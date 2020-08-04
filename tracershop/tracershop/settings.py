@@ -25,7 +25,9 @@ SECRET_KEY = '6k8chfm_-enql+y)#k)lnm5#ey9-t41tq*xj__pmmups)uo(m*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost','127.0.0.1']
+AUTHENTICATION_BACKENDS = ['customer.backends.SimpleBackend']
+LOGIN_URL = '/'
 
 
 # Application definition
@@ -78,9 +80,9 @@ WSGI_APPLICATION = 'tracershop.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tracershopdb',
+        'NAME': 'tracershop',
         'USER': 'tracershop',
-        'Password': 'tracershop',
+        'PASSWORD': 'tracer',
         'HOST': 'localhost', 
         'PORT': '3306'
     }
