@@ -25,15 +25,18 @@ SECRET_KEY = '6k8chfm_-enql+y)#k)lnm5#ey9-t41tq*xj__pmmups)uo(m*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1']
+ALLOWED_HOSTS = ['localhost','127.0.0.1', '172.16.189.163']
+AUTH_USER_MODEL = 'customer.User'
 AUTHENTICATION_BACKENDS = ['customer.backends.SimpleBackend']
 LOGIN_URL = '/'
+
 
 
 # Application definition
 
 INSTALLED_APPS = [
     'customer',
+    'rest_framework',
     'bootstrap4',
     'django.contrib.admin',
     'django.contrib.auth',
@@ -72,6 +75,13 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'tracershop.wsgi.application'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES' : [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
 
 
 # Database
@@ -126,3 +136,5 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+STATIC_ROOT = os.path.join(BASE_DIR, "customer/static")

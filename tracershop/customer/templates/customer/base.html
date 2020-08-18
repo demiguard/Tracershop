@@ -4,16 +4,34 @@
 <!DOCTYPE html>
 <html>
   <head>
+  {% if title %}
+    <title>{{ title }}</title>
+  {% else %}
+    <title>Tracershop</title>
+  {% endif %}
+
+  <link rel="icon" href="{% static 'customer/images/favicon.ico' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/bootstrap/bootstrap.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/navbar.css' %}">
   {% block head %}
   {% endblock %}
+
   </head>
   <body>
     {% block navbar %}
     {% endblock %}
+    <div class="container bd-highlight bg-light">
+      <div class="row">
+        {% block content %}
+        
+        {% endblock %}
+      </div>
+      
+    </div>
     
-    {% block content %}
-    {% endblock %}
-    
+    <script src="{% static 'customer/javascript/jquery.js' %}"></script>
+    <script src="{% static 'customer/javascript/popper.js'%}"></script>
+    <script src="{% static 'customer/javascript/bootstrap/bootstrap.js' %}"></script>
     {% block javascript %}
     {% endblock%}  
   </body>

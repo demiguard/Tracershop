@@ -1,0 +1,72 @@
+html, body { 
+  height: 100%;
+  overflow: hidden;
+}
+
+.calender {
+  padding: 0px;
+  border: 2px;
+  border-color: blue;
+  border-style: solid;
+  width: 250px;
+  height: 100%;
+  text-align: center;
+}
+
+.calender-row {
+  width: 17%;
+}
+
+.calender-dates {
+  background: #7BF;;
+  border-bottom: 2px;
+  border-top: 0px;
+  border-left:0px;
+  border-right:0px;
+  border-style: solid;
+  border-color: #00F;
+}
+
+
+.calender-header {
+  background: #7BF;
+}
+
+.container {
+  min-height: 100%;
+  overflow: auto;
+}
+
+th, td {
+  text-align: center;
+  padding-top: 0px ;
+  padding-bottom: 0px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.date-status1 {
+  background-color: #F99;
+}
+
+.date-status2 {
+  background-color: #FF9;
+}
+.date-status3 {
+  background-color: #9F9;
+}
+.date-status4 {
+  background-color: #BBB;
+}
+
+.container {
+  max-width: 1500px;
+}
+
+table {
+  width: 1050px;
+}
+
+th, td {
+  width: 150px;
+}

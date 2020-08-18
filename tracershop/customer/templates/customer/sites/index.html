@@ -1,5 +1,93 @@
-{%extends base.html %}
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/index.css' %}">
+{% endblock %}
+
 
 {% block navbar %}
-{% include navbar/unauth_navbar.html %}
+{% include 'customer/navbar/unauth_navbar.html' %}
+{% endblock %}
+
+{% block content %}
+
+<div id="Information" class="col-9">
+  <div id="dato">
+    Dato: {{ Dato_DK_format }}
+  </div>
+  <div id="content">
+    {% for order in data %}
+    <div class="data-row">
+      <div class="col-12 row">
+        <strong>
+          Bestilling {{order.order_num}} - {{ order.time | time:'H:i' }}
+        </strong>
+      </div>
+      <div class="row">
+        <div class="col-1"></div>
+        {% if order.data_type == "form" %}
+        <div>
+          {{ order.data }}
+        </div>
+        <div class="col-1"></div>
+        <button class="btn btn-primary" style="height: 36px;" id="order_button_{{order.order_num}}">
+          Bestil
+        </button>
+        {% endif %}
+        {% if order.data_type == "data" %}
+        <table class="col-11">
+          <thead>
+            <tr>
+              <th>Status</th>
+              <th>order ID</th>
+              <th>Bestilt MBQ</th>
+              <th>Produceret MBQ</th>
+              <th>Batch-nr.</th>
+              <th>Frigivet MBQ</th>
+              <th>Frigivet</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for order in order.data %}
+            <tr>
+              <td>{{order.status}}</td>
+              <td>{{order.orderID}}</td>
+              <td>{{order.ordered_amount}}</td>
+              <td>{{order.total_amount}}</td>
+              <td>{{order.batchnr}}</td>
+              <td>{{order.free_amount}}</td>
+              <td>{{order.free_dt |date:'H:i'}}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% endif %}
+      </div>
+    </div>
+    
+    {% endfor %}
+  </div>
+    
+</div>
+<div class="col-3">
+  <div id="calender">
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+  <script>
+    var today = new Date(Date.parse( "{{ today }}" ));
+    colorDict = {
+    {% for key, status in data_status.items %}
+    "{{ key }}" : {{ status }},
+    {% endfor %}
+    };
+
+
+  </script>
+  <script type="module" src="{% static 'customer/javascript/sites/libs/calender.js' %}"></script>
+  <script type="module" src="{% static 'customer/javascript/sites/index.js' %}"></script>
 {% endblock %}
