@@ -12,7 +12,7 @@ def map_order_tuple(x):
     'free_dt'  : x[7]
   }
 
-def match_orders(orders, runs):
+def matchOrders(orders, runs):
   order_list = []
   used_orderID = []
 
@@ -31,7 +31,7 @@ def match_orders(orders, runs):
     if len(matching_orders): 
       used_orderID += list(map(lambda x: x[1], matching_orders))
       order_context['data_type'] = 'data'
-      order_context['data'] = map(map_order_tuple, matching_orders)
+      order_context['data'] = list(map(map_order_tuple, matching_orders))
     else:
       order_context['data_type'] = 'form'
       order_context['data'] = OrderForm()

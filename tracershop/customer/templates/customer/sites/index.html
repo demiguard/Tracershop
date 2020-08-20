@@ -5,11 +5,6 @@
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/index.css' %}">
 {% endblock %}
 
-
-{% block navbar %}
-{% include 'customer/navbar/unauth_navbar.html' %}
-{% endblock %}
-
 {% block content %}
 
 <div id="Information" class="col-9">
@@ -38,7 +33,6 @@
         {% if order.data_type == "data" %}
         <table class="col-11">
           <thead>
-            <tr>
               <th>Status</th>
               <th>order ID</th>
               <th>Bestilt MBQ</th>
@@ -46,7 +40,6 @@
               <th>Batch-nr.</th>
               <th>Frigivet MBQ</th>
               <th>Frigivet</th>
-            </tr>
           </thead>
           <tbody>
             {% for order in order.data %}

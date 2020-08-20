@@ -13,13 +13,25 @@
   <link rel="icon" href="{% static 'customer/images/favicon.ico' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/bootstrap/bootstrap.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/navbar.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/base.css' %}">
   {% block head %}
   {% endblock %}
 
   </head>
   <body>
-    {% block navbar %}
-    {% endblock %}
+    {% if user.is_authenticated %}
+      {% if user.is_staff %}
+        {% if user.is_admin %}
+          {% include 'customer/navbar/admin_navbar.html' %}
+        {% else %}
+          {% include 'customer/navbar/staff_navbar.html' %}
+        {% endif %}
+      {% else %}
+        {% include 'customer/navbar/customer_navbar.html' %}
+      {% endif %}
+    {% else %} 
+      {% include 'customer/navbar/unauth_navbar.html' %}
+    {% endif %}
     <div class="container bd-highlight bg-light">
       <div class="row">
         {% block content %}
@@ -32,6 +44,7 @@
     <script src="{% static 'customer/javascript/jquery.js' %}"></script>
     <script src="{% static 'customer/javascript/popper.js'%}"></script>
     <script src="{% static 'customer/javascript/bootstrap/bootstrap.js' %}"></script>
+    <script src="{% static 'customer/javascript/csrf.js' %}"></script>
     {% block javascript %}
     {% endblock%}  
   </body>

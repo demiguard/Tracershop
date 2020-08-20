@@ -1,0 +1,10 @@
+html, body { 
+  height: 100%;
+  overflow: hidden;
+}
+
+.container {
+  min-height: 100%;
+  overflow: auto;
+  max-width: 1500px;
+}

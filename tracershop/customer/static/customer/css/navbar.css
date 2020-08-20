@@ -1,3 +1,8 @@
 .navbar_custom {
   background: #88aaff;
 }
+
+.navbarElem {
+  padding-right: 15px;
+  padding-left: 15px;
+}

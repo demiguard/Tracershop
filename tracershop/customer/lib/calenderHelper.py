@@ -1,6 +1,13 @@
 import datetime
 import calendar
 
+def get_hour_from_dt(dt):
+  if dt:
+    return dt.strftime("%H:%M")
+  else:
+    return None
+
+
 def convert_to_datetime_time(user_input):
   if type(user_input) == datetime.time:
     return user_input
@@ -25,7 +32,7 @@ def convert_to_sql_date(date):
   if date.month < 10:
     month = "0" + str(date.month)
   else:
-    month = str(month)
+    month = str(date.month)
   if date.day < 10:
     day = "0" + str(date.day)
   else:

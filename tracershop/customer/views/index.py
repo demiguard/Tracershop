@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 
 import datetime
 import json
@@ -10,23 +11,14 @@ from customer.lib import sqlCurator
 from customer.lib import calenderHelper
 from customer.lib import orderHelper
 
-def map_tuple(x):
-  return {
-    'status' : x[0],
-    'orderID' : x[1],
-    'ordered_amount': x[2],
-    'total_amount' : x[4],
-    'batchnr' : x[5],
-    'free_amount' : x[6],
-    'free_dt'  : x[7]
-  }
-
-
-class IndexView(TemplateView):
+class IndexView(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/index.html'
+  login_url = '/login'
+  redirect_field_name = 'loginView'
 
+  
   def get(self, request):
-    today = datetime.date(2020,8,20) #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
+    today = datetime.date.today() #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
     userID = 7
 
     ### Data construction ###

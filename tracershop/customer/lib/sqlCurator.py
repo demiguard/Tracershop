@@ -13,7 +13,6 @@ def query_order_by_month(year,month, userID):
   if len(month) == 1:
     month = "0" + month
 
-
   SQLQuery = f""" 
   SELECT DISTINCT 
     DATE(order_time),
@@ -31,14 +30,10 @@ def query_order_by_month(year,month, userID):
 
 def query_order_by_date(date, userID):
   """
-    Queries for orders 
+    Queries for orders for a specific date
   
   
   """
-
-  #Perform query
-
-  #Move this to a helper function
   if type(date) != str:
     date = calenderHelper.convert_to_sql_date(date)
 
@@ -56,6 +51,7 @@ def query_order_by_date(date, userID):
   WHERE DATE(order_time) = \'{date}\' AND
   BID = {userID}
   """
+  #Perform query
   with connection.cursor() as cursor:
     cursor.execute(SQLQuery)
     orders = list(cursor.fetchall())

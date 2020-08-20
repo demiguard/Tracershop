@@ -1,0 +1,13 @@
+{% extends 'customer/navbar/navbar_base.html' %}
+
+{% block navbar_content %}
+
+  {% block authbar_content %}
+
+  {% endblock authbar_content %}
+
+  <div class=navbarElem>
+    Logget in som: <strong>{{ user.username }}</strong>
+    <input type="button" class="btn btn-primary" value="Log ud" onclick="window.location='api/logout'">
+  </div>
+{% endblock %}

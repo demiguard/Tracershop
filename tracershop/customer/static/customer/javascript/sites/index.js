@@ -5,9 +5,16 @@ import { CalenderFactory } from "./libs/calender.js";
 
 var CalenderInstance;
 
-
-
-
+function create_element(div, content, identifyer, classList) {
+  var element = document.createElement(identifyer);
+  for(let i = 0; i < classList.length; i++) {
+    const classToBeAdded = classList[i];
+    element.classList.add(classToBeAdded)
+  }
+  element.innerHTML = content;
+  div.append(element);
+  return element;
+}
 
 $(function() {
   var Date_function = function(div,  date, directory){
@@ -55,7 +62,59 @@ $(function() {
         return data;
       }
     }).then(function(data) {
-      console.log(data);
+      var contentDiv = $("#content");
+      for (let i = 0; i < data.responses.length; i++) {
+        const response = data.responses[i];
+        var dataRow = create_element(contentDiv,'','div',['data-row']);
+      
+        var contentStr;
+        if (response.data_type == 'form'  || response.data_type == 'data') {
+          contentStr = "<strong> Bestilling " + response['order_num'] + " - " + response['time'].substr(0,5) + "</strong>";
+        } else {
+          contentStr = "Ukendt Data format fra JSON Fil";
+        }
+        create_element(dataRow, contentStr, 'div', ['col-12', 'row']);
+        var informationRowDiv = create_element(dataRow,'','div',['row']);
+        create_element(informationRowDiv,'','div',['col-1']);
+        // ----- Form Creation -----
+        if (response.data_type == 'form'){
+          create_element(
+            informationRowDiv, 
+            "<label for=\"id_order_MBQ\">Antal MBQ:</label><input id=\"id_order_MBQ\" type=\"number\" name=\"order_MBQ\" min=\"0\">",
+            'div', [])
+          create_element(informationRowDiv,'','div',['col-1']);
+          create_element(informationRowDiv,'Bestil','BUTTON',['btn', 'btn-primary']);
+
+        } else if (response.data_type == 'data') { 
+          // ----- Table Creation -----
+          var table = create_element(informationRowDiv,'','table',['col-11']);
+          var tableHead = create_element(table, '',   'thead',[]);
+          create_element(tableHead, 'Status',         'th',   []);
+          create_element(tableHead, 'order ID',       'th',   []);
+          create_element(tableHead, 'Bestilt MBQ',    'th',   []);
+          create_element(tableHead, 'Produceret MBQ', 'th',   []);
+          create_element(tableHead, 'Batch-nr.',      'th',   []);
+          create_element(tableHead, 'Frigivet MBQ',   'th',   []);
+          create_element(tableHead, 'Frigivet',       'th',   []);
+          var tableBody = create_element(table, '','tbody',   []);
+          for (let j = 0; j < response.data.length; j++){
+            const order = response.data[j];
+            var tableRow = create_element(tableBody,'','tr', []);
+            create_element(tableRow, order.status,         'td', []);
+            create_element(tableRow, order.orderID,        'td', []);
+            create_element(tableRow, order.ordered_amount, 'td', []);
+            create_element(tableRow, order.total_amount,   'td', []);
+            create_element(tableRow, order.batchnr,        'td', []);
+            create_element(tableRow, order.free_amount,    'td', []);
+            if (order.free_dt != null) {
+              create_element(tableRow, order.free_dt.substr(11,5), 'td', []);
+            } else {
+              create_element(tableRow, "", 'td', []);
+            }
+          }
+        }        
+      }
+
       } 
     );
   }

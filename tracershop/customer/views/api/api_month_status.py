@@ -11,4 +11,6 @@ class Api_month_status(View):
     data = sql.query_order_by_month(year, month, 7)
     data = dict(map(lambda x: (str(x[0]), x[1]), data))
 
+    print(data)
+
     return JsonResponse(data)    
