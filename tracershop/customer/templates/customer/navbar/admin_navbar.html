@@ -1,5 +1,7 @@
 {% extends 'customer/navbar/auth_navbar.html' %}
 
 {% block authbar_content %}
-  
+  <div class=navbarElem>
+    <a href="{% url 'customer:verifyUser' %}"">Godkend Bruger</a>
+  </div>
 {% endblock %}

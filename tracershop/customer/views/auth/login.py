@@ -20,7 +20,6 @@ class LoginView(TemplateView):
 
 class APILoginView(TemplateView):
   def post(self, request):
-    print("Loggin in a user")
     login_data = LoginForm(data=request.POST)
     success = False
 
@@ -30,7 +29,6 @@ class APILoginView(TemplateView):
         username=request.POST['username'],
         password=request.POST['password']
       )
-      print(user)  
 
       if user:
         login(request, user)

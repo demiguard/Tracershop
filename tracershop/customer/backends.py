@@ -1,5 +1,5 @@
 from django.contrib.auth.hashers import check_password
-from .models import User
+from customer.models import User
 
 
 # Simple mysql database users

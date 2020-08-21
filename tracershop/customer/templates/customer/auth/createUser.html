@@ -1,0 +1,77 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="col-12">
+  <form method="POST">
+    {% csrf_token %}
+    <table class="">
+      <tbody>
+        <tr>
+          <td> Bruger Navn:</td>
+          <td> {{ CreateUserForm.username }}</td>
+        </tr>
+        <tr>
+          <td> Password:</td>
+          <td> {{ CreateUserForm.password }}</td>
+        </tr>
+        <tr>
+          <td> Gentag Password:</td>
+          <td> {{ CreateUserForm.password_confirm }}</td>
+        </tr>
+        
+        <tr>
+          <td> Fornavn:</td>
+          <td> {{ CreateUserForm.first_name }}</td>
+        </tr>
+        <tr>
+          <td> Efternavn:</td>
+          <td> {{ CreateUserForm.last_name }}</td>
+        </tr>
+        <tr>
+          <td> Email 1:</td>
+          <td> {{ CreateUserForm.email_1 }}</td>
+        </tr>
+        <tr>
+          <td> Email 2:</td>
+          <td> {{ CreateUserForm.email_2 }}</td>
+        </tr>
+        <tr>
+          <td> Email 3:</td>
+          <td> {{ CreateUserForm.email_3 }}</td>
+        </tr>
+        <tr>
+          <td> Email 4:</td>
+          <td> {{ CreateUserForm.email_4 }}</td>
+        </tr>
+        <tr>
+          <td> Addresse:</td>
+          <td> {{ CreateUserForm.address }}</td>
+        </tr>
+        <tr>
+          <td> Instutition:</td>
+          <td> {{ CreateUserForm.location }}</td>
+        </tr>
+        <tr>
+          <td> By:</td>
+          <td> {{ CreateUserForm.cityname }}</td>
+        </tr>
+        <tr>
+          <td> Postnummer:</td>
+          <td> {{ CreateUserForm.postcode }}</td>
+        </tr>
+      </tbody>
+    </table>
+  
+    {% buttons %}
+      <input type="submit" class="btn btn-primary" value="Opret Bruger" >
+    {% endbuttons %}
+  </form>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+
+{% endblock %}

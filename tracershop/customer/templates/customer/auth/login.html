@@ -3,11 +3,6 @@
 
 {% load bootstrap4 %}
 
-{% block navbar %}
-{% include 'customer/navbar/unauth_navbar.html' %}
-{% endblock %}
-
-
 {% block content %}
   <form method="POST">
     {% csrf_token %}
@@ -22,6 +17,7 @@
     {% else %}
       <input type="button" class="btn btn-primary" value="Log ud" onclick="window.location='api/logout'">
     {% endif %}
+    <a href="{% url 'customer:CreateUser' %}">Opret Bruger </a>
   
   </form>
 {% endblock %}
