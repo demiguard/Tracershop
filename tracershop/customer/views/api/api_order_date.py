@@ -10,11 +10,8 @@ from customer.lib import calenderHelper
 
 import datetime
 
-
-
 class Api_order_date(View):
   def get(self, request, year, month, day):
-    print("hello world")
     try:
       dt_object = datetime.datetime(year,month,day)
     except ValueError:

@@ -4,7 +4,7 @@ from django.forms import Form, ModelForm
 from customer.models import PotentialUser
 
 class OrderForm(Form):
-  order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
+  order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ", widget=forms.TextInput)
 
 
 class LoginForm(Form):
@@ -20,12 +20,17 @@ class CreateUserForm(Form):
   first_name = forms.CharField(max_length=30, required=False)
   last_name  = forms.CharField(max_length=60, required=False)
 
-  email_1 = forms.CharField(max_length=256, required=False, widget=forms.EmailInput())
-  email_2 = forms.CharField(max_length=256, required=False, widget=forms.EmailInput())
-  email_3 = forms.CharField(max_length=256, required=False, widget=forms.EmailInput())
-  email_4 = forms.CharField(max_length=256, required=False, widget=forms.EmailInput())
+  email_1 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
+  email_2 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
+  email_3 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
+  email_4 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
 
   address  = forms.CharField(max_length=60, required=False)
   location = forms.CharField(max_length=60, required=False)
   cityname = forms.CharField(max_length=60, required=False)
   postcode = forms.CharField(max_length=60, required=False)
+
+class VerifyUserForm(Form):
+  is_staff = forms.BooleanField(required=False)
+  is_admin = forms.BooleanField(required=False)
+  customerNumber = forms.IntegerField(required=False, widget=forms.TextInput())

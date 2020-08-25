@@ -1,14 +1,14 @@
 from django.db import connection
 
 from customer.lib import calenderHelper
-
+from customer.models import PotentialUser
 
 def check_for_injection(query):
   pass
 
 
 
-def query_order_by_month(year,month, userID):
+def query_order_by_month(year,month, userID) -> list:
   month = str(month)
   if len(month) == 1:
     month = "0" + month
@@ -28,7 +28,7 @@ def query_order_by_month(year,month, userID):
 
   return orders
 
-def query_order_by_date(date, userID):
+def query_order_by_date(date, userID) -> list:
   """
     Queries for orders for a specific date
   
@@ -58,7 +58,7 @@ def query_order_by_date(date, userID):
 
   return orders
 
-def get_daily_runs(date, userID):
+def get_daily_runs(date, userID) -> list:
   day_num = calenderHelper.get_day(date)
 
   SQLQuery = f"""
@@ -81,7 +81,7 @@ def get_daily_runs(date, userID):
 
   return runs
 
-def get_closed(date):
+def get_closed(date) -> bool:
   """
     Determines if production have closed on a specific day
 
@@ -108,6 +108,24 @@ def get_closed(date):
     return True
   return False
 
+def get_unverified_users() -> list: 
+  return list(PotentialUser.objects.all())
+
+
+def getMaxCustomerNumber() -> int:
+  SQLQuery = f"""
+  SELECT 
+    MAX(Users.kundenr),
+    MAX(customer_user.customer_number)
+  FROM 
+    Users,
+    customer_user
+  """
+  with connection.cursor() as cursor:
+    cursor.execute(SQLQuery)
+    MaxCustomerNumber = max(cursor.fetchone())
+  return MaxCustomerNumber
+  
 
 
 
