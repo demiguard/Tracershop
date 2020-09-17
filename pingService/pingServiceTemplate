@@ -1,0 +1,17 @@
+#Place this File in /etc/systemd/system/pingService
+[Unit]
+Description =pingService retrieves 
+After=network.target #Use this if there's not Database installed on the server
+After=mysql.service #You may have to remove this if the database is not located at this
+
+[Service]
+Type = simple
+ExecStart = <Path to virtual envoirment> <Path to pingService>
+User = <User you want to run>
+Group = <User Group running the scrip as>
+Restart=on-failure
+RestartSec=10
+SysLogIdentifier = pingServiceLog
+TimeoutStartSec=infinity
+[Install]
+WantedBy=multi-user.target
