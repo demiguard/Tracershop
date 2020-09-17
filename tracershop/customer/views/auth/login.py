@@ -5,7 +5,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
 
 
-from customer.forms import LoginForm
+from customer.forms.forms import LoginForm
 
 class LoginView(TemplateView):
   template_name = 'customer/auth/login.html'

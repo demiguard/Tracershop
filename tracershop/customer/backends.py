@@ -1,7 +1,7 @@
 from django.contrib.auth.hashers import check_password
 from customer.models import User
 
-# Simple mysql database users
+# Simple mySQL database users
 class SimpleBackend:
   def authenticate(self, request, username=None, password=None):
     if username and password:

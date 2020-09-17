@@ -5,10 +5,17 @@ from django.views.generic import TemplateView, View
 from django.http import JsonResponse, HttpResponseBadRequest
 
 from customer.lib import orderHelper
-from customer.lib import sqlCurator as sql
+from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
 
 import datetime
+
+def formatUse(adir):
+  if 'use' in adir:
+    if (adir['use'] == 'Human'):
+      adir['use'] = 'Menneske'
+  
+  return adir
 
 class Api_order_date(View):
   def get(self, request, year, month, day):
@@ -17,16 +24,22 @@ class Api_order_date(View):
     except ValueError:
       return HttpResponseBadRequest()
 
-    if sql.get_closed(dt_object):
+    if SQL.getClosed(dt_object):
       pass
 
     userID = 7
 
-    order = sql.query_order_by_date(dt_object, userID)
-    runs = sql.get_daily_runs(dt_object, userID)
+    order = SQL.queryOrderByDate(dt_object, userID)
+    runs = SQL.getDailyRuns(dt_object, userID)
+
+    tOrders = SQL.getDailyTOrders(dt_object, userID)
+    
+
 
     response_dir = {
-      'responses' : orderHelper.matchOrders(order, runs)
+      'responses' : orderHelper.matchOrders(order, runs),
+      #formatting mapping
+      'tOrders'   : list(map(formatUse, tOrders))
     }
 
     for order in response_dir['responses']:

@@ -27,20 +27,14 @@ def get_day(date):
   return calendar.weekday(date.year, date.month, date.day) + 1
 
 
-def convert_to_sql_date(date):
-  year = str(date.year)
-  if date.month < 10:
-    month = "0" + str(date.month)
-  else:
-    month = str(date.month)
-  if date.day < 10:
-    day = "0" + str(date.day)
-  else:
-    day = str(date.day)
-  return f"{year}-{month}-{day}"
+def convert_to_SQL_date(date):  
+  return date.strftime('%Y-%m-%d')
 
 
 def compare_hours(date_one, date_two): 
   date_one = convert_to_datetime_time(date_one)
   date_two = convert_to_datetime_time(date_two)
   return date_one == date_two
+
+def combine_time_and_date(date, time):
+  return datetime.datetime(date.year, date.month, date.day, time.hour, time.minute)

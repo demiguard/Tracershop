@@ -5,8 +5,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import ObjectDoesNotExist
 
 
-from customer.forms import VerifyUserForm
-from customer.lib import sqlCurator
+from customer.forms.forms import VerifyUserForm
+from customer.lib.SQL import SQLController
 from customer.models import PotentialUser, User
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
@@ -14,8 +14,8 @@ class VerifyUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   template_name = 'customer/admin/VerifyUser.html'
 
   def get(self, request):
-    unverfiedUsers = sqlCurator.get_unverified_users()
-    maxCustomerNumber = sqlCurator.getMaxCustomerNumber()
+    unverfiedUsers =SQLController.get_unverified_users()
+    maxCustomerNumber =SQLController.getMaxCustomerNumber()
     verificationforms = [ VerifyUserForm(initial={'customerNumber': i+1+maxCustomerNumber}) for i,_ in enumerate(unverfiedUsers) ]
 
     context = {
@@ -39,12 +39,12 @@ class APIVerifyUser(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
 
     return returnDict
 
-  def put(self, request, UserID):
+  def put(self, request, userID):
     
     FormInfo = self.parse_qDict(QueryDict(request.body))
 
     try:
-      pu = PotentialUser.objects.get(id=UserID)
+      pu = PotentialUser.objects.get(id=userID)
     except ObjectDoesNotExist: 
       return JsonResponse({'status': 0})
 
@@ -72,9 +72,9 @@ class APIVerifyUser(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
 
     return JsonResponse({'status': 1})
 
-  def delete(self, request, UserID):
+  def delete(self, request, userID):
     try:
-      pu = PotentialUser.objects.get(id=UserID)
+      pu = PotentialUser.objects.get(id=userID)
     except ObjectDoesNotExist: 
       return JsonResponse({'status': 0})
 

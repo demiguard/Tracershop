@@ -12,6 +12,7 @@ from customer.views.auth.login import LoginView, APILoginView, APILogoutView
 from customer.views.api.api_add_order import Api_add_order
 from customer.views.api.api_month_status import Api_month_status
 from customer.views.api.api_order_date import Api_order_date
+from customer.views.api.api_add_torder import Api_add_torder
 
 app_name = 'customer'
 
@@ -28,9 +29,10 @@ urlpatterns = [
 
     #API
     path('api/addOrder', Api_add_order.as_view(), name='API_add_order'),
+    path('api/addTOrder', Api_add_torder.as_view(), name='API_add_torder'),
     path('api/month_status/<int:year>/<int:month>', Api_month_status.as_view(), name='API_month_status'),
     path('api/order_date/<int:year>/<int:month>/<int:day>', Api_order_date.as_view(), name="API_order_date"),
     path('api/logout', APILogoutView.as_view(), name='logout'),
     path('api/login',  APILoginView.as_view(),  name='login'),
-    path('api/verifyUser/<int:UserID>', APIVerifyUser.as_view(), name='API_verifyUser'),
+    path('api/verifyUser/<int:userID>', APIVerifyUser.as_view(), name='API_verifyUser'),
 ]

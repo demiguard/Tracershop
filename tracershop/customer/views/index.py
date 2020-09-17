@@ -5,11 +5,18 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import datetime
 import json
 
-from customer import forms
-
-from customer.lib import sqlCurator
+from customer.forms import formFactory
+from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
 from customer.lib import orderHelper
+
+def formatUse(adir):
+  if 'use' in adir:
+    if (adir['use'] == 'Human'):
+      adir['use'] = 'Menneske'
+  
+  return adir
+
 
 class IndexView(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/index.html'
@@ -18,21 +25,26 @@ class IndexView(LoginRequiredMixin, TemplateView):
 
   
   def get(self, request):
-    today = datetime.date.today() #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
+    today = datetime.date(2020,8,3) #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
     userID = 7
 
     ### Data construction ###
     # get data #
-    is_closed  = sqlCurator.get_closed(today)
-    runs       = sqlCurator.get_daily_runs(today, userID)
-    injections = sqlCurator.query_order_by_date(today, userID)
+    is_closed  = SQL.getClosed(today)
+    runs       = SQL.getDailyRuns(today, userID)
+    injections = SQL.queryOrderByDate(today, userID)
     #Compute
     data = orderHelper.matchOrders(injections, runs)
     # Calender construction
-    status_tupples = sqlCurator.query_order_by_month(today.year,today.month, userID)
-    status_tupples = dict(map(lambda x: (str(x[0]), x[1]), status_tupples))
+    status_tupples = SQL.queryOrderByMonth(today.year, today.month, userID)
     
+    secondaryOrderFormQuery = SQL.getTOrdersForms(userID)
+    secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
+    DailyTOrders            = list(map(formatUse, SQL.getDailyTOrders(today, userID)))
+
     context = {
+      'secondaryOrders' : DailyTOrders,
+      'secondaryForms'  : secondaryOrdersForms,
       'data'            : data,
       'is_closed'       : is_closed,
       'Dato_DK_format'  : today.strftime('%d/%m/%Y'),

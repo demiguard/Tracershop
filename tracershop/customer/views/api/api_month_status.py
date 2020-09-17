@@ -4,13 +4,10 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, View
 from django.http import JsonResponse
 
-from customer.lib import sqlCurator as sql
+from customer.lib.SQL import SQLController as SQL
 
 class Api_month_status(View):
   def get(self, request, year, month):
-    data = sql.query_order_by_month(year, month, 7)
-    data = dict(map(lambda x: (str(x[0]), x[1]), data))
-
-    print(data)
-
+    userID = 7
+    data = SQL.queryOrderByMonth(year, month, userID)
     return JsonResponse(data)    

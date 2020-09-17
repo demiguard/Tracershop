@@ -1,5 +1,6 @@
 {% extends 'customer/base.html' %}
 {% load static %}
+{% load bootstrap4 %}
 
 {% block head %}
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/index.css' %}">
@@ -7,7 +8,7 @@
 
 {% block content %}
 
-<div id="Information" class="col-9">
+<div id="FTG" class="col-9">
   <div id="dato">
     Dato: {{ Dato_DK_format }}
   </div>
@@ -16,41 +17,46 @@
     <div class="data-row">
       <div class="col-12 row">
         <strong>
-          Bestilling {{order.order_num}} - {{ order.time | time:'H:i' }}
+          Ordre {{order.order_num}} - Kalibreret til: {{ order.time | time:'H:i' }}
         </strong>
       </div>
-      <div class="row">
-        <div class="col-1"></div>
+      <div class="row" id="informationRow{{ order.order_num }}">
         {% if order.data_type == "form" %}
-        <div>
-          {{ order.data }}
+        <div id="ButtonDiv{{ order.order_num }}">
+          Bestil: {{ order.data.order_MBQ }} [MBq]
+        </div>
+        <div class="col-1" ></div>
+        <div id="CommentDiv{{ order.order_num }}">
+          Kommentar:
+          {{ order.data.comment }}
         </div>
         <div class="col-1"></div>
-        <button class="btn btn-primary" style="height: 36px;" id="order_button_{{order.order_num}}">
+        <button class="btn btn-primary OrderButton" style="height: 36px;" id="{{order.order_num}}">
           Bestil
-        </button>
+        </button> 
+        
         {% endif %}
         {% if order.data_type == "data" %}
-        <table class="col-11">
+        <table>
           <thead>
               <th>Status</th>
               <th>order ID</th>
-              <th>Bestilt MBQ</th>
-              <th>Produceret MBQ</th>
-              <th>Batch-nr.</th>
-              <th>Frigivet MBQ</th>
-              <th>Frigivet</th>
+              <th>Bestilt Aktivitet</th>
+              <th>Produceret [MBq]</th>
+              <th>Batch-nr. </th>
+              <th>Frigivet [MBq]</th>
+              <th>Frigivet </th>
           </thead>
           <tbody>
             {% for order in order.data %}
             <tr>
               <td>{{order.status}}</td>
-              <td>{{order.orderID}}</td>
+              <td>{{order.OID}}</td>
               <td>{{order.ordered_amount}}</td>
               <td>{{order.total_amount}}</td>
               <td>{{order.batchnr}}</td>
-              <td>{{order.free_amount}}</td>
-              <td>{{order.free_dt |date:'H:i'}}</td>
+              <td>{{order.frigivet_amount}}</td>
+              <td>{{order.frigivet_datetime |date:'H:i'}}</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -58,15 +64,85 @@
         {% endif %}
       </div>
     </div>
-    
     {% endfor %}
   </div>
-    
 </div>
 <div class="col-3">
-  <div id="calender">
-  </div>
+  <div id="calender"></div>
 </div>
+
+
+<div id="second" class="col-9">
+  {% if secondaryOrders %}
+    <div id="T_orders">
+  {% else %}
+    <div id="T_orders" class="DisplayHidden">
+  {% endif %}
+      <div class="row">
+        <p>Ordre af Tracer Bestilt til i dag:</p>
+      </div>
+      <div id="torder_data">
+        <table>
+          <thead>
+            <th>Tracer</th>
+            <th>Status</th>
+            <th>Order ID</th>
+            <th>Bestilt til</th>
+            <th>Injectioner</th>
+            <th>Til</th>            
+          </thead>
+          <tbody id="secondaryTableBody">
+            {% if secondaryOrders %}
+            {% for secondaryOrder in secondaryOrders %}
+              <tr class="data-row">
+                <td>{{ secondaryOrder.tracer }}</td>
+                <td>{{ secondaryOrder.status }}</td>
+                <td>{{ secondaryOrder.OrderID }}</td>
+                <td>{{ secondaryOrder.deliver_datetime | date:'H:i' }}</td>
+                <td>{{ secondaryOrder.nInjections }}</td>
+                <td>{{ secondaryOrder.use }}</td>
+              </tr>
+            {% endfor %}
+            {% endif %}
+          </tbody>
+          
+          
+        </table>
+      </div>
+    </div>
+  
+
+  {% if secondaryForms %}
+  <p>Bestillinger af andre tracers til i dag:</p>
+  <div id="T_forms">
+    <table>
+      <thead>
+        <th>Tracer</th>
+        <th>Bestil til</th>
+        <th>Antal injectioner</th>
+        <th>Brug </th>
+        <th></th>
+      </thead>
+      <tbody>
+        {% for secondaryForm in secondaryForms %}
+        <tr id="Row{{ secondaryForm.id }}">
+          <td id="TracerName">{{ secondaryForm.name }} </td>
+          <td id="deliverTime" class="">{{ secondaryForm.deliverTime }}</td>  
+          <td id="InjectionField" class="">{{ secondaryForm.injectionField }}</td> 
+          <td id="UseField">{{ secondaryForm.useField }}</td> 
+          <td><input type="button" id="TOrderButton{{ secondaryForm.id }}" class="TorderButton btn btn-outline-secondary" value="Bestil"></td>
+        </tr>
+        {% endfor %}  
+      </tbody>
+    </table>
+    
+    </p>
+  </div>
+  {% endif %}
+
+</div>
+<div class="col-3">
+  <div id="calender2"></div>
 
 {% endblock %}
 

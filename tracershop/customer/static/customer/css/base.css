@@ -6,10 +6,24 @@ html, body {
 .container {
   min-height: 100%;
   overflow: auto;
-  max-width: 1500px;
+  max-width: 100%;
 }
 
 .row {
   margin-left: 0px !important;
   margin-right: 0px !important;
+}
+
+:root {
+  --primary-color: #009ce8;
+  --secondary-color-1: #4db9ef;
+  --secondary-color-2: #99d7f6;
+  --secondary-color-3: #ccebfa;
+  --tertiary-color-1: #397c7a;
+  --tertiary-color-2: #699;
+  --tertiary-color-3: #88d0c8;
+  --grey-1: #333;
+  --grey-2: #565656;
+  --grey-3: #858585;
+  --grey-4: #d6d6d6; 
 }

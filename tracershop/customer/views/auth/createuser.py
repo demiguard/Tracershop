@@ -1,7 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
-from customer.forms import CreateUserForm
+from customer.forms.forms import CreateUserForm
 from customer.models import PotentialUser
 
 class CreateUserView(TemplateView):

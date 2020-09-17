@@ -1,10 +1,12 @@
 .calender {
   padding: 0px;
-  border: 2px;
+  margin-top: 46px;
+  border: 3px;
   border-color: blue;
   border-style: solid;
   width: 250px;
   text-align: center;
+  border-radius: 8px;
 }
 
 .calender-row {
@@ -12,7 +14,7 @@
 }
 
 .calender-dates {
-  background: #7BF;;
+  background: var(--tertiary-color-3);
   border-bottom: 2px;
   border-top: 0px;
   border-left:0px;
@@ -22,35 +24,107 @@
 }
 
 .calender-header {
-  background: #7BF;
+  background: var(--tertiary-color-3);
+}
+
+table {
+  border-top: 1px;
+  border-left: 1px;
+  border-right: 1px;
+  border-bottom: 1px;
+  border-style: solid;
+  border-color: var(--grey-1);
+  width: 1250px;
 }
 
 th, td {
   text-align: center;
   padding-top: 0px ;
   padding-bottom: 0px;
-  padding-left: 20px;
-  padding-right: 20px;
+  padding-left: 10px;
+  padding-right: 10px;
+  width: 150px;
 }
 
+th {
+  background-color: var(--grey-4);
+}
+
+tr {
+  border-top: 1px;
+  border-left: 0px;
+  border-right: 0px;
+  border-bottom: 1px;
+  border-style: dashed;
+  border-color: var(--grey-3)
+}
+
+
 .date-status1 {
-  background-color: #F99;
+  background-color: #F55;
+  border-radius: 100%;
+  padding-top:    3px;
+  padding-bottom: 3px;
+  margin: 1px;
 }
 
 .date-status2 {
-  background-color: #FF9;
+  background-color: #FF5;
+  border-radius: 100%;
+  padding-top:    3px;
+  padding-bottom: 3px;
+  margin: 2px;
 }
 .date-status3 {
-  background-color: #9F9;
+  background-color: #5F5;
+  border-radius: 100%;
+  padding-top:    3px;
+  padding-bottom: 3px;
+  margin: 2px;
 }
 .date-status4 {
-  background-color: #BBB;
+  background-color: var(--grey-4);
+  border-radius: 100%;
+  padding-top:    3px;
+  padding-bottom: 3px;
+  margin: 2px;
+}
+.date-status5 {
+  background-color: var(--grey-2);
+  border-radius: 50%;
+  padding-top:    3px;
+  padding-bottom: 3px;
+  margin: 2px;
 }
 
-table {
-  width: 1050px;
+.data-row {
+  margin-bottom: 50px;
 }
 
-th, td {
-  width: 150px;
+.timeField {
+  align-content: center !important;
+  width: 65px;
+  height: 25px;
+}
+
+.injectionField {
+  align-content: center;
+  height: 25px;
+  width: 65px;
+}
+
+.TorderButton {
+  height: 30px;
+  padding: 0.1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+  margin: 0.2rem;
+}
+
+.selectTOrder {
+  width: auto;
+}
+
+.DisplayNone {
+  display: none;
 }
