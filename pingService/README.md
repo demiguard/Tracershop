@@ -7,7 +7,6 @@ Inheritted from Tracershop but otherwise the PYPI-packages:
 <li> mysql.connector-python===8.0.21
 <li> pydicom==2.0.0
 <li> pynetdicom==1.5.3
-<li> service===0.6.0
 
 All packages can be found in pip
 

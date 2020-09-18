@@ -1,4 +1,7 @@
+#
+TRACERSHOPDATABASENAME = 'tracershop'
 
+#SQL CONSTANTS
 TORDERS     = 'tOrders'
 TORDERFORMS = 'tOrderForms'
 DAILYRUNS   = 'dailyRuns'

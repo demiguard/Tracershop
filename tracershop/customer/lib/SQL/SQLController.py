@@ -34,11 +34,11 @@ def queryOrderByDate(date, userID : int ) -> list:
 def getDailyRuns(date, userID) -> list:
   SQLQuery       = SQLFactory.createSQLQueryDailyRuns(date, userID)
   QueryResult    = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  FormattedQuery = SQLFormatter.FormatSQLTuple(
+  deltaTimeQuery = SQLFormatter.FormatSQLTuple(
     QueryResult,
     constants.SQLTuples[constants.DAILYRUNS]
   )
-
+  FormattedQuery = SQLFormatter.mapTimeDeltasToTime(deltaTimeQuery, 'dtime')
   return FormattedQuery
 
 def getClosed(date) -> bool:

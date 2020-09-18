@@ -38,3 +38,7 @@ def compare_hours(date_one, date_two):
 
 def combine_time_and_date(date, time):
   return datetime.datetime(date.year, date.month, date.day, time.hour, time.minute)
+
+
+def timedeltaToTime(timedelta):
+  return (datetime.datetime.min + timedelta).time()

@@ -3,16 +3,11 @@ from django.db.models import Model
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-from customer.modelsDir.authModels import PotentialUser
-from customer.modelsDir.networkingModels import Address, Database, AET
 
-#
-class User(AbstractBaseUser):
+class PotentialUser(AbstractBaseUser):
   id = models.AutoField(primary_key=True)
   username = models.CharField(max_length=120, unique=True)
   password = models.CharField(max_length=256)
-  is_staff = models.BooleanField(default=False)
-  is_admin = models.BooleanField(default=False)
 
   first_name = models.CharField(max_length=30, blank=True, null=True)
   last_name  = models.CharField(max_length=60, blank=True, null=True)
@@ -27,12 +22,9 @@ class User(AbstractBaseUser):
   cityname = models.CharField(max_length=60,  blank=True, null=True)
   postcode = models.CharField(max_length=30,  blank=True, null=True)
   # 
-  customer_number = models.IntegerField(default=0)
 
   USERNAME_FIELD = 'username'
   REQUIRED_FIELDS = ['password']
 
   def __str__(self):
     return self.username
-
-

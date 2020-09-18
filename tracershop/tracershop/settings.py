@@ -93,7 +93,7 @@ REST_FRAMEWORK = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tracershop',
+        'NAME': 'tracerstore',
         'USER': 'tracershop',
         'PASSWORD': 'tracer',
         'HOST': 'localhost', 
