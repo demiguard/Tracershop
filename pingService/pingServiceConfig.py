@@ -4,7 +4,7 @@ DBConfig = {
   'user' : "tracershop",
   'password' : "tracer",
   'host' : "localhost",
-  'port' : '3306'
+  'port' : '3306',
   'database': "tracerstore",
   'raise_on_warnings': True,
   'autocommit':True,

@@ -76,11 +76,9 @@ def createSQLQueryClosedDate(date) -> str:
 def createSQLQueryMaxCustomerNumber() -> str:
   return f"""
   SELECT 
-    MAX(Users.kundenr),
-    MAX(customer_user.customer_number)
+    MAX(kundenr)
   FROM 
-    Users,
-    customer_user
+    Users
   """
 
 def createSQLQueryInsertFTGOrder(
