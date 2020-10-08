@@ -23,7 +23,6 @@ class MySQLCursor(object):
       'autocommit' : True,
       'raise_on_warnings': True
     }
-    print(databaseConfig)
     try:
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True

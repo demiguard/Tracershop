@@ -1,11 +1,10 @@
 html, body { 
   height: 100%;
-  overflow: hidden;
+  margin
 }
 
 .container {
   min-height: 100%;
-  overflow: auto;
   max-width: 100%;
 }
 

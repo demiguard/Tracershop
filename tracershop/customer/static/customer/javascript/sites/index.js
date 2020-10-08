@@ -162,7 +162,6 @@ var Send_order = function(id) {
     },
     dataType: "JSON", 
     success: function(data) {
-      console.log(data);
       var informationRowDiv = $('#informationRow' + String(id));
       informationRowDiv.empty();
       var table = create_element(informationRowDiv,'','','table',[]);
@@ -252,7 +251,6 @@ $(function() {
     let id = TOrderButton.attr('id').substr(12);
     TOrderButton.on('click', () => Send_torder(id));
   }
-
 
   CalenderInstance = new CalenderFactory('calender',today, Date_function, Date_onClick, colorDict);
 });

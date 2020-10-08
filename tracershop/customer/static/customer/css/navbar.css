@@ -2,6 +2,12 @@
   background: var(--secondary-color-3);
 }
 
+.navbar {
+  top:0;
+  width: 100%;
+  overflow: hidden;
+}
+
 .navbarElem {
   background: var(--secondary-color-2);
   padding : 10px;

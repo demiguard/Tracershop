@@ -1,5 +1,8 @@
 export { CalenderFactory }
 
+// It's important to know that JS is really fucking stupid about dates
+// AKA the month number for jan is 0. So yeah.
+//
 
 class CalenderFactory {
   //Helper Functions
@@ -126,10 +129,11 @@ class CalenderFactory {
           dayDiv.classList.add('today')
         }
         var day_str = String(day.getFullYear()) + "-";
-        if (day.getMonth() < 10) {
+        
+        if (day.getMonth() < 9) {
           day_str += "0" + String(day.getMonth() + 1) + "-";
         } else {
-          day_str += String(day.getMonth() + 1);
+          day_str += String(day.getMonth() + 1) + "-";
         } 
         if (day.getDate() < 10) {
           day_str += "0" + String(day.getDate());
@@ -150,9 +154,14 @@ class CalenderFactory {
   //Activated when next month button is clicked
   change_month(change_by, baseurl) {
     this.remove_weekdays();
-    var month = this.today.getMonth() + change_by;
     var year  = this.today.getFullYear();
-    this.today = new Date(year, month, today.getDate());
+    var month = this.today.getMonth() + change_by;
+
+    this.today = new Date(year, month, 1);
+    //This is the easiest way to not think about conversion of dates
+    var month = this.today.getMonth();
+    var year  = this.today.getFullYear();
+    
     this.monthDiv.innerText = this.today.toLocaleString('default', {month:'long'});
     var parent = this
     $.get({

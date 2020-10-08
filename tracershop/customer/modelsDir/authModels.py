@@ -33,30 +33,34 @@ class PotentialUser(AbstractBaseUser):
     return self.username
 
 
-class Booking(Model):
-  procedure       = ForeignKey(Procedure, on_delete=CASCADE)
-  location        = ForeignKey(location)
-  accessionNumber = CharField(max_length=16, primary_key=True)
-  startDate       = DateField()
-  startTime       = TimeField()
-
-
 class Location(Model):
   location = CharField(max_length=16, primary_key=True)
 
   def __str__(self):
     return self.location
 
-
-class Kunde(Model):
-  ID        = AutoField(primary_key=True)
-  kundeName = CharField(max_length=30)
-  is_REGH   = BooleanField(default=False)
+class Booking(Model):
+  procedure       = ForeignKey(Procedure, on_delete=CASCADE)
+  location        = ForeignKey(Location, on_delete=SET_NULL, null=True)
+  accessionNumber = CharField(max_length=16, primary_key=True)
+  startDate       = DateField()
+  startTime       = TimeField()
 
   def __str__(self):
-    return self.kundeName
+    return str(self.accessionNumber)
 
-class KundeUsesLocation(Model):
-  location = ForeignKey(Location, primary_key=True, on_delete=CASCADE)
-  kunde    = ForeignKey(Kunde, primary_key=True, on_delete=CASCADE)
+
+class Customer(Model):
+  ID        = AutoField(primary_key=True)
+  customerName = CharField(max_length=30)
+  is_REGH   = BooleanField(default=False)
+  AET       = CharField(max_length=16, null=True, default=None)
+
+  def __str__(self):
+    return self.customerName
+
+class CustomerUsesLocation(Model):
+  ID       = AutoField(primary_key=True) 
+  location = ForeignKey(Location, on_delete=CASCADE)
+  customer = ForeignKey(Customer, on_delete=CASCADE)
 

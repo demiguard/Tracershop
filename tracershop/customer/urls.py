@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import path
 
 from customer.views.index import IndexView
+from customer.views.FutureBookings import FutureBooking
 
 from customer.views.admin.verify_user import VerifyUserView, APIVerifyUser
 
@@ -18,6 +19,7 @@ app_name = 'customer'
 
 urlpatterns = [
     path('', IndexView.as_view(), name='index'),
+    path('futureBooking', FutureBooking.as_view(), name='futureBooking'),
     #ADMIN
     path('verifyUser', VerifyUserView.as_view(), name= 'verifyUser'),
     

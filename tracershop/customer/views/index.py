@@ -25,7 +25,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
 
   
   def get(self, request):
-    today = datetime.date(2020,8,3) #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
+    today = datetime.date.today() #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
     userID = 7
 
     ### Data construction ###

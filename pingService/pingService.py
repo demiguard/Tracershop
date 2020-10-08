@@ -1,14 +1,20 @@
-import logging
-import time
+#
+# See README.MD for 
+#
+# Auther: Christoffer Vilstrup Jensen
+#
 
-from datetime import datetime, timedelta
+import logging
+import time as systime
+
+from datetime import datetime, date, time, timedelta
 from logging.handlers import SysLogHandler
 #Custompackages 
 import pingServiceConfig as config
 #Pip packages
 import pydicom
-from pydicom import Dataset
 import pynetdicom
+from pydicom import Dataset
 from pynetdicom.sop_class import ModalityWorklistInformationFind
 
 #Mysql
@@ -16,6 +22,7 @@ import mysql.connector as mysql
 from mysql.connector import errorcode
 
 #Mysql cursor because they couldn't be bothered to implement it in the mysql lib
+# Note these objects are much smarter because they do some Entering / error handling
 class MysqlCursor(object):
   def __init__(self):
     pass
@@ -55,7 +62,7 @@ class MyDicomConnection(object):
     if self.assoc.is_established:
       self.assoc.release()
 
-
+# Helper Functions Primairy SQL functions
 def getConnectionParameters(cursor):
   """
     Retreives the RIS connection from the database
@@ -85,20 +92,103 @@ def getQueryDataset(cursor):
   ds.ScheduledProcedureStepSequence = [item]
   return ds
 
+def getProcedureID(sql, ProcedureName) -> int:
+
+  sqlQuery = f""" 
+    SELECT 
+      id 
+    FROM
+      customer_procedure
+    WHERE
+      title=\"{ProcedureName}\"
+  """
+  sql.execute(sqlQuery)
+  x = sql.fetchone()
+  if x==None:
+    return -1
+  else:
+    return x[0]
+
+def getLocation(sql, location:str) -> str:
+  sqlQuery = f""" 
+    SELECT 
+      location 
+    FROM
+      customer_location
+    WHERE
+      location=\"{location}\";
+  """
+  sql.execute(sqlQuery)
+  x = sql.fetchone()
+  if x==None:
+    return ''
+  else:
+    return x[0]
+
+
+
+def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id):
+
+  sqlQuery = f"""
+    REPLACE INTO customer_booking(
+      accessionNumber,
+      startDate,
+      startTime,
+      location_id,
+      procedure_id
+    ) VALUES (
+      \"{accessionNumber}\",
+      \"{startDate}\",
+      \"{startTime}\",
+      \"{location}\",
+      {procedure_id} 
+    )
+
+  """
+  sql.execute(sqlQuery)
+
+
+#######################################################
+#                                                     #
+# -------------- Handler functions ------------------ #
+#                                                     #
+#######################################################
+def handleDataset(dataset, sql):
+  seq = dataset.ScheduledProcedureStepSequence[0]
+  location = getLocation(sql, str(seq.ScheduledProcedureStepLocation))
+  if not(location):
+    logger.error(f"Unknown Location: {seq.ScheduledProcedureStepLocation}")
+    return
+  procedure_id = getProcedureID(sql, seq.ScheduledProcedureStepDescription)
+  if procedure_id == -1:
+    logger.error(f"Unknown Procedure: {seq.ScheduledProcedureStepDescription}")
+    return
+  accessionNumber = seq.ScheduledProcedureStepID
+  unformattedTime = seq.ScheduledProcedureStepStartTime
+  unformattedDate = seq.ScheduledProcedureStepStartDate
+  startTime = unformattedTime[:2] + ":" + unformattedTime[2:4] + ":" + unformattedTime[4:]
+  startDate = unformattedDate[:4] + "-" + unformattedDate[4:6] + "-" + unformattedDate[6:]
+  storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id)
+
+
+# C-Find Response
 def handleResponse(response, sql):
   for (status, dataset) in response:
     if status:
       if status.Status in (0xFF00, 0xFF01):
-        logger.info('I have a dataset')
+        handleDataset(dataset,sql)
     else:
       logger.error('Status Not availble')  
   
+##################################################
+#                                                #
+# ------------ Starting the service ------------ #
+#                                                #
+##################################################
 
-
-#Starting the service
 if __name__ == "__main__":
   logger = logging.getLogger("pingLogger")
-  logging.basicConfig(filename=config.loggingPath, level=logging.INFO)
+  logging.basicConfig(filename=config.loggingPath, level=logging.ERROR)
   waiting = False #First iteration does not wait
 
   ae = pynetdicom.AE()
@@ -106,7 +196,7 @@ if __name__ == "__main__":
 
   while(True):
     if waiting:
-      time.sleep(5) # Waiting comes first because of Continue statements
+      systime.sleep(900) # Waiting comes first because of Continue statements
     waiting = True 
 
     with MysqlCursor() as sql:
@@ -121,7 +211,5 @@ if __name__ == "__main__":
             continue
       else:
         continue
-
-    logger.info("This happens")
     
   

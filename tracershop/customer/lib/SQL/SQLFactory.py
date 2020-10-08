@@ -19,7 +19,7 @@ def createSQLQueryOrderStatusByMonth(year :int, month : int , userID:int) -> str
     status
   FROM orders
   WHERE 
-    CONVERT(DATE(deliver_datetime), CHAR) LIKE \'{year}-{month}-%\' AND
+    CONVERT(DATE(deliver_datetime), CHAR) LIKE '{year}-{month}-%' AND
     BID = {userID}
   """
 
@@ -70,7 +70,7 @@ def createSQLQueryClosedDate(date) -> str:
   FROM 
     blockDeliverDate
   WHERE
-    ddate = {date}
+    ddate = \"{date}\"
   """
 
 def createSQLQueryMaxCustomerNumber() -> str:
@@ -168,4 +168,31 @@ def createSQLQueryTOrders(date, userID : int) -> str:
   WHERE
     BID = {userID} AND
     DATE(deliver_datetime) = \"{SQLDate}\"
+  """
+
+
+def createSQLQUeryInsertTOrder(
+    userID : int,
+    deliver_datetime : Type[datetime],
+    tracer : int,
+    n_injections : int,
+    anvendelse : str
+    ) -> str:
+
+  return f"""
+    INSERT INTO t_orders(
+      BID,
+      deliver_datetime,
+      status,
+      tracer,
+      n_injections,
+      anvendelse
+    ) VALUES (
+      {userID},
+      {deliver_datetime.strftime("%Y-%m-%d %H:%M:%S")},
+      1,
+      {tracer},
+      {n_injections},
+      {anvendelse}
+    )
   """

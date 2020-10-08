@@ -14,7 +14,7 @@ def queryOrderByMonth(year : int,month : int, userID : int) -> list:
   SQLQuery       = SQLFactory.createSQLQueryOrderStatusByMonth(year, month, userID)
   QueryResult    = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   FormattedQuery = SQLFormatter.FormatMonthlyOrders(QueryResult)
-
+  
   return FormattedQuery
 
 
@@ -77,6 +77,18 @@ def insertOrderFTG(
     amount, deliverTime, dato, comment, userID )
   SQLExecuter.ExecuteQuery(SQLQuery)
 
+def insertTOrder(
+    injections : int,
+    deliver_datetime : Type[datetime],
+    tracerID   : int,
+    usage      : str,
+    userID     : int
+    ) -> None:
+
+  SQLQuery = SQLFactory.createSQLQUeryInsertTOrder(
+    userID, deliver_datetime,tracerID, injections, usage
+  )
+  SQLExecuter.ExecuteQuery(SQLQuery)
 
 def getLastOrder() -> int: 
   SQLQuery = SQLFactory.createSQLQueryMaxOrderID()

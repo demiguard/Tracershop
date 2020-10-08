@@ -3,9 +3,9 @@ from django.db.models import Model, AutoField, BooleanField, CharField, ForeignK
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-from customer.modelsDir.authModels import PotentialUser, Booking, Kunde, KundeUsesLocation, Location
+from customer.modelsDir.authModels import PotentialUser, Booking, Customer, CustomerUsesLocation, Location
 from customer.modelsDir.networkingModels import Address, Database, AET
-from customer.modelsDir.clinicalModels import Tracer, Procedure
+from customer.modelsDir.clinicalModels import Tracer, Procedure, Isotope
 
 #
 class User(AbstractBaseUser):
@@ -28,7 +28,7 @@ class User(AbstractBaseUser):
   cityname = CharField(max_length=60,  blank=True, null=True)
   postcode = CharField(max_length=30,  blank=True, null=True)
   # 
-  customer_number = ForeignKey(Kunde, on_delete=models.SET_NULL, null=True)
+  customer_number = ForeignKey(Customer, on_delete=models.SET_NULL, null=True, default=None)
 
   USERNAME_FIELD = 'username'
   REQUIRED_FIELDS = ['password']

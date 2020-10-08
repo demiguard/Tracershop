@@ -1,0 +1,37 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/futureBooking.css' %}">
+{% endblock %}
+
+{% block content %}
+
+
+
+  {% for key, list in studies.items %}
+  <div class="row col-12">
+    <p class="col-12"><input class="btn btn-info tableButton " id="{{ key }}-button"" type="button" value="Vis data"> <strong>{{ key }}</strong> </p> 
+    <table id="{{ key }}-table" class="dataTable">
+      <thead>
+        <th>Accession Number</th>
+      </thead>
+      <tbody>
+        {% for study in list %}
+          <tr>
+            <td>{{ study.accessionNumber }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+
+  </div>
+  {% endfor %}
+
+
+{% endblock %}
+{% block javascript %}
+<script type="module" src="{% static 'customer/javascript/sites/futureBooking.js' %}"></script>
+{% endblock %}

@@ -1,0 +1,5 @@
+ALTER TABLE orders 
+  ADD comment VARCHAR(8000) NULL;
+
+ALTER TABLE t_orders
+  ADD comment VARCHAR(8000) NULL;
