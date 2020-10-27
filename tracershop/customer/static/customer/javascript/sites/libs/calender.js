@@ -72,10 +72,10 @@ class CalenderFactory {
     var jNextDiv = $(this.nextDiv);
 
     jPrevDiv.on('click', () => {
-      this.change_month(-1, "api/month_status/");
+      this.change_month(-1);
     });
     jNextDiv.on('click', () => {
-      this.change_month(1, "api/month_status/");
+      this.change_month(1);
     });
     
 
@@ -146,7 +146,7 @@ class CalenderFactory {
 
   
   //Activated when next month button is clicked
-  change_month(change_by, baseurl) {
+  change_month(change_by) {
     this.remove_weekdays();
     var year  = this.today.getFullYear();
     var month = this.today.getMonth() + change_by;

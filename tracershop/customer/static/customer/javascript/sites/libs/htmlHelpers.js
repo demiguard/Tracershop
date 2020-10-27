@@ -1,4 +1,4 @@
-export { createElement }
+export { createElement, dropChildern }
 
 
 // This module contains functions that are independant on 
@@ -17,4 +17,8 @@ function createElement(div, content,id, identifyer, classList) {
   element.innerHTML = content;
   div.append(element);
   return element;
-}
+};
+
+function dropChildern(div) {
+  div.children().remove()
+};

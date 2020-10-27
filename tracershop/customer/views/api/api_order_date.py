@@ -27,22 +27,20 @@ class Api_order_date(View):
     if SQL.getClosed(dt_object):
       pass
 
-    
-    print(request.readlines())
-
     userID = request.GET['UserID']
+    
 
     order = SQL.queryOrderByDate(dt_object, userID)
     runs = SQL.getDailyRuns(dt_object, userID)
 
     tOrders = SQL.getDailyTOrders(dt_object, userID)
-    
-
+    tOrderForms = SQL.getTOrdersForms(userID)
 
     response_dir = {
       'responses' : orderHelper.matchOrders(order, runs),
       #formatting mapping
-      'tOrders'   : list(map(formatUse, tOrders))
+      'tOrders'   : list(map(formatUse, tOrders)),
+      'tOrdersForms' : tOrderForms
     }
 
     for order in response_dir['responses']:

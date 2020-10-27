@@ -9,7 +9,6 @@ from customer.lib.SQL import SQLController as SQL
 class Api_month_status(View):
   def get(self, request, year, month):
     
-
-    userID = 7
+    userID = request.GET['userID']
     data = SQL.queryOrderByMonth(year, month, userID)
     return JsonResponse(data)    

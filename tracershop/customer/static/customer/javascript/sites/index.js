@@ -1,6 +1,6 @@
 import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
-import { createElement } from './libs/htmlHelpers.js' ;
+import { createElement, dropChildern } from './libs/htmlHelpers.js' ;
 
 // Today is variable that's created from GET request, 
 // since it's provided from Django
@@ -24,12 +24,13 @@ var dateColoringFunction = function(div,  date, directory){
 };
 
 
-var change_date = function (new_date) {
-  var day = new_date.getDate();
-  var month = new_date.getMonth() + 1;
-  var year = new_date.getFullYear();
-  var new_text = "Dato: " + day + "/" + month + "/" + year;
-  $('#dato').text(new_text);
+var change_date = function (newDate) {
+  today = newDate
+  var day = newDate.getDate();
+  var month = newDate.getMonth() + 1;
+  var year = newDate.getFullYear();
+  var newText = "Dato: " + day + "/" + month + "/" + year;
+  $('#dato').text(newText);
 };
 
 
@@ -63,13 +64,18 @@ var Month_api_call = function(year, month) {
   }
 };
 
+var onChangeSelect = function() {
+  // this is the the div that got changed
+  clear_order_table();
+  fill_order_table(today);
+  CalenderInstance.change_month(0);
+};
+
 
 var fill_order_table = function(date) {
-  //
-  //  Fills the main table with data from the api
-  //
-  //
-  console.log(date);
+  //////////////////////////////////////////////////
+  //  Fills the main table with data from the api //
+  //////////////////////////////////////////////////
   var day = String(date.getDate());
   var month = String(date.getMonth() + 1);
   var year = String(date.getFullYear());
@@ -154,7 +160,40 @@ var fill_order_table = function(date) {
       }
     } else {
       $('#T_orders').addClass('DisplayNone')
+    };
+    // T-OrderForms
+    var TFormTbody = $('#TFormRows');
+    const deliverTimeInputStr = '<input type="text" name="deliverTime" class="timeField" required="" id="id_deliverTime">';
+    const injectionFieldInputStr = '<input type="text" name="injectionField" class="injectionField" id="id_injectionField">';
+    const UseSelectStr = '\
+    <select name="useField" class="selectTOrder custom-select" id="id_useField">\
+      <option value="0">Menneske</option>\
+      <option value="1">Dyr</option>\
+      <option value="2">Andet</option>\
+    </select>';
+    dropChildern(TFormTbody);
+    for (let i = 0; i < data.tOrdersForms.length; i++) {
+      const TORDERFORM = data.tOrdersForms[i];
+      console.log(TORDERFORM);
+      var formRow = createElement(TFormTbody,'',"Row"+TORDERFORM.id,'tr',[]);
+      createElement(formRow, TORDERFORM.name,"TracerName", 'td',[]);
+      createElement(formRow, deliverTimeInputStr,"deliverTime", 'td',[]);
+      createElement(formRow, injectionFieldInputStr, "InjectionField", 'td', []);
+      createElement(formRow, UseSelectStr, 'UseField','td',[]);
+      var orderButtonTD = createElement(formRow, '', '', 'td', []);
+      var orderButton = $('<input>', {
+        id : "TOrderButton"+TORDERFORM.id,
+        type:"button",
+        value:"Bestil"
+      });
+      orderButton.addClass("TorderButton");
+      orderButton.addClass("btn");
+      orderButton.addClass("btn-outline-secondary");
+      let id = orderButton.attr('id').substr(12);
+      orderButton.on('click', () => Send_torder(id));
+      orderButton.appendTo(orderButtonTD);
     }
+
   });
 };
 
@@ -248,12 +287,6 @@ var Send_torder = function(TracerID) {
 
 
 $(function() {
-  var customer_select = $('#customer_select');
-  console.log($('#customer_select')[0].value);
-  customer_select.on('change', function () {
-    console.log(this.value)
-  });
-
   var OrderButtons = $('.OrderButton');
   for (let i = 0; i< OrderButtons.length; i++){
     var OrderButton = $(OrderButtons[i]);
@@ -276,5 +309,8 @@ $(function() {
     Month_api_call,
     colorDict);
   
-  CustomerInstance = new CustomerSelect();
+  CustomerInstance = new CustomerSelect(
+    $('#customer_select'),
+    onChangeSelect
+  );
 });

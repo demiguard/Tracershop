@@ -1,10 +1,8 @@
 export { CustomerSelect }
 
 class CustomerSelect {
-
-
-  constructor() {
-
+  constructor(select, onChangeFunction) {
+    select.on('change', onChangeFunction)
   };
 
 }
