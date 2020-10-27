@@ -45,6 +45,8 @@ class Booking(Model):
   accessionNumber = CharField(max_length=16, primary_key=True)
   startDate       = DateField()
   startTime       = TimeField()
+  status          = IntegerField(default=0)
+  orderNumber     = IntegerField(default=None, null=True)
 
   def __str__(self):
     return str(self.accessionNumber)
@@ -55,6 +57,7 @@ class Customer(Model):
   customerName = CharField(max_length=30)
   is_REGH   = BooleanField(default=False)
   AET       = CharField(max_length=16, null=True, default=None)
+  TestCustomer = BooleanField(default=False) #This means it will not show up in 
 
   def __str__(self):
     return self.customerName

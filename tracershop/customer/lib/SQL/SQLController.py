@@ -116,3 +116,13 @@ def getDailyTOrders(date, userID:int) -> list:
   nameDir    = constants.SQLTuples
 
   return SQLFormatter.FormatSQLTuple(TOrders, nameDir[tupleNames])
+
+def getActiveCustomers() -> list:
+  SQLQuery = SQLFactory.createSQLQueryActiveCustomers()
+  ActiveCustomers = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+
+
+  tupleName = constants.ACTIVECUSTOMER
+  nameDir    = constants.SQLTuples
+
+  return SQLFormatter.FormatSQLTuple(ActiveCustomers, nameDir[tupleName])

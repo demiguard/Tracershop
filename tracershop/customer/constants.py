@@ -7,7 +7,7 @@ TORDERFORMS = 'tOrderForms'
 DAILYRUNS   = 'dailyRuns'
 FTGORDER    = 'FTGOrder'
 MONTHORDER  = 'MonthlyOrder'
-
+ACTIVECUSTOMER = 'ActiveCustomers'
 
 SQLTuples = {
   TORDERS : [
@@ -44,5 +44,9 @@ SQLTuples = {
   MONTHORDER : [
     'orderTime',
     'status'
+  ],
+  ACTIVECUSTOMER : [
+    'Username',
+    'ID'
   ]
 }

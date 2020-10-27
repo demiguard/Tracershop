@@ -45,7 +45,6 @@ def createSQLQueryOrdersByDay(date, userID : int) -> str:
   
 def createSQLQueryDailyRuns(date, userID : int) -> str:
   day_num = calenderHelper.get_day(date)
-
   return f"""
   SELECT 
     repeat_t,
@@ -198,3 +197,17 @@ def createSQLQUeryInsertTOrder(
       \"{anvendelse}\"
     )
   """
+
+def createSQLQueryActiveCustomers():
+  return f"""
+    SELECT DISTINCT
+      Users.Username, Users.Id
+    FROM 
+      deliverTimes
+        INNER JOIN
+      Users
+        ON
+      deliverTimes.BID = Users.Id
+    ORDER BY
+      Users.Username
+    """

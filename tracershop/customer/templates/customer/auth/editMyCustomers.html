@@ -1,0 +1,31 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="row col-12">
+  <h1> Kunde administration</h1>
+</div>
+
+<form method=POST>
+  {% csrf_token %}
+  <table>
+    <thead>
+      <th>Kunde</th>
+      <th>Administrer</th>
+    </thead>
+    {% for form in customerList %}
+    <tr>
+      <td>{{ form }}</td>
+    </tr> 
+    {% endfor %}
+  </table>
+
+  <input type="submit" value="Godkend Kunder">
+</form>
+
+{% endblock content %}
+
+{% block javascript %}
+
+{% endblock%}

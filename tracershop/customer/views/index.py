@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 
@@ -31,11 +31,10 @@ class IndexView(LoginRequiredMixin, TemplateView):
 
     customerIDs = list(map(
         lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
-        models.UserHasAccess.objects.filter(userID=request.user)))
+        models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID')))
 
     if customerIDs == []:
-      #TODO: Direct to site where you select Customers
-      pass
+      return redirect("customer:editMyCustomer")
     else:
       active_customerID = customerIDs[0][0]
 

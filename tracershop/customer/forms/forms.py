@@ -48,3 +48,9 @@ class T_OrderForm(Form):
     self.fields['deliverTime'].widget.attrs.update({'class': "timeField"})
     self.fields['injectionField'].widget.attrs.update({'class':"injectionField"})
     self.fields['useField'].widget.attrs.update({'class':"selectTOrder custom-select"})
+
+class ActiveCustomerForm(Form):
+  def __init__(self, name, initalValue, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.fields[name] = forms.BooleanField(required=False, initial=initalValue)
+    
