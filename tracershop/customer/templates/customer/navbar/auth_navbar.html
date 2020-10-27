@@ -6,7 +6,13 @@
 
   {% endblock authbar_content %}
 
-  <div class=navbarElem>
+  
+  <a href="/futureBooking">
+    <div class="navbarElem">
+      Fremtide bookinger
+    </div>
+  </a>
+  <div class="navbarElem">
     Logget in som: <strong>{{ user.username }}</strong>
     <input type="button" class="btn btn-primary" value="Log ud" onclick="window.location='api/logout'">
   </div>

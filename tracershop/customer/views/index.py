@@ -9,6 +9,7 @@ from customer.forms import formFactory
 from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
 from customer.lib import orderHelper
+from customer import models
 
 def formatUse(adir):
   if 'use' in adir:
@@ -28,21 +29,32 @@ class IndexView(LoginRequiredMixin, TemplateView):
     today = datetime.date.today() #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
     userID = 7
 
+    customerIDs = list(map(
+        lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
+        models.UserHasAccess.objects.filter(userID=request.user)))
+
+    if customerIDs == []:
+      #TODO: Direct to site where you select Customers
+      pass
+    else:
+      active_customerID = customerIDs[0][0]
+
     ### Data construction ###
     # get data #
     is_closed  = SQL.getClosed(today)
-    runs       = SQL.getDailyRuns(today, userID)
-    injections = SQL.queryOrderByDate(today, userID)
+    runs       = SQL.getDailyRuns(today, active_customerID)
+    injections = SQL.queryOrderByDate(today, active_customerID)
     #Compute
     data = orderHelper.matchOrders(injections, runs)
     # Calender construction
-    status_tupples = SQL.queryOrderByMonth(today.year, today.month, userID)
+    status_tupples = SQL.queryOrderByMonth(today.year, today.month, active_customerID)
     
-    secondaryOrderFormQuery = SQL.getTOrdersForms(userID)
+    secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
-    DailyTOrders            = list(map(formatUse, SQL.getDailyTOrders(today, userID)))
+    DailyTOrders            = list(map(formatUse, SQL.getDailyTOrders(today, active_customerID)))
 
     context = {
+      'customerIDs'     : customerIDs,
       'secondaryOrders' : DailyTOrders,
       'secondaryForms'  : secondaryOrdersForms,
       'data'            : data,

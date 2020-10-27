@@ -68,6 +68,13 @@
   </div>
 </div>
 <div class="col-3">
+  <div id="div_customer_select">
+    <select id="customer_select">
+      {% for id, name in customerIDs %}
+      <option value="{{ id }}">{{ name }}</option>
+      {% endfor %}
+    </select>
+  </div>
   <div id="calender"></div>
 </div>
 
@@ -157,6 +164,8 @@
 
 
   </script>
+  <script type="module" src="{% static 'customer/javascript/sites/libs/htmlHelpers.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/libs/calender.js' %}"></script>
+  <script type="module" src="{% static 'customer/javascript/sites/libs/customerSelect.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/index.js' %}"></script>
 {% endblock %}

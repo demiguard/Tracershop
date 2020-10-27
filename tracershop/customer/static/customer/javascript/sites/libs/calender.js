@@ -2,24 +2,11 @@ export { CalenderFactory }
 
 // It's important to know that JS is really fucking stupid about dates
 // AKA the month number for jan is 0. So yeah.
-//
+// At the same time the 1 of a month is the first of a month
+// aka The date 01/01/2020 is Date = 1 month = 0, Year = 2020
 
 class CalenderFactory {
   //Helper Functions
-  send_month_request = function (year, month ) {
-    var finished_data;
-    $.get({
-        url:'api/month_status/'+ String(year)+'/'+String(month +1),
-        success: function(data) {
-          return data
-        }
-      }
-    ).then(function (data) {
-      data = finished_data;
-      return finished_data;
-    });
-  };
-
   remove_weekdays() {
     var weekdivs = $(".weekrow");
     for (let i = 0; i < weekdivs.length; i++) {
@@ -53,7 +40,14 @@ class CalenderFactory {
   };
   //End helper functions
 
-  constructor(div, today, date_coloring_function,date_onClick_function, date_status, ){ 
+  constructor(
+      div,
+      today,
+      date_coloring_function,
+      date_onClick_function, 
+      month_api_function,
+      date_status, ){ 
+    this.month_api_function = month_api_function;
     this.today = today;
     this.date_coloring_function = date_coloring_function;
     this.date_onClick_function = date_onClick_function;
@@ -164,13 +158,9 @@ class CalenderFactory {
     
     this.monthDiv.innerText = this.today.toLocaleString('default', {month:'long'});
     var parent = this
-    $.get({
-      url:baseurl+String(year)+"/"+String(month + 1),
-      data:{},
-      success: function(data){
-        return data;
-      } 
-    }).then(function(data) {
+
+    var api_call = this.month_api_function(year, month)
+    $.get(api_call).then(function(data) {
       parent.date_status = data;
       parent.create_weekdays(year, month);
     });

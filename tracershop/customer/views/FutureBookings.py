@@ -20,17 +20,24 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
     studies = {}
 
     #Note SQL query here
-    for booking in Booking.objects.filter(startDate=today):
-      procedureStr = str(booking.procedure)
+    for booking in Booking.objects.filter(startDate=today).order_by("startTime"):
+      TracerStr = str(booking.procedure.tracer)
       #Fill BookingInfo with Data to display in HTML file
+      injectionDateTime = datetime.datetime.combine(datetime.date.today(), booking.startTime) 
+      injectionTimeDelta = datetime.timedelta(seconds=60*booking.procedure.delay)
+      injectionTime =  (injectionDateTime + injectionTimeDelta).time()
+
       bookingInfo = {
-        'accessionNumber' : booking.accessionNumber
+        'accessionNumber' : booking.accessionNumber,
+        'procedure' : booking.procedure,
+        'studyTime' : booking.startTime.strftime("%H:%M"),
+        'injectionTime' : injectionTime.strftime("%H:%M")
       }
 
-      if procedureStr in studies:
-        studies[procedureStr].append(bookingInfo)
+      if TracerStr in studies:
+        studies[TracerStr].append(bookingInfo)
       else:
-        studies[procedureStr] = [bookingInfo]
+        studies[TracerStr] = [bookingInfo]
 
 
     context={

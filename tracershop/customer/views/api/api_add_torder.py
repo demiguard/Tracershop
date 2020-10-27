@@ -32,8 +32,8 @@ class Api_add_torder(LoginRequiredMixin, TemplateView):
 
     return {
       self.FDICTInjections : int(QDict[self.QDICTInjections]),
-      self.FDICTTracerID : int(QDict[self.QDICTTraderID]),
-      self.FDICTDateTime : datetime.datetime.strptime(
+      self.FDICTTracerID : int(QDict[self.QDICTTracerID]),
+      self.FDICTDateTime : datetime.strptime(
         QDict[self.QDICTTime]+" "+QDict[self.QDICTDato],
         "%H:%M %d/%m/%Y" 
       ),
@@ -43,7 +43,8 @@ class Api_add_torder(LoginRequiredMixin, TemplateView):
   def post(self, request): 
     try:
       FormattedDict = self.parseDict(request.POST)
-    except:
+    except Exception as E:
+      print(E)
       return JsonResponse({
         'successRate': "FAIL",
         'failMessage': "SUP"
@@ -55,7 +56,7 @@ class Api_add_torder(LoginRequiredMixin, TemplateView):
     SQL.insertTOrder(
       FormattedDict[self.FDICTInjections],
       FormattedDict[self.FDICTDateTime],
-      FormattedDict[self.FDICTtracerID],
+      FormattedDict[self.FDICTTracerID],
       FormattedDict[self.FDICTUsage],
       UserID
       )

@@ -182,6 +182,7 @@ def createSQLQUeryInsertTOrder(
   return f"""
     INSERT INTO t_orders(
       BID,
+      batchnr,
       deliver_datetime,
       status,
       tracer,
@@ -189,10 +190,11 @@ def createSQLQUeryInsertTOrder(
       anvendelse
     ) VALUES (
       {userID},
-      {deliver_datetime.strftime("%Y-%m-%d %H:%M:%S")},
+      \"\",
+      \"{deliver_datetime.strftime("%Y-%m-%d %H:%M:%S")}\",
       1,
       {tracer},
       {n_injections},
-      {anvendelse}
+      \"{anvendelse}\"
     )
   """

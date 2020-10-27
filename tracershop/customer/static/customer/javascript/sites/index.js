@@ -1,25 +1,14 @@
 import { CalenderFactory } from "./libs/calender.js";
+import { CustomerSelect  } from "./libs/customerSelect.js";
+import { createElement } from './libs/htmlHelpers.js' ;
 
 // Today is variable that's created from GET request, 
 // since it's provided from Django
 
 var CalenderInstance;
+var CustomerInstance;
 
-function create_element(div, content,id, identifyer, classList) {
-  var element = document.createElement(identifyer);
-  for(let i = 0; i < classList.length; i++) {
-    const classToBeAdded = classList[i];
-    element.classList.add(classToBeAdded)
-  }
-  if (id != ''){
-    element.id=id;
-  }
-  element.innerHTML = content;
-  div.append(element);
-  return element;
-}
-
-var Date_function = function(div,  date, directory){
+var dateColoringFunction = function(div,  date, directory){
   if (date in directory){
     var directory_value = directory[date];
     if (directory_value == 1){
@@ -34,14 +23,15 @@ var Date_function = function(div,  date, directory){
   }
 };
 
-var change_date = function (new_date) {
 
+var change_date = function (new_date) {
   var day = new_date.getDate();
   var month = new_date.getMonth() + 1;
   var year = new_date.getFullYear();
   var new_text = "Dato: " + day + "/" + month + "/" + year;
   $('#dato').text(new_text);
 };
+
 
 var clear_order_table = function() {
   var data_rows = $('.data-row');
@@ -50,6 +40,7 @@ var clear_order_table = function() {
     div.parentNode.removeChild(div);
   }
 };
+
 
 var Date_onClick = function (div, date) {
   var jdiv = $(div);
@@ -61,12 +52,31 @@ var Date_onClick = function (div, date) {
 
 };
 
+var Month_api_call = function(year, month) {
+  ////////////////////////////////
+  //  Produces a Dictionany for the $.get for the month api to the Calender API
+  ////////////////////////
+  return {
+    url: "api/month_status/" + String(year) + "/" + String(month + 1),
+    data: {"userID" : $('#customer_select')[0].value},
+    success: function (data){ return data} 
+  }
+};
+
+
 var fill_order_table = function(date) {
+  //
+  //  Fills the main table with data from the api
+  //
+  //
+  console.log(date);
   var day = String(date.getDate());
   var month = String(date.getMonth() + 1);
   var year = String(date.getFullYear());
+
   $.get({
     url:'api/order_date/' + year + "/" + month + "/" + day,
+    data: {"UserID" : $('#customer_select')[0].value},
     success: function(data){
       return data;
     }
@@ -75,56 +85,56 @@ var fill_order_table = function(date) {
     // FTG Orders
     for (let i = 0; i < data.responses.length; i++) {
       const response = data.responses[i];
-      var dataRow = create_element(contentDiv,'','Row-'+String(i+1),'div',['data-row']);
+      var dataRow = createElement(contentDiv,'','Row-'+String(i+1),'div',['data-row']);
       var contentStr;
       if (response.data_type == 'form'  || response.data_type == 'data') {
         contentStr = "<strong> Ordre " + response['order_num'] + " - Kalibreret til: " + response['time'].substr(0,5) + "</strong>";
       } else {
         contentStr = "Ukendt Data format fra JSON Fil";
       }
-      create_element(dataRow, contentStr,'', 'div', ['col-12', 'row']);
-      var informationRowDiv = create_element(dataRow,'','informationRow'+String(i+1),'div',['row']);
+      createElement(dataRow, contentStr,'', 'div', ['col-12', 'row']);
+      var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
       
       // ----- Form Creation -----
       if (response.data_type == 'form'){
-        create_element(
+        createElement(
           informationRowDiv, 
           "Bestil: <input type=\"number\" id=\"id_order_MBQ\" name=\"order_MBQ\" min=\"0\"> [MBq]",
           'ButtonDiv'+String(i+1), 'div', [])
-        create_element(informationRowDiv,'','','div',['col-1']);
-        create_element(
+        createElement(informationRowDiv,'','','div',['col-1']);
+        createElement(
           informationRowDiv,
           'Kommentar: <input type=\"text\" name=\"comment\" id=\"id_comment\">',
           'CommentDiv'+String(i+1),'div',[]);
-        create_element(informationRowDiv,'','','div',['col-1']);
-        var Button = create_element(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
+        createElement(informationRowDiv,'','','div',['col-1']);
+        var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
         $(Button).on('click', () => Send_order(response['order_num']))
 
       // ----- Table Creation -----
       } else if (response.data_type == 'data') { 
-        var table = create_element(informationRowDiv,'','','table',[]);
-        var tableHead = create_element(table, '',   '','thead',[]);
-        create_element(tableHead, 'Status',         '','th',   []);
-        create_element(tableHead, 'order ID',       '','th',   []);
-        create_element(tableHead, 'Bestilt MBQ',    '','th',   []);
-        create_element(tableHead, 'Produceret MBQ', '','th',   []);
-        create_element(tableHead, 'Batch-nr.',      '','th',   []);
-        create_element(tableHead, 'Frigivet MBQ',   '','th',   []);
-        create_element(tableHead, 'Frigivet',       '','th',   []);
-        var tableBody = create_element(table, '','','tbody',   []);
+        var table = createElement(informationRowDiv,'','','table',[]);
+        var tableHead = createElement(table, '',   '','thead',[]);
+        createElement(tableHead, 'Status',         '','th',   []);
+        createElement(tableHead, 'order ID',       '','th',   []);
+        createElement(tableHead, 'Bestilt MBQ',    '','th',   []);
+        createElement(tableHead, 'Produceret MBQ', '','th',   []);
+        createElement(tableHead, 'Batch-nr.',      '','th',   []);
+        createElement(tableHead, 'Frigivet MBQ',   '','th',   []);
+        createElement(tableHead, 'Frigivet',       '','th',   []);
+        var tableBody = createElement(table, '','','tbody',   []);
         for (let j = 0; j < response.data.length; j++){
           const order = response.data[j];
-          var tableRow = create_element(tableBody,'',    '', 'tr', []);
-          create_element(tableRow, order.status,         '', 'td', []);
-          create_element(tableRow, order.OID,        '', 'td', []);
-          create_element(tableRow, order.ordered_amount, '', 'td', []);
-          create_element(tableRow, order.total_amount,   '', 'td', []);
-          create_element(tableRow, order.batchnr,        '', 'td', []);
-          create_element(tableRow, order.frigivet_amount,    '', 'td', []);
+          var tableRow = createElement(tableBody,'',    '', 'tr', []);
+          createElement(tableRow, order.status,         '', 'td', []);
+          createElement(tableRow, order.OID,        '', 'td', []);
+          createElement(tableRow, order.ordered_amount, '', 'td', []);
+          createElement(tableRow, order.total_amount,   '', 'td', []);
+          createElement(tableRow, order.batchnr,        '', 'td', []);
+          createElement(tableRow, order.frigivet_amount,    '', 'td', []);
           if (order.frigivet_datetime != null) {
-            create_element(tableRow, order.frigivet_datetime.substr(11,5),'' , 'td', []);
+            createElement(tableRow, order.frigivet_datetime.substr(11,5),'' , 'td', []);
           } else {
-            create_element(tableRow, "",'', 'td', []);
+            createElement(tableRow, "",'', 'td', []);
           }
         }
       }        
@@ -134,13 +144,13 @@ var fill_order_table = function(date) {
       $('#T_orders').removeClass('DisplayNone')
       for(let i = 0; i < data.tOrders.length; i++) {
         const TORDER = data.tOrders[i];
-        var table_row = create_element($('#secondaryTableBody'), '','','tr',['data-row']);
-        create_element(table_row, TORDER.tracer,'','td',[])        
-        create_element(table_row, TORDER.status,'','td',[])        
-        create_element(table_row, TORDER.OrderID,'','td',[])
-        create_element(table_row, TORDER.deliver_datetime.substr(11,5),'','td',[])
-        create_element(table_row, TORDER.nInjections, '', 'td', [])
-        create_element(table_row, TORDER.use, '', 'td', [])
+        var table_row = createElement($('#secondaryTableBody'), '','','tr',['data-row']);
+        createElement(table_row, TORDER.tracer,'','td',[])        
+        createElement(table_row, TORDER.status,'','td',[])        
+        createElement(table_row, TORDER.OrderID,'','td',[])
+        createElement(table_row, TORDER.deliver_datetime.substr(11,5),'','td',[])
+        createElement(table_row, TORDER.nInjections, '', 'td', [])
+        createElement(table_row, TORDER.use, '', 'td', [])
       }
     } else {
       $('#T_orders').addClass('DisplayNone')
@@ -164,24 +174,24 @@ var Send_order = function(id) {
     success: function(data) {
       var informationRowDiv = $('#informationRow' + String(id));
       informationRowDiv.empty();
-      var table = create_element(informationRowDiv,'','','table',[]);
-      var tableHead = create_element(table, '',   '','thead',[]);
-      create_element(tableHead, 'Status',         '','th',   []);
-      create_element(tableHead, 'order ID',       '','th',   []);
-      create_element(tableHead, 'Bestilt MBQ',    '','th',   []);
-      create_element(tableHead, 'Produceret MBQ', '','th',   []);
-      create_element(tableHead, 'Batch-nr.',      '','th',   []);
-      create_element(tableHead, 'Frigivet MBQ',   '','th',   []);
-      create_element(tableHead, 'Frigivet',       '','th',   []);
-      var tableBody = create_element(table, '','','tbody',   []);
-      var tableRow = create_element(tableBody,'', '', 'tr', []);
-      create_element(tableRow, 1,  '', 'td', []);
-      create_element(tableRow, data.lastOrder, '', 'td', []);
-      create_element(tableRow, data.amount, '', 'td', []);
-      create_element(tableRow, '', '', 'td', []);
-      create_element(tableRow, '', '', 'td', []);
-      create_element(tableRow, '', '', 'td', []);
-      create_element(tableRow, "", '', 'td', []);
+      var table = createElement(informationRowDiv,'','','table',[]);
+      var tableHead = createElement(table, '',   '','thead',[]);
+      createElement(tableHead, 'Status',         '','th',   []);
+      createElement(tableHead, 'order ID',       '','th',   []);
+      createElement(tableHead, 'Bestilt MBQ',    '','th',   []);
+      createElement(tableHead, 'Produceret MBQ', '','th',   []);
+      createElement(tableHead, 'Batch-nr.',      '','th',   []);
+      createElement(tableHead, 'Frigivet MBQ',   '','th',   []);
+      createElement(tableHead, 'Frigivet',       '','th',   []);
+      var tableBody = createElement(table, '','','tbody',   []);
+      var tableRow = createElement(tableBody,'', '', 'tr', []);
+      createElement(tableRow, 1,  '', 'td', []);
+      createElement(tableRow, data.lastOrder, '', 'td', []);
+      createElement(tableRow, data.amount, '', 'td', []);
+      createElement(tableRow, '', '', 'td', []);
+      createElement(tableRow, '', '', 'td', []);
+      createElement(tableRow, '', '', 'td', []);
+      createElement(tableRow, "", '', 'td', []);
     }, 
     error: function() {
       console.log("Error");
@@ -217,12 +227,12 @@ var Send_torder = function(TracerID) {
         tOrdersRow.removeClass('DisplayNone');
       }
       var tableBody = $('#secondaryTableBody');
-      var tableRow = create_element(tableBody,'', '', 'tr', []);
-      create_element(tableRow, TracerName,  '', 'td', []);
-      create_element(tableRow, 1, '', 'td', []);
-      create_element(tableRow, data.lastOID, '', 'td', []);
-      create_element(tableRow, bestillingVal, '', 'td', []);
-      create_element(tableRow, injectionVal, '', 'td', []);
+      var tableRow = createElement(tableBody,'', '', 'tr', []);
+      createElement(tableRow, TracerName,  '', 'td', []);
+      createElement(tableRow, 1, '', 'td', []);
+      createElement(tableRow, data.lastOID, '', 'td', []);
+      createElement(tableRow, bestillingVal, '', 'td', []);
+      createElement(tableRow, injectionVal, '', 'td', []);
       var UseName;
       if (useVal === "0") {
         UseName = 'Menneske';
@@ -231,13 +241,19 @@ var Send_torder = function(TracerID) {
       } else {
         UseName = 'Andet';
       }
-      create_element(tableRow, UseName, '', 'td', []);      
+      createElement(tableRow, UseName, '', 'td', []);      
     }
   });
 }
 
 
 $(function() {
+  var customer_select = $('#customer_select');
+  console.log($('#customer_select')[0].value);
+  customer_select.on('change', function () {
+    console.log(this.value)
+  });
+
   var OrderButtons = $('.OrderButton');
   for (let i = 0; i< OrderButtons.length; i++){
     var OrderButton = $(OrderButtons[i]);
@@ -252,5 +268,13 @@ $(function() {
     TOrderButton.on('click', () => Send_torder(id));
   }
 
-  CalenderInstance = new CalenderFactory('calender',today, Date_function, Date_onClick, colorDict);
+  CalenderInstance = new CalenderFactory(
+    'calender',
+    today, 
+    dateColoringFunction, 
+    Date_onClick, 
+    Month_api_call,
+    colorDict);
+  
+  CustomerInstance = new CustomerSelect();
 });

@@ -36,4 +36,7 @@ class User(AbstractBaseUser):
   def __str__(self):
     return self.username
 
-
+class UserHasAccess(Model):
+  ID = AutoField(primary_key=True)
+  userID = ForeignKey(User, on_delete=models.CASCADE)
+  CustomerID = ForeignKey(Customer, on_delete=models.CASCADE)

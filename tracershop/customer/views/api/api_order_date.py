@@ -27,7 +27,10 @@ class Api_order_date(View):
     if SQL.getClosed(dt_object):
       pass
 
-    userID = 7
+    
+    print(request.readlines())
+
+    userID = request.GET['UserID']
 
     order = SQL.queryOrderByDate(dt_object, userID)
     runs = SQL.getDailyRuns(dt_object, userID)
