@@ -5,8 +5,9 @@ from django.views.generic import TemplateView, View
 from django.http import JsonResponse, HttpResponseBadRequest
 
 from customer.lib import Filters
-from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
+from customer.lib.CustomTools import LMap
+from customer.lib.SQL import SQLController as SQL
 
 import datetime
 
@@ -39,7 +40,7 @@ class Api_order_date(View):
     response_dir = {
       'responses' : Filters.matchOrders(order, runs),
       #formatting mapping
-      'tOrders'   : list(map(formatUse, tOrders)),
+      'tOrders'   : LMap(formatUse, tOrders),
       'tOrdersForms' : tOrderForms
     }
 

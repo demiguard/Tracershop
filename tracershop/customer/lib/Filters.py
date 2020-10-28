@@ -1,5 +1,10 @@
+import datetime
+
+from customer.lib.CustomTools import LMap
 from customer.lib import calenderHelper
 from customer.forms.forms import OrderForm
+
+from customer.models import Booking, CustomerUsesLocation, UserHasAccess
 
 def matchOrders(orders, runs):
   order_list = []
@@ -21,7 +26,7 @@ def matchOrders(orders, runs):
       orders))
 
     if len(matching_orders): 
-      used_orderID += list(map(lambda x: x['OID'], matching_orders))
+      used_orderID += LMap(lambda x: x['OID'], matching_orders)
       order_context['data_type'] = 'data'
       order_context['data'] = matching_orders
     else:
@@ -31,3 +36,41 @@ def matchOrders(orders, runs):
     order_list.append(order_context)
 
   return order_list
+
+def FilterBookings(Customer, Date):
+  locations = LMap(lambda x : x.location, CustomerUsesLocation.objects.filter(customer=Customer))
+
+  studies = {}
+
+  for booking in Booking.objects.filter(startDate=Date).filter(location__in=locations).order_by("startTime"):
+      TracerStr = str(booking.procedure.tracer)
+      #Fill BookingInfo with Data to display in HTML file
+      injectionDateTime = datetime.datetime.combine(datetime.date.today(), booking.startTime) 
+      injectionTimeDelta = datetime.timedelta(seconds=60*booking.procedure.delay)
+      injectionTime =  (injectionDateTime + injectionTimeDelta).time()
+
+      bookingInfo = {
+        'accessionNumber' : booking.accessionNumber,
+        'procedure' : booking.procedure,
+        'studyTime' : booking.startTime.strftime("%H:%M"),
+        'injectionTime' : injectionTime.strftime("%H:%M")
+      }
+
+      if TracerStr in studies:
+        studies[TracerStr].append(bookingInfo)
+      else:
+        studies[TracerStr] = [bookingInfo]
+
+  return studies
+
+def FindActiveCustomer(user):
+  customers = LMap(
+    lambda x: x.CustomerID, 
+    UserHasAccess.objects.filter(userID=user).order_by('CustomerID')
+  )
+  if len(customers) == 0:
+    return customers, None
+  else:
+    return customers, customers[0]  
+
+  

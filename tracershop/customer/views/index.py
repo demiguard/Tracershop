@@ -5,11 +5,12 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 import datetime
 import json
 
+from customer import models
 from customer.forms import formFactory
-from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
 from customer.lib import Filters
-from customer import models
+from customer.lib.CustomTools import LMap
+from customer.lib.SQL import SQLController as SQL
 
 def formatUse(adir):
   if 'use' in adir:
@@ -28,9 +29,9 @@ class IndexView(LoginRequiredMixin, TemplateView):
   def get(self, request):
     today = datetime.date.today()
 
-    customerIDs = list(map(
+    customerIDs = LMap(
         lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
-        models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID')))
+        models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))
 
     if customerIDs == []:
       return redirect("customer:editMyCustomer")
@@ -49,7 +50,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
     
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
-    DailyTOrders            = list(map(formatUse, SQL.getDailyTOrders(today, active_customerID)))
+    DailyTOrders            = LMap(formatUse, SQL.getDailyTOrders(today, active_customerID))
 
     context = {
       'customerIDs'     : customerIDs,
