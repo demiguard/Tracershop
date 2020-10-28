@@ -6,6 +6,8 @@ from customer.models import User
 
 class CreateUserView(TemplateView):
   template_name = 'customer/auth/createUser.html'
+  path = "createuser"
+  name = "CreateUser"
 
   def get(self, request):
     

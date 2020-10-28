@@ -9,6 +9,8 @@ class EditMyUser(LoginRequiredMixin, TemplateView):
   template_name = 'customer/auth/editMyUser.html'
   login_url = '/login'
   redirect_field_name = 'loginView'
+  path = "editMyUser"
+  name = "editMyUser"
 
   def get(self, request):
     user = request.user

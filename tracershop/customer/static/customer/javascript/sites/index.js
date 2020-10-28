@@ -60,7 +60,7 @@ var Month_api_call = function(year, month) {
   return {
     url: "api/month_status/" + String(year) + "/" + String(month + 1),
     data: {"userID" : $('#customer_select')[0].value},
-    success: function (data){ return data} 
+    success: function (data){return data} 
   }
 };
 

@@ -51,7 +51,7 @@ def FilterBookings(Customer, Date):
 
       bookingInfo = {
         'accessionNumber' : booking.accessionNumber,
-        'procedure' : booking.procedure,
+        'procedure' : str(booking.procedure),
         'studyTime' : booking.startTime.strftime("%H:%M"),
         'injectionTime' : injectionTime.strftime("%H:%M")
       }
@@ -68,9 +68,9 @@ def FindActiveCustomer(user):
     lambda x: x.CustomerID, 
     UserHasAccess.objects.filter(userID=user).order_by('CustomerID')
   )
-  if len(customers) == 0:
-    return customers, None
-  else:
+  if customers:
     return customers, customers[0]  
+  else:
+    return customers, None
 
   

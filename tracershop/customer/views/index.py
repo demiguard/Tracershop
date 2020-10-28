@@ -7,24 +7,17 @@ import json
 
 from customer import models
 from customer.forms import formFactory
-from customer.lib import calenderHelper
-from customer.lib import Filters
+from customer.lib import calenderHelper, Filters, Formatting
 from customer.lib.CustomTools import LMap
 from customer.lib.SQL import SQLController as SQL
-
-def formatUse(adir):
-  if 'use' in adir:
-    if (adir['use'] == 'Human'):
-      adir['use'] = 'Menneske'
-  
-  return adir
 
 
 class IndexView(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/index.html'
   login_url = '/login'
   redirect_field_name = 'loginView'
-
+  name = "index"
+  path = ""
   
   def get(self, request):
     today = datetime.date.today()
@@ -50,7 +43,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
     
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
-    DailyTOrders            = LMap(formatUse, SQL.getDailyTOrders(today, active_customerID))
+    DailyTOrders            = LMap(Formatting.formatUse, SQL.getDailyTOrders(today, active_customerID))
 
     context = {
       'customerIDs'     : customerIDs,

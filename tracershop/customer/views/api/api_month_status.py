@@ -7,6 +7,8 @@ from django.http import JsonResponse
 from customer.lib.SQL import SQLController as SQL
 
 class Api_month_status(View):
+  name = "APIMonthStatus"
+  path = "api/month_status/<int:year>/<int:month>"
   def get(self, request, year, month):
     
     userID = request.GET['userID']

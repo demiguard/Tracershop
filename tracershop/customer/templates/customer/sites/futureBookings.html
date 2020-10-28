@@ -11,7 +11,7 @@
 {% block content %}
   <div id="Study" class="row col-9">
     {% for key, list in studies.items %}
-    <div class="row col-12">
+    <div class="TracerDiv row col-12">
       <p class="col-12"><input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> <strong>{{ key }}</strong> </p> 
       <table id="{{ forloop.counter0 }}-table" class="dataTable hidden">
         <thead>

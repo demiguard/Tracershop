@@ -1,28 +1,29 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.shortcuts import render
-from django.views.generic import TemplateView
+from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 
 from datetime import datetime, date
 
 from customer.lib.SQL import SQLController as SQL
 
-class Api_add_torder(LoginRequiredMixin, TemplateView):
-  def __init__(self):
-    self.QDICTTracerID = 'id'
-    self.QDICTDato = 'dato'
-    self.QDICTTime = 'BestillingTid'
-    self.QDICTInjections = 'injections'
-    self.QDICTUsage = 'Usage'
+class Api_add_torder(LoginRequiredMixin, View):
+  name = "APIAddTorder"
+  path = "api/addTOrder"
 
-    self.FDICTInjections = 'injections'
-    self.FDICTTracerID = 'tracer'
-    self.FDICTUsage = 'Usage'
-    self.FDICTDateTime = 'Datetime'
+  #Constants
+  QDICTTracerID = 'id'
+  QDICTDato = 'dato'
+  QDICTTime = 'BestillingTid'
+  QDICTInjections = 'injections'
+  QDICTUsage = 'Usage'
+
+  FDICTInjections = 'injections'
+  FDICTTracerID = 'tracer'
+  FDICTUsage = 'Usage'
+  FDICTDateTime = 'Datetime'
 
   def parseDict(self,QDict):
-    print(QDict)
-    
     if QDict[self.QDICTUsage] == '0':
       usage = 'Human'
     elif QDict[self.QDICTUsage] == '1':

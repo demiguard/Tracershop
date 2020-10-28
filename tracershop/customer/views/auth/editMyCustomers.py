@@ -11,6 +11,8 @@ class EditMyCustomers(LoginRequiredMixin, TemplateView):
   template_name = 'customer/auth/editMyCustomers.html'
   login_url = '/login'
   redirect_field_name = 'loginView'
+  path = "editMyUser/MyCustomer"
+  name = "editMyCustomer"
 
   def get(self, request):
 

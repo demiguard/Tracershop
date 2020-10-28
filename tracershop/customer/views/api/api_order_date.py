@@ -1,24 +1,18 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.shortcuts import render
-
-from django.views.generic import TemplateView, View
+from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 
-from customer.lib import Filters
+from customer.lib import Filters, Formatting
 from customer.lib import calenderHelper
 from customer.lib.CustomTools import LMap
 from customer.lib.SQL import SQLController as SQL
 
 import datetime
 
-def formatUse(adir):
-  if 'use' in adir:
-    if (adir['use'] == 'Human'):
-      adir['use'] = 'Menneske'
-  
-  return adir
+class ApiOrderDate(View):
+  path = 'api/order_date/<int:year>/<int:month>/<int:day>'
+  name = "ApiOrderDate"
 
-class Api_order_date(View):
   def get(self, request, year, month, day):
     try:
       dt_object = datetime.datetime(year,month,day)
@@ -29,18 +23,14 @@ class Api_order_date(View):
       pass
 
     userID = request.GET['UserID']
-    
-
     order = SQL.queryOrderByDate(dt_object, userID)
     runs = SQL.getDailyRuns(dt_object, userID)
-
     tOrders = SQL.getDailyTOrders(dt_object, userID)
     tOrderForms = SQL.getTOrdersForms(userID)
 
     response_dir = {
       'responses' : Filters.matchOrders(order, runs),
-      #formatting mapping
-      'tOrders'   : LMap(formatUse, tOrders),
+      'tOrders'   : LMap(Formatting.formatUse, tOrders),
       'tOrdersForms' : tOrderForms
     }
 

@@ -9,6 +9,8 @@ from customer.forms.forms import LoginForm
 
 class LoginView(TemplateView):
   template_name = 'customer/auth/login.html'
+  name = "loginView"
+  path = "login"
 
   def get(self, request):
 
@@ -19,6 +21,10 @@ class LoginView(TemplateView):
     return render(request, self.template_name, context)
 
 class APILoginView(TemplateView):
+  path = "api/login"
+  name = "login"
+
+
   def post(self, request):
     login_data = LoginForm(data=request.POST)
     success = False
@@ -51,6 +57,9 @@ class APILogoutView(TemplateView, LoginRequiredMixin):
   template_name=''
   login_url = '/login'
   redirect_field_name = 'loginView'
+  name = "logout"
+  path = "api/logout"
+
   def logout_user(self, request):
     logout(request)
     return redirect('customer:loginView')

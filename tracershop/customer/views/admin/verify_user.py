@@ -11,6 +11,9 @@ from customer.models import PotentialUser, User
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 class VerifyUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
+  name = 'verifyUser'
+  path = 'verifyUser'
+
   template_name = 'customer/admin/VerifyUser.html'
 
   def get(self, request):
@@ -25,6 +28,8 @@ class VerifyUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
     return render(request, self.template_name, context)
 
 class APIVerifyUser(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
+  path = "api/verifyUser/<int:userID>"
+  name = "APIVerifyUser"
   def parse_qDict(self, qDict):
     returnDict = {}
     if qDict.get('is_admin','false') == 'true':

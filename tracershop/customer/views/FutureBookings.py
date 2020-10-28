@@ -13,6 +13,8 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/futureBookings.html'
   login_url = '/login'
   redirect_field_name = 'loginView'
+  name = "futureBooking"
+  path = "futureBooking"
 
   def get(self, request):
     today = datetime.date.today()
