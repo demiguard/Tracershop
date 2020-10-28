@@ -8,7 +8,7 @@ import json
 from customer.forms import formFactory
 from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
-from customer.lib import orderHelper
+from customer.lib import Filters
 from customer import models
 
 def formatUse(adir):
@@ -26,8 +26,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
 
   
   def get(self, request):
-    today = datetime.date.today() #CHANGE THIS TO ANOTHER DAY WHEN PRODUCTION
-    userID = 7
+    today = datetime.date.today()
 
     customerIDs = list(map(
         lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
@@ -44,7 +43,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
     runs       = SQL.getDailyRuns(today, active_customerID)
     injections = SQL.queryOrderByDate(today, active_customerID)
     #Compute
-    data = orderHelper.matchOrders(injections, runs)
+    data = Filters.matchOrders(injections, runs)
     # Calender construction
     status_tupples = SQL.queryOrderByMonth(today.year, today.month, active_customerID)
     

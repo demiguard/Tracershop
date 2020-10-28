@@ -1,5 +1,8 @@
 
 import { CalenderFactory } from "./libs/calender.js";
+import { CustomerSelect } from "./libs/customerSelect.js";
+
+var CalenderInstance;
 
 
 var ShowHideData = function () {
@@ -13,10 +16,20 @@ var ShowHideData = function () {
     var tableID = "#" + this.id.substring(0,1) + "-table"
     var dataTable = $(tableID);
     dataTable.addClass("hidden");
-    
   }
+}
+
+var dateColoringFunction = function(div, date, directory) {
 
 }
+
+var DateOnClick = function(div, date) {
+
+}
+
+var MonthApiCall = function (year, month) {
+
+} 
 
 
 $(function() { 
@@ -24,6 +37,16 @@ $(function() {
   for ( let i = 0; i < buttons.length; i++) {
     var activeButton = $(buttons[i])
     activeButton.on('click', ShowHideData)
-  }
-  
+  };
+  console.log(today);
+
+  CalenderInstance = new CalenderFactory(
+    'calender', 
+    today,
+    dateColoringFunction,
+    DateOnClick,
+    MonthApiCall,
+    colorDict
+    )
+
 });

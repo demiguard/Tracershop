@@ -4,7 +4,7 @@ from django.shortcuts import render
 from django.views.generic import TemplateView, View
 from django.http import JsonResponse, HttpResponseBadRequest
 
-from customer.lib import orderHelper
+from customer.lib import Filters
 from customer.lib.SQL import SQLController as SQL
 from customer.lib import calenderHelper
 
@@ -37,7 +37,7 @@ class Api_order_date(View):
     tOrderForms = SQL.getTOrdersForms(userID)
 
     response_dir = {
-      'responses' : orderHelper.matchOrders(order, runs),
+      'responses' : Filters.matchOrders(order, runs),
       #formatting mapping
       'tOrders'   : list(map(formatUse, tOrders)),
       'tOrdersForms' : tOrderForms

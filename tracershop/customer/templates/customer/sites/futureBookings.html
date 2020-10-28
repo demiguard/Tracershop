@@ -4,40 +4,58 @@
 
 
 {% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/calender.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/futureBooking.css' %}">
 {% endblock %}
 
 {% block content %}
-
-
-
-  {% for key, list in studies.items %}
-  <div class="row col-12">
-    <p class="col-12"><input class="btn btn-info tableButton " id="{{ forloop.counter0 }}-button"" type="button" value="Vis data"> <strong>{{ key }}</strong> </p> 
-    <table id="{{ forloop.counter0 }}-table" class="dataTable hidden">
-      <thead>
-        <th>Accession Number</th>
-        <th>Study Description</th>
-        <th>Start tidspunkt</th>
-        <th>Injektions Tidspunkt</th>
-      </thead>
-      <tbody>
-        {% for study in list %}
+  <div id="Study" class="row col-9">
+    {% for key, list in studies.items %}
+    <div class="row col-12">
+      <p class="col-12"><input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> <strong>{{ key }}</strong> </p> 
+      <table id="{{ forloop.counter0 }}-table" class="dataTable hidden">
+        <thead>
+          <th>Accession Number</th>
+          <th>Study Description</th>
+          <th>Start tidspunkt</th>
+          <th>Injektions Tidspunkt</th>
+        </thead>
+        <tbody>
+          {% for study in list %}
           <tr>
             <td>{{ study.accessionNumber }}</td>
             <td>{{ study.procedure }}</td>
-            <td>{{ study.studyTime }} </td>
-            <td>{{ study.injectionTime}}</td>
+            <td class="text-center">{{ study.studyTime }} </td>
+            <td class="text-center">{{ study.injectionTime}}</td>
           </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-
+          {% endfor %}
+        </tbody>
+      </table>
+      
+    </div>
+    {% endfor %}
   </div>
-  {% endfor %}
-
+  <div class="col-3">
+    <div id="div_customer_select">
+      <select id="customer_select">
+        {% for id, name in customerIDs %}
+        <option value="{{ id }}">{{ name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div id="calender"></div>
+  </div>
+  
 
 {% endblock %}
 {% block javascript %}
+<script>
+  var today = new Date(Date.parse( "{{ today }}" ));
+  var colorDict = {};
+</script>
+<script type="module" src="{% static 'customer/javascript/sites/libs/htmlHelpers.js' %}"></script>
+<script type="module" src="{% static 'customer/javascript/sites/libs/calender.js' %}"></script>
+<script type="module" src="{% static 'customer/javascript/sites/libs/customerSelect.js' %}"></script>
 <script type="module" src="{% static 'customer/javascript/sites/futureBooking.js' %}"></script>
+
 {% endblock %}

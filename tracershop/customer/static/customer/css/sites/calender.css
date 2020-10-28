@@ -1,0 +1,28 @@
+.calender {
+  padding: 0px;
+  margin-top: 46px;
+  border: 3px;
+  border-color: blue;
+  border-style: solid;
+  width: 250px;
+  text-align: center;
+  border-radius: 8px;
+}
+
+.calender-row {
+  width: 17%;
+}
+
+.calender-dates {
+  background: var(--tertiary-color-3);
+  border-bottom: 2px;
+  border-top: 0px;
+  border-left:0px;
+  border-right:0px;
+  border-style: solid;
+  border-color: #00F;
+}
+
+.calender-header {
+  background: var(--tertiary-color-3);
+}

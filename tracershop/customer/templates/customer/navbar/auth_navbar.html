@@ -5,15 +5,21 @@
   {% block authbar_content %}
 
   {% endblock authbar_content %}
-
   
-  <a href="/futureBooking">
+  <a href="{% url 'customer:futureBooking' %}">
     <div class="navbarElem">
       Fremtide bookinger
     </div>
   </a>
+  <a href="{% url 'customer:editMyUser' %}">
+    <div class="navbarElem">
+      Rediger bruger
+    </div>
+  </a>
   <div class="navbarElem">
     Logget in som: <strong>{{ user.username }}</strong>
-    <input type="button" class="btn btn-primary" value="Log ud" onclick="window.location='api/logout'">
+    <a href="{% url 'customer:logout' %}">
+      <input type="button" class="btn btn-primary" value="Log ud">
+    </a>
   </div>
 {% endblock %}

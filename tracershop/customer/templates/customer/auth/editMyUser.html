@@ -1,0 +1,28 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+<div class="row col-12">
+  <h1> Bruger administration</h1>
+</div>
+<div class="row col-12">
+  <form method=POST>
+    {% csrf_token %}
+    <table>
+      {{ EditUserForm.as_table }}
+    </table>
+    
+    <input type="submit" value="Opdater Bruger">
+  </form>
+</div>
+<div class="row">
+  <a href="{% url 'customer:editMyCustomer' %}">
+    <input type="button" value="Rediger Aktive Kunder">
+  </a>
+</div>
+{% endblock content %}
+
+{% block javascript %}
+
+{% endblock%}
