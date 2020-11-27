@@ -16,10 +16,16 @@
       Rediger bruger
     </div>
   </a>
+  <a href="{% url 'customer:procedureEditor' %}">
+    <div class="navbarElem">
+      Procedurer
+    </div>
+  </a>
   <div class="navbarElem">
     Logget in som: <strong>{{ user.username }}</strong>
     <a href="{% url 'customer:logout' %}">
       <input type="button" class="btn btn-primary" value="Log ud">
     </a>
   </div>
+
 {% endblock %}

@@ -118,7 +118,7 @@ var fill_order_table = function(date) {
 
       // ----- Table Creation -----
       } else if (response.data_type == 'data') { 
-        var table = createElement(informationRowDiv,'','','table',[]);
+        var table = createElement(informationRowDiv,'','','table',["table"]);
         var tableHead = createElement(table, '',   '','thead',[]);
         createElement(tableHead, 'Status',         '','th',   []);
         createElement(tableHead, 'order ID',       '','th',   []);

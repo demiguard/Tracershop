@@ -141,7 +141,7 @@ def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure
       \"{startDate}\",
       \"{startTime}\",
       \"{location}\",
-      {procedure_id} 
+      {procedure_id}
     )
 
   """

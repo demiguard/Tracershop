@@ -50,6 +50,7 @@ def FilterBookings(Customer, Date):
       injectionTime =  (injectionDateTime + injectionTimeDelta).time()
 
       bookingInfo = {
+        'status' : booking.status,
         'accessionNumber' : booking.accessionNumber,
         'procedure' : str(booking.procedure),
         'studyTime' : booking.startTime.strftime("%H:%M"),

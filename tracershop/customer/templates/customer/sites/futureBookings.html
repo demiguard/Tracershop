@@ -4,40 +4,62 @@
 
 
 {% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/customerSelect.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/calender.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/futureBooking.css' %}">
 {% endblock %}
 
 {% block content %}
-  <div id="Study" class="row col-9">
+  <div id="Study" class="col-9">
     {% for key, list in studies.items %}
     <div class="TracerDiv row col-12">
-      <p class="col-12"><input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> <strong>{{ key }}</strong> </p> 
-      <table id="{{ forloop.counter0 }}-table" class="dataTable hidden">
-        <thead>
+      <div class="col-12 overViewDiv">
+        <input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> 
+        <strong id="{{ forloop.counter0 }}-tracer"> {{ key }} </strong>
+      </div> 
+      <div class=hidden id="{{ forloop.counter0 }}-div">
+        <table id="{{ forloop.counter0 }}-table" class="dataTable table">
+          <thead>
           <th>Accession Number</th>
           <th>Study Description</th>
-          <th>Start tidspunkt</th>
+          <th>Booking tidspunkt</th>
           <th>Injektions Tidspunkt</th>
+          <th></th>
         </thead>
-        <tbody>
+        <tbody id="{{ forloop.counter0 }}-tbody">
           {% for study in list %}
           <tr>
-            <td>{{ study.accessionNumber }}</td>
+            <td class="accessionNumber">{{ study.accessionNumber }}</td>
             <td>{{ study.procedure }}</td>
-            <td class="text-center">{{ study.studyTime }} </td>
-            <td class="text-center">{{ study.injectionTime}}</td>
+            <td class="">{{ study.studyTime }} </td>
+            <td class="">{{ study.injectionTime}}</td>
+            {% if study.status == 0 %}
+              <td class="checkbox"><input type="checkbox" id="{{ study.accessionNumber }}" checked></td>
+            {% elif study.status == 2 %}
+              <td><img src="{% static 'customer/images/check.svg' %}"></td>
+            {% else %}
+              <td><img src="{% static 'customer/images/x-circle-fill.svg' %}"></td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>
       </table>
-      
+      <div class="d-flex flex-row-reverse col-12">
+        <div class="p-2">
+          <input type="button" id="{{ forloop.counter0 }}-orderButton" class="orderButton btn btn-outline-secondary" value="Bestil">
+        </div>
+      </div>
+        
+      </div>
     </div>
     {% endfor %}
   </div>
   <div class="col-3">
-    <div id="div_customer_select">
-      <select id="customer_select">
+    <div id="div_customer_select" class="input-group">
+      <div class="input-group-prepend">
+        <label class="input-group-text" for="customer_select">Kunde</label>
+      </div>
+      <select id="customer_select" class="custom-select">
         {% for id, name in customerIDs %}
         <option value="{{ id }}">{{ name }}</option>
         {% endfor %}

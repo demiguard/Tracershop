@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import Model, AutoField, BooleanField, CharField, DateField, ForeignKey, IntegerField, TimeField
+from django.db.models import Model, AutoField, BooleanField, CharField, DateField, DateTimeField, ForeignKey, IntegerField, TimeField
 from django.db.models import CASCADE, SET_NULL
 
 from customer.modelsDir.clinicalModels import Procedure
@@ -51,6 +51,10 @@ class Booking(Model):
   def __str__(self):
     return str(self.accessionNumber)
 
+class UpdateTimeStamp(Model):
+  id = IntegerField()
+  timeStamp = DateTimeField()
+  
 
 class Customer(Model):
   ID        = AutoField(primary_key=True)

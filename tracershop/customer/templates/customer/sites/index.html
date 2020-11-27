@@ -3,50 +3,50 @@
 {% load bootstrap4 %}
 
 {% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/customerSelect.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/calender.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/index.css' %}">
 {% endblock %}
 
 {% block content %}
+<div class="row col-12" id="dato">
+  Dato: {{ Dato_DK_format }}
+</div>
 
-<div id="FTG" class="col-9">
-  <div id="dato">
-    Dato: {{ Dato_DK_format }}
-  </div>
-  <div id="content">
-    {% for order in data %}
-    <div class="data-row">
-      <div class="col-12 row">
-        <strong>
-          Ordre {{order.order_num}} - Kalibreret til: {{ order.time | time:'H:i' }}
-        </strong>
-      </div>
-      <div class="row" id="informationRow{{ order.order_num }}">
-        {% if order.data_type == "form" %}
-        <div id="ButtonDiv{{ order.order_num }}">
-          Bestil: {{ order.data.order_MBQ }} [MBq]
+<div id="FTG" class="container col-9 row">
+  <div id="content"  class="col-9">
+      {% for order in data %} 
+      <div class="data-row">
+        <div class="col-11 row">
+          <strong>
+            Ordre {{order.order_num}} - Kalibreret til: {{ order.time | time:'H:i' }}
+          </strong>
         </div>
-        <div class="col-1" ></div>
-        <div id="CommentDiv{{ order.order_num }}">
-          Kommentar:
-          {{ order.data.comment }}
+        <div class="row" id="informationRow{{ order.order_num }}">
+          {% if order.data_type == "form" %}
+          <div id="ButtonDiv{{ order.order_num }}">
+            Bestil: {{ order.data.order_MBQ }} [MBq]
+          </div>
+          <div class="col-1" ></div>
+          <div id="CommentDiv{{ order.order_num }}">
+            Kommentar:
+            {{ order.data.comment }}
         </div>
         <div class="col-1"></div>
-        <button class="btn btn-primary OrderButton" style="height: 36px;" id="{{order.order_num}}">
+        <button class="btn btn-primary OrderButton" style="height: 50px;" id="{{order.order_num}}">
           Bestil
-        </button> 
-        
+        </button>      
         {% endif %}
         {% if order.data_type == "data" %}
-        <table>
+        <table class="table">
           <thead>
-              <th>Status</th>
-              <th>order ID</th>
-              <th>Bestilt Aktivitet</th>
-              <th>Produceret [MBq]</th>
-              <th>Batch-nr. </th>
-              <th>Frigivet [MBq]</th>
-              <th>Frigivet </th>
+            <th>Status</th>
+            <th>order ID</th>
+            <th>Bestilt Aktivitet</th>
+            <th>Produceret [MBq]</th>
+            <th>Batch-nr. </th>
+            <th>Frigivet [MBq]</th>
+            <th>Frigivet </th>
           </thead>
           <tbody>
             {% for order in order.data %}
@@ -67,10 +67,16 @@
     </div>
     {% endfor %}
   </div>
+  <div class="col-2 flex text-center">
+    <img src="{% static 'customer/images/calculator.svg' %}" class="calculator" id="calculator{{ order.time | time:'H:i' }}" height="36px">
+  </div>
 </div>
 <div class="col-3">
-  <div id="div_customer_select">
-    <select id="customer_select">
+  <div id="div_customer_select" class="input-group">
+    <div class="input-group-prepend">
+      <label class="input-group-text" for="customer_select">Kunde</label>
+    </div>
+    <select id="customer_select" class="custom-select">
       {% for id, name in customerIDs %}
       <option value="{{ id }}">{{ name }}</option>
       {% endfor %}
@@ -90,7 +96,7 @@
         <p>Ordre af Tracer Bestilt til i dag:</p>
       </div>
       <div id="torder_data">
-        <table>
+        <table class="table">
           <thead>
             <th>Tracer</th>
             <th>Status</th>
@@ -123,7 +129,7 @@
   {% if secondaryForms %}
   <p>Bestillinger af andre tracers til i dag:</p>
   <div id="T_forms">
-    <table>
+    <table class="table">
       <thead>
         <th>Tracer</th>
         <th>Bestil til</th>

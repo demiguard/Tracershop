@@ -149,7 +149,6 @@ def createSQLQueryTOrderForms(userID : int) -> str:
 
 def createSQLQueryTOrders(date, userID : int) -> str:
   SQLDate = calenderHelper.convert_to_SQL_date(date)
-
   return f"""
   SELECT 
     t_orders.status,
@@ -165,8 +164,8 @@ def createSQLQueryTOrders(date, userID : int) -> str:
       ON
         Tracers.id=t_orders.tracer
   WHERE
-    BID = {userID} AND
-    DATE(deliver_datetime) = \"{SQLDate}\"
+    DATE(deliver_datetime)=DATE(\"{SQLDate}\") AND
+    BID = {userID}
   """
 
 

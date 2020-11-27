@@ -24,10 +24,8 @@ class ApiFutureBookingDay(View):
     
     #TODO Error Handling as statement below may not succeed
     customer = Customer.objects.get(ID=request.POST[self.USERIDKEY])
-
     response = FilterBookings(customer, queryDate)
 
-    print(response)
     return JsonResponse(response)
     
 

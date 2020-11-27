@@ -5,3 +5,11 @@
 .hidden {
   display: none;
 }
+
+.TracerDiv {
+  padding: 15px;
+}
+
+.overViewDiv {
+  padding: 15px;
+}

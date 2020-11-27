@@ -21,7 +21,6 @@ class IndexView(LoginRequiredMixin, TemplateView):
   
   def get(self, request):
     today = datetime.date.today()
-
     customerIDs = LMap(
         lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
         models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))
@@ -36,15 +35,18 @@ class IndexView(LoginRequiredMixin, TemplateView):
     is_closed  = SQL.getClosed(today)
     runs       = SQL.getDailyRuns(today, active_customerID)
     injections = SQL.queryOrderByDate(today, active_customerID)
+    
     #Compute
     data = Filters.matchOrders(injections, runs)
+    
     # Calender construction
     status_tupples = SQL.queryOrderByMonth(today.year, today.month, active_customerID)
     
+
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
     DailyTOrders            = LMap(Formatting.formatUse, SQL.getDailyTOrders(today, active_customerID))
-
+    
     context = {
       'customerIDs'     : customerIDs,
       'secondaryOrders' : DailyTOrders,

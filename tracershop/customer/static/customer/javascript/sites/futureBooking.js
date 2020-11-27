@@ -6,18 +6,57 @@ import { createElement } from "./libs/htmlHelpers.js";
 var CalenderInstance;
 var CustomerSelectInstance;
 
-var ShowHideData = function () {
+const ShowHideData = function () {
   if (this.value == "Vis data") {
     this.value = "Gem data";
-    var tableID = "#" + this.id.substring(0,1) + "-table"
+    var tableID = "#" + this.id.substring(0,1) + "-div"
     var dataTable = $(tableID);
     dataTable.removeClass("hidden");
   } else if (this.value == "Gem data") {
     this.value = "Vis data";
-    var tableID = "#" + this.id.substring(0,1) + "-table"
+    var tableID = "#" + this.id.substring(0,1) + "-div"
     var dataTable = $(tableID);
     dataTable.addClass("hidden");
   }
+}
+
+const MassOrder = function() {
+  const id = this.id.substring(0,1);
+  const tbody = $("#"+id+"-tbody")[0];
+  const tracerStrong = $('#'+id+"-tracer")[0]; 
+  const tracer = tracerStrong.innerHTML;
+  var studies = {};
+  for (const tableRow of $(tbody).children()) {    
+    const checkboxTD = $(tableRow).children(".checkbox")[0];
+    const checkbox = $(checkboxTD).children()[0];
+    const checkboxID = checkbox.id;
+    const checkboxChecked = $(checkbox).prop("checked");
+    studies[checkboxID] = checkboxChecked
+    // Change Icons
+    $(checkboxTD).empty();
+    if (checkboxChecked) {
+      const image   = $("<img>", {
+        src: "/static/customer/images/check.svg"
+      });
+      image.appendTo(checkboxTD)
+    } else {
+      const image   = $("<img>", {
+        src: "/static/customer/images/x-circle-fill.svg"
+      });
+      image.appendTo(checkboxTD)
+    }
+
+  }
+  const customer = CustomerSelectInstance.getValue()
+  $.post({
+    url:"api/MassAddOrder",
+    data: {
+      "tracer" : tracer,
+      "studies" : studies,
+      "customer" : customer
+    }
+  })
+
 }
 
 var dateColoringFunction = function(div, date, directory) {
@@ -60,12 +99,12 @@ var ChangeTable = function(date) {
     url: "api/FutureDaily/"+year+"/"+month+"/"+day,
     data:{"UserID" : $('#customer_select')[0].value},
     success: function (data) {return data} 
-  }).then(function(data) {
-    console.log(data);
+  }).then(function(data) {  
     var TracerNumber = 0;
+    var CanOrder = false;
     for (const [Tracer, Studies] of Object.entries(data)) {
       const TracerDiv      = createElement(DataDiv,'','','div',["TracerDiv","row", "col-12"]);
-      const PArea          = createElement(TracerDiv, '', '','p',["col-12"]);
+      const OverViewDiv    = createElement(TracerDiv, '', '','div',["col-12", "overViewDiv"]);
       const ShowHideButton = $('<input>', {
         id: String(TracerNumber) + "-button",
         type: "button",
@@ -75,37 +114,91 @@ var ChangeTable = function(date) {
       ShowHideButton.addClass("btn-info");
       ShowHideButton.addClass("tableButton");
       ShowHideButton.on('click', ShowHideData);
-      ShowHideButton.appendTo(PArea);
-      createElement(PArea, Tracer, '', 'strong', [])
+      ShowHideButton.appendTo(OverViewDiv);
+      createElement(OverViewDiv, Tracer, String(TracerNumber)+'-tracer', 'strong', [])
+      const HidingDiv = createElement(TracerDiv, '', String(TracerNumber)+"-div", "div", ["hidden"]);
       // Create the Table
-      const DataTable = createElement(TracerDiv,'', String(TracerNumber)+"-table",'table', ["datatable", "hidden"])
+      const DataTable = createElement(HidingDiv,'', String(TracerNumber)+"-table","table", ["datatable", "table"])
       const TableHead = createElement(DataTable,'','','thead',[]);
       const TableHeadRow = createElement(TableHead, '', '', 'tr',[]);
       createElement(TableHeadRow,'Accession Number','','th',[]);
       createElement(TableHeadRow,'Study Description','','th',[]);
-      createElement(TableHeadRow,'Start tidspunkt','','th',[]);
+      createElement(TableHeadRow,'Booking tidspunkt','','th',[]);
       createElement(TableHeadRow,'Injektions Tidspunkt','','th',[]);
+      createElement(TableHeadRow,'','',"th",[]);
       // Create the Table body
-      const TableBody = createElement(DataTable, '', '', 'tbody', []);
+      const TableBody = createElement(DataTable, '', String(TracerNumber)+"-tbody", 'tbody', []);
       for (const study of Studies) {
         const StudyRow = createElement(TableBody, '','','tr',[]);
-        createElement(StudyRow,study.accessionNumber ,'','td',[]);
+        createElement(StudyRow,study.accessionNumber , '','td',["accessionNumber"]);
         createElement(StudyRow,study.procedure , '','td',[]);
-        createElement(StudyRow,study.studyTime , '','td',["text-center"]);
-        createElement(StudyRow,study.injectionTime ,'','td',["text-center"]);     
+        createElement(StudyRow,study.studyTime , '','td',[]);
+        createElement(StudyRow,study.injectionTime ,'','td',[]);    
+        if (study.status == 0) {
+          CanOrder = true;
+          const checkboxTD = createElement(StudyRow,'', '', "td", ["checkbox"])
+          const checkbox = $("<input>", {
+            id : study.accessionNumber,
+            type : "checkbox",
+            checked : ""
+          })
+          checkbox.appendTo(checkboxTD)
+        } else if (study.status == 1) {
+          const imageTD = createElement(StudyRow,'', '', "td", [])
+          const image   = $("<img>", {
+            src: "/static/customer/images/x-circle-fill.svg"
+          })
+          image.appendTo(imageTD)
+        } else if (study.status == 2) {
+          const imageTD = createElement(StudyRow,'', '', "td", [])
+          const image   = $("<img>", {
+            src: "/static/customer/images/check.svg"
+          })
+          image.appendTo(imageTD)
+
+        } else {
+          console.log("Unknown Status:" + String(study.Status))
+        };
+
+      }
+      if (CanOrder) {
+        const OrderButtonFlexRow = createElement(HidingDiv, '','',"div",["d-flex", "flex-row-reverse", "col-12"]);
+        const OrderButtonDiv     = createElement(OrderButtonFlexRow,'','',"div",["p-2"]);
+        const OrderButton        = $('<input>', {
+          id: String(TracerNumber) + "-orderButton",
+          type : "button",
+          value : "Bestil"
+        });
+        OrderButton.addClass("orderbutton");
+        OrderButton.addClass("btn");
+        OrderButton.addClass("btn-outline-secondary");
+        OrderButton.appendTo(OrderButtonDiv);
+        OrderButton.on("click", MassOrder)
       }
       TracerNumber++;
     }
+    const buttons = $(".tableButton");
+    if (buttons.length != 0){
+      buttons[0].click();
+    }
   });
-}
+};
 
 
 $(function() { 
-  var buttons = $(".tableButton");
-  for ( let i = 0; i < buttons.length; i++) {
-    var activeButton = $(buttons[i])
-    activeButton.on('click', ShowHideData)
+  const buttons = $(".tableButton");
+  for (const activeButton of buttons) {
+    $(activeButton).on('click', ShowHideData)
   };
+  if (buttons.length != 0){
+    buttons[0].click();
+  }
+
+  const OrderButtons = $(".orderButton");
+  for (const orderButton of OrderButtons) {
+    $(orderButton).on("click", MassOrder)
+  }
+
 
   CalenderInstance = new CalenderFactory(
     'calender', 

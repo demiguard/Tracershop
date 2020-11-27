@@ -13,7 +13,6 @@ class LoginView(TemplateView):
   path = "login"
 
   def get(self, request):
-
     context = {
       'login_form' : LoginForm()
     }

@@ -2,7 +2,7 @@ from django import forms
 from django.forms import Form, ModelForm
 
 from customer.lib.Enums import USECASENAMING
-from customer.models import PotentialUser
+from customer.models import PotentialUser, Procedure
 
 class OrderForm(Form):
   order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
@@ -71,3 +71,11 @@ class ActiveCustomerForm(Form):
     super().__init__(*args, **kwargs)
     self.fields[name] = forms.BooleanField(required=False, initial=initalValue)
     
+class ProcedureForm(ModelForm):
+  class Meta:
+    model = Procedure
+    fields = ["title", "baseDosis", "delay", "tracer", "inUse"]
+
+  def __init__(self, *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.fields["title"].widget.attrs["readonly"] = True

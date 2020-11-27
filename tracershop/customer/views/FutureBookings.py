@@ -24,7 +24,6 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
       redirect("customer:editMyCustomer")
 
     studies = FilterBookings(activeCustomer, today)
-    
     context = {
       'customerIDs' : LMap(lambda x: (x.ID, x.customerName), customers),
       'studies' : studies,

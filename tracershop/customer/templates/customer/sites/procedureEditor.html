@@ -1,0 +1,48 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/procedureEditor.css' %}">
+{% endblock %}
+
+{% block content %}
+
+<form class="col-12 row" method="POST">
+  {% csrf_token %}
+
+  <table class="table col-10">
+    <thead class="text-center">
+      <th>Undersgelse </th>
+      <th>Dosis</th>
+      <th>Forsinkelse</th>
+      <th>Tracer</th>
+      <th>I brug</th>
+    </thead>
+    <tbody id="tableBody">
+      {% for form in procedureForms %}
+      <tr>
+        <td class="titleData">{{ form.title }}    </td>
+        <td class="dosisData">{{ form.baseDosis }}</td>
+        <td class="delayData">{{ form.delay }}    </td>
+        <td class="traceData">{{ form.tracer }}   </td>
+        <td class="inUseData">{{ form.inUse }}   </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="col-2 d-flex justify-content-end text-right">
+    <input type="button" id="updateButton" value="Opdater" class="updateButton btn btn-outline-primary">
+    <div class="d-flex align-bottom align-text-bottom">
+    </div>
+  </div>
+</form>
+
+
+{% endblock %}
+
+{% block javascript %}
+ <script type="module" src="{% static 'customer/javascript/sites/procedureEditor.js' %}"></script>
+{% endblock %}
+

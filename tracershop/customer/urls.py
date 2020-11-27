@@ -4,8 +4,9 @@ from django.urls    import path
 from customer.lib.CustomTools import LMap
 
 # Views
-from customer.views.index          import IndexView
-from customer.views.FutureBookings import FutureBooking
+from customer.views.index           import IndexView
+from customer.views.FutureBookings  import FutureBooking
+from customer.views.procedureEditor import ProcedureEditor
 
 from customer.views.admin.verify_user import VerifyUserView, APIVerifyUser
 
@@ -15,11 +16,13 @@ from customer.views.auth.login             import LoginView, APILoginView, APILo
 from customer.views.auth.editMyCustomers   import EditMyCustomers
 from customer.views.auth.editmyuser        import EditMyUser
 
-from customer.views.api.api_add_order    import Api_add_order
-from customer.views.api.api_month_status import Api_month_status
-from customer.views.api.api_order_date   import ApiOrderDate
-from customer.views.api.api_add_torder   import Api_add_torder
-from customer.views.api.apiFutureDaily   import ApiFutureBookingDay
+from customer.views.api.api_add_order       import Api_add_order
+from customer.views.api.api_month_status    import Api_month_status
+from customer.views.api.api_order_date      import ApiOrderDate
+from customer.views.api.api_add_torder      import Api_add_torder
+from customer.views.api.apiFutureDaily      import ApiFutureBookingDay
+from customer.views.api.apiUpdateProcedures import ApiUpdateProcedure
+from customer.views.api.apiMassAddOrder     import ApiMassAddOrder
 
 app_name = 'customer'
 
@@ -27,6 +30,7 @@ Views = [
   #Sites
   IndexView,
   FutureBooking,
+  ProcedureEditor,
   #Admin
   VerifyUserView, 
   APIVerifyUser,
@@ -41,8 +45,10 @@ Views = [
   Api_add_order,
   Api_month_status,
   ApiOrderDate,
+  ApiMassAddOrder,
   Api_add_torder,
-  ApiFutureBookingDay
+  ApiFutureBookingDay,
+  ApiUpdateProcedure
 ]
 
 urlpatterns = LMap(lambda view: path(view.path, view.as_view(), name=view.name), Views)

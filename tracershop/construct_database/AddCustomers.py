@@ -15,7 +15,6 @@ def is_already_in_database(cursor, userID):
   """
   cursor.execute(sqlQuery)
   res = cursor.fetchone()[0]
-  print(res)
   if res:
     return True
   return False
