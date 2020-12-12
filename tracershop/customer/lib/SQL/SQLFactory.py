@@ -1,18 +1,14 @@
 from typing import Type
 from datetime import date,time,datetime
-
 from customer.lib import calenderHelper
+from customer.lib import Formatting
 
 """
 The purpose of the SQLFactory is to create SQL queries
 """
 
-
 def createSQLQueryOrderStatusByMonth(year :int, month : int , userID:int) -> str:
-  month = str(month)
-  if len(month) == 1:
-    month = "0" + month
-
+  month = Formatting.convertIntToStrLen2(month)
   return f""" 
   SELECT DISTINCT 
     DATE(deliver_datetime),
@@ -20,6 +16,18 @@ def createSQLQueryOrderStatusByMonth(year :int, month : int , userID:int) -> str
   FROM orders
   WHERE 
     CONVERT(DATE(deliver_datetime), CHAR) LIKE '{year}-{month}-%' AND
+    BID = {userID}
+  """
+
+def createSQLQueryTOrderStatusByMonth(year : int, month : int, userID : int):
+  month = Formatting.convertIntToStrLen2(month)
+  return f"""
+  SELECT DISTINCT
+    DATE(deliver_datetime),
+    status
+  FROM t_orders
+  WHERE
+    CONVERT (DATE(deliver_datetime), CHAR) Like '{year}-{month}-%' AND
     BID = {userID}
   """
 

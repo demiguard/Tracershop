@@ -13,7 +13,7 @@
 
   <table class="table col-10">
     <thead class="text-center">
-      <th>Undersgelse </th>
+      <th>Undersøgelse </th>
       <th>Dosis</th>
       <th>Forsinkelse</th>
       <th>Tracer</th>
@@ -21,7 +21,7 @@
     </thead>
     <tbody id="tableBody">
       {% for form in procedureForms %}
-      <tr>
+      <tr class="">
         <td class="titleData">{{ form.title }}    </td>
         <td class="dosisData">{{ form.baseDosis }}</td>
         <td class="delayData">{{ form.delay }}    </td>

@@ -13,9 +13,14 @@ from customer.models import PotentialUser
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
   SQLQuery       = SQLFactory.createSQLQueryOrderStatusByMonth(year, month, userID)
   QueryResult    = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  FormattedQuery = SQLFormatter.FormatMonthlyOrders(QueryResult)
+  return           SQLFormatter.FormatMonthlyOrders(QueryResult)
   
-  return FormattedQuery
+  
+
+def queryTOrderByMonth(year:int, month : int, userID : int) -> list:
+  SQLQuery       = SQLFactory.createSQLQueryTOrderStatusByMonth(year, month, userID)
+  QueryResult    = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return           SQLFormatter.FormatMonthlyOrders(QueryResult)
 
 
 def queryOrderByDate(date, userID : int ) -> list:

@@ -22,6 +22,7 @@ const update = function () {
     datatype : "JSON",
     success : function(data) {
       console.log(data["Success"])
+      window.location.href = "/futureBooking"
     }
   })
 };

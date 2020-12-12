@@ -1,0 +1,101 @@
+:root {
+  --status0 : var(--grey-4);
+  --status1 : #F55;
+  --status2 : #FF5;
+  --status3 : #5F5;
+}
+
+.date-base-class {
+  border: 5px;
+  border-style: solid;
+  border-radius: 3px;
+  border-radius: 100%;
+  padding:    3px;
+  margin: 3px;
+}
+
+.date-status0 {
+  background-color: var(--status0);
+  border-color:     var(--status0);
+}
+
+.date-status1 {
+  background-color: var(--status1);
+  border-color:     var(--status0);
+}
+
+.date-status2 {
+  background-color: var(--status2);
+  border-color:     var(--status0);
+}
+
+.date-status3 {
+  background-color: var(--status3);
+  border-color:     var(--status0);
+}
+
+.date-status10 {
+  background-color: var(--status0);
+  border-color:     var(--status1);
+}
+
+.date-status11 {
+  background-color: var(--status1);
+  border-color:     var(--status1);
+}
+
+.date-status12 {
+  background-color: var(--status2);
+  border-color:     var(--status1);
+}
+
+.date-status13 {
+  background-color: var(--status3);
+  border-color:     var(--status1);
+}
+
+.date-status20 {
+  background-color: var(--status0);
+  border-color:     var(--status2);
+}
+
+.date-status21 {
+  background-color: var(--status1);
+  border-color:     var(--status2);
+}
+
+.date-status22 {
+  background-color: var(--status2);
+  border-color:     var(--status2);
+}
+
+.date-status23 {
+  background-color: var(--status3);
+  border-color:     var(--status2);
+}
+
+.date-status30 {
+  background-color: var(--status0);
+  border-color:     var(--status3);
+}
+
+.date-status31 {
+  background-color: var(--status1);
+  border-color:     var(--status3);
+}
+
+.date-status32 {
+  background-color: var(--status2);
+  border-color:     var(--status3);
+}
+
+.date-status33 {
+  background-color: var(--status3);
+  border-color:     var(--status3);
+}
+
+.date-status5 {
+  background-color: var(--grey-2);
+  border-color: var(--grey-2);
+}
+

@@ -5,6 +5,7 @@
 {% block head %}
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/customerSelect.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/calender.css' %}">
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/CalenderDates.css' %}">
   <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/index.css' %}">
 {% endblock %}
 
@@ -51,7 +52,15 @@
           <tbody>
             {% for order in order.data %}
             <tr>
-              <td>{{order.status}}</td>
+              {% if order.status == 1 %}
+              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
+              {% elif order.status == 2 %}
+              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
+              {% elif order.status == 3 %}
+              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
+              {% else %}
+              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
+              {% endif %}
               <td>{{order.OID}}</td>
               <td>{{order.ordered_amount}}</td>
               <td>{{order.total_amount}}</td>
@@ -110,7 +119,15 @@
             {% for secondaryOrder in secondaryOrders %}
               <tr class="data-row">
                 <td>{{ secondaryOrder.tracer }}</td>
-                <td>{{ secondaryOrder.status }}</td>
+                {% if order.status == 1 %}
+                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
+                {% elif order.status == 2 %}
+                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
+                {% elif order.status == 3 %}
+                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
+                {% else %}
+                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
+                {% endif %}
                 <td>{{ secondaryOrder.OrderID }}</td>
                 <td>{{ secondaryOrder.deliver_datetime | date:'H:i' }}</td>
                 <td>{{ secondaryOrder.nInjections }}</td>

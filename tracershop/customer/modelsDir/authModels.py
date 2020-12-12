@@ -52,7 +52,7 @@ class Booking(Model):
     return str(self.accessionNumber)
 
 class UpdateTimeStamp(Model):
-  id = IntegerField()
+  id = IntegerField(primary_key=True)
   timeStamp = DateTimeField()
   
 

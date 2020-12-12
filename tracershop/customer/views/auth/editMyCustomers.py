@@ -30,7 +30,7 @@ class EditMyCustomers(LoginRequiredMixin, TemplateView):
       else:
         DjangoCustomer = DjangoCustomers[0] #Unique cuz primary Key
 
-      if not(DjangoCustomer.TestCustomer): #Should we append this one
+      if not(DjangoCustomer.TestCustomer) and DjangoCustomer.is_REGH: #Should we append this one
         
         inputList.append(
           ActiveCustomerForm(

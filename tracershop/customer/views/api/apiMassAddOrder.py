@@ -43,9 +43,7 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
 
 
   def post(self, request):
-    
     tracer, customerID, studies = self.processData(request.POST)
-    print(f"{tracer},\n{customerID}\n{studies}\n")
     if not(tracer and customerID and studies):
       print("Error")
       return JsonResponse({})
@@ -56,8 +54,7 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
     startTime = tmp.startTime
 
 
-    if isFDG := tracer.tracerName == "18-F-FDG":
-    
+    if isFDG := tracer.tracerName == "FDG":
       times = {calenderHelper.combine_time_and_date(startDate, item['dtime']) : 0 
             for item in SQL.getDailyRuns(startDate, customerID)}
 
@@ -76,7 +73,6 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
           FDGMBq, time = orders.calculateDosisFDG(booking, customerID, sorted(times.keys()))
           times[time] += FDGMBq
         else:
-          print("Inserting TOrder")
           orders.insertTOrderBooking(booking, customerID)
         booking.status = 2        
         booking.save()

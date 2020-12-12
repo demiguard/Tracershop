@@ -17,7 +17,7 @@ from customer.views.auth.editMyCustomers   import EditMyCustomers
 from customer.views.auth.editmyuser        import EditMyUser
 
 from customer.views.api.api_add_order       import Api_add_order
-from customer.views.api.api_month_status    import Api_month_status
+from customer.views.api.apiMonthStatus      import ApiMonthStatus
 from customer.views.api.api_order_date      import ApiOrderDate
 from customer.views.api.api_add_torder      import Api_add_torder
 from customer.views.api.apiFutureDaily      import ApiFutureBookingDay
@@ -43,7 +43,7 @@ Views = [
   EditMyCustomers,
   EditMyUser,
   Api_add_order,
-  Api_month_status,
+  ApiMonthStatus,
   ApiOrderDate,
   ApiMassAddOrder,
   Api_add_torder,

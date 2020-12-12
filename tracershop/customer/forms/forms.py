@@ -79,3 +79,5 @@ class ProcedureForm(ModelForm):
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.fields["title"].widget.attrs["readonly"] = True
+    for visible in self.visible_fields():
+      visible.field.widget.attrs['class'] = 'form-control'

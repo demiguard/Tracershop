@@ -126,9 +126,47 @@ def getLocation(sql, location:str) -> str:
     return x[0]
 
 
+def AddProcedure(sql, procedureName):
+  logger.info(f"Added producedure:{procedureName}")
+  SQLQuery = f"""
+  INSERT INTO customer_procedure(
+    title,
+    basisDosis,
+    delay,
+    inUse,
+    tracer_id
+  ) Values (
+    \"{procedureName}\",
+    0,
+    0,
+    0,
+    NULL
+  )
+  """
+  sql.execute(SQLQuery)
+
+
+def updateTimeStamp(sql):
+  now = datetime.now()
+
+  sqlQuery = f"""
+    REPLACE INTO customer_updatetimestamp(id, timeStamp) Values (1, \"{now.strftime("%Y-%m-%d %H:%M:%S")}\")
+  """
+  sql.execute(sqlQuery)
+
+
+def deleteOldbookings(sql, accessionNumbers):
+  accessionNumbers = list(map(lambda x: f"\"{x}\"", accessionNumbers))
+  accessionNumbers = ", ".join(accessionNumbers)
+
+  SQLQuery = f"""
+  DELETE FROM customer_booking 
+  WHERE accessionNumber NOT IN ({accessionNumbers})"""
+  sql.execute(SQLQuery)
+
+
 
 def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id):
-
   sqlQuery = f"""
     REPLACE INTO customer_booking(
       accessionNumber,
@@ -162,7 +200,8 @@ def handleDataset(dataset, sql):
   procedure_id = getProcedureID(sql, seq.ScheduledProcedureStepDescription)
   if procedure_id == -1:
     logger.error(f"Unknown Procedure: {seq.ScheduledProcedureStepDescription}")
-    return
+    AddProcedure(sql, seq.ScheduledProcedureStepDescription)
+    return handleDataset,sql
   accessionNumber = seq.ScheduledProcedureStepID
   unformattedTime = seq.ScheduledProcedureStepStartTime
   unformattedDate = seq.ScheduledProcedureStepStartDate
@@ -173,12 +212,17 @@ def handleDataset(dataset, sql):
 
 # C-Find Response
 def handleResponse(response, sql):
+  accessionNumbers = []
   for (status, dataset) in response:
     if status:
       if status.Status in (0xFF00, 0xFF01):
         handleDataset(dataset,sql)
+        seq = dataset.ScheduledProcedureStepSequence[0]
+        accessionNumbers.append(seq.ScheduledProcedureStepID)
     else:
-      logger.error('Status Not availble')  
+      logger.error('Status Not availble') 
+  deleteOldbookings(sql, accessionNumbers)  
+   
   
 ##################################################
 #                                                #
@@ -201,6 +245,7 @@ if __name__ == "__main__":
 
     with MysqlCursor() as sql:
       if sql:
+        updateTimeStamp(sql)
         conP = getConnectionParameters(sql)
         ds   = getQueryDataset(sql)
         with MyDicomConnection(ae,conP['ip'],conP['port'],conP['aet']) as assoc: 

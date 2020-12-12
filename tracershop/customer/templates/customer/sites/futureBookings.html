@@ -15,7 +15,7 @@
     <div class="TracerDiv row col-12">
       <div class="col-12 overViewDiv">
         <input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> 
-        <strong id="{{ forloop.counter0 }}-tracer"> {{ key }} </strong>
+        <strong id="{{ forloop.counter0 }}-tracer">{{ key }}</strong>
       </div> 
       <div class=hidden id="{{ forloop.counter0 }}-div">
         <table id="{{ forloop.counter0 }}-table" class="dataTable table">
@@ -45,9 +45,11 @@
         </tbody>
       </table>
       <div class="d-flex flex-row-reverse col-12">
+        {% if key != "None" %}
         <div class="p-2">
           <input type="button" id="{{ forloop.counter0 }}-orderButton" class="orderButton btn btn-outline-secondary" value="Bestil">
         </div>
+        {% endif %}
       </div>
         
       </div>

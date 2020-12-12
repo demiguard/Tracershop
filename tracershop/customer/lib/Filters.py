@@ -43,6 +43,8 @@ def FilterBookings(Customer, Date):
   studies = {}
 
   for booking in Booking.objects.filter(startDate=Date).filter(location__in=locations).order_by("startTime"):
+      if not(booking.procedure.inUse):
+        continue
       TracerStr = str(booking.procedure.tracer)
       #Fill BookingInfo with Data to display in HTML file
       injectionDateTime = datetime.datetime.combine(datetime.date.today(), booking.startTime) 

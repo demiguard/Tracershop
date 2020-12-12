@@ -5,6 +5,7 @@ export { CalenderFactory }
 // At the same time the 1 of a month is the first of a month
 // aka The date 01/01/2020 is Date = 1 month = 0, Year = 2020
 
+
 class CalenderFactory {
   //Helper Functions
   remove_weekdays() {
@@ -18,6 +19,10 @@ class CalenderFactory {
   DaysInAMonth(year, month){
     return new Date(year, month,0).getDate();
   };
+
+  SetActiveDate(Date) {
+    this.activeDate = Date;
+  }
 
   LastmondayInLastMonth(year,month){
     var pivot = 1;
@@ -49,6 +54,7 @@ class CalenderFactory {
       date_status, ){ 
     this.month_api_function = month_api_function;
     this.today = today;
+    this.activeDate = today;
     this.date_coloring_function = date_coloring_function;
     this.date_onClick_function = date_onClick_function;
     this.date_status = date_status;
@@ -118,8 +124,9 @@ class CalenderFactory {
         var dayDiv = document.createElement("div");
         dayDiv.classList.add('calender-row');
         var day = new Date(year, month, pivotday);
-        var real_today = new Date()
-        if (day.getUTCDate() == real_today.getUTCDate()) {
+        
+        
+        if (day.getUTCDate() == this.activeDate.getUTCDate() && day.getMonth() == this.activeDate.getMonth()) {
           dayDiv.classList.add('today')
         }
         var day_str = String(day.getFullYear()) + "-";

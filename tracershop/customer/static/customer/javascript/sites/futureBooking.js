@@ -63,9 +63,20 @@ var dateColoringFunction = function(div, date, directory) {
 
 }
 
+var change_date = function (dateDiv, newDate) {
+  CalenderInstance.SetActiveDate(newDate);
+  today = newDate;
+  var currToday = $(".today");
+  currToday.removeClass('today');
+  dateDiv.classList.add('today');
+};
+
+
+
 var DateOnClick = function(div, date) {
   var jqDiv = $(div)
   jqDiv.on('click', function() {
+    change_date(div, date);
     ClearTable();
     ChangeTable(date);
   })
@@ -161,7 +172,8 @@ var ChangeTable = function(date) {
         };
 
       }
-      if (CanOrder) {
+      
+      if (CanOrder && Tracer != "None") {
         const OrderButtonFlexRow = createElement(HidingDiv, '','',"div",["d-flex", "flex-row-reverse", "col-12"]);
         const OrderButtonDiv     = createElement(OrderButtonFlexRow,'','',"div",["p-2"]);
         const OrderButton        = $('<input>', {
@@ -199,10 +211,12 @@ $(function() {
     $(orderButton).on("click", MassOrder)
   }
 
+  var Ztoday = new Date(today.getYear()+1900, today.getMonth(),today.getDate())
+
 
   CalenderInstance = new CalenderFactory(
     'calender', 
-    today,
+    Ztoday,
     dateColoringFunction,
     DateOnClick,
     MonthApiCall,

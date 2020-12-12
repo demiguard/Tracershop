@@ -9,26 +9,25 @@ var CalenderInstance;
 var CustomerInstance;
 
 var dateColoringFunction = function(div,  date, directory){
+  div.classList.add('date-base-class')
   if (date in directory){
-    var directory_value = directory[date];
-    if (directory_value == 1){
-      div.classList.add('date-status1');
-    } else if (directory_value == 2) {
-      div.classList.add('date-status2');
-    } else if (directory_value == 3) {
-      div.classList.add('date-status3');
-    }
+    var directory_value = String(directory[date]);
+    div.classList.add('date-status' + directory_value);
   } else {
-    div.classList.add('date-status4');
+    div.classList.add('date-status5');
   }
 };
 
 
-var change_date = function (newDate) {
-  today = newDate
+var change_date = function (dateDiv, newDate) {
+  CalenderInstance.SetActiveDate(newDate);
+  today = newDate;
   var day = newDate.getDate();
   var month = newDate.getMonth() + 1;
   var year = newDate.getFullYear();
+  var currToday = $(".today");
+  currToday.removeClass('today');
+  dateDiv.classList.add('today');
   var newText = "Dato: " + day + "/" + month + "/" + year;
   $('#dato').text(newText);
 };
@@ -46,7 +45,7 @@ var clear_order_table = function() {
 var Date_onClick = function (div, date) {
   var jdiv = $(div);
   jdiv.on('click', function() {
-    change_date(date);
+    change_date(div, date);
     clear_order_table();
     fill_order_table(date);
   });
@@ -58,7 +57,7 @@ var Month_api_call = function(year, month) {
   //  Produces a Dictionany for the $.get for the month api to the Calender API
   ////////////////////////
   return {
-    url: "api/month_status/" + String(year) + "/" + String(month + 1),
+    url: "api/monthStatus/" + String(year) + "/" + String(month + 1),
     data: {"userID" : $('#customer_select')[0].value},
     success: function (data){return data} 
   }
@@ -131,7 +130,12 @@ var fill_order_table = function(date) {
         for (let j = 0; j < response.data.length; j++){
           const order = response.data[j];
           var tableRow = createElement(tableBody,'',    '', 'tr', []);
-          createElement(tableRow, order.status,         '', 'td', []);
+          const statusRow = createElement(tableRow, '',         '', 'td', []);
+          const statusImage = $('<img>', {
+            src: "/static/customer/images/clipboard" + order.status + ".svg",
+            class: "StatusIcon"
+          });
+          statusImage.appendTo(statusRow);
           createElement(tableRow, order.OID,        '', 'td', []);
           createElement(tableRow, order.ordered_amount, '', 'td', []);
           createElement(tableRow, order.total_amount,   '', 'td', []);
@@ -152,7 +156,12 @@ var fill_order_table = function(date) {
         const TORDER = data.tOrders[i];
         var table_row = createElement($('#secondaryTableBody'), '','','tr',['data-row']);
         createElement(table_row, TORDER.tracer,'','td',[])        
-        createElement(table_row, TORDER.status,'','td',[])        
+        const statusRow = createElement(table_row, '',         '', 'td', []);
+        const statusImage = $('<img>', {
+          src: "/static/customer/images/clipboard" + TORDER.status + ".svg",
+          class: "StatusIcon"
+        });    
+        statusImage.appendTo(statusRow);
         createElement(table_row, TORDER.OrderID,'','td',[])
         createElement(table_row, TORDER.deliver_datetime.substr(11,5),'','td',[])
         createElement(table_row, TORDER.nInjections, '', 'td', [])
@@ -174,7 +183,6 @@ var fill_order_table = function(date) {
     dropChildern(TFormTbody);
     for (let i = 0; i < data.tOrdersForms.length; i++) {
       const TORDERFORM = data.tOrdersForms[i];
-      console.log(TORDERFORM);
       var formRow = createElement(TFormTbody,'',"Row"+TORDERFORM.id,'tr',[]);
       createElement(formRow, TORDERFORM.name,"TracerName", 'td',[]);
       createElement(formRow, deliverTimeInputStr,"deliverTime", 'td',[]);
@@ -301,9 +309,12 @@ $(function() {
     TOrderButton.on('click', () => Send_torder(id));
   }
 
+  //Okay I HAVE NO IDEA Why this line of code is needed, but if you dont you have zero indentation error
+  var Ztoday = new Date(today.getYear()+1900, today.getMonth(),today.getDate())
+
   CalenderInstance = new CalenderFactory(
     'calender',
-    today, 
+    Ztoday, 
     dateColoringFunction, 
     Date_onClick, 
     Month_api_call,

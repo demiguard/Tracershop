@@ -10,7 +10,7 @@ from customer.forms import formFactory
 from customer.lib import calenderHelper, Filters, Formatting
 from customer.lib.CustomTools import LMap
 from customer.lib.SQL import SQLController as SQL
-
+from customer.lib import orders
 
 class IndexView(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/index.html'
@@ -22,8 +22,8 @@ class IndexView(LoginRequiredMixin, TemplateView):
   def get(self, request):
     today = datetime.date.today()
     customerIDs = LMap(
-        lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
-        models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))
+      lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
+      models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))
 
     if customerIDs == []:
       return redirect("customer:editMyCustomer")
@@ -40,8 +40,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
     data = Filters.matchOrders(injections, runs)
     
     # Calender construction
-    status_tupples = SQL.queryOrderByMonth(today.year, today.month, active_customerID)
-    
+    MonthlyOrders           = orders.getMonthlyOrders(today.year, today.month, active_customerID)
 
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
@@ -56,6 +55,6 @@ class IndexView(LoginRequiredMixin, TemplateView):
       'Dato_DK_format'  : today.strftime('%d/%m/%Y'),
       'today'           : today.strftime('%Y-%m-%d'),
       'orders'          : injections,
-      'data_status'     : status_tupples,
+      'data_status'     : MonthlyOrders,
     }
     return render(request, self.template_name, context=context)
