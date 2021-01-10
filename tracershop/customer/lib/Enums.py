@@ -9,6 +9,6 @@ class UseCaseEnum(Enum):
   def choices(cls):
     return [(i, i.value) for i in cls]
 
-USECASENAMING = ['Menneske', 'Dyr', 'Andet']
+USECASENAMING = ['Human', 'Dyr', 'Andet']
 USECASEDBNAMEINGS = ['Human', 'Dyr', 'Andet']
   

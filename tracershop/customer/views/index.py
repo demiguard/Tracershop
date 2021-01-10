@@ -44,7 +44,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
 
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
-    DailyTOrders            = LMap(Formatting.formatUse, SQL.getDailyTOrders(today, active_customerID))
+    DailyTOrders            = SQL.getDailyTOrders(today, active_customerID)
     
     context = {
       'customerIDs'     : customerIDs,

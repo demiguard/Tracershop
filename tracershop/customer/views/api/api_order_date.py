@@ -2,8 +2,10 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 
-from customer.lib import Filters, Formatting
 from customer.lib import calenderHelper
+from customer.lib import Filters
+from customer.lib import Formatting
+from customer.lib import orders
 from customer.lib.CustomTools import LMap
 from customer.lib.SQL import SQLController as SQL
 
@@ -14,23 +16,32 @@ class ApiOrderDate(View):
   name = "ApiOrderDate"
 
   def get(self, request, year, month, day):
+    print("helloworld")
     try:
       dt_object = datetime.datetime(year,month,day)
     except ValueError:
       return HttpResponseBadRequest()
-
-    if SQL.getClosed(dt_object):
-      pass
-
+    
     userID = request.GET['UserID']
     order = SQL.queryOrderByDate(dt_object, userID)
     runs = SQL.getDailyRuns(dt_object, userID)
+    responses = Filters.matchOrders(order, runs)
+
     tOrders = SQL.getDailyTOrders(dt_object, userID)
-    tOrderForms = SQL.getTOrdersForms(userID)
+    if orders.isOrderTAvailableForDate(dt_object):
+      tOrderForms = SQL.getTOrdersForms(userID)
+    else:
+      tOrderForms = []
+
+    
+    if not orders.isOrderFDGAvailalbeForDate(dt_object):
+      responses = orders.removeOrdersFromList(responses) 
+
+
 
     response_dir = {
-      'responses' : Filters.matchOrders(order, runs),
-      'tOrders'   : LMap(Formatting.formatUse, tOrders),
+      'responses'    : responses,
+      'tOrders'      : tOrders,
       'tOrdersForms' : tOrderForms
     }
 
@@ -38,4 +49,5 @@ class ApiOrderDate(View):
       if order['data_type'] == "form":
         del order['data']
 
+    print("goodbye")
     return JsonResponse(response_dir)    

@@ -93,6 +93,23 @@ def isOrderFDGAvailalbeForDate(date):
 def isOrderTAvailableForDate(date):
   now = datetime.now()
 
-  
+  nextDeadlineday  = now + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - now.weekday()) % 7)
+  deadlineDateTime = datetime(nextDeadlineday.year, nextDeadlineday.month, nextDeadlineday.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
+  if now.weekday() == constants.TORDERDEADLINEWEEKDAY:
+    nowDT = datetime(date.year, date.month, date.day, now.hour, now.minute)
+  else:
+    nowDT = datetime(date.year, date.month, date.day, 0, 0)
+  if nowDT < deadlineDateTime :
+    return False
+
+  if SQL.getClosed(date):
+    return False
 
   return True
+
+def removeOrdersFromList(responses):
+  returnlist = []
+  for response in responses:
+    if response['data_type'] != "form":
+      returnlist.append(response)
+  return returnlist
