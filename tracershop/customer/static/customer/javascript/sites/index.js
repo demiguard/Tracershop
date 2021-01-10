@@ -14,7 +14,7 @@ var dateColoringFunction = function(div,  date, directory){
     var directory_value = String(directory[date]);
     div.classList.add('date-status' + directory_value);
   } else {
-    div.classList.add('date-status5');
+    div.classList.add('date-status55');
   }
 };
 

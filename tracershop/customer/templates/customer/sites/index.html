@@ -13,7 +13,6 @@
 <div class="row col-12" id="dato">
   Dato: {{ Dato_DK_format }}
 </div>
-
 <div id="FTG" class="container col-9 row">
   <div id="content"  class="col-9">
       {% for order in data %} 
@@ -79,6 +78,80 @@
   <div class="col-2 flex text-center">
     <img src="{% static 'customer/images/calculator.svg' %}" class="calculator" id="calculator{{ order.time | time:'H:i' }}" height="36px">
   </div>
+  <div id="second" class="col-9">
+    {% if secondaryOrders %}
+      <div id="T_orders">
+    {% else %}
+      <div id="T_orders" class="DisplayHidden">
+    {% endif %}
+        <div class="row">
+          <p>Ordre af Tracer Bestilt til i dag:</p>
+        </div>
+        <div id="torder_data">
+          <table class="table">
+            <thead>
+              <th>Tracer</th>
+              <th>Status</th>
+              <th>Order ID</th>
+              <th>Bestilt til</th>
+              <th>Injectioner</th>
+              <th>Til</th>            
+            </thead>
+            <tbody id="secondaryTableBody">
+              {% if secondaryOrders %}
+              {% for secondaryOrder in secondaryOrders %}
+                <tr class="data-row">
+                  <td>{{ secondaryOrder.tracer }}</td>
+                  {% if order.status == 1 %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
+                  {% elif order.status == 2 %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
+                  {% elif order.status == 3 %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
+                  {% else %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
+                  {% endif %}
+                  <td>{{ secondaryOrder.OrderID }}</td>
+                  <td>{{ secondaryOrder.deliver_datetime | date:'H:i' }}</td>
+                  <td>{{ secondaryOrder.nInjections }}</td>
+                  <td>{{ secondaryOrder.use }}</td>
+                </tr>
+              {% endfor %}
+              {% endif %}
+            </tbody>            
+          </table>
+        </div>
+      </div>
+      
+    {% if secondaryForms %}
+    <p>Bestillinger af andre tracers til i dag:</p>
+    <div id="T_forms">
+      <table class="table">
+        <thead>
+          <th>Tracer</th>
+          <th>Bestil til</th>
+          <th>Antal injectioner</th>
+          <th>Brug </th>
+          <th></th>
+        </thead>
+        <tbody id="TFormRows">
+          {% for secondaryForm in secondaryForms %}
+          <tr id="Row{{ secondaryForm.id }}">
+            <td id="TracerName">{{ secondaryForm.name }} </td>
+            <td id="deliverTime" class="">{{ secondaryForm.deliverTime }}</td>  
+            <td id="InjectionField" class="">{{ secondaryForm.injectionField }}</td> 
+            <td id="UseField">{{ secondaryForm.useField }}</td> 
+            <td><input type="button" id="TOrderButton{{ secondaryForm.id }}" class="TorderButton btn btn-outline-secondary" value="Bestil"></td>
+          </tr>
+          {% endfor %}  
+        </tbody>
+      </table>
+      
+      </p>
+    </div>
+    {% endif %}
+  
+  </div>
 </div>
 <div class="col-3">
   <div id="div_customer_select" class="input-group">
@@ -95,83 +168,7 @@
 </div>
 
 
-<div id="second" class="col-9">
-  {% if secondaryOrders %}
-    <div id="T_orders">
-  {% else %}
-    <div id="T_orders" class="DisplayHidden">
-  {% endif %}
-      <div class="row">
-        <p>Ordre af Tracer Bestilt til i dag:</p>
-      </div>
-      <div id="torder_data">
-        <table class="table">
-          <thead>
-            <th>Tracer</th>
-            <th>Status</th>
-            <th>Order ID</th>
-            <th>Bestilt til</th>
-            <th>Injectioner</th>
-            <th>Til</th>            
-          </thead>
-          <tbody id="secondaryTableBody">
-            {% if secondaryOrders %}
-            {% for secondaryOrder in secondaryOrders %}
-              <tr class="data-row">
-                <td>{{ secondaryOrder.tracer }}</td>
-                {% if order.status == 1 %}
-                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
-                {% elif order.status == 2 %}
-                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
-                {% elif order.status == 3 %}
-                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
-                {% else %}
-                  <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
-                {% endif %}
-                <td>{{ secondaryOrder.OrderID }}</td>
-                <td>{{ secondaryOrder.deliver_datetime | date:'H:i' }}</td>
-                <td>{{ secondaryOrder.nInjections }}</td>
-                <td>{{ secondaryOrder.use }}</td>
-              </tr>
-            {% endfor %}
-            {% endif %}
-          </tbody>
-          
-          
-        </table>
-      </div>
-    </div>
-  
 
-  {% if secondaryForms %}
-  <p>Bestillinger af andre tracers til i dag:</p>
-  <div id="T_forms">
-    <table class="table">
-      <thead>
-        <th>Tracer</th>
-        <th>Bestil til</th>
-        <th>Antal injectioner</th>
-        <th>Brug </th>
-        <th></th>
-      </thead>
-      <tbody id="TFormRows">
-        {% for secondaryForm in secondaryForms %}
-        <tr id="Row{{ secondaryForm.id }}">
-          <td id="TracerName">{{ secondaryForm.name }} </td>
-          <td id="deliverTime" class="">{{ secondaryForm.deliverTime }}</td>  
-          <td id="InjectionField" class="">{{ secondaryForm.injectionField }}</td> 
-          <td id="UseField">{{ secondaryForm.useField }}</td> 
-          <td><input type="button" id="TOrderButton{{ secondaryForm.id }}" class="TorderButton btn btn-outline-secondary" value="Bestil"></td>
-        </tr>
-        {% endfor %}  
-      </tbody>
-    </table>
-    
-    </p>
-  </div>
-  {% endif %}
-
-</div>
 
 {% endblock %}
 

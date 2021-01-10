@@ -4,6 +4,7 @@ from datetime import datetime, date, time, timedelta
 
 from customer.lib import calenderHelper
 from customer.lib import Formatting
+from customer import constants
 from customer.lib.SQL import SQLController as SQL 
 from customer.models import Procedure, Booking, Tracer
 
@@ -43,17 +44,29 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
   #### So goal is to merge the two dict into one                                        ####
   #### Function needs to map 1,2,3 from each dict                                       ####
   #### Uses first digit is status from first dict and second dict is status from second ####
-  month = Formatting.convertIntToStrLen2(month)
+  monthStr = Formatting.convertIntToStrLen2(month)
   returnDict = {}
 
   for i in range(1,32):
+    try:
+      calenderDate = date(year,month,i)
+    except ValueError:
+      continue
     status = 0
     dayStr = Formatting.convertIntToStrLen2(i)
-    dateStr = f"{year}-{month}-{dayStr}"
+    dateStr = f"{year}-{monthStr}-{dayStr}"
     if FDGStatus := FDG.get(dateStr):
       status += FDGStatus
+    else:  
+      if not(isOrderFDGAvailalbeForDate(calenderDate)):
+        status += 5
     if TOrderStatus := TOrders.get(dateStr):
       status += 10 * TOrderStatus
+    else:
+      if not(isOrderTAvailableForDate(calenderDate)):
+        status += 50
+      
+    
     returnDict[dateStr] = status
 
   return returnDict
@@ -62,3 +75,24 @@ def getMonthlyOrders(year, month, userID):
   MonthlyStatusFDG     = SQL.queryOrderByMonth(year, month, userID)
   MonthlyStatusTOrders = SQL.queryTOrderByMonth(year, month, userID)
   return                 MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders) 
+
+
+def isOrderFDGAvailalbeForDate(date):
+  now = datetime.now()
+
+  deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN) + timedelta(days=constants.ORDERDEADLINEDAY)
+
+  if deadlineDateTime < now:
+    return False
+
+  if SQL.getClosed(date):
+    return False
+  return True
+
+
+def isOrderTAvailableForDate(date):
+  now = datetime.now()
+
+  
+
+  return True

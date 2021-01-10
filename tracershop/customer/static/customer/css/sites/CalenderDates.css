@@ -3,6 +3,7 @@
   --status1 : #F55;
   --status2 : #FF5;
   --status3 : #5F5;
+  --status5 : var(--grey-2);
 }
 
 .date-base-class {
@@ -34,6 +35,11 @@
   border-color:     var(--status0);
 }
 
+.date-status5 {
+  background-color: var(--status5);
+  border-color:     var(--status0);
+}
+
 .date-status10 {
   background-color: var(--status0);
   border-color:     var(--status1);
@@ -54,6 +60,12 @@
   border-color:     var(--status1);
 }
 
+.date-status15 {
+  background-color: var(--status5);
+  border-color:     var(--status1);
+}
+
+
 .date-status20 {
   background-color: var(--status0);
   border-color:     var(--status2);
@@ -71,6 +83,11 @@
 
 .date-status23 {
   background-color: var(--status3);
+  border-color:     var(--status2);
+}
+
+.date-status25 {
+  background-color: var(--status5);
   border-color:     var(--status2);
 }
 
@@ -94,8 +111,33 @@
   border-color:     var(--status3);
 }
 
-.date-status5 {
-  background-color: var(--grey-2);
-  border-color: var(--grey-2);
+.date-status35 {
+  background-color: var(--status5);
+  border-color:     var(--status3);
+}
+
+.date-status50 {
+  background-color: var(--status0);
+  border-color:     var(--status5);
+}
+
+.date-status51 {
+  background-color: var(--status1);
+  border-color:     var(--status5);
+}
+
+.date-status52 {
+  background-color: var(--status2);
+  border-color:     var(--status5);
+}
+
+.date-status53 {
+  background-color: var(--status3);
+  border-color:     var(--status5);
+}
+
+.date-status55 {
+  background-color: var(--status5);
+  border-color:     var(--status5);
 }
 
