@@ -9,7 +9,6 @@ The bookkeeping system is a django webservice that runs on top of a mysql databa
 
 * **Django app - Customer** The main webservice
 * **pingService** a service that retrieves studies from the future at a regular interval
-* **OldFaithful** a service that regulary syncronises the new database and the old database
 
 ## Old System
 
