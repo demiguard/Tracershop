@@ -23,3 +23,9 @@ def mapTimeDeltasToTime(SQLQueries: list, key:str) -> list:
   for query in SQLQueries:
     query[key] = calenderHelper.timedeltaToTime(query[key])
   return SQLQueries
+
+def MonthlyDirectory(dates):
+  returnDict = {}
+  for date in dates:
+    returnDict[date[0].strftime("%Y-%m-%d")] = True
+  return returnDict

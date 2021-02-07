@@ -16,28 +16,25 @@ class ApiOrderDate(View):
   name = "ApiOrderDate"
 
   def get(self, request, year, month, day):
-    print("helloworld")
     try:
       dt_object = datetime.datetime(year,month,day)
     except ValueError:
       return HttpResponseBadRequest()
     
+    closedDates = SQL.monthlyCloseDates(year, month)
     userID = request.GET['UserID']
     order = SQL.queryOrderByDate(dt_object, userID)
     runs = SQL.getDailyRuns(dt_object, userID)
     responses = Filters.matchOrders(order, runs)
 
     tOrders = SQL.getDailyTOrders(dt_object, userID)
-    if orders.isOrderTAvailableForDate(dt_object):
+    if orders.isOrderTAvailableForDate(dt_object, closedDates):
       tOrderForms = SQL.getTOrdersForms(userID)
     else:
       tOrderForms = []
 
-    
-    if not orders.isOrderFDGAvailalbeForDate(dt_object):
+    if not orders.isOrderFDGAvailalbeForDate(dt_object, closedDates):
       responses = orders.removeOrdersFromList(responses) 
-
-
 
     response_dir = {
       'responses'    : responses,
@@ -49,5 +46,4 @@ class ApiOrderDate(View):
       if order['data_type'] == "form":
         del order['data']
 
-    print("goodbye")
     return JsonResponse(response_dir)    

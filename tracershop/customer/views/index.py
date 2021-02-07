@@ -40,10 +40,15 @@ class IndexView(LoginRequiredMixin, TemplateView):
     data = Filters.matchOrders(injections, runs)
     
     # Calender construction
+    monthlyCloseDates       = SQL.monthlyCloseDates(today.year, today.month)
     MonthlyOrders           = orders.getMonthlyOrders(today.year, today.month, active_customerID)
 
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
-    secondaryOrdersForms    = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
+    
+    if orders.isOrderTAvailableForDate(today, monthlyCloseDates):
+      secondaryOrdersForms = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
+    else:
+      secondaryOrdersForms = []
     DailyTOrders            = SQL.getDailyTOrders(today, active_customerID)
     
     context = {

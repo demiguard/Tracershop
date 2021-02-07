@@ -14,4 +14,5 @@ class ApiMonthStatus(View):
     
     userID = request.GET['userID']
     MergedOrders = orders.getMonthlyOrders(year, month, userID)
+    
     return JsonResponse(MergedOrders)    

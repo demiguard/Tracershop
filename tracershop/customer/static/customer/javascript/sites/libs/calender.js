@@ -165,7 +165,7 @@ class CalenderFactory {
     
     this.monthDiv.innerText = this.today.toLocaleString('default', {month:'long'});
     var parent = this
-
+    
     var api_call = this.month_api_function(year, month)
     $.get(api_call).then(function(data) {
       parent.date_status = data;

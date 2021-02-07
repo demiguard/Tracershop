@@ -131,3 +131,12 @@ def getActiveCustomers() -> list:
   nameDir    = constants.SQLTuples
 
   return SQLFormatter.FormatSQLTuple(ActiveCustomers, nameDir[tupleName])
+
+def monthlyCloseDates(year:int, month:int):
+  SQLQuery = SQLFactory.createSQLQueryMonthlyClosedDates(year, month)
+  closedDates = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  if closedDates:
+    return SQLFormatter.MonthlyDirectory(closedDates)
+  else:
+    return {}
+

@@ -17,8 +17,8 @@ class VerifyUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   template_name = 'customer/admin/VerifyUser.html'
 
   def get(self, request):
-    unverfiedUsers =SQLController.get_unverified_users()
-    maxCustomerNumber =SQLController.getMaxCustomerNumber()
+    unverfiedUsers =     SQLController.get_unverified_users()
+    maxCustomerNumber =  SQLController.getMaxCustomerNumber()
     verificationforms = [ VerifyUserForm(initial={'customerNumber': i+1+maxCustomerNumber}) for i,_ in enumerate(unverfiedUsers) ]
 
     context = {
@@ -26,6 +26,8 @@ class VerifyUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
     }
 
     return render(request, self.template_name, context)
+
+
 
 class APIVerifyUser(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   path = "api/verifyUser/<int:userID>"

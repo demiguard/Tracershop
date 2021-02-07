@@ -80,6 +80,9 @@ def createSQLQueryClosedDate(date) -> str:
     ddate = \"{date}\"
   """
 
+
+
+
 def createSQLQueryMaxCustomerNumber() -> str:
   return f"""
   SELECT 
@@ -218,3 +221,22 @@ def createSQLQueryActiveCustomers():
     ORDER BY
       Users.Username
     """
+
+
+def createSQLQueryMonthlyClosedDates(year, month):
+  if month == 12:
+    newMonth = "01"
+    newYear  = year + 1
+  else:
+    newMonth = Formatting.convertIntToStrLen2(month + 1)
+    newYear  = year
+  month = Formatting.convertIntToStrLen2(month)
+
+  return f"""
+  SELECT
+    ddate
+  FROM
+    blockDeliverDate
+  WHERE
+    ddate BETWEEN \"{year}-{month}-01\" AND \"{newYear}-{newMonth}-01\"
+  """

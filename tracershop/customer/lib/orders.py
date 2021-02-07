@@ -47,6 +47,8 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
   monthStr = Formatting.convertIntToStrLen2(month)
   returnDict = {}
 
+  closedDates = SQL.monthlyCloseDates(year, month)
+
   for i in range(1,32):
     try:
       calenderDate = date(year,month,i)
@@ -58,12 +60,12 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
     if FDGStatus := FDG.get(dateStr):
       status += FDGStatus
     else:  
-      if not(isOrderFDGAvailalbeForDate(calenderDate)):
+      if not(isOrderFDGAvailalbeForDate(calenderDate, closedDates)):
         status += 5
     if TOrderStatus := TOrders.get(dateStr):
       status += 10 * TOrderStatus
     else:
-      if not(isOrderTAvailableForDate(calenderDate)):
+      if not(isOrderTAvailableForDate(calenderDate, closedDates)):
         status += 50
       
     
@@ -74,10 +76,12 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
 def getMonthlyOrders(year, month, userID):
   MonthlyStatusFDG     = SQL.queryOrderByMonth(year, month, userID)
   MonthlyStatusTOrders = SQL.queryTOrderByMonth(year, month, userID)
-  return                 MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders) 
+  mergedOrders         = MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders) 
+  
+  return mergedOrders
 
 
-def isOrderFDGAvailalbeForDate(date):
+def isOrderFDGAvailalbeForDate(date, closedDates):
   now = datetime.now()
 
   deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN) + timedelta(days=constants.ORDERDEADLINEDAY)
@@ -85,12 +89,12 @@ def isOrderFDGAvailalbeForDate(date):
   if deadlineDateTime < now:
     return False
 
-  if SQL.getClosed(date):
+  if closedDates.get(date.strftime("%Y-%m-%d")):
     return False
   return True
 
 
-def isOrderTAvailableForDate(date):
+def isOrderTAvailableForDate(date, closedDates):
   now = datetime.now()
 
   nextDeadlineday  = now + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - now.weekday()) % 7)
@@ -102,7 +106,7 @@ def isOrderTAvailableForDate(date):
   if nowDT < deadlineDateTime :
     return False
 
-  if SQL.getClosed(date):
+  if closedDates.get(date.strftime("%Y-%m-%d")):
     return False
 
   return True

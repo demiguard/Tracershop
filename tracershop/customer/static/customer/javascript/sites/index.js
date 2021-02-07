@@ -1,7 +1,7 @@
 import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
 import { createElement, dropChildern } from './libs/htmlHelpers.js' ;
-
+import { createCalculator } from "./libs/calculator.js";
 // Today is variable that's created from GET request, 
 // since it's provided from Django
 
@@ -97,7 +97,8 @@ var fill_order_table = function(date) {
       } else {
         contentStr = "Ukendt Data format fra JSON Fil";
       }
-      createElement(dataRow, contentStr,'', 'div', ['col-12', 'row']);
+      createElement(dataRow, contentStr,'', 'div', ['col-11', 'row']);
+      createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone"]);
       var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
       
       // ----- Form Creation -----
@@ -176,10 +177,15 @@ var fill_order_table = function(date) {
     const injectionFieldInputStr = '<input type="text" name="injectionField" class="injectionField" id="id_injectionField">';
     const UseSelectStr = '\
     <select name="useField" class="selectTOrder custom-select" id="id_useField">\
-      <option value="0">Menneske</option>\
+      <option value="0">Human</option>\
       <option value="1">Dyr</option>\
       <option value="2">Andet</option>\
     </select>';
+    if (data.tOrdersForms.length != 0) {
+      $("#T_forms").removeClass('DisplayNone')
+    } else {
+      $("#T_forms").addClass('DisplayNone')
+    }
     dropChildern(TFormTbody);
     for (let i = 0; i < data.tOrdersForms.length; i++) {
       const TORDERFORM = data.tOrdersForms[i];
@@ -221,7 +227,7 @@ var Send_order = function(id) {
     success: function(data) {
       var informationRowDiv = $('#informationRow' + String(id));
       informationRowDiv.empty();
-      var table = createElement(informationRowDiv,'','','table',[]);
+      var table = createElement(informationRowDiv,'','','table',["table"]);
       var tableHead = createElement(table, '',   '','thead',[]);
       createElement(tableHead, 'Status',         '','th',   []);
       createElement(tableHead, 'order ID',       '','th',   []);
@@ -232,12 +238,12 @@ var Send_order = function(id) {
       createElement(tableHead, 'Frigivet',       '','th',   []);
       var tableBody = createElement(table, '','','tbody',   []);
       var tableRow = createElement(tableBody,'', '', 'tr', []);
-      createElement(tableRow, 1,  '', 'td', []);
+      createElement(tableRow, "<img src=\"/static/customer/images/clipboard1.svg\" class=\"StatusIcon\">",  '', 'td', []);
       createElement(tableRow, data.lastOrder, '', 'td', []);
       createElement(tableRow, data.amount, '', 'td', []);
       createElement(tableRow, '', '', 'td', []);
       createElement(tableRow, '', '', 'td', []);
-      createElement(tableRow, '', '', 'td', []);
+      createElement(tableRow, 0, '', 'td', []);
       createElement(tableRow, "", '', 'td', []);
     }, 
     error: function() {
@@ -294,7 +300,17 @@ var Send_torder = function(TracerID) {
 }
 
 
+
+
+
 $(function() {
+  $("#calculatorIcon").on("click", function () {
+    createCalculator();
+  })
+  
+  
+
+
   var OrderButtons = $('.OrderButton');
   for (let i = 0; i< OrderButtons.length; i++){
     var OrderButton = $(OrderButtons[i]);

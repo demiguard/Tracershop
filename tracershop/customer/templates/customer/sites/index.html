@@ -21,6 +21,7 @@
           <strong>
             Ordre {{order.order_num}} - Kalibreret til: {{ order.time | time:'H:i' }}
           </strong>
+          <div class="order DisplayNone">{{ order.time | time:'H:i' }}</div>
         </div>
         <div class="row" id="informationRow{{ order.order_num }}">
           {% if order.data_type == "form" %}
@@ -75,14 +76,17 @@
     </div>
     {% endfor %}
   </div>
+  <!-- Start Calculator -->
   <div class="col-2 flex text-center">
-    <img src="{% static 'customer/images/calculator.svg' %}" class="calculator" id="calculator{{ order.time | time:'H:i' }}" height="36px">
+    <!-- Target for -->
+    <img src="{% static 'customer/images/calculator.svg' %}" class="calculator" id="calculatorIcon" height="36px">
   </div>
+  <!-- End Calculator-->
   <div id="second" class="col-9">
     {% if secondaryOrders %}
       <div id="T_orders">
     {% else %}
-      <div id="T_orders" class="DisplayHidden">
+      <div id="T_orders" class="DisplayNone">
     {% endif %}
         <div class="row">
           <p>Ordre af Tracer Bestilt til i dag:</p>
@@ -123,9 +127,13 @@
         </div>
       </div>
       
+    
     {% if secondaryForms %}
-    <p>Bestillinger af andre tracers til i dag:</p>
     <div id="T_forms">
+    {% else %}
+    <div id="T_forms" class="DisplayNone">
+    {% endif %}
+    <p>Bestillinger af andre tracers til i dag:</p>
       <table class="table">
         <thead>
           <th>Tracer</th>
@@ -146,11 +154,7 @@
           {% endfor %}  
         </tbody>
       </table>
-      
-      </p>
     </div>
-    {% endif %}
-  
   </div>
 </div>
 <div class="col-3">
@@ -185,6 +189,7 @@
   </script>
   <script type="module" src="{% static 'customer/javascript/sites/libs/htmlHelpers.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/libs/calender.js' %}"></script>
+  <script type="module" src="{% static 'customer/javascript/sites/libs/calculator.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/libs/customerSelect.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/index.js' %}"></script>
 {% endblock %}
