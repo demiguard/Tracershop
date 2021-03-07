@@ -8,7 +8,7 @@ from customer.views.index           import IndexView
 from customer.views.FutureBookings  import FutureBooking
 from customer.views.procedureEditor import ProcedureEditor
 
-from customer.views.admin.verify_user import VerifyUserView, APIVerifyUser
+from customer.views.admin.admin_users import AdminUserView
 
 from customer.views.auth.createuser        import CreateUserView
 from customer.views.auth.createusersuccess import CreateUserSuccess
@@ -32,8 +32,7 @@ Views = [
   FutureBooking,
   ProcedureEditor,
   #Admin
-  VerifyUserView, 
-  APIVerifyUser,
+  AdminUserView, 
   #Authen
   CreateUserView,
   CreateUserSuccess,

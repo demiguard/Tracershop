@@ -118,6 +118,14 @@ var fill_order_table = function(date) {
 
       // ----- Table Creation -----
       } else if (response.data_type == 'data') { 
+        console.log(response);
+        var commentDetected = false;
+        for (let j = 0; j < response.data.length; j++) {
+          const order = response.data[j];
+          commentDetected |= (order.comment !== "" && order.comment !== null);
+          console.log(order.comment !== "" && order.comment !== null);
+          console.log(commentDetected);
+        }
         var table = createElement(informationRowDiv,'','','table',["table"]);
         var tableHead = createElement(table, '',   '','thead',[]);
         createElement(tableHead, 'Status',         '','th',   []);
@@ -127,6 +135,9 @@ var fill_order_table = function(date) {
         createElement(tableHead, 'Batch-nr.',      '','th',   []);
         createElement(tableHead, 'Frigivet MBQ',   '','th',   []);
         createElement(tableHead, 'Frigivet',       '','th',   []);
+        if (commentDetected){
+          createElement(tableHead, 'Kommentar', '', 'th', []);
+        }
         var tableBody = createElement(table, '','','tbody',   []);
         for (let j = 0; j < response.data.length; j++){
           const order = response.data[j];
@@ -146,6 +157,18 @@ var fill_order_table = function(date) {
             createElement(tableRow, order.frigivet_datetime.substr(11,5),'' , 'td', []);
           } else {
             createElement(tableRow, "",'', 'td', []);
+          }
+          if (order.comment !== "" && commentDetected) {
+            var commentTD = createElement(tableRow, '', '','td',[]);
+            var commentImage = $("<img>",
+              {
+                src : "/static/customer/images/comment.svg", 
+                class: "StatusIcon",
+                title:order.comment
+              }
+            )
+            $(commentImage).tooltip()
+            commentImage.appendTo($(commentTD));
           }
         }
       }        

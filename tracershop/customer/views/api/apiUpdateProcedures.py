@@ -3,6 +3,7 @@ from django.shortcuts import render
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 from django.core.exceptions import ObjectDoesNotExist
+from django.db import IntegrityError
 
 import json
 
@@ -19,17 +20,43 @@ class ApiUpdateProcedure(LoginRequiredMixin, View):
       procedures = json.loads(key)
 
     for key, data in procedures.items():
+      if not(key):
+        continue
       try:
-        procedure = Procedure.objects.get(title=key)
-        procedure.delay = data["delay"]
-        procedure.baseDosis = data["dosis"]
-        procedure.inUse = data["inUse"]
+        try:
+          procedure = Procedure.objects.get(title=key)
+          procedure.delay = data["delay"]
+          procedure.baseDosis = data["dosis"]
+          procedure.inUse = data["inUse"]
+        except ObjectDoesNotExist:
+          try:
+            procedure = Procedure(title=key, delay=data["delay"], baseDosis=data['dosis'], inUse=True)
+          except ValueError:
+            return({"Success":"Failure"})
         try:
           procedure.tracer = Tracer.objects.get(ID=data["tracer"]) 
-        except Exception as E:
+        except ObjectDoesNotExist as E:
           procedure.tracer = None
         procedure.save()
       except :
         return JsonResponse({"Success" : "Failure"})
       
+    return JsonResponse({"Success" : "Success"})
+  
+  def put(self, request): 
+    
+    data = json.loads(request.readline().decode())
+
+    try:
+      newProcedure = Procedure(
+        inUse=True, 
+        title=data['title'],
+        baseDosis=data['dosis'],
+        delay=data['delay']) 
+      newProcedure.save()
+    except IntegrityError:
+      return JsonResponse({"Success" : "Failure"})
+    except ValueError:
+      return JsonResponse({"Success" : "Failure"})
+
     return JsonResponse({"Success" : "Success"})

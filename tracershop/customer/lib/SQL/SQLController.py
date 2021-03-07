@@ -7,7 +7,7 @@ from datetime import datetime, time, date
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from customer.models import PotentialUser
+from customer.models import User
 
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
@@ -33,7 +33,6 @@ def queryOrderByDate(date, userID : int ) -> list:
     QueryResult,
     constants.SQLTuples[constants.FTGORDER]
   )
-
   return FormattedQuery
 
 def getDailyRuns(date, userID) -> list:
@@ -60,8 +59,8 @@ def getClosed(date) -> bool:
     return True
   return False
 
-def get_unverified_users() -> list: 
-  return list(PotentialUser.objects.all())
+def get_users() -> list: 
+  return list(User.objects.all())
 
 
 def getMaxCustomerNumber() -> int:

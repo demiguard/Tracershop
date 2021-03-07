@@ -15,30 +15,30 @@
 </div>
 <div id="FTG" class="container col-9 row">
   <div id="content"  class="col-9">
-      {% for order in data %} 
+      {% for orderList in data %} 
       <div class="data-row">
         <div class="col-11 row">
           <strong>
-            Ordre {{order.order_num}} - Kalibreret til: {{ order.time | time:'H:i' }}
+            Ordre {{orderList.order_num}} - Kalibreret til: {{ orderList.time | time:'H:i' }}
           </strong>
-          <div class="order DisplayNone">{{ order.time | time:'H:i' }}</div>
+          <div class="order DisplayNone">{{ orderList.time | time:'H:i' }}</div>
         </div>
         <div class="row" id="informationRow{{ order.order_num }}">
-          {% if order.data_type == "form" %}
+          {% if orderList.data_type == "form" %}
           <div id="ButtonDiv{{ order.order_num }}">
-            Bestil: {{ order.data.order_MBQ }} [MBq]
+            Bestil: {{ orderList.data.order_MBQ }} [MBq]
           </div>
           <div class="col-1" ></div>
           <div id="CommentDiv{{ order.order_num }}">
             Kommentar:
-            {{ order.data.comment }}
+            {{ orderList.data.comment }}
         </div>
         <div class="col-1"></div>
         <button class="btn btn-primary OrderButton" style="height: 50px;" id="{{order.order_num}}">
           Bestil
         </button>      
         {% endif %}
-        {% if order.data_type == "data" %}
+        {% if orderList.data_type == "data" %}
         <table class="table">
           <thead>
             <th>Status</th>
@@ -48,9 +48,12 @@
             <th>Batch-nr. </th>
             <th>Frigivet [MBq]</th>
             <th>Frigivet </th>
+            {% if orderList.hasComment %}
+              <th>Kommentar</th>
+            {% endif %}
           </thead>
           <tbody>
-            {% for order in order.data %}
+            {% for order in orderList.data %}
             <tr>
               {% if order.status == 1 %}
               <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
@@ -63,10 +66,17 @@
               {% endif %}
               <td>{{order.OID}}</td>
               <td>{{order.ordered_amount}}</td>
-              <td>{{order.total_amount}}</td>
+              {% if order.total_amount %}
+                <td>{{order.total_amount}}</td>
+              {% else%}
+                <td></td>
+              {% endif %}
               <td>{{order.batchnr}}</td>
               <td>{{order.frigivet_amount}}</td>
               <td>{{order.frigivet_datetime |date:'H:i'}}</td>
+              {% if orderList.hasComment %}
+                <td><img class=StatusIcon src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
+              {% endif %}
             </tr>
             {% endfor %}
           </tbody>

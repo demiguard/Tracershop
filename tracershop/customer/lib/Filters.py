@@ -15,7 +15,8 @@ def matchOrders(orders, runs):
   for run in runs:
     order_context = {
       'order_num' : order_num,
-      'time' : run['dtime']
+      'time' : run['dtime'],
+      'hasComment' : False
     }
     order_num += 1
 
@@ -24,7 +25,10 @@ def matchOrders(orders, runs):
         x['deliver_datetime'],
         run['dtime']),
       orders))
-
+    
+    for order in matching_orders:
+      if order['comment'] != "":
+        order_context['hasComment'] = True 
     if len(matching_orders): 
       used_orderID += LMap(lambda x: x['OID'], matching_orders)
       order_context['data_type'] = 'data'
