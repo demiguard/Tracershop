@@ -15,7 +15,7 @@
   <tbody>
     {% for Auser in users %}
     <tr id="{{Auser.id}}">
-      <td>{{Auser.username}}</td>
+      <td class="Username">{{Auser.username}}</td>
       <td>{{Auser.email_1}}</td>
       <td>
       {% if Auser.is_admin %}
@@ -24,7 +24,7 @@
         <input type="checkbox">
       {% endif%}
       </td>
-      <td><input class="ChangePassword Button" type="button" class="btn btn-outline-primary" value="Skift Password"></td>
+      <td><input id="changePass-{{Auser.id}}" class="ChangePassword Button" type="button" class="btn btn-outline-primary" value="Skift Password"></td>
     </tr>
     {% endfor%}
   </tbody>
@@ -35,5 +35,5 @@
 {% endblock %}
 
 {% block javascript %}
-
+  <script type="module" src="{% static 'customer/javascript/sites/AdminUser.js' %}"></script>
 {% endblock %}

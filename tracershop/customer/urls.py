@@ -9,6 +9,7 @@ from customer.views.FutureBookings  import FutureBooking
 from customer.views.procedureEditor import ProcedureEditor
 
 from customer.views.admin.admin_users import AdminUserView
+from customer.views.api.apiAdminChangePassword import ApiAdminChangePassword
 
 from customer.views.auth.createuser        import CreateUserView
 from customer.views.auth.createusersuccess import CreateUserSuccess
@@ -33,6 +34,7 @@ Views = [
   ProcedureEditor,
   #Admin
   AdminUserView, 
+  ApiAdminChangePassword,
   #Authen
   CreateUserView,
   CreateUserSuccess,

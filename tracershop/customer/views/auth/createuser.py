@@ -30,10 +30,13 @@ class CreateUserView(TemplateView):
       location = request.POST['location'],
       cityname = request.POST['cityname'],
       postcode = request.POST['postcode'],
+      is_staff=True
     )
     user.set_password(request.POST['password'])
 
     user.save()
+
+
 
 
     return redirect('customer:loginView')
