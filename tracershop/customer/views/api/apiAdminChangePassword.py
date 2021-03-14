@@ -15,6 +15,6 @@ class ApiAdminChangePassword(AdminRequiredMixin, LoginRequiredMixin, View):
   def get(self, request):
     passwordChangingUser = User.objects.get(id=request.GET['userID'])
     passwordChangingUser.set_password(request.GET['newPassword'])
-
+    passwordChangingUser.save()
 
     return JsonResponse({})

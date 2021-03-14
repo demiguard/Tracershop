@@ -74,11 +74,12 @@ def insertOrderFTG(
       deliverTime : Type[time],
       dato        : Type[date],
       comment     : str,
-      userID      : int
+      userID      : int,
+      username    : str
     )      -> None:
 
   SQLQuery = SQLFactory.createSQLQueryInsertFTGOrder(
-    amount, deliverTime, dato, comment, userID )
+    amount, deliverTime, dato, comment, userID, username)
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 def insertTOrder(
@@ -86,11 +87,12 @@ def insertTOrder(
     deliver_datetime : Type[datetime],
     tracerID   : int,
     usage      : str,
-    userID     : int
+    userID     : int,
+    username   : str
     ) -> None:
 
   SQLQuery = SQLFactory.createSQLQUeryInsertTOrder(
-    userID, deliver_datetime,tracerID, injections, usage
+    userID, deliver_datetime,tracerID, injections, usage, username
   )
   SQLExecuter.ExecuteQuery(SQLQuery)
 

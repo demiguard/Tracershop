@@ -1,5 +1,5 @@
 
-let SendpasswordChange = function(UserID) {
+let SendPasswordChange = function(UserID) {
   const passwordInput = $("#password");
   const passwordConfirm = $("#passwordConfirm");
 
@@ -17,9 +17,6 @@ $.ajax({
   }
 
 })
-
-
-
   return 0
 }
 
@@ -70,7 +67,7 @@ let ChangePasswordUser = function(buttonID) {
       {
         text: "Skift kode",
         click:function() {
-          if (SendpasswordChange(UserID) == 0){
+          if (SendasswordChange(UserID) == 0){
             $(this).dialog("close")
           }
         }
@@ -85,9 +82,30 @@ let ChangePasswordUser = function(buttonID) {
   })
 };
 
+let updateRights = function() {
+  const rights = {}
+  $(".UserRow").each(function() {
+    if ($(this).children(".isAdmin").children(".isAdminCheckbox").prop("checked")) {
+      rights[this.id] = true;
+    } else {
+      rights[this.id] = false;
+    }
+  });
+  $.ajax({
+    type:"get",
+    url: "api/admin/updateRights",
+    data: rights,
+    success: function(data) {
+      $("#UpdaterightsMessages").text("Rettighederne er nu opdateret");
+    }
+  })
+};
+
+
+
 //Initial Javascript
 $(function () {
-  $(".ChangePassword").click(function() {ChangePasswordUser(this.id)})
-
+  $(".ChangePassword").click(function() {ChangePasswordUser(this.id)});
+  $("#UpdateRightsButton").click(function() {updateRights()});
 
 })

@@ -10,6 +10,7 @@ from customer.views.procedureEditor import ProcedureEditor
 
 from customer.views.admin.admin_users import AdminUserView
 from customer.views.api.apiAdminChangePassword import ApiAdminChangePassword
+from customer.views.api.apiAdminUpdateRights import ApiAdminUpdateRights
 
 from customer.views.auth.createuser        import CreateUserView
 from customer.views.auth.createusersuccess import CreateUserSuccess
@@ -35,6 +36,7 @@ Views = [
   #Admin
   AdminUserView, 
   ApiAdminChangePassword,
+  ApiAdminUpdateRights,
   #Authen
   CreateUserView,
   CreateUserSuccess,

@@ -3,3 +3,9 @@ ALTER TABLE orders
 
 ALTER TABLE t_orders
   ADD comment VARCHAR(8000) NULL;
+
+ALTER TABLE orders
+  ADD userName VARCHAR(128) NULL;
+
+ALTER TABLE t_orders
+  ADD userName VARCHAR(128) NULL;  

@@ -18,7 +18,8 @@ SQLTuples = {
     'deliver_datetime',
     'nInjections',
     'use',
-    'tracer'
+    'tracer',
+    'userName'
   ],
   TORDERFORMS : [
     'name',
@@ -41,7 +42,8 @@ SQLTuples = {
     'batchnr',
     'frigivet_amount',
     'frigivet_datetime',
-    'comment'
+    'comment',
+    'userName'
   ],
   MONTHORDER : [
     'orderTime',

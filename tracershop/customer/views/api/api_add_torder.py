@@ -17,11 +17,13 @@ class Api_add_torder(LoginRequiredMixin, View):
   QDICTTime = 'BestillingTid'
   QDICTInjections = 'injections'
   QDICTUsage = 'Usage'
+  QDICTCustomerID = "customerID"
 
   FDICTInjections = 'injections'
   FDICTTracerID = 'tracer'
   FDICTUsage = 'Usage'
   FDICTDateTime = 'Datetime'
+  FDICTUserID = "customerID"
 
   def parseDict(self,QDict):
     if QDict[self.QDICTUsage] == '0':
@@ -38,10 +40,12 @@ class Api_add_torder(LoginRequiredMixin, View):
         QDict[self.QDICTTime]+" "+QDict[self.QDICTDato],
         "%H:%M %d/%m/%Y" 
       ),
-      self.FDICTUsage : usage
+      self.FDICTUsage : usage,
+      self.FDICTUserID : int(QDict[self.QDICTCustomerID])
     }
 
   def post(self, request): 
+    print(request.POST)
     try:
       FormattedDict = self.parseDict(request.POST)
     except Exception as E:
@@ -52,14 +56,15 @@ class Api_add_torder(LoginRequiredMixin, View):
       })
 
     
-    UserID = 7
+    
 
     SQL.insertTOrder(
       FormattedDict[self.FDICTInjections],
       FormattedDict[self.FDICTDateTime],
       FormattedDict[self.FDICTTracerID],
       FormattedDict[self.FDICTUsage],
-      UserID
+      FormattedDict[self.FDICTUserID],
+      request.user.username
       )
 
 

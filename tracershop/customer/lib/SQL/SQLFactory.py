@@ -45,7 +45,8 @@ def createSQLQueryOrdersByDay(date, userID : int) -> str:
     batchnr,
     frigivet_amount,
     frigivet_datetime,
-    comment
+    comment,
+    userName
   FROM orders
   WHERE DATE(deliver_datetime) = \'{date}\' AND
   BID = {userID}
@@ -96,7 +97,8 @@ def createSQLQueryInsertFTGOrder(
     deliverTime : Type[time],
     dato        : Type[date],
     comment     : str,
-    userID      : int
+    userID      : int,
+    userName    : str
   ) -> str :
   dt_deliverTime = calenderHelper.combine_time_and_date(dato, deliverTime)
   return f"""
@@ -108,7 +110,8 @@ def createSQLQueryInsertFTGOrder(
       batchnr,
       tracer,
       frigivet_datetime,
-      comment
+      comment,
+      userName
     ) VALUES (
       {userID},
       {amount},
@@ -117,7 +120,8 @@ def createSQLQueryInsertFTGOrder(
       \"\",
       6,
       \"0000-01-01 00:00:00\",
-      \"{comment}\"
+      \"{comment}\",
+      \"{userName}\"
     )
   """
 
@@ -167,7 +171,8 @@ def createSQLQueryTOrders(date, userID : int) -> str:
     t_orders.deliver_datetime,
     t_orders.n_injections,
     t_orders.anvendelse,
-    Tracers.name
+    Tracers.name,
+    t_orders.userName
   FROM
     t_orders
       INNER JOIN
@@ -185,7 +190,8 @@ def createSQLQUeryInsertTOrder(
     deliver_datetime : Type[datetime],
     tracer : int,
     n_injections : int,
-    anvendelse : str
+    anvendelse : str,
+    userName : str
     ) -> str:
 
   return f"""
@@ -196,7 +202,8 @@ def createSQLQUeryInsertTOrder(
       status,
       tracer,
       n_injections,
-      anvendelse
+      anvendelse,
+      userName
     ) VALUES (
       {userID},
       \"\",
@@ -204,7 +211,8 @@ def createSQLQUeryInsertTOrder(
       1,
       {tracer},
       {n_injections},
-      \"{anvendelse}\"
+      \"{anvendelse}\",
+      \"{userName}\"
     )
   """
 

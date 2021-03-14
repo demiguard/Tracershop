@@ -42,6 +42,8 @@ class ApiOrderDate(View):
       'tOrdersForms' : tOrderForms
     }
 
+    print(response_dir)
+
     for order in response_dir['responses']:
       if order['data_type'] == "form":
         del order['data']

@@ -238,13 +238,15 @@ var Send_order = function(id) {
   let amount = $('#ButtonDiv'+String(id)).children('#id_order_MBQ').val();
   let comment = $('#CommentDiv'+String(id)).children('#id_comment').val();
   let date = $('#dato').text().replace(/\s+/g, '');
+  let customerID = $("#customer_select").children("option:selected").val();
   $.post({
     url: "api/addOrder",
     data: {
       'dato' : date.substr(5),
       'order' : id,
       'amount' : amount,
-      'comment' : comment
+      'comment' : comment,
+      'customerID' : customerID
     },
     dataType: "JSON", 
     success: function(data) {
@@ -281,7 +283,7 @@ var Send_torder = function(TracerID) {
   var bestillingTD = datarow.children('#deliverTime');
   var injectionTD  = datarow.children('#InjectionField');
   var useTD        = datarow.children('#UseField');
-
+  var customerID = $("#customer_select").children("option:selected").val();
   var bestillingVal = bestillingTD.children('#id_deliverTime').val();
   var injectionVal  = injectionTD.children('#id_injectionField').val();
   var useVal        = useTD.children('#id_useField').val();
@@ -295,7 +297,8 @@ var Send_torder = function(TracerID) {
       'id'  : TracerID,
       'BestillingTid' : bestillingVal,
       'injections'    : injectionVal,
-      'Usage'         : useVal
+      'Usage'         : useVal,
+      'customerID'    : customerID
     },
     success: function(data) {
       var tOrdersRow = $("#T_orders");

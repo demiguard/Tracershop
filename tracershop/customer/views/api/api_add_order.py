@@ -19,35 +19,39 @@ class Api_add_order(LoginRequiredMixin, View):
       'order'  : int(Dict['order']) - 1,
       'amount' : int(Dict['amount']),
       'dato':  date(tempdate.year, tempdate.month, tempdate.day),
-      'comment' : Dict['comment']
+      'comment' : Dict['comment'],
+      'customerID'  : Dict['customerID']
     }
 
   def post(self, request):
+
+
     try:
       FormatedDict = self.parse_QueryDict(request.POST)
     except ValueError as E:
-      print(E)
+      print(f"Value Error: {E}")
       return JsonResponse({
         'successRate' : 'FAIL',
         'failMessage' : 'Invaild Inputs'
       })
     except KeyError as E:
-      print(E)
+      print(f"Key Error: {E}")
       return JsonResponse({
         'successRate' : 'FAIL',
         'failMessage' : 'Missing Inputs'
       })
 
-    userID = 7
     #Remember there's a selection here
-    deliverTimeDict = SQL.getDailyRuns(FormatedDict['dato'], userID)[FormatedDict['order']]
-    deliverTime      = deliverTimeDict['dtime']
+    deliverTimeDict = SQL.getDailyRuns(FormatedDict['dato'], FormatedDict['customerID'])
+    SelectdeliverTime = deliverTimeDict[FormatedDict['order']]
+    deliverTime      = SelectdeliverTime['dtime']
     SQL.insertOrderFTG(
         FormatedDict['amount'],
         deliverTime,
         FormatedDict['dato'],
         FormatedDict['comment'],
-        userID
+        FormatedDict['customerID'],
+        request.user.username
       )
     #Note rare Race condition
     lastOID = SQL.getLastOrder()

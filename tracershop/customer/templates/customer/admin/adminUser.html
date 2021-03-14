@@ -1,6 +1,5 @@
 {% extends 'customer/base.html' %}
 {% load static %}
-
 {% load bootstrap4 %}
 
 {% block content %}
@@ -14,14 +13,14 @@
   </thead>
   <tbody>
     {% for Auser in users %}
-    <tr id="{{Auser.id}}">
+    <tr id="{{Auser.id}}" class="UserRow">
       <td class="Username">{{Auser.username}}</td>
       <td>{{Auser.email_1}}</td>
-      <td>
+      <td class="isAdmin">
       {% if Auser.is_admin %}
-        <input type="checkbox" checked="">
+        <input type="checkbox" class="isAdminCheckbox" checked="">
       {% else %}
-        <input type="checkbox">
+        <input type="checkbox" class="isAdminCheckbox">
       {% endif%}
       </td>
       <td><input id="changePass-{{Auser.id}}" class="ChangePassword Button" type="button" class="btn btn-outline-primary" value="Skift Password"></td>
@@ -29,8 +28,8 @@
     {% endfor%}
   </tbody>
 </table>
-<input class="Button" type="button" class="btn btn-outline-primary" value="Opdater Rettigheder">
-
+<input class="Button" id="UpdateRightsButton" type="button" class="btn btn-outline-primary" value="Opdater Rettigheder">
+<div id="UpdateRightMessages"></div>
 
 {% endblock %}
 

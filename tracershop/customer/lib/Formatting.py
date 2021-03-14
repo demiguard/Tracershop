@@ -3,3 +3,10 @@ def convertIntToStrLen2(INT : int) -> str:
   if len(INT) == 1:
     return "0" + INT
   return INT
+
+def convertTruthValuesFromJS(truthval :str) -> bool:
+  if truthval.lower() == "true":
+    return True
+  if truthval.lower() == "false":
+    return False
+  raise ValueError("Value is not true or false")
