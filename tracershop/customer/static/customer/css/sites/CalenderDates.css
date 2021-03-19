@@ -3,7 +3,7 @@
   --status1 : #F55;
   --status2 : #FF5;
   --status3 : #5F5;
-  --status5 : var(--grey-2);
+  --status5 : var(--grey-3);
 }
 
 .date-base-class {

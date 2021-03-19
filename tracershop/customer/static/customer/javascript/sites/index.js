@@ -333,8 +333,9 @@ $(function() {
   $("#calculatorIcon").on("click", function () {
     createCalculator();
   })
-  
-  
+  //Make sure calender is syncronized with customer select
+  const MinVal = $("#customer_select").children()[0].value
+  $("#customer_select").val(MinVal);
 
 
   var OrderButtons = $('.OrderButton');

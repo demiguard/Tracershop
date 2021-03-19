@@ -8,6 +8,11 @@ class OrderForm(Form):
   order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
   comment   = forms.CharField(required=False, widget=forms.TextInput())
 
+  def __init__(self, ordertime, *args,**kwargs):
+    super().__init__(*args, **kwargs)
+    self.fields['order_MBQ'].widget.attrs['class'] = f"fdg_MQB_Field {ordertime}"
+    
+
 class LoginForm(Form):
   username = forms.CharField()
   password = forms.CharField(widget=forms.PasswordInput())

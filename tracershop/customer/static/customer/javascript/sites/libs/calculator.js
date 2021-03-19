@@ -146,8 +146,8 @@ function calculate() {
 
   orders.each(function () {
     var index = orderIndexs[this.innerText]
-    var parentNode = $(this).parent();
-    var Input = $(parentNode).find("#id_order_MBQ");
+    var updatedInnerText = "."+this.innerText.replace(':', "\\:")+"\\:00"
+    var Input = $(updatedInnerText);
     Input.val(MBqs[index]);
   }) 
 };
