@@ -43,6 +43,7 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
 
 
   def post(self, request):
+    username = request.user.username
     tracer, customerID, studies = self.processData(request.POST)
     if not(tracer and customerID and studies):
       print("Error")
@@ -73,14 +74,14 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
           FDGMBq, time = orders.calculateDosisFDG(booking, customerID, sorted(times.keys()))
           times[time] += FDGMBq
         else:
-          orders.insertTOrderBooking(booking, customerID)
+          orders.insertTOrderBooking(booking, customerID, username)
         booking.status = 2        
         booking.save()
 
     if isFDG:
       for time, fdg in times.items():
         SQL.insertOrderFTG(
-          fdg, time, startDate, "Automaticly generated FDG-order", customerID
+          fdg, time, startDate, "Automaticly generated FDG-order", customerID, username
         )
 
     return JsonResponse({})
