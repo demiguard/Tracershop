@@ -103,15 +103,26 @@ var fill_order_table = function(date) {
       
       // ----- Form Creation -----
       if (response.data_type == 'form'){
-        createElement(
-          informationRowDiv, 
-          "Bestil: <input type=\"number\" id=\"id_order_MBQ\" name=\"order_MBQ\" min=\"0\"> [MBq]",
-          'ButtonDiv'+String(i+1), 'div', [])
+        var mbqInputDiv = createElement(informationRowDiv,"",'ButtonDiv'+String(i+1), 'div', [])
+        var mbqInput = $("<input>", {
+          type:"number",
+          id:"id_order_MBQ",
+          name:"order_MBQ",
+          min:"0",
+          class: response['time'] + " form-control"
+        });
+        mbqInput.appendTo(mbqInputDiv)
+        //Create Spcae between the buttons
         createElement(informationRowDiv,'','','div',['col-1']);
-        createElement(
-          informationRowDiv,
-          'Kommentar: <input type=\"text\" name=\"comment\" id=\"id_comment\">',
-          'CommentDiv'+String(i+1),'div',[]);
+        
+        var commentDiv = createElement(informationRowDiv, "", 'CommentDiv'+String(i+1),'div',[]);
+        var commentInput = $("<input>",{
+          id:"id_comment",
+          type:"text",
+          name:"comment",
+          class:"form-control"
+        });
+        commentInput.appendTo(commentDiv)
         createElement(informationRowDiv,'','','div',['col-1']);
         var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
         $(Button).on('click', () => Send_order(response['order_num']))

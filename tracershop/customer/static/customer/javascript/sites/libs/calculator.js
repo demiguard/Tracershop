@@ -1,10 +1,11 @@
-import { createElement } from './htmlHelpers.js' ;
+import { createElement, auto_char } from './htmlHelpers.js' ;
 export { createCalculator }
 
 
 
 function confirmRow(tbody, Row, thisButton) {
-  $(".CalErrDiv").empty();
+  $("#CalErrDiv").empty();
+  $("#CalErrDiv").removeClass("ErrorBox");
   // Check if valid inputs
   const timetd = $(Row).find(".tableTime");
   const timeStr = timetd.find(".tableField").val();
@@ -51,22 +52,6 @@ function deleteRow(row) {
   row.remove();
 };
 
-function auto_char(field, c, n) {
-  const BACKSPACE_KEY = 8;
-  
-  field.bind('keypress', function(key) {
-
-    if (key.which !== BACKSPACE_KEY) {
-      let number_of_chars = $(this).val().length;
-      
-      if (number_of_chars === n  && String.fromCharCode(key.which) !== c){
-        let prev_val = $(this).val();
-        $(this).val(prev_val + c);
-      }
-    }
-  });
-};
-
 // Validation
 function betterParseInt(numStr) {
   // Holy shit the implementation of parseInt if FUCKING STUPID
@@ -85,6 +70,12 @@ function CreateTime(timeStr) {
   if (isNaN(hour) || isNaN(min)){
     return null;
   }
+  if (hour > 24) {
+    return null;
+  }
+  if (min > 60) {
+    return null;
+  }
   return new Date(1993,11,20, hour, min);
 }
 
@@ -97,9 +88,12 @@ function compute(CreationTime, EndTime, MBq) {
 
 
 function validateTimeAndMBq(time, MBq, startTime) {
+
   //Validate the Time field
+  
   if (time.length != 5) {
-    $("#CalErrDiv").text("Tidspunktet kræver 4 tal, og et :")
+    $("#CalErrDiv").text("Tidspunktet er ikke på formattet HH:MM");
+    $("#CalErrDiv").addClass("ErrorBox");
     return false; 
   }
   
@@ -108,10 +102,12 @@ function validateTimeAndMBq(time, MBq, startTime) {
 
   if (TestTime === null){
     $("#CalErrDiv").text("Der er invalid Karakter i tidspunktet")
+    $("#CalErrDiv").addClass("ErrorBox");
     return false;
   }
   if (TestTime < RowTime) {
     $("#CalErrDiv").text("Tidspunkt er før produktions tidspunktet")
+    $("#CalErrDiv").addClass("ErrorBox");
     return false;
   }
   // Validate the MBQ field
@@ -119,9 +115,11 @@ function validateTimeAndMBq(time, MBq, startTime) {
 
   if (isNaN(parsed)) {
     $("#CalErrDiv").text("MBq skal være et tal")
+    $("#CalErrDiv").addClass("ErrorBox");
     return false;
   } else if (parsed <= 0) {
     $("#CalErrDiv").text("Du kan ikke bestille et negativt mændge FDG");
+    $("#CalErrDiv").addClass("ErrorBox");
     return false; 
   } 
   return true;
@@ -152,17 +150,14 @@ function calculate() {
   }) 
 };
 
-
-
-
 // Main function
 function createCalculator() {
   var dialogText = document.createElement("div");
+  dialogText.id = "mainCalculator";
   dialogText = $(dialogText);
-  //$(dialogText).addClass("container")
+  var errorDiv   = $("<div>", {id: "CalErrDiv"})
   $('.order').each(function () {
       var timeslotDiv = document.createElement("div");
-      var errorDiv   = $("<div>", {id: "CalErrDiv"})
       var table      = $("<table>", {class:"table"});
       var thead      = $("<thead>");
       var hTimer     = $("<th>");
@@ -198,8 +193,9 @@ function createCalculator() {
       thead.append(hTimer, hTidspunkt, hMBq, hbutton);
       table.append(thead);
       timeslotDiv.append(table);
-      dialogText.append(errorDiv,timeslotDiv);
+      dialogText.append(timeslotDiv);
     });
+  dialogText.append(errorDiv);
 
   $(dialogText).dialog({
     dialogClass: "no-close",
