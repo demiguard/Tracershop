@@ -108,6 +108,7 @@ function validateTimeAndMBq(time, MBq, startTime) {
   if (TestTime < RowTime) {
     $("#CalErrDiv").text("Tidspunkt er før produktions tidspunktet")
     $("#CalErrDiv").addClass("ErrorBox");
+    console.log("This happens");
     return false;
   }
   // Validate the MBQ field

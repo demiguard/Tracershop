@@ -22,37 +22,15 @@ class CreateUserForm(Form):
   username         = forms.CharField(max_length=120)
   password         = forms.CharField(widget=forms.PasswordInput()) 
   password_confirm = forms.CharField(widget=forms.PasswordInput())
-
-  first_name = forms.CharField(max_length=30, required=False)
-  last_name  = forms.CharField(max_length=60, required=False)
-
-  email_1 = forms.EmailField(max_length=256, widget=forms.EmailInput())
-  email_2 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
-  email_3 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
-  email_4 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
-
-  address  = forms.CharField(max_length=60, required=False)
-  location = forms.CharField(max_length=60, required=False)
-  cityname = forms.CharField(max_length=60, required=False)
-  postcode = forms.CharField(max_length=60, required=False)
+  email_1 = forms.EmailField(max_length=256, widget=forms.EmailInput(), label="Email 1*")
+  
 
 class EditUserForm(Form):
   password         = forms.CharField(widget=forms.PasswordInput(), required=False) 
   password_confirm = forms.CharField(widget=forms.PasswordInput(), required=False)
-
-  first_name = forms.CharField(max_length=30, required=False)
-  last_name  = forms.CharField(max_length=60, required=False)
-
   email_1 = forms.EmailField(max_length=256, widget=forms.EmailInput(), required=False)
-  email_2 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
-  email_3 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
-  email_4 = forms.EmailField(max_length=256, required=False, widget=forms.EmailInput())
-
-  address  = forms.CharField(max_length=60, required=False)
-  location = forms.CharField(max_length=60, required=False)
-  cityname = forms.CharField(max_length=60, required=False)
-  postcode = forms.CharField(max_length=60, required=False)
-
+  
+  
 class VerifyUserForm(Form):
   is_staff = forms.BooleanField(required=False)
   is_admin = forms.BooleanField(required=False)

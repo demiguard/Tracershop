@@ -20,16 +20,7 @@ class CreateUserView(TemplateView):
   def post(self, request):
     user = User.objects.create(
       username = request.POST['username'],
-      first_name = request.POST['first_name'],
-      last_name = request.POST['last_name'],
       email_1 = request.POST['email_1'],
-      email_2 = request.POST['email_2'],
-      email_3 = request.POST['email_3'],
-      email_4 = request.POST['email_4'],
-      address = request.POST['address'],
-      location = request.POST['location'],
-      cityname = request.POST['cityname'],
-      postcode = request.POST['postcode'],
       is_staff=True
     )
     user.set_password(request.POST['password'])
