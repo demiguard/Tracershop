@@ -21,7 +21,7 @@ class ProcedureEditor(LoginRequiredMixin, TemplateView):
     """
     procedureForms = []
 
-    for procedure in Procedure.objects.all():
+    for procedure in Procedure.objects.all().order_by("title"):
       procedureForms.append(
         ProcedureForm(instance=procedure)
       )
