@@ -235,10 +235,20 @@ var fill_order_table = function(date) {
 };
 
 var Send_order = function(id) {
+  const ErrorDiv = $("#OrderErrorMessages")
+  ErrorDiv.empty();
+  ErrorDiv.removeClass("ErrorBox");
   let amount = $('#ButtonDiv'+String(id)).children('#id_order_MBQ').val();
   let comment = $('#CommentDiv'+String(id)).children('#id_comment').val();
   let date = $('#dato').text().replace(/\s+/g, '');
   let customerID = $("#customer_select").children("option:selected").val();
+  let NumbersRegex = /^\d+$/;
+  if (!NumbersRegex.test(amount)) {
+    ErrorDiv.text("Der er ikke tastet et tal ind i bestillings feltet!");
+    ErrorDiv.addClass("ErrorBox");
+    return;
+  }
+
   $.post({
     url: "api/addOrder",
     data: {

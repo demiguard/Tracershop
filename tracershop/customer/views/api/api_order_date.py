@@ -20,9 +20,10 @@ class ApiOrderDate(View):
       dt_object = datetime.datetime(year,month,day)
     except ValueError:
       return HttpResponseBadRequest()
+    userID = request.GET['UserID']
     
     closedDates = SQL.monthlyCloseDates(year, month)
-    userID = request.GET['UserID']
+    openDays = SQL.getOpenDays(userID)
     order = SQL.queryOrderByDate(dt_object, userID)
     runs = SQL.getDailyRuns(dt_object, userID)
     responses = Filters.matchOrders(order, runs)
@@ -33,7 +34,7 @@ class ApiOrderDate(View):
     else:
       tOrderForms = []
 
-    if not orders.isOrderFDGAvailalbeForDate(dt_object, closedDates):
+    if not orders.isOrderFDGAvailalbeForDate(dt_object, closedDates, openDays):
       responses = orders.removeOrdersFromList(responses) 
 
     response_dir = {
@@ -41,8 +42,6 @@ class ApiOrderDate(View):
       'tOrders'      : tOrders,
       'tOrdersForms' : tOrderForms
     }
-
-    print(response_dir)
 
     for order in response_dir['responses']:
       if order['data_type'] == "form":

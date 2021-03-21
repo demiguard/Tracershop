@@ -87,9 +87,14 @@
     {% endfor %}
   </div>
   <!-- Start Calculator -->
-  <div class="col-2 flex text-center">
+  <div class="col-2 flex" >
     <!-- Target for -->
-    <img src="{% static 'customer/images/calculator.svg' %}" class="calculator" id="calculatorIcon" height="36px">
+    <div class="row flex text-center">
+      <img src="{% static 'customer/images/calculator.svg' %}" class="calculator" id="calculatorIcon" height="36px">
+    </div>
+    <div id="OrderErrorMessages" class="">
+  </div>
+
   </div>
   <!-- End Calculator-->
   <div id="second" class="col-9">

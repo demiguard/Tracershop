@@ -5,12 +5,12 @@
 .timeField {
   align-content: center !important;
   width: 65px;
-  height: 25px;
+  height: 36px;
 }
 
 .injectionField {
   align-content: center;
-  height: 25px;
+  height: 36px;
   width: 65px;
 }
 
@@ -49,4 +49,9 @@
 
 .no-close .ui-dialog-titlebar-close {
   display: none;
+}
+
+.calculator{
+  margin-left:auto;
+  margin-right:auto
 }

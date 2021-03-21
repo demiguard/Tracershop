@@ -29,3 +29,16 @@ def MonthlyDirectory(dates):
   for date in dates:
     returnDict[date[0].strftime("%Y-%m-%d")] = True
   return returnDict
+
+def FormatDaysList(QueryResult):
+  """
+    When you query for a list using mysql connector you get a tuple back.
+    This function detuple the results for a list. In addition the days in the database is stored in the format:
+      1 - monday
+      2 - ...
+    While in Python the weekday format is
+      0 - monday
+      1 - ...
+  
+  """
+  return [ x[0] - 1 for x in QueryResult]

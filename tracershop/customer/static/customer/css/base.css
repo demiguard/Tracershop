@@ -25,4 +25,17 @@ html, body {
   --grey-2: #565656;
   --grey-3: #858585;
   --grey-4: #d6d6d6; 
+  --red-1:#F55;
+  --red-2:#FBB;
+  --green-1: #5F5;
+  --yellow-1: #FF5;
+}
+
+.ErrorBox {
+  margin:5px;
+  padding: 5px;
+  background-color: var(--red-2);
+  border-color: var(--red-1) !important;
+  border-style: solid !important;
+  border:2px;
 }

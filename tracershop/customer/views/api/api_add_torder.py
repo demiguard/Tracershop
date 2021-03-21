@@ -45,11 +45,9 @@ class Api_add_torder(LoginRequiredMixin, View):
     }
 
   def post(self, request): 
-    print(request.POST)
     try:
       FormattedDict = self.parseDict(request.POST)
     except Exception as E:
-      print(E)
       return JsonResponse({
         'successRate': "FAIL",
         'failMessage': "SUP"

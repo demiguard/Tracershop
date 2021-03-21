@@ -134,6 +134,20 @@ def getActiveCustomers() -> list:
   return SQLFormatter.FormatSQLTuple(ActiveCustomers, nameDir[tupleName])
 
 def monthlyCloseDates(year:int, month:int):
+  """
+    Retrives the closed Dates from External Database
+
+    Args:
+      Year: The Year in question for which the query is targeted
+      Month: The Month in question for which the Query is targeted
+  
+    Returns:
+      A dict on the format
+        {"Date" : 1}
+      Use codesnippet to detect if the day is closed:
+         if Dict.get(Date):
+           #Code
+  """  
   SQLQuery = SQLFactory.createSQLQueryMonthlyClosedDates(year, month)
   closedDates = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   if closedDates:
@@ -141,3 +155,7 @@ def monthlyCloseDates(year:int, month:int):
   else:
     return {}
 
+def getOpenDays(userID):
+  SQLQuery = SQLFactory.createSQLAvailbleFDGDays(userID)
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery) 
+  return SQLFormatter.FormatDaysList(QueryResult)

@@ -1,8 +1,8 @@
 :root {
   --status0 : var(--grey-4);
-  --status1 : #F55;
-  --status2 : #FF5;
-  --status3 : #5F5;
+  --status1 : var(--red-1);
+  --status2 : var(--yellow-1);
+  --status3 : var(--green-1);
   --status5 : var(--grey-3);
 }
 

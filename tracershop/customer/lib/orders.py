@@ -40,13 +40,13 @@ def insertTOrderBooking(booking, customerID : int , username):
   bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
   SQLController.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "human", customerID, username)
 
-def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
+def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: int):
   #### So goal is to merge the two dict into one                                        ####
   #### Function needs to map 1,2,3 from each dict                                       ####
   #### Uses first digit is status from first dict and second dict is status from second ####
   monthStr = Formatting.convertIntToStrLen2(month)
   returnDict = {}
-
+  openDays = SQL.getOpenDays(userID)
   closedDates = SQL.monthlyCloseDates(year, month)
 
   for i in range(1,32):
@@ -60,7 +60,7 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
     if FDGStatus := FDG.get(dateStr):
       status += FDGStatus
     else:  
-      if not(isOrderFDGAvailalbeForDate(calenderDate, closedDates)):
+      if not(isOrderFDGAvailalbeForDate(calenderDate, closedDates, openDays)):
         status += 5
     if TOrderStatus := TOrders.get(dateStr):
       status += 10 * TOrderStatus
@@ -76,16 +76,22 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict):
 def getMonthlyOrders(year, month, userID):
   MonthlyStatusFDG     = SQL.queryOrderByMonth(year, month, userID)
   MonthlyStatusTOrders = SQL.queryTOrderByMonth(year, month, userID)
-  mergedOrders         = MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders) 
+  mergedOrders         = MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders, userID) 
   
   return mergedOrders
 
 
-def isOrderFDGAvailalbeForDate(date, closedDates):
+def isOrderFDGAvailalbeForDate(date, closedDates, openDays):
+  """
+    This Function determines if FDG is availble for ordering
+  
+  """
   now = datetime.now()
 
   deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN) + timedelta(days=constants.ORDERDEADLINEDAY)
 
+  if date.weekday() not in openDays:
+    return False
   if deadlineDateTime < now:
     return False
 

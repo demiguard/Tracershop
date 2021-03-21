@@ -248,3 +248,13 @@ def createSQLQueryMonthlyClosedDates(year, month):
   WHERE
     ddate BETWEEN \"{year}-{month}-01\" AND \"{newYear}-{newMonth}-01\"
   """
+
+def createSQLAvailbleFDGDays(UserID):
+  return f"""
+  SELECT DISTINCT
+    day
+  FROM
+    deliverTimes
+  WHERE
+    BID={UserID}
+  """
