@@ -1,6 +1,6 @@
 import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
-import { createElement, dropChildern } from './libs/htmlHelpers.js' ;
+import { createElement, dropChildern, auto_char, MaxCharInField } from './libs/htmlHelpers.js' ;
 import { createCalculator } from "./libs/calculator.js";
 // Today is variable that's created from GET request, 
 // since it's provided from Django
@@ -211,9 +211,9 @@ var fill_order_table = function(date) {
     const injectionFieldInputStr = '<input type="text" name="injectionField" class="injectionField" id="id_injectionField">';
     const UseSelectStr = '\
     <select name="useField" class="selectTOrder custom-select" id="id_useField">\
-      <option value="0">Human</option>\
-      <option value="1">Dyr</option>\
-      <option value="2">Andet</option>\
+    <option value="0">Human</option>\
+    <option value="1">Dyr</option>\
+    <option value="2">Andet</option>\
     </select>';
     if (data.tOrdersForms.length != 0) {
       $("#T_forms").removeClass('DisplayNone')
@@ -225,7 +225,16 @@ var fill_order_table = function(date) {
       const TORDERFORM = data.tOrdersForms[i];
       var formRow = createElement(TFormTbody,'',"Row"+TORDERFORM.id,'tr',[]);
       createElement(formRow, TORDERFORM.name,"TracerName", 'td',[]);
-      createElement(formRow, deliverTimeInputStr,"deliverTime", 'td',[]);
+      var deliverTimeTD = createElement(formRow, "" ,"deliverTime", 'td',[]);
+      var deliverTimeInput    = $("<input>", {
+        type:"text",
+        class:"timeField",
+        required:"", 
+        id:"id_deliverTime"
+      });
+      deliverTimeInput.appendTo($(deliverTimeTD));
+      auto_char(deliverTimeInput, ':',2);
+      MaxCharInField(deliverTimeInput, 5);  
       createElement(formRow, injectionFieldInputStr, "InjectionField", 'td', []);
       createElement(formRow, UseSelectStr, 'UseField','td',[]);
       var orderButtonTD = createElement(formRow, '', '', 'td', []);

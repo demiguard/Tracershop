@@ -27,7 +27,7 @@ def matchOrders(orders, runs):
       orders))
     
     for order in matching_orders:
-      if order['comment'] != "":
+      if order['comment'] != "" and order['comment'] != None:
         order_context['hasComment'] = True 
     if len(matching_orders): 
       used_orderID += LMap(lambda x: x['OID'], matching_orders)

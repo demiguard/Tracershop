@@ -1,0 +1,42 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block head %}
+  <link rel="stylesheet" type="text/css" href="{% static 'customer/css/sites/adminPanel.css' %}">
+{% endblock %}
+
+
+{% block content %}
+  <div class="CustomContainer row">
+    <div class="col-2">
+      <a href="{% url 'customer:adminUser' %}">
+        <input type=button class="btn btn-primary navButton" value="Adminster Nuværende Bruger">
+      </a>
+    </div>
+    <div class="col-2">
+      <a href="{% url 'customer:adminConfirmUser' %}">
+        <input type=button class="btn btn-primary navButton" value="Godkend Nye bruger">
+      </a>
+    </div>
+    <div class="col-2">
+      
+    </div>
+    <div class="col-2">
+      
+    </div>
+    <div class="col-2">
+      
+    </div>
+    <div class="col-2">
+      
+    </div>
+  </div>
+
+
+{% endblock %}
+
+
+{% block javascript %}
+
+{% endblock %}

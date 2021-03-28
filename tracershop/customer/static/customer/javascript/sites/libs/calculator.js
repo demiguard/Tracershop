@@ -208,12 +208,14 @@ function createCalculator() {
         click: function () {
           calculate();
           $( this ).dialog("close");
+          $(this).remove();
         }
       },
       {
         text: "Afbryd",
         click: function () {
           $( this ).dialog("close");
+          $(this).remove();
         }
       }
     ]

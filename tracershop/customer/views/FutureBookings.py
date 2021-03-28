@@ -4,6 +4,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 
 import datetime
 
+from customer.lib.calenderHelper import getNextWeekday
 from customer.lib.CustomTools import LMap
 from customer.lib.Filters import FilterBookings, FindActiveCustomer
 
@@ -17,17 +18,17 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
   path = "futureBooking"
 
   def get(self, request):
-    today = datetime.date.today()
+    NextWeekday = getNextWeekday(datetime.date.today())
     
     customers, activeCustomer = FindActiveCustomer(request.user)
     if not(activeCustomer):
       redirect("customer:editMyCustomer")
 
-    studies = FilterBookings(activeCustomer, today)
+    studies = FilterBookings(activeCustomer, NextWeekday)
     context = {
       'customerIDs' : LMap(lambda x: (x.ID, x.customerName), customers),
       'studies' : studies,
-      'today' : today.strftime('%Y-%m-%d')
+      'today' : NextWeekday.strftime('%Y-%m-%d')
     }
     
     return render(request, self.template_name, context=context)

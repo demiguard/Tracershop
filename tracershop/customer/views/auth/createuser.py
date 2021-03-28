@@ -2,7 +2,7 @@ from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 
 from customer.forms.forms import CreateUserForm
-from customer.models import User
+from customer.models import PotentialUser
 
 class CreateUserView(TemplateView):
   template_name = 'customer/auth/createUser.html'
@@ -18,14 +18,13 @@ class CreateUserView(TemplateView):
     return render(request, self.template_name, context)
 
   def post(self, request):
-    user = User.objects.create(
+    potentialuser = PotentialUser.objects.create(
       username = request.POST['username'],
       email_1 = request.POST['email_1'],
-      is_staff=True
     )
-    user.set_password(request.POST['password'])
+    potentialuser.set_password(request.POST['password'])
 
-    user.save()
+    potentialuser.save()
 
 
 

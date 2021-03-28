@@ -6,10 +6,13 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError
 
 import json
+import traceback
+
 
 from customer.models import Procedure, Tracer
+from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
-class ApiUpdateProcedure(LoginRequiredMixin, View):
+class ApiUpdateProcedure(LoginRequiredMixin, View, AdminRequiredMixin):
   path = "api/updateProcedure"
   name = "APIUpdateProcedure"
 
@@ -25,22 +28,27 @@ class ApiUpdateProcedure(LoginRequiredMixin, View):
       try:
         try:
           procedure = Procedure.objects.get(title=key)
-          procedure.delay = data["delay"]
+          procedure.delay =     data["delay"]
           procedure.baseDosis = data["dosis"]
-          procedure.inUse = data["inUse"]
+          procedure.inUse =     data["inUse"]
         except ObjectDoesNotExist:
           try:
             procedure = Procedure(title=key, delay=data["delay"], baseDosis=data['dosis'], inUse=True)
           except ValueError:
-            return({"Success":"Failure"})
-        try:
+            return({"Success":"Could not create Procedure"})
+        try: 
           procedure.tracer = Tracer.objects.get(ID=data["tracer"]) 
         except ObjectDoesNotExist as E:
           procedure.tracer = None
+        except ValueError:
+          procedure.tracer = None
         procedure.save()
-      except :
+      except Exception as e:
+        
+        x = traceback.print_exception()
         return JsonResponse({"Success" : "Failure"})
       
+    print("Update Successful!")
     return JsonResponse({"Success" : "Success"})
   
   def put(self, request): 

@@ -7,7 +7,7 @@ from datetime import datetime, time, date
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from customer.models import User
+from customer.models import User, PotentialUser
 
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
@@ -159,3 +159,6 @@ def getOpenDays(userID):
   SQLQuery = SQLFactory.createSQLAvailbleFDGDays(userID)
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery) 
   return SQLFormatter.FormatDaysList(QueryResult)
+
+def getPotentialUsers():
+  return list(PotentialUser.objects.all())

@@ -1,9 +1,14 @@
 {% extends 'customer/navbar/auth_navbar.html' %}
 
 {% block authbar_content %}
-  <a href="{% url 'customer:adminUser' %}">
+  <a href="{% url 'customer:adminPanel' %}">
     <div class="navbarElem">
-      Adminster Bruger
+      Super Bruger Panel
+    </div>
+  </a>
+  <a href="{% url 'customer:procedureEditor' %}">
+    <div class="navbarElem">
+      Procedurer
     </div>
   </a>
 {% endblock %}

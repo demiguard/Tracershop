@@ -42,3 +42,9 @@ def combine_time_and_date(date, time):
 
 def timedeltaToTime(timedelta):
   return (datetime.datetime.min + timedelta).time()
+
+def getNextWeekday(today):
+  NextDateCandidate = today + datetime.timedelta(days=1)
+  while NextDateCandidate.weekday() not in [0,1,2,3,4]:
+    NextDateCandidate += datetime.timedelta(days=1)
+  return NextDateCandidate

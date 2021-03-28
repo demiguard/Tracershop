@@ -23,8 +23,9 @@ const update = function () {
     data :  JSON.stringify(formList),
     datatype : "JSON",
     success : function(data) {
-      console.log(data["Success"])
-      window.location.href = "/futureBooking"
+      if (data["Success"] == "Success"){
+        window.location.href = "/futureBooking"
+      } 
     }
   })
 };

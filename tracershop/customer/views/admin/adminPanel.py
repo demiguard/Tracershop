@@ -10,20 +10,15 @@ from customer.lib.SQL import SQLController
 from customer.models import PotentialUser, User
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
-class AdminUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
-  name = 'adminUser'
-  path = 'admin/ActiveUsers'
+class AdminPanel (AdminRequiredMixin, LoginRequiredMixin, TemplateView):
+  name = 'adminPanel'
+  path = 'admin/Panel'
 
-  template_name = 'customer/admin/adminUser.html'
+  template_name = 'customer/admin/adminPanel.html'
 
   def get(self, request):
 
-    
+    context = {}
 
-    context={
-      "users" : SQLController.get_users()
-    }    
 
     return render(request, self.template_name, context)
-
-
