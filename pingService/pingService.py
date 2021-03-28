@@ -131,7 +131,7 @@ def AddProcedure(sql, procedureName):
   SQLQuery = f"""
   INSERT INTO customer_procedure(
     title,
-    basisDosis,
+    baseDosis,
     delay,
     inUse,
     tracer_id
