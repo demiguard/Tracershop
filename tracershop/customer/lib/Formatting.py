@@ -1,3 +1,5 @@
+import json
+
 def convertIntToStrLen2(INT : int) -> str:
   INT = str(INT)
   if len(INT) == 1:
@@ -10,3 +12,7 @@ def convertTruthValuesFromJS(truthval :str) -> bool:
   if truthval.lower() == "false":
     return False
   raise ValueError("Value is not true or false")
+
+def ParseJSONRequest(request):
+    return json.load(request)
+    

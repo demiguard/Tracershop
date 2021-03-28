@@ -13,6 +13,7 @@ from customer.views.admin.adminPanel import AdminPanel
 from customer.views.admin.adminConfirmUser import AdminConfirmUser
 from customer.views.api.apiAdminChangePassword import ApiAdminChangePassword
 from customer.views.api.apiAdminUpdateRights import ApiAdminUpdateRights
+from customer.views.api.apiConfirmUser import ApiConfirmUser
 
 from customer.views.auth.createuser        import CreateUserView
 from customer.views.auth.createusersuccess import CreateUserSuccess
@@ -41,6 +42,7 @@ Views = [
   AdminConfirmUser,
   ApiAdminChangePassword,
   ApiAdminUpdateRights,
+  ApiConfirmUser,
   #Authen
   CreateUserView,
   CreateUserSuccess,

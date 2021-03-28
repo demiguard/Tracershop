@@ -17,7 +17,7 @@
   </thead>
   <tbody>
     {% for Puser in potentialUsers %}
-      <tr>
+      <tr id="Row-{{Puser.id}}">
         <td>{{Puser.username}}</td>
         <td>{{Puser.email_1}}</td>
         <td><input id="Confirm-{{Puser.id}}" type=button class="btn btn-primary confirmButton" value="Godkend"></td>
@@ -26,15 +26,15 @@
     {% endfor %}
   </tbody>
 </table>
+<div id="ErrorMessageContainer" class="">
+
+</div>
 {% else %}
   <br> <p>Der er ingen potentielle bruger som der kan godkendes. </p>
 {% endif %}
-
-
-
 {% endblock %}
 
 
 {% block javascript %}
-
+  <script type=module src="{% static 'customer/javascript/sites/adminConfirmUser.js' %}"></script>
 {% endblock %}

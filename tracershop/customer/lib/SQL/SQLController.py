@@ -162,3 +162,7 @@ def getOpenDays(userID):
 
 def getPotentialUsers():
   return list(PotentialUser.objects.all())
+
+def getSpecificObject(ID, obejct ):
+  return obejct.objects.get(id=ID) 
+  #This function is mainly to make code there to make it testable, because you can mock stuff up with it

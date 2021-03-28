@@ -16,10 +16,7 @@ class AdminConfirmUser (AdminRequiredMixin, LoginRequiredMixin, TemplateView):
 
 
   def get(self, request):
-
-
     potentialUsers = SQLController.getPotentialUsers()
-    print(potentialUsers)
     context = {
       "potentialUsers" : potentialUsers
     }
