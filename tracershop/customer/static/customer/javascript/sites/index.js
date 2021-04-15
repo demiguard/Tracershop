@@ -161,7 +161,7 @@ var fill_order_table = function(date) {
             src: "/static/customer/images/clipboard" + order.status + ".svg",
             class: "StatusIcon"
           });
-          if (order.status = 1) {
+          if (order.status == 1) {
             statusImage.addClass("Editable-Order");
             statusImage.attr("id", "Order-" + order.OID);
             statusImage.click(EditOrder)
