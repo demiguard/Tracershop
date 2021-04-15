@@ -21,6 +21,7 @@ from customer.views.auth.login             import LoginView, APILoginView, APILo
 from customer.views.auth.editMyCustomers   import EditMyCustomers
 from customer.views.auth.editmyuser        import EditMyUser
 
+from customer.views.api.apiEditOrder        import ApiEditOrder
 from customer.views.api.api_add_order       import Api_add_order
 from customer.views.api.apiMonthStatus      import ApiMonthStatus
 from customer.views.api.api_order_date      import ApiOrderDate
@@ -51,6 +52,7 @@ Views = [
   APILogoutView,
   EditMyCustomers,
   EditMyUser,
+  ApiEditOrder,
   Api_add_order,
   ApiMonthStatus,
   ApiOrderDate,

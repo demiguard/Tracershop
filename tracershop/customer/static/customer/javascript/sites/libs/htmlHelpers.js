@@ -1,4 +1,4 @@
-export { createElement, dropChildern, auto_char, MaxCharInField}
+export { createElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog}
 
 
 // This module contains functions that are independant on 
@@ -58,4 +58,9 @@ function MaxCharInField(field, maxLength) {
       $(this).css("background-color", "#FFFFFF");
     }
   });
+};
+
+function destroyActiveDialog() {
+  $(".ui-dialog-content").dialog("close");
+  $(".ui-dialog-content").remove();
 };

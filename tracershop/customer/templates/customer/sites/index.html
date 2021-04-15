@@ -23,18 +23,18 @@
           </strong>
           <div class="order DisplayNone">{{ orderList.time | time:'H:i' }}</div>
         </div>
-        <div class="row" id="informationRow{{ order.order_num }}">
+        <div class="row" id="informationRow{{ orderList.order_num }}">
           {% if orderList.data_type == "form" %}
-          <div id="ButtonDiv{{ order.order_num }}">
+          <div id="ButtonDiv{{ orderList.order_num }}">
             Bestil: {{ orderList.data.order_MBQ }} [MBq]
           </div>
           <div class="col-1" ></div>
-          <div id="CommentDiv{{ order.order_num }}">
+          <div id="CommentDiv{{ orderList.order_num }}">
             Kommentar:
             {{ orderList.data.comment }}
         </div>
         <div class="col-1"></div>
-        <button class="btn btn-primary OrderButton" style="height: 50px;" id="{{order.order_num}}">
+        <button class="btn btn-primary OrderButton" style="height: 50px;" id="{{orderList.order_num}}">
           Bestil
         </button>      
         {% endif %}
@@ -54,9 +54,9 @@
           </thead>
           <tbody>
             {% for order in orderList.data %}
-            <tr>
+            <tr id="OrderRow-{{ order.OID }}">
               {% if order.status == 1 %}
-              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
+              <td><img class="StatusIcon Editable-Order" id="Order-{{ order.OID }}" src="{% static 'customer/images/clipboard1.svg' %}"></td>
               {% elif order.status == 2 %}
               <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
               {% elif order.status == 3 %}
@@ -65,7 +65,7 @@
               <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
               {% endif %}
               <td>{{order.OID}}</td>
-              <td>{{order.ordered_amount}}</td>
+              <td id="Amount-{{order.OID}}">{{order.ordered_amount}}</td>
               {% if order.total_amount %}
                 <td>{{order.total_amount}}</td>
               {% else%}
@@ -75,7 +75,7 @@
               <td>{{order.frigivet_amount}}</td>
               <td>{{order.frigivet_datetime |date:'H:i'}}</td>
               {% if orderList.hasComment %}
-                <td><img class=StatusIcon src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
+                <td id="comment-{{ order.OID }}"> <img class=StatusIcon src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
               {% endif %}
             </tr>
             {% endfor %}
@@ -119,13 +119,13 @@
             <tbody id="secondaryTableBody">
               {% if secondaryOrders %}
               {% for secondaryOrder in secondaryOrders %}
-                <tr class="data-row">
+                <tr class="data-row" id="TOrder-{{ secondaryOrder.OrderID }}">
                   <td>{{ secondaryOrder.tracer }}</td>
-                  {% if order.status == 1 %}
+                  {% if secondaryOrder.status == 1 %}
                     <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
-                  {% elif order.status == 2 %}
+                  {% elif secondaryOrder.status == 2 %}
                     <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
-                  {% elif order.status == 3 %}
+                  {% elif secondaryOrder.status == 3 %}
                     <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
                   {% else %}
                     <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
@@ -206,5 +206,6 @@
   <script type="module" src="{% static 'customer/javascript/sites/libs/calender.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/libs/calculator.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/libs/customerSelect.js' %}"></script>
+  <script type="module" src="{% static 'customer/javascript/sites/libs/EditFDGOrder.js' %}"></script>
   <script type="module" src="{% static 'customer/javascript/sites/index.js' %}"></script>
 {% endblock %}

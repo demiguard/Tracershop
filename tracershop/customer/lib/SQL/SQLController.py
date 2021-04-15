@@ -1,4 +1,5 @@
 from django.db import connection
+from django.core.exceptions import ObjectDoesNotExist
 
 from typing import Type
 from datetime import datetime, time, date
@@ -7,7 +8,7 @@ from datetime import datetime, time, date
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from customer.models import User, PotentialUser
+from customer.models import User, PotentialUser, ServerConfiguration, Database
 
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
@@ -163,6 +164,24 @@ def getOpenDays(userID):
 def getPotentialUsers():
   return list(PotentialUser.objects.all())
 
-def getSpecificObject(ID, obejct ):
-  return obejct.objects.get(id=ID) 
-  #This function is mainly to make code there to make it testable, because you can mock stuff up with it
+#These function is mainly to make code there to make it testable, because you can mock stuff up with it
+def getAll(Model):
+  return Model.objects.all()
+
+def getSpecificObject(ID, Obejct ):
+  return Obejct.objects.get(id=ID) 
+
+
+def getServerConfig():
+  """
+    This Functions gets the serverConfig, if it doesn't exists it 
+  
+  """
+  try:
+    ServerConfig = ServerConfiguration.objects.get(ID=0)
+  except ObjectDoesNotExist:
+    Databases    = Database.objects.all()
+    ServerConfig = ServerConfiguration(ID=0, ExternalDatabase=Databases[0])
+    ServerConfig.save()
+
+  return

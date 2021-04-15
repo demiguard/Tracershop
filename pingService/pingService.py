@@ -221,6 +221,7 @@ def handleResponse(response, sql):
         accessionNumbers.append(seq.ScheduledProcedureStepID)
     else:
       logger.error('Status Not availble') 
+      return
   deleteOldbookings(sql, accessionNumbers)  
    
   

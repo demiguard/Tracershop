@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from customer.modelsDir.authModels import PotentialUser, Booking, Customer, CustomerUsesLocation, Location
 from customer.modelsDir.networkingModels import Address, Database, AET
 from customer.modelsDir.clinicalModels import Tracer, Procedure, Isotope
-
+from customer.modelsDir.serverModels import ServerConfiguration
 #
 class User(AbstractBaseUser):
   id = AutoField(primary_key=True)

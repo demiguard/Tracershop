@@ -21,7 +21,8 @@ def CreateUserFromPotentialUser(potentialUser):
   NewUser = User(
     username=potentialUser.username,
     password=potentialUser.password,
-    email_1=potentialUser.email_1
+    email_1=potentialUser.email_1,
+    is_staff=True
   )
 
   NewUser.save()

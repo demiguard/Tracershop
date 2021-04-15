@@ -29,7 +29,7 @@ class Api_add_order(LoginRequiredMixin, View):
     try:
       FormatedDict = self.parse_QueryDict(request.POST)
     except ValueError as E:
-      print(f"Value Error: {E}")
+      print(f"Value Error: {E}\n Input was {request.POST}")
       return JsonResponse({
         'successRate' : 'FAIL',
         'failMessage' : 'Invaild Inputs'

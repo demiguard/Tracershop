@@ -1,4 +1,4 @@
-import { createElement, auto_char } from './htmlHelpers.js' ;
+import { createElement, auto_char, destroyActiveDialog } from './htmlHelpers.js' ;
 export { createCalculator }
 
 
@@ -207,7 +207,7 @@ function createCalculator() {
         text: "Udregn", 
         click: function () {
           calculate();
-          $( this ).dialog("close");
+          $(this).dialog("close");
           $(this).remove();
         }
       },

@@ -10,7 +10,7 @@ from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 class ApiAdminChangePassword(AdminRequiredMixin, LoginRequiredMixin, View):
   name = "ApiAdminChangePassword"
-  path = "api/admin/updatepw"
+  path = "admin/api/updatepw"
 
   def get(self, request):
     passwordChangingUser = User.objects.get(id=request.GET['userID'])

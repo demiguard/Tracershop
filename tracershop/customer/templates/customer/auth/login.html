@@ -4,13 +4,13 @@
 {% load bootstrap4 %}
 
 {% block content %}
-  <form method="POST">
+  <form method="POST" id>
     {% csrf_token %}
 
     {% if not user.is_authenticated %}  
       {% bootstrap_form login_form %}
       {% buttons %}
-        <input type="button" class="btn btn-primary" value="Log in" >
+        <input type="button" class="btn btn-primary" value="Log in" onclick="try_login()">
       {% endbuttons %}
       <div id="error-message-container"></div>
 

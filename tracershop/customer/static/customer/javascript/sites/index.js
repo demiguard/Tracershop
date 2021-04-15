@@ -1,7 +1,9 @@
 import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
-import { createElement, dropChildern, auto_char, MaxCharInField } from './libs/htmlHelpers.js' ;
+import { EditOrder } from "./libs/EditFDGOrder.js"
+import { createElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
 import { createCalculator } from "./libs/calculator.js";
+
 // Today is variable that's created from GET request, 
 // since it's provided from Django
 
@@ -20,6 +22,7 @@ var dateColoringFunction = function(div,  date, directory){
 
 
 var change_date = function (dateDiv, newDate) {
+  destroyActiveDialog();
   CalenderInstance.SetActiveDate(newDate);
   today = newDate;
   var day = newDate.getDate();
@@ -152,12 +155,18 @@ var fill_order_table = function(date) {
         var tableBody = createElement(table, '','','tbody',   []);
         for (let j = 0; j < response.data.length; j++){
           const order = response.data[j];
-          var tableRow = createElement(tableBody,'',    '', 'tr', []);
+          var tableRow = createElement(tableBody,'', "OrderRow-" + order.OID, 'tr', []);
           const statusRow = createElement(tableRow, '',         '', 'td', []);
           const statusImage = $('<img>', {
             src: "/static/customer/images/clipboard" + order.status + ".svg",
             class: "StatusIcon"
           });
+          if (order.status = 1) {
+            statusImage.addClass("Editable-Order");
+            statusImage.attr("id", "Order-" + order.OID);
+            statusImage.click(EditOrder)
+          }
+
           statusImage.appendTo(statusRow);
           createElement(tableRow, order.OID,        '', 'td', []);
           createElement(tableRow, order.ordered_amount, '', 'td', []);
@@ -254,7 +263,8 @@ var fill_order_table = function(date) {
   });
 };
 
-var Send_order = function(id) {
+var Send_order = function() {
+  const id = this.id;
   const ErrorDiv = $("#OrderErrorMessages")
   ErrorDiv.empty();
   ErrorDiv.removeClass("ErrorBox");
@@ -292,8 +302,8 @@ var Send_order = function(id) {
       createElement(tableHead, 'Frigivet MBQ',   '','th',   []);
       createElement(tableHead, 'Frigivet',       '','th',   []);
       var tableBody = createElement(table, '','','tbody',   []);
-      var tableRow = createElement(tableBody,'', '', 'tr', []);
-      createElement(tableRow, "<img src=\"/static/customer/images/clipboard1.svg\" class=\"StatusIcon\">",  '', 'td', []);
+      var tableRow = createElement(tableBody,'', 'OrderRow-'+ data.lastOrder, 'tr', []);
+      createElement(tableRow, "<img id=\"Order-"+ data.lastOrder + "\" src=\"/static/customer/images/clipboard1.svg\" class=\"StatusIcon Editable-Order\">",  '', 'td', []);
       createElement(tableRow, data.lastOrder, '', 'td', []);
       createElement(tableRow, data.amount, '', 'td', []);
       createElement(tableRow, '', '', 'td', []);
@@ -307,7 +317,8 @@ var Send_order = function(id) {
   });
 };
 
-var Send_torder = function(TracerID) {
+var Send_torder = function() {
+  var TracerID = this.id;
   var datarow =  $('#Row'+ String(TracerID));
   let date = $('#dato').text().replace(/\s+/g, '').substr(5);
   var bestillingTD = datarow.children('#deliverTime');
@@ -358,7 +369,7 @@ var Send_torder = function(TracerID) {
 
 
 
-
+// TODO: Goal Reduce this to imports and this function
 $(function() {
   $("#calculatorIcon").on("click", function () {
     createCalculator();
@@ -367,20 +378,10 @@ $(function() {
   const MinVal = $("#customer_select").children()[0].value
   $("#customer_select").val(MinVal);
 
+  $('.OrderButton').click(Send_order);
+  $('.TorderButton').click(Send_torder);
+  $('.Editable-Order').click(EditOrder);
 
-  var OrderButtons = $('.OrderButton');
-  for (let i = 0; i< OrderButtons.length; i++){
-    var OrderButton = $(OrderButtons[i]);
-    let id = OrderButton.attr('id');
-    OrderButton.on( 'click', () => Send_order(id));
-  }
-
-  var TorderButtons = $('.TorderButton');
-  for (let i = 0; i < TorderButtons.length; i++) {
-    var TOrderButton = $(TorderButtons[i]);
-    let id = TOrderButton.attr('id').substr(12);
-    TOrderButton.on('click', () => Send_torder(id));
-  }
 
   //Okay I HAVE NO IDEA Why this line of code is needed, but if you dont you have zero indentation error
   var Ztoday = new Date(today.getYear()+1900, today.getMonth(),today.getDate())

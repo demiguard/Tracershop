@@ -1,5 +1,8 @@
+from django.http.response import JsonResponse
+
+
 #
-TRACERSHOPDATABASENAME = 'TracerShop'
+TRACERSHOPDATABASENAME = 'TS_test'
 
 #SQL CONSTANTS
 TORDERS     = 'tOrders'
@@ -68,3 +71,7 @@ ORDERDEADLINEDAY = 1
 TORDERDEADLINEWEEKDAY = 2
 TORDERDEADLINEHOUR = 11
 TORDERDEADLINEMIN = 00
+
+SUCCESSFUL_JSON_RESPONSE = JsonResponse({
+  "Success": "Success"
+})

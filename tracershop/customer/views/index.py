@@ -51,6 +51,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
       secondaryOrdersForms = []
     DailyTOrders            = SQL.getDailyTOrders(today, active_customerID)
     
+
     context = {
       'customerIDs'     : customerIDs,
       'secondaryOrders' : DailyTOrders,

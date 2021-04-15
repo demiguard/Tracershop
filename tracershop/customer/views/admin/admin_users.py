@@ -17,9 +17,6 @@ class AdminUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   template_name = 'customer/admin/adminUser.html'
 
   def get(self, request):
-
-    
-
     context={
       "users" : SQLController.get_users()
     }    

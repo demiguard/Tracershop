@@ -2,20 +2,23 @@
 let SendPasswordChange = function(UserID) {
   const passwordInput = $("#password");
   const passwordConfirm = $("#passwordConfirm");
-
+  
+  console.log("Test")
   if (passwordInput.val() !== passwordConfirm.val()){
     //Error message
     $("#ErrorMessagesPW").text("Koderne er ikke ens")
     return -1
   }
 $.ajax({
-  url:"api/admin/updatepw",
+  url:"api/updatepw",
   type:"get",
   data:{
     "userID":UserID,
     newPassword: passwordInput.val()
+  },
+  success: function(data) {
+    console.log(data)
   }
-
 })
   return 0
 }
@@ -36,13 +39,13 @@ let ChangePasswordUser = function(buttonID) {
   const PasswordInput = $("<input>", {
     id:"password",
     type: "password", 
-    minlength:8
+    minlength:4
   })
   PasswordInput.appendTo(dialogpwP)
   const ConfirmPasswordInput = $("<input>", {
     id:"passwordConfirm",
     type: "password", 
-    minlength:8
+    minlength:4
   })
   ConfirmPasswordInput.appendTo(dialogpwcP);
   dialogpwP.appendTo(dialog);
@@ -67,7 +70,7 @@ let ChangePasswordUser = function(buttonID) {
       {
         text: "Skift kode",
         click:function() {
-          if (SendasswordChange(UserID) == 0){
+          if (SendPasswordChange(UserID) == 0){
             $(this).dialog("close")
           }
         }
@@ -93,7 +96,7 @@ let updateRights = function() {
   });
   $.ajax({
     type:"get",
-    url: "api/admin/updateRights",
+    url: "api/updateRights",
     data: rights,
     success: function(data) {
       $("#UpdaterightsMessages").text("Rettighederne er nu opdateret");

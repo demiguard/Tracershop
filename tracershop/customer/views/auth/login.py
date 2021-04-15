@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.views.generic import TemplateView
+from django.views.generic import View, TemplateView
 from django.http import JsonResponse, HttpResponseServerError, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,7 +19,10 @@ class LoginView(TemplateView):
 
     return render(request, self.template_name, context)
 
-class APILoginView(TemplateView):
+  def post(self, request):
+    return redirect("customer:login")
+
+class APILoginView(View):
   path = "api/login"
   name = "login"
 

@@ -10,12 +10,13 @@ from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 class ApiAdminUpdateRights(AdminRequiredMixin, LoginRequiredMixin, View):
   name = "ApiAdminUpdateRights"
-  path = "api/admin/updateRights"
+  path = "admin/api/updateRights"
 
   def get(self, request):
     for userID, right in request.GET.items():
-      tempUser =  User.objects.get(id=userID)
+      tempUser = User.objects.get(id=userID)
       tempUser.is_admin = convertTruthValuesFromJS(right)
       tempUser.save()
+
 
     return JsonResponse({})
