@@ -38,7 +38,7 @@ def calculateDosisFDG(booking, userID, times):
 
 def insertTOrderBooking(booking, customerID : int , username):
   bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
-  SQLController.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "human", customerID, username)
+  SQL.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "human", customerID, username)
 
 def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: int):
   #### So goal is to merge the two dict into one                                        ####
