@@ -45,13 +45,16 @@ class Api_add_order(LoginRequiredMixin, View):
     deliverTimeDict = SQL.getDailyRuns(FormatedDict['dato'], FormatedDict['customerID'])
     SelectdeliverTime = deliverTimeDict[FormatedDict['order']]
     deliverTime      = SelectdeliverTime['dtime']
+
+    run = FormatedDict['order'] + 1 
     SQL.insertOrderFTG(
-        FormatedDict['amount'],
-        deliverTime,
-        FormatedDict['dato'],
-        FormatedDict['comment'],
-        FormatedDict['customerID'],
-        request.user.username
+        FormatedDict['amount'],     # amount
+        FormatedDict['comment'],    # comment
+        deliverTime,                # deliverTime
+        FormatedDict['dato'],       # dato
+        run,                        # run
+        FormatedDict['customerID'], # UserID
+        request.user.username       # userName
       )
     #Note rare Race condition
     lastOID = SQL.getLastOrder()

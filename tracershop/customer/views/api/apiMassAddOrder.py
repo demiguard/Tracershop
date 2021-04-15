@@ -79,9 +79,16 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
         booking.save()
 
     if isFDG:
-      for time, fdg in times.items():
+      for runm1, (time, fdg) in enumerate(times.items()):
+        run = runm1 + 1    # Run are not zero initialized, Take it up with the system administrator
         SQL.insertOrderFTG(
-          fdg, time, startDate, "Automaticly generated FDG-order", customerID, username
+          fdg,                                # Amount
+          "Automaticly generated FDG-order",  # Comment
+          time,                               # deliverTime
+          startDate,                          # dato #### ARE YOU FUCKING KIDDING ME CHRIS
+          run,                                # run
+          customerID,                         # userID
+          username                            # username
         )
 
     return JsonResponse({})

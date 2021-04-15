@@ -1,11 +1,12 @@
 #
 # See README.MD for 
 #
-# Auther: Christoffer Vilstrup Jensen
+# Author: Christoffer Vilstrup Jensen
 #
 
 import logging
 import time as systime
+import traceback
 
 from datetime import datetime, date, time, timedelta
 from logging.handlers import SysLogHandler

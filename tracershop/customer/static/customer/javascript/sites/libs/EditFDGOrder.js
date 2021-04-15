@@ -83,12 +83,8 @@ var EditOrder = function(){
                 ErrorDiv.text("Der er Sket en fejl");
                 ErrorDiv.addClass("ErrorBox")
               }
-              
-      
             }
           })
-          
-          
         }
       },
       {
@@ -107,8 +103,6 @@ var EditOrder = function(){
                 ErrorDiv.text("Der er Sket en fejl");
                 ErrorDiv.addClass("ErrorBox")
               }
-              
-      
             }
           })
         }

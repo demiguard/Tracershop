@@ -4,7 +4,8 @@ from customer.lib import calenderHelper
 from customer.lib import Formatting
 
 """
-The purpose of the SQLFactory is to create SQL queries
+The purpose of the SQLFactory is to create SQL queries,
+Yeha there might some redudant naming
 """
 
 def createSQLQueryOrderStatusByMonth(year :int, month : int , userID:int) -> str:
@@ -93,34 +94,44 @@ def createSQLQueryMaxCustomerNumber() -> str:
   """
 
 def createSQLQueryInsertFTGOrder(
-    amount      : int,
-    deliverTime : Type[time],
-    dato        : Type[date],
-    comment     : str,
-    userID      : int,
-    userName    : str
+    amount         : int,
+    amountOverhead : int,
+    comment        : str,
+    deliverTime    : Type[time],
+    dato           : Type[date],
+    run            : int,
+    userID         : int,
+    userName       : str
   ) -> str :
   dt_deliverTime = calenderHelper.combine_time_and_date(dato, deliverTime)
   return f"""
     INSERT INTO orders(
-      BID, 
       amount,
-      deliver_datetime,
-      status,
+      amount_o,
       batchnr,
-      tracer,
-      frigivet_datetime,
+      BID, 
+      COID,
       comment,
+      deliver_datetime,
+      frigivet_datetime,
+      run,
+      status,
+      total_amount, 
+      tracer,
       userName
     ) VALUES (
-      {userID},
       {amount},
-      \"{dt_deliverTime.strftime('%Y-%m-%d %H:%M:%S')}\",
-      1,
+      {amountOverhead},
       \"\",
-      6,
-      \"0000-01-01 00:00:00\",
+      {userID},
+      -1,
       \"{comment}\",
+      \"{dt_deliverTime.strftime('%Y-%m-%d %H:%M:%S')}\",
+      \"0000-01-01 00:00:00\",
+      {run},
+      1, 
+      {amountOverhead},
+      6,
       \"{userName}\"
     )
   """
@@ -257,4 +268,28 @@ def createSQLAvailbleFDGDays(UserID):
     deliverTimes
   WHERE
     BID={UserID}
+  """
+
+def createSQLUpdateFDG(OrderID, NewAmount, NewComment):
+  return f"""
+    UPDATE orders
+    SET
+      amount = {NewAmount}
+      comment = \"{NewComment}\"
+    WHERE  
+      OID = {OrderID}
+  """
+
+def createSQLDeleteFDG(OrderID):
+  return f"""
+  DELETE FROM orders
+  WHERE OID={OrderID}
+  """
+
+def createSQLGetOverhead(CustomerID):
+  return f"""
+  SELECT overhead
+  FROM Users
+  WHERE 
+    Id={CustomerID}
   """

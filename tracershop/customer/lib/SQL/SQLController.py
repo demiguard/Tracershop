@@ -4,7 +4,6 @@ from django.core.exceptions import ObjectDoesNotExist
 from typing import Type
 from datetime import datetime, time, date
 
-
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
@@ -72,15 +71,33 @@ def getMaxCustomerNumber() -> int:
 
 def insertOrderFTG(
       amount      : int,
+      comment     : str,
       deliverTime : Type[time],
       dato        : Type[date],
-      comment     : str,
+      run         : int, 
       userID      : int,
       username    : str
     )      -> None:
 
+
+  overhead = getCustomerOverhead(userID)
+  if overhead:
+    AmountOverhead = int(amount * (1 + overhead / 100))
+  else:
+    AmountOverhead = amount
+
+
   SQLQuery = SQLFactory.createSQLQueryInsertFTGOrder(
-    amount, deliverTime, dato, comment, userID, username)
+    amount,
+    AmountOverhead,
+    comment,
+    deliverTime,
+    dato,
+    run,
+    userID,
+    username
+  )
+     
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 def insertTOrder(
@@ -156,6 +173,7 @@ def monthlyCloseDates(year:int, month:int):
   else:
     return {}
 
+
 def getOpenDays(userID):
   SQLQuery = SQLFactory.createSQLAvailbleFDGDays(userID)
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery) 
@@ -174,6 +192,7 @@ def getSpecificObject(ID, Obejct ):
 
 def getServerConfig():
   """
+
     This Functions gets the serverConfig, if it doesn't exists it 
   
   """
@@ -184,4 +203,17 @@ def getServerConfig():
     ServerConfig = ServerConfiguration(ID=0, ExternalDatabase=Databases[0])
     ServerConfig.save()
 
-  return
+  return ServerConfig
+
+def updateFDGOrder(OrderID, NewAmount, NewComment):
+  pass
+
+
+def getCustomerOverhead(customerID):
+  """
+    Cache to allow sloppy programming
+  """
+  SQLQuery = SQLFactory.createSQLGetOverhead(customerID)
+  overhead = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+  return overhead[0]
+
