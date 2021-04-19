@@ -8,6 +8,7 @@ from customer.views.index           import IndexView
 from customer.views.FutureBookings  import FutureBooking
 from customer.views.procedureEditor import ProcedureEditor
 
+from customer.views.admin.adminLocations import AdminLocationsView
 from customer.views.admin.admin_users import AdminUserView
 from customer.views.admin.adminPanel import AdminPanel
 from customer.views.admin.adminConfirmUser import AdminConfirmUser
@@ -21,6 +22,8 @@ from customer.views.auth.login             import LoginView, APILoginView, APILo
 from customer.views.auth.editMyCustomers   import EditMyCustomers
 from customer.views.auth.editmyuser        import EditMyUser
 
+from customer.views.api.apiRest             import RESTAPI
+from customer.views.api.apiLocations        import ApiEditLocation
 from customer.views.api.apiEditOrder        import ApiEditOrder
 from customer.views.api.api_add_order       import Api_add_order
 from customer.views.api.apiMonthStatus      import ApiMonthStatus
@@ -40,10 +43,12 @@ Views = [
   #Admin
   AdminUserView, 
   AdminPanel,
+  AdminLocationsView,
   AdminConfirmUser,
   ApiAdminChangePassword,
   ApiAdminUpdateRights,
   ApiConfirmUser,
+  ApiEditLocation,
   #Authen
   CreateUserView,
   CreateUserSuccess,
@@ -59,7 +64,8 @@ Views = [
   ApiMassAddOrder,
   Api_add_torder,
   ApiFutureBookingDay,
-  ApiUpdateProcedure
+  ApiUpdateProcedure, 
+  RESTAPI
 ]
 
 urlpatterns = LMap(lambda view: path(view.path, view.as_view(), name=view.name), Views)

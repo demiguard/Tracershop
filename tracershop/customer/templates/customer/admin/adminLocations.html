@@ -1,0 +1,49 @@
+{% extends 'customer/base.html' %}
+{% load static %}
+{% load bootstrap4 %}
+
+{% block content %}
+  <div class="col-6">
+    <table class="table">
+      <thead>
+        <th>Location</th>
+        <th>Scanner Navn</th>
+        <th>Forbundet kunde</th>
+      </thead>
+      <tbody>
+        {% for location in locations %}
+        <tr>
+          <td> {{ location.location }}</td>
+          <td> <input type="text" id="input-{{location.location}}" class="LocationNameInput" value="{{ location.LocName }}">  </td>
+          <td></td>
+        </tr>
+        {% endfor%}
+      </tbody>
+    </table>
+  </div>
+  
+  <div class="col-6">
+    <table class="table">
+      <thead>
+        <th>TracerShop Brugernavn</th>
+        <th>Intern Bruger</th>
+        <th>Automatisk Kunde</th>
+      </thead>
+      <tbody>
+        {% for customer in customers %}
+        <tr>
+          <td>{{ customer.customerName }}</td>
+          <td>{{ customer.is_REGH }}</td>
+          <td>{{ customer.defualtActiveCustomer }}</td>
+        </tr>
+        {% endfor%}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block javascript %}
+  <script type="module" src="{% static 'customer/javascript/sites/AdminLocations.js' %}"></script>
+{% endblock %}

@@ -1,14 +1,14 @@
 from django.db import models
-from django.db.models import Model
+from customer.modelsDir.BaseModels import SubscribeableModel
 
-class Isotope(Model): 
-  id = models.AutoField(primary_key=True)
+class Isotope(SubscribeableModel): 
+  ID = models.AutoField(primary_key=True)
   atomName = models.CharField(max_length=30)
   halfTime = models.IntegerField(null=True)
   isotopeNumber = models.IntegerField(null=True) # Protons + neutrons
   symbol = models.CharField(max_length=5, null=True)
 
-class Tracer(Model):
+class Tracer(SubscribeableModel):
   ID = models.AutoField(primary_key=True)
   tracerName = models.CharField(max_length=30, unique=True, null=True)
   inUse      = models.BooleanField(default=False)
@@ -23,8 +23,8 @@ class Tracer(Model):
 
 
 
-class Procedure(Model):
-  id        = models.AutoField(primary_key=True)
+class Procedure(SubscribeableModel):
+  ID        = models.AutoField(primary_key=True)
   title     = models.CharField(unique=True, max_length=128)
   baseDosis = models.IntegerField(null=True)
   delay     = models.IntegerField(default=0)
@@ -33,3 +33,7 @@ class Procedure(Model):
 
   def __str__(self):
     return self.title
+
+  class Meta:
+    verbose_name = "Procedure"
+    verbose_name_plural = "Procedures"

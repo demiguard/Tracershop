@@ -136,6 +136,7 @@ var ChangeTable = function(date) {
       createElement(TableHeadRow,'Study Description','','th',[]);
       createElement(TableHeadRow,'Booking tidspunkt','','th',[]);
       createElement(TableHeadRow,'Injektions Tidspunkt','','th',[]);
+      createElement(TableHeadRow, 'Location','', "th", []);
       createElement(TableHeadRow,'','',"th",[]);
       // Create the Table body
       const TableBody = createElement(DataTable, '', String(TracerNumber)+"-tbody", 'tbody', []);
@@ -145,6 +146,7 @@ var ChangeTable = function(date) {
         createElement(StudyRow,study.procedure , '','td',[]);
         createElement(StudyRow,study.studyTime , '','td',[]);
         createElement(StudyRow,study.injectionTime ,'','td',[]);    
+        createElement(StudyRow,study.location, '', 'td', []);
         if (study.status == 0) {
           CanOrder = true;
           const checkboxTD = createElement(StudyRow,'', '', "td", ["checkbox"])

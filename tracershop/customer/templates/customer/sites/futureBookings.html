@@ -10,7 +10,13 @@
 {% endblock %}
 
 {% block content %}
+  
   <div id="Study" class="col-9">
+    <div class="row"> 
+      <strong>
+        {{ today }}
+      </strong> 
+    </div>
     {% for key, list in studies.items %}
     <div class="TracerDiv row col-12">
       <div class="col-12 overViewDiv">
@@ -24,6 +30,7 @@
           <th>Study Description</th>
           <th>Booking tidspunkt</th>
           <th>Injektions Tidspunkt</th>
+          <th>Location</th>
           <th></th>
         </thead>
         <tbody id="{{ forloop.counter0 }}-tbody">
@@ -33,6 +40,7 @@
             <td>{{ study.procedure }}</td>
             <td class="">{{ study.studyTime }} </td>
             <td class="">{{ study.injectionTime}}</td>
+            <td>{{ study.location }}</td>
             {% if study.status == 0 %}
               <td class="checkbox"><input type="checkbox" id="{{ study.accessionNumber }}" checked></td>
             {% elif study.status == 2 %}

@@ -1,5 +1,6 @@
 from django.db import models
-from django.db.models import Model, AutoField, BooleanField, CharField, ForeignKey
+from django.db.models import AutoField, BooleanField, CharField, ForeignKey
+from customer.modelsDir.BaseModels import SubscribeableModel
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
@@ -9,7 +10,8 @@ from customer.modelsDir.clinicalModels import Tracer, Procedure, Isotope
 from customer.modelsDir.serverModels import ServerConfiguration
 #
 class User(AbstractBaseUser):
-  id = AutoField(primary_key=True)
+  #Because this class is not a subscribableModel, it cannot be used in REST API. but truth be told, that's not something i would have allowed by default.
+  ID = AutoField(primary_key=True)
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=256)
   is_staff = BooleanField(default=False)
@@ -35,7 +37,7 @@ class User(AbstractBaseUser):
   def __str__(self):
     return self.username
 
-class UserHasAccess(Model):
+class UserHasAccess(SubscribeableModel):
   ID = AutoField(primary_key=True)
   userID = ForeignKey(User, on_delete=models.CASCADE)
   CustomerID = ForeignKey(Customer, on_delete=models.CASCADE)

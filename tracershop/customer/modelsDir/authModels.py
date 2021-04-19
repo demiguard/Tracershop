@@ -1,14 +1,14 @@
 from django.db import models
-from django.db.models import Model, AutoField, BooleanField, CharField, DateField, DateTimeField, ForeignKey, IntegerField, TimeField
+from django.db.models import AutoField, BooleanField, CharField, DateField, DateTimeField, ForeignKey, IntegerField, TimeField
 from django.db.models import CASCADE, SET_NULL
-
+from customer.modelsDir.BaseModels import SubscribeableModel
 from customer.modelsDir.clinicalModels import Procedure
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
 
-class PotentialUser(AbstractBaseUser):
-  id       = AutoField(primary_key=True)
+class PotentialUser(AbstractBaseUser, SubscribeableModel):
+  ID       = AutoField(primary_key=True)
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=256)
 
@@ -33,13 +33,18 @@ class PotentialUser(AbstractBaseUser):
     return self.username
 
 
-class Location(Model):
-  location = CharField(max_length=16, primary_key=True)
+class Location(SubscribeableModel):
+  location   = CharField(max_length=16, primary_key=True)
+  LocName    = CharField(max_length=32, default="")
+  AssignedTo = ForeignKey(Customer, on_delete=SET_NULL) 
 
   def __str__(self):
-    return self.location
+    if self.LocName:
+      return self.LocName
+    else:
+      return self.location
 
-class Booking(Model):
+class Booking(SubscribeableModel):
   procedure       = ForeignKey(Procedure, on_delete=CASCADE)
   location        = ForeignKey(Location, on_delete=SET_NULL, null=True)
   accessionNumber = CharField(max_length=16, primary_key=True)
@@ -51,22 +56,23 @@ class Booking(Model):
   def __str__(self):
     return str(self.accessionNumber)
 
-class UpdateTimeStamp(Model):
-  id = IntegerField(primary_key=True)
+class UpdateTimeStamp(SubscribeableModel):
+  ID = IntegerField(primary_key=True)
   timeStamp = DateTimeField()
   
 
-class Customer(Model):
+class Customer(SubscribeableModel):
   ID        = AutoField(primary_key=True)
   customerName = CharField(max_length=30)
   is_REGH   = BooleanField(default=False)
+  defualtActiveCustomer = BooleanField(default=False) #This means the customer would be assigned to new Users
   AET       = CharField(max_length=16, null=True, default=None)
   TestCustomer = BooleanField(default=False) #This means it will not show up in 
 
   def __str__(self):
     return self.customerName
 
-class CustomerUsesLocation(Model):
+class CustomerUsesLocation(SubscribeableModel):
   ID       = AutoField(primary_key=True) 
   location = ForeignKey(Location, on_delete=CASCADE)
   customer = ForeignKey(Customer, on_delete=CASCADE)

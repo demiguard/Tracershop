@@ -60,7 +60,8 @@ def FilterBookings(Customer, Date):
         'accessionNumber' : booking.accessionNumber,
         'procedure' : str(booking.procedure),
         'studyTime' : booking.startTime.strftime("%H:%M"),
-        'injectionTime' : injectionTime.strftime("%H:%M")
+        'injectionTime' : injectionTime.strftime("%H:%M"),
+        'location' : str(booking.location)
       }
 
       if TracerStr in studies:

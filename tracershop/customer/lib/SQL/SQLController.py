@@ -7,7 +7,7 @@ from datetime import datetime, time, date
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from customer.models import User, PotentialUser, ServerConfiguration, Database
+from customer.models import User, PotentialUser, ServerConfiguration, Database, Customer, Location, CustomerUsesLocation
 
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
@@ -216,4 +216,7 @@ def getCustomerOverhead(customerID):
   SQLQuery = SQLFactory.createSQLGetOverhead(customerID)
   overhead = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
   return overhead[0]
+
+
+
 

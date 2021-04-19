@@ -1,0 +1,39 @@
+from django.shortcuts import render
+from django.views.generic import TemplateView
+from django.contrib.auth.mixins import LoginRequiredMixin
+
+from customer.lib.SQL import SQLController as SQL
+from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
+
+from customer.models import Customer, CustomerUsesLocation, Location
+
+def MergeLocationsAndCustomerUsesLocations(Locations, CustomerUsesLocations):
+  return Locations
+
+
+
+class AdminLocationsView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
+  name = 'adminLocations'
+  path = 'admin/Locations'
+
+  template_name = 'customer/admin/adminLocations.html'
+
+  def get(self, request): 
+    """
+
+      Note: there might some inefficiencies in my mapping, however since we are talking about <100 location and customers, we should be kewl with a n² or n³ algorithm 
+    """
+    
+    locationsObjects            = SQL.getAll(Location)
+    CustomerObjects             = SQL.getAll(Customer)
+    CustomerUsesLocationObjects = SQL.getAll(CustomerUsesLocation)
+
+    displayLocations = MergeLocationsAndCustomerUsesLocations(locationsObjects, CustomerUsesLocationObjects)
+
+    context = {
+      'customers' : CustomerObjects,
+      'locations' : displayLocations
+    }
+
+
+    return render(request, self.template_name, context)
