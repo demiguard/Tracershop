@@ -33,28 +33,8 @@ class PotentialUser(AbstractBaseUser, SubscribeableModel):
     return self.username
 
 
-class Location(SubscribeableModel):
-  location   = CharField(max_length=16, primary_key=True)
-  LocName    = CharField(max_length=32, default="")
-  AssignedTo = ForeignKey(Customer, on_delete=SET_NULL) 
 
-  def __str__(self):
-    if self.LocName:
-      return self.LocName
-    else:
-      return self.location
 
-class Booking(SubscribeableModel):
-  procedure       = ForeignKey(Procedure, on_delete=CASCADE)
-  location        = ForeignKey(Location, on_delete=SET_NULL, null=True)
-  accessionNumber = CharField(max_length=16, primary_key=True)
-  startDate       = DateField()
-  startTime       = TimeField()
-  status          = IntegerField(default=0)
-  orderNumber     = IntegerField(default=None, null=True)
-
-  def __str__(self):
-    return str(self.accessionNumber)
 
 class UpdateTimeStamp(SubscribeableModel):
   ID = IntegerField(primary_key=True)
@@ -71,6 +51,33 @@ class Customer(SubscribeableModel):
 
   def __str__(self):
     return self.customerName
+
+class Location(SubscribeableModel):
+  location   = CharField(max_length=16, primary_key=True)
+  LocName    = CharField(max_length=32, default="")
+  AssignedTo = ForeignKey(Customer, on_delete=SET_NULL, null=True, default=None) 
+
+  def __str__(self):
+    if self.LocName:
+      return self.LocName
+    else:
+      return self.location
+
+
+class Booking(SubscribeableModel):
+  procedure       = ForeignKey(Procedure, on_delete=CASCADE)
+  location        = ForeignKey(Location, on_delete=SET_NULL, null=True)
+  accessionNumber = CharField(max_length=16, primary_key=True)
+  startDate       = DateField()
+  startTime       = TimeField()
+  status          = IntegerField(default=0)
+  orderNumber     = IntegerField(default=None, null=True)
+
+  def __str__(self):
+    return str(self.accessionNumber)
+
+
+
 
 class CustomerUsesLocation(SubscribeableModel):
   ID       = AutoField(primary_key=True) 

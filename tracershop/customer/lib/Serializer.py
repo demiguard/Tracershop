@@ -1,9 +1,6 @@
 ### So this file and Class is mostly made because I couldn't figure out how to implement this class using a Djangos build in frame work
 ### Maybe I'm just stupid and can't read an API, So feel free to replace this with an implementation such that 
 ### So in general the stratigy is too transform json objects and list of models back and forth 
-import json
-from types import list
-
 ### Wrapper function intented to work as an interface. So if you replace this module with something else you should 
 
 def SerializeAll(model):

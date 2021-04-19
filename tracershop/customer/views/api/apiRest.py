@@ -17,7 +17,7 @@
 
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.exceptions     import PermissionDenied
-from django.http                import JsonResponse, HttpResponseBadRequest, Http404, QueryDict, Http4
+from django.http                import JsonResponse, HttpResponseBadRequest, Http404, QueryDict
 from django.shortcuts           import render
 from django.views.generic       import View
 
@@ -70,7 +70,7 @@ def getactiveModels(modelName):
 class RESTAPI(View):
   #Note this entire REST is included in 
   name = 'RESTAPI'
-  path = 'api/REST/<string:model>'
+  path = 'api/REST/<str:model>'
 
   def get(self, request, model):
     # Verfication / authentication
