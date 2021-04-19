@@ -97,7 +97,7 @@ def getProcedureID(sql, ProcedureName) -> int:
 
   sqlQuery = f""" 
     SELECT 
-      id 
+      ID 
     FROM
       customer_procedure
     WHERE
