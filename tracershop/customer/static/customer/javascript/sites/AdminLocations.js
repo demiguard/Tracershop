@@ -5,14 +5,39 @@ function updateLocationName() {
 
   $.ajax({
     type:"put",
-    url:"/api/updateLocations",
-
+    url:"/api/REST/Location",
+    datatype:"json",
     data:JSON.stringify({
-      LocationID: LocationID,
-      newLocationName : newLocationName
+      filter:{
+        location: LocationID
+      },
+      update:{
+        LocName : newLocationName
+      }
     }),
     success: function(data){
       //console.log("Success")
+    }
+  })
+}
+
+function updateConnectedCustomer() {
+  const id = this.id.substr(7);
+  const newSelect = $(this).children("option:selected").val()
+  $.ajax({
+    type:"put",
+    url:"/api/REST/Location",
+    datatype:"json",
+    data:JSON.stringify({
+      filter: {
+        location : id
+      },
+      update: {
+        AssignedTo : newSelect
+      }
+    }),
+    success: function(data) {
+      console.log(data)
     }
   })
 }
@@ -21,6 +46,6 @@ function updateLocationName() {
 
 $(function (){
   $('.LocationNameInput').keyup(updateLocationName)
-
+  $('.AssignedToInput').change(updateConnectedCustomer)
 
 });

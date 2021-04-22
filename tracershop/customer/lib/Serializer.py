@@ -3,28 +3,22 @@
 ### So in general the stratigy is too transform json objects and list of models back and forth 
 ### Wrapper function intented to work as an interface. So if you replace this module with something else you should 
 
+from django.db.models import ForeignKey
+
+
 def SerializeAll(model):
   """
     This function creates a dictionary of all models. It's possible because of extention to the model class found in Basemodels.py - Subscribable model.
     As this allows model[fieldname] to return something
   """
-  returnDict = {}
-
   models = model.objects.all()
-  for instance in models:
-    modelDict = {}
-    for field in x._meta.fields:
-      modelDict[field.name] = instance[field.name]
-    
-    returnDict[instance["pk"]] = modelDict
-  
-  return returnDict
+  return SerializeInstaced(models)
 
 def SerializeInstaced(modelList):
   returnDict = {}
-  for instance in modelsList:
+  for instance in modelList:
     modelDict = {}
-    for field in x._meta.fields:
+    for field in instance._meta.fields:
       modelDict[field.name] = instance[field.name]
     
     returnDict[instance["pk"]] = modelDict
@@ -72,7 +66,12 @@ def DeserializeInstance(modelInstance, data):
         A instanced of the supplied model with fields achording to the supplied Dict
   """
   for field, value in data.items():
-    modelInstance[field] = value    
+    modelField = modelInstance._meta.get_field(field)
+    if isinstance(modelField, ForeignKey):
+      targetmodel = modelField.related_model
+      modelInstance[field] = targetmodel.objects.get(pk=value)
+    else:   
+      modelInstance[field] = value    
   
   return modelInstance
 

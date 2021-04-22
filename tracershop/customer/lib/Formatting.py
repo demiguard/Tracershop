@@ -14,5 +14,8 @@ def convertTruthValuesFromJS(truthval :str) -> bool:
   raise ValueError("Value is not true or false")
 
 def ParseJSONRequest(request):
+  if request.body:
     return json.load(request)
+  else:
+    return {}
     

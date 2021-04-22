@@ -2,7 +2,7 @@ from django import forms
 from django.forms import Form, ModelForm
 
 from customer.lib.Enums import USECASENAMING
-from customer.models import PotentialUser, Procedure
+from customer.models import PotentialUser, Procedure, Location, Procedure
 
 class OrderForm(Form):
   order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
@@ -64,3 +64,16 @@ class ProcedureForm(ModelForm):
     self.fields["title"].widget.attrs["readonly"] = True
     for visible in self.visible_fields():
       visible.field.widget.attrs['class'] = 'form-control'
+
+class LocationForm(ModelForm):
+  class Meta:
+    model = Location
+    fields = ["location", "LocName", "AssignedTo"]
+
+  def __init__(self, locationName,  *args, **kwargs):
+    super().__init__(*args, **kwargs)
+    self.fields['LocName'].widget.attrs['id'] = f"input-{locationName}"
+    self.fields['LocName'].widget.attrs['class'] = "LocationNameInput"
+    self.fields['AssignedTo'].widget.attrs['id'] = f"select-{locationName}"
+    self.fields['AssignedTo'].widget.attrs['class'] = f"AssignedToInput"
+

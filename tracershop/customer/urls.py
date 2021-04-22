@@ -23,7 +23,6 @@ from customer.views.auth.editMyCustomers   import EditMyCustomers
 from customer.views.auth.editmyuser        import EditMyUser
 
 from customer.views.api.apiRest             import RESTAPI
-from customer.views.api.apiLocations        import ApiEditLocation
 from customer.views.api.apiEditOrder        import ApiEditOrder
 from customer.views.api.api_add_order       import Api_add_order
 from customer.views.api.apiMonthStatus      import ApiMonthStatus
@@ -48,7 +47,6 @@ Views = [
   ApiAdminChangePassword,
   ApiAdminUpdateRights,
   ApiConfirmUser,
-  ApiEditLocation,
   #Authen
   CreateUserView,
   CreateUserSuccess,

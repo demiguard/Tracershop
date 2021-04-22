@@ -6,9 +6,22 @@ from customer.lib.SQL import SQLController as SQL
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 from customer.models import Customer, CustomerUsesLocation, Location
+from customer.forms.forms import LocationForm
+
+
+def createCustomerForm():
+  pass
+
 
 def MergeLocationsAndCustomerUsesLocations(Locations, CustomerUsesLocations):
-  return Locations
+  LocationsForms = []
+  for location in Locations:
+    form =  LocationForm(location.location, instance=location)
+    form.name = location.location
+
+    LocationsForms.append(form)
+
+  return LocationsForms
 
 
 
@@ -29,6 +42,9 @@ class AdminLocationsView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
     CustomerUsesLocationObjects = SQL.getAll(CustomerUsesLocation)
 
     displayLocations = MergeLocationsAndCustomerUsesLocations(locationsObjects, CustomerUsesLocationObjects)
+
+    print(locationsObjects)
+
 
     context = {
       'customers' : CustomerObjects,

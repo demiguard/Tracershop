@@ -12,6 +12,7 @@ class SubscribeableModel(Model):
         return getattr(self, name)  
       try:
         self._meta.get_field(name)
+        return getattr(self, name)
       except models.FieldDoesNotExist:
         raise KeyError("This is not valid Field")
 

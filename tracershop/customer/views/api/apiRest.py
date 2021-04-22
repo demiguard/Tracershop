@@ -48,9 +48,8 @@ modelHashMap = {
 
 def FilterModels(model, Filter):
   result = []
-
-  obejcts = model.obejcts.all()
-  for instance in obejcts:
+  objects = model.objects.all()
+  for instance in objects:
     PassedFilter = True
     for key, value in Filter.items():
       if instance[key] != value:
@@ -62,8 +61,9 @@ def FilterModels(model, Filter):
   return result
 
 def getactiveModels(modelName):  
-  activeModel = modelHashMap.get(model)
+  activeModel = modelHashMap.get(modelName)
   if not activeModel:
+    print("Could not find model")
     raise Http404("Model does not exists")
   return activeModel
 
@@ -87,40 +87,49 @@ class RESTAPI(View):
     requestData = ParseJSONRequest(request)
     if len(requestData.keys()) == 0:
       #See note on serializers in Serializer 
-      serializeAllModels = Serializer.SerializeAll(activemodel) 
-      return JsonResponse(SerializeAllModels)
+      serializeAllModels = Serializer.SerializeAll(activeModel) 
+      return JsonResponse(serializeAllModels)
     else:
       Instances = activeModel.obejcts.all()
       FilteredInstances = FilterModels(Instances, requestData)
       return JsonResponse(Serializer.SerializeInstaced(FilteredInstances))
 
     
-def post(self, request, model):
-  if not request.user.is_admin:
-    raise PermissionDenied
+  def post(self, request, model):
+    if not request.user.is_admin:
+      raise PermissionDenied
 
-  activeModel = getactiveModels(model)
-  requestData = ParseJSONRequest(request)
-  instance = Serializer.Deserialize(activeModel, requestData)
-  instance.save()
-
-def put(self, request, model):
-  #Verfication / Authentication
-  if not request.user.is_admin:
-    raise PermissionDenied
-
-  activeModel = getactiveModels(model)
-  requestData = ParseJSONRequest(request)
-  instances = FilterModels(activeModel, requestData)
-  if len(instances) == 0:
-    raise Http404("Model not found")
-  elif len(instances) > 1:
-    raise HttpResponseBadRequest
-  else:
-    instance = instances[0]
-    instance = Serializer.DeserializeInstance(instance, data) #This is the same object but for the sake your sanity there's an assignment
+    activeModel = getactiveModels(model)
+    requestData = ParseJSONRequest(request)
+    instance = Serializer.Deserialize(activeModel, requestData)
     instance.save()
 
-def delete(self, request, model):
-  raise NotImplemented
+    return constants.SUCCESSFUL_JSON_RESPONSE
+
+  def put(self, request, model):
+    
+    #Verfication / Authentication
+    if not request.user.is_admin:
+      print("raising Permission Denied")
+      raise PermissionDenied
+
+    activeModel = getactiveModels(model)
+    requestData = ParseJSONRequest(request)
+    Filter = requestData['filter']
+    Update = requestData['update']
+    instances = FilterModels(activeModel, Filter)
+    if len(instances) == 0:
+      return HttpResponseBadRequest("Model not found")
+    elif len(instances) > 1:
+      return HttpResponseBadRequest("Multiple Models Found, Use one request per update")
+    else:
+      instance = instances[0]
+      instance = Serializer.DeserializeInstance(instance, Update) #This is the same object but for the sake your sanity there's an assignment
+      instance.save()
+    
+
+    return constants.SUCCESSFUL_JSON_RESPONSE
+
+  def delete(self, request, model):
+    raise NotImplemented
 
