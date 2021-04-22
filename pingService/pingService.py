@@ -306,7 +306,7 @@ def handleResponse(response, sql):
 
 if __name__ == "__main__":
 
-  logging.basicConfig(format="%(levelname)s - %(asctime)s :%(message)s", filename=config.loggingPath, level=logging.info)
+  logging.basicConfig(format="%(levelname)s - %(asctime)s :%(message)s", filename=config.loggingPath, level=logging.INFO)
   nosyLogger =  logging.getLogger('pynetdicom')
   nosyLogger.setLevel(logging.ERROR)
   
