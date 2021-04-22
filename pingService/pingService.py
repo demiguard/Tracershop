@@ -24,6 +24,7 @@ from mysql.connector import errorcode
 
 #Mysql cursor because they couldn't be bothered to implement it in the mysql lib
 # Note these objects are much smarter because they do some Entering / error handling
+
 class MysqlCursor(object):
   def __init__(self):
     pass
@@ -127,6 +128,23 @@ def getLocation(sql, location:str) -> str:
     return x[0]
 
 
+def AddLocation(sql, LocationName):
+  SQLQuery = f"""
+  INSERT INTO customer_location(
+    location,
+    LocName,
+    AssignedTo_id
+  ) VALUES (
+    \"{LocationName}\",
+    \"\"
+    NULL
+  )
+  """
+  sql.execute(SQLQuery)
+  logger.info(f"Added Location{LocationName}")
+
+
+
 def AddProcedure(sql, procedureName):
   logger.info(f"Added producedure:{procedureName}")
   SQLQuery = f"""
@@ -146,6 +164,17 @@ def AddProcedure(sql, procedureName):
   """
   sql.execute(SQLQuery)
 
+def getOldBookings(sql):
+  SQLQuery = f"""
+  SELECT 
+    accessionNumber
+  FROM
+   customer_booking
+  """
+  sql.execute(SQLQuery)
+  unformatedAcc =  sql.fetchall()
+  unformatedAcc = [x[0] for x in unformatedAcc]
+  return set(unformatedAcc)
 
 def updateTimeStamp(sql):
   now = datetime.now()
@@ -162,14 +191,25 @@ def deleteOldbookings(sql, accessionNumbers):
 
   SQLQuery = f"""
   DELETE FROM customer_booking 
-  WHERE accessionNumber NOT IN ({accessionNumbers})"""
+  WHERE accessionNumber IN ({accessionNumbers})"""
   sql.execute(SQLQuery)
 
+def insertIntoDatabase(sql, accessionNumbers, BookingInfo):
+  for accessionNumber in accessionNumbers:
+    bookingData = BookingInfo[accessionNumber]
+    storeDataset(
+      sql,
+      BookingData['accessionNumber'], 
+      BookingData['startDate'], 
+      BookingData['startTime'], 
+      BookingData['location'], 
+      BookingData['procedure_id']
+      )
 
 
 def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id):
   sqlQuery = f"""
-    REPLACE INTO customer_booking(
+    Insert INTO customer_booking(
       accessionNumber,
       startDate,
       startTime,
@@ -182,7 +222,6 @@ def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure
       \"{location}\",
       {procedure_id}
     )
-
   """
   sql.execute(sqlQuery)
 
@@ -197,33 +236,59 @@ def handleDataset(dataset, sql):
   location = getLocation(sql, str(seq.ScheduledProcedureStepLocation))
   if not(location):
     logger.error(f"Unknown Location: {seq.ScheduledProcedureStepLocation}")
-    return
+    AddLocation()
+    return handleDataset(dataset,sql)
   procedure_id = getProcedureID(sql, seq.ScheduledProcedureStepDescription)
   if procedure_id == -1:
     logger.error(f"Unknown Procedure: {seq.ScheduledProcedureStepDescription}")
     AddProcedure(sql, seq.ScheduledProcedureStepDescription)
-    return handleDataset,sql
+    return handleDataset(dataset,sql)
   accessionNumber = seq.ScheduledProcedureStepID
   unformattedTime = seq.ScheduledProcedureStepStartTime
   unformattedDate = seq.ScheduledProcedureStepStartDate
   startTime = unformattedTime[:2] + ":" + unformattedTime[2:4] + ":" + unformattedTime[4:]
   startDate = unformattedDate[:4] + "-" + unformattedDate[4:6] + "-" + unformattedDate[6:]
-  storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id)
+  #storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id)
+  return accessionNumber, {
+    "AccessionNumber" : accessionNumber,
+    "Location"        : location,
+    "startDate"       : startDate,
+    "startTime"       : startTime,
+    "procedure_id"    : procedure_id
 
+  }
 
 # C-Find Response
 def handleResponse(response, sql):
-  accessionNumbers = []
+  # Idea
+  # Do a C-find
+  # Accumulate data from C-FIND
+  # Create Set A over Accession Numbers from C-Find 
+  # Query Own Data base and make set B
+  # Remove B \ A 
+  # Add    A \ B
+  
+  accessionNumbers = set()
+  BookingInfo = {}
   for (status, dataset) in response:
     if status:
       if status.Status in (0xFF00, 0xFF01):
-        handleDataset(dataset,sql)
-        seq = dataset.ScheduledProcedureStepSequence[0]
-        accessionNumbers.append(seq.ScheduledProcedureStepID)
+        accessionNumber, Data = handleDataset(dataset,sql)
+        BookingInfo[accessionNumber] = Data
+        accessionNumbers.add(accessionNumber)
     else:
       logger.error('Status Not availble') 
       return
-  deleteOldbookings(sql, accessionNumbers)  
+  oldBookings = getOldBookings(sql)
+
+  toBeRemoved = oldBookings - accessionNumbers
+  toBeAdded   = accessionNumbers - oldBookingss
+  if len(toBeRemoved) > 0:
+    logger.info(f"Deleted {len(toBeRemoved)} Studies")
+    deleteOldbookings(sql, toBeRemoved)  
+  if len(toBeAdded) > 0:
+    logger.info(f"Added {len(toBeAdded)} Studies")
+    addBookings(sql, toBeAdded, BookingInfo)
    
   
 ##################################################
@@ -254,9 +319,12 @@ if __name__ == "__main__":
           if assoc:
             response = assoc.send_c_find(ds, ModalityWorklistInformationFind)
             handleResponse(response, sql)
+
+
           else:
             continue
       else:
+        logger.error("Could not Create connection to Database")
         continue
     
   
