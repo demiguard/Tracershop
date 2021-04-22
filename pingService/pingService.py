@@ -32,10 +32,10 @@ class MysqlCursor(object):
     try:
       self.connection = mysql.connect(**config.DBConfig)
       self.connected = True
-      logger.info("Successfully connected to The Database")
+      logger.debug("Successfully connected to The Database")
       return self.connection.cursor()
     except mysql.Error as Err:
-      logger.info(f"Failed to connect to the Database because {Err}")
+      logger.error(f"Failed to connect to the Database because {Err}")
       self.connected = False
       return None
   def __exit__(self, type, value, traceback):
@@ -279,16 +279,23 @@ def handleResponse(response, sql):
     else:
       logger.error('Status Not availble') 
       return
-  oldBookings = getOldBookings(sql)
 
+  logger.debug("Handled C-Find")
+
+  oldBookings = getOldBookings(sql)
+  logger.debug("Aquired Old bookings")
   toBeRemoved = oldBookings - accessionNumbers
-  toBeAdded   = accessionNumbers - oldBookingss
+  toBeAdded   = accessionNumbers - oldBookings
+  logger.debug("Finished Intersections")
+
   if len(toBeRemoved) > 0:
     logger.info(f"Deleted {len(toBeRemoved)} Studies")
     deleteOldbookings(sql, toBeRemoved)  
   if len(toBeAdded) > 0:
     logger.info(f"Added {len(toBeAdded)} Studies")
     addBookings(sql, toBeAdded, BookingInfo)
+
+  logger.debug("Finished Handling Response")
    
   
 ##################################################
@@ -298,8 +305,14 @@ def handleResponse(response, sql):
 ##################################################
 
 if __name__ == "__main__":
+
+  logging.basicConfig(format="%(levelname)s - %(asctime)s :%(message)s", filename=config.loggingPath, level=logging.info)
+  nosyLogger =  logging.getLogger('pynetdicom')
+  nosyLogger.setLevel(logging.ERROR)
+  
   logger = logging.getLogger("pingLogger")
-  logging.basicConfig(filename=config.loggingPath, level=logging.ERROR)
+  
+
   waiting = False #First iteration does not wait
 
   ae = pynetdicom.AE()
@@ -309,7 +322,7 @@ if __name__ == "__main__":
     if waiting:
       systime.sleep(900) # Waiting comes first because of Continue statements
     waiting = True 
-
+    logger.debug("started Updating Database")
     with MysqlCursor() as sql:
       if sql:
         updateTimeStamp(sql)
@@ -319,9 +332,9 @@ if __name__ == "__main__":
           if assoc:
             response = assoc.send_c_find(ds, ModalityWorklistInformationFind)
             handleResponse(response, sql)
-
-
+            logger.debug("Finished Updating Database")
           else:
+            logger.error("Could Not connect to Ris")
             continue
       else:
         logger.error("Could not Create connection to Database")
