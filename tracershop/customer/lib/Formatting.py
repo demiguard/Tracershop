@@ -19,3 +19,11 @@ def ParseJSONRequest(request):
   else:
     return {}
     
+def ParseBool(string):
+  if type(string) == str:
+    if string.lower() == "true":
+      return True
+    if string.lower() == "false":
+      return False
+    raise ValueError("String does not match True or False")
+  return bool(string)

@@ -42,10 +42,46 @@ function updateConnectedCustomer() {
   })
 }
 
+function updateIsREGH() {
+  const NewIsRegh = $(this).prop("checked");
+  const CustomerID = this.id.substr(8);
+  $.ajax({
+    type:"put",
+    url:"/api/REST/Customer",
+    datatype:"json",
+    data:JSON.stringify({
+      filter:{
+        ID: CustomerID
+      },
+      update:{
+        is_REGH: NewIsRegh
+      }
+    })
+  });
+}
+
+function updateDAC() {
+  const NewDAC = $(this).prop("checked")
+  const CustomerID = this.id.substr(4);
+  $.ajax({
+    type:"put",
+    url:"/api/REST/Customer",
+    datatype:"json",
+    data:JSON.stringify({
+      filter:{
+        ID: CustomerID
+      },
+      update:{
+        defualtActiveCustomer: NewDAC
+      }
+    })
+  });
+}
 
 
 $(function (){
-  $('.LocationNameInput').keyup(updateLocationName)
-  $('.AssignedToInput').change(updateConnectedCustomer)
-
+  $('.LocationNameInput').keyup(updateLocationName);
+  $('.AssignedToInput').change(updateConnectedCustomer);
+  $('.CB_is_REGH').click(updateIsREGH);
+  $('.CB_DAC').click(updateDAC);
 });

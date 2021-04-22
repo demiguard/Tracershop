@@ -33,8 +33,16 @@
         {% for customer in customers %}
         <tr>
           <td>{{ customer }}</td>
-          <td>{{ customer.is_REGH }}</td>
-          <td>{{ customer.defualtActiveCustomer }}</td>
+          {% if customer.is_REGH  %}
+            <td> <input type="checkbox" id="is_REGH-{{ customer.ID }}" class="CB_is_REGH" checked> </td>
+          {% else %}
+            <td> <input type="checkbox" id="is_REGH-{{ customer.ID }}" class="CB_is_REGH"> </td>
+          {% endif %}
+          {% if customer.defualtActiveCustomer %}
+          <td> <input type="checkbox" id="DAC-{{ customer.ID }}" class="CB_DAC" checked> </td>
+          {% else %}
+          <td> <input type="checkbox" id="DAC-{{ customer.ID }}" class="CB_DAC"> </td>
+          {% endif %}
         </tr>
         {% endfor%}
       </tbody>

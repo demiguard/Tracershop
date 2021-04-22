@@ -42,12 +42,12 @@ class UpdateTimeStamp(SubscribeableModel):
   
 
 class Customer(SubscribeableModel):
-  ID        = AutoField(primary_key=True)
-  customerName = CharField(max_length=30)
-  is_REGH   = BooleanField(default=False)
+  ID                    = AutoField(primary_key=True)
+  customerName          = CharField(max_length=30)
+  is_REGH               = BooleanField(default=False)
   defualtActiveCustomer = BooleanField(default=False) #This means the customer would be assigned to new Users
-  AET       = CharField(max_length=16, null=True, default=None)
-  TestCustomer = BooleanField(default=False) #This means it will not show up in 
+  AET                   = CharField(max_length=16, null=True, default=None)
+  TestCustomer          = BooleanField(default=False) #This means it will not show up in 
 
   def __str__(self):
     return self.customerName

@@ -46,19 +46,6 @@ modelHashMap = {
   "ServerConfiguration" : models.ServerConfiguration
 } 
 
-def FilterModels(model, Filter):
-  result = []
-  objects = model.objects.all()
-  for instance in objects:
-    PassedFilter = True
-    for key, value in Filter.items():
-      if instance[key] != value:
-        PassedFilter = False
-        break
-    if PassedFilter:
-      result.append(instance)
-
-  return result
 
 def getactiveModels(modelName):  
   activeModel = modelHashMap.get(modelName)
@@ -91,7 +78,7 @@ class RESTAPI(View):
       return JsonResponse(serializeAllModels)
     else:
       Instances = activeModel.obejcts.all()
-      FilteredInstances = FilterModels(Instances, requestData)
+      FilteredInstances = Serializer.FilterModels(Instances, requestData)
       return JsonResponse(Serializer.SerializeInstaced(FilteredInstances))
 
     
@@ -117,8 +104,9 @@ class RESTAPI(View):
     requestData = ParseJSONRequest(request)
     Filter = requestData['filter']
     Update = requestData['update']
-    instances = FilterModels(activeModel, Filter)
+    instances = Serializer.FilterModels(activeModel, Filter)
     if len(instances) == 0:
+      print("IN here")
       return HttpResponseBadRequest("Model not found")
     elif len(instances) > 1:
       return HttpResponseBadRequest("Multiple Models Found, Use one request per update")
