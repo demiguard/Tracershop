@@ -76,11 +76,3 @@ class Booking(SubscribeableModel):
   def __str__(self):
     return str(self.accessionNumber)
 
-
-
-
-class CustomerUsesLocation(SubscribeableModel):
-  ID       = AutoField(primary_key=True) 
-  location = ForeignKey(Location, on_delete=CASCADE)
-  customer = ForeignKey(Customer, on_delete=CASCADE)
-

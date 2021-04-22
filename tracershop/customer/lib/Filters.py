@@ -4,7 +4,7 @@ from customer.lib.CustomTools import LMap
 from customer.lib import calenderHelper
 from customer.forms.forms import OrderForm
 
-from customer.models import Booking, CustomerUsesLocation, UserHasAccess
+from customer.models import Booking, UserHasAccess, Location
 
 def matchOrders(orders, runs):
   order_list = []
@@ -42,7 +42,7 @@ def matchOrders(orders, runs):
   return order_list
 
 def FilterBookings(Customer, Date):
-  locations = LMap(lambda x : x.location, CustomerUsesLocation.objects.filter(customer=Customer))
+  locations = Location.objects.filter(AssignedTo=Customer)
 
   studies = {}
 

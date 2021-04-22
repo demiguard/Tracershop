@@ -8,7 +8,7 @@ from customer.lib.calenderHelper import getNextWeekday
 from customer.lib.CustomTools import LMap
 from customer.lib.Filters import FilterBookings, FindActiveCustomer
 
-from customer.models import Booking, CustomerUsesLocation, UserHasAccess
+from customer.models import Booking, UserHasAccess
 
 class FutureBooking(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/futureBookings.html'

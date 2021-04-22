@@ -7,7 +7,7 @@ from datetime import datetime, time, date
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from customer.models import User, PotentialUser, ServerConfiguration, Database, Customer, Location, CustomerUsesLocation
+from customer.models import User, PotentialUser, ServerConfiguration, Database, Customer, Location
 
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:

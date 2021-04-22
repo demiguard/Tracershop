@@ -5,7 +5,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from customer.lib.SQL import SQLController as SQL
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
-from customer.models import Customer, CustomerUsesLocation, Location
+from customer.models import Customer, Location
 from customer.forms.forms import LocationForm
 
 
@@ -13,7 +13,7 @@ def createCustomerForm():
   pass
 
 
-def MergeLocationsAndCustomerUsesLocations(Locations, CustomerUsesLocations):
+def createLocationsForms(Locations):
   LocationsForms = []
   for location in Locations:
     form =  LocationForm(location.location, instance=location)
@@ -22,7 +22,6 @@ def MergeLocationsAndCustomerUsesLocations(Locations, CustomerUsesLocations):
     LocationsForms.append(form)
 
   return LocationsForms
-
 
 
 class AdminLocationsView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
@@ -36,15 +35,10 @@ class AdminLocationsView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
 
       Note: there might some inefficiencies in my mapping, however since we are talking about <100 location and customers, we should be kewl with a n² or n³ algorithm 
     """
-    
     locationsObjects            = SQL.getAll(Location)
     CustomerObjects             = SQL.getAll(Customer)
-    CustomerUsesLocationObjects = SQL.getAll(CustomerUsesLocation)
 
-    displayLocations = MergeLocationsAndCustomerUsesLocations(locationsObjects, CustomerUsesLocationObjects)
-
-    print(locationsObjects)
-
+    displayLocations = createLocationsForms(locationsObjects)
 
     context = {
       'customers' : CustomerObjects,
