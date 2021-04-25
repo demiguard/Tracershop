@@ -199,11 +199,11 @@ def insertIntoDatabase(sql, accessionNumbers, BookingInfo):
     bookingData = BookingInfo[accessionNumber]
     storeDataset(
       sql,
-      BookingData['accessionNumber'], 
-      BookingData['startDate'], 
-      BookingData['startTime'], 
-      BookingData['location'], 
-      BookingData['procedure_id']
+      bookingData['AccessionNumber'], 
+      bookingData['startDate'], 
+      bookingData['startTime'], 
+      bookingData['Location'], 
+      bookingData['procedure_id']
       )
 
 
