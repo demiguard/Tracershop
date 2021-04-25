@@ -207,6 +207,8 @@ def insertIntoDatabase(sql, accessionNumbers, BookingInfo):
       )
 
 
+
+
 def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id):
   sqlQuery = f"""
     Insert INTO customer_booking(
@@ -293,7 +295,7 @@ def handleResponse(response, sql):
     deleteOldbookings(sql, toBeRemoved)  
   if len(toBeAdded) > 0:
     logger.info(f"Added {len(toBeAdded)} Studies")
-    addBookings(sql, toBeAdded, BookingInfo)
+    insertIntoDatabase(sql, toBeAdded, BookingInfo)
 
   logger.debug("Finished Handling Response")
    
