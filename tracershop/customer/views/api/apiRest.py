@@ -94,7 +94,41 @@ class RESTAPI(View):
     return constants.SUCCESSFUL_JSON_RESPONSE
 
   def put(self, request, model):
-    
+    """
+      Implementes the Put functionality-
+
+      This is the put part of the REST functionality. It selectes a single entity and updates it. If you wanna create an entry use a POST request.
+      This REST API only exposes the local Django database, so custom entraces are needed for the external Database. 
+
+      ---------
+      Args:
+        self : Django View Class
+          This class
+
+        Filter : Django Request - html request
+
+          The request must have a body with a json encoded object with the following structure:
+          {
+            filter : {
+              table-column : entry value
+            }
+            update : {
+              table-column : new entry value
+            }
+          }
+          If the filter is unable to narrow to a single entry, the call fails and you get a http bad response. 
+          Use GET to get multiple things and then use primary key to update multiple obejcts. 
+
+        Model : String
+          String corosponding to the model wished changed, see modelHashMap dictionary for valid strings.
+
+      ---------
+      Returns
+        Jsonresponse with success on success
+        HTTPBbadresonse on failure
+
+
+    """
     #Verfication / Authentication
     if not request.user.is_admin:
       print("raising Permission Denied")

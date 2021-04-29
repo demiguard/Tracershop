@@ -3,7 +3,10 @@ export { EditOrder }
 
 const EditOrderErrorID = "EditOrderError"
 
+function SuccessfullyEditedOrder(OrderID){}
 
+
+function SuccessfullyDeletedOrder(){}
 
 
 var EditOrder = function(){
@@ -24,7 +27,6 @@ var EditOrder = function(){
     value:"MBQ"
   })
   const MBQInput = $("<input>", {
-    
     value: amount,
     type: "number"
   });
@@ -68,10 +70,12 @@ var EditOrder = function(){
         text: "Opdater ordre " + orderID,
         click: function() {
           //Send Request To Server 
+          const customerID = $("#customer_select").children("option:selected").val();
           $.ajax({
             type:"put",
             url: "api/EditOrder",
             data: JSON.stringify({
+              "ActiveCustomer" : customerID,
               "OrderID" : orderID,
               "NewAmount" : MBQInput.val(),
               "NewComment" : CommentInput.val()
@@ -79,6 +83,7 @@ var EditOrder = function(){
             success: function(data) {
               if (data['Success'] = "Success") {
                 destroyActiveDialog()
+                SuccessfullyEditedOrder(OrderID)
               } else {
                 ErrorDiv.text("Der er Sket en fejl");
                 ErrorDiv.addClass("ErrorBox")
@@ -115,9 +120,5 @@ var EditOrder = function(){
       }
     ]
   })
-
-
-  
-
 };
 

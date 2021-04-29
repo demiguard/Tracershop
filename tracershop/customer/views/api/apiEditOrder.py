@@ -14,8 +14,12 @@ from customer import constants
 def typeCorrectData(JSONObject):
   JSONObject['OrderID'] = int(JSONObject['OrderID'])
   JSONObject['NewAmount'] = int(JSONObject['NewAmount'])
+  JSONObject['ActiveCustomer'] = int(JSONObject['ActiveCustomer'])
   return JSONObject
 
+def typeCorrectDataDelete(JSONObject):
+  
+  return int(JSONObject['OrderID'])
 
 class ApiEditOrder(LoginRequiredMixin, View):
   path = "api/EditOrder"
@@ -24,10 +28,18 @@ class ApiEditOrder(LoginRequiredMixin, View):
   def put(self, request):    
     StringData = ParseJSONRequest(request)
     data = typeCorrectData(StringData)
-    
+    SQL.updateFDGOrder(
+      data['OrderID'], 
+      data['NewAmount'],
+      data['NewComment'],
+      data['ActiveCustomer']
+    )
 
     return constants.SUCCESSFUL_JSON_RESPONSE
 
 
   def delete(self, request):
+    StringData = ParseJSONRequest(request)
+    ID = typeCorrectDataDelete
+    SQL.deleteFDGOrder(ID)
     return constants.SUCCESSFUL_JSON_RESPONSE

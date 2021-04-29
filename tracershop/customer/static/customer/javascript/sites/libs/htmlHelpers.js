@@ -1,4 +1,5 @@
-export { createElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog}
+import { HTMLTAG } from "./Constants.js"
+export { createElement, constructElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog}
 
 
 // This module contains functions that are independant on 
@@ -64,3 +65,19 @@ function destroyActiveDialog() {
   $(".ui-dialog-content").dialog("close");
   $(".ui-dialog-content").remove();
 };
+
+function constructElement(typeOfElement, content = "", id="", classList=[]) {
+  //This is a function similar to createElement, but it uses Keywords for easy usage
+  
+  htmlObejct = $(`<${typeOfElement}>`) //Note `` operates different that '' or "" yeah - FUCK JAVASCRIPT
+  if (id != "") htmlObejct.attr(id, id);
+  if (content != "") htmlObejct.text(content);
+  classList.forEach(function callback(value) { htmlObejct.addClass(value)});
+
+  return htmlObejct
+}
+
+function ObjectFactory(Blueprint) {
+  htmlObejct = $(`<${Blueprint[HTMLTAG]}>`)
+
+}

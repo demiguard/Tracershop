@@ -136,12 +136,12 @@ def AddLocation(sql, LocationName):
     AssignedTo_id
   ) VALUES (
     \"{LocationName}\",
-    \"\"
+    \"\",
     NULL
   )
   """
   sql.execute(SQLQuery)
-  logger.info(f"Added Location{LocationName}")
+  logger.info(f"Added Location: {LocationName}")
 
 
 
@@ -238,7 +238,7 @@ def handleDataset(dataset, sql):
   location = getLocation(sql, str(seq.ScheduledProcedureStepLocation))
   if not(location):
     logger.error(f"Unknown Location: {seq.ScheduledProcedureStepLocation}")
-    AddLocation()
+    AddLocation(sql, seq.ScheduledProcedureStepLocation)
     return handleDataset(dataset,sql)
   procedure_id = getProcedureID(sql, seq.ScheduledProcedureStepDescription)
   if procedure_id == -1:

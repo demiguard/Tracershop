@@ -270,11 +270,13 @@ def createSQLAvailbleFDGDays(UserID):
     BID={UserID}
   """
 
-def createSQLUpdateFDG(OrderID, NewAmount, NewComment):
+def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
   return f"""
     UPDATE orders
     SET
-      amount = {NewAmount}
+      amount = {NewAmount},
+      amount_o = {Overhead},
+      total_amount = {Overhead},
       comment = \"{NewComment}\"
     WHERE  
       OID = {OrderID}

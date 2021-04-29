@@ -27,13 +27,16 @@ const MassOrder = function() {
   const tracer = tracerStrong.innerHTML;
   var studies = {};
   for (const tableRow of $(tbody).children()) {    
-    const checkboxTD = $(tableRow).children(".checkbox")[0];
-    const checkbox = $(checkboxTD).children()[0];
+    const checkboxTD = $(tableRow).children(".checkbox");
+    if (checkboxTD.length == 0) {
+      continue;
+    }
+    const checkbox = $(checkboxTD[0]).children()[0];
     const checkboxID = checkbox.id;
     const checkboxChecked = $(checkbox).prop("checked");
     studies[checkboxID] = checkboxChecked
     // Change Icons
-    $(checkboxTD).empty();
+    $(checkboxTD[0]).empty();
     if (checkboxChecked) {
       const image   = $("<img>", {
         src: "/static/customer/images/check.svg"
@@ -43,7 +46,7 @@ const MassOrder = function() {
       const image   = $("<img>", {
         src: "/static/customer/images/x-circle-fill.svg"
       });
-      image.appendTo(checkboxTD)
+      image.appendTo(checkboxTD[0])
     }
 
   }
