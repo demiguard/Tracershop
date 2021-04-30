@@ -3,7 +3,9 @@ import { CustomerSelect  } from "./libs/customerSelect.js";
 import { EditOrder } from "./libs/EditFDGOrder.js"
 import { SendOrder, SendTOrder } from "./libs/requests.js"
 import { createElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
+
 import { createCalculator } from "./libs/calculator.js";
+import { Table } from "./libs/TableFactory.js"
 
 // Today is variable that's created from GET request, 
 // since it's provided from Django
@@ -74,6 +76,81 @@ var onChangeSelect = function() {
   CalenderInstance.change_month(0);
 };
 
+function CreateTOrderTable(data, Div) {
+  //Set up data
+  let Header = ["Tracer", "Status", "Order ID", "Bestilt til", "Injecioner", "Til"];
+  let RowIDs=[];
+  let Row= [];
+
+  const Skeleton = new Object();
+  Skeleton.HeaderColumns  = Header;
+  Skeleton.Rows           = Row;
+  Skeleton.RowIDs         = RowIDs;
+
+  const dataTable = new Table(Skeleton)
+  Div.append(dataTable.getTable()[0])
+}
+
+
+function CreateFGDOrderTable(data, Div, hasComment) {
+  let Header;
+  let RowIDs = [];
+  let Row = []
+  for (let i = 0; i < data.length; i++) {
+    const order = data[i];
+    
+    var RowData = new Array();
+    const statusImage = $('<img>', {
+      src: `/static/customer/images/clipboard${order.status}.svg`,
+      class: "StatusIcon"
+    });
+    if (order.status == 1) {
+      statusImage.addClass("Editable-Order");
+      statusImage.attr("id", `Order-${order.OID}`);
+      statusImage.click(EditOrder)
+    }
+    RowData.push(statusImage);
+    RowData.push(order.OID);
+    RowData.push(order.ordered_amount);
+    RowData.push(order.total_amount);
+    RowData.push(order.batchnr);
+    RowData.push(order.frigivet_amount);
+    (order.frigivet_datetime != null) ? RowData.push(order.frigivet_datetime.substr(11,5)) : RowData.push("");
+    if (hasComment) {
+      const commentImage = $("<img>",
+          {
+          src : "/static/customer/images/comment.svg", 
+          class: "StatusIcon",
+          title:order.comment
+        }
+      );
+      $(commentImage).tooltip();
+      RowData.push(commentImage);
+    }
+    Row.push(RowData);
+    RowIDs.push(`OrderRow-${order.OID}`);
+    }
+  if (hasComment) {
+    Header = ["Status", "Order ID", "Bestilt MBq", "Produceret Mbq","Batch-nr", "Frigivet MBq", "Frigivet", "Kommentar"] ;
+  }
+  else {
+    Header = ["Status", "Order ID", "Bestilt MBq", "Produceret Mbq", "Batch-nr", "Frigivet MBq", "Frigivet"] 
+  } 
+  //Format such that Table factory can use it 
+  const Skeleton = new Object();
+  Skeleton.HeaderColumns  = Header;
+  Skeleton.Rows           = Row;
+  Skeleton.RowIDs         = RowIDs;
+
+  const dataTable = new Table(Skeleton)
+  Div.append(dataTable.getTable()[0])
+}
+
+
+function HandleOrderDateResponse(data) {
+  
+}
+
 
 var fill_order_table = function(date) {
   //////////////////////////////////////////////////
@@ -133,62 +210,7 @@ var fill_order_table = function(date) {
 
       // ----- Table Creation -----
       } else if (response.data_type == 'data') { 
-        var commentDetected = false;
-        for (let j = 0; j < response.data.length; j++) {
-          const order = response.data[j];
-          commentDetected |= (order.comment !== "" && order.comment !== null);
-          
-        }
-        var table = createElement(informationRowDiv,'','','table',["table"]);
-        var tableHead = createElement(table, '',   '','thead',[]);
-        createElement(tableHead, 'Status',         '','th',   []);
-        createElement(tableHead, 'order ID',       '','th',   []);
-        createElement(tableHead, 'Bestilt MBQ',    '','th',   []);
-        createElement(tableHead, 'Produceret MBQ', '','th',   []);
-        createElement(tableHead, 'Batch-nr.',      '','th',   []);
-        createElement(tableHead, 'Frigivet MBQ',   '','th',   []);
-        createElement(tableHead, 'Frigivet',       '','th',   []);
-        if (commentDetected){
-          createElement(tableHead, 'Kommentar', '', 'th', []);
-        }
-        var tableBody = createElement(table, '','','tbody',   []);
-        for (let j = 0; j < response.data.length; j++){
-          const order = response.data[j];
-          var tableRow = createElement(tableBody,'', "OrderRow-" + order.OID, 'tr', []);
-          const statusRow = createElement(tableRow, '',         '', 'td', []);
-          const statusImage = $('<img>', {
-            src: "/static/customer/images/clipboard" + order.status + ".svg",
-            class: "StatusIcon"
-          });
-          if (order.status == 1) {
-            statusImage.addClass("Editable-Order");
-            statusImage.attr("id", "Order-" + order.OID);
-            statusImage.click(EditOrder)
-          }
-          statusImage.appendTo(statusRow);
-          createElement(tableRow, order.OID,        '', 'td', []);
-          createElement(tableRow, order.ordered_amount, '', 'td', []);
-          createElement(tableRow, order.total_amount,   '', 'td', []);
-          createElement(tableRow, order.batchnr,        '', 'td', []);
-          createElement(tableRow, order.frigivet_amount,    '', 'td', []);
-          if (order.frigivet_datetime != null) {
-            createElement(tableRow, order.frigivet_datetime.substr(11,5),'' , 'td', []);
-          } else {
-            createElement(tableRow, "",'', 'td', []);
-          }
-          if (order.comment !== "" && commentDetected) {
-            var commentTD = createElement(tableRow, '', '','td',[]);
-            var commentImage = $("<img>",
-              {
-                src : "/static/customer/images/comment.svg", 
-                class: "StatusIcon",
-                title:order.comment
-              }
-            )
-            $(commentImage).tooltip()
-            commentImage.appendTo($(commentTD));
-          }
-        }
+        CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment)
       }        
     } // End For Loop
     // T-orders 

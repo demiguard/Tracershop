@@ -32,7 +32,7 @@ from customer.models import Location
 
 json = "json"
 
-#This dir maps models to strings
+#This dir maps strings (from url) to Database models
 modelHashMap = {
   "Address"             : models.Address,
   "AET"                 : models.AET,
@@ -98,7 +98,8 @@ class RESTAPI(View):
       Implementes the Put functionality-
 
       This is the put part of the REST functionality. It selectes a single entity and updates it. If you wanna create an entry use a POST request.
-      This REST API only exposes the local Django database, so custom entraces are needed for the external Database. 
+      This REST API only exposes the local Django database, so custom entraces are needed for the external Database.  So it's the other API endpoints. Could you restify them?
+      Yes, but that allows others to 
 
       ---------
       Args:
