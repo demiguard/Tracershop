@@ -1,6 +1,6 @@
 import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
-import { EditOrder } from "./libs/EditFDGOrder.js"
+import { EditOrder } from "./libs/EditOrder.js"
 import { SendOrder, SendTOrder } from "./libs/requests.js"
 import { createElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
 
@@ -82,6 +82,14 @@ function CreateTOrderTable(data, Div) {
   let RowIDs=[];
   let Row= [];
 
+  data.TOrders.foreach(Torder => {
+    let RowData = []
+    RowIDs.push(`TOrder-${Torder.OrderID}`),
+    RowData.push(Tracer)
+    Rows.push(RowData)
+  });
+
+
   const Skeleton = new Object();
   Skeleton.HeaderColumns  = Header;
   Skeleton.Rows           = Row;
@@ -148,7 +156,7 @@ function CreateFGDOrderTable(data, Div, hasComment) {
 
 
 function HandleOrderDateResponse(data) {
-  
+
 }
 
 
@@ -216,6 +224,8 @@ var fill_order_table = function(date) {
     // T-orders 
     if (data.tOrders.length != 0) {
       $('#T_orders').removeClass('DisplayNone')
+      CreateTOrderTable(data.tOrders, $('#secondaryTableBody'))
+      
       for(let i = 0; i < data.tOrders.length; i++) {
         const TORDER = data.tOrders[i];
         var table_row = createElement($('#secondaryTableBody'), '','','tr',['data-row']);
