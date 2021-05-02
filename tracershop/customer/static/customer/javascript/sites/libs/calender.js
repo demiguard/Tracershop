@@ -43,6 +43,8 @@ class CalenderFactory {
     }
     return pivot;
   };
+
+  
   //End helper functions
 
   constructor(
@@ -51,7 +53,9 @@ class CalenderFactory {
       date_coloring_function,
       date_onClick_function, 
       month_api_function,
-      date_status, ){ 
+      date_status
+      //dateOnClickFunction
+    ){ 
     this.month_api_function = month_api_function;
     this.today = today;
     this.activeDate = today;
@@ -59,6 +63,8 @@ class CalenderFactory {
     this.date_onClick_function = date_onClick_function;
     this.date_status = date_status;
     this.main_div = $('#'+div);
+    //this.dateOnClickFunction;
+    this.Updating = false;
 
     if(!(this.main_div.length)){
       console.log("The target div does not exists: usage: divID");
@@ -142,7 +148,8 @@ class CalenderFactory {
           day_str += String(day.getDate());
         }
         this.date_coloring_function(dayDiv, day_str, this.date_status);
-        this.date_onClick_function(dayDiv, day);
+        //$(dayDiv).click(this.dateOnClickFunction)
+        this.date_onClick_function(dayDiv, day, this);
         dayDiv.innerText = day.getDate();
         weekDiv.append(dayDiv);
       }
@@ -154,6 +161,9 @@ class CalenderFactory {
   
   //Activated when next month button is clicked
   change_month(change_by) {
+    if (this.Updating) return;
+    this.Updating = true;
+    const parentObj = this 
     this.remove_weekdays();
     var year  = this.today.getFullYear();
     var month = this.today.getMonth() + change_by;
@@ -170,6 +180,7 @@ class CalenderFactory {
     $.get(api_call).then(function(data) {
       parent.date_status = data;
       parent.create_weekdays(year, month);
+      parentObj.Updating=false;
     });
   }
   };

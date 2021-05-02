@@ -12,6 +12,7 @@ import { Table } from "./libs/TableFactory.js"
 
 var CalenderInstance;
 var CustomerInstance;
+var ChangingDate = false;
 
 
 var dateColoringFunction = function(div,  date, directory){
@@ -50,12 +51,14 @@ var clear_order_table = function() {
 
 
 var Date_onClick = function (div, date) {
-  var jdiv = $(div);
-  jdiv.on('click', function() {
+  function anno() {
+    $(this).unbind()
     change_date(div, date);
     clear_order_table();
-    fill_order_table(date);
-  });
+    fill_order_table(date, this, anno);
+  }
+  var jdiv = $(div);
+  jdiv.click(anno);
 
 };
 
@@ -202,7 +205,7 @@ function HandleOrderDateResponse(data) {
 }
 
 
-var fill_order_table = function(date) {
+var fill_order_table = function(date, DateDiv, changeDateFunction) {
   //////////////////////////////////////////////////
   //  Fills the main table with data from the api //
   //////////////////////////////////////////////////
@@ -287,7 +290,7 @@ var fill_order_table = function(date) {
       orderButton.click(SendTOrder);
       orderButton.appendTo(orderButtonTD);
     }
-
+    $(DateDiv).click(changeDateFunction); 
   });
 };
 
