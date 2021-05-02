@@ -82,7 +82,9 @@ var DateOnClick = function(div, date) {
     change_date(div, date);
     ClearTable();
     ChangeTable(date);
-  })
+    let NewDateString = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
+    $("#DateStrong").text(NewDateString);
+  });
   
 }
 

@@ -34,7 +34,8 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
     context = {
       'customerIDs' : LMap(lambda x: (x.ID, x.customerName), customers),
       'studies' : studies,
-      'today' : NextWeekday.strftime('%Y-%m-%d'),
+      'today' : NextWeekday.strftime("%Y-%m-%d"),
+      'todayDanishFormat' : NextWeekday.strftime('%d/%m/%Y'),
       'NextUpdate' : getNextUpdate()
     }
     
