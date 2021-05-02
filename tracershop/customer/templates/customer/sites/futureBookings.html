@@ -13,9 +13,13 @@
   
   <div id="Study" class="col-9">
     <div class="row"> 
-      <strong>
+      <strong id="DateStrong">
         {{ today }}
       </strong> 
+      <div class="col-1"></div>
+      <div id="Next update">
+        Næste Opdatering: {{ NextUpdate.time | time:'H:i' }}
+      </div>
     </div>
     {% for key, list in studies.items %}
     <div class="TracerDiv row col-12">

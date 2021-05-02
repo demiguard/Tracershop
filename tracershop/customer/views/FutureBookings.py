@@ -7,8 +7,14 @@ import datetime
 from customer.lib.calenderHelper import getNextWeekday
 from customer.lib.CustomTools import LMap
 from customer.lib.Filters import FilterBookings, FindActiveCustomer
+from customer.lib.SQL import  SQLController as SQL
 
-from customer.models import Booking, UserHasAccess
+from customer.models import Booking, UserHasAccess, UpdateTimeStamp
+
+def getNextUpdate():
+  timeStamps = SQL.getAll(UpdateTimeStamp)
+  updateTime = timeStamps.filter(ID=1)[0]
+  return updateTime.timeStamp + datetime.timedelta(seconds=900)
 
 class FutureBooking(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/futureBookings.html'
@@ -28,7 +34,8 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
     context = {
       'customerIDs' : LMap(lambda x: (x.ID, x.customerName), customers),
       'studies' : studies,
-      'today' : NextWeekday.strftime('%Y-%m-%d')
+      'today' : NextWeekday.strftime('%Y-%m-%d'),
+      'NextUpdate' : getNextUpdate()
     }
     
     return render(request, self.template_name, context=context)

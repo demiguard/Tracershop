@@ -4,7 +4,7 @@ from customer.modelsDir.BaseModels import SubscribeableModel
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 
-from customer.modelsDir.authModels import PotentialUser, Booking, Customer, Location
+from customer.modelsDir.authModels import PotentialUser, Booking, Customer, Location, UpdateTimeStamp
 from customer.modelsDir.networkingModels import Address, Database, AET
 from customer.modelsDir.clinicalModels import Tracer, Procedure, Isotope
 from customer.modelsDir.serverModels import ServerConfiguration
