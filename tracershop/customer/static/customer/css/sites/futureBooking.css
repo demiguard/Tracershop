@@ -13,3 +13,8 @@
 .overViewDiv {
   padding: 15px;
 }
+
+.today {
+  background-color: skyblue;
+  border-radius: 100%;
+}

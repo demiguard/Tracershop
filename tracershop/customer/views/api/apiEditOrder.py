@@ -34,12 +34,16 @@ class ApiEditOrder(LoginRequiredMixin, View):
       data['NewComment'],
       data['ActiveCustomer']
     )
+    overhead = SQL.getCustomerOverhead(data['ActiveCustomer'])
 
-    return constants.SUCCESSFUL_JSON_RESPONSE
+    return JsonResponse({
+      "Success" : "Success",
+      "overhead" : overhead
+    })
 
 
   def delete(self, request):
     StringData = ParseJSONRequest(request)
-    ID = typeCorrectDataDelete
+    ID = typeCorrectDataDelete(StringData)
     SQL.deleteFDGOrder(ID)
     return constants.SUCCESSFUL_JSON_RESPONSE

@@ -13,9 +13,11 @@
 }
 
 .calender-row {
+  padding-top: 7px;
   height: 35px;
   width: 17%;
   cursor: pointer;
+  vertical-align: middle;
 }
 
 .calender-dates {

@@ -30,12 +30,13 @@ class Table {
      * Optional aruments
      *   RowIDs - List of ids for each Row
      *   RowClass - A Class added to each Row
+     *   tbodyID - string that will be the ID of the Tbody
     */
     // Init optional keywords
-    let RowIDs, RowClass;
+    let RowIDs, RowClass, tbodyID;
     (TableSkeleton.hasOwnProperty('RowIDs')) ? RowIDs = TableSkeleton.RowIDs: RowIDs = undefined;
-    (TableSkeleton.hasOwnProperty('RowClass')) ? RowClass = TableSkeleton.RowClass : RowClass = undefined
-
+    (TableSkeleton.hasOwnProperty('RowClass')) ? RowClass = TableSkeleton.RowClass : RowClass = undefined;
+    (TableSkeleton.hasOwnProperty('tbodyID')) ? tbodyID = TableSkeleton.tbodyID : tbodyID = undefined;
     //Mandatory Keywords:
     const HeaderColumns = TableSkeleton.HeaderColumns;
     const Rows       = TableSkeleton.Rows;
@@ -54,6 +55,7 @@ class Table {
     this.Table.append(this.thead);
     //Body Construction
     this.Tbody = constructElement("tbody")
+    if (tbodyID != undefined) this.Tbody.attr("id", "secondaryTableBody")
     for(let i = 0; i < Rows.length; i++) {
       const RowData = Rows[i];
       var Row = constructElement("tr");

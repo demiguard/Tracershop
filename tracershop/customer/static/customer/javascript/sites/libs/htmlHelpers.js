@@ -1,5 +1,5 @@
 import { HTMLTAG } from "./Constants.js"
-export { createElement, constructElement, constructElementID, constructElementClassList, dropChildern, auto_char, MaxCharInField, destroyActiveDialog}
+export { createElement, constructElement, constructElementID, constructElementClassList, dropChildren, auto_char, MaxCharInField, destroyActiveDialog}
 
 
 // This module contains functions that are independant on 
@@ -20,7 +20,7 @@ function createElement(div, content,id, identifyer, classList) {
   return element;
 };
 
-function dropChildern(div) {
+function dropChildren(div) {
   div.children().remove()
 };
 

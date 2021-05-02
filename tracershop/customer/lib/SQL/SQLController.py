@@ -208,14 +208,14 @@ def getServerConfig():
 def updateFDGOrder(OrderID, NewAmount, NewComment, customerID):
   overhead = getCustomerOverhead(customerID)
   if overhead:
-    overheadAmount = NewAmount * (1 + overhead / 100)
+    overheadAmount = int(NewAmount * (1 + overhead / 100))
   else:
     overheadAmount = NewAmount
-  SQLQuery = createSQLUpdateFDG(OrderID, NewAmount, NewComment, overheadAmount)
+  SQLQuery = SQLFactory.createSQLUpdateFDG(OrderID, NewAmount, overheadAmount, NewComment)
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 def deleteFDGOrder(OrderID):
-  SQLQuery = createSQLDeleteFDG(OrderID)
+  SQLQuery = SQLFactory.createSQLDeleteFDG(OrderID)
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 def getCustomerOverhead(customerID):

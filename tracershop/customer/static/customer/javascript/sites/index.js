@@ -2,7 +2,7 @@ import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
 import { EditOrder } from "./libs/EditOrder.js"
 import { SendOrder, SendTOrder } from "./libs/requests.js"
-import { createElement, dropChildern, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
+import { createElement, dropChildren, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
 
 import { createCalculator } from "./libs/calculator.js";
 import { Table } from "./libs/TableFactory.js"
@@ -12,6 +12,7 @@ import { Table } from "./libs/TableFactory.js"
 
 var CalenderInstance;
 var CustomerInstance;
+
 
 var dateColoringFunction = function(div,  date, directory){
   div.classList.add('date-base-class')
@@ -80,23 +81,65 @@ function CreateTOrderTable(data, Div) {
   //Set up data
   let Header = ["Tracer", "Status", "Order ID", "Bestilt til", "Injecioner", "Til"];
   let RowIDs=[];
-  let Row= [];
+  let Rows= [];
 
-  data.TOrders.foreach(Torder => {
-    let RowData = []
+
+  for(let i = 0; i < data.length; i++) {
+    let Torder = data[i];
+    let RowData = [];
     RowIDs.push(`TOrder-${Torder.OrderID}`),
-    RowData.push(Tracer)
-    Rows.push(RowData)
-  });
-
+    RowData.push(Torder.tracer)
+    const statusImage = $('<img>', {
+      src: `/static/customer/images/clipboard${Torder.status}.svg`,
+      class: "StatusIcon"
+    });
+    if (Torder.status == 1) {
+      statusImage.addClass("Editable-TOrder");
+      statusImage.attr("id", `TOrder-${Torder.OrderID}`);
+      //statusImage.click(EditOrder) // TODO
+    }
+    RowData.push(statusImage);
+    RowData.push(Torder.OrderID);
+    RowData.push(Torder.deliver_datetime.substr(11,5));
+    RowData.push(Torder.nInjections);
+    RowData.push(Torder.use);
+    Rows.push(RowData);
+  };
 
   const Skeleton = new Object();
   Skeleton.HeaderColumns  = Header;
-  Skeleton.Rows           = Row;
+  Skeleton.Rows           = Rows;
   Skeleton.RowIDs         = RowIDs;
+  Skeleton.tbodyID        = "secondaryTableBody";
 
   const dataTable = new Table(Skeleton)
   Div.append(dataTable.getTable()[0])
+}
+
+function CreateFDGForm(informationRowDiv, response, responseNumber) {
+  var mbqInputDiv = createElement(informationRowDiv,"",'ButtonDiv'+String(responseNumber+1), 'div', [])
+  var mbqInput = $("<input>", {
+    type:"number",
+    id:"id_order_MBQ",
+    name:"order_MBQ",
+    min:"0",
+    class: response['time'] + " form-control"
+  });
+  mbqInput.appendTo(mbqInputDiv)
+  //Create Spcae between the buttons
+  createElement(informationRowDiv,'','','div',['col-1']);
+  
+  var commentDiv = createElement(informationRowDiv, "", 'CommentDiv'+String(responseNumber+1),'div',[]);
+  var commentInput = $("<input>",{
+    id:"id_comment",
+    type:"text",
+    name:"comment",
+    class:"form-control"
+  });
+  commentInput.appendTo(commentDiv)
+  createElement(informationRowDiv,'','','div',['col-1']);
+  var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
+  $(Button).click(SendOrder)
 }
 
 
@@ -125,8 +168,7 @@ function CreateFGDOrderTable(data, Div, hasComment) {
     RowData.push(order.frigivet_amount);
     (order.frigivet_datetime != null) ? RowData.push(order.frigivet_datetime.substr(11,5)) : RowData.push("");
     if (hasComment) {
-      const commentImage = $("<img>",
-          {
+      const commentImage = $("<img>", {
           src : "/static/customer/images/comment.svg", 
           class: "StatusIcon",
           title:order.comment
@@ -189,64 +231,21 @@ var fill_order_table = function(date) {
       createElement(dataRow, contentStr,'', 'div', ['col-11', 'row']);
       createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone"]);
       var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
-      
       // ----- Form Creation -----
-      if (response.data_type == 'form'){
-        var mbqInputDiv = createElement(informationRowDiv,"",'ButtonDiv'+String(i+1), 'div', [])
-        var mbqInput = $("<input>", {
-          type:"number",
-          id:"id_order_MBQ",
-          name:"order_MBQ",
-          min:"0",
-          class: response['time'] + " form-control"
-        });
-        mbqInput.appendTo(mbqInputDiv)
-        //Create Spcae between the buttons
-        createElement(informationRowDiv,'','','div',['col-1']);
-        
-        var commentDiv = createElement(informationRowDiv, "", 'CommentDiv'+String(i+1),'div',[]);
-        var commentInput = $("<input>",{
-          id:"id_comment",
-          type:"text",
-          name:"comment",
-          class:"form-control"
-        });
-        commentInput.appendTo(commentDiv)
-        createElement(informationRowDiv,'','','div',['col-1']);
-        var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
-        $(Button).click(SendOrder)
-
+      if (response.data_type == 'form') CreateFDGForm(informationRowDiv, response, i);
       // ----- Table Creation -----
-      } else if (response.data_type == 'data') { 
-        CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment)
-      }        
-    } // End For Loop
+      if (response.data_type == 'data') CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment);
+    } 
     // T-orders 
     if (data.tOrders.length != 0) {
-      $('#T_orders').removeClass('DisplayNone')
-      CreateTOrderTable(data.tOrders, $('#secondaryTableBody'))
-      
-      for(let i = 0; i < data.tOrders.length; i++) {
-        const TORDER = data.tOrders[i];
-        var table_row = createElement($('#secondaryTableBody'), '','','tr',['data-row']);
-        createElement(table_row, TORDER.tracer,'','td',[])        
-        const statusRow = createElement(table_row, '',         '', 'td', []);
-        const statusImage = $('<img>', {
-          src: "/static/customer/images/clipboard" + TORDER.status + ".svg",
-          class: "StatusIcon"
-        });    
-        statusImage.appendTo(statusRow);
-        createElement(table_row, TORDER.OrderID,'','td',[])
-        createElement(table_row, TORDER.deliver_datetime.substr(11,5),'','td',[])
-        createElement(table_row, TORDER.nInjections, '', 'td', [])
-        createElement(table_row, TORDER.use, '', 'td', [])
-      }
+      $('#T_orders').removeClass('DisplayNone');
+      $("#torder_data").empty(); // Remove old content
+      CreateTOrderTable(data.tOrders, $('#torder_data'));
     } else {
-      $('#T_orders').addClass('DisplayNone')
+      $('#T_orders').addClass('DisplayNone');
     };
     // T-OrderForms
     var TFormTbody = $('#TFormRows');
-    const deliverTimeInputStr = '<input type="text" name="deliverTime" class="timeField" required="" id="id_deliverTime">';
     const injectionFieldInputStr = '<input type="text" name="injectionField" class="injectionField" id="id_injectionField">';
     const UseSelectStr = '\
     <select name="useField" class="selectTOrder custom-select" id="id_useField">\
@@ -259,7 +258,7 @@ var fill_order_table = function(date) {
     } else {
       $("#T_forms").addClass('DisplayNone')
     }
-    dropChildern(TFormTbody);
+    dropChildren(TFormTbody);
     for (let i = 0; i < data.tOrdersForms.length; i++) {
       const TORDERFORM = data.tOrdersForms[i];
       var formRow = createElement(TFormTbody,'',"Row"+TORDERFORM.id,'tr',[]);

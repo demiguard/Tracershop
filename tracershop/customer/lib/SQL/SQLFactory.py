@@ -275,7 +275,7 @@ def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
     UPDATE orders
     SET
       amount = {NewAmount},
-      amount_o = {Overhead},
+      amount_o =     {Overhead},
       total_amount = {Overhead},
       comment = \"{NewComment}\"
     WHERE  
@@ -283,10 +283,7 @@ def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
   """
 
 def createSQLDeleteFDG(OrderID):
-  return f"""
-  DELETE FROM orders
-  WHERE OID={OrderID}
-  """
+  return f"DELETE FROM orders WHERE OID={OrderID}"
 
 def createSQLGetOverhead(CustomerID):
   return f"""

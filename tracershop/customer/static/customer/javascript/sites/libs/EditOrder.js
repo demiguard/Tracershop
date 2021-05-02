@@ -1,12 +1,86 @@
-import { destroyActiveDialog } from "./htmlHelpers.js";
+import { destroyActiveDialog, constructElement, constructElementID, constructElementClassList } from "./htmlHelpers.js";
+import { SendOrder } from "./requests.js"
 export { EditOrder }
 
-const EditOrderErrorID = "EditOrderError"
+const EditOrderErrorID = "EditOrderError";
 
-function SuccessfullyEditedOrder(OrderID){}
+function SuccessfullyEditedOrder(OrderID, overhead, newAmount, newComment){
+  let NewTotal = Math.floor(newAmount * (1 + overhead/100));
+  let Row = $(`#OrderRow-${OrderID}`);
+  let data = Row.children()
+  for (let i = 0; i < data.length; i++) {
+    let node = data[i]
+    if (i == 2) $(node).text(newAmount);
+    if (i == 3) $(node).text(NewTotal);
+    if (i == 7) {
+      $(node).empty();
+      const commentImage = $("<img>", {
+        src : "/static/customer/images/comment.svg", 
+        class: "StatusIcon",
+        title: newComment
+      });
+      $(commentImage).tooltip();
+      RowData.push(commentImage);
+    }
+  }
+}
 
 
-function SuccessfullyDeletedOrder(){}
+function SuccessfullyDeletedOrder(OrderID){
+  let Row = $(`#OrderRow-${OrderID}`);
+  let tBody = Row.parent();
+  if (tBody.length > 1) {
+    Row.remove();
+    return
+  }
+  //Remove the table and recreate Form
+  let Table = tBody.parent();
+  let InformationRow = Table.parent();
+  let OrderRow = InformationRow.parent();
+  Table.remove();
+  // Reconstruct the Form
+  let RowNumber = InformationRow.attr("id").substr(14);
+  let buttonDiv = constructElementID("div", `ButtonDiv${RowNumber}`);
+  let Space = constructElementClassList("div", ["col-1"]);
+  let Space2 = constructElementClassList("div", ["col-1"]);
+  let CommentDiv = constructElementID("div", `CommentDiv${RowNumber}`);
+  let OrderButton = $("<Button>",{
+    "id" : RowNumber,
+    "class": "btn btn-primary OrderButton"
+  });
+  OrderButton.text("Bestil")
+  OrderButton.click(SendOrder);
+
+  let OrderTimeDiv = OrderRow.children(".order");
+  let OrderTime = OrderTimeDiv.text();
+
+  let MBqInput = $("<input>", {
+    "id": "id_order_MBQ",
+    "type" : "number",
+    "min"  : "0",
+    "name" : "order_MBQ",
+    "class" : `form-control ${OrderTime}:00`
+  });
+  buttonDiv.append(MBqInput);
+
+  let CommentInput = $("<input>", {
+    id: "id_comment",
+    class: "form-control",
+    type: "text",
+    name:"comment"
+  });
+  CommentDiv.append(CommentInput);
+
+
+  InformationRow.append(buttonDiv);
+  InformationRow.append(Space);
+  InformationRow.append(CommentDiv);
+  InformationRow.append(Space2);
+  InformationRow.append(OrderButton);
+
+}
+
+
 
 
 var EditOrder = function(){
@@ -83,7 +157,7 @@ var EditOrder = function(){
             success: function(data) {
               if (data['Success'] = "Success") {
                 destroyActiveDialog()
-                SuccessfullyEditedOrder(OrderID)
+                SuccessfullyEditedOrder(orderID, data['overhead'], MBQInput.val(), CommentInput.val() )
               } else {
                 ErrorDiv.text("Der er Sket en fejl");
                 ErrorDiv.addClass("ErrorBox")
@@ -104,6 +178,7 @@ var EditOrder = function(){
             success: function(data) {
               if (data['Success'] = "Success") {
                 destroyActiveDialog()
+                SuccessfullyDeletedOrder(orderID)
               } else {
                 ErrorDiv.text("Der er Sket en fejl");
                 ErrorDiv.addClass("ErrorBox")

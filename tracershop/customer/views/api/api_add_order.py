@@ -58,11 +58,14 @@ class Api_add_order(LoginRequiredMixin, View):
       )
     #Note rare Race condition
     lastOID = SQL.getLastOrder()
+    overhead = SQL.getCustomerOverhead(FormatedDict['customerID'])
+
 
     return JsonResponse({
       'successRate' : "Success",
       'lastOrder'   : lastOID,
       'amount'      : FormatedDict['amount'],
+      'overhead'    : overhead
     })
 
     
