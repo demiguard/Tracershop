@@ -7,6 +7,8 @@ from customer.lib.Formatting import convertTruthValuesFromJS
 from customer.models import User
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
+from customer.lib.SQL import  SQLController as SQL
+
 
 class ApiAdminUpdateRights(AdminRequiredMixin, LoginRequiredMixin, View):
   name = "ApiAdminUpdateRights"
@@ -14,7 +16,7 @@ class ApiAdminUpdateRights(AdminRequiredMixin, LoginRequiredMixin, View):
 
   def get(self, request):
     for userID, right in request.GET.items():
-      tempUser = User.objects.get(id=userID)
+      tempUser = SQL.getSpecificObject(userID, User)
       tempUser.is_admin = convertTruthValuesFromJS(right)
       tempUser.save()
 
