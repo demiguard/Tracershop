@@ -17,11 +17,11 @@
   </thead>
   <tbody>
     {% for Puser in potentialUsers %}
-      <tr id="Row-{{Puser.id}}">
+      <tr id="Row-{{Puser.ID}}">
         <td>{{Puser.username}}</td>
         <td>{{Puser.email_1}}</td>
-        <td><input id="Confirm-{{Puser.id}}" type=button class="btn btn-primary confirmButton" value="Godkend"></td>
-        <td><input id="Deny-{{Puser.id}}" type=button class="btn btn-primary denyButton" value="Afvis"></td>
+        <td><input id="Confirm-{{Puser.ID}}" type=button class="btn btn-primary confirmButton" value="Godkend"></td>
+        <td><input id="Deny-{{Puser.ID}}" type=button class="btn btn-primary denyButton" value="Afvis"></td>
       </tr>
     {% endfor %}
   </tbody>

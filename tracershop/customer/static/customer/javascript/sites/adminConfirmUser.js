@@ -9,6 +9,7 @@ function denyUser() {
 }
 
 function SendRequest(type, ID) {
+  console.log(ID);
   $.ajax({
     //Note that because the site is on /admin/confirmUser, 
     //The True URL that is queried is : "/admin/api/confirmUser"

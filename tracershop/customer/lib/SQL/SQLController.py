@@ -187,7 +187,7 @@ def getAll(Model):
   return Model.objects.all()
 
 def getSpecificObject(ID, Obejct ):
-  return Obejct.objects.get(id=ID) 
+  return Obejct.objects.get(ID=ID) 
 
 
 def getServerConfig():

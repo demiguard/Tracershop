@@ -5,7 +5,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 
 from customer.models import User
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
-
+from customer.lib.SQL import SQLController as SQL
 
 
 class ApiAdminChangePassword(AdminRequiredMixin, LoginRequiredMixin, View):
@@ -13,7 +13,7 @@ class ApiAdminChangePassword(AdminRequiredMixin, LoginRequiredMixin, View):
   path = "admin/api/updatepw"
 
   def get(self, request):
-    passwordChangingUser = User.objects.get(id=request.GET['userID'])
+    passwordChangingUser = SQL.getSpecificObject(request.GET['userID'], User)
     passwordChangingUser.set_password(request.GET['newPassword'])
     passwordChangingUser.save()
 

@@ -13,7 +13,7 @@
   </thead>
   <tbody>
     {% for Auser in users %}
-    <tr id="{{Auser.id}}" class="UserRow">
+    <tr id="{{Auser.ID}}" class="UserRow">
       <td class="Username">{{Auser.username}}</td>
       <td>{{Auser.email_1}}</td>
       <td class="isAdmin">
@@ -23,7 +23,7 @@
         <input type="checkbox" class="isAdminCheckbox">
       {% endif%}
       </td>
-      <td><input id="changePass-{{Auser.id}}" class="ChangePassword Button" type="button" class="btn btn-outline-primary" value="Skift Password"></td>
+      <td><input id="changePass-{{Auser.ID}}" class="ChangePassword Button" type="button" class="btn btn-outline-primary" value="Skift Password"></td>
     </tr>
     {% endfor%}
   </tbody>

@@ -1,5 +1,3 @@
-import { createElement, dropChildern } from './libs/htmlHelpers.js' ;
-
 const update = function () {
   var formList = {};
   const TABLEBODY = $("#tableBody")[0]; 
