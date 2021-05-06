@@ -122,7 +122,7 @@
                 <tr class="data-row" id="TOrder-{{ secondaryOrder.OrderID }}">
                   <td>{{ secondaryOrder.tracer }}</td>
                   {% if secondaryOrder.status == 1 %}
-                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard1.svg' %}"></td>
+                    <td><img id="TStatus-{{ secondaryOrder.OrderID }}" class="StatusIcon Editable-TOrder" src="{% static 'customer/images/clipboard1.svg' %}"></td>
                   {% elif secondaryOrder.status == 2 %}
                     <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
                   {% elif secondaryOrder.status == 3 %}

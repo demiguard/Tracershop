@@ -98,7 +98,7 @@ function CreateTOrderTable(data, Div) {
     });
     if (Torder.status == 1) {
       statusImage.addClass("Editable-TOrder");
-      statusImage.attr("id", `TOrder-${Torder.OrderID}`);
+      statusImage.attr("id", `TStatus-${Torder.OrderID}`);
       //statusImage.click(EditOrder) // TODO
     }
     RowData.push(statusImage);
