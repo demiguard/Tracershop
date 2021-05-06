@@ -1,6 +1,0 @@
-from smtplib import SMTP
-
-
-
-
-

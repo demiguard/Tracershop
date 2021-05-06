@@ -4,6 +4,8 @@ from django.http.response import JsonResponse
 #
 TRACERSHOPDATABASENAME = 'TS_test'
 
+TRACERSHOPNAME = "tracershop-int"
+
 #SQL CONSTANTS
 TORDERS     = 'tOrders'
 TORDERFORMS = 'tOrderForms'

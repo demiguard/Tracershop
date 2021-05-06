@@ -18,10 +18,10 @@
       <input type="button" class="btn btn-primary" value="Log ud" onclick="window.location='api/logout'">
     {% endif %}
     <a href="{% url 'customer:CreateUser' %}">Opret Bruger </a>
-  
+    <input type="button" id="ResetPassword" class="btn btn-primary" value="Genskab Password">
   </form>
 {% endblock %}
 
 {% block javascript %}
-  <script src="{% static 'customer/javascript/sites/login.js' %}"></script>
+  <script type="module" src="{% static 'customer/javascript/sites/login.js' %}"></script>
 {% endblock javascript%}

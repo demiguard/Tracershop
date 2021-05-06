@@ -1,3 +1,5 @@
+import { destroyActiveDialog } from "./libs/htmlHelpers.js";
+
 let try_login = function() {
   $('#error-message-container').empty();
   
@@ -33,9 +35,52 @@ let enter_login = function(event){
     try_login();
   }
 }
+
+function ResetPassword() {
+  destroyActiveDialog();
+  const ResetPasswordDialog = $("<div>", {
+    class: "container"
+  })
+
+  const HelperText = $("<p>")
+  const UserNameInput = $("<input>", {
+    type:"text",
+    placeholder:"Brugernavn",
+  });
+  const SpamFilterText = $("<p>")
+
+  HelperText.text("Skriv dit bruger navn in her, så sender vi dig en mail til at genskabe dit kodeord")
+  SpamFilterText.text("Husk at tjekke dit spam filter for mailen")
+
+  $(ResetPasswordDialog).Dialog({
+    classes: {
+      "ui-dialog": "modal-content",
+      "ui-dialog-titlebar": "modal-header",
+      "ui-dialog-title": "modal-title",
+      "ui-dialog-titlebar-close": "close",
+      "ui-dialog-content": "modal-body",
+      "ui-dialog-buttonpane": "modal-footer"
+    },
+    id: "ResetPasswordDialog",
+    title: "Genskab Password",
+    width: 500,
+    buttons : [
+      {
+        text: "Send mail",
+        click: function() {
+          $.ajax({
+
+          })
+        }
+      }
+    ]
+  })
+}
+
 //After loading
 $(function() {
   $('#login-btn').click(try_login);
   $('#id_username').keypress(enter_login);
   $('#id_password').keypress(enter_login);
+  $('#ResetPassword').click(ResetPassword);
 });
