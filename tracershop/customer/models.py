@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models import AutoField, BooleanField, CharField, ForeignKey
+from django.db.models import AutoField, BooleanField, CharField, ForeignKey, UUIDField
 from customer.modelsDir.BaseModels import SubscribeableModel
 
 from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
@@ -41,3 +41,9 @@ class UserHasAccess(SubscribeableModel):
   ID = AutoField(primary_key=True)
   userID = ForeignKey(User, on_delete=models.CASCADE)
   CustomerID = ForeignKey(Customer, on_delete=models.CASCADE)
+
+class ResetPassword(SubscribeableModel):
+  ID = AutoField(primary_key=True)
+  expire = DateTimeField()
+  UserID = ForeignKey(User)
+  Reference = UUIDField()
