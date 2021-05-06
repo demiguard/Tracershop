@@ -197,10 +197,10 @@ def getServerConfig():
   
   """
   try:
-    ServerConfig = ServerConfiguration.objects.get(ID=0)
+    ServerConfig = ServerConfiguration.objects.get(ID=1)
   except ObjectDoesNotExist:
     Databases    = Database.objects.all()
-    ServerConfig = ServerConfiguration(ID=0, ExternalDatabase=Databases[0])
+    ServerConfig = ServerConfiguration(ID=1, ExternalDatabase=Databases[0])
     ServerConfig.save()
 
   return ServerConfig

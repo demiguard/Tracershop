@@ -46,13 +46,23 @@ function ResetPassword() {
   const UserNameInput = $("<input>", {
     type:"text",
     placeholder:"Brugernavn",
+    id:"ResetPasswordOfUser"
   });
   const SpamFilterText = $("<p>")
+  const ErrorDiv = $("<div>",{
+    id:"ErrorDiv"
+  })
 
   HelperText.text("Skriv dit bruger navn in her, så sender vi dig en mail til at genskabe dit kodeord")
-  SpamFilterText.text("Husk at tjekke dit spam filter for mailen")
+  SpamFilterText.text("Husk at tjekke dit spam filter for password reset mailen")
 
-  $(ResetPasswordDialog).Dialog({
+  ResetPasswordDialog.append(HelperText);
+  ResetPasswordDialog.append(UserNameInput);
+  ResetPasswordDialog.append(SpamFilterText);
+  ResetPasswordDialog.append(ErrorDiv);
+
+
+  $(ResetPasswordDialog).dialog({
     classes: {
       "ui-dialog": "modal-content",
       "ui-dialog-titlebar": "modal-header",
@@ -69,8 +79,28 @@ function ResetPassword() {
         text: "Send mail",
         click: function() {
           $.ajax({
-
+            type:    "post",
+            url:     "/api/CreateNewPasswordResetRequest",
+            datatype:"json",
+            data:    JSON.stringify({ username:$("#ResetPasswordOfUser").val()}),
+            success: function (data) {
+              if (data['Success'] == "Success") {
+                destroyActiveDialog();
+              } else if (data['Success'] == "User does not exists") {
+                ErrorDiv.text("Brugeren ved dette navn findes ikke");
+                ErrorDiv.addClass("ErrorBox");
+              }
+            },
+            error: function(data){
+              ErrorDiv.text("Der er sket en uventet fejl. Kontakt support");
+              ErrorDiv.addClass("ErrorBox")
+            }
           })
+        }
+      }, {
+        text:"Afbryd",
+        click: function() {
+          destroyActiveDialog();
         }
       }
     ]

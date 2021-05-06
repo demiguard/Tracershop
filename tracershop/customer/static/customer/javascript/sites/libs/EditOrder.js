@@ -155,7 +155,7 @@ var EditOrder = function(){
               "NewComment" : CommentInput.val()
             }),
             success: function(data) {
-              if (data['Success'] = "Success") {
+              if (data['Success'] == "Success") {
                 destroyActiveDialog()
                 SuccessfullyEditedOrder(orderID, data['overhead'], MBQInput.val(), CommentInput.val() )
               } else {

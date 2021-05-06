@@ -18,19 +18,21 @@ from customer.views.api.apiConfirmUser import ApiConfirmUser
 
 from customer.views.auth.createuser        import CreateUserView
 from customer.views.auth.createusersuccess import CreateUserSuccess
-from customer.views.auth.login             import LoginView, APILoginView, APILogoutView 
 from customer.views.auth.editMyCustomers   import EditMyCustomers
 from customer.views.auth.editmyuser        import EditMyUser
+from customer.views.auth.login             import LoginView, APILoginView, APILogoutView 
+from customer.views.auth.resetpassword     import ResetPasswordView
 
-from customer.views.api.apiRest             import RESTAPI
-from customer.views.api.apiEditOrder        import ApiEditOrder
-from customer.views.api.api_add_order       import Api_add_order
-from customer.views.api.apiMonthStatus      import ApiMonthStatus
-from customer.views.api.api_order_date      import ApiOrderDate
-from customer.views.api.api_add_torder      import Api_add_torder
-from customer.views.api.apiFutureDaily      import ApiFutureBookingDay
-from customer.views.api.apiUpdateProcedures import ApiUpdateProcedure
-from customer.views.api.apiMassAddOrder     import ApiMassAddOrder
+from customer.views.api.apiRest                          import RESTAPI
+from customer.views.api.apiEditOrder                     import ApiEditOrder
+from customer.views.api.api_add_order                    import Api_add_order
+from customer.views.api.apiMonthStatus                   import ApiMonthStatus
+from customer.views.api.api_order_date                   import ApiOrderDate
+from customer.views.api.api_add_torder                   import Api_add_torder
+from customer.views.api.apiFutureDaily                   import ApiFutureBookingDay
+from customer.views.api.apiUpdateProcedures              import ApiUpdateProcedure
+from customer.views.api.apiMassAddOrder                  import ApiMassAddOrder
+from customer.views.api.apiCreateNewPasswordResetRequest import APICreateNewPasswordResetRequest
 
 app_name = 'customer'
 
@@ -51,6 +53,8 @@ Views = [
   CreateUserView,
   CreateUserSuccess,
   LoginView, 
+  APICreateNewPasswordResetRequest,
+  ResetPasswordView,
   APILoginView, 
   APILogoutView,
   EditMyCustomers,
