@@ -15,10 +15,11 @@ def SendResetPasswordEmail(user, ResetPasswordRequest):
 
   message = f"""
   Nogle har ønsket at genskabe kodeordet for brugeren: {user.username}
+  
   Hvis det er dig så klik på linket neden for:
   {TRACERSHOPNAME}/resetPassword/{str(ResetPasswordRequest.Reference)}
 
-  Dette request udløber kl:{ResetPasswordRequest.expire.strftime("%H:%m")}
+  Dette request udløber kl:{ResetPasswordRequest.expire.strftime("%H:%M")}
   """
   mail = MIMEText(message.encode("utf-8"), _charset="utf-8")
   
