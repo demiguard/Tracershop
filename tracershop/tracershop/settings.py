@@ -25,7 +25,7 @@ SECRET_KEY = '6k8chfm_-enql+y)#k)lnm5#ey9-t41tq*xj__pmmups)uo(m*'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost','127.0.0.1', '172.16.189.163','172.16.186.33']
+ALLOWED_HOSTS = ['localhost','127.0.0.1', '172.16.189.163','172.16.186.33', "tracershop-int", "tracershop-int.petnet.rh.dk"]
 AUTH_USER_MODEL = 'customer.User'
 AUTHENTICATION_BACKENDS = ['customer.backends.SimpleBackend']
 LOGIN_URL = '/'
