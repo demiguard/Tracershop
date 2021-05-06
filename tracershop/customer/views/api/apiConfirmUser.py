@@ -31,7 +31,7 @@ def CreateUserFromPotentialUser(potentialUser):
 def DeletePotentialUser(potentialUser):
   potentialUser.delete()
 
-class ApiConfirmUser(LoginRequiredMixin, View, AdminRequiredMixin):
+class ApiConfirmUser(AdminRequiredMixin, LoginRequiredMixin, View ):
   """
 
    Note: Yes there's alot of dub code, however the problem is that you can't really copy the try excepts, since the different functions return JSON responses.
