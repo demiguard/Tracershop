@@ -26,7 +26,7 @@ class APILoginView(View):
   path = "api/login"
   name = "login"
 
-  def get(self, request)
+  def get(self, request):
     return redirect("customer:index")
 
   def post(self, request):
