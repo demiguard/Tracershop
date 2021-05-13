@@ -5,6 +5,11 @@
   {% block authbar_content %}
 
   {% endblock authbar_content %}
+  <a href="{% url 'customer:index' %}"> 
+    <div class ="navbarElem">
+      Bestillinger
+    </div>
+  </a>
   
   <a href="{% url 'customer:futureBooking' %}">
     <div class="navbarElem">

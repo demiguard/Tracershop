@@ -260,6 +260,21 @@ def handleDataset(dataset, sql):
 
   }
 
+def updateBookingInfo(sql, BookingInfo):
+  for accessionNumber, studyData in BookingInfo.items():
+    sqlQuery = f"""
+      UPDATE 
+        customer_booking
+      SET 
+        startDate    = \"{studyData["startDate"]}\",
+        startTime    = \"{studyData["startTime"]}\",
+        location_id  = \"{studyData["Location"]}\",
+        procedure_id = {studyData["procedure_id"]}
+      WHERE
+        accessionNumber = \"accessionNumber\"
+    """
+    sql.execute(sqlQuery)
+
 # C-Find Response
 def handleResponse(response, sql):
   # Idea
@@ -297,6 +312,7 @@ def handleResponse(response, sql):
     logger.info(f"Added {len(toBeAdded)} Studies")
     insertIntoDatabase(sql, toBeAdded, BookingInfo)
 
+  updateBookingInfo(sql, BookingInfo)
   logger.debug("Finished Handling Response")
    
   

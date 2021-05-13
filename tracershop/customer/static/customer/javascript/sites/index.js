@@ -126,9 +126,11 @@ function CreateFDGForm(informationRowDiv, response, responseNumber) {
     id:"id_order_MBQ",
     name:"order_MBQ",
     min:"0",
-    class: response['time'] + " form-control"
+    class: response['time']
   });
-  mbqInput.appendTo(mbqInputDiv)
+  $(mbqInputDiv).append("Bestil FDG:");
+  mbqInput.appendTo(mbqInputDiv);
+  $(mbqInputDiv).append("[MBq]");
   //Create Spcae between the buttons
   createElement(informationRowDiv,'','','div',['col-1']);
   
@@ -137,12 +139,13 @@ function CreateFDGForm(informationRowDiv, response, responseNumber) {
     id:"id_comment",
     type:"text",
     name:"comment",
-    class:"form-control"
+    class:""
   });
-  commentInput.appendTo(commentDiv)
+  $(commentDiv).append("Kommentar:");
+  commentInput.appendTo(commentDiv);
   createElement(informationRowDiv,'','','div',['col-1']);
   var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
-  $(Button).click(SendOrder)
+  $(Button).click(SendOrder);
 }
 
 
