@@ -105,7 +105,17 @@ function CreateTOrderTable(data, Div) {
     RowData.push(Torder.OrderID);
     RowData.push(Torder.deliver_datetime.substr(11,5));
     RowData.push(Torder.nInjections);
-    RowData.push(Torder.comment);
+    if (Torder.comment)  {
+      const commentImage = $("<img>",{
+        src: "/static/customer/images/comment.svg",
+        class:"StatusIcon",
+        title:Torder.comment
+      });
+      commentImage.tooltip()
+      RowData.push(commentImage);
+    } else {
+      RowData.push("");
+    }
     RowData.push(Torder.use);
     Rows.push(RowData);
   };
@@ -337,4 +347,6 @@ $(function() {
     $('#customer_select'),
     onChangeSelect
   );
+
+  $(".commentIcon").tooltip();
 });

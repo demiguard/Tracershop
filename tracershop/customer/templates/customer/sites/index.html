@@ -75,7 +75,7 @@
               <td>{{order.frigivet_amount}}</td>
               <td>{{order.frigivet_datetime |date:'H:i'}}</td>
               {% if orderList.hasComment %}
-                <td id="comment-{{ order.OID }}"> <img class=StatusIcon src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
+                <td id="comment-{{ order.OID }}"> <img class="StatusIcon commentIcon" src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
               {% endif %}
             </tr>
             {% endfor %}
@@ -135,7 +135,7 @@
                   <td>{{ secondaryOrder.deliver_datetime | date:'H:i' }}</td>
                   <td>{{ secondaryOrder.nInjections }}</td>
                   <td>{{ secondaryOrder.use }}</td>
-                  <td>Kommentar</td>
+                  <td><img class="StatusIcon commentIcon" src="{% static 'cusomter/images/comment.svg' %}" title="{{ secondaryOrder.comment }}"></td>
                 </tr>
               {% endfor %}
               {% endif %}

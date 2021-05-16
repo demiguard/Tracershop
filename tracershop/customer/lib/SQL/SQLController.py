@@ -138,7 +138,6 @@ def getDailyTOrders(date, userID:int) -> list:
 
   tupleNames = constants.TORDERS
   nameDir    = constants.SQLTuples
-  print(SQLQuery, TOrders, tupleNames, nameDir)
 
   return SQLFormatter.FormatSQLTuple(TOrders, nameDir[tupleNames])
 
