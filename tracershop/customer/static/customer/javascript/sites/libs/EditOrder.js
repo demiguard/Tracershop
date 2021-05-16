@@ -1,4 +1,4 @@
-import { destroyActiveDialog, constructElement, constructElementID, constructElementClassList } from "./htmlHelpers.js";
+import { destroyActiveDialog, constructElement, constructElementID, constructElementClassList, MaxCharInField, auto_char } from "./htmlHelpers.js";
 import { SendOrder, SendTOrder } from "./requests.js"
 export { EditOrder, EditTOrder }
 
@@ -202,12 +202,92 @@ var EditOrder = function(){
 
 function EditTOrder() {
   destroyActiveDialog()
-  const OrderID = this.id.substr(7);
+  const OrderID = this.id.substr(8);
 
   const dialogDiv = $("<div>",{
     class : "container",
     id    : "EditTOrderDialog"
   });
+
+  const Table = $("<table>", {
+    class:"table"
+  });
+  const TableBody = $("<tbody>")
+  //I'm not sure if this is a smart way of programming.
+  var TracerRow, TimeRow, InjectionRow, commentRow, UseageRow;
+  $(`#TOrder-${OrderID}`).children().each((index, element) => {
+    if (index === 0) {
+      TracerRow = $("<tr>");
+      const RowName  = $("<td>");
+      const RowData  = $("<td>");
+      RowName.text("Tracer Type:");
+      RowData.text($(element).text());
+      
+      TracerRow.append(RowName);
+      TracerRow.append(RowData);
+    }
+    if (index === 3) {
+      TimeRow = $("<tr>");
+      const RowName  = $("<td>");
+      const RowData  = $("<td>");
+      RowName.text("Nyt Tidpunkt:");
+      const NewTimeField = $("<input>", {
+        id: "EditInjectionTimeInput",
+        type:"text",
+        class:"timeField",
+        name: "NewTimeField"
+      });
+      NewTimeField.val(element.innerText);
+      auto_char(NewTimeField,':',2)
+      MaxCharInField(NewTimeField, 5)
+      RowData.append(NewTimeField);
+      TimeRow.append(RowName);
+      TimeRow.append(RowData);
+    }
+    if (index === 4) {
+      InjectionRow   = $("<tr>");
+      const RowName  = $("<td>");
+      const RowData  = $("<td>");
+      RowName.text("Nyt antal injecktioner: ");
+      const NewInjectionField = $("<input>", {
+        id: "EditInjectionInput",
+        type:"number",
+        class:"injectionField",
+        name: "NewInjectionField"
+      });
+      NewInjectionField.val(element.innerText);
+      RowData.append(NewInjectionField);
+      
+      InjectionRow.append(RowName);
+      InjectionRow.append(RowData);
+    }
+    if (index === 5) {
+      commentRow = $("<tr>");
+      const RowName  = $("<td>");
+      const RowData  = $("<td>");
+      RowName.text("Nyt antal injecktioner: ");
+      const NewCommentField = $("<textarea>", {
+        id: "Editcomment",
+        rows:1,
+        name: "NewInjectionField"
+      });
+      const commentImage = $(element).children()[0]
+      NewCommentField.val($(commentImage).attr("data-original-title"))
+      RowData.append(NewCommentField);
+      commentRow.append(RowName);
+      commentRow.append(RowData);
+    }
+
+  });
+  TableBody.append(TracerRow);
+  TableBody.append(TimeRow);
+  TableBody.append(InjectionRow);
+  TableBody.append(UseageRow);
+  TableBody.append(commentRow);
+  
+  Table.append(TableBody);
+  dialogDiv.append(Table);
+
   $(dialogDiv).dialog({
     classes: {
       "ui-dialog": "modal-content",
@@ -221,7 +301,7 @@ function EditTOrder() {
     title: "Ændre T-order " + OrderID,
     width: 500,
     buttons : [
-      {text: "Opdater Order" + OrderID, click:function() {
+      {text: "Opdater Order: " + OrderID, click:function() {
 
       }},
       {text: "Slet Order: "+ OrderID, click:function() {
@@ -229,12 +309,20 @@ function EditTOrder() {
           type:"delete",
           datatype:"json",
           url:"api/EditTOrder",
-          data:JSON.stringify({}),
+          data:JSON.stringify({
+            "OrderID" : OrderID
+          }),
           success:function(data) {
-            
+            destroyActiveDialog()
+            $(`#TOrder-${OrderID}`).remove(); 
+            if ($("#secondaryTableBody").children().length == 0) {
+              $("#T_orders").addClass("DisplayNone")
+            }
           }
         })
       }},
-      {text: "Annuller", click:function() {}}]
+      {text: "Annuller", click:function() {
+        destroyActiveDialog();
+      }}]
   })
 }

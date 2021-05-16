@@ -1,5 +1,5 @@
 import { createElement } from "./htmlHelpers.js";
-import { EditOrder } from "./EditOrder.js";
+import { EditOrder, EditTOrder } from "./EditOrder.js";
 import { Table } from "./TableFactory.js";
 export { SendOrder, SendTOrder }
 
@@ -98,21 +98,31 @@ function SendTOrder() {
       var tOrdersRow = $("#T_orders");
       if (tOrdersRow.hasClass('DisplayNone')) tOrdersRow.removeClass('DisplayNone');
       var tableBody = $('#secondaryTableBody');
-      var tableRow = createElement(tableBody,'', '', 'tr', []);
+      var tableRow = createElement(tableBody,'', `TOrder-${data.lastOID}`, 'tr', []);
       createElement(tableRow, TracerName,  '', 'td', []);
       const statusImage = $('<img>', {
         src: `/static/customer/images/clipboard1.svg`,
         class: "StatusIcon Editable-TOrder",
-        id: `Order-${data.lastOrder}`
+        id: `TStatus-${data.lastOID}`
       });
-      statusImage.click(EditOrder);
+      statusImage.click(EditTOrder);
       
 
       const StatusRow = createElement(tableRow, '', '', 'td', []);
-      $(StatusRow).append(StatusRow);
+      $(StatusRow).append(statusImage);
       createElement(tableRow, data.lastOID, '', 'td', []);
       createElement(tableRow, bestillingVal, '', 'td', []);
       createElement(tableRow, injectionVal, '', 'td', []);
+      const commentRow = createElement(tableRow,'', '' ,'td' ,  []);
+      if (comment) {
+        const commentImage = $("<img>", {
+          src: "/static/customer/images/comment.svg",
+          class:"StatusIcon",
+          title:comment
+        });
+        commentImage.tooltip();
+        $(commentRow).append(commentImage);
+      }
       var UseName;
       if (useVal === "0") { UseName = 'Human';}
       else if (useVal === "1") { UseName = "Dyr";}

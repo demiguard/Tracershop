@@ -1,6 +1,6 @@
 import { CalenderFactory } from "./libs/calender.js";
 import { CustomerSelect  } from "./libs/customerSelect.js";
-import { EditOrder } from "./libs/EditOrder.js"
+import { EditOrder, EditTOrder } from "./libs/EditOrder.js"
 import { SendOrder, SendTOrder } from "./libs/requests.js"
 import { createElement, dropChildren, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
 
@@ -99,7 +99,7 @@ function CreateTOrderTable(data, Div) {
     if (Torder.status == 1) {
       statusImage.addClass("Editable-TOrder");
       statusImage.attr("id", `TStatus-${Torder.OrderID}`);
-      //statusImage.click(EditOrder) // TODO
+      statusImage.click(EditTOrder);
     }
     RowData.push(statusImage);
     RowData.push(Torder.OrderID);
@@ -330,7 +330,7 @@ $(function() {
   $('.OrderButton').click(SendOrder);
   $('.TorderButton').click(SendTOrder);
   $('.Editable-Order').click(EditOrder);
-
+  $('.Editable-TOrder').click(EditTOrder);
 
   //Okay I HAVE NO IDEA Why this line of code is needed, but if you dont you have zero indentation error
   var Ztoday = new Date(today.getYear()+1900, today.getMonth(),today.getDate())

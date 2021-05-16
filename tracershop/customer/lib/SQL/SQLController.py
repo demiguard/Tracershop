@@ -219,12 +219,9 @@ def deleteFDGOrder(OrderID):
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 def getCustomerOverhead(customerID):
-  """
-    Cache to allow sloppy programming
-  """
   SQLQuery = SQLFactory.createSQLGetOverhead(customerID)
-  overhead = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-  return overhead[0]
+  overhead,  = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+  return overhead
 
 def getTOrderStatusOrderTime(OrderID):
   SQLQuery = SQLFactory.createSQLGetTorderDate(OrderID)
@@ -235,6 +232,7 @@ def updateTOrder(OrderID, NewComment, NewInjections, NewUse):
   pass
 
 def deleteTOrder(OrderID):
-  SQLQuery = SQLFactory.createSQLDeleteTOrder  
+  SQLQuery = SQLFactory.createSQLDeleteTOrders(OrderID)
+  SQLExecuter.ExecuteQuery(SQLQuery)
 
 

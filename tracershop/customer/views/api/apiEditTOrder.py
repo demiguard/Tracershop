@@ -23,7 +23,7 @@ def typeCorrectDataDelete(JSONObject):
   return int(JSONObject['OrderID'])
 
 
-class ApiEditOrder(LoginRequiredMixin, View):
+class ApiEditTOrder(LoginRequiredMixin, View):
   path = "api/EditTOrder"
   name = "APIEditTOrder"
 

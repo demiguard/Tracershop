@@ -33,6 +33,7 @@ from customer.views.api.apiFutureDaily                   import ApiFutureBooking
 from customer.views.api.apiUpdateProcedures              import ApiUpdateProcedure
 from customer.views.api.apiMassAddOrder                  import ApiMassAddOrder
 from customer.views.api.apiCreateNewPasswordResetRequest import APICreateNewPasswordResetRequest
+from customer.views.api.apiEditTOrder                    import ApiEditTOrder
 
 app_name = 'customer'
 
@@ -67,6 +68,7 @@ Views = [
   Api_add_torder,
   ApiFutureBookingDay,
   ApiUpdateProcedure, 
+  ApiEditTOrder,
   RESTAPI
 ]
 

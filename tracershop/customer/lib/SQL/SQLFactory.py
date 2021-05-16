@@ -300,7 +300,7 @@ def createSQLGetOverhead(CustomerID):
 
 def createSQLDeleteTOrders(OrderID):
   #Build in check not to delete a known Order
-  return f"DELETE FROM t_order WHERE OID={OrderID} AND status=1"
+  return f"DELETE FROM t_orders WHERE OID={OrderID} AND status=1"
 
 def createSQLGetTorderDate(OrderID):
   return f"""
