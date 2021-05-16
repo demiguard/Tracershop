@@ -82,7 +82,7 @@ var onChangeSelect = function() {
 
 function CreateTOrderTable(data, Div) {
   //Set up data
-  let Header = ["Tracer", "Status", "Order ID", "Bestilt til", "Injecioner", "Til"];
+  let Header = ["Tracer", "Status", "Order ID", "Bestilt til", "Injecioner","Kommentar", "Til"];
   let RowIDs=[];
   let Rows= [];
 
@@ -105,6 +105,7 @@ function CreateTOrderTable(data, Div) {
     RowData.push(Torder.OrderID);
     RowData.push(Torder.deliver_datetime.substr(11,5));
     RowData.push(Torder.nInjections);
+    RowData.push(Torder.comment);
     RowData.push(Torder.use);
     Rows.push(RowData);
   };
@@ -135,13 +136,14 @@ function CreateFDGForm(informationRowDiv, response, responseNumber) {
   createElement(informationRowDiv,'','','div',['col-1']);
   
   var commentDiv = createElement(informationRowDiv, "", 'CommentDiv'+String(responseNumber+1),'div',[]);
-  var commentInput = $("<input>",{
+  var commentInput = $("<textarea>",{
     id:"id_comment",
     type:"text",
     name:"comment",
-    class:""
+    class:"",
+    placeholder: "Kommentar",
+    rows:1
   });
-  $(commentDiv).append("Kommentar:");
   commentInput.appendTo(commentDiv);
   createElement(informationRowDiv,'','','div',['col-1']);
   var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
@@ -281,6 +283,15 @@ var fill_order_table = function(date, DateDiv, changeDateFunction) {
       MaxCharInField(deliverTimeInput, 5);  
       createElement(formRow, injectionFieldInputStr, "InjectionField", 'td', []);
       createElement(formRow, UseSelectStr, 'UseField','td',[]);
+      const CommentTD    = createElement(formRow, '', '', 'td', []);
+      const CommentInput = $("<textarea>",{
+        type:"text",
+        class: "TOrderComment",
+        id: `TOrderComment-${TORDERFORM.id}`,
+        placeholder:"Kommentar",
+        rows:1
+      });
+      $(CommentTD).append(CommentInput)
       var orderButtonTD = createElement(formRow, '', '', 'td', []);
       var orderButton = $('<input>', {
         id : "TOrderButton"+TORDERFORM.id,

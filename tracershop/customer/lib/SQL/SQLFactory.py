@@ -183,7 +183,8 @@ def createSQLQueryTOrders(date, userID : int) -> str:
     t_orders.n_injections,
     t_orders.anvendelse,
     Tracers.name,
-    t_orders.userName
+    t_orders.userName,
+    t_orders.comment
   FROM
     t_orders
       INNER JOIN
@@ -202,13 +203,15 @@ def createSQLQUeryInsertTOrder(
     tracer : int,
     n_injections : int,
     anvendelse : str,
-    userName : str
+    userName : str,
+    comment  : str
     ) -> str:
 
   return f"""
     INSERT INTO t_orders(
       BID,
       batchnr,
+      comment,
       deliver_datetime,
       status,
       tracer,
@@ -218,6 +221,7 @@ def createSQLQUeryInsertTOrder(
     ) VALUES (
       {userID},
       \"\",
+      \"{comment}\",
       \"{deliver_datetime.strftime("%Y-%m-%d %H:%M:%S")}\",
       1,
       {tracer},
@@ -283,7 +287,8 @@ def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
   """
 
 def createSQLDeleteFDG(OrderID):
-  return f"DELETE FROM orders WHERE OID={OrderID}"
+  #Build in check so that you can't delete status 2,3 orders
+  return f"DELETE FROM orders WHERE OID={OrderID} AND status=1"
 
 def createSQLGetOverhead(CustomerID):
   return f"""
@@ -291,4 +296,31 @@ def createSQLGetOverhead(CustomerID):
   FROM Users
   WHERE 
     Id={CustomerID}
+  """
+
+def createSQLDeleteTOrders(OrderID):
+  #Build in check not to delete a known Order
+  return f"DELETE FROM t_order WHERE OID={OrderID} AND status=1"
+
+def createSQLGetTorderDate(OrderID):
+  return f"""
+  SELECT 
+    status, order_time
+  From 
+    t_orders
+  WHERE 
+    OID={OrderID}
+  """
+
+def createSQLupdateTOrder(OrderID, NewInjections, orderDateTime, newComment, NewUse):
+  return f"""
+  Update t_orders
+  SET
+    n_injections = {NewInjections},
+    order_time   = \"{orderDateTime.strftime("%Y-%m-%d %H:%M:%S")}\",
+    comment      = \"{newComment}\"
+    anvendelse   = \"{NewUse}\"
+  WHERE
+    OID = {OrderID} AND 
+    status = 1
   """

@@ -106,11 +106,12 @@ def insertTOrder(
     tracerID   : int,
     usage      : str,
     userID     : int,
-    username   : str
+    username   : str,
+    comment    : str
     ) -> None:
 
   SQLQuery = SQLFactory.createSQLQUeryInsertTOrder(
-    userID, deliver_datetime,tracerID, injections, usage, username
+    userID, deliver_datetime,tracerID, injections, usage, username, comment
   )
   SQLExecuter.ExecuteQuery(SQLQuery)
 
@@ -129,7 +130,6 @@ def getTOrdersForms(userID: int) -> list:
 
   tupleNames = constants.TORDERFORMS
   nameDir    = constants.SQLTuples
-
   return SQLFormatter.FormatSQLTuple(SQLResult, nameDir[tupleNames]) 
 
 def getDailyTOrders(date, userID:int) -> list:
@@ -138,6 +138,7 @@ def getDailyTOrders(date, userID:int) -> list:
 
   tupleNames = constants.TORDERS
   nameDir    = constants.SQLTuples
+  print(SQLQuery, TOrders, tupleNames, nameDir)
 
   return SQLFormatter.FormatSQLTuple(TOrders, nameDir[tupleNames])
 
@@ -226,6 +227,15 @@ def getCustomerOverhead(customerID):
   overhead = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
   return overhead[0]
 
+def getTOrderStatusOrderTime(OrderID):
+  SQLQuery = SQLFactory.createSQLGetTorderDate(OrderID)
+  status, order_dateTime = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+  return status, order_dateTime
 
+def updateTOrder(OrderID, NewComment, NewInjections, NewUse):
+  pass
+
+def deleteTOrder(OrderID):
+  SQLQuery = SQLFactory.createSQLDeleteTOrder  
 
 

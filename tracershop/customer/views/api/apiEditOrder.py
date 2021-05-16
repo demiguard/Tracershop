@@ -17,8 +17,7 @@ def typeCorrectData(JSONObject):
   JSONObject['ActiveCustomer'] = int(JSONObject['ActiveCustomer'])
   return JSONObject
 
-def typeCorrectDataDelete(JSONObject):
-  
+def typeCorrectDataDelete(JSONObject):  
   return int(JSONObject['OrderID'])
 
 class ApiEditOrder(LoginRequiredMixin, View):

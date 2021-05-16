@@ -6,7 +6,7 @@ from customer.models import PotentialUser, Procedure, Location, Procedure
 
 class OrderForm(Form):
   order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
-  comment   = forms.CharField(required=False, widget=forms.TextInput())
+  comment   = forms.CharField(required=False, widget=forms.Textarea)
 
   def __init__(self, ordertime, *args,**kwargs):
     super().__init__(*args, **kwargs)

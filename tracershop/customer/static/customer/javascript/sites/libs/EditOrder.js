@@ -1,6 +1,6 @@
 import { destroyActiveDialog, constructElement, constructElementID, constructElementClassList } from "./htmlHelpers.js";
-import { SendOrder } from "./requests.js"
-export { EditOrder }
+import { SendOrder, SendTOrder } from "./requests.js"
+export { EditOrder, EditTOrder }
 
 const EditOrderErrorID = "EditOrderError";
 
@@ -197,3 +197,44 @@ var EditOrder = function(){
   })
 };
 
+
+
+
+function EditTOrder() {
+  destroyActiveDialog()
+  const OrderID = this.id.substr(7);
+
+  const dialogDiv = $("<div>",{
+    class : "container",
+    id    : "EditTOrderDialog"
+  });
+  $(dialogDiv).dialog({
+    classes: {
+      "ui-dialog": "modal-content",
+      "ui-dialog-titlebar": "modal-header",
+      "ui-dialog-title": "modal-title",
+      "ui-dialog-titlebar-close": "close",
+      "ui-dialog-content": "modal-body",
+      "ui-dialog-buttonpane": "modal-footer"
+    },
+    id: "EditOrderDialog",
+    title: "Ændre T-order " + OrderID,
+    width: 500,
+    buttons : [
+      {text: "Opdater Order" + OrderID, click:function() {
+
+      }},
+      {text: "Slet Order: "+ OrderID, click:function() {
+        $.ajax({
+          type:"delete",
+          datatype:"json",
+          url:"api/EditTOrder",
+          data:JSON.stringify({}),
+          success:function(data) {
+            
+          }
+        })
+      }},
+      {text: "Annuller", click:function() {}}]
+  })
+}

@@ -79,6 +79,9 @@ function SendTOrder() {
   var injectionVal  = injectionTD.children('#id_injectionField').val();
   var useVal        = useTD.children('#id_useField').val();
   var TracerName    = datarow.children('#TracerName').text();
+  var comment       = $(`#TOrderComment-${TracerID}`).val();
+
+
 
   $.post({
     url: 'api/addTOrder',
@@ -88,7 +91,8 @@ function SendTOrder() {
       'BestillingTid' : bestillingVal,
       'injections'    : injectionVal,
       'Usage'         : useVal,
-      'customerID'    : customerID
+      'customerID'    : customerID,
+      "comment"       : comment
     },
     success: function(data) {
       var tOrdersRow = $("#T_orders");
@@ -98,13 +102,14 @@ function SendTOrder() {
       createElement(tableRow, TracerName,  '', 'td', []);
       const statusImage = $('<img>', {
         src: `/static/customer/images/clipboard1.svg`,
-        class: "StatusIcon Editable-Order",
+        class: "StatusIcon Editable-TOrder",
         id: `Order-${data.lastOrder}`
       });
       statusImage.click(EditOrder);
       
 
-      createElement(tableRow, 1, '', 'td', []);
+      const StatusRow = createElement(tableRow, '', '', 'td', []);
+      $(StatusRow).append(StatusRow);
       createElement(tableRow, data.lastOID, '', 'td', []);
       createElement(tableRow, bestillingVal, '', 'td', []);
       createElement(tableRow, injectionVal, '', 'td', []);

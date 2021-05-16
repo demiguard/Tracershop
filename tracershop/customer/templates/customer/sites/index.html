@@ -114,6 +114,7 @@
               <th>Order ID</th>
               <th>Bestilt til</th>
               <th>Injectioner</th>
+              <th>Kommentar</th>
               <th>Til</th>            
             </thead>
             <tbody id="secondaryTableBody">
@@ -134,6 +135,7 @@
                   <td>{{ secondaryOrder.deliver_datetime | date:'H:i' }}</td>
                   <td>{{ secondaryOrder.nInjections }}</td>
                   <td>{{ secondaryOrder.use }}</td>
+                  <td>Kommentar</td>
                 </tr>
               {% endfor %}
               {% endif %}
@@ -155,15 +157,17 @@
           <th>Bestil til</th>
           <th>Antal injectioner</th>
           <th>Brug </th>
+          <th>Kommentar</th>
           <th></th>
         </thead>
         <tbody id="TFormRows">
           {% for secondaryForm in secondaryForms %}
           <tr id="Row{{ secondaryForm.id }}">
-            <td id="TracerName">{{ secondaryForm.name }} </td>
-            <td id="deliverTime" class="">{{ secondaryForm.deliverTime }}</td>  
+            <td id="TracerName">             {{ secondaryForm.name }} </td>
+            <td id="deliverTime" class="">   {{ secondaryForm.deliverTime }}</td>  
             <td id="InjectionField" class="">{{ secondaryForm.injectionField }}</td> 
-            <td id="UseField">{{ secondaryForm.useField }}</td> 
+            <td id="UseField">               {{ secondaryForm.useField }}</td> 
+            <td class="CommentField"><textarea id="TOrderComment-{{ secondaryForm.id }}" type="text" class="TOrderComment"> </td>
             <td><input type="button" id="TOrderButton{{ secondaryForm.id }}" class="TorderButton btn btn-outline-secondary" value="Bestil"></td>
           </tr>
           {% endfor %}  

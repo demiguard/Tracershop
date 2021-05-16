@@ -18,12 +18,14 @@ class Api_add_torder(LoginRequiredMixin, View):
   QDICTInjections = 'injections'
   QDICTUsage = 'Usage'
   QDICTCustomerID = "customerID"
+  QDICTComment = "comment"
 
   FDICTInjections = 'injections'
   FDICTTracerID = 'tracer'
   FDICTUsage = 'Usage'
   FDICTDateTime = 'Datetime'
   FDICTUserID = "customerID"
+  FDICTComment = "comment"
 
   def parseDict(self,QDict):
     if QDict[self.QDICTUsage] == '0':
@@ -41,7 +43,8 @@ class Api_add_torder(LoginRequiredMixin, View):
         "%H:%M %d/%m/%Y" 
       ),
       self.FDICTUsage : usage,
-      self.FDICTUserID : int(QDict[self.QDICTCustomerID])
+      self.FDICTUserID : int(QDict[self.QDICTCustomerID]),
+      self.FDICTComment : QDict[self.QDICTComment]
     }
 
   def post(self, request): 
@@ -63,7 +66,8 @@ class Api_add_torder(LoginRequiredMixin, View):
       FormattedDict[self.FDICTTracerID],
       FormattedDict[self.FDICTUsage],
       FormattedDict[self.FDICTUserID],
-      request.user.username
+      request.user.username,
+      FormattedDict[self.FDICTComment]
       )
 
 

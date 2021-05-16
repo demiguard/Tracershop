@@ -24,7 +24,8 @@ SQLTuples = {
     'nInjections',
     'use',
     'tracer',
-    'userName'
+    'userName',
+    'comment'
   ],
   TORDERFORMS : [
     'name',
