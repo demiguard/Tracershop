@@ -228,8 +228,23 @@ def getTOrderStatusOrderTime(OrderID):
   status, order_dateTime = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
   return status, order_dateTime
 
-def updateTOrder(OrderID, NewComment, NewInjections, NewUse):
-  pass
+def updateTOrder(
+    OrderID,
+    NewActiveCustomer,
+    NewComment,
+    NewInjections,
+    NewOrderTime,
+    NewUse
+  ):
+  SQLQuery = SQLFactory.createSQLupdateTOrder(
+    OrderID,
+    NewActiveCustomer,
+    NewComment,
+    NewInjections,
+    NewOrderTime,
+    NewUse
+  )
+  SQLExecuter.ExecuteQuery(SQLQuery)
 
 def deleteTOrder(OrderID):
   SQLQuery = SQLFactory.createSQLDeleteTOrders(OrderID)

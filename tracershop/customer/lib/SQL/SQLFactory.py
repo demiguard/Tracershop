@@ -305,20 +305,28 @@ def createSQLDeleteTOrders(OrderID):
 def createSQLGetTorderDate(OrderID):
   return f"""
   SELECT 
-    status, order_time
+    status, deliver_datetime
   From 
     t_orders
   WHERE 
     OID={OrderID}
   """
 
-def createSQLupdateTOrder(OrderID, NewInjections, orderDateTime, newComment, NewUse):
+def createSQLupdateTOrder(
+    OrderID,
+    NewActiveCustomer,
+    newComment,
+    NewInjections,
+    NewOrderDateTime,
+    NewUse
+  ):
   return f"""
   Update t_orders
   SET
+    BID          = {NewActiveCustomer},
     n_injections = {NewInjections},
-    order_time   = \"{orderDateTime.strftime("%Y-%m-%d %H:%M:%S")}\",
-    comment      = \"{newComment}\"
+    deliver_datetime   = \"{NewOrderDateTime.strftime("%Y-%m-%d %H:%M:%S")}\",
+    comment      = \"{newComment}\",
     anvendelse   = \"{NewUse}\"
   WHERE
     OID = {OrderID} AND 

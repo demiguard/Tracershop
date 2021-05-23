@@ -4,20 +4,27 @@ from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 
 
-from datetime import datetime, date
+from datetime import datetime, date, time
 
 
 from customer.lib.Formatting import ParseJSONRequest
 from customer.lib.SQL import SQLController as SQL
 from customer import constants
 
+def mapUsage(usage):
+  UsageMapping = ["Human", "Dyr", "Andet"]
+  return UsageMapping[usage]
+
 def typeCorrectData(JSONObject):
-  JSONObject['OrderID']        = int(JSONObject['OrderID'])
-  JSONObject['ActiveCustomer'] = int(JSONObject['ActiveCustomer'])
-  JSONObject['n_injections']   = int(JSONObject['n_injections'])
-  Hour, Minute                 = str(JSONObject['orderTime']).split(":")
-  JSONObject['NewHour']        = datetime.time(int(Hour), int(Minute))
-  return JSONObject
+  returnObject = {}
+  returnObject['OrderID']           = int(JSONObject['OrderID'])
+  returnObject['n_injections']      = int(JSONObject['n_injections'])
+  Hour, Minute                      = str(JSONObject['NewHour']).split(":")
+  returnObject['NewUse']            = mapUsage(int(JSONObject["NewUse"]))
+  returnObject['NewHour']           = time(int(Hour), int(Minute))
+  returnObject['NewComment']        = JSONObject["NewComment"]
+  returnObject['NewActiveCustomer'] = int(JSONObject["NewActiveCustomer"])
+  return returnObject
 
 def typeCorrectDataDelete(JSONObject):  
   return int(JSONObject['OrderID'])
@@ -30,21 +37,31 @@ class ApiEditTOrder(LoginRequiredMixin, View):
   def put(self, request):
     JsonData = ParseJSONRequest(request)
     data = typeCorrectData(JsonData)
-    status , order_DateTime = SQL.getTOrderStatusOrderTime(data['OrderID'])
+    status, order_DateTime = SQL.getTOrderStatusOrderTime(data['OrderID'])
     if status != 1:
       return JsonResponse({"Success": "Order does not have a Status of 1"})
+    OrderID = data["OrderID"]
+    NewActiveCustomer = data["NewActiveCustomer"]
     NewInjections = data['n_injections']
-    NewOrderTime  = datetime.datetime(
+    NewOrderTime  = datetime(
       order_DateTime.year,
       order_DateTime.month,
       order_DateTime.day,
-      JsonData["NewHour"].hour,
-      JsonData["NewHour"].minute
+      data["NewHour"].hour,
+      data["NewHour"].minute
     )
-    NewComment = JsonData["NewComment"]
-    NewUse     = JsonData["NewUse"]
+    NewUse = data["NewUse"]
+    NewComment = data["NewComment"]
 
-    print(NewInjections, NewOrderTime, NewComment, NewUse)
+    SQL.updateTOrder(
+      OrderID,
+      NewActiveCustomer,
+      NewComment,
+      NewInjections,
+      NewOrderTime,
+      NewUse
+    )
+    
 
     return constants.SUCCESSFUL_JSON_RESPONSE
 

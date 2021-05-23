@@ -190,8 +190,7 @@ function CreateFGDOrderTable(data, Div, hasComment) {
           src : "/static/customer/images/comment.svg", 
           class: "StatusIcon",
           title:order.comment
-        }
-      );
+        });
       $(commentImage).tooltip();
       RowData.push(commentImage);
     }

@@ -265,17 +265,43 @@ function EditTOrder() {
       commentRow = $("<tr>");
       const RowName  = $("<td>");
       const RowData  = $("<td>");
-      RowName.text("Nyt antal injecktioner: ");
+      RowName.text("Ny kommentar: ");
       const NewCommentField = $("<textarea>", {
-        id: "Editcomment",
+        id: "EditComment",
         rows:1,
-        name: "NewInjectionField"
+        name: "NewCommentField"
       });
       const commentImage = $(element).children()[0]
       NewCommentField.val($(commentImage).attr("data-original-title"))
       RowData.append(NewCommentField);
       commentRow.append(RowName);
       commentRow.append(RowData);
+    }
+    if (index === 6) {
+      UseageRow = $("<tr>");
+      const RowName = $("<td>").appendTo(UseageRow);
+      RowName.text("Nyt brug");
+      const RowData = $("<td>");
+      const Select = $("<select>", { id:"NewUsageSelect", class:"custom-select" });
+      const option1 = $("<option>", { value:"0" });
+      option1.text("Human");
+      const option2 = $("<option>", { value:"1" });
+      option2.text("Dyr");
+      const option3 = $("<option>", { value:"2" });
+      option3.text("Andet");
+      Select.append(option1);
+      Select.append(option2);
+      Select.append(option3);
+
+      RowData.append(Select);
+      UseageRow.append(RowData);
+
+      const UseAgeField = $(element).text();
+
+      if (UseAgeField == "Human") $(Select).val(0);
+      if (UseAgeField == "Dyr")  $(Select).val(1)
+      if (UseAgeField == "Andet") $(Select).val(2);
+
     }
 
   });
@@ -287,6 +313,8 @@ function EditTOrder() {
   
   Table.append(TableBody);
   dialogDiv.append(Table);
+
+
 
   $(dialogDiv).dialog({
     classes: {
@@ -302,7 +330,48 @@ function EditTOrder() {
     width: 500,
     buttons : [
       {text: "Opdater Order: " + OrderID, click:function() {
+        const NewHour =$("#EditInjectionTimeInput").val();
+        const NewInjectionNumber =$("#EditInjectionInput").val();
+        const NewComment = $("#EditComment").val();
+        const NewUsage   = $("#NewUsageSelect").val();
+        const NewActiveCustomer = $("#customer_select").val() // This might become relevant, ask about it
+        $.ajax({
+          url:"/api/EditTOrder",
+          type:"PUT",
+          datatype:"json",
+          data: JSON.stringify({
+            "OrderID":OrderID,
+            "NewHour" : NewHour,
+            "n_injections" : NewInjectionNumber,
+            "NewComment" : NewComment,
+            "NewUse"     : NewUsage,
+            "NewActiveCustomer" : NewActiveCustomer
+          }),
+          success: function(data) {
+            if (data["Success"] == "Success") {
+              
+              $(`#TOrder-${OrderID}`).children().each((index, element) => {
+                if (index === 3) $(element).text(NewHour)
+                if (index === 4) $(element).text(NewInjectionNumber)
+                if (index === 5) { 
+                  $(element).empty()
+                  if (NewComment != "") {
+                    const NewCommentImage = $("<img>", {
+                      src : "/static/customer/images/comment.svg", 
+                      class: "StatusIcon",
+                      title: NewComment
+                    });
+                    $(NewCommentImage).tooltip();
+                    $(element).append(NewCommentImage)
+                  }
+                }
+                if (index === 6) $(element).text($("#NewUsageSelect option:selected").text())
 
+              });
+            }
+            destroyActiveDialog();
+          }
+        })
       }},
       {text: "Slet Order: "+ OrderID, click:function() {
         $.ajax({
