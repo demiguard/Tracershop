@@ -1,6 +1,8 @@
 import datetime
 import calendar
 
+import customer.lib.SQL.SQLController as SQL
+
 def get_hour_from_dt(dt):
   if dt:
     return dt.strftime("%H:%M")
@@ -45,6 +47,6 @@ def timedeltaToTime(timedelta):
 
 def getNextWeekday(today):
   NextDateCandidate = today + datetime.timedelta(days=1)
-  while NextDateCandidate.weekday() not in [0,1,2,3,4]:
+  while NextDateCandidate.weekday() not in [0,1,2,3,4] and not SQL.getClosed(NextDateCandidate):
     NextDateCandidate += datetime.timedelta(days=1)
   return NextDateCandidate
