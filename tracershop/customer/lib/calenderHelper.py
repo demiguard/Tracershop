@@ -47,6 +47,6 @@ def timedeltaToTime(timedelta):
 
 def getNextWeekday(today):
   NextDateCandidate = today + datetime.timedelta(days=1)
-  while NextDateCandidate.weekday() not in [0,1,2,3,4] and not SQL.getClosed(NextDateCandidate):
+  while NextDateCandidate.weekday() not in [0,1,2,3,4] and SQL.getClosed(NextDateCandidate):
     NextDateCandidate += datetime.timedelta(days=1)
   return NextDateCandidate
