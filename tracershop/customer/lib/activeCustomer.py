@@ -17,5 +17,5 @@ def GetActiveCustomer(request):
   if customerIDs == []:
     return -1
     
-  return customerIDs[0][0]
+  return customerIDs[0].ID
 
