@@ -10,7 +10,7 @@ from customer.forms import formFactory
 from customer.lib import calenderHelper, Filters, Formatting
 from customer.lib.CustomTools import LMap
 from customer.lib.SQL import SQLController as SQL
-from customer.lib import orders
+from customer.lib import orders, activeCustomer
 
 class IndexView(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/index.html'
@@ -21,15 +21,11 @@ class IndexView(LoginRequiredMixin, TemplateView):
   
   def get(self, request):
     today = datetime.date.today()
+    active_customerID = activeCustomer.GetActiveCustomer(request)
+
     customerIDs = LMap(
       lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
-      models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))
-
-    if customerIDs == []:
-      return redirect("customer:editMyCustomer")
-    else:
-      active_customerID = customerIDs[0][0]
-
+      models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))    
     ### Data construction ###
     # get data #
     is_closed  = SQL.getClosed(today)
@@ -63,4 +59,6 @@ class IndexView(LoginRequiredMixin, TemplateView):
       'orders'          : injections,
       'data_status'     : MonthlyOrders,
     }
-    return render(request, self.template_name, context=context)
+    response = render(request, self.template_name, context=context)
+    response.set_cookie("ActiveCustomer", active_customerID, samesite="strict")
+    return response

@@ -6,9 +6,9 @@ import datetime
 
 from customer.lib.calenderHelper import getNextWeekday
 from customer.lib.CustomTools import LMap
-from customer.lib.Filters import FilterBookings, FindActiveCustomer
+from customer.lib.Filters import FilterBookings
 from customer.lib.SQL import  SQLController as SQL
-
+from customer.lib.activeCustomer import GetActiveCustomer, getCustomers
 from customer.models import Booking, UserHasAccess, UpdateTimeStamp
 
 def getNextUpdate():
@@ -26,11 +26,15 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
   def get(self, request):
     NextWeekday = getNextWeekday(datetime.date.today())
     
-    customers, activeCustomer = FindActiveCustomer(request.user)
-    if not(activeCustomer):
+    customers = getCustomers(request.user)
+
+    activeCustomer = GetActiveCustomer(request)
+    
+    if activeCustomer == -1:
       redirect("customer:editMyCustomer")
 
     studies = FilterBookings(activeCustomer, NextWeekday)
+
     context = {
       'customerIDs' : LMap(lambda x: (x.ID, x.customerName), customers),
       'studies' : studies,

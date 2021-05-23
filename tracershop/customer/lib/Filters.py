@@ -71,14 +71,4 @@ def FilterBookings(Customer, Date):
 
   return studies
 
-def FindActiveCustomer(user):
-  customers = LMap(
-    lambda x: x.CustomerID, 
-    UserHasAccess.objects.filter(userID=user).order_by('CustomerID')
-  )
-  if customers:
-    return customers, customers[0]  
-  else:
-    return customers, None
-
   
