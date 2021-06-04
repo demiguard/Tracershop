@@ -11,6 +11,8 @@ class OrderForm(Form):
   def __init__(self, ordertime, *args,**kwargs):
     super().__init__(*args, **kwargs)
     self.fields['order_MBQ'].widget.attrs['class'] = f"fdg_MQB_Field {ordertime}"
+    self.fields['comment'].widget.attrs['rows']    = "1"
+    self.fields['comment'].widget.attrs['cols']    = "20"
     
 
 class LoginForm(Form):

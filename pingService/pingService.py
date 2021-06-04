@@ -271,7 +271,7 @@ def updateBookingInfo(sql, BookingInfo):
         location_id  = \"{studyData["Location"]}\",
         procedure_id = {studyData["procedure_id"]}
       WHERE
-        accessionNumber = \"accessionNumber\"
+        accessionNumber = \"{accessionNumber}\"
     """
     sql.execute(sqlQuery)
 
@@ -353,9 +353,7 @@ if __name__ == "__main__":
             logger.debug("Finished Updating Database")
           else:
             logger.error("Could Not connect to Ris")
-            continue
       else:
         logger.error("Could not Create connection to Database")
-        continue
     
   
