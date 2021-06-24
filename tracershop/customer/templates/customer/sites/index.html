@@ -78,8 +78,10 @@
                   <td>{{order.batchnr}}</td>
                   <td>{{order.frigivet_amount}}</td>
                   <td>{{order.frigivet_datetime |date:'H:i'}}</td>
-                  {% if orderList.hasComment %}
+                  {% if order.comment %}
                     <td id="comment-{{ order.OID }}"> <img class="StatusIcon commentIcon" src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
+                  {% else %}
+                    <td></td>
                   {% endif %}
                 </tr>
                 {% endfor %}
