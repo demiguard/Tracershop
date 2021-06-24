@@ -15,6 +15,9 @@ def typeCorrectData(JSONObject):
   JSONObject['OrderID'] = int(JSONObject['OrderID'])
   JSONObject['NewAmount'] = int(JSONObject['NewAmount'])
   JSONObject['ActiveCustomer'] = int(JSONObject['ActiveCustomer'])
+  if not JSONObject.get("NewComment"):
+    JSONObject["NewComment"] = ""
+    
   return JSONObject
 
 def typeCorrectDataDelete(JSONObject):  

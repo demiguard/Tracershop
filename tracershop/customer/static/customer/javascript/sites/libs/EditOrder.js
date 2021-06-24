@@ -1,6 +1,6 @@
 import { destroyActiveDialog, constructElement, constructElementID, constructElementClassList, MaxCharInField, auto_char } from "./htmlHelpers.js";
 import { SendOrder, SendTOrder } from "./requests.js"
-export { EditOrder, EditTOrder }
+export { EditOrder, EditTOrder, SendEditOrder }
 
 const EditOrderErrorID = "EditOrderError";
 
@@ -14,14 +14,27 @@ function SuccessfullyEditedOrder(OrderID, overhead, newAmount, newComment){
     if (i == 3) $(node).text(NewTotal);
     if (i == 7) {
       $(node).empty();
-      const commentImage = $("<img>", {
-        src : "/static/customer/images/comment.svg", 
-        class: "StatusIcon",
-        title: newComment
-      });
-      $(commentImage).tooltip();
-      RowData.push(commentImage);
+      if (newComment) {
+        const commentImage = $("<img>", {
+          src : "/static/customer/images/comment.svg", 
+          class: "StatusIcon",
+          title: newComment
+        });
+        $(commentImage).tooltip();
+        $(node).append(commentImage);
+      }
     }
+  }
+  if (data.length == 7 && newComment) {
+    const NewCommentTD = $("<td>");
+    const commentImage = $("<img>", {
+      src : "/static/customer/images/comment.svg", 
+      class: "StatusIcon",
+      title: newComment
+    });
+    $(commentImage).tooltip();
+    $(NewCommentTD).append(commentImage);
+    data.append(NewCommentTD);
   }
 }
 
@@ -52,6 +65,8 @@ function SuccessfullyDeletedOrder(OrderID){
   OrderButton.click(SendOrder);
 
   let OrderTimeDiv = OrderRow.children(".order");
+  $(OrderTimeDiv).removeClass("data");
+  $(OrderTimeDiv).addClass("form");
   let OrderTime = OrderTimeDiv.text();
 
   let MBqInput = $("<input>", {
@@ -80,7 +95,27 @@ function SuccessfullyDeletedOrder(OrderID){
 
 }
 
-
+function SendEditOrder(OrderID, NewAmount, NewComment) {
+  const customerID = $("#customer_select").children("option:selected").val();
+  $.ajax({
+    type:"put",
+    url: "api/EditOrder",
+    data: JSON.stringify({
+      "ActiveCustomer" : customerID,
+      "OrderID" : OrderID,
+      "NewAmount" :NewAmount,
+      "NewComment" : NewComment
+    }),
+    success: function(data) {
+      if (data['Success'] == "Success") {
+        destroyActiveDialog()
+        SuccessfullyEditedOrder(OrderID, data['overhead'], NewAmount, NewComment)
+      } else {
+        ErrorDiv.text("Der er Sket en fejl");
+        ErrorDiv.addClass("ErrorBox")
+      }
+    }
+})}
 
 
 var EditOrder = function(){
@@ -144,26 +179,7 @@ var EditOrder = function(){
         text: "Opdater ordre " + orderID,
         click: function() {
           //Send Request To Server 
-          const customerID = $("#customer_select").children("option:selected").val();
-          $.ajax({
-            type:"put",
-            url: "api/EditOrder",
-            data: JSON.stringify({
-              "ActiveCustomer" : customerID,
-              "OrderID" : orderID,
-              "NewAmount" : MBQInput.val(),
-              "NewComment" : CommentInput.val()
-            }),
-            success: function(data) {
-              if (data['Success'] == "Success") {
-                destroyActiveDialog()
-                SuccessfullyEditedOrder(orderID, data['overhead'], MBQInput.val(), CommentInput.val() )
-              } else {
-                ErrorDiv.text("Der er Sket en fejl");
-                ErrorDiv.addClass("ErrorBox")
-              }
-            }
-          })
+          SendEditOrder(orderID, MBQInput.val(), CommentInput.val());
         }
       },
       {

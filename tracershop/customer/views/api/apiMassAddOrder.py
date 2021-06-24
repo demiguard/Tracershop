@@ -12,6 +12,7 @@ from customer.models import Tracer, Booking, Procedure
 from customer.lib import orders, calenderHelper
 from customer.lib.SQL import SQLController as SQL
 
+datetimeFormatStr = "%Y-%m-%d %H-%M"
 
 class ApiMassAddOrder(LoginRequiredMixin, View):
   path = "api/MassAddOrder"
@@ -58,6 +59,8 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
     if isFDG := tracer.tracerName == "FDG":
       times = {calenderHelper.combine_time_and_date(startDate, item['dtime']) : 0 
             for item in SQL.getDailyRuns(startDate, customerID)}
+    else:
+      DosesTime = {}
 
     for accessionNumber, checked in studies.items():
       try:
@@ -74,7 +77,13 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
           FDGMBq, time = orders.calculateDosisFDG(booking, customerID, sorted(times.keys()))
           times[time] += FDGMBq
         else:
-          orders.insertTOrderBooking(booking, customerID, username)
+          bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
+          keyStr = bookingDatetime.strftime(datetimeFormatStr)
+          if DosesTime.get(keyStr):
+            DosesTime[keyStr] += 1
+          else:
+            DosesTime[keystr] = 1
+          #orders.insertTOrderBooking(booking, customerID, username)
         booking.status = 2        
         booking.save()
 
@@ -85,11 +94,22 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
           fdg,                                # Amount
           "Automaticly generated FDG-order",  # Comment
           time,                               # deliverTime
-          startDate,                          # dato #### ARE YOU FUCKING KIDDING ME CHRIS
+          startDate,                          # dato
           run,                                # run
           customerID,                         # userID
           username                            # username
         )
+    else:
+      for DateTimeStr, Injections in DosesTime:
+        SQL.insertTOrder(
+          injections, 
+          datetime.strptime(DateTimeStr, datetimeFormatStr),
+          tracer.ID,
+          "human", 
+          customerID, 
+          username, 
+          f"Automaticly generated {tracer.tracerName} order"
+        )
 
-    return JsonResponse({})
+    return JsonResponse(SUCCESSFUL_JSON_RESPONSE)
 

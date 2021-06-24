@@ -185,7 +185,7 @@ function CreateFGDOrderTable(data, Div, hasComment) {
     RowData.push(order.batchnr);
     RowData.push(order.frigivet_amount);
     (order.frigivet_datetime != null) ? RowData.push(order.frigivet_datetime.substr(11,5)) : RowData.push("");
-    if (hasComment) {
+    if (hasComment && order.comment) {
       const commentImage = $("<img>", {
           src : "/static/customer/images/comment.svg", 
           class: "StatusIcon",
@@ -246,12 +246,13 @@ var fill_order_table = function(date, DateDiv, changeDateFunction) {
         contentStr = "Ukendt Data format fra JSON Fil";
       }
       createElement(dataRow, contentStr,'', 'div', ['col-11', 'row']);
-      createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone"]);
+      
+      createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone", response.data_type]);
       var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
       // ----- Form Creation -----
-      if (response.data_type == 'form') CreateFDGForm(informationRowDiv, response, i);
+      if (response.data_type == 'form') { CreateFDGForm(informationRowDiv, response, i); }
       // ----- Table Creation -----
-      if (response.data_type == 'data') CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment);
+      if (response.data_type == 'data') { CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment); }
     } 
     // T-orders 
     if (data.tOrders.length != 0) {

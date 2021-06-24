@@ -48,9 +48,9 @@
             {% if study.status == 0 %}
               <td class="checkbox"><input type="checkbox" id="{{ study.accessionNumber }}" checked></td>
             {% elif study.status == 2 %}
-              <td><img src="{% static 'customer/images/check.svg' %}"></td>
+              <td><img class="ResetOrder" src="{% static 'customer/images/check.svg' %}"></td>
             {% else %}
-              <td><img src="{% static 'customer/images/x-circle-fill.svg' %}"></td>
+              <td><img class="ResetOrder" src="{% static 'customer/images/x-circle-fill.svg' %}"></td>
             {% endif %}
           </tr>
           {% endfor %}

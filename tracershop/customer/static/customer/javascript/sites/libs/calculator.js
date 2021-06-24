@@ -1,4 +1,6 @@
 import { createElement, auto_char, destroyActiveDialog } from './htmlHelpers.js' ;
+import { SendEditOrder } from "./EditOrder.js"
+import { Table } from './TableFactory.js';
 export { createCalculator }
 
 
@@ -145,17 +147,36 @@ function calculate() {
 
   orders.each(function () {
     var index = orderIndexs[this.innerText]
-    var updatedInnerText = "."+this.innerText.replace(':', "\\:")+"\\:00"
-    var Input = $(updatedInnerText);
-    Input.val(MBqs[index]);
+    if ($(this).hasClass("form")){
+      var updatedInnerText = "."+this.innerText.replace(':', "\\:")+"\\:00"
+      var Input = $(updatedInnerText);
+      Input.val(MBqs[index]);
+    } else if ($(this).hasClass("data")) { //The Else-if part is mostly there for future compatablity
+      // The Structure of how div are set up is different based on if Form or data, this should be fix TBH, but hey, that's effort
+      // And we don't do that around here
+      // We now need to Update 
+      const DataRow = $(this).parent();
+      const RowNumber = DataRow.attr("id").substr(4);
+      const TableBody = $(DataRow.children("#informationRow"+RowNumber).children()[0]).children()[1];
+      const FirstRow  = $(TableBody).children()[0]
+      const OrderID   = $(FirstRow).attr("id").substr(9)
+      const OldAmount = betterParseInt($($(FirstRow).children()[2]).text())
+      const NewAmount = OldAmount + MBqs[index];
+      var   Comment   = "";
+      if ($(FirstRow).children().length == 7) {
+        const CommentTD = $($(FirstRow).children()[7]);
+        const Image     = CommentTD.children()[0]
+        Comment = $(Image).attr("data-original-title")
+      } 
+
+      SendEditOrder(OrderID, NewAmount, Comment);
+    }
   }) 
 };
 
 // Main function
 function createCalculator() {
-  var dialogText = document.createElement("div");
-  dialogText.id = "mainCalculator";
-  dialogText = $(dialogText);
+  var dialogText = $("<div>", {id: "mainCalculator"});
   var errorDiv   = $("<div>", {id: "CalErrDiv"})
   $('.order').each(function () {
       var timeslotDiv = document.createElement("div");
@@ -164,7 +185,7 @@ function createCalculator() {
       var hTimer     = $("<th>");
       var hTidspunkt = $("<th>");
       var hMBq       = $("<th>");
-      var hbutton    = $("<th>")
+      var hbutton    = $("<th>");
       timeslotDiv = $(timeslotDiv);
       timeslotDiv.addClass("row");
       hTimer.text(this.innerText); 
@@ -197,6 +218,11 @@ function createCalculator() {
       dialogText.append(timeslotDiv);
     });
   dialogText.append(errorDiv);
+  
+  var CalculateButtonStr = "Udregn";
+  if ($(".data").length > 0) {
+    CalculateButtonStr = "Udregn og Opdater"
+  }
 
   $(dialogText).dialog({
     dialogClass: "no-close",
@@ -204,7 +230,7 @@ function createCalculator() {
     width: 500,
     buttons: [
       {
-        text: "Udregn", 
+        text: CalculateButtonStr, 
         click: function () {
           calculate();
           $(this).dialog("close");
@@ -214,7 +240,7 @@ function createCalculator() {
       {
         text: "Afbryd",
         click: function () {
-          $( this ).dialog("close");
+          $(this).dialog("close");
           $(this).remove();
         }
       }

@@ -21,10 +21,10 @@
           <strong>
             Ordre {{orderList.order_num}} - Kalibreret til: {{ orderList.time | time:'H:i' }}
           </strong>
-          <div class="order DisplayNone">{{ orderList.time | time:'H:i' }}</div>
+          <div class="order DisplayNone {{ orderList.data_type }}">{{ orderList.time | time:'H:i' }}</div>
         </div>
+        {% if orderList.data_type == "form" %}
         <div class="row" id="informationRow{{ orderList.order_num }}">
-          {% if orderList.data_type == "form" %}
           <div id="ButtonDiv{{ orderList.order_num }}">
             Bestil FDG: {{ orderList.data.order_MBQ }} [MBq]
           </div>
@@ -32,57 +32,61 @@
           <div id="CommentDiv{{ orderList.order_num }}">
             Kommentar:
             {{ orderList.data.comment }}
+          </div>
+          <div class="col-1"></div>
+          <div>
+            <button class="btn btn-primary OrderButton" style="height: 50px;" id="{{orderList.order_num}}">
+              Bestil
+            </button>    
+          </div>
         </div>
-        <div class="col-1"></div>
-        <button class="btn btn-primary OrderButton" style="height: 50px;" id="{{orderList.order_num}}">
-          Bestil
-        </button>      
         {% endif %}
         {% if orderList.data_type == "data" %}
-        <table class="table">
-          <thead>
-            <th>Status</th>
-            <th>order ID</th>
-            <th>Bestilt Aktivitet</th>
-            <th>Produceret [MBq]</th>
-            <th>Batch-nr. </th>
-            <th>Frigivet [MBq]</th>
-            <th>Frigivet </th>
-            {% if orderList.hasComment %}
-              <th>Kommentar</th>
-            {% endif %}
-          </thead>
-          <tbody>
-            {% for order in orderList.data %}
-            <tr id="OrderRow-{{ order.OID }}">
-              {% if order.status == 1 %}
-              <td><img class="StatusIcon Editable-Order" id="Order-{{ order.OID }}" src="{% static 'customer/images/clipboard1.svg' %}"></td>
-              {% elif order.status == 2 %}
-              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
-              {% elif order.status == 3 %}
-              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
-              {% else %}
-              <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
-              {% endif %}
-              <td>{{order.OID}}</td>
-              <td id="Amount-{{order.OID}}">{{order.ordered_amount}}</td>
-              {% if order.total_amount %}
-                <td>{{order.total_amount}}</td>
-              {% else%}
-                <td></td>
-              {% endif %}
-              <td>{{order.batchnr}}</td>
-              <td>{{order.frigivet_amount}}</td>
-              <td>{{order.frigivet_datetime |date:'H:i'}}</td>
-              {% if orderList.hasComment %}
-                <td id="comment-{{ order.OID }}"> <img class="StatusIcon commentIcon" src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
-              {% endif %}
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+          <div class="row" id="informationRow{{ orderList.order_num }}">
+            <table class="table">
+             <thead>
+                <th>Status</th>
+                <th>order ID</th>
+                <th>Bestilt Aktivitet</th>
+                <th>Produceret [MBq]</th>
+                <th>Batch-nr. </th>
+                <th>Frigivet [MBq]</th>
+                <th>Frigivet </th>
+                {% if orderList.hasComment %}
+                  <th>Kommentar</th>
+                {% endif %}
+              </thead>
+              <tbody>
+                {% for order in orderList.data %}
+                <tr id="OrderRow-{{ order.OID }}">
+                  {% if order.status == 1 %}
+                    <td><img class="StatusIcon Editable-Order" id="Order-{{ order.OID }}" src="{% static 'customer/images/clipboard1.svg' %}"></td>
+                  {% elif order.status == 2 %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard2.svg' %}"></td>
+                  {% elif order.status == 3 %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard3.svg' %}"></td>
+                  {% else %}
+                    <td><img class="StatusIcon" src="{% static 'customer/images/clipboard0.svg' %}"></td>
+                  {% endif %}
+                  <td>{{order.OID}}</td>
+                  <td id="Amount-{{order.OID}}">{{order.ordered_amount}}</td>
+                  {% if order.total_amount %}
+                    <td>{{order.total_amount}}</td>
+                  {% else%}
+                    <td></td>
+                  {% endif %}
+                  <td>{{order.batchnr}}</td>
+                  <td>{{order.frigivet_amount}}</td>
+                  <td>{{order.frigivet_datetime |date:'H:i'}}</td>
+                  {% if orderList.hasComment %}
+                    <td id="comment-{{ order.OID }}"> <img class="StatusIcon commentIcon" src="{% static 'customer/images/comment.svg'%}" title="{{ order.comment }}"> </td>
+                  {% endif %}
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
         {% endif %}
-      </div>
     </div>
     {% endfor %}
   </div>

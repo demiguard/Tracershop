@@ -126,22 +126,16 @@ class RESTAPI(View):
       ---------
       Returns
         Jsonresponse with success on success
-        HTTPBbadresonse on failure
+        HTTPBadresponse on failure
 
 
     """
-    #Verfication / Authentication
-    if not request.user.is_admin:
-      print("raising Permission Denied")
-      raise PermissionDenied
-
     activeModel = getactiveModels(model)
     requestData = ParseJSONRequest(request)
     Filter = requestData['filter']
     Update = requestData['update']
     instances = Serializer.FilterModels(activeModel, Filter)
     if len(instances) == 0:
-      print("IN here")
       return HttpResponseBadRequest("Model not found")
     elif len(instances) > 1:
       return HttpResponseBadRequest("Multiple Models Found, Use one request per update")

@@ -7,7 +7,7 @@ from datetime import datetime, time, date
 from customer import constants
 from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from customer.models import User, PotentialUser, ServerConfiguration, Database, Customer, Location
+from customer.models import User, PotentialUser, ServerConfiguration, Database, Customer, Location, Booking
 
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
@@ -100,6 +100,7 @@ def insertOrderFTG(
      
   SQLExecuter.ExecuteQuery(SQLQuery)
 
+
 def insertTOrder(
     injections : int,
     deliver_datetime : Type[datetime],
@@ -115,10 +116,12 @@ def insertTOrder(
   )
   SQLExecuter.ExecuteQuery(SQLQuery)
 
+
 def getLastOrder() -> int: 
   SQLQuery = SQLFactory.createSQLQueryMaxOrderID()
   return SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-  
+
+
 def getLastTOrder() -> int:
   SQLQuery = SQLFactory.createSQLQueryMaxTOrderID()
   return SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
@@ -189,12 +192,9 @@ def getAll(Model):
 def getSpecificObject(ID, Obejct ):
   return Obejct.objects.get(ID=ID) 
 
-
 def getServerConfig():
   """
-
     This Functions gets the serverConfig, if it doesn't exists it 
-  
   """
   try:
     ServerConfig = ServerConfiguration.objects.get(ID=1)
@@ -249,5 +249,3 @@ def updateTOrder(
 def deleteTOrder(OrderID):
   SQLQuery = SQLFactory.createSQLDeleteTOrders(OrderID)
   SQLExecuter.ExecuteQuery(SQLQuery)
-
-

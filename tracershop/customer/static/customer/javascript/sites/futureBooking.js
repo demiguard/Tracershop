@@ -6,6 +6,41 @@ import { createElement } from "./libs/htmlHelpers.js";
 var CalenderInstance;
 var CustomerSelectInstance;
 
+
+function ResetBooking() {
+  const TD  = $(this).parent()
+  const Row = $(TD).parent() // Image -> Image TD -> Order Row
+  const AccessionNumberTD = Row.children(".accessionNumber")
+  const accessionNumber = AccessionNumberTD.text();
+  
+  $.ajax({
+    url      : "api/REST/Booking",
+    type     : "put",
+    datatype :"json",
+    data     : JSON.stringify({
+      "filter" : {
+        "accessionNumber" : accessionNumber   
+      },
+      "update" : {
+        "status" : 0
+      }
+    }),
+    success : function(data) {
+      //Update the icon
+      TD.empty();
+      const checkbox = $("<input>", {
+        id : accessionNumber,
+        type : "checkbox",
+        checked : ""
+      })
+      checkbox.appendTo(TD)
+
+    }
+  })
+  
+}
+
+
 const ShowHideData = function () {
   if (this.value == "Vis data") {
     this.value = "Gem data";
@@ -39,13 +74,17 @@ const MassOrder = function() {
     $(checkboxTD[0]).empty();
     if (checkboxChecked) {
       const image   = $("<img>", {
-        src: "/static/customer/images/check.svg"
+        src: "/static/customer/images/check.svg",
+        class: "ResetOrder"
       });
+      image.click(ResetBooking)
       image.appendTo(checkboxTD)
     } else {
       const image   = $("<img>", {
-        src: "/static/customer/images/x-circle-fill.svg"
+        src: "/static/customer/images/x-circle-fill.svg",
+        class: "ResetOrder"
       });
+      image.click(ResetBooking)
       image.appendTo(checkboxTD[0])
     }
 
@@ -154,7 +193,7 @@ var ChangeTable = function(date) {
         createElement(StudyRow,study.location, '', 'td', []);
         if (study.status == 0) {
           CanOrder = true;
-          const checkboxTD = createElement(StudyRow,'', '', "td", ["checkbox"])
+          const checkboxTD = createElement(StudyRow,'', '', "td", ["checkbox"]);
           const checkbox = $("<input>", {
             id : study.accessionNumber,
             type : "checkbox",
@@ -162,17 +201,21 @@ var ChangeTable = function(date) {
           })
           checkbox.appendTo(checkboxTD)
         } else if (study.status == 1) {
-          const imageTD = createElement(StudyRow,'', '', "td", [])
+          const imageTD = createElement(StudyRow,'', '', "td", []);
           const image   = $("<img>", {
-            src: "/static/customer/images/x-circle-fill.svg"
-          })
-          image.appendTo(imageTD)
+            src: "/static/customer/images/x-circle-fill.svg",
+            class: "ResetOrder"
+          });
+          image.click(ResetBooking);
+          image.appendTo(imageTD);
         } else if (study.status == 2) {
-          const imageTD = createElement(StudyRow,'', '', "td", [])
+          const imageTD = createElement(StudyRow,'', '', "td", []);
           const image   = $("<img>", {
-            src: "/static/customer/images/check.svg"
-          })
-          image.appendTo(imageTD)
+            src: "/static/customer/images/check.svg",
+            class: "ResetOrder"
+          });
+          image.click(ResetBooking);
+          image.appendTo(imageTD);
 
         } else {
           console.log("Unknown Status:" + String(study.Status))
@@ -213,6 +256,11 @@ $(function() {
     buttons[0].click();
   }
 
+  const FilledOrders = $(".ResetOrder")
+  for (const FilledOrder of FilledOrders) {
+    $(FilledOrder).on("click", ResetBooking)
+  }
+
   const OrderButtons = $(".orderButton");
   for (const orderButton of OrderButtons) {
     $(orderButton).on("click", MassOrder)
@@ -233,6 +281,4 @@ $(function() {
     $('#customer_select'),
     SelectChange
   );
-
-
 });
