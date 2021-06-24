@@ -3,6 +3,15 @@ import { SendEditOrder } from "./EditOrder.js"
 import { Table } from './TableFactory.js';
 export { createCalculator }
 
+function KeyConfirmRow(event) {
+  if (event.which === 13) {
+    const field = $(event.target).parent();
+    const Row = $(field).parent();
+    const tbody = $(Row).parent();
+    const thisButtonDiv = $($(Row).children()[3])
+    confirmRow(tbody, Row, thisButtonDiv.children()[0]);
+  }
+}
 
 
 function confirmRow(tbody, Row, thisButton) {
@@ -38,7 +47,9 @@ function confirmRow(tbody, Row, thisButton) {
   var tButton    = $("<td>");
   var timeInput = $("<input>", {class: "tableField"});
   auto_char(timeInput, ':',2);
+  timeInput.on("keyup", KeyConfirmRow);
   var amountInput = $("<input>", {class: "tableField", val:defaultValue} );
+  amountInput.on("keyup", KeyConfirmRow);
   var confirmButton = $("<img>", {
     class: "tableButton",
     src: "/static/customer/images/accept.svg"
@@ -177,7 +188,7 @@ function calculate() {
 
 function UpdateDefaultValue() {
   const NewDefaultValue = betterParseInt($(this).val())
-  if (NewDefaultValue != NaN ){
+  if (! isNaN(NewDefaultValue)){
     $.ajax({
       url      : "api/REST/ServerConfiguration",
       type     : "put",
@@ -236,7 +247,9 @@ function createCalculator() {
       var tButton    = $("<td>");
       var timeInput = $("<input>", {class: "tableField"});
       auto_char(timeInput, ':',2);
+      timeInput.on("keyup", KeyConfirmRow);
       var amountInput = $("<input>", {class: "tableField", val: defaultValue});
+      amountInput.on("keyup", KeyConfirmRow);
       var confirmButton = $("<img>", {
         class: "tableButton",
         src: "/static/customer/images/accept.svg"
