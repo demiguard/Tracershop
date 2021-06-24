@@ -32,9 +32,8 @@ function ResetBooking() {
         id : accessionNumber,
         type : "checkbox",
         checked : ""
-      })
-      checkbox.appendTo(TD)
-
+      });
+      checkbox.appendTo(TD);
     }
   })
   

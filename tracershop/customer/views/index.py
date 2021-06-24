@@ -22,6 +22,8 @@ class IndexView(LoginRequiredMixin, TemplateView):
   def get(self, request):
     today = datetime.date.today()
     active_customerID = activeCustomer.GetActiveCustomer(request)
+    serverConfiguration = SQL.getServerConfig()
+
 
     customerIDs = LMap(
       lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
@@ -58,6 +60,7 @@ class IndexView(LoginRequiredMixin, TemplateView):
       'today'           : today.strftime('%Y-%m-%d'),
       'orders'          : injections,
       'data_status'     : MonthlyOrders,
+      'defaultCalValue' : serverConfiguration.DefaultCalculatorValue
     }
     response = render(request, self.template_name, context=context)
     response.set_cookie("ActiveCustomer", active_customerID, samesite="strict")

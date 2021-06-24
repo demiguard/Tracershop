@@ -30,6 +30,7 @@ function confirmRow(tbody, Row, thisButton) {
   $(thisButton).on("click", () => deleteRow(Row));
   Row.addClass("CalRow");
   // Create New row
+  const defaultValue = Number($("#calculatorIcon").attr("defaultValue"));
   var tr    = $("<tr>", {var:RowTime});
   var tTimer     = $("<td>");
   var tTidspunkt = $("<td>", {class : "tableTime"});
@@ -37,7 +38,7 @@ function confirmRow(tbody, Row, thisButton) {
   var tButton    = $("<td>");
   var timeInput = $("<input>", {class: "tableField"});
   auto_char(timeInput, ':',2);
-  var amountInput = $("<input>", {class: "tableField"} );
+  var amountInput = $("<input>", {class: "tableField", val:defaultValue} );
   var confirmButton = $("<img>", {
     class: "tableButton",
     src: "/static/customer/images/accept.svg"
@@ -174,10 +175,46 @@ function calculate() {
   }) 
 };
 
+function UpdateDefaultValue() {
+  const NewDefaultValue = betterParseInt($(this).val())
+  if (NewDefaultValue != NaN ){
+    $.ajax({
+      url      : "api/REST/ServerConfiguration",
+      type     : "put",
+      datatype :"json",
+      data     : JSON.stringify({
+        "filter" : {
+          "ID" : 1 // Serverconfigution is 1 indexed   
+        },
+        "update" : {
+          "DefaultCalculatorValue" : NewDefaultValue
+        }
+      }),
+      success : function(data){
+        $(".calculator").attr("defaultValue", NewDefaultValue);
+      }
+    });
+  }
+}
+
+
 // Main function
 function createCalculator() {
+  const defaultValue = Number($("#calculatorIcon").attr("defaultValue"));
+
+  // Create Calculator
   var dialogText = $("<div>", {id: "mainCalculator"});
   var errorDiv   = $("<div>", {id: "CalErrDiv"})
+  var defaultDiv = $("<div>").appendTo(dialogText);
+  defaultDiv.append($("<label>", {
+    "text" : "Standard bestilling:"
+  }));
+  var defaultInput = $("<input>", {
+    id:"defaultInput",
+    val: defaultValue,
+    type:"number"
+  }).appendTo(defaultDiv);
+  defaultInput.on('keyup', UpdateDefaultValue);
   $('.order').each(function () {
       var timeslotDiv = document.createElement("div");
       var table      = $("<table>", {class:"table"});
@@ -199,7 +236,7 @@ function createCalculator() {
       var tButton    = $("<td>");
       var timeInput = $("<input>", {class: "tableField"});
       auto_char(timeInput, ':',2);
-      var amountInput = $("<input>", {class: "tableField"} );
+      var amountInput = $("<input>", {class: "tableField", val: defaultValue});
       var confirmButton = $("<img>", {
         class: "tableButton",
         src: "/static/customer/images/accept.svg"
@@ -223,6 +260,8 @@ function createCalculator() {
   if ($(".data").length > 0) {
     CalculateButtonStr = "Udregn og Opdater"
   }
+
+  
 
   $(dialogText).dialog({
     dialogClass: "no-close",
