@@ -3,6 +3,34 @@ import { SendEditOrder } from "./EditOrder.js"
 import { Table } from './TableFactory.js';
 export { createCalculator }
 
+
+
+// Frontend construction
+function CreateInputRow(RowTime, tbody) {
+  var tr         = $("<tr>", {var: RowTime});
+  var tTimer     = $("<td>");
+  var tTidspunkt = $("<td>", {class : "tableTime"});
+  var tMBq       = $("<td>", {class : "tableMBq"});
+  var tButton    = $("<td>");
+  var timeInput = $("<input>", {class: "tableField timeField"});
+  auto_char(timeInput, ':',2);
+  timeInput.on("keyup", KeyConfirmRow);
+  const defaultValue = Number($("#calculatorIcon").attr("defaultValue"));
+  var amountInput = $("<input>", {class: "tableField amountField", val:defaultValue} );
+  amountInput.on("keyup", KeyConfirmRow);
+  var confirmButton = $("<img>", {
+    class: "tableButton",
+    src: "/static/customer/images/accept.svg"
+  });
+  confirmButton.on("click", () => confirmRow(tbody, tr, confirmButton));
+  tButton.append(confirmButton);
+  tTidspunkt.append(timeInput);
+  tMBq.append(amountInput);
+  tr.append(tTimer, tTidspunkt, tMBq, tButton)
+  return tr;  
+}
+
+
 function KeyConfirmRow(event) {
   if (event.which === 13) {
     const field = $(event.target).parent();
@@ -43,27 +71,7 @@ function confirmRow(tbody, Row, thisButton) {
   $(thisButton).on("click", () => deleteRow(Row));
   Row.addClass("CalRow");
   // Create New row
-  const defaultValue = Number($("#calculatorIcon").attr("defaultValue"));
-  var tr    = $("<tr>", {var:RowTime});
-  var tTimer     = $("<td>");
-  var tTidspunkt = $("<td>", {class : "tableTime"});
-  var tMBq       = $("<td>", {class : "tableMBq"});
-  var tButton    = $("<td>");
-  var timeInput = $("<input>", {class: "tableField timeField"});
-  auto_char(timeInput, ':',2);
-  timeInput.on("keyup", KeyConfirmRow);
-  var amountInput = $("<input>", {class: "tableField amountField", val:defaultValue} );
-  amountInput.on("keyup", KeyConfirmRow);
-  var confirmButton = $("<img>", {
-    class: "tableButton",
-    src: "/static/customer/images/accept.svg"
-  });
-  confirmButton.on("click", () => confirmRow(tbody, tr, confirmButton));
-  tButton.append(confirmButton);
-  tTidspunkt.append(timeInput);
-  tMBq.append(amountInput);
-  tr.append(tTimer, tTidspunkt, tMBq, tButton)
-  tbody.append(tr);
+  tbody.append(CreateInputRow(RowTime, tbody));
 };
 
 function deleteRow(row) {
@@ -72,7 +80,7 @@ function deleteRow(row) {
 
 // Validation
 function betterParseInt(numStr) {
-  // Holy shit the implementation of parseInt if FUCKING STUPID
+  // Holy shit the implementation of parseInt is FUCKING STUPID
   var numReg = /^\d+$/
   if (! numStr.match(numReg)) {
     return NaN;
@@ -220,7 +228,7 @@ function createCalculator() {
 
   // Create Calculator
   var dialogText = $("<div>", {id: "mainCalculator"});
-  var errorDiv   = $("<div>", {id: "CalErrDiv"})
+  
   var defaultDiv = $("<div>").appendTo(dialogText);
   defaultDiv.append($("<label>", {
     "text" : "Standard bestilling:"
@@ -230,56 +238,31 @@ function createCalculator() {
     val: defaultValue,
     type:"number"
   }).appendTo(defaultDiv);
+
   defaultInput.on('keyup', UpdateDefaultValue);
   $('.order').each(function () {
       var timeslotDiv = document.createElement("div");
       var table      = $("<table>", {class:"table"});
       var thead      = $("<thead>");
-      var hTimer     = $("<th>");
-      var hTidspunkt = $("<th>");
-      var hMBq       = $("<th>");
-      var hbutton    = $("<th>");
-      timeslotDiv = $(timeslotDiv);
-      timeslotDiv.addClass("row");
-      hTimer.text(this.innerText); 
-      hTidspunkt.text("Tidspunkt");
-      hMBq.text("FDG MBQ");
+      thead.append($("<th>").text(this.innerText));
+      thead.append($("<th>").text("Tidspunkt"));
+      thead.append($("<th>").text("FDG MBq"));
+      thead.append($("<th>")); // Button  Row
+      timeslotDiv = $(timeslotDiv, {class : "row"});
       var tbody = $("<tbody>");
-      var tr    = $("<tr>", {var:this.innerText});
-      var tTimer     = $("<td>");
-      var tTidspunkt = $("<td>", {class : "tableTime"});
-      var tMBq       = $("<td>", {class : "tableMBq"});
-      var tButton    = $("<td>");
-      var timeInput = $("<input>", {class: "tableField timeField"});
-      auto_char(timeInput, ':',2);
-      timeInput.on("keyup", KeyConfirmRow);
-      var amountInput = $("<input>", {class: "tableField amountField", val: defaultValue});
-      amountInput.on("keyup", KeyConfirmRow);
-      var confirmButton = $("<img>", {
-        class: "tableButton",
-        src: "/static/customer/images/accept.svg"
-      });
-      confirmButton.on("click", () => confirmRow(tbody, tr, confirmButton));
+      tbody.append(CreateInputRow(this.innerText, tbody));
 
-      tButton.append(confirmButton);
-      tTidspunkt.append(timeInput);
-      tMBq.append(amountInput);
-      tr.append(tTimer, tTidspunkt, tMBq, tButton)
-      tbody.append(tr);
-      table.append(tbody);
-      thead.append(hTimer, hTidspunkt, hMBq, hbutton);
       table.append(thead);
+      table.append(tbody);
       timeslotDiv.append(table);
       dialogText.append(timeslotDiv);
     });
-  dialogText.append(errorDiv);
+  dialogText.append($("<div>", {id: "CalErrDiv"}));
   
   var CalculateButtonStr = "Udregn";
   if ($(".data").length > 0) {
     CalculateButtonStr = "Udregn og Opdater"
   }
-
-  
 
   $(dialogText).dialog({
     dialogClass: "no-close",
