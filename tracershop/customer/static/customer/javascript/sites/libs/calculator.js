@@ -8,8 +8,13 @@ function KeyConfirmRow(event) {
     const field = $(event.target).parent();
     const Row = $(field).parent();
     const tbody = $(Row).parent();
-    const thisButtonDiv = $($(Row).children()[3])
+    const thisButtonDiv = $($(Row).children()[3]);
     confirmRow(tbody, Row, thisButtonDiv.children()[0]);
+    
+    const Rows = tbody.children();
+    const NewRow = Rows[Rows.length -1];
+    const NewAmountField = $(NewRow).find(".timeField");
+    NewAmountField.focus();
   }
 }
 
@@ -44,7 +49,7 @@ function confirmRow(tbody, Row, thisButton) {
   var tTidspunkt = $("<td>", {class : "tableTime"});
   var tMBq       = $("<td>", {class : "tableMBq"});
   var tButton    = $("<td>");
-  var timeInput = $("<input>", {class: "tableField"});
+  var timeInput = $("<input>", {class: "tableField timeField"});
   auto_char(timeInput, ':',2);
   timeInput.on("keyup", KeyConfirmRow);
   var amountInput = $("<input>", {class: "tableField amountField", val:defaultValue} );
@@ -245,7 +250,7 @@ function createCalculator() {
       var tTidspunkt = $("<td>", {class : "tableTime"});
       var tMBq       = $("<td>", {class : "tableMBq"});
       var tButton    = $("<td>");
-      var timeInput = $("<input>", {class: "tableField"});
+      var timeInput = $("<input>", {class: "tableField timeField"});
       auto_char(timeInput, ':',2);
       timeInput.on("keyup", KeyConfirmRow);
       var amountInput = $("<input>", {class: "tableField amountField", val: defaultValue});
