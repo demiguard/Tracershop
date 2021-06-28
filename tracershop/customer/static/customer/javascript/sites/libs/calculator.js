@@ -13,7 +13,6 @@ function KeyConfirmRow(event) {
   }
 }
 
-
 function confirmRow(tbody, Row, thisButton) {
   $("#CalErrDiv").empty();
   $("#CalErrDiv").removeClass("ErrorBox");
@@ -48,7 +47,7 @@ function confirmRow(tbody, Row, thisButton) {
   var timeInput = $("<input>", {class: "tableField"});
   auto_char(timeInput, ':',2);
   timeInput.on("keyup", KeyConfirmRow);
-  var amountInput = $("<input>", {class: "tableField", val:defaultValue} );
+  var amountInput = $("<input>", {class: "tableField amountField", val:defaultValue} );
   amountInput.on("keyup", KeyConfirmRow);
   var confirmButton = $("<img>", {
     class: "tableButton",
@@ -195,7 +194,7 @@ function UpdateDefaultValue() {
       datatype :"json",
       data     : JSON.stringify({
         "filter" : {
-          "ID" : 1 // Serverconfigution is 1 indexed   
+          "ID" : 1 // Serverconfigution is 1 indexed, Complain to Django not me.
         },
         "update" : {
           "DefaultCalculatorValue" : NewDefaultValue
@@ -203,6 +202,7 @@ function UpdateDefaultValue() {
       }),
       success : function(data){
         $(".calculator").attr("defaultValue", NewDefaultValue);
+        $(".amountField").val(NewDefaultValue);
       }
     });
   }
@@ -248,7 +248,7 @@ function createCalculator() {
       var timeInput = $("<input>", {class: "tableField"});
       auto_char(timeInput, ':',2);
       timeInput.on("keyup", KeyConfirmRow);
-      var amountInput = $("<input>", {class: "tableField", val: defaultValue});
+      var amountInput = $("<input>", {class: "tableField amountField", val: defaultValue});
       amountInput.on("keyup", KeyConfirmRow);
       var confirmButton = $("<img>", {
         class: "tableButton",
