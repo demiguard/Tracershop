@@ -1,36 +1,14 @@
 import { createElement, auto_char, destroyActiveDialog } from './htmlHelpers.js' ;
 import { SendEditOrder } from "./EditOrder.js"
-import { Table } from './TableFactory.js';
+import { CALCULATOR_ICON, DEFAULT_VALUE_ATTRIBUTE, CROSS_PICTURE, ERROR_CLASS, CALCULATOR_ORDER_TIME,
+  TIME_FIELD, TIME_TD_CLASS, AMOUNT_FIELD, AMOUNT_TD_CLASS } from "./Constants.js"
+import { createCalculatorInput } from "./Factory.js"
 export { createCalculator }
 
+const ERROR_DIV = "CalErrDiv";
 
 
 // Frontend construction
-function CreateInputRow(RowTime, tbody) {
-  var tr         = $("<tr>", {var: RowTime});
-  var tTimer     = $("<td>");
-  var tTidspunkt = $("<td>", {class : "tableTime"});
-  var tMBq       = $("<td>", {class : "tableMBq"});
-  var tButton    = $("<td>");
-  var timeInput = $("<input>", {class: "tableField timeField"});
-  auto_char(timeInput, ':',2);
-  timeInput.on("keyup", KeyConfirmRow);
-  const defaultValue = Number($("#calculatorIcon").attr("defaultValue"));
-  var amountInput = $("<input>", {class: "tableField amountField", val:defaultValue} );
-  amountInput.on("keyup", KeyConfirmRow);
-  var confirmButton = $("<img>", {
-    class: "tableButton",
-    src: "/static/customer/images/accept.svg"
-  });
-  confirmButton.on("click", () => confirmRow(tbody, tr, confirmButton));
-  tButton.append(confirmButton);
-  tTidspunkt.append(timeInput);
-  tMBq.append(amountInput);
-  tr.append(tTimer, tTidspunkt, tMBq, tButton)
-  return tr;  
-}
-
-
 function KeyConfirmRow(event) {
   if (event.which === 13) {
     const field = $(event.target).parent();
@@ -41,21 +19,21 @@ function KeyConfirmRow(event) {
     
     const Rows = tbody.children();
     const NewRow = Rows[Rows.length -1];
-    const NewAmountField = $(NewRow).find(".timeField");
+    const NewAmountField = $(NewRow).find("." + TIME_FIELD);
     NewAmountField.focus();
   }
 }
 
 function confirmRow(tbody, Row, thisButton) {
-  $("#CalErrDiv").empty();
-  $("#CalErrDiv").removeClass("ErrorBox");
+  $("#" + ERROR_DIV).empty();
+  $("#" + ERROR_DIV).removeClass(ERROR_CLASS);
   // Check if valid inputs
-  const timetd = $(Row).find(".tableTime");
-  const timeStr = timetd.find(".tableField").val();
-  const MBqtd = $(Row).find(".tableMBq"); 
-  const MBqStr = MBqtd.find(".tableField").val();
+  const timetd = $(Row).find("."  + TIME_TD_CLASS);
+  const timeStr = timetd.find("." + TIME_FIELD).val();
+  const MBqtd = $(Row).find("." + AMOUNT_TD_CLASS); 
+  const MBqStr = MBqtd.find("." + AMOUNT_FIELD).val();
   // Fixate inputs and change icon
-  var RowTime = Row.attr("var");
+  var RowTime = Row.attr(CALCULATOR_ORDER_TIME);
 
   if(!validateTimeAndMBq(timeStr, MBqStr, RowTime)) {
     // Do some error message
@@ -67,18 +45,18 @@ function confirmRow(tbody, Row, thisButton) {
   MBqtd.text(MBqStr);
 
   $(thisButton).off();
-  $(thisButton).attr("src", "static/customer/images/decline.svg")
+  $(thisButton).attr("src", CROSS_PICTURE)
   $(thisButton).on("click", () => deleteRow(Row));
   Row.addClass("CalRow");
   // Create New row
-  tbody.append(CreateInputRow(RowTime, tbody));
+  tbody.append(createCalculatorInput(RowTime, tbody, confirmRow, KeyConfirmRow));
 };
 
 function deleteRow(row) {
   row.remove();
 };
 
-// Validation
+// Validation && Math
 function betterParseInt(numStr) {
   // Holy shit the implementation of parseInt is FUCKING STUPID
   var numReg = /^\d+$/
@@ -116,7 +94,6 @@ function compute(CreationTime, EndTime, MBq) {
 function validateTimeAndMBq(time, MBq, startTime) {
 
   //Validate the Time field
-  
   if (time.length != 5) {
     $("#CalErrDiv").text("Tidspunktet er ikke på formattet HH:MM");
     $("#CalErrDiv").addClass("ErrorBox");
@@ -141,7 +118,7 @@ function validateTimeAndMBq(time, MBq, startTime) {
   var parsed = betterParseInt(MBq);
 
   if (isNaN(parsed)) {
-    $("#CalErrDiv").text("MBq skal være et tal")
+    $("#CalErrDiv").text("MBq skal være et Positivt tal")
     $("#CalErrDiv").addClass("ErrorBox");
     return false;
   } else if (parsed <= 0) {
@@ -152,6 +129,17 @@ function validateTimeAndMBq(time, MBq, startTime) {
   return true;
 };
 
+function ReadCalculator(MBqs, orderIndexs) {
+  $(".CalRow").each(function () {
+    var rowTime = $(this).attr(CALCULATOR_ORDER_TIME)
+    var timeStr = $(this).children(".tableTime")[0].innerText;
+    var index   = orderIndexs[rowTime];
+    var MBq     = parseInt($(this).children(".tableMBq")[0].innerText);
+    MBqs[index] += compute(rowTime, timeStr, MBq);
+  });
+}
+
+// Controller Function
 function calculate() {
   var orders = $(".order");
   var orderIndexs = {};
@@ -161,20 +149,13 @@ function calculate() {
     orderIndexs[orders[i].innerText] = i;
   }
 
-  $(".CalRow").each(function () {
-    var rowTime = $(this).attr("var")
-    var timeStr = $(this).children(".tableTime")[0].innerText;
-    var index   = orderIndexs[rowTime];
-    var MBq     = parseInt($(this).children(".tableMBq")[0].innerText);
-    MBqs[index] += compute(rowTime, timeStr, MBq);
-  });
+  ReadCalculator(MBqs, orderIndexs);
 
   orders.each(function () {
     var index = orderIndexs[this.innerText]
     if ($(this).hasClass("form")){
       var updatedInnerText = "."+this.innerText.replace(':', "\\:")+"\\:00"
-      var Input = $(updatedInnerText);
-      Input.val(MBqs[index]);
+      $(updatedInnerText).val(MBqs[index]);
     } else if ($(this).hasClass("data")) { //The Else-if part is mostly there for future compatablity
       // The Structure of how div are set up is different based on if Form or data, this should be fix TBH, but hey, that's effort
       // And we don't do that around here
@@ -197,6 +178,11 @@ function calculate() {
     }
   }) 
 };
+
+function UpdateEditable() {
+
+}
+
 
 function UpdateDefaultValue() {
   const NewDefaultValue = betterParseInt($(this).val())
@@ -228,7 +214,7 @@ function createCalculator() {
 
   // Create Calculator
   var dialogText = $("<div>", {id: "mainCalculator"});
-  
+  // Header Default Value
   var defaultDiv = $("<div>").appendTo(dialogText);
   defaultDiv.append($("<label>", {
     "text" : "Standard bestilling:"
@@ -238,8 +224,12 @@ function createCalculator() {
     val: defaultValue,
     type:"number"
   }).appendTo(defaultDiv);
-
   defaultInput.on('keyup', UpdateDefaultValue);
+
+
+  var ContainsEditableOrder = false;
+  var ContainsInputFields   = false;
+  //Main table
   $('.order').each(function () {
       var timeslotDiv = document.createElement("div");
       var table      = $("<table>", {class:"table"});
@@ -250,20 +240,35 @@ function createCalculator() {
       thead.append($("<th>")); // Button  Row
       timeslotDiv = $(timeslotDiv, {class : "row"});
       var tbody = $("<tbody>");
-      tbody.append(CreateInputRow(this.innerText, tbody));
+      tbody.append(createCalculatorInput(this.innerText, tbody, confirmRow, KeyConfirmRow));
 
       table.append(thead);
       table.append(tbody);
       timeslotDiv.append(table);
       dialogText.append(timeslotDiv);
     });
+
+  //This appends the Error Div
   dialogText.append($("<div>", {id: "CalErrDiv"}));
+  
+  //Buttons
+  var Buttons = [{
+    text: "Afbryd",
+    click: function () {
+      $(this).dialog("close");
+      $(this).remove();
+    }
+  }]
   
   var CalculateButtonStr = "Udregn";
   if ($(".data").length > 0) {
     CalculateButtonStr = "Udregn og Opdater"
   }
 
+
+
+
+  //Create The Dialog
   $(dialogText).dialog({
     dialogClass: "no-close",
     title: "Lommeregner",

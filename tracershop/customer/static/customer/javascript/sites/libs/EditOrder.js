@@ -1,6 +1,8 @@
 import { destroyActiveDialog, constructElement, constructElementID, constructElementClassList, MaxCharInField, auto_char } from "./htmlHelpers.js";
-import { SendOrder, SendTOrder } from "./requests.js"
+import { SendOrder, SendTOrder } from "./requests.js";
+import { createFDGForm } from "./Factory.js";
 export { EditOrder, EditTOrder, SendEditOrder }
+
 
 const EditOrderErrorID = "EditOrderError";
 
@@ -50,9 +52,17 @@ function SuccessfullyDeletedOrder(OrderID){
   let Table = tBody.parent();
   let InformationRow = Table.parent();
   let OrderRow = InformationRow.parent();
+  // Change State
+  let OrderTimeDiv = OrderRow.children(".order");
+  $(OrderTimeDiv).removeClass("data");
+  $(OrderTimeDiv).addClass("form");
+  let OrderTime = OrderTimeDiv.text();
+
   Table.remove();
   // Reconstruct the Form
   let RowNumber = InformationRow.attr("id").substr(14);
+  createFDGForm(InformationRow, OrderTime , RowNumber, SendOrder)
+  /* 
   let buttonDiv = constructElementID("div", `ButtonDiv${RowNumber}`);
   let Space = constructElementClassList("div", ["col-1"]);
   let Space2 = constructElementClassList("div", ["col-1"]);
@@ -63,12 +73,12 @@ function SuccessfullyDeletedOrder(OrderID){
   });
   OrderButton.text("Bestil")
   OrderButton.click(SendOrder);
-
+  
   let OrderTimeDiv = OrderRow.children(".order");
   $(OrderTimeDiv).removeClass("data");
   $(OrderTimeDiv).addClass("form");
   let OrderTime = OrderTimeDiv.text();
-
+  
   let MBqInput = $("<input>", {
     "id": "id_order_MBQ",
     "type" : "number",
@@ -77,7 +87,7 @@ function SuccessfullyDeletedOrder(OrderID){
     "class" : `form-control ${OrderTime}:00`
   });
   buttonDiv.append(MBqInput);
-
+  
   let CommentInput = $("<input>", {
     id: "id_comment",
     class: "form-control",
@@ -85,14 +95,15 @@ function SuccessfullyDeletedOrder(OrderID){
     name:"comment"
   });
   CommentDiv.append(CommentInput);
-
-
+  
+  
   InformationRow.append(buttonDiv);
   InformationRow.append(Space);
   InformationRow.append(CommentDiv);
   InformationRow.append(Space2);
   InformationRow.append(OrderButton);
-
+  */
+  
 }
 
 function SendEditOrder(OrderID, NewAmount, NewComment) {

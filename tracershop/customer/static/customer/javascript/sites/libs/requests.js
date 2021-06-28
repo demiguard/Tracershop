@@ -1,15 +1,18 @@
 import { createElement } from "./htmlHelpers.js";
 import { EditOrder, EditTOrder } from "./EditOrder.js";
 import { Table } from "./TableFactory.js";
+import { MBQ_ID_HEADER, COMMENT_ID_HEADER } from './Constants.js'
 export { SendOrder, SendTOrder }
+
 
 function SendOrder () {
   const id = this.id;
+  const idStr = String(id);
   const ErrorDiv = $("#OrderErrorMessages")
   ErrorDiv.empty();
   ErrorDiv.removeClass("ErrorBox");
-  let amount = $('#ButtonDiv'+String(id)).children('#id_order_MBQ').val();
-  let comment = $('#CommentDiv'+String(id)).children('#id_comment').val();
+  let amount = $('#' + MBQ_ID_HEADER +idStr).val();
+  let comment = $('#' + COMMENT_ID_HEADER + idStr).val();
   let date = $('#dato').text().replace(/\s+/g, '');
   let customerID = $("#customer_select").children("option:selected").val();
   let NumbersRegex = /^\d+$/;

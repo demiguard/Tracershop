@@ -3,12 +3,13 @@ import { CustomerSelect  } from "./libs/customerSelect.js";
 import { EditOrder, EditTOrder } from "./libs/EditOrder.js"
 import { SendOrder, SendTOrder } from "./libs/requests.js"
 import { createElement, dropChildren, auto_char, MaxCharInField, destroyActiveDialog } from './libs/htmlHelpers.js' ;
+import { createFDGForm } from "./libs/Factory.js"
 
 import { createCalculator } from "./libs/calculator.js";
 import { Table } from "./libs/TableFactory.js"
 
 // Today is variable that's created from GET request, 
-// since it's provided from Django
+// it's provided from Django Template and can be found in index.html
 
 var CalenderInstance;
 var CustomerInstance;
@@ -130,6 +131,7 @@ function CreateTOrderTable(data, Div) {
   Div.append(dataTable.getTable()[0])
 }
 
+/*
 function CreateFDGForm(informationRowDiv, response, responseNumber) {
   var mbqInputDiv = createElement(informationRowDiv,"",'ButtonDiv'+String(responseNumber+1), 'div', [])
   var mbqInput = $("<input>", {
@@ -159,7 +161,7 @@ function CreateFDGForm(informationRowDiv, response, responseNumber) {
   var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
   $(Button).click(SendOrder);
 }
-
+*/
 
 function CreateFGDOrderTable(data, Div, hasComment) {
   let Header;
@@ -250,7 +252,9 @@ var fill_order_table = function(date, DateDiv, changeDateFunction) {
       createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone", response.data_type]);
       var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
       // ----- Form Creation -----
-      if (response.data_type == 'form') { CreateFDGForm(informationRowDiv, response, i); }
+      if (response.data_type == 'form') {
+        createFDGForm(informationRowDiv, response["time"], response["order_num"], SendOrder);
+      }
       // ----- Table Creation -----
       if (response.data_type == 'data') { CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment); }
     } 

@@ -8,11 +8,15 @@ class OrderForm(Form):
   order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
   comment   = forms.CharField(required=False, widget=forms.Textarea)
 
-  def __init__(self, ordertime, *args,**kwargs):
+  def __init__(self, orderTime, orderNumber, *args,**kwargs):
     super().__init__(*args, **kwargs)
-    self.fields['order_MBQ'].widget.attrs['class'] = f"fdg_MQB_Field {ordertime}"
+    self.fields['order_MBQ'].widget.attrs['class'] = f"{orderTime}"
+    self.fields['comment'].widget.attrs['class'] = f"CommentField"
+    self.fields['order_MBQ'].widget.attrs['id']    = f"MBQ_{orderNumber}"
+    self.fields['comment'].widget.attrs['id']      = f"Comment_{orderNumber}"
     self.fields['comment'].widget.attrs['rows']    = "1"
     self.fields['comment'].widget.attrs['cols']    = "20"
+    self.fields['comment'].widget.attrs['placeholder'] = "Kommentar"
     
 
 class LoginForm(Form):
