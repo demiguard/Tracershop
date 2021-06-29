@@ -194,40 +194,6 @@ def deleteOldbookings(sql, accessionNumbers):
   WHERE accessionNumber IN ({accessionNumbers})"""
   sql.execute(SQLQuery)
 
-def insertIntoDatabase(sql, accessionNumbers, BookingInfo):
-  for accessionNumber in accessionNumbers:
-    bookingData = BookingInfo[accessionNumber]
-    storeDataset(
-      sql,
-      bookingData['AccessionNumber'], 
-      bookingData['startDate'], 
-      bookingData['startTime'], 
-      bookingData['Location'], 
-      bookingData['procedure_id']
-      )
-
-
-
-
-def storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id):
-  sqlQuery = f"""
-    Insert INTO customer_booking(
-      accessionNumber,
-      startDate,
-      startTime,
-      location_id,
-      procedure_id
-    ) VALUES (
-      \"{accessionNumber}\",
-      \"{startDate}\",
-      \"{startTime}\",
-      \"{location}\",
-      {procedure_id}
-    )
-  """
-  sql.execute(sqlQuery)
-
-
 #######################################################
 #                                                     #
 # -------------- Handler functions ------------------ #
@@ -245,9 +211,11 @@ def handleDataset(dataset, sql):
     logger.error(f"Unknown Procedure: {seq.ScheduledProcedureStepDescription}")
     AddProcedure(sql, seq.ScheduledProcedureStepDescription)
     return handleDataset(dataset,sql)
+
   accessionNumber = seq.ScheduledProcedureStepID
   unformattedTime = seq.ScheduledProcedureStepStartTime
   unformattedDate = seq.ScheduledProcedureStepStartDate
+  
   startTime = unformattedTime[:2] + ":" + unformattedTime[2:4] + ":" + unformattedTime[4:]
   startDate = unformattedDate[:4] + "-" + unformattedDate[4:6] + "-" + unformattedDate[6:]
   #storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id)
@@ -261,19 +229,17 @@ def handleDataset(dataset, sql):
   }
 
 def updateBookingInfo(sql, BookingInfo):
-  for accessionNumber, studyData in BookingInfo.items():
-    sqlQuery = f"""
-      UPDATE 
-        customer_booking
-      SET 
-        startDate    = \"{studyData["startDate"]}\",
-        startTime    = \"{studyData["startTime"]}\",
-        location_id  = \"{studyData["Location"]}\",
-        procedure_id = {studyData["procedure_id"]}
-      WHERE
-        accessionNumber = \"{accessionNumber}\"
+  #UpdateBooking is found in Tracershop/construct_database/ProcedureUpdateBooking.sql
+  sqlQuery = f"""
+    CALL UpdateBooking(
+      \"{BookingInfo["AccessionNumber"]}\",
+      \"{BookingInfo["startDate"]}\",
+      \"{BookingInfo["startTime"]}\",
+      \"{BookingInfo["Location"]}\",
+        {BookingInfo["procedure_id"]}
+      )
     """
-    sql.execute(sqlQuery)
+  sql.execute(sqlQuery)
 
 # C-Find Response
 def handleResponse(response, sql):
@@ -293,6 +259,7 @@ def handleResponse(response, sql):
         accessionNumber, Data = handleDataset(dataset,sql)
         BookingInfo[accessionNumber] = Data
         accessionNumbers.add(accessionNumber)
+        updateBookingInfo(sql, Data)
     else:
       logger.error('Status Not availble') 
       return
@@ -302,17 +269,11 @@ def handleResponse(response, sql):
   oldBookings = getOldBookings(sql)
   logger.debug("Aquired Old bookings")
   toBeRemoved = oldBookings - accessionNumbers
-  toBeAdded   = accessionNumbers - oldBookings
-  logger.debug("Finished Intersections")
 
   if len(toBeRemoved) > 0:
     logger.info(f"Deleted {len(toBeRemoved)} Studies")
     deleteOldbookings(sql, toBeRemoved)  
-  if len(toBeAdded) > 0:
-    logger.info(f"Added {len(toBeAdded)} Studies")
-    insertIntoDatabase(sql, toBeAdded, BookingInfo)
-
-  updateBookingInfo(sql, BookingInfo)
+  
   logger.debug("Finished Handling Response")
    
   
@@ -329,8 +290,6 @@ if __name__ == "__main__":
   nosyLogger.setLevel(logging.ERROR)
   
   logger = logging.getLogger("pingLogger")
-  
-
   waiting = False #First iteration does not wait
 
   ae = pynetdicom.AE()
