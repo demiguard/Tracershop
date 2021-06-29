@@ -1,6 +1,6 @@
 export {ROW_ID, ROW_DATA, HTMLTAG, 
-  ERROR_CLASS, TABLE_BUTTON_CSS,
-  MBQ_ID_HEADER, COMMENT_ID_HEADER, BUTTON_DIV_HEADER, COMMENT_DIV_HEADER,
+  ERROR_CLASS, TABLE_BUTTON_CSS, INFORMATION_ROW_HEADER, EDITABLE_ORDER,
+  MBQ_ID_HEADER, COMMENT_ID_HEADER, BUTTON_DIV_HEADER, COMMENT_DIV_HEADER, COMMENT_CLASS,
   CALCULATOR_ICON, DEFAULT_VALUE_ATTRIBUTE, TIME_FIELD, AMOUNT_FIELD, TIME_TD_CLASS, AMOUNT_TD_CLASS,
   CALCULATOR_ORDER_TIME, 
   STATUS_1_PICTURE, STATUS_2_PICTURE, STATUS_3_PICTURE, CHECKMARK_PICTURE, CROSS_PICTURE,
@@ -18,18 +18,21 @@ const HTMLTAG = "HTMLTag";
 
 // CSS Classes
 const ERROR_CLASS = "ErrorBox";
-const TABLE_BUTTON_CSS = "tableButton"
+const TABLE_BUTTON_CSS = "tableButton";
 
 // FDG Orders
-const MBQ_ID_HEADER = "MBQ_"
-const COMMENT_ID_HEADER = "Comment_"
+const MBQ_ID_HEADER = "MBQ_";
+const COMMENT_ID_HEADER = "Comment_";
+const COMMENT_CLASS     = "CommentField";
 
-const BUTTON_DIV_HEADER  = "ButtonDiv"
-const COMMENT_DIV_HEADER = "CommentDiv" 
+const BUTTON_DIV_HEADER  = "ButtonDiv";
+const COMMENT_DIV_HEADER = "CommentDiv"; 
 
+const INFORMATION_ROW_HEADER = "informationRow";
+const EDITABLE_ORDER = "Editable-Order";
 
 // Calculator Constants
-const CALCULATOR_ICON = "#calculatorIcon";
+const CALCULATOR_ICON = "calculatorIcon";
 const DEFAULT_VALUE_ATTRIBUTE = "defaultValue";
 
 const TIME_FIELD      = "timeField";
@@ -37,7 +40,7 @@ const TIME_TD_CLASS   = "tableTime";
 const AMOUNT_FIELD    = "amountField";
 const AMOUNT_TD_CLASS = "tableMBq";
 
-const CALCULATOR_ORDER_TIME = "CalculatorOrderTime";
+const CALCULATOR_ORDER_TIME = "calculator_order_time";
 
 //Icon Pictures
 const STATUS_1_PICTURE = "/static/customer/images/clipboard1.svg";

@@ -1,6 +1,6 @@
 import {CALCULATOR_ICON, DEFAULT_VALUE_ATTRIBUTE, CALCULATOR_ORDER_TIME, TABLE_BUTTON_CSS,
   CHECKMARK_PICTURE, TIME_FIELD, AMOUNT_FIELD, TIME_TD_CLASS, AMOUNT_TD_CLASS,
-  BUTTON_DIV_HEADER, MBQ_ID_HEADER, COMMENT_ID_HEADER, COMMENT_DIV_HEADER} from './Constants.js'
+  BUTTON_DIV_HEADER, MBQ_ID_HEADER, COMMENT_ID_HEADER, COMMENT_DIV_HEADER, COMMENT_CLASS} from './Constants.js'
 import { createElement, auto_char, destroyActiveDialog } from './htmlHelpers.js' ;
 export { createCalculatorInput, createFDGForm }
 
@@ -8,7 +8,8 @@ const NewTR    = "<tr>";
 const NewTD    = "<td>";
 const NewInput = "<input>";
 const NewImg   = "<img>";
-const NewDiv   = "<div>"
+const NewDiv   = "<div>";
+const NewTextArea = "<textarea>";
 
 function createFDGForm(AnchorDiv, responseTime, responseNumber, activeButtonFunction) {
   const sResNum = String(responseNumber)
@@ -29,11 +30,11 @@ function createFDGForm(AnchorDiv, responseTime, responseNumber, activeButtonFunc
   
   $(AnchorDiv).append($(NewDiv, {
     id: COMMENT_DIV_HEADER + sResNum
-  }).append($("<textarea>",{
+  }).append($(NewTextArea,{
     id:COMMENT_ID_HEADER+sResNum,
     type:"text",
     name:"comment",
-    class:"CommentField",
+    class:COMMENT_CLASS,
     placeholder: "Kommentar",
     rows:1
   })));
@@ -46,9 +47,13 @@ function createFDGForm(AnchorDiv, responseTime, responseNumber, activeButtonFunc
 }
 
 function createCalculatorInput(RowTime, tbody, confirmFunction, KeyConfirmFunction) {
-  const defaultValue = Number($(CALCULATOR_ICON).attr(DEFAULT_VALUE_ATTRIBUTE));
+  const defaultValue = Number($("#" + CALCULATOR_ICON).attr(DEFAULT_VALUE_ATTRIBUTE));
+  //Okay this is the most ugly code I've seen in a fucking long time.
+  //WHAT THE FUCKING Is wrong with {constantKeyWord : value } NONONO IT*S THE FUCKING KEYWORD THAT IS THE IDENTIFIER?
+  var constructionObject = {}
+  constructionObject[CALCULATOR_ORDER_TIME] = RowTime
 
-  var tr         = $(NewTR, {CALCULATOR_ORDER_TIME : RowTime});
+  var tr         = $(NewTR, constructionObject); 
   $(NewTD).appendTo(tr); // This is the empty row under the timer.
   var tTidspunkt = $(NewTD, {class : TIME_TD_CLASS}).appendTo(tr);
   var tMBq       = $(NewTD, {class : AMOUNT_TD_CLASS}).appendTo(tr);

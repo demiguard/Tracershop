@@ -33,7 +33,12 @@ function SendOrder () {
     },
     dataType: "JSON", 
     success: function(data) {
+      const Row = $("#" + "Row-" + String(id))
+      const Order = Row.find(".order");
+      Order.removeClass("form");
+      Order.addClass("data");
       var informationRowDiv = $('#informationRow' + String(id));
+      
       informationRowDiv.empty();
       const Total = data.amount * (1 + data.overhead / 100)
       var table = createElement(informationRowDiv,'','','table',["table"]);

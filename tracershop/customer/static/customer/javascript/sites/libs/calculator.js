@@ -1,12 +1,13 @@
 import { createElement, auto_char, destroyActiveDialog } from './htmlHelpers.js' ;
 import { SendEditOrder } from "./EditOrder.js"
-import { CALCULATOR_ICON, DEFAULT_VALUE_ATTRIBUTE, CROSS_PICTURE, ERROR_CLASS, CALCULATOR_ORDER_TIME,
+import { CALCULATOR_ICON, DEFAULT_VALUE_ATTRIBUTE, EDITABLE_ORDER,
+  INFORMATION_ROW_HEADER, CROSS_PICTURE, ERROR_CLASS, CALCULATOR_ORDER_TIME,
   TIME_FIELD, TIME_TD_CLASS, AMOUNT_FIELD, AMOUNT_TD_CLASS } from "./Constants.js"
 import { createCalculatorInput } from "./Factory.js"
 export { createCalculator }
 
 const ERROR_DIV = "CalErrDiv";
-
+const FINISHED_ROW_CLASS = "CalRow";
 
 // Frontend construction
 function KeyConfirmRow(event) {
@@ -25,6 +26,8 @@ function KeyConfirmRow(event) {
 }
 
 function confirmRow(tbody, Row, thisButton) {
+  
+  
   $("#" + ERROR_DIV).empty();
   $("#" + ERROR_DIV).removeClass(ERROR_CLASS);
   // Check if valid inputs
@@ -33,8 +36,8 @@ function confirmRow(tbody, Row, thisButton) {
   const MBqtd = $(Row).find("." + AMOUNT_TD_CLASS); 
   const MBqStr = MBqtd.find("." + AMOUNT_FIELD).val();
   // Fixate inputs and change icon
-  var RowTime = Row.attr(CALCULATOR_ORDER_TIME);
-
+  var RowTime = Row.attr(CALCULATOR_ORDER_TIME);  
+  
   if(!validateTimeAndMBq(timeStr, MBqStr, RowTime)) {
     // Do some error message
     return;
@@ -47,7 +50,7 @@ function confirmRow(tbody, Row, thisButton) {
   $(thisButton).off();
   $(thisButton).attr("src", CROSS_PICTURE)
   $(thisButton).on("click", () => deleteRow(Row));
-  Row.addClass("CalRow");
+  Row.addClass(FINISHED_ROW_CLASS);
   // Create New row
   tbody.append(createCalculatorInput(RowTime, tbody, confirmRow, KeyConfirmRow));
 };
@@ -95,8 +98,8 @@ function validateTimeAndMBq(time, MBq, startTime) {
 
   //Validate the Time field
   if (time.length != 5) {
-    $("#CalErrDiv").text("Tidspunktet er ikke på formattet HH:MM");
-    $("#CalErrDiv").addClass("ErrorBox");
+    $("#" + ERROR_DIV).text("Tidspunktet er ikke på formattet HH:MM");
+    $("#" + ERROR_DIV).addClass(ERROR_CLASS);
     return false; 
   }
   
@@ -104,13 +107,13 @@ function validateTimeAndMBq(time, MBq, startTime) {
   var RowTime =  CreateTime(startTime)
 
   if (TestTime === null){
-    $("#CalErrDiv").text("Der er invalid Karakter i tidspunktet")
-    $("#CalErrDiv").addClass("ErrorBox");
+    $("#" + ERROR_DIV).text("Der er invalid Karakter i tidspunktet")
+    $("#" + ERROR_DIV).addClass(ERROR_CLASS);
     return false;
   }
   if (TestTime < RowTime) {
-    $("#CalErrDiv").text("Tidspunkt er før produktions tidspunktet")
-    $("#CalErrDiv").addClass("ErrorBox");
+    $("#" + ERROR_DIV).text("Tidspunkt er før produktions tidspunktet")
+    $("#" + ERROR_DIV).addClass(ERROR_CLASS);
     console.log("This happens");
     return false;
   }
@@ -118,29 +121,29 @@ function validateTimeAndMBq(time, MBq, startTime) {
   var parsed = betterParseInt(MBq);
 
   if (isNaN(parsed)) {
-    $("#CalErrDiv").text("MBq skal være et Positivt tal")
-    $("#CalErrDiv").addClass("ErrorBox");
+    $("#" + ERROR_DIV).text("MBq skal være et Positivt tal")
+    $("#" + ERROR_DIV).addClass(ERROR_CLASS);
     return false;
   } else if (parsed <= 0) {
-    $("#CalErrDiv").text("Du kan ikke bestille et negativt mændge FDG");
-    $("#CalErrDiv").addClass("ErrorBox");
+    $("#" + ERROR_DIV).text("Du kan ikke bestille et negativt mændge FDG");
+    $("#" + ERROR_DIV).addClass(ERROR_CLASS);
     return false; 
   } 
   return true;
 };
 
 function ReadCalculator(MBqs, orderIndexs) {
-  $(".CalRow").each(function () {
-    var rowTime = $(this).attr(CALCULATOR_ORDER_TIME)
-    var timeStr = $(this).children(".tableTime")[0].innerText;
+  $("." + FINISHED_ROW_CLASS).each(function () {
+    var rowTime = $(this).attr(CALCULATOR_ORDER_TIME);
+    var timeStr = $(this).children("." + TIME_TD_CLASS)[0].innerText;
     var index   = orderIndexs[rowTime];
-    var MBq     = parseInt($(this).children(".tableMBq")[0].innerText);
+    var MBq     = parseInt($(this).children("." + AMOUNT_TD_CLASS)[0].innerText);
     MBqs[index] += compute(rowTime, timeStr, MBq);
   });
 }
 
-// Controller Function
-function calculate() {
+// Buttons  Function
+function calculateEmpty() {
   var orders = $(".order");
   var orderIndexs = {};
   var MBqs = new Array(orders.length);
@@ -156,10 +159,54 @@ function calculate() {
     if ($(this).hasClass("form")){
       var updatedInnerText = "."+this.innerText.replace(':', "\\:")+"\\:00"
       $(updatedInnerText).val(MBqs[index]);
-    } else if ($(this).hasClass("data")) { //The Else-if part is mostly there for future compatablity
-      // The Structure of how div are set up is different based on if Form or data, this should be fix TBH, but hey, that's effort
-      // And we don't do that around here
-      // We now need to Update 
+    } 
+    
+  }); 
+};
+
+// Buttons
+function calculateKeep() {
+  var orders = $(".order");
+  var orderIndexs = {};
+  var MBqs = new Array(orders.length);
+  for (let i = 0; i < MBqs.length; i++) {
+    MBqs[i] = 0; // Just for testing purposes
+    orderIndexs[orders[i].innerText] = i;
+  }
+
+  ReadCalculator(MBqs, orderIndexs);
+
+  orders.each(function () {
+    var index = orderIndexs[this.innerText]
+    if ($(this).hasClass("form")){
+      var updatedInnerText = "."+this.innerText.replace(':', "\\:")+"\\:00"
+      const oldVal = betterParseInt($(updatedInnerText).val());
+      console.log(oldVal)
+      if (!isNaN(oldVal)) {
+        $(updatedInnerText).val(MBqs[index] + oldVal);
+      } else {
+        $(updatedInnerText).val(MBqs[index]);
+      }
+    } 
+    
+  }); 
+};
+
+
+
+function UpdateEditable() {
+  var orders = $(".order");
+  var orderIndexs = {};
+  var MBqs = new Array(orders.length);
+  for (let i = 0; i < MBqs.length; i++) {
+    MBqs[i] = 0; // Just for testing purposes
+    orderIndexs[orders[i].innerText] = i;
+  }
+
+  ReadCalculator(MBqs, orderIndexs);
+  orders.each(function () {
+    var index = orderIndexs[this.innerText]
+    if ($(this).hasClass("data")) {
       const DataRow = $(this).parent();
       const RowNumber = DataRow.attr("id").substr(4);
       const TableBody = $(DataRow.children("#informationRow"+RowNumber).children()[0]).children()[1];
@@ -176,11 +223,7 @@ function calculate() {
 
       SendEditOrder(OrderID, NewAmount, Comment);
     }
-  }) 
-};
-
-function UpdateEditable() {
-
+  });
 }
 
 
@@ -231,14 +274,25 @@ function createCalculator() {
   var ContainsInputFields   = false;
   //Main table
   $('.order').each(function () {
-      var timeslotDiv = document.createElement("div");
+      //Check is order is Editable
+      if ($(this).hasClass("data")) {
+        const DataRow = $(this).parent();
+        const RowNumber = DataRow.attr("id").substr(4);
+        if ($("#"+ INFORMATION_ROW_HEADER + RowNumber).find("." + EDITABLE_ORDER).length == 0 ) return;
+        ContainsEditableOrder = true;
+      }
+      if ($(this).hasClass("form")) {
+        ContainsInputFields = true;
+      } 
+      //Create the remaining 
+      var timeslotDiv = $("<div>", {class : "row"});
       var table      = $("<table>", {class:"table"});
       var thead      = $("<thead>");
       thead.append($("<th>").text(this.innerText));
       thead.append($("<th>").text("Tidspunkt"));
       thead.append($("<th>").text("FDG MBq"));
       thead.append($("<th>")); // Button  Row
-      timeslotDiv = $(timeslotDiv, {class : "row"});
+      
       var tbody = $("<tbody>");
       tbody.append(createCalculatorInput(this.innerText, tbody, confirmRow, KeyConfirmRow));
 
@@ -258,37 +312,52 @@ function createCalculator() {
       $(this).dialog("close");
       $(this).remove();
     }
-  }]
+  }];
   
-  var CalculateButtonStr = "Udregn";
-  if ($(".data").length > 0) {
-    CalculateButtonStr = "Udregn og Opdater"
+  if (ContainsEditableOrder) {
+    Buttons.push({
+      text : "Opdater Existerne Ordre",
+      click: function() {
+        UpdateEditable()
+        $(this).dialog("close");
+        $(this).remove();
+      }
+    });
+  }
+
+  if (ContainsInputFields) {
+    Buttons.push({
+      text : "Tilføj til nuværende bestilling",
+      click: function() {
+        calculateKeep()
+        $(this).dialog("close");
+        $(this).remove();
+      }
+    });
+    Buttons.push({
+      text : "Overskriv gamle bestilling",
+      click: function() {
+        calculateEmpty()
+        $(this).dialog("close");
+        $(this).remove();
+      }
+    });
   }
 
 
-
+  console.log(ContainsInputFields)
+  console.log(ContainsEditableOrder)
+  Buttons = Buttons.reverse()
+  if (! ContainsInputFields && ! ContainsEditableOrder ) {
+    //Write a error message
+    return
+  }
 
   //Create The Dialog
   $(dialogText).dialog({
     dialogClass: "no-close",
     title: "Lommeregner",
-    width: 500,
-    buttons: [
-      {
-        text: CalculateButtonStr, 
-        click: function () {
-          calculate();
-          $(this).dialog("close");
-          $(this).remove();
-        }
-      },
-      {
-        text: "Afbryd",
-        click: function () {
-          $(this).dialog("close");
-          $(this).remove();
-        }
-      }
-    ]
+    width: 750,
+    buttons: Buttons
   });
 };
