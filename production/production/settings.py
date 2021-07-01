@@ -25,7 +25,7 @@ SECRET_KEY = 'pcsy3wswz(mmips=koz#kj_q=1-z5val90mn$o-o-e@&lc6+6!'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
 
 
 # Application definition
@@ -37,7 +37,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'frontend.apps.FrontendConfig'
+    'frontend.apps.FrontendConfigx½'
 ]
 
 MIDDLEWARE = [
