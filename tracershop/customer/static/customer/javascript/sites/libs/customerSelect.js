@@ -17,7 +17,6 @@ class CustomerSelect {
     select.on('change', onChangeFunction)
     select.on('change', this.SetCookie)
     this.select = select[0];
-    console.log(CookieValue)
   };
 
   getValue() {

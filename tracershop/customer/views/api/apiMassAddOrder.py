@@ -7,7 +7,7 @@ from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from datetime import datetime, date
 
 
-from customer import constants
+from customer.constants import SUCCESSFUL_JSON_RESPONSE
 from customer.models import Tracer, Booking, Procedure
 from customer.lib import orders, calenderHelper
 from customer.lib.SQL import SQLController as SQL
@@ -111,5 +111,5 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
           f"Automaticly generated {tracer.tracerName} order"
         )
 
-    return JsonResponse(SUCCESSFUL_JSON_RESPONSE)
+    return SUCCESSFUL_JSON_RESPONSE
 

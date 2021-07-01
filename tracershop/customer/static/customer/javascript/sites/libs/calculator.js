@@ -344,9 +344,6 @@ function createCalculator() {
     });
   }
 
-
-  console.log(ContainsInputFields)
-  console.log(ContainsEditableOrder)
   Buttons = Buttons.reverse()
   if (! ContainsInputFields && ! ContainsEditableOrder ) {
     //Write a error message
