@@ -1,5 +1,5 @@
 from django.shortcuts import render
 
-# Create your views here.
+# This is a single page appilication
 def indexView(request, *args, **kwargs):
   return render(request, "frontend/index.html")

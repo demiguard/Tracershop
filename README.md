@@ -39,3 +39,10 @@ In general the process will look something like this.
 6. Install UWSGI see tracershop/README.md for guide there
 
 Apologies for any holes in the Documentation
+
+
+### Notes To self
+
+Here's a list of some the useful tutorials that have helped setting up the production
+
+* https://medium.com/analytics-vidhya/django-react-integration-37acc304e984

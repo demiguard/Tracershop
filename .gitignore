@@ -5,5 +5,7 @@ venv/
 __pycache__/
 .vscode/settings.json
 tracershop/customer/migrations/
+production/api/migrations/
 production/frontend/migrations/
 production/frontend/node_modules/
+*.sqlite3

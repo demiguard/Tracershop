@@ -1,0 +1,40 @@
+.calender {
+  padding: 0px;
+  margin: auto;
+  margin-top: 46px;
+  border: 5px;
+  border-color: blue;
+  border-style: solid;
+  width: 300px;
+  text-align: center;
+  border-radius: 8px;
+  line-height: 20px;
+  vertical-align: middle;
+}
+
+.calender-row {
+  padding-top: 7px;
+  height: 35px;
+  width: 17%;
+  cursor: pointer;
+  vertical-align: middle;
+}
+
+.calender-dates {
+  background: var(--tertiary-color-3);
+  border-bottom: 5px;
+  border-top: 0px;
+  border-left:0px;
+  border-right:0px;
+  border-style: solid;
+  border-color: #00F;
+}
+
+.calender-header {
+  background: var(--tertiary-color-3);
+}
+
+.today {
+  font-size: large;
+  color:blue;
+}

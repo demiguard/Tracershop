@@ -1,0 +1,37 @@
+:root {
+  --primary-color: #009ce8;
+  --secondary-color-1: #4db9ef;
+  --secondary-color-2: #99d7f6;
+  --secondary-color-3: #ccebfa;
+  --tertiary-color-1: #397c7a;
+  --tertiary-color-2: #699;
+  --tertiary-color-3: #88d0c8;
+  --grey-1: #333;
+  --grey-2: #565656;
+  --grey-3: #858585;
+  --grey-4: #d6d6d6; 
+  --red-1:#F55;
+  --red-2:#FBB;
+  --green-1: #5F5;
+  --yellow-1: #FF5;
+}
+
+
+.navBarSpacer {
+  margin-top: 70px;
+}
+
+nav {
+  background-color: var(--secondary-color-3) ;
+}
+
+.navbarElem {
+  background: var(--secondary-color-2);
+  padding : 10px;
+  margin-right: 15px;
+  margin-left: 15px;
+  border : 1px;
+  border-style: solid;
+  border-color: var(--secondary-color-1);
+  border-radius: 10px;
+}
