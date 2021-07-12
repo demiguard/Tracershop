@@ -35,3 +35,9 @@ nav {
   border-color: var(--secondary-color-1);
   border-radius: 10px;
 }
+
+.tableButton {
+  height: 35px;
+  width: 35px;
+  cursor: pointer;
+}
