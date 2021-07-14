@@ -141,7 +141,7 @@
                   <td>{{ secondaryOrder.nInjections }}</td>
                   {% if secondaryOrder.comment %}
                     <td><img class="StatusIcon commentIcon" src="{% static 'customer/images/comment.svg' %}" title="{{ secondaryOrder.comment }}"></td>
-                  {% else%}
+                  {% else %}
                     <td></td>
                   {% endif %}
 
@@ -177,7 +177,7 @@
             <td id="deliverTime" class="">   {{ secondaryForm.deliverTime }}</td>  
             <td id="InjectionField" class="">{{ secondaryForm.injectionField }}</td> 
             <td id="UseField">               {{ secondaryForm.useField }}</td> 
-            <td class="CommentField"><textarea id="TOrderComment-{{ secondaryForm.id }}" type="text" class="TOrderComment"> </td>
+            <td class="CommentField"><textarea id="TOrderComment-{{ secondaryForm.id }}" type="text" class="TOrderComment"></textarea> </td>
             <td><input type="button" id="TOrderButton{{ secondaryForm.id }}" class="TorderButton btn btn-outline-secondary" value="Bestil"></td>
           </tr>
           {% endfor %}  
@@ -185,6 +185,7 @@
       </table>
     </div>
   </div>
+  
 </div>
 <div class="col-3">
   <div id="div_customer_select" class="input-group">
