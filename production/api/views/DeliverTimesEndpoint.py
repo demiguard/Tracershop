@@ -7,12 +7,14 @@ from api.utils import LMAP
 
 class ApiDeliverTimes(View):
   name = "delivertimes"
-  path = "delivertimes
+  path = "delivertimes"
 
   def get(self, request):
+    data = Formatting.ParseJSONRequest(request)
 
+    print(data)
     
-    return JsonResponse({}})
+    return JsonResponse({})
 
   def post(self, request):
     data = Formatting.ParseJSONRequest(request)

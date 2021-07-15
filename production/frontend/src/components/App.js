@@ -6,6 +6,9 @@ import {ConfigPage} from "./ConfigPage";
 import {OrderPage} from './OrderPage';
 import {CustomerPage} from "./CustomerPage";
 
+import { ajaxSetup } from "jquery";
+import { get as getCookie } from 'js-cookie';
+
 export {App}
 
 const Pages = {
@@ -21,6 +24,13 @@ export default class App extends Component {
       activePage : OrderPage
     };
     this.setActivePage = this.setActivePage.bind(this);
+
+
+    ajaxSetup({
+      headers: {
+          "X-CSRFToken": getCookie("csrftoken")
+      }
+    });
   }
 
 

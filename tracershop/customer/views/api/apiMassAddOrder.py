@@ -59,8 +59,7 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
     if isFDG := tracer.tracerName == "FDG":
       times = {calenderHelper.combine_time_and_date(startDate, item['dtime']) : 0 
             for item in SQL.getDailyRuns(startDate, customerID)}
-    else:
-      DosesTime = {}
+    
 
     for accessionNumber, checked in studies.items():
       try:
@@ -79,37 +78,23 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
         else:
           bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
           keyStr = bookingDatetime.strftime(datetimeFormatStr)
-          if DosesTime.get(keyStr):
-            DosesTime[keyStr] += 1
-          else:
-            DosesTime[keystr] = 1
-          #orders.insertTOrderBooking(booking, customerID, username)
+          orders.insertTOrderBooking(booking, customerID, username)
         booking.status = 2        
         booking.save()
 
     if isFDG:
       for runm1, (time, fdg) in enumerate(times.items()):
         run = runm1 + 1    # Run are not zero initialized, Take it up with the system administrator
-        SQL.insertOrderFTG(
-          fdg,                                # Amount
-          "Automaticly generated FDG-order",  # Comment
-          time,                               # deliverTime
-          startDate,                          # dato
-          run,                                # run
-          customerID,                         # userID
-          username                            # username
-        )
-    else:
-      for DateTimeStr, Injections in DosesTime:
-        SQL.insertTOrder(
-          injections, 
-          datetime.strptime(DateTimeStr, datetimeFormatStr),
-          tracer.ID,
-          "human", 
-          customerID, 
-          username, 
-          f"Automaticly generated {tracer.tracerName} order"
-        )
-
+        if fdg > 0:
+          SQL.insertOrderFTG(
+            fdg,                                # Amount
+            "Automaticly generated FDG-order",  # Comment
+            time,                               # deliverTime
+            startDate,                          # dato
+            run,                                # run
+            customerID,                         # userID
+            username                            # username
+          )
+    
     return SUCCESSFUL_JSON_RESPONSE
 

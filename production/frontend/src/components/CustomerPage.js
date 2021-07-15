@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { Row, FormControl, Table } from "react-bootstrap"
+import { Row, FormControl, Table, Container } from "react-bootstrap"
 import { ajax } from "jquery"
 import { node } from "prop-types";
 import { CustomerModal } from "./CustomerModal";
@@ -111,11 +111,12 @@ export default class CustomerPage extends Component {
     }
 
     return (
-    <div><Row>
+    <Container>
+    <Row>
       <FormControl 
         onChange={this.OnchangeFilter.bind(this)} 
         placeholder="Filter"
-      />
+        />
     </Row>
     <Table>
       <thead>
@@ -132,8 +133,9 @@ export default class CustomerPage extends Component {
       userid = {this.state.userIDModal}
       onClose = {this.closeModal.bind(this)}
       saveModal = {this.saveModal.bind(this)}
-    />
-    </div>
+      />
+    
+    </Container>
     );
   } 
 }

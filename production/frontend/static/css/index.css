@@ -19,6 +19,8 @@
 
 .navBarSpacer {
   margin-top: 70px;
+  width: 100% !important;
+  max-width: 100% !important;
 }
 
 nav {

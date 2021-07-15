@@ -1,6 +1,7 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
-import { Modal, Button, Table, Row, FormControl, Form } from "react-bootstrap";
+import { Modal, Button, Table, Row, FormControl } from "react-bootstrap";
+import { FormatNumber, FormatTime } from "./lib/formatting"
 
 export { CustomerModal }
 
@@ -65,7 +66,40 @@ export default class CustomerModal extends Component {
   }
 
   AddOrder() {
+    if (null === FormatTime(this.state.new_dtime)) return
+    if (null === FormatNumber(this.state.new_max)) return
 
+    // While i could use and perhaps should use POST / PUT / DELETE request, the problem is
+    const message = {
+      type : 1,
+      max : this.state.new_max,
+      run : this.state.new_run,
+      dtime : this.state.new_dtime,
+      repeat : this.state.new_repeat,
+      day : this.state.new_day
+    }
+
+    ajax({
+      url: "api/delivertimes",
+      data:JSON.stringify(message),
+      dataType : "json"
+    }).then((res) => {
+      const newState = {...this.state};
+      newState["DTID"].push(1) //READ THIS VALUE FROM RES 
+      newState["run"].push(this.state.new_run);
+      newState["max"].push(this.state.new_max);
+      newState["days"].push(this.state.new_day);
+      newState["dtime"].push(this.state.new_dtime);
+      newState["repeat"].push(this.state.new_repeat);
+
+      newState["new_day"] = 1;
+      newState["new_run"] = 1
+      newState["new_dtime"] = null;
+      newState["new_max"] = null;
+      newState["new_repeat"] = 1;
+
+      this.setState(newState)
+    })
   }
 
   changeState(value, state) {
@@ -103,7 +137,7 @@ export default class CustomerModal extends Component {
     return (
       <select 
         defaultValue={defaultValue} 
-        onChange={(event) => this.changeStateList(Number(event.target.value),"run",i)}
+        onChange={(event) => this.changeStateList(Number(event.target.value),"run",i) }
       >
         <option value="1">1</option>
         <option value="2">2</option>
@@ -116,7 +150,9 @@ export default class CustomerModal extends Component {
     return(
       <FormControl 
         defaultValue={defaultValue}
-        onChange={(event) => this.changeModalList(event.target.value, "dtime", i)}
+        onChange={(event) => {
+          if (FormatTime(event.target.value) !== null) this.changeStateList(event.target.value, "dtime", i)
+        }}
       />
     );
   }
@@ -125,7 +161,9 @@ export default class CustomerModal extends Component {
     return(
       <FormControl 
         defaultValue={defaultValue} 
-        onChange={(event) => this.changeStateList(Number(event.target.value),"max",i)}
+        onChange={(event) => {
+          if (!isNaN(Number(event.target.value))) this.changeStateList(Number(event.target.value),"max",i)
+        }}
       />
     );
   }
@@ -134,7 +172,9 @@ export default class CustomerModal extends Component {
     return(
       <select 
         defaultValue={defaultValue} 
-        onChange={(event) => this.changeStateList(Number(event.target.value),"repeat",i)}
+        onChange={
+          (event) => this.changeStateList(Number(event.target.value),"repeat",i)
+        }
       >
         <option value="1">Hver Uge</option>
         <option value="2">Lige Uger</option>
@@ -181,10 +221,10 @@ export default class CustomerModal extends Component {
           </select>
         </td>
         <td>
-          <FormControl onChange={(event) => this.changeState(event.target.value,"new_dtime")}/>
+          <FormControl onChange={(event) => {if (FormatTime(event.target.value) !== null) this.changeState(event.target.value,"new_dtime")}}/>
         </td>
         <td>
-          <FormControl onChange={(event) => this.changeState(Number(event.target.value),"new_max")}/>
+          <FormControl onChange={(event) => {if (!isNaN(Number(event.target.value))) this.changeState(Number(event.target.value),"new_max")}}/>
         </td>
         <td>
           <select 
@@ -195,7 +235,7 @@ export default class CustomerModal extends Component {
             <option value="3">Ulige Uger</option>
           </select>  
         </td>
-        <td><img src="static/images/accept.svg" className="tableButton" /></td>
+        <td><img src="static/images/accept.svg" className="tableButton" onClick={this.AddOrder.bind(this)} /></td>
       </tr>
     );
   }

@@ -5,7 +5,7 @@
 """
 from datetime import timedelta, time
 
-
+from api.lib import Formatting
 from api.lib.SQL import SQLExecuter, SQLFormatter
 
 def getCustomers():
@@ -100,3 +100,85 @@ def getCustomerDeliverTimes(ID):
     result["DTID"].append(DTID)
 
   return result
+
+def getTorderMonthlyStatus(year : int, month : int):
+  month = Formatting.convertIntToStrLen2(month)
+  SQLQuery = f"""
+  SELECT DISTINCT
+    DATE(deliver_datetime),
+    status
+  FROM t_orders
+  WHERE
+    CONVERT (DATE(deliver_datetime), CHAR) Like '{year}-{month}-%'
+  """
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return {
+    statusPair[0] : statusPair[1] * 10 for statusPair in QueryResult
+  }
+
+
+def getOrderMonthlyStatus(year : int, month : int):
+  month = Formatting.convertIntToStrLen2(month)
+  SQLQuery = f"""SELECT DISTINCT 
+    DATE(deliver_datetime),
+    status
+  FROM orders
+  WHERE 
+    CONVERT(DATE(deliver_datetime), CHAR) LIKE '{year}-{month}-%'
+  """
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return {
+    statusPair[0] : statusPair[1] for statusPair in QueryResult
+  }
+
+def getDailyOrders(DT):
+  SQLQuery = f"""
+    SELECT
+
+    FROM
+      orders
+    WHERE
+      DATE(deliver_datetime) 
+  """
+
+def getTracers():
+  SQLQuery = f"""
+    SELECT 
+      id,
+      name,
+      isotope, 
+      n_injections,
+      order_block
+    FROM
+      Tracers
+  """
+  result = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+
+  returnDict = {
+    "TID" : [],
+    "name" : [],
+    "isotope" : [],
+    "inj"  : [], 
+    "block" : []
+  }
+
+  for (TID, name, isotope, inj, block) in result:
+    returnDict["TID"].append(TID)
+    returnDict["name"].append(name)
+    returnDict["isotope"].append(isotope)
+    returnDict["inj"].append(inj)
+    returnDict["block"].append(block)
+  return returnDict
+  
+
+def getIsotopes():
+  SQLQuery = f"""SELECT  
+    id,
+    name
+  FROM 
+    isotopes
+  """
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return {
+    IsotopePair[0] : IsotopePair[1] for IsotopePair in QueryResult
+  }

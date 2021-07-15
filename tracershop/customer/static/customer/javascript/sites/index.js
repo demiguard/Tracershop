@@ -200,10 +200,10 @@ function CreateFGDOrderTable(data, Div, hasComment) {
     RowIDs.push(`OrderRow-${order.OID}`);
     }
   if (hasComment) {
-    Header = ["Status", "Order ID", "Bestilt MBq", "Produceret Mbq","Batch-nr", "Frigivet MBq", "Frigivet", "Kommentar"] ;
+    Header = ["Status", "Order ID", "Bestilt MBq", "Samlet Mbq","Batch-nr", "Frigivet MBq", "Frigivet", "Kommentar"] ;
   }
   else {
-    Header = ["Status", "Order ID", "Bestilt MBq", "Produceret Mbq", "Batch-nr", "Frigivet MBq", "Frigivet"] 
+    Header = ["Status", "Order ID", "Bestilt MBq", "Samlet Mbq", "Batch-nr", "Frigivet MBq", "Frigivet"] 
   } 
   //Format such that Table factory can use it 
   const Skeleton = new Object();
