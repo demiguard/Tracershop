@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { ajax, ajaxSetup } from "jquery";
 import { Row } from "react-bootstrap";
 
+
+import { FormatDateStr } from './lib/formatting'
 import {DAYS, DAYS_PER_WEEK} from './lib/constants'
 
 export { Calender }
@@ -16,7 +18,7 @@ export default class Calender extends Component {
     }
     this.updateColors(
       this.props.date.getFullYear(),
-      this.props.date.getMonth()
+      this.props.date.getMonth() + 1
     )
   }
 
@@ -45,8 +47,12 @@ export default class Calender extends Component {
         year  : year
       }),
     }).then((res) => {
-      console.log(res)
+      this.setState({...this.state, DateColors: res})
     }) 
+  }
+
+  getStatusClass(StatusValue){
+    return "date-status"+ String(StatusValue)
   }
 
   DaysInAMonth(year, month){
@@ -78,11 +84,18 @@ export default class Calender extends Component {
   };
 
   renderDay(date) {
-    const DateObject = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date)
+    const DateObject  = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date);
 
+    const DateStr     = String(DateObject.getFullYear()) + '-' + FormatDateStr(DateObject.getMonth() + 1) + '-' + FormatDateStr(DateObject.getDate());
+    var StatusClass = "";
+    if (DateStr in this.state.DateColors) {
+      StatusClass = this.getStatusClass(this.state.DateColors[DateStr]);
+    } else {
+      StatusClass = this.getStatusClass(55);
+    }
 
     return (
-      <div className="calender-row" onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
+      <div className={"calender-row date-base-class " + StatusClass}  onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
     );
   }
 
@@ -114,6 +127,7 @@ export default class Calender extends Component {
       startingDate += DAYS_PER_WEEK;
     }
 
+    console.log(this.state)
     return (
     <div className="calender">
       <div className="calender-header flex-row d-flex justify-content-around">

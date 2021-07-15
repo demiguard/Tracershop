@@ -1,6 +1,5 @@
-
-
 import json
+
 from datetime import date
 
 def ParseJSONRequest(request):
@@ -18,8 +17,6 @@ def convertIntToStrLen2(INT : int) -> str:
 def mergeMonthlyOrders(year, month, orders, t_orders):
   monthStr = convertIntToStrLen2(month)
   returnDict = {}
-  
-
 
   for i in range(1,32):
     try:
@@ -40,6 +37,10 @@ def mergeMonthlyOrders(year, month, orders, t_orders):
 
   return returnDict
   
-  
+def EncodeDateTimeDict(Dict):
+  returnDict = {}
+  for dt, val in Dict.items():
+    returnDict[dt.__str__()] = val
+  return returnDict
   
   

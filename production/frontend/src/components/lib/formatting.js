@@ -1,4 +1,4 @@
-export { FormatTime, FormatNumber }
+export { FormatTime, FormatNumber, FormatDateStr }
 
 function FormatTime (timeStr) {
   /**
@@ -33,4 +33,9 @@ function FormatTime (timeStr) {
 function FormatNumber(NumberString) {
   if (/^\d+$/.test(NumberString)) return NumberString;
   return null;
+}
+
+function FormatDateStr(number) {
+  return number < 10 ? "0" + String(number) : String(number)
+  
 }

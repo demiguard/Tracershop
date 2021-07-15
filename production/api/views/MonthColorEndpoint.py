@@ -19,4 +19,8 @@ class ApiMonthColorEndpoint(View):
     orders = SQLController.getOrderMonthlyStatus(year, month)
     tOrders = SQLController.getTorderMonthlyStatus(year, month)
 
-    return JsonResponse({})
+    MergedDict = Formatting.mergeMonthlyOrders(year, month, orders, tOrders)
+    
+    formattedDict = Formatting.EncodeDateTimeDict(MergedDict)
+
+    return JsonResponse(formattedDict)
