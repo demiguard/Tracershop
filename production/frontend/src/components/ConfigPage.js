@@ -9,6 +9,8 @@ export default class ConfigPage extends Component {
     super(props)
 
     this.state = {
+      filterName : null,
+      filterIsotope : null,
       names : [],
       isotope : [],
       isotopeOptions : {},

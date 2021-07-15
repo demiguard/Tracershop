@@ -24,8 +24,6 @@ export default class App extends Component {
       activePage : OrderPage
     };
     this.setActivePage = this.setActivePage.bind(this);
-
-
     ajaxSetup({
       headers: {
           "X-CSRFToken": getCookie("csrftoken")
