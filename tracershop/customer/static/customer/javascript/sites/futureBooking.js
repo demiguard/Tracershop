@@ -28,6 +28,7 @@ function ResetBooking() {
     success : function(data) {
       //Update the icon
       TD.empty();
+      TD.addClass('checkbox')
       const checkbox = $("<input>", {
         id : accessionNumber,
         type : "checkbox",
@@ -62,6 +63,7 @@ const MassOrder = function() {
   var studies = {};
   for (const tableRow of $(tbody).children()) {    
     const checkboxTD = $(tableRow).children(".checkbox");
+    console.log(checkboxTD)
     if (checkboxTD.length == 0) {
       continue;
     }
@@ -71,6 +73,7 @@ const MassOrder = function() {
     studies[checkboxID] = checkboxChecked
     // Change Icons
     $(checkboxTD[0]).empty();
+    $(checkboxTD[0]).removeClass('checkbox')
     if (checkboxChecked) {
       const image   = $("<img>", {
         src: "/static/customer/images/check.svg",
@@ -89,13 +92,14 @@ const MassOrder = function() {
 
   }
   const customer = CustomerSelectInstance.getValue()
+
   $.post({
     url:"api/MassAddOrder",
-    data: {
+    data: JSON.stringify({
       "tracer" : tracer,
       "studies" : studies,
       "customer" : customer
-    }
+    })
   })
 
 }

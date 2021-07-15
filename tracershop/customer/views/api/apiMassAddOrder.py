@@ -9,7 +9,7 @@ from datetime import datetime, date
 
 from customer.constants import SUCCESSFUL_JSON_RESPONSE
 from customer.models import Tracer, Booking, Procedure
-from customer.lib import orders, calenderHelper
+from customer.lib import orders, calenderHelper, Formatting
 from customer.lib.SQL import SQLController as SQL
 
 datetimeFormatStr = "%Y-%m-%d %H-%M"
@@ -19,10 +19,12 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
   name = "APIMassAddOrder"
 
   def processData(self,qDict):
+    
     tracer = None,
     customer = None
     studies = {}
     for key,item in qDict.items():
+      print("key: ", key, "Item: ", item)
       if key == 'tracer':
         try: 
           tracer = Tracer.objects.get(tracerName=item)
@@ -32,22 +34,21 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
           pass
       elif key == 'customer':
         customer = int(item)
-      
-      else: #item = "studies[AccessionNumber]"
-        _, study = key.split('[')
-        study = study.replace(']','')
-        if item == 'true':
-          studies[study] = True
-        else:
-          studies[study] = False
+      elif key == 'studies': #item = "studies[AccessionNumber]"
+        studies = item
     return tracer, customer, studies
 
 
   def post(self, request):
     username = request.user.username
-    tracer, customerID, studies = self.processData(request.POST)
+    data = Formatting.ParseJSONRequest(request)
+    tracer, customerID, studies = self.processData(data)
+    if not studies:
+      print("Empty mass order")
+      return JsonResponse({})
+
     if not(tracer and customerID and studies):
-      print("Error")
+      
       return JsonResponse({})
     
     tmpAccessionNumber = list(studies.keys())[0]
