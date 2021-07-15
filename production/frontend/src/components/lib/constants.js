@@ -1,0 +1,18 @@
+export {
+  DAYS, DAYS_PER_WEEK
+
+
+
+}
+
+
+const DAYS_PER_WEEK = 7
+const DAYS = {
+  MONDAY : 0,
+  TUESDAY : 1,
+  WENDSDAY : 2,
+  THURSDAY : 3,
+  FRIDAY : 4,
+  SATURDAY : 5,
+  SUNDAY : 6,
+}

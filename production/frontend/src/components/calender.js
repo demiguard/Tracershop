@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { ajax, ajaxSetup } from "jquery";
 import { Row } from "react-bootstrap";
 
+import {DAYS, DAYS_PER_WEEK} from './lib/constants'
+
 export { Calender }
 
 export default class Calender extends Component {
@@ -48,13 +50,17 @@ export default class Calender extends Component {
   }
 
   DaysInAMonth(year, month){
+     //This takes advantage of javascript date system.
+     // Since the "zeroth" day of a month doesn't exists (* Yeah 0-index is not for days *)
+     // The date time system creates the last day of the month before.
+     // Then just select the date
     return new Date(year, month,0).getDate();
   };
 
   LastmondayInLastMonth(year,month){
     var pivot = 1;
     var pivotDate = new Date(year, month, pivot);
-    while(pivotDate.getDay() != 0){
+    while(pivotDate.getDay() != DAYS.MONDAY){
       pivot--;
       pivotDate = new Date(year, month, pivot);
     }
@@ -64,7 +70,7 @@ export default class Calender extends Component {
   FirstSundayInNextMonth(year,month){
     var pivot = this.DaysInAMonth(year, month);
     var pivotDate = new Date(year, month, pivot);
-    while(pivotDate.getDay() != 6){
+    while(pivotDate.getDay() != DAYS.SUNDAY){
       pivot++;
       pivotDate = new Date(year, month, pivot);
     }
@@ -76,7 +82,7 @@ export default class Calender extends Component {
 
 
     return (
-      <div className="calender-row"> {DateObject.getDate()}</div>
+      <div className="calender-row" onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
     );
   }
 
@@ -104,15 +110,9 @@ export default class Calender extends Component {
     const weeks = [];
 
     while (startingDate <= EndingDate) {
-      
-      
-      weeks.push((
-        this.renderWeek(startingDate)
-      ));
-      startingDate += 7
+      weeks.push((this.renderWeek(startingDate)));
+      startingDate += DAYS_PER_WEEK;
     }
-
-
 
     return (
     <div className="calender">

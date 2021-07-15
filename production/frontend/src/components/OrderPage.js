@@ -21,13 +21,15 @@ export default class OrderPage extends Component {
     const today = new Date();
     this.state={
       date : today,
-      calenderMonth : today.getMonth(),
-      calenderColors : {},
       activeTable : FDGTable
 
 
 
     };
+  }
+
+  setActiveDate(NewDate) {
+    this.setState({...this.state, date : NewDate})
   }
 
   setActiveTable(NewTableName) {
@@ -72,6 +74,7 @@ export default class OrderPage extends Component {
           <Col sm={3}>
             <Calender
               date={this.state.date}
+              onDayClick={this.setActiveDate.bind(this)}
               />
           </Col>
         </Row>
