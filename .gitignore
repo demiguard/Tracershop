@@ -9,3 +9,5 @@ production/api/migrations/
 production/frontend/migrations/
 production/frontend/node_modules/
 *.sqlite3
+main.js
+main.js*
