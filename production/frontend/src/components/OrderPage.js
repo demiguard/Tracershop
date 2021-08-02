@@ -46,7 +46,7 @@ export default class OrderPage extends Component {
 
   renderActiveTable() {
     return (
-      <this.state.activeTable/>
+      <this.state.activeTable date={this.state.date}/>
     )
   }
 

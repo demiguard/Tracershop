@@ -39,7 +39,7 @@ class ApiConfirmUser(AdminRequiredMixin, LoginRequiredMixin, View ):
 
   """
   name = "APIConfirmUser"
-  path = "admin/api/ConfirmUser"
+  path = "myadmin/api/ConfirmUser"
 
 
   def put(self, request):

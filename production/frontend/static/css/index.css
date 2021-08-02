@@ -43,3 +43,7 @@ nav {
   width: 35px;
   cursor: pointer;
 }
+
+.statusIcon {
+  height: 25px;
+}

@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "webpack --mode development --watch",
-    "build": "webpack --mode production"
+    "build": "webpack --mode production",
+    "test": "jest"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +30,9 @@
     "webpack-cli": "^4.7.2"
   },
   "devDependencies": {
+    "@babel/plugin-transform-modules-commonjs": "^7.14.5",
     "css-loader": "^5.2.6",
+    "jest": "^27.0.6",
     "less-loader": "^10.0.1",
     "sass-loader": "^12.1.0"
   }

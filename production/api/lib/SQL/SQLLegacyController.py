@@ -182,3 +182,36 @@ def getIsotopes():
   return {
     IsotopePair[0] : IsotopePair[1] for IsotopePair in QueryResult
   }
+
+def getFDGOrders(year:int, month: int, day : int):
+  month = Formatting.convertIntToStrLen2(month)
+  day   = Formatting.convertIntToStrLen2(day)
+  SQLQuery = f"""
+    SELECT
+      orders.deliver_datetime,
+      orders.OID,
+      orders.status,
+      orders.amount,
+      orders.total_amount,
+      orders.run,
+      Users.Username
+    FROM
+      orders INNER JOIN Users ON
+        orders.BID = Users.Id
+    WHERE
+      orders.deliver_datetime LIKE \"{year}-{month}-{day}%\"
+    ORDER BY
+      Users.Id,
+      orders.deliver_datetime
+  """
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+
+  return [{
+    "deliver_datetime" :    res[0],
+    "oid" :                 res[1],
+    "status" :              res[2],
+    "amount" :              res[3],
+    "total_amount" :        res[4],
+    "run" :                 res[5],
+    "realname" :            res[6]
+  } for res in QueryResult]

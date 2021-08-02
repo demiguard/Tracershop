@@ -12,7 +12,7 @@ from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 class AdminUserView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   name = 'adminUser'
-  path = 'admin/ActiveUsers'
+  path = 'myadmin/ActiveUsers'
 
   template_name = 'customer/admin/adminUser.html'
 

@@ -41,7 +41,10 @@ def getCustomerDeliverTimes(ID):
   return SQLLegacyController.getCustomerDeliverTimes(ID)
 
 def getTorderMonthlyStatus(year : int, month : int):
-  return SQLLegacyController.getTorderMonthlyStatus(year-2, month)
+  return SQLLegacyController.getTorderMonthlyStatus(year, month)
 
 def getOrderMonthlyStatus(year : int, month : int):
-  return SQLLegacyController.getOrderMonthlyStatus(year-2, month)
+  return SQLLegacyController.getOrderMonthlyStatus(year, month)
+
+def getFDGOrders(year:int, month:int, day:int):
+  return SQLLegacyController.getFDGOrders(year, month, day)

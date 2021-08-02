@@ -127,7 +127,6 @@ export default class Calender extends Component {
       startingDate += DAYS_PER_WEEK;
     }
 
-    console.log(this.state)
     return (
     <div className="calender">
       <div className="calender-header flex-row d-flex justify-content-around">

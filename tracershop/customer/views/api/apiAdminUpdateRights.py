@@ -12,7 +12,7 @@ from customer.lib.SQL import  SQLController as SQL
 
 class ApiAdminUpdateRights(AdminRequiredMixin, LoginRequiredMixin, View):
   name = "ApiAdminUpdateRights"
-  path = "admin/api/updateRights"
+  path = "myadmin/api/updateRights"
 
   def get(self, request):
     for userID, right in request.GET.items():

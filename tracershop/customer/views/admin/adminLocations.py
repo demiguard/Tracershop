@@ -26,7 +26,7 @@ def createLocationsForms(Locations):
 
 class AdminLocationsView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   name = 'adminLocations'
-  path = 'admin/Locations'
+  path = 'myadmin/Locations'
 
   template_name = 'customer/admin/adminLocations.html'
 

@@ -10,7 +10,7 @@ from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 class AdminConfirmUser (AdminRequiredMixin, LoginRequiredMixin, TemplateView):
   name = 'adminConfirmUser'
-  path = 'admin/ConfirmUser'
+  path = 'myadmin/ConfirmUser'
 
   template_name = 'customer/admin/adminConfirmUser.html'
 

@@ -5,7 +5,7 @@ from api.views.getCustomer  import ApiGetCustomer
 from api.views.getTracers import ApiGetTracers
 from api.views.DeliverTimesEndpoint import ApiDeliverTimes
 from api.views.MonthColorEndpoint import ApiMonthColorEndpoint
-
+from api.views.getFDGOrders import ApiGetFDGOrders
 
 from api.utils import LMAP
 
@@ -15,7 +15,8 @@ Views = [
   ApiGetCustomers,
   ApiDeliverTimes,
   ApiMonthColorEndpoint,
-  ApiGetTracers
+  ApiGetTracers,
+  ApiGetFDGOrders
 ]
 
 urlpatterns = LMAP(lambda view: path(view.path, view.as_view(), name=view.name), Views)

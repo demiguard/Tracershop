@@ -81,7 +81,6 @@ export default class CustomerPage extends Component {
 
 
   saveModal(modalState) {
-    console.log(modalState)
     const newState = {
       ...this.state,
       showModal : false,

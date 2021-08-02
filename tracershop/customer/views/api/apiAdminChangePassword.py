@@ -10,7 +10,7 @@ from customer.lib.SQL import SQLController as SQL
 
 class ApiAdminChangePassword(AdminRequiredMixin, LoginRequiredMixin, View):
   name = "ApiAdminChangePassword"
-  path = "admin/api/updatepw"
+  path = "myadmin/api/updatepw"
 
   def get(self, request):
     passwordChangingUser = SQL.getSpecificObject(request.GET['userID'], User)
