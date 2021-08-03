@@ -1,8 +1,8 @@
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 
-from api.lib.SQL import SQLController
-from api.utils import LMAP
+from lib.SQL import SQLController
+from lib.utils import LMAP
 
 class ApiGetCustomer(View):
   name = "getCustomer"

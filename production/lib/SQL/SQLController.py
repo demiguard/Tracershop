@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from typing import Type
 from datetime import datetime, time, date
 
-from api.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
+from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
 
 """
 This class contains all the database calls to the database.

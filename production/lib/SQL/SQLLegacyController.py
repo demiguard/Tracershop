@@ -5,8 +5,8 @@
 """
 from datetime import timedelta, time
 
-from api.lib import Formatting
-from api.lib.SQL import SQLExecuter, SQLFormatter
+from lib import Formatting
+from lib.SQL import SQLExecuter, SQLFormatter
 
 def getCustomers():
   SQLQuery = """

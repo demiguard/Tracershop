@@ -1,9 +1,8 @@
 from django.views.generic import View
 from django.http import JsonResponse, HttpResponseBadRequest
 
-from api.lib.SQL import SQLController
-from api.utils import LMAP
-from api.lib import Formatting
+from lib.SQL import SQLController
+from lib import Formatting
 
 class ApiGetFDGOrders(View):
   name = "getFDGOrders"

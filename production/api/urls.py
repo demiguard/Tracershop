@@ -7,7 +7,7 @@ from api.views.DeliverTimesEndpoint import ApiDeliverTimes
 from api.views.MonthColorEndpoint import ApiMonthColorEndpoint
 from api.views.getFDGOrders import ApiGetFDGOrders
 
-from api.utils import LMAP
+from lib.utils import LMAP
 
 
 Views = [
