@@ -215,3 +215,12 @@ def getFDGOrders(year:int, month: int, day : int):
     "run" :                 res[5],
     "realname" :            res[6]
   } for res in QueryResult]
+
+def setFDGOrderStatusTo2(oid:int):
+  SQLQuery = f"""
+    UPDATE orders
+    SET status = 2
+    WHERE
+      OID = {oid}
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)

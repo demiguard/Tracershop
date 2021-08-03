@@ -2,6 +2,9 @@ import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
 import { renderStatusImage } from "./lib/Rendering";
+import { TracerWebSocket } from "./lib/TracerWebsocket";
+import { CompareDates } from "./lib/utils";
+
 
 export { FDGTable }
 
@@ -19,19 +22,21 @@ export { FDGTable }
     deliver_datetime : Str //note it's on a date time format where you can call new Date(orders.delivers_datetime)
 
   }
-
-
 */
+
 
 
 export default class FDGTable extends Component {
   constructor(props) {
     super(props)
 
+    this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/FDG/", this)
+
     this.state = {
       orders : []
     }
     this.updateState(this.props.date)
+
   }
 
   updateState(newDate) {
@@ -58,10 +63,35 @@ export default class FDGTable extends Component {
       this.updateState(this.props.date)
     }
   }
+
+
+  updateOrders(newOrders, newDate) {
+    if (CompareDates(newDate, this.props.date)) {
+      const newState = {...this.state,
+        orders : newOrders
+      }
+      this.setState(newState)
+    }
+  }
   // Functions 
 
-  AcceptOrder() {
+  AcceptOrder(i) {
+    const newOrder = this.state.orders[i];
+    newOrder.status = 2;
 
+    const newOrders = [...this.state.orders];
+    const newState  = {...this.state, 
+      orders : newOrders
+    }
+
+    this.setState(newState);
+
+    this.websocket.send(JSON.stringify({
+      "date"      : this.props.date,
+      "newOrders" : this.state.orders,
+      "updatedOrder" : newOrder,
+      "messageType"  : "AcceptOrder"
+    }));
   }
 
 

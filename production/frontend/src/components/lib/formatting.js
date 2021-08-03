@@ -36,6 +36,5 @@ function FormatNumber(NumberString) {
 }
 
 function FormatDateStr(number) {
-  return number < 10 ? "0" + String(number) : String(number)
-  
+  return number < 10 ? "0" + String(number) : String(number) 
 }

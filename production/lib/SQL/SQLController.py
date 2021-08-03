@@ -48,3 +48,6 @@ def getOrderMonthlyStatus(year : int, month : int):
 
 def getFDGOrders(year:int, month:int, day:int):
   return SQLLegacyController.getFDGOrders(year, month, day)
+
+def setFDGOrderStatusTo2(oid:int):
+  SQLLegacyController.setFDGOrderStatusTo2(oid)

@@ -39,7 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'frontend.apps.FrontendConfig',
     'api.apps.ApiConfig',
-    'channels'
+    'channels',
+    'websocket.apps.WebsocketConfig'
 ]
 
 MIDDLEWARE = [
@@ -72,6 +73,15 @@ TEMPLATES = [
 
 ASGI_APPLICATION = 'production.asgi.application'
 WSGI_APPLICATION = 'production.wsgi.application'
+
+CHANNEL_LAYERS = {
+    'default' : {
+        'BACKEND' : 'channels_redis.core.RedisChannelLayer',
+        'CONFIG'  : {
+            'hosts' : [('127.0.0.1', 6379)]
+        }
+    }
+}
 
 
 # Database
