@@ -22,38 +22,35 @@ class FDGConsumer(WebsocketConsumer):
       self.FDG_group_name,
       self.channel_name
     )
+    print("Closing Websocket")
 
 
   #Receive data from Websocket
   def receive(self, text_data):
-    text_data_json = json.loads(text_data)
-    message = text_data_json["newOrders"]
-    dateStr = text_data_json["date"]
-    messageType  = text_data_json["messageType"]
+    message = text_data
+    message_json = json.loads(message)
+    
+    dateStr      = message_json["date"] # Only used on the front end
+    messageType  = message_json["messageType"]
+
     if messageType == "AcceptOrder":
-      updatedOrder = text_data_json["updatedOrder"]
-      print(updatedOrder)
-      SQL.setFDGOrderStatusTo2(updatedOrder["oid"])
+      oid = message_json["oid"]
+      SQL.setFDGOrderStatusTo2(oid)
+      async_to_sync(self.channel_layer.group_send)(
+        self.FDG_channel_name,
+        {
+          "type" : 'AcceptOrder',
+          "messageType" : "AcceptOrder",
+          "date"        : dateStr,
+          "oid"         : oid
+        }
+      )
 
 
 
-
-    async_to_sync(self.channel_layer.group_send)(
-      self.FDG_channel_name,
-      {
-        "type" : 'ChannelMessage',
-        "newOrders" : message,
-        "date"      : dateStr
-      }
-    )
+    
 
 
   #Recieve data from channel
-  def ChannelMessage(self, event):
-    newOrders = event['newOrders']
-    dateStr   = event['date']
-
-    self.send(text_data=json.dumps({
-      'newOrders' :  newOrders,
-      'date'      :  dateStr
-    }))
+  def AcceptOrder(self, event):
+    self.send(text_data=json.dumps(event))

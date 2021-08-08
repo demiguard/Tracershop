@@ -6,12 +6,22 @@ export class TracerWebSocket extends WebSocket {
     this.onmessage = function(e) {
       const data = JSON.parse(e.data)
       const MessageDate = new Date(data["date"])
-      this.table.updateOrders(data["newOrders"], MessageDate)
+
+      switch(data["messageType"]) {
+        case "AcceptOrder":
+          const oid = data["oid"];
+          this.table.AcceptOrderIncoming(oid, MessageDate);
+          break;
+      }
+
+
+      
     } 
 
 
-    this.onclose = function() {
-      console.log("Websocket closed!")
+    this.onclose = function(e) {
+      console.log("Websocket closed! with code:" + e.code)
+      console.log(e.reason)
     } 
   }
 }

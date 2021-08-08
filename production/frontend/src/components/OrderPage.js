@@ -35,7 +35,6 @@ export default class OrderPage extends Component {
   setActiveTable(NewTableName) {
     const NewTable = TableOrder[NewTableName];
     this.setState({...this.state, activeTable : NewTable});
-    console.log(this.state);
   }
 
   renderTableSwitchButton(TableName) {

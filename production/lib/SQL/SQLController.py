@@ -51,3 +51,9 @@ def getFDGOrders(year:int, month:int, day:int):
 
 def setFDGOrderStatusTo2(oid:int):
   SQLLegacyController.setFDGOrderStatusTo2(oid)
+
+def getRuns():
+  return SQLLegacyController.getRuns()
+
+def getProductions():
+  return SQLLegacyController.getProductions()

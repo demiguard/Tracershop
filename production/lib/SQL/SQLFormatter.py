@@ -5,9 +5,21 @@
   https://docs.djangoproject.com/en/3.1/topics/db/sql/
 """
 
-def FormatSQLTuple(SQLQuery, names) -> list:
+def FormatSQLTuple(SQLQuery : list, names : list) -> list:
   """
-    Yes it's Stupid
+    This function takes a list of tuples and converts it into a list of dicts
+    with the names from the arguments.
+
+    Names should have the same length as the tuple. 
+    The final list of length equal to SQL query
+
+    Example:
+    FormatSQLTuple([(1,2), (2,3)],["a","b"]) ->
+      [{"a" : 1, "b" : 2 }, {"a" : 2, "b" : 3 }]
+    
+    Programmers Note:
+
+    Yes it's Stupid python magic
   """
   return [ 
     { name : query[i] for (i, name) in enumerate(names) } 

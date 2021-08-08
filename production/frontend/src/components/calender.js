@@ -85,7 +85,6 @@ export default class Calender extends Component {
 
   renderDay(date) {
     const DateObject  = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date);
-
     const DateStr     = String(DateObject.getFullYear()) + '-' + FormatDateStr(DateObject.getMonth() + 1) + '-' + FormatDateStr(DateObject.getDate());
     var StatusClass = "";
     if (DateStr in this.state.DateColors) {
