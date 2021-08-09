@@ -15,10 +15,6 @@ class ApiGetInitialData(View):
     runs = SQLController.getRuns()
     customers = SQLController.getCustomers()
     productions = SQLController.getProductions()
-    
-    print(Orders)
-    print(customers)
-    print(productions)
 
     return JsonResponse({
       "Orders" : Orders,

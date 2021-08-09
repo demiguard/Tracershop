@@ -112,13 +112,15 @@ export default class FDGTable extends Component {
         day : newDate.getDate(),
       })
     }).then((data) => {
-      const newCustomerMap = new Map(this.state.customer);
-      for(const Customer of newCustomerMap.entries()){
+      var newCustomerMap = new Map(this.state.customer);
+      for(var [BID, Customer] of newCustomerMap.entries()){
+        var Customer = {...Customer};
         Customer.productions = [];
+        newCustomerMap.set(BID, Customer);
       }
-      this.InsertProductions(newCustomerMap, data["productions"]);
+      newCustomerMap  = this.InsertProductions(newCustomerMap, data["productions"]);
       const newOrders = this.InsertOrders(newCustomerMap, data["Orders"]);
-      
+
       this.SetOrdersCustomers(newOrders, newCustomerMap);
     });
   }
@@ -144,10 +146,12 @@ export default class FDGTable extends Component {
       Customer.productions.push({
         orders : [],
         dtime  : Production.dtime,
-        run    : Production.run
+        run    : Production.run,
+        contribution : 0
       });
       Customer.productions.sort((p1, p2) => (p1.run > p2.run) ? 1 : -1);
     }
+    return CustomerMap;
   }
 
   InsertOrders(CustomerMap, Orders) {
@@ -173,11 +177,18 @@ export default class FDGTable extends Component {
     
   }
 
+  GetProductionDateTimeString(Production) {
+    return String(this.props.date.getFullYear()) + '-' +
+      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
+      FormatDateStr(this.props.date.getDate()) + "T" +  
+      Production.dtime;
+  }
+
 
   // State Changing Functions 
   // Accepting Order Functions AKA An order Going from Status 1 to Status 2
   AcceptOrder(oid) {
-    const Order = this.state.orders.get(Order.oid);
+    const Order = this.state.orders.get(oid);
     Order.status = 2
     this.SetOrder(Order);
 
@@ -199,124 +210,230 @@ export default class FDGTable extends Component {
   SetOrder(Order) {
     //Note you should Look at liberay called immer
     //The Liberay deals with Updatling large objects, like the Customer Map
-    Order        = {...Order};
+    const NewOrder        = {...Order};
     const NewOrders    = new Map(this.state.orders);
     const NewCustomers = new Map(this.state.customer);
     // Set New object in Customer Map
-    const Customer     = NewCustomers.get(Order.BID);
-    const Produtions   = Customer.productions[Order.run - 1];
-    const pOrders       = Produtions.orders;
-    var oldOrderI;
-    for(let pOrderI in pOrders) {
-      const pOrder = pOrders[pOrderI];
-      if (pOrder.oid === Order.oid) {
-        oldOrderI = pOrderI;
-        break
+    const Customer     = {...NewCustomers.get(Order.BID)};
+
+    for (let ProductionI = 0; ProductionI < Customer.productions.length; ProductionI++) {
+      const Production = Customer.productions[ProductionI];
+      if (ProductionI === (Order.run - 1)) {
+        const pOrders = Production.orders;
+        var oldOrderI = undefined;
+        for(let pOrderI in pOrders) {
+          const pOrder = pOrders[pOrderI];
+          if (pOrder.oid === NewOrder.oid) {
+            oldOrderI = pOrderI;
+            break;
+          }
+        }
+        if (oldOrderI !== undefined) {
+          pOrders[oldOrderI] = Order;
+        } else {
+          pOrders.push(Order);
+        }
+      } else {
+        Customer.productions[ProductionI].orders = 
+          Customer.productions[ProductionI].orders.filter(function(
+            OldOrder, index, arr
+          ){
+          return OldOrder.oid !== Order.oid; 
+        });
       }
+      
     }
-    pOrders[oldOrderI] = Order
-    // Set new object
-    NewOrders.set(Order.oid, Order);
-    this.SetOrdersCustomers(NewOrders, NewCustomers);
     
+    // Set new object in NewOrders & NewCustomers
+    NewOrders.set(Order.oid, Order); 
+    NewCustomers.set(Customer.ID, Customer);
+    this.SetOrdersCustomers(NewOrders, NewCustomers);
   }
 
 
   // Change the Run value of a Order:
   ChangeRun(newRun, oid) {
-    const Order = {...this.state.orders.get(oid)};
-    const Customer = this.state.customer.get(Order.BID);
+    const Order         = {...this.state.orders.get(oid)};
+    const Customer      = {...this.state.customer.get(Order.BID)};
     const NewProduction = Customer.productions[newRun - 1];
     
-    const ProductionDateTimeString =
-      String(this.props.date.getFullYear()) + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
-      FormatDateStr(this.props.date.getDate()) + "T" +  
-      NewProduction.dtime;
-
+    const ProductionDateTimeString = this.GetProductionDateTimeString(NewProduction)
+    
     const NewProductionDT = new Date(ProductionDateTimeString);
     const OrderTime       = new Date(Order.deliver_datetime);
-
-
-    console.log(NewProductionDT)
-    console.log(OrderTime)
-
+    
     if (NewProductionDT <= OrderTime) {
-      console.log("Nooo Problem");
       Order.run = newRun;
       this.SetOrder(Order);
-      this.updateAmountForCustomer(Customer.BID);
+      
+      const UpdatedOrders = this.updateAmountForCustomer(Customer.ID);
+
+      this.websocket.send(JSON.stringify({
+        "date" : this.props.date,
+        "messageType" : "ChangeRun",
+        "UpdatedOrders" : UpdatedOrders
+      }));
     } else {
-      console.log("Biiig problem");
       //TODO: Post Error as you cannot deliver this.
       throw "This should not happen, you need to update your rendering"
     }
+  }
 
+  ChangeRunIncoming(newDate, UpdatedOrders){
+    if(this.ShouldOrdersUpdate(newDate)){
+      for(const Order of UpdatedOrders){
+        this.SetOrder(Order);
+      }
+    }
+  }
 
+  updateAmountForCustomer(ID){
+    //This function updates the values FDG amount,
+    //such that the orders are in a consistent state 
     
+    const Customer = {...this.state.customer.get(ID)};
+    const NewOrders = new Map(this.state.orders);
+    if (Customer === undefined) {
+      throw "Customer Not found";
+    }
+    const ChangedOrders = []
+    for (const ProductionI in Customer.productions) {
+      const Production = {...Customer.productions[ProductionI]};
+      var MasterOrder = null; //Order to the given time slot
+      const ServantOrders = []; //Orders outside the time slot
+      const ProductionDateTimeString = this.GetProductionDateTimeString(Production);
+      const ProductionDateTime = new Date(ProductionDateTimeString);
+
+      for (const orderI in Production.orders) {
+        const order = {...Production.orders[orderI]};
+        if (order.deliver_datetime === ProductionDateTimeString) {
+          MasterOrder = {...order};
+        } else {
+          ServantOrders.push({...order});
+        }
+        Production.orders[orderI] = order;
+      }
+
+      if (MasterOrder === null && ServantOrders.length > 0) {
+        //Create a new order
+      } else if (MasterOrder === null && ServantOrders.length === 0) {
+        
+      } else {
+        MasterOrder.total_amount = MasterOrder.amount;
+        MasterOrder.COID = -1;
+        for (const SOrder of ServantOrders) {
+          const MinDiff = CountMinutes(
+            ProductionDateTime, 
+            new Date(SOrder.deliver_datetime)
+          );
+          
+          const OrderContribution = CalculateProduction("FDG", MinDiff, SOrder.amount);
+          //Updating Orders
+          MasterOrder.total_amount += OrderContribution;
+          SOrder.total_amount = 0;
+          SOrder.total_amount_o = 0;
+          SOrder.COID = MasterOrder.oid;
+          //We can update the order now, because we are not touching it later in the function
+          NewOrders.set(SOrder.oid, SOrder);
+          ChangedOrders.push(SOrder);
+        }
+        MasterOrder.total_amount_o = MasterOrder.total_amount * (1 + Customer.overhead/100)
+        Production.contribution = MasterOrder.total_amount_o;
+        NewOrders.set(MasterOrder.oid, MasterOrder);
+        ChangedOrders.push(MasterOrder);
+      }
+      Customer.productions[ProductionI] = Production;
+    }
+    const NewCustomerMap = new Map(this.state.customer);
+    NewCustomerMap.set(Customer.ID, Customer);
+    this.SetOrdersCustomers(NewOrders, NewCustomerMap);
+
+    return ChangedOrders
   }
 
-  updateAmountForCustomer(BID){
-    //This function calculates 
-  }
 
 
-
-  renderRun(Run) {
-    return (<option value={Run.run} key={Run.run}>{Run.run}</option>)
-  }
 
   // Renders 
-  renderRunSelect(init, oid) {
-    
+  renderRunSelect(Order) {
     const Day  = this.props.date.getDay();
-    const Runs = this.state.runs.get(Day);
-    
-    const options = [];
-    for (const Run of Runs) {
-      options.push(this.renderRun(Run));
+    const Customer = this.state.customer.get(Order.BID);
+
+    const OrderDT = new Date(Order.deliver_datetime);
+
+
+    const options = []
+    for(const Production of Customer.productions) {
+      const ProductionDT = new Date(this.GetProductionDateTimeString(Production))
+      if (OrderDT >= ProductionDT) {
+        options.push((<option key={Production.run} value={Production.run}>{Production.run}</option>));
+      }
     }
 
-    return (
-      <select 
-        defaultValue={init}
-        onChange={(event) => this.ChangeRun(Number(event.target.value), oid)}
-      >
+    if (options.length > 1) { 
+      //Daily philosophy: When you only have 1 chocie you have no chocie.
+      return (
+        <select
+        value={Order.run}
+        onChange={(event) => this.ChangeRun(Number(event.target.value), Order.oid)}
+        >
         {options}
       </select>
     )
+    } else {
+      return Order.run;
+    }
   }
 
-  renderAcceptButtons(status,oid) {
-    if (status == 1) return (<td><Button variant="light" onClick={() => this.AcceptOrder(oid)}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>)
-    if (status == 2) return (<td><Button variant="light" onClick={() => {}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>)
-    if (status == 3) return (<td></td>)
+  renderRejectButton(Order){
+    if (Order.COID !== -1 || Order.status === 3) return (<td></td>);
+    return (
+      <td>
+        <Button variant="light">
+          <img className="statusIcon" src="/static/images/decline.svg"/>
+        </Button>
+      </td>
+    );
+  }
+
+  renderAcceptButtons(Order) {
+    if (Order.COID !== -1) return (<td></td>); 
+    if (Order.status == 1) return (<td><Button variant="light" onClick={() => this.AcceptOrder(Order.oid)}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
+    if (Order.status == 2) return (<td><Button variant="light" onClick={() => {}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
+    if (Order.status == 3) return (<td></td>);
+  }
+
+  renderRun(Order){
+    if (Order.status === 1) return ""
+    if (Order.status === 2) return this.renderRunSelect(Order)
+    if (Order.status === 3) return String(Order.run)
+
   }
 
 
   renderOrder(Order) {
     const OrderDT   = new Date(Order.deliver_datetime) 
     const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
-    var Run;
-    if (Order.status === 1) Run = ""
-    if (Order.status === 2) Run = this.renderRunSelect(Order.run, Order.oid)
-    if (Order.status === 3) Run = String(Order.run)
-
+    const Run       = this.renderRun(Order); 
+    
     const customer = this.state.customer.get(Order.BID)
-    var Kunde;
-    (customer !== undefined) ? Kunde = customer.username : Kunde = Order.BID
+    const CustomerName = (customer !== undefined) ? customer.username : Order.BID;
+    const TotalAmount  = (Order.COID === -1) ? Order.total_amount : "Flyttet til:" + Order.COID;
+    const TotalAmountO = (Order.COID === -1) ? Order.total_amount_o : "";
 
     return (
     <tr key={Order.oid}> 
       <td>{renderStatusImage(Order.status)}</td>
       <td>{Order.oid}</td>
-      <td>{Kunde}</td>
+      <td>{CustomerName}</td>
       <td>{Order.amount}</td>
-      <td>{Order.total_amount}</td>
+      <td>{TotalAmount}</td>
+      <td>{TotalAmountO}</td>
       <td>{OrderTime}</td>
       <td>{Run}</td>
-      {this.renderAcceptButtons(Order.status,Order.oid)}
-      <td><Button variant="light"><img className="statusIcon" src="/static/images/decline.svg"></img></Button></td>
+      {this.renderAcceptButtons(Order)}
+      {this.renderRejectButton(Order)}
+      
     </tr>)
   }
 
@@ -326,8 +443,6 @@ export default class FDGTable extends Component {
       orders.push(this.renderOrder(order))
     }
 
-    console.log(this.state)
-
     return (
       <Table>
         <thead>
@@ -336,6 +451,7 @@ export default class FDGTable extends Component {
             <th>Order ID</th>
             <th>Kunde</th>
             <th>Bestilt</th>
+            <th>Total Bestilling</th>
             <th>Med Overhead</th>
             <th>tid</th>
             <th>Kørsel</th>

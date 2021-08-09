@@ -27,6 +27,7 @@ class FDGConsumer(WebsocketConsumer):
 
   #Receive data from Websocket
   def receive(self, text_data):
+    print("Websocket RECIEVE "+text_data)
     message = text_data
     message_json = json.loads(message)
     
@@ -35,7 +36,6 @@ class FDGConsumer(WebsocketConsumer):
 
     if messageType == "AcceptOrder":
       oid = message_json["oid"]
-      SQL.setFDGOrderStatusTo2(oid)
       async_to_sync(self.channel_layer.group_send)(
         self.FDG_channel_name,
         {
@@ -45,12 +45,28 @@ class FDGConsumer(WebsocketConsumer):
           "oid"         : oid
         }
       )
+    if messageType == "ChangeRun":
+      updatedOrders = message_json["UpdatedOrders"]
+      async_to_sync(self.channel_layer.group_send)(
+        self.FDG_channel_name,
+        {
+          "type" : 'ChangeRun',
+          "messageType" : "ChangeRun",
+          "date"        : dateStr,
+          "UpdatedOrders" : updatedOrders
+        }
+      )
 
 
-
-    
+  def ChangeRun(self, event):
+    updatedOrders = event["UpdatedOrders"]
+    #Update the orders in the Database
+    for order in updatedOrders:
+      SQL.UpdateOrder(order)
+    self.send(text_data=json.dumps(event))
 
 
   #Recieve data from channel
   def AcceptOrder(self, event):
+    SQL.setFDGOrderStatusTo2(event["oid"])
     self.send(text_data=json.dumps(event))

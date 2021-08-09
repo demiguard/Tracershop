@@ -57,3 +57,6 @@ def getRuns():
 
 def getProductions():
   return SQLLegacyController.getProductions()
+
+def UpdateOrder(Order : dict):
+  SQLLegacyController.UpdateOrder(Order)

@@ -194,9 +194,13 @@ def getFDGOrders(year:int, month: int, day : int):
       OID,
       status,
       amount,
+      amount_o,
       total_amount,
+      total_amount_o,
       run,
-      BID
+      BID,
+      batchnr,
+      COID
     FROM
       orders 
     WHERE
@@ -211,9 +215,13 @@ def getFDGOrders(year:int, month: int, day : int):
     "oid",
     "status",
     "amount",
+    "amount_o",
     "total_amount",
+    "total_amount_o",
     "run",
-    "BID"
+    "BID",
+    "batchnr",
+    "COID"
   ])
 
 
@@ -265,3 +273,7 @@ def getProductions():
     "dtime",
     "run" 
   ])
+
+def UpdateOrder(Order : dict):
+  print(Order)
+  

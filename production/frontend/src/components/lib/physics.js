@@ -15,5 +15,5 @@ function CalculateProduction(Tracer, minutes, MBQ) {
   
   const hf = HALFLIFE[Tracer]
 
-  return MBQ / Math.pow(1/2,  minutes / hf)
+  return Math.floor(MBQ / Math.pow(1/2,  minutes / hf))
 }
