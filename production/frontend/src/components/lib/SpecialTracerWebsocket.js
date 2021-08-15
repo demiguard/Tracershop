@@ -1,4 +1,4 @@
-export class TracerWebSocket extends WebSocket {
+export class SpecialTracerWebsocket extends WebSocket {
   constructor(path, parent){
     super(path)
     this.table = parent
@@ -7,17 +7,11 @@ export class TracerWebSocket extends WebSocket {
       const data = JSON.parse(e.data)
       const MessageDate = new Date(data["date"])
       switch(data["messageType"]) {
-        case "AcceptOrder":
-          const oid = data["oid"];
-          this.table.AcceptOrderIncoming(oid, MessageDate);
+        case "changeStatus":
+          this.table.changeStatusIncomming(MessageDate, data["oid"], data["status"])
           break;
-        case "ChangeRun":
-          this.table.ChangeRunIncoming(MessageDate, data["UpdatedOrders"]);
-          break;
+        
       }
-
-
-      
     } 
 
 

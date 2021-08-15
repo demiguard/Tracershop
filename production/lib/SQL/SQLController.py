@@ -60,3 +60,9 @@ def getProductions():
 
 def UpdateOrder(Order : dict):
   SQLLegacyController.UpdateOrder(Order)
+
+def getTOrders(year : int, month : int, day : int): 
+  return SQLLegacyController.getTOrders(year, month, day)
+
+def setTOrderStatus(oid, status):
+  SQLLegacyController.setTOrderStatus(oid, status)

@@ -147,7 +147,6 @@ export default class FDGTable extends Component {
         orders : [],
         dtime  : Production.dtime,
         run    : Production.run,
-        contribution : 0
       });
       Customer.productions.sort((p1, p2) => (p1.run > p2.run) ? 1 : -1);
     }
@@ -163,7 +162,7 @@ export default class FDGTable extends Component {
       if (Production === undefined) continue;
       Production.orders.push(Order);
     }
-    return newOrders
+    return newOrders;
   }
 
 
@@ -303,7 +302,6 @@ export default class FDGTable extends Component {
       const ServantOrders = []; //Orders outside the time slot
       const ProductionDateTimeString = this.GetProductionDateTimeString(Production);
       const ProductionDateTime = new Date(ProductionDateTimeString);
-
       for (const orderI in Production.orders) {
         const order = {...Production.orders[orderI]};
         if (order.deliver_datetime === ProductionDateTimeString) {
@@ -337,8 +335,7 @@ export default class FDGTable extends Component {
           NewOrders.set(SOrder.oid, SOrder);
           ChangedOrders.push(SOrder);
         }
-        MasterOrder.total_amount_o = MasterOrder.total_amount * (1 + Customer.overhead/100)
-        Production.contribution = MasterOrder.total_amount_o;
+        MasterOrder.total_amount_o = MasterOrder.total_amount * (1 + Customer.overhead/100);
         NewOrders.set(MasterOrder.oid, MasterOrder);
         ChangedOrders.push(MasterOrder);
       }
@@ -433,8 +430,38 @@ export default class FDGTable extends Component {
       <td>{Run}</td>
       {this.renderAcceptButtons(Order)}
       {this.renderRejectButton(Order)}
-      
     </tr>)
+  }
+
+  renderTotal(run, _index, _arr) {
+    var total = 0;
+    var total_o = 0
+    const runDateString = String(this.props.date.getFullYear() + '-' +
+      FormatDateStr(this.props.date.getMonth() + 1)) + '-' +
+      FormatDateStr(this.props.date.getDate()) + "T" + run.ptime;
+    const runDate = new Date(runDateString);
+    for(const [_BID, Customer ] of this.state.customer.entries()){
+      for(const Production of Customer.productions){
+        if (Production.run === run.run) {
+          var contribution = 0;
+          for (const Order of Production.orders) {
+            contribution += Order.total_amount;
+          }
+          if(contribution === 0) continue;
+          
+          const ProductionDatetime = new Date(this.GetProductionDateTimeString(Production));
+          const MinDiff = CountMinutes(runDate, ProductionDatetime);
+          const TimeCorrectedContribution = CalculateProduction("FDG", MinDiff, contribution);
+          total += TimeCorrectedContribution;
+          total_o += Math.floor(TimeCorrectedContribution * (1 + Customer.overhead / 100));
+        }
+      }
+    }
+
+    return (
+    <div key={run.run}>
+      Kørsel : {run.run} - {run.ptime} : {total} MBq / Overhead : {total_o} MBq
+    </div>);
   }
 
   render() {
@@ -443,7 +470,18 @@ export default class FDGTable extends Component {
       orders.push(this.renderOrder(order))
     }
 
-    return (
+    const dailyRuns = this.state.runs.get(this.props.date.getDay());
+    const RenderedRuns = []
+    if (dailyRuns !== undefined) {
+      for (const run of dailyRuns) {
+        RenderedRuns.push(this.renderTotal(run));
+      }
+    }
+    
+    return (<div>
+      <div> Produktioner: <br/>
+        {RenderedRuns}
+      </div>
       <Table>
         <thead>
           <tr>
@@ -463,6 +501,7 @@ export default class FDGTable extends Component {
           {orders}
         </tbody>
       </Table>
+    </div>
     );
   }
 }

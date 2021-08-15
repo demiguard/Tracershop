@@ -275,5 +275,61 @@ def getProductions():
   ])
 
 def UpdateOrder(Order : dict):
-  print(Order)
+  
+  SQLQuery = f"""
+    UPDATE orders
+    SET
+      status = {Order["status"]},
+      total_amount = {Order["total_amount"]},
+      total_amount_o = {Order["total_amount_o"]},
+      run = {Order["run"]},
+      batchnr = \"{Order["batchnr"]}\", 
+      COID = {Order["COID"]}
+    WHERE
+      OID = {Order["oid"]}
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def getTOrders(year : int, month : int, day :int):
+  month = Formatting.convertIntToStrLen2(month)
+  day   = Formatting.convertIntToStrLen2(day)
+  SQLQuery = f"""
+    SELECT 
+      t_orders.deliver_datetime,
+      t_orders.OID,
+      t_orders.status,
+      t_orders.n_injections,
+      t_orders.anvendelse,
+      t_orders.comment,
+      Users.Username,
+      Tracers.name
+    FROM
+      t_orders 
+        INNER JOIN Tracers on t_orders.tracer = Tracers.id
+        INNER JOIN Users   on t_orders.BID    = Users.Id
+    WHERE 
+      t_orders.deliver_datetime LIKE \"{year}-{month}-{day}%\"
+  """
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+
+  return SQLFormatter.FormatSQLTuple(QueryResult, [
+    "deliver_datetime",
+    "oid",
+    "status",
+    "injections",
+    "usage",
+    "comment",
+    "username",
+    "tracer"
+  ])
+
+def setTOrderStatus(oid, status):
+  
+  SQLQuery = f"""
+  UPDATE t_orders
+  SET status = {status}
+  WHERE
+    OID = {oid}
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
   
