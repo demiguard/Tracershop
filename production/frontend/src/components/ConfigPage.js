@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import { Container, Table, FormControl } from "react-bootstrap";
 import { ajax } from "jquery";
+import TracerModal from "./TracerModal";
 
 export {ConfigPage}
 
@@ -9,74 +10,161 @@ export default class ConfigPage extends Component {
     super(props)
 
     this.state = {
-      filterName : null,
-      filterIsotope : null,
-      names : [],
-      isotope : [],
-      isotopeOptions : {},
-      injections : [],
-      lockOrder : [],
-      tracerIDs : []
+      tracerID : null,
+      showModal : false,
+      ModalTracerMap : new Map(),
+
+      customers : new Map(),
+      tracerCustomer : new Map(),
+      tracers : new Map(),
+      isotope : []
     }
-    this.fetchTracers()
+
+  Promise.all([this.getCustomers(), this.getTracers(), this.getTracerCustomers()]).then(([
+    customerJSON, TracerJSON, TracerCustomers
+  ]) => {
+    const TracerInfo = TracerJSON["tracer"];
+    const Isotopes   = TracerJSON["isotope"]
+      
+    const newCustomerMap = new Map();
+    const TracerMap = new Map(); 
+    const TracerCustomerMap = new Map();
+
+    for (const tracer of TracerInfo) {
+      TracerMap.set(tracer.id, tracer); 
+    }
+    for(const Customer of customerJSON["customers"]){
+      newCustomerMap.set(Customer.ID, Customer)
+    }
+    
+    for(const tracerCustomer of TracerCustomers["data"]){
+      if (TracerCustomerMap.has(tracerCustomer.tracer_id)) {
+        const TracerMapping = TracerCustomerMap.get(tracerCustomer.tracer_id)
+        TracerMapping.set(tracerCustomer.customer_id, true)
+      } else {
+        const TracerMapping = new Map();
+        TracerMapping.set(tracerCustomer.customer_id, true);
+        TracerCustomerMap.set(tracerCustomer.tracer_id, TracerMapping);
+      }
+    }
+
+    this.setState({
+      ...this.state,
+      tracers : TracerMap,
+      isotope : Isotopes,
+      customers : newCustomerMap,
+      tracerCustomer : TracerCustomerMap
+      });
+
+    console.log(this.state);
+    });    
   }
 
-  fetchTracers() {
-    ajax({
+  //Ajax getters
+  getTracers(){
+    return ajax({
       url:"api/gettracers"
-    }).then((res) => {
-      const TracerInfo = res["tracer"];
-      this.setState({
-        ...this.state,
-        names : TracerInfo["name"],
-        isotope : TracerInfo["isotope"],
-        isotopeOptions : res["isotope"],
-        injections : TracerInfo["inj"],
-        lockOrder : TracerInfo["block"],
-        tracerIDs : TracerInfo["TID"]
-      });
+    })
+  }
+
+  getCustomers(){
+    return ajax({
+      url:"api/getCustomers"
+    })
+  }
+
+  getTracerCustomers(){
+    return ajax({
+      url:"api/getTracerCustomer"
+    })
+  }
+
+
+  updateTracer(tracer, key, newValue ) {
+    if (key == "n_injections" || key == "order_block") {
+      newValue = Number(newValue);
+      if (isNaN(newValue)) return;
+    }
+    ajax({
+      url:"api/updateTracer",
+      type:"post",
+      dataType:"json",
+      data : JSON.stringify({
+        "tracer" : tracer.id,
+        "key"    : key,
+        "newValue" : newValue 
+      })
+    }).then(() => {
+      const NewTracerMap = new Map(this.state.tracers);
+      const newTracer = {...tracer}
+      newTracer[key] = newValue;
+      NewTracerMap.set(newTracer.id, newTracer);
+      
+      this.setState({...this.state,
+        tracers : NewTracerMap
+      })
     });
   }
 
-  renderIsotopeSelect() {
+
+  renderIsotopeSelect(tracer) {
     const options = [];
-    for (const [IsotopeID, isotope] of Object.entries(this.state.isotopeOptions)) {
-      options.push((<option key={IsotopeID} value={IsotopeID}>{isotope}</option>))
+    for (const isotope of this.state.isotope) {
+      options.push((<option key={isotope.ID} value={isotope.ID}>{isotope.name}</option>))
     }
 
     return (
-      <select>
+      <select 
+        value={tracer.isotope} 
+        onChange={(event) => {this.updateTracer(tracer, "isotope", Number(event.target.value))}}>
         {options}
       </select>
     ) 
   }
 
-  renderTracer(i) {
+  showTracerModal(tracerID){
+    const ModalMap = (this.state.tracerCustomer.has(tracerID)) ? this.state.tracerCustomer.get(tracerID) : new Map();
+    const newState = {...this.state,
+      showModal : true,
+      ModalTracerMap : ModalMap,
+      tracerID : tracerID
+    };
+    this.setState(newState);
+  }
+
+  closeModal(){
+    const newState = {...this.state,
+      showModal : false
+    };
+    this.setState(newState);
+  }
+
+  renderTracer(tracer) {
     return(
-    <tr key={this.state.tracerIDs[i]}>
+    <tr key={tracer.id}>
       <td>
-        <FormControl defaultValue={this.state.names[i]}/>
+        <FormControl value={tracer.name} onChange={(event) => {this.updateTracer(tracer, "name", event.target.value)}}/>
       </td>
       <td>
-        {this.renderIsotopeSelect(this.state.isotope[i])}
+        {this.renderIsotopeSelect(tracer)}
       </td>
       <td>
-        <FormControl defaultValue={this.state.injections[i]}/>
+        <FormControl value={tracer.n_injections}  onChange={(event) => {this.updateTracer(tracer, "n_injections", event.target.value)}}/>
       </td>
       <td>
-        <FormControl defaultValue={this.state.lockOrder[i]}/>
+        <FormControl value={tracer.order_block}  onChange={(event) => {this.updateTracer(tracer, "order_block", event.target.value)}}/>
       </td>
       <td>
-        config Button
+        <img src="/static/images/setting2.png" className="statusIcon" onClick={(_event) => this.showTracerModal(tracer.id)}></img>
       </td>
     </tr>
     );
   }
 
-  render() {  
+  render() {
     const Tracers = []
-    for (let i=0; i < this.state.tracerIDs.length; i++ ) {
-      Tracers.push(this.renderTracer(i));
+    for (const [_tracerID, tracer] of this.state.tracers) {
+      Tracers.push(this.renderTracer(tracer));
     }
 
     return (
@@ -95,6 +183,13 @@ export default class ConfigPage extends Component {
           {Tracers}
         </tbody>
       </Table>
+      <TracerModal
+        show           = {this.state.showModal}
+        ModalTracerMap = {this.state.ModalTracerMap}
+        customers      = {this.state.customers}
+        onClose        = {this.closeModal.bind(this)} 
+        tracerID       = {this.state.tracerID}
+      />
     </Container>);
   }
 }

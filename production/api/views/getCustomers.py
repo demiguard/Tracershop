@@ -11,6 +11,8 @@ class ApiGetCustomers(View):
   def get(self, request):
 
     Result = SQLController.getCustomers()
-    FormattedResult = { res["ID"] : res["UserName"] for res in Result}
     
-    return JsonResponse(FormattedResult)
+    
+    return JsonResponse({
+      "customers" : Result
+    })

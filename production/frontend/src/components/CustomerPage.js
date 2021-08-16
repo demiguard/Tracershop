@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { Row, FormControl, Table, Container } from "react-bootstrap"
-import { ajax } from "jquery"
-import { node } from "prop-types";
+import { ajax } from "jquery";
 import { CustomerModal } from "./CustomerModal";
 
 export { CustomerPage }
@@ -26,14 +25,7 @@ export default class CustomerPage extends Component {
         return res   
       }}).then(
         (res) => {
-          const CustomerList = []
-          const IDs = Object.keys(res)
-          for(let i = 0; i<IDs.length; i++) {
-              CustomerList.push({
-              id : IDs[i],
-              username : res[IDs[i]]
-            })
-          }
+          const CustomerList = res["customers"]
           const NewState = {
             ...this.state,
             Customers : CustomerList,
@@ -56,9 +48,8 @@ export default class CustomerPage extends Component {
     const Filter = event.target.value;
     const FilterRegEx = new RegExp(Filter, "g")
     const newFilterList = [];
-    for(let i = 0; i < this.state.Customers.length; i++) {
-      const customer = this.state.Customers[i];
-      if (FilterRegEx.test(customer["username"])) {
+    for(const customer of this.state.Customers) {
+      if (FilterRegEx.test(customer["UserName"])) {
         newFilterList.push(customer);
       }
     }
@@ -80,7 +71,7 @@ export default class CustomerPage extends Component {
   }
 
 
-  saveModal(modalState) {
+  saveModal() {
     const newState = {
       ...this.state,
       showModal : false,
@@ -101,11 +92,10 @@ export default class CustomerPage extends Component {
 
   render() {
     var customers = [];
-    for (let i = 0; i < this.state.filteredCustomers.length; i++) {
-      const customer = this.state.filteredCustomers[i];
+    for (const customer of this.state.filteredCustomers) {
       customers.push(this.renderCustomer(
-        customer["id"],
-        customer["username"]
+        customer["ID"],
+        customer["UserName"]
       ));
     }
 

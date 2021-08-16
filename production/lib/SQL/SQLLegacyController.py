@@ -21,8 +21,6 @@ def getCustomers():
     WHERE
       UserRoles.Id_Role = 4
   """
-
-
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
   names = ["UserName", "ID", "overhead"]
@@ -153,23 +151,16 @@ def getTracers():
     FROM
       Tracers
   """
-  result = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
-  returnDict = {
-    "TID" : [],
-    "name" : [],
-    "isotope" : [],
-    "inj"  : [], 
-    "block" : []
-  }
-
-  for (TID, name, isotope, inj, block) in result:
-    returnDict["TID"].append(TID)
-    returnDict["name"].append(name)
-    returnDict["isotope"].append(isotope)
-    returnDict["inj"].append(inj)
-    returnDict["block"].append(block)
-  return returnDict
+  return SQLFormatter.FormatSQLTuple(QueryResult, [
+    "id",
+    "name",
+    "isotope",
+    "n_injections",
+    "order_block"
+  ])
+  
   
 
 def getIsotopes():
@@ -180,9 +171,10 @@ def getIsotopes():
     isotopes
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return {
-    IsotopePair[0] : IsotopePair[1] for IsotopePair in QueryResult
-  }
+  return SQLFormatter.FormatSQLTuple(QueryResult,[
+    "ID",
+    "name"
+  ])
 
 
 def getFDGOrders(year:int, month: int, day : int):
@@ -332,4 +324,60 @@ def setTOrderStatus(oid, status):
     OID = {oid}
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
-  
+
+def updateTracer(TracerID, key, newValue):
+
+  if key == "name":
+    SQLQuery = f"""
+      UPDATE Tracers
+      SET
+        {key} = \"{newValue}\"
+      WHERE
+        id = {TracerID}
+    """
+  else:
+    SQLQuery = f"""
+      UPDATE Tracers
+      SET
+        {key} = {newValue}
+      WHERE
+        id = {TracerID}
+    """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def getTracerCustomer():
+  SQLQuery = f"""
+  SELECT
+    tracer_id,
+    customer_id
+  FROM
+    TracerCustomer
+  ORDER BY
+    tracer_id,
+    customer_id
+  """
+
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return SQLFormatter.FormatSQLTuple(QueryResult, [
+    "tracer_id",
+    "customer_id"
+  ])
+
+def createTracerCustomer(tracer_id, customer_id):
+  SQLQuery = f"""
+  INSERT INTO 
+    TracerCustomer(tracer_id, customer_id)
+  VALUES
+    ({tracer_id},{customer_id})
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+
+def deleteTracerCustomer(tracer_id, customer_id):
+  SQLQuery = f"""
+  DELETE FROM
+    TracerCustomer
+  WHERE
+    tracer_id = {tracer_id} AND customer_id = {customer_id}
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)

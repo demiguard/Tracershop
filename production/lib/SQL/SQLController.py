@@ -66,3 +66,15 @@ def getTOrders(year : int, month : int, day : int):
 
 def setTOrderStatus(oid, status):
   SQLLegacyController.setTOrderStatus(oid, status)
+
+def updateTracer(tracerID, key, newValue):
+  SQLLegacyController.updateTracer(tracerID, key, newValue)
+
+def getTracerCustomer():
+  return SQLLegacyController.getTracerCustomer()
+
+def createTracerCustomer(tracer_id, customer_id):
+  SQLLegacyController.createTracerCustomer(tracer_id, customer_id)
+
+def deleteTracerCustomer(tracer_id, customer_id):
+  SQLLegacyController.deleteTracerCustomer(tracer_id, customer_id)
