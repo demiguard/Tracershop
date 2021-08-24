@@ -1,4 +1,4 @@
-import { ajax } from "jquery";
+import { ajax, post } from "jquery";
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl } from "react-bootstrap";
 import { FormatNumber, FormatTime } from "./lib/formatting"
@@ -81,6 +81,7 @@ export default class CustomerModal extends Component {
 
     ajax({
       url: "api/delivertimes",
+      type:post,
       data:JSON.stringify(message),
       dataType : "json"
     }).then((res) => {
@@ -102,6 +103,7 @@ export default class CustomerModal extends Component {
     })
   }
 
+  //Helper functions
   changeState(value, state) {
     const newState =  {...this.state};
     newState[state] = value;
@@ -116,6 +118,7 @@ export default class CustomerModal extends Component {
   }
 
 
+  // Rendering Functions
   renderDatePicker(defaultValue,i) {
     return (
       <select 
@@ -250,29 +253,14 @@ export default class CustomerModal extends Component {
 
     return (
       <div>
-        <Row>
-          Kunde nummer: {info.kundenr}
-        </Row>
-        <Row>
-          Kontakt: {info.contact}
-        </Row>
-        <Row>
-          Telefon : {info.tlf}
-        </Row>
-        <Row>
-          Email 1: {info.email1}
-        </Row>
-        <Row>
-          Email 2: {info.email2}
-        </Row>
-        <Row>
-          Email 3: {info.email3}
-        </Row>
-        <Row>
-          Email 4: {info.email4}
-        </Row>
-        <Row>
-          Overhead : 
+        <Row> Kunde nummer: {info.kundenr} </Row>
+        <Row> Kontakt: {info.contact} </Row>
+        <Row> Telefon : {info.tlf} </Row>
+        <Row> Email 1: {info.email1} </Row>
+        <Row> Email 2: {info.email2} </Row>
+        <Row> Email 3: {info.email3} </Row>
+        <Row> Email 4: {info.email4}  </Row>
+        <Row> Overhead : 
             <FormControl 
               defaultValue={info.overhead}
               onChange={(event) => this.changeStateNumber(event, "overhead")}
@@ -297,7 +285,6 @@ export default class CustomerModal extends Component {
     );
   }
   
-  
   render() {
     return (
       <Modal 
@@ -314,15 +301,6 @@ export default class CustomerModal extends Component {
         <Modal.Footer>
           <Button onClick={this.props.onClose}>
             Luk
-          </Button>
-          <Button onClick={ () => {
-            // Never have a more hacky solution been made
-            // I'm accutally proud at just how "unreact" this feels
-            // They said state belongs to the child, they were wrong
-            const state = this.state;
-            this.props.saveModal(state)}
-          }>
-            Gem
           </Button>
         </Modal.Footer>
       </Modal>

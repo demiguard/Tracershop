@@ -110,11 +110,19 @@ def getTorderMonthlyStatus(year : int, month : int):
   WHERE
     CONVERT (DATE(deliver_datetime), CHAR) Like '{year}-{month}-%'
   """
-  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return {
-    statusPair[0] : statusPair[1] * 10 for statusPair in QueryResult
-  }
+  QueryResults = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
+  returnDict = {}
+
+  #Picking the minimum
+  for QueryResult in QueryResults:
+    if QueryResult[0] in returnDict:
+      if returnDict[QueryResult[0]] > QueryResult[1]:
+        returnDict[QueryResult[0]] = QueryResult[1]
+    else:
+      returnDict[QueryResult[0]] = QueryResult[1]
+
+  return returnDict
 
 def getOrderMonthlyStatus(year : int, month : int):
   month = Formatting.convertIntToStrLen2(month)

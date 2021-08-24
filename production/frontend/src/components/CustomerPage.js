@@ -8,12 +8,11 @@ export { CustomerPage }
 export default class CustomerPage extends Component {
   constructor(props) {
     super(props);
-    
 
     this.state = {
-      Customers : [],
-      filteredCustomers : [],
-      showModal : false,
+      Customers   : [],
+      filter      : "",
+      showModal   : false,
       userIDModal : null,
     }
 
@@ -28,8 +27,7 @@ export default class CustomerPage extends Component {
           const CustomerList = res["customers"]
           const NewState = {
             ...this.state,
-            Customers : CustomerList,
-            filteredCustomers : CustomerList
+            Customers : CustomerList
           }
           this.setState(NewState)
         });
@@ -46,17 +44,10 @@ export default class CustomerPage extends Component {
 
   OnchangeFilter(event) {
     const Filter = event.target.value;
-    const FilterRegEx = new RegExp(Filter, "g")
-    const newFilterList = [];
-    for(const customer of this.state.Customers) {
-      if (FilterRegEx.test(customer["UserName"])) {
-        newFilterList.push(customer);
-      }
-    }
-
+    
     const NewState = {
       ...this.state,
-      filteredCustomers : newFilterList
+      filter : Filter
     };
     this.setState(NewState);
   }
@@ -70,18 +61,6 @@ export default class CustomerPage extends Component {
     this.setState(newState);
   }
 
-
-  saveModal() {
-    const newState = {
-      ...this.state,
-      showModal : false,
-      userIDModal : null
-    }
-    this.setState(newState);
-  }
-
-
-
   renderCustomer (ID, username) {
     return (
       <tr key={ID} onClick={() => this.ActivateModal(ID)} >
@@ -91,12 +70,15 @@ export default class CustomerPage extends Component {
   }
 
   render() {
-    var customers = [];
-    for (const customer of this.state.filteredCustomers) {
-      customers.push(this.renderCustomer(
-        customer["ID"],
-        customer["UserName"]
-      ));
+    const customers = [];
+    const FilterRegEx = new RegExp(this.state.filter,'g')
+    for (const customer of this.state.Customers) {
+      if (FilterRegEx.test(customer["UserName"])) {
+        customers.push(this.renderCustomer(
+          customer["ID"],
+          customer["UserName"]
+          ));
+      }
     }
 
     return (
@@ -121,7 +103,6 @@ export default class CustomerPage extends Component {
       show={this.state.showModal}
       userid = {this.state.userIDModal}
       onClose = {this.closeModal.bind(this)}
-      saveModal = {this.saveModal.bind(this)}
       />
     
     </Container>

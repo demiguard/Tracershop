@@ -18,8 +18,10 @@ export default class Calender extends Component {
     }
     this.updateColors(
       this.props.date.getFullYear(),
-      this.props.date.getMonth() + 1
+      this.props.date.getMonth()
     )
+    console.log(this.props.date);
+    console.log(this.state.activeMonth);
   }
 
   componentDidUpdate(prevProps) {
@@ -43,7 +45,7 @@ export default class Calender extends Component {
       dataType : "json",
 
       data : JSON.stringify({
-        month : month,
+        month : month + 1,
         year  : year
       }),
     }).then((res) => {
