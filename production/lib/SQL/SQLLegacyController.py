@@ -147,7 +147,8 @@ def getTracers():
       name,
       isotope, 
       n_injections,
-      order_block
+      order_block,
+      in_use
     FROM
       Tracers
   """
@@ -158,7 +159,8 @@ def getTracers():
     "name",
     "isotope",
     "n_injections",
-    "order_block"
+    "order_block",
+    "in_use"
   ])
   
   
@@ -381,3 +383,39 @@ def deleteTracerCustomer(tracer_id, customer_id):
     tracer_id = {tracer_id} AND customer_id = {customer_id}
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
+
+
+def createNewTracer(name, isotope, n_injections, order_block):
+  SQLQuery = f"""
+  INSERT INTO
+    Tracers(name, isotope, n_injections, order_block)
+  VALUES
+    (\"{name}\", {isotope}, {n_injections}, {order_block})
+  """
+
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def deleteTracer(tracer_id):
+  """
+    This fucntions deletes a tracer from the data base.
+    This includes the tables:
+      * Tracers
+      * TracerCustomer
+  """
+
+  SQLQueryTracerCustomers = f"""
+  DELETE FROM
+    TracerCustomer
+  WHERE
+    tracer_id = {tracer_id}
+  """
+  SQLExecuter.ExecuteQuery(SQLQueryTracerCustomers)
+
+  SQLQueryTracer  = f"""
+  DELETE FROM
+    Tracers
+  WHERE
+    id = {tracer_id}
+  """
+  SQLExecuter.ExecuteQuery(SQLQueryTracer)
+  

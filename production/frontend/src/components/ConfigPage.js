@@ -1,7 +1,8 @@
 import React, { Component } from "react";
-import { Container, Table, FormControl } from "react-bootstrap";
+import { Container, Table, FormControl, Form } from "react-bootstrap";
 import { ajax } from "jquery";
 import TracerModal from "./TracerModal";
+import { BooleanMapping } from "./lib/utils";
 
 export {ConfigPage}
 
@@ -10,6 +11,7 @@ export default class ConfigPage extends Component {
     super(props)
 
     this.state = {
+      filter : "",
       tracerID : null,
       showModal : false,
       ModalTracerMap : new Map(),
@@ -17,7 +19,14 @@ export default class ConfigPage extends Component {
       customers : new Map(),
       tracerCustomer : new Map(),
       tracers : new Map(),
-      isotope : []
+      isotope : [],
+
+      newTracerName : "",
+      newIsotope    : 1,
+      newInjections : 0,
+      newOrderBlock : 0
+
+
     }
 
   Promise.all([this.getCustomers(), this.getTracers(), this.getTracerCustomers()]).then(([
@@ -55,8 +64,6 @@ export default class ConfigPage extends Component {
       customers : newCustomerMap,
       tracerCustomer : TracerCustomerMap
       });
-
-    console.log(this.state);
     });    
   }
 
@@ -79,6 +86,13 @@ export default class ConfigPage extends Component {
     })
   }
 
+  updateFilter(event) {
+    const newState = {
+      ...this.state,
+      filter : event.target.value
+    }
+    this.setState(newState);
+  }
 
   updateTracer(tracer, key, newValue ) {
     if (key == "n_injections" || key == "order_block") {
@@ -106,8 +120,37 @@ export default class ConfigPage extends Component {
     });
   }
 
+  deleteTracer(){
+    ajax({
+      url:"api/deleteTracer",
+      type:"POST", 
+      dataType:"json",
+      data:JSON.stringify({
+        tracerID : this.state.tracerID
+      })
+    });
 
-  renderIsotopeSelect(tracer) {
+    const NewTracerMap = new Map(this.state.tracers);
+    newTracerMap.delete(this.state.tracerID);
+
+    const newState = { ...this.state,
+      tracers : NewTracerMap,
+      showModal : false,
+      tracerID  : null
+    };
+    this.setState(newState);
+  }
+
+
+  //Curried Functions : https://stackoverflow.com/questions/36314/what-is-currying
+  curriedIsotopeUpdateTracer(tracer){
+    return function(event) {
+      this.updateTracer(tracer, "isotope", Number(event.target.value))
+    }.bind(this);
+  }
+
+
+  renderIsotopeSelect(initialValue, eventFunction) {
     const options = [];
     for (const isotope of this.state.isotope) {
       options.push((<option key={isotope.ID} value={isotope.ID}>{isotope.name}</option>))
@@ -115,8 +158,8 @@ export default class ConfigPage extends Component {
 
     return (
       <select 
-        value={tracer.isotope} 
-        onChange={(event) => {this.updateTracer(tracer, "isotope", Number(event.target.value))}}>
+        value={initialValue} 
+        onChange={(event) => {eventFunction(event)}}>
         {options}
       </select>
     ) 
@@ -139,20 +182,97 @@ export default class ConfigPage extends Component {
     this.setState(newState);
   }
 
+
+  createNewTracer(){
+    ajax({
+      url:"api/createNewTracer",
+      method: "POST",
+      dataType:"json",
+      data: JSON.stringify({
+        newTracerName : this.state.newTracerName,
+        newIsotope : this.state.newIsotope,
+        newInjections : this.state.newInjections,
+        newOrderBlock : this.state.newOrderBlock
+      })
+    }).then((res) => {
+      const newTracerMap = new Map();
+      for (const tracer of res["tracers"]) {
+        newTracerMap.set(tracer.id, tracer); 
+      }
+      
+      
+    
+      const newState = {...this.state,
+        tracers : newTracerMap,
+        newTracerName : "",
+        newIsotope : 1,
+        newInjections : 0,
+        newOrderBlock : 0
+      };
+      this.setState(newState)
+
+    })
+
+  }
+
+
+  curriedChangeNewValue(){
+    return function(event){
+      this.changeNewValue("newIsotope", event);
+    }.bind(this)
+  }
+
+  changeNewValue(key, event) {
+    const newState = {...this.state}
+    if (key == "newInjections" || key =="newIsotope" || key == "newOrderBlock"){
+      const NumKey = Number(event.target.value);
+      if (!isNaN(NumKey)){
+        newState[key] = NumKey;
+      }
+    } else {
+      newState[key] = event.target.value;
+    }
+    this.setState(newState);
+  }
+
+  renderNewTracer() {
+    return(
+    <tr key={-1}>
+      <td><FormControl value={this.state.newTracerName} onChange={(event)=> this.changeNewValue("newTracerName", event)}/></td> 
+      <td>{this.renderIsotopeSelect(this.state.newIsotope, this.curriedChangeNewValue())}</td> 
+      <td><FormControl value={this.state.newInjections} onChange={(event)=> this.changeNewValue("newInjections", event)} /></td> 
+      <td><FormControl value={this.state.newOrderBlock} onChange={(event)=> this.changeNewValue("newOrderBlock", event)}/></td> 
+      <td></td>
+      <td><img src="/static/images/accept.svg" className="statusIcon" onClick={()=>this.createNewTracer()}/></td>
+    </tr>);
+  }
+
+
   renderTracer(tracer) {
+    const checked = tracer.in_use > 0;
     return(
     <tr key={tracer.id}>
       <td>
         <FormControl value={tracer.name} onChange={(event) => {this.updateTracer(tracer, "name", event.target.value)}}/>
       </td>
       <td>
-        {this.renderIsotopeSelect(tracer)}
+        {this.renderIsotopeSelect(tracer.isotope, this.curriedIsotopeUpdateTracer(tracer))}
       </td>
       <td>
         <FormControl value={tracer.n_injections}  onChange={(event) => {this.updateTracer(tracer, "n_injections", event.target.value)}}/>
       </td>
       <td>
         <FormControl value={tracer.order_block}  onChange={(event) => {this.updateTracer(tracer, "order_block", event.target.value)}}/>
+      </td>
+      <td>
+        <Form.Check
+          defaultChecked={checked}
+          type="checkbox"
+          className="mb-2"
+          onClick={(event) =>{
+            this.updateTracer(tracer, "in_use", BooleanMapping(event.target.checked))
+          }}
+        />
       </td>
       <td>
         <img src="/static/images/setting2.png" className="statusIcon" onClick={(_event) => this.showTracerModal(tracer.id)}></img>
@@ -163,12 +283,15 @@ export default class ConfigPage extends Component {
 
   render() {
     const Tracers = []
+    const filter = new RegExp(this.state.filter, 'g');
     for (const [_tracerID, tracer] of this.state.tracers) {
-      Tracers.push(this.renderTracer(tracer));
+      if (filter.test(tracer.name)) Tracers.push(this.renderTracer(tracer));
     }
+    Tracers.push(this.renderNewTracer());
 
     return (
     <Container>
+      Tracer Filter: <FormControl value={this.state.filter} onChange={(event) => this.updateFilter(event)}/>
       <Table>
         <thead>
           <tr>
@@ -176,6 +299,7 @@ export default class ConfigPage extends Component {
             <th>Isotope</th>
             <th>Injektioner</th>
             <th>Lås bestilling</th>
+            <th>I brug</th>
             <th>Konfiguration</th>
           </tr>
         </thead>
@@ -189,6 +313,7 @@ export default class ConfigPage extends Component {
         customers      = {this.state.customers}
         onClose        = {this.closeModal.bind(this)} 
         tracerID       = {this.state.tracerID}
+        deleteTracer   = {this.deleteTracer.bind(this)}
       />
     </Container>);
   }

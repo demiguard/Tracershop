@@ -7,14 +7,19 @@ The bookkeeping system is a django webservice that runs on top of a mysql databa
 
 ## Components of Tracershop
 
-* **Django app - Customer** The main webservice
-* **pingService** a service that retrieves studies from the future at a regular interval
+* **Django app - Customer** *(UWSGI DJANGO / Pure Javascript + JQuery WEBSERVER)* The main internal webservice for placing orders.
+* **pingService** *(System Service)* A service that retrieves internal studies to provide for easy ordering. This is a Customer Subsystem.
+* **Production** *(AWSGI DJANGO / REACT WEBSERVER)* This site is the productions view of tracershop, it configures availble tracers and accepts orders.
 
-## Old System
+## Old System & improvements
 
 The System runs a 'copy' of the old database on the new database, this is done so that cutting the cord from the old service is very easy.
 
-Note that the customer number 'kundenummer' from the user table is unused, instead the BID is used for most things.
+Note that the customer number 'kundenummer' from the user table is unused, instead the BID is used for most things. Note that this external Database prevent you from creating stuff like a nice and pretty REST API.
+
+Obviously if you are looking at this and wish to improve upon this system, upgrading and having a look and remaking the database system should be your top priority.
+
+Secondly I would also recommend rewritting the Customer to be a React / Django App. Once you start maintaining both the production and the Customer APP then you'll know the difference. 
 
 ### Difference from the old system
 

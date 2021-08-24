@@ -78,3 +78,10 @@ def createTracerCustomer(tracer_id, customer_id):
 
 def deleteTracerCustomer(tracer_id, customer_id):
   SQLLegacyController.deleteTracerCustomer(tracer_id, customer_id)
+
+def createNewTracer(Name, isotope, n_injections, order_block):
+  SQLLegacyController.createNewTracer(Name, isotope, n_injections, order_block)
+  return SQLLegacyController.getTracers()
+
+def deleteTracer(tracer_id):
+  SQLLegacyController.deleteTracer(tracer_id)

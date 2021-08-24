@@ -303,6 +303,7 @@ export default class CustomerModal extends Component {
       <Modal 
         show={this.props.show} 
         size="lg"
+        onHide ={this.props.onClose}
       >
         <Modal.Header>
           <Modal.Title>Kunde Konfigurering</Modal.Title>
