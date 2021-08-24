@@ -25,7 +25,7 @@ class EditMyCustomers(LoginRequiredMixin, TemplateView):
       #Find our 
       DjangoCustomers = Customer.objects.filter(ID=ActiveCustomer['ID']) 
       if len(DjangoCustomers) == 0:
-        DjangoCustomer = Customer(ID=ActiveCustomer[ID], customerName=ActiveCustomer['Username'])
+        DjangoCustomer = Customer(ID=ActiveCustomer["ID"], customerName=ActiveCustomer['Username'])
         DjangoCustomer.save()
       else:
         DjangoCustomer = DjangoCustomers[0] #Unique cuz primary Key

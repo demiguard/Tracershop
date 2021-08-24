@@ -10,7 +10,7 @@ import traceback
 
 from customer.lib import Formatting
 from customer.lib.SQL import SQLController as SQL
-from customer.models import PotentialUser, User
+from customer.models import PotentialUser, User, UserHasAccess, Customer
 from customer.views.mixins.AuthRequirementsMixin import AdminRequiredMixin
 
 def GetUserID(request):
@@ -27,6 +27,10 @@ def CreateUserFromPotentialUser(potentialUser):
 
   NewUser.save()
   DeletePotentialUser(potentialUser)
+
+  UserHasAccess(userID=NewUser, CustomerID=Customer.objects.get(ID=7)).save()
+  UserHasAccess(userID=NewUser, CustomerID=Customer.objects.get(ID=21)).save()
+  UserHasAccess(userID=NewUser, CustomerID=Customer.objects.get(ID=39)).save()
 
 def DeletePotentialUser(potentialUser):
   potentialUser.delete()
