@@ -20,8 +20,6 @@ export default class Calender extends Component {
       this.props.date.getFullYear(),
       this.props.date.getMonth()
     )
-    console.log(this.props.date);
-    console.log(this.state.activeMonth);
   }
 
   componentDidUpdate(prevProps) {

@@ -85,3 +85,17 @@ def createNewTracer(Name, isotope, n_injections, order_block):
 
 def deleteTracer(tracer_id):
   SQLLegacyController.deleteTracer(tracer_id)
+
+def createDeliverTime(run, MaxFDG, dtime, repeat, day, customer):
+  """
+    Creates a new deliverTime with the given input, returns the ID of the new DeliverTimes
+  """
+  return SQLLegacyController.createDeliverTime(
+      run, MaxFDG, dtime, repeat, day, customer
+  )
+
+def deleteDeliverTime(DTID):
+  SQLLegacyController.deleteDeliverTime(DTID)
+
+def updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID):
+  SQLLegacyController.updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID)

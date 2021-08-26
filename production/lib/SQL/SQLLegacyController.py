@@ -31,7 +31,12 @@ def getCustomer(ID):
     SELECT 
       EMail,
       EMail2,
-      EMail3, EMail4, overhead, kundenr, contact, tlf
+      EMail3,
+      EMail4,
+      overhead,
+      kundenr,
+      contact,
+      tlf
     FROM
       Users
     Where
@@ -50,10 +55,10 @@ def getCustomer(ID):
     tlf = str(tlf)
 
   return {
-    "EMail1" :   EMail1,
-    "EMail2" :   EMail2,
-    "EMail3" :   EMail3,
-    "EMail4" :   EMail4,
+    "email1" :   EMail1,
+    "email2" :   EMail2,
+    "email3" :   EMail3,
+    "email4" :   EMail4,
     "overhead" : overhead,
     "kundenr" :  kundenr,
     "contact":   contact,
@@ -81,24 +86,14 @@ def getCustomerDeliverTimes(ID):
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
-  result = {
-    "days" : [],
-    "repeat_t" : [],
-    "dtime" : [],
-    "max"   : [],
-    "run" : [],
-    "DTID" : []
-  }
-
-  for day, repeat_t, dtime, maxOrder, run, DTID in SQLResult:
-    result["days"].append(day)
-    result["repeat_t"].append(repeat_t)
-    result["dtime"].append(dtime)
-    result["max"].append(maxOrder)
-    result["run"].append(run)
-    result["DTID"].append(DTID)
-
-  return result
+  return SQLFormatter.FormatSQLTuple(SQLResult, [
+      "day",
+      "repeat",
+      "dtime",
+      "max",
+      "run",
+      "DTID"
+    ])
 
 def getTorderMonthlyStatus(year : int, month : int):
   month = Formatting.convertIntToStrLen2(month)
@@ -427,3 +422,65 @@ def deleteTracer(tracer_id):
   """
   SQLExecuter.ExecuteQuery(SQLQueryTracer)
   
+def createDeliverTime( run, MaxFDG, dtime, repeat, day, customer):
+  InsertQuery = f"""
+    INSERT INTO
+      deliverTimes(
+        run,
+        max,
+        dtime,
+        repeat_t,
+        day,
+        BID
+      ) VALUES (
+        {run},
+        {MaxFDG},
+        \"{dtime}\",
+        {repeat},
+        {day},
+        {customer}
+      )
+  """
+  SQLExecuter.ExecuteQuery(InsertQuery)
+  SelectQuery = f"""
+    SELECT
+      max(DTID)
+    FROM
+      deliverTimes
+    WHERE
+      run   = {run}        AND
+      max   = {MaxFDG}     AND
+      dtime = \"{dtime}\" AND
+      repeat_t = {repeat} AND
+      day = {day}         AND
+      BID = {customer}
+  """
+  ID_tuple = SQLExecuter.ExecuteQueryFetchOne(SelectQuery)
+
+  return ID_tuple[0]
+
+def deleteDeliverTime(DTID):
+  SQLQuery = f"""
+  DELETE FROM
+    deliverTimes
+  WHERE
+    DTID = {DTID}
+  """
+
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+
+def updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID):
+  SQLQuery = f"""
+    UPDATE deliverTimes
+    SET
+      day = {day},
+      repeat_t = {repeat},
+      dtime = \"{dtime}\",
+      max = {MaxFDG},
+      run = {run}
+    WHERE
+      DTID = {DTID}
+  """
+
+  SQLExecuter.ExecuteQuery(SQLQuery)

@@ -11,6 +11,9 @@ class ApiGetCustomer(View):
   def get(self, request, ID):
 
     CustomerData = SQLController.getCustomer(ID)
-    CustomerData.update(SQLController.getCustomerDeliverTimes(ID))
-    
-    return JsonResponse(CustomerData)
+    DeliverTimes = (SQLController.getCustomerDeliverTimes(ID))
+
+    return JsonResponse({
+      "customer" : CustomerData,
+      "deliverTimes" : DeliverTimes
+    })
