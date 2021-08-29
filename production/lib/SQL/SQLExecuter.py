@@ -4,7 +4,7 @@ import mysql.connector as mysql
 
 # This is some legacy code that should really be moved
 from api.models import Database
-from api import constants
+import constants
 
 
 

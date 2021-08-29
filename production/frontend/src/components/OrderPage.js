@@ -5,6 +5,8 @@ import { FDGTable } from './FDGTable'
 import { FETTable } from './FETTable' 
 import { TOrderTable } from './TOrderTable'
 
+import { ajax } from "jquery";
+
 export {OrderPage}
 
 const TableOrder = {
@@ -23,14 +25,32 @@ export default class OrderPage extends Component {
       date : today,
       activeTable : FDGTable
 
-
-
     };
   }
 
-  setActiveDate(NewDate) {
+  // Calender functions
+  updateCalenderColors(year, month) {
+    return ajax({
+      url : "api/monthcolor",
+      type:"POST",
+      dataType : "json",
+
+      data : JSON.stringify({
+        month : month + 1,
+        year  : year
+      }),
+    })
+  }
+
+  setActiveDate(NewDate, Calender) {
     this.setState({...this.state, date : NewDate})
   }
+
+  getColor(DateStr, ColorDict) {
+    return (DateStr in ColorDict) ? "date-status" + String(ColorDict[DateStr]) : "date-status55"; 
+  }
+  // End Calender Functions
+
 
   setActiveTable(NewTableName) {
     const NewTable = TableOrder[NewTableName];
@@ -74,6 +94,8 @@ export default class OrderPage extends Component {
             <Calender
               date={this.state.date}
               onDayClick={this.setActiveDate.bind(this)}
+              updateColors={this.updateCalenderColors}
+              getColor={this.getColor}
               />
           </Col>
         </Row>

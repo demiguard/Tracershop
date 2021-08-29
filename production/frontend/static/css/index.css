@@ -55,5 +55,16 @@ nav {
 
   border: 1px;
   border-style: solid;
-  border-color: #333;
+  border-color: var(--grey-1);
+}
+
+.ClosedDate {
+  border-color: var(--grey-2) !important;
+  background-color: var(--grey-2) !important;
+}
+
+.OpenDate {
+
+  border-color: var(--grey-4) !important;
+  background-color: var(--grey-4) !important;
 }

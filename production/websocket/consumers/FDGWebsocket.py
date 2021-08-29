@@ -1,24 +1,26 @@
 import json
 
 from asgiref.sync import async_to_sync
-from channels.generic.websocket import WebsocketConsumer
+
+from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
 
 from lib.SQL import SQLController as SQL
 
-class FDGConsumer(WebsocketConsumer):
+class FDGConsumer(AsyncWebsocketConsumer):
   FDG_group_name   = 'FDG' 
   FDG_channel_name = 'FDG'
   
-  def connect(self):
-    async_to_sync(self.channel_layer.group_add)(
+  async def connect(self):
+    await self.channel_layer.group_add(
       self.FDG_group_name,
       self.channel_name
     )
 
-    self.accept()
+    await self.accept()
 
-  def disconnect(self, close_code):
-    async_to_sync(self.channel_layer.group_add)(
+  async def disconnect(self, close_code):
+    await self.channel_layer.group_add(
       self.FDG_group_name,
       self.channel_name
     )
@@ -26,7 +28,7 @@ class FDGConsumer(WebsocketConsumer):
 
 
   #Receive data from Websocket
-  def receive(self, text_data):
+  async def receive(self, text_data): 
     print("Websocket RECIEVE "+text_data)
     message = text_data
     message_json = json.loads(message)
@@ -36,8 +38,8 @@ class FDGConsumer(WebsocketConsumer):
 
     if messageType == "AcceptOrder":
       oid = message_json["oid"]
-      SQL.setFDGOrderStatusTo2(oid)
-      async_to_sync(self.channel_layer.group_send)(
+      await self.setFDGOrderStatusTo2(oid)
+      await self.channel_layer.group_send(
         self.FDG_channel_name,
         {
           "type" : 'AcceptOrder',
@@ -50,8 +52,8 @@ class FDGConsumer(WebsocketConsumer):
       updatedOrders = message_json["UpdatedOrders"]
       #Update the orders in the Database
       for order in updatedOrders:
-        SQL.UpdateOrder(order)
-      async_to_sync(self.channel_layer.group_send)(
+        await self.updatedOrder(order)
+      await self.channel_layer.group_send(
         self.FDG_channel_name,
         {
           "type" : 'ChangeRun',
@@ -62,11 +64,20 @@ class FDGConsumer(WebsocketConsumer):
       )
 
   #These functions are called for each Websocket
-  def ChangeRun(self, event):
-    self.send(text_data=json.dumps(event))
+  async def ChangeRun(self, event):
+    await self.send(text_data=json.dumps(event))
 
 
   #Recieve data from channel
-  def AcceptOrder(self, event):
-    
-    self.send(text_data=json.dumps(event))
+  async def AcceptOrder(self, event):
+    await self.send(text_data=json.dumps(event))
+
+  #Database handlers
+  @database_sync_to_async
+  def updatedOrder(self, order):
+    SQL.UpdateOrder(order)
+
+  @database_sync_to_async
+  def setFDGOrderStatusTo2(self, oid):
+    SQL.setFDGOrderStatusTo2(oid)
+

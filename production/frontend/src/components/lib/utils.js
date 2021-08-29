@@ -1,4 +1,4 @@
-export { CompareDates, BooleanMapping }
+export { CompareDates, BooleanMapping, noop }
 
 
 function CompareDates(d1, d2) {
@@ -8,4 +8,8 @@ function CompareDates(d1, d2) {
 
 function BooleanMapping(bool){
   return (bool) ? 1 : 0
+}
+
+function noop(){
+
 }

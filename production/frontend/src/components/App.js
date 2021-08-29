@@ -5,9 +5,11 @@ import { Navbar } from "./Navbar";
 import {ConfigPage} from "./ConfigPage";
 import {OrderPage} from './OrderPage';
 import {CustomerPage} from "./CustomerPage";
+import {EmailSetupPage} from "./EmailSetupPage";
 
 import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
+import CloseDaysPage from "./CloseDaysPage";
 
 export {App}
 
@@ -15,6 +17,8 @@ const Pages = {
   Ordre : OrderPage,
   Kunder : CustomerPage,
   Konfiguration : ConfigPage,
+  Email : EmailSetupPage,
+  Lukkedage : CloseDaysPage
 }
 
 export default class App extends Component {

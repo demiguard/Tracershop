@@ -16,14 +16,18 @@ export default class Calender extends Component {
       activeMonth : this.props.date,  //This is because when you change the month in the calender, you should not update the orders
       DateColors  : {}
     }
-    this.updateColors(
+
+    this.props.updateColors(
       this.props.date.getFullYear(),
       this.props.date.getMonth()
-    )
+    ).then((newDateColors) => {
+      this.updateColor(newDateColors);  
+    });
   }
 
-  componentDidUpdate(prevProps) {
-
+  updateColor(newDateColors) {
+    const newState = {...this.state, DateColors : newDateColors};
+    this.setState(newState);
   }
 
   changeMonth(changeby) {
@@ -33,27 +37,10 @@ export default class Calender extends Component {
     this.setState({...this.state,
       activeMonth : new Date(year, month, 1)
     });
-    this.updateColors(year, month);
+    this.props.updateColors(year, month).bind(this);
   }
 
-  updateColors(year, month) {
-    ajax({
-      url : "api/monthcolor",
-      type:"POST",
-      dataType : "json",
 
-      data : JSON.stringify({
-        month : month + 1,
-        year  : year
-      }),
-    }).then((res) => {
-      this.setState({...this.state, DateColors: res})
-    }) 
-  }
-
-  getStatusClass(StatusValue){
-    return "date-status"+ String(StatusValue)
-  }
 
   DaysInAMonth(year, month){
      //This takes advantage of javascript date system.
@@ -83,18 +70,16 @@ export default class Calender extends Component {
     return pivot;
   };
 
+  
+
+
   renderDay(date) {
     const DateObject  = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date);
     const DateStr     = String(DateObject.getFullYear()) + '-' + FormatDateStr(DateObject.getMonth() + 1) + '-' + FormatDateStr(DateObject.getDate());
-    var StatusClass = "";
-    if (DateStr in this.state.DateColors) {
-      StatusClass = this.getStatusClass(this.state.DateColors[DateStr]);
-    } else {
-      StatusClass = this.getStatusClass(55);
-    }
+    const StatusClass = this.props.getColor(DateStr, this.state.DateColors);
 
     return (
-      <div className={"calender-row date-base-class " + StatusClass}  onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
+      <div className={"calender-row date-base-class " + StatusClass}  onClick={() => this.props.onDayClick(DateObject, this)}> {DateObject.getDate()}</div>
     );
   }
 

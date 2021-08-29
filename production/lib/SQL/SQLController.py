@@ -99,3 +99,12 @@ def deleteDeliverTime(DTID):
 
 def updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID):
   SQLLegacyController.updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID)
+
+def getClosedDays():
+  return SQLLegacyController.getClosedDays()
+
+def deleteCloseDay(year, month, day):
+  SQLLegacyController.deleteCloseDay(year, month, day)
+
+def createCloseDay(year, month, day):
+  SQLLegacyController.createCloseDay(year, month, day)

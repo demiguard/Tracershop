@@ -5,7 +5,7 @@
 """
 from datetime import timedelta, time
 
-from lib import Formatting
+from lib import Formatting, utils
 from lib.SQL import SQLExecuter, SQLFormatter
 
 def getCustomers():
@@ -483,4 +483,34 @@ def updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID):
       DTID = {DTID}
   """
 
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def getClosedDays():
+  SQLQuery = f"""
+    SELECT 
+      ddate
+    FROM
+      blockDeliverDate
+  """
+
+  dates = utils.LMAP(lambda x : x[0], SQLExecuter.ExecuteQueryFetchAll(SQLQuery))
+
+  return { date.strftime("%Y-%m-%d") : 1 for date in dates }
+
+def deleteCloseDay(year, month, day):
+  SQLQuery = f"""
+    DELETE FROM
+      blockDeliverDate
+    WHERE
+      ddate like \"{year}-{month}-{day}\"
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def createCloseDay(year, month, day):
+  SQLQuery = f"""
+    INSERT INTO
+      blockDeliverDate( ddate )
+    VALUES
+      (\"{year}-{month}-{day}\")
+  """
   SQLExecuter.ExecuteQuery(SQLQuery)
