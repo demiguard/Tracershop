@@ -87,7 +87,7 @@ var onChangeSelect = function() {
 
 function CreateTOrderTable(data, Div) {
   //Set up data
-  let Header = ["Tracer", "Status", "Order ID", "Bestilt til", "Injecioner","Kommentar", "Til"];
+  let Header = ["Tracer", "Status", "Order ID", "Bestilt til", "Injektioner","Kommentar", "Til"];
   let RowIDs=[];
   let Rows= [];
 
