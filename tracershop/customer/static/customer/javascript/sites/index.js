@@ -15,6 +15,8 @@ var CalenderInstance;
 var CustomerInstance;
 var ChangingDate = false;
 
+const AutomaticRefreshingPeriod = 5 * 60 * 1000 // This number should be in milliseconds
+
 
 var dateColoringFunction = function(div,  date, directory){
   div.classList.add('date-base-class')
@@ -56,7 +58,9 @@ var Date_onClick = function (div, date) {
     $(this).unbind()
     change_date(div, date);
     clear_order_table();
-    fill_order_table(date, this, anno);
+    fill_order_table(date).then(() => {
+      $(this).click(anno);  
+    });
   }
   var jdiv = $(div);
   jdiv.click(anno);
@@ -131,38 +135,6 @@ function CreateTOrderTable(data, Div) {
   Div.append(dataTable.getTable()[0])
 }
 
-/*
-function CreateFDGForm(informationRowDiv, response, responseNumber) {
-  var mbqInputDiv = createElement(informationRowDiv,"",'ButtonDiv'+String(responseNumber+1), 'div', [])
-  var mbqInput = $("<input>", {
-    type:"number",
-    id:"id_order_MBQ",
-    name:"order_MBQ",
-    min:"0",
-    class: response['time']
-  });
-  $(mbqInputDiv).append("Bestil FDG:");
-  mbqInput.appendTo(mbqInputDiv);
-  $(mbqInputDiv).append("[MBq]");
-  //Create Spcae between the buttons
-  createElement(informationRowDiv,'','','div',['col-1']);
-  
-  var commentDiv = createElement(informationRowDiv, "", 'CommentDiv'+String(responseNumber+1),'div',[]);
-  var commentInput = $("<textarea>",{
-    id:"id_comment",
-    type:"text",
-    name:"comment",
-    class:"",
-    placeholder: "Kommentar",
-    rows:1
-  });
-  commentInput.appendTo(commentDiv);
-  createElement(informationRowDiv,'','','div',['col-1']);
-  var Button = createElement(informationRowDiv,'Bestil',response['order_num'],'BUTTON',['btn', 'btn-primary', 'OrderButton']);
-  $(Button).click(SendOrder);
-}
-*/
-
 function CreateFGDOrderTable(data, Div, hasComment) {
   let Header;
   let RowIDs = [];
@@ -221,106 +193,119 @@ function HandleOrderDateResponse(data) {
 }
 
 
-var fill_order_table = function(date, DateDiv, changeDateFunction) {
+async function fill_order_table(date, DateDiv, changeDateFunction) {
   //////////////////////////////////////////////////
   //  Fills the main table with data from the api //
   //////////////////////////////////////////////////
-  var day = String(date.getDate());
+  var day =   String(date.getDate());
   var month = String(date.getMonth() + 1);
-  var year = String(date.getFullYear());
+  var year =  String(date.getFullYear());
 
-  $.get({
+  const data = await $.get({
     url:'api/order_date/' + year + "/" + month + "/" + day,
     data: {"UserID" : $('#customer_select')[0].value},
     success: function(data){
       return data;
     }
-  }).then(function(data) {
-    var contentDiv = $("#content");
-    // FTG Orders
-    for (let i = 0; i < data.responses.length; i++) {
-      const response = data.responses[i];
-      var dataRow = createElement(contentDiv,'','Row-'+String(i+1),'div',['data-row']);
-      var contentStr;
-      if (response.data_type == 'form'  || response.data_type == 'data') {
-        contentStr = "<strong> Ordre " + response['order_num'] + " - Kalibreret til: " + response['time'].substr(0,5) + "</strong>";
-      } else {
-        contentStr = "Ukendt Data format fra JSON Fil";
-      }
-      createElement(dataRow, contentStr,'', 'div', ['col-11', 'row']);
-      
-      createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone", response.data_type]);
-      var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
-      // ----- Form Creation -----
-      if (response.data_type == 'form') {
-        createFDGForm(informationRowDiv, response["time"], response["order_num"], SendOrder);
-      }
+  })
+  
+  var contentDiv = $("#content");
+  // FTG Orders
+  for (let i = 0; i < data.responses.length; i++) {
+    const response = data.responses[i];
+    var dataRow = createElement(contentDiv,'','Row-'+String(i+1),'div',['data-row']);
+    var contentStr;
+    if (response.data_type == 'form'  || response.data_type == 'data') {
+      contentStr = "<strong> Ordre " + response['order_num'] + " - Kalibreret til: " + response['time'].substr(0,5) + "</strong>";
+    } else {
+      contentStr = "Ukendt Data format fra JSON Fil";
+    }
+    createElement(dataRow, contentStr,'', 'div', ['col-11', 'row']);
+    
+    createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone", response.data_type]);
+    var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
+    // ----- Form Creation -----
+    if (response.data_type == 'form') {
+      createFDGForm(informationRowDiv, response["time"], response["order_num"], SendOrder);
+    }
       // ----- Table Creation -----
-      if (response.data_type == 'data') { CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment); }
-    } 
-    // T-orders 
-    if (data.tOrders.length != 0) {
-      $('#T_orders').removeClass('DisplayNone');
-      $("#torder_data").empty(); // Remove old content
-      CreateTOrderTable(data.tOrders, $('#torder_data'));
-    } else {
-      $('#T_orders').addClass('DisplayNone');
-    };
-    // T-OrderForms
-    var TFormTbody = $('#TFormRows');
-    const injectionFieldInputStr = '<input type="text" name="injectionField" class="injectionField" id="id_injectionField">';
-    const UseSelectStr = '\
-    <select name="useField" class="selectTOrder custom-select" id="id_useField">\
-    <option value="0">Human</option>\
-    <option value="1">Dyr</option>\
-    <option value="2">Andet</option>\
-    </select>';
-    if (data.tOrdersForms.length != 0) {
-      $("#T_forms").removeClass('DisplayNone')
-    } else {
-      $("#T_forms").addClass('DisplayNone')
-    }
-    dropChildren(TFormTbody);
-    for (let i = 0; i < data.tOrdersForms.length; i++) {
-      const TORDERFORM = data.tOrdersForms[i];
-      var formRow = createElement(TFormTbody,'',"Row"+TORDERFORM.id,'tr',[]);
-      createElement(formRow, TORDERFORM.name,"TracerName", 'td',[]);
-      var deliverTimeTD = createElement(formRow, "" ,"deliverTime", 'td',[]);
-      var deliverTimeInput    = $("<input>", {
-        type:"text",
-        class:"timeField",
-        required:"", 
-        id:"id_deliverTime"
-      });
-      deliverTimeInput.appendTo($(deliverTimeTD));
-      auto_char(deliverTimeInput, ':',2);
-      MaxCharInField(deliverTimeInput, 5);  
-      createElement(formRow, injectionFieldInputStr, "InjectionField", 'td', []);
-      createElement(formRow, UseSelectStr, 'UseField','td',[]);
-      const CommentTD    = createElement(formRow, '', '', 'td', []);
-      const CommentInput = $("<textarea>",{
-        type:"text",
-        class: "TOrderComment",
-        id: `TOrderComment-${TORDERFORM.id}`,
-        placeholder:"Kommentar",
-        rows:1
-      });
-      $(CommentTD).append(CommentInput)
-      var orderButtonTD = createElement(formRow, '', '', 'td', []);
-      var orderButton = $('<input>', {
-        id : "TOrderButton"+TORDERFORM.id,
-        type:"button",
-        value:"Bestil"
-      });
-      orderButton.addClass("TorderButton");
-      orderButton.addClass("btn");
-      orderButton.addClass("btn-outline-secondary");
-      orderButton.click(SendTOrder);
-      orderButton.appendTo(orderButtonTD);
-    }
-    $(DateDiv).click(changeDateFunction); 
-  });
-};
+    if (response.data_type == 'data') { 
+      CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment); }
+  } 
+  // T-orders 
+  if (data.tOrders.length != 0) {
+    $('#T_orders').removeClass('DisplayNone');
+    $("#torder_data").empty(); // Remove old content
+    CreateTOrderTable(data.tOrders, $('#torder_data'));
+  } else {
+    $('#T_orders').addClass('DisplayNone');
+  };
+  // T-OrderForms
+  var TFormTbody = $('#TFormRows');
+  const injectionFieldInputStr = '<input type="text" name="injectionField" class="injectionField" id="id_injectionField">';
+  const UseSelectStr = '\
+  <select name="useField" class="selectTOrder custom-select" id="id_useField">\
+  <option value="0">Human</option>\
+  <option value="1">Dyr</option>\
+  <option value="2">Andet</option>\
+  </select>';
+  if (data.tOrdersForms.length != 0) {
+    $("#T_forms").removeClass('DisplayNone')
+  } else {
+    $("#T_forms").addClass('DisplayNone')
+  }
+  dropChildren(TFormTbody);
+  for (let i = 0; i < data.tOrdersForms.length; i++) {
+    const TORDERFORM = data.tOrdersForms[i];
+    var formRow = createElement(TFormTbody,'',"Row"+TORDERFORM.id,'tr',[]);
+    createElement(formRow, TORDERFORM.name,"TracerName", 'td',[]);
+    var deliverTimeTD = createElement(formRow, "" ,"deliverTime", 'td',[]);
+    var deliverTimeInput    = $("<input>", {
+      type:"text",
+      class:"timeField",
+      required:"", 
+      id:"id_deliverTime"
+    });
+    deliverTimeInput.appendTo($(deliverTimeTD));
+    auto_char(deliverTimeInput, ':',2);
+    MaxCharInField(deliverTimeInput, 5);  
+    createElement(formRow, injectionFieldInputStr, "InjectionField", 'td', []);
+    createElement(formRow, UseSelectStr, 'UseField','td',[]);
+    const CommentTD    = createElement(formRow, '', '', 'td', []);
+    const CommentInput = $("<textarea>",{
+      type:"text",
+      class: "TOrderComment",
+      id: `TOrderComment-${TORDERFORM.id}`,
+      placeholder:"Kommentar",
+      rows:1
+    });
+    $(CommentTD).append(CommentInput)
+    var orderButtonTD = createElement(formRow, '', '', 'td', []);
+    var orderButton = $('<input>', {
+      id : "TOrderButton"+TORDERFORM.id,
+      type:"button",
+      value:"Bestil"
+    });
+    orderButton.addClass("TorderButton");
+    orderButton.addClass("btn");
+    orderButton.addClass("btn-outline-secondary");
+    orderButton.click(SendTOrder);
+    orderButton.appendTo(orderButtonTD);
+  }
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function AutomaticRefreshing(){
+  while (true) {
+    await sleep(AutomaticRefreshingPeriod)
+    clear_order_table();
+    fill_order_table(today);
+    CalenderInstance.change_month(0);
+  }
+}
 
 // TODO: Goal Reduce this to imports and this function
 $(function() {
@@ -351,4 +336,7 @@ $(function() {
   );
 
   $(".commentIcon").tooltip();
+
+  AutomaticRefreshing()
+
 });
