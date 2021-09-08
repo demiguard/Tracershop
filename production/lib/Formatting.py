@@ -14,7 +14,7 @@ def convertIntToStrLen2(INT : int) -> str:
     return "0" + INT
   return INT
 
-def mergeMonthlyOrders(year, month, orders, t_orders):
+def mergeMonthlyOrders(year :int, month : int, orders : dict, t_orders : dict) -> dict:
   monthStr = convertIntToStrLen2(month)
   returnDict = {}
 
@@ -37,10 +37,13 @@ def mergeMonthlyOrders(year, month, orders, t_orders):
 
   return returnDict
   
-def EncodeDateTimeDict(Dict):
+def EncodeDateTimeDict(Dict : dict) -> dict:
   returnDict = {}
   for dt, val in Dict.items():
     returnDict[dt.__str__()] = val
   return returnDict
-  
+
+def FormatDateTimeJStoSQL(datetimestr : str) -> str:
+  return datetimestr.replace("T", " ")
+
   

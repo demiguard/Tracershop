@@ -6,6 +6,7 @@ import { TracerWebSocket } from "./lib/TracerWebsocket";
 import { CompareDates } from "./lib/utils";
 import { FormatDateStr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
+import FDGModal from "./FDGModal";
 
 
 export { FDGTable }
@@ -41,6 +42,11 @@ export default class FDGTable extends Component {
       orders   : new Map(),
       runs     : new Map(),
       customer : new Map(),
+
+      showModal : false,
+      ModalOrder : null,
+      ModalCustomer : null,
+      Vials : new Map()
     }
 
     ajax({
@@ -265,13 +271,15 @@ export default class FDGTable extends Component {
       Order.run = newRun;
       this.SetOrder(Order);
       
-      const UpdatedOrders = this.updateAmountForCustomer(Customer.ID);
-
-      this.websocket.send(JSON.stringify({
-        "date" : this.props.date,
-        "messageType" : "ChangeRun",
-        "UpdatedOrders" : UpdatedOrders
-      }));
+      this.updateAmountForCustomer(Customer.ID).then(
+        ((UpdatedOrders) => {
+          this.websocket.send(JSON.stringify({
+            "date" : this.props.date,
+            "messageType" : "ChangeRun",
+            "UpdatedOrders" : UpdatedOrders
+          }));
+        })
+      );
     } else {
       //TODO: Post Error as you cannot deliver this.
       throw "This should not happen, you need to update your rendering"
@@ -286,7 +294,26 @@ export default class FDGTable extends Component {
     }
   }
 
-  updateAmountForCustomer(ID){
+  async createNewOrder(CustomerID, Production){
+    const orderDateTime = this.GetProductionDateTimeString(Production)
+
+    const newOrder = await ajax({
+      url : "api/createEmptyFDGOrder",
+      type:"POST",
+      datatype:"json",
+      data:JSON.stringify({
+        CustomerID    : CustomerID,
+        orderDateTime : orderDateTime,
+        run           : Production.run
+      })
+    });
+    this.SetOrder(newOrder);
+    return newOrder;
+  }
+
+
+
+  async updateAmountForCustomer(ID){
     //This function updates the values FDG amount,
     //such that the orders are in a consistent state 
     
@@ -313,32 +340,33 @@ export default class FDGTable extends Component {
       }
 
       if (MasterOrder === null && ServantOrders.length > 0) {
+        MasterOrder = await this.createNewOrder(ID,Production);
         //Create a new order
       } else if (MasterOrder === null && ServantOrders.length === 0) {
-        
-      } else {
-        MasterOrder.total_amount = MasterOrder.amount;
-        MasterOrder.COID = -1;
-        for (const SOrder of ServantOrders) {
-          const MinDiff = CountMinutes(
-            ProductionDateTime, 
-            new Date(SOrder.deliver_datetime)
-          );
-          
-          const OrderContribution = CalculateProduction("FDG", MinDiff, SOrder.amount);
-          //Updating Orders
-          MasterOrder.total_amount += OrderContribution;
-          SOrder.total_amount = 0;
-          SOrder.total_amount_o = 0;
-          SOrder.COID = MasterOrder.oid;
-          //We can update the order now, because we are not touching it later in the function
-          NewOrders.set(SOrder.oid, SOrder);
-          ChangedOrders.push(SOrder);
-        }
-        MasterOrder.total_amount_o = MasterOrder.total_amount * (1 + Customer.overhead/100);
-        NewOrders.set(MasterOrder.oid, MasterOrder);
-        ChangedOrders.push(MasterOrder);
+        continue;
       }
+      MasterOrder.total_amount = MasterOrder.amount;
+      MasterOrder.COID = -1;
+      for (const SOrder of ServantOrders) {
+        const MinDiff = CountMinutes(
+          ProductionDateTime, 
+          new Date(SOrder.deliver_datetime)
+        );
+          
+        const OrderContribution = CalculateProduction("FDG", MinDiff, SOrder.amount);
+          //Updating Orders
+        MasterOrder.total_amount += OrderContribution;
+        SOrder.total_amount = 0;
+        SOrder.total_amount_o = 0;
+        SOrder.COID = MasterOrder.oid;
+          //We can update the order now, because we are not touching it later in the function
+        NewOrders.set(SOrder.oid, SOrder);
+        ChangedOrders.push(SOrder);
+      }
+      MasterOrder.total_amount_o = MasterOrder.total_amount * (1 + Customer.overhead/100);
+      NewOrders.set(MasterOrder.oid, MasterOrder);
+      ChangedOrders.push(MasterOrder);
+      
       Customer.productions[ProductionI] = Production;
     }
     const NewCustomerMap = new Map(this.state.customer);
@@ -348,7 +376,28 @@ export default class FDGTable extends Component {
     return ChangedOrders
   }
 
+  // Modal Functions
+  closeModal(){
+    this.setState({...this.state,
+      showModal : false,
+      ModalOrder : null,
+      ModalCustomer : null,
+    });
+  }
 
+  activateModal(oid){
+    const Order = this.state.orders.get(oid);
+    if(Order === null) throw "Order is null";
+    if(Order === undefined) throw "Order is undefined";
+    const Customer = this.state.customer.get(Order.BID)
+
+    this.setState({...this.state,
+      showModal : true,
+      ModalOrder : Order,
+      ModalCustomer : Customer,
+    });
+
+  }
 
 
   // Renders 
@@ -420,7 +469,7 @@ export default class FDGTable extends Component {
 
     return (
     <tr key={Order.oid}> 
-      <td>{renderStatusImage(Order.status)}</td>
+      <td>{renderStatusImage(Order.status, () => this.activateModal(Order.oid))}</td>
       <td>{Order.oid}</td>
       <td>{CustomerName}</td>
       <td>{Order.amount}</td>
@@ -478,6 +527,9 @@ export default class FDGTable extends Component {
       }
     }
     
+    console.log(this.state)
+
+
     return (<div>
       <div> Produktioner: <br/>
         {RenderedRuns}
@@ -501,6 +553,13 @@ export default class FDGTable extends Component {
           {orders}
         </tbody>
       </Table>
+      <FDGModal
+        show={this.state.showModal}
+        onClose={this.closeModal.bind(this)}
+        Order={this.state.ModalOrder}
+      >
+
+      </FDGModal>
     </div>
     );
   }

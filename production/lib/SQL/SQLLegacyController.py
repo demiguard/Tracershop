@@ -13,7 +13,9 @@ def getCustomers():
     SELECT 
       Users.Username, 
       Users.Id,
-      Users.overhead
+      Users.overhead,
+      Users.kundenr,
+      Users.realname
     FROM 
       Users
       INNER JOIN UserRoles on
@@ -23,7 +25,7 @@ def getCustomers():
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
-  names = ["UserName", "ID", "overhead"]
+  names = ["UserName", "ID", "overhead", "CustomerNumber", "Name"]
   return SQLFormatter.FormatSQLTuple(SQLResult, names)
   
 def getCustomer(ID):
@@ -36,13 +38,19 @@ def getCustomer(ID):
       overhead,
       kundenr,
       contact,
-      tlf
+      tlf,
+      Username,
+      Realname,
+      addr1,
+      addr2,
+      addr3,
+      addr4
     FROM
       Users
     Where
       Id={ID}
   """
-  EMail1, EMail2, EMail3, EMail4, overhead, kundenr, contact, tlf  = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+  EMail1, EMail2, EMail3, EMail4, overhead, kundenr, contact, tlf, Username, Realname, addr1, addr2, addr3, addr4  = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
   
   if EMail1 == None  : EMail1 = ""
   if EMail2 == None  : EMail2 = ""
@@ -62,7 +70,13 @@ def getCustomer(ID):
     "overhead" : overhead,
     "kundenr" :  kundenr,
     "contact":   contact,
-    "tlf": tlf
+    "tlf": tlf,
+    "Username" : Username,
+    "Realname" : Realname,
+    "addr1"    : addr1,
+    "addr2"    : addr2,
+    "addr3"    : addr3,
+    "addr4"    : addr4
   }
 
 
@@ -514,3 +528,102 @@ def createCloseDay(year, month, day):
       (\"{year}-{month}-{day}\")
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
+
+def insertEmptyFDGOrder(CustomerID, deliver_datetime, run, comment):
+  SQLQuery = f"""
+    INSERT INTO orders(
+      BID,
+      deliver_datetime,
+      run,
+      batchnr,
+      amount,
+      amount_o,
+      total_amount,
+      total_amount_o,
+      status,
+      tracer,
+      COID,
+      comment
+    ) VALUES (
+      {CustomerID}, 
+      \"{deliver_datetime}\",
+      {run},
+      \"\",
+      0,
+      0,
+      0,
+      0,
+      2,
+      6,
+      -1,
+      \"{comment}\")
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def getFDGOrder(
+    BID="",
+    run=0,
+    deliver_datetime=""
+  ):
+
+  KeyWordList = []
+  if BID:
+    KeyWordList.append(("BID",BID, "str"))
+  if run:
+    KeyWordList.append(("run",run, "num"))
+  if deliver_datetime:
+    KeyWordList.append(("deliver_datetime", deliver_datetime, "str"))
+  
+  SQLQuery = """
+    SELECT
+      deliver_datetime,
+      OID,
+      status,
+      amount,
+      amount_o,
+      total_amount,
+      total_amount_o,
+      run,
+      BID,
+      batchnr,
+      COID
+    FROM
+      orders
+  """
+
+  def insertKeyWordStr(keyWordTuple):
+    keyword, value, Type = keyWordTuple
+    if Type == "str":
+      return f"{keyword}=\"{value}\""
+    else:
+      return f"{keyword}={value}"
+
+  KeywordLen = len(KeyWordList)
+
+  if KeywordLen: #So there's Keywords
+    SQLQuery += "WHERE\n"
+  
+  for i, keyWordTuple in enumerate(KeyWordList):
+    if i + 1 < KeywordLen:
+      SQLQuery += f"{insertKeyWordStr(keyWordTuple)} AND\n"
+    else:
+      SQLQuery += insertKeyWordStr(keyWordTuple)
+
+  deliver_datetime, OID, status, amount, amount_o, total_amount, total_amount_o, run, BID, batchnr, COID = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+
+  return {
+    "deliver_datetime" : deliver_datetime,
+    "oid" : OID,
+    "status" : status,
+    "amount" : amount,
+    "amount_o" : amount_o,
+    "total_amount" : total_amount,
+    "total_amount_o" : total_amount_o,
+    "run" : run,
+    "BID" : BID,
+    "batchnr" : batchnr,
+    "COID" : COID
+  }
+
+
+

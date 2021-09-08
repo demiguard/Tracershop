@@ -37,10 +37,8 @@ export default class Calender extends Component {
     this.setState({...this.state,
       activeMonth : new Date(year, month, 1)
     });
-    this.props.updateColors(year, month).bind(this);
+    this.props.updateColors(year, month).then((newDateColors) => this.updateColor(newDateColors));
   }
-
-
 
   DaysInAMonth(year, month){
      //This takes advantage of javascript date system.

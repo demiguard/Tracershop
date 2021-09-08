@@ -4,7 +4,11 @@ from django.core.exceptions import ObjectDoesNotExist
 from typing import Type
 from datetime import datetime, time, date
 
+from api.models import ServerConfiguration
+
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
+
+
 
 """
 This class contains all the database calls to the database.
@@ -108,3 +112,21 @@ def deleteCloseDay(year, month, day):
 
 def createCloseDay(year, month, day):
   SQLLegacyController.createCloseDay(year, month, day)
+
+def getServerConfig():
+  """
+    This Functions gets the serverConfig, if it doesn't exists it 
+  """
+  try:
+    ServerConfig = ServerConfiguration.objects.get(ID=1)
+  except ObjectDoesNotExist:
+    Databases    = Database.objects.all()
+    ServerConfig = ServerConfiguration(ID=1, ExternalDatabase=Databases[0])
+    ServerConfig.save()
+
+  return ServerConfig
+
+def createEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment):
+  SQLLegacyController.insertEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment)
+
+  return SQLLegacyController.getFDGOrder(BID=CustomerID, deliver_datetime=deliverTimeStr, run=run)
