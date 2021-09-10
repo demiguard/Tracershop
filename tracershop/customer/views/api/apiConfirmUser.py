@@ -28,9 +28,8 @@ def CreateUserFromPotentialUser(potentialUser):
   NewUser.save()
   DeletePotentialUser(potentialUser)
 
-  UserHasAccess(userID=NewUser, CustomerID=Customer.objects.get(ID=7)).save()
-  UserHasAccess(userID=NewUser, CustomerID=Customer.objects.get(ID=21)).save()
-  UserHasAccess(userID=NewUser, CustomerID=Customer.objects.get(ID=39)).save()
+  for CustomerInstance in Customer.objects.filter(defualtActiveCustomer=True):
+    UserHasAccess(userID=NewUser, CustomerID=CustomerInstance).save()
 
 def DeletePotentialUser(potentialUser):
   potentialUser.delete()
