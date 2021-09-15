@@ -31,6 +31,8 @@ def CreateUserFromPotentialUser(potentialUser):
   for CustomerInstance in Customer.objects.filter(defualtActiveCustomer=True):
     UserHasAccess(userID=NewUser, CustomerID=CustomerInstance).save()
 
+  return NewUser
+
 def DeletePotentialUser(potentialUser):
   potentialUser.delete()
 
@@ -62,7 +64,7 @@ class ApiConfirmUser(AdminRequiredMixin, LoginRequiredMixin, View ):
       #Ooh boy it's a forest with all these logs
       return JsonResponse({"Success": "Potential User could not be found"})
 
-    CreateUserFromPotentialUser(potentialUser)
+    User = CreateUserFromPotentialUser(potentialUser)
 
     return JsonResponse({"Success" : "Success"})
 

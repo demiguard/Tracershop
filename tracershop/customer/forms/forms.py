@@ -67,9 +67,23 @@ class ProcedureForm(ModelForm):
 
   def __init__(self, *args, **kwargs):
     super().__init__(*args, **kwargs)
+
+    procedure = kwargs['instance']
+
     self.fields["title"].widget.attrs["readonly"] = True
+    self.fields["title"].widget.attrs['class']        = "title" 
+    self.fields["baseDosis"].widget.attrs['class']    = "baseDosis" 
+    self.fields["delay"].widget.attrs['class']        = "delay" 
+    self.fields["tracer"].widget.attrs['class']       = "tracer" 
+    self.fields["inUse"].widget.attrs['class']        = "inUse" 
+    self.fields["title"].widget.attrs['id']           = f"title_{procedure.ID}"    
+    self.fields["baseDosis"].widget.attrs['id']       = f"baseDosis_{procedure.ID}"
+    self.fields["delay"].widget.attrs['id']           = f"delay_{procedure.ID}"    
+    self.fields["tracer"].widget.attrs['id']          = f"tracer_{procedure.ID}"   
+    self.fields["inUse"].widget.attrs['id']           = f"inUse_{procedure.ID}"    
+
     for visible in self.visible_fields():
-      visible.field.widget.attrs['class'] = 'form-control'
+      visible.field.widget.attrs['class'] += ' form-control'
 
 class LocationForm(ModelForm):
   class Meta:

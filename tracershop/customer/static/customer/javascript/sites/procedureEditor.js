@@ -1,32 +1,82 @@
-const update = function () {
-  var formList = {};
-  const TABLEBODY = $("#tableBody")[0]; 
-  const CHILDREN = Array.from(TABLEBODY.children)
-  CHILDREN.forEach(function (procedureRow) {
-    let title  = $(procedureRow).children(".titleData")[0].childNodes[0].value;
-    let dosis  = $(procedureRow).children(".dosisData")[0].childNodes[0].value;
-    let delay  = $(procedureRow).children(".delayData")[0].childNodes[0].value;
-    let tracer = $(procedureRow).children(".traceData")[0].childNodes[0].value;
-    let inUseCheckbox  = $($(procedureRow).children(".inUseData")[0].childNodes[0]);
+function FieldUpdate(){
+  const fieldIDArr  = this.id.split("_")
+  const field       = fieldIDArr[0];
+  const ProcedureID = fieldIDArr[1];
+  
+  switch (field) {
+    case "inUse":
+      const NewUse   = $(this).prop("checked");
+      $.ajax({
+        url:"/api/REST/Procedure",
+        type:"PUT",
+        datatype:"json",
+        data:JSON.stringify({
+          filter : {
+            ID : ProcedureID
+          },
+          update : {
+            inUse : NewUse
+          }
+        })
+      });
 
-    formList[title] = {
-      "dosis" : dosis, 
-      "delay" : delay,
-      "tracer" : tracer, 
-      "inUse" : inUseCheckbox.prop("checked")
-    };
-  });
-  $.get({
-    url : "api/updateProcedure",
-    data :  JSON.stringify(formList),
-    datatype : "JSON",
-    success : function(data) {
-      if (data["Success"] == "Success"){
-        window.location.href = "/futureBooking"
-      } 
-    }
-  })
-};
+      break;
+    case "delay":
+      const NewDelay = $(this).val();
+      if (NewDelay || NewDelay === 0) {
+        $.ajax({
+          url:"/api/REST/Procedure",
+          type:"PUT",
+          datatype:"json",
+          data:JSON.stringify({
+            filter : {
+              ID : ProcedureID
+            },
+            update : {
+              delay : NewDelay
+            }
+          })
+        });
+      }
+      break;
+    case "tracer":
+      var NewTracer = $(this).val();
+      if (NewTracer === "") NewTracer = null;
+
+      $.ajax({
+        url:"/api/REST/Procedure",
+        type:"PUT",
+        datatype:"json",
+        data:JSON.stringify({
+          filter : {
+            ID : ProcedureID
+          },
+          update : {
+            tracer : NewTracer
+          }
+        })
+      });
+      break;
+    case "baseDosis":
+      const newBaseDosis = $(this).val();
+      if (newBaseDosis || newBaseDosis === 0) {
+        $.ajax({
+          url:"/api/REST/Procedure",
+          type:"PUT",
+          datatype:"json",
+          data:JSON.stringify({
+            filter : {
+              ID : ProcedureID
+            },
+            update : {
+              baseDosis : newBaseDosis
+            }
+          })
+        });
+      }
+      break;
+  }
+}
 
 const AcceptProcedure = function() {
   const inUse = $(this).parent();
@@ -38,16 +88,17 @@ const AcceptProcedure = function() {
 
   const data = {
     title : $(row).children(".titleData")[0].childNodes[0].value,
-    dosis : $(row).children(".dosisData")[0].childNodes[0].value,
+    baseDosis : $(row).children(".dosisData")[0].childNodes[0].value,
     delay : $(row).children(".delayData")[0].childNodes[0].value,
-    tracer: $(row).children(".traceData")[0].childNodes[0].value
+    tracer: $(row).children(".traceData")[0].childNodes[0].value,
+    inUse : true,
   }
 
   $.ajax({
-    url:"api/updateProcedure",
+    url:"api/REST/Procedure",
     data: JSON.stringify(data),
     datatype: "JSON",
-    type: "PUT",
+    type: "POST",
     success: function(res){
       if (res['Success'] == "Success"){
         $($(row).children(".titleData")[0]).children().attr("readonly", true);
@@ -101,6 +152,7 @@ const newProcedure = function() {
 
 
 $(function() {
-  $("#updateButton").on('click', update);
   $("#NewButton").on('click', newProcedure);
+  $(".form-control").bind('input', FieldUpdate);
+
 });

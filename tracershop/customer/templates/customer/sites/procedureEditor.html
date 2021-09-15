@@ -20,8 +20,8 @@
       <th>I brug</th>
     </thead>
     <tbody id="tableBody">
-      {% for form in procedureForms %}
-      <tr class="">
+      {% for procedureID, form in procedureForms %}
+      <tr id="procedure-{{ procedureID }}" class="">
         <td class="titleData">{{ form.title }}    </td>
         <td class="dosisData">{{ form.baseDosis }}</td>
         <td class="delayData">{{ form.delay }}    </td>
@@ -33,7 +33,6 @@
   </table>
   <div class="col-2 d-flex justify-content-end text-right">
     <input type="button" id="NewButton" value="Ny procedure" class="updateButton btn btn-outline-primary">
-    <input type="button" id="updateButton" value="Opdater" class="updateButton btn btn-outline-primary">
     <div class="d-flex align-bottom align-text-bottom">
     </div>
   </div>
@@ -45,4 +44,3 @@
 {% block javascript %}
  <script type="module" src="{% static 'customer/javascript/sites/procedureEditor.js' %}"></script>
 {% endblock %}
-

@@ -23,14 +23,11 @@ class ProcedureEditor(LoginRequiredMixin, TemplateView):
 
     for procedure in Procedure.objects.all().order_by("title"):
       procedureForms.append(
-        ProcedureForm(instance=procedure)
+        (procedure.ID, ProcedureForm(instance=procedure))
       )
-
 
     context = {
       "procedureForms" : procedureForms
     }
 
     return render(request, self.template_name, context)
-
-  

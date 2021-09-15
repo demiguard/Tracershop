@@ -50,7 +50,7 @@ def Deserialize(model, data):
     Instance of model
         A instanced of the supplied model with fields achording to the supplied Dict
   """
-  modelinstace = model()
+  modelInstance = model()
   return DeserializeInstance(modelInstance, data)
     
 def DeserializeInstance(modelInstance, data):
@@ -128,8 +128,10 @@ def __MatchFieldModel(Field, Value: str):
 
     Raises
     -------
-    Type errors if the underlying conversion fails, or it can't find the object, if it's a foreign key
+    TypeError -  if the underlying conversion fails, or it can't find the object, if it's a foreign key
   """
+  if type(Value) == type(None): #This is for handling null values. Django assumes none=null. Note that null can go into any type of field so we do not need to check on the type of field
+    return None
   if isinstance(Field, AutoField):
     return int(Value)
   if isinstance(Field, BigAutoField):
@@ -151,4 +153,4 @@ def __MatchFieldModel(Field, Value: str):
 
 
 
-  raise NotImplemented(f" Field type: {type(Field)} Are not supported")
+  raise TypeError(f" Field type: {type(Field)} Are not supported")
