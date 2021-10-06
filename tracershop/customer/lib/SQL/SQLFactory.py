@@ -104,36 +104,18 @@ def createSQLQueryInsertFTGOrder(
     userName       : str
   ) -> str :
   dt_deliverTime = calenderHelper.combine_time_and_date(dato, deliverTime)
+  #The procedure InsertOrder is found in /tracershop/construct_database/ProcedureInsertOrder.sql
   return f"""
-    INSERT INTO orders(
-      amount,
-      amount_o,
-      batchnr,
-      BID, 
-      COID,
-      comment,
-      deliver_datetime,
-      frigivet_datetime,
-      run,
-      status,
-      total_amount, 
-      tracer,
-      userName
-    ) VALUES (
+    CALL InsertOrder(
       {amount},
       {amountOverhead},
-      \"\",
       {userID},
-      -1,
-      \"{comment}\",
       \"{dt_deliverTime.strftime('%Y-%m-%d %H:%M:%S')}\",
-      \"0000-01-01 00:00:00\",
-      {run},
-      1, 
-      {amountOverhead},
-      6,
-      \"{userName}\"
+      \"{comment}\",
+      \"{userName}\",
+      {run}
     )
+      
   """
 
 def createSQLQueryMaxOrderID() -> str:
@@ -280,7 +262,8 @@ def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
     SET
       amount = {NewAmount},
       amount_o =     {Overhead},
-      total_amount = {Overhead},
+      total_amount = {NewAmount},
+      total_amount_o = {Overhead}
       comment = \"{NewComment}\"
     WHERE  
       OID = {OrderID}

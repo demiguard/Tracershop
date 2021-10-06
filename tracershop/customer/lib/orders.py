@@ -36,8 +36,11 @@ def calculateDosisFDG(booking, userID, times):
 
   return 0, None
 
-def insertTOrderBooking(booking, customerID : int , username):
+def insertTOrderBooking(booking : Booking, customerID : int , username):
+
   bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
+  bookingDatetime += timedelta(minutes=booking.procedure.delay)
+  
   SQL.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "human", customerID, username, f"Automaticly Generated {booking.procedure.tracer.tracerName} Order")
 
 def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: int):
