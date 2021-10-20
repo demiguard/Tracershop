@@ -2,11 +2,23 @@
   The Idea behind this class to be the only link to the legacy database.
   In other word this class is an interface for communication between the 
   different Tracershop apps. 
+
+  For the most part all functions work like this:
+
+  1. Define an SQL query
+  2. Execute the Query using the SQLExecuter
+  3. Format the Query using the SQLFormatter
+  4. Return the output
+
+  The format that most queries comes out in a list of dict with keywords matching the keywords of the table.
 """
 from datetime import timedelta, time
 
 from lib import Formatting, utils
 from lib.SQL import SQLExecuter, SQLFormatter
+
+from typing import List, Dict
+
 
 def getCustomers():
   SQLQuery = """
@@ -625,5 +637,30 @@ def getFDGOrder(
     "COID" : COID
   }
 
-
+def getVials(year : str, month : str, day : str ) -> List[Dict]:
+  SQLQuery = f"""
+  SELECT 
+    customer, 
+    charge,
+    filldate,
+    filltime,
+    volume, 
+    ID,
+    activity
+  FROM
+    VAL
+  WHERE
+    filldate = \"{year}-{month}-{day}\"
+  """
+  SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  names = [
+    "customer",
+    "charge",
+    "filldate",
+    "filltime",
+    "volume," 
+    "ID",
+    "activity"
+  ]
+  return SQLFormatter.FormatSQLTuple(SQLResult, names)
 

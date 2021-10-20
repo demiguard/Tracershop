@@ -2,7 +2,7 @@ import React, {} from "react";
 
 import { noop } from "./utils";
 
-export { renderStatusImage }
+export { renderStatusImage , renderTableRow}
 
 
 function renderStatusImage(status, func) {
@@ -16,3 +16,30 @@ function renderStatusImage(status, func) {
   throw "Status not supproted!";
 }
 
+function renderTableRow(key, list_of_tds) {  
+  /*
+   * This function is for building Tables, it creates a single row.
+   * It has a variable amount of entries allowing to be used for creation of all Tables
+   * The function was introduced late in the development, so might not have been used everywhere
+   * But its usage is on the todo list.
+   * 
+   * Args: 
+   *    key - Int :    The key that's appied to tr
+   *    list_of_keys : List of renderable objects. The order of the list matters, where the first object is rendered first .
+   * Returns
+   *  rendered typescript.
+  */
+  var index = 0 
+
+  const tds = []
+  for(let td of list_of_tds){
+    tds.push((<td key={index}>{td}</td>));
+    index++;
+  }
+
+  return(
+    <tr key={key}>
+      {tds}
+    </tr>
+  )
+}

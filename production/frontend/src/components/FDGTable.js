@@ -42,11 +42,13 @@ export default class FDGTable extends Component {
       orders   : new Map(),
       runs     : new Map(),
       customer : new Map(),
+      vial    : new Map(),
+
 
       showModal : false,
       ModalOrder : null,
       ModalCustomer : null,
-      Vials : new Map()
+      
     }
 
     ajax({
@@ -59,19 +61,19 @@ export default class FDGTable extends Component {
         day   : this.props.date.getDate(),
       })
     }).then((data) => {
-
       const CustomerMap = new Map();
       for (let Customer of data["customers"]) {
         CustomerMap.set(Customer.ID, {
           username : Customer.UserName,
           ID       : Customer.ID,
           overhead : Customer.overhead,
-          productions : []
+          productions : [],
+          CustomerNumber : Customer.CustomerNumber,
+          Name   : Customer.Name,
         });
       }
 
-      this.InsertProductions(CustomerMap, data["productions"])
-
+      this.InsertProductions(CustomerMap, data["productions"]);
 
       // These are the attual productions runs
       const RunMap = new Map();
@@ -89,11 +91,17 @@ export default class FDGTable extends Component {
 
       const newOrders = this.InsertOrders(CustomerMap, data["Orders"])      
 
+      const NewVials = new Map();
+      for(let vial of data["vials"]) {
+        NewVials.set(vial.ID, vial);
+      }
+
       const newState = {
         ...this.state,
         runs   : RunMap,
         orders : newOrders,
-        customer : CustomerMap
+        customer : CustomerMap,
+        vial : NewVials
       };
       this.setState(newState);
     });    
@@ -128,6 +136,12 @@ export default class FDGTable extends Component {
       const newOrders = this.InsertOrders(newCustomerMap, data["Orders"]);
 
       this.SetOrdersCustomers(newOrders, newCustomerMap);
+
+      const newVials = new Map();
+      for(let vial of data["vials"]){
+        newVials.set(vial.ID, vial);
+      }
+      this.setState({...this.state, vial: newVials});
     });
   }
 
@@ -163,7 +177,7 @@ export default class FDGTable extends Component {
     const newOrders = new Map();
     for (const Order of Orders) {
       newOrders.set(Order.oid, Order);
-      const Customer    = CustomerMap.get(Order.BID);
+      const Customer   = CustomerMap.get(Order.BID);
       const Production = Customer.productions[Order.run - 1];
       if (Production === undefined) continue;
       Production.orders.push(Order);
@@ -175,12 +189,12 @@ export default class FDGTable extends Component {
   SetOrdersCustomers(newOrders, newCustomerMap) {
     const newState = {
       ...this.state,
-      orders : newOrders,
-      customer : newCustomerMap
+      "orders" : newOrders,
+      "customer" : newCustomerMap
     };
     this.setState(newState);
-    
   }
+
 
   GetProductionDateTimeString(Production) {
     return String(this.props.date.getFullYear()) + '-' +
@@ -396,6 +410,27 @@ export default class FDGTable extends Component {
       ModalOrder : Order,
       ModalCustomer : Customer,
     });
+  }
+
+  createVial(
+    Charge,
+    FillTime,
+    Volume,
+    Activity, 
+  ){
+    console.log(Charge, FillTime, Volume, Activity)
+    console.log(this.state)
+  }
+
+  editVial(){
+
+  }
+
+  assignVial(){
+
+  }
+
+  AcceptOrder(){
 
   }
 
@@ -445,7 +480,7 @@ export default class FDGTable extends Component {
   renderAcceptButtons(Order) {
     if (Order.COID !== -1) return (<td></td>); 
     if (Order.status == 1) return (<td><Button variant="light" onClick={() => this.AcceptOrder(Order.oid)}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
-    if (Order.status == 2) return (<td><Button variant="light" onClick={() => {}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
+    if (Order.status == 2) return (<td><Button variant="light" onClick={() => {this.activateModal(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
     if (Order.status == 3) return (<td></td>);
   }
 
@@ -455,7 +490,6 @@ export default class FDGTable extends Component {
     if (Order.status === 3) return String(Order.run)
 
   }
-
 
   renderOrder(Order) {
     const OrderDT   = new Date(Order.deliver_datetime) 
@@ -513,6 +547,7 @@ export default class FDGTable extends Component {
     </div>);
   }
 
+
   render() {
     const orders = [];
     for (const [oid, order] of this.state.orders.entries()){
@@ -527,9 +562,6 @@ export default class FDGTable extends Component {
       }
     }
     
-    console.log(this.state)
-
-
     return (<div>
       <div> Produktioner: <br/>
         {RenderedRuns}
@@ -557,9 +589,10 @@ export default class FDGTable extends Component {
         show={this.state.showModal}
         onClose={this.closeModal.bind(this)}
         Order={this.state.ModalOrder}
-      >
-
-      </FDGModal>
+        vials={this.state.vial}
+        customer={this.state.customer}
+        createVial={this.createVial.bind(this)}
+      />
     </div>
     );
   }

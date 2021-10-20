@@ -15,11 +15,14 @@ class ApiGetInitialData(View):
     runs = SQLController.getRuns()
     customers = SQLController.getCustomers()
     productions = SQLController.getProductions()
+    vials    = SQLController.getVials(data["year"], data["month"], data["day"])
+
+
 
     return JsonResponse({
       "Orders" : Orders,
       "Runs"   : runs,
       "customers" : customers,
-      "productions" : productions
-
+      "productions" : productions,
+      "vials" : vials
     })

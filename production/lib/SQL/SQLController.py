@@ -130,3 +130,12 @@ def createEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment):
   SQLLegacyController.insertEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment)
 
   return SQLLegacyController.getFDGOrder(BID=CustomerID, deliver_datetime=deliverTimeStr, run=run)
+
+def getVials(year, month, day):
+  return SQLLegacyController.getVials(year, month, day)
+
+def createVial(): #### TODO ARGS
+  SQLLegacyController.createVial()
+
+def updateVial(): #### TODO ARGS
+  SQLLegacyController.updateVial()

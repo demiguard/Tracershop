@@ -12,8 +12,11 @@ class ApiGetFDGOrders(View):
     data = Formatting.ParseJSONRequest(request)
     Orders = SQLController.getFDGOrders(data["year"], data["month"], data["day"])
     productions = SQLController.getProductions()
+    vials = SQLController.getVials(data["year"], data["month"], data["day"])
+
 
     return JsonResponse({
       "Orders" : Orders,
-      "productions" : productions
+      "productions" : productions,
+      "vials" : vials
     })

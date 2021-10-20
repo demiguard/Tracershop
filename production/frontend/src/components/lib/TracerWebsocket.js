@@ -22,8 +22,8 @@ export class TracerWebSocket extends WebSocket {
 
 
     this.onclose = function(e) {
-      console.log("Websocket closed! with code:" + e.code)
-      console.log(e.reason)
+      //console.log("Websocket closed! with code:" + e.code)
+      //console.log(e.reason)
     } 
 
     this.onerror = function(err) {
