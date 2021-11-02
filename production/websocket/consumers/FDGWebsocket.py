@@ -24,12 +24,20 @@ class FDGConsumer(AsyncWebsocketConsumer):
       self.FDG_group_name,
       self.channel_name
     )
-    print("Closing Websocket")
-
 
   #Receive data from Websocket
   async def receive(self, text_data): 
-    print("Websocket RECIEVE "+text_data)
+    """
+      This is the server side handler for new message. It assumes the text data is on json format with the following entries:
+        messageType - This is the indentifier for which type of message was send.
+        date        - This message indicate what date it was send. It's used on the front end to discard messages, that's is not relevant
+                    / This would normaly be different groups that you sign up to instead, but since i'm expecting only a few users are on site.
+                    / Note that different group would probally require the websockets to drop / enter new group dynamicly. 
+                    / The point is, the way stuff is done is not optimal, but sufficient given the current usecase
+    
+    """
+
+    print("Websocket RECIEVE " + text_data)
     message = text_data
     message_json = json.loads(message)
     
@@ -42,7 +50,7 @@ class FDGConsumer(AsyncWebsocketConsumer):
       await self.channel_layer.group_send(
         self.FDG_channel_name,
         {
-          "type" : 'AcceptOrder',
+          "type" : 'sendEvent',
           "messageType" : "AcceptOrder",
           "date"        : dateStr,
           "oid"         : oid
@@ -56,20 +64,42 @@ class FDGConsumer(AsyncWebsocketConsumer):
       await self.channel_layer.group_send(
         self.FDG_channel_name,
         {
-          "type" : 'ChangeRun',
+          "type" : 'sendEvent',
           "messageType" : "ChangeRun",
           "date"        : dateStr,
           "UpdatedOrders" : updatedOrders
         }
       )
+    if messageType == "CreateVial":
+      vial = message_json["vial"]
+      await self.CreateVial(vial)
+      InsertedVial = await self.getVial(vial)
+      await self.channel_layer.group_send(
+        self.FDG_channel_name,
+        {
+          "type" : 'sendEvent',
+          "messageType" : "CreateVial",
+          "date"        : dateStr,
+          "vial"        : InsertedVial
+        }
+      )
+    if messageType == "EditVial":
+      vial = message_json["vial"]
+      await self.updateVial(vial)
+      await self.channel_layer.group_send(
+        self.FDG_channel_name,
+        {
+          "type"        : "sendEvent",
+          "messageType" : "EditVial",
+          "date"        : dateStr,
+          "vial"        : vial
+        }
+      )
 
-  #These functions are called for each Websocket
-  async def ChangeRun(self, event):
-    await self.send(text_data=json.dumps(event))
-
-
-  #Recieve data from channel
-  async def AcceptOrder(self, event):
+  async def sendEvent(self, event):
+    """
+      Send the event to each websocket. Note this function gets call for each websocket connected to the group 
+    """
     await self.send(text_data=json.dumps(event))
 
   #Database handlers
@@ -81,3 +111,38 @@ class FDGConsumer(AsyncWebsocketConsumer):
   def setFDGOrderStatusTo2(self, oid):
     SQL.setFDGOrderStatusTo2(oid)
 
+  @database_sync_to_async
+  def CreateVial(self, Vial):
+    SQL.createVial(
+      Vial["customer"], 
+      Vial["charge"],
+      Vial["filldate"],
+      Vial["filltime"],
+      Vial["volume"],
+      Vial["activity"]
+    )
+  
+  @database_sync_to_async
+  def getVial(self, Vial):
+    return SQL.getVial(
+      CustomerID=Vial["customer"], 
+      Charge=Vial["charge"],
+      FillDate=Vial["filldate"],
+      FillTime=Vial["filltime"],
+      Volume=Vial["volume"],
+      activity=Vial["activity"]
+    )
+
+  @database_sync_to_async
+  def updateVial(self, Vial):
+    SQL.updateVial(
+      ID=Vial["ID"],
+      CustomerID=Vial["customer"], 
+      Charge=Vial["charge"],
+      FillDate=Vial["filldate"],
+      FillTime=Vial["filltime"],
+      Volume=Vial["volume"],
+      activity=Vial["activity"]
+    )
+    
+    

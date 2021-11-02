@@ -28,6 +28,14 @@ export { FDGTable }
     deliver_datetime : Str //note it's on a date time format where you can call new Date(orders.delivers_datetime)
 
   }
+
+  ***** IDIOT NOTICE *****
+    So some genious figure out, Hey this websocket is kinda smart lets not use it. Instead lets use normal AJAX calls
+
+    So a massive TODO is removing all the AJAX calls and instead make them over the websocket
+    websockets are harder better faster stronger, Also we need to do some encryption...
+
+
 */
 
 
@@ -417,21 +425,64 @@ export default class FDGTable extends Component {
     FillTime,
     Volume,
     Activity, 
+    CustomerNumber
   ){
-    console.log(Charge, FillTime, Volume, Activity)
-    console.log(this.state)
+    const FillDate = String(this.props.date.getFullYear()) + '-' +
+      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
+      FormatDateStr(this.props.date.getDate());
+    this.websocket.send(JSON.stringify({
+      "messageType" : "CreateVial",
+      "date"        : this.props.date,
+      "vial"        : {
+        "charge" : Charge,
+        "filltime" : FillTime,
+        "filldate" : FillDate, 
+        "customer" : CustomerNumber,
+        "activity" : Activity,
+        "volume" : Volume
+      }
+    }));
   }
 
-  editVial(){
-
+  recieveVial(Vial){
+    const TodayStr = String(this.props.date.getFullYear()) + '-' +
+      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
+      FormatDateStr(this.props.date.getDate());
+    
+    if (Vial.filldate == TodayStr)  {
+      const NewVials = new Map(this.state.vial);
+      NewVials.set(Vial.ID, Vial);
+      this.setState({...this.state, vial : NewVials});
+    }
   }
 
-  assignVial(){
-
+  editVial(ID,
+    Charge,
+    FillTime,
+    Volume,
+    Activity, 
+    CustomerNumber)
+  {
+    const FillDate = String(this.props.date.getFullYear()) + '-' +
+      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
+      FormatDateStr(this.props.date.getDate());
+    this.websocket.send(JSON.stringify({
+      "messageType" : "EditVial",
+      "date"        : this.props.date,
+      "vial"        : {
+        "ID"     : ID,
+        "charge" : Charge,
+        "filltime" : FillTime,
+        "filldate" : FillDate, 
+        "customer" : CustomerNumber,
+        "activity" : Activity,
+        "volume" : Volume
+      }
+    })); 
   }
 
-  AcceptOrder(){
-
+  FinishOrder(){
+    //This the function responsitble for sending 
   }
 
 
@@ -479,7 +530,7 @@ export default class FDGTable extends Component {
 
   renderAcceptButtons(Order) {
     if (Order.COID !== -1) return (<td></td>); 
-    if (Order.status == 1) return (<td><Button variant="light" onClick={() => this.AcceptOrder(Order.oid)}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
+    if (Order.status == 1) return (<td><Button variant="light" onClick={() => {this.AcceptOrder(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
     if (Order.status == 2) return (<td><Button variant="light" onClick={() => {this.activateModal(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
     if (Order.status == 3) return (<td></td>);
   }
@@ -592,6 +643,7 @@ export default class FDGTable extends Component {
         vials={this.state.vial}
         customer={this.state.customer}
         createVial={this.createVial.bind(this)}
+        editVial={this.editVial.bind(this)}
       />
     </div>
     );

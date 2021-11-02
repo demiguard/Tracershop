@@ -643,7 +643,7 @@ def getVials(year : str, month : str, day : str ) -> List[Dict]:
     customer, 
     charge,
     filldate,
-    filltime,
+    TIME_FORMAT(filltime, \"%T\"),
     volume, 
     ID,
     activity
@@ -658,9 +658,131 @@ def getVials(year : str, month : str, day : str ) -> List[Dict]:
     "charge",
     "filldate",
     "filltime",
-    "volume," 
+    "volume", 
     "ID",
     "activity"
   ]
   return SQLFormatter.FormatSQLTuple(SQLResult, names)
 
+def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0.0, activity = 0.0):
+  """
+    This function gets a specific vial, note if the conditions above do not return a unique vial you get the first. It does kinda funky
+  """
+  ValidConditions = []
+  def helper(name, entry,  entryType): 
+    if entry:
+      if entryType == "str":
+        ValidConditions.append((name, f"\"{entry}\""))
+      else:
+        ValidConditions.append((name, entry))
+  helper("customer", CustomerID, "num")
+  helper("charge", Charge,       "str")
+  helper("filldate", FillDate,   "str")
+  helper("filltime", FillTime,   "str")
+  helper("volume", Volume,       "num")
+  helper("activity", activity,   "num")
+  Condition = ""
+  for i, (FieldName, FieldValue) in enumerate(ValidConditions):
+    if i == 0:
+      Condition += f"{FieldName} = {FieldValue}"
+    else:
+      Condition += f" AND {FieldName} = {FieldValue}"
+  SQLQuery = f"""
+  SELECT 
+    customer, 
+    charge,
+    filldate,
+    TIME_FORMAT(filltime, \"%T\"),
+    volume, 
+    ID,
+    activity
+  FROM
+    VAL
+  WHERE
+    {Condition}
+  """
+  customer, charge, filldate, filltime, volume, ID, activity = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+
+  return {
+    "customer"  : customer,
+    "charge"    : charge,
+    "filldate"  : filldate.strftime("%Y-%m-%d"),
+    "filltime"  : filltime ,
+    "volume"    : float(volume),
+    "ID"        : ID ,
+    "activity"  : float(activity)
+  }
+
+
+def createVial(CustomerID : int, Charge : str, FillDate : str, FillTime : str, Volume : float, activity : float):
+  SQLQuery = f"""
+    INSERT INTO VAL(
+      customer,
+      charge,
+      depotpos,
+      filldate,
+      filltime,
+      volume,
+      gros,
+      tare,
+      net,
+      product,
+      activity
+    ) VALUES (
+      {CustomerID},
+      \"{Charge}\",
+      0,
+      \"{FillDate}\",
+      \"{FillTime}\",
+      {Volume},
+      0,
+      0,
+      0,
+      \"18F\",
+      {activity}
+      )
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+def updateVial(
+  ID,
+  CustomerID = 0,
+  Charge = "",
+  FillDate = "",
+  FillTime = "",
+  Volume = 0.0,
+  activity = 0.0
+):
+  UpdateFields = []
+
+  def helper(name, entry,  entryType): 
+    if entry:
+      if entryType == "str":
+        UpdateFields.append((name, f"\"{entry}\""))
+      else:
+        UpdateFields.append((name, entry))
+  helper("customer", CustomerID, "int")
+  helper("charge", Charge, "str")
+  helper("filldate", FillDate, "str")
+  helper("filltime", FillTime, "str")
+  helper("volume", Volume, "float")
+  helper("activity", activity, "float")
+
+  updateStr = ""
+  for i, (field, value) in enumerate(UpdateFields):
+    if i + 1 == len(UpdateFields): 
+      updateStr +=f"{field}={value}\n"
+    else:
+      updateStr +=f"{field}={value},\n"
+
+  if not updateStr:
+    return
+
+  SQLQuery=f"""
+    UPDATE VAL
+    SET
+      {updateStr}
+    WHERE
+     ID={ID}
+    """
+  SQLExecuter.ExecuteQuery(SQLQuery)

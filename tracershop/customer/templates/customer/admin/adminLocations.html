@@ -10,7 +10,7 @@
         <th>Scanner Navn</th>
         <th>Forbundet kunde</th>
       </thead>
-      <tbody>
+      <tbody id="LocationBody">
         {% for location in locations %}
         <tr>
           <td> {{ location.name }}</td>
@@ -18,8 +18,18 @@
           <td> {{ location.AssignedTo }}</td>
         </tr>
         {% endfor%}
+        <tr id="NewLocationRow">
+          <td><input id="NewLocation" ></td>
+          <td><input id="NewLocationName"></td>
+          <td><select id="NewLocationCustomer">
+            {% for customer in customers %}
+              <option value="{{ customer.ID }}">{{ customer }}</option>
+            {% endfor %}
+          </select></td>
+        </tr>
       </tbody>
     </table>
+    <input type="button" id="SubmitLocation" class="btn btn-primary" value="Tilføj Location">
   </div>
   
   <div class="col-6">

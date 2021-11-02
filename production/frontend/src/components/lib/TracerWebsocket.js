@@ -4,8 +4,9 @@ export class TracerWebSocket extends WebSocket {
     this.table = parent
 
     this.onmessage = function(e) {
-      const data = JSON.parse(e.data)
-      const MessageDate = new Date(data["date"])
+      const data = JSON.parse(e.data);
+      const MessageDate = new Date(data["date"]);
+      console.log(data);
       switch(data["messageType"]) {
         case "AcceptOrder":
           const oid = data["oid"];
@@ -14,10 +15,13 @@ export class TracerWebSocket extends WebSocket {
         case "ChangeRun":
           this.table.ChangeRunIncoming(MessageDate, data["UpdatedOrders"]);
           break;
+        case "CreateVial":
+          this.table.recieveVial(data["vial"]);
+          break;
+        case "EditVial":
+          this.table.recieveVial(data["vial"]);
+          break;
       }
-
-
-      
     } 
 
 
@@ -27,7 +31,7 @@ export class TracerWebSocket extends WebSocket {
     } 
 
     this.onerror = function(err) {
-      console.error("Socket encounter error: ", err.message)
+      console.error("Socket encounter error: ", err.message);
       ws.close();
     }
   }

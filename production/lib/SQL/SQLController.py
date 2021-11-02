@@ -134,8 +134,34 @@ def createEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment):
 def getVials(year, month, day):
   return SQLLegacyController.getVials(year, month, day)
 
-def createVial(): #### TODO ARGS
-  SQLLegacyController.createVial()
+def getVial(
+    CustomerID = 0,
+    Charge = "",
+    FillDate ="",
+    FillTime = "",
+    Volume = 0.0, 
+    activity = 0
+  ):
+  return SQLLegacyController.getVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
 
-def updateVial(): #### TODO ARGS
-  SQLLegacyController.updateVial()
+def createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity): #### TODO ARGS
+  SQLLegacyController.createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
+
+def updateVial(
+    ID,
+    CustomerID=0, 
+    Charge="",
+    FillDate="",
+    FillTime="",
+    Volume=0,
+    activity=0
+  ):
+  SQLLegacyController.updateVial(
+      ID,
+      CustomerID = CustomerID, 
+      Charge = Charge,
+      FillDate = FillDate,
+      FillTime = FillTime,
+      Volume = Volume,
+      activity = activity
+    )
