@@ -263,7 +263,7 @@ def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
       amount = {NewAmount},
       amount_o =     {Overhead},
       total_amount = {NewAmount},
-      total_amount_o = {Overhead}
+      total_amount_o = {Overhead},
       comment = \"{NewComment}\"
     WHERE  
       OID = {OrderID}
