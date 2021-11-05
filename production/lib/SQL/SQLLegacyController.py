@@ -177,7 +177,8 @@ def getTracers():
       isotope, 
       n_injections,
       order_block,
-      in_use
+      in_use,
+      tracer_type
     FROM
       Tracers
   """
@@ -189,7 +190,8 @@ def getTracers():
     "isotope",
     "n_injections",
     "order_block",
-    "in_use"
+    "in_use",
+    "tracer_type"
   ])
   
   
@@ -197,18 +199,20 @@ def getTracers():
 def getIsotopes():
   SQLQuery = f"""SELECT  
     id,
-    name
+    name,
+    halflife
   FROM
     isotopes
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   return SQLFormatter.FormatSQLTuple(QueryResult,[
     "ID",
-    "name"
+    "name",
+    "halflife"
   ])
 
 
-def getFDGOrders(year:int, month: int, day : int):
+def getActivityOrders(year:int, month: int, day : int, tracer_id):
   month = Formatting.convertIntToStrLen2(month)
   day   = Formatting.convertIntToStrLen2(day)
   SQLQuery = f"""
@@ -227,7 +231,8 @@ def getFDGOrders(year:int, month: int, day : int):
     FROM
       orders 
     WHERE
-      deliver_datetime LIKE \"{year}-{month}-{day}%\"
+      deliver_datetime LIKE \"{year}-{month}-{day}%\" AND 
+      tracer={tracer_id}
     ORDER BY
       BID,
       deliver_datetime

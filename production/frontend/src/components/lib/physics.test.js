@@ -35,30 +35,26 @@ test("CountMinutes: Day is irrelevant for this function", () => {
 
 // You don't need this much precisions
 test("CalculateProduction: 1 hour dosis", () => {
-  expect(CalculateProduction("FDG", 60, 300)).toBeCloseTo(438.1895114613755)
+  expect(CalculateProduction(6584, 60, 300)).toBeCloseTo(438.1895114613755)
 });
 
 test("CalculateProduction: 0 hour dosis", () => {
-  expect(CalculateProduction("FDG", 0, 300)).toBeCloseTo(300)
+  expect(CalculateProduction(6584, 0, 300)).toBeCloseTo(300)
 });
 
 
 test("CalculateProduction: Splitting calls doesn't matter", () => {
-  const oneHourDecay     = CalculateProduction("FDG", 60, 300)
-  const AnotherHourDecay = CalculateProduction("FDG", 60, oneHourDecay)
-  const TwoHoursDecay    = CalculateProduction("FDG", 120, 300)
+  const oneHourDecay     = CalculateProduction(6584, 60, 300)
+  const AnotherHourDecay = CalculateProduction(6584, 60, oneHourDecay)
+  const TwoHoursDecay    = CalculateProduction(6584, 120, 300)
 
   expect(AnotherHourDecay).toBeCloseTo(TwoHoursDecay)
 });
 
-test("CalculateProduction: Unknown Tracer throwing Error", () => {
-  expect(() => CalculateProduction("Bonanza", 60, 300)).toThrow("Tracer is not known")
-})
-
 // this test was taken from 2021/08/03 production
 test("Integration test 1: Real Life example 1", () => {
   const min = CountMinutes(new Date(1993,11,20,8,15), new Date(1993,11,20,11,30))
-  const production = CalculateProduction("FDG", min, 1319)
+  const production = CalculateProduction(6584, min, 1319)
 
   expect(production + 3653).toBeCloseTo(8171,-1)
 })

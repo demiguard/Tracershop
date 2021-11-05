@@ -10,7 +10,7 @@ class ApiGetInitialData(View):
 
   def post(self, request):
     data = Formatting.ParseJSONRequest(request)
-    Orders = SQLController.getFDGOrders(data["year"], data["month"], data["day"])
+    Orders = SQLController.getActivityOrders(data["year"], data["month"], data["day"], data["tracer"])
 
     runs = SQLController.getRuns()
     customers = SQLController.getCustomers()

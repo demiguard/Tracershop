@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Modal, Button, Row, Container, Table, Tab, FormControl, Form } from "react-bootstrap";
 import { renderTableRow } from "./lib/Rendering";
 import { FormatTime } from "./lib/formatting";
-export { FDGModal }
+export { ActivityModal }
 
 
 /*
@@ -34,7 +34,7 @@ const initial_state = {
   ErrorMessage :""
 }
 
-export default class FDGModal extends Component {
+export default class ActivityModal extends Component {
   constructor(props){
     super(props);
 

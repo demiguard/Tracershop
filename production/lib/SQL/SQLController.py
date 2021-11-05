@@ -50,8 +50,8 @@ def getTorderMonthlyStatus(year : int, month : int):
 def getOrderMonthlyStatus(year : int, month : int):
   return SQLLegacyController.getOrderMonthlyStatus(year, month)
 
-def getFDGOrders(year:int, month:int, day:int):
-  return SQLLegacyController.getFDGOrders(year, month, day)
+def getActivityOrders(year:int, month:int, day:int, tracerID):
+  return SQLLegacyController.getActivityOrders(year, month, day, tracerID)
 
 def setFDGOrderStatusTo2(oid:int):
   SQLLegacyController.setFDGOrderStatusTo2(oid)

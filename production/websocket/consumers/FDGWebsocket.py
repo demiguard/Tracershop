@@ -8,20 +8,23 @@ from channels.db import database_sync_to_async
 from lib.SQL import SQLController as SQL
 
 class FDGConsumer(AsyncWebsocketConsumer):
-  FDG_group_name   = 'FDG' 
-  FDG_channel_name = 'FDG'
+  channel_name = 'Activity'
   
+
   async def connect(self):
+    self.group_name = self.scope['url_route']['kwargs']['tracer_id'] # Tracer id
+    
+
     await self.channel_layer.group_add(
-      self.FDG_group_name,
+      self.group_name,
       self.channel_name
     )
 
     await self.accept()
 
   async def disconnect(self, close_code):
-    await self.channel_layer.group_add(
-      self.FDG_group_name,
+    await self.channel_layer.group_discard(
+      self.group_name,
       self.channel_name
     )
 
@@ -48,7 +51,7 @@ class FDGConsumer(AsyncWebsocketConsumer):
       oid = message_json["oid"]
       await self.setFDGOrderStatusTo2(oid)
       await self.channel_layer.group_send(
-        self.FDG_channel_name,
+        self.group_name,
         {
           "type" : 'sendEvent',
           "messageType" : "AcceptOrder",
@@ -62,7 +65,7 @@ class FDGConsumer(AsyncWebsocketConsumer):
       for order in updatedOrders:
         await self.updatedOrder(order)
       await self.channel_layer.group_send(
-        self.FDG_channel_name,
+        self.group_name,
         {
           "type" : 'sendEvent',
           "messageType" : "ChangeRun",
@@ -75,7 +78,7 @@ class FDGConsumer(AsyncWebsocketConsumer):
       await self.CreateVial(vial)
       InsertedVial = await self.getVial(vial)
       await self.channel_layer.group_send(
-        self.FDG_channel_name,
+        self.group_name,
         {
           "type" : 'sendEvent',
           "messageType" : "CreateVial",
@@ -87,7 +90,7 @@ class FDGConsumer(AsyncWebsocketConsumer):
       vial = message_json["vial"]
       await self.updateVial(vial)
       await self.channel_layer.group_send(
-        self.FDG_channel_name,
+        self.group_name,
         {
           "type"        : "sendEvent",
           "messageType" : "EditVial",

@@ -10,6 +10,7 @@ import {EmailSetupPage} from "./EmailSetupPage";
 import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
 import CloseDaysPage from "./CloseDaysPage";
+import VialPage from "./Vials";
 
 export {App}
 
@@ -18,7 +19,8 @@ const Pages = {
   Kunder : CustomerPage,
   Konfiguration : ConfigPage,
   Email : EmailSetupPage,
-  Lukkedage : CloseDaysPage
+  Lukkedage : CloseDaysPage,
+  Vial : VialPage
 }
 
 export default class App extends Component {

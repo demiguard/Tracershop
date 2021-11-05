@@ -6,10 +6,10 @@ import { TracerWebSocket } from "./lib/TracerWebsocket";
 import { CompareDates } from "./lib/utils";
 import { FormatDateStr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
-import FDGModal from "./FDGModal";
+import ActivityModal from "./ActivityModal";
 
 
-export { FDGTable }
+export { ActivityTable }
 
 /*
   As all documentation in code, this might be out of date, 
@@ -34,29 +34,25 @@ export { FDGTable }
 
     So a massive TODO is removing all the AJAX calls and instead make them over the websocket
     websockets are harder better faster stronger, Also we need to do some encryption...
-
-
 */
 
 
 
-export default class FDGTable extends Component {
+export default class ActivityTable extends Component {
   constructor(props) {
     super(props);
 
-    this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/FDG/", this);
+    this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/activity/" + this.props.tracer.id + "/", this);
 
     this.state = {
       orders   : new Map(),
       runs     : new Map(),
       customer : new Map(),
-      vial    : new Map(),
-
+      vial     : new Map(),
 
       showModal : false,
       ModalOrder : null,
       ModalCustomer : null,
-      
     }
 
     ajax({
@@ -64,6 +60,7 @@ export default class FDGTable extends Component {
       type:"post",
       dataType : "json",
       data     : JSON.stringify({
+        tracer : this.props.tracer.id,
         year  : this.props.date.getFullYear(),
         month : this.props.date.getMonth() + 1,
         day   : this.props.date.getDate(),
@@ -125,10 +122,11 @@ export default class FDGTable extends Component {
 
   updateOrders(newDate) {
     ajax({
-      url:"api/getFDGOrders",
+      url:"api/getActivityOrders",
       type:"post",
       dataType : "json",
       data : JSON.stringify({
+        tracer : this.props.tracer.id,
         year : newDate.getFullYear(),
         month : newDate.getMonth() + 1,
         day : newDate.getDate(),
@@ -205,7 +203,7 @@ export default class FDGTable extends Component {
 
 
   GetProductionDateTimeString(Production) {
-    return String(this.props.date.getFullYear()) + '-' +
+    return String(  this.props.date.getFullYear()) + '-' +
       FormatDateStr(this.props.date.getMonth() + 1) + '-' +
       FormatDateStr(this.props.date.getDate()) + "T" +  
       Production.dtime;
@@ -320,7 +318,7 @@ export default class FDGTable extends Component {
     const orderDateTime = this.GetProductionDateTimeString(Production)
 
     const newOrder = await ajax({
-      url : "api/createEmptyFDGOrder",
+      url : "api/createEmptyActitityOrder",
       type:"POST",
       datatype:"json",
       data:JSON.stringify({
@@ -375,7 +373,7 @@ export default class FDGTable extends Component {
           new Date(SOrder.deliver_datetime)
         );
           
-        const OrderContribution = CalculateProduction("FDG", MinDiff, SOrder.amount);
+        const OrderContribution = CalculateProduction(this.props.tracer.halflife, MinDiff, SOrder.amount);
           //Updating Orders
         MasterOrder.total_amount += OrderContribution;
         SOrder.total_amount = 0;
@@ -585,7 +583,7 @@ export default class FDGTable extends Component {
           
           const ProductionDatetime = new Date(this.GetProductionDateTimeString(Production));
           const MinDiff = CountMinutes(runDate, ProductionDatetime);
-          const TimeCorrectedContribution = CalculateProduction("FDG", MinDiff, contribution);
+          const TimeCorrectedContribution = CalculateProduction(this.props.tracer.halflife, MinDiff, contribution);
           total += TimeCorrectedContribution;
           total_o += Math.floor(TimeCorrectedContribution * (1 + Customer.overhead / 100));
         }
@@ -636,7 +634,7 @@ export default class FDGTable extends Component {
           {orders}
         </tbody>
       </Table>
-      <FDGModal
+      <ActivityModal
         show={this.state.showModal}
         onClose={this.closeModal.bind(this)}
         Order={this.state.ModalOrder}
