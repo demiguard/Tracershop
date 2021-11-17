@@ -20,15 +20,16 @@ This is because one should be able to exchange that, module if the underlying da
 
 def getCustomers():
   """
-    This is a function to get the endpoints for the system such as petrh / life
-
-    The end result should be on the form
-    [
-      {
-        ID : <int>
-        username : <string
-      }, ...
-    ]
+    Retrieves entries from the external customer table, where the user is an customer and not an admin / production 
+    
+    Returns List of Dict on this structure:
+    {
+      UserName : str (login name)
+      ID : Int (Unique)
+      overhead : int (Assume this is a procentage)
+      CustomerNumber : Int (Unique, but there's no constraint)
+      Name : Str ( Real name so petrh = Rigshospitalet)
+    }
   """
   return SQLLegacyController.getCustomers()
 
@@ -144,7 +145,7 @@ def getVial(
   ):
   return SQLLegacyController.getVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
 
-def createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity): #### TODO ARGS
+def createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity): 
   SQLLegacyController.createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
 
 def updateVial(
@@ -165,3 +166,23 @@ def updateVial(
       Volume = Volume,
       activity = activity
     )
+
+def getVialRange(startdate : date, endDate : date):
+  """
+    Get all Vials in a date range
+  
+    Args:
+      startDate : datetime.date - start date for the range
+      endDate   : datetime.date - end date for the range
+    returns a list of Dict with objects:
+    [{
+      customer  : int - customer number not id, that this vial belongs to
+      charge    : str - batchnumber
+      filldate  : date-str - date then vial was filled
+      filltime  : time-str - time where vial was filled
+      volume    : decimal(2) - Volume of radioactive Matieral
+      ID        : int - id of Vial
+      activity  : decimal(2) - Radioactive material in Vial
+    }, ...]
+  """
+  return SQLLegacyController.getVialRange(startdate, endDate)

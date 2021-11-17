@@ -1,17 +1,11 @@
 import React, { Component } from "react";
 import { Button, Row, Col, Container } from 'react-bootstrap'
 import { Calender } from './calender'
-import { FDGTable } from './FDGTable'
-import { FETTable } from './FETTable' 
 import { TOrderTable } from './TOrderTable'
 import { ActivityTable } from './ActivityTracerTable'
 import { ajax } from "jquery";
-
+import { TRACER_TYPE_ACTIVITY } from "./lib/constants";
 export {OrderPage}
-
-
-const TRACER_TYPE_ACTIVITY = 1
-const TRACER_TYPE_DOSE     = 2
 
 export default class OrderPage extends Component {
   constructor(props) {
@@ -40,8 +34,8 @@ export default class OrderPage extends Component {
         if(tracer.tracer_type != TRACER_TYPE_ACTIVITY) continue
         const tracer_isotope = isotopeMap.get(tracer.isotope);
         newTracers.push({
-          id   : tracer.id,
-          name : tracer.name,
+          id       : tracer.id,
+          name     : tracer.name,
           isotope  : tracer_isotope.name, 
           halflife : tracer_isotope.halflife,
         });

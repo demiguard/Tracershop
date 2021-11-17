@@ -3,6 +3,7 @@ import { Container, Table, FormControl, Form } from "react-bootstrap";
 import { ajax } from "jquery";
 import TracerModal from "./TracerModal";
 import { BooleanMapping } from "./lib/utils";
+import { TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "./lib/constants";
 
 export {ConfigPage}
 
@@ -273,6 +274,12 @@ export default class ConfigPage extends Component {
             this.updateTracer(tracer, "in_use", BooleanMapping(event.target.checked))
           }}
         />
+      </td>
+      <td>
+          <select value={tracer.tracer_type} onChange={(event) => {this.updateTracer(tracer, "tracer_type", event.target.value)}}>
+            <option value={TRACER_TYPE_ACTIVITY}>Activitet</option>
+            <option value={TRACER_TYPE_DOSE}>Dose</option>
+          </select>
       </td>
       <td>
         <img src="/static/images/setting2.png" className="statusIcon" onClick={(_event) => this.showTracerModal(tracer.id)}></img>

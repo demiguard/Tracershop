@@ -12,7 +12,7 @@
 
   The format that most queries comes out in a list of dict with keywords matching the keywords of the table.
 """
-from datetime import timedelta, time
+from datetime import timedelta, time, date
 
 from lib import Formatting, utils
 from lib.SQL import SQLExecuter, SQLFormatter
@@ -33,10 +33,10 @@ def getCustomers():
       INNER JOIN UserRoles on
         Users.Id = UserRoles.Id_User
     WHERE
-      UserRoles.Id_Role = 4
+      UserRoles.Id_Role = 4 AND
+      Users.kundenr IS NOT NULL
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-
   names = ["UserName", "ID", "overhead", "CustomerNumber", "Name"]
   return SQLFormatter.FormatSQLTuple(SQLResult, names)
   
@@ -533,7 +533,7 @@ def deleteCloseDay(year, month, day):
     DELETE FROM
       blockDeliverDate
     WHERE
-      ddate like \"{year}-{month}-{day}\"
+      ddate like \"{year}-{Formatting.convertIntToStrLen2(month)}-{Formatting.convertIntToStrLen2(day)}\"
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
 
@@ -542,7 +542,7 @@ def createCloseDay(year, month, day):
     INSERT INTO
       blockDeliverDate( ddate )
     VALUES
-      (\"{year}-{month}-{day}\")
+      (\"{year}-{Formatting.convertIntToStrLen2(month)}-{Formatting.convertIntToStrLen2(day)}\")
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
 
@@ -791,3 +791,54 @@ def updateVial(
      ID={ID}
     """
   SQLExecuter.ExecuteQuery(SQLQuery)
+
+def getVialRange(startDate : date, endDate: date):
+  """
+    Get all Vials in a date range
+  
+    Args:
+      startDate : datetime.date - start date for the range
+      endDate   : datetime.date - end date for the range
+    returns a list of Dict with objects:
+    [{
+      customer  : int - customer number not id, that this vial belongs to
+      charge    : str - batchnumber
+      filldate  : date-str - date then vial was filled
+      filltime  : time-str - time where vial was filled
+      volume    : decimal(2) - Volume of radioactive Matieral
+      ID        : int - id of Vial
+      activity  : decimal(2) - Radioactive material in Vial
+    }, ...]
+  """
+  def dateConverter(Date : date):
+    return f"{Date.year}-{Formatting.convertIntToStrLen2(Date.month)}-{Formatting.convertIntToStrLen2(Date.day)}"
+
+  SQLQuery = f"""
+    SELECT
+      customer, 
+      charge,
+      filldate,
+      TIME_FORMAT(filltime, \"%T\"),
+      volume, 
+      ID,
+      activity
+    FROM
+      VAL
+    WHERE
+      filldate BETWEEN \"{dateConverter(startDate)}\" AND \"{dateConverter(endDate)}\"
+  """
+
+  print(SQLQuery)
+
+  QueryRes =  SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return SQLFormatter.FormatSQLTuple(QueryRes, [
+    "customer",
+    "charge",
+    "filldate",
+    "filltime",
+    "volume",
+    "ID",
+    "activity"
+  ])
+
+  

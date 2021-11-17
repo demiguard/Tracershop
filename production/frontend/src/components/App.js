@@ -17,7 +17,7 @@ export {App}
 const Pages = {
   Ordre : OrderPage,
   Kunder : CustomerPage,
-  Konfiguration : ConfigPage,
+  Tracers : ConfigPage,
   Email : EmailSetupPage,
   Lukkedage : CloseDaysPage,
   Vial : VialPage

@@ -1,11 +1,12 @@
 import mysql.connector as mysql
-
+from lib.SQL.SQLFormatter import checkForSQLInjection
 # User packages:
 
 # This is some legacy code that should really be moved
 from api.models import Database
 import constants
 
+from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect
 
 
 class MySQLCursor(object):
@@ -14,7 +15,7 @@ class MySQLCursor(object):
   def __enter__(self):
     databaseQuery = Database.objects.filter(databaseName=constants.TRACERSHOPDATABASENAME)
     if not databaseQuery:
-      raise Exception
+      raise DatabaseNotSetupException
     database = databaseQuery[0]
     databaseConfig = {
       'database' : database.databaseName,
@@ -42,24 +43,27 @@ class MySQLCursor(object):
 def ExecuteQueryFetchOne(SQLQuery : str):
   with MySQLCursor() as cursor:
     if cursor:
+      checkForSQLInjection(SQLQuery)
       cursor.execute(SQLQuery)
       FetchedVal = cursor.fetchone()
     else:
-      raise Exception
+      raise DatabaseCouldNotConnect
   return FetchedVal
 
 def ExecuteQueryFetchAll(SQLQuery : str) -> list:
   with MySQLCursor() as cursor:
     if cursor:
+      checkForSQLInjection(SQLQuery)
       cursor.execute(SQLQuery)
       FetchedVals = cursor.fetchall()
     else:
-      raise Exception
+      raise DatabaseCouldNotConnect
   return FetchedVals
 
 def ExecuteQuery(SQLQuery : str) -> None:
   with MySQLCursor() as cursor:
     if cursor:
+      checkForSQLInjection(SQLQuery)
       cursor.execute(SQLQuery)
     else:
-      raise Exception
+      raise DatabaseCouldNotConnect

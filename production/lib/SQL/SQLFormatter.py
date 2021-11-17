@@ -5,6 +5,11 @@
   https://docs.djangoproject.com/en/3.1/topics/db/sql/
 """
 
+import re
+
+from lib.expections import SQLInjectionException
+
+
 def FormatSQLTuple(SQLQuery : list, names : list) -> list:
   """
     This function takes a list of tuples and converts it into a list of dicts
@@ -25,3 +30,16 @@ def FormatSQLTuple(SQLQuery : list, names : list) -> list:
     { name : query[i] for (i, name) in enumerate(names) } 
       for query in SQLQuery
   ]
+
+
+def checkForSQLInjection(SQLquery : str):
+  """
+    Checks for common SQL injeciton patterns 
+    Raises SQLInjecitonException if it finds one
+  """
+  
+  regex = re.compile(r";|--\%")
+  
+  if regex.search(SQLquery):
+    raise SQLInjectionException()
+  

@@ -15,6 +15,7 @@ from api.views.createNewTracer      import ApicreateNewTracer
 from api.views.deleteTracer         import ApiDeleteTracer
 from api.views.getCloseDays         import ApiClosedDays
 from api.views.createEmptyOrder     import APICreateEmptyFDGOrder
+from api.views.getVialInfo          import ApigetVialInfo
 
 from lib.utils import LMAP
 
@@ -34,7 +35,8 @@ Views = [
   ApicreateNewTracer,
   ApiDeleteTracer,
   ApiClosedDays,
-  APICreateEmptyFDGOrder
+  APICreateEmptyFDGOrder,
+  ApigetVialInfo,
 ]
 
 urlpatterns = LMAP(lambda view: path(view.path, view.as_view(), name=view.name), Views)

@@ -1,4 +1,27 @@
-export { FormatTime, FormatNumber, FormatDateStr }
+export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate }
+
+function parseDate(inputStr){
+  if (/^\d{4}-\d{2}-\d{2}$/g.test(dateString)) return inputStr;
+  if (/^\d{4}\/\d{2}\/\d{2}$/g.test(dateString)) return inputStr.substr(0,4)+ "-" + inputStr.substr(5,2) + "-" + inputStr.substr(8,2);
+  if (/^\d{2}\/\d{2}\/\d{4}$/g.test(dateString)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
+  if (/^\d{2}-\d{2}-\d{4}$/g.test(dateString)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
+  //Todo add more formats
+
+
+  throw "Date not on known format, Date: "+inputStr
+}
+
+function parseDateToDanishDate(dateString){
+  /* This funciton takes a date string on the format YYYY-MM-DD and formats it to DD-MM-YYYY
+   * The Primary function should be to convert input dates to display dates.
+   * This Date format is the one used by the site and throws an Error if it's not sites format
+   * This is kinda a warning to don't use this function for user input parsing
+   */
+  if (!/^\d{4}-\d{2}-\d{2}$/g.test(dateString)) throw "Date not on format, Input: " + dateString;
+
+  return dateString.substr(8,2) + "-" + dateString.substr(5,2) + "-" +  dateString.substr(0,4);
+
+}
 
 function FormatTime (timeStr) {
   /**
@@ -21,10 +44,10 @@ function FormatTime (timeStr) {
   if (/^\d{1}:\d{2}:\d{2}$/g.test(timeStr)) return "0" + timeStr;
   if (/^\d{2}:\d{2}$/g.test(timeStr)) return timeStr + ":00";
   if (/^\d{1}:\d{2}$/g.test(timeStr)) return "0" + timeStr + ":00"
-  if (/^\d{2}.\d{2}$/g.test(timeStr)) return timeStr.substring(0,2) + ":" + timeStr.substring(3,5) + ":00";
-  if (/^\d{1}.\d{2}$/g.test(timeStr)) return "0" + timeStr.substring(0,1) + ":" + timeStr.substring(2,4) + ":00";
-  if (/^\d{2}.\d{2}.\d{2}$/g.test(timeStr)) return timeStr.substring(0,2) + ":" + timeStr.substring(3,5) + ":" + timeStr.substring(6,8);
-  if (/^\d{1}.\d{2}.\d{2}$/g.test(timeStr)) return "0" + timeStr.substring(0,1) + ":" + timeStr.substring(2,4) + ":" + timeStr.timeStr.substring(5,7);
+  if (/^\d{2}\.\d{2}$/g.test(timeStr)) return timeStr.substring(0,2) + ":" + timeStr.substring(3,5) + ":00";
+  if (/^\d{1}\.\d{2}$/g.test(timeStr)) return "0" + timeStr.substring(0,1) + ":" + timeStr.substring(2,4) + ":00";
+  if (/^\d{2}\.\d{2}\.\d{2}$/g.test(timeStr)) return timeStr.substring(0,2) + ":" + timeStr.substring(3,5) + ":" + timeStr.substring(6,8);
+  if (/^\d{1}\.\d{2}\.\d{2}$/g.test(timeStr)) return "0" + timeStr.substring(0,1) + ":" + timeStr.substring(2,4) + ":" + timeStr.timeStr.substring(5,7);
 
   return null;
 
