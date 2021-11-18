@@ -34,7 +34,7 @@ const initial_state = {
   ErrorMessage :""
 }
 
-export default class ActivityModal extends Component {
+class ActivityModal extends Component {
   constructor(props){
     super(props);
 
@@ -106,6 +106,21 @@ export default class ActivityModal extends Component {
     this.setState(new_state);
   }
 
+  /**
+   * This function is called when the user have started to create a new vial
+   * but regrets doing so and reset the state to a non creating state
+   */
+  StopCreatingNewVial(){
+    this.setState({...this.state,
+      CreatingVial : false,
+      newCharge : "",
+      newFillTime : "",
+      newVolume : "",
+      newActivity : "", 
+      ErrorMessage :""
+    })
+  }
+
   initializeNewVial(){
     this.setState({
       ...this.state,
@@ -170,7 +185,6 @@ export default class ActivityModal extends Component {
       EditingVials : newEdittingMap
     });
   }
-
 
   ActiveVialList(vial){
     const editingState = this.state.EditingVials.get(vial.ID);
@@ -274,6 +288,23 @@ export default class ActivityModal extends Component {
     this.setState({...this.state, EditingVials : newEdittingMap})
   }
 
+  /**
+   * This function is responsible for handling the action when the user
+   * presses the "Frigiv ordre". This validates the order and send it
+   * To the parent table, who'll send the order back by their websocket.
+   */
+  AcceptOrder(){
+    // Validating Input
+    this.setState({...this.state, ErrorMessage : ""});
+    if (this.state.SelectedVials.size === 0) this.setState({...this.state, ErrorMessage : "Der er ikke valgt nogen vials til denne ordre"})
+    if (this.state.EditingVials.size === 0 ) this.setState({...this.state, ErrorMessage : "Færdigør din redigering før du frigiver en ordre "} )
+    if (this.state.CreatingVial) this.setState({...this.state, ErrorMesssage : "Afslut opretelsen af en ny Vial, før du frigiver en ordre"})
+
+    if (this.state.ErrorMessage) return;
+
+  }
+
+  // Render functions
 
   renderNewVial(){
     const bacthInput = (<FormControl
@@ -292,10 +323,11 @@ export default class ActivityModal extends Component {
       value={this.state.newActivity}
       onChange={(event) => {this.changeState(event.target.value, "newActivity")}}
     />);
+    const AcceptButton = (<Button onClick={this.createNewVial.bind(this)}>Accept</Button>);
+    const EmptyDiv = (<div></div>);
 
 
-
-    return ["ny", bacthInput, ProductionTimeInput, VolumeInput, ActivityInput]
+    return ["ny", bacthInput, ProductionTimeInput, VolumeInput, ActivityInput, AcceptButton, EmptyDiv];
   }
 
   renderOrder(){
@@ -351,7 +383,7 @@ export default class ActivityModal extends Component {
 
     if(this.state.CreatingVial){
       vials_in_use.push(renderTableRow("new", this.renderNewVial()))
-      AddNewOrderButton = (<Button onClick={this.createNewVial.bind(this)}>Godkend Ny Vial</Button>)
+      AddNewOrderButton = (<Button onClick={this.StopCreatingNewVial.bind(this)}>Anuller ny Vial</Button>)
     } else {
       AddNewOrderButton = (<Button onClick={() => {this.initializeNewVial()}}>Opret Ny Vial</Button>)
     }
@@ -384,10 +416,12 @@ export default class ActivityModal extends Component {
 
   renderBody(){
     return (
-    <Container fluid>
-      <Row>{this.renderOrder()}</Row>
-      <Row>{this.renderVials()}</Row>
-    </Container>);
+      <Container fluid>
+        <Row>{this.renderOrder()}</Row>
+        <Row>{this.renderVials()}</Row>
+        {this.state.ErrorMessage ? <Row>{this.state.ErrorMessage}</Row> : null }
+      </Container>);
+    
   }
 
   render(){
@@ -404,7 +438,7 @@ export default class ActivityModal extends Component {
       <Modal.Header>Ordre {OrderID}</Modal.Header>
       <Modal.Body>{this.renderBody()}</Modal.Body>
       <Modal.Footer>
-        <Button> Set Status til 3 </Button>
+        <Button onClick={this.AcceptOrder.bind(this)}> Frigiv Ordre </Button>
         <Button onClick={this.CloseModal.bind(this)}> Tilbage </Button>
       </Modal.Footer>
     </Modal>);

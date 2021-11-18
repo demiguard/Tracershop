@@ -4,7 +4,9 @@ from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
 from lib.SQL import SQLController
 from lib import Formatting
 
-class ApiClosedDays(View):
+from datetime import date
+
+class APIClosedDays(View):
   name = "ClosedDays"
   path = "closeddays"
 
@@ -16,16 +18,24 @@ class ApiClosedDays(View):
 
   def post(self, request):
     data = Formatting.ParseJSONRequest(request)
+    try:
+      requestDate = date(data["year"], data["month"], data["day"])
+    except ValueError:
+      return HttpResponseBadRequest()
 
-    SQLController.createCloseDay(data["year"], data["month"], data["day"])
+    SQLController.createCloseDay(requestDate)
 
     return HttpResponse(status=204)
 
 
   def delete(self, request):
     data = Formatting.ParseJSONRequest(request)
+    try:
+      requestDate = date(data["year"], data["month"], data["day"])
+    except ValueError:
+      return HttpResponseBadRequest()
 
-    SQLController.deleteCloseDay(data["year"], data["month"], data["day"])
+    SQLController.deleteCloseDay(requestDate)
 
     return HttpResponse(status=204)
   

@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { Row, FormControl, Table, Container } from "react-bootstrap"
 import { ajax } from "jquery";
 import { CustomerModal } from "./CustomerModal";
+import { JSON_CUSTOMER } from "./lib/constants"
+
 
 export { CustomerPage }
 
@@ -24,7 +26,7 @@ export default class CustomerPage extends Component {
         return res   
       }}).then(
         (res) => {
-          const CustomerList = res["customers"]
+          const CustomerList = res[JSON_CUSTOMER]
           const NewState = {
             ...this.state,
             Customers : CustomerList

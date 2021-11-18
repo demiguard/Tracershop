@@ -1,20 +1,21 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
-import { Calender } from './calender'
 import { CompareDates } from "./lib/utils";
 import { renderStatusImage } from './lib/Rendering'
 import ReactHover, { Trigger, Hover  } from "react-hover"
 import { FormatDateStr } from "./lib/formatting";
 import { SpecialTracerWebsocket } from "./lib/SpecialTracerWebsocket";
 
+import {JSON_ORDERS} from "./lib/constants.js"
+
 export { TOrderTable }
 
-export default class TOrderTable extends Component {
+class TOrderTable extends Component {
   constructor(props) {
     super(props)
 
-    this.websocket = new SpecialTracerWebsocket("ws://" + window.location.host + "/ws/TOrder/", this);
+    this.websocket = new SpecialTracerWebsocket(`ws://${window.location.host}/ws/TOrder/`, this);
 
     this.state = {
       orders : new Map()
@@ -32,18 +33,11 @@ export default class TOrderTable extends Component {
 
   updateOrders() {
     ajax({
-      url: "/api/getspecialtracers",
-      type : "post",
-      datatype : "json",
-      data : JSON.stringify({
-        year  : this.props.date.getFullYear(),
-        month : this.props.date.getMonth() + 1,
-        day  : this.props.date.getDate()
-      })
-
+      url: `/api/getspecialtracerOrders/${this.props.date.getFullYear()}/${this.props.date.getMonth() + 1}/${this.props.date.getDate()}`,
+      type : "get",
     }).then((res) => {
       const NewOrderMap = new Map();
-      for(const Order of res["Orders"]) {
+      for(const Order of res[JSON_ORDERS]) {
         NewOrderMap.set(Order.oid, Order);
       }
       this.setState({

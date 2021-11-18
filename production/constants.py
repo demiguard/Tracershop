@@ -19,3 +19,18 @@ class EmailEvents(Enum):
   STATUS_SET_TO_2 = 1
   STATUS_SET_TO_3 = 2
   STATUS_SET_TO_0 = 3
+
+# Long list JSON key word used in Json messsages
+# These should have great overlap with production/frontend/src/lib/constants.js
+
+JSON_CUSTOMER = "customers"
+JSON_DELIVERTIMES = "deliverTimes"
+JSON_ISOTOPE = "isotopes"
+JSON_ORDERS  = "orders"
+JSON_PRODUCTIONS = "productions"
+JSON_RUNS = "runs"
+JSON_TRACER = "tracers"
+JSON_TRACER_MAPPING = "tracer_mapping"
+JSON_VIALS = "vials"
+JSON_VIAL_MAPPING = "vial_mapping"
+

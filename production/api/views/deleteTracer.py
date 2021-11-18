@@ -4,7 +4,7 @@ from django.http import JsonResponse
 from lib.SQL import SQLController
 from lib import Formatting
 
-class ApiDeleteTracer(View):
+class APIDeleteTracer(View):
   name = "deleteTracer"
   path = "deleteTracer"
 

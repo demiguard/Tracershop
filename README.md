@@ -21,6 +21,19 @@ Obviously if you are looking at this and wish to improve upon this system, upgra
 
 Secondly I would also recommend rewritting the Customer to be a React / Django App. Once you start maintaining both the production and the Customer APP then you'll know the difference. 
 
+### Programmer Notes
+
+  This code base tries to follow the code standard set forward by <https://www.python.org/dev/peps/pep-0008/> with camelcase Note that not all code is this, but It should aim.
+  Therefore if you make updates please try and follow this style guide.
+  With the following exceptions:
+  
+* Use 2 spaces instead of 4 for indentation
+* Allow multiple spaces after multiple assignments to line them up
+
+Simlarly The javascript should follow the google styleguide found here: <https://google.github.io/styleguide/jsguide.html>.
+Note that it was decided 1.5 year into development that this style guide should be followed so there's plenty of errors. The Quick and dirty of it using lowercase CamelCase.
+Also this site might be helpful <https://jsdoc.app/index.html>
+
 ### Difference from the old system
 
 The user group have changed quite a bit, now instead of having a single user, a customer can have multiple users so that a department don't have to share a single profile.
@@ -50,4 +63,4 @@ Apologies for any holes in the Documentation
 
 Here's a list of some the useful tutorials that have helped setting up the production
 
-* https://medium.com/analytics-vidhya/django-react-integration-37acc304e984
+* <https://medium.com/analytics-vidhya/django-react-integration-37acc304e984>

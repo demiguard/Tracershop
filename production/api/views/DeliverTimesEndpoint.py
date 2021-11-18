@@ -5,15 +5,15 @@ from lib import Formatting
 from lib.SQL import SQLController
 from lib.utils import LMAP
 
-class ApiDeliverTimes(View):
+class APIDeliverTimes(View):
   name = "delivertimes"
   path = "delivertimes"
 
   def get(self, request):
     data = Formatting.ParseJSONRequest(request)
 
-    print(data)
-    
+    raise NotImplemented
+
     return JsonResponse({})
 
   def post(self, request):
@@ -36,7 +36,6 @@ class ApiDeliverTimes(View):
   def put(self, request):
     data = Formatting.ParseJSONRequest(request)
 
-    print(data)
     MaxFDG = data["max"]
     run    = data["run"]
     dtime  = data["dtime"]    

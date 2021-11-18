@@ -30,11 +30,11 @@ export default class ConfigPage extends Component {
 
     }
 
-  Promise.all([this.getCustomers(), this.getTracers(), this.getTracerCustomers()]).then(([
+  Promise.all([this.getCustomers(), this.getTracers(), this.getTracerCustomersMapping()]).then(([
     customerJSON, TracerJSON, TracerCustomers
   ]) => {
-    const TracerInfo = TracerJSON["tracer"];
-    const Isotopes   = TracerJSON["isotope"]
+    const TracerInfo = TracerJSON["tracers"];
+    const Isotopes   = TracerJSON["isotopes"]
       
     const newCustomerMap = new Map();
     const TracerMap = new Map(); 
@@ -47,7 +47,7 @@ export default class ConfigPage extends Component {
       newCustomerMap.set(Customer.ID, Customer)
     }
     
-    for(const tracerCustomer of TracerCustomers["data"]){
+    for(const tracerCustomer of TracerCustomers["tracer_mapping"]){
       if (TracerCustomerMap.has(tracerCustomer.tracer_id)) {
         const TracerMapping = TracerCustomerMap.get(tracerCustomer.tracer_id)
         TracerMapping.set(tracerCustomer.customer_id, true)
@@ -81,9 +81,9 @@ export default class ConfigPage extends Component {
     })
   }
 
-  getTracerCustomers(){
+  getTracerCustomersMapping(){
     return ajax({
-      url:"api/getTracerCustomer"
+      url:"api/getTracerCustomerMapping"
     })
   }
 

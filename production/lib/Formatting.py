@@ -46,4 +46,13 @@ def EncodeDateTimeDict(Dict : dict) -> dict:
 def FormatDateTimeJStoSQL(datetimestr : str) -> str:
   return datetimestr.replace("T", " ")
 
+def dateConverter(Date : date) -> str:
+  """
+    Extracts date on the string format for the database
+    Args:
+      Date - datetime.date object
+    return 
+      string - ready for the database
+  """
+  return Date.strftime("%Y-%m-%d")
   

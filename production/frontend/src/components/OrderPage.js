@@ -4,7 +4,7 @@ import { Calender } from './calender'
 import { TOrderTable } from './TOrderTable'
 import { ActivityTable } from './ActivityTracerTable'
 import { ajax } from "jquery";
-import { TRACER_TYPE_ACTIVITY } from "./lib/constants";
+import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER } from "./lib/constants.js";
 export {OrderPage}
 
 export default class OrderPage extends Component {
@@ -26,11 +26,11 @@ export default class OrderPage extends Component {
       type:"GET"
     }).then((data) => {
       const isotopeMap = new Map();
-      for(const isotope of data["isotope"]){
+      for(const isotope of data[JSON_ISOTOPE]){
         isotopeMap.set(isotope.ID, isotope)
       }
       const newTracers = new Array();
-      for(const tracer of data["tracer"]){
+      for(const tracer of data[JSON_TRACER]){
         if(tracer.tracer_type != TRACER_TYPE_ACTIVITY) continue
         const tracer_isotope = isotopeMap.get(tracer.isotope);
         newTracers.push({
@@ -56,7 +56,6 @@ export default class OrderPage extends Component {
       url : "api/monthcolor",
       type:"POST",
       dataType : "json",
-
       data : JSON.stringify({
         month : month + 1,
         year  : year

@@ -6,7 +6,8 @@ import { TracerWebSocket } from "./lib/TracerWebsocket";
 import { CompareDates } from "./lib/utils";
 import { FormatDateStr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
-import ActivityModal from "./ActivityModal";
+import { ActivityModal } from "./ActivityModal.js";
+import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS } from "./lib/constants";
 
 
 export { ActivityTable }
@@ -38,7 +39,7 @@ export { ActivityTable }
 
 
 
-export default class ActivityTable extends Component {
+class ActivityTable extends Component {
   constructor(props) {
     super(props);
 
@@ -56,18 +57,11 @@ export default class ActivityTable extends Component {
     }
 
     ajax({
-      url:"api/getinitialinformation",
-      type:"post",
-      dataType : "json",
-      data     : JSON.stringify({
-        tracer : this.props.tracer.id,
-        year  : this.props.date.getFullYear(),
-        month : this.props.date.getMonth() + 1,
-        day   : this.props.date.getDate(),
-      })
+      url:`api/getActivityTable/${this.props.tracer.id}/${this.props.date.getFullYear()}/${this.props.date.getMonth() + 1}/${this.props.date.getDate()}`,
+      type:"get",
     }).then((data) => {
       const CustomerMap = new Map();
-      for (let Customer of data["customers"]) {
+      for (let Customer of data[JSON_CUSTOMER]) {
         CustomerMap.set(Customer.ID, {
           username : Customer.UserName,
           ID       : Customer.ID,
@@ -78,11 +72,11 @@ export default class ActivityTable extends Component {
         });
       }
 
-      this.InsertProductions(CustomerMap, data["productions"]);
+      this.InsertProductions(CustomerMap, data[JSON_PRODUCTIONS]);
 
       // These are the attual productions runs
       const RunMap = new Map();
-      for (let Run of data["Runs"]) {
+      for (let Run of data[JSON_RUNS]) {
         if (RunMap.has(Run.day)){
           //Remake list ahear to the principle of purity
           const Runs = [...RunMap.get(Run.day)] 
@@ -94,10 +88,10 @@ export default class ActivityTable extends Component {
         }
       }
 
-      const newOrders = this.InsertOrders(CustomerMap, data["Orders"])      
+      const newOrders = this.InsertOrders(CustomerMap, data[JSON_ORDERS])      
 
       const NewVials = new Map();
-      for(let vial of data["vials"]) {
+      for(let vial of data[JSON_VIALS]) {
         NewVials.set(vial.ID, vial);
       }
 
@@ -121,16 +115,14 @@ export default class ActivityTable extends Component {
   }
 
   updateOrders(newDate) {
+    const url_target = String(this.props.tracer.id) + "/"
+                        + String(newDate.getFullYear()) + "/"
+                        + String(newDate.getMonth() + 1) + "/"
+                        + String(newDate.getDate());
+
     ajax({
-      url:"api/getActivityOrders",
-      type:"post",
-      dataType : "json",
-      data : JSON.stringify({
-        tracer : this.props.tracer.id,
-        year : newDate.getFullYear(),
-        month : newDate.getMonth() + 1,
-        day : newDate.getDate(),
-      })
+      url:"api/getActivityOrders/"+ url_target,
+      type:"get"
     }).then((data) => {
       var newCustomerMap = new Map(this.state.customer);
       for(var [BID, Customer] of newCustomerMap.entries()){
@@ -138,13 +130,12 @@ export default class ActivityTable extends Component {
         Customer.productions = [];
         newCustomerMap.set(BID, Customer);
       }
-      newCustomerMap  = this.InsertProductions(newCustomerMap, data["productions"]);
-      const newOrders = this.InsertOrders(newCustomerMap, data["Orders"]);
-
+      newCustomerMap  = this.InsertProductions(newCustomerMap, data[JSON_PRODUCTIONS]);
+      const newOrders = this.InsertOrders(newCustomerMap, data[JSON_ORDERS]);
       this.SetOrdersCustomers(newOrders, newCustomerMap);
 
       const newVials = new Map();
-      for(let vial of data["vials"]){
+      for(let vial of data[JSON_VIALS]){
         newVials.set(vial.ID, vial);
       }
       this.setState({...this.state, vial: newVials});
@@ -195,8 +186,8 @@ export default class ActivityTable extends Component {
   SetOrdersCustomers(newOrders, newCustomerMap) {
     const newState = {
       ...this.state,
-      "orders" : newOrders,
-      "customer" : newCustomerMap
+      orders : newOrders,
+      customer : newCustomerMap
     };
     this.setState(newState);
   }

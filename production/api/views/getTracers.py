@@ -4,7 +4,9 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from lib.SQL import SQLController
 from lib.utils import LMAP
 
-class ApiGetTracers(View):
+from constants import JSON_TRACER, JSON_ISOTOPE
+
+class APIGetTracers(View):
   name = "gettracers"
   path = "gettracers"
 
@@ -14,6 +16,6 @@ class ApiGetTracers(View):
     isotopes = SQLController.getIsotopes()
 
     return JsonResponse({
-      "tracer" : tracers,
-      "isotope" : isotopes
+      JSON_TRACER  : tracers,
+      JSON_ISOTOPE : isotopes
     })

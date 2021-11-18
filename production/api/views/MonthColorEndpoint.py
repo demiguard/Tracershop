@@ -6,7 +6,7 @@ from lib.SQL import SQLController
 from lib.utils import LMAP
 
 
-class ApiMonthColorEndpoint(View):
+class APIMonthColorEndpoint(View):
   name = "MonthColor"
   path = "monthcolor"
 

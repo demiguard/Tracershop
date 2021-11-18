@@ -4,7 +4,9 @@ from django.http import JsonResponse
 from lib.SQL import SQLController
 from lib import Formatting
 
-class ApicreateNewTracer(View):
+from constants import JSON_TRACER
+
+class APICreateNewTracer(View):
   name = "createNewTracer"
   path = "createNewTracer"
 
@@ -18,5 +20,5 @@ class ApicreateNewTracer(View):
 
 
     return JsonResponse({
-      "tracers" : SQLController.createNewTracer(name, isotope, n_injections, order_block)
+      JSON_TRACER : SQLController.createNewTracer(name, isotope, n_injections, order_block)
     })

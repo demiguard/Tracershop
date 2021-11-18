@@ -1,7 +1,9 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl } from "react-bootstrap";
-import { FormatNumber, FormatTime } from "./lib/formatting"
+import { FormatNumber, FormatTime } from "./lib/formatting.js"
+import { JSON_CUSTOMER, JSON_DELIVERTIMES } from "./lib/constants.js"
+
 
 export { CustomerModal }
 
@@ -27,7 +29,7 @@ const defaulState = {
 }
 
 
-export default class CustomerModal extends Component {
+class CustomerModal extends Component {
   constructor(props) {
     super(props)
     this.state = defaulState;
@@ -45,12 +47,12 @@ export default class CustomerModal extends Component {
       type: "get"
     }).then((res) =>{ 
       const newDeliverTimeMap = new Map();
-      for (const deliverTime of res["deliverTimes"]) {
+      for (const deliverTime of res[JSON_DELIVERTIMES]) {
         newDeliverTimeMap.set(deliverTime.DTID, deliverTime);
       }
 
       const NewModalState = {...this.state, 
-        customer : res["customer"],
+        customer : res[JSON_CUSTOMER],
         deliverTimes : newDeliverTimeMap,
       }
       this.setState(NewModalState);

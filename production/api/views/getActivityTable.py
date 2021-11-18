@@ -6,11 +6,13 @@ from datetime import date
 from lib.SQL import SQLController
 from lib import Formatting
 
-from constants import JSON_ORDERS, JSON_PRODUCTIONS, JSON_VIALS
+from constants import JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS
 
-class APIGetActivityOrders(View):
-  name = "getActivityOrders"
-  path = "getActivityOrders/<int:tracerID>/<int:year>/<int:month>/<int:day>"
+class APIGetActivityTable(View):
+  name = "getActivityTable"
+  path = "getActivityTable/<int:tracerID>/<int:year>/<int:month>/<int:day>"
+
+
 
   def get(self, request, tracerID: int, year: int, month: int, day: int):
     try:
@@ -18,12 +20,21 @@ class APIGetActivityOrders(View):
     except ValueError:
       return HttpResponseBadRequest()
 
+
     Orders = SQLController.getActivityOrders(requestDate, tracerID)
+
+    runs = SQLController.getRuns()
+    customers = SQLController.getCustomers()
     productions = SQLController.getProductions()
-    vials = SQLController.getVials(requestDate)
+    vials    = SQLController.getVials(requestDate)
+
+
 
     return JsonResponse({
+      JSON_CUSTOMER : customers,
       JSON_ORDERS : Orders,
       JSON_PRODUCTIONS : productions,
+      JSON_RUNS   : runs,
       JSON_VIALS : vials
     })
+    

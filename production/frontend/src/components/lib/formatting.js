@@ -23,23 +23,25 @@ function parseDateToDanishDate(dateString){
 
 }
 
+/**
+ * Checks if a string is on a valid time format:
+ * 
+ * - HH:MM:SS
+ * - (0)H:MM:SS 
+ * - HH:MM   -> HH:MM:00
+ * - (0)H:MM -> 0H:MM:00
+ * - HH.MM.SS  -> HH:MM:00
+ * - (0)H.MM.SS -> 0H:MM:00
+ * - HH.MM   -> HH:MM:00
+ * - (0)H.MM -> 0H:MM:00
+ * Number in paraentens are missing from the text and are assumed to be there.
+ * If the string is not on the format returns null.
+ * 
+  * @param {string} timeStr
+  * @returns {string} time string on format HH:MM:SS
+*/
 function FormatTime (timeStr) {
-  /**
-   * Number in paraentens are missing from the text and are assumed to be there
-   * Checks if a string is on a valid time format:
-   * 
-   * HH:MM:SS
-   * (0)H:MM:SS 
-   * HH:MM   -> HH:MM:00
-   * (0)H:MM -> 0H:MM:00
-   * HH.MM.SS  -> HH:MM:00
-   * (0)HMM.SS -> 0H:MM:00
-   * HH.MM   -> HH:MM:00
-   * (0)H.MM -> 0H:MM:00
-   * 
-   * If the string is not on the format returns null
-   */
-
+  
   if (/^\d{2}:\d{2}:\d{2}$/g.test(timeStr)) return timeStr;
   if (/^\d{1}:\d{2}:\d{2}$/g.test(timeStr)) return "0" + timeStr;
   if (/^\d{2}:\d{2}$/g.test(timeStr)) return timeStr + ":00";

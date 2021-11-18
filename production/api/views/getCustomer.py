@@ -1,19 +1,19 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import JsonResponse
 
 from lib.SQL import SQLController
-from lib.utils import LMAP
 
-class ApiGetCustomer(View):
+from constants import JSON_CUSTOMER, JSON_DELIVERTIMES
+
+class APIGetCustomer(View):
+  """
+    This endpoint retrieves the deliver times availble to a specific customer
+  """
   name = "getCustomer"
   path = "getCustomer/<int:ID>"
 
   def get(self, request, ID):
-
-    CustomerData = SQLController.getCustomer(ID)
-    DeliverTimes = (SQLController.getCustomerDeliverTimes(ID))
-
     return JsonResponse({
-      "customer" : CustomerData,
-      "deliverTimes" : DeliverTimes
+      JSON_CUSTOMER : SQLController.getCustomer(ID),
+      JSON_DELIVERTIMES : SQLController.getCustomerDeliverTimes(ID)
     })

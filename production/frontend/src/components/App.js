@@ -1,16 +1,16 @@
 import React, { Component } from "react";
 import {Container} from "react-bootstrap";
 
-import { Navbar } from "./Navbar";
-import {ConfigPage} from "./ConfigPage";
-import {OrderPage} from './OrderPage';
-import {CustomerPage} from "./CustomerPage";
-import {EmailSetupPage} from "./EmailSetupPage";
+import { Navbar } from "./Navbar.js";
+import { ConfigPage } from "./ConfigPage.js";
+import { OrderPage } from './OrderPage.js';
+import { CustomerPage } from "./CustomerPage.js";
+import { EmailSetupPage } from "./EmailSetupPage.js";
 
 import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
 import CloseDaysPage from "./CloseDaysPage";
-import VialPage from "./Vials";
+import { VialPage } from "./Vials.js";
 
 export {App}
 

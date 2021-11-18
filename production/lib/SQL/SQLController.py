@@ -1,7 +1,7 @@
 from django.db import connection
 from django.core.exceptions import ObjectDoesNotExist
 
-from typing import Type
+from typing import Type, Dict, List
 from datetime import datetime, time, date
 
 from api.models import ServerConfiguration
@@ -51,8 +51,8 @@ def getTorderMonthlyStatus(year : int, month : int):
 def getOrderMonthlyStatus(year : int, month : int):
   return SQLLegacyController.getOrderMonthlyStatus(year, month)
 
-def getActivityOrders(year:int, month:int, day:int, tracerID):
-  return SQLLegacyController.getActivityOrders(year, month, day, tracerID)
+def getActivityOrders(requestDate, tracerID):
+  return SQLLegacyController.getActivityOrders(requestDate, tracerID)
 
 def setFDGOrderStatusTo2(oid:int):
   SQLLegacyController.setFDGOrderStatusTo2(oid)
@@ -63,11 +63,11 @@ def getRuns():
 def getProductions():
   return SQLLegacyController.getProductions()
 
-def UpdateOrder(Order : dict):
+def UpdateOrder(Order : Dict):
   SQLLegacyController.UpdateOrder(Order)
 
-def getTOrders(year : int, month : int, day : int): 
-  return SQLLegacyController.getTOrders(year, month, day)
+def getTOrders(requestDate: date): 
+  return SQLLegacyController.getTOrders(requestDate)
 
 def setTOrderStatus(oid, status):
   SQLLegacyController.setTOrderStatus(oid, status)
@@ -75,7 +75,7 @@ def setTOrderStatus(oid, status):
 def updateTracer(tracerID, key, newValue):
   SQLLegacyController.updateTracer(tracerID, key, newValue)
 
-def getTracerCustomer():
+def getTracerCustomerMapping():
   return SQLLegacyController.getTracerCustomer()
 
 def createTracerCustomer(tracer_id, customer_id):
@@ -105,18 +105,18 @@ def deleteDeliverTime(DTID):
 def updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID):
   SQLLegacyController.updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID)
 
-def getClosedDays():
+def getClosedDays() -> List[Dict]:
   return SQLLegacyController.getClosedDays()
 
-def deleteCloseDay(year, month, day):
-  SQLLegacyController.deleteCloseDay(year, month, day)
+def deleteCloseDay(requestDate : date) -> None:
+  SQLLegacyController.deleteCloseDay(requestDate)
 
-def createCloseDay(year, month, day):
-  SQLLegacyController.createCloseDay(year, month, day)
+def createCloseDay(requestDate : date) -> None:
+  SQLLegacyController.createCloseDay(requestDate)
 
-def getServerConfig():
+def getServerConfig() -> ServerConfiguration:
   """
-    This Functions gets the serverConfig, if it doesn't exists it 
+    This Functions retrives the serverConfig model from theserver, if it doesn't exists it creates a default object.
   """
   try:
     ServerConfig = ServerConfiguration.objects.get(ID=1)
@@ -132,8 +132,6 @@ def createEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment):
 
   return SQLLegacyController.getFDGOrder(BID=CustomerID, deliver_datetime=deliverTimeStr, run=run)
 
-def getVials(year, month, day):
-  return SQLLegacyController.getVials(year, month, day)
 
 def getVial(
     CustomerID = 0,
@@ -144,6 +142,9 @@ def getVial(
     activity = 0
   ):
   return SQLLegacyController.getVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
+
+def getVials(request_date : date) -> [Dict]:
+  return SQLLegacyController.getVials(request_date)
 
 def createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity): 
   SQLLegacyController.createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
@@ -186,3 +187,4 @@ def getVialRange(startdate : date, endDate : date):
     }, ...]
   """
   return SQLLegacyController.getVialRange(startdate, endDate)
+

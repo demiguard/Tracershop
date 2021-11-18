@@ -212,9 +212,7 @@ def getIsotopes():
   ])
 
 
-def getActivityOrders(year:int, month: int, day : int, tracer_id):
-  month = Formatting.convertIntToStrLen2(month)
-  day   = Formatting.convertIntToStrLen2(day)
+def getActivityOrders(requestDate: date, tracer_id: int) -> List[Dict]:
   SQLQuery = f"""
     SELECT
       deliver_datetime,
@@ -231,7 +229,7 @@ def getActivityOrders(year:int, month: int, day : int, tracer_id):
     FROM
       orders 
     WHERE
-      deliver_datetime LIKE \"{year}-{month}-{day}%\" AND 
+      deliver_datetime LIKE \"{Formatting.dateConverter(requestDate)}%\" AND 
       tracer={tracer_id}
     ORDER BY
       BID,
@@ -318,9 +316,7 @@ def UpdateOrder(Order : dict):
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
 
-def getTOrders(year : int, month : int, day :int):
-  month = Formatting.convertIntToStrLen2(month)
-  day   = Formatting.convertIntToStrLen2(day)
+def getTOrders(requestDate: date):
   SQLQuery = f"""
     SELECT 
       t_orders.deliver_datetime,
@@ -336,7 +332,7 @@ def getTOrders(year : int, month : int, day :int):
         INNER JOIN Tracers on t_orders.tracer = Tracers.id
         INNER JOIN Users   on t_orders.BID    = Users.Id
     WHERE 
-      t_orders.deliver_datetime LIKE \"{year}-{month}-{day}%\"
+      t_orders.deliver_datetime LIKE \"{Formatting.dateConverter(requestDate)}%\"
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
@@ -642,7 +638,7 @@ def getFDGOrder(
     "COID" : COID
   }
 
-def getVials(year : str, month : str, day : str ) -> List[Dict]:
+def getVials(request_date : date) -> List[Dict]:
   SQLQuery = f"""
   SELECT 
     customer, 
@@ -655,7 +651,7 @@ def getVials(year : str, month : str, day : str ) -> List[Dict]:
   FROM
     VAL
   WHERE
-    filldate = \"{year}-{month}-{day}\"
+    filldate = \"{Formatting.dateConverter(request_date)}\"
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   names = [
@@ -711,7 +707,7 @@ def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0
   return {
     "customer"  : customer,
     "charge"    : charge,
-    "filldate"  : filldate.strftime("%Y-%m-%d"),
+    "filldate"  : Formatting.dateConverter(filldate),
     "filltime"  : filltime ,
     "volume"    : float(volume),
     "ID"        : ID ,
@@ -810,8 +806,6 @@ def getVialRange(startDate : date, endDate: date):
       activity  : decimal(2) - Radioactive material in Vial
     }, ...]
   """
-  def dateConverter(Date : date):
-    return f"{Date.year}-{Formatting.convertIntToStrLen2(Date.month)}-{Formatting.convertIntToStrLen2(Date.day)}"
 
   SQLQuery = f"""
     SELECT
@@ -825,10 +819,8 @@ def getVialRange(startDate : date, endDate: date):
     FROM
       VAL
     WHERE
-      filldate BETWEEN \"{dateConverter(startDate)}\" AND \"{dateConverter(endDate)}\"
+      filldate BETWEEN \"{Formatting.dateConverter(startDate)}\" AND \"{Formatting.dateConverter(endDate)}\"
   """
-
-  print(SQLQuery)
 
   QueryRes =  SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   return SQLFormatter.FormatSQLTuple(QueryRes, [

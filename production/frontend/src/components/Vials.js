@@ -1,11 +1,15 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { parseDateToDanishDate } from "./lib/formatting";
+import { parseDate, parseDateToDanishDate } from "./lib/formatting";
 
 export {VialPage}
 
-
+/**
+ * Enum for different sorting options for vial table
+ * @readonly
+ * @enum {number}
+ */
 const SearchOptions = {
   ID: 0,
   CHARGE : 1,
@@ -18,7 +22,7 @@ const SearchOptions = {
 }
 
 
-export default class VialPage extends Component {
+class VialPage extends Component {
   constructor(props){
     super(props)
     this.state = {
@@ -34,7 +38,7 @@ export default class VialPage extends Component {
       vialMapping : new Map()
     }
     ajax({
-      url:"api/getVialInfo",
+      url:"api/getVialRange",
       type:"get"
     }).then((data) => {
       const newVialMap = new Map();
@@ -54,6 +58,10 @@ export default class VialPage extends Component {
     })
   }
 
+  /**
+   * This function handles search button, being pressed
+   * Functionality is sending a request to the backend and updating Vials on response.
+   */
   dateSearch(){
     var ParsedDate;
     try {
@@ -62,16 +70,29 @@ export default class VialPage extends Component {
       //TODO: Add Error handling here
       return;
     }
-
+    const year = Number(parseDate.substr(0,4));
+    const month = Number(parseDate.substr(5,2));
+    const day  = Number(parseDate.substr(8,2));
     
   }
 
+  /**
+   * This function updates a value of the state determined by the key to the newVale. 
+   * 
+   * @param {string} key 
+   * @param {*} newValue 
+   */
   changeState(key,newValue){
     const newState = {...this.state};
     newState[key] = newValue;
     this.setState(newState);
   }
 
+  /**
+   * This function 
+   * @param {string} NewSelect 
+   * @returns {void}
+   */
   changeSelectState(NewSelect){
     const newState = {...this.state};
     
@@ -171,7 +192,7 @@ export default class VialPage extends Component {
 
       <Row>
         <Col>
-          <input value={this.state.filterBatch} onChange={(event) => {this.changeState("filterBatch", event.target.value)}} placeholder="batch number"/> 
+          <input value={this.state.filterBatch} onChange={(event) => {this.changeState("filterBatch", event.target.value)}} placeholder="batch nummer"/> 
         </Col>
         <Col>
           <select onChange={(event) => {this.changeSelectState(event.target.value)}}>
@@ -190,9 +211,9 @@ export default class VialPage extends Component {
         <thead>
           <tr>
             <th onClick={() => {this.changeSearch(SearchOptions.ID)}}>ID</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.CHARGE)}}>Batch number</th>
+            <th onClick={() => {this.changeSearch(SearchOptions.CHARGE)}}>Batch nummer</th>
             <th onClick={() => {this.changeSearch(SearchOptions.DATE)}}>Dato</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.TIME)}}>tappe Tidspunkt</th>
+            <th onClick={() => {this.changeSearch(SearchOptions.TIME)}}>Tappe tidspunkt</th>
             <th onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>Volume</th>
             <th onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>Aktivitet</th>
             <th onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>Ejer</th>
