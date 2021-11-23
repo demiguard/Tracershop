@@ -115,13 +115,8 @@ class ActivityTable extends Component {
   }
 
   updateOrders(newDate) {
-    const url_target = String(this.props.tracer.id) + "/"
-                        + String(newDate.getFullYear()) + "/"
-                        + String(newDate.getMonth() + 1) + "/"
-                        + String(newDate.getDate());
-
     ajax({
-      url:"api/getActivityOrders/"+ url_target,
+      url:`api/getActivityOrders/${this.props.tracer.id}/${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`,
       type:"get"
     }).then((data) => {
       var newCustomerMap = new Map(this.state.customer);
@@ -322,8 +317,6 @@ class ActivityTable extends Component {
     return newOrder;
   }
 
-
-
   async updateAmountForCustomer(ID){
     //This function updates the values FDG amount,
     //such that the orders are in a consistent state 
@@ -388,6 +381,9 @@ class ActivityTable extends Component {
   }
 
   // Modal Functions
+  /**
+   * Changes internal state such that the modal for an order is no longer displayed
+   */
   closeModal(){
     this.setState({...this.state,
       showModal : false,
@@ -396,6 +392,10 @@ class ActivityTable extends Component {
     });
   }
 
+  /**
+   * Changes the internal state such that the modal for the request oid is displayed
+   * @param {number} oid 
+   */
   activateModal(oid){
     const Order = this.state.orders.get(oid);
     if(Order === null) throw "Order is null";
@@ -452,9 +452,7 @@ class ActivityTable extends Component {
     Activity, 
     CustomerNumber)
   {
-    const FillDate = String(this.props.date.getFullYear()) + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
-      FormatDateStr(this.props.date.getDate());
+    const FillDate = `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`;
     this.websocket.send(JSON.stringify({
       "messageType" : "EditVial",
       "date"        : this.props.date,
@@ -470,8 +468,20 @@ class ActivityTable extends Component {
     })); 
   }
 
-  FinishOrder(){
-    //This the function responsitble for sending 
+  /**
+   * This function takes a validated order and send the information back to  
+   * @param {number} orderID 
+   * @param {Set<number>} vialSet 
+   */
+  FreeOrder(orderID, vialSet){
+    this.closeModal();
+    this.websocket.send(JSON.stringify({
+      "messageType" : "FreeOrder",
+      "date"        : this.props.date,
+      "orderID"     : this.state.orders.get(orderID),
+      "vialSet"     : [...vialSet],
+      "tracerID"    : this.props.tracer.id,
+    }));
   }
 
 
@@ -633,6 +643,7 @@ class ActivityTable extends Component {
         customer={this.state.customer}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
+        AcceptOrder={this.FreeOrder.bind(this)}
       />
     </div>
     );

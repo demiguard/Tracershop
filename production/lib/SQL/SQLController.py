@@ -139,9 +139,10 @@ def getVial(
     FillDate ="",
     FillTime = "",
     Volume = 0.0, 
-    activity = 0
-  ):
-  return SQLLegacyController.getVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
+    activity = 0,
+    ID = 0
+  ) -> Dict:
+  return SQLLegacyController.getVial(CustomerID, Charge, FillDate, FillTime, Volume, activity, ID)
 
 def getVials(request_date : date) -> [Dict]:
   return SQLLegacyController.getVials(request_date)
@@ -188,3 +189,8 @@ def getVialRange(startdate : date, endDate : date):
   """
   return SQLLegacyController.getVialRange(startdate, endDate)
 
+def FreeOrder(OrderID: int , Vial: Dict)-> Dict:
+  SQLLegacyController.FreeOrder(OrderID, Vial)
+
+def CreateNewFreeOrder(Vial : Dict) -> Dict:
+  pass

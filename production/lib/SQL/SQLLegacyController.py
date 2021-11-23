@@ -300,8 +300,7 @@ def getProductions():
     "run" 
   ])
 
-def UpdateOrder(Order : dict):
-  
+def UpdateOrder(Order : dict) -> None:
   SQLQuery = f"""
     UPDATE orders
     SET
@@ -316,7 +315,7 @@ def UpdateOrder(Order : dict):
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
 
-def getTOrders(requestDate: date):
+def getTOrders(requestDate: date) -> None:
   SQLQuery = f"""
     SELECT 
       t_orders.deliver_datetime,
@@ -665,7 +664,7 @@ def getVials(request_date : date) -> List[Dict]:
   ]
   return SQLFormatter.FormatSQLTuple(SQLResult, names)
 
-def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0.0, activity = 0.0):
+def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0.0, activity = 0.0, ID = 0):
   """
     This function gets a specific vial, note if the conditions above do not return a unique vial you get the first. It does kinda funky
   """
@@ -682,6 +681,7 @@ def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0
   helper("filltime", FillTime,   "str")
   helper("volume", Volume,       "num")
   helper("activity", activity,   "num")
+  helper("ID", ID, "num")
   Condition = ""
   for i, (FieldName, FieldValue) in enumerate(ValidConditions):
     if i == 0:
@@ -833,4 +833,67 @@ def getVialRange(startDate : date, endDate: date):
     "activity"
   ])
 
-  
+def FreeOrder(OrderID: int, Vial : Dict):
+  SQLQuery = f"""
+  UPDATE orders
+  SET
+    status=3,
+    frigivet_amount={Vial["activity"]},
+    frigivet_datetime=\"{Vial["filldate"]} {Vial["filltime"]}\",
+    batchnr=\"{Vial["charge"]}\"
+  WHERE
+    oid={OrderID}
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+  SQLFollowUpQuery = f"""
+  UPDATE orders
+  SET
+    status=3
+  WHERE
+    COID={OrderID}
+  """
+  SQLInsertIntoVialMapping = f"""
+    INSERT INTO VialMapping(
+      Order_id,
+      VAL_id
+    ) Values ({OrderID},{Vial.ID})
+  """
+  SQLExecuter.ExecuteQuery(SQLInsertIntoVialMapping)
+
+  SQLExecuter.ExecuteQuery(SQLFollowUpQuery)
+  SQLReturnQuery = f"""
+  SELECT
+    deliver_datetime,
+    OID,
+    status,
+    amount,
+    amount_o,
+    total_amount,
+    total_amount_o,
+    run,
+    BID,
+    batchnr,
+    COID
+  FROM
+    orders
+  WHERE
+    oid={orderID} OR COID={OrderID}
+  """
+  updatedOrders = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  return SQLFormatter.FormatSQLTuple(updatedOrders, [
+      "deliver_datetime",
+      "oid",
+      "status",
+      "amount",
+      "amount_o",
+      "total_amount",
+      "total_amount_o",
+      "run",
+      "BID",
+      "batchnr",
+      "COID"
+    ])
+
+def getLastOrder():
+  pass

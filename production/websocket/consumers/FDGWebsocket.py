@@ -5,6 +5,8 @@ from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncWebsocketConsumer
 from channels.db import database_sync_to_async
 
+from datetime import datetime
+
 from lib.SQL import SQLController as SQL
 
 class FDGConsumer(AsyncWebsocketConsumer):
@@ -98,6 +100,23 @@ class FDGConsumer(AsyncWebsocketConsumer):
           "vial"        : vial
         }
       )
+    if messageType == "FreeOrder":
+      OrderID  = message_json["orderID"]
+      Vials    = message_json["vialSet"].sort()
+      tracerID = message_json["tracerID"]
+      customerID = message_json["customerID"]
+      serverConfiguration = await self.getServerConfiguration()
+      if serverConfiguration.LegacyMode:
+        Vials.reverse() # this is to get the first element last
+        headerVialID = Vials.pop()
+        await self.assignVial(OrderID, headerVialID)
+        for VialID in Vials:
+          await self.createVialOrder(VialID, tracerID)
+        
+      else:
+        print("LegacyMode is no go")
+      print("this printstatement sends a mail")
+
 
   async def sendEvent(self, event):
     """
@@ -148,4 +167,17 @@ class FDGConsumer(AsyncWebsocketConsumer):
       activity=Vial["activity"]
     )
     
+  @database_sync_to_async
+  def getServerConfiguration(self):
+    return SQL.getServerConfig()
+
+  @database_sync_to_async
+  def assignVial(self, OrderID, VialID):
+    VialData = SQL.getVial(ID=VialID)
+    return SQL.FreeOrder(OrderID, VialData)
     
+
+  @database_sync_to_async
+  def createVialOrder(self, VialID, tracerID, CustomerID):
+    VialData = SQL.getVial(ID=VialID)
+    return SQL.CreateNewFreeOrder(VialData, tracerID) 

@@ -301,7 +301,7 @@ class ActivityModal extends Component {
     if (this.state.CreatingVial) this.setState({...this.state, ErrorMesssage : "Afslut opretelsen af en ny Vial, før du frigiver en ordre"})
 
     if (this.state.ErrorMessage) return;
-
+    this.props.AcceptOrder(this.props.Order.oid, this.state.SelectedVials);
   }
 
   // Render functions

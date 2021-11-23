@@ -249,3 +249,12 @@ def updateTOrder(
 def deleteTOrder(OrderID):
   SQLQuery = SQLFactory.createSQLDeleteTOrders(OrderID)
   SQLExecuter.ExecuteQuery(SQLQuery)
+
+def VerifyCustomers():
+  old_customers = SQLExecuter.ExecuteQueryFetchAll(SQLFactory.createSQLQueryActiveCustomers())
+  customerIDs  = set(lambda x: x.ID, getAll(Customer))
+  for (customerID, customerUserName) in old_customers:
+    if customerID not in customerIDs:
+      Customer(ID=customerID, customerName=customerUserName).save()
+
+

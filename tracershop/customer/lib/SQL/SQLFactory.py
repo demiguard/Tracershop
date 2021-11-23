@@ -315,3 +315,11 @@ def createSQLupdateTOrder(
     OID = {OrderID} AND 
     status = 1
   """
+
+def createSQLQueryGetUsers():
+  return """
+    SELECT
+      id,
+      username
+    From Users
+  """
