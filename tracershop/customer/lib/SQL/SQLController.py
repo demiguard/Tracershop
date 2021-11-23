@@ -251,7 +251,7 @@ def deleteTOrder(OrderID):
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 def VerifyCustomers():
-  old_customers = SQLExecuter.ExecuteQueryFetchAll(SQLFactory.createSQLQueryActiveCustomers())
+  old_customers = SQLExecuter.ExecuteQueryFetchAll(SQLFactory.createSQLQueryGetUsers())
   customerIDs  = set(map(lambda x: x.ID, getAll(Customer)))
   for (customerID, customerUserName) in old_customers:
     if customerID not in customerIDs:
