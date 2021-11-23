@@ -36,6 +36,7 @@ class AdminLocationsView(AdminRequiredMixin, LoginRequiredMixin, TemplateView):
       Note: there might some inefficiencies in my mapping, however since we are talking about <100 location and customers, we should be kewl with a n² or n³ algorithm 
     """
     locationsObjects            = SQL.getAll(Location)
+    SQL.VerifyCustomers()
     CustomerObjects             = SQL.getAll(Customer)
 
     displayLocations = createLocationsForms(locationsObjects)
