@@ -16,29 +16,7 @@ class EditMyCustomers(LoginRequiredMixin, TemplateView):
 
   def get(self, request):
 
-    ActiveCustomers = SQLController.getActiveCustomers()
-
-    inputList = []
-
-
-    for ActiveCustomer in ActiveCustomers:
-      #Find our 
-      DjangoCustomers = Customer.objects.filter(ID=ActiveCustomer['ID']) 
-      if len(DjangoCustomers) == 0:
-        DjangoCustomer = Customer(ID=ActiveCustomer["ID"], customerName=ActiveCustomer['Username'])
-        DjangoCustomer.save()
-      else:
-        DjangoCustomer = DjangoCustomers[0] #Unique cuz primary Key
-
-      if not(DjangoCustomer.TestCustomer) and DjangoCustomer.is_REGH: #Should we append this one
-        
-        inputList.append(
-          ActiveCustomerForm(
-            ActiveCustomer['Username'], 
-            UserHasAccess.objects.filter(userID=request.user,CustomerID=DjangoCustomer).exists(),
-            ))
-
-    context = { 'customerList' : inputList}
+    context = { 'customerList' : Customer.objects.all().filter(is_REGH=True)}
 
 
     return render(request, self.template_name, context)
