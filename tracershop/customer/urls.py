@@ -34,6 +34,8 @@ from customer.views.api.apiUpdateProcedures              import ApiUpdateProcedu
 from customer.views.api.apiMassAddOrder                  import ApiMassAddOrder
 from customer.views.api.apiCreateNewPasswordResetRequest import APICreateNewPasswordResetRequest
 from customer.views.api.apiEditTOrder                    import ApiEditTOrder
+from customer.views.api.apiUserAccess                    import APIUserAccess
+
 
 app_name = 'customer'
 
@@ -69,7 +71,8 @@ Views = [
   ApiFutureBookingDay,
   ApiUpdateProcedure, 
   ApiEditTOrder,
-  RESTAPI
+  APIUserAccess,
+  RESTAPI,
 ]
 
 urlpatterns = LMap(lambda view: path(view.path, view.as_view(), name=view.name), Views)

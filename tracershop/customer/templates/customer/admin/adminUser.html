@@ -10,6 +10,7 @@
     <th>Email</th>
     <th>Er admin</th>
     <th></th>
+    <th></th>
   </thead>
   <tbody>
     {% for Auser in users %}
@@ -24,6 +25,7 @@
       {% endif%}
       </td>
       <td><input id="changePass-{{Auser.ID}}" class="ChangePassword Button" type="button" class="btn btn-outline-primary" value="Skift Password"></td>
+      <td><input id="changeAccess-{{Auser.ID}}" class="ChangeAccess Button" type="button" class="btn btn-outline-primary" value="Skift Adgang"/></td>
     </tr>
     {% endfor%}
   </tbody>

@@ -1,9 +1,7 @@
-
-let SendPasswordChange = function(UserID) {
+function SendPasswordChange(UserID) {
   const passwordInput = $("#password");
   const passwordConfirm = $("#passwordConfirm");
   
-  console.log("Test")
   if (passwordInput.val() !== passwordConfirm.val()){
     //Error message
     $("#ErrorMessagesPW").text("Koderne er ikke ens")
@@ -23,7 +21,7 @@ $.ajax({
   return 0
 }
 
-let ChangePasswordUser = function(buttonID) {
+function ChangePasswordUser(buttonID) {
   $(".ui-dialog-content").dialog("close")
   const UserID = buttonID.substr(11);
   const UserDiv = $('#'+UserID);
@@ -85,7 +83,7 @@ let ChangePasswordUser = function(buttonID) {
   })
 };
 
-let updateRights = function() {
+function updateRights(){
   const rights = {}
   $(".UserRow").each(function() {
     if ($(this).children(".isAdmin").children(".isAdminCheckbox").prop("checked")) {
@@ -104,11 +102,95 @@ let updateRights = function() {
   })
 };
 
+function toggleAccess() {
+  const userID = $(this).attr("userID");
+  const customerID = $(this).attr("customerID");
+  const isChecked = $(this).prop("checked");
+
+  if (isChecked) {
+    $.ajax({
+      url:`api/UserAccess/${userID}`,
+      type:"POST",
+      datatype:"json",
+      data:JSON.stringify({"customerID" : customerID}),
+    })
+  } else {
+    $.ajax({
+      url:`api/UserAccess/${userID}`,
+      type:"DELETE",
+      datatype:"json",
+      data:JSON.stringify({"customerID" : customerID}),
+    })
+  }
+
+}
+
+
+function OpenAccessModal(){
+  const userID = this.id.substr(13);
+  $.ajax({
+    url:`api/UserAccess/${userID}`,
+    type:"GET"
+  }).then((data) => {
+    console.log(data)
+    // Data extraction
+    const /** Length of response @type {number} */ Length = data["customerNames"].length
+    const customerNames = data["customerNames"]
+    const Assignments = data["assignments"]
+    const customerIDs = data["customerIDs"]
+
+    //Close the current Dialog
+    $(".ui-dialog-content").dialog("close");
+    const dialog = $("<div>")
+    const dialogText = $("<p>").text("Kunder:").appendTo(dialog);
+    for (let i = 0; i<Length; i++){
+      const customerName = customerNames[i];
+      const customerID = customerIDs[i];
+      const Assignment = Assignments[i];
+      const Tickmark = $("<p>").text(`${customerName}:`)
+      if (Assignment) {
+        $("<input>", {
+          customerID : customerID,
+          userID: userID,
+          type:"checkbox",
+          checked:"",
+        }).on("change", toggleAccess).appendTo(Tickmark);
+      } else {
+        $("<input>", {
+          customerID : customerID,
+          userID: userID,
+          type:"checkbox",
+        }).on("change", toggleAccess).appendTo(Tickmark)
+      }
+      Tickmark.appendTo(dialog);
+    }
+    $(dialog).dialog({
+      classes: {
+        "ui-dialog": "modal-content",
+        "ui-dialog-titlebar": "modal-header",
+        "ui-dialog-title": "modal-title",
+        "ui-dialog-titlebar-close": "close",
+        "ui-dialog-content": "modal-body",
+        "ui-dialog-buttonpane": "modal-footer"
+      },
+      id: "ChangeAccessDialog",
+      title: "Bruger Adgang",
+      width: 500,
+      buttons: [{
+        text: "Færdig",
+        click: function () {
+          $(this).dialog("close")
+        }
+      }]
+    });
+  });
+}
+
 
 
 //Initial Javascript
 $(function () {
   $(".ChangePassword").click(function() {ChangePasswordUser(this.id)});
-  $("#UpdateRightsButton").click(function() {updateRights()});
-
+  $("#UpdateRightsButton").click(updateRights);
+  $(".ChangeAccess").on('click',OpenAccessModal);
 })
