@@ -16,7 +16,13 @@ class EditMyCustomers(LoginRequiredMixin, TemplateView):
 
   def get(self, request):
 
-    context = { 'customerList' : Customer.objects.all().filter(is_REGH=True)}
+
+    CurrentSelectedUsers = set(map(lambda x: x.CustomerID, UserHasAccess.objects.all().filter(userID=request.user.ID)))
+    CustomerObjects = Customer.objects.all().filter(is_REGH=True)
+    Accesses = [customer in CurrentSelectedUsers for customer in CustomerObjects]
+
+    inputForm = [ ActiveCustomerForm(customer.customerName, access) for customer, access in zip(CustomerObjects, Accesses)]
+    context = { 'customerList' : inputForm }
 
 
     return render(request, self.template_name, context)
