@@ -1,10 +1,10 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 
-from datetime import date, timedelta
+from datetime import date
 
+from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
-from lib.utils import LMAP
 
 from constants import JSON_VIALS, JSON_VIAL_MAPPING
 
@@ -25,7 +25,7 @@ class APIGetVials(View):
     Vials = SQLController.getVials(requestDate)
     OrderRelations = SQLController.getOrderRelationsByDate(requestDate)
 
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_VIALS : Vials,
       JSON_VIAL_MAPPING : OrderRelations
     })

@@ -21,7 +21,6 @@ BEGIN
       BID = InBID
   ) 
   THEN
-    
     SELECT amount INTO OldAmount 
     FROM orders 
     WHERE 
@@ -47,7 +46,6 @@ BEGIN
   ELSE
     -- Insert New Order
     INSERT INTO orders(
-
       amount,
       amount_o,
       batchnr,

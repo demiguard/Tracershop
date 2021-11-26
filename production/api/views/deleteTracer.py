@@ -1,5 +1,5 @@
 from django.views.generic import View
-from django.http import JsonResponse
+from django.http import HttpResponse
 
 from lib.SQL import SQLController
 from lib import Formatting
@@ -13,4 +13,4 @@ class APIDeleteTracer(View):
 
     SQLController.deleteTracer(data["tracerID"])
 
-    return JsonResponse({})
+    return HttpResponse(status=204)

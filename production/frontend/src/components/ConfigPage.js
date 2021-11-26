@@ -3,7 +3,8 @@ import { Container, Table, FormControl, Form } from "react-bootstrap";
 import { ajax } from "jquery";
 import TracerModal from "./TracerModal";
 import { BooleanMapping } from "./lib/utils";
-import { TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "./lib/constants";
+import { JSON_CUSTOMER, JSON_ISOTOPE, JSON_TRACER, JSON_TRACER_MAPPING, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "./lib/constants";
+import { ParseJSONstr } from "./lib/formatting";
 
 export {ConfigPage}
 
@@ -33,21 +34,29 @@ export default class ConfigPage extends Component {
   Promise.all([this.getCustomers(), this.getTracers(), this.getTracerCustomersMapping()]).then(([
     customerJSON, TracerJSON, TracerCustomers
   ]) => {
-    const TracerInfo = TracerJSON["tracers"];
-    const Isotopes   = TracerJSON["isotopes"]
-      
+    const TracerInfo = TracerJSON[JSON_TRACER];
+    
     const newCustomerMap = new Map();
     const TracerMap = new Map(); 
     const TracerCustomerMap = new Map();
 
-    for (const tracer of TracerInfo) {
+    for (const tracerString of TracerInfo) {
+      const tracer = ParseJSONstr(tracerString);
       TracerMap.set(tracer.id, tracer); 
     }
-    for(const Customer of customerJSON["customers"]){
-      newCustomerMap.set(Customer.ID, Customer)
+    for(const CustomerString of customerJSON[JSON_CUSTOMER]){
+      const Customer = ParseJSONstr(CustomerString);
+      newCustomerMap.set(Customer.ID, Customer);
     }
     
-    for(const tracerCustomer of TracerCustomers["tracer_mapping"]){
+    const Isotopes = [];
+    for (const IsotopeString of TracerJSON[JSON_ISOTOPE]){
+      Isotopes.push(ParseJSONstr(IsotopeString));
+    }
+
+
+    for(const tracerCustomerString of TracerCustomers[JSON_TRACER_MAPPING]){
+      const tracerCustomer = ParseJSONstr(tracerCustomerString)
       if (TracerCustomerMap.has(tracerCustomer.tracer_id)) {
         const TracerMapping = TracerCustomerMap.get(tracerCustomer.tracer_id)
         TracerMapping.set(tracerCustomer.customer_id, true)

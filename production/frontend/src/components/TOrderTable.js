@@ -4,7 +4,7 @@ import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
 import { CompareDates } from "./lib/utils";
 import { renderStatusImage } from './lib/Rendering'
 import ReactHover, { Trigger, Hover  } from "react-hover"
-import { FormatDateStr } from "./lib/formatting";
+import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
 import { SpecialTracerWebsocket } from "./lib/SpecialTracerWebsocket";
 
 import {JSON_ORDERS} from "./lib/constants.js"
@@ -37,7 +37,8 @@ class TOrderTable extends Component {
       type : "get",
     }).then((res) => {
       const NewOrderMap = new Map();
-      for(const Order of res[JSON_ORDERS]) {
+      for(const OrderStr of res[JSON_ORDERS]) {
+        const Order = ParseJSONstr(OrderStr)
         NewOrderMap.set(Order.oid, Order);
       }
       this.setState({

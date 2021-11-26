@@ -101,18 +101,33 @@ class FDGConsumer(AsyncWebsocketConsumer):
         }
       )
     if messageType == "FreeOrder":
-      OrderID  = message_json["orderID"]
-      Vials    = message_json["vialSet"].sort()
+      Order  = message_json["orderID"]
+      Vials    = message_json["vialSet"]
+      Vials.sort()
       tracerID = message_json["tracerID"]
-      customerID = message_json["customerID"]
+      CustomerID = Order["BID"]
+
+
+
       serverConfiguration = await self.getServerConfiguration()
       if serverConfiguration.LegacyMode:
         Vials.reverse() # this is to get the first element last
         headerVialID = Vials.pop()
-        await self.assignVial(OrderID, headerVialID)
+        UpdatedOrders = await self.assignVial(Order["oid"], headerVialID)
         for VialID in Vials:
-          await self.createVialOrder(VialID, tracerID)
+          newOrder = await self.createVialOrder(VialID, Order, tracerID)
+          UpdatedOrders.append(newOrder)
         
+        SerlizedUpdatedOrders = updatedOrders
+
+        await self.channel_layer.group_send(
+          self.group_name,
+          {
+            "type" : "sendEvent",
+            "messageType" : "FreeOrder",
+            "UpdatedOrders" : UpdatedOrders 
+          }
+        )
       else:
         print("LegacyMode is no go")
       print("this printstatement sends a mail")
@@ -172,12 +187,21 @@ class FDGConsumer(AsyncWebsocketConsumer):
     return SQL.getServerConfig()
 
   @database_sync_to_async
-  def assignVial(self, OrderID, VialID):
+  def assignVial(self, Order, VialID):
+    """
+      Fills an order with data from the vialID given
+
+      Args:
+        Order : dict contains the order information
+        VialID : ID corosponding to the vial that is being assigned
+      returns
+        Dict : contains the information new and
+    """
     VialData = SQL.getVial(ID=VialID)
-    return SQL.FreeOrder(OrderID, VialData)
+    return SQL.FreeOrder(Order, VialData)
     
 
   @database_sync_to_async
-  def createVialOrder(self, VialID, tracerID, CustomerID):
+  def createVialOrder(self, VialID, OriginalOrder, tracerID):
     VialData = SQL.getVial(ID=VialID)
-    return SQL.CreateNewFreeOrder(VialData, tracerID) 
+    return SQL.CreateNewFreeOrder(VialData, OriginalOrder, tracerID) 

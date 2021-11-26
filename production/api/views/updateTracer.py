@@ -1,5 +1,5 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponse, HttpResponseBadRequest
 
 from lib.SQL import SQLController
 from lib import Formatting
@@ -16,6 +16,4 @@ class APIUpdateTracer(View):
       data["newValue"] 
     )
 
-    return JsonResponse({
-
-    })
+    return HttpResponse(status=204)

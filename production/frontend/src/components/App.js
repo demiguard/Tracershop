@@ -10,7 +10,7 @@ import { EmailSetupPage } from "./EmailSetupPage.js";
 import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
 import CloseDaysPage from "./CloseDaysPage";
-import { VialPage } from "./Vials.js";
+import { VialPage } from "./VialPage.js";
 
 export {App}
 

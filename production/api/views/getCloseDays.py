@@ -1,8 +1,9 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponse
 
-from lib.SQL import SQLController
 from lib import Formatting
+from lib.ProductionJSON import ProductionJSONResponse
+from lib.SQL import SQLController
 
 from datetime import date
 
@@ -14,7 +15,7 @@ class APIClosedDays(View):
   def get(self, request):
     datesDict = SQLController.getClosedDays()
 
-    return JsonResponse(datesDict)
+    return ProductionJSONResponse(datesDict)
 
   def post(self, request):
     data = Formatting.ParseJSONRequest(request)

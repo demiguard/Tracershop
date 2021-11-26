@@ -1,10 +1,11 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 
 from datetime import date
 
-from lib.SQL import SQLController
 from lib import Formatting
+from lib.ProductionJSON import ProductionJSONResponse
+from lib.SQL import SQLController
 
 from constants import JSON_ORDERS, JSON_PRODUCTIONS, JSON_VIALS
 
@@ -19,10 +20,10 @@ class APIGetActivityOrders(View):
       return HttpResponseBadRequest()
 
     Orders = SQLController.getActivityOrders(requestDate, tracerID)
-    productions = SQLController.getProductions()
+    productions = SQLController.GetDeliverTimes()
     vials = SQLController.getVials(requestDate)
 
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_ORDERS : Orders,
       JSON_PRODUCTIONS : productions,
       JSON_VIALS : vials

@@ -1,6 +1,6 @@
 from django.views.generic import View
-from django.http import JsonResponse
 
+from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
 
 from constants import JSON_CUSTOMER, JSON_DELIVERTIMES
@@ -13,7 +13,7 @@ class APIGetCustomer(View):
   path = "getCustomer/<int:ID>"
 
   def get(self, request, ID):
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_CUSTOMER : SQLController.getCustomer(ID),
       JSON_DELIVERTIMES : SQLController.getCustomerDeliverTimes(ID)
     })

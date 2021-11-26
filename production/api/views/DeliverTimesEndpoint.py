@@ -1,9 +1,12 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest, HttpResponse
+from django.http import HttpResponseBadRequest, HttpResponse
 
+from lib.ProductionJSON import ProductionJSONResponse
 from lib import Formatting
 from lib.SQL import SQLController
 from lib.utils import LMAP
+
+
 
 class APIDeliverTimes(View):
   name = "delivertimes"
@@ -13,8 +16,6 @@ class APIDeliverTimes(View):
     data = Formatting.ParseJSONRequest(request)
 
     raise NotImplemented
-
-    return JsonResponse({})
 
   def post(self, request):
     data = Formatting.ParseJSONRequest(request)
@@ -31,7 +32,7 @@ class APIDeliverTimes(View):
     )
 
 
-    return JsonResponse({"newID" : newID}) 
+    return ProductionJSONResponse({"newID" : newID}) 
 
   def put(self, request):
     data = Formatting.ParseJSONRequest(request)

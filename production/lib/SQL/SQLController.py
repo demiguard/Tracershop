@@ -60,8 +60,8 @@ def setFDGOrderStatusTo2(oid:int):
 def getRuns():
   return SQLLegacyController.getRuns()
 
-def getProductions():
-  return SQLLegacyController.getProductions()
+def GetDeliverTimes():
+  return SQLLegacyController.GetDeliverTimes()
 
 def UpdateOrder(Order : Dict):
   SQLLegacyController.UpdateOrder(Order)
@@ -189,8 +189,8 @@ def getVialRange(startdate : date, endDate : date):
   """
   return SQLLegacyController.getVialRange(startdate, endDate)
 
-def FreeOrder(OrderID: int , Vial: Dict)-> Dict:
-  SQLLegacyController.FreeOrder(OrderID, Vial)
+def FreeOrder(OrderID: int , Vial: Dict)-> List[Dict]:
+  return SQLLegacyController.FreeOrder(OrderID, Vial)
 
-def CreateNewFreeOrder(Vial : Dict) -> Dict:
-  pass
+def CreateNewFreeOrder(Vial : Dict, OriginalOrder : Dict, TracerID : int) -> Dict:
+  return SQLLegacyController.CreateNewFreeOrder(Vial, OriginalOrder, TracerID)

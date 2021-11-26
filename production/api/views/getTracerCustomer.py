@@ -1,8 +1,9 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 
-from lib.SQL import SQLController
 from lib import Formatting
+from lib.ProductionJSON import ProductionJSONResponse
+from lib.SQL import SQLController
 
 from constants import JSON_TRACER_MAPPING
 
@@ -16,6 +17,6 @@ class APIGetTracerCustomer(View):
   path = "getTracerCustomerMapping"
 
   def get(self,request):
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_TRACER_MAPPING : SQLController.getTracerCustomerMapping()
     })

@@ -1,8 +1,8 @@
 from django.views.generic import View
-from django.http import JsonResponse
 
-from lib.SQL import SQLController
 from lib import Formatting
+from lib.ProductionJSON import ProductionJSONResponse
+from lib.SQL import SQLController
 
 
 class APICreateEmptyFDGOrder(View):
@@ -19,4 +19,4 @@ class APICreateEmptyFDGOrder(View):
       "This order have been created due to the moving of orders to an empty time slot."
     )
 
-    return JsonResponse(newOrder)
+    return ProductionJSONResponse(newOrder)

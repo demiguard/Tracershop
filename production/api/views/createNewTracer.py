@@ -1,8 +1,8 @@
 from django.views.generic import View
-from django.http import JsonResponse
 
-from lib.SQL import SQLController
 from lib import Formatting
+from lib.ProductionJSON import ProductionJSONResponse
+from lib.SQL import SQLController
 
 from constants import JSON_TRACER
 
@@ -19,6 +19,6 @@ class APICreateNewTracer(View):
     order_block  = data["newOrderBlock"]
 
 
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_TRACER : SQLController.createNewTracer(name, isotope, n_injections, order_block)
     })

@@ -1,4 +1,6 @@
 """
+  SQL Legacy Controller
+
   The Idea behind this class to be the only link to the legacy database.
   In other word this class is an interface for communication between the 
   different Tracershop apps. 
@@ -12,9 +14,14 @@
 
   The format that most queries comes out in a list of dict with keywords matching the keywords of the table.
 """
-from datetime import timedelta, time, date
+__author__ = "Christoffer Vilstrup Jensen"
 
-from lib import Formatting, utils
+from datetime import timedelta, time, date, datetime
+
+
+from lib import Formatting
+from lib import ProductionDataClasses as DC
+from lib import utils
 from lib.SQL import SQLExecuter, SQLFormatter
 
 from typing import List, Dict
@@ -37,8 +44,7 @@ def getCustomers():
       Users.kundenr IS NOT NULL
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  names = ["UserName", "ID", "overhead", "CustomerNumber", "Name"]
-  return SQLFormatter.FormatSQLTuple(SQLResult, names)
+  return SQLFormatter.FormatSQLTupleAsClass(SQLResult, DC.CustomerDataClass)
   
 def getCustomer(ID):
   SQLQuery = f"""
@@ -74,22 +80,22 @@ def getCustomer(ID):
   else:
     tlf = str(tlf)
 
-  return {
-    "email1" :   EMail1,
-    "email2" :   EMail2,
-    "email3" :   EMail3,
-    "email4" :   EMail4,
+  return DC.UserDataClass.fromDict({
+    "email1"   : EMail1,
+    "email2"   : EMail2,
+    "email3"   : EMail3,
+    "email4"   : EMail4,
     "overhead" : overhead,
-    "kundenr" :  kundenr,
-    "contact":   contact,
-    "tlf": tlf,
+    "kundenr"  : kundenr,
+    "contact"  : contact,
+    "tlf"      : tlf,
     "Username" : Username,
     "Realname" : Realname,
     "addr1"    : addr1,
     "addr2"    : addr2,
     "addr3"    : addr3,
     "addr4"    : addr4
-  }
+  })
 
 
 def getCustomerDeliverTimes(ID):
@@ -112,14 +118,10 @@ def getCustomerDeliverTimes(ID):
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
-  return SQLFormatter.FormatSQLTuple(SQLResult, [
-      "day",
-      "repeat",
-      "dtime",
-      "max",
-      "run",
-      "DTID"
-    ])
+  return SQLFormatter.FormatSQLTupleAsClass(
+    SQLResult, 
+    DC.CustomerDeliverTimeDataClass
+  )
 
 def getTorderMonthlyStatus(year : int, month : int):
   month = Formatting.convertIntToStrLen2(month)
@@ -159,16 +161,6 @@ def getOrderMonthlyStatus(year : int, month : int):
     statusPair[0] : statusPair[1] for statusPair in QueryResult
   }
 
-def getDailyOrders(DT):
-  SQLQuery = f"""
-    SELECT
-
-    FROM
-      orders
-    WHERE
-      DATE(deliver_datetime) 
-  """
-
 def getTracers():
   SQLQuery = f"""
     SELECT 
@@ -184,15 +176,7 @@ def getTracers():
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
-  return SQLFormatter.FormatSQLTuple(QueryResult, [
-    "id",
-    "name",
-    "isotope",
-    "n_injections",
-    "order_block",
-    "in_use",
-    "tracer_type"
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(QueryResult, DC.TracerDataClass)
   
   
 
@@ -205,11 +189,7 @@ def getIsotopes():
     isotopes
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(QueryResult,[
-    "ID",
-    "name",
-    "halflife"
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(QueryResult, DC.IsotopeDataClass)
 
 
 def getActivityOrders(requestDate: date, tracer_id: int) -> List[Dict]:
@@ -236,19 +216,10 @@ def getActivityOrders(requestDate: date, tracer_id: int) -> List[Dict]:
       deliver_datetime
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(QueryResult,[
-    "deliver_datetime",
-    "oid",
-    "status",
-    "amount",
-    "amount_o",
-    "total_amount",
-    "total_amount_o",
-    "run",
-    "BID",
-    "batchnr",
-    "COID"
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(
+    QueryResult,
+    DC.ActivityOrderDataClass
+  )
 
 
 def setFDGOrderStatusTo2(oid:int):
@@ -272,12 +243,14 @@ def getRuns():
     ORDER BY
       day, ptime
   """
-
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(QueryResult, ["day", "ptime", "run"])
+  return SQLFormatter.FormatSQLTupleAsClass(
+    QueryResult, 
+    DC.RunsDataClass
+  )
 
 
-def getProductions():
+def GetDeliverTimes():
   SQLQuery = f"""
     SELECT 
       BID, 
@@ -292,13 +265,10 @@ def getProductions():
   """
 
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(QueryResult, [
-    "BID",
-    "day",
-    "repeat",
-    "dtime",
-    "run" 
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(
+    QueryResult, 
+    DC.DeliverTimeDataClass
+  )
 
 def UpdateOrder(Order : dict) -> None:
   SQLQuery = f"""
@@ -335,16 +305,10 @@ def getTOrders(requestDate: date) -> None:
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
-  return SQLFormatter.FormatSQLTuple(QueryResult, [
-    "deliver_datetime",
-    "oid",
-    "status",
-    "injections",
-    "usage",
-    "comment",
-    "username",
-    "tracer"
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(
+    QueryResult, 
+    DC.InjectionOrderDataClass
+  )
 
 def setTOrderStatus(oid, status):
   
@@ -389,10 +353,10 @@ def getTracerCustomer():
   """
 
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(QueryResult, [
-    "tracer_id",
-    "customer_id"
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(
+    QueryResult, 
+    DC.TracerCustomerMappingDataClass
+  )
 
 def createTracerCustomer(tracer_id, customer_id):
   SQLQuery = f"""
@@ -621,48 +585,29 @@ def getFDGOrder(
     else:
       SQLQuery += insertKeyWordStr(keyWordTuple)
 
-  deliver_datetime, OID, status, amount, amount_o, total_amount, total_amount_o, run, BID, batchnr, COID = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-
-  return {
-    "deliver_datetime" : deliver_datetime,
-    "oid" : OID,
-    "status" : status,
-    "amount" : amount,
-    "amount_o" : amount_o,
-    "total_amount" : total_amount,
-    "total_amount_o" : total_amount_o,
-    "run" : run,
-    "BID" : BID,
-    "batchnr" : batchnr,
-    "COID" : COID
-  }
+  return DC.ActivityOrderDataClass(
+    *SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+  )
 
 def getVials(request_date : date) -> List[Dict]:
   SQLQuery = f"""
   SELECT 
-    customer, 
-    charge,
-    filldate,
-    TIME_FORMAT(filltime, \"%T\"),
-    volume, 
-    ID,
-    activity
+    VAL.customer, 
+    VAL.charge,
+    VAL.filldate,
+    TIME_FORMAT(VAL.filltime, \"%T\"),
+    VAL.volume, 
+    VAL.ID,
+    VAL.activity,
+    VialMapping.Order_id
   FROM
     VAL
+      LEFT JOIN VialMapping on VAL.ID = VialMapping.VAL_id
   WHERE
-    filldate = \"{Formatting.dateConverter(request_date)}\"
+    VAL.filldate = \"{Formatting.dateConverter(request_date)}\"
   """
   SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  names = [
-    "customer",
-    "charge",
-    "filldate",
-    "filltime",
-    "volume", 
-    "ID",
-    "activity"
-  ]
-  return SQLFormatter.FormatSQLTuple(SQLResult, names)
+  return SQLFormatter.FormatSQLTupleAsClass(SQLResult,DC.VialDataClass)
 
 def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0.0, activity = 0.0, ID = 0):
   """
@@ -675,13 +620,13 @@ def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0
         ValidConditions.append((name, f"\"{entry}\""))
       else:
         ValidConditions.append((name, entry))
-  helper("customer", CustomerID, "num")
-  helper("charge", Charge,       "str")
-  helper("filldate", FillDate,   "str")
-  helper("filltime", FillTime,   "str")
-  helper("volume", Volume,       "num")
-  helper("activity", activity,   "num")
-  helper("ID", ID, "num")
+  helper("VAL.customer", CustomerID, "num")
+  helper("VAL.charge", Charge,       "str")
+  helper("VAL.filldate", FillDate,   "str")
+  helper("VAL.filltime", FillTime,   "str")
+  helper("VAL.volume", Volume,       "num")
+  helper("VAL.activity", activity,   "num")
+  helper("VAL.ID", ID, "num")
   Condition = ""
   for i, (FieldName, FieldValue) in enumerate(ValidConditions):
     if i == 0:
@@ -690,29 +635,21 @@ def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0
       Condition += f" AND {FieldName} = {FieldValue}"
   SQLQuery = f"""
   SELECT 
-    customer, 
-    charge,
-    filldate,
-    TIME_FORMAT(filltime, \"%T\"),
-    volume, 
-    ID,
-    activity
+    VAL.customer, 
+    VAL.charge,
+    VAL.filldate,
+    TIME_FORMAT(VAL.filltime, \"%T\"),
+    VAL.volume, 
+    VAL.ID,
+    VAL.activity,
+    VialMapping.Order_id
   FROM
     VAL
+      LEFT JOIN VialMapping on VAL.ID = VialMapping.VAL_id
   WHERE
     {Condition}
   """
-  customer, charge, filldate, filltime, volume, ID, activity = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-
-  return {
-    "customer"  : customer,
-    "charge"    : charge,
-    "filldate"  : Formatting.dateConverter(filldate),
-    "filltime"  : filltime ,
-    "volume"    : float(volume),
-    "ID"        : ID ,
-    "activity"  : float(activity)
-  }
+  return DC.VialDataClass(*SQLExecuter.ExecuteQueryFetchOne(SQLQuery))
 
 
 def createVial(CustomerID : int, Charge : str, FillDate : str, FillTime : str, Volume : float, activity : float):
@@ -809,31 +746,25 @@ def getVialRange(startDate : date, endDate: date):
 
   SQLQuery = f"""
     SELECT
-      customer, 
-      charge,
-      filldate,
-      TIME_FORMAT(filltime, \"%T\"),
-      volume, 
-      ID,
-      activity
+      VAL.customer, 
+      VAL.charge,
+      VAL.filldate,
+      TIME_FORMAT(VAL.filltime, \"%T\"),
+      VAL.volume, 
+      VAL.ID,
+      VAL.activity,
+      VialMapping.Order_id
     FROM
       VAL
+      LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id
     WHERE
-      filldate BETWEEN \"{Formatting.dateConverter(startDate)}\" AND \"{Formatting.dateConverter(endDate)}\"
+      VAL.filldate BETWEEN \"{Formatting.dateConverter(startDate)}\" AND \"{Formatting.dateConverter(endDate)}\"
   """
 
   QueryRes =  SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(QueryRes, [
-    "customer",
-    "charge",
-    "filldate",
-    "filltime",
-    "volume",
-    "ID",
-    "activity"
-  ])
+  return SQLFormatter.FormatSQLTupleAsClass(QueryRes, DC.VialDataClass)
 
-def FreeOrder(OrderID: int, Vial : Dict):
+def FreeOrder(OrderID: int, Vial : Dict) -> List[Dict]:
   SQLQuery = f"""
   UPDATE orders
   SET
@@ -857,7 +788,7 @@ def FreeOrder(OrderID: int, Vial : Dict):
     INSERT INTO VialMapping(
       Order_id,
       VAL_id
-    ) Values ({OrderID},{Vial.ID})
+    ) Values ({OrderID},{Vial["ID"]})
   """
   SQLExecuter.ExecuteQuery(SQLInsertIntoVialMapping)
 
@@ -878,22 +809,80 @@ def FreeOrder(OrderID: int, Vial : Dict):
   FROM
     orders
   WHERE
-    oid={orderID} OR COID={OrderID}
+    oid={OrderID} OR COID={OrderID}
   """
-  updatedOrders = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTuple(updatedOrders, [
-      "deliver_datetime",
-      "oid",
-      "status",
-      "amount",
-      "amount_o",
-      "total_amount",
-      "total_amount_o",
-      "run",
-      "BID",
-      "batchnr",
-      "COID"
-    ])
+  updatedOrders = SQLExecuter.ExecuteQueryFetchAll(SQLReturnQuery)
+  return SQLFormatter.FormatSQLTupleAsClass(
+    UpdatedOrders, DC.ActivityOrderDataClass
+  )
 
-def getLastOrder():
-  pass
+def CreateNewFreeOrder(Vial: Dict, OriginalOrder: Dict, tracerID: int) -> Dict:
+  deliverDateTime = datetime.strptime(OriginalOrder["deliver_datetime"], "%Y-%m-%dT%H:%M:%S")
+  
+  SQLQuery = f"""
+    INSERT INTO orders(
+      amount,
+      amount_o,
+      batchnr,
+      BID,
+      COID,
+      comment,
+      deliver_datetime,
+      frigivet_datetime,
+      run,
+      status,
+      total_amount,
+      total_amount_o,
+      tracer,
+      userName,
+      frigivet_amount,
+      volume
+    ) VALUES (
+      0,
+      0,
+      \"{Vial["charge"]}\",
+      {OriginalOrder["BID"]},
+      -1,
+      \"Extra Vial for Order: {OriginalOrder["oid"]}\",
+      \"{deliverDateTime.strftime("%Y-%m-%d %H:%M:%S")}\",
+      \"{Vial["filldate"]} {Vial["filltime"]}\",
+      {OriginalOrder["run"]},
+      3,
+      0,
+      0,
+      {tracerID},
+      NULL,
+      {Vial["activity"]},
+      {Vial["volume"]}
+    )
+  """
+  SQLExecuter.ExecuteQuery(SQLQuery)
+
+  return getLastOrder()
+
+def getLastOrder() -> Dict:
+  SQLQuery = """
+    SELECT
+      deliver_datetime,
+      oid,
+      status,
+      amount,
+      amount_o,
+      total_amount,
+      total_amount_o,
+      run,
+      BID,
+      batchnr,
+      COID
+    FROM
+     orders
+    WHERE 
+      OID = (
+        SELECT 
+          MAX(OID)
+        FROM orders
+      )
+  """
+  OrderTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+  return DC.ActivityOrderDataClass(*Ordertuple)
+  

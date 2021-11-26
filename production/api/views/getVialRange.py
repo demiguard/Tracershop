@@ -1,8 +1,9 @@
 from django.views.generic import View
-from django.http import JsonResponse, HttpResponseBadRequest
+from django.http import HttpResponseBadRequest
 
 from datetime import date, timedelta
 
+from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
 from lib.utils import LMAP
 
@@ -31,7 +32,7 @@ class APIGetVialRange(View):
 
     customers = SQLController.getCustomers()
 
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_VIALS : Vials,
       JSON_CUSTOMER : customers
     })

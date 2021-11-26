@@ -3,6 +3,7 @@ import { Row, FormControl, Table, Container } from "react-bootstrap"
 import { ajax } from "jquery";
 import { CustomerModal } from "./CustomerModal";
 import { JSON_CUSTOMER } from "./lib/constants"
+import { ParseJSONstr } from "./lib/formatting";
 
 
 export { CustomerPage }
@@ -26,12 +27,15 @@ export default class CustomerPage extends Component {
         return res   
       }}).then(
         (res) => {
-          const CustomerList = res[JSON_CUSTOMER]
+          const CustomerList = []
+          for (const CustomerString of res[JSON_CUSTOMER]){
+            CustomerList.push(ParseJSONstr(CustomerString));
+          }
           const NewState = {
             ...this.state,
             Customers : CustomerList
           }
-          this.setState(NewState)
+          this.setState(NewState);
         });
   }
 

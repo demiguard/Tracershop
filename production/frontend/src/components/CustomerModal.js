@@ -1,7 +1,7 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl } from "react-bootstrap";
-import { FormatNumber, FormatTime } from "./lib/formatting.js"
+import { FormatNumber, FormatTime, ParseJSONstr } from "./lib/formatting.js"
 import { JSON_CUSTOMER, JSON_DELIVERTIMES } from "./lib/constants.js"
 
 
@@ -47,12 +47,13 @@ class CustomerModal extends Component {
       type: "get"
     }).then((res) =>{ 
       const newDeliverTimeMap = new Map();
-      for (const deliverTime of res[JSON_DELIVERTIMES]) {
+      for (const deliverTimeString of res[JSON_DELIVERTIMES]) {
+        const deliverTime = ParseJSONstr(deliverTimeString);
         newDeliverTimeMap.set(deliverTime.DTID, deliverTime);
       }
 
       const NewModalState = {...this.state, 
-        customer : res[JSON_CUSTOMER],
+        customer : ParseJSONstr(res[JSON_CUSTOMER]),
         deliverTimes : newDeliverTimeMap,
       }
       this.setState(NewModalState);
@@ -81,7 +82,8 @@ class CustomerModal extends Component {
       type:"POST",
       data:JSON.stringify(message),
       dataType : "json"
-    }).then((res) => {
+    }).then((resStr) => {
+      const res = ParseJSONstr(resStr)
       const newDTID = res.newID;
       const newDeliverTimeMap = new Map(this.state.deliverTimes);
       newDeliverTimeMap.set(newDTID,{

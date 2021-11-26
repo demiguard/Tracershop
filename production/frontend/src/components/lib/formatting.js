@@ -1,4 +1,4 @@
-export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate }
+export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate, ParseJSONstr }
 
 function parseDate(inputStr){
   if (/^\d{4}-\d{2}-\d{2}$/g.test(dateString)) return inputStr;
@@ -62,4 +62,12 @@ function FormatNumber(NumberString) {
 
 function FormatDateStr(number) {
   return number < 10 ? "0" + String(number) : String(number) 
+}
+
+/**
+ * @param {String} JSONString  
+ * @returns {object} Jsonformatted object
+ */
+function ParseJSONstr(JSONString){
+  return JSON.parse(JSONString)
 }

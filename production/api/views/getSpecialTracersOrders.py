@@ -4,8 +4,10 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from datetime import date
 
 from constants import JSON_ORDERS
-from lib.SQL import SQLController
+
 from lib import Formatting
+from lib.ProductionJSON import ProductionJSONResponse
+from lib.SQL import SQLController
 
 
 class APIGetSpecialTracerOrders(View):
@@ -18,6 +20,6 @@ class APIGetSpecialTracerOrders(View):
     except ValueError:
       return HttpResponseBadRequest()
 
-    return JsonResponse({
+    return ProductionJSONResponse({
       JSON_ORDERS : SQLController.getTOrders(request_date)
     })

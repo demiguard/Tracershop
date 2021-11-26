@@ -1,7 +1,8 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { parseDate, parseDateToDanishDate } from "./lib/formatting";
+import { JSON_CUSTOMER, JSON_VIALS } from "./lib/constants";
+import { parseDate, parseDateToDanishDate, ParseJSONstr } from "./lib/formatting";
 
 export {VialPage}
 
@@ -42,12 +43,14 @@ class VialPage extends Component {
       type:"get"
     }).then((data) => {
       const newVialMap = new Map();
-      for (const vial of data["vials"]) {
+      for (const vialString of data[JSON_VIALS]) {
+        const vial = ParseJSONstr(vialString);
         newVialMap.set(vial.ID, vial);
       }
       
       const newCustomerMap = new Map();
-      for (const customer of data["customers"]) {
+      for (const customerString of data[JSON_CUSTOMER]) {
+        const customer = ParseJSONstr(customerString);
         newCustomerMap.set(customer.CustomerNumber, customer);
       }
 
@@ -114,9 +117,6 @@ class VialPage extends Component {
     this.setState(newState);
   }
 
-
-
-
   renderVial(vial){
     // Sadly I need some extra functionality so can't really use the table rendering function :(
     
@@ -178,10 +178,8 @@ class VialPage extends Component {
       }
     }
 
-
     const CustomerOptions = []
     for(const [_, customer] of this.state.customers){
-
       CustomerOptions.push(
         <option value={customer.CustomerNumber} key={customer.CustomerNumber}>{customer.UserName}</option>
       )

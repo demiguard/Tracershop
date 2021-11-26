@@ -1,10 +1,10 @@
-import { ajax } from "jquery";
+import { ajax, parseJSON } from "jquery";
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
 import { renderStatusImage } from "./lib/Rendering";
 import { TracerWebSocket } from "./lib/TracerWebsocket";
 import { CompareDates } from "./lib/utils";
-import { FormatDateStr } from "./lib/formatting";
+import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
 import { ActivityModal } from "./ActivityModal.js";
 import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS } from "./lib/constants";
@@ -61,7 +61,8 @@ class ActivityTable extends Component {
       type:"get",
     }).then((data) => {
       const CustomerMap = new Map();
-      for (let Customer of data[JSON_CUSTOMER]) {
+      for (let CustomerString of data[JSON_CUSTOMER]) {
+        const Customer = ParseJSONstr(CustomerString)
         CustomerMap.set(Customer.ID, {
           username : Customer.UserName,
           ID       : Customer.ID,
@@ -72,11 +73,22 @@ class ActivityTable extends Component {
         });
       }
 
-      this.InsertProductions(CustomerMap, data[JSON_PRODUCTIONS]);
+      const Productions = []
+      for(const ProductionStr of data[JSON_PRODUCTIONS]){
+        Productions.push(ParseJSONstr(ProductionStr));
+      }
+
+      const Orders = []
+      for(const OrderStr of data[JSON_ORDERS]) {
+        Orders.push(ParseJSONstr(OrderStr))
+      }
+
+      this.InsertProductions(CustomerMap, Productions);
 
       // These are the attual productions runs
       const RunMap = new Map();
-      for (let Run of data[JSON_RUNS]) {
+      for (let RunStr of data[JSON_RUNS]) {
+        const Run = ParseJSONstr(RunStr)
         if (RunMap.has(Run.day)){
           //Remake list ahear to the principle of purity
           const Runs = [...RunMap.get(Run.day)] 
@@ -88,10 +100,11 @@ class ActivityTable extends Component {
         }
       }
 
-      const newOrders = this.InsertOrders(CustomerMap, data[JSON_ORDERS])      
+      const newOrders = this.InsertOrders(CustomerMap, Orders)      
 
       const NewVials = new Map();
-      for(let vial of data[JSON_VIALS]) {
+      for(let vialStr of data[JSON_VIALS]) {
+        const vial = ParseJSONstr(vialStr)
         NewVials.set(vial.ID, vial);
       }
 
@@ -474,7 +487,7 @@ class ActivityTable extends Component {
    * @param {Set<number>} vialSet 
    */
   FreeOrder(orderID, vialSet){
-    this.closeModal();
+    this.closeModal(); 
     this.websocket.send(JSON.stringify({
       "messageType" : "FreeOrder",
       "date"        : this.props.date,
