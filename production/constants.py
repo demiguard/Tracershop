@@ -10,8 +10,11 @@ FDG_GROUP_NAME = "fdg"
 
 SPECIAL_TRACER_GROUP_NAME = "special"
 
-emailSenderAddress = "no-reply-production@regionh.dk"
+EMAIL_SENDER_ADDRESS = "no-reply-production@regionh.dk"
 
+DATE_FORMAT = "%Y-%m-%d"
+TIME_FORMAT = "%H-%M-%S"
+DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
 
 @unique
 class EmailEvents(Enum):
@@ -34,3 +37,18 @@ JSON_TRACER_MAPPING = "tracer_mapping"
 JSON_VIALS = "vials"
 JSON_VIAL_MAPPING = "vial_mapping"
 
+# WEBSOCKET MESSAGES
+WEBSOCKET_DATA_ORDER           = "order"
+WEBSOCKET_DATA_ORDERS          = "orders"
+WEBSOCKET_DATA_VIAL            = "vial"
+WEBSOCKET_DATA_VIALS           = "vials"
+WEBSOCKET_DATA_TRACER          = "tracerID" 
+WEBSOCKET_DATE                 = "date"
+WEBSOCKET_MESSAGETYPE          = "messageType"
+WEBSOCKET_MESSAGE_CREATE_VIAL  = "createVial"  
+WEBSOCKET_MESSAGE_EDIT_VIAL    = "editVial"
+WEBSOCKET_MESSAGE_FREE_ORDER   = "freeOrder"
+WEBSOCKET_MESSAGE_UPDATEORDERS = "updateOrder"
+WEBSOCKET_MESSAGE_RECIEVE_VIAL = "recieveVial"
+WEBSOCKET_SEND_EVENT           = "sendEvent"
+WEBSOCKET_EVENT_TYPE           = "type"

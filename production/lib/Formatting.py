@@ -1,6 +1,7 @@
 import json
 
-from datetime import date
+from constants import TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
+from datetime import date, time, datetime
 
 def ParseJSONRequest(request):
   if request.body:
@@ -46,7 +47,7 @@ def EncodeDateTimeDict(Dict : dict) -> dict:
 def FormatDateTimeJStoSQL(datetimestr : str) -> str:
   return datetimestr.replace("T", " ")
 
-def dateConverter(Date : date) -> str:
+def dateConverter(Date : date, Format: str=DATE_FORMAT) -> str:
   """
     Extracts date on the string format for the database
     Args:
@@ -54,5 +55,20 @@ def dateConverter(Date : date) -> str:
     return 
       string - ready for the database
   """
-  return Date.strftime("%Y-%m-%d")
-  
+  return Date.strftime(Format)
+
+def timeConverter(Time : time, Format: str=TIME_FORMAT) -> str:
+  return Time.strftime(Format)
+
+def datetimeConverter(DateTime : datetime, Format: str=DATETIME_FORMAT ) -> str:
+  return DateTime.strftime(Format)
+
+def toTime():
+  pass
+
+def toDateTime():
+  pass
+
+def toDate():
+  pass
+

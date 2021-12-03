@@ -1,22 +1,64 @@
+"""
+  This module is responsible for overseeing all data transfers between databases and the server
+  This Module is that have been modified into a class for depency injections sake.
+  So that this module can easily be replaced if one decide to change the underlying database
+  This is also helpful for testing sake
+
+
+
+"""
+__author__ = "Christoffer Vilstrup Jensen"
+
 from django.db import connection
 from django.core.exceptions import ObjectDoesNotExist
 
-from typing import Type, Dict, List
+from dataclasses import fields
 from datetime import datetime, time, date
+from typing import Type, Dict, List, Callable
 
 from api.models import ServerConfiguration
-
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, JsonSerilizableDataClass, TracerDataClass,  VialDataClass
 
 
+class SQL():
+  """
+    This is a stateless dataClass, that is meant be injected into a view
+    One can later use depency injection to change this
+  """
 
-"""
-This class contains all the database calls to the database.
-Note that a large part of this is just calls to the Legacy controller. 
-This is because one should be able to exchange that, module if the underlying database changes.
+  @staticmethod
+  def __ExecuteNoReturn(SQLFactoryMethod: Callable[..., str], *args) -> None:
+    SQLQuery = SQLFactoryMethod(*args)
+    SQLExecuter.ExecuteQuery(SQLQuery)
 
-"""
+  @staticmethod
+  def __ExecuteReturnOne(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
+    SQLQuery = SQLFactoryMethod(*args)
+    SQLTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+    return returnClass(*SQLTuple)
 
+  @staticmethod
+  def __ExecuteCommandMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
+    SQLQuery = SQLFactoryMethod(*args)
+    SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+    return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
+
+  #
+  @classmethod
+  def getCustomers(cls) -> List[CustomerDataClass]:
+    return cls.__ExecuteCommandMany(SQLFactory.getCustomers, CustomerDataClass)
+
+  @classmethod
+  def getTracers(cls) -> List[TracerDataClass]:
+    return cls.__ExecuteCommandMany(SQLFactory.getTracers, TracerDataClass)
+
+  @classmethod
+  def updateOrder(cls, order : ActivityOrderDataClass) -> None:
+    cls.__ExecuteNoReturn(SQLFactory.updateOrder, order)
+    
+
+##### END CLASS METHODS ######
 
 def getCustomers():
   """
@@ -189,8 +231,8 @@ def getVialRange(startdate : date, endDate : date):
   """
   return SQLLegacyController.getVialRange(startdate, endDate)
 
-def FreeOrder(OrderID: int , Vial: Dict)-> List[Dict]:
+def FreeOrder(OrderID: int , Vial: VialDataClass)-> List[Dict]:
   return SQLLegacyController.FreeOrder(OrderID, Vial)
 
-def CreateNewFreeOrder(Vial : Dict, OriginalOrder : Dict, TracerID : int) -> Dict:
+def CreateNewFreeOrder(Vial : VialDataClass, OriginalOrder : Dict, TracerID : int) -> Dict:
   return SQLLegacyController.CreateNewFreeOrder(Vial, OriginalOrder, TracerID)

@@ -14,9 +14,11 @@ import dataclasses
 import json
 
 import dataclasses
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass, asdict, fields
 from typing import Dict, Optional, List
 from datetime import datetime, date, time
+from constants import DATETIME_FORMAT, DATE_FORMAT, TIME_FORMAT
+from Formatting import toTime, toDateTime, toDate
 
 @dataclass
 class JsonSerilizableDataClass:
@@ -53,9 +55,37 @@ class JsonSerilizableDataClass:
   def getFields(cls) -> List[str]:
     return [field.name for field in dataclasses.fields(cls)]
 
+  def __init__(self, *args):
+    for field, fieldVal in zip(fields(self), args):
+      fieldValType = type(fieldVal)
+      if fieldValType == field.type:
+        self.__setattr__(field.name, fieldVal)
+      elif field.type == date:
+        self.__setattr__(field.name, date.strptime(fieldVal, DATE_FORMAT))
+      elif field.type == datetime:
+        self.__setattr__(field.name, datetime.strptime(fieldVal, DATETIME_FORMAT))
+      elif field.type == time:
+        
+        
+        self.__setattr__(field.name, time.strptime(fieldVal, TIME_FORMAT))
+      else:
+        try:
+          self.__setattr__(field.name, field.type(fieldVal))
+        except ValueError:
+          raise TypeError(f"""The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
+            The dataclass cannot nativily convert this to {field.type}""")
+
+  ##### This is good to have since the init mehtod might be over written
+  def __post_init__(self):
+    for field in fields(self):
+      if type(self.__getattribute__(field.name)) != field.type:
+        raise TypeError(f"""The Field: {field.name} was Assigned a object of type: {type(self.__getattribute__(field.name))}
+          The dataclass cannot nativily convert this to {field.type}""")
+
+
 # Below are the actual dataclass that's passed around in Server
 
-@dataclass
+@dataclass(init=False)
 class ActivityOrderDataClass(JsonSerilizableDataClass):
   deliver_datetime : datetime
   oid : int
@@ -70,7 +100,7 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   COID : int
 
 
-@dataclass
+@dataclass(init=False)
 class InjectionOrderDataClass(JsonSerilizableDataClass):
   deliver_datetime : datetime
   oid : int
@@ -82,25 +112,25 @@ class InjectionOrderDataClass(JsonSerilizableDataClass):
   tracer : int
 
 
-@dataclass
+@dataclass(init=False)
 class VialDataClass(JsonSerilizableDataClass):
   customer : int
   charge : str
   filldate : date
   filltime : time
   volume : float
-  ID : int
   activity : float
+  ID : Optional[int]
   OrderMap : Optional[int]
 
 
-@dataclass
+@dataclass(init=False)
 class TracerCustomerMappingDataClass(JsonSerilizableDataClass):
   tracer_id : int
   customer_id : int
 
 
-@dataclass
+@dataclass(init=False)
 class DeliverTimeDataClass(JsonSerilizableDataClass):
   BID : int
   day : int
@@ -109,7 +139,7 @@ class DeliverTimeDataClass(JsonSerilizableDataClass):
   run : int
 
 
-@dataclass
+@dataclass(init=False)
 class CustomerDeliverTimeDataClass(JsonSerilizableDataClass):
   day : int
   repeat : int
@@ -118,21 +148,21 @@ class CustomerDeliverTimeDataClass(JsonSerilizableDataClass):
   run : int
   DTID : int # DeliverTimeID
 
-@dataclass
+@dataclass(init=False)
 class RunsDataClass(JsonSerilizableDataClass):
   day : int
   ptime : time
   run : int
 
 
-@dataclass
+@dataclass(init=False)
 class IsotopeDataClass(JsonSerilizableDataClass):
   ID : int
   name : str
   halflife : float
 
 
-@dataclass
+@dataclass(init=False)
 class TracerDataClass(JsonSerilizableDataClass):
   id : int
   name : str
@@ -143,7 +173,7 @@ class TracerDataClass(JsonSerilizableDataClass):
   tracer_type : int
 
 
-@dataclass
+@dataclass(init=False)
 class CustomerDataClass(JsonSerilizableDataClass):
   UserName : str
   ID : int
@@ -152,7 +182,7 @@ class CustomerDataClass(JsonSerilizableDataClass):
   Name : str
 
 
-@dataclass
+@dataclass(init=False)
 class UserDataClass(JsonSerilizableDataClass):
   email1 : str
   email2 : str

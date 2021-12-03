@@ -12,8 +12,11 @@
 __author__ = "Christoffer Vilstrup Jensen"
 
 import re
+from typing import List, Tuple, Dict, Any
+from datetime import datetime, date, time
+from lib.Formatting import dateConverter, timeConverter , datetimeConverter
 
-from typing import List, Tuple, Dict
+
 from lib.expections import SQLInjectionException
 from lib.ProductionDataClasses import JsonSerilizableDataClass
 
@@ -60,4 +63,22 @@ def checkForSQLInjection(SQLquery : str):
   
   if regex.search(SQLquery):
     raise SQLInjectionException()
+
+def SerilizeToSQLValue(value : Any) -> Any:
+  valueType = type(value)
+  if valueType == int:
+    return value
+  if valueType == float:
+    return value
+  if valueType == str:
+    return f"\"{value}\""
+  if valueType == date:
+    return f"\"{dateConverter(value)}\""
+  if value == time:
+    return f"\"{timeConverter(value)}\""
+  if value == datetime:
+    return f"\"{datetimeConverter(value)}\""
+  raise TypeError(f"Value of unknown type: {valueType}")
+
+
   

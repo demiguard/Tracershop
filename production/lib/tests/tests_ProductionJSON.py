@@ -26,3 +26,14 @@ class ProductionJSONResponseTestCase(TestCase):
     response = PJSON.ProductionJSONResponse({
       self.json_kw_1 : DC.RunsDataClass(1, timeInstance, 1)
     })
+
+
+  def test_RunDataClassEncoding(self):
+    timeInstance = time(11,33,22)
+
+    dataClass = DC.RunsDataClass(1, timeInstance, 1)
+
+    datastring = PJSON.encode(dataClass)
+    print(datastring)
+
+    dataDict = PJSON.decode(datastring)

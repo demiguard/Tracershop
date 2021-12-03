@@ -36,7 +36,6 @@ class VialPage extends Component {
 
       vials : new Map(),
       customers : new Map(),
-      vialMapping : new Map()
     }
     ajax({
       url:"api/getVialRange",
@@ -121,7 +120,7 @@ class VialPage extends Component {
     // Sadly I need some extra functionality so can't really use the table rendering function :(
     
     const customer = this.state.customers.get(Number(vial.customer));
-    const OrderNumber = this.state.vialMapping.has(vial.ID) ? this.state.vialMapping.get(vial.ID) : "-"
+    const orderMap = (vial.OrderMap) ? vial.OrderMap : "-";
 
     return (
       <tr key={vial.ID}>
@@ -132,9 +131,9 @@ class VialPage extends Component {
         <td onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>  {vial.volume}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>{vial.activity}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customer.UserName}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {OrderNumber}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.OrderMap}</td>
       </tr>
-    )
+    );
   }
   
   render(){
@@ -162,7 +161,7 @@ class VialPage extends Component {
         case SearchOptions.OWNER:
           return invertedSearchFactor*(vial1.customer - vial2.customer);
         case SearchOptions.ORDER:
-          return 0
+          return invertedSearchFactor*(vial1.OrderMap - vial2.OrderMap)
         default:
           throw "Unknown Searchpattern:" + this.state.SearchPattern
       }

@@ -21,6 +21,7 @@ from datetime import timedelta, time, date, datetime
 
 from lib import Formatting
 from lib import ProductionDataClasses as DC
+from lib.ProductionDataClasses import ActivityOrderDataClass, VialDataClass
 from lib import utils
 from lib.SQL import SQLExecuter, SQLFormatter
 
@@ -640,8 +641,8 @@ def getVial(CustomerID = 0, Charge = "", FillDate ="", FillTime = "", Volume = 0
     VAL.filldate,
     TIME_FORMAT(VAL.filltime, \"%T\"),
     VAL.volume, 
-    VAL.ID,
     VAL.activity,
+    VAL.ID,
     VialMapping.Order_id
   FROM
     VAL
@@ -764,14 +765,14 @@ def getVialRange(startDate : date, endDate: date):
   QueryRes =  SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   return SQLFormatter.FormatSQLTupleAsClass(QueryRes, DC.VialDataClass)
 
-def FreeOrder(OrderID: int, Vial : Dict) -> List[Dict]:
+def FreeOrder(OrderID: int, Vial : VialDataClass) -> List[VialDataClass]:
   SQLQuery = f"""
   UPDATE orders
   SET
     status=3,
-    frigivet_amount={Vial["activity"]},
-    frigivet_datetime=\"{Vial["filldate"]} {Vial["filltime"]}\",
-    batchnr=\"{Vial["charge"]}\"
+    frigivet_amount={Vial.activity},
+    frigivet_datetime=\"{Vial.filldate} {Vial.filltime}\",
+    batchnr=\"{Vial.charge}\"
   WHERE
     oid={OrderID}
   """
@@ -788,7 +789,7 @@ def FreeOrder(OrderID: int, Vial : Dict) -> List[Dict]:
     INSERT INTO VialMapping(
       Order_id,
       VAL_id
-    ) Values ({OrderID},{Vial["ID"]})
+    ) Values ({OrderID},{Vial.ID})
   """
   SQLExecuter.ExecuteQuery(SQLInsertIntoVialMapping)
 
@@ -813,10 +814,10 @@ def FreeOrder(OrderID: int, Vial : Dict) -> List[Dict]:
   """
   updatedOrders = SQLExecuter.ExecuteQueryFetchAll(SQLReturnQuery)
   return SQLFormatter.FormatSQLTupleAsClass(
-    UpdatedOrders, DC.ActivityOrderDataClass
+    updatedOrders, DC.ActivityOrderDataClass
   )
 
-def CreateNewFreeOrder(Vial: Dict, OriginalOrder: Dict, tracerID: int) -> Dict:
+def CreateNewFreeOrder(Vial: VialDataClass, OriginalOrder: Dict, tracerID: int) -> Dict:
   deliverDateTime = datetime.strptime(OriginalOrder["deliver_datetime"], "%Y-%m-%dT%H:%M:%S")
   
   SQLQuery = f"""
@@ -840,27 +841,44 @@ def CreateNewFreeOrder(Vial: Dict, OriginalOrder: Dict, tracerID: int) -> Dict:
     ) VALUES (
       0,
       0,
-      \"{Vial["charge"]}\",
+      \"{Vial.charge}\",
       {OriginalOrder["BID"]},
       -1,
       \"Extra Vial for Order: {OriginalOrder["oid"]}\",
       \"{deliverDateTime.strftime("%Y-%m-%d %H:%M:%S")}\",
-      \"{Vial["filldate"]} {Vial["filltime"]}\",
+      \"{Vial.filldate} {Vial.filltime}\",
       {OriginalOrder["run"]},
       3,
       0,
       0,
       {tracerID},
       NULL,
-      {Vial["activity"]},
-      {Vial["volume"]}
+      {Vial.activity},
+      {Vial.volume}
     )
   """
   SQLExecuter.ExecuteQuery(SQLQuery)
+  
+  InserttedOrder = getLastOrder()
+  SQLQueryVialMapping = f"""
+    INSERT INTO VialMapping(
+      Order_id,
+      VAL_id
+    ) Values ({InserttedOrder.oid},{Vial.ID})
+  """
 
-  return getLastOrder()
+  SQLExecuter.ExecuteQuery(SQLQueryVialMapping)
 
-def getLastOrder() -> Dict:
+  return InserttedOrder
+
+def getLastOrder() -> ActivityOrderDataClass:
+  """
+    Retrieves the order with largest OrderID
+
+    Note that there's currently a kinda a race condition, where a function is inserting an order and then asking to get it
+    A solution to this problem is to create an an SQL transaction, that inserts and quieres after the inserted order
+  """
+
   SQLQuery = """
     SELECT
       deliver_datetime,
@@ -884,5 +902,5 @@ def getLastOrder() -> Dict:
       )
   """
   OrderTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-  return DC.ActivityOrderDataClass(*Ordertuple)
+  return DC.ActivityOrderDataClass(*OrderTuple)
   

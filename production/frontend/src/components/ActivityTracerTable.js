@@ -1,4 +1,4 @@
-import { ajax, parseJSON } from "jquery";
+import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
 import { renderStatusImage } from "./lib/Rendering";
@@ -7,7 +7,9 @@ import { CompareDates } from "./lib/utils";
 import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
 import { ActivityModal } from "./ActivityModal.js";
-import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS } from "./lib/constants";
+import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, 
+  WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS, WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS,
+} from "./lib/constants";
 
 
 export { ActivityTable }
@@ -138,12 +140,22 @@ class ActivityTable extends Component {
         Customer.productions = [];
         newCustomerMap.set(BID, Customer);
       }
-      newCustomerMap  = this.InsertProductions(newCustomerMap, data[JSON_PRODUCTIONS]);
-      const newOrders = this.InsertOrders(newCustomerMap, data[JSON_ORDERS]);
+      const Productions = [];
+      for(const ProductionStr of data[JSON_PRODUCTIONS]){
+        Productions.push(ParseJSONstr(ProductionStr));
+      }
+      const Orders = [];
+      for(const OrderStr of data[JSON_ORDERS]){
+        Orders.push(ParseJSONstr(OrderStr));
+      }
+
+      newCustomerMap  = this.InsertProductions(newCustomerMap, Productions);
+      const newOrders = this.InsertOrders(newCustomerMap, Orders);
       this.SetOrdersCustomers(newOrders, newCustomerMap);
 
       const newVials = new Map();
-      for(let vial of data[JSON_VIALS]){
+      for(let vialStr of data[JSON_VIALS]){
+        const vial = ParseJSONstr(vialStr);
         newVials.set(vial.ID, vial);
       }
       this.setState({...this.state, vial: newVials});
@@ -215,12 +227,10 @@ class ActivityTable extends Component {
     const Order = this.state.orders.get(oid);
     Order.status = 2
     this.SetOrder(Order);
-
-    this.websocket.send(JSON.stringify({
-      "date"         : this.props.date,
-      "oid"          : oid,
-      "messageType"  : "AcceptOrder"
-    }));
+    //One needs this way of object constrution to have constants keys
+    const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_UPDATEORDERS);
+    jsonData[WEBSOCKET_UPDATEORDERS] = [Order]
+    this.websocket.send(JSON.stringify(jsonData));
   }
 
   AcceptOrderIncoming(oid, messageDate) {
@@ -292,11 +302,10 @@ class ActivityTable extends Component {
       
       this.updateAmountForCustomer(Customer.ID).then(
         ((UpdatedOrders) => {
-          this.websocket.send(JSON.stringify({
-            "date" : this.props.date,
-            "messageType" : "ChangeRun",
-            "UpdatedOrders" : UpdatedOrders
-          }));
+          const jsonData = this.websocket.getDefaultMessage(
+            this.props.date, WEBSOCKET_MESSAGE_UPDATEORDERS);
+          jsonData[WEBSOCKET_DATA_ORDERS] = UpdatedOrders;
+          this.websocket.send(JSON.stringify(jsonData));
         })
       );
     } else {
@@ -305,7 +314,7 @@ class ActivityTable extends Component {
     }
   }
 
-  ChangeRunIncoming(newDate, UpdatedOrders){
+  UpdateOrderFromWebsocket(newDate, UpdatedOrders){
     if(this.ShouldOrdersUpdate(newDate)){
       for(const Order of UpdatedOrders){
         this.SetOrder(Order);
@@ -315,7 +324,7 @@ class ActivityTable extends Component {
 
   async createNewOrder(CustomerID, Production){
     const orderDateTime = this.GetProductionDateTimeString(Production)
-
+    // There's some code smell here
     const newOrder = await ajax({
       url : "api/createEmptyActitityOrder",
       type:"POST",
@@ -432,18 +441,18 @@ class ActivityTable extends Component {
     const FillDate = String(this.props.date.getFullYear()) + '-' +
       FormatDateStr(this.props.date.getMonth() + 1) + '-' +
       FormatDateStr(this.props.date.getDate());
-    this.websocket.send(JSON.stringify({
-      "messageType" : "CreateVial",
-      "date"        : this.props.date,
-      "vial"        : {
+
+      const jsonData = this.websocket.getDefaultMessage(
+        this.props.date, WEBSOCKET_MESSAGE_CREATE_VIAL);
+      jsonData[WEBSOCKET_DATA_VIAL] = {
         "charge" : Charge,
         "filltime" : FillTime,
         "filldate" : FillDate, 
         "customer" : CustomerNumber,
         "activity" : Activity,
         "volume" : Volume
-      }
-    }));
+      };
+    this.websocket.send(JSON.stringify(jsonData));
   }
 
   recieveVial(Vial){
@@ -466,19 +475,18 @@ class ActivityTable extends Component {
     CustomerNumber)
   {
     const FillDate = `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`;
-    this.websocket.send(JSON.stringify({
-      "messageType" : "EditVial",
-      "date"        : this.props.date,
-      "vial"        : {
-        "ID"     : ID,
-        "charge" : Charge,
-        "filltime" : FillTime,
-        "filldate" : FillDate, 
-        "customer" : CustomerNumber,
-        "activity" : Activity,
-        "volume" : Volume
-      }
-    })); 
+    const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_EDIT_VIAL)
+    jsonData[WEBSOCKET_DATA_VIAL] = {
+      "ID"     : ID,
+      "charge" : Charge,
+      "filltime" : FillTime,
+      "filldate" : FillDate, 
+      "customer" : CustomerNumber,
+      "activity" : Activity,
+      "volume" : Volume
+    };
+    
+    this.websocket.send(JSON.stringify(jsonData)); 
   }
 
   /**
@@ -487,16 +495,15 @@ class ActivityTable extends Component {
    * @param {Set<number>} vialSet 
    */
   FreeOrder(orderID, vialSet){
-    this.closeModal(); 
-    this.websocket.send(JSON.stringify({
-      "messageType" : "FreeOrder",
-      "date"        : this.props.date,
-      "orderID"     : this.state.orders.get(orderID),
-      "vialSet"     : [...vialSet],
-      "tracerID"    : this.props.tracer.id,
-    }));
+    const vials = [...vialSet].Map(vialID => this.state.vial.get(vialID));
+    const order = this.state.orders.get(orderID);
+    this.closeModal();
+    const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_FREE_ORDER);
+    jsonData[WEBSOCKET_DATA_VIALS] = vials;
+    jsonData[WEBSOCKET_DATA_TRACER] = this.props.tracer.id;
+    jsonData[WEBSOCKET_DATA_ORDERID] = order;
+    this.websocket.send(JSON.stringify(jsonData));
   }
-
 
   // Renders 
   renderRunSelect(Order) {
@@ -624,6 +631,8 @@ class ActivityTable extends Component {
         RenderedRuns.push(this.renderTotal(run));
       }
     }
+
+    console.log(this.state)
     
     return (<div>
       <div> Produktioner: <br/>

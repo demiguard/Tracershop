@@ -368,6 +368,7 @@ class ActivityModal extends Component {
     const vials_in_use = [];
     if (CustomerNumber) {
       for(let [vialID, vial ] of this.props.vials){
+        if (vial.OrderMap !== null) continue;
         if (vial.customer == CustomerNumber){
           (this.state.EditingVials.has(vialID)) ? vials_in_use.push(
             renderTableRow(vialID, this.ActiveVialList(vial))
