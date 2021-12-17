@@ -69,5 +69,9 @@ function FormatDateStr(number) {
  * @returns {object} Jsonformatted object
  */
 function ParseJSONstr(JSONString){
-  return JSON.parse(JSONString)
+  var json = JSONString;
+  while (typeof(json) == "string"){
+    json = JSON.parse(json);
+  }
+  return json;
 }

@@ -64,7 +64,22 @@ def checkForSQLInjection(SQLquery : str):
   if regex.search(SQLquery):
     raise SQLInjectionException()
 
-def SerilizeToSQLValue(value : Any) -> Any:
+def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
+  """This function converts a value to be inserted into the database.
+
+  Args:
+      value (Any): [description]
+
+  KWArgs:
+      NoneTypeRes (Any): This is the return value if the value is None 
+
+  Raises:
+      TypeError: On an unsupported type it raises an TypeError
+
+  Returns:
+      Any: returns a value ready to be inserted into the database by a format string. Type is dependant on input type
+  """
+  
   valueType = type(value)
   if valueType == int:
     return value
@@ -74,10 +89,12 @@ def SerilizeToSQLValue(value : Any) -> Any:
     return f"\"{value}\""
   if valueType == date:
     return f"\"{dateConverter(value)}\""
-  if value == time:
+  if valueType == time:
     return f"\"{timeConverter(value)}\""
-  if value == datetime:
+  if valueType == datetime:
     return f"\"{datetimeConverter(value)}\""
+  if valueType == type(None):
+    return NoneTypeRes
   raise TypeError(f"Value of unknown type: {valueType}")
 
 

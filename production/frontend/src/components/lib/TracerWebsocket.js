@@ -1,4 +1,6 @@
-import { WEBSOCKET_DATA_ORDERS, WEBSOCKET_MESSAGETYPE, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, WEBSOCKET_MESSAGE_UPDATEORDERS } from "./constants";
+import {
+  WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_MESSAGETYPE, WEBSOCKET_MESSAGE_CREATE_VIAL, 
+  WEBSOCKET_MESSAGE_EDIT_VIAL, WEBSOCKET_MESSAGE_UPDATEORDERS, WEBSOCKET_DATE } from "./constants";
 import { ParseJSONstr } from "./formatting";
 
 export class TracerWebSocket extends WebSocket {
@@ -12,6 +14,7 @@ export class TracerWebSocket extends WebSocket {
       const MessageDate = new Date(data[WEBSOCKET_DATE]);
       switch(data[WEBSOCKET_MESSAGETYPE]) {
         case WEBSOCKET_MESSAGE_CREATE_VIAL:
+        case WEBSOCKET_MESSAGE_EDIT_VIAL:
           /*
            * YEEEAH some really bad code ahead with double parsing: TODO: TODO: !IMPORTANT
            * Hours Spend fixing this: 3
@@ -27,17 +30,14 @@ export class TracerWebSocket extends WebSocket {
            * 
            */ 
 
-          const NewVial = JSON.parse(ParseJSONstr(data[WEBSOCKET_DATA_VIAL])); 
+          const NewVial = ParseJSONstr(data[WEBSOCKET_DATA_VIAL]); 
           this.table.recieveVial(NewVial);
-          break;
-        case WEBSOCKET_MESSAGE_EDIT_VIAL:
-          this.table.recieveVial(data[WEBSOCKET_DATA_VIAL]);
           break;
         case WEBSOCKET_MESSAGE_UPDATEORDERS:
           // read the comment above for why the double parsing.
           const UpdatedOrders = [];
           for (const OrderStr of data[WEBSOCKET_DATA_ORDERS]) {
-            UpdatedOrders.push(JSON.parse(OrderStr));
+            UpdatedOrders.push(ParseJSONstr(OrderStr));
           }
           this.table.UpdateOrderFromWebsocket(MessageDate, UpdatedOrders)
           break;

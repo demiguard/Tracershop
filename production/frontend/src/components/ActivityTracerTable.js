@@ -8,7 +8,9 @@ import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
 import { ActivityModal } from "./ActivityModal.js";
 import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, 
-  WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS, WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS,
+  WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS, 
+  WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, 
+  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS,
 } from "./lib/constants";
 
 
@@ -229,7 +231,7 @@ class ActivityTable extends Component {
     this.SetOrder(Order);
     //One needs this way of object constrution to have constants keys
     const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_UPDATEORDERS);
-    jsonData[WEBSOCKET_UPDATEORDERS] = [Order]
+    jsonData[WEBSOCKET_DATA_ORDERS] = [Order]
     this.websocket.send(JSON.stringify(jsonData));
   }
 
@@ -244,6 +246,8 @@ class ActivityTable extends Component {
   SetOrder(Order) {
     //Note you should Look at liberay called immer
     //The Liberay deals with Updatling large objects, like the Customer Map
+    console.log(Order);
+    
     const NewOrder        = {...Order};
     const NewOrders    = new Map(this.state.orders);
     const NewCustomers = new Map(this.state.customer);
@@ -501,7 +505,7 @@ class ActivityTable extends Component {
     const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_FREE_ORDER);
     jsonData[WEBSOCKET_DATA_VIALS] = vials;
     jsonData[WEBSOCKET_DATA_TRACER] = this.props.tracer.id;
-    jsonData[WEBSOCKET_DATA_ORDERID] = order;
+    jsonData[WEBSOCKET_DATA_ORDER] = order;
     this.websocket.send(JSON.stringify(jsonData));
   }
 

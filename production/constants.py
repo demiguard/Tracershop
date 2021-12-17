@@ -13,8 +13,9 @@ SPECIAL_TRACER_GROUP_NAME = "special"
 EMAIL_SENDER_ADDRESS = "no-reply-production@regionh.dk"
 
 DATE_FORMAT = "%Y-%m-%d"
-TIME_FORMAT = "%H-%M-%S"
+TIME_FORMAT = "%H:%M:%S"
 DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
+JSON_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}"
 
 @unique
 class EmailEvents(Enum):

@@ -7,6 +7,7 @@ from typing import Dict, List
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import ActivityOrderDataClass, VialDataClass
 from lib.SQL import SQLController as SQL
+from api.models import ServerConfiguration
 from constants import * # Import the many WEBSOCKET constants
 
 class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
@@ -18,7 +19,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
 
   ### --- JSON methods --- ###
   @classmethod
-  async def encode_json(cls, text_data):
+  async def encode_json(cls, text_data: Dict) -> str:
     return encode(text_data)
   
   @classmethod
@@ -43,7 +44,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
     )
 
   #Receive data from Websocket
-  async def receive_json(self, message):
+  async def receive_json(self, message: Dict) -> None:
     """
       This is the server side handler for new message. It assumes the text data is on json format with the following entries:
         messageType - This is the indentifier for which type of message was send.
@@ -62,7 +63,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       updatedOrders = message[WEBSOCKET_DATA_ORDERS]
       returnOrders = [] # this mainly done So I can uniformly update
       #Update the orders in the Database
-      for orderdict in updatedOrders:
+      for orderDict in updatedOrders:
         order = ActivityOrderDataClass.fromDict(orderDict)
         returnOrders.append(order)
         await self.updatedOrder(order)
@@ -72,7 +73,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
           WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
           WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_UPDATEORDERS,
           WEBSOCKET_DATE        : dateStr,
-          WEBSOCKET_DATA_ORDERS : returnOrders
+          WEBSOCKET_DATA_ORDERS : [encode(rOrder) for rOrder in returnOrders]
         }
       )
     if messageType == WEBSOCKET_MESSAGE_CREATE_VIAL:
@@ -89,7 +90,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
         }
       )
     if messageType == WEBSOCKET_MESSAGE_EDIT_VIAL:
-      vial = message[WEBSOCKET_DATA_VIAL] # Dict Vial Form
+      vial = VialDataClass.fromDict(message[WEBSOCKET_DATA_VIAL]) # Dict Vial Form
       await self.updateVial(vial)
 
       await self.channel_layer.group_send(
@@ -98,21 +99,21 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
           WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
           WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_EDIT_VIAL,
           WEBSOCKET_DATE        : dateStr,
-          WEBSOCET_DATA_VIAL    : vial
+          WEBSOCKET_DATA_VIAL   : encode(vial)
         }
       )
     if messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
-      Order      = message[WEBSOCKET_DATA_ORDER]
-      Vials      = message[WEBSOCKET_DATA_VIALS]
+      Order      = ActivityOrderDataClass.fromDict(message[WEBSOCKET_DATA_ORDER])
+      Vials      = [VialDataClass.fromDict(vialDict) for vialDict in message[WEBSOCKET_DATA_VIALS]]
       tracerID   = message[WEBSOCKET_DATA_TRACER]
 
       serverConfiguration = await self.getServerConfiguration()
       if serverConfiguration.LegacyMode:
         Vials.reverse() # this is to get the first element last
-        headerVialID = Vials.pop()
-        UpdatedOrders = await self.assignVial(Order, headerVialID)
-        for VialID in Vials:
-          newOrder = await self.createVialOrder(VialID, Order, tracerID)
+        PrimaryVial = Vials.pop()
+        UpdatedOrders = await self.assignVial(Order, PrimaryVial)
+        for Vial in Vials:
+          newOrder = await self.createVialOrder(Vial, Order, tracerID)
           UpdatedOrders.append(newOrder)
         
         SerlizedUpdatedOrders = list(map(lambda x: encode(x.toJSON()), UpdatedOrders))
@@ -143,14 +144,22 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       self,
       order: ActivityOrderDataClass
     ) -> ActivityOrderDataClass:
-    self.SQL.UpdateOrder(order)
+    """[summary]
+
+    Args:
+        order (ActivityOrderDataClass): [description]
+
+    Returns:
+        ActivityOrderDataClass: [description]
+    """
+    self.SQL.updateOrder(order)
 
   @database_sync_to_async
   def CreateVial(self, Vial : VialDataClass) -> None:
-    SQL.createVial(Vial)
+    self.SQL.createVial(Vial)
       
   @database_sync_to_async
-  def FillVial(self, Vial : VialDataClass) -> VialDataClass:
+  def getVial(self, Vial : VialDataClass) -> VialDataClass:
     """
       This takes an incomplete VialDataClass and fills the data in it
     
@@ -161,7 +170,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
                         if the field was precent in the old vial
                         it's the same in the new
     """
-    return SQL.getVial(Vial)
+    return self.SQL.getVial(Vial)
 
   @database_sync_to_async
   def updateVial(self, Vial : VialDataClass) -> None:
@@ -169,27 +178,32 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       Overwrite the database Vial with this database object
       Note this doesn't affect Vial Mapping 
     """
-    SQL.updateVial(Vial)
+    self.SQL.updateVial(Vial)
     
   @database_sync_to_async
-  def getServerConfiguration(self):
-    return SQL.getServerConfig()
+  def getServerConfiguration(self) -> ServerConfiguration:
+    """Get the server configuration
+
+    Returns:
+        ServerConfiguration: the server configuration Instance
+    """
+    return self.SQL.getServerConfig()
 
   @database_sync_to_async
   def assignVial(self, 
       Order : ActivityOrderDataClass,
       Vial : VialDataClass
     ) -> List[ActivityOrderDataClass]:
-    """
-      Fills an order with data from the vialID given
+    """Fills an order with data from the vialID given
 
       Args:
         Order  : ActivityOrderDataClass, is the order the vial is being assigned to
         VialID : VialDataClass, corosponding to the vial that is being assigned
-      returns
+
+      Returns:
         List[ActivityOrderDataClass] : List of modified orders 
     """
-    return SQL.FreeOrder(Order, VialData)
+    return self.SQL.FreeOrder(Order, VialData)
     
 
   @database_sync_to_async
@@ -205,4 +219,4 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       returns 
         ActivityOrderClass: The order created
     """
-    return SQL.CreateNewFreeOrder(VialData, OriginalOrder, tracerID) 
+    return self.SQL.CreateNewFreeOrder(VialData, OriginalOrder, tracerID) 

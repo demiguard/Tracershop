@@ -12,13 +12,14 @@ from django.http import JsonResponse
 
 from lib.ProductionDataClasses import JsonSerilizableDataClass
 
+from typing import Dict
 import json
 
 class ProductionJSONEncoder(DjangoJSONEncoder):
   def default(self, o):
     if isinstance(o, JsonSerilizableDataClass):
       responseStr = '{\n'
-      fields = o.getFields()
+      fields = [ field.name for field in o.getFields()]
       oDict = o.toDict()
       for i,field in enumerate(fields):
         if i != len(fields) - 1:
@@ -38,5 +39,17 @@ class ProductionJSONResponse(JsonResponse):
 def encode(text_data):
   return json.dumps(text_data, cls=ProductionJSONEncoder)
 
-def decode(content):
-  return json.loads(content)
+def decode(content: str) -> Dict:
+  """Decodes a string as many times as needed to get a python object
+
+  Args:
+      content (str): A json encoded string any number of times
+
+  Returns:
+      Dict: Json dict with the appropriate values
+  """
+  iteratorContent = content
+  while type(iteratorContent) == str:
+    iteratorContent = json.loads(iteratorContent)
+  if type(iteratorContent) == dict:
+    return iteratorContent

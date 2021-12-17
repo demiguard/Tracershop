@@ -25,7 +25,7 @@ class APIGetActivityTable(View):
     runs = SQLController.getRuns()
     customers = SQLController.getCustomers()
     productions = SQLController.GetDeliverTimes()
-    vials    = SQLController.getVials(requestDate)
+    vials    = self.SQL.getVials(requestDate)
 
     return ProductionJSONResponse({
       JSON_CUSTOMER : customers,
@@ -34,3 +34,7 @@ class APIGetActivityTable(View):
       JSON_RUNS   : runs,
       JSON_VIALS : vials
     })
+
+  def __init__(self, SQL_Controller=SQLController.SQL()):
+    self.SQL = SQL_Controller
+    super().__init__()

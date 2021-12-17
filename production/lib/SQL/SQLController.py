@@ -57,6 +57,54 @@ class SQL():
   def updateOrder(cls, order : ActivityOrderDataClass) -> None:
     cls.__ExecuteNoReturn(SQLFactory.updateOrder, order)
     
+  @classmethod
+  def createVial(cls, Vial) -> None:
+    """[summary]
+
+    Args:
+        Vial ([type]): [description]
+
+    Returns:
+        VialDataClass: [description]
+    """
+    cls.__ExecuteNoReturn(SQLFactory.InsertVial, Vial)
+    
+  @classmethod
+  def getVial(cls, Vial: VialDataClass) -> VialDataClass:
+    return cls.__ExecuteReturnOne(SQLFactory.getVial, VialDataClass, Vial)
+
+  @classmethod
+  def getVials(cls, requestDate : date) -> List[VialDataClass]:
+    return cls.__ExecuteCommandMany(SQLFactory.getVials, VialDataClass, requestDate)
+
+  @classmethod
+  def updateVial(cls, Vial : VialDataClass) -> None:
+    cls.__ExecuteNoReturn(SQLFactory.updateVial, Vial)
+
+  @classmethod
+  def FreeOrder(cls, Order: ActivityOrderDataClass, Vial: VialDataClass) -> List[ActivityOrderDataClass]:
+    """[summary]
+
+    Args:
+        Order (ActivityOrderDataClass): [description]
+        Vial (VialDataClass): [description]
+
+    Returns:
+        List[ActivityOrderDataClass]: [description]
+    """
+    cls.__ExecuteCommandNoReturn(SQLFactory.FreeOrder, Order, Vial)
+    cls.__ExecuteCommandNoReturn(SQLFactory.UpdateCOID, Order)
+    cls.__ExecuteCommandNoReturn(SQLFactory.CreateVialMapping, Order, Vial)
+    return cls.__ExecuteCommandMany(SQLFactory.getRelatedOrders, ActivityOrderDataClass, Order)
+
+  @classmethod
+  def CreateNewFreeOrder(cls, OriginalOrder : ActivityOrderDataClass, Vial : VialDataClass) -> ActivityOrderDataClass:
+    cls.__ExecuteCommandNoReturn(SQLFactory.CreateRelatedOrder, OriginalOrder, Vial)
+    lastOrder = cls.__ExecuteReturnOne(SQLFactory.getLastActivityOrder, ActivityOrderDataClass)
+    cls.__ExecuteCommandNoReturn(SQLFactory.CreateVialMapping, lastOrder, Vial)
+    return lastOrder
+
+
 
 ##### END CLASS METHODS ######
 
