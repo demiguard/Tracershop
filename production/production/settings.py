@@ -25,7 +25,7 @@ SECRET_KEY = 'pcsy3wswz(mmips=koz#kj_q=1-z5val90mn$o-o-e@&lc6+6!'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost','0.0.0.0', '172.16.189.163']
+ALLOWED_HOSTS = ['127.0.0.1', 'localhost','0.0.0.0', '172.16.189.163', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk"]
 
 
 # Application definition
