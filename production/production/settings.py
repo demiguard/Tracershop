@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'frontend.apps.FrontendConfig',
     'api.apps.ApiConfig',
     'channels',
-    'lib.apps.LibConfig',
     'websocket.apps.WebsocketConfig'
 ]
 
