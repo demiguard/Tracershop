@@ -12,12 +12,11 @@ import os
 from channels.auth import AuthMiddlewareStack
 from channels.routing import ProtocolTypeRouter, URLRouter
 from django.core.asgi import get_asgi_application
-
-from websocket import routing
-
+from django.apps import apps
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
-
 django_asgi_app = get_asgi_application()
+
+from websocket import routing # Import that this line is here, otherwise load order is fucked up
 
 application = ProtocolTypeRouter({
   "http" : django_asgi_app,
