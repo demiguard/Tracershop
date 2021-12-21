@@ -12,7 +12,7 @@
 __author__ = "Christoffer Vilstrup Jensen"
 
 import re
-from typing import List, Tuple, Dict, Any
+from typing import List, Tuple, Dict, Any, Optional
 from datetime import datetime, date, time
 from lib.Formatting import dateConverter, timeConverter , datetimeConverter
 
@@ -44,13 +44,14 @@ def FormatSQLTuple(SQLQuery : List[Tuple], names : List[str]) -> List[Dict]:
       for query in SQLQuery
   ]
 
-def FormatSQLTupleAsClass(SQLResult: List[Tuple], cls : JsonSerilizableDataClass) -> List[JsonSerilizableDataClass]:
+def FormatSQLTupleAsClass(SQLResult: Optional[List[Tuple]], cls : JsonSerilizableDataClass) -> Optional[List[JsonSerilizableDataClass]]:
   """
     This function converts a list of tuples queried from the database into a list
-
-
   """
-  return list(map(lambda ClassTuple : cls(*ClassTuple), SQLResult))
+  if SQLResult:
+    return list(map(lambda ClassTuple : cls(*ClassTuple), SQLResult))
+  else:
+    return None
 
 
 def checkForSQLInjection(SQLquery : str):

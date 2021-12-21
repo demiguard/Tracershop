@@ -14,11 +14,11 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dataclasses import fields
 from datetime import datetime, time, date
-from typing import Type, Dict, List, Callable
+from typing import Type, Dict, List, Callable, Optional
 
 from api.models import ServerConfiguration
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, JsonSerilizableDataClass, TracerDataClass,  VialDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, EmployeeDataClass, JsonSerilizableDataClass, TracerDataClass,  VialDataClass
 
 
 class SQL():
@@ -33,10 +33,27 @@ class SQL():
     SQLExecuter.ExecuteQuery(SQLQuery)
 
   @staticmethod
-  def __ExecuteReturnOne(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
-    SQLQuery = SQLFactoryMethod(*args)
+  def __ExecuteReturnOne(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args, **kwargs) -> Optional[JsonSerilizableDataClass]:
+    """This function is the control function for making a query, taking one row, 
+    converting that into a dataclass and then returning it
+
+    Args:
+        SQLFactoryMethod (Callable[..., str]): This is the method, that generates the query
+        returnClass (JsonSerilizableDataClass): This is the return class, 
+                    Note it shouldn't be an instance, only the type of class
+        *args: additional args are passed to SQLFactoryMethod
+        **kwargs: additional kwargs are passed to SQLFactoryMethod
+
+    Returns:
+        Optional[JsonSerilizableDataClass]: If the underlying query returned a result, 
+          then it's converted to JsonSerilizableDataClass if no result was found, it returns None
+    """
+    SQLQuery = SQLFactoryMethod(*args, **kwargs)
     SQLTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-    return returnClass(*SQLTuple)
+    if SQLTuple:
+      return returnClass(*SQLTuple)
+    else:
+      return None
 
   @staticmethod
   def __ExecuteCommandMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
@@ -104,7 +121,9 @@ class SQL():
     cls.__ExecuteCommandNoReturn(SQLFactory.CreateVialMapping, lastOrder, Vial)
     return lastOrder
 
-
+  @classmethod
+  def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
+    return cls.ExecuteQueryFetchOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
 
 ##### END CLASS METHODS ######
 

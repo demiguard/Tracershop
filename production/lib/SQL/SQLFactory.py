@@ -248,3 +248,15 @@ def updateVial(Vial: VialDataClass) -> str:
     WHERE
      ID={Vial.ID}
   """
+
+def authenticateUser(username, password):
+  return f"""
+    Select 
+      Users.Username
+    FROM
+      Users INNER JOIN UserRoles ON Users.id=UserRoles.Id_user
+    WHERE
+      UserRoles.Id_Role = 6 AND
+      Username={username} AND
+      password={password}
+  """

@@ -1,21 +1,33 @@
 from django.urls import path
 #Views
-from api.views.getCustomers            import APIGetCustomers
-from api.views.getCustomer             import APIGetCustomer
-from api.views.getTracers              import APIGetTracers
-from api.views.DeliverTimesEndpoint    import APIDeliverTimes
-from api.views.MonthColorEndpoint      import APIMonthColorEndpoint
-from api.views.getActivityOrders       import APIGetActivityOrders
-from api.views.getActivityTable        import APIGetActivityTable
-from api.views.getSpecialTracersOrders import APIGetSpecialTracerOrders
-from api.views.updateTracer            import APIUpdateTracer
-from api.views.getTracerCustomer       import APIGetTracerCustomer
-from api.views.updateTracerCustomer    import APIUpdateTracerCustomer
-from api.views.createNewTracer         import APICreateNewTracer
-from api.views.deleteTracer            import APIDeleteTracer
-from api.views.getCloseDays            import APIClosedDays
-from api.views.createEmptyOrder        import APICreateEmptyFDGOrder
-from api.views.getVialRange            import APIGetVialRange
+
+# Auth Views
+
+# Database Views
+## Calender Views
+from api.views.database.Calender.MonthColorEndpoint      import APIMonthColorEndpoint
+from api.views.database.Calender.getCloseDays            import APIClosedDays
+
+## Customers Views
+from api.views.database.Customers.getCustomers            import APIGetCustomers
+from api.views.database.Customers.getCustomer             import APIGetCustomer
+from api.views.database.Customers.DeliverTimesEndpoint    import APIDeliverTimes
+
+## Order Views
+from api.views.database.Orders.createEmptyOrder        import APICreateEmptyFDGOrder
+from api.views.database.Orders.getActivityOrders       import APIGetActivityOrders
+from api.views.database.Orders.getActivityTable        import APIGetActivityTable
+from api.views.database.Orders.getSpecialTracersOrders import APIGetSpecialTracerOrders
+from api.views.database.Orders.getVialRange            import APIGetVialRange
+from api.views.database.Orders.getVials                import APIGetVials
+
+## Tracer Views
+from api.views.database.Tracer.createNewTracer         import APICreateNewTracer
+from api.views.database.Tracer.deleteTracer            import APIDeleteTracer
+from api.views.database.Tracer.getTracers              import APIGetTracers
+from api.views.database.Tracer.getTracerCustomer       import APIGetTracerCustomer
+from api.views.database.Tracer.updateTracer            import APIUpdateTracer
+from api.views.database.Tracer.updateTracerCustomer    import APIUpdateTracerCustomer
 
 from lib.utils import LMAP
 
@@ -37,6 +49,7 @@ Views = [
   APIClosedDays,
   APICreateEmptyFDGOrder,
   APIGetVialRange,
+  APIGetVials,
 ]
 
 urlpatterns = LMAP(lambda view: path(view.path, view.as_view(), name=view.name), Views)

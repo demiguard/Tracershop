@@ -283,3 +283,6 @@ class UserDataClass(JsonSerilizableDataClass):
   @classmethod
   def getSQLTable(cls):
     return "Users"
+
+class EmployeeDataClass(JsonSerilizableDataClass):
+  Username : str

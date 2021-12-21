@@ -27,6 +27,11 @@ class EmailEvents(Enum):
 # Long list JSON key word used in Json messsages
 # These should have great overlap with production/frontend/src/lib/constants.js
 
+AUTH_USERNAME         = "username"
+AUTH_PASSWORD         = "password"
+AUTH_DETAIL           = "detail"
+AUTH_IS_AUTHENTICATED = "isAuthenticated"
+
 JSON_CUSTOMER = "customers"
 JSON_DELIVERTIMES = "deliverTimes"
 JSON_ISOTOPE = "isotopes"

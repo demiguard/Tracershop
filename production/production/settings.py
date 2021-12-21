@@ -37,9 +37,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'frontend.apps.FrontendConfig',
-    'api.apps.ApiConfig',
     'channels',
+    'api.apps.ApiConfig',
+    'frontend.apps.FrontendConfig',
+    'lib.apps.LibConfig',
+    'TracerAuth.apps.AuthConfig',
     'websocket.apps.WebsocketConfig'
 ]
 
@@ -54,6 +56,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'production.urls'
+
+
 
 TEMPLATES = [
     {
@@ -116,6 +120,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+AUTH_USER_MODEL = "auth.User"
+
+AUTHENTICATION_BACKENDS = ['auth.backend.TracershopAuthenticationBackend']
 
 
 # Internationalization
