@@ -41,7 +41,7 @@ def insertTOrderBooking(booking : Booking, customerID : int , username):
   bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
   bookingDatetime += timedelta(minutes=booking.procedure.delay)
   
-  SQL.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "human", customerID, username, f"Automaticly Generated {booking.procedure.tracer.tracerName} Order")
+  SQL.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "Human", customerID, username, f"Automaticly Generated {booking.procedure.tracer.tracerName} Order")
 
 def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: int):
   #### So goal is to merge the two dict into one                                        ####
