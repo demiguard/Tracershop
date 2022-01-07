@@ -16,7 +16,7 @@ from dataclasses import fields
 from datetime import datetime, time, date
 from typing import Type, Dict, List, Callable, Optional
 
-from api.models import ServerConfiguration
+from api.models import ServerConfiguration, Database
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, EmployeeDataClass, JsonSerilizableDataClass, TracerDataClass,  VialDataClass
 
@@ -50,6 +50,7 @@ class SQL():
     """
     SQLQuery = SQLFactoryMethod(*args, **kwargs)
     SQLTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
+    print(type(SQLTuple))
     if SQLTuple:
       return returnClass(*SQLTuple)
     else:
@@ -92,7 +93,11 @@ class SQL():
 
   @classmethod
   def getVials(cls, requestDate : date) -> List[VialDataClass]:
-    return cls.__ExecuteCommandMany(SQLFactory.getVials, VialDataClass, requestDate)
+    vials = cls.__ExecuteCommandMany(SQLFactory.getVials, VialDataClass, requestDate)
+    if vials:
+      return vials
+    else:
+      return []
 
   @classmethod
   def updateVial(cls, Vial : VialDataClass) -> None:
@@ -123,7 +128,7 @@ class SQL():
 
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
-    return cls.ExecuteQueryFetchOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
+    return cls.__ExecuteReturnOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
 
 ##### END CLASS METHODS ######
 
@@ -303,3 +308,6 @@ def FreeOrder(OrderID: int , Vial: VialDataClass)-> List[Dict]:
 
 def CreateNewFreeOrder(Vial : VialDataClass, OriginalOrder : Dict, TracerID : int) -> Dict:
   return SQLLegacyController.CreateNewFreeOrder(Vial, OriginalOrder, TracerID)
+
+def getDatabases() -> List[Database]:
+  return list(Database.objects.all())

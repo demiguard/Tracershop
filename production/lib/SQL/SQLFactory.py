@@ -252,11 +252,11 @@ def updateVial(Vial: VialDataClass) -> str:
 def authenticateUser(username, password):
   return f"""
     Select 
-      Users.Username
+      Users.username
     FROM
       Users INNER JOIN UserRoles ON Users.id=UserRoles.Id_user
     WHERE
       UserRoles.Id_Role = 6 AND
-      Username={username} AND
-      password={password}
+      Users.username={SerilizeToSQLValue(username)} AND
+      Users.password={SerilizeToSQLValue(password)}
   """

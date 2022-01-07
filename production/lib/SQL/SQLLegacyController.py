@@ -217,10 +217,13 @@ def getActivityOrders(requestDate: date, tracer_id: int) -> List[Dict]:
       deliver_datetime
   """
   QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-  return SQLFormatter.FormatSQLTupleAsClass(
-    QueryResult,
-    DC.ActivityOrderDataClass
-  )
+  if QueryResult:
+    return SQLFormatter.FormatSQLTupleAsClass(
+      QueryResult,
+      DC.ActivityOrderDataClass
+    )
+  else:
+    return []
 
 
 def setFDGOrderStatusTo2(oid:int):

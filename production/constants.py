@@ -42,6 +42,10 @@ JSON_TRACER = "tracers"
 JSON_TRACER_MAPPING = "tracer_mapping"
 JSON_VIALS = "vials"
 JSON_VIAL_MAPPING = "vial_mapping"
+JSON_ACTIVE_DATABASE = "active_database"
+JSON_DATABASE = "database"
+JSON_FIELD_TO_UPDATE = "FieldToUpdate"
+
 
 # WEBSOCKET MESSAGES
 WEBSOCKET_DATA_ORDER           = "order"

@@ -122,9 +122,17 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 AUTH_USER_MODEL = "auth.User"
 
-AUTHENTICATION_BACKENDS = ['auth.backend.TracershopAuthenticationBackend']
+AUTHENTICATION_BACKENDS = ['TracerAuth.backend.TracershopAuthenticationBackend']
 
+CSRF_COOKIE_SAMESITE = 'Strict'
+SESSION_COOKIE_SAMESITE = 'Strict'
 
+# PROD ONLY
+# CSRF_COOKIE_SECURE = True
+# SESSION_COOKIE_SECURE = True
+
+#SESSION_ENGINE = 'django.contrib.sessions.backends.signed_cookies'
+SESSION_ENGINE =  "django.contrib.sessions.backends.cached_db"
 # Internationalization
 # https://docs.djangoproject.com/en/3.0/topics/i18n/
 

@@ -20,6 +20,9 @@ export default class Navbar extends Component {
     for(let i = 0; i < this.props.Names.length; i++) {
       Elements.push(this.renderElement(i));
     }
+    if(!this.props.username){
+      Elements.push((<NavbarElement key="logout" content={"log ud"} onClick={this.props.logout} ></NavbarElement>));
+    }
 
     return (
      <BSNavbar fixed="top">

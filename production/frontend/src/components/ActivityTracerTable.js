@@ -76,7 +76,6 @@ class ActivityTable extends Component {
           Name   : Customer.Name,
         });
       }
-
       const Productions = []
       for(const ProductionStr of data[JSON_PRODUCTIONS]){
         Productions.push(ParseJSONstr(ProductionStr));

@@ -3,7 +3,7 @@ from lib.SQL.SQLFormatter import checkForSQLInjection
 # User packages:
 
 # This is some legacy code that should really be moved
-from api.models import Database
+from api.models import Database, ServerConfiguration
 import constants
 
 from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect
@@ -13,10 +13,11 @@ class MySQLCursor(object):
   def __init__(self):
     pass
   def __enter__(self):
-    databaseQuery = Database.objects.filter(databaseName=constants.TRACERSHOPDATABASENAME)
-    if not databaseQuery:
+    try:
+      SC = ServerConfiguration.objects.get(ID=1)
+    except ServerConfiguration.DoesNotExist:
       raise DatabaseNotSetupException
-    database = databaseQuery[0]
+    database = SC.ExternalDatabase
     databaseConfig = {
       'database' : database.databaseName,
       'user' : database.username,
@@ -26,6 +27,7 @@ class MySQLCursor(object):
       'autocommit' : True,
       'raise_on_warnings': True
     }
+    
     try:
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True
