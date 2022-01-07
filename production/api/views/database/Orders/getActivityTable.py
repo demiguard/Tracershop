@@ -22,6 +22,8 @@ class APIGetActivityTable(View):
 
     Orders = SQLController.getActivityOrders(requestDate, tracerID)
 
+    print(Orders)
+
     runs = SQLController.getRuns()
     customers = SQLController.getCustomers()
     productions = SQLController.GetDeliverTimes()

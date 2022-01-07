@@ -5,19 +5,19 @@ from TracerAuth.models import User
 from lib.SQL.SQLController import SQL
 
 class TracershopAuthenticationBackend(BaseBackend):
-  def authenticate(self, username:str, password:str) -> User:
+  def authenticate(self,request, username=None, password=None) -> User:
     if username and password:
       try:
         user = User.objects.get(username=username)
+        print(user)
       except User.DoesNotExist:
-        return get_user_from_old_database(username, password)
+        return self.get_user_from_old_database(username, password)
       if check_password(password, user.password):
         return user
     return None
 
   def get_user_from_old_database(self, username, password):
     valid_old_user = self.SQL.authenticateUser(username, password)
-
     if valid_old_user:
       user = User(username=username)
       user.set_password(password)
@@ -26,7 +26,13 @@ class TracershopAuthenticationBackend(BaseBackend):
     
     return None
 
+  def get_user(self, user_id):
+    try:
+      return User.objects.get(id=user_id)
+    except User.DoesNotExist:
+      return None
 
   def __init__(self, SQL=SQL()):
     self.SQL=SQL
+    super().__init__()
 

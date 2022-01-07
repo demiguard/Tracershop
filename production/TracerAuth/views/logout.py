@@ -9,7 +9,6 @@ from lib.Formatting import ParseJSONRequest
 from constants import AUTH_DETAIL
 
 class AuthLogout(View):
-
   path = "logout"
   name = "logout"
 

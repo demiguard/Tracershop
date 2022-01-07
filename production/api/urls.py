@@ -4,6 +4,8 @@ from django.urls import path
 # Auth Views
 
 # Database Views
+from api.views.database.ServerConfig import APIServerConfig
+
 ## Calender Views
 from api.views.database.Calender.MonthColorEndpoint      import APIMonthColorEndpoint
 from api.views.database.Calender.getCloseDays            import APIClosedDays
@@ -50,6 +52,7 @@ Views = [
   APICreateEmptyFDGOrder,
   APIGetVialRange,
   APIGetVials,
+  APIServerConfig,
 ]
 
 urlpatterns = LMAP(lambda view: path(view.path, view.as_view(), name=view.name), Views)

@@ -21,7 +21,7 @@ class AuthLogin(View):
     username = form.get(AUTH_USERNAME)
     password = form.get(AUTH_PASSWORD)
 
-    user = authenticate(username=username, password=password)
+    user = authenticate(request, username=username, password=password)
 
     if user is None:
       return ProductionJSONResponse({
