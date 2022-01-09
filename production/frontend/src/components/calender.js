@@ -25,11 +25,19 @@ export default class Calender extends Component {
     });
   }
 
+  /**
+   * 
+   * @param {Object} newDateColors - Contains the new color mappings. 
+   */
   updateColor(newDateColors) {
     const newState = {...this.state, DateColors : newDateColors};
     this.setState(newState);
   }
 
+  /**
+   * 
+   * @param {Number} changeby - This number indicates how many months you wish to change by
+   */
   changeMonth(changeby) {
     const year  = this.state.activeMonth.getFullYear();
     const month = this.state.activeMonth.getMonth() + changeby;

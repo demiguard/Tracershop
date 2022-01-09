@@ -155,7 +155,7 @@ class ActivityTable extends Component {
       this.SetOrdersCustomers(newOrders, newCustomerMap);
 
       const newVials = new Map();
-      for(let vialStr of data[JSON_VIALS]){
+      if (data[JSON_VIALS]) for(let vialStr of data[JSON_VIALS]){
         const vial = ParseJSONstr(vialStr);
         newVials.set(vial.ID, vial);
       }

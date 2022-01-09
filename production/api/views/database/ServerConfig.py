@@ -21,7 +21,7 @@ class APIServerConfig(View):
     databases = SQLController.getDatabases()
 
     return ProductionJSONResponse({
-      JSON_ACTIVE_DATABASE : config.ExternalDatabase ,
+      JSON_ACTIVE_DATABASE : config.ExternalDatabase,
       JSON_DATABASE : databases
     })
 
