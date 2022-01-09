@@ -62,52 +62,12 @@ function SuccessfullyDeletedOrder(OrderID){
   // Reconstruct the Form
   let RowNumber = InformationRow.attr("id").substr(14);
   createFDGForm(InformationRow, OrderTime , RowNumber, SendOrder)
-  /* 
-  let buttonDiv = constructElementID("div", `ButtonDiv${RowNumber}`);
-  let Space = constructElementClassList("div", ["col-1"]);
-  let Space2 = constructElementClassList("div", ["col-1"]);
-  let CommentDiv = constructElementID("div", `CommentDiv${RowNumber}`);
-  let OrderButton = $("<Button>",{
-    "id" : RowNumber,
-    "class": "btn btn-primary OrderButton"
-  });
-  OrderButton.text("Bestil")
-  OrderButton.click(SendOrder);
-  
-  let OrderTimeDiv = OrderRow.children(".order");
-  $(OrderTimeDiv).removeClass("data");
-  $(OrderTimeDiv).addClass("form");
-  let OrderTime = OrderTimeDiv.text();
-  
-  let MBqInput = $("<input>", {
-    "id": "id_order_MBQ",
-    "type" : "number",
-    "min"  : "0",
-    "name" : "order_MBQ",
-    "class" : `form-control ${OrderTime}:00`
-  });
-  buttonDiv.append(MBqInput);
-  
-  let CommentInput = $("<input>", {
-    id: "id_comment",
-    class: "form-control",
-    type: "text",
-    name:"comment"
-  });
-  CommentDiv.append(CommentInput);
-  
-  
-  InformationRow.append(buttonDiv);
-  InformationRow.append(Space);
-  InformationRow.append(CommentDiv);
-  InformationRow.append(Space2);
-  InformationRow.append(OrderButton);
-  */
-  
+
 }
 
 function SendEditOrder(OrderID, NewAmount, NewComment) {
   const customerID = $("#customer_select").children("option:selected").val();
+  const date = $('#dato').text().replace(/\s+/g, '');
   $.ajax({
     type:"put",
     url: "api/EditOrder",
@@ -115,15 +75,20 @@ function SendEditOrder(OrderID, NewAmount, NewComment) {
       "ActiveCustomer" : customerID,
       "OrderID" : OrderID,
       "NewAmount" :NewAmount,
-      "NewComment" : NewComment
+      "NewComment" : NewComment,
+      "Date" : date
     }),
     success: function(data) {
+      const ErrorDiv = $("#"+EditOrderErrorID);
       if (data['Success'] == "Success") {
         destroyActiveDialog()
         SuccessfullyEditedOrder(OrderID, data['overhead'], NewAmount, NewComment)
+      } else if (data['Success'] == "InvalidDate") {
+        ErrorDiv.text("Orderen er låst, da deadlinen for at bestille FDG er passeret");
+        ErrorDiv.addClass("ErrorBox");
       } else {
-        ErrorDiv.text("Der er Sket en fejl");
-        ErrorDiv.addClass("ErrorBox")
+        ErrorDiv.text("Der er Sket ukendt en fejl");
+        ErrorDiv.addClass("ErrorBox");
       }
     }
 })}
@@ -169,9 +134,9 @@ var EditOrder = function(){
   $(EditDialog).append(EditMBQDiv);
   $(EditDialog).append(EditCommentDiv);
 
-  const ErrorDiv = $("div", {
+  const ErrorDiv = $("<div>", {
     id: EditOrderErrorID
-  })
+  }).appendTo(EditDialog);
 
   $(EditDialog).dialog({
     classes: {
@@ -196,16 +161,22 @@ var EditOrder = function(){
       {
         text: "Slet ordre " + orderID,
         click: function() {
+          const date = $('#dato').text().replace(/\s+/g, '');
           $.ajax({
             type:"delete",
             data: JSON.stringify({
-              "OrderID" : orderID
+              "OrderID" : orderID,
+              "Date" : date
             }),
             url: "api/EditOrder",
             success: function(data) {
-              if (data['Success'] = "Success") {
+              console.log(data)
+              if (data['Success'] == "Success") {
                 destroyActiveDialog()
                 SuccessfullyDeletedOrder(orderID)
+              } else if (data['Success'] == "InvalidDate") {
+                ErrorDiv.text("Orderen er låst, da deadlinen for at bestille FDG er passeret");
+                ErrorDiv.addClass("ErrorBox");  
               } else {
                 ErrorDiv.text("Der er Sket en fejl");
                 ErrorDiv.addClass("ErrorBox")

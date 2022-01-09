@@ -91,15 +91,21 @@ def isOrderFDGAvailalbeForDate(date, closedDates, openDays):
   """
   now = datetime.now()
 
-  deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN) + timedelta(days=constants.ORDERDEADLINEDAY)
+  if closedDates.get(date.strftime("%Y-%m-%d")):
+    return False
+  
 
   if date.weekday() not in openDays:
     return False
+  
+  deadlineWeekDate = (date.weekday() - 1) % 5
+  deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN)
+  while deadlineDateTime.weekday() != deadlineWeekDate:
+    deadlineDateTime -= timedelta(days=1)
+  
   if deadlineDateTime < now:
     return False
 
-  if closedDates.get(date.strftime("%Y-%m-%d")):
-    return False
   return True
 
 

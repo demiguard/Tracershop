@@ -32,6 +32,12 @@ def get_day(date):
 def convert_to_SQL_date(date):  
   return date.strftime('%Y-%m-%d')
 
+def pad_0_to_num(num:int) -> str:
+  if num < 10:
+    return "0" + str(num)
+  else:
+    return str(num)
+
 
 def compare_hours(date_one, date_two): 
   date_one = convert_to_datetime_time(date_one)

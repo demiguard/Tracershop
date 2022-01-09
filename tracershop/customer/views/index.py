@@ -12,6 +12,8 @@ from customer.lib.CustomTools import LMap
 from customer.lib.SQL import SQLController as SQL
 from customer.lib import orders, activeCustomer
 
+from customer import constants
+
 class IndexView(LoginRequiredMixin, TemplateView):
   template_name = 'customer/sites/index.html'
   login_url = '/login'
@@ -33,16 +35,25 @@ class IndexView(LoginRequiredMixin, TemplateView):
     is_closed  = SQL.getClosed(today)
     runs       = SQL.getDailyRuns(today, active_customerID)
     injections = SQL.queryOrderByDate(today, active_customerID)
-    
+    openDays   = SQL.getOpenDays(request.user.ID)
+
+
     #Compute
-    data = Filters.matchOrders(injections, runs)
-    
+
     # Calender construction
     monthlyCloseDates       = SQL.monthlyCloseDates(today.year, today.month)
     MonthlyOrders           = orders.getMonthlyOrders(today.year, today.month, active_customerID)
 
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
     
+
+    data = Filters.matchOrders(injections, runs)
+    
+    if not orders.isOrderFDGAvailalbeForDate(today, monthlyCloseDates, openDays):
+      data = orders.removeOrdersFromList(data) 
+
+
+
     if orders.isOrderTAvailableForDate(today, monthlyCloseDates):
       secondaryOrdersForms = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
     else:
@@ -60,7 +71,9 @@ class IndexView(LoginRequiredMixin, TemplateView):
       'today'           : today.strftime('%Y-%m-%d'),
       'orders'          : injections,
       'data_status'     : MonthlyOrders,
-      'defaultCalValue' : serverConfiguration.DefaultCalculatorValue
+      'defaultCalValue' : serverConfiguration.DefaultCalculatorValue,
+      'OrderHour'       : calenderHelper.pad_0_to_num(constants.ORDERDEADLINEHOUR),
+      'OrderMinute'     : calenderHelper.pad_0_to_num(constants.ORDERDEADLINEMIN),
     }
     response = render(request, self.template_name, context=context)
     response.set_cookie("ActiveCustomer", active_customerID, samesite="strict")
