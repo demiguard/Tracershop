@@ -498,7 +498,9 @@ class ActivityTable extends Component {
    * @param {Set<number>} vialSet 
    */
   FreeOrder(orderID, vialSet){
-    const vials = [...vialSet].Map(vialID => this.state.vial.get(vialID));
+    console.log(vialSet);
+    const vialIDs = [...vialSet];
+    const vials = vialIDs.map(id => this.state.vial.get(id));
     const order = this.state.orders.get(orderID);
     this.closeModal();
     const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_FREE_ORDER);

@@ -80,3 +80,5 @@ def toDate(DateStr : str, Format: str=DATE_FORMAT) -> date:
   DummyTime = datetime.strptime(DateStr, Format)
   return DummyTime.date()
 
+def mergeDateAndTime(Date : date, Time: time) -> datetime:
+  return datetime(Date.year, Date.month, Date.day, Time.hour, Time.minute, Time.second)

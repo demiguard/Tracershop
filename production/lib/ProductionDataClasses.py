@@ -169,6 +169,9 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   BID : int
   batchnr : str
   COID : int
+  frigivet_af : int #id matching to OldDatabaseID
+  frigivet_amount : float
+  frigivet_datetime : Optional[datetime]
 
   @classmethod
   def getSQLTable(cls):
@@ -286,3 +289,4 @@ class UserDataClass(JsonSerilizableDataClass):
 
 class EmployeeDataClass(JsonSerilizableDataClass):
   Username : str
+  OldTracerBaseID : int

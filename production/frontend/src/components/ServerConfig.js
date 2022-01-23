@@ -32,18 +32,15 @@ export default class ServerConfigPage extends Component {
     const SendObject = {}; 
     SendObject[JSON_FIELD_TO_UPDATE] = JSON_ACTIVE_DATABASE
     SendObject[JSON_DATABASE] = event.target.value
-
+    this.setState({
+      activeDatabase : event.target.value
+    })
 
     ajax({
       url:"api/ServerConfig",
       type:"PUT",
       dataType:"JSON",
       data:JSON.stringify(SendObject)
-    }).then(() => {
-      this.setState({
-        
-        activeDatabase : event.target.value
-      })
     })
 
   }

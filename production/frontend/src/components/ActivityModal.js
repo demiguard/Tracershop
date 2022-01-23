@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import { Modal, Button, Row, Container, Table, Tab, FormControl, Form } from "react-bootstrap";
 import { renderTableRow } from "./lib/Rendering";
-import { FormatTime } from "./lib/formatting";
+import { FormatTime, ParseDanishNumber } from "./lib/formatting";
+import { autoAddCharacter, noop } from "./lib/utils";
 export { ActivityModal }
 
 
@@ -47,6 +48,13 @@ class ActivityModal extends Component {
     this.setState(newState);
   }
 
+  changeNewFieldTime(event){
+    const newState = {...this.state};
+    newState.newFillTime = autoAddCharacter(event, ":", new Set([2,5]), this.state.newFillTime);
+
+    this.setState(newState);
+  }
+
   createNewVial(){
     /*
      * This Function checks that the current new Vial is ok, then calls the prop function
@@ -60,7 +68,7 @@ class ActivityModal extends Component {
       ErrorInInput = true;
       NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
     }
-    const NewActivity = Number(this.state.newActivity)
+    const NewActivity = ParseDanishNumber(this.state.newActivity)
     if (isNaN(NewActivity)){
       ErrorInInput = true;
       NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
@@ -68,7 +76,7 @@ class ActivityModal extends Component {
       ErrorInInput = true;
       NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
     }
-    const NewVolume = Number(this.state.newVolume)
+    const NewVolume = ParseDanishNumber(this.state.newVolume)
     if (isNaN(NewVolume)){
       ErrorInInput = true;
       NewErrorMessage += "Volumen skal være et tal.\n"
@@ -193,7 +201,7 @@ class ActivityModal extends Component {
       onChange={(event) => this.EditVialField(vial.ID, "newBatchName", event.target.value)}/>);
 
     const ProductionField = (<FormControl value={editingState.newProductionTime}
-      onChange={(event) => this.EditVialField(vial.ID, "newProductiontime", event.target.value)}/>);
+      onChange={(event) => this.EditVialTimeField(vial.ID, event)}/>);
 
     const VolumeField = (<FormControl value={editingState.newVolume}
       onChange={(event) => this.EditVialField(vial.ID, "newVolume", event.target.value)}/>);
@@ -280,6 +288,14 @@ class ActivityModal extends Component {
     this.setState({...this.state, EditingVials : newEdittingMap})
   }
 
+  EditVialTimeField(vialID, event){
+    const newEdittingMap = new Map(this.state.EditingVials);
+    const newVialData = {...newEdittingMap.get(vialID)};
+    newVialData["newFillTime"] = autoAddCharacter(event, ":", new Set([2,5]));
+    newEdittingMap.set(vialID, newVialData);
+    this.setState({...this.state, EditingVials : newEdittingMap });
+  }
+
   EditVialField(vialID, fieldName, NewValue){
     const newEdittingMap = new Map(this.state.EditingVials)
     const newData = {...newEdittingMap.get(vialID)}  
@@ -313,7 +329,7 @@ class ActivityModal extends Component {
     />);
     const ProductionTimeInput = (<FormControl
       value={this.state.newFillTime}
-      onChange={(event) => {this.changeState(event.target.value, "newFillTime")}}
+      onChange={(event) => {this.changeNewFieldTime(event)}}
     />);
     const VolumeInput = (<FormControl
       value={this.state.newVolume}
@@ -428,7 +444,6 @@ class ActivityModal extends Component {
   render(){
     const Order = this.props.Order;
     const OrderID = (Order) ? Order.oid : "";
-
 
     return(
     <Modal

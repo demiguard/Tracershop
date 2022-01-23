@@ -1,15 +1,24 @@
-export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate, ParseJSONstr }
+export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate, ParseJSONstr, ParseDanishNumber }
 
 function parseDate(inputStr){
-  if (/^\d{4}-\d{2}-\d{2}$/g.test(dateString)) return inputStr;
-  if (/^\d{4}\/\d{2}\/\d{2}$/g.test(dateString)) return inputStr.substr(0,4)+ "-" + inputStr.substr(5,2) + "-" + inputStr.substr(8,2);
-  if (/^\d{2}\/\d{2}\/\d{4}$/g.test(dateString)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
-  if (/^\d{2}-\d{2}-\d{4}$/g.test(dateString)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
+  console.log(inputStr);
+
+  if (/^\d{4}-\d{2}-\d{2}$/g.test(inputStr)) return inputStr;
+  if (/^\d{4}\/\d{2}\/\d{2}$/g.test(inputStr)) return inputStr.substr(0,4)+ "-" + inputStr.substr(5,2) + "-" + inputStr.substr(8,2);
+  if (/^\d{2}\/\d{2}\/\d{4}$/g.test(inputStr)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
+  if (/^\d{2}-\d{2}-\d{4}$/g.test(inputStr)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
   //Todo add more formats
 
 
   throw "Date not on known format, Date: "+inputStr
 }
+
+function ParseDanishNumber(numberString){
+  const parsedNumber = numberString.replace(/,/g, ".");
+
+  return Number(parsedNumber);
+}
+
 
 function parseDateToDanishDate(dateString){
   /* This funciton takes a date string on the format YYYY-MM-DD and formats it to DD-MM-YYYY
@@ -19,7 +28,7 @@ function parseDateToDanishDate(dateString){
    */
   if (!/^\d{4}-\d{2}-\d{2}$/g.test(dateString)) throw "Date not on format, Input: " + dateString;
 
-  return dateString.substr(8,2) + "-" + dateString.substr(5,2) + "-" +  dateString.substr(0,4);
+  return dateString.substr(8,2) + "/" + dateString.substr(5,2) + "/" +  dateString.substr(0,4);
 
 }
 

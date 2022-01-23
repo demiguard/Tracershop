@@ -29,7 +29,8 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
   ### --- Websocket methods --- ####
   async def connect(self):
     self.group_name = self.scope['url_route']['kwargs']['tracer_id'] # Tracer id
-    
+    self.user = self.scope["user"]
+
     await self.channel_layer.group_add(
       self.group_name,
       self.channel_name
@@ -55,7 +56,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
     
     """
     print("Websocket RECIEVE:\n",message) # Debug message 
-    
+    print("User:", self.user)
     dateStr      = message[WEBSOCKET_DATE] # Only used on the front end
     messageType  = message[WEBSOCKET_MESSAGETYPE]
 
@@ -203,7 +204,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       Returns:
         List[ActivityOrderDataClass] : List of modified orders 
     """
-    return self.SQL.FreeOrder(Order, VialData)
+    return self.SQL.FreeOrder(Order, Vial, self.user)
     
 
   @database_sync_to_async
@@ -219,4 +220,4 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       returns 
         ActivityOrderClass: The order created
     """
-    return self.SQL.CreateNewFreeOrder(VialData, OriginalOrder, tracerID) 
+    return self.SQL.CreateNewFreeOrder(OriginalOrder, Vial, tracerID, self.user) 

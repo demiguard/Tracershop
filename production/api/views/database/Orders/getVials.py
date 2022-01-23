@@ -23,10 +23,10 @@ class APIGetVials(View):
       return HttpResponseBadRequest()
 
     Vials = SQLController.getVials(requestDate)
-    OrderRelations = SQLController.getOrderRelationsByDate(requestDate)
+
+    print(Vials)
 
     return ProductionJSONResponse({
-      JSON_VIALS : Vials,
-      JSON_VIAL_MAPPING : OrderRelations
+      JSON_VIALS : Vials
     })
     

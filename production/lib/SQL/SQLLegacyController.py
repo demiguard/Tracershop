@@ -196,17 +196,7 @@ def getIsotopes():
 def getActivityOrders(requestDate: date, tracer_id: int) -> List[Dict]:
   SQLQuery = f"""
     SELECT
-      deliver_datetime,
-      OID,
-      status,
-      amount,
-      amount_o,
-      total_amount,
-      total_amount_o,
-      run,
-      BID,
-      batchnr,
-      COID
+      {DC.ActivityOrderDataClass.getSQLFields()}
     FROM
       orders 
     WHERE
@@ -601,8 +591,8 @@ def getVials(request_date : date) -> List[Dict]:
     VAL.filldate,
     TIME_FORMAT(VAL.filltime, \"%T\"),
     VAL.volume, 
-    VAL.ID,
     VAL.activity,
+    VAL.ID,
     VialMapping.Order_id
   FROM
     VAL

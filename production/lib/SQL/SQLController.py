@@ -20,6 +20,7 @@ from api.models import ServerConfiguration, Database
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, EmployeeDataClass, JsonSerilizableDataClass, TracerDataClass,  VialDataClass
 
+from TracerAuth.models import User
 
 class SQL():
   """
@@ -50,14 +51,13 @@ class SQL():
     """
     SQLQuery = SQLFactoryMethod(*args, **kwargs)
     SQLTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-    print(type(SQLTuple))
     if SQLTuple:
       return returnClass(*SQLTuple)
     else:
       return None
 
   @staticmethod
-  def __ExecuteCommandMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
+  def __ExecuteReturnMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
     SQLQuery = SQLFactoryMethod(*args)
     SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
     return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
@@ -65,11 +65,11 @@ class SQL():
   #
   @classmethod
   def getCustomers(cls) -> List[CustomerDataClass]:
-    return cls.__ExecuteCommandMany(SQLFactory.getCustomers, CustomerDataClass)
+    return cls.__ExecuteReturnMany(SQLFactory.getCustomers, CustomerDataClass)
 
   @classmethod
   def getTracers(cls) -> List[TracerDataClass]:
-    return cls.__ExecuteCommandMany(SQLFactory.getTracers, TracerDataClass)
+    return cls.__ExecuteReturnMany(SQLFactory.getTracers, TracerDataClass)
 
   @classmethod
   def updateOrder(cls, order : ActivityOrderDataClass) -> None:
@@ -93,7 +93,7 @@ class SQL():
 
   @classmethod
   def getVials(cls, requestDate : date) -> List[VialDataClass]:
-    vials = cls.__ExecuteCommandMany(SQLFactory.getVials, VialDataClass, requestDate)
+    vials = cls.__ExecuteReturnMany(SQLFactory.getVials, VialDataClass, requestDate)
     if vials:
       return vials
     else:
@@ -104,7 +104,11 @@ class SQL():
     cls.__ExecuteNoReturn(SQLFactory.updateVial, Vial)
 
   @classmethod
-  def FreeOrder(cls, Order: ActivityOrderDataClass, Vial: VialDataClass) -> List[ActivityOrderDataClass]:
+  def FreeOrder(
+    cls,
+    Order: ActivityOrderDataClass, 
+    Vial: VialDataClass,
+    user: User) -> List[ActivityOrderDataClass]:
     """[summary]
 
     Args:
@@ -114,22 +118,37 @@ class SQL():
     Returns:
         List[ActivityOrderDataClass]: [description]
     """
-    cls.__ExecuteCommandNoReturn(SQLFactory.FreeOrder, Order, Vial)
-    cls.__ExecuteCommandNoReturn(SQLFactory.UpdateCOID, Order)
-    cls.__ExecuteCommandNoReturn(SQLFactory.CreateVialMapping, Order, Vial)
-    return cls.__ExecuteCommandMany(SQLFactory.getRelatedOrders, ActivityOrderDataClass, Order)
+    cls.__ExecuteNoReturn(SQLFactory.FreeExistingOrder, Order, Vial, user)
+    cls.__ExecuteNoReturn(SQLFactory.FreeDependantOrders, Order, user)
+    cls.__ExecuteNoReturn(SQLFactory.CreateVialMapping, Order, Vial)
+    return cls.__ExecuteReturnMany(SQLFactory.getRelatedOrders, ActivityOrderDataClass, Order)
 
   @classmethod
-  def CreateNewFreeOrder(cls, OriginalOrder : ActivityOrderDataClass, Vial : VialDataClass) -> ActivityOrderDataClass:
-    cls.__ExecuteCommandNoReturn(SQLFactory.CreateRelatedOrder, OriginalOrder, Vial)
-    lastOrder = cls.__ExecuteReturnOne(SQLFactory.getLastActivityOrder, ActivityOrderDataClass)
-    cls.__ExecuteCommandNoReturn(SQLFactory.CreateVialMapping, lastOrder, Vial)
+  def CreateNewFreeOrder(
+      cls,
+      OriginalOrder : ActivityOrderDataClass, 
+      Vial : VialDataClass, 
+      tracerID :int
+    ) -> ActivityOrderDataClass:
+    cls.__ExecuteNoReturn(SQLFactory.createLegacyFreeOrder, OriginalOrder, Vial, tracerID, user)
+    lastOrder = cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
+    cls.__ExecuteNoReturn(SQLFactory.CreateVialMapping, lastOrder, Vial)
     return lastOrder
 
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
     return cls.__ExecuteReturnOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
 
+  @staticmethod
+  def getServerConfig() -> ServerConfiguration:
+    try:
+      ServerConfig = ServerConfiguration.objects.get(ID=1)
+    except ObjectDoesNotExist:
+      Databases    = Database.objects.all()
+      ServerConfig = ServerConfiguration(ID=1, ExternalDatabase=Databases[0])
+      ServerConfig.save()
+
+    return ServerConfig
 ##### END CLASS METHODS ######
 
 def getCustomers():

@@ -1,4 +1,4 @@
-export { CompareDates, BooleanMapping, noop }
+export { CompareDates, BooleanMapping, noop, autoAddCharacter }
 
 
 function CompareDates(d1, d2) {
@@ -13,3 +13,21 @@ function BooleanMapping(bool){
 function noop(){
 
 }
+/** 
+ * This functions adds a string at certain indexes. 
+ * This is useable for instance in when users are typing numbers for a time stamp
+ * example The user types: 1234 but the format is specified as 12:34
+ * @param { Object } event - an react event that caused the parent function to fire
+ * @param { String } insert_character - The character inserted at the relevant indexes
+ * @param { Set } indexes - An set of numbers where the inserted character 
+ * @param { String } old_string - This is the old string 
+ * @returns { String } - A potential modified string. 
+ */
+function autoAddCharacter(event, insert_character, indexes, old_string){
+  const nativeEvent = event.nativeEvent;
+  if (nativeEvent.inputType !== "insertText") return event.target.value;
+  if (indexes.has(old_string.length) && nativeEvent.data !== insert_character) {
+    return old_string + insert_character + nativeEvent.data;
+  }
+  return event.target.value;
+};

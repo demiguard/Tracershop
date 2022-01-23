@@ -10,7 +10,10 @@ from dataclasses import fields
 
 from lib.SQL.SQLFormatter import SerilizeToSQLValue
 from lib.ProductionDataClasses import ActivityOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass, UserDataClass
-from lib.Formatting import dateConverter
+from lib.Formatting import dateConverter, mergeDateAndTime
+
+from TracerAuth.models import User
+
 
 def getCustomers() -> str:
   return """
@@ -249,14 +252,115 @@ def updateVial(Vial: VialDataClass) -> str:
      ID={Vial.ID}
   """
 
-def authenticateUser(username, password):
+def authenticateUser(username: str, password: str) -> str:
   return f"""
     Select 
-      Users.username
+      Users.username,
+      Users.id
     FROM
       Users INNER JOIN UserRoles ON Users.id=UserRoles.Id_user
     WHERE
       UserRoles.Id_Role = 6 AND
       Users.username={SerilizeToSQLValue(username)} AND
       Users.password={SerilizeToSQLValue(password)}
+  """
+
+def FreeExistingOrder(Order: ActivityOrderDataClass, Vial : VialDataClass, user : User) -> str:
+  return f"""
+  UPDATE orders
+  SET
+    status=3,
+    frigivet_af={user.OldTracerBaseID},
+    frigivet_amount={Vial.activity},
+    frigivet_datetime={SerilizeToSQLValue(mergeDateAndTime(Vial.filldate, Vial.filltime))},
+    batchnr=\"{Vial.charge}\"
+  WHERE
+    oid={Order.oid}
+  """
+
+def FreeDependantOrders(Order: ActivityOrderDataClass, user: User) -> str:
+  return f"""
+  UPDATE orders
+  SET
+    status=3,
+    frigivet_af={user.OldTracerBaseID}
+  WHERE
+    COID={Order.oid}
+  """
+
+def CreateVialMapping(Order: ActivityOrderDataClass, Vial : VialDataClass)-> str:
+  return f"""
+    INSERT INTO VialMapping(
+      Order_id,
+      VAL_id
+    ) Values ({Order.oid},{Vial.ID})
+  """
+
+def getRelatedOrders(Order: ActivityOrderDataClass) -> str:
+  return f"""
+    SELECT
+      {Order.getSQLFields()}
+    FROM
+      orders
+    WHERE
+      oid={Order.oid} OR COID={Order.oid}
+  """
+
+def createLegacyFreeOrder(
+    OriginalOrder : ActivityOrderDataClass, 
+    Vial : VialDataClass, 
+    tracerID:int,
+    user : User) -> str:
+  return f"""
+    INSERT INTO orders(
+      amount,
+      amount_o,
+      batchnr,
+      BID,
+      COID,
+      comment,
+      deliver_datetime,
+      frigivet_datetime,
+      run,
+      status,
+      total_amount,
+      total_amount_o,
+      tracer,
+      userName,
+      frigivet_amount,
+      frigivet_af,
+      volume
+    ) VALUES (
+      0,
+      0,
+      \"{Vial.charge}\",
+      {OriginalOrder.BID},
+      -1,
+      {SerilizeToSQLValue(f"Extra Vial for Order: {OriginalOrder.oid}")},
+      {SerilizeToSQLValue(OriginalOrder.deliver_datetime)},
+      {SerilizeToSQLValue(mergeDateAndTime(Vial.filldate, Vial.filltime))},
+      {OriginalOrder.run},
+      3,
+      0,
+      0,
+      {tracerID},
+      NULL,
+      {Vial.activity},
+      {user.OldTracerBaseID},
+      {Vial.volume}
+    )
+  """
+
+def getLastOrder() -> str:
+  return f"""
+    SELECT
+      {ActivityOrderDataClass.getSQLFields()}
+    FROM
+     orders
+    WHERE 
+      OID = (
+        SELECT 
+          MAX(OID)
+        FROM orders
+      )
   """

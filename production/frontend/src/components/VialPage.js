@@ -3,6 +3,7 @@ import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
 import { JSON_CUSTOMER, JSON_VIALS } from "./lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "./lib/formatting";
+import { autoAddCharacter } from "./lib/utils";
 
 export {VialPage}
 
@@ -42,13 +43,13 @@ class VialPage extends Component {
       type:"get"
     }).then((data) => {
       const newVialMap = new Map();
-      for (const vialString of data[JSON_VIALS]) {
+      if (data[JSON_VIALS]) for (const vialString of data[JSON_VIALS]) {
         const vial = ParseJSONstr(vialString);
         newVialMap.set(vial.ID, vial);
       }
       
       const newCustomerMap = new Map();
-      for (const customerString of data[JSON_CUSTOMER]) {
+      if (data[JSON_CUSTOMER]) for (const customerString of data[JSON_CUSTOMER]) {
         const customer = ParseJSONstr(customerString);
         newCustomerMap.set(customer.CustomerNumber, customer);
       }
@@ -65,17 +66,35 @@ class VialPage extends Component {
    * Functionality is sending a request to the backend and updating Vials on response.
    */
   dateSearch(){
-    var ParsedDate;
+    console.log("Hello world");
+
+    var parsedDate;
+    parsedDate = parseDate(this.state.filterSearchDate);
     try {
-      ParsedDate = parseDate(this.state.filterSearchDate)
-    } catch (error) {
-      //TODO: Add Error handling here
+
+    } catch {
+      //TODO Error handling
+      console.log("caught Error");
       return;
     }
-    const year = Number(parseDate.substr(0,4));
-    const month = Number(parseDate.substr(5,2));
-    const day  = Number(parseDate.substr(8,2));
     
+    const year  = Number(parsedDate.substr(0,4));
+    const month = Number(parsedDate.substr(5,2));
+    const day   = Number(parsedDate.substr(8,2));
+    
+    ajax({
+      url:`api/getVials/${year}/${month}/${day}`,
+      type:"get"
+    }).then((response) => {
+      console.log(response);
+      const newVialMap = new Map();
+      if (response[JSON_VIALS]) for (const vialString of response[JSON_VIALS]) {
+        const vial = ParseJSONstr(vialString);
+        newVialMap.set(vial.ID, vial);
+      }
+      this.setState({...this.state, vials : newVialMap});
+    })
+
   }
 
   /**
@@ -87,6 +106,12 @@ class VialPage extends Component {
   changeState(key,newValue){
     const newState = {...this.state};
     newState[key] = newValue;
+    this.setState(newState);
+  }
+
+  changeSearchDate(event){
+    const newState = {...this.state};
+    newState.filterSearchDate = autoAddCharacter(event, "/", new Set([2,5]), newState.filterSearchDate); 
     this.setState(newState);
   }
 
@@ -198,10 +223,10 @@ class VialPage extends Component {
           </select> 
         </Col>
         <Col>
-          <input value={this.state.filterSearchDate} onChange={(event) => this.changeState("filterSearchDate", event.target.value)} placeholder="Dato"/> 
+          <input value={this.state.filterSearchDate} onChange={(event) => this.changeSearchDate(event)} placeholder="Dato"/> 
         </Col>
         <Col>
-          <Button onClick={this.dateSearch}>Søg</Button>
+          <Button onClick={this.dateSearch.bind(this)}>Søg</Button>
         </Col>
       </Row>
       <Table>
