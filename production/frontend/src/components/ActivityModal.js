@@ -3,6 +3,7 @@ import { Modal, Button, Row, Container, Table, Tab, FormControl, Form } from "re
 import { renderTableRow } from "./lib/Rendering";
 import { FormatTime, ParseDanishNumber } from "./lib/formatting";
 import { autoAddCharacter, noop } from "./lib/utils";
+import { ActivityModalStatus3 } from "./ActivityModalStatus3";
 export { ActivityModal }
 
 
@@ -20,6 +21,9 @@ export { ActivityModal }
  *  - onClose   - Function that closes the modal without any external state
  *  - onStatus3 - Function called when the user changes the status of an order to 3
  *  - applyVial - Function called when the user assigns a vial to an order.
+ * 
+ *  TODO: This should be a composition of 3 (4 cancelled orders) different modals, dependant on which is shown.
+ *  
  */
 
 const initial_state = {
@@ -445,6 +449,19 @@ class ActivityModal extends Component {
     const Order = this.props.Order;
     const OrderID = (Order) ? Order.oid : "";
 
+    if(Order) {
+      if (Order.status == 3) {
+        return (
+          <ActivityModalStatus3
+            show={this.props.show}
+            Order={this.props.Order}
+            customer={this.props.customer}
+            onClose={this.props.onClose}
+          />
+        );
+      }
+    } 
+
     return(
     <Modal
       show={this.props.show}
@@ -455,7 +472,7 @@ class ActivityModal extends Component {
       <Modal.Body>{this.renderBody()}</Modal.Body>
       <Modal.Footer>
         <Button onClick={this.AcceptOrder.bind(this)}> Frigiv Ordre </Button>
-        <Button onClick={this.CloseModal.bind(this)}> Tilbage </Button>
+        <Button onClick={this.CloseModal.bind(this)}> Luk </Button>
       </Modal.Footer>
     </Modal>);
   }
