@@ -1,7 +1,7 @@
-import { ajax } from "jquery";
+import { ajax, parseJSON } from "jquery";
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
-import { renderStatusImage } from "./lib/Rendering";
+import { renderStatusImage, renderTableRow } from "./lib/Rendering";
 import { TracerWebSocket } from "./lib/TracerWebsocket";
 import { CompareDates } from "./lib/utils";
 import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
@@ -10,7 +10,7 @@ import { ActivityModal } from "./ActivityModal.js";
 import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, 
   WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS, 
   WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, 
-  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS,
+  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, JSON_EMPLOYEE,
 } from "./lib/constants";
 
 
@@ -50,10 +50,11 @@ class ActivityTable extends Component {
     this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/activity/" + this.props.tracer.id + "/", this);
 
     this.state = {
-      orders   : new Map(),
-      runs     : new Map(),
-      customer : new Map(),
-      vial     : new Map(),
+      orders    : new Map(),
+      runs      : new Map(),
+      customer  : new Map(),
+      vial      : new Map(),
+      employees : new Map(),
 
       showModal : false,
       ModalOrder : null,
@@ -111,12 +112,20 @@ class ActivityTable extends Component {
         NewVials.set(vial.ID, vial);
       }
 
+      const NewEmployee = new Map();
+      for (let employeeStr of data[JSON_EMPLOYEE]) {
+        const employee = ParseJSONstr(employeeStr);
+        NewEmployee.set(employee.OldTracerBaseID, employee);
+      }
+      
+
       const newState = {
         ...this.state,
         runs   : RunMap,
         orders : newOrders,
         customer : CustomerMap,
-        vial : NewVials
+        vial : NewVials,
+        employees : NewEmployee
       };
       this.setState(newState);
     });    
@@ -566,7 +575,34 @@ class ActivityTable extends Component {
 
   }
 
-  renderOrder(Order) {
+  renderFinishedOrder(order) {
+    const OrderDT   = new Date(order.deliver_datetime) 
+    const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
+    
+    const FreeDT    = (order.frigivet_datetime) ? new Date(order.frigivet_datetime) : "-";
+    const FreeTime  = (FreeDT != "-") ? FormatDateStr(FreeDT.getHours()) + ":" + FormatDateStr(FreeDT.getMinutes()) : FreeDT
+
+    const Employee     = this.state.employees.get(order.frigivet_af)
+    const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
+
+    const customer = this.state.customer.get(order.BID)
+    const CustomerName = (customer !== undefined) ? customer.username : order.BID;
+    const TotalAmount  = (order.COID === -1) ? order.total_amount_o : "Flyttet til:" + order.COID;
+
+    return renderTableRow(order.oid, [
+      renderStatusImage(order.status, () => this.activateModal(order.oid)),
+      order.oid,
+      CustomerName,
+      TotalAmount,
+      order.frigivet_amount,
+      FreeTime,
+      OrderTime,
+      EmployeeName
+    ])
+  }
+
+
+  renderPendingOrder(Order) {
     const OrderDT   = new Date(Order.deliver_datetime) 
     const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
     const Run       = this.renderRun(Order); 
@@ -624,9 +660,13 @@ class ActivityTable extends Component {
 
 
   render() {
-    const orders = [];
+    const FinishedOrders = [];
+    const pendingOrders = [];
     for (const [oid, order] of this.state.orders.entries()){
-      orders.push(this.renderOrder(order))
+      if (order.status == 3) {
+        FinishedOrders.push(this.renderFinishedOrder(order))
+      } else 
+      pendingOrders.push(this.renderPendingOrder(order))
     }
 
     const dailyRuns = this.state.runs.get(this.props.date.getDay());
@@ -643,13 +683,14 @@ class ActivityTable extends Component {
       <div> Produktioner: <br/>
         {RenderedRuns}
       </div>
-      <Table>
+      { pendingOrders.length ? // This statement makes it so the table is conditionally render on the number of orders
+        <Table>
         <thead>
           <tr>
             <th>Status</th>
             <th>Order ID</th>
             <th>Kunde</th>
-            <th>Bestilt</th>
+            <th>Bestilt </th>
             <th>Total Bestilling</th>
             <th>Med Overhead</th>
             <th>tid</th>
@@ -659,15 +700,35 @@ class ActivityTable extends Component {
           </tr>
         </thead>
         <tbody>
-          {orders}
+          {pendingOrders}
         </tbody>
-      </Table>
+      </Table> : <div/>
+      }
+      { FinishedOrders.length ?
+        <Table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Order ID</th>
+            <th>Kunde</th>
+            <th>Ønsket Aktivitet</th>
+            <th>Frigivet Aktivitet</th>
+            <th>Frigivet kl:</th>
+            <th>Tid</th>
+            <th>Frigivet af</th>
+          </tr>
+        </thead>
+        <tbody>
+          {FinishedOrders}
+        </tbody>
+      </Table> : <div/>
+    }
       <ActivityModal
-        show={this.state.showModal}
-        onClose={this.closeModal.bind(this)}
+      show={this.state.showModal}
+      onClose={this.closeModal.bind(this)}
         Order={this.state.ModalOrder}
         vials={this.state.vial}
-        customer={this.state.customer}
+        customer={this.state.ModalCustomer}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}

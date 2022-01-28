@@ -34,6 +34,7 @@ AUTH_IS_AUTHENTICATED = "isAuthenticated"
 
 JSON_CUSTOMER = "customers"
 JSON_DELIVERTIMES = "deliverTimes"
+JSON_EMPLOYEE = "employee"
 JSON_ISOTOPE = "isotopes"
 JSON_ORDERS  = "orders"
 JSON_PRODUCTIONS = "productions"

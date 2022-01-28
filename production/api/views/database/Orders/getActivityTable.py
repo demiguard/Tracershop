@@ -7,7 +7,7 @@ from lib import Formatting
 from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
 
-from constants import JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS
+from constants import JSON_CUSTOMER, JSON_EMPLOYEE, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS
 
 class APIGetActivityTable(View):
   name = "getActivityTable"
@@ -28,13 +28,15 @@ class APIGetActivityTable(View):
     customers = SQLController.getCustomers()
     productions = SQLController.GetDeliverTimes()
     vials    = self.SQL.getVials(requestDate)
+    employees = self.SQL.getEmployees()
 
     return ProductionJSONResponse({
       JSON_CUSTOMER : customers,
       JSON_ORDERS : Orders,
       JSON_PRODUCTIONS : productions,
       JSON_RUNS   : runs,
-      JSON_VIALS : vials
+      JSON_VIALS : vials,
+      JSON_EMPLOYEE : employees
     })
 
   def __init__(self, SQL_Controller=SQLController.SQL()):

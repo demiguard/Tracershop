@@ -1,0 +1,37 @@
+.AuthenticationBox {
+  width: 20em;
+  margin: 6em;
+  border: 2px;
+  
+  border-color: var(--secondary-color-1);
+  border-style: solid;
+  border-radius: 10px;
+}
+
+.AuthenticationHeader {
+  background-color: var(--secondary-color-3);
+  color: var(--primary-color);
+  line-height: 150%;
+  margin-bottom: 0pt;
+  border-top-left-radius : 10px;
+  border-top-right-radius : 10px;
+}
+
+.formRow {
+  padding: 1.5em;
+}
+
+.myHR {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.ErrorBox {
+  margin: 1.5em;
+  padding: 5px;
+  background-color: var(--red-2);
+  border-color: var(--red-1) !important;
+  border-style: solid !important;
+  border:2px;
+}
+

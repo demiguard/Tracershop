@@ -46,6 +46,7 @@ class ActivityModal extends Component {
     this.state = initial_state  
   }
 
+
   changeState(value, stateField) {
     const newState =  {...this.state};
     newState[stateField] = value;
@@ -94,7 +95,7 @@ class ActivityModal extends Component {
       ErrorInInput = true;
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
     } 
-    const Customer = (this.props.Order && this.props.customer) ? (this.props.customer.get(this.props.Order.BID)) : null
+    const Customer = (this.props.customer) ? (this.props.customer) : null
     const CustomerNumber = (Customer) ? Customer.CustomerNumber : null 
 
     if (CustomerNumber === null) {
@@ -259,7 +260,7 @@ class ActivityModal extends Component {
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
     } 
     
-    const Customer = (this.props.Order && this.props.customer) ? (this.props.customer.get(this.props.Order.BID)) : null
+    const Customer = (this.props.customer) ? (this.props.customer) : null
     const CustomerNumber = (Customer) ? Customer.CustomerNumber : null 
 
     if (CustomerNumber === null) {
@@ -324,6 +325,15 @@ class ActivityModal extends Component {
     this.props.AcceptOrder(this.props.Order.oid, this.state.SelectedVials);
   }
 
+  // Authenticate
+  Authenticate() {
+    
+
+
+
+  }
+
+
   // Render functions
 
   renderNewVial(){
@@ -354,9 +364,9 @@ class ActivityModal extends Component {
     const Order = this.props.Order;
     const OrderID = (Order) ? Order.oid : "";
 
-    const Customer = (Order) ? this.props.customer.get(Order.BID) : null;
+    const Customer = (this.props.customer) ? this.props.customer : null;
     const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
-    const CustomerName   = (Customer) ? Customer.Name : "";
+    const CustomerName   = (Customer) ? Customer.username + " - " + Customer.Name : "";
     const Activity       = (Order) ? Order.total_amount_o : "";
 
     var AssignedActivity = 0;
@@ -367,7 +377,7 @@ class ActivityModal extends Component {
 
     return(
       <div>
-        <Table>
+        <Table striped bordered>
           <tbody>
             {renderTableRow("0", ["Order ID", OrderID])}
             {renderTableRow("1", ["Kunde nummber:", CustomerNumber])}
@@ -381,9 +391,8 @@ class ActivityModal extends Component {
 
   renderVials(){
     const Order = this.props.Order;
-    const OrderID = (Order) ? Order.oid : "";
 
-    const Customer = (Order) ? this.props.customer.get(Order.BID) : null;
+    const Customer = (this.props.customer) ? this.props.customer : null;
     const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
     const vials_in_use = [];
     if (CustomerNumber) {
@@ -410,7 +419,7 @@ class ActivityModal extends Component {
     }
     
     return(<div>
-      <Table>
+      <Table bordered>
         <thead>
           <tr>
             <th>ID</th>
@@ -457,6 +466,7 @@ class ActivityModal extends Component {
             Order={this.props.Order}
             customer={this.props.customer}
             onClose={this.props.onClose}
+            vials={this.props.vials}
           />
         );
       }
@@ -471,6 +481,7 @@ class ActivityModal extends Component {
       <Modal.Header>Ordre {OrderID}</Modal.Header>
       <Modal.Body>{this.renderBody()}</Modal.Body>
       <Modal.Footer>
+        <Button onClick={this.Authenticate.bind(this)}>test</Button>
         <Button onClick={this.AcceptOrder.bind(this)}> Frigiv Ordre </Button>
         <Button onClick={this.CloseModal.bind(this)}> Luk </Button>
       </Modal.Footer>

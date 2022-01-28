@@ -28,7 +28,7 @@ class APIGetVialRange(View):
   def get(self, request):
     today = date.today()
     historic_date = today - timedelta(days=HISTORIC_RANGE)
-    Vials = SQLController.getVialRange(historic_date, today)
+    Vials = self.SQL.getVialRange(historic_date, today)
 
     customers = SQLController.getCustomers()
 
@@ -36,4 +36,7 @@ class APIGetVialRange(View):
       JSON_VIALS : Vials,
       JSON_CUSTOMER : customers
     })
+
+  def __init__(self, SQL=SQLController.SQL()):
+    self.SQL = SQL
     

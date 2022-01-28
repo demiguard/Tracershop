@@ -13,12 +13,14 @@ __author__= "Christoffer Vilstrup Jensen"
 import dataclasses
 import json
 
-import dataclasses
 from dataclasses import dataclass, asdict, fields, Field
 from typing import Dict, Optional, List, Any, get_args, get_origin, Union
 from datetime import datetime, date, time
+
 from constants import DATETIME_FORMAT, DATE_FORMAT, TIME_FORMAT, JSON_DATETIME_FORMAT
+
 from lib.Formatting import toTime, toDateTime, toDate
+from TracerAuth.models import User
 
 @dataclass
 class JsonSerilizableDataClass:
@@ -200,6 +202,22 @@ class VialDataClass(JsonSerilizableDataClass):
   ID : Union[int, None]
   OrderMap : Optional[int]
 
+  @classmethod
+  def getSQLFields(cls) -> str:
+    return """
+      VAL.customer,
+      VAL.charge,
+      VAL.filldate,
+      TIME_FORMAT(VAL.filltime, \"%T\"),
+      VAL.volume,
+      VAL.activity,
+      VAL.ID,
+      VialMapping.Order_id
+    """
+
+  @classmethod
+  def getSQLTable(cls) -> str: 
+    return "VAL LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id"
 
 @dataclass(init=False)
 class TracerCustomerMappingDataClass(JsonSerilizableDataClass):
@@ -287,6 +305,11 @@ class UserDataClass(JsonSerilizableDataClass):
   def getSQLTable(cls):
     return "Users"
 
+@dataclass(init=False)
 class EmployeeDataClass(JsonSerilizableDataClass):
   Username : str
   OldTracerBaseID : int
+
+  @classmethod
+  def fromUser(cls, user: User):
+    return cls(Username=user.username, OldTracerBaseID=user.OldTracerBaseID)

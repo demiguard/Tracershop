@@ -61,17 +61,20 @@ class VialPage extends Component {
     })
   }
 
+  keyDateSearch(event){
+    if (event.key === "Enter"){
+      this.dateSearch();
+    }
+  }
+
   /**
    * This function handles search button, being pressed
    * Functionality is sending a request to the backend and updating Vials on response.
    */
   dateSearch(){
-    console.log("Hello world");
-
     var parsedDate;
-    parsedDate = parseDate(this.state.filterSearchDate);
     try {
-
+      parsedDate = parseDate(this.state.filterSearchDate);
     } catch {
       //TODO Error handling
       console.log("caught Error");
@@ -145,6 +148,7 @@ class VialPage extends Component {
     // Sadly I need some extra functionality so can't really use the table rendering function :(
     
     const customer = this.state.customers.get(Number(vial.customer));
+    const customerName = (customer) ? customer.UserName : `Ukendet med nummer ${vial.customer}`
     const orderMap = (vial.OrderMap) ? vial.OrderMap : "-";
 
     return (
@@ -155,13 +159,14 @@ class VialPage extends Component {
         <td onClick={() => {this.changeSearch(SearchOptions.TIME)}}>    {vial.filltime}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>  {vial.volume}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>{vial.activity}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customer.UserName}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customerName}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.OrderMap}</td>
       </tr>
     );
   }
   
   render(){
+    console.log(this.state);
     const SortedVials = [...this.state.vials.values()].sort((vial1, vial2) => {
       const invertedSearchFactor = (this.state.InvertedSearch) ? -1 : 1;
       switch (this.state.SearchPattern) {
@@ -223,10 +228,10 @@ class VialPage extends Component {
           </select> 
         </Col>
         <Col>
-          <input value={this.state.filterSearchDate} onChange={(event) => this.changeSearchDate(event)} placeholder="Dato"/> 
+          <input onKeyDown={(event) => {this.keyDateSearch(event)}} value={this.state.filterSearchDate} onChange={(event) => this.changeSearchDate(event)} placeholder="Dato"/> 
         </Col>
         <Col>
-          <Button onClick={this.dateSearch.bind(this)}>Søg</Button>
+          <Button  onClick={this.dateSearch.bind(this)}>Søg</Button>
         </Col>
       </Row>
       <Table>

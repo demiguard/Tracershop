@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
-
+import { renderDateTime, renderTableRow } from "./lib/Rendering";
 
 
 export { ActivityModalStatus3 }
@@ -11,12 +11,44 @@ class ActivityModalStatus3 extends Component {
     super(props);
   }
 
+  /** Exit function, resets internal state for next time the modal is open.
+   */
   CloseModal(){
     this.props.onClose();
   }
 
+  /** returns the name of the corrosponding Employee
+   * @param {Number} employeeID
+   * @returns {String} The name of the user 
+   */
+  getUserMapping(employeeID){
+    // const employee = this.props.employees.get(employeeID);
+    // return employee.Name;
+
+    return employeeID;
+  }
+
+  /**
+   * 
+   * @param {Object} vial Simple object with the attributes 
+   * @returns {JSX.Element}
+   */
+  renderVial(vial){
+    return renderTableRow(vial.ID, [vial.ID, vial.filltime, vial.activity, vial.charge, vial.volume])
+  }
+
 
   render(){
+    console.log(this.props.customer);
+    console.log(this.props.vials);
+
+    const vials = [];
+    for(const [vialID, vial] of this.props.vials) {
+      if (vial.OrderMap == this.props.Order.oid) {
+        vials.push(this.renderVial(vial));
+      }
+    } 
+
     return (
     <Modal
       show={this.props.show}
@@ -26,39 +58,31 @@ class ActivityModalStatus3 extends Component {
       <Modal.Header>Frigivet Ordre {this.props.Order.oid}</Modal.Header>
       <Modal.Body>
         <Table striped bordered>
+        
           <tbody>
+            {renderTableRow(0,["Order ID:", this.props.Order.oid])}
+            {renderTableRow(1,["Kunde:", this.props.customer.username + " - " + this.props.customer.Name])}
+            {renderTableRow(2,["Bestilt Aktivitet:", this.props.Order.amount])}
+            {renderTableRow(3,["Udleveret Aktivitet",this.props.Order.frigivet_amount])}
+            {renderTableRow(4,["Bestilt til:",renderDateTime(this.props.Order.deliver_datetime)])}
+            {renderTableRow(5,["Frigivet kl:",renderDateTime(this.props.Order.frigivet_datetime)])}
+            {renderTableRow(6,["Frigivet af:", this.getUserMapping(this.props.Order.frigivet_af)])}
+            {renderTableRow(7,["Batch Nummer:", this.props.Order.batchnr])}
+          </tbody>
+        </Table>
+        
+        <Table striped bordered>
+          <thead>
             <tr>
-              <td>Order ID</td>
-              <td>{this.props.Order.oid} </td>
+              <th>Vials</th>
+              <th>Dispensations tidspunkt</th>
+              <th>Aktivit</th>
+              <th>Batch nummer</th>
+              <th>Volume</th>
             </tr>
-            <tr>
-              <td>Kunde:</td>
-              <td>{this.props.customer.username} - {this.props.customer.Name} </td>
-            </tr>
-            <tr>
-              <td>Bestilt Aktivitet:</td>
-              <td>{this.props.Order.amount}</td>
-            </tr>
-            <tr>
-              <td>Udleveret Aktivitet</td>
-              <td>{this.props.Order.frigivet_amount}</td>
-            </tr>
-            <tr>
-              <td>Bestilt til: (TODO Datetime formatting) </td>
-              <td>{this.props.Order.deliver_datetime}</td>
-            </tr>
-            <tr>
-              <td>Frigivet kl: (Skal dette være frigivet_datetime eller hvornår ordre blev frigivet?) </td>
-              <td>{this.props.Order.frigivet_datetime}</td>
-            </tr>
-            <tr>
-              <td>Frigivet af: (To do mapping) </td>
-              <td>{this.props.Order.frigivet_af}</td>
-            </tr>
-            <tr>
-              <td>Batch Nummer:</td>
-              <td>{this.props.Order.batchnr}</td>
-            </tr>
+          </thead>
+          <tbody>
+            {vials}
           </tbody>
         </Table>
 

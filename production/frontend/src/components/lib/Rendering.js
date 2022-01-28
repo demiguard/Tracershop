@@ -1,8 +1,9 @@
 import React, {} from "react";
+import { FormatDateStr } from "./formatting";
 
 import { noop } from "./utils";
 
-export { renderStatusImage , renderTableRow}
+export { renderStatusImage , renderTableRow, renderDateTime}
 
 
 function renderStatusImage(status, func) {
@@ -17,21 +18,22 @@ function renderStatusImage(status, func) {
 }
 
 function renderTableRow(key, list_of_tds) {  
-  /*
+  /**
    * This function is for building Tables, it creates a single row.
    * It has a variable amount of entries allowing to be used for creation of all Tables
    * The function was introduced late in the development, so might not have been used everywhere
    * But its usage is on the todo list.
    * 
-   * Args: 
-   *    key - Int :    The key that's appied to tr
-   *    list_of_keys : List of renderable objects. The order of the list matters, where the first object is rendered first .
-   * Returns
+   * @param {Number} key - The key that's appied to row
+   * @param {Array<Object>} list_of_tds This is the list of tds, can contain typescirpt 
+   * @returns {JSX.Element} - Type script that contains a table row with index key
+   * 
+   * 
    *  rendered typescript.
   */
-  var index = 0 
+  var index = 0;
 
-  const tds = []
+  const tds = [];
   for(let td of list_of_tds){
     tds.push((<td key={index}>{td}</td>));
     index++;
@@ -42,4 +44,20 @@ function renderTableRow(key, list_of_tds) {
       {tds}
     </tr>
   )
+}
+
+/** Parses a date object into a danish formatted string
+ * 
+ * @param {String} dateString - The String to be converted into a date object to be converted and back again
+ * @returns {String} - the formatted string
+ */
+function renderDateTime(dateString){
+  const dateObject = new Date(dateString);
+  const hours    = FormatDateStr(dateObject.getHours());
+  const minutes  = FormatDateStr(dateObject.getMinutes());
+  const day      = FormatDateStr(dateObject.getDate());
+  const month    = FormatDateStr(dateObject.getMonth() + 1);
+  const year     = String(dateObject.getFullYear());
+
+  return `${hours}:${minutes} ${day}/${month}/${year}`;
 }

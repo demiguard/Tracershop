@@ -745,17 +745,17 @@ def getVialRange(startDate : date, endDate: date):
       VAL.filldate,
       TIME_FORMAT(VAL.filltime, \"%T\"),
       VAL.volume, 
-      VAL.ID,
       VAL.activity,
+      VAL.ID,
       VialMapping.Order_id
     FROM
-      VAL
-      LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id
+      VAL LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id
     WHERE
       VAL.filldate BETWEEN \"{Formatting.dateConverter(startDate)}\" AND \"{Formatting.dateConverter(endDate)}\"
   """
 
   QueryRes =  SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+  print(QueryRes)
   return SQLFormatter.FormatSQLTupleAsClass(QueryRes, DC.VialDataClass)
 
 def FreeOrder(OrderID: int, Vial : VialDataClass) -> List[VialDataClass]:

@@ -272,7 +272,7 @@ def FreeExistingOrder(Order: ActivityOrderDataClass, Vial : VialDataClass, user 
     status=3,
     frigivet_af={user.OldTracerBaseID},
     frigivet_amount={Vial.activity},
-    frigivet_datetime={SerilizeToSQLValue(mergeDateAndTime(Vial.filldate, Vial.filltime))},
+    frigivet_datetime={SerilizeToSQLValue(datetime.now())},
     batchnr=\"{Vial.charge}\"
   WHERE
     oid={Order.oid}
@@ -284,6 +284,7 @@ def FreeDependantOrders(Order: ActivityOrderDataClass, user: User) -> str:
   SET
     status=3,
     frigivet_af={user.OldTracerBaseID}
+    frigivet_datetime={SerilizeToSQLValue(datetime.now())}
   WHERE
     COID={Order.oid}
   """
@@ -311,6 +312,9 @@ def createLegacyFreeOrder(
     Vial : VialDataClass, 
     tracerID:int,
     user : User) -> str:
+    
+  now = datetime.now()
+  
   return f"""
     INSERT INTO orders(
       amount,
@@ -338,7 +342,7 @@ def createLegacyFreeOrder(
       -1,
       {SerilizeToSQLValue(f"Extra Vial for Order: {OriginalOrder.oid}")},
       {SerilizeToSQLValue(OriginalOrder.deliver_datetime)},
-      {SerilizeToSQLValue(mergeDateAndTime(Vial.filldate, Vial.filltime))},
+      {SerilizeToSQLValue(now)},
       {OriginalOrder.run},
       3,
       0,
@@ -356,11 +360,21 @@ def getLastOrder() -> str:
     SELECT
       {ActivityOrderDataClass.getSQLFields()}
     FROM
-     orders
+     {ActivityOrderDataClass.getSQLTable()}
     WHERE 
       OID = (
         SELECT 
           MAX(OID)
         FROM orders
       )
+  """
+
+def getVialRange(startDate:date , endDate : date, DataClass=VialDataClass) -> str:
+  return f"""
+    SELECT
+      {DataClass.getSQLFields()}
+    FROM
+      {DataClass.getSQLTable()}
+    WHERE
+      VAL.filldate BETWEEN {SerilizeToSQLValue(startDate)} AND {SerilizeToSQLValue(endDate)}
   """

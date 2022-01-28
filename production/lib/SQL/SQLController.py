@@ -128,7 +128,8 @@ class SQL():
       cls,
       OriginalOrder : ActivityOrderDataClass, 
       Vial : VialDataClass, 
-      tracerID :int
+      tracerID :int,
+      user : User
     ) -> ActivityOrderDataClass:
     cls.__ExecuteNoReturn(SQLFactory.createLegacyFreeOrder, OriginalOrder, Vial, tracerID, user)
     lastOrder = cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
@@ -138,6 +139,16 @@ class SQL():
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
     return cls.__ExecuteReturnOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
+
+  @classmethod
+  def getVialRange(cls, startDate: date, endDate:  date) -> List[VialDataClass]:
+    return cls.__ExecuteReturnMany(SQLFactory.getVialRange, VialDataClass, startDate, endDate)
+
+  @classmethod
+  def getEmployees(cls):
+    userObjects = User.objects.all()
+    mapObject = map(EmployeeDataClass.fromUser, userObjects)
+    return list(mapObject)
 
   @staticmethod
   def getServerConfig() -> ServerConfiguration:

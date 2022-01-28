@@ -7,7 +7,7 @@ import { OrderPage } from './OrderPage.js';
 import { CustomerPage } from "./CustomerPage.js";
 import { EmailSetupPage } from "./EmailSetupPage.js";
 import ServerConfigPage, { ServerConfig } from "./ServerConfig.js";
-
+import { Authenticate } from "./Authenticate";
 import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
 import CloseDaysPage from "./CloseDaysPage";
@@ -80,6 +80,40 @@ export default class App extends Component {
     }
   }
 
+  login_auth(username, password){
+    const body = {
+      username: username, 
+      password: password
+    };
+
+    console.log(this.state)
+
+
+    fetch("/auth/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-CSRFToken": getCookie("csrftoken"),
+      },
+      credentials: "same-origin",
+      body: JSON.stringify(body),
+    })
+    .then(this.isResponseOk)
+    .then((data) => {
+      ajaxSetup({
+        headers: {
+            "X-CSRFToken": getCookie("csrftoken")
+        }
+      });
+      this.setState({isAuthenticated: true, password: "", error: ""});
+    })
+    .catch((err) => {
+      console.log(err);
+      this.setState({error: "Wrong username or password."});
+    });
+
+  }
+
   login(event) {
     event.preventDefault();
     const body = {
@@ -138,7 +172,12 @@ export default class App extends Component {
     if (this.state.isAuthenticated){ // User is logged in      
       return (
         <div>
-        <Navbar Names={Object.keys(Pages)} setActivePage={this.setActivePage} username={this.state.username} logout={this.logout}/>    
+        <Navbar 
+          Names={Object.keys(Pages)} 
+          setActivePage={this.setActivePage} 
+          username={this.state.username} 
+          logout={this.logout}
+          isAuthenticated={this.state.isAuthenticated}/>    
         <Container className="navBarSpacer">
             {this.renderActivePage()}
         </Container>
@@ -149,29 +188,12 @@ export default class App extends Component {
         <div>
           <Navbar Names={[]} setActivePage={() => {}} username={this.state.username} logout={this.logout}/>
           <Container className="navBarSpacer">
-            <h1>Tracershop Produktion</h1>
-            <br/>
-            <h2>Login</h2>
-            <form onSubmit={this.login.bind(this)}>
-            <div className="form-group">
-              <label htmlFor="username">Username</label>
-              <input type="text" className="form-control" id="username" name="username" value={this.state.username} onChange={this.handleUserNameChange} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="username">Password</label>
-              <input type="password" className="form-control" id="password" name="password" value={this.state.password} onChange={this.handlePasswordChange} />
-              <div>
-                {this.state.error &&
-                  <small className="text-danger">
-                    {this.state.error}
-                  </small>
-                }
-              </div>
-            </div>
-            <Button type="submit" className="btn btn-primary">Login</Button>
-
-            </form>
-            </Container>
+            <Authenticate 
+              login_message="Log in"
+              authenticate={this.login_auth.bind(this)}
+              ErrorMessage={this.state.error}
+            />  
+          </Container>
         </div>
       )
     }
