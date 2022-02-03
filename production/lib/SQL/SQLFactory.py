@@ -283,7 +283,7 @@ def FreeDependantOrders(Order: ActivityOrderDataClass, user: User) -> str:
   UPDATE orders
   SET
     status=3,
-    frigivet_af={user.OldTracerBaseID}
+    frigivet_af={user.OldTracerBaseID},
     frigivet_datetime={SerilizeToSQLValue(datetime.now())}
   WHERE
     COID={Order.oid}

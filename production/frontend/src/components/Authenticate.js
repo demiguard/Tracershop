@@ -8,6 +8,15 @@ export { Authenticate }
 /**
  * This class is for the authentication box 
  * This class should have all the code injected into it and as a result should be VERY Small
+ * IE this class doesn't perform any networking
+ * 
+ * Props:
+ *  @param {CallableFunction} authenticate : Function - that takes the arguments username and password of the user to authenticate them,
+ *  @param {String} ErrorMessage : String that describes the user didn't type their password correctly
+ *  @param {String} login_message  : String Message to be written inside of the box that logs a user in
+ *  @param {Boolean} fit_in : Boolean deciding if extra css is needed let the box in its full glory
+ * 
+ * @author Christoffer Vilstrup Jensen
  */
 export default class Authenticate extends Component {
   constructor(props){
@@ -34,7 +43,7 @@ export default class Authenticate extends Component {
 
   render() {
     return (
-      <div className="wrapper AuthenticationBox">
+      <div className={this.props.fit_in ? "AuthenticationBox" : "AuthenticationBoxNoFit"}>
         <h3 className="text-center AuthenticationHeader">Log in</h3>
         <hr className="myHR"/>
         <div>

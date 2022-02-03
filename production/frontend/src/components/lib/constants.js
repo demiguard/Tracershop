@@ -1,6 +1,8 @@
 export {
   DAYS, DAYS_PER_WEEK, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE,
 
+  AUTH_USERNAME, AUTH_PASSWORD, AUTH_DETAIL, AUTH_IS_AUTHENTICATED,
+
   JSON_CUSTOMER, JSON_DELIVERTIMES, JSON_EMPLOYEE, JSON_ISOTOPE, JSON_ORDERS, JSON_PRODUCTIONS,
   JSON_RUNS, JSON_TRACER, JSON_TRACER_MAPPING, JSON_VIALS, JSON_VIAL_MAPPING, JSON_ACTIVE_DATABASE, 
   JSON_DATABASE, JSON_FIELD_TO_UPDATE,
@@ -25,6 +27,14 @@ const DAYS = {
   SATURDAY : 5,
   SUNDAY : 6,
 }
+
+const AUTH_USERNAME         = "username"
+const AUTH_PASSWORD         = "password"
+const AUTH_DETAIL           = "detail"
+const AUTH_IS_AUTHENTICATED = "isAuthenticated"
+
+
+
 
 // This is JSON key word used in all communication between the server and client.
 // you shound find these in production/constants.py

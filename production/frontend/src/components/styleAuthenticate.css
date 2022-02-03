@@ -8,6 +8,14 @@
   border-radius: 10px;
 }
 
+.AuthenticationBoxNoFit {
+  border: 2px;
+  
+  border-color: var(--secondary-color-1);
+  border-style: solid;
+  border-radius: 10px;
+}
+
 .AuthenticationHeader {
   background-color: var(--secondary-color-3);
   color: var(--primary-color);

@@ -9,7 +9,6 @@ class TracershopAuthenticationBackend(BaseBackend):
     if username and password:
       try:
         user = User.objects.get(username=username)
-        print(user)
       except User.DoesNotExist:
         return self.get_user_from_old_database(username, password)
       if check_password(password, user.password):

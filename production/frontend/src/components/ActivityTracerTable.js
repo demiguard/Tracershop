@@ -723,16 +723,18 @@ class ActivityTable extends Component {
         </tbody>
       </Table> : <div/>
     }
+    { this.state.showModal ? 
       <ActivityModal
-      show={this.state.showModal}
-      onClose={this.closeModal.bind(this)}
+        show={this.state.showModal}
         Order={this.state.ModalOrder}
         vials={this.state.vial}
         customer={this.state.ModalCustomer}
+        onClose={this.closeModal.bind(this)}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}
       />
+    : null }
     </div>
     );
   }

@@ -1,9 +1,8 @@
 import React, { Component } from "react";
-import { Modal, Button, Row, Container, Table, Tab, FormControl, Form } from "react-bootstrap";
-import { renderTableRow } from "./lib/Rendering";
-import { FormatTime, ParseDanishNumber } from "./lib/formatting";
-import { autoAddCharacter, noop } from "./lib/utils";
 import { ActivityModalStatus3 } from "./ActivityModalStatus3";
+import ActivityModalAuthenticate from "./ActivityModalAuthenticate";
+import ActivityModalStatus2 from "./ActivityModalStatus2";
+
 export { ActivityModal }
 
 
@@ -27,16 +26,8 @@ export { ActivityModal }
  */
 
 const initial_state = {
-  SelectedVials : new Set(),
-  EditingVials : new Map(), // keys are ID, while entity are state data
-  CreatingVial : false,
-
-
-  newCharge : "",
-  newFillTime : "",
-  newVolume : "",
-  newActivity : "", 
-  ErrorMessage :""
+  selectedVials : new Set(),
+  isAuthenticating : false,
 }
 
 class ActivityModal extends Component {
@@ -46,417 +37,51 @@ class ActivityModal extends Component {
     this.state = initial_state  
   }
 
-
-  changeState(value, stateField) {
-    const newState =  {...this.state};
-    newState[stateField] = value;
-    this.setState(newState);
-  }
-
-  changeNewFieldTime(event){
-    const newState = {...this.state};
-    newState.newFillTime = autoAddCharacter(event, ":", new Set([2,5]), this.state.newFillTime);
-
-    this.setState(newState);
-  }
-
-  createNewVial(){
-    /*
-     * This Function checks that the current new Vial is ok, then calls the prop function
-     * for creating new vials. 
-     * 
-     */
-    var ErrorInInput = false;
-    var NewErrorMessage = "";
-    
-    if (!this.state.newCharge){
-      ErrorInInput = true;
-      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
-    }
-    const NewActivity = ParseDanishNumber(this.state.newActivity)
-    if (isNaN(NewActivity)){
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
-    } else if ( NewActivity <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
-    }
-    const NewVolume = ParseDanishNumber(this.state.newVolume)
-    if (isNaN(NewVolume)){
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen skal være et tal.\n"
-    } else if ( NewVolume <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen kan ikke være negativ.\n"
-    }
-
-    const FillTime = FormatTime(this.state.newFillTime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse 
-      ErrorInInput = true;
-      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    } 
-    const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber : null 
-
-    if (CustomerNumber === null) {
-      ErrorInInput = true;
-      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
-    }
-
-    if (ErrorInInput){
-      console.log(NewErrorMessage);
-      this.setState({...this.state, ErrorMessage : NewErrorMessage})
-      return
-    }
-
-
-    const editingSet = this.state.EditingVials
-    const new_state = {...initial_state}
-    new_state.EditingVials = editingSet
-    // This function will trigger an update to the prop Vials, that in turn will trigger an update, and then we'll be able to see the Vial when the backend have accepted it.
-    // Note that other users will also be able to see this vial, since it's created using the websocket. 
-    this.props.createVial(this.state.newCharge, FillTime, Number(NewVolume.toFixed(2)), Number(NewActivity.toFixed(2)), CustomerNumber)
-    this.setState(new_state);
-  }
-
-  /**
-   * This function is called when the user have started to create a new vial
-   * but regrets doing so and reset the state to a non creating state
+  /** Moves a Vial in or out of the selectedVials set in state
+   * 
+   * @param {Number} vialID id of the vial being toggled
    */
-  StopCreatingNewVial(){
-    this.setState({...this.state,
-      CreatingVial : false,
-      newCharge : "",
-      newFillTime : "",
-      newVolume : "",
-      newActivity : "", 
-      ErrorMessage :""
-    })
-  }
-
-  initializeNewVial(){
-    this.setState({
-      ...this.state,
-      CreatingVial : true,
-
-      newBatch : "",
-      newFillTime : "",
-      newVolume : "",
-      newActivity : "",
-    });
-  }
-
-  InactiveVialList(vial){
-    /*
-     * This function extracts the information in a vial object, for displaying
-     */
-    return [
-      vial.ID,
-      vial.charge,
-      vial.filltime,
-      vial.volume,
-      vial.activity,
-      (<Button onClick={() => this.toggleEdit(vial.ID)}>Edit</Button>),
-      (<input type="checkbox" onClick={() => this.toggleVial(vial.ID)}/>)
-    ]
-  }
-
   toggleVial(vialID){
-    const selectedVials = new Set(this.state.SelectedVials) //make a copy for new state
+    const selectedVials = new Set(this.state.selectedVials) //make a copy for new state
     if (selectedVials.has(vialID)){
       selectedVials.delete(vialID)
     } else{
       selectedVials.add(vialID)
     }
+
     this.setState({...this.state, 
-      SelectedVials : selectedVials
+      selectedVials : selectedVials
     })
   }
 
-  toggleEdit(vialID){
-    var selectedVials;
-    if(this.state.SelectedVials.has(vialID)){
-      selectedVials = new Set(this.state.SelectedVials);
-      selectedVials.delete(vialID);
-    } else {
-      selectedVials = this.state.SelectedVials;
-    }
-
-    const vial = this.props.vials.get(vialID);
-    
-    const EdittingData = {
-      newBatchName      : vial.charge,
-      newProductionTime : vial.filltime,
-      newVolume         : vial.volume,
-      newActivity       : vial.activity,
-    };
-    const newEdittingMap = new Map(this.state.EditingVials);
-    newEdittingMap.set(vialID, EdittingData);
-
-    this.setState({...this.state, 
-      SelectedVials : selectedVials,  
-      EditingVials : newEdittingMap
+  /**
+   * This function is called to change the modal to an Authentication mode
+   * This function is called from the status 2 Modal indicating, that the manager
+   * should render the authentication component instead of the status2 modal. 
+   */
+  Authenticate(){
+    this.setState({
+      ...this.state,
+      isAuthenticating : true
     });
   }
 
-  ActiveVialList(vial){
-    const editingState = this.state.EditingVials.get(vial.ID);
-
-    const BatchField = (<FormControl value={editingState.newBatchName} 
-      onChange={(event) => this.EditVialField(vial.ID, "newBatchName", event.target.value)}/>);
-
-    const ProductionField = (<FormControl value={editingState.newProductionTime}
-      onChange={(event) => this.EditVialTimeField(vial.ID, event)}/>);
-
-    const VolumeField = (<FormControl value={editingState.newVolume}
-      onChange={(event) => this.EditVialField(vial.ID, "newVolume", event.target.value)}/>);
-
-    const ActivityField = (<FormControl value={editingState.newActivity}
-      onChange={(event) => this.EditVialField(vial.ID, "newActivity", event.target.value)}/>);
-
-    return [vial.ID,
-      BatchField, 
-      ProductionField,
-      VolumeField,
-      ActivityField,
-      (<Button variant="light" onClick={() => this.AcceptEditVial(vial.ID)}><img className="statusIcon" src="/static/images/accept.svg"></img></Button>),
-      (<Button variant="light" onClick={() => this.RejectEditVial(vial.ID)}><img className="statusIcon" src="/static/images/decline.svg"></img></Button>)
-    ]
+  cancel(){
+    this.setState({
+      ...this.state,
+      isAuthenticating : false
+    });
   }
-
-  AcceptEditVial(vialID){
-    //Validate the data, if ok then Pass it on the table, that will use its websocket to probergate the change onward.
-    const EditingData = this.state.EditingVials.get(vialID);
-
-    var ErrorInInput = false;
-    var NewErrorMessage = "";
-
-    
-    const BatchName = EditingData.newBatchName
-    if (!BatchName){
-      ErrorInInput = true;
-      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
-    }
-    const NewActivity = Number(EditingData.newActivity)
-    if (isNaN(NewActivity)){
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
-    } else if ( NewActivity <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
-    }
-    const NewVolume = Number(EditingData.newVolume)
-    if (isNaN(NewVolume)){
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen skal være et tal.\n"
-    } else if ( NewVolume <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen kan ikke være negativ.\n"
-    }
-
-    const FillTime = FormatTime(EditingData.newProductionTime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse 
-      ErrorInInput = true;
-      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    } 
-    
-    const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber : null 
-
-    if (CustomerNumber === null) {
-      ErrorInInput = true;
-      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
-    }
-
-    if (ErrorInInput){
-      console.log(NewErrorMessage);
-      this.setState({...this.state, ErrorMessage : NewErrorMessage});
-      return;
-    }
-    
-    this.props.editVial(  
-      vialID,
-      BatchName,
-      FillTime,
-      Number(NewVolume.toFixed(2)),
-      Number(NewActivity.toFixed(2)), 
-      CustomerNumber)
-
-    const newEdittingMap = new Map(this.state.EditingVials)
-    newEdittingMap.delete(vialID)
-    this.setState({...this.state, EditingVials : newEdittingMap})
-  }
-
-  RejectEditVial(vialID){
-    const newEdittingMap = new Map(this.state.EditingVials)
-    newEdittingMap.delete(vialID)
-    this.setState({...this.state, EditingVials : newEdittingMap})
-  }
-
-  EditVialTimeField(vialID, event){
-    const newEdittingMap = new Map(this.state.EditingVials);
-    const newVialData = {...newEdittingMap.get(vialID)};
-    newVialData["newFillTime"] = autoAddCharacter(event, ":", new Set([2,5]));
-    newEdittingMap.set(vialID, newVialData);
-    this.setState({...this.state, EditingVials : newEdittingMap });
-  }
-
-  EditVialField(vialID, fieldName, NewValue){
-    const newEdittingMap = new Map(this.state.EditingVials)
-    const newData = {...newEdittingMap.get(vialID)}  
-    newData[fieldName] = NewValue
-    newEdittingMap.set(vialID, newData)
-    this.setState({...this.state, EditingVials : newEdittingMap})
-  }
-
-  /**
-   * This function is responsible for handling the action when the user
-   * presses the "Frigiv ordre". This validates the order and send it
-   * To the parent table, who'll send the order back by their websocket.
-   */
-  AcceptOrder(){
-    // Validating Input
-    this.setState({...this.state, ErrorMessage : ""});
-    if (this.state.SelectedVials.size === 0) this.setState({...this.state, ErrorMessage : "Der er ikke valgt nogen vials til denne ordre"})
-    if (this.state.EditingVials.size === 0 ) this.setState({...this.state, ErrorMessage : "Færdigør din redigering før du frigiver en ordre "} )
-    if (this.state.CreatingVial) this.setState({...this.state, ErrorMesssage : "Afslut opretelsen af en ny Vial, før du frigiver en ordre"})
-
-    if (this.state.ErrorMessage) return;
-    this.props.AcceptOrder(this.props.Order.oid, this.state.SelectedVials);
-  }
-
-  // Authenticate
-  Authenticate() {
-    
-
-
-
-  }
-
-
   // Render functions
-
-  renderNewVial(){
-    const bacthInput = (<FormControl
-      value={this.state.newCharge}
-      onChange={(event) => {this.changeState(event.target.value, "newCharge")}}
-    />);
-    const ProductionTimeInput = (<FormControl
-      value={this.state.newFillTime}
-      onChange={(event) => {this.changeNewFieldTime(event)}}
-    />);
-    const VolumeInput = (<FormControl
-      value={this.state.newVolume}
-      onChange={(event) => {this.changeState(event.target.value, "newVolume")}}
-    />);
-    const ActivityInput = (<FormControl
-      value={this.state.newActivity}
-      onChange={(event) => {this.changeState(event.target.value, "newActivity")}}
-    />);
-    const AcceptButton = (<Button onClick={this.createNewVial.bind(this)}>Accept</Button>);
-    const EmptyDiv = (<div></div>);
-
-
-    return ["ny", bacthInput, ProductionTimeInput, VolumeInput, ActivityInput, AcceptButton, EmptyDiv];
-  }
-
-  renderOrder(){
-    const Order = this.props.Order;
-    const OrderID = (Order) ? Order.oid : "";
-
-    const Customer = (this.props.customer) ? this.props.customer : null;
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
-    const CustomerName   = (Customer) ? Customer.username + " - " + Customer.Name : "";
-    const Activity       = (Order) ? Order.total_amount_o : "";
-
-    var AssignedActivity = 0;
-    for (let vialID of this.state.SelectedVials) {
-      const Vial = this.props.vials.get(vialID)
-      AssignedActivity += Number(Vial.activity)
-    }
-
-    return(
-      <div>
-        <Table striped bordered>
-          <tbody>
-            {renderTableRow("0", ["Order ID", OrderID])}
-            {renderTableRow("1", ["Kunde nummber:", CustomerNumber])}
-            {renderTableRow("2", ["Navn:" , CustomerName])}
-            {renderTableRow("3", ["Ønsket aktivitet:", Activity])}
-            {renderTableRow("4", ["Allokeret Aktivitet:", AssignedActivity])}
-          </tbody>
-        </Table> 
-      </div>);
-  }
-
-  renderVials(){
-    const Order = this.props.Order;
-
-    const Customer = (this.props.customer) ? this.props.customer : null;
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
-    const vials_in_use = [];
-    if (CustomerNumber) {
-      for(let [vialID, vial ] of this.props.vials){
-        if (vial.OrderMap !== null) continue;
-        if (vial.customer == CustomerNumber){
-          (this.state.EditingVials.has(vialID)) ? vials_in_use.push(
-            renderTableRow(vialID, this.ActiveVialList(vial))
-          ) : 
-          vials_in_use.push(
-            renderTableRow(vialID, this.InactiveVialList(vial))
-          ); 
-        }
-      }
-    }
-
-    var AddNewOrderButton;
-
-    if(this.state.CreatingVial){
-      vials_in_use.push(renderTableRow("new", this.renderNewVial()))
-      AddNewOrderButton = (<Button onClick={this.StopCreatingNewVial.bind(this)}>Anuller ny Vial</Button>)
-    } else {
-      AddNewOrderButton = (<Button onClick={() => {this.initializeNewVial()}}>Opret Ny Vial</Button>)
-    }
-    
-    return(<div>
-      <Table bordered>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Batch</th>
-            <th>Produktions Tidpunkt</th>
-            <th>Volume</th>
-            <th>Aktivitet</th>
-            <th></th>
-            <th>Brug</th>
-          </tr>
-        </thead>
-        <tbody>
-          {vials_in_use}
-        </tbody>
-      </Table>
-      {AddNewOrderButton}
-    </div>)
-  }
 
   CloseModal(){
     this.setState(initial_state);
     this.props.onClose();
   }
 
-  renderBody(){
-    return (
-      <Container fluid>
-        <Row>{this.renderOrder()}</Row>
-        <Row>{this.renderVials()}</Row>
-        {this.state.ErrorMessage ? <Row>{this.state.ErrorMessage}</Row> : null }
-      </Container>);
-    
-  }
-
   render(){
+    console.log(this.state);
     const Order = this.props.Order;
-    const OrderID = (Order) ? Order.oid : "";
 
     if(Order) {
       if (Order.status == 3) {
@@ -469,22 +94,37 @@ class ActivityModal extends Component {
             vials={this.props.vials}
           />
         );
+      } else if (Order.status == 2) {
+        if (this.state.isAuthenticating) {
+          return (<ActivityModalAuthenticate
+            show={this.props.show}
+            Order={this.props.Order}
+            customer={this.props.customer}
+            onClose={this.props.onClose}
+            vials={this.props.vials}
+            selectedVials={this.state.selectedVials}  
+            cancel={this.cancel.bind(this)}
+            accept={this.props.AcceptOrder}
+          />)
+        } else {
+          return (<ActivityModalStatus2
+            show={this.props.show}
+            Order={this.props.Order}
+            customer={this.props.customer}
+            onClose={this.props.onClose}
+            vials={this.props.vials}
+            editVial={this.props.editVial}
+            createVial={this.props.createVial}
+            selectedVials={this.state.selectedVials}
+            toggleVial={this.toggleVial.bind(this)}
+            Authenticate={this.Authenticate.bind(this)}
+          />)
+        }
       }
     } 
 
     return(
-    <Modal
-      show={this.props.show}
-      size="lg"
-      onHide={this.CloseModal.bind(this)}
-    >
-      <Modal.Header>Ordre {OrderID}</Modal.Header>
-      <Modal.Body>{this.renderBody()}</Modal.Body>
-      <Modal.Footer>
-        <Button onClick={this.Authenticate.bind(this)}>test</Button>
-        <Button onClick={this.AcceptOrder.bind(this)}> Frigiv Ordre </Button>
-        <Button onClick={this.CloseModal.bind(this)}> Luk </Button>
-      </Modal.Footer>
-    </Modal>);
+    <div></div>
+    );
   }
 }

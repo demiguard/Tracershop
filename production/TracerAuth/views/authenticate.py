@@ -22,7 +22,7 @@ class AuthAuthenticate(View):
     # This code block prevent authentication while logged in as another user
     # This is mainly to clearify who is responsible for freeing Orders
     if request.user:
-      if request.username != username:
+      if request.user.username != username:
         return ProductionJSONResponse({
           AUTH_DETAIL : False
         })
@@ -31,9 +31,9 @@ class AuthAuthenticate(View):
 
     if user is None:
       return ProductionJSONResponse({
-        AUTH_DETAIL : True
+        AUTH_DETAIL : False
       })
     else:
       return ProductionJSONResponse({
-        AUTH_DETAIL : False
+        AUTH_DETAIL : True
       })

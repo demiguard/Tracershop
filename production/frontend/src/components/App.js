@@ -192,6 +192,7 @@ export default class App extends Component {
               login_message="Log in"
               authenticate={this.login_auth.bind(this)}
               ErrorMessage={this.state.error}
+              fit_in={true}
             />  
           </Container>
         </div>

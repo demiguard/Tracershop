@@ -14,9 +14,14 @@ function parseDate(inputStr){
 }
 
 function ParseDanishNumber(numberString){
-  const parsedNumber = numberString.replace(/,/g, ".");
+  if (typeof numberString == "string") {
+    const parsedNumber = numberString.replace(/,/g, ".");
+    
+    return Number(parsedNumber);
+  } else {
+    return numberString
+  }
 
-  return Number(parsedNumber);
 }
 
 
