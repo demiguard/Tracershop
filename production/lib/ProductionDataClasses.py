@@ -174,6 +174,8 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   frigivet_af : int #id matching to OldDatabaseID
   frigivet_amount : float
   frigivet_datetime : Optional[datetime]
+  comment : Optional[str]
+  username : Optional[str]
 
   @classmethod
   def getSQLTable(cls):

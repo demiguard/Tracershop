@@ -68,6 +68,8 @@ class ActivityModalStatus3 extends Component {
             {renderTableRow(5,["Frigivet kl:",renderDateTime(this.props.Order.frigivet_datetime)])}
             {renderTableRow(6,["Frigivet af:", this.getUserMapping(this.props.Order.frigivet_af)])}
             {renderTableRow(7,["Batch Nummer:", this.props.Order.batchnr])}
+            {renderTableRow(8, ["Bestilt Af:",  this.props.Order.username])}
+            {this.props.Order.comment ? renderTableRow(9, ["Kommentar", this.props.Order.comment]) : null}
           </tbody>
         </Table>
         

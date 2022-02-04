@@ -104,6 +104,8 @@ export default class ActivityModalAuthenticate extends Component {
                 {renderTableRow("2", ["Navn:" , CustomerName])}
                 {renderTableRow("3", ["Ønsket aktivitet:", Activity])}
                 {renderTableRow("4", ["Allokeret Aktivitet:", AssignedActivity])}
+                {renderTableRow("5", ["Bestilt Af:",  Order.username])}
+                {Order.comment ? renderTableRow("6", ["Kommentar", Order.comment]) : null}
                 {Vials}
               </tbody>
             </Table>
