@@ -11,3 +11,4 @@ production/frontend/node_modules/
 *.sqlite3
 main.js
 main.js*
+SECRET_KEY.py
