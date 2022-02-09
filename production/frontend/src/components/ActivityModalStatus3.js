@@ -22,10 +22,8 @@ class ActivityModalStatus3 extends Component {
    * @returns {String} The name of the user 
    */
   getUserMapping(employeeID){
-    // const employee = this.props.employees.get(employeeID);
-    // return employee.Name;
-
-    return employeeID;
+    const employee = this.props.employees.get(employeeID);
+    return employee.Username;
   }
 
   /**
@@ -39,9 +37,6 @@ class ActivityModalStatus3 extends Component {
 
 
   render(){
-    console.log(this.props.customer);
-    console.log(this.props.vials);
-
     const vials = [];
     for(const [vialID, vial] of this.props.vials) {
       if (vial.OrderMap == this.props.Order.oid) {

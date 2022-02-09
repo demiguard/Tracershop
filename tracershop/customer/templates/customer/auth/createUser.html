@@ -44,5 +44,6 @@
 {% endblock content %}
 
 {% block javascript %}
+<script type="module" src="{% static 'customer/javascript/csrf.js' %}"></script>
 <script type="module" src="{% static 'customer/javascript/sites/createUser.js' %}"></script>
 {% endblock %}

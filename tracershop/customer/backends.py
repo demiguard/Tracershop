@@ -6,7 +6,7 @@ class SimpleBackend:
   def authenticate(self, request, username=None, password=None):
     if username and password:
       try:
-        user = User.objects.get(username=username)
+        user = User.objects.get(username=username.upper())
 
         if check_password(password, user.password):
           return user
@@ -15,8 +15,8 @@ class SimpleBackend:
 
     return None
 
-  def get_user(self, username):
+  def get_user(self, pk):
     try:
-      return User.objects.get(pk=username)
+      return User.objects.get(pk=pk)
     except User.DoesNotExist:
       return None

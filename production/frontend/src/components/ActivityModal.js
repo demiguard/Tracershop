@@ -45,7 +45,7 @@ class ActivityModal extends Component {
     const selectedVials = new Set(this.state.selectedVials) //make a copy for new state
     if (selectedVials.has(vialID)){
       selectedVials.delete(vialID)
-    } else{
+    } else {
       selectedVials.add(vialID)
     }
 
@@ -80,7 +80,6 @@ class ActivityModal extends Component {
   }
 
   render(){
-    console.log(this.state);
     const Order = this.props.Order;
 
     if(Order) {
@@ -92,6 +91,7 @@ class ActivityModal extends Component {
             customer={this.props.customer}
             onClose={this.props.onClose}
             vials={this.props.vials}
+            employees={this.props.employees}
           />
         );
       } else if (Order.status == 2) {

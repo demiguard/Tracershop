@@ -1,6 +1,6 @@
 import { ajax, parseJSON } from "jquery";
 import React, { Component } from "react";
-import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
+import { Row, Col, Table, Tab, Button, Container } from 'react-bootstrap'
 import { renderStatusImage, renderTableRow } from "./lib/Rendering";
 import { TracerWebSocket } from "./lib/TracerWebsocket";
 import { CompareDates } from "./lib/utils";
@@ -653,9 +653,9 @@ class ActivityTable extends Component {
     }
 
     return (
-    <div key={run.run}>
+    <Row key={run.run}>
       Kørsel : {run.run} - {run.ptime} : {total} MBq / Overhead : {total_o} MBq
-    </div>);
+    </Row>);
   }
 
 
@@ -680,9 +680,10 @@ class ActivityTable extends Component {
     console.log(this.state)
     
     return (<div>
-      <div> Produktioner: <br/>
+      <Container>
+        <Row> Produktioner: </Row>
         {RenderedRuns}
-      </div>
+      </Container>
       { pendingOrders.length ? // This statement makes it so the table is conditionally render on the number of orders
         <Table>
         <thead>
@@ -702,7 +703,7 @@ class ActivityTable extends Component {
         <tbody>
           {pendingOrders}
         </tbody>
-      </Table> : <div/>
+      </Table> : null
       }
       { FinishedOrders.length ?
         <Table>
@@ -729,6 +730,7 @@ class ActivityTable extends Component {
         Order={this.state.ModalOrder}
         vials={this.state.vial}
         customer={this.state.ModalCustomer}
+        employees={this.state.employees}
         onClose={this.closeModal.bind(this)}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
