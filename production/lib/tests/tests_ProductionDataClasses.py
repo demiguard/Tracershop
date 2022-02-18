@@ -79,26 +79,6 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
     self.assertEqual(testInstance.b, 4)
     self.assertEqual(testInstance.c, None)
 
-  def test_ActivityOrderTestSpeed(self):
-    exampleDict = {
-      'deliver_datetime': '2021-12-10T08:15:00', 
-      'oid': 41509, 
-      'status': 2, 
-      'amount': 10000, 
-      'amount_o': 12000, 
-      'total_amount': 10000, 
-      'total_amount_o': 12000, 
-      'run': 1, 
-      'BID': 7, 
-      'batchnr': '', 
-      'COID': -1
-    }
-    start = perf_counter()
-    ActivityOrderDataClass(**exampleDict)
-    end   = perf_counter()
-  
-    print(f"Created class in {end - start}")
-
   def test_VialWithMinimalData(self):
     data = {
       'charge': 'test',
@@ -133,5 +113,5 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
     self.assertIsNone(Vial.OrderMap)
 
   def test_ActivityOrderSQLFields(self):
-    Expected = "deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, run, BID, batchnr, COID"
+    Expected = "deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, run, BID, batchnr, COID, frigivet_af, frigivet_amount, volume, frigivet_datetime, comment, username"
     self.assertEqual(ActivityOrderDataClass.getSQLFields(), Expected)

@@ -9,27 +9,20 @@ from datetime import date,time,datetime
 from dataclasses import fields
 
 from lib.SQL.SQLFormatter import SerilizeToSQLValue
-from lib.ProductionDataClasses import ActivityOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass, UserDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass, UserDataClass, JsonSerilizableDataClass
 from lib.Formatting import dateConverter, mergeDateAndTime
 
 from TracerAuth.models import User
 
 
-def getCustomers() -> str:
-  return """
+def getCustomers(dataClass=CustomerDataClass) -> str:
+  return f"""
     SELECT 
-      Users.Username, 
-      Users.Id,
-      Users.overhead,
-      Users.kundenr,
-      Users.realname
+      {dataClass.getSQLFields()}
     FROM 
-      Users
-      INNER JOIN UserRoles on
-        Users.Id = UserRoles.Id_User
+      {dataClass.getSQLTable()}
     WHERE
-      UserRoles.Id_Role = 4 AND
-      Users.kundenr IS NOT NULL
+      {datacase.getSQLWhere()}
   """
 
 def getCustomer(ID: int) -> str:
@@ -273,7 +266,8 @@ def FreeExistingOrder(Order: ActivityOrderDataClass, Vial : VialDataClass, user 
     frigivet_af={user.OldTracerBaseID},
     frigivet_amount={Vial.activity},
     frigivet_datetime={SerilizeToSQLValue(datetime.now())},
-    batchnr=\"{Vial.charge}\"
+    volume={Vial.volume},
+    batchnr={SerilizeToSQLValue(Vial.charge)}
   WHERE
     oid={Order.oid}
   """

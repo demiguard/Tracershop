@@ -30,7 +30,7 @@ class APIGetVialRange(View):
     historic_date = today - timedelta(days=HISTORIC_RANGE)
     Vials = self.SQL.getVialRange(historic_date, today)
 
-    customers = SQLController.getCustomers()
+    customers = self.SQL.getCustomers()
 
     return ProductionJSONResponse({
       JSON_VIALS : Vials,

@@ -150,6 +150,10 @@ class SQL():
     mapObject = map(EmployeeDataClass.fromUser, userObjects)
     return list(mapObject)
 
+  @classmethod
+  def getCustomer(cls, CustomerID : int) -> CustomerDataClass:
+    return cls.__ExecuteReturnOne(SQLFactory, CustomerDataClass, CustomerID)
+
   @staticmethod
   def getServerConfig() -> ServerConfiguration:
     try:

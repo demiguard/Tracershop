@@ -22,6 +22,7 @@ class Database(SubscribeableModel):
     on_delete=models.SET_NULL,
     null=True
   )
+  testinDatabase = models.BooleanField(default=False) #testing databases do not send mails
 
   def __str__(self):
     return self.databaseName

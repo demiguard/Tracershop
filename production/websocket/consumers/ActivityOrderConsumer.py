@@ -221,3 +221,11 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
         ActivityOrderClass: The order created
     """
     return self.SQL.CreateNewFreeOrder(OriginalOrder, Vial, tracerID, self.user) 
+
+  @database_sync_to_async
+  def createPDF(
+    self, 
+    Order: ActivityOrderDataClass, 
+    Vials: List[VialDataClass]
+  ):
+    pass

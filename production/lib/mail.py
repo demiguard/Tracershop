@@ -11,6 +11,8 @@ from constants import EmailEvents
 
 from lib.SQL import SQLController as SQL
 
+from api.models import ServerConfiguration
+
 from smtplib import SMTP
 from email import encoders
 
@@ -71,6 +73,9 @@ def sendMail(mail, emailAddress):
     return
 
   ServerConfiguration = SQL.getServerConfig()
+
+  if ServerConfiguration.ExternalDatabase.testinDatabase:
+    raise ValueError("Testing Databases should never send emails.")
 
   with SMTP(ServerConfiguration.SMTPServer) as smtp:
     smtp.sendmail(constants.emailSenderAddress, [emailAddress], mail)

@@ -21,6 +21,8 @@ from constants import DATETIME_FORMAT, DATE_FORMAT, TIME_FORMAT, JSON_DATETIME_F
 
 from lib.Formatting import toTime, toDateTime, toDate
 from TracerAuth.models import User
+from lib.utils import LMAP
+
 
 @dataclass
 class JsonSerilizableDataClass:
@@ -48,8 +50,13 @@ class JsonSerilizableDataClass:
 
   @classmethod
   def fromDict(cls, ClassDict : Dict):
-    """
-      This method allows for construction of the dataclass using a dict.
+    f"""Alternative consturctor from a dictionary
+
+    Args:
+        ClassDict (Dict): Dict with the fields: {", ".join([field.name for field in cls.getFields()])}
+
+    Returns:
+        [type]: [description]
     """
     return cls(**ClassDict)
 
@@ -61,6 +68,18 @@ class JsonSerilizableDataClass:
         List[Field]: [description]
     """
     return fields(cls)
+
+  @classmethod
+  def getSQLWhere(cls) -> str:
+    """
+    This function should be called in conjuction with a coditional statement in an SQL
+    By Default this is just TRUE, hence no filtering, however the function that
+    need filtering are expected to implement their own version of this function
+
+    Returns:
+        str: SubQuery with valid SQL condition statement
+    """
+    return "TRUE" 
 
   @classmethod
   def getSQLFields(cls):
@@ -173,6 +192,7 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   COID : int
   frigivet_af : int #id matching to OldDatabaseID
   frigivet_amount : float
+  volume : float
   frigivet_datetime : Optional[datetime]
   comment : Optional[str]
   username : Optional[str]
@@ -283,8 +303,25 @@ class CustomerDataClass(JsonSerilizableDataClass):
   ID : int
   overhead : int
   CustomerNumber : int
-  Name : str
+  Realname : str
+  email1 : str
+  contact : str
+  tlf : str
+  
+  @classmethod
+  def getSQLFields(cls):
+    fieldsNames = cls.getFields()
+    UpdatedFieldNames = LMAP(lambda field: "Users." + field, [field.name for field in Fields])
+    
+    return ", ".join(UpdatedFieldNames)
 
+  @staticmethod
+  def getSQLTable():
+    return "Users INNER JOIN UserRoles on Users.Id = UserRoles.Id_User"
+
+  @staticmethod
+  def getSQLWhere():
+    return "UserRoles.Id_Role = 4 AND Users.kundenr IS NOT NULL"
 
 @dataclass(init=False)
 class UserDataClass(JsonSerilizableDataClass):

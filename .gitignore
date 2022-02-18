@@ -12,3 +12,5 @@ production/frontend/node_modules/
 main.js
 main.js*
 SECRET_KEY.py
+test_pdfs/
+pdfs/
