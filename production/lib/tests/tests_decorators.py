@@ -109,7 +109,7 @@ def testFunctionPartial(x: int, y):
   return x + y
 
 @typeCheckfunc
-def testFunctionKWargAnnotation(x: int, y: int, aKW : int=3, anotherKW: int="123"):
+def testFunctionKWargAnnotation(x: int, y: int, aKW : int=3):
   return x + y + aKW
 
 @typeCheckfunc
