@@ -4,11 +4,15 @@ from channels.db import database_sync_to_async
 
 from datetime import datetime
 from typing import Dict, List
+from lib.decorators import typeCheckfunc
+from lib.utils import LMAP
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import ActivityOrderDataClass, VialDataClass
+from lib.mail import sendMail
 from lib.SQL import SQLController as SQL
 from api.models import ServerConfiguration
 from constants import * # Import the many WEBSOCKET constants
+from lib import pdfs
 
 class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
   channel_name = 'Activity'
@@ -110,14 +114,14 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
 
       serverConfiguration = await self.getServerConfiguration()
       if serverConfiguration.LegacyMode:
-        Vials.reverse() # this is to get the first element last
-        PrimaryVial = Vials.pop()
+        PrimaryVial = Vials[0]
         UpdatedOrders = await self.assignVial(Order, PrimaryVial)
-        for Vial in Vials:
+        for Vial in Vials[1:]: #The first vial is assoc with the Primary order
           newOrder = await self.createVialOrder(Vial, Order, tracerID)
+          Vial.OrderMap = newOrder.oid
           UpdatedOrders.append(newOrder)
         
-        SerlizedUpdatedOrders = list(map(lambda x: encode(x.toJSON()), UpdatedOrders))
+        SerlizedUpdatedOrders = LMAP(lambda x: encode(x.toJSON()), UpdatedOrders)
 
         await self.channel_layer.group_send(
           self.group_name,
@@ -125,12 +129,16 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
             WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
             WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_UPDATEORDERS,
             WEBSOCKET_DATE : dateStr,
-            WEBSOCKET_DATA_ORDERS : SerlizedUpdatedOrders 
+            WEBSOCKET_DATA_ORDERS : SerlizedUpdatedOrders,
+            WEBSOCKET_DATA_VIALS : LMAP(lambda v: encode(v.toJSON()),Vials)
           }
         )
       else:
-        print("LegacyMode is no go")
-      print("this printstatement sends a mail")
+        print("No LegacyMode is no go")
+      pdfFilePath = await self.createPDF(Order, Vials)
+      Customer    = await self.getCustomer(Order.BID)
+      self.send_mail(pdfFilePath, Customer, Order)
+      
 
 
   async def sendEvent(self, event: Dict):
@@ -191,6 +199,11 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
     return self.SQL.getServerConfig()
 
   @database_sync_to_async
+  def getCustomer(self, BID : int):
+    return self.SQL.getCustomer(BID)
+
+
+  @database_sync_to_async
   def assignVial(self, 
       Order : ActivityOrderDataClass,
       Vial : VialDataClass
@@ -204,10 +217,20 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
       Returns:
         List[ActivityOrderDataClass] : List of modified orders 
     """
+    #Order Changes:
+    Order.frigivet_datetime = datetime.now()
+    Order.frigivet_amount   = Vial.activity
+    Order.frigivet_af = self.user.OldTracerBaseID
+    Order.volume = Vial.volume
+    Order.batchnr = Vial.charge
+
+    #Vial Changes
+    Vial.OrderMap = Order.oid
+    
     return self.SQL.FreeOrder(Order, Vial, self.user)
     
-
   @database_sync_to_async
+  @typeCheckfunc
   def createVialOrder(
       self, 
       Vial: VialDataClass, 
@@ -228,4 +251,12 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
     Order: ActivityOrderDataClass, 
     Vials: List[VialDataClass]
   ):
-    pass
+    customer = self.SQL.getCustomer(Order.BID)
+    Tracer, Isotope = self.SQL.getTracerAndIsotope(Order.tracer)
+    pdfPath = pdfs.getPdfFilePath(customer, Order)
+    pdfs.DrawSimpleActivityOrder(pdfPath, customer, Order, Vials, Tracer, Isotope)
+    return pdfPath
+
+  @database_sync_to_async
+  def send_mail(self, pdfFilePath, Customer, Order):
+    sendMail(pdfFilePath, Customer, Order)

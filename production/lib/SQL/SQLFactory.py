@@ -9,7 +9,7 @@ from datetime import date,time,datetime
 from dataclasses import fields
 
 from lib.SQL.SQLFormatter import SerilizeToSQLValue
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass, UserDataClass, JsonSerilizableDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, UserDataClass, JsonSerilizableDataClass
 from lib.Formatting import dateConverter, mergeDateAndTime
 
 from TracerAuth.models import User
@@ -22,15 +22,15 @@ def getCustomers(dataClass=CustomerDataClass) -> str:
     FROM 
       {dataClass.getSQLTable()}
     WHERE
-      {datacase.getSQLWhere()}
+      {dataClass.getSQLWhere()}
   """
 
 def getCustomer(ID: int) -> str:
   return f"""
     SELECT 
-      {UserDataClass.getSQLFields()}
+      {CustomerDataClass.getSQLFields()}
     FROM
-      {UserDataClass.getSQLTable()}
+      {CustomerDataClass.getSQLTable()}
     Where
       Id={ID}
   """
@@ -70,14 +70,36 @@ def getIsotopes() ->  str:
       {IsotopeDataClass.getSQLTable()}
   """
 
+def getTracer(ID : int ) -> str:
+  return f"""
+    SELECT
+      {TracerDataClass.getSQLFields()}
+    FROM
+      {TracerDataClass.getSQLTable()}
+    WHERE
+      id={SerilizeToSQLValue(ID)}
+  """
+
+def getIsotope(ID : int ) -> str:
+  return f"""
+    SELECT
+      {IsotopeDataClass.getSQLFields()}
+    FROM
+      {IsotopeDataClass.getSQLTable()}
+    WHERE
+      id={SerilizeToSQLValue(ID)}
+  """
+
 def getActivityOrders(requestDate: date, tracerID: int) -> str:
+  #Can't use SerilizeToSQLValue due to missing %
+  
   return f"""
     SELECT
       {ActivityOrderDataClass.getSQLFields()}
     FROM
       orders 
     WHERE
-      deliver_datetime LIKE {SerilizeToSQLValue(requestDate)} AND 
+      deliver_datetime LIKE \"{dateConverter(requestDate)}%\" AND 
       tracer={tracerID}
     ORDER BY
       BID,
@@ -85,27 +107,21 @@ def getActivityOrders(requestDate: date, tracerID: int) -> str:
   """
 
 def getRuns() -> str: 
-  return """
+  return f"""
     SELECT 
-      day,
-      TIME_FORMAT(ptime, \"%T\"), 
-      run
+      {RunsDataClass.getSQLFields()}
     FROM 
-      productionTimes
+      {RunsDataClass.getSQLTable()}
     ORDER BY
       day, ptime
   """
 
 def getDeliverTimes() -> str:
-  return """
-    SELECT 
-      BID, 
-      day,
-      repeat_t,
-      TIME_FORMAT(dtime, \"%T\"),
-      run
+  return f"""
+    SELECT
+      {DeliverTimeDataClass.getSQLFields()}
     FROM 
-      deliverTimes
+      {DeliverTimeDataClass.getSQLTable()}
     ORDER BY
       BID, day, dtime
   """

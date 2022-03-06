@@ -9,8 +9,8 @@ import typing
 import constants
 from constants import EmailEvents
 
-from lib.SQL import SQLController as SQL
-
+from lib.SQL import SQLController
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
 from api.models import ServerConfiguration
 
 from smtplib import SMTP
@@ -22,10 +22,10 @@ from email.mime.text import MIMEText
 
 @dataclass(frozen=True)
 class EmailHeader:
-  From    : str = constants.emailSenderAddress
   To      : str
   Subject : str
   message : str
+  From    : str = constants.EMAIL_SENDER_ADDRESS
 
 def validifyEmailAddress(potentialEmail : str) -> bool:
   """
@@ -43,39 +43,49 @@ def validifyEmailAddress(potentialEmail : str) -> bool:
     return True
   return False  
 
+def prepareMail(emailHeader :EmailHeader, pdfFile):
+  fname = "følgeseddel.pdf"
 
-def prepareMailWithFile(emailHeader : EmailHeader):
-  pass
 
-def prepareMail(emailHeader :  EmailHeader):
-  mail = MIMEText(emailHeader.message.encode("utf-8"), _charset="utf-8")
+  mail = MIMEMultipart()
   mail["Subject"] = emailHeader.Subject
   mail["To"]      = emailHeader.To
   mail["From"]    = emailHeader.From
   
-  return mail.as_string()
+  text = MIMEText(emailHeader.message.encode("utf-8"),"plain", _charset="utf-8")
+  
+  mail.attach(text)
+  payload = MIMEBase('application', 'octate-stream', Name=fname)
+  payload.set_payload(pdfFile.read())
 
-def sendMailToCustomer(Customer : dict, emailType : EmailEvents ):
-  """
-    
-  Args:
-    Customer : Dict - Corosponding to an entry in the Users Table
+  encoders.encode_base64(payload)
+
+  payload.add_header("Content-Decomposition", "attachment", filename=fname)
+  mail.attach(payload)
+
+  return mail
 
 
+def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDataClass, SQL=SQLController.SQL() ):
+  emails = [Customer.email, Customer.email2, Customer.email3, Customer.email4]
 
-  """
-  pass
-
-
-def sendMail(mail, emailAddress):
-  if not validifyEmailAddress(emailAddress):
-    #Log this
-    return
+  Text_message = "Dette er en føgleseddel til tracershop."
+  subject_message = f"Følgeseddel - {Order.oid}"
 
   ServerConfiguration = SQL.getServerConfig()
 
-  if ServerConfiguration.ExternalDatabase.testinDatabase:
-    raise ValueError("Testing Databases should never send emails.")
+  with open(pdfPath, 'rb') as f:
+    for email in emails:
+      if not validifyEmailAddress(email):
+        continue
 
-  with SMTP(ServerConfiguration.SMTPServer) as smtp:
-    smtp.sendmail(constants.emailSenderAddress, [emailAddress], mail)
+      Header = EmailHeader(
+        To=email,
+        Subject=subject_message,
+        message=Text_message
+      )
+
+      mail = prepareMail(Header, f)
+
+      with SMTP(ServerConfiguration.SMTPServer) as smtp:
+        smtp.sendmail(constants.EMAIL_SENDER_ADDRESS, [email], mail.as_string())

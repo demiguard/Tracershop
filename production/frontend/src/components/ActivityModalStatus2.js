@@ -123,7 +123,7 @@ export default class ActivityModalStatus2 extends Component {
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
     } 
     const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber : null 
+    const CustomerNumber = (Customer) ? Customer.kundenr : null 
 
     if (CustomerNumber === null) {
       ErrorInInput = true;
@@ -185,7 +185,7 @@ export default class ActivityModalStatus2 extends Component {
     } 
     
     const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber : null 
+    const CustomerNumber = (Customer) ? Customer.kundenr : null 
 
     if (CustomerNumber === null) {
       ErrorInInput = true;
@@ -366,8 +366,8 @@ export default class ActivityModalStatus2 extends Component {
     const OrderID = (Order) ? Order.oid : "";
 
     const Customer = (this.props.customer) ? this.props.customer : null;
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
-    const CustomerName   = (Customer) ? Customer.username + " - " + Customer.Name : "";
+    const CustomerNumber = (Customer) ? Customer.kundenr  : "";
+    const CustomerName   = (Customer) ? Customer.UserName + " - " + Customer.Realname : "";
     const Activity       = (Order) ? Order.total_amount_o : "";
 
     var AssignedActivity = 0;
@@ -396,7 +396,7 @@ export default class ActivityModalStatus2 extends Component {
     const Order = this.props.Order;
 
     const Customer = (this.props.customer) ? this.props.customer : null;
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
+    const CustomerNumber = (Customer) ? Customer.kundenr  : "";
     const vials_in_use = [];
     if (CustomerNumber) {
       for(let [vialID, vial ] of this.props.vials){

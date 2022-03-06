@@ -17,8 +17,8 @@ class APIServerConfig(View):
   path = "ServerConfig"
 
   def get(self, request):
-    config = SQLController.getServerConfig()
-    databases = SQLController.getDatabases()
+    config = self.SQL.getServerConfig()
+    databases = self.SQL.getDatabases()
 
     return ProductionJSONResponse({
       JSON_ACTIVE_DATABASE : config.ExternalDatabase,
@@ -37,3 +37,7 @@ class APIServerConfig(View):
       config.save()
 
     return HttpResponse(status=204)
+
+  def __init__(self, SQL_Controller=SQLController.SQL()):
+    self.SQL = SQL_Controller
+    super().__init__()

@@ -186,13 +186,14 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   amount_o : float
   total_amount : float
   total_amount_o : float
+  tracer : int
   run : int
   BID : int
   batchnr : str
   COID : int
   frigivet_af : int #id matching to OldDatabaseID
   frigivet_amount : float
-  volume : float
+  volume : Optional[float]
   frigivet_datetime : Optional[datetime]
   comment : Optional[str]
   username : Optional[str]
@@ -255,6 +256,20 @@ class DeliverTimeDataClass(JsonSerilizableDataClass):
   dtime : time
   run : int
 
+  @classmethod
+  def getSQLTable(cls):
+    return "deliverTimes"
+
+  @classmethod
+  def getSQLFields(cls):
+    return """ 
+      BID, 
+      day,
+      repeat_t,
+      TIME_FORMAT(dtime, \"%T\"),
+      run
+    """
+
 
 @dataclass(init=False)
 class CustomerDeliverTimeDataClass(JsonSerilizableDataClass):
@@ -271,6 +286,17 @@ class RunsDataClass(JsonSerilizableDataClass):
   ptime : time
   run : int
 
+  @classmethod
+  def getSQLTable(cls):
+    return "productionTimes"
+
+  @classmethod
+  def getSQLFields(cls):
+    return """
+      day,
+      TIME_FORMAT(ptime, \"%T\"), 
+      run
+    """
 
 @dataclass(init=False)
 class IsotopeDataClass(JsonSerilizableDataClass):
@@ -292,6 +318,7 @@ class TracerDataClass(JsonSerilizableDataClass):
   order_block : int
   in_use : bool
   tracer_type : int
+  longName : str
 
   @classmethod
   def getSQLTable(cls):
@@ -302,16 +329,23 @@ class CustomerDataClass(JsonSerilizableDataClass):
   UserName : str
   ID : int
   overhead : int
-  CustomerNumber : int
+  kundenr : int
   Realname : str
-  email1 : str
+  email : str
+  email2 : str
+  email3 : str
+  email4 : str
   contact : str
   tlf : str
+  addr1 : str
+  addr2 : str
+  addr3 : str
+  addr4 : str
   
   @classmethod
   def getSQLFields(cls):
     fieldsNames = cls.getFields()
-    UpdatedFieldNames = LMAP(lambda field: "Users." + field, [field.name for field in Fields])
+    UpdatedFieldNames = LMAP(lambda field: "Users." + field, [field.name for field in fieldsNames])
     
     return ", ".join(UpdatedFieldNames)
 
@@ -323,9 +357,10 @@ class CustomerDataClass(JsonSerilizableDataClass):
   def getSQLWhere():
     return "UserRoles.Id_Role = 4 AND Users.kundenr IS NOT NULL"
 
+#Depricated
 @dataclass(init=False)
 class UserDataClass(JsonSerilizableDataClass):
-  email1 : str
+  email : str
   email2 : str
   email3 : str
   email4 : str

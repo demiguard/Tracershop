@@ -14,11 +14,11 @@ from django.core.exceptions import ObjectDoesNotExist
 
 from dataclasses import fields
 from datetime import datetime, time, date
-from typing import Type, Dict, List, Callable, Optional
+from typing import Callable, Dict, List, Optional, Tuple, Type
 
 from api.models import ServerConfiguration, Database
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, EmployeeDataClass, JsonSerilizableDataClass, TracerDataClass,  VialDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
 
 from TracerAuth.models import User
 
@@ -57,24 +57,92 @@ class SQL():
       return None
 
   @staticmethod
-  def __ExecuteReturnMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args):
+  def __ExecuteReturnMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args) -> Optional[List[JsonSerilizableDataClass]]:
     SQLQuery = SQLFactoryMethod(*args)
     SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
     return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
 
-  #
+  # Get methods
+  @classmethod
+  def getActivityOrders(cls, requestDate : date, tracerID: int) -> List[ActivityOrderDataClass]:
+    Orders = cls.__ExecuteReturnMany(SQLFactory.getActivityOrders, ActivityOrderDataClass, requestDate, tracerID)
+    if Orders:
+      return Orders
+    else:
+      return []
+
+  @classmethod
+  def getCustomer(cls, CustomerID : int) -> CustomerDataClass:
+    return cls.__ExecuteReturnOne(SQLFactory.getCustomer, CustomerDataClass, CustomerID)
+
   @classmethod
   def getCustomers(cls) -> List[CustomerDataClass]:
     return cls.__ExecuteReturnMany(SQLFactory.getCustomers, CustomerDataClass)
+
+  @classmethod
+  def getDeliverTimes(cls):
+    return cls.__ExecuteReturnMany(SQLFactory.getDeliverTimes, DeliverTimeDataClass)
+
+  @classmethod
+  def getEmployees(cls):
+    userObjects = User.objects.all()
+    mapObject = map(EmployeeDataClass.fromUser, userObjects)
+    return list(mapObject)
+
+  @classmethod
+  def getIsotopes(cls) -> List[IsotopeDataClass]:
+    return cls.__ExecuteReturnMany(SQLFactory.getIsotopes, IsotopeDataClass)
 
   @classmethod
   def getTracers(cls) -> List[TracerDataClass]:
     return cls.__ExecuteReturnMany(SQLFactory.getTracers, TracerDataClass)
 
   @classmethod
+  def getTracerAndIsotope(cls, TracerID:int) -> Tuple[TracerDataClass, IsotopeDataClass]:
+    Tracer = cls.__ExecuteReturnOne(SQLFactory.getTracer, TracerDataClass, TracerID)
+    Isotope = cls.__ExecuteReturnOne(SQLFactory.getIsotope, IsotopeDataClass, Tracer.isotope)
+    return Tracer, Isotope
+
+  @classmethod
+  def getRuns(cls) -> List[RunsDataClass]:
+    return cls.__ExecuteReturnMany(SQLFactory.getRuns, RunsDataClass)
+
+  @staticmethod
+  def getServerConfig() -> ServerConfiguration:
+    try:
+      ServerConfig = ServerConfiguration.objects.get(ID=1)
+    except ObjectDoesNotExist:
+      Databases    = Database.objects.all()
+      ServerConfig = ServerConfiguration(ID=1, ExternalDatabase=Databases[0])
+      ServerConfig.save()
+
+    return ServerConfig
+
+
+  @classmethod
+  def getVial(cls, Vial: VialDataClass) -> VialDataClass:
+    return cls.__ExecuteReturnOne(SQLFactory.getVial, VialDataClass, Vial)
+
+  @classmethod
+  def getVials(cls, requestDate : date) -> List[VialDataClass]:
+    vials = cls.__ExecuteReturnMany(SQLFactory.getVials, VialDataClass, requestDate)
+    if vials:
+      return vials
+    else:
+      return []
+
+  @classmethod
+  def getVialRange(cls, startDate: date, endDate:  date) -> List[VialDataClass]:
+    return cls.__ExecuteReturnMany(SQLFactory.getVialRange, VialDataClass, startDate, endDate)
+
+  #
+
+  @classmethod
   def updateOrder(cls, order : ActivityOrderDataClass) -> None:
     cls.__ExecuteNoReturn(SQLFactory.updateOrder, order)
     
+
+
   @classmethod
   def createVial(cls, Vial) -> None:
     """[summary]
@@ -87,17 +155,6 @@ class SQL():
     """
     cls.__ExecuteNoReturn(SQLFactory.InsertVial, Vial)
     
-  @classmethod
-  def getVial(cls, Vial: VialDataClass) -> VialDataClass:
-    return cls.__ExecuteReturnOne(SQLFactory.getVial, VialDataClass, Vial)
-
-  @classmethod
-  def getVials(cls, requestDate : date) -> List[VialDataClass]:
-    vials = cls.__ExecuteReturnMany(SQLFactory.getVials, VialDataClass, requestDate)
-    if vials:
-      return vials
-    else:
-      return []
 
   @classmethod
   def updateVial(cls, Vial : VialDataClass) -> None:
@@ -140,30 +197,11 @@ class SQL():
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
     return cls.__ExecuteReturnOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
 
-  @classmethod
-  def getVialRange(cls, startDate: date, endDate:  date) -> List[VialDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getVialRange, VialDataClass, startDate, endDate)
-
-  @classmethod
-  def getEmployees(cls):
-    userObjects = User.objects.all()
-    mapObject = map(EmployeeDataClass.fromUser, userObjects)
-    return list(mapObject)
-
-  @classmethod
-  def getCustomer(cls, CustomerID : int) -> CustomerDataClass:
-    return cls.__ExecuteReturnOne(SQLFactory, CustomerDataClass, CustomerID)
 
   @staticmethod
-  def getServerConfig() -> ServerConfiguration:
-    try:
-      ServerConfig = ServerConfiguration.objects.get(ID=1)
-    except ObjectDoesNotExist:
-      Databases    = Database.objects.all()
-      ServerConfig = ServerConfiguration(ID=1, ExternalDatabase=Databases[0])
-      ServerConfig.save()
+  def getDatabases() -> List[Database]:
+    return list(Database.objects.all())
 
-    return ServerConfig
 ##### END CLASS METHODS ######
 
 def getCustomers():

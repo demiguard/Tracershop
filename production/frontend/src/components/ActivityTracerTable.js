@@ -68,14 +68,8 @@ class ActivityTable extends Component {
       const CustomerMap = new Map();
       for (let CustomerString of data[JSON_CUSTOMER]) {
         const Customer = ParseJSONstr(CustomerString)
-        CustomerMap.set(Customer.ID, {
-          username : Customer.UserName,
-          ID       : Customer.ID,
-          overhead : Customer.overhead,
-          productions : [],
-          CustomerNumber : Customer.CustomerNumber,
-          Name   : Customer.Name,
-        });
+        Customer["productions"] = [];
+        CustomerMap.set(Customer.ID, Customer);
       }
       const Productions = []
       for(const ProductionStr of data[JSON_PRODUCTIONS]){
@@ -83,6 +77,7 @@ class ActivityTable extends Component {
       }
 
       const Orders = []
+
       for(const OrderStr of data[JSON_ORDERS]) {
         Orders.push(ParseJSONstr(OrderStr))
       }
@@ -464,6 +459,8 @@ class ActivityTable extends Component {
         "activity" : Activity,
         "volume" : Volume
       };
+
+      console.log(jsonData);
     this.websocket.send(JSON.stringify(jsonData));
   }
 

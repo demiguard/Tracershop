@@ -4,7 +4,7 @@ from reportlab.pdfgen import canvas
 from datetime import datetime,date, time
 
 from lib import pdfs
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, VialDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
 
 
 
@@ -16,10 +16,16 @@ class PDFsGenerationTest(TestCase):
     1,
     "Test RigtigtNavn",
     "Test@email_1.com",
+    "Test@email_2.com",
+    "Test@email_3.com",
+    "Test@email_4.com",
     "Test Person",
-    "12345678"
+    "12345678",
+    "addr 1",
+    "addr 2",
+    "addr 3",
+    "addr 4"
   )
-  
   test_long_customer = CustomerDataClass(
     "testUser_with_REAAAAAAAAAAAAALY_LOOOOOOOONG_NAAAAAAMES",
     1,
@@ -27,15 +33,22 @@ class PDFsGenerationTest(TestCase):
     1,
     "Test Rigtigt LAAAAAAAAAAAAAAAAAAAAAAAAAAAAANGT Navn ",
     "TestLAAAAAAAAAAAAAAANGEMAAAAAAAIIIILLLLL@email_1.com",
+    "TestLAAAAAAAAAAAAAAANGEMAAAAAAAIIIILLLLL@email_2.com",
+    "TestLAAAAAAAAAAAAAAANGEMAAAAAAAIIIILLLLL@email_3.com",
+    "TestLAAAAAAAAAAAAAAANGEMAAAAAAAIIIILLLLL@email_4.com",
     "Test LAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAANG Person",
-    "12345678"
+    "12345678",
+    "addr 1",
+    "addr 2",
+    "addr 3",
+    "addr 4"
   )
 
   test_order_oid = 9001
 
   test_Order = ActivityOrderDataClass(
     datetime(1993,11,20,11,30), test_order_oid,
-    3, 100000, 120000, 200000, 240000,1,7,"Test Batch Nummer",-1,5,123456, 13.37,
+    3, 100000, 120000, 200000, 240000,6,1,7,"Test Batch Nummer",-1,5,123456, 13.37,
     datetime(1993,11,20,12,30),"Test Kommentar", "Test_bioanalytiker"
   )
 
@@ -47,6 +60,7 @@ class PDFsGenerationTest(TestCase):
     120000,
     0,
     0,
+    6,
     1,
     7,
     "",
@@ -67,6 +81,7 @@ class PDFsGenerationTest(TestCase):
     0,
     0,
     0,
+    6,
     1,
     7,
     "",
@@ -87,6 +102,7 @@ class PDFsGenerationTest(TestCase):
     0,
     0,
     0,
+    6,
     1,
     7,
     "",
@@ -132,6 +148,14 @@ class PDFsGenerationTest(TestCase):
     test_vial_order_2.oid
   )
 
+  test_tracer = TracerDataClass(
+    6, 
+    "FDG",
+    1, -1, 0, True, 1, 
+    "Fludeoxyglucose"
+  )
+
+  test_isotope = IsotopeDataClass(1, "F-18", 65567)
 
 
   def test_PDF_single_order_single_vial(self):
@@ -139,7 +163,8 @@ class PDFsGenerationTest(TestCase):
       "test_pdfs/mail_template_order_single_vial.pdf",
       self.test_customer,
       self.test_Order,
-      [self.test_vial_1]
+      [self.test_vial_1],
+      self.test_tracer, self.test_isotope
     ) 
 
   def test_PDF_long_name(self):
@@ -147,7 +172,8 @@ class PDFsGenerationTest(TestCase):
       "test_pdfs/mail_template_long_customer_Name.pdf",
       self.test_long_customer,
       self.test_Order,
-      [self.test_vial_1]
+      [self.test_vial_1],
+      self.test_tracer, self.test_isotope
     ) 
 
   def test_PDF_order_coid_single_vial(self):
@@ -156,6 +182,7 @@ class PDFsGenerationTest(TestCase):
       self.test_customer,
       self.test_Order,
       [self.test_vial_1],
+      self.test_tracer, self.test_isotope
     )
 
   def test_PDF_Order_COID_many_vials(self):
@@ -164,6 +191,7 @@ class PDFsGenerationTest(TestCase):
       self.test_customer,
       self.test_Order,
       [self.test_vial_1, self.test_vial_2, self.test_vial_3],
+      self.test_tracer, self.test_isotope
     )
 
 

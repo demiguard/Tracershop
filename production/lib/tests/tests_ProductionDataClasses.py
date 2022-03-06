@@ -113,5 +113,5 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
     self.assertIsNone(Vial.OrderMap)
 
   def test_ActivityOrderSQLFields(self):
-    Expected = "deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, run, BID, batchnr, COID, frigivet_af, frigivet_amount, volume, frigivet_datetime, comment, username"
+    Expected = "deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, tracer, run, BID, batchnr, COID, frigivet_af, frigivet_amount, volume, frigivet_datetime, comment, username"
     self.assertEqual(ActivityOrderDataClass.getSQLFields(), Expected)

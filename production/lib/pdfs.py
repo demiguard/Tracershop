@@ -3,8 +3,10 @@ from django.conf import settings
 import os
 from pathlib import Path
 
+
+from lib.decorators import typeCheckfunc
 from lib.SQL import SQLController
-from lib.ProductionDataClasses import CustomerDataClass, ActivityOrderDataClass, InjectionOrderDataClass, VialDataClass
+from lib.ProductionDataClasses import CustomerDataClass, ActivityOrderDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
 from typing import Optional, Tuple, List
 from reportlab.pdfgen import canvas
 from PIL import Image
@@ -57,7 +59,7 @@ class MailTemplate(canvas.Canvas):
     
     y_cursor -= 15 # Move the Cursor Down
 
-    Customer_identification_lines = [Customer.Realname, Customer.contact,Customer.tlf, Customer.email1]
+    Customer_identification_lines = [Customer.Realname, Customer.contact,Customer.tlf, Customer.email]
     max_text_length = 0
 
 
@@ -147,12 +149,13 @@ class MailTemplate(canvas.Canvas):
 
     return y_cursor
 
-  def applyVials(self, x_cursor:int, y_cursor, Vials: List[VialDataClass]):
+  @typeCheckfunc
+  def applyVials(self, x_cursor:int, y_cursor : int, Vials: List[VialDataClass]):
     """[summary]
 
     Args:
-        x_cursor (int): [description]
-        y_cursor ([type]): [description]
+        x_cursor (int): The Cursor 
+        y_cursor (int): [description]
         Vials (List[VialDataClass]): [description]
     Returns:
         int - end position of the y cursor
@@ -161,7 +164,7 @@ class MailTemplate(canvas.Canvas):
       return [
         str(Vial.charge),
         Vial.filltime.strftime("%H:%M"),
-        str(Vial.activity) + " MBq",
+        str(int(Vial.activity)) + " MBq",
         str(Vial.volume) + " ml"
       ]
 
@@ -277,7 +280,15 @@ class MailTemplate(canvas.Canvas):
 
     return y_cursor
 
-  def ApplyOrderActivitySimple(self, x_cursor : int, y_cursor : int, Order: ActivityOrderDataClass, Vials: List[VialDataClass]):
+  def ApplyOrderActivitySimple(
+      self, 
+      x_cursor : int, 
+      y_cursor : int, 
+      Order: ActivityOrderDataClass, 
+      Vials: List[VialDataClass], 
+      Tracer : TracerDataClass, 
+      Isotope : IsotopeDataClass
+    ):
     AssocVial = None
     for vial in Vials:
       if vial.OrderMap == Order.oid:
@@ -295,15 +306,7 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"Dato.: {freedate}")
     y_cursor -= self.__line_width
 
-    """
-    self.drawString(x_cursor, y_cursor, f"volume: {Order.volume}ml")
-    y_cursor -= self.__line_width
-
-    filltime = AssocVial.filltime.strftime("%H:%M")
-    self.drawString(x_cursor, y_cursor, f"Aktivitet: {Order.frigivet_amount}MBq kl: {filltime}")
-    """
-    y_cursor -= self.__line_width
-
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug. Se Vial for batch Nr:")
 
     return y_cursor
     
@@ -327,17 +330,26 @@ class MailTemplate(canvas.Canvas):
 
     self.drawString(x_cursor, y_cursor, f"Tlf: +45 35453949")
     y_cursor -= self.__line_width
-    
-    
-    self.drawString(x_cursor, y_cursor, f"Email: tracershop@pet.rh.dk")
-    y_cursor -= self.__line_width
+  
     
     return y_cursor
+
+  def ApplyText(self, x_cursor:int, y_cursor : int, Tracer : TracerDataClass, Isotope : IsotopeDataClass):
+    
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug. Se Vial for batch Nr")
+
+    y_cursor -= self.__line_width
+
+    return y_cursor
+    
+    
 
 def DrawSimpleActivityOrder(filename :str,
     customer: CustomerDataClass,
     Order: ActivityOrderDataClass,
-    Vials: List[VialDataClass]
+    Vials: List[VialDataClass],
+    Tracer : TracerDataClass,
+    Isotope : IsotopeDataClass
   ):
   template  = MailTemplate(filename) 
 
@@ -349,7 +361,7 @@ def DrawSimpleActivityOrder(filename :str,
   x_cursor += 10
   y_cursor -= 20
 
-  y_cursor = template.ApplyOrderActivitySimple(x_cursor, y_cursor, Order, Vials)
+  y_cursor = template.ApplyOrderActivitySimple(x_cursor, y_cursor, Order, Vials, Tracer, Isotope)
 
   y_cursor -= 50
 
@@ -388,14 +400,14 @@ def DrawActivityOrder(
 
   template.save()
 
-def getStaticFolder(customer: CustomerDataClass, Order: ActivityOrderDataClass):
+def getPdfFilePath(customer: CustomerDataClass, Order: ActivityOrderDataClass):
   year = Order.deliver_datetime.strftime("%Y")
   month = Order.deliver_datetime.strftime("%m")
 
-  pdfsPath  = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pfds")
-  customerPath = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pfds/{customer.UserName}/")
-  yearlyPath = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pfds/{customer.UserName}/{year}")
-  monthlyPath =Path(f"{settings.BASE_DIR}/frontend/static/frontend/pfds/{customer.UserName}/{year}/{month}")
+  pdfsPath  = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs")
+  customerPath = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/")
+  yearlyPath = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}")
+  monthlyPath =Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}/{month}")
 
   if not pdfsPath.exists():
     pdfsPath.mkdir()
@@ -409,4 +421,4 @@ def getStaticFolder(customer: CustomerDataClass, Order: ActivityOrderDataClass):
   if not monthlyPath.exists():
     monthlyPath.mkdir()
 
-  return f"{settings.BASE_DIR}/frontend/static/frontend/pfds/{customer.UserName}/{year}/{month}/{Order.oid}.pdf"
+  return f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}/{month}/{Order.oid}.pdf"

@@ -20,9 +20,8 @@ JSON_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}"
 @unique
 class EmailEvents(Enum):
   #Note that due to this being database ID, we are 1 indexed instead of 0 indexed
-  STATUS_SET_TO_2 = 1
-  STATUS_SET_TO_3 = 2
-  STATUS_SET_TO_0 = 3
+  STATUS_SET_TO_3 = 1
+  STATUS_SET_TO_0 = 2
 
 # Long list JSON key word used in Json messsages
 # These should have great overlap with production/frontend/src/lib/constants.js

@@ -14,5 +14,9 @@ class APIGetCustomers(View):
 
   def get(self, request):
     return ProductionJSONResponse({
-      JSON_CUSTOMER : SQLController.getCustomers()
+      JSON_CUSTOMER : self.SQL.getCustomers()
     })
+
+  def __init__(self, SQL_Controller=SQLController.SQL()):
+    self.SQL = SQL_Controller
+    super().__init__()

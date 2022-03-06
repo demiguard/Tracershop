@@ -19,12 +19,17 @@ class APIGetActivityOrders(View):
     except ValueError:
       return HttpResponseBadRequest()
 
-    Orders = SQLController.getActivityOrders(requestDate, tracerID)
-    productions = SQLController.GetDeliverTimes()
-    vials = SQLController.getVials(requestDate)
+    Orders = self.SQL.getActivityOrders(requestDate, tracerID)
+    productions = self.SQL.getDeliverTimes()
+    vials = self.SQL.getVials(requestDate)
 
     return ProductionJSONResponse({
       JSON_ORDERS : Orders,
       JSON_PRODUCTIONS : productions,
       JSON_VIALS : vials
     })
+
+  def __init__(self, SQL_Controller=SQLController.SQL()):
+    self.SQL = SQL_Controller
+    super().__init__()
+

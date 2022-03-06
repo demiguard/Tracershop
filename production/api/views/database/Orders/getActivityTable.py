@@ -19,14 +19,11 @@ class APIGetActivityTable(View):
     except ValueError:
       return HttpResponseBadRequest()
 
+    Orders = self.SQL.getActivityOrders(requestDate, tracerID)
 
-    Orders = SQLController.getActivityOrders(requestDate, tracerID)
-
-    print(Orders)
-
-    runs = SQLController.getRuns()
-    customers = SQLController.getCustomers()
-    productions = SQLController.GetDeliverTimes()
+    runs = self.SQL.getRuns()
+    customers = self.SQL.getCustomers()
+    productions = self.SQL.getDeliverTimes()
     vials    = self.SQL.getVials(requestDate)
     employees = self.SQL.getEmployees()
 
