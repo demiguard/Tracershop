@@ -145,7 +145,6 @@ def updateOrder(Order : ActivityOrderDataClass) -> str:
   return SQLQuery
 
 def InsertVial(Vial: VialDataClass) -> str:
-  print(Vial)
   return f"""
     INSERT INTO VAL(
       customer,

@@ -31,9 +31,9 @@ class mailTests(TestCase):
       7, 
       "Realname", 
       "Christoffer.vilstrup.Jensen@Regionh.dk", 
-      "email2", 
+      "Christoffer.vilstrup.Jensen@Regionh.dk", 
       "email3", 
-      " email4", 
+      "Christoffer.vilstrup.Jensen@Regionh.dk", 
       "contact", "+45 20 99 05 50", "addr1", "addr2", "addr3", "addr4"
   )
     

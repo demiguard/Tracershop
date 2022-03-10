@@ -43,7 +43,7 @@ def validifyEmailAddress(potentialEmail : str) -> bool:
     return True
   return False  
 
-def prepareMail(emailHeader :EmailHeader, pdfFile):
+def prepareMail(emailHeader :EmailHeader, fileBytes):
   fname = "følgeseddel.pdf"
 
 
@@ -56,7 +56,7 @@ def prepareMail(emailHeader :EmailHeader, pdfFile):
   
   mail.attach(text)
   payload = MIMEBase('application', 'octate-stream', Name=fname)
-  payload.set_payload(pdfFile.read())
+  payload.set_payload(fileBytes)
 
   encoders.encode_base64(payload)
 
@@ -75,17 +75,19 @@ def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDa
   ServerConfiguration = SQL.getServerConfig()
 
   with open(pdfPath, 'rb') as f:
-    for email in emails:
-      if not validifyEmailAddress(email):
-        continue
+    fileBytes = f.read()
+    
+  for email in emails:
+    if not validifyEmailAddress(email):
+      continue
 
-      Header = EmailHeader(
-        To=email,
-        Subject=subject_message,
-        message=Text_message
-      )
+    Header = EmailHeader(
+      To=email,
+      Subject=subject_message,
+      message=Text_message
+    )
 
-      mail = prepareMail(Header, f)
+    mail = prepareMail(Header, fileBytes)
 
-      with SMTP(ServerConfiguration.SMTPServer) as smtp:
-        smtp.sendmail(constants.EMAIL_SENDER_ADDRESS, [email], mail.as_string())
+    with SMTP(ServerConfiguration.SMTPServer) as smtp:
+      smtp.sendmail(constants.EMAIL_SENDER_ADDRESS, [email], mail.as_string())

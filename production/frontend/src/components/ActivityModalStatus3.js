@@ -26,6 +26,9 @@ class ActivityModalStatus3 extends Component {
     return employee.Username;
   }
 
+  
+
+
   /**
    * 
    * @param {Object} vial Simple object with the attributes 
@@ -37,6 +40,19 @@ class ActivityModalStatus3 extends Component {
 
 
   render(){
+
+    const username = this.props.customer.UserName;
+    const year     = this.props.Order.deliver_datetime.substring(0,4);
+    const month    = this.props.Order.deliver_datetime.substring(5,7);
+    const oid      = this.props.Order.oid
+
+    const ToPDF = () => {
+      let path = `/static/frontend/pdfs/${username}/${year}/${month}/${oid}.pdf`
+      window.location.href = path;
+    }
+
+
+
     const vials = [];
     for(const [vialID, vial] of this.props.vials) {
       if (vial.OrderMap == this.props.Order.oid) {
@@ -56,7 +72,7 @@ class ActivityModalStatus3 extends Component {
         
           <tbody>
             {renderTableRow(0,["Order ID:", this.props.Order.oid])}
-            {renderTableRow(1,["Kunde:", this.props.customer.username + " - " + this.props.customer.Name])}
+            {renderTableRow(1,["Kunde:", this.props.customer.UserName + " - " + this.props.customer.Realname])}
             {renderTableRow(2,["Bestilt Aktivitet:", this.props.Order.amount])}
             {renderTableRow(3,["Udleveret Aktivitet",this.props.Order.frigivet_amount])}
             {renderTableRow(4,["Bestilt til:",renderDateTime(this.props.Order.deliver_datetime)])}
@@ -86,6 +102,7 @@ class ActivityModalStatus3 extends Component {
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={this.CloseModal.bind(this)}> Luk </Button>
+        <Button onClick={ToPDF}> Se følgeseddel</Button>
       </Modal.Footer>
     </Modal>)
   }

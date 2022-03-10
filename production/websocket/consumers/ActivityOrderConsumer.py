@@ -259,4 +259,5 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
 
   @database_sync_to_async
   def send_mail(self, pdfFilePath, Customer, Order):
+    print("Sending Mail")
     sendMail(pdfFilePath, Customer, Order)
