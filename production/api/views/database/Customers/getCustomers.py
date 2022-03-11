@@ -3,7 +3,7 @@ from django.views.generic import View
 from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
 
-from constants import JSON_CUSTOMER
+from constants import JSON_CUSTOMERS
 
 class APIGetCustomers(View):
   """
@@ -14,7 +14,7 @@ class APIGetCustomers(View):
 
   def get(self, request):
     return ProductionJSONResponse({
-      JSON_CUSTOMER : self.SQL.getCustomers()
+      JSON_CUSTOMERS : self.SQL.getCustomers()
     })
 
   def __init__(self, SQL_Controller=SQLController.SQL()):

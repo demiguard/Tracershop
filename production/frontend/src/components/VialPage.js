@@ -1,7 +1,7 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { JSON_CUSTOMER, JSON_VIALS } from "./lib/constants";
+import { JSON_CUSTOMERS, JSON_VIALS } from "./lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "./lib/formatting";
 import { autoAddCharacter } from "./lib/utils";
 
@@ -49,7 +49,7 @@ class VialPage extends Component {
       }
       
       const newCustomerMap = new Map();
-      if (data[JSON_CUSTOMER]) for (const customerString of data[JSON_CUSTOMER]) {
+      if (data[JSON_CUSTOMERS]) for (const customerString of data[JSON_CUSTOMERS]) {
         const customer = ParseJSONstr(customerString);
         newCustomerMap.set(customer.CustomerNumber, customer);
       }

@@ -14,6 +14,11 @@ from api.models import ServerConfiguration
 from constants import * # Import the many WEBSOCKET constants
 from lib import pdfs
 
+import logging
+
+logger = logging.getLogger('DebugLogger')
+
+
 class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
   channel_name = 'Activity'
 
@@ -41,6 +46,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
     )
 
     await self.accept()
+    logger.info(f"User: {self.user.username} connected")
 
   async def disconnect(self, close_code):
     await self.channel_layer.group_discard(
@@ -60,7 +66,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
     
     """
     print("Websocket RECIEVE:\n",message) # Debug message 
-    print("User:", self.user)
+    logger.info(message)
     dateStr      = message[WEBSOCKET_DATE] # Only used on the front end
     messageType  = message[WEBSOCKET_MESSAGETYPE]
 
@@ -123,6 +129,10 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
         
         SerlizedUpdatedOrders = LMAP(lambda x: encode(x.toJSON()), UpdatedOrders)
 
+        pdfFilePath = await self.createPDF(Order, Vials)
+        Customer    = await self.getCustomer(Order.BID)
+        await self.send_mail(pdfFilePath, Customer, Order)
+
         await self.channel_layer.group_send(
           self.group_name,
           {
@@ -135,9 +145,7 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
         )
       else:
         print("No LegacyMode is no go")
-      pdfFilePath = await self.createPDF(Order, Vials)
-      Customer    = await self.getCustomer(Order.BID)
-      self.send_mail(pdfFilePath, Customer, Order)
+      
       
 
 
@@ -259,5 +267,5 @@ class ActivityOrderConsumer(AsyncJsonWebsocketConsumer):
 
   @database_sync_to_async
   def send_mail(self, pdfFilePath, Customer, Order):
-    print("Sending Mail")
+    logger.info(f"Sending Mail with path {pdfFilePath} about Order {Order.oid} to {Customer.email}")
     sendMail(pdfFilePath, Customer, Order)

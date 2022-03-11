@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 import { Form, Button, Container } from "react-bootstrap";
-import "./styleAuthenticate.css"
+import "./css/styleAuthenticate.css"
 
 export { Authenticate }
 

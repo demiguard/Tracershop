@@ -3,7 +3,7 @@ import { Container, Table, FormControl, Form } from "react-bootstrap";
 import { ajax } from "jquery";
 import TracerModal from "./TracerModal";
 import { BooleanMapping } from "./lib/utils";
-import { JSON_CUSTOMER, JSON_ISOTOPE, JSON_TRACER, JSON_TRACER_MAPPING, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "./lib/constants";
+import { JSON_CUSTOMERS, JSON_ISOTOPE, JSON_TRACER, JSON_TRACER_MAPPING, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "./lib/constants";
 import { ParseJSONstr } from "./lib/formatting";
 
 export {ConfigPage}
@@ -44,7 +44,7 @@ export default class ConfigPage extends Component {
       const tracer = ParseJSONstr(tracerString);
       TracerMap.set(tracer.id, tracer); 
     }
-    for(const CustomerString of customerJSON[JSON_CUSTOMER]){
+    for(const CustomerString of customerJSON[JSON_CUSTOMERS]){
       const Customer = ParseJSONstr(CustomerString);
       newCustomerMap.set(Customer.ID, Customer);
     }

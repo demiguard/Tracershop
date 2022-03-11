@@ -7,7 +7,7 @@ from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
 from lib.utils import LMAP
 
-from constants import JSON_VIALS, JSON_CUSTOMER
+from constants import JSON_VIALS, JSON_CUSTOMERS
 
 HISTORIC_RANGE = 7
 
@@ -34,7 +34,7 @@ class APIGetVialRange(View):
 
     return ProductionJSONResponse({
       JSON_VIALS : Vials,
-      JSON_CUSTOMER : customers
+      JSON_CUSTOMERS : customers
     })
 
   def __init__(self, SQL=SQLController.SQL()):

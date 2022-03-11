@@ -2,7 +2,7 @@ import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl } from "react-bootstrap";
 import { FormatNumber, FormatTime, ParseJSONstr } from "./lib/formatting.js"
-import { JSON_CUSTOMER, JSON_DELIVERTIMES } from "./lib/constants.js"
+import { JSON_CUSTOMERS, JSON_DELIVERTIMES } from "./lib/constants.js"
 
 
 export { CustomerModal }
@@ -53,7 +53,7 @@ class CustomerModal extends Component {
       }
 
       const NewModalState = {...this.state, 
-        customer : ParseJSONstr(res[JSON_CUSTOMER]),
+        customer : ParseJSONstr(res[JSON_CUSTOMERS]),
         deliverTimes : newDeliverTimeMap,
       }
       this.setState(NewModalState);

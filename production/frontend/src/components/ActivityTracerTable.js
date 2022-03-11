@@ -1,4 +1,4 @@
-import { ajax, parseJSON } from "jquery";
+import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container } from 'react-bootstrap'
 import { renderStatusImage, renderTableRow } from "./lib/Rendering";
@@ -7,10 +7,11 @@ import { CompareDates } from "./lib/utils";
 import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
 import { CountMinutes, CalculateProduction } from "./lib/physics";
 import { ActivityModal } from "./ActivityModal.js";
-import { JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, 
+import { CreateOrderModal } from "./CreateOrderModal";
+import { JSON_AMOUNT, JSON_CUSTOMER, JSON_CUSTOMERS, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, JSON_PRODUCTION,
   WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS, 
   WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, 
-  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, JSON_EMPLOYEE,
+  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, JSON_EMPLOYEE, WEBSOCKET_MESSAGE_CREATE_ORDER, WEBSOCKET_DATA_CREATE_ORDER,
 } from "./lib/constants";
 
 
@@ -59,6 +60,7 @@ class ActivityTable extends Component {
       showModal : false,
       ModalOrder : null,
       ModalCustomer : null,
+      Modal: null
     }
 
     ajax({
@@ -66,7 +68,7 @@ class ActivityTable extends Component {
       type:"get",
     }).then((data) => {
       const CustomerMap = new Map();
-      for (let CustomerString of data[JSON_CUSTOMER]) {
+      for (let CustomerString of data[JSON_CUSTOMERS]) {
         const Customer = ParseJSONstr(CustomerString)
         Customer["productions"] = [];
         CustomerMap.set(Customer.ID, Customer);
@@ -418,6 +420,7 @@ class ActivityTable extends Component {
       showModal : false,
       ModalOrder : null,
       ModalCustomer : null,
+      Modal : null,
     });
   }
 
@@ -425,7 +428,7 @@ class ActivityTable extends Component {
    * Changes the internal state such that the modal for the request oid is displayed
    * @param {number} oid 
    */
-  activateModal(oid){
+  activateOrderModal(oid){
     const Order = this.state.orders.get(oid);
     if(Order === null) throw "Order is null";
     if(Order === undefined) throw "Order is undefined";
@@ -435,7 +438,16 @@ class ActivityTable extends Component {
       showModal : true,
       ModalOrder : Order,
       ModalCustomer : Customer,
+      Modal : ActivityModal
     });
+  }
+
+  activateCreateModal(){
+    this.setState({
+      ...this.state,
+      Modal : CreateOrderModal,
+      showModal : true,
+    })
   }
 
   createVial(
@@ -462,6 +474,17 @@ class ActivityTable extends Component {
 
       console.log(jsonData);
     this.websocket.send(JSON.stringify(jsonData));
+  }
+
+  modalCreateOrder(customer, production, amount){
+    const message = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_CREATE_ORDER);
+    const payload = {};
+    payload[JSON_CUSTOMER] = customer;
+    payload[JSON_PRODUCTION] = production;
+    payload[JSON_AMOUNT] = amount;
+
+    message[WEBSOCKET_DATA_CREATE_ORDER] = payload;
+    this.websocket.send(JSON.stringify(message));
   }
 
   recieveVial(Vial){
@@ -583,11 +606,11 @@ class ActivityTable extends Component {
     const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
 
     const customer = this.state.customer.get(order.BID)
-    const CustomerName = (customer !== undefined) ? customer.username : order.BID;
+    const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
     const TotalAmount  = (order.COID === -1) ? order.total_amount_o : "Flyttet til:" + order.COID;
 
     return renderTableRow(order.oid, [
-      renderStatusImage(order.status, () => this.activateModal(order.oid)),
+      renderStatusImage(order.status, () => this.activateOrderModal(order.oid)),
       order.oid,
       CustomerName,
       TotalAmount,
@@ -605,13 +628,13 @@ class ActivityTable extends Component {
     const Run       = this.renderRun(Order); 
     
     const customer = this.state.customer.get(Order.BID)
-    const CustomerName = (customer !== undefined) ? customer.username : Order.BID;
+    const CustomerName = (customer !== undefined) ? customer.UserName : Order.BID;
     const TotalAmount  = (Order.COID === -1) ? Order.total_amount : "Flyttet til:" + Order.COID;
     const TotalAmountO = (Order.COID === -1) ? Order.total_amount_o : "";
 
     return (
     <tr key={Order.oid}> 
-      <td>{renderStatusImage(Order.status, () => this.activateModal(Order.oid))}</td>
+      <td>{renderStatusImage(Order.status, () => this.activateOrderModal(Order.oid))}</td>
       <td>{Order.oid}</td>
       <td>{CustomerName}</td>
       <td>{Order.amount}</td>
@@ -678,8 +701,17 @@ class ActivityTable extends Component {
     
     return (<div>
       <Container>
-        <Row> Produktioner: </Row>
-        {RenderedRuns}
+        <Row>
+
+          <Col sm={10}>
+            <Row> Produktioner: </Row>
+            {RenderedRuns}
+          </Col>
+          <Col sm={2}>
+            <Button onClick={this.activateCreateModal.bind(this)}> Opret ny Ordre</Button>
+          </Col>
+        </Row>
+        
       </Container>
       { pendingOrders.length ? // This statement makes it so the table is conditionally render on the number of orders
         <Table>
@@ -722,16 +754,18 @@ class ActivityTable extends Component {
       </Table> : <div/>
     }
     { this.state.showModal ? 
-      <ActivityModal
+      < this.state.Modal
         show={this.state.showModal}
         Order={this.state.ModalOrder}
         vials={this.state.vial}
         customer={this.state.ModalCustomer}
+        customers={this.state.customer} // Your naming skills SUXXS
         employees={this.state.employees}
         onClose={this.closeModal.bind(this)}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}
+        createOrder={this.modalCreateOrder.bind(this)}
       />
     : null }
     </div>
