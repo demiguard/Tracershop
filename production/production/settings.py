@@ -185,7 +185,7 @@ LOGGING = {
         'myHandler' : {
             'level' : 'DEBUG',
             'class' : 'logging.FileHandler',
-            'filename' : '/home/christoffer/Documents/Tracershop/production/log/debug.log',
+            'filename' : debug_file_log,
             'formatter'  : 'django.server'
         }
     },
@@ -203,7 +203,6 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        
     }
 }
 
