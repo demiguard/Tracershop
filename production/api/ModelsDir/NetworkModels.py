@@ -4,7 +4,7 @@ from api.ModelsDir.BaseModels import SubscribeableModel
 class Address(SubscribeableModel):
   ID   = models.AutoField(primary_key=True)
   ip   = models.CharField(max_length=30, null=True)
-  port = models.CharField(max_length=6, null=True) 
+  port = models.CharField(max_length=6, null=True)
   description = models.CharField(max_length=120,null=True)
 
   def __str__(self):

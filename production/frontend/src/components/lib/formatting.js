@@ -1,4 +1,4 @@
-export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate, ParseJSONstr, ParseDanishNumber }
+export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate, ParseJSONstr, ParseDanishNumber, ParseDjangoModelJson }
 
 function parseDate(inputStr){
   console.log(inputStr);
@@ -16,7 +16,6 @@ function parseDate(inputStr){
 function ParseDanishNumber(numberString){
   if (typeof numberString == "string") {
     const parsedNumber = numberString.replace(/,/g, ".");
-    
     return Number(parsedNumber);
   } else {
     return numberString
@@ -39,9 +38,9 @@ function parseDateToDanishDate(dateString){
 
 /**
  * Checks if a string is on a valid time format:
- * 
+ *
  * - HH:MM:SS
- * - (0)H:MM:SS 
+ * - (0)H:MM:SS
  * - HH:MM   -> HH:MM:00
  * - (0)H:MM -> 0H:MM:00
  * - HH.MM.SS  -> HH:MM:00
@@ -50,12 +49,12 @@ function parseDateToDanishDate(dateString){
  * - (0)H.MM -> 0H:MM:00
  * Number in paraentens are missing from the text and are assumed to be there.
  * If the string is not on the format returns null.
- * 
+ *
   * @param {string} timeStr
   * @returns {string} time string on format HH:MM:SS
 */
 function FormatTime (timeStr) {
-  
+
   if (/^\d{2}:\d{2}:\d{2}$/g.test(timeStr)) return timeStr;
   if (/^\d{1}:\d{2}:\d{2}$/g.test(timeStr)) return "0" + timeStr;
   if (/^\d{2}:\d{2}$/g.test(timeStr)) return timeStr + ":00";
@@ -75,11 +74,11 @@ function FormatNumber(NumberString) {
 }
 
 function FormatDateStr(number) {
-  return number < 10 ? "0" + String(number) : String(number) 
+  return number < 10 ? "0" + String(number) : String(number)
 }
 
 /**
- * @param {String} JSONString  
+ * @param {String} JSONString
  * @returns {object} Jsonformatted object
  */
 function ParseJSONstr(JSONString){
@@ -88,4 +87,21 @@ function ParseJSONstr(JSONString){
     json = JSON.parse(json);
   }
   return json;
+}
+
+function ParseDjangoModelJson(JSONString){
+  var json = JSONString;
+  while (typeof(json) == "string"){
+    json = JSON.parse(json);
+  }
+  const ModelMap = new Map();
+  // Use that it's a list of objects with information in the following form
+  //{ model : string of model name on format module.model for instance api.database
+  //  pk    : Something that is the primary key of the model instance
+  //  fields : Object with table names
+  //}
+  for (const model of json){
+    ModelMap.set(model.pk, model.fields)
+  }
+  return ModelMap;
 }

@@ -1,3 +1,5 @@
+import socket
+
 from django.test import TestCase
 
 from lib import mail
@@ -6,6 +8,7 @@ from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
 from datetime import datetime
 from api import models
 
+from lib.SQL.SQLController import SQL
 
 class mailTests(TestCase):  
   def setUp(self):
@@ -22,6 +25,8 @@ class mailTests(TestCase):
       address=add,
       testinDatabase=0
     )
+
+    self.sc = SQL.getServerConfig()    
 
 
   test_customer = CustomerDataClass(
@@ -50,6 +55,9 @@ class mailTests(TestCase):
   #def test_prepareMail(self):
   #  mail.prepareMail(self.emailHeader, self.filename)
 
-  def test_sendMail(self):
-    mail.sendMail(self.filename, self.test_customer, self.test_order)
+  def test_sendMail(self): # This test have a dependency on the mail server working
+    try:
+      mail.sendMail(self.filename, self.test_customer, self.test_order, self.sc)
+    except socket.gaierror:
+      pass
 

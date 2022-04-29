@@ -1,7 +1,7 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { JSON_CUSTOMERS, JSON_VIALS } from "./lib/constants";
+import { JSON_CUSTOMERS, JSON_VIALS, WEBSOCKET_MESSAGE_ECHO } from "./lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "./lib/formatting";
 import { autoAddCharacter } from "./lib/utils";
 
@@ -35,36 +35,16 @@ class VialPage extends Component {
       SearchPattern  : SearchOptions.DATE,
       InvertedSearch : true,
 
-      vials : new Map(),
-      customers : new Map(),
+      vials : this.props.vials,
     }
-    ajax({
-      url:"api/getVialRange",
-      type:"get"
-    }).then((data) => {
-      const newVialMap = new Map();
-      if (data[JSON_VIALS]) for (const vialString of data[JSON_VIALS]) {
-        const vial = ParseJSONstr(vialString);
-        newVialMap.set(vial.ID, vial);
-      }
-      
-      const newCustomerMap = new Map();
-      if (data[JSON_CUSTOMERS]) for (const customerString of data[JSON_CUSTOMERS]) {
-        const customer = ParseJSONstr(customerString);
-        newCustomerMap.set(customer.CustomerNumber, customer);
-      }
-
-      this.setState({
-        vials : newVialMap,
-        customers : newCustomerMap,
-      });
-    })
   }
 
   keyDateSearch(event){
+    
     if (event.key === "Enter"){
       this.dateSearch();
     }
+    
   }
 
   /**
@@ -72,6 +52,10 @@ class VialPage extends Component {
    * Functionality is sending a request to the backend and updating Vials on response.
    */
   dateSearch(){
+    if(!this.state.filterSearchDate){
+      this.setState({...this.state, vials : new Map(this.props.vials)});
+      return;
+    }
     var parsedDate;
     try {
       parsedDate = parseDate(this.state.filterSearchDate);
@@ -85,6 +69,10 @@ class VialPage extends Component {
     const month = Number(parsedDate.substr(5,2));
     const day   = Number(parsedDate.substr(8,2));
     
+    // Note that websockets works syncronized, and the callback is fucked. 
+    // I think it's because I define a onmessage function in the websocket
+    // This means that you can't add an function argument
+    // Jesus javascript, this is stupid    
     ajax({
       url:`api/getVials/${year}/${month}/${day}`,
       type:"get"
@@ -97,7 +85,6 @@ class VialPage extends Component {
       }
       this.setState({...this.state, vials : newVialMap});
     })
-
   }
 
   /**
@@ -147,9 +134,15 @@ class VialPage extends Component {
   renderVial(vial){
     // Sadly I need some extra functionality so can't really use the table rendering function :(
     
-    const customer = this.state.customers.get(Number(vial.customer));
-    const customerName = (customer) ? customer.UserName : `Ukendet med nummer ${vial.customer}`
-    const orderMap = (vial.OrderMap) ? vial.OrderMap : "-";
+    var customerName = "";
+    for(const [_, customer] of this.props.customer){
+      if (customer.kundenr == vial.customer){
+        customerName = customer.UserName;
+        break;
+      }
+    }
+    if(!customerName) customerName = `Ukendet med nummer ${vial.customer}`;
+    //const customerName = (customer) ? customer.UserName : `Ukendet med nummer ${vial.customer}`;
 
     return (
       <tr key={vial.ID}>
@@ -208,9 +201,9 @@ class VialPage extends Component {
     }
 
     const CustomerOptions = []
-    for(const [_, customer] of this.state.customers){
+    for(const [_, customer] of this.props.customer){  
       CustomerOptions.push(
-        <option value={customer.CustomerNumber} key={customer.CustomerNumber}>{customer.UserName}</option>
+        <option value={customer.kundenr} key={customer.kundenr}>{customer.UserName}</option>
       )
     }
 

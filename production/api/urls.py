@@ -7,7 +7,6 @@ from django.urls import path
 from api.views.database.ServerConfig import APIServerConfig
 
 ## Calender Views
-from api.views.database.Calender.MonthColorEndpoint      import APIMonthColorEndpoint
 from api.views.database.Calender.getCloseDays            import APIClosedDays
 
 ## Customers Views
@@ -16,11 +15,6 @@ from api.views.database.Customers.getCustomer             import APIGetCustomer
 from api.views.database.Customers.DeliverTimesEndpoint    import APIDeliverTimes
 
 ## Order Views
-from api.views.database.Orders.createEmptyOrder        import APICreateEmptyFDGOrder
-from api.views.database.Orders.getActivityOrders       import APIGetActivityOrders
-from api.views.database.Orders.getActivityTable        import APIGetActivityTable
-from api.views.database.Orders.getSpecialTracersOrders import APIGetSpecialTracerOrders
-from api.views.database.Orders.getVialRange            import APIGetVialRange
 from api.views.database.Orders.getVials                import APIGetVials
 
 ## Tracer Views
@@ -39,18 +33,12 @@ Views = [
   APIGetCustomers,
   APIGetTracers,
   APIDeliverTimes,
-  APIMonthColorEndpoint,
-  APIGetActivityOrders,
-  APIGetActivityTable,
-  APIGetSpecialTracerOrders,
   APIUpdateTracer,
   APIGetTracerCustomer,
   APIUpdateTracerCustomer,
   APICreateNewTracer,
   APIDeleteTracer,
   APIClosedDays,
-  APICreateEmptyFDGOrder,
-  APIGetVialRange,
   APIGetVials,
   APIServerConfig,
 ]

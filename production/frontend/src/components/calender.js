@@ -8,51 +8,58 @@ import {DAYS, DAYS_PER_WEEK} from './lib/constants'
 
 export { Calender }
 
+/** This is a calender, where stuff can be injected on date click and on month change
+ *  Alot of functions are in injected into this Component.
+ *
+ * Props:
+ *  date - Initial date for the calender
+ *  onMonthChange - function(Date object) -> No return - injected function in response to a user changing the month.
+ *  onDayChange - 
+ *  getColor - function that adds css classes, primarily to add a different color to the date
+ */
 export default class Calender extends Component {
   constructor(props) {
     super(props);
-
+     // This is because when you change the month in the calender,
+     // you should cause other changes
     this.state = {
-      activeMonth : this.props.date,  //This is because when you change the month in the calender, you should not update the orders
-      DateColors  : {}
+      activeMonth : this.props.date,
     }
-
-    this.props.updateColors(
-      this.props.date.getFullYear(),
-      this.props.date.getMonth()
-    ).then((newDateColors) => {
-      this.updateColor(newDateColors);  
-    });
   }
 
-  /**
-   * 
-   * @param {Object} newDateColors - Contains the new color mappings. 
-   */
-  updateColor(newDateColors) {
-    const newState = {...this.state, DateColors : newDateColors};
-    this.setState(newState);
-  }
-
-  /**
-   * 
+  /** This function is called when the user changes the current month
+   *
    * @param {Number} changeby - This number indicates how many months you wish to change by
    */
   changeMonth(changeby) {
     const year  = this.state.activeMonth.getFullYear();
     const month = this.state.activeMonth.getMonth() + changeby;
-    
+
+    const NewMonth = new Date(year, month, 1);
+
     this.setState({...this.state,
-      activeMonth : new Date(year, month, 1)
+      activeMonth : NewMonth
     });
-    this.props.updateColors(year, month).then((newDateColors) => this.updateColor(newDateColors));
+    this.props.onMonthChange(NewMonth);
+
   }
 
+  /** Calculate the amount of days in the month
+   *
+   * Programmers Note and complaint
+   * This takes advantage of javascript date system to largest goldmedaæ.
+   * Since the "zeroth" day of a month doesn't exists, (* Yeah 0-index is not for days *)
+   * The date time system creates the last day of the previous month.
+   * Note that there's not a +1 in front of the month, however here the next parcularity of
+   * Javascripts Date system. Months ARE zero indexed, so the +1 is kinda build in.
+   * Then just select the date
+   *
+   *
+   * @param {*} year
+   * @param {*} month
+   * @returns {Date}
+   */
   DaysInAMonth(year, month){
-     //This takes advantage of javascript date system.
-     // Since the "zeroth" day of a month doesn't exists (* Yeah 0-index is not for days *)
-     // The date time system creates the last day of the month before.
-     // Then just select the date
     return new Date(year, month,0).getDate();
   };
 
@@ -76,19 +83,16 @@ export default class Calender extends Component {
     return pivot;
   };
 
-  
-
-
+ // ##### Render Functions ##### //
   renderDay(date) {
     const DateObject  = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date, 12);
     const DateStr     = String(DateObject.getFullYear()) + '-' + FormatDateStr(DateObject.getMonth() + 1) + '-' + FormatDateStr(DateObject.getDate());
     const StatusClass = this.props.getColor(DateStr, this.state.DateColors);
 
     return (
-      <div className={"calender-row date-base-class " + StatusClass}  onClick={() => this.props.onDayClick(DateObject, this)}> {DateObject.getDate()}</div>
+      <div className={"calender-row date-base-class " + StatusClass}  onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
     );
   }
-
 
   renderWeek(startingDate) {
     return(
@@ -104,12 +108,10 @@ export default class Calender extends Component {
     );
   }
 
-
-
-  render() {    
+  render() {
     var startingDate = this.LastmondayInLastMonth(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth())
     const EndingDate = this.FirstSundayInNextMonth(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth())
-    
+
     const weeks = [];
 
     while (startingDate <= EndingDate) {

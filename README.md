@@ -50,7 +50,7 @@ Note that all new tables (to the right) have a customer_ ommited and that not al
 In general the process will look something like this.
 
 1. Download the git repo from url:
-2. Install Mysql and update the django parameters to match the database
+2. Install Mysql and update the django parameters to match the database (Note this is easier said than done)
 3. Fill in relevant tables in the mysql database (inside of tracershop/construct_database there's a couple fo scripts that might be helpful)
 4. Install pingService. See pingService/README.md for installation
 5. Install SyncoDBService. See SyncoDbService
@@ -64,3 +64,51 @@ Apologies for any holes in the Documentation
 Here's a list of some the useful tutorials that have helped setting up the production
 
 * <https://medium.com/analytics-vidhya/django-react-integration-37acc304e984>
+
+### Javascript Tips and Tricks
+
+So if you're not a Javascript Shark, here are some stuff that might help you to understand what the code is doing. There's quite a few "Particulars." Said nicely...
+
+For loops of vs in - Objects such as maps and arrays can be iterated like this:
+
+```javascript
+for(const Element of Array){
+  // Here the element is the data of the array
+}
+
+for(const index in Array){
+  // Here it's the index of the element of the array
+  // To access the array you need Array[index]
+}
+
+for(const [key, value] of Map){
+  // here the only thing you should know is that Map.get(key) == value
+}
+
+// In general I do not use the in keyword a lot and i try to avoid it
+```
+
+The months of javascript is 0 indexed FOR SOME REASON ie: 0 - Jan, 1 - Feb, ... It very stupid.
+
+Object creation in javascript is wierd to say the least, with regards to object creation
+
+```javascript
+
+const text = "HelloWorld";
+
+const Obj = { text : text}; // Produces an object { text : "HelloWorld"}
+// while 
+const Obj2 = {};
+Obj2[text] = text
+// produces Obj2 = { HelloWorld : "HelloWorld"} 
+
+```
+
+Note this is mostly applicable in Object with constants. One should perhaps say create dataclass for Javascript, but that is of the time doc writting not the case.
+
+### Terminologies
+
+Belows is a list words that is used throught the Documentation and this is the meaning
+
+* **Ghost Order** A ghost order is an artificalial order created by tracershop when the production moves an order to another timeslot without a host Order.
+* **Dead Order** A dead order is an order that doesn't contain ordered activity or deliever activity

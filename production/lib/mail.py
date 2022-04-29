@@ -9,7 +9,6 @@ import typing
 import constants
 from constants import EmailEvents
 
-from lib.SQL import SQLController
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
 from api.models import ServerConfiguration
 
@@ -66,13 +65,11 @@ def prepareMail(emailHeader :EmailHeader, fileBytes):
   return mail
 
 
-def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDataClass, SQL=SQLController.SQL() ):
+def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDataClass, serverConfiguration : ServerConfiguration):
   emails = [Customer.email, Customer.email2, Customer.email3, Customer.email4]
 
   Text_message = "Dette er en føgleseddel til tracershop."
   subject_message = f"Følgeseddel - {Order.oid}"
-
-  ServerConfiguration = SQL.getServerConfig()
 
   with open(pdfPath, 'rb') as f:
     fileBytes = f.read()
@@ -89,5 +86,7 @@ def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDa
 
     mail = prepareMail(Header, fileBytes)
 
-    with SMTP(ServerConfiguration.SMTPServer) as smtp:
+    ip = str(ServerConfiguration.SMTPServer)
+
+    with SMTP(ip) as smtp:
       smtp.sendmail(constants.EMAIL_SENDER_ADDRESS, [email], mail.as_string())

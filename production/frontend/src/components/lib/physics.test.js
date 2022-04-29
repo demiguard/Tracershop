@@ -35,7 +35,7 @@ test("CountMinutes: Day is irrelevant for this function", () => {
 
 // You don't need this much precisions
 test("CalculateProduction: 1 hour dosis", () => {
-  expect(CalculateProduction(6584, 60, 300)).toBeCloseTo(438.1895114613755)
+  expect(CalculateProduction(6584, 60, 300)).toBeCloseTo(438.24650136544807)
 });
 
 test("CalculateProduction: 0 hour dosis", () => {
@@ -48,7 +48,7 @@ test("CalculateProduction: Splitting calls doesn't matter", () => {
   const AnotherHourDecay = CalculateProduction(6584, 60, oneHourDecay)
   const TwoHoursDecay    = CalculateProduction(6584, 120, 300)
 
-  expect(AnotherHourDecay).toBeCloseTo(TwoHoursDecay)
+  expect(AnotherHourDecay).toBeCloseTo(TwoHoursDecay) // Note rounding here is fucking things quite up 
 });
 
 // this test was taken from 2021/08/03 production

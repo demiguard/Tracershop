@@ -1,6 +1,6 @@
 {
-  "name": "frontend",
-  "version": "1.0.0",
+  "name": "Tracershop-frontend",
+  "version": "4.2.0",
   "description": "",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
     "test": "jest"
   },
   "keywords": [],
-  "author": "",
+  "author": "Christoffer Vilstrup Jensen",
   "dependencies": {
     "@babel/core": "^7.14.6",
     "@babel/plugin-proposal-class-properties": "^7.14.5",
@@ -26,6 +26,7 @@
     "react-dom": "^17.0.2",
     "react-hover": "^2.1.1",
     "react-router-dom": "^6.2.2",
+    "react-scripts": "^5.0.0",
     "sockjs": "^0.3.21",
     "style-loader": "^3.0.0",
     "svg-url-loader": "^7.1.1",
@@ -38,5 +39,10 @@
     "jest": "^27.0.6",
     "less-loader": "^10.0.1",
     "sass-loader": "^12.1.0"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>/src/setupTests.js"
+    ]
   }
 }

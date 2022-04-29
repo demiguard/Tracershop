@@ -24,7 +24,7 @@ class TypeCheckingTest(TestCase):
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "can only concatenate str (not \"int\") to str")
-    
+
   def test_Partial_args_x(self):
     try:
       testFunctionPartial("hello", 4)
@@ -50,15 +50,15 @@ class TypeCheckingTest(TestCase):
       testFunctionKWargAnnotation(3,4,3, aKW=3) # this is a standard python lib, but It still shows that it's that throws an exception and not my function
     except TypeError as Err:
       self.assertEqual(str(Err), "testFunctionKWargAnnotation() got multiple values for argument 'aKW'")
-    
+
   def test_KW_type_error(self):
     try:
       testFunctionKWargAnnotation(3, 4, aKW="str")
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "Argument aKW is of type: <class 'str'>, but this doesn't match the annotations\n")
-    
-  # Regarding the Union of Union types, that kinda doesn't make any sense since it's a 
+
+  # Regarding the Union of Union types, that kinda doesn't make any sense since it's a Union of a Union is just a bigger Union
   def test_UnionType_int(self):
     self.assertEqual(testFunctionUnionType(3), 3)
 
@@ -74,14 +74,14 @@ class TypeCheckingTest(TestCase):
 
   def test_ListType(self):
     self.assertEqual([2,3,4,5], testFunctionList([1,2,3,4]))
-  
+
   def test_ListType_incorrectType(self):
     try:
       testFunctionList(["zxcv","wers","helloworld","wqer"])
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "An element of iterable l is not of type: <class 'int'>")
-    
+
   def test_ListListType(self):
     self.assertEqual([[2,3,4],[5,6,7],[8,9,10]], testFunctionNestedList([[1,2,3],[4,5,6],[7,8,9]]))
 

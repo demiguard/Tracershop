@@ -25,11 +25,11 @@ export default class ServerConfigPage extends Component {
   }
 
   /** This function updates the active database
-   * 
-   * @param {*} event 
+   *
+   * @param {*} event
    */
   updateActiveDatabase(event){
-    const SendObject = {}; 
+    const SendObject = {};
     SendObject[JSON_FIELD_TO_UPDATE] = JSON_ACTIVE_DATABASE
     SendObject[JSON_DATABASE] = event.target.value
     this.setState({
@@ -47,13 +47,12 @@ export default class ServerConfigPage extends Component {
 
 
   /** This function renders all the database options
-   * 
+   *
    * @returns {List[JSX.Element]}
    */
   renderOptions(){
     const options = [];
     for (const database of this.state.databases) {
-      console.log(database);
       options.push((<option key={database} value={database}>{database}</option>))
     }
 

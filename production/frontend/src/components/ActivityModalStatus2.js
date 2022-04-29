@@ -160,7 +160,6 @@ export default class ActivityModalStatus2 extends Component {
       ErrorInInput = true;
       NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
     }
-    console.log(EditingData)
     const NewActivity = ParseDanishNumber(EditingData.newActivity)
     if (isNaN(NewActivity)){
       ErrorInInput = true;

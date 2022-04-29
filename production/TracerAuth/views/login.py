@@ -23,7 +23,9 @@ class AuthLogin(View):
 
     user = authenticate(request, username=username, password=password)
 
-    if user is None:
+
+    if not(user):
+      
       return ProductionJSONResponse({
         AUTH_DETAIL : self.INVALID_CRED_MESSAGE
       }, status=400)

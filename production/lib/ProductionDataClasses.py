@@ -30,6 +30,12 @@ class JsonSerilizableDataClass:
     This is a Wrapper class for the other dataclasses
     It allows for conversion between json objects (dict) and dataclasses
   """
+  #def __getitem__(self, item):
+  #  return getattr(self, item)
+
+  #def __setattr__(self, name, value):
+  #  setattr(self, name, value)
+
   def toDict(self) -> Dict:
     """
       Returns the dict corrosponding to the dataclass
@@ -79,7 +85,25 @@ class JsonSerilizableDataClass:
     Returns:
         str: SubQuery with valid SQL condition statement
     """
-    return "TRUE" 
+    return "TRUE"
+
+  @classmethod
+  def getSQLDateTime() -> str:
+    """ This is abstract method, that is called when the SQL modules needs to constrtuct a query with an condition based on a date or datetime field
+
+    Raises:
+        NotImplemented: If the super class doesn't have field upon which you can create a datetime, then this raises an not implemented.
+    """
+    raise NotImplemented
+
+  @classmethod
+  def getIDField() -> str:
+    """Abstract method for generating ID
+
+    Raises:
+        NotImplemented: _description_
+    """
+    raise NotImplemented
 
   @classmethod
   def getSQLFields(cls):
@@ -98,13 +122,13 @@ class JsonSerilizableDataClass:
 
   def __TypeSafeSetAttr(self, field : Field, fieldVal : Any) -> None:
     """This function attempts to set a field after performing type checking.
-    If Typechecking fails, it will attempt to perform some conversion between 
+    If Typechecking fails, it will attempt to perform some conversion between
     input type and the designated type
-    
+
     Args:
       self (JsonSerilizableDataclass): The object where an attribute is set
       field (dataclass.Field): The field that is being set
-      fieldval (Any): The value that will be set, it's not on type field.type 
+      fieldval (Any): The value that will be set, it's not on type field.type
                       then it will be converted or raise a TypeError
 
     Raises:
@@ -125,7 +149,7 @@ class JsonSerilizableDataClass:
       except ValueError:
         self.__setattr__(field.name, toDateTime(fieldVal, Format=JSON_DATETIME_FORMAT))
     elif field.type == time:
-      
+
       self.__setattr__(field.name, toTime(fieldVal))
     elif field.type == int:
       if fieldValType == type(None):
@@ -134,19 +158,21 @@ class JsonSerilizableDataClass:
         try:
           self.__setattr__(field.name, field.type(fieldVal))
         except ValueError:
-          raise TypeError(f"""The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
-            The dataclass cannot nativily convert this to {field.type}""")  
+          ErrorMessage = f"""In the construction of the Class {self.__class__} The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
+            The dataclass cannot nativily convert this to {field.type}"""
+          raise TypeError(ErrorMessage)
     else:
       try:
         self.__setattr__(field.name, field.type(fieldVal))
       except ValueError:
-        raise TypeError(f"""The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
-          The dataclass cannot nativily convert this to {field.type}""")
+        ErrorMessage = f"""In the construction of the Class {self.__class__} The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
+          The dataclass cannot nativily convert this to {field.type}"""
+        raise TypeError(ErrorMessage)
 
   def __init__(self, *args, **kwargs):
     Myfields = self.getFields()
     fieldDict = { field.name : field for field in Myfields}
-    
+
     # Initialize Optionals as None
     # Note that Optional[types] is just shorthand for Union[Types, Nonetype]
     for field in Myfields:
@@ -154,14 +180,15 @@ class JsonSerilizableDataClass:
         self.__setattr__(field.name, None)
 
     for field, fieldVal in zip(Myfields, args):
-      self.__TypeSafeSetAttr(field, fieldVal)    
+      self.__TypeSafeSetAttr(field, fieldVal)
 
     for fieldName, fieldVal in kwargs.items():
       if field := fieldDict.get(fieldName):
         self.__TypeSafeSetAttr(field, fieldVal)
       else:
-        raise KeyError(f"Unknown keyword in construction:{fieldName} for construction of: {type(self)}")
-        
+        ErrorString = f"In the construction of the Class {self.__class__} an Unknown keyword in construction:{fieldName} was encountered"
+        raise KeyError(ErrorString)
+
   ##### This is good to have since the init mehtod might be over written and it ensure type safity
   def __post_init__(self):
     for field in fields(self):
@@ -202,17 +229,36 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   def getSQLTable(cls):
     return "orders"
 
+  @classmethod
+  def getSQLDateTime(cls) -> str:
+    return "deliver_datetime"
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "oid"
+
 @dataclass(init=False)
 class InjectionOrderDataClass(JsonSerilizableDataClass):
   deliver_datetime : datetime
   oid : int
   status : int
-  injections : int
-  usage : int
+  n_injections : int
+  anvendelse : str
   comment : str
   username : str
   tracer : int
 
+  @classmethod
+  def getSQLTable(cls) -> str:
+    return "t_orders"
+
+  @classmethod
+  def getSQLDateTime(cls) -> str:
+    return "deliver_datetime"
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "oid"
 
 @dataclass(init=False)
 class VialDataClass(JsonSerilizableDataClass):
@@ -222,25 +268,27 @@ class VialDataClass(JsonSerilizableDataClass):
   filltime : time
   volume : float
   activity : float
-  ID : Union[int, None]
+  ID : Optional[int]
   OrderMap : Optional[int]
 
   @classmethod
   def getSQLFields(cls) -> str:
-    return """
-      VAL.customer,
+    return """VAL.customer,
       VAL.charge,
       VAL.filldate,
       TIME_FORMAT(VAL.filltime, \"%T\"),
       VAL.volume,
       VAL.activity,
       VAL.ID,
-      VialMapping.Order_id
-    """
+      VialMapping.Order_id"""
 
   @classmethod
-  def getSQLTable(cls) -> str: 
+  def getSQLTable(cls) -> str:
     return "VAL LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id"
+
+  @classmethod
+  def getSQLDateTime(cls) -> str:
+    return "VAL.filldate"
 
 @dataclass(init=False)
 class TracerCustomerMappingDataClass(JsonSerilizableDataClass):
@@ -255,6 +303,7 @@ class DeliverTimeDataClass(JsonSerilizableDataClass):
   repeat : int
   dtime : time
   run : int
+  DTID : int
 
   @classmethod
   def getSQLTable(cls):
@@ -262,17 +311,21 @@ class DeliverTimeDataClass(JsonSerilizableDataClass):
 
   @classmethod
   def getSQLFields(cls):
-    return """ 
-      BID, 
+    return """BID,
       day,
       repeat_t,
       TIME_FORMAT(dtime, \"%T\"),
-      run
-    """
+      run,
+      DTID"""
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "DTID"
 
 
 @dataclass(init=False)
-class CustomerDeliverTimeDataClass(JsonSerilizableDataClass):
+class CustomerDeliverTimeDataClass(JsonSerilizableDataClass): # This a legacy and the real one is DeliverTimeDataCkass
+  #This should be removed
   day : int
   repeat : int
   dtime : time
@@ -280,11 +333,16 @@ class CustomerDeliverTimeDataClass(JsonSerilizableDataClass):
   run : int
   DTID : int # DeliverTimeID
 
+  @classmethod
+  def getIDField(cls) -> str:
+    return "DTID"
+
 @dataclass(init=False)
 class RunsDataClass(JsonSerilizableDataClass):
   day : int
   ptime : time
   run : int
+  PTID : int
 
   @classmethod
   def getSQLTable(cls):
@@ -292,11 +350,14 @@ class RunsDataClass(JsonSerilizableDataClass):
 
   @classmethod
   def getSQLFields(cls):
-    return """
-      day,
-      TIME_FORMAT(ptime, \"%T\"), 
-      run
-    """
+    return """day,
+      TIME_FORMAT(ptime, \"%T\"),
+      run,
+      PTID"""
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "PTID"
 
 @dataclass(init=False)
 class IsotopeDataClass(JsonSerilizableDataClass):
@@ -308,13 +369,17 @@ class IsotopeDataClass(JsonSerilizableDataClass):
   def getSQLTable(cls):
     return "isotopes"
 
+  @classmethod
+  def getIDField(cls) -> str:
+    return "ID"
+
 
 @dataclass(init=False)
 class TracerDataClass(JsonSerilizableDataClass):
   id : int
   name : str
-  isotope : int 
-  n_injections : int 
+  isotope : int
+  n_injections : int
   order_block : int
   in_use : bool
   tracer_type : int
@@ -323,6 +388,10 @@ class TracerDataClass(JsonSerilizableDataClass):
   @classmethod
   def getSQLTable(cls):
     return "Tracers"
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "id"
 
 @dataclass(init=False)
 class CustomerDataClass(JsonSerilizableDataClass):
@@ -341,12 +410,12 @@ class CustomerDataClass(JsonSerilizableDataClass):
   addr2 : str
   addr3 : str
   addr4 : str
-  
+
   @classmethod
   def getSQLFields(cls):
     fieldsNames = cls.getFields()
     UpdatedFieldNames = LMAP(lambda field: "Users." + field, [field.name for field in fieldsNames])
-    
+
     return ", ".join(UpdatedFieldNames)
 
   @staticmethod
@@ -356,6 +425,10 @@ class CustomerDataClass(JsonSerilizableDataClass):
   @staticmethod
   def getSQLWhere():
     return "UserRoles.Id_Role = 4 AND Users.kundenr IS NOT NULL"
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "ID"
 
 #Depricated
 @dataclass(init=False)
@@ -381,6 +454,7 @@ class UserDataClass(JsonSerilizableDataClass):
 
 @dataclass(init=False)
 class EmployeeDataClass(JsonSerilizableDataClass):
+  #This datacase is not a datastruct from the old but instead is technically a user
   Username : str
   OldTracerBaseID : int
 

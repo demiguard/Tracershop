@@ -2,13 +2,13 @@
   This module is responsible for overseeing all data transfers between databases and the server
   This Module is that have been modified into a class for depency injections sake.
   So that this module can easily be replaced if one decide to change the underlying database
-  This is also helpful for testing sake
-
-
-
+  This is also helpful for testing sake.
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
+from django.db.models import Model
+from django.db.models.base import ModelBase
+from django.db.models.query import QuerySet
 from django.db import connection
 from django.core.exceptions import ObjectDoesNotExist
 
@@ -16,37 +16,50 @@ from dataclasses import fields
 from datetime import datetime, time, date
 from typing import Callable, Dict, List, Optional, Tuple, Type
 
+
 from api.models import ServerConfiguration, Database
-from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory, SQLLegacyController
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
+from lib.decorators import typeCheckfunc
+from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
+from lib.utils import LMAP
 
 from TracerAuth.models import User
 
 class SQL():
   """
-    This is a stateless dataClass, that is meant be injected into a view
+    This is a stateless class, that is meant be injected into something, thus allowing for testing
     One can later use depency injection to change this
   """
 
   @staticmethod
   def __ExecuteNoReturn(SQLFactoryMethod: Callable[..., str], *args) -> None:
+    """This function takes a method and arguments to that method. The method must produce a valid SQL query
+    That is executed by this function. The query must have no return values such as updates and insert Queries
+
+    Note:
+      These methods should be found in SQLFactory module found in /production/lib/SQL/SQLFactory.py
+
+    Args:
+        SQLFactoryMethod (Callable[..., str]): Method that produces a SQL query
+        *Args : Args for SQLFactoryMethod
+    """
     SQLQuery = SQLFactoryMethod(*args)
     SQLExecuter.ExecuteQuery(SQLQuery)
 
   @staticmethod
   def __ExecuteReturnOne(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args, **kwargs) -> Optional[JsonSerilizableDataClass]:
-    """This function is the control function for making a query, taking one row, 
+    """This function is the control function for making a query, taking one row,
     converting that into a dataclass and then returning it
 
     Args:
         SQLFactoryMethod (Callable[..., str]): This is the method, that generates the query
-        returnClass (JsonSerilizableDataClass): This is the return class, 
+        returnClass (JsonSerilizableDataClass): This is the return class,
                     Note it shouldn't be an instance, only the type of class
         *args: additional args are passed to SQLFactoryMethod
         **kwargs: additional kwargs are passed to SQLFactoryMethod
 
     Returns:
-        Optional[JsonSerilizableDataClass]: If the underlying query returned a result, 
+        Optional[JsonSerilizableDataClass]: If the underlying query returned a result,
           then it's converted to JsonSerilizableDataClass if no result was found, it returns None
     """
     SQLQuery = SQLFactoryMethod(*args, **kwargs)
@@ -57,56 +70,56 @@ class SQL():
       return None
 
   @staticmethod
-  def __ExecuteReturnMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args) -> Optional[List[JsonSerilizableDataClass]]:
+  def __ExecuteReturnMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args) -> List[JsonSerilizableDataClass]:
+    """_summary_
+
+    Args:
+        SQLFactoryMethod (Callable[..., str]): _description_
+        returnClass (JsonSerilizableDataClass): _description_
+
+    Returns:
+        List[JsonSerilizableDataClass]: _description_
+    """
     SQLQuery = SQLFactoryMethod(*args)
     SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
-    return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
-
-  # Get methods
-  @classmethod
-  def getActivityOrders(cls, requestDate : date, tracerID: int) -> List[ActivityOrderDataClass]:
-    Orders = cls.__ExecuteReturnMany(SQLFactory.getActivityOrders, ActivityOrderDataClass, requestDate, tracerID)
-    if Orders:
-      return Orders
+    if SQLResult:
+      return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
     else:
       return []
 
+  # Get methods
+  ##### Universal methods #####
   @classmethod
-  def getCustomer(cls, CustomerID : int) -> CustomerDataClass:
-    return cls.__ExecuteReturnOne(SQLFactory.getCustomer, CustomerDataClass, CustomerID)
+  def getModels(cls, model) -> QuerySet[Model]:
+    """gets a list of models.
+
+    Programmers note: Don't convert the QuerySet to a list, since a QuerySet acts as a list,
+    hence converting it to a list is just a waste of clock cycles.
+
+    Args:
+        model django.db.models.Model: The models where you wish all models
+    Returns:
+        QuerySet[Model] - This is effectivly a list, with some bonus stuff.
+    """
+    return model.objects.all()
 
   @classmethod
-  def getCustomers(cls) -> List[CustomerDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getCustomers, CustomerDataClass)
+  def getElement(cls, ID:int, Dataclass) -> Optional[JsonSerilizableDataClass]:
+    return cls.__ExecuteReturnOne(SQLFactory.getElement, Dataclass, ID, Dataclass)
 
   @classmethod
-  def getDeliverTimes(cls):
-    return cls.__ExecuteReturnMany(SQLFactory.getDeliverTimes, DeliverTimeDataClass)
+  def UpdateJsonDataClass(cls, DataClassObject : JsonSerilizableDataClass):
+    cls.__ExecuteNoReturn(SQLFactory.UpdateJsonDataClass, DataClassObject)
 
   @classmethod
-  def getEmployees(cls):
-    userObjects = User.objects.all()
-    mapObject = map(EmployeeDataClass.fromUser, userObjects)
-    return list(mapObject)
+  def getDataClass(cls, DataClass) -> List[JsonSerilizableDataClass]:
+    return cls.__ExecuteReturnMany(SQLFactory.getDataClass, DataClass, DataClass)
 
   @classmethod
-  def getIsotopes(cls) -> List[IsotopeDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getIsotopes, IsotopeDataClass)
+  def getDataClassRange(cls, startDate: datetime, endDate : datetime, DataClass):
+    return cls.__ExecuteReturnMany(SQLFactory.getDataClassRange, DataClass, startDate, endDate, DataClass)
 
-  @classmethod
-  def getTracers(cls) -> List[TracerDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getTracers, TracerDataClass)
-
-  @classmethod
-  def getTracerAndIsotope(cls, TracerID:int) -> Tuple[TracerDataClass, IsotopeDataClass]:
-    Tracer = cls.__ExecuteReturnOne(SQLFactory.getTracer, TracerDataClass, TracerID)
-    Isotope = cls.__ExecuteReturnOne(SQLFactory.getIsotope, IsotopeDataClass, Tracer.isotope)
-    return Tracer, Isotope
-
-  @classmethod
-  def getRuns(cls) -> List[RunsDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getRuns, RunsDataClass)
-
+  # Get methods from django Database
   @staticmethod
   def getServerConfig() -> ServerConfiguration:
     try:
@@ -118,52 +131,30 @@ class SQL():
 
     return ServerConfig
 
+  @classmethod
+  def getEmployees(cls):
+    """Get the employes, Note that this class have their data dublicated with in the old database and the new one.
+    This data dublication should only last until BAM ID login is integrated, at which point the connection to the old DB should be cut.
+
+    Returns:
+        _type_: _description_
+    """
+    return LMAP(EmployeeDataClass.fromUser, User.objects.all())
 
   @classmethod
-  def getVial(cls, Vial: VialDataClass) -> VialDataClass:
-    return cls.__ExecuteReturnOne(SQLFactory.getVial, VialDataClass, Vial)
-
-  @classmethod
-  def getVials(cls, requestDate : date) -> List[VialDataClass]:
-    vials = cls.__ExecuteReturnMany(SQLFactory.getVials, VialDataClass, requestDate)
-    if vials:
-      return vials
-    else:
-      return []
-
-  @classmethod
-  def getVialRange(cls, startDate: date, endDate:  date) -> List[VialDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getVialRange, VialDataClass, startDate, endDate)
-
-  #
-
-  @classmethod
-  def updateOrder(cls, order : ActivityOrderDataClass) -> None:
-    cls.__ExecuteNoReturn(SQLFactory.updateOrder, order)
-    
-
-
-  @classmethod
-  def createVial(cls, Vial) -> None:
+  def createVial(cls, Vial : VialDataClass) -> None:
     """[summary]
 
     Args:
-        Vial ([type]): [description]
-
-    Returns:
-        VialDataClass: [description]
+        Vial (VialDataClass): Vial to saved to database
     """
     cls.__ExecuteNoReturn(SQLFactory.InsertVial, Vial)
-    
 
-  @classmethod
-  def updateVial(cls, Vial : VialDataClass) -> None:
-    cls.__ExecuteNoReturn(SQLFactory.updateVial, Vial)
 
   @classmethod
   def FreeOrder(
     cls,
-    Order: ActivityOrderDataClass, 
+    Order: ActivityOrderDataClass,
     Vial: VialDataClass,
     user: User) -> List[ActivityOrderDataClass]:
     """[summary]
@@ -183,8 +174,8 @@ class SQL():
   @classmethod
   def CreateNewFreeOrder(
       cls,
-      OriginalOrder : ActivityOrderDataClass, 
-      Vial : VialDataClass, 
+      OriginalOrder : ActivityOrderDataClass,
+      Vial : VialDataClass,
       tracerID :int,
       user : User
     ) -> ActivityOrderDataClass:
@@ -197,189 +188,37 @@ class SQL():
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
     return cls.__ExecuteReturnOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
 
-
-  @staticmethod
-  def getDatabases() -> List[Database]:
-    return list(Database.objects.all())
-
-##### END CLASS METHODS ######
-
-def getCustomers():
-  """
-    Retrieves entries from the external customer table, where the user is an customer and not an admin / production 
-    
-    Returns List of Dict on this structure:
-    {
-      UserName : str (login name)
-      ID : Int (Unique)
-      overhead : int (Assume this is a procentage)
-      CustomerNumber : Int (Unique, but there's no constraint)
-      Name : Str ( Real name so petrh = Rigshospitalet)
-    }
-  """
-  return SQLLegacyController.getCustomers()
-
-def getTracers():
-  return SQLLegacyController.getTracers()
-
-def getIsotopes():
-  return SQLLegacyController.getIsotopes()
-
-def getCustomer(ID):
-  return SQLLegacyController.getCustomer(ID)
-
-def getCustomerDeliverTimes(ID):
-  return SQLLegacyController.getCustomerDeliverTimes(ID)
-
-def getTorderMonthlyStatus(year : int, month : int):
-  return SQLLegacyController.getTorderMonthlyStatus(year, month)
-
-def getOrderMonthlyStatus(year : int, month : int):
-  return SQLLegacyController.getOrderMonthlyStatus(year, month)
-
-def getActivityOrders(requestDate, tracerID):
-  return SQLLegacyController.getActivityOrders(requestDate, tracerID)
-
-def setFDGOrderStatusTo2(oid:int):
-  SQLLegacyController.setFDGOrderStatusTo2(oid)
-
-def getRuns():
-  return SQLLegacyController.getRuns()
-
-def GetDeliverTimes():
-  return SQLLegacyController.GetDeliverTimes()
-
-def UpdateOrder(Order : Dict):
-  SQLLegacyController.UpdateOrder(Order)
-
-def getTOrders(requestDate: date): 
-  return SQLLegacyController.getTOrders(requestDate)
-
-def setTOrderStatus(oid, status):
-  SQLLegacyController.setTOrderStatus(oid, status)
-
-def updateTracer(tracerID, key, newValue):
-  SQLLegacyController.updateTracer(tracerID, key, newValue)
-
-def getTracerCustomerMapping():
-  return SQLLegacyController.getTracerCustomer()
-
-def createTracerCustomer(tracer_id, customer_id):
-  SQLLegacyController.createTracerCustomer(tracer_id, customer_id)
-
-def deleteTracerCustomer(tracer_id, customer_id):
-  SQLLegacyController.deleteTracerCustomer(tracer_id, customer_id)
-
-def createNewTracer(Name, isotope, n_injections, order_block):
-  SQLLegacyController.createNewTracer(Name, isotope, n_injections, order_block)
-  return SQLLegacyController.getTracers()
-
-def deleteTracer(tracer_id):
-  SQLLegacyController.deleteTracer(tracer_id)
-
-def createDeliverTime(run, MaxFDG, dtime, repeat, day, customer):
-  """
-    Creates a new deliverTime with the given input, returns the ID of the new DeliverTimes
-  """
-  return SQLLegacyController.createDeliverTime(
-      run, MaxFDG, dtime, repeat, day, customer
-  )
-
-def deleteDeliverTime(DTID):
-  SQLLegacyController.deleteDeliverTime(DTID)
-
-def updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID):
-  SQLLegacyController.updateDeliverTime(MaxFDG, run, dtime, repeat, day, DTID)
-
-def getClosedDays() -> List[Dict]:
-  return SQLLegacyController.getClosedDays()
-
-def deleteCloseDay(requestDate : date) -> None:
-  SQLLegacyController.deleteCloseDay(requestDate)
-
-def createCloseDay(requestDate : date) -> None:
-  SQLLegacyController.createCloseDay(requestDate)
-
-def getServerConfig() -> ServerConfiguration:
-  """
-    This Functions retrives the serverConfig model from theserver, if it doesn't exists it creates a default object.
-  """
-  try:
-    ServerConfig = ServerConfiguration.objects.get(ID=1)
-  except ObjectDoesNotExist:
-    Databases    = Database.objects.all()
-    ServerConfig = ServerConfiguration(ID=1, ExternalDatabase=Databases[0])
-    ServerConfig.save()
-
-  return ServerConfig
-
-def createEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment):
-  SQLLegacyController.insertEmptyFDGOrder(CustomerID, deliverTimeStr, run, comment)
-
-  return SQLLegacyController.getFDGOrder(BID=CustomerID, deliver_datetime=deliverTimeStr, run=run)
-
-
-def getVial(
-    CustomerID = 0,
-    Charge = "",
-    FillDate ="",
-    FillTime = "",
-    Volume = 0.0, 
-    activity = 0,
-    ID = 0
-  ) -> Dict:
-  return SQLLegacyController.getVial(CustomerID, Charge, FillDate, FillTime, Volume, activity, ID)
-
-def getVials(request_date : date) -> [Dict]:
-  return SQLLegacyController.getVials(request_date)
-
-def createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity): 
-  SQLLegacyController.createVial(CustomerID, Charge, FillDate, FillTime, Volume, activity)
-
-def updateVial(
-    ID,
-    CustomerID=0, 
-    Charge="",
-    FillDate="",
-    FillTime="",
-    Volume=0,
-    activity=0
+  @classmethod
+  def productionCreateOrder(
+    cls,
+    deliver_datetime : datetime,
+    Customer : CustomerDataClass,
+    amount : float,
+    amount_overhead : float,
+    tracer : TracerDataClass,
+    run : int,
+    username : str
   ):
-  SQLLegacyController.updateVial(
-      ID,
-      CustomerID = CustomerID, 
-      Charge = Charge,
-      FillDate = FillDate,
-      FillTime = FillTime,
-      Volume = Volume,
-      activity = activity
-    )
+    cls.__ExecuteNoReturn(SQLFactory.productionCreateOrder, deliver_datetime, Customer, amount, amount_overhead, tracer, run, username)
+    return cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
 
-def getVialRange(startdate : date, endDate : date):
-  """
-    Get all Vials in a date range
-  
-    Args:
-      startDate : datetime.date - start date for the range
-      endDate   : datetime.date - end date for the range
-    returns a list of Dict with objects:
-    [{
-      customer  : int - customer number not id, that this vial belongs to
-      charge    : str - batchnumber
-      filldate  : date-str - date then vial was filled
-      filltime  : time-str - time where vial was filled
-      volume    : decimal(2) - Volume of radioactive Matieral
-      ID        : int - id of Vial
-      activity  : decimal(2) - Radioactive material in Vial
-    }, ...]
-  """
-  return SQLLegacyController.getVialRange(startdate, endDate)
+  @classmethod
+  def createGhostOrder(
+    cls,
+    deliver_datetime : datetime,
+    Customer : CustomerDataClass,
+    amount_total : float,
+    amount_total_overhead : float,
+    tracer : TracerDataClass,
+    run : int,
+    username : str
+  ):
+    """ This function creates an empty order,
+    this should be invoked when a user moves an order from a time slot with out an order existsing
+    """
+    cls.__ExecuteNoReturn(SQLFactory.createGhostOrder, deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username)
+    return cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
 
-def FreeOrder(OrderID: int , Vial: VialDataClass)-> List[Dict]:
-  return SQLLegacyController.FreeOrder(OrderID, Vial)
-
-def CreateNewFreeOrder(Vial : VialDataClass, OriginalOrder : Dict, TracerID : int) -> Dict:
-  return SQLLegacyController.CreateNewFreeOrder(Vial, OriginalOrder, TracerID)
-
-def getDatabases() -> List[Database]:
-  return list(Database.objects.all())
+  @classmethod
+  def deleteActivityOrders(cls, oids_to_delete):
+    cls.__ExecuteNoReturn(SQLFactory.deleteActivityOrder, oids_to_delete)

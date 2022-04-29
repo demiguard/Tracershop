@@ -22,7 +22,7 @@ def typeCheckfunc(func):
       else:
         if issubclass(Signature.empty, parameter.annotation) or isinstance(arg, parameter.annotation):
           pass
-        else: 
+        else:
           errorMessage += f"Argument {key} is of type: {type(arg)}, but this doesn't match the annotations\n"
     for (key, value) in kwargs.items():
       parameter = sig.parameters[key]
@@ -39,7 +39,7 @@ def typeCheckfunc(func):
       else:
         if issubclass(Signature.empty, parameter.annotation) or isinstance(value, parameter.annotation):
           pass
-        else: 
+        else:
           errorMessage += f"Argument {key} is of type: {type(value)}, but this doesn't match the annotations\n"
     if errorMessage:
         raise TypeError(errorMessage)
@@ -47,14 +47,14 @@ def typeCheckfunc(func):
     value = func(*args, **kwargs)
     return value
   return wrapper
-  
+
 def typeCheckIterable(dataType, l):
   dataType = dataType[0] # Okay I'll support regular typed arrays
   #IE NO List[Type1, Type2]
   if get_origin(dataType) is list:
     for ll in l:
       if not typeCheckIterable(dataType.__args__, ll):
-        return False      
+        return False
     return True
 
   for elem in l:

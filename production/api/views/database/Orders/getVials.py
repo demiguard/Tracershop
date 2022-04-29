@@ -1,10 +1,11 @@
 from django.views.generic import View
 from django.http import HttpResponseBadRequest
 
-from datetime import date
+from datetime import date, timedelta
 
 from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
+from lib.ProductionDataClasses import VialDataClass
 
 from constants import JSON_VIALS, JSON_VIAL_MAPPING
 
@@ -22,11 +23,15 @@ class APIGetVials(View):
     except ValueError:
       return HttpResponseBadRequest()
 
-    Vials = SQLController.getVials(requestDate)
+    startDate = requestDate
+    endDate = requestDate
 
-    print(Vials)
+    Vials = self.SQL.getDataClassRange(startDate, endDate, VialDataClass)
 
     return ProductionJSONResponse({
       JSON_VIALS : Vials
     })
+
+  def __init__(self, SQL = SQLController.SQL()):
+    self.SQL = SQL
     

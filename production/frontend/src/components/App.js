@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import {Button, Container} from "react-bootstrap";
 
+import { getSession, handlePasswordChange, handleUserNameChange, isResponseOk, login_auth, login, logout } from "./lib/authentication.js"
 import { Navbar } from "./Navbar.js";
 import { ConfigPage } from "./ConfigPage.js";
 import { OrderPage } from './OrderPage.js';
@@ -12,6 +13,10 @@ import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
 import CloseDaysPage from "./CloseDaysPage";
 import { VialPage } from "./VialPage.js";
+import { db } from "./lib/localStorageDriver.js";
+import { TracerWebSocket, safeSend } from "./lib/TracerWebsocket.js";
+import {JSON_ADDRESS, JSON_CUSTOMERS, JSON_DATABASE, JSON_DELIVERTIMES, JSON_EMPLOYEES, JSON_ISOTOPE, JSON_ORDERS, JSON_RUNS, JSON_SERVER_CONFIG, JSON_TRACER, JSON_T_ORDERS, JSON_VIALS, WEBSOCKET_MESSAGE_GREAT_STATE } from "./lib/constants.js";
+import { ParseDjangoModelJson, ParseJSONstr } from "./lib/formatting.js";
 
 export {App}
 
@@ -28,138 +33,190 @@ const Pages = {
 export default class App extends Component {
   constructor(props) {
     super(props);
+    // Init old state
+    var isAuth = db.get("isAuth") ? true : false;
+
+    const address  = this.getDatabaseMap("addresses");
+    const customer = this.getDatabaseMap("customer");
+    const databases = this.getDatabaseMap("databases");
+    const deliverTimes = this.getDatabaseMap("deliverTimes");
+    const employees = this.getDatabaseMap("employees");
+    const isotopes  = this.getDatabaseMap("isotopes");
+    const orders    = this.getDatabaseMap("orders");
+    const runs      = this.getDatabaseMap("runs");
+    const t_orders  = this.getDatabaseMap("t_orders");
+    const tracers   = this.getDatabaseMap("tracers");
+    var ServerConfig = db.get("serverConfig");
+    if(!ServerConfig){
+      ServerConfig = undefined;
+    }
+
+    const vials     = this.getDatabaseMap("vials");
+
     this.state = {
       activePage : OrderPage,
-      isAuthenticated : false,
-      username : "",
-      password : "",
-      error : "",
+      isAuthenticated : isAuth,
+      username        : "",
+      password        : "",
+      error           : "",
+      address         : address,
+      customer        : customer,
+      database        : databases,
+      deliverTimes    : deliverTimes,
+      employees       : employees,
+      isotopes        : isotopes,
+      orders          : orders,
+      runs            : runs,
+      t_orders        : t_orders,
+      tracers         : tracers,
+      vials           : vials,
+      serverConfig    : ServerConfig,
+
     };
-    this.setActivePage = this.setActivePage.bind(this); 
+    this.MasterSocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
+    const Message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE);
+    const updateMessage = new Promise(() => {safeSend(Message, this.MasterSocket)});
+
+    this.setActivePage = this.setActivePage.bind(this);
+
+    /**** AUTHENTICATION METHODS ****/
+    this.getSession = getSession.bind(this);
+    this.handlePasswordChange = handlePasswordChange.bind(this);
+    this.handleUserNameChange = handleUserNameChange.bind(this);
+    this.isResponseOk = isResponseOk.bind(this);
+    this.login_auth = login_auth.bind(this);
+    this.login = login.bind(this);
+    this.logout = logout.bind(this);
+
     ajaxSetup({
       headers: {
-          "X-CSRFToken": getCookie("csrftoken")
+        "X-CSRFToken": getCookie("csrftoken")
       }
     });
+  }
+
+  getDatabaseMap(databaseField){
+    var dbmap = db.get(databaseField);
+    if(!dbmap){
+      return new Map();
+    }
+    return dbmap;
+  }
+
+  /********* Websocket Methods *********/
+  // These methods are called by the websocket to invoke a state change
+
+  updateGreatState(greatState){
+    /*
+     *
+     */
+    //Customers
+    const customers = new Map();
+    for(const customerStr of greatState[JSON_CUSTOMERS]){
+      const customer = ParseJSONstr(customerStr);
+      customers.set(customer.ID, customer);
+    }
+    db.set("customer", customers);
+    //DeliverTimes
+    const deliverTimes = new Map();
+    for(const deliverTimeStr of greatState[JSON_DELIVERTIMES]){
+      const deliverTime = ParseJSONstr(deliverTimeStr);
+      deliverTimes.set(deliverTime.DTID, deliverTime);
+    }
+    db.set("deliverTimes", deliverTimes);
+    //Employees
+    const employees = new Map();
+    for(const employeeStr of greatState[JSON_EMPLOYEES]){
+      const employee = ParseJSONstr(employeeStr);
+      employees.set(employee.OldTracerBaseID, employee);
+    }
+    db.set("employees", employees);
+    //Isotopes
+    const isotopes = new Map();
+    for(const isotopeStr of greatState[JSON_ISOTOPE]){
+      const isotope = ParseJSONstr(isotopeStr);
+      isotopes.set(isotope.ID, isotope);
+    }
+    db.set("isotopes", isotopes);
+    //Orders
+    const orders = new Map();
+    for(const orderStr of greatState[JSON_ORDERS]){
+      const order = ParseJSONstr(orderStr);
+      orders.set(order.oid, order);
+    }
+    db.set("orders", orders);
+    //Runs
+    const runs = new Map();
+    for(const runStr of greatState[JSON_RUNS]){
+      const run = ParseJSONstr(runStr);
+      runs.set(run.PTID, run);
+    }
+    db.set("runs", runs);
+    //T_Orders
+    const t_orders = new Map();
+    for(const t_orderStr of greatState[JSON_T_ORDERS]){
+      const t_order = ParseJSONstr(t_orderStr);
+      orders.set(t_order.oid, t_order);
+    }
+    db.set("t_orders", t_orders);
+    //Tracers
+    const Tracers = new Map();
+    for(const TracerStr of greatState[JSON_TRACER]){
+      const Tracer = ParseJSONstr(TracerStr);
+      Tracers.set(Tracer.id, Tracer);
+    }
+    db.set("tracers", Tracers);
+    //Vials
+    const Vials = new Map();
+    for(const VialStr of greatState[JSON_VIALS]){
+      const Vial = ParseJSONstr(VialStr);
+      Vials.set(Vial.ID, Vial);
+    }
+    db.set("vials", Vials);
+
+    const Addresses = ParseDjangoModelJson(greatState[JSON_ADDRESS]);
+    db.set("addresses", Addresses);
+    const Databases = ParseDjangoModelJson(greatState[JSON_DATABASE]);
+    db.set("databases", Databases);
+    const ServerConfigMap = ParseDjangoModelJson(greatState[JSON_SERVER_CONFIG]);
+    const ServerConfig = ServerConfigMap.get(1);
+    db.set("serverConfig", ServerConfig)
+
+    this.setState({
+      ...this.state,
+      address         : Addresses,
+      customer        : customers,
+      database        : Databases,
+      deliverTimes    : deliverTimes,
+      employees       : employees,
+      isotopes        : isotopes,
+      orders          : orders,
+      runs            : runs,
+      t_orders        : t_orders,
+      tracers         : Tracers,
+      serverConfig    : ServerConfig,
+      vials           : Vials,
+    })
+  }
+
+  UpdateMap(mapName, ArrayNewObejct, IDkey, KeepOld, DeleteKeys){
+    const NewStateMap = (KeepOld) ? new Map(this.state[mapName]) : new Map();
+
+    if(ArrayNewObejct) for(const obj of ArrayNewObejct){
+      NewStateMap.set(obj[IDkey], obj);
+    }
+    if(DeleteKeys) for(const id_to_delete of DeleteKeys){
+      NewStateMap.delete(id_to_delete);
+    }
+
+    const newState = {...this.state}; // This Creates a new object
+    newState[mapName] = NewStateMap;
+    this.setState(newState); // Trigger Rerendering
+    db.set(mapName, NewStateMap);
   }
 
   componentDidMount() {
     this.getSession();
-  }
-
-  getSession() {
-    fetch("/auth/session", {
-      credentials: "same-origin",
-    })
-    .then((res) => res.json())
-    .then((data) => {
-      if (data.isAuthenticated) {
-        this.setState({isAuthenticated: true});
-      } else {
-        this.setState({isAuthenticated: false});
-      }
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-  }
-
-  handlePasswordChange = (event) => {
-    this.setState({password: event.target.value});
-  }
-
-  handleUserNameChange = (event) => {
-    this.setState({username: event.target.value});
-  }
-
-  isResponseOk(response) {
-    if (response.status >= 200 && response.status <= 299) {
-      return response.json();
-    } else {
-      throw Error(response.statusText);
-    }
-  }
-
-  login_auth(username, password){
-    const body = {
-      username: username, 
-      password: password
-    };
-
-    console.log(this.state)
-
-
-    fetch("/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      credentials: "same-origin",
-      body: JSON.stringify(body),
-    })
-    .then(this.isResponseOk)
-    .then((data) => {
-      ajaxSetup({
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken")
-        }
-      });
-      this.setState({isAuthenticated: true, password: "", error: ""});
-    })
-    .catch((err) => {
-      console.log(err);
-      this.setState({error: "Wrong username or password."});
-    });
-
-  }
-
-  login(event) {
-    event.preventDefault();
-    const body = {
-      username: this.state.username, 
-      password: this.state.password
-    };
-    fetch("/auth/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": getCookie("csrftoken"),
-      },
-      credentials: "same-origin",
-      body: JSON.stringify(body),
-    })
-    .then(this.isResponseOk)
-    .then((data) => {
-      ajaxSetup({
-        headers: {
-            "X-CSRFToken": getCookie("csrftoken")
-        }
-      });
-      this.setState({isAuthenticated: true, password: "", error: ""});
-    })
-    .catch((err) => {
-      console.log(err);
-      this.setState({error: "Wrong username or password."});
-    });
-  }
-
-  logout = () => {
-    fetch("/auth/logout", {
-      credentials: "same-origin",
-    })
-    .then(this.isResponseOk)
-    .then((data) => {
-      this.setState({isAuthenticated: false});
-    })
-    .catch((err) => {
-      console.log(err);
-    });
-  };
- 
-
-  renderActivePage() {
-    return <this.state.activePage username={this.state.username}/>;
   }
 
   setActivePage(NewPageName) {
@@ -169,31 +226,46 @@ export default class App extends Component {
   }
 
   render() {
-    if (this.state.isAuthenticated){ // User is logged in      
+    if (this.state.isAuthenticated){ // User is logged in
       return (
         <div>
-        <Navbar 
-          Names={Object.keys(Pages)} 
-          setActivePage={this.setActivePage} 
-          username={this.state.username} 
+        <Navbar
+          Names={Object.keys(Pages)}
+          setActivePage={this.setActivePage}
+          username={this.state.username}
           logout={this.logout}
-          isAuthenticated={this.state.isAuthenticated}/>    
+          isAuthenticated={this.state.isAuthenticated}/>
         <Container className="navBarSpacer">
-            {this.renderActivePage()}
+          <this.state.activePage
+            username={this.state.username}
+            address={this.state.address}
+            customer={this.state.customer}
+            database={this.state.database}
+            deliverTimes={this.state.deliverTimes}
+            employees={this.state.employees}
+            isotopes={this.state.isotopes}
+            orders={this.state.orders}
+            runs={this.state.runs}
+            t_orders={this.state.t_orders}
+            tracers={this.state.tracers}
+            serverConfig={this.state.serverConfig}
+            vials={this.state.vials}
+            websocket={this.MasterSocket}
+          />
         </Container>
-      </div> 
+      </div>
     );
     } else {
       return (
         <div>
           <Navbar Names={[]} setActivePage={() => {}} username={this.state.username} logout={this.logout}/>
           <Container className="navBarSpacer">
-            <Authenticate 
+            <Authenticate
               login_message="Log in"
               authenticate={this.login_auth.bind(this)}
               ErrorMessage={this.state.error}
               fit_in={true}
-            />  
+            />
           </Container>
         </div>
       )

@@ -9,5 +9,5 @@ function CountMinutes(past,future) {
 function CalculateProduction(halflife, minutes, MBQ) {
   const hf_in_min = halflife / 60
 
-  return Math.floor(MBQ / Math.pow(1/2,  minutes / hf_in_min))
+  return MBQ / Math.pow(1/2,  minutes / hf_in_min)
 }

@@ -39,6 +39,31 @@
   border-color:     var(--status0);
 }
 
+.date-status0 {
+  background-color: var(--status0);
+  border-color:     var(--status0);
+}
+
+.date-status01 {
+  background-color: var(--status1);
+  border-color:     var(--status0);
+}
+
+.date-status02 {
+  background-color: var(--status2);
+  border-color:     var(--status0);
+}
+
+.date-status03 {
+  background-color: var(--status3);
+  border-color:     var(--status0);
+}
+
+.date-status05 {
+  background-color: var(--status5);
+  border-color:     var(--status0);
+}
+
 .date-status10 {
   background-color: var(--status0);
   border-color:     var(--status1);

@@ -3,6 +3,8 @@ from enum import Enum, unique
 
 TRACERSHOPDATABASENAME = 'TS_test'
 
+
+
 NO_TORDER_FOUND = 50
 NO_ORDER_FOUND = 5
 
@@ -31,39 +33,56 @@ AUTH_PASSWORD         = "password"
 AUTH_DETAIL           = "detail"
 AUTH_IS_AUTHENTICATED = "isAuthenticated"
 
+# There is some problems regarding what the difference is between a JSON_ var and a WEBSOCKET_DATA_ constant
+
+JSON_ACTIVE_DATABASE = "active_database"
+JSON_ADDRESS  = "address"
 JSON_AMOUNT   = "amount"
 JSON_CUSTOMER  = "customer"
 JSON_CUSTOMERS = "customers"
+JSON_DATABASE = "database"
+JSON_DELIVERTIME = "deliverTime"
 JSON_DELIVERTIMES = "deliverTimes"
 JSON_EMPLOYEE = "employee"
+JSON_EMPLOYEES = "employees"
+JSON_FIELD_TO_UPDATE = "FieldToUpdate"
+JSON_GHOST_ORDER = "ghostOrder"
+JSON_GREAT_STATE = "GREATSTATE"
 JSON_ISOTOPE = "isotopes"
 JSON_ORDERS  = "orders"
 JSON_PRODUCTION = "production"
 JSON_PRODUCTIONS = "productions"
+JSON_RUN = "run"
 JSON_RUNS = "runs"
 JSON_TRACER = "tracers"
 JSON_TRACER_MAPPING = "tracer_mapping"
+JSON_T_ORDERS = "t_orders"
+JSON_SERVER_CONFIG = "server_config"
 JSON_VIALS = "vials"
 JSON_VIAL_MAPPING = "vial_mapping"
-JSON_ACTIVE_DATABASE = "active_database"
-JSON_DATABASE = "database"
-JSON_FIELD_TO_UPDATE = "FieldToUpdate"
 
 
 # WEBSOCKET MESSAGES
 WEBSOCKET_DATA_CREATE_ORDER    = "createOrder"
+WEBSOCKET_DATA_DEAD_ORDERS     = "deadOrders"
 WEBSOCKET_DATA_ORDER           = "order"
 WEBSOCKET_DATA_ORDERS          = "orders"
 WEBSOCKET_DATA_VIAL            = "vial"
 WEBSOCKET_DATA_VIALS           = "vials"
-WEBSOCKET_DATA_TRACER          = "tracerID" 
+WEBSOCKET_DATA_TRACER          = "tracerID"
+WEBSOCKET_DATA_T_ORDERS        = "t_orders"
 WEBSOCKET_DATE                 = "date"
 WEBSOCKET_MESSAGETYPE          = "messageType"
-WEBSOCKET_MESSAGE_CREATE_VIAL  = "createVial"  
+WEBSOCKET_MESSAGE_CREATE_VIAL  = "createVial"
 WEBSOCKET_MESSAGE_CREATE_ORDER = "createOrder"
+WEBSOCKET_MESSAGE_EDIT_TRACER  = "editTracer"
 WEBSOCKET_MESSAGE_EDIT_VIAL    = "editVial"
 WEBSOCKET_MESSAGE_FREE_ORDER   = "freeOrder"
 WEBSOCKET_MESSAGE_UPDATEORDERS = "updateOrder"
+WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState"
 WEBSOCKET_MESSAGE_RECIEVE_VIAL = "recieveVial"
 WEBSOCKET_SEND_EVENT           = "sendEvent"
 WEBSOCKET_EVENT_TYPE           = "type"
+WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder"
+WEBSOCKET_MESSAGE_ECHO         = "echo"
+WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders"

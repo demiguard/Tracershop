@@ -96,6 +96,8 @@ def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
     return f"\"{datetimeConverter(value)}\""
   if valueType == type(None):
     return NoneTypeRes
+  if valueType == bool:
+    return int(value)
   raise TypeError(f"Value of unknown type: {valueType}")
 
 

@@ -27,7 +27,7 @@ class MySQLCursor(object):
       'autocommit' : True,
       'raise_on_warnings': True
     }
-    
+
     try:
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True
@@ -39,7 +39,6 @@ class MySQLCursor(object):
   def __exit__(self, type, value, traceback):
     if self.connected:
       self.connection.close()
-
 
 
 def ExecuteQueryFetchOne(SQLQuery : str):

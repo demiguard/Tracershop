@@ -9,19 +9,27 @@ class CreateOrderModal extends Component {
     super(props);
     
     var activeCustomer; 
+    var DeliverTimeMapping;
 
     for(const [customerID, customer] of this.props.customers){
       activeCustomer = customer;
-      if (activeCustomer.productions.length > 0) break;
+      DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);
+      if (DeliverTimeMapping.size){ //If it's empty pick a new one, since you can't order there
+        break;
+      }
     }
 
-    let productions = activeCustomer.productions
-    let activeProduction = productions[0];
+    var run;
+    for(const [DTrun, _] of DeliverTimeMapping){
+      run = DTrun;
+      break;
+    }
+    
 
     this.state = {
-      productions : productions,
+      productions : DeliverTimeMapping,
       activeCustomerID : activeCustomer.ID,
-      activeRun : activeProduction.run,
+      activeRun : run,
       amount : "",
       ErrorMessage : "",
     };
@@ -36,14 +44,18 @@ class CreateOrderModal extends Component {
 
   changeCustomer(event){
     const newCustomer = this.props.customers.get(Number(event.target.value));
-    const NewProductions = newCustomer.productions
-    const DefaultRun = NewProductions[0];
+    const NewProductions = this.props.DeliverTimeMap.get(newCustomer.ID);
+    var run;
+    for(const [DTrun, _] of NewProductions){
+      run = DTrun;
+      break;
+    }
 
     this.setState({
       ...this.state,
       activeCustomerID : newCustomer.ID,
       productions : NewProductions,
-      activeRun : DefaultRun.run,
+      activeRun : run,
       ErrorMessage : "",
     })
   }
@@ -51,7 +63,7 @@ class CreateOrderModal extends Component {
   changeRun(event){
     this.setState({
       ...this.state,
-      activeRun : event.target.value
+      activeRun : Number(event.target.value)
     });
   }
 
@@ -65,46 +77,32 @@ class CreateOrderModal extends Component {
       return
     }
     const customer = this.props.customers.get(Number(this.state.activeCustomerID));
-    
-    var production = undefined;
-    for(const CustomerProduction of customer.productions){
-      if (this.state.activeRun == CustomerProduction.run){
-        production = CustomerProduction;
-        break
-      }
-    }
-
-    if(production == undefined){
-      this.setState({
-        ErrorMessage: "Kan ikke funde produktion, Det burde være umuligt at nå her til."
-      });
-      return;
-    }
+    const activeProduction = this.state.productions.get(this.state.activeRun);
 
     this.props.createOrder(
       customer,
-      production,
+      this.state.activeRun,
+      activeProduction.deliverTime,
       AmountNumber
-
     );
     this.props.onClose();
   }
 
   render(){
-    console.log(this.state);
-    console.log(this.props);
-
+    console.log(this.state)
+    console.log(this.props)
     const options = [];
     for(const [customerID, customer] of this.props.customers){
-      if(customer.productions.length > 0) options.push(
+      const DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);
+      if(DeliverTimeMapping.size > 0) options.push(
         (<option key={customerID} value={customerID}>{customer.UserName}</option>)
       );
     }
 
     const runs = [];
-    for(const production of this.state.productions){
+    for(const [run, production] of this.state.productions){
       runs.push(
-        (<option key={production.run} value={production.run}>{production.run} - {production.dtime}</option>)
+        (<option key={run} value={run}>{run} - {production.deliverTime.substr(11,5)}</option>)
       )
     }
     // Verbosity is mostly for the reader sake, so don't say I didn't think about you

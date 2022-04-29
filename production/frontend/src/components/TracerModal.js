@@ -40,7 +40,7 @@ export default class TracerModal extends Component {
       <tr key={customer.ID}>
         <td>{customer.UserName}</td>
         <td>
-          <Form.Check 
+          <Form.Check
             defaultChecked={allowedToOrder}
             type="checkbox"
             className="mb-2"
@@ -81,9 +81,9 @@ export default class TracerModal extends Component {
 
   render() {
     return (
-      <Modal 
+      <Modal
         show={this.props.show}
-        size="lg"  
+        size="lg"
         onHide={this.props.onClose}
       >
         <Modal.Header>
@@ -96,7 +96,7 @@ export default class TracerModal extends Component {
           <Button onClick={this.props.deleteTracer}>
             Slet Tracer
           </Button>
-          <Button 
+          <Button
             onClick={this.props.onClose}
           >Færdig</Button>
         </Modal.Footer>

@@ -11,405 +11,328 @@ import { CreateOrderModal } from "./CreateOrderModal";
 import { JSON_AMOUNT, JSON_CUSTOMER, JSON_CUSTOMERS, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, JSON_PRODUCTION,
   WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS, 
   WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL, 
-  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, JSON_EMPLOYEE, WEBSOCKET_MESSAGE_CREATE_ORDER, WEBSOCKET_DATA_CREATE_ORDER,
+  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, JSON_EMPLOYEE, WEBSOCKET_MESSAGE_CREATE_ORDER, WEBSOCKET_DATA_CREATE_ORDER, JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, JSON_DELIVERTIME,
 } from "./lib/constants";
 
 
 export { ActivityTable }
 
 /*
-  As all documentation in code, this might be out of date, 
+  As all documentation in code, this might be out of date and should look at what the code does. 
   
-  This Table is starting to become really complicated...
-  
-  you can find the true answer in the SQLController / SQLLegacyController file
-  Orders are Native Objects on the format: 
-  {
-    status       : Int
-    oid          : Int
-    run          : Int
-    BID          : Int
-    amount       : Float
-    total_amount : Float
-    deliver_datetime : Str //note it's on a date time format where you can call new Date(orders.delivers_datetime)
+  For the dataclasses described see Tracershop/production/lib/ProductionDataClasses.py
+  The Dataclasses have been converted to native javascript Objects. Note these dataclasse doesn't exists in the javascript frame work at time of writting this doc
 
-  }
-
-  ***** IDIOT NOTICE *****
-    So some genious figure out, Hey this websocket is kinda smart lets not use it. Instead lets use normal AJAX calls
-
-    So a massive TODO is removing all the AJAX calls and instead make them over the websocket
-    websockets are harder better faster stronger, Also we need to do some encryption...
+  The props for this is the following:
+            date : Date Object - The day that the table is displaying
+            tracer : Number - An id to enter in the map tracers
+            username : Username of log in user, should be passed to Modal, for verification
+            customer : Map <CustomerDataClass.ID, CustomerDataClass>
+            deliverTimes : Map <DeliverTimeDataClass.DTID, DeliverTimeDataClass>
+            employees : Map<EmployeeDataClass.OldTracerBaseID, EmployeeDataClass>
+            isotopes :  Map<IsotopeDataClass.ID, IsotopeDataClass>
+            orders : Map<ActivityOrderDataClass.oid, ActivityOrderDataClass>
+            runs : Map<RunsDataClass.PTID, RunsDataClass>
+            t_orders : Map<InjectionOrderDataClass.oid, InjectionOrderDataClass>
+            tracers : Map<TracerDataClass.id, TracerDataClass>
+            vials : Map<VialDataClass.ID, VialDataClass>
+            websocket : Active and connected Websocket Object from TracerWebsocket
 */
-
-
 
 class ActivityTable extends Component {
   constructor(props) {
     super(props);
 
-    this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/activity/" + this.props.tracer.id + "/", this);
+    //this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
+
+    // I should look into local storage, to put in stuff like 
+    // * runs
+    // * customers
+    // * employees
+    // To create initial state
+
+    this.OrderMapping = this.createOrderMapping();
 
     this.state = {
-      orders    : new Map(),
-      runs      : new Map(),
-      customer  : new Map(),
-      vial      : new Map(),
-      employees : new Map(),
-
+      
       showModal : false,
       ModalOrder : null,
       ModalCustomer : null,
       Modal: null
     }
-
-    ajax({
-      url:`api/getActivityTable/${this.props.tracer.id}/${this.props.date.getFullYear()}/${this.props.date.getMonth() + 1}/${this.props.date.getDate()}`,
-      type:"get",
-    }).then((data) => {
-      const CustomerMap = new Map();
-      for (let CustomerString of data[JSON_CUSTOMERS]) {
-        const Customer = ParseJSONstr(CustomerString)
-        Customer["productions"] = [];
-        CustomerMap.set(Customer.ID, Customer);
-      }
-      const Productions = []
-      for(const ProductionStr of data[JSON_PRODUCTIONS]){
-        Productions.push(ParseJSONstr(ProductionStr));
-      }
-
-      const Orders = []
-
-      for(const OrderStr of data[JSON_ORDERS]) {
-        Orders.push(ParseJSONstr(OrderStr))
-      }
-
-      this.InsertProductions(CustomerMap, Productions);
-
-      // These are the attual productions runs
-      const RunMap = new Map();
-      for (let RunStr of data[JSON_RUNS]) {
-        const Run = ParseJSONstr(RunStr)
-        if (RunMap.has(Run.day)){
-          //Remake list ahear to the principle of purity
-          const Runs = [...RunMap.get(Run.day)] 
-          Runs.push(Run)
-          Runs.sort((r1, r2) => (r1.ptime > r2.ptime) ? 1 : -1)
-          RunMap.set(Run.day, Runs)
-        } else {
-          RunMap.set(Run.day, [Run])
-        }
-      }
-
-      const newOrders = this.InsertOrders(CustomerMap, Orders)      
-
-      const NewVials = new Map();
-      for(let vialStr of data[JSON_VIALS]) {
-        const vial = ParseJSONstr(vialStr)
-        NewVials.set(vial.ID, vial);
-      }
-
-      const NewEmployee = new Map();
-      for (let employeeStr of data[JSON_EMPLOYEE]) {
-        const employee = ParseJSONstr(employeeStr);
-        NewEmployee.set(employee.OldTracerBaseID, employee);
-      }
-      
-
-      const newState = {
-        ...this.state,
-        runs   : RunMap,
-        orders : newOrders,
-        customer : CustomerMap,
-        vial : NewVials,
-        employees : NewEmployee
-      };
-      this.setState(newState);
-    });    
   }
-
-
-  //Updating Calender
+  
+  
+  //Since Order mapping doesn't effect rendering, it's not updated when props are updated
   componentDidUpdate(prevProps) {
-    if (this.props.date !== prevProps.date) {
-      this.updateOrders(this.props.date)
+    if(this.props.date !== prevProps.date ||
+       this.props.orders !== prevProps.orders ||
+       this.props.customer !== prevProps.customer ||
+       this.props.deliverTimes !== prevProps.deliverTimes
+      ){
+      this.OrderMapping = this.createOrderMapping();
+      
     }
   }
 
-  updateOrders(newDate) {
-    ajax({
-      url:`api/getActivityOrders/${this.props.tracer.id}/${newDate.getFullYear()}/${newDate.getMonth() + 1}/${newDate.getDate()}`,
-      type:"get"
-    }).then((data) => {
-      var newCustomerMap = new Map(this.state.customer);
-      for(var [BID, Customer] of newCustomerMap.entries()){
-        var Customer = {...Customer};
-        Customer.productions = [];
-        newCustomerMap.set(BID, Customer);
-      }
-      const Productions = [];
-      for(const ProductionStr of data[JSON_PRODUCTIONS]){
-        Productions.push(ParseJSONstr(ProductionStr));
-      }
-      const Orders = [];
-      for(const OrderStr of data[JSON_ORDERS]){
-        Orders.push(ParseJSONstr(OrderStr));
-      }
-
-      newCustomerMap  = this.InsertProductions(newCustomerMap, Productions);
-      const newOrders = this.InsertOrders(newCustomerMap, Orders);
-      this.SetOrdersCustomers(newOrders, newCustomerMap);
-
-      const newVials = new Map();
-      if (data[JSON_VIALS]) for(let vialStr of data[JSON_VIALS]){
-        const vial = ParseJSONstr(vialStr);
-        newVials.set(vial.ID, vial);
-      }
-      this.setState({...this.state, vial: newVials});
-    });
+  GetProductionDateTimeString(ProductionTime) {
+    return String(  this.props.date.getFullYear()) + '-' +
+      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
+      FormatDateStr(this.props.date.getDate()) + "T" +  
+      ProductionTime;
   }
 
-  
-  //This is primary the message filter if a message is relevant.
-  ShouldOrdersUpdate(newDate) {
-    return CompareDates(newDate, this.props.date) 
-  }
-
-  InsertProductions(CustomerMap, Productions) {
+  /** This constructs a data structure from the props: date, orders, deliverTimes, customers
+   *  The Data struct is as follows:
+   *  Map< keys:Customers.id, value:Map<
+   *         keys:deliverTime.run, {MasterOrder - Optional[Number], extraOrders - Array[Number] , deliverTime - String}>
+   *     >
+   *  
+   *  The master order is the order that is expanded if other orders are moved to this time slot. 
+   *  extraOrders is a list of additional orders, that is / should be delivered in this time slot
+   *  delivertime is the delivertime for this run.
+   * 
+   * @returns Map as described above
+   */
+  createOrderMapping(){
     const today     = this.props.date.getDay();
     const JanOne    = new Date(this.props.date.getFullYear(),0,1);
     const NumDays   = Math.floor(this.props.date - JanOne) / (24 * 60 * 60 * 1000);
     const WeekNum   = Math.ceil((this.props.date.getDay() + 1 + NumDays) / 7);
-    const WeekNumIsEven = WeekNum % 2 === 0
-    for (let Production of Productions) {
-      if (Production.day !== today)                  continue;
-      if (Production.repeat === 2 && !WeekNumIsEven) continue;
-      if (Production.repeat === 3 && WeekNumIsEven)  continue;
-      const Customer = CustomerMap.get(Production.BID);
-      if (Customer === undefined) continue;
-      Customer.productions.push({
-        orders : [],
-        dtime  : Production.dtime,
-        run    : Production.run,
-      });
-      Customer.productions.sort((p1, p2) => (p1.run > p2.run) ? 1 : -1);
-    }
-    return CustomerMap;
-  }
-
-  InsertOrders(CustomerMap, Orders) {
-    const newOrders = new Map();
-    for (const Order of Orders) {
-      newOrders.set(Order.oid, Order);
-      const Customer   = CustomerMap.get(Order.BID);
-      const Production = Customer.productions[Order.run - 1];
-      if (Production === undefined) continue;
-      Production.orders.push(Order);
-    }
-    return newOrders;
-  }
-
-
-  SetOrdersCustomers(newOrders, newCustomerMap) {
-    const newState = {
-      ...this.state,
-      orders : newOrders,
-      customer : newCustomerMap
-    };
-    this.setState(newState);
-  }
-
-
-  GetProductionDateTimeString(Production) {
-    return String(  this.props.date.getFullYear()) + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
-      FormatDateStr(this.props.date.getDate()) + "T" +  
-      Production.dtime;
-  }
-
-
-  // State Changing Functions 
-  // Accepting Order Functions AKA An order Going from Status 1 to Status 2
-  AcceptOrder(oid) {
-    const Order = this.state.orders.get(oid);
-    Order.status = 2
-    this.SetOrder(Order);
-    //One needs this way of object constrution to have constants keys
-    const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_UPDATEORDERS);
-    jsonData[WEBSOCKET_DATA_ORDERS] = [Order]
-    this.websocket.send(JSON.stringify(jsonData));
-  }
-
-  AcceptOrderIncoming(oid, messageDate) {
-    if (this.ShouldOrdersUpdate(messageDate)) {
-      const Order = this.state.orders.get(oid);
-      Order.status = 2
-      this.SetOrder(Order);
-    }
-  }
- 
-  SetOrder(Order) {
-    //Note you should Look at liberay called immer
-    //The Liberay deals with Updatling large objects, like the Customer Map
-    console.log(Order);
+    const WeekNumIsEven = WeekNum % 2 === 0;
     
-    const NewOrder        = {...Order};
-    const NewOrders    = new Map(this.state.orders);
-    const NewCustomers = new Map(this.state.customer);
-    // Set New object in Customer Map
-    const Customer     = {...NewCustomers.get(Order.BID)};
+    const NewOrderMapping = new Map();
 
-    for (let ProductionI = 0; ProductionI < Customer.productions.length; ProductionI++) {
-      const Production = Customer.productions[ProductionI];
-      if (ProductionI === (Order.run - 1)) {
-        const pOrders = Production.orders;
-        var oldOrderI = undefined;
-        for(let pOrderI in pOrders) {
-          const pOrder = pOrders[pOrderI];
-          if (pOrder.oid === NewOrder.oid) {
-            oldOrderI = pOrderI;
-            break;
-          }
-        }
-        if (oldOrderI !== undefined) {
-          pOrders[oldOrderI] = Order;
+    for(const [customerID, _] of this.props.customer){
+      NewOrderMapping.set(customerID, new Map());
+    }
+
+    for(const [DTID, deliverTime] of this.props.deliverTimes){
+      // Check if date is ok?
+      if (deliverTime.day !== today) continue;
+      if (deliverTime.repeat === 2 && !WeekNumIsEven) continue;
+      if (deliverTime.repeat === 3 && WeekNumIsEven)  continue;
+      const customerMap = NewOrderMapping.get(deliverTime.BID);
+      if (customerMap === undefined){
+        console.log("A Delivertime cannot be associated with customer"); // You should send a message that database is broken and an somebody should REEEEEALY fix it
+        console.log(deliverTime);
+        continue; // WHO CARES THAT STUFF DON'T WORK?
+      }
+      customerMap.set(deliverTime.run, {MasterOrder : null, extraOrders : [], deliverTime : this.GetProductionDateTimeString(deliverTime.dtime)});
+    }
+
+    for(const [oid, Order] of this.props.orders){
+      // This just build things up with out checking for data integrety.
+      // You might need to add some validation, that gives some sort of warning if stuff breaks.
+      const orderDate = new Date(Order.deliver_datetime);
+      if (!CompareDates(this.props.date, orderDate) || Order.tracer !== this.props.tracer) continue; //note this.props.tracer is an ID
+      
+      const customerMap = NewOrderMapping.get(Order.BID);
+      if(customerMap === undefined){
+        console.log("An order was made to an unknown customer");
+        console.log(Order);
+        console.log(NewOrderMapping);
+        continue
+      }
+      const DeliverTimeStruct = customerMap.get(Order.run);
+      // Note Here I need the timestring and not the Date Object
+      if (DeliverTimeStruct) {
+        if(Order.deliver_datetime == DeliverTimeStruct.deliverTime && DeliverTimeStruct.MasterOrder == null){
+          DeliverTimeStruct.MasterOrder = oid;
         } else {
-          pOrders.push(Order);
+          DeliverTimeStruct.extraOrders.push(oid);
         }
       } else {
-        Customer.productions[ProductionI].orders = 
-          Customer.productions[ProductionI].orders.filter(function(
-            OldOrder, index, arr
-          ){
-          return OldOrder.oid !== Order.oid; 
-        });
+        console.log("An order was made to a known customer, but to an unknown time slot");
       }
-      
     }
-    
-    // Set new object in NewOrders & NewCustomers
-    NewOrders.set(Order.oid, Order); 
-    NewCustomers.set(Customer.ID, Customer);
-    this.SetOrdersCustomers(NewOrders, NewCustomers);
+    return NewOrderMapping; 
   }
 
+  // State Changing Functions 
+  /**
+   * This function is called in response to a user accepting an order
+   * It updates the status from 1 to 2 and sends it to server causing a response giving a
+   * site wide change
+   * 
+   * @param {Number} oid  Order ID to be accepted.
+   */
+  AcceptOrder(oid) {
+    const Order = this.props.orders.get(oid);
+    Order.status = 2
+    
+    //One needs this way of object constrution to have constants keys
+    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_UPDATEORDERS);
+    jsonData[WEBSOCKET_DATA_ORDERS] = [Order]
+    this.props.websocket.send(JSON.stringify(jsonData));
+  }
 
-  // Change the Run value of a Order:
+  
+  /** This Function Moves an order from one Production run to another. It also updates dependant orders.
+   * 
+   * @param {Number} newRun - New run that the order is being moved to.
+   * @param {Number} oid - ID of Order being moved 
+   */
   ChangeRun(newRun, oid) {
-    const Order         = {...this.state.orders.get(oid)};
-    const Customer      = {...this.state.customer.get(Order.BID)};
-    const NewProduction = Customer.productions[newRun - 1];
+    /** So this works for 2 production, however there's so much more fun when you have 3 productions 
+     * 
+     * Okay So here is a fun bug / I dunno what happens:
+     * Lets say we have 3 Deliver Times
+     * 2 gets mapped to 1 -> No problem, however 2 no longer have a master Order
+     * 3 gets mapped to 2 -> Big problem, Since there's no master order for DT 2, a new order is created, since there's no master order a new one is created
+     * 2 gets mapped to 2 -> Biggest problem, there's now three orders: a ghost order, 2, 3. 
+     * 
+     * Now This might not be a problem, there might be some wierd reason why Production might want this, however if Order 2 is moved back, then the orders should be merged
+     * Really this is something that might best be handled on the backend
+     * Also this is not a problem since for now there's only 2 productions per day, however This will be a problem someday!
+     */
+    const Order         = this.props.orders.get(oid);
+    const OrderDate = new Date(Order.deliver_datetime);
+    const Customer      = this.props.customer.get(Order.BID);
+    const Tracer        = this.props.tracers.get(this.props.tracer);
+    const isotope       = this.props.isotopes.get(Tracer.isotope);
     
-    const ProductionDateTimeString = this.GetProductionDateTimeString(NewProduction)
-    
-    const NewProductionDT = new Date(ProductionDateTimeString);
-    const OrderTime       = new Date(Order.deliver_datetime);
-    
-    if (NewProductionDT <= OrderTime) {
-      Order.run = newRun;
-      this.SetOrder(Order);
-      
-      this.updateAmountForCustomer(Customer.ID).then(
-        ((UpdatedOrders) => {
-          const jsonData = this.websocket.getDefaultMessage(
-            this.props.date, WEBSOCKET_MESSAGE_UPDATEORDERS);
-          jsonData[WEBSOCKET_DATA_ORDERS] = UpdatedOrders;
-          this.websocket.send(JSON.stringify(jsonData));
-        })
-      );
-    } else {
-      //TODO: Post Error as you cannot deliver this.
-      throw "This should not happen, you need to update your rendering"
-    }
-  }
+    // Find Master Order
+    const DeliverTimeMapping = this.OrderMapping.get(Customer.ID);
 
-  UpdateOrderFromWebsocket(newDate, UpdatedOrders){
-    if(this.ShouldOrdersUpdate(newDate)){
-      for(const Order of UpdatedOrders){
-        this.SetOrder(Order);
-      }
+    if(!DeliverTimeMapping){
+      console.log(Customer);
+      console.log(Order);
+      throw "An Order doesn't have a deliverTime mapping for a customer";
     }
-  }
-
-  async createNewOrder(CustomerID, Production){
-    const orderDateTime = this.GetProductionDateTimeString(Production)
-    // There's some code smell here
-    const newOrder = await ajax({
-      url : "api/createEmptyActitityOrder",
-      type:"POST",
-      datatype:"json",
-      data:JSON.stringify({
-        CustomerID    : CustomerID,
-        orderDateTime : orderDateTime,
-        run           : Production.run
-      })
-    });
-    this.SetOrder(newOrder);
-    return newOrder;
-  }
-
-  async updateAmountForCustomer(ID){
-    //This function updates the values FDG amount,
-    //such that the orders are in a consistent state 
     
-    const Customer = {...this.state.customer.get(ID)};
-    const NewOrders = new Map(this.state.orders);
-    if (Customer === undefined) {
-      throw "Customer Not found";
+    const DeliverTimeObejct = DeliverTimeMapping.get(newRun);
+
+    if (!DeliverTimeObejct){
+      console.log(Customer);
+      console.log(Order);
+      throw "A user is trying to map to a delivertime that doesn't exists for that user!";
     }
-    const ChangedOrders = []
-    for (const ProductionI in Customer.productions) {
-      const Production = {...Customer.productions[ProductionI]};
-      var MasterOrder = null; //Order to the given time slot
-      const ServantOrders = []; //Orders outside the time slot
-      const ProductionDateTimeString = this.GetProductionDateTimeString(Production);
-      const ProductionDateTime = new Date(ProductionDateTimeString);
-      for (const orderI in Production.orders) {
-        const order = {...Production.orders[orderI]};
-        if (order.deliver_datetime === ProductionDateTimeString) {
-          MasterOrder = {...order};
-        } else {
-          ServantOrders.push({...order});
+    
+    if(DeliverTimeObejct.MasterOrder == null){
+      if(DeliverTimeObejct.deliverTime == Order.deliver_datetime){
+        // This was an old master Order that is now being moved back
+        if(Order.COID === -1){
+          throw "You got some data corruption in your orders! Because this should already be a master Order";
         }
-        Production.orders[orderI] = order;
-      }
+        var OldMasterOrder   = this.props.orders.get(Order.COID);
+        while (OldMasterOrder.COID !== -1){ // There might be a chain of orders
+          OldMasterOrder = this.props.orders.get(OldMasterOrder.COID);
+        }
+        const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
+        const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
 
-      if (MasterOrder === null && ServantOrders.length > 0) {
-        MasterOrder = await this.createNewOrder(ID,Production);
-        //Create a new order
-      } else if (MasterOrder === null && ServantOrders.length === 0) {
-        continue;
-      }
-      MasterOrder.total_amount = MasterOrder.amount;
-      MasterOrder.COID = -1;
-      for (const SOrder of ServantOrders) {
-        const MinDiff = CountMinutes(
-          ProductionDateTime, 
-          new Date(SOrder.deliver_datetime)
-        );
-          
-        const OrderContribution = CalculateProduction(this.props.tracer.halflife, MinDiff, SOrder.amount);
-          //Updating Orders
-        MasterOrder.total_amount += OrderContribution;
-        SOrder.total_amount = 0;
-        SOrder.total_amount_o = 0;
-        SOrder.COID = MasterOrder.oid;
-          //We can update the order now, because we are not touching it later in the function
-        NewOrders.set(SOrder.oid, SOrder);
-        ChangedOrders.push(SOrder);
-      }
-      MasterOrder.total_amount_o = MasterOrder.total_amount * (1 + Customer.overhead/100);
-      NewOrders.set(MasterOrder.oid, MasterOrder);
-      ChangedOrders.push(MasterOrder);
+        const lessActivity = CalculateProduction(isotope.halflife, OldMinutes, Order.amount)
+        const lessActivityOverhead = CalculateProduction(isotope.halflife, OldMinutes, Order.amount_o)
       
-      Customer.productions[ProductionI] = Production;
-    }
-    const NewCustomerMap = new Map(this.state.customer);
-    NewCustomerMap.set(Customer.ID, Customer);
-    this.SetOrdersCustomers(NewOrders, NewCustomerMap);
+        OldMasterOrder.total_amount -= lessActivity;
+        OldMasterOrder.total_amount_o -= lessActivityOverhead;
 
-    return ChangedOrders
+        Order.total_amount = Order.amount;
+        Order.total_amount_o = Order.amount_o;
+        Order.run = newRun;
+        Order.COID = -1;
+
+        const Orders = [Order, OldMasterOrder];
+
+        const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+        jsonData[WEBSOCKET_DATA_ORDERS] = Orders;
+        this.props.websocket.send(JSON.stringify(jsonData));
+
+      } else {
+        // Create a ghost order
+        const GhostOrderDate = new Date(DeliverTimeObejct.deliverTime);
+        const GhostOrderMinutes = CountMinutes(GhostOrderDate, OrderDate);
+
+        const GhostOrderActivity = CalculateProduction(isotope.halflife, GhostOrderMinutes, Order.amount);
+        const GhostOrderActivityOverhead = CalculateProduction(isotope.halflife, GhostOrderMinutes, Order.amount_o);
+
+        const GhostOrderData = {
+          GhostOrderActivity : GhostOrderActivity,
+          GhostOrderActivityOverhead : GhostOrderActivityOverhead,
+          GhostOrderDeliverTime : DeliverTimeObejct.deliverTime,
+          GhostOrderRun : newRun,
+          Tracer : this.props.tracer,
+          MappedOrder : Order.oid, // Because the server needs to create the order
+          CustomerID : Order.BID
+        }
+
+        Order.run = newRun;
+        Order.total_amount = 0;
+        Order.total_amount_o = 0;
+        // Can't set COID since it's an ID for a new Order
+
+        const Orders = [Order];
+
+        if(Order.COID !== -1){
+          var OldMasterOrder   = this.props.orders.get(Order.COID);
+          while (OldMasterOrder.COID !== -1){
+            OldMasterOrder = this.props.orders.get(OldMasterOrder.COID);
+          }
+  
+          const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
+          const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
+  
+          const lessActivity = CalculateProduction(isotope.halflife, OldMinutes, Order.total_amount);
+          const lessActivityOverhead = CalculateProduction(isotope.halflife, OldMinutes, Order.total_amount_o);
+        
+          OldMasterOrder.total_amount -= lessActivity;
+          OldMasterOrder.total_amount_o -= lessActivityOverhead;
+  
+          Orders.push(OldMasterOrder);
+        }
+        const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+        jsonData[WEBSOCKET_DATA_ORDERS] = Orders;
+        jsonData[JSON_GHOST_ORDER] = GhostOrderData;
+        this.props.websocket.send(JSON.stringify(jsonData));
+      }
+
+    } else {
+      //This is updates the Master and Original Order
+      const OldMasterOrderID = Order.COID;
+      const MasterOrder = this.props.orders.get(DeliverTimeObejct.MasterOrder);
+      const MasterOrderDate = new Date(MasterOrder.deliver_datetime);
+      
+      const Minutes = CountMinutes(MasterOrderDate, OrderDate);
+      console.log(MasterOrderDate, OrderDate, Minutes)
+      const AdditionalActivity = CalculateProduction(isotope.halflife, Minutes, Order.total_amount)
+      const AdditionalActivityOverhead = CalculateProduction(isotope.halflife, Minutes, Order.total_amount_o)
+      
+      MasterOrder.total_amount   += AdditionalActivity;
+      MasterOrder.total_amount_o += AdditionalActivityOverhead;
+      
+      Order.total_amount = 0;
+      Order.total_amount_o = 0;
+      Order.COID = MasterOrder.oid;
+      Order.run = newRun;
+      
+      const Orders = [Order, MasterOrder];
+
+      if(OldMasterOrderID !== -1){
+        var OldMasterOrder   = this.props.orders.get(OldMasterOrderID);
+        while (OldMasterOrder.COID !== -1){
+          OldMasterOrder = this.props.orders.get(OldMasterOrder.COID);
+        }
+
+        const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
+        const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
+
+        const lessActivity = CalculateProduction(isotope.halflife, OldMinutes, Order.amount_total);
+        const lessActivityOverhead = CalculateProduction(isotope.halflife, OldMinutes, Order.amount_total_o);
+      
+        OldMasterOrder.total_amount -= lessActivity
+        OldMasterOrder.total_amount_o -= lessActivityOverhead
+
+        Orders.push(OldMasterOrder);
+      }
+
+
+      const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+      jsonData[WEBSOCKET_DATA_ORDERS] = Orders;
+      this.props.websocket.send(JSON.stringify(jsonData));
+    }
   }
+
 
   // Modal Functions
   /**
@@ -429,10 +352,10 @@ class ActivityTable extends Component {
    * @param {number} oid 
    */
   activateOrderModal(oid){
-    const Order = this.state.orders.get(oid);
+    const Order = this.props.orders.get(oid);
     if(Order === null) throw "Order is null";
     if(Order === undefined) throw "Order is undefined";
-    const Customer = this.state.customer.get(Order.BID)
+    const Customer = this.props.customer.get(Order.BID)
 
     this.setState({...this.state,
       showModal : true,
@@ -461,9 +384,8 @@ class ActivityTable extends Component {
       FormatDateStr(this.props.date.getMonth() + 1) + '-' +
       FormatDateStr(this.props.date.getDate());
 
-      const jsonData = this.websocket.getDefaultMessage(
-        this.props.date, WEBSOCKET_MESSAGE_CREATE_VIAL);
-      jsonData[WEBSOCKET_DATA_VIAL] = {
+    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_VIAL);
+    jsonData[WEBSOCKET_DATA_VIAL] = {
         "charge" : Charge,
         "filltime" : FillTime,
         "filldate" : FillDate, 
@@ -471,33 +393,22 @@ class ActivityTable extends Component {
         "activity" : Activity,
         "volume" : Volume
       };
-
-      console.log(jsonData);
-    this.websocket.send(JSON.stringify(jsonData));
+    this.props.websocket.send(JSON.stringify(jsonData));
   }
 
-  modalCreateOrder(customer, production, amount){
-    const message = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_CREATE_ORDER);
+  modalCreateOrder(customer, run, deliverTime, amount){
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_ORDER);
     const payload = {};
     payload[JSON_CUSTOMER] = customer;
-    payload[JSON_PRODUCTION] = production;
+    payload[JSON_DELIVERTIME] = deliverTime;
+    payload[JSON_RUN] = run;
     payload[JSON_AMOUNT] = amount;
+    payload[JSON_TRACER] = this.props.tracers.get(this.props.tracer);
 
     message[WEBSOCKET_DATA_CREATE_ORDER] = payload;
-    this.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(JSON.stringify(message));
   }
 
-  recieveVial(Vial){
-    const TodayStr = String(this.props.date.getFullYear()) + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
-      FormatDateStr(this.props.date.getDate());
-    
-    if (Vial.filldate == TodayStr)  {
-      const NewVials = new Map(this.state.vial);
-      NewVials.set(Vial.ID, Vial);
-      this.setState({...this.state, vial : NewVials});
-    }
-  }
 
   editVial(ID,
     Charge,
@@ -507,7 +418,7 @@ class ActivityTable extends Component {
     CustomerNumber)
   {
     const FillDate = `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`;
-    const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_EDIT_VIAL)
+    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_VIAL)
     jsonData[WEBSOCKET_DATA_VIAL] = {
       "ID"     : ID,
       "charge" : Charge,
@@ -518,7 +429,7 @@ class ActivityTable extends Component {
       "volume" : Volume
     };
     
-    this.websocket.send(JSON.stringify(jsonData)); 
+    this.props.websocket.send(JSON.stringify(jsonData)); 
   }
 
   /**
@@ -529,32 +440,30 @@ class ActivityTable extends Component {
   FreeOrder(orderID, vialSet){
     console.log(vialSet);
     const vialIDs = [...vialSet];
-    const vials = vialIDs.map(id => this.state.vial.get(id));
-    const order = this.state.orders.get(orderID);
+    const vials = vialIDs.map(id => this.props.vials.get(id));
+    const order = this.props.orders.get(orderID);
     this.closeModal();
-    const jsonData = this.websocket.getDefaultMessage(this.props.date, WEBSOCKET_MESSAGE_FREE_ORDER);
+    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ORDER);
     jsonData[WEBSOCKET_DATA_VIALS] = vials;
-    jsonData[WEBSOCKET_DATA_TRACER] = this.props.tracer.id;
+    jsonData[WEBSOCKET_DATA_TRACER] = this.props.tracer;
     jsonData[WEBSOCKET_DATA_ORDER] = order;
-    this.websocket.send(JSON.stringify(jsonData));
+    this.props.websocket.send(JSON.stringify(jsonData));
   }
 
   // Renders 
   renderRunSelect(Order) {
-    const Day  = this.props.date.getDay();
-    const Customer = this.state.customer.get(Order.BID);
-
+    const CustomerSpecificOrderMapping = this.OrderMapping.get(Order.BID); //Date filtering is done under construction of Order mapping
+    if(!CustomerSpecificOrderMapping) return Order.run; // Most likely, OrderMapping have not been initialized
     const OrderDT = new Date(Order.deliver_datetime);
 
 
     const options = []
-    for(const Production of Customer.productions) {
-      const ProductionDT = new Date(this.GetProductionDateTimeString(Production))
+    for(const [run, DeliverTime] of CustomerSpecificOrderMapping) {
+      const ProductionDT = new Date(DeliverTime.deliverTime);
       if (OrderDT >= ProductionDT) {
-        options.push((<option key={Production.run} value={Production.run}>{Production.run}</option>));
+        options.push((<option key={run} value={run}>{run}</option>));
       }
     }
-
     if (options.length > 1) { 
       //Daily philosophy: When you only have 1 chocie you have no chocie.
       return (
@@ -571,28 +480,25 @@ class ActivityTable extends Component {
   }
 
   renderRejectButton(Order){
-    if (Order.COID !== -1 || Order.status === 3) return (<td></td>);
+    if (Order.COID !== -1 || Order.status === 3) return ("");
     return (
-      <td>
         <Button variant="light">
           <img className="statusIcon" src="/static/images/decline.svg"/>
         </Button>
-      </td>
     );
   }
 
   renderAcceptButtons(Order) {
-    if (Order.COID !== -1) return (<td></td>); 
-    if (Order.status == 1) return (<td><Button variant="light" onClick={() => {this.AcceptOrder(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
-    if (Order.status == 2) return (<td><Button variant="light" onClick={() => {this.activateModal(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button></td>);
-    if (Order.status == 3) return (<td></td>);
+    if (Order.COID !== -1) return (""); 
+    if (Order.status == 1) return (<Button variant="light" onClick={() => {this.AcceptOrder(Order.oid).bind(this)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
+    if (Order.status == 2) return (<Button variant="light" onClick={() => {this.activateOrderModal(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
+    if (Order.status == 3) return ("");
   }
 
   renderRun(Order){
     if (Order.status === 1) return ""
     if (Order.status === 2) return this.renderRunSelect(Order)
     if (Order.status === 3) return String(Order.run)
-
   }
 
   renderFinishedOrder(order) {
@@ -602,10 +508,10 @@ class ActivityTable extends Component {
     const FreeDT    = (order.frigivet_datetime) ? new Date(order.frigivet_datetime) : "-";
     const FreeTime  = (FreeDT != "-") ? FormatDateStr(FreeDT.getHours()) + ":" + FormatDateStr(FreeDT.getMinutes()) : FreeDT
 
-    const Employee     = this.state.employees.get(order.frigivet_af)
+    const Employee     = this.props.employees.get(order.frigivet_af)
     const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
 
-    const customer = this.state.customer.get(order.BID)
+    const customer = this.props.customer.get(order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
     const TotalAmount  = (order.COID === -1) ? order.total_amount_o : "Flyttet til:" + order.COID;
 
@@ -627,84 +533,109 @@ class ActivityTable extends Component {
     const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
     const Run       = this.renderRun(Order); 
     
-    const customer = this.state.customer.get(Order.BID)
+    const customer = this.props.customer.get(Order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : Order.BID;
-    const TotalAmount  = (Order.COID === -1) ? Order.total_amount : "Flyttet til:" + Order.COID;
-    const TotalAmountO = (Order.COID === -1) ? Order.total_amount_o : "";
+    const TotalAmount  = (Order.COID === -1) ? Math.floor(Order.total_amount) : "Flyttet til:" + Order.COID;
+    const TotalAmountO = (Order.COID === -1) ? Math.floor(Order.total_amount_o) : "";
 
-    return (
-    <tr key={Order.oid}> 
-      <td>{renderStatusImage(Order.status, () => this.activateOrderModal(Order.oid))}</td>
-      <td>{Order.oid}</td>
-      <td>{CustomerName}</td>
-      <td>{Order.amount}</td>
-      <td>{TotalAmount}</td>
-      <td>{TotalAmountO}</td>
-      <td>{OrderTime}</td>
-      <td>{Run}</td>
-      {this.renderAcceptButtons(Order)}
-      {this.renderRejectButton(Order)}
-    </tr>)
+    return renderTableRow(Order.oid, [renderStatusImage(Order.status, () => this.activateOrderModal(Order.oid)),
+      Order.oid,
+      CustomerName,
+      Math.floor(Order.amount),
+      TotalAmount,
+      TotalAmountO,
+      OrderTime,
+      Run, 
+      this.renderAcceptButtons(Order), 
+      this.renderRejectButton(Order)]);
+
   }
 
-  renderTotal(run, _index, _arr) {
+  renderTotal(Production) {
     var total = 0;
     var total_o = 0
-    const runDateString = String(this.props.date.getFullYear() + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1)) + '-' +
-      FormatDateStr(this.props.date.getDate()) + "T" + run.ptime;
-    const runDate = new Date(runDateString);
-    for(const [_BID, Customer ] of this.state.customer.entries()){
-      for(const Production of Customer.productions){
-        if (Production.run === run.run) {
-          var contribution = 0;
-          for (const Order of Production.orders) {
-            contribution += Order.total_amount;
+    
+    for(const [_, DeliverTimeMap] of this.OrderMapping){
+      const RelvantDeliverTime = DeliverTimeMap.get(Production.run);
+
+
+      if(RelvantDeliverTime){ // If there's mapping else It doesn't matter
+        
+        if(RelvantDeliverTime.MasterOrder) {
+          const MasterOrder = this.props.orders.get(RelvantDeliverTime.MasterOrder);
+          if(MasterOrder === undefined){
+            console.log(this.props.orders)
+            console.log(DeliverTimeMap);
+            console.log(RelvantDeliverTime);
           }
-          if(contribution === 0) continue;
-          
-          const ProductionDatetime = new Date(this.GetProductionDateTimeString(Production));
-          const MinDiff = CountMinutes(runDate, ProductionDatetime);
-          const TimeCorrectedContribution = CalculateProduction(this.props.tracer.halflife, MinDiff, contribution);
-          total += TimeCorrectedContribution;
-          total_o += Math.floor(TimeCorrectedContribution * (1 + Customer.overhead / 100));
+          total += MasterOrder.total_amount;
+          total_o += MasterOrder.total_amount_o;
+        }
+        for(const OrderID of RelvantDeliverTime.extraOrders){
+          const ExtraOrder = this.props.orders.get(OrderID);
+          total += ExtraOrder.total_amount;
+          total_o += ExtraOrder.total_amount_o;
         }
       }
     }
 
     return (
-    <Row key={run.run}>
-      Kørsel : {run.run} - {run.ptime} : {total} MBq / Overhead : {total_o} MBq
+    <Row key={Production.run}>
+      Kørsel : {Production.run} - {Production.ptime} : {Math.floor(total)} MBq / Overhead : {Math.floor(total_o)} MBq
     </Row>);
   }
-
 
   render() {
     const FinishedOrders = [];
     const pendingOrders = [];
-    for (const [oid, order] of this.state.orders.entries()){
-      if (order.status == 3) {
-        FinishedOrders.push(this.renderFinishedOrder(order))
-      } else 
-      pendingOrders.push(this.renderPendingOrder(order))
-    }
 
-    const dailyRuns = this.state.runs.get(this.props.date.getDay());
-    const RenderedRuns = []
-    if (dailyRuns !== undefined) {
-      for (const run of dailyRuns) {
-        RenderedRuns.push(this.renderTotal(run));
+
+    // This Object is newer than the state version
+    // Yeah so this is really anonying here is why
+    // So There might be a solution to make it variable that's not state, since it technically isn't a state,
+    // But an object that's dependant on props
+    this.OrderMapping = this.createOrderMapping(); 
+    
+    const Orders = [...this.props.orders.values()].sort((order_1, order_2) => {
+      if (order_1.BID < order_2.BID) {
+        return -1;
+      } else if (order_1.BID > order_2.BID){
+        return 1;
+      } else {
+        // order.BID equals
+        if (order_1.run < order_2.run){
+          return -1;
+        } else {
+          return 1;
+        }
+      }
+    });
+
+    for (const order of Orders){
+      const orderDate = new Date(order.deliver_datetime);
+      
+      if (CompareDates(this.props.date, orderDate)){
+        (order.status == 3) ? 
+          FinishedOrders.push(this.renderFinishedOrder(order)) : 
+          pendingOrders.push(this.renderPendingOrder(order));
       }
     }
+    
+    const RenderedRuns = [];
+    for (const [PTID, run] of this.props.runs) {
+      if (run.day === this.props.date.getDay()){
+        RenderedRuns.push(this.renderTotal(run));
+      }
+    }    
 
-    console.log(this.state)
+    console.log(this.props);
+    console.log(this.state);
     
     return (<div>
       <Container>
         <Row>
-
           <Col sm={10}>
-            <Row> Produktioner: </Row>
+            <Row> Produktioner - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}: </Row>
             {RenderedRuns}
           </Col>
           <Col sm={2}>
@@ -757,15 +688,17 @@ class ActivityTable extends Component {
       < this.state.Modal
         show={this.state.showModal}
         Order={this.state.ModalOrder}
-        vials={this.state.vial}
+        DeliverTimeMap={this.OrderMapping}
+        vials={this.props.vials}
         customer={this.state.ModalCustomer}
-        customers={this.state.customer} // Your naming skills SUXXS
-        employees={this.state.employees}
+        customers={this.props.customer} // Your naming skills SUXXS
+        employees={this.props.employees}
         onClose={this.closeModal.bind(this)}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}
         createOrder={this.modalCreateOrder.bind(this)}
+
       />
     : null }
     </div>
