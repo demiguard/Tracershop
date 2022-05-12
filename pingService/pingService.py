@@ -10,7 +10,7 @@ import traceback
 
 from datetime import datetime, date, time, timedelta
 from logging.handlers import SysLogHandler
-#Custompackages 
+#Custompackages
 import pingServiceConfig as config
 #Pip packages
 import pydicom
@@ -41,7 +41,7 @@ class MysqlCursor(object):
   def __exit__(self, type, value, traceback):
     if self.connected:
       self.connection.close()
-    
+
 
 class MyDicomConnection(object):
   def __init__(self, ae, ip, port, aet):
@@ -70,7 +70,7 @@ def getConnectionParameters(cursor):
     Retreives the RIS connection from the database
   """
   sqlQuery = """
-    SELECT 
+    SELECT
       ip, port, AET
     FROM
       customer_aet inner join customer_address
@@ -87,18 +87,19 @@ def getConnectionParameters(cursor):
 
 def getQueryDataset(cursor):
   ds = Dataset()
+  ds.PatientName = "*"
   item = Dataset()
   item.ScheduledStationAETitle = 'RHKFATBUK561'
-  item.ScheduledProcedureStepStartDate = datetime.strftime(datetime.today()+timedelta(days=1), '%Y%m%d')+'-'
+  #item.ScheduledProcedureStepStartDate = datetime.strftime(datetime.today()+timedelta(days=1), '%Y%m%d')+'-'
   item.ScheduledProcedureStepLocation = ''
   ds.ScheduledProcedureStepSequence = [item]
   return ds
 
 def getProcedureID(sql, ProcedureName) -> int:
 
-  sqlQuery = f""" 
-    SELECT 
-      ID 
+  sqlQuery = f"""
+    SELECT
+      ID
     FROM
       customer_procedure
     WHERE
@@ -112,9 +113,9 @@ def getProcedureID(sql, ProcedureName) -> int:
     return x[0]
 
 def getLocation(sql, location:str) -> str:
-  sqlQuery = f""" 
-    SELECT 
-      location 
+  sqlQuery = f"""
+    SELECT
+      location
     FROM
       customer_location
     WHERE
@@ -166,7 +167,7 @@ def AddProcedure(sql, procedureName):
 
 def getOldBookings(sql):
   SQLQuery = f"""
-  SELECT 
+  SELECT
     accessionNumber
   FROM
    customer_booking
@@ -190,7 +191,7 @@ def deleteOldbookings(sql, accessionNumbers):
   accessionNumbers = ", ".join(accessionNumbers)
 
   SQLQuery = f"""
-  DELETE FROM customer_booking 
+  DELETE FROM customer_booking
   WHERE accessionNumber IN ({accessionNumbers})"""
   sql.execute(SQLQuery)
 
@@ -215,7 +216,7 @@ def handleDataset(dataset, sql):
   accessionNumber = seq.ScheduledProcedureStepID
   unformattedTime = seq.ScheduledProcedureStepStartTime
   unformattedDate = seq.ScheduledProcedureStepStartDate
-  
+
   startTime = unformattedTime[:2] + ":" + unformattedTime[2:4] + ":" + unformattedTime[4:]
   startDate = unformattedDate[:4] + "-" + unformattedDate[4:6] + "-" + unformattedDate[6:]
   #storeDataset(sql, accessionNumber, startDate, startTime, location, procedure_id)
@@ -292,8 +293,6 @@ if __name__ == "__main__":
   logger = logging.getLogger("pingLogger")
   waiting = False #First iteration does not wait
 
-  ae = pynetdicom.AE()
-  ae.add_requested_context(ModalityWorklistInformationFind)
 
   while(True):
     if waiting:
@@ -305,7 +304,9 @@ if __name__ == "__main__":
         updateTimeStamp(sql)
         conP = getConnectionParameters(sql)
         ds   = getQueryDataset(sql)
-        with MyDicomConnection(ae,conP['ip'],conP['port'],conP['aet']) as assoc: 
+        ae = pynetdicom.AE(conP['aet'])
+        ae.add_requested_context(ModalityWorklistInformationFind)
+        with MyDicomConnection(ae,conP['ip'],conP['port'],conP['aet']) as assoc:
           if assoc:
             response = assoc.send_c_find(ds, ModalityWorklistInformationFind)
             handleResponse(response, sql)
