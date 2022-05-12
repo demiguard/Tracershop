@@ -89,7 +89,7 @@ def getQueryDataset(cursor):
   ds = Dataset()
   ds.PatientName = "*"
   item = Dataset()
-  item.ScheduledStationAETitle = 'RHKFATBUK561'
+  item.ScheduledStationAETitle = 'RHKFATBUK561' #Move this to DB
   #item.ScheduledProcedureStepStartDate = datetime.strftime(datetime.today()+timedelta(days=1), '%Y%m%d')+'-'
   item.ScheduledProcedureStepLocation = ''
   ds.ScheduledProcedureStepSequence = [item]
@@ -298,14 +298,14 @@ if __name__ == "__main__":
     if waiting:
       systime.sleep(900) # Waiting comes first because of Continue statements
     waiting = True 
+    ae = pynetdicom.AE("RHKFATBUK561")
+    ae.add_requested_context(ModalityWorklistInformationFind)
     logger.debug("started Updating Database")
     with MysqlCursor() as sql:
       if sql:
         updateTimeStamp(sql)
         conP = getConnectionParameters(sql)
         ds   = getQueryDataset(sql)
-        ae = pynetdicom.AE(conP['aet'])
-        ae.add_requested_context(ModalityWorklistInformationFind)
         with MyDicomConnection(ae,conP['ip'],conP['port'],conP['aet']) as assoc:
           if assoc:
             response = assoc.send_c_find(ds, ModalityWorklistInformationFind)
