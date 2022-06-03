@@ -1,6 +1,9 @@
 import {
-  WEBSOCKET_DATA_ORDERS, WEBSOCKET_DATA_VIAL, WEBSOCKET_MESSAGETYPE, WEBSOCKET_MESSAGE_CREATE_VIAL, 
-  WEBSOCKET_MESSAGE_EDIT_VIAL, WEBSOCKET_MESSAGE_UPDATEORDERS, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GREAT_STATE, JSON_GREAT_STATE, WEBSOCKET_DATA_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_EDIT_TRACER, WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATA_T_ORDERS, WEBSOCKET_DATA_VIALS } from "./constants";
+  WEBSOCKET_MESSAGETYPE, WEBSOCKET_MESSAGE_CREATE_VIAL,
+  WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GREAT_STATE, JSON_GREAT_STATE, WEBSOCKET_DATA_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_EDIT_TRACER, WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATA_T_ORDERS, WEBSOCKET_DATA_VIALS,
+  JSON_INJECTION_ORDERS, JSON_ACTIVITY_ORDER,
+
+  JSON_VIALS} from "./constants";
 import { ParseJSONstr } from "./formatting";
 
 export { safeSend, TracerWebSocket}
@@ -22,7 +25,6 @@ class TracerWebSocket extends WebSocket {
 
       const data = JSON.parse(e.data);
       console.log(data)
-      const MessageDate = new Date(data[WEBSOCKET_DATE]);
       switch(data[WEBSOCKET_MESSAGETYPE]) {
         /*
         * YEEEAH some really bad code ahead with double parsing: TODO: TODO: !IMPORTANT
@@ -41,17 +43,8 @@ class TracerWebSocket extends WebSocket {
         */
 
         case WEBSOCKET_MESSAGE_CREATE_VIAL: //Merge to UpdateVial
-        case WEBSOCKET_MESSAGE_EDIT_VIAL:
-          const NewVial = ParseJSONstr(data[WEBSOCKET_DATA_VIAL]);
-          this.StateHolder.UpdateMap("vials",  [NewVial], "ID", true, []);
-          break;
-        case WEBSOCKET_MESSAGE_UPDATEORDERS:
-          { const ActivityOrders = [];
-            for (const OrderStr of data[WEBSOCKET_DATA_ORDERS]) {
-              ActivityOrders.push(ParseJSONstr(OrderStr));
-            }
-            this.StateHolder.UpdateMap("orders", ActivityOrders, "oid", true, []);
-          }
+          const NewVial = ParseJSONstr(data[JSON_VIALS]);
+          this.StateHolder.UpdateMap(JSON_VIALS, [NewVial], data[WEBSOCKET_DATA_ID], true, []);
           break;
         case WEBSOCKET_MESSAGE_GREAT_STATE:
           this.StateHolder.updateGreatState(
@@ -61,18 +54,10 @@ class TracerWebSocket extends WebSocket {
         case WEBSOCKET_MESSAGE_MOVE_ORDERS:
           {  // There's A double state change with this
             const ActivityOrders = [];
-            for (const OrderStr of data[WEBSOCKET_DATA_ORDERS]) {
+            for (const OrderStr of data[JSON_ACTIVITY_ORDER]) {
               ActivityOrders.push(ParseJSONstr(OrderStr));
             }
             this.StateHolder.UpdateMap("orders", ActivityOrders, "oid", true, data[WEBSOCKET_DATA_DEAD_ORDERS]);
-          }
-          break;
-        case WEBSOCKET_MESSAGE_EDIT_TRACER:
-          { const Tracers = [];
-            for (const TracerStr of data[WEBSOCKET_DATA_TRACER]){
-              Tracers.push(ParseJSONstr(TracerStr));
-            }
-            this.StateHolder.UpdateMap("tracers", Tracers, "id", true, []);
           }
           break;
         case WEBSOCKET_MESSAGE_GET_ORDERS:
@@ -80,19 +65,29 @@ class TracerWebSocket extends WebSocket {
             const ActivityOrders = [];
             const InjectionOrders = [];
             const Vials = [];
-            for(const ActivityStr of data[WEBSOCKET_DATA_ORDERS]){
+            for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
               ActivityOrders.push(ParseJSONstr(ActivityStr));
             }
-            for(const injectionStr of data[WEBSOCKET_DATA_T_ORDERS]){
+            for(const injectionStr of data[JSON_INJECTION_ORDERS]){
               InjectionOrders.push(ParseJSONstr(injectionStr));
             }
-            for(const VialStr of data[WEBSOCKET_DATA_VIALS]){
+            for(const VialStr of data[JSON_VIALS]){
               Vials.push(ParseJSONstr(VialStr));
             }
             this.StateHolder.UpdateMap("orders", ActivityOrders, "oid", false, []);
             this.StateHolder.UpdateMap("t_orders", InjectionOrders, "oid", false, []);
-            this.StateHolder.UpdateMap("vials", ActivityOrders, "oid", true, []);
+            this.StateHolder.UpdateMap("vials", Vials, "id", true, []);
           }
+        break;
+        case WEBSCOKET_MESSAGE_EDIT_STATE:
+        {
+          const Objects = [];
+          for(const ObjectStr of data[WEBSOCKET_DATA]){
+            Objects.push(ParseJSONstr(ObjectStr));
+          }
+          this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], Objects, data[WEBSOCKET_DATA_ID], true, []);
+        }
+        break;
       }
     }
 

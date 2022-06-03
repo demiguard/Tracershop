@@ -1,8 +1,4 @@
-export { FormatTime, FormatNumber, FormatDateStr, parseDateToDanishDate, parseDate, ParseJSONstr, ParseDanishNumber, ParseDjangoModelJson }
-
-function parseDate(inputStr){
-  console.log(inputStr);
-
+export function parseDate(inputStr){
   if (/^\d{4}-\d{2}-\d{2}$/g.test(inputStr)) return inputStr;
   if (/^\d{4}\/\d{2}\/\d{2}$/g.test(inputStr)) return inputStr.substr(0,4)+ "-" + inputStr.substr(5,2) + "-" + inputStr.substr(8,2);
   if (/^\d{2}\/\d{2}\/\d{4}$/g.test(inputStr)) return inputStr.substr(6,4) + "-" + inputStr.substr(3,2) + "-" + inputStr.substr(0,2);
@@ -13,7 +9,7 @@ function parseDate(inputStr){
   throw "Date not on known format, Date: "+inputStr
 }
 
-function ParseDanishNumber(numberString){
+export function ParseDanishNumber(numberString){
   if (typeof numberString == "string") {
     const parsedNumber = numberString.replace(/,/g, ".");
     return Number(parsedNumber);
@@ -24,7 +20,7 @@ function ParseDanishNumber(numberString){
 }
 
 
-function parseDateToDanishDate(dateString){
+export function parseDateToDanishDate(dateString){
   /* This funciton takes a date string on the format YYYY-MM-DD and formats it to DD-MM-YYYY
    * The Primary function should be to convert input dates to display dates.
    * This Date format is the one used by the site and throws an Error if it's not sites format
@@ -53,7 +49,7 @@ function parseDateToDanishDate(dateString){
   * @param {string} timeStr
   * @returns {string} time string on format HH:MM:SS
 */
-function FormatTime (timeStr) {
+export function FormatTime (timeStr) {
 
   if (/^\d{2}:\d{2}:\d{2}$/g.test(timeStr)) return timeStr;
   if (/^\d{1}:\d{2}:\d{2}$/g.test(timeStr)) return "0" + timeStr;
@@ -68,12 +64,12 @@ function FormatTime (timeStr) {
 
 }
 
-function FormatNumber(NumberString) {
+export function FormatNumber(NumberString) {
   if (/^\d+$/.test(NumberString)) return NumberString;
   return null;
 }
 
-function FormatDateStr(number) {
+export function FormatDateStr(number) {
   return number < 10 ? "0" + String(number) : String(number)
 }
 
@@ -81,7 +77,7 @@ function FormatDateStr(number) {
  * @param {String} JSONString
  * @returns {object} Jsonformatted object
  */
-function ParseJSONstr(JSONString){
+export function ParseJSONstr(JSONString){
   var json = JSONString;
   while (typeof(json) == "string"){
     json = JSON.parse(json);
@@ -89,7 +85,7 @@ function ParseJSONstr(JSONString){
   return json;
 }
 
-function ParseDjangoModelJson(JSONString){
+export function ParseDjangoModelJson(JSONString){
   var json = JSONString;
   while (typeof(json) == "string"){
     json = JSON.parse(json);
@@ -104,4 +100,21 @@ function ParseDjangoModelJson(JSONString){
     ModelMap.set(model.pk, model.fields)
   }
   return ModelMap;
+}
+
+export function ParseEmail(input){
+  if(input.length == 0) return true;
+  return /^[a-zA-Z0-9.! #$%&'*+/=? ^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(input);
+}
+
+export function ParseTelefonNumber(input){
+  return /^(\+45)?( )?(\d{8}|\d{2} \d{2} \d{2} \d{2}|\d{4} \d{4})$/.test(input);
+}
+
+export function parseName(input){
+  return input.length > 0;
+}
+
+export function isNotNaN(number){
+  return !isNaN(number);
 }

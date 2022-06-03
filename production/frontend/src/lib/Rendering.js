@@ -1,13 +1,12 @@
 import React, {} from "react";
-import { FormatDateStr } from "./formatting";
+import { FormatDateStr } from "/src/lib/formatting";
 
-import { noop } from "./utils";
+import { noop } from "/src/lib/utils";
 
 export { renderStatusImage , renderTableRow, renderDateTime}
 
 
 function renderStatusImage(status, func) {
-  
   const onclickFunc = (func === undefined) ? noop : func
   if (status === 1) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard1.svg"></img>);
   if (status === 2) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard2.svg"></img>);
@@ -17,18 +16,18 @@ function renderStatusImage(status, func) {
   throw "Status not supproted!";
 }
 
-function renderTableRow(key, list_of_tds) {  
+function renderTableRow(key, list_of_tds) {
   /**
    * This function is for building Tables, it creates a single row.
    * It has a variable amount of entries allowing to be used for creation of all Tables
    * The function was introduced late in the development, so might not have been used everywhere
    * But its usage is on the todo list.
-   * 
+   *
    * @param {Number} key - The key that's appied to row
-   * @param {Array<Object>} list_of_tds This is the list of tds, can contain typescirpt 
+   * @param {Array<Object>} list_of_tds This is the list of tds, can contain typescirpt
    * @returns {JSX.Element} - Type script that contains a table row with index key
-   * 
-   * 
+   *
+   *
    *  rendered typescript.
   */
   var index = 0;
@@ -47,7 +46,7 @@ function renderTableRow(key, list_of_tds) {
 }
 
 /** Parses a date object into a danish formatted string
- * 
+ *
  * @param {String} dateString - The String to be converted into a date object to be converted and back again
  * @returns {String} - the formatted string
  */
@@ -61,3 +60,5 @@ function renderDateTime(dateString){
 
   return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
+
+export function renderSelect(){}

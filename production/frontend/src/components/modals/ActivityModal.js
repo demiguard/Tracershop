@@ -8,21 +8,21 @@ export { ActivityModal }
 
 /*
  * This is the modal that shows up when the user click on an order to recieve additional information
- * This modal also handles 
- * 
- * 
+ * This modal also handles
+ *
+ *
  * Props :
  *  - show      - Boolean indicating if the modal should be shown
  *  - Order     - JavaScript Object with the following values:
  *      * oid    - int - the orders id
  *      * status - int - The status of an order where 1 = Ordered, 2 = Accepted, 3 = Finished, 4 Cancelled
- *  - Customer  - Javascript Object with the customer Information 
+ *  - Customer  - Javascript Object with the customer Information
  *  - onClose   - Function that closes the modal without any external state
  *  - onStatus3 - Function called when the user changes the status of an order to 3
  *  - applyVial - Function called when the user assigns a vial to an order.
- * 
+ *
  *  TODO: This should be a composition of 3 (4 cancelled orders) different modals, dependant on which is shown.
- *  
+ *
  */
 
 const initial_state = {
@@ -34,11 +34,11 @@ class ActivityModal extends Component {
   constructor(props){
     super(props);
 
-    this.state = initial_state  
+    this.state = initial_state
   }
 
   /** Moves a Vial in or out of the selectedVials set in state
-   * 
+   *
    * @param {Number} vialID id of the vial being toggled
    */
   toggleVial(vialID){
@@ -49,7 +49,7 @@ class ActivityModal extends Component {
       selectedVials.add(vialID)
     }
 
-    this.setState({...this.state, 
+    this.setState({...this.state,
       selectedVials : selectedVials
     })
   }
@@ -102,7 +102,7 @@ class ActivityModal extends Component {
             customer={this.props.customer}
             onClose={this.props.onClose}
             vials={this.props.vials}
-            selectedVials={this.state.selectedVials}  
+            selectedVials={this.state.selectedVials}
             cancel={this.cancel.bind(this)}
             accept={this.props.AcceptOrder}
           />)
@@ -121,7 +121,7 @@ class ActivityModal extends Component {
           />)
         }
       }
-    } 
+    }
 
     return(
     <div></div>

@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 import { Modal, Button, Row, Container, Table, FormControl } from "react-bootstrap";
-import { FormatTime, ParseDanishNumber } from "./lib/formatting";
-import { renderTableRow } from "./lib/Rendering";
-import { autoAddCharacter } from "./lib/utils";
+import { FormatTime, ParseDanishNumber } from "/src/lib/formatting";
+import { renderTableRow } from "/src/lib/Rendering";
+import { autoAddCharacter } from "/src/lib/utils";
 
 export { ActivityModalStatus2 }
 
@@ -15,27 +15,27 @@ const initial_state = {
   newCharge : "",
   newFillTime : "",
   newVolume : "",
-  newActivity : "", 
+  newActivity : "",
   ErrorMessage :"",
 };
 
 
-/** This class renders a Modal for an order with status two. 
+/** This class renders a Modal for an order with status two.
  * The purpose of the modal is select the vial to be freed with the given order
- * 
+ *
  * Props:
  *  show  - Boolean - Should the modal be shown or not?
-    Order - Obejct - The order to be rendered
-    customer - Object - The customer related to the order
-    onClose - func - Function that closes the modal
-    vials - Map<int,Obejcts> - A mapping with all vials.
-    editVial - func - Function that communicates an edit to a vial.
-    createVial - func - Function that creates a vial on the backend
-    selectedVials - Set - Set of vials, that should be associated with this order
-    toggleVial - func - Function called when a given vial is toggled in the selectedVials
-    Authenticate - func - Function called when the modal is ready to be confirmed
-
-    @author Christoffer Vilstrup Jensen
+ *  Order - Obejct - The order to be rendered
+ *  customer - Object - The customer related to the order
+ *  onClose - func - Function that closes the modal
+ *  vials - Map<int,Obejcts> - A mapping with all vials.
+ *  editVial - func - Function that communicates an edit to a vial.
+ *  createVial - func - Function that creates a vial on the backend
+ *  selectedVials - Set - Set of vials, that should be associated with this order
+ *  toggleVial - func - Function called when a given vial is toggled in the selectedVials
+ *  Authenticate - func - Function called when the modal is ready to be confirmed
+ *
+ *  @author Christoffer Vilstrup Jensen
  */
 export default class ActivityModalStatus2 extends Component {
   constructor(props){

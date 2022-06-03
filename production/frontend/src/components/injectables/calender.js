@@ -1,12 +1,8 @@
 import React, { Component } from "react";
-import { ajax, ajaxSetup } from "jquery";
-import { Row } from "react-bootstrap";
 
+import { FormatDateStr } from '/src/lib/formatting'
+import {DAYS, DAYS_PER_WEEK} from '/src/lib/constants'
 
-import { FormatDateStr } from './lib/formatting'
-import {DAYS, DAYS_PER_WEEK} from './lib/constants'
-
-export { Calender }
 
 /** This is a calender, where stuff can be injected on date click and on month change
  *  Alot of functions are in injected into this Component.
@@ -14,10 +10,10 @@ export { Calender }
  * Props:
  *  date - Initial date for the calender
  *  onMonthChange - function(Date object) -> No return - injected function in response to a user changing the month.
- *  onDayChange - 
+ *  onDayChange -
  *  getColor - function that adds css classes, primarily to add a different color to the date
  */
-export default class Calender extends Component {
+export class Calender extends Component {
   constructor(props) {
     super(props);
      // This is because when you change the month in the calender,

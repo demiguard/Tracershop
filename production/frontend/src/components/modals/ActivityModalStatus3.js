@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
-import { renderDateTime, renderTableRow } from "./lib/Rendering";
+import { renderDateTime, renderTableRow } from "/src/lib/Rendering";
 
 
 export { ActivityModalStatus3 }
@@ -19,19 +19,17 @@ class ActivityModalStatus3 extends Component {
 
   /** returns the name of the corrosponding Employee
    * @param {Number} employeeID
-   * @returns {String} The name of the user 
+   * @returns {String} The name of the user
    */
   getUserMapping(employeeID){
     const employee = this.props.employees.get(employeeID);
     return employee.Username;
   }
 
-  
-
 
   /**
-   * 
-   * @param {Object} vial Simple object with the attributes 
+   *
+   * @param {Object} vial Simple object with the attributes
    * @returns {JSX.Element}
    */
   renderVial(vial){
@@ -58,7 +56,7 @@ class ActivityModalStatus3 extends Component {
       if (vial.OrderMap == this.props.Order.oid) {
         vials.push(this.renderVial(vial));
       }
-    } 
+    }
 
     return (
     <Modal
@@ -69,7 +67,6 @@ class ActivityModalStatus3 extends Component {
       <Modal.Header>Frigivet Ordre {this.props.Order.oid}</Modal.Header>
       <Modal.Body>
         <Table striped bordered>
-        
           <tbody>
             {renderTableRow(0,["Order ID:", this.props.Order.oid])}
             {renderTableRow(1,["Kunde:", this.props.customer.UserName + " - " + this.props.customer.Realname])}
@@ -83,7 +80,6 @@ class ActivityModalStatus3 extends Component {
             {this.props.Order.comment ? renderTableRow(9, ["Kommentar", this.props.Order.comment]) : null}
           </tbody>
         </Table>
-        
         <Table striped bordered>
           <thead>
             <tr>

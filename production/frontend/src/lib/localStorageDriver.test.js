@@ -112,7 +112,7 @@ test("Save and Read TestObject", () => {
 
   const savedValue = db.get(testKeyObject);
 
-  expect(savedValue).toEqual(testObject)  
+  expect(savedValue).toEqual(testObject)
 
 });
 
@@ -135,7 +135,7 @@ test("Save and Read nestedTestObject", () => {
 
   const savedValue = db.get(testKeyObject);
 
-  expect(savedValue).toEqual(testObject_2)  
+  expect(savedValue).toEqual(testObject_2)
 
 });
 
@@ -160,7 +160,7 @@ test("Save and Read nestedTestObjectWithList", () => {
 
   const savedValue = db.get(testKeyObject);
 
-  expect(savedValue).toEqual(testObject_2)  
+  expect(savedValue).toEqual(testObject_2)
 
 });
 
@@ -170,7 +170,7 @@ test("Save and Read Date", () => {
 
   db.addType(testKeyDate, Date);
   db.set(testKeyDate, testDate);
-  
+
   const value = db.get(testKeyDate);
 
   expect(value).toEqual(testDate);
@@ -234,7 +234,7 @@ test("Save and Read Map(Strings)", () => {
   testMap.set("b", {kw1 : "qwer", kw2 : 134});
   testMap.set("c", {kw1 : "zxcv", kw2 : 124, kw3: [11923981293,123121231]});
   testMap.set("d", {kw1 : "oqpq", kw2 : 1234, kw3 : {kwOb : "Check if object in are preserved"}});
-  
+
   db.addType(testKW, Map);
   db.set(testKW, testMap)
 

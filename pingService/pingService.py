@@ -247,11 +247,11 @@ def handleResponse(response, sql):
   # Idea
   # Do a C-find
   # Accumulate data from C-FIND
-  # Create Set A over Accession Numbers from C-Find 
+  # Create Set A over Accession Numbers from C-Find
   # Query Own Data base and make set B
-  # Remove B \ A 
+  # Remove B \ A
   # Add    A \ B
-  
+
   accessionNumbers = set()
   BookingInfo = {}
   for (status, dataset) in response:
@@ -262,7 +262,7 @@ def handleResponse(response, sql):
         accessionNumbers.add(accessionNumber)
         updateBookingInfo(sql, Data)
     else:
-      logger.error('Status Not availble') 
+      logger.error('Status Not availble')
       return
 
   logger.debug("Handled C-Find")
@@ -273,11 +273,10 @@ def handleResponse(response, sql):
 
   if len(toBeRemoved) > 0:
     logger.info(f"Deleted {len(toBeRemoved)} Studies")
-    deleteOldbookings(sql, toBeRemoved)  
-  
+    deleteOldbookings(sql, toBeRemoved) 
+
   logger.debug("Finished Handling Response")
-   
-  
+
 ##################################################
 #                                                #
 # ------------ Starting the service ------------ #
@@ -289,7 +288,7 @@ if __name__ == "__main__":
   logging.basicConfig(format="%(levelname)s - %(asctime)s :%(message)s", filename=config.loggingPath, level=logging.INFO)
   nosyLogger =  logging.getLogger('pynetdicom')
   nosyLogger.setLevel(logging.ERROR)
-  
+
   logger = logging.getLogger("pingLogger")
   waiting = False #First iteration does not wait
 
@@ -297,7 +296,7 @@ if __name__ == "__main__":
   while(True):
     if waiting:
       systime.sleep(900) # Waiting comes first because of Continue statements
-    waiting = True 
+    waiting = True
     ae = pynetdicom.AE("RHKFATBUK561")
     ae.add_requested_context(ModalityWorklistInformationFind)
     logger.debug("started Updating Database")

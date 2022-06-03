@@ -1,11 +1,10 @@
 import React, { Component } from "react";
 import { Container, Table, FormControl, Form } from "react-bootstrap";
 import { ajax } from "jquery";
-import TracerModal from "./TracerModal";
-import { BooleanMapping } from "./lib/utils";
-import { JSON_CUSTOMERS, JSON_ISOTOPE, JSON_TRACER, JSON_TRACER_MAPPING,WEBSOCKET_MESSAGE_EDIT_TRACER, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "./lib/constants";
-import { ParseJSONstr } from "./lib/formatting";
-import { renderTableRow } from "./lib/Rendering";
+import TracerModal from "/src/components/modals/TracerModal";
+import { BooleanMapping } from "/src/lib/utils";
+import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "/src/lib/constants";
+import { renderTableRow } from "/src/lib/Rendering";
 
 export {ConfigPage}
 
@@ -77,9 +76,9 @@ export default class ConfigPage extends Component {
     this.setState({...this.state, tracers : Tracers});
 
     if(this.validateTracer(Tracer)){
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_TRACER);
-      message[JSON_TRACER] = Tracer;
-      console.log(message);
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+      message[WEBSOCKET_DATA] = Tracer;
+      message[WEBSOCKET_DATATYPE] = JSON_TRACER;
       this.props.websocket.send(JSON.stringify(message));
     }
   }

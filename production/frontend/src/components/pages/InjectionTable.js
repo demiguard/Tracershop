@@ -1,25 +1,34 @@
-import { ajax } from "jquery";
-import React, { Component } from "react";
-import { Row, Col, Table, Tab, Button } from 'react-bootstrap'
-import { CompareDates } from "./lib/utils";
-import { renderStatusImage } from './lib/Rendering'
-import ReactHover, { Trigger, Hover  } from "react-hover"
-import { FormatDateStr, ParseJSONstr } from "./lib/formatting";
-import { SpecialTracerWebsocket } from "./lib/SpecialTracerWebsocket";
 
-import {JSON_ORDERS} from "./lib/constants.js"
+import React, { Component } from "react";
+import { Row, Col, Table, Tab, Button, Container } from 'react-bootstrap';
+import { CompareDates } from "/src/lib/utils";
+import { renderStatusImage } from '/src/lib/Rendering';
+import ReactHover, { Trigger, Hover  } from "react-hover";
+import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
+import { WEBSOCKET_MESSAGE_CREATE_T_ORDER } from "/src/lib/constants";
 
 export { TOrderTable }
+
+/**
+ * @enum
+ */
+const Modals = {
+  EmptyModal : null
+}
 
 class TOrderTable extends Component {
   constructor(props) {
     super(props)
-    
+
+
+    this.state = {
+      modal : Modals.EmptyModal
+    }
   }
 
-  
+
   ShouldOrdersUpdate(newDate) {
-    return CompareDates(newDate, this.props.date) 
+    return CompareDates(newDate, this.props.date);
   }
 
   changeStatusIncomming(date, oid, status){
@@ -29,27 +38,26 @@ class TOrderTable extends Component {
   }
 
   changeStatus(oid, status) {
-      const newOrderMap = new Map(this.state.orders);
-      const Order = {...newOrderMap.get(oid)};
-      Order.status = status;
-      newOrderMap.set(Order.oid, Order);
-      this.setState({...this.state, orders: newOrderMap});
+      const order = this.props.t_orders.get(oid);
+      order.status = status;
+
+      this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_T_ORDER)
     }
 
   acceptOrder(oid) {
     this.changeStatus(oid, 2)
 
-    this.websocket.send(JSON.stringify({
+    this.props.websocket.send(JSON.stringify({
       "date"        : this.props.date,
       "messageType" : "changeStatus",
       "oid"         : oid,
-      "status" : 2  
+      "status" : 2
     }));
   }
 
   rejectOrder(oid) {
     this.changeStatus(oid, 0)
-    
+
     this.websocket.send(JSON.stringify({
       "date"        : this.props.date,
       "messageType" : "changeStatus",
@@ -81,7 +89,6 @@ class TOrderTable extends Component {
           ><img className="statusIcon" src="/static/images/accept.svg"></img></Button>
       </td>);
   }
-  
   return (<td></td>);
 }
 
@@ -93,7 +100,7 @@ class TOrderTable extends Component {
       shiftY: 0
     };
 
-    if( comment) {
+    if(comment) {
       return(
         <td>
         <ReactHover options={TriggerOptions}>
@@ -134,10 +141,16 @@ class TOrderTable extends Component {
   }
 
   render() {
-    const Orders = []
-    
+    const Orders = [];
 
     return (
+      <Container>
+        <Row>
+          <Col sm={10}>Produktion - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</Col>
+          <Col sm={2}>
+            <Button onClick={this.activateCreateOrder}>Opret ny ordre</Button>
+          </Col>
+        </Row>
       <Table>
         <thead>
           <tr>
@@ -157,6 +170,10 @@ class TOrderTable extends Component {
           {Orders}
         </tbody>
       </Table>
+      {this.state.modal != Modals.EmptyModal ?
+        <this.state.modal
+        ></this.state.modal> : ""}
+      </Container>
     );
   }
 }

@@ -1,12 +1,9 @@
 // Stealing code from https://stackoverflow.com/questions/2010892/how-to-store-objects-in-html5-localstorage
-export { db }
-
-
-var db = {
+export var db = {
   set: function(key, value){
     if (!key || value == undefined) return;
 
-    const Type = this.types[key]
+    const Type = this.types[key];
 
     if (Type === undefined){
       throw `Type of ${key} unknown!`;

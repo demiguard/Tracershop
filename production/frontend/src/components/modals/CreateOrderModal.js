@@ -1,14 +1,14 @@
 import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
-import "./css/MyRow.css"
-import { ParseDanishNumber } from "./lib/formatting";
+import "/src/css/MyRow.css"
+import { ParseDanishNumber } from "/src/lib/formatting";
 export { CreateOrderModal }
 
 class CreateOrderModal extends Component {
   constructor(props){
     super(props);
-    
-    var activeCustomer; 
+
+    var activeCustomer;
     var DeliverTimeMapping;
 
     for(const [customerID, customer] of this.props.customers){
@@ -24,7 +24,6 @@ class CreateOrderModal extends Component {
       run = DTrun;
       break;
     }
-    
 
     this.state = {
       productions : DeliverTimeMapping,
@@ -106,9 +105,8 @@ class CreateOrderModal extends Component {
       )
     }
     // Verbosity is mostly for the reader sake, so don't say I didn't think about you
-    const Err = this.state.ErrorMessage.length == 0 ? false : true; 
+    const Err = this.state.ErrorMessage.length == 0 ? false : true;
 
-    
     return  (
       <Modal
         show={this.props.show}
@@ -155,5 +153,4 @@ class CreateOrderModal extends Component {
       </Modal>
     );;
   }
-
 }

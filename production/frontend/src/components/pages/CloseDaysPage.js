@@ -1,12 +1,10 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
-import Calender from "./calender";
+import { Calender } from "/src/components/injectables/calender";
 
-import { FormatDateStr } from "./lib/formatting";
+import { FormatDateStr } from "/src/lib/formatting";
 
-export { CloseDaysPage }
-
-export default class CloseDaysPage extends Component {
+export class CloseDaysPage extends Component {
   constructor(props){
     super(props);
 
@@ -64,7 +62,7 @@ export default class CloseDaysPage extends Component {
   render() {
     return(
     <div>
-      <Calender 
+      <Calender
         date={this.state.today}
         onDayClick={this.changeCloseDay}
         updateColors={this.changeColors}

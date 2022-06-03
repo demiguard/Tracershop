@@ -24,7 +24,7 @@ from lib import pdfs
 from lib.decorators import typeCheckfunc
 from lib.Formatting import FormatDateTimeJStoSQL, toDateTime
 from lib.ProductionJSON import encode, decode
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, TracerDataClass, VialDataClass, InjectionOrderDataClass
+from lib.ProductionDataClasses import *
 from lib.mail import sendMail
 from lib.SQL import SQLController as SQL
 from lib.utils import LMAP
@@ -89,26 +89,22 @@ class Consumer(SQLConsumer):
     messageType  = message[WEBSOCKET_MESSAGETYPE]
     if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
       await self.HandleTheGreatStateMessage()
-    elif messageType == WEBSOCKET_MESSAGE_UPDATEORDERS:
-      await self.HandleUpdateOrder(message)
     elif messageType == WEBSOCKET_MESSAGE_CREATE_VIAL:
       await self.HandleCreateVial(message)
-    elif messageType == WEBSOCKET_MESSAGE_EDIT_VIAL:
-      await self.HandleEditVial(message)
     elif messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
       await self.HandleFreeOrder(message)
     elif messageType == WEBSOCKET_MESSAGE_CREATE_ORDER:
       await self.HandleCreateOrder(message)
     elif messageType == WEBSOCKET_MESSAGE_MOVE_ORDERS:
       await self.HandleMoveOrders(message)
-    elif messageType == WEBSOCKET_MESSAGE_EDIT_TRACER:
-      await self.HandleEditTracer(message)
     elif messageType == WEBSOCKET_MESSAGE_ECHO:
       await self.HandleEcho(message)
     elif messageType == WEBSOCKET_MESSAGE_GET_ORDERS:
       await self.HandleGetOrders(message)
     elif messageType == WEBSOCKET_UPDATE_SERVERCONFIG:
       await self.HandleUpdateServerConfig
+    elif messageType == WEBSOCKET_MESSAGE_EDIT_STATE:
+      await self.HandleEditState(message)
 
   async def sendEvent(self, event: Dict):
     """
@@ -150,18 +146,18 @@ class Consumer(SQLConsumer):
 
     content = {
       JSON_GREAT_STATE : {
-        JSON_ADDRESS      : SerializedAddress,
-        JSON_CUSTOMERS    : Customers,
-        JSON_DATABASE     : SerializedDatabases,
-        JSON_DELIVERTIMES : DeliverTimes,
-        JSON_EMPLOYEES    : Employees,
-        JSON_ISOTOPE      : Isotopes,
-        JSON_ORDERS       : Orders,
-        JSON_RUNS         : Runs,
-        JSON_T_ORDERS     : T_Orders,
-        JSON_TRACER       : Tracers,
-        JSON_VIALS        : Vials,
-        JSON_SERVER_CONFIG : SerializedServerConfig
+        JSON_ADDRESS          : SerializedAddress,
+        JSON_CUSTOMER         : Customers,
+        JSON_DATABASE         : SerializedDatabases,
+        JSON_DELIVERTIMES     : DeliverTimes,
+        JSON_EMPLOYEES        : Employees,
+        JSON_ISOTOPE          : Isotopes,
+        JSON_ACTIVITY_ORDER   : Orders,
+        JSON_RUNS             : Runs,
+        JSON_INJECTION_ORDERS : T_Orders,
+        JSON_TRACER           : Tracers,
+        JSON_VIALS            : Vials,
+        JSON_SERVER_CONFIG    : SerializedServerConfig
       },
       WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_GREAT_STATE
     }
@@ -177,7 +173,8 @@ class Consumer(SQLConsumer):
       {
         WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
         WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_CREATE_VIAL,
-        WEBSOCKET_DATA_VIAL   : encode(InsertedVial)
+        WEBSOCKET_DATA_VIAL   : encode(InsertedVial),
+        WEBSOCKET_DATA_ID     : VialDataClass.getIDField(),
       }
     )
 
@@ -194,13 +191,13 @@ class Consumer(SQLConsumer):
     )
 
   async def HandleCreateOrder(self, message : Dict):
-    data = message[WEBSOCKET_DATA_CREATE_ORDER]
+    data = message[WEBSOCKET_MESSAGE_CREATE_ORDER]
     amount = data[JSON_AMOUNT]
     customer_dataDict = data[JSON_CUSTOMER]
     tracer = TracerDataClass.fromDict(data[JSON_TRACER])
     customer = CustomerDataClass.fromDict(customer_dataDict)
     production = data[JSON_RUN]
-    deliver_datetime = toDateTime(data[JSON_DELIVERTIME], JSON_DATETIME_FORMAT)
+    deliver_datetime = toDateTime(data[JSON_DELIVERTIMES], JSON_DATETIME_FORMAT)
 
     amount_overhead = amount * (1 + customer.overhead / 100.0)
     run = data[JSON_RUN]
@@ -293,7 +290,7 @@ class Consumer(SQLConsumer):
     def IsDead(Order: ActivityOrderDataClass) -> bool: #Helper that can be exported easily if need be
       return Order.amount == 0.0 and Order.total_amount < 1.0
 
-    updatedOrders = message[WEBSOCKET_DATA_ORDERS]
+    updatedOrders = message[JSON_ACTIVITY_ORDER]
     GhostOrderSkeleton = message.get(JSON_GHOST_ORDER)
     deadOrders   = []
     returnOrders = [] # this mainly done So I can uniformly update
@@ -377,3 +374,34 @@ class Consumer(SQLConsumer):
   @typeCheckfunc
   async def HandleUpdateServerConfig(self, message : Dict):
     pass
+
+  @typeCheckfunc
+  async def HandleEditState(self, message : Dict):
+
+    if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
+      dataclass = ActivityOrderDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_CUSTOMER:
+      dataClass = CustomerDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIMES:
+      dataClass = DeliverTimeDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_ISOTOPE:
+      dataClass = IsotopeDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_RUN:
+      dataclass = RunsDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_TRACER:
+      dataClass = TracerDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_VIALS:
+      dataClass = VialDataClass
+
+    if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
+      raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
+    dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
+    await self.updateDataClass(dataClassInstance)
+
+    await self.channel_layer.group_send(self.global_group, {
+      WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
+      WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_EDIT_STATE,
+      WEBSOCKET_DATA        : message[WEBSOCKET_DATA],
+      WEBSOCKET_DATATYPE    : message[WEBSOCKET_DATATYPE],
+      WEBSOCKET_DATA_ID     : dataClass.getIDField()
+    })

@@ -10,7 +10,7 @@ from dataclasses import fields
 
 from lib.decorators import typeCheckfunc
 from lib.SQL.SQLFormatter import SerilizeToSQLValue
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, UserDataClass, JsonSerilizableDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib.Formatting import dateConverter, mergeDateAndTime
 from lib.utils import LMAP
 
@@ -314,19 +314,21 @@ def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
     if i + 1 == len(updateFields):
       updateString +=f"{field}={value}"
     else:
-      updateString +=f"{field}={value}, "
+      updateString +=f"{field}={value},\n"
 
 
 
   IDstring = f"{DataClassObject.getIDField()}={ID}"
 
-  return f"""
+  returnstr = f"""
     UPDATE {DataClassObject.getSQLTable()}
     SET
       {updateString}
     WHERE
       {IDstring}
   """
+
+  return returnstr
 
 
 def authenticateUser(username: str, password: str) -> str:

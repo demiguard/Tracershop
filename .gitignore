@@ -14,3 +14,5 @@ main.js*
 SECRET_KEY.py
 test_pdfs/
 pdfs/
+*.code-workspace
+legacy_code/

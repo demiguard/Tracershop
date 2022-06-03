@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import { Modal, Button, Container, Col, Table, Row } from "react-bootstrap";
-import Authenticate from "./Authenticate";
-import { renderTableRow } from "./lib/Rendering";
+import Authenticate from "/src/components/injectables/Authenticate";
+import { renderTableRow } from "/src/lib/Rendering";
 import { ajax } from "jquery"
-import { AUTH_DETAIL, AUTH_PASSWORD, AUTH_USERNAME } from "./lib/constants";
+import { AUTH_DETAIL, AUTH_PASSWORD, AUTH_USERNAME } from "/src/lib/constants";
 
 export { ActivityModalAuthenticate }
 
@@ -17,10 +17,10 @@ const initial_state = {
  *  @param {CallableFunction} onClose - Function to be called if the user wishes to close the modal
  *  @param {CallableFunction} cancel - Function called when the user wish to cancel the authentication
  *  @param {Object} Order - Object with information on the order
- 
+
             customer={this.props.customer}
             vials={this.props.vials}
- * @param {} selectedVials  {this.state.selectedVials}  
+ * @param {} selectedVials  {this.state.selectedVials}
             accept={this.props.AcceptOrder}
  */
 export default class ActivityModalAuthenticate extends Component {

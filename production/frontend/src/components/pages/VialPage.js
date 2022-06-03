@@ -1,9 +1,9 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { JSON_CUSTOMERS, JSON_VIALS, WEBSOCKET_MESSAGE_ECHO } from "./lib/constants";
-import { parseDate, parseDateToDanishDate, ParseJSONstr } from "./lib/formatting";
-import { autoAddCharacter } from "./lib/utils";
+import { JSON_CUSTOMERS, JSON_VIALS, WEBSOCKET_MESSAGE_ECHO } from "/src/lib/constants";
+import { parseDate, parseDateToDanishDate, ParseJSONstr } from "/src/lib/formatting";
+import { autoAddCharacter } from "/src/lib/utils";
 
 export {VialPage}
 
@@ -29,7 +29,7 @@ class VialPage extends Component {
     super(props)
     this.state = {
       filterCustomer   : "",
-      filterBatch      : "",  
+      filterBatch      : "",
       filterSearchDate : "",
 
       SearchPattern  : SearchOptions.DATE,
@@ -40,11 +40,9 @@ class VialPage extends Component {
   }
 
   keyDateSearch(event){
-    
     if (event.key === "Enter"){
       this.dateSearch();
     }
-    
   }
 
   /**
@@ -64,15 +62,15 @@ class VialPage extends Component {
       console.log("caught Error");
       return;
     }
-    
+
     const year  = Number(parsedDate.substr(0,4));
     const month = Number(parsedDate.substr(5,2));
     const day   = Number(parsedDate.substr(8,2));
-    
-    // Note that websockets works syncronized, and the callback is fucked. 
+
+    // Note that websockets works syncronized, and the callback is fucked.
     // I think it's because I define a onmessage function in the websocket
     // This means that you can't add an function argument
-    // Jesus javascript, this is stupid    
+    // Jesus javascript, this is stupid
     ajax({
       url:`api/getVials/${year}/${month}/${day}`,
       type:"get"
@@ -88,10 +86,10 @@ class VialPage extends Component {
   }
 
   /**
-   * This function updates a value of the state determined by the key to the newVale. 
-   * 
-   * @param {string} key 
-   * @param {*} newValue 
+   * This function updates a value of the state determined by the key to the newVale.
+   *
+   * @param {string} key
+   * @param {*} newValue
    */
   changeState(key,newValue){
     const newState = {...this.state};
@@ -106,13 +104,12 @@ class VialPage extends Component {
   }
 
   /**
-   * This function 
-   * @param {string} NewSelect 
+   * This function
+   * @param {string} NewSelect
    * @returns {void}
    */
   changeSelectState(NewSelect){
     const newState = {...this.state};
-    
     if (NewSelect === "null") {
       newState.filterCustomer = "";
     } else {
@@ -133,7 +130,6 @@ class VialPage extends Component {
 
   renderVial(vial){
     // Sadly I need some extra functionality so can't really use the table rendering function :(
-    
     var customerName = "";
     for(const [_, customer] of this.props.customer){
       if (customer.kundenr == vial.customer){
@@ -157,7 +153,8 @@ class VialPage extends Component {
       </tr>
     );
   }
-  
+
+
   render(){
     console.log(this.state);
     const SortedVials = [...this.state.vials.values()].sort((vial1, vial2) => {
@@ -201,7 +198,7 @@ class VialPage extends Component {
     }
 
     const CustomerOptions = []
-    for(const [_, customer] of this.props.customer){  
+    for(const [_, customer] of this.props.customer){
       CustomerOptions.push(
         <option value={customer.kundenr} key={customer.kundenr}>{customer.UserName}</option>
       )
@@ -218,7 +215,7 @@ class VialPage extends Component {
           <select onChange={(event) => {this.changeSelectState(event.target.value)}}>
             <option value="null" >-----</option>
             {CustomerOptions}
-          </select> 
+          </select>
         </Col>
         <Col>
           <input onKeyDown={(event) => {this.keyDateSearch(event)}} value={this.state.filterSearchDate} onChange={(event) => this.changeSearchDate(event)} placeholder="Dato"/> 

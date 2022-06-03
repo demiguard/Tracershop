@@ -1,22 +1,24 @@
 import React, { Component } from "react";
 import {Button, Container} from "react-bootstrap";
 
-import { getSession, handlePasswordChange, handleUserNameChange, isResponseOk, login_auth, login, logout } from "./lib/authentication.js"
-import { Navbar } from "./Navbar.js";
-import { ConfigPage } from "./ConfigPage.js";
-import { OrderPage } from './OrderPage.js';
-import { CustomerPage } from "./CustomerPage.js";
-import { EmailSetupPage } from "./EmailSetupPage.js";
-import ServerConfigPage, { ServerConfig } from "./ServerConfig.js";
-import { Authenticate } from "./Authenticate";
+import { getSession, handlePasswordChange, handleUserNameChange, isResponseOk, login_auth, login, logout } from "/src/lib/authentication.js"
+import { Navbar } from "/src/components/injectables/Navbar.js";
+import { ConfigPage } from "/src/components/pages/ConfigPage.js";
+import { OrderPage } from '/src/components/pages/OrderPage.js';
+import { CustomerPage } from "/src/components/pages/CustomerPage.js";
+import { EmailSetupPage } from "/src/components/pages/EmailSetupPage.js";
+import { ServerConfigPage } from "/src/components/pages/ServerConfig.js";
+import { Authenticate } from "/src/components/injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
 import { get as getCookie } from 'js-cookie';
-import CloseDaysPage from "./CloseDaysPage";
-import { VialPage } from "./VialPage.js";
-import { db } from "./lib/localStorageDriver.js";
-import { TracerWebSocket, safeSend } from "./lib/TracerWebsocket.js";
-import {JSON_ADDRESS, JSON_CUSTOMERS, JSON_DATABASE, JSON_DELIVERTIMES, JSON_EMPLOYEES, JSON_ISOTOPE, JSON_ORDERS, JSON_RUNS, JSON_SERVER_CONFIG, JSON_TRACER, JSON_T_ORDERS, JSON_VIALS, WEBSOCKET_MESSAGE_GREAT_STATE } from "./lib/constants.js";
-import { ParseDjangoModelJson, ParseJSONstr } from "./lib/formatting.js";
+import { CloseDaysPage } from "/src/components/pages/CloseDaysPage";
+import { VialPage } from "/src/components/pages/VialPage.js";
+import { db } from "/src/lib/localStorageDriver.js";
+import { TracerWebSocket, safeSend } from "/src/lib/TracerWebsocket.js";
+import {JSON_ADDRESS, JSON_CUSTOMER,JSON_INJECTION_ORDERS, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DELIVERTIMES,
+        JSON_EMPLOYEES, JSON_ISOTOPE, JSON_ORDERS, JSON_RUNS, JSON_SERVER_CONFIG, JSON_TRACER,
+        JSON_T_ORDERS, JSON_VIALS, WEBSOCKET_MESSAGE_GREAT_STATE } from "/src/lib/constants.js";
+import { ParseDjangoModelJson, ParseJSONstr } from "/src/lib/formatting.js";
 
 export {App}
 
@@ -112,18 +114,18 @@ export default class App extends Component {
      */
     //Customers
     const customers = new Map();
-    for(const customerStr of greatState[JSON_CUSTOMERS]){
+    for(const customerStr of greatState[JSON_CUSTOMER]){
       const customer = ParseJSONstr(customerStr);
       customers.set(customer.ID, customer);
     }
-    db.set("customer", customers);
+    db.set(JSON_CUSTOMER, customers);
     //DeliverTimes
     const deliverTimes = new Map();
     for(const deliverTimeStr of greatState[JSON_DELIVERTIMES]){
       const deliverTime = ParseJSONstr(deliverTimeStr);
       deliverTimes.set(deliverTime.DTID, deliverTime);
     }
-    db.set("deliverTimes", deliverTimes);
+    db.set(JSON_DELIVERTIMES, deliverTimes);
     //Employees
     const employees = new Map();
     for(const employeeStr of greatState[JSON_EMPLOYEES]){
@@ -140,7 +142,7 @@ export default class App extends Component {
     db.set("isotopes", isotopes);
     //Orders
     const orders = new Map();
-    for(const orderStr of greatState[JSON_ORDERS]){
+    for(const orderStr of greatState[JSON_ACTIVITY_ORDER]){
       const order = ParseJSONstr(orderStr);
       orders.set(order.oid, order);
     }
@@ -154,7 +156,7 @@ export default class App extends Component {
     db.set("runs", runs);
     //T_Orders
     const t_orders = new Map();
-    for(const t_orderStr of greatState[JSON_T_ORDERS]){
+    for(const t_orderStr of greatState[JSON_INJECTION_ORDERS]){
       const t_order = ParseJSONstr(t_orderStr);
       orders.set(t_order.oid, t_order);
     }

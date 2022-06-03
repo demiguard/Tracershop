@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 import { Form, Button, Container } from "react-bootstrap";
-import "./css/styleAuthenticate.css"
+import "/src/css/styleAuthenticate.css"
 
 export { Authenticate }
 
@@ -50,15 +50,14 @@ export default class Authenticate extends Component {
           <Form onSubmit={this.onSubmitFunc.bind(this)}>
             <div className="form-group formRow">
               <label htmlFor="username">Bruger navn</label>
-              <input type="text" className="form-control" id="username" name="username" value={this.state.username} onChange={this.handleUserNameChange} />
+              <input type="text" className="form-control" id="username" name="username" autoComplete="new-password" value={this.state.username} onChange={this.handleUserNameChange} />
             </div>
             <div className="form-group formRow">
               <label htmlFor="username">Kodeord</label>
               <input type="password"
                      className="form-control"
-                     id="password"
-                     autoComplete="off"
-                     readonly onfocus="this.removeAttribute('readonly');"
+                     id="password"x
+                     autoComplete="new-password"
                      name="password"
                      value={this.state.password}
                      onChange={this.handlePasswordChange}/>

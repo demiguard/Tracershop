@@ -300,7 +300,7 @@ class TracerCustomerMappingDataClass(JsonSerilizableDataClass):
 class DeliverTimeDataClass(JsonSerilizableDataClass):
   BID : int
   day : int
-  repeat : int
+  repeat_t : int
   dtime : time
   run : int
   DTID : int
@@ -322,20 +322,6 @@ class DeliverTimeDataClass(JsonSerilizableDataClass):
   def getIDField(cls) -> str:
     return "DTID"
 
-
-@dataclass(init=False)
-class CustomerDeliverTimeDataClass(JsonSerilizableDataClass): # This a legacy and the real one is DeliverTimeDataCkass
-  #This should be removed
-  day : int
-  repeat : int
-  dtime : time
-  max : int
-  run : int
-  DTID : int # DeliverTimeID
-
-  @classmethod
-  def getIDField(cls) -> str:
-    return "DTID"
 
 @dataclass(init=False)
 class RunsDataClass(JsonSerilizableDataClass):
@@ -429,28 +415,6 @@ class CustomerDataClass(JsonSerilizableDataClass):
   @classmethod
   def getIDField(cls) -> str:
     return "ID"
-
-#Depricated
-@dataclass(init=False)
-class UserDataClass(JsonSerilizableDataClass):
-  email : str
-  email2 : str
-  email3 : str
-  email4 : str
-  overhead : int
-  kundenr : int
-  contact : str
-  tlf : str
-  Username : str
-  Realname : str
-  addr1 : str
-  addr2 : str
-  addr3 : str
-  addr4 : str
-
-  @classmethod
-  def getSQLTable(cls):
-    return "Users"
 
 @dataclass(init=False)
 class EmployeeDataClass(JsonSerilizableDataClass):
