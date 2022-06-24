@@ -19,6 +19,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type
 
 from api.models import ServerConfiguration, Database
 from lib.decorators import typeCheckfunc
+from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
 from lib.utils import LMAP
@@ -27,66 +28,54 @@ from TracerAuth.models import User
 
 class SQL():
   """
-    This is a stateless class, that is meant be injected into something, thus allowing for testing
-    One can later use depency injection to change this
+    This is a stateless class, that is meant to be injected into a database using class,
+    thus allowing mocking in testing.
   """
 
   @staticmethod
-  def __ExecuteNoReturn(SQLFactoryMethod: Callable[..., str], *args) -> None:
-    """This function takes a method and arguments to that method. The method must produce a valid SQL query
-    That is executed by this function. The query must have no return values such as updates and insert Queries
-
-    Note:
-      These methods should be found in SQLFactory module found in /production/lib/SQL/SQLFactory.py
-
-    Args:
-        SQLFactoryMethod (Callable[..., str]): Method that produces a SQL query
-        *Args : Args for SQLFactoryMethod
-    """
-    SQLQuery = SQLFactoryMethod(*args)
-    SQLExecuter.ExecuteQuery(SQLQuery)
-
-  @staticmethod
-  def __ExecuteReturnOne(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args, **kwargs) -> Optional[JsonSerilizableDataClass]:
-    """This function is the control function for making a query, taking one row,
-    converting that into a dataclass and then returning it
-
-    Args:
-        SQLFactoryMethod (Callable[..., str]): This is the method, that generates the query
-        returnClass (JsonSerilizableDataClass): This is the return class,
-                    Note it shouldn't be an instance, only the type of class
-        *args: additional args are passed to SQLFactoryMethod
-        **kwargs: additional kwargs are passed to SQLFactoryMethod
-
-    Returns:
-        Optional[JsonSerilizableDataClass]: If the underlying query returned a result,
-          then it's converted to JsonSerilizableDataClass if no result was found, it returns None
-    """
-    SQLQuery = SQLFactoryMethod(*args, **kwargs)
-    SQLTuple = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
-    if SQLTuple:
-      return returnClass(*SQLTuple)
-    else:
-      return None
-
-  @staticmethod
-  def __ExecuteReturnMany(SQLFactoryMethod : Callable[..., str], returnClass : JsonSerilizableDataClass, *args) -> List[JsonSerilizableDataClass]:
-    """_summary_
+  def __Execute(
+      SQLFactoryMethod : Callable[..., str],
+      returnClass : JsonSerilizableDataClass,
+      fetch : Fetching, *args) -> List[JsonSerilizableDataClass]:
+    """This is the method for executing a single SQL statement transaction
 
     Args:
         SQLFactoryMethod (Callable[..., str]): _description_
         returnClass (JsonSerilizableDataClass): _description_
-
+        Fetch : Fetching enum Value
     Returns:
         List[JsonSerilizableDataClass]: _description_
     """
     SQLQuery = SQLFactoryMethod(*args)
-    SQLResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
+    SQLResult = SQLExecuter.ExecuteQuery(SQLQuery, fetch=fetch)
+
     if SQLResult:
-      return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
+      if fetch == Fetching.ALL:
+        return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
+      elif fetch == Fetching.ONE:
+        return [returnClass(*SQLResult)]
+      else:
+        return []
     else:
       return []
 
+  @staticmethod
+  def __ExecuteMany(
+      SQLFactoryMethods : List[Callable[..., str]],
+      returnClass : JsonSerilizableDataClass,
+      fetch : Fetching,
+      args : List) -> List[JsonSerilizableDataClass]:
+    Queries = [method(*arg) for method, arg in zip(SQLFactoryMethods, args)]
+    SQLResult = SQLExecuter.ExecuteManyQueries(Queries, fetch=fetch)
+    if SQLResult:
+      if fetch == Fetching.ALL:
+        return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
+      elif fetch == Fetching.ONE:
+        return [returnClass(*SQLResult)]
+      else:
+        return []
+    else:
+      return []
   # Get methods
   ##### Universal methods #####
   @classmethod
@@ -105,19 +94,26 @@ class SQL():
 
   @classmethod
   def getElement(cls, ID:int, Dataclass) -> Optional[JsonSerilizableDataClass]:
-    return cls.__ExecuteReturnOne(SQLFactory.getElement, Dataclass, ID, Dataclass)
+    returnList = cls.__Execute(SQLFactory.getElement, Dataclass, Fetching.ONE, ID, Dataclass)
+    if returnList:
+      return returnList[0]
+    else:
+      None
 
   @classmethod
   def UpdateJsonDataClass(cls, DataClassObject : JsonSerilizableDataClass):
-    cls.__ExecuteNoReturn(SQLFactory.UpdateJsonDataClass, DataClassObject)
+    cls.__Execute(SQLFactory.UpdateJsonDataClass, JsonSerilizableDataClass, Fetching.NONE, DataClassObject)
 
   @classmethod
   def getDataClass(cls, DataClass) -> List[JsonSerilizableDataClass]:
-    return cls.__ExecuteReturnMany(SQLFactory.getDataClass, DataClass, DataClass)
+    return cls.__Execute(SQLFactory.getDataClass, DataClass, Fetching.ALL, DataClass)
 
   @classmethod
   def getDataClassRange(cls, startDate: datetime, endDate : datetime, DataClass):
-    return cls.__ExecuteReturnMany(SQLFactory.getDataClassRange, DataClass, startDate, endDate, DataClass)
+    return cls.__Execute(
+      SQLFactory.getDataClassRange,
+      DataClass, Fetching.ALL,
+      startDate, endDate, DataClass)
 
   # Get methods from django Database
   @staticmethod
@@ -142,13 +138,18 @@ class SQL():
     return LMAP(EmployeeDataClass.fromUser, User.objects.all())
 
   @classmethod
-  def createVial(cls, Vial : VialDataClass) -> None:
-    """[summary]
+  def createVial(cls, Vial : VialDataClass) -> VialDataClass:
+    """This takes a vial skeleton and creates it in the database.
+      Then it fetches it and creates a updated Vial
 
     Args:
         Vial (VialDataClass): Vial to saved to database
     """
-    cls.__ExecuteNoReturn(SQLFactory.InsertVial, Vial)
+    returnList = cls.__ExecuteMany(
+      [SQLFactory.InsertVial, SQLFactory.getLastElement],
+      VialDataClass, Fetching.ONE, [[Vial],[VialDataClass]]
+    )
+    return returnList[0]
 
 
   @classmethod
@@ -166,10 +167,14 @@ class SQL():
     Returns:
         List[ActivityOrderDataClass]: [description]
     """
-    cls.__ExecuteNoReturn(SQLFactory.FreeExistingOrder, Order, Vial, user)
-    cls.__ExecuteNoReturn(SQLFactory.FreeDependantOrders, Order, user)
-    cls.__ExecuteNoReturn(SQLFactory.CreateVialMapping, Order, Vial)
-    return cls.__ExecuteReturnMany(SQLFactory.getRelatedOrders, ActivityOrderDataClass, Order)
+    return cls.__ExecuteMany(
+      [ SQLFactory.FreeExistingOrder,
+        SQLFactory.FreeDependantOrders,
+        SQLFactory.CreateVialMapping,
+        SQLFactory.getRelatedOrders],
+      ActivityOrderDataClass,
+      Fetching.ALL,
+      [[Order, Vial, user],[Order, user], [Order, Vial], [Order]])
 
   @classmethod
   def CreateNewFreeOrder(
@@ -179,14 +184,25 @@ class SQL():
       tracerID :int,
       user : User
     ) -> ActivityOrderDataClass:
-    cls.__ExecuteNoReturn(SQLFactory.createLegacyFreeOrder, OriginalOrder, Vial, tracerID, user)
-    lastOrder = cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
-    cls.__ExecuteNoReturn(SQLFactory.CreateVialMapping, lastOrder, Vial)
+    lastOrderList = cls.__ExecuteMany(
+      [SQLFactory.createLegacyFreeOrder, SQLFactory.getLastElement],
+      ActivityOrderDataClass, Fetching.ONE,
+      [[OriginalOrder, Vial, tracerID, user],[ActivityOrderDataClass]]
+    )
+    lastOrder = lastOrderList[0]
+    # This should technically be a part of the last transaction and therefore does give a race condition,
+    # However such a race condition is rare, since it's in a low throughput server
+    # Also in the case where the race condition happens aka the vial appears unused while in truth it's used.
+    cls.__Execute(
+      SQLFactory.CreateVialMapping,
+      JsonSerilizableDataClass,
+      Fetching.NONE, lastOrder, Vial
+    )
     return lastOrder
 
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
-    return cls.__ExecuteReturnOne(SQLFactory.authenticateUser, EmployeeDataClass, username, password)
+    return cls.__Execute(SQLFactory.authenticateUser, EmployeeDataClass, Fetching.ONE, username, password)
 
   @classmethod
   def productionCreateOrder(
@@ -198,9 +214,13 @@ class SQL():
     tracer : TracerDataClass,
     run : int,
     username : str
-  ):
-    cls.__ExecuteNoReturn(SQLFactory.productionCreateOrder, deliver_datetime, Customer, amount, amount_overhead, tracer, run, username)
-    return cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
+  ) -> ActivityOrderDataClass:
+    lastOrderList = cls.__ExecuteMany(
+      [SQLFactory.productionCreateOrder,SQLFactory.getLastElement],
+      ActivityOrderDataClass, Fetching.ONE,
+      [[deliver_datetime, Customer, amount, amount_overhead, tracer, run, username],
+      [ActivityOrderDataClass]])
+    return lastOrderList[0]
 
   @classmethod
   def createGhostOrder(
@@ -216,9 +236,13 @@ class SQL():
     """ This function creates an empty order,
     this should be invoked when a user moves an order from a time slot with out an order existsing
     """
-    cls.__ExecuteNoReturn(SQLFactory.createGhostOrder, deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username)
-    return cls.__ExecuteReturnOne(SQLFactory.getLastOrder, ActivityOrderDataClass)
+    GhostOrderList = cls.__ExecuteMany(
+      [SQLFactory.createGhostOrder, SQLFactory.getLastElement],
+      ActivityOrderDataClass, Fetching.ONE,
+      [[deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username],
+        [ActivityOrderDataClass]] )
+    return GhostOrderList[0]
 
   @classmethod
-  def deleteActivityOrders(cls, oids_to_delete):
-    cls.__ExecuteNoReturn(SQLFactory.deleteActivityOrder, oids_to_delete)
+  def deleteIDs(cls, ids, DataClass):
+    cls.__Execute(SQLFactory.deleteIDs, JsonSerilizableDataClass, Fetching.NONE, ids, DataClass)

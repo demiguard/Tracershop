@@ -18,3 +18,6 @@ class DatabaseNotSetupException(Exception):
 
 class DatabaseCouldNotConnect(Exception):
   pass
+
+class DatabaseInvalidQueriesConfiguration(Exception):
+  pass

@@ -7,10 +7,11 @@ import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
 import { CountMinutes, CalculateProduction } from "/src/lib/physics";
 import { ActivityModal } from "/src/components/modals/ActivityModal.js";
 import { CreateOrderModal } from "/src/components/modals/CreateOrderModal";
-import { JSON_AMOUNT, JSON_CUSTOMER, JSON_ORDERS, JSON_PRODUCTIONS, JSON_RUNS, JSON_VIALS, JSON_PRODUCTION,
-  WEBSOCKET_DATA_ORDER, WEBSOCKET_DATA_VIAL, WEBSOCKET_DATA_VIALS,
-  WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_CREATE_VIAL, WEBSOCKET_MESSAGE_EDIT_VIAL,
-  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, JSON_EMPLOYEE, WEBSOCKET_MESSAGE_CREATE_ORDER, WEBSOCKET_DATA_CREATE_ORDER, JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, JSON_ACTIVITY_ORDER, JSON_DELIVERTIMES,
+import { JSON_CUSTOMER, JSON_VIAL,
+  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+  JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
+   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
+   KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME
 } from "/src/lib/constants";
 
 
@@ -91,7 +92,7 @@ export class ActivityTable extends Component {
    * @returns Map as described above
    */
   createOrderMapping(){
-    const today     = this.props.date.getDay();
+    const today     = this.props.date.getDay() - 1; // FUCKING AMERICANS!
     const JanOne    = new Date(this.props.date.getFullYear(),0,1);
     const NumDays   = Math.floor(this.props.date - JanOne) / (24 * 60 * 60 * 1000);
     const WeekNum   = Math.ceil((this.props.date.getDay() + 1 + NumDays) / 7);
@@ -106,8 +107,8 @@ export class ActivityTable extends Component {
     for(const [DTID, deliverTime] of this.props.deliverTimes){
       // Check if date is ok?
       if (deliverTime.day !== today) continue;
-      if (deliverTime.repeat === 2 && !WeekNumIsEven) continue;
-      if (deliverTime.repeat === 3 && WeekNumIsEven)  continue;
+      if (deliverTime.repeat_t === 2 && !WeekNumIsEven) continue;
+      if (deliverTime.repeat_t === 3 && WeekNumIsEven) continue;
       const customerMap = NewOrderMapping.get(deliverTime.BID);
       if (customerMap === undefined){
         console.log("A Delivertime cannot be associated with customer"); // You should send a message that database is broken and an somebody should REEEEEALY fix it
@@ -170,13 +171,13 @@ export class ActivityTable extends Component {
    * @param {Number} oid - ID of Order being moved
    */
   ChangeRun(newRun, oid) {
-    /** So this works for 2 production, however there's so much more fun when you have 3 productions 
+    /** So this works for 2 production, however there's so much more fun when you have 3 productions
      *
      * Okay So here is a fun bug / I dunno what happens:
      * Lets say we have 3 Deliver Times
      * 2 gets mapped to 1 -> No problem, however 2 no longer have a master Order
      * 3 gets mapped to 2 -> Big problem, Since there's no master order for DT 2, a new order is created, since there's no master order a new one is created
-     * 2 gets mapped to 2 -> Biggest problem, there's now three orders: a ghost order, 2, 3. 
+     * 2 gets mapped to 2 -> Biggest problem, there's now three orders: a ghost order, 2, 3.
      *
      * Now This might not be a problem, there might be some wierd reason why Production might want this, however if Order 2 is moved back, then the orders should be merged
      * Really this is something that might best be handled on the backend
@@ -380,8 +381,10 @@ export class ActivityTable extends Component {
       FormatDateStr(this.props.date.getMonth() + 1) + '-' +
       FormatDateStr(this.props.date.getDate());
 
-    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_ORDER);
-    jsonData[JSON_VIALS] = {
+    const message = this.props.websocket.getMessage(
+      WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
+    message[WEBSOCKET_DATATYPE] = JSON_VIAL;
+    message[WEBSOCKET_DATA] = {
         "charge" : Charge,
         "filltime" : FillTime,
         "filldate" : FillDate,
@@ -389,23 +392,25 @@ export class ActivityTable extends Component {
         "activity" : Activity,
         "volume" : Volume
       };
-    this.props.websocket.send(JSON.stringify(jsonData));
-  }
-
-  modalCreateOrder(customer, run, deliverTime, amount){
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_ORDER);
-    const payload = {};
-    payload[JSON_CUSTOMER] = customer;
-    payload[JSON_DELIVERTIMES] = deliverTime;
-    payload[JSON_RUN] = run;
-    payload[JSON_AMOUNT] = amount;
-    payload[JSON_TRACER] = this.props.tracers.get(this.props.tracer);
-
-    message[WEBSOCKET_MESSAGE_CREATE_ORDER] = payload;
     this.props.websocket.send(JSON.stringify(message));
   }
 
+  modalCreateOrder(customer, run, deliverTime, amount){
+    const message = this.props.websocket.getMessage(
+      WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
+    const skeleton = {};
+    skeleton[JSON_CUSTOMER] = customer;
+    skeleton[JSON_DELIVERTIME] = deliverTime;
+    skeleton[JSON_RUN] = run;
+    skeleton[KEYWORD_AMOUNT] = amount;
+    skeleton[JSON_TRACER] = this.props.tracers.get(this.props.tracer);
 
+    message[WEBSOCKET_DATA] = skeleton;
+    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
+    this.props.websocket.send(JSON.stringify(message));
+  }
+
+  // This needs to change
   editVial(ID,
     Charge,
     FillTime,
@@ -414,19 +419,19 @@ export class ActivityTable extends Component {
     CustomerNumber)
   {
     const FillDate = `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`;
-    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE)
-    jsonData[WEBSOCKET_DATA] = {
-      "ID"     : ID,
-      "charge" : Charge,
-      "filltime" : FillTime,
-      "filldate" : FillDate,
-      "customer" : CustomerNumber,
-      "activity" : Activity,
-      "volume" : Volume
-    };
-    jsonData[WEBSOCKET_DATATYPE] = JSON_VIALS
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+    const skeleton = {};
+    skeleton[KEYWORD_ID] = ID;
+    skeleton[KEYWORD_CHARGE] = Charge;
+    skeleton[KEYWORD_FILLTIME] = FillTime;
+    skeleton[KEYWORD_FILLDATE] = FillDate;
+    skeleton[KEYWORD_CUSTOMER] = CustomerNumber; // Note that due to bad setup, it's using the Customer Keyword
+    skeleton[KEYWORD_ACTIVITY] = Activity;
+    skeleton[KEYWORD_VOLUME] = Volume;
+    message[WEBSOCKET_DATA] = skeleton
+    message[WEBSOCKET_DATATYPE] = JSON_VIAL
 
-    this.props.websocket.send(JSON.stringify(jsonData));
+    this.props.websocket.send(JSON.stringify(message));
   }
 
   /**
@@ -441,7 +446,7 @@ export class ActivityTable extends Component {
     const order = this.props.orders.get(orderID);
     this.closeModal();
     const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ORDER);
-    jsonData[JSON_VIALS] = vials;
+    jsonData[JSON_VIAL] = vials;
     jsonData[JSON_TRACER] = this.props.tracer;
     jsonData[JSON_ACTIVITY_ORDER] = order;
     this.props.websocket.send(JSON.stringify(jsonData));
@@ -487,8 +492,12 @@ export class ActivityTable extends Component {
 
   renderAcceptButtons(Order) {
     if (Order.COID !== -1) return ("");
-    if (Order.status == 1) return (<Button variant="light" onClick={() => {this.AcceptOrder(Order.oid).bind(this)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
-    if (Order.status == 2) return (<Button variant="light" onClick={() => {this.activateOrderModal(Order.oid)}}><img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
+    if (Order.status == 1) return (<Button variant="light" onClick={
+      () => {this.AcceptOrder(Order.oid).bind(this)}}>
+        <img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
+    if (Order.status == 2) return (<Button variant="light" onClick={
+      () => {this.activateOrderModal(Order.oid)}}>
+      <img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
     if (Order.status == 3) return ("");
   }
 
@@ -505,7 +514,7 @@ export class ActivityTable extends Component {
     const FreeDT    = (order.frigivet_datetime) ? new Date(order.frigivet_datetime) : "-";
     const FreeTime  = (FreeDT != "-") ? FormatDateStr(FreeDT.getHours()) + ":" + FormatDateStr(FreeDT.getMinutes()) : FreeDT
 
-    const Employee     = this.props.employees.get(order.frigivet_af)
+    const Employee     = this.props.employee.get(order.frigivet_af)
     const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
 
     const customer = this.props.customer.get(order.BID)
@@ -596,7 +605,7 @@ export class ActivityTable extends Component {
         return 1;
       } else {
         // order.BID equals
-        if (order_1.run < order_2.run){
+        if (order_1.deliver_datetime < order_2.deliver_datetime){
           return -1;
         } else {
           return 1;
@@ -620,9 +629,6 @@ export class ActivityTable extends Component {
       }
     }
 
-    console.log(this.props);
-    console.log(this.state);
-
     return (<div>
       <Container>
         <Row>
@@ -631,7 +637,7 @@ export class ActivityTable extends Component {
             {RenderedRuns}
           </Col>
           <Col sm={2}>
-            <Button onClick={this.activateCreateModal.bind(this)}> Opret ny Ordre</Button>
+            <Button onClick={this.activateCreateModal.bind(this)}> Opret ny ordre</Button>
           </Col>
         </Row>
       </Container>
@@ -689,7 +695,7 @@ export class ActivityTable extends Component {
         editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}
         createOrder={this.modalCreateOrder.bind(this)}
-
+        date={this.props.date}
       />
     : null }
     </div>

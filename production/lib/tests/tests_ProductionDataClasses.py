@@ -69,7 +69,7 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
     """This test just shows that you can do both ways and really it's just
     Syntatic sugar
     """
-    
+
     newClassStar = DummyJsonSerilizableDataClass(**self.testDict)
     newClass = DummyJsonSerilizableDataClass.fromDict(self.testDict)
 

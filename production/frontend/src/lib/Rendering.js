@@ -1,12 +1,10 @@
 import React, {} from "react";
 import { FormatDateStr } from "/src/lib/formatting";
+import { Form } from "react-bootstrap"
 
 import { noop } from "/src/lib/utils";
 
-export { renderStatusImage , renderTableRow, renderDateTime}
-
-
-function renderStatusImage(status, func) {
+export function renderStatusImage(status, func) {
   const onclickFunc = (func === undefined) ? noop : func
   if (status === 1) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard1.svg"></img>);
   if (status === 2) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard2.svg"></img>);
@@ -16,7 +14,7 @@ function renderStatusImage(status, func) {
   throw "Status not supproted!";
 }
 
-function renderTableRow(key, list_of_tds) {
+export function renderTableRow(key, list_of_tds) {
   /**
    * This function is for building Tables, it creates a single row.
    * It has a variable amount of entries allowing to be used for creation of all Tables
@@ -50,7 +48,7 @@ function renderTableRow(key, list_of_tds) {
  * @param {String} dateString - The String to be converted into a date object to be converted and back again
  * @returns {String} - the formatted string
  */
-function renderDateTime(dateString){
+export function renderDateTime(dateString){
   const dateObject = new Date(dateString);
   const hours    = FormatDateStr(dateObject.getHours());
   const minutes  = FormatDateStr(dateObject.getMinutes());
@@ -61,4 +59,19 @@ function renderDateTime(dateString){
   return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
 
-export function renderSelect(){}
+
+export function renderSelect(Options, valueKey, nameKey, OnChange, selectValue){
+  const Rendered = [];
+
+  for(const Option of Options){
+    const value = Option[valueKey];
+    const name = Option[nameKey];
+    Rendered.push(<option value={value} key={value}>{name}</option>);
+  }
+
+  return(
+    <Form.Select value={selectValue} onChange={OnChange}>
+      {Rendered}
+    </Form.Select>
+  );
+}

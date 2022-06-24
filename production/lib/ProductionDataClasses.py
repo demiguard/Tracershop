@@ -97,7 +97,7 @@ class JsonSerilizableDataClass:
     raise NotImplemented
 
   @classmethod
-  def getIDField() -> str:
+  def getIDField(cls) -> str:
     """Abstract method for generating ID
 
     Raises:
@@ -289,6 +289,10 @@ class VialDataClass(JsonSerilizableDataClass):
   @classmethod
   def getSQLDateTime(cls) -> str:
     return "VAL.filldate"
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "VAL.ID"
 
 @dataclass(init=False)
 class TracerCustomerMappingDataClass(JsonSerilizableDataClass):

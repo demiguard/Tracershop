@@ -1,7 +1,7 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { JSON_CUSTOMERS, JSON_VIALS, WEBSOCKET_MESSAGE_ECHO } from "/src/lib/constants";
+import { JSON_VIAL, WEBSOCKET_MESSAGE_ECHO } from "/src/lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "/src/lib/formatting";
 import { autoAddCharacter } from "/src/lib/utils";
 
@@ -77,7 +77,7 @@ class VialPage extends Component {
     }).then((response) => {
       console.log(response);
       const newVialMap = new Map();
-      if (response[JSON_VIALS]) for (const vialString of response[JSON_VIALS]) {
+      if (response[JSON_VIAL]) for (const vialString of response[JSON_VIAL]) {
         const vial = ParseJSONstr(vialString);
         newVialMap.set(vial.ID, vial);
       }
@@ -191,16 +191,20 @@ class VialPage extends Component {
     const filter_batch = new RegExp(this.state.filterBatch, 'g');
     for (const vial of SortedVials){
       if (this.state.filterCustomer) {
-        if (filter_batch.test(vial.charge) && this.state.filterCustomer == vial.customer) RenderedVials.push(this.renderVial(vial));
+        if (filter_batch.test(vial.charge) &&
+              this.state.filterCustomer == vial.customer)
+                RenderedVials.push(this.renderVial(vial));
       } else {
-        if (filter_batch.test(vial.charge)) RenderedVials.push(this.renderVial(vial));
+        if (filter_batch.test(vial.charge))
+          RenderedVials.push(this.renderVial(vial));
       }
     }
 
     const CustomerOptions = []
     for(const [_, customer] of this.props.customer){
       CustomerOptions.push(
-        <option value={customer.kundenr} key={customer.kundenr}>{customer.UserName}</option>
+        <option value={customer.kundenr} key={customer.kundenr}
+          >{customer.UserName}</option>
       )
     }
 
@@ -209,7 +213,10 @@ class VialPage extends Component {
 
       <Row>
         <Col>
-          <input value={this.state.filterBatch} onChange={(event) => {this.changeState("filterBatch", event.target.value)}} placeholder="batch nummer"/> 
+          <input value={this.state.filterBatch} onChange={(event) =>
+            {this.changeState("filterBatch", event.target.value)}}
+            placeholder="batch nummer"
+          />
         </Col>
         <Col>
           <select onChange={(event) => {this.changeSelectState(event.target.value)}}>

@@ -12,4 +12,7 @@ if __name__ == "__main__":
   cur = conn.cursor()
 
   cur.execute("""CREATE DATABASE test_backend """)
-  
+
+  cur.execute("""SHOW DATABASES""")
+
+  cur.execute("""DELETE DATABASE test_backend""")

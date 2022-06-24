@@ -1,9 +1,9 @@
 """
-  This class is support to contain all the functions, 
+  This class is support to contain all the functions,
   that makes SQL calls to the database. This is in an attempt to clean up the Consumer
   as it will get bloated with code otherwise.
 
-  Most of this code is simply just an way to put the decorator on top. 
+  Most of this code is simply just an way to put the decorator on top.
   Really there shouldn't be too much code down here, however it'll save you a few hundred lines in Real consumer
 """
 
@@ -24,44 +24,15 @@ from datetime import datetime, date, timedelta
 from typing import Dict, List, Tuple
 
 
-class SQLConsumer(AsyncJsonWebsocketConsumer):
+class DatabaseInterface():
+  """_summary_
+  """
   def __init__(self, SQL_Controller=SQL()):
-    super().__init__()
     self.SQL = SQL_Controller
-
-  #Database handlers
-  @database_sync_to_async
-  def updatedOrder(
-      self,
-      order: ActivityOrderDataClass
-    ) -> ActivityOrderDataClass:
-    """[summary]
-
-    Args:
-        order (ActivityOrderDataClass): [description]
-
-    Returns:
-        ActivityOrderDataClass: [description]
-    """
-    self.SQL.updateOrder(order)
 
   @database_sync_to_async
   def CreateVial(self, Vial : VialDataClass) -> None:
-    self.SQL.createVial(Vial)
-
-  @database_sync_to_async
-  def getVial(self, Vial : VialDataClass) -> VialDataClass:
-    """
-      This takes an incomplete VialDataClass and fills the data in it
-
-      Args:
-        Vial - VialDataClass - the incomplete VialDataClass
-      return
-        VialDataClass - a new VialDataClass with more fields,
-                        if the field was precent in the old vial
-                        it's the same in the new
-    """
-    return self.SQL.getVial(Vial)
+    return self.SQL.createVial(Vial)
 
   @database_sync_to_async
   def getServerConfiguration(self) -> ServerConfiguration:
@@ -120,8 +91,9 @@ class SQLConsumer(AsyncJsonWebsocketConsumer):
     Order: ActivityOrderDataClass,
     Vials: List[VialDataClass]
   ):
-    customer = self.SQL.getCustomer(Order.BID)
-    Tracer, Isotope = self.SQL.getTracerAndIsotope(Order.tracer)
+    customer = self.SQL.getElement(Order.BID, CustomerDataClass)
+    Tracer = self.SQL.getElement(Order.tracer, TracerDataClass)
+    Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)
     pdfPath = pdfs.getPdfFilePath(customer, Order)
     pdfs.DrawSimpleActivityOrder(pdfPath, customer, Order, Vials, Tracer, Isotope)
     return pdfPath
@@ -226,9 +198,5 @@ class SQLConsumer(AsyncJsonWebsocketConsumer):
 
   @database_sync_to_async
   @typeCheckfunc
-  def deleteActivityOrders(
-    self,
-    oids_to_delete : List[int]
-  ):
-    self.SQL.deleteActivityOrders(oids_to_delete)
-
+  def DeleteIDs(self, ids : List[int], DataClass):
+    self.SQL.deleteIDs(ids, DataClass)

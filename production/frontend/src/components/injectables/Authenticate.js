@@ -56,7 +56,7 @@ export default class Authenticate extends Component {
               <label htmlFor="username">Kodeord</label>
               <input type="password"
                      className="form-control"
-                     id="password"x
+                     id="password"
                      autoComplete="new-password"
                      name="password"
                      value={this.state.password}

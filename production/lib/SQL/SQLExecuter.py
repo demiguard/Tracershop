@@ -1,15 +1,22 @@
 import mysql.connector as mysql
-from lib.SQL.SQLFormatter import checkForSQLInjection
+import enum
+from typing import List
+from pprint import pprint
+
 # User packages:
-
-# This is some legacy code that should really be moved
-from api.models import Database, ServerConfiguration
 import constants
+from lib.SQL.SQLFormatter import checkForSQLInjection
+from api.models import Database, ServerConfiguration
+from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect, DatabaseInvalidQueriesConfiguration
 
-from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect
+__author__ = "Christoffer Vilstrup Jensen"
 
+class Fetching(enum.Enum):
+  ALL = 1
+  ONE = 2
+  NONE = 3
 
-class MySQLCursor(object):
+class DataBaseConnectionWrapper(object):
   def __init__(self):
     pass
   def __enter__(self):
@@ -24,7 +31,7 @@ class MySQLCursor(object):
       'password' : database.password,
       'host' : database.address.ip,
       'port' : database.address.port,
-      'autocommit' : True,
+      'autocommit' : False,
       'raise_on_warnings': True
     }
 
@@ -32,39 +39,49 @@ class MySQLCursor(object):
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True
       self.cursor = self.connection.cursor()
-      return self.cursor
+      return self
     except mysql.Error as Err:
       self.connected = False
-      return None
+      return self
   def __exit__(self, type, value, traceback):
     if self.connected:
       self.connection.close()
 
-
-def ExecuteQueryFetchOne(SQLQuery : str):
-  with MySQLCursor() as cursor:
-    if cursor:
+def ExecuteQuery(SQLQuery : str, fetch = Fetching.ALL):
+  with DataBaseConnectionWrapper() as Wrapper:
+    if Wrapper.connected:
       checkForSQLInjection(SQLQuery)
-      cursor.execute(SQLQuery)
-      FetchedVal = cursor.fetchone()
+      Wrapper.cursor.execute(SQLQuery)
+      if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
+        FetchedVals = Wrapper.cursor.fetchall()
+      elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:
+        FetchedVals = Wrapper.cursor.fetchone()
+      if "FetchedVals" not in locals().keys() and fetch != Fetching.NONE:
+        Wrapper.connection.rollback()
+        raise DatabaseInvalidQueriesConfiguration
+      Wrapper.connection.commit()
     else:
       raise DatabaseCouldNotConnect
-  return FetchedVal
+  if fetch != Fetching.NONE:
+    return FetchedVals
 
-def ExecuteQueryFetchAll(SQLQuery : str) -> list:
-  with MySQLCursor() as cursor:
-    if cursor:
-      checkForSQLInjection(SQLQuery)
-      cursor.execute(SQLQuery)
-      FetchedVals = cursor.fetchall()
-    else:
-      raise DatabaseCouldNotConnect
-  return FetchedVals
-
-def ExecuteQuery(SQLQuery : str) -> None:
-  with MySQLCursor() as cursor:
-    if cursor:
-      checkForSQLInjection(SQLQuery)
-      cursor.execute(SQLQuery)
-    else:
-      raise DatabaseCouldNotConnect
+def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
+  with DataBaseConnectionWrapper() as Wrapper:
+    if Wrapper.connected:
+      Wrapper.connection.autocommit = False
+      try:
+        for Query in SQLQueries:
+          Wrapper.cursor.execute(Query)
+          if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
+            FetchedVals = Wrapper.cursor.fetchall()
+          elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:
+            FetchedVals = Wrapper.cursor.fetchone()
+        if "FetchedVals" not in locals().keys() and fetch != Fetching.NONE:
+          Wrapper.connection.rollback()
+          raise DatabaseInvalidQueriesConfiguration
+        Wrapper.connection.commit()
+      except mysql.Error as Err:
+        Wrapper.connection.rollback()
+        raise DatabaseInvalidQueriesConfiguration
+  if fetch != Fetching.NONE:
+    return FetchedVals

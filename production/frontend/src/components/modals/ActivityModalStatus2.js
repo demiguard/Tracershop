@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Modal, Button, Row, Container, Table, FormControl } from "react-bootstrap";
-import { FormatTime, ParseDanishNumber } from "/src/lib/formatting";
+import { FormatTime, ParseDanishNumber, FormatDateStr } from "/src/lib/formatting";
 import { renderTableRow } from "/src/lib/Rendering";
 import { autoAddCharacter } from "/src/lib/utils";
 
@@ -56,7 +56,7 @@ export default class ActivityModalStatus2 extends Component {
       newCharge : "",
       newFillTime : "",
       newVolume : "",
-      newActivity : "", 
+      newActivity : "",
       ErrorMessage :""
     })
   }
@@ -85,17 +85,17 @@ export default class ActivityModalStatus2 extends Component {
     this.setState(newState);
   }
 
-  // ********* Vial Functions ********** // 
+  // ********* Vial Functions ********** //
 
   /*
-  * This Function checks that the current new Vial is ok, 
-  * then calls the prop function for creating new vials. 
-  * 
+  * This Function checks that the current new Vial is ok,
+  * then calls the prop function for creating new vials.
+  *
   */
   createNewVial(){
     var ErrorInInput = false;
     var NewErrorMessage = "";
-    
+
     if (!this.state.newCharge){
       ErrorInInput = true;
       NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
@@ -121,9 +121,9 @@ export default class ActivityModalStatus2 extends Component {
     if (FillTime === null) { // This is the output if fillTime fails to parse 
       ErrorInInput = true;
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    } 
+    }
     const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.kundenr : null 
+    const CustomerNumber = (Customer) ? Customer.kundenr : null
 
     if (CustomerNumber === null) {
       ErrorInInput = true;
@@ -178,13 +178,13 @@ export default class ActivityModalStatus2 extends Component {
     }
 
     const FillTime = FormatTime(EditingData.newProductionTime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse 
+    if (FillTime === null) { // This is the output if fillTime fails to parse
       ErrorInInput = true;
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    } 
-    
+    }
+
     const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.kundenr : null 
+    const CustomerNumber = (Customer) ? Customer.kundenr : null
 
     if (CustomerNumber === null) {
       ErrorInInput = true;
@@ -196,14 +196,14 @@ export default class ActivityModalStatus2 extends Component {
       this.setState({...this.state, ErrorMessage : NewErrorMessage});
       return;
     }
-    
+
     // This function causes an update to the props vials, so a re-render happens
-    this.props.editVial(  
+    this.props.editVial(
       vialID,
       BatchName,
       FillTime,
       Number(NewVolume.toFixed(2)),
-      Number(NewActivity.toFixed(2)), 
+      Number(NewActivity.toFixed(2)),
       CustomerNumber
     );
 
@@ -233,19 +233,19 @@ export default class ActivityModalStatus2 extends Component {
 
   EditVialField(vialID, fieldName, NewValue){
     const newEdittingMap = new Map(this.state.EditingVials)
-    const newData = {...newEdittingMap.get(vialID)}  
+    const newData = {...newEdittingMap.get(vialID)}
     newData[fieldName] = NewValue
     newEdittingMap.set(vialID, newData)
     this.setState({...this.state, EditingVials : newEdittingMap})
   }
 
   /** This function updates the state such that a user can edit a vial.
-   * 
+   *
    * @param {Number} vialID This is the ID of the Vial used for key in state.EditingVials
    */
   startEditVial(vialID){
     if(this.props.selectedVials.has(vialID)){
-      this.props.toggleVial(vialID); 
+      this.props.toggleVial(vialID);
     }
 
     const vial = this.props.vials.get(vialID);
@@ -258,7 +258,7 @@ export default class ActivityModalStatus2 extends Component {
     const newEdittingMap = new Map(this.state.EditingVials);
     newEdittingMap.set(vialID, EdittingData);
 
-    this.setState({...this.state, 
+    this.setState({...this.state,
       EditingVials : newEdittingMap
     });
   }
@@ -281,11 +281,11 @@ export default class ActivityModalStatus2 extends Component {
       newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med redigerer en vial.\n";
     }
     if (this.props.selectedVials.size === 0) {
-      newErrorMessage += "Du kan ikke godkende en ordre, uden at vælge mindst 1 vial.\n" 
+      newErrorMessage += "Du kan ikke godkende en ordre, uden at vælge mindst 1 vial.\n"
     }
     if (newErrorMessage) {
       this.setState({
-        ...this.state, 
+        ...this.state,
         ErrorMessage : newErrorMessage
       });
     } else {
@@ -312,7 +312,7 @@ export default class ActivityModalStatus2 extends Component {
   renderEditingVial(vial){
     const editingState = this.state.EditingVials.get(vial.ID);
 
-    const BatchField = (<FormControl value={editingState.newBatchName} 
+    const BatchField = (<FormControl value={editingState.newBatchName}
       onChange={(event) => this.EditVialField(vial.ID, "newBatchName", event.target.value)}/>);
 
     const ProductionField = (<FormControl value={editingState.newProductionTime}
@@ -325,7 +325,7 @@ export default class ActivityModalStatus2 extends Component {
       onChange={(event) => this.EditVialField(vial.ID, "newActivity", event.target.value)}/>);
 
     return [vial.ID,
-      BatchField, 
+      BatchField,
       ProductionField,
       VolumeField,
       ActivityField,
@@ -387,7 +387,7 @@ export default class ActivityModalStatus2 extends Component {
             {renderTableRow("5", ["Bestilt Af:",  Order.username])}
             {Order.comment ? renderTableRow("6", ["Kommentar", Order.comment]) : null}
           </tbody>
-        </Table> 
+        </Table>
       </div>);
   }
 
@@ -398,28 +398,45 @@ export default class ActivityModalStatus2 extends Component {
     const CustomerNumber = (Customer) ? Customer.kundenr  : "";
     const vials_in_use = [];
     if (CustomerNumber) {
-      for(let [vialID, vial ] of this.props.vials){
+      for(let [_, vial] of this.props.vials){
+
         if (vial.OrderMap !== null) continue;
-        if (vial.customer == CustomerNumber){
-          (this.state.EditingVials.has(vialID)) ? vials_in_use.push(
-            renderTableRow(vialID, this.renderEditingVial(vial))
-          ) : 
-          vials_in_use.push(
-            renderTableRow(vialID, this.renderVial(vial))
-          ); 
-        }
+        if (vial.customer !== CustomerNumber) continue;
+        if (vial.filldate !==
+          `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`) continue;
+        vials_in_use.push(vial);
       }
+    }
+
+    vials_in_use.sort((v1, v2) => {
+      if (v1.filltime < v2.filltime) {
+        return -1;
+      } else if (v1.filltime === v2.filltime) {
+        return v1.ID - v2.ID;
+      } else {
+        return 1;
+      }
+    });
+
+    const RenderVials = [];
+    for (const vial of vials_in_use){
+      (this.state.EditingVials.has(vial.ID)) ? RenderVials.push(
+        renderTableRow(vial.ID, this.renderEditingVial(vial))
+      ) :
+      RenderVials.push(
+        renderTableRow(vial.ID, this.renderVial(vial))
+      );
     }
 
     var AddNewOrderButton;
 
     if(this.state.CreatingVial){
-      vials_in_use.push(renderTableRow("new", this.renderNewVial()))
+      RenderVials.push(renderTableRow("new", this.renderNewVial()))
       AddNewOrderButton = (<Button onClick={this.StopCreatingNewVial.bind(this)}>Anuller ny Vial</Button>)
     } else {
       AddNewOrderButton = (<Button onClick={() => {this.initializeNewVial()}}>Opret Ny Vial</Button>)
     }
-    
+
     return(<div>
       <Table bordered>
         <thead>
@@ -434,7 +451,7 @@ export default class ActivityModalStatus2 extends Component {
           </tr>
         </thead>
         <tbody>
-          {vials_in_use}
+          {RenderVials}
         </tbody>
       </Table>
       {AddNewOrderButton}
@@ -447,10 +464,9 @@ export default class ActivityModalStatus2 extends Component {
         <Row>{this.renderOrder()}</Row>
         <Row>{this.renderVials()}</Row>
         {this.state.ErrorMessage ? <Row>{this.state.ErrorMessage}</Row> : null }
-      </Container>); 
+      </Container>);
   }
 
-  
   // * Main render function * //
 
   render() {

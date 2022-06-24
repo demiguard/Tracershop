@@ -118,6 +118,7 @@ class ActivityModal extends Component {
             selectedVials={this.state.selectedVials}
             toggleVial={this.toggleVial.bind(this)}
             Authenticate={this.Authenticate.bind(this)}
+            date={this.props.date}
           />)
         }
       }

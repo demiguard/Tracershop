@@ -7,7 +7,7 @@ from lib.ProductionJSON import ProductionJSONResponse
 from lib.SQL import SQLController
 from lib.ProductionDataClasses import VialDataClass
 
-from constants import JSON_VIALS, JSON_VIAL_MAPPING
+from constants import JSON_VIAL, JSON_VIAL_MAPPING
 
 class APIGetVials(View):
   """
@@ -29,9 +29,8 @@ class APIGetVials(View):
     Vials = self.SQL.getDataClassRange(startDate, endDate, VialDataClass)
 
     return ProductionJSONResponse({
-      JSON_VIALS : Vials
+      JSON_VIAL : Vials
     })
 
   def __init__(self, SQL = SQLController.SQL()):
     self.SQL = SQL
-    

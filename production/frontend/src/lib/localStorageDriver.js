@@ -23,7 +23,6 @@ export var db = {
 
   },
   get: function(key) {
-
     const Type = this.types[key]
 
     if (Type === undefined){
@@ -62,24 +61,25 @@ export var db = {
     return value;
   },
 
+  // ENSURE THAT THIS IS OBJECT IS UP TO DATE WITH constants.js
   types : {
-    today : Date,
-    lastUpdated : Date,
-    activeTracer : Number,
-    isAuth : Boolean,
-    serverConfig : Object,
+    today : Date, // DATABASE_TODAY
+    lastUpdated : Date, //DATABASE_LAST_UPDATED
+    activeTracer : Number, //DATABASE_ACTIVE_TRACER
+    isAuth : Boolean, //DATABASE_IS_AUTH
+    serverConfig : Object, //DATABASE_SERVER_CONFIG
     // Maps
-    addresses : Map,
-    customer : Map,
-    databases : Map,
-    deliverTimes : Map,
-    employees : Map,
-    isotopes : Map,
-    orders : Map,
-    runs : Map,
-    t_orders : Map,
-    tracers : Map,
-    vials    : Map,
+    address : Map, // DATABASE_ADDRESS
+    customer : Map, // DATABASE_CUSTOMER
+    database : Map, // DATABASE_DATABASE
+    deliverTimes : Map, //DATABASE_DELIVERTIME
+    employee : Map, //DATABASE_EMPLOYEE
+    isotopes : Map, //DATABASE_ISOTOPE
+    orders : Map, //DATABASE_ACTIVITY_ORDER
+    run : Map, //DATABASE_PRODUCTION
+    t_orders : Map, //DATABASE_INJECTION_ORDER
+    tracer : Map, //DATABASE_TRACER
+    vial    : Map, //DATABASE_VIAL
   },
 
   addType: function(key, typeClass){

@@ -17,13 +17,11 @@ class TracershopAuthenticationBackend(BaseBackend):
 
   def get_user_from_old_database(self, username, password):
     valid_old_user = self.SQL.authenticateUser(username, password)
-    print(username, password, valid_old_user)
     if valid_old_user:
       user = User(username=username, OldTracerBaseID=valid_old_user.OldTracerBaseID)
       user.set_password(password)
       user.save()
       return user
-    
     return None
 
   def get_user(self, user_id):

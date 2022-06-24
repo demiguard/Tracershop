@@ -254,7 +254,7 @@ test("Save and Read Map(Type Preservation)", () => {
   testMap.set("b", {kw1 : "qwer", kw2 : 134});
   testMap.set("c", {kw1 : "zxcv", kw2 : 124, kw3: [11923981293,123121231]});
   testMap.set("d", {kw1 : "oqpq", kw2 : 1234, kw3 : {kwOb : "Check if object in are preserved"}});
-  
+
   db.addType(testKW, Map);
   db.set(testKW, testMap)
 
@@ -265,9 +265,9 @@ test("Save and Read Map(Type Preservation)", () => {
 
 test("Jest map equal test", () => {
   // Tests if Jest can determine equallity between maps
-  
+
   const key = 3;
-  const value = "test"; 
+  const value = "test";
   const map1 = new Map();
   const map2 = new Map();
 
@@ -297,4 +297,4 @@ test("Save and read Map inside of Maps", () => {
   const loaded_MONSTERMAP = db.get(kw);
 
   expect(MONSTERMAP).toEqual(loaded_MONSTERMAP);
-}) 
+});

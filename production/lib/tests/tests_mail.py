@@ -10,7 +10,7 @@ from api import models
 
 from lib.SQL.SQLController import SQL
 
-class mailTests(TestCase):  
+class mail():
   def setUp(self):
     add = models.Address(
       ip="127.0.0.1",
@@ -26,17 +26,17 @@ class mailTests(TestCase):
       testinDatabase=0
     )
 
-    self.sc = SQL.getServerConfig()    
+    self.sc = SQL.getServerConfig()
 
 
   test_customer = CustomerDataClass(
-      "UserName", 
-      1, 
-      23, 
-      7, 
-      "Realname", 
-      "Christoffer.vilstrup.Jensen@Regionh.dk", 
-      "Christoffer.vilstrup.Jensen@Regionh.dk", 
+      "UserName",
+      1,
+      23,
+      7,
+      "Realname",
+      "Christoffer.vilstrup.Jensen@Regionh.dk",
+      "Christoffer.vilstrup.Jensen@Regionh.dk",
       "email3", 
       "Christoffer.vilstrup.Jensen@Regionh.dk", 
       "contact", "+45 20 99 05 50", "addr1", "addr2", "addr3", "addr4"

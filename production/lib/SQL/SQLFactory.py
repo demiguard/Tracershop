@@ -38,7 +38,7 @@ def getCustomer(ID: int) -> str:
   """
 
 def getElement(ID: int, dataClass) -> str:
-  return f"""
+  Query = f"""
     SELECT
       {dataClass.getSQLFields()}
     FROM
@@ -46,6 +46,7 @@ def getElement(ID: int, dataClass) -> str:
     Where
       {dataClass.getIDField()}={ID}
   """
+  return Query
 
 def getDataClass(dataClass) -> str:
   # Note that in most cases where there's no internal filter then SQLWhere just returns TRUE ie: All elements of the class
@@ -78,42 +79,6 @@ def getCustomerDeliverTimes(ID : int) -> str:
       deliverTimes.dtime
   """
 
-def getTracers() -> str:
-  return f"""
-    SELECT
-      {TracerDataClass.getSQLFields()}
-    FROM
-      {TracerDataClass.getSQLTable()}
-  """
-
-def getIsotopes() ->  str:
-  return f"""
-    SELECT
-      {IsotopeDataClass.getSQLFields()}
-    FROM
-      {IsotopeDataClass.getSQLTable()}
-  """
-
-def getTracer(ID : int ) -> str:
-  return f"""
-    SELECT
-      {TracerDataClass.getSQLFields()}
-    FROM
-      {TracerDataClass.getSQLTable()}
-    WHERE
-      id={SerilizeToSQLValue(ID)}
-  """
-
-def getIsotope(ID : int ) -> str:
-  return f"""
-    SELECT
-      {IsotopeDataClass.getSQLFields()}
-    FROM
-      {IsotopeDataClass.getSQLTable()}
-    WHERE
-      id={SerilizeToSQLValue(ID)}
-  """
-
 def getActivityOrders(requestDate: date, tracerID: int) -> str:
   #Can't use SerilizeToSQLValue due to missing %
   return f"""
@@ -127,26 +92,6 @@ def getActivityOrders(requestDate: date, tracerID: int) -> str:
     ORDER BY
       BID,
       deliver_datetime
-  """
-
-def getRuns() -> str:
-  return f"""
-    SELECT
-      {RunsDataClass.getSQLFields()}
-    FROM
-      {RunsDataClass.getSQLTable()}
-    ORDER BY
-      day, ptime
-  """
-
-def getDeliverTimes() -> str:
-  return f"""
-    SELECT
-      {DeliverTimeDataClass.getSQLFields()}
-    FROM
-      {DeliverTimeDataClass.getSQLTable()}
-    ORDER BY
-      BID, day, dtime
   """
 
 def updateOrder(Order : ActivityOrderDataClass) -> str:
@@ -168,7 +113,7 @@ def updateOrder(Order : ActivityOrderDataClass) -> str:
   return SQLQuery
 
 def InsertVial(Vial: VialDataClass) -> str:
-  return f"""
+  Query = f"""
     INSERT INTO VAL(
       customer,
       charge,
@@ -196,93 +141,7 @@ def InsertVial(Vial: VialDataClass) -> str:
       )
   """
 
-def getVial(Vial: VialDataClass) -> str:
-  ValidConditions = []
-  def helper(name, entry):
-    if entry:
-      ValidConditions.append((name, SerilizeToSQLValue(entry)))
-  helper("VAL.customer", Vial.customer)
-  helper("VAL.charge", Vial.charge)
-  helper("VAL.filldate", Vial.filldate)
-  helper("VAL.filltime", Vial.filltime)
-  helper("VAL.volume", Vial.volume)
-  helper("VAL.activity", Vial.activity)
-  helper("VAL.ID", Vial.ID)
-  Condition = ""
-  for i, (FieldName, FieldValue) in enumerate(ValidConditions):
-    if i == 0:
-      Condition += f"{FieldName} = {FieldValue}"
-    else:
-      Condition += f" AND {FieldName} = {FieldValue}"
-  return f"""
-  SELECT
-    VAL.customer,
-    VAL.charge,
-    VAL.filldate,
-    TIME_FORMAT(VAL.filltime, \"%T\"),
-    VAL.volume,
-    VAL.activity,
-    VAL.ID,
-    VialMapping.Order_id
-  FROM
-    VAL
-      LEFT JOIN VialMapping on VAL.ID = VialMapping.VAL_id
-  WHERE
-    {Condition}
-  """
-
-def getVials(requestDate : date) -> str:
-  return f"""
-  SELECT
-    VAL.customer,
-    VAL.charge,
-    VAL.filldate,
-    TIME_FORMAT(VAL.filltime, \"%T\"),
-    VAL.volume,
-    VAL.activity,
-    VAL.ID,
-    VialMapping.Order_id
-  FROM
-    VAL
-      LEFT JOIN VialMapping on VAL.ID = VialMapping.VAL_id
-  WHERE
-    VAL.filldate = {SerilizeToSQLValue(requestDate)}
-  """
-def helper(name, entry, UpdateFields):
-    if entry:
-      UpdateFields.append((name, SerilizeToSQLValue(entry)))
-
-def updateVial(Vial: VialDataClass) -> str:
-  if Vial.ID == None:
-    raise KeyError("No ID define for updating Vial")
-  UpdateFields = []
-
-
-  helper("customer", Vial.customer, UpdateFields)
-  helper("charge",   Vial.charge,   UpdateFields)
-  helper("filldate", Vial.filldate, UpdateFields)
-  helper("filltime", Vial.filltime, UpdateFields)
-  helper("volume",   Vial.volume,   UpdateFields)
-  helper("activity", Vial.activity, UpdateFields)
-
-  updateStr = ""
-
-  for i, (field, value) in enumerate(UpdateFields):
-    if i + 1 == len(UpdateFields):
-      updateStr +=f"{field}={value}\n"
-    else:
-      updateStr +=f"{field}={value},\n"
-
-  if not updateStr:
-    raise ValueError("Vial Update String is Empty")
-
-  return f"""
-    UPDATE VAL
-    SET
-      {updateStr}
-    WHERE
-     ID={Vial.ID}
-  """
+  return Query
 
 def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
   """Creates an string with a SQL Query for Updating an JsonSerilizableDataClass
@@ -436,28 +295,18 @@ def createLegacyFreeOrder(
     )
   """
 
-def getLastOrder() -> str:
-  return f"""
-    SELECT
-      {ActivityOrderDataClass.getSQLFields()}
-    FROM
-     {ActivityOrderDataClass.getSQLTable()}
-    WHERE
-      OID = (
-        SELECT
-          MAX(OID)
-        FROM orders
-      )
-  """
-
-def getVialRange(startDate:date , endDate : date, DataClass=VialDataClass) -> str:
+def getLastElement(DataClass : JsonSerilizableDataClass) -> str:
   return f"""
     SELECT
       {DataClass.getSQLFields()}
     FROM
-      {DataClass.getSQLTable()}
+     {DataClass.getSQLTable()}
     WHERE
-      VAL.filldate BETWEEN {SerilizeToSQLValue(startDate)} AND {SerilizeToSQLValue(endDate)}
+      {DataClass.getIDField()} = (
+        SELECT
+          MAX({DataClass.getIDField()})
+        FROM {DataClass.getSQLTable()}
+      )
   """
 
 @typeCheckfunc
@@ -556,11 +405,9 @@ def createGhostOrder(
     )
   """
 
-@typeCheckfunc
-def deleteActivityOrder(
-  oids_to_delete : List[int]
-):
-  ids = ", ".join(LMAP(str,oids_to_delete)) # types are callable
+
+def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
+  idsStr = ", ".join(LMAP(str,ids)) # types are callable
   return f"""
-    DELETE FROM orders WHERE oid IN ({ids})
+    DELETE FROM {DataClass.getSQLTable()} WHERE {DataClass.getIDField()} IN ({idsStr})
   """

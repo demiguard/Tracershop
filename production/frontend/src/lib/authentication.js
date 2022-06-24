@@ -2,15 +2,16 @@
  * This file Contains the authentication methods for login, Some code is stolen shamelessly from the interwebs
  * I think it was a tutorial on login with React
  * Also you should prob think about using websocket instead of Ajax
- * 
+ *
  * Also you should prob move this code into The Authenticate component
- * 
+ *
  * Author : Christoffer Visltrup Jensen
  */
 
-import { db } from "./localStorageDriver";
+import { db } from "/src/lib/localStorageDriver";
 import { get as getCookie } from "js-cookie";
 import { ajaxSetup } from "jquery";
+import { DATABASE_IS_AUTH, AUTH_IS_AUTHENTICATED } from "/src/lib/constants";
 
 export { getSession, handlePasswordChange, handleUserNameChange, isResponseOk, login_auth, login, logout }
 
@@ -20,12 +21,16 @@ function getSession() {
   })
   .then((res) => res.json())
   .then((data) => {
-    if (data.isAuthenticated) {
-      db.set("isAuth", true);
-      this.setState({isAuthenticated: true});
+    if (data[AUTH_IS_AUTHENTICATED]) {
+      db.set(DATABASE_IS_AUTH, true);
+      const newState = {...this.state};
+      newState[DATABASE_IS_AUTH] = true;
+      this.setState(newState);
     } else {
-      db.set("isAuth", false);
-      this.setState({isAuthenticated: false});
+      db.set(DATABASE_IS_AUTH, false);
+      const newState = {...this.state};
+      newState[DATABASE_IS_AUTH] = false;
+      this.setState(newState)
     }
   })
   .catch((err) => {
@@ -52,7 +57,7 @@ function isResponseOk(response) {
 
 function login_auth(username, password){
   const body = {
-    username: username, 
+    username: username,
     password: password
   };
 
@@ -73,8 +78,10 @@ function login_auth(username, password){
           "X-CSRFToken": getCookie("csrftoken")
       }
     });
-    db.set("isAuth", true);
-    this.setState({isAuthenticated: true, password: "", error: ""});
+    db.set(DATABASE_IS_AUTH, true);
+    const newState = {...this.state, password: "", error: ""};
+    newState[DATABASE_IS_AUTH] = true;
+    this.setState(newState);
   })
   .catch((err) => {
     console.log(err);
@@ -86,7 +93,7 @@ function login_auth(username, password){
 function login(event) {
   event.preventDefault();
   const body = {
-    username: this.state.username, 
+    username: this.state.username,
     password: this.state.password
   };
   fetch("/auth/login", {
@@ -105,8 +112,12 @@ function login(event) {
           "X-CSRFToken": getCookie("csrftoken")
       }
     });
-    db.set("isAuth", true);
-    this.setState({isAuthenticated: true, password: "", error: ""});
+    console.log("login successful", this.state);
+    db.set(DATABASE_IS_AUTH, true);
+    const newState = {...this.state, password: "", error: ""};
+    newState[DATABASE_IS_AUTH] = true;
+
+    this.setState(newState);
   })
   .catch((err) => {
     console.log(err);
@@ -120,8 +131,10 @@ function logout () {
   })
   .then(this.isResponseOk)
   .then((data) => {
-    db.set("isAuth", false);
-    this.setState({isAuthenticated: false});
+    db.set(DATABASE_IS_AUTH, false);
+    const newState = {...this.state};
+    newState[DATABASE_IS_AUTH] = false;
+    this.setState(newState);
   })
   .catch((err) => {
     console.log(err);

@@ -26,19 +26,22 @@ from lib.Formatting import FormatDateTimeJStoSQL, toDateTime
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
-from lib.SQL import SQLController as SQL
 from lib.utils import LMAP
 
-from websocket.consumers.SQLConsumer import SQLConsumer
+from websocket.DatabaseInterface import DatabaseInterface
 
 import logging
 
 logger = logging.getLogger('DebugLogger')
 
 
-class Consumer(SQLConsumer):
+class Consumer(AsyncJsonWebsocketConsumer):
   channel_name = 'websocket'
   global_group = "Global"
+
+  def __init__(self, db = DatabaseInterface()):
+    super().__init__()
+    self.db = db
 
   ### --- JSON methods --- ###
   @classmethod
@@ -86,15 +89,13 @@ class Consumer(SQLConsumer):
     """
     logger.info(message)
     #dateStr      = message[WEBSOCKET_DATE] # mostly used on the front end
-    messageType  = message[WEBSOCKET_MESSAGETYPE]
+    messageType  = message[WEBSOCKET_MESSAGE_TYPE]
     if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
       await self.HandleTheGreatStateMessage()
-    elif messageType == WEBSOCKET_MESSAGE_CREATE_VIAL:
-      await self.HandleCreateVial(message)
+    elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
+      await self.HandleCreateDataClass(message)
     elif messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
       await self.HandleFreeOrder(message)
-    elif messageType == WEBSOCKET_MESSAGE_CREATE_ORDER:
-      await self.HandleCreateOrder(message)
     elif messageType == WEBSOCKET_MESSAGE_MOVE_ORDERS:
       await self.HandleMoveOrders(message)
     elif messageType == WEBSOCKET_MESSAGE_ECHO:
@@ -112,6 +113,8 @@ class Consumer(SQLConsumer):
     """
     await self.send_json(event)
 
+  async def HandleEcho(self, message : Dict):
+    await self.send_json({WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO})
 
   async def HandleTheGreatStateMessage(self):
     """This function is responsible for sending back the state,
@@ -124,11 +127,11 @@ class Consumer(SQLConsumer):
         vials
         employees
         deliverTimes
-        * T_orders
+        T_orders
 
-      Note * indicate that this is something the function doesn't support but will in time.
+
     """
-    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, ServerConfig, Databases, Address = await self.getGreatState()
+    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, ServerConfig, Databases, Address = await self.db.getGreatState()
 
     #Convert Dataclasses to python dict to send over
     Employees    = LMAP(encode, Employees)
@@ -149,60 +152,48 @@ class Consumer(SQLConsumer):
         JSON_ADDRESS          : SerializedAddress,
         JSON_CUSTOMER         : Customers,
         JSON_DATABASE         : SerializedDatabases,
-        JSON_DELIVERTIMES     : DeliverTimes,
-        JSON_EMPLOYEES        : Employees,
+        JSON_DELIVERTIME      : DeliverTimes,
+        JSON_EMPLOYEE         : Employees,
         JSON_ISOTOPE          : Isotopes,
         JSON_ACTIVITY_ORDER   : Orders,
-        JSON_RUNS             : Runs,
-        JSON_INJECTION_ORDERS : T_Orders,
+        JSON_RUN              : Runs,
+        JSON_INJECTION_ORDER  : T_Orders,
         JSON_TRACER           : Tracers,
-        JSON_VIALS            : Vials,
+        JSON_VIAL             : Vials,
         JSON_SERVER_CONFIG    : SerializedServerConfig
       },
-      WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_GREAT_STATE
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE
     }
     await self.send_json(content)
 
+  async def HandleCreateDataClass(self, message : Dict):
+    """Websocket handler function for production data class creation.
 
-  async def HandleCreateVial(self, message : Dict):
-    vial = VialDataClass.fromDict(message[WEBSOCKET_DATA_VIAL])
-    await self.CreateVial(vial)
-    InsertedVial = await self.getVial(vial)
-    await self.channel_layer.group_send(
-      self.global_group,
-      {
-        WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_CREATE_VIAL,
-        WEBSOCKET_DATA_VIAL   : encode(InsertedVial),
-        WEBSOCKET_DATA_ID     : VialDataClass.getIDField(),
-      }
-    )
+    Args:
+        message (Dict): received message with the following fields
+          WEBSOCKET_DATA     - Dict with fields suficient to create a dataclass
+          WEBSOCKET_DATATYPE - Constant specifying the type of data class to be created
+          ----- different arguments might be present due to late standardization -----
 
-  async def HandleEditVial(self, message : Dict):
-    vial = VialDataClass.fromDict(message[WEBSOCKET_DATA_VIAL])
-    await self.updateDataClass(Vial, VialDataClass)
+    Raises:
+        ValueError: raised when an unknown WEBSOCKET_DATATYPE is encountered
+    """
+    dataClass = None
+    if message[WEBSOCKET_DATATYPE] == JSON_VIAL:
+      vial = VialDataClass.fromDict(message[WEBSOCKET_DATA])
+      dataClass = await self.db.CreateVial(vial)
+      print(f"Created Vial {dataClass}")
+    if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
+      skeleton = message[WEBSOCKET_DATA]
+      tracer = TracerDataClass.fromDict(skeleton[JSON_TRACER])
+      customer = CustomerDataClass.fromDict(skeleton[JSON_CUSTOMER])
+      deliver_datetime = toDateTime(skeleton[JSON_DELIVERTIME], JSON_DATETIME_FORMAT)
 
-    await self.channel_layer.group_send(
-      self.global_group, {
-        WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_EDIT_VIAL,
-        WEBSOCKET_DATA_VIAL   : encode(vial)
-      }
-    )
+      amount = skeleton[KEYWORD_AMOUNT]
+      amount_overhead = amount * (1 + customer.overhead / 100.0)
+      run = skeleton[JSON_RUN]
 
-  async def HandleCreateOrder(self, message : Dict):
-    data = message[WEBSOCKET_MESSAGE_CREATE_ORDER]
-    amount = data[JSON_AMOUNT]
-    customer_dataDict = data[JSON_CUSTOMER]
-    tracer = TracerDataClass.fromDict(data[JSON_TRACER])
-    customer = CustomerDataClass.fromDict(customer_dataDict)
-    production = data[JSON_RUN]
-    deliver_datetime = toDateTime(data[JSON_DELIVERTIMES], JSON_DATETIME_FORMAT)
-
-    amount_overhead = amount * (1 + customer.overhead / 100.0)
-    run = data[JSON_RUN]
-
-    Order = await self.createOrder(
+      dataClass = await self.db.createOrder(
         deliver_datetime,
         customer,
         float(amount),
@@ -210,68 +201,66 @@ class Consumer(SQLConsumer):
         tracer,
         run
       )
+    if message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
+      skeleton = data[WEBSOCKET_DATA]
+      tracer = TracerDataClass.fromDict(skeleton[JSON_TRACER])
+      customer = CustomerDataClass.fromDict(skeleton[JSON_CUSTOMER])
+      deliver_datetime = toDateTime(skeleton[JSON_DELIVERTIMES], JSON_DATETIME_FORMAT)
+      n_injections = skeleton[KEYWORD_INJECTIONS]
+      #Missing Database stufff
 
-    SerilizedOrder = [encode(Order.toJSON())]
-
+    # Checking for unhandled case
+    if dataClass == None:
+      error_message = f"Unhandled attempt to create a data class: {message[WEBSOCKET_DATATYPE]}"
+      raise ValueError(error_message)
+    SQL_ID = dataClass.getIDField()
+    if '.' in SQL_ID:
+      _ , ID = SQL_ID.split(".")
+    else:
+      ID = SQL_ID
     await self.channel_layer.group_send(
-      self.global_group, {
+      self.global_group,{
         WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_UPDATEORDERS,
-        WEBSOCKET_DATA_ORDERS : SerilizedOrder
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+        WEBSOCKET_DATA : encode(dataClass),
+        WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+        WEBSOCKET_DATA_ID : ID
       }
     )
 
-
   async def HandleFreeOrder(self, message : Dict):
-    Order      = ActivityOrderDataClass.fromDict(message[WEBSOCKET_DATA_ORDER])
-    Vials      = [VialDataClass.fromDict(vialDict) for vialDict in message[WEBSOCKET_DATA_VIALS]]
-    tracerID   = message[WEBSOCKET_DATA_TRACER]
+    Order      = ActivityOrderDataClass.fromDict(message[JSON_ACTIVITY_ORDER])
+    Vials      = [VialDataClass.fromDict(vialDict) for vialDict in message[JSON_VIAL]]
+    tracerID   = message[JSON_TRACER]
 
-    serverConfiguration = await self.getServerConfiguration()
+    serverConfiguration = await self.db.getServerConfiguration()
     if serverConfiguration.LegacyMode:
       PrimaryVial = Vials[0]
-      UpdatedOrders = await self.assignVial(Order, PrimaryVial)
+      UpdatedOrders = await self.db.assignVial(Order, PrimaryVial)
       for Vial in Vials[1:]: #The first vial is assoc with the Primary order
-        newOrder = await self.createVialOrder(Vial, Order, tracerID)
+        newOrder = await self.db.createVialOrder(Vial, Order, tracerID)
         Vial.OrderMap = newOrder.oid
         UpdatedOrders.append(newOrder)
 
       SerlizedUpdatedOrders = LMAP(lambda x: encode(x.toJSON()), UpdatedOrders)
 
-      pdfFilePath = await self.createPDF(Order, Vials)
-      Customer    = await self.getElement(Order.BID, CustomerDataClass)
+      pdfFilePath = await self.db.createPDF(Order, Vials)
+      Customer    = await self.db.getElement(Order.BID, CustomerDataClass)
       try:
         sendMail(pdfFilePath, Customer, Order, serverConfiguration)
       except Exception as E:
         print(f"could not send mail because: {E}")
 
       await self.channel_layer.group_send(
-        self.global_group,
-        {
+        self.global_group, {
             WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-            WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_UPDATEORDERS,
-            WEBSOCKET_DATA_ORDERS : SerlizedUpdatedOrders,
-            WEBSOCKET_DATA_VIALS : LMAP(lambda v: encode(v.toJSON()),Vials)
+            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+            JSON_ACTIVITY_ORDER : SerlizedUpdatedOrders,
+            JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),Vials)
           }
         )
     else:
       print("No LegacyMode is no go")
-
-  async def HandleUpdateOrder(self, message : Dict):
-    updatedOrders = message[WEBSOCKET_DATA_ORDERS]
-    returnOrders = [] # this mainly done So I can uniformly update
-      #Update the orders in the Database
-    for orderDict in updatedOrders:
-      order = ActivityOrderDataClass.fromDict(orderDict)
-      returnOrders.append(order)
-      await self.updatedOrder(order)
-    await self.channel_layer.group_send(
-      self.global_group, {
-        WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_UPDATEORDERS,
-        WEBSOCKET_DATA_ORDERS : [encode(rOrder) for rOrder in returnOrders]
-      }
-    )
 
   async def HandleMoveOrders(self, message : Dict):
     """This handles the moving of order, Most of the calculation are already done by the client.
@@ -298,14 +287,14 @@ class Consumer(SQLConsumer):
       ### Create GhostOrder
       ### The Ghost kw should be moved into constants
       deliverTime = toDateTime(GhostOrderSkeleton["GhostOrderDeliverTime"], JSON_DATETIME_FORMAT)
-      Customer    = await self.getElement(GhostOrderSkeleton["CustomerID"], CustomerDataClass)
+      Customer    = await self.db.getElement(GhostOrderSkeleton["CustomerID"], CustomerDataClass)
       amount_total = float(GhostOrderSkeleton["GhostOrderActivity"])
       amount_total_o = float(GhostOrderSkeleton["GhostOrderActivityOverhead"])
-      Tracer = await self.getElement(GhostOrderSkeleton["Tracer"], TracerDataClass)
+      Tracer = await self.db.getElement(GhostOrderSkeleton["Tracer"], TracerDataClass)
       run = int(GhostOrderSkeleton["GhostOrderRun"])
       username = self.user.username
 
-      GhostOrder = await self.createGhostOrder(
+      GhostOrder = await self.db.createGhostOrder(
         deliverTime,
         Customer,
         amount_total,
@@ -321,54 +310,43 @@ class Consumer(SQLConsumer):
     for orderDict in updatedOrders:
       order = ActivityOrderDataClass.fromDict(orderDict)
       if IsDead(order):
+        #Delete Orders later
         deadOrders.append(order.oid)
-        #self.deleteOrder(Order)
       else:
         if GhostOrderSkeleton:
           if GhostOrderSkeleton["MappedOrder"] == order.oid:
             order.COID = GhostOrder.oid
 
         returnOrders.append(order)
-        await self.updatedOrder(order)
+        await self.db.updateDataClass(order)
 
-    if deadOrders: await self.deleteActivityOrders(deadOrders)
+    if deadOrders: await self.db.DeleteIDs(deadOrders, ActivityOrderDataClass)
 
     await self.channel_layer.group_send(
       self.global_group, {
         WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
-        WEBSOCKET_DATA_ORDERS : [encode(rOrder) for rOrder in returnOrders],
-        WEBSOCKET_DATA_DEAD_ORDERS : deadOrders, # This is a list of OID so no need to encode this
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
+        JSON_ACTIVITY_ORDER : [encode(rOrder) for rOrder in returnOrders],
+        WEBSOCKET_DEAD_ORDERS : deadOrders, # This is a list of OID so no need to encode this
       }
     )
 
-  async def HandleEditTracer(self, message:Dict):
-    tracer = TracerDataClass.fromDict(message[JSON_TRACER])
-    await self.updateDataClass(tracer)
-    await self.channel_layer.group_send(self.global_group,{
-      WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-      WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_EDIT_TRACER,
-      WEBSOCKET_DATA_TRACER : [encode(tracer)]
-    })
-
-  async def HandleEcho(self, message : Dict):
-    await self.send_json({WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_ECHO})
 
   @typeCheckfunc
   async def HandleGetOrders(self, message : Dict):
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
-    SC = await self.getServerConfig()
+    SC = await self.db.getServerConfig()
     startDate = client_date - timedelta(days=SC.DateRange)
     endDate = client_date + timedelta(days=SC.DateRange)
-    activityOrders = await self.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
-    injectionOrders = await self.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
-    Vials = await self.getDataClassRange(startDate, endDate, VialDataClass)
+    activityOrders = await self.db.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
+    injectionOrders = await self.db.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
+    Vials = await self.db.getDataClassRange(startDate, endDate, VialDataClass)
 
     await self.send_json({
-      WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
-      WEBSOCKET_DATA_ORDERS : [encode(aorder) for aorder in activityOrders],
-      WEBSOCKET_DATA_T_ORDERS : [encode(torder) for torder in injectionOrders],
-      WEBSOCKET_DATA_VIALS : [encode(vialdc) for vialdc in Vials],
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
+      JSON_ACTIVITY_ORDER : [encode(aorder) for aorder in activityOrders],
+      JSON_INJECTION_ORDER : [encode(torder) for torder in injectionOrders],
+      JSON_VIAL : [encode(vialdc) for vialdc in Vials],
     })
 
   @typeCheckfunc
@@ -377,7 +355,6 @@ class Consumer(SQLConsumer):
 
   @typeCheckfunc
   async def HandleEditState(self, message : Dict):
-
     if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
       dataclass = ActivityOrderDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_CUSTOMER:
@@ -390,17 +367,17 @@ class Consumer(SQLConsumer):
       dataclass = RunsDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_TRACER:
       dataClass = TracerDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_VIALS:
+    elif message[WEBSOCKET_DATATYPE] == JSON_VIAL:
       dataClass = VialDataClass
 
     if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
       raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
     dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
-    await self.updateDataClass(dataClassInstance)
+    await self.db.updateDataClass(dataClassInstance)
 
     await self.channel_layer.group_send(self.global_group, {
       WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
-      WEBSOCKET_MESSAGETYPE : WEBSOCKET_MESSAGE_EDIT_STATE,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_EDIT_STATE,
       WEBSOCKET_DATA        : message[WEBSOCKET_DATA],
       WEBSOCKET_DATATYPE    : message[WEBSOCKET_DATATYPE],
       WEBSOCKET_DATA_ID     : dataClass.getIDField()

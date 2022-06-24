@@ -1,69 +1,44 @@
 
 import React, { Component } from "react";
-import { Row, Col, Table, Tab, Button, Container } from 'react-bootstrap';
+import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
 import { CompareDates } from "/src/lib/utils";
 import { renderStatusImage } from '/src/lib/Rendering';
 import ReactHover, { Trigger, Hover  } from "react-hover";
 import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
-import { WEBSOCKET_MESSAGE_CREATE_T_ORDER } from "/src/lib/constants";
+import { WEBSOCKET_MESSAGE_EDIT_STATE } from "/src/lib/constants";
+import { CreateInjectionOrderModal } from "/src/components/modals/InjectionCreateOrderModal";
 
-export { TOrderTable }
-
-/**
- * @enum
- */
-const Modals = {
-  EmptyModal : null
+const /** Contains the components of the different modals this page can display  @Enum */ Modals  = {
+  NoModal : null,
+  CreateOrder : CreateInjectionOrderModal
 }
-
-class TOrderTable extends Component {
+/** Page that contains all injections orders
+ *
+ */
+export class TOrderTable extends Component {
   constructor(props) {
     super(props)
 
-
     this.state = {
-      modal : Modals.EmptyModal
+      modal : Modals.NoModal
     }
   }
 
-
-  ShouldOrdersUpdate(newDate) {
-    return CompareDates(newDate, this.props.date);
-  }
-
-  changeStatusIncomming(date, oid, status){
-    if(this.ShouldOrdersUpdate(date)){
-      this.changeStatus(oid, status);
-    }
-  }
 
   changeStatus(oid, status) {
       const order = this.props.t_orders.get(oid);
       order.status = status;
 
-      this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_T_ORDER)
+      this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
     }
 
-  acceptOrder(oid) {
-    this.changeStatus(oid, 2)
 
-    this.props.websocket.send(JSON.stringify({
-      "date"        : this.props.date,
-      "messageType" : "changeStatus",
-      "oid"         : oid,
-      "status" : 2
-    }));
+  openCreateOrderModal(){
+    this.setState({...this.state, modal : Modals.CreateOrder});
   }
 
-  rejectOrder(oid) {
-    this.changeStatus(oid, 0)
-
-    this.websocket.send(JSON.stringify({
-      "date"        : this.props.date,
-      "messageType" : "changeStatus",
-      "oid"         : oid,
-      "status"      : 0
-    }));
+  closeModal(){
+    this.setState({...this.state, modal : Modals.NoModal});
   }
 
   renderRejectOrder(Order) {
@@ -88,10 +63,9 @@ class TOrderTable extends Component {
           onClick={() => {this.acceptOrder(Order.oid)}}
           ><img className="statusIcon" src="/static/images/accept.svg"></img></Button>
       </td>);
+    }
+    return (<td></td>);
   }
-  return (<td></td>);
-}
-
 
   renderComment (comment) {
     const TriggerOptions = {
@@ -141,6 +115,8 @@ class TOrderTable extends Component {
   }
 
   render() {
+    console.log(this.props)
+
     const Orders = [];
 
     return (
@@ -148,7 +124,7 @@ class TOrderTable extends Component {
         <Row>
           <Col sm={10}>Produktion - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</Col>
           <Col sm={2}>
-            <Button onClick={this.activateCreateOrder}>Opret ny ordre</Button>
+            <Button onClick={this.openCreateOrderModal.bind(this)}>Opret ny ordre</Button>
           </Col>
         </Row>
       <Table>
@@ -170,8 +146,13 @@ class TOrderTable extends Component {
           {Orders}
         </tbody>
       </Table>
-      {this.state.modal != Modals.EmptyModal ?
+      {this.state.modal != Modals.NoModal ?
         <this.state.modal
+          date={this.props.date}
+          customer={this.props.customer}
+          tracers={this.props.tracers}
+          websocket={this.props.websocket}
+          onClose={this.closeModal.bind(this)}
         ></this.state.modal> : ""}
       </Container>
     );

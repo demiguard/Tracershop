@@ -96,6 +96,18 @@ export class OrderPage extends Component {
         return (
         <TOrderTable
           date={this.state.date}
+          tracer={this.state.activeTracer}
+          username={this.props.username}
+          customer={this.props.customer}
+          deliverTimes={this.props.deliverTimes}
+          employee={this.props.employee}
+          isotopes={this.props.isotopes}
+          orders={this.props.orders}
+          runs={this.props.runs}
+          t_orders={this.props.t_orders}
+          tracers={this.props.tracers}
+          vials={this.props.vials}
+          websocket={this.props.websocket}
           key="Special table"
         />);
       default:
@@ -106,7 +118,7 @@ export class OrderPage extends Component {
             username={this.props.username}
             customer={this.props.customer}
             deliverTimes={this.props.deliverTimes}
-            employees={this.props.employees}
+            employee={this.props.employee}
             isotopes={this.props.isotopes}
             orders={this.props.orders}
             runs={this.props.runs}

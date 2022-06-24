@@ -25,7 +25,9 @@ class SQLFactoryTestCase(TestCase):
     self.assertEqual("""
     UPDATE productionTimes
     SET
-      day=1, ptime="11:30:15", run=1
+      day=1,
+ptime="11:30:15",
+run=1
     WHERE
       PTID=31\n  """, Query)
 
@@ -34,7 +36,13 @@ class SQLFactoryTestCase(TestCase):
     self.assertEqual("""
     UPDATE Tracers
     SET
-      name="FDG", isotope=6, n_injections=-1, order_block=-1, in_use=1, tracer_type=1, longName="I forgot this name"
+      name="FDG",
+isotope=6,
+n_injections=-1,
+order_block=-1,
+in_use=1,
+tracer_type=1,
+longName="I forgot this name"
     WHERE
       id=6\n  """, Query)
 
@@ -62,7 +70,7 @@ class SQLFactoryTestCase(TestCase):
     FROM
       productionTimes
     WHERE
-      TRUE \n  """, Query)
+      TRUE\n  """, Query)
 
   def test_getDataClassRange_vial(self):
     Query = SQLFactory.getDataClassRange(self.start_date, self.end_date, PDC.VialDataClass)

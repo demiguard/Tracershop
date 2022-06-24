@@ -2,7 +2,8 @@ import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl, Col } from "react-bootstrap";
 import { ParseTelefonNumber, FormatTime, parseName, ParseEmail, isNotNaN } from "/src/lib/formatting.js"
-import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_DELIVERTIMES, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
+  JSON_DELIVERTIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS
 } from "/src/lib/constants.js"
 
@@ -96,7 +97,7 @@ class CustomerModal extends Component {
 
   deleteDeliverTime(deliverTime){
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
-    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIMES;
+    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
     message[WEBSOCKET_DATA] = deliverTime;
     this.props.websocket.send(JSON.stringify(message));
   }
@@ -115,7 +116,7 @@ class CustomerModal extends Component {
     };
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
     message[WEBSOCKET_DATA] = newDelivertime;
-    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIMES;
+    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
     this.props.websocket.send(JSON.stringify(message));
   }
 
@@ -137,7 +138,7 @@ class CustomerModal extends Component {
     }
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
     message[WEBSOCKET_DATA] = deliverTime;
-    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIMES;
+    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
     this.props.websocket.send(JSON.stringify(message));
   }
 

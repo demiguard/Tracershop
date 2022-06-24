@@ -1,10 +1,11 @@
-import {
-  WEBSOCKET_MESSAGETYPE, WEBSOCKET_MESSAGE_CREATE_VIAL,
-  WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GREAT_STATE, JSON_GREAT_STATE, WEBSOCKET_DATA_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_EDIT_TRACER, WEBSOCKET_DATA_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATA_T_ORDERS, WEBSOCKET_DATA_VIALS,
-  JSON_INJECTION_ORDERS, JSON_ACTIVITY_ORDER,
-
-  JSON_VIALS} from "./constants";
-import { ParseJSONstr } from "./formatting";
+import { DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER, DATABASE_VIAL, WEBSOCKET_MESSAGE_FREE_ORDER,
+  WEBSOCKET_MESSAGE_TYPE,
+  WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GREAT_STATE, JSON_GREAT_STATE,
+  WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
+  JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
+  JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
+} from "/src/lib/constants";
+import { ParseJSONstr } from "/src/lib/formatting";
 
 export { safeSend, TracerWebSocket}
 
@@ -13,19 +14,27 @@ class TracerWebSocket extends WebSocket {
     super(path)
     this.StateHolder = parent
 
-    // Note that websockets works syncronized, and the callback is fucked.
-    // I think it's because I define a onmessage function in the websocket
-    // This means that you can't add an function argument
-    // Jesus javascript, this is stupid
 
-    // So there's one way I get around this, by injecting this class with the parents class
-    // This means that the program have access to the state of the program but not any smaller sites
-    // Such effect means that It should cause a site wide change for all users connected.
+    /** This function is called, when a message is received through the websocket from the server.
+     *  This function handles all the different messages.
+     *  Therefore it's basicly a big switch statement on each message type
+     *
+     * Note that websockets works syncronized, and the callback is fucked.
+     * I think it's because I define a onmessage function in the websocket
+     * This means that you can't add an function argument
+     * Jesus javascript, this is stupid
+     * So there's one way I get around this, by injecting this class with the parents class
+     * This means that the program have access to the state of the program but not any smaller sites
+     * Such effect means that It should cause a site wide change for all users connected.
+     *
+     * @param {*} e - Message that is received
+     */
     this.onmessage = function(e) {
+
 
       const data = JSON.parse(e.data);
       console.log(data)
-      switch(data[WEBSOCKET_MESSAGETYPE]) {
+      switch(data[WEBSOCKET_MESSAGE_TYPE]) {
         /*
         * YEEEAH some really bad code ahead with double parsing: TODO: TODO: !IMPORTANT
         * Hours Spend fixing this: 3
@@ -39,12 +48,15 @@ class TracerWebSocket extends WebSocket {
           * AND here it uses the default python json encoder.
           * So the fix to this is to create new type of channel layer that have a custom JSON encoder.
           *
-        * Additional programmer note: Create a new namespace for each handled case.
+        * Additional programmer note: Create a new namespace for each handled case : using {}
         */
 
-        case WEBSOCKET_MESSAGE_CREATE_VIAL: //Merge to UpdateVial
-          const NewVial = ParseJSONstr(data[JSON_VIALS]);
-          this.StateHolder.UpdateMap(JSON_VIALS, [NewVial], data[WEBSOCKET_DATA_ID], true, []);
+        case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS: //Merge to UpdateVial
+          {
+            const object_id = data[WEBSOCKET_DATA_ID];
+            var data_class = ParseJSONstr(data[WEBSOCKET_DATA]);
+            this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], [data_class], object_id, true, [])
+          }
           break;
         case WEBSOCKET_MESSAGE_GREAT_STATE:
           this.StateHolder.updateGreatState(
@@ -57,7 +69,7 @@ class TracerWebSocket extends WebSocket {
             for (const OrderStr of data[JSON_ACTIVITY_ORDER]) {
               ActivityOrders.push(ParseJSONstr(OrderStr));
             }
-            this.StateHolder.UpdateMap("orders", ActivityOrders, "oid", true, data[WEBSOCKET_DATA_DEAD_ORDERS]);
+            this.StateHolder.UpdateMap(DATABASE_ACTIVITY_ORDER, ActivityOrders, "oid", true, data[WEBSOCKET_DEAD_ORDERS]);
           }
           break;
         case WEBSOCKET_MESSAGE_GET_ORDERS:
@@ -68,24 +80,39 @@ class TracerWebSocket extends WebSocket {
             for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
               ActivityOrders.push(ParseJSONstr(ActivityStr));
             }
-            for(const injectionStr of data[JSON_INJECTION_ORDERS]){
+            for(const injectionStr of data[JSON_INJECTION_ORDER]){
               InjectionOrders.push(ParseJSONstr(injectionStr));
             }
-            for(const VialStr of data[JSON_VIALS]){
+            for(const VialStr of data[JSON_VIAL]){
               Vials.push(ParseJSONstr(VialStr));
             }
-            this.StateHolder.UpdateMap("orders", ActivityOrders, "oid", false, []);
-            this.StateHolder.UpdateMap("t_orders", InjectionOrders, "oid", false, []);
-            this.StateHolder.UpdateMap("vials", Vials, "id", true, []);
+            this.StateHolder.UpdateMap(DATABASE_ACTIVITY_ORDER, ActivityOrders, "oid", false, []);
+            this.StateHolder.UpdateMap(DATABASE_INJECTION_ORDER, InjectionOrders, "oid", false, []);
+            this.StateHolder.UpdateMap(DATABASE_VIAL, Vials, "ID", true, []);
           }
         break;
-        case WEBSCOKET_MESSAGE_EDIT_STATE:
+        case WEBSOCKET_MESSAGE_EDIT_STATE:
         {
           const Objects = [];
           for(const ObjectStr of data[WEBSOCKET_DATA]){
             Objects.push(ParseJSONstr(ObjectStr));
           }
           this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], Objects, data[WEBSOCKET_DATA_ID], true, []);
+        }
+        break;
+        case WEBSOCKET_MESSAGE_FREE_ORDER:
+        {
+          const ActivityOrders = [];
+          for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
+            ActivityOrders.push(ParseJSONstr(ActivityStr));
+          }
+          const Vials = [];
+          for(const VialStr of data[JSON_VIAL]){
+            Vials.push(ParseJSONstr(VialStr));
+          }
+          this.StateHolder.UpdateMap(DATABASE_ACTIVITY_ORDER,
+                                     ActivityOrders, "oid", true, []);
+          this.StateHolder.UpdateMap(DATABASE_VIAL, Vials, "ID", true, []);
         }
         break;
       }
@@ -103,22 +130,14 @@ class TracerWebSocket extends WebSocket {
 
   }
 
-  /**
+  /** Creates a message object, that latter can be send by the websocket
    *
-   * @param {Date} date
    * @param {String} messagetype - a WEBSOCKET_MESSAGE_* constants
    * @returns {Object} on json format, still need to add the data for the message
    */
-  getDefaultMessage(date, messagetype) {
-    const jsonData = {};
-    jsonData[WEBSOCKET_DATE] = date;
-    jsonData[WEBSOCKET_MESSAGETYPE] = messagetype;
-    return jsonData;
-  }
-
   getMessage(messagetype) {
     const jsonData = {};
-    jsonData[WEBSOCKET_MESSAGETYPE] = messagetype;
+    jsonData[WEBSOCKET_MESSAGE_TYPE] = messagetype;
     return jsonData;
   }
 

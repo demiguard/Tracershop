@@ -273,7 +273,7 @@ def handleResponse(response, sql):
 
   if len(toBeRemoved) > 0:
     logger.info(f"Deleted {len(toBeRemoved)} Studies")
-    deleteOldbookings(sql, toBeRemoved) 
+    deleteOldbookings(sql, toBeRemoved)
 
   logger.debug("Finished Handling Response")
 
