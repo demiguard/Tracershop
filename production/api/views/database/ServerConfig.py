@@ -18,11 +18,11 @@ class APIServerConfig(View):
 
   def get(self, request):
     config = self.SQL.getServerConfig()
-    databases = self.SQL.getDatabases()
+    databases = self.SQL.getModels(Database)
 
     return ProductionJSONResponse({
       JSON_ACTIVE_DATABASE : config.ExternalDatabase,
-      JSON_DATABASE : databases
+      JSON_DATABASE : list(databases)
     })
 
   def put(self, request):

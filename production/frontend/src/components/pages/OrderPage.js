@@ -7,6 +7,11 @@ import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER, WEBSOCKET_MESSAGE_GET_
 import { db } from "/src/lib/localStorageDriver";
 import { CompareDates } from "/src/lib/utils";
 
+const Tables = {
+  activity : ActivityTable,
+  injections : TOrderTable
+};
+
 export class OrderPage extends Component {
   constructor(props) {
     super(props)
@@ -16,15 +21,20 @@ export class OrderPage extends Component {
       today = new Date();
     }
 
-    var activeTracer = db.get("activeTracer")
+    var activeTracer = db.get("activeTracer");
     if(!activeTracer) {
       activeTracer = -1;
       db.set("activeTracer", activeTracer);
     }
 
+    console.log(activeTracer);
+
+    const activeTable = (activeTracer == -1) ? Tables["injections"] : Tables["activity"]
+
     this.state={
       date : today,
       activeTracer : activeTracer,
+      activeTable  : activeTable
     };
   }
 
@@ -35,7 +45,6 @@ export class OrderPage extends Component {
   }
 
   setActiveMonth(NewMonth) {
-    console.log(NewMonth);
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
     this.props.websocket.send(JSON.stringify(message));
@@ -80,55 +89,12 @@ export class OrderPage extends Component {
     return (
       <Button className="navbarElem" key={tracer.name} sz="sm" onClick={() => {
         db.set("activeTracer", tracer.id);
-        this.setState({...this.state, activeTracer : tracer.id})}}
+
+        this.setState({...this.state, activeTracer : tracer.id, activeTable : Tables["activity"]})}}
       >
         {tracer.name}
       </Button>
     );
-  }
-
-  renderActiveTable() {
-    switch(this.state.activeTracer){
-      case null:
-        //
-        return (<div></div>)
-      case -1:
-        return (
-        <TOrderTable
-          date={this.state.date}
-          tracer={this.state.activeTracer}
-          username={this.props.username}
-          customer={this.props.customer}
-          deliverTimes={this.props.deliverTimes}
-          employee={this.props.employee}
-          isotopes={this.props.isotopes}
-          orders={this.props.orders}
-          runs={this.props.runs}
-          t_orders={this.props.t_orders}
-          tracers={this.props.tracers}
-          vials={this.props.vials}
-          websocket={this.props.websocket}
-          key="Special table"
-        />);
-      default:
-        return(
-          <ActivityTable
-            date={this.state.date}
-            tracer={this.state.activeTracer}
-            username={this.props.username}
-            customer={this.props.customer}
-            deliverTimes={this.props.deliverTimes}
-            employee={this.props.employee}
-            isotopes={this.props.isotopes}
-            orders={this.props.orders}
-            runs={this.props.runs}
-            t_orders={this.props.t_orders}
-            tracers={this.props.tracers}
-            vials={this.props.vials}
-            websocket={this.props.websocket}
-            />
-        );
-    }
   }
 
   render() {
@@ -143,7 +109,7 @@ export class OrderPage extends Component {
         className="navbarElem"
         key="special"
         sz="sm"
-        onClick={() => {this.setState({...this.state, activeTracer : -1})}}
+        onClick={() => {db.set("activeTracer", -1);this.setState({...this.state, activeTracer : -1, activeTable : Tables["injections"]})}}
       >
           Special
       </Button>));
@@ -157,7 +123,21 @@ export class OrderPage extends Component {
         </Row>
         <Row>
           <Col sm={8}>
-            {this.renderActiveTable()}
+            <this.state.activeTable
+              date={this.state.date}
+              tracer={this.state.activeTracer}
+              username={this.props.username}
+              customer={this.props.customer}
+              deliverTimes={this.props.deliverTimes}
+              employee={this.props.employee}
+              isotopes={this.props.isotopes}
+              orders={this.props.orders}
+              runs={this.props.runs}
+              t_orders={this.props.t_orders}
+              tracers={this.props.tracers}
+              vials={this.props.vials}
+              websocket={this.props.websocket}
+            />
           </Col>
           <Col sm={1}></Col>
           <Col sm={3}>

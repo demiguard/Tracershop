@@ -2,11 +2,12 @@
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
 import { CompareDates } from "/src/lib/utils";
-import { renderStatusImage } from '/src/lib/Rendering';
-import ReactHover, { Trigger, Hover  } from "react-hover";
+import { renderStatusImage, renderTableRow, renderComment } from '/src/lib/Rendering';
+
 import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
 import { WEBSOCKET_MESSAGE_EDIT_STATE } from "/src/lib/constants";
 import { CreateInjectionOrderModal } from "/src/components/modals/InjectionCreateOrderModal";
+
 
 const /** Contains the components of the different modals this page can display  @Enum */ Modals  = {
   NoModal : null,
@@ -27,9 +28,13 @@ export class TOrderTable extends Component {
 
   changeStatus(oid, status) {
       const order = this.props.t_orders.get(oid);
+      if (order.status == status) return;
       order.status = status;
 
-      this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+      message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
+      message[WEBSOCKET_DATA] = order;
+      this.props.websocket.send(JSON.stringify(message));
     }
 
 
@@ -41,77 +46,31 @@ export class TOrderTable extends Component {
     this.setState({...this.state, modal : Modals.NoModal});
   }
 
-  renderRejectOrder(Order) {
-    if (Order.status == 1 || Order.status == 2) {
-      return (
-      <td>
-        <Button variant="light"
-          onClick={() => {this.rejectOrder(Order.oid)}}
-        ><img className="statusIcon" src="/static/images/decline.svg"></img></Button>
-      </td>);
-    }
-
-    return (<td></td>);
-  }
-
-
-  renderAcceptOrder(Order) {
-    if (Order.status == 1) {
-      return (
-        <td>
-        <Button variant="light"
-          onClick={() => {this.acceptOrder(Order.oid)}}
-          ><img className="statusIcon" src="/static/images/accept.svg"></img></Button>
-      </td>);
-    }
-    return (<td></td>);
-  }
-
-  renderComment (comment) {
-    const TriggerOptions = {
-      followCursor:false,
-      shiftX: 20,
-      shiftY: 0
-    };
-
-    if(comment) {
-      return(
-        <td>
-        <ReactHover options={TriggerOptions}>
-          <Trigger type="trigger">
-            <img src="/static/images/comment.svg" className="statusIcon"></img>
-          </Trigger>
-          <Hover type="hover">
-            <div className="CommentDiv">
-              {comment}
-            </div>
-          </Hover>
-        </ReactHover>
-      </td>);
-    } else {
-      return (<td></td>);
-    }
-  }
-
-
   renderOrder(Order) {
     const OrderDT = new Date(Order.deliver_datetime)
     const TimeStr = FormatDateStr(OrderDT.getHours()) + ':' + FormatDateStr(OrderDT.getMinutes());
 
+    const Tracer = this.props.tracers.get(Order.tracer);
+    const TracerName = Tracer.name;
+    const customer = this.props.customer.get(Order.BID);
 
-    return(
-    <tr key={Order.oid}>
-      <td>{renderStatusImage(Order.status)}</td>
-      <td>{Order.oid}</td>
-      <td>{Order.tracer}</td>
-      <td>{Order.username}</td>
-      <td>{Order.injections}</td>
-      <td>{TimeStr}</td>
-      <td>{Order.usage}</td>
-      {this.renderComment(Order.comment)}
-      {this.renderAcceptOrder(Order)}
-      {this.renderRejectOrder(Order)}
-    </tr>)
+    const customerName = customer.UserName;
+
+
+    return renderTableRow(
+      Order.oid,[
+        renderStatusImage(Order.status),
+        Order.oid,
+        customerName,
+        TracerName,
+        Order.n_injections,
+        TimeStr,
+        Order.anvendelse,
+        renderComment(Order.comment),
+        "",
+        ""
+      ]
+    )
   }
 
   render() {
@@ -119,6 +78,12 @@ export class TOrderTable extends Component {
 
     const Orders = [];
 
+    for(const [_oid, t_order] of this.props.t_orders){
+      const orderDate = new Date(t_order.deliver_datetime)
+      if (CompareDates(this.props.date, orderDate)){
+        Orders.push(t_order);
+      }
+    }
     return (
       <Container>
         <Row>
@@ -132,8 +97,8 @@ export class TOrderTable extends Component {
           <tr>
             <th>Status</th>
             <th>Order ID</th>
-            <th>Tracer</th>
             <th>Kunde</th>
+            <th>Tracer</th>
             <th>Injektioner</th>
             <th>Bestilt Til</th>
             <th>Anvendelse</th>
@@ -143,7 +108,7 @@ export class TOrderTable extends Component {
           </tr>
         </thead>
         <tbody>
-          {Orders}
+          {Orders.map(this.renderOrder.bind(this))}
         </tbody>
       </Table>
       {this.state.modal != Modals.NoModal ?

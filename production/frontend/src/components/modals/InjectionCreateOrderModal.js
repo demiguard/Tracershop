@@ -4,7 +4,8 @@ import { Button, Col, Form, FormControl, Modal, ModalBody, Row, Table } from "re
 import { renderSelect } from "/src/lib/Rendering";
 import { changeState } from "/src/lib/stateManagement";
 import { FormatTime, FormatDateStr } from "/src/lib/formatting";
-import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE } from "/src/lib/constants"
+import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
+  JSON_TRACER, JSON_DELIVERTIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, } from "/src/lib/constants"
 
 export class CreateInjectionOrderModal extends Component {
   constructor(props){
@@ -47,22 +48,36 @@ export class CreateInjectionOrderModal extends Component {
     const deliver_datetime = `${year}-${month}-${date}T${deliverTime}`
 
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    message[WEBSOCKET_DATA] = {
-      customer : this.props.customer.get(Number(this.state.customerID)),
-      tracer : this.props.tracer.get(Number(this.state.tracer)),
-      anvendelse : Number(this.state.use),
-      n_injections : injections,
-      deliver_datetime : deliver_datetime,
-      comment : this.state.comment
-    };
+    const data_object = {};
+    data_object[JSON_CUSTOMER] = this.props.customer.get(Number(this.state.customer));
+    data_object[JSON_TRACER] = this.props.tracers.get(Number(this.state.tracer));
+    data_object[JSON_DELIVERTIME] = deliver_datetime;
+    data_object[KEYWORD_INJECTIONS] = injections;
+    data_object[KEYWORD_USAGE] = Number(this.state.use);
+    data_object[KEYWORD_COMMENT] = this.state.comment;
+    message[WEBSOCKET_DATA] = data_object;
     message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
     this.props.websocket.send(JSON.stringify(message));
     this.props.onClose();
   }
 
   render(){
-    const customerSelect = renderSelect(this.props.customer.values(), "ID", "UserName", changeState("customer", this).bind(this), this.state.customer);
-    const tracerSelect   = renderSelect(this.props.tracers.values(), "id", "name", changeState("tracer", this).bind(this),  this.state.tracer);
+    const customerSelect = renderSelect(
+      this.props.customer.values(),
+      "ID",
+      "UserName",
+      changeState("customer", this).bind(this),
+      this.state.customer
+    );
+    const tracers_all = Array.from((this.props.tracers.values()));
+    const tracers = tracers_all.filter(tracer => {return tracer.tracer_type == 2});
+    const tracerSelect   = renderSelect(
+      tracers,
+      "id",
+      "name",
+      changeState("tracer", this).bind(this),
+      this.state.tracer
+    );
     const UsageOptions = [{ value : 1, name  : "Human"}, { value : 2, name  : "Dyr"}, {value: 3, name : "Andet"}];
     const usageSelect = renderSelect(UsageOptions, "value", "name", changeState("use", this).bind(this), this.state.use);
 
@@ -90,7 +105,7 @@ export class CreateInjectionOrderModal extends Component {
       </ModalBody>
       <Modal.Footer>
         <Button onClick={this.props.onClose}>Annuller</Button>
-        <Button>Opret</Button>
+        <Button onClick={this.SubmitOrder.bind(this)}>Opret</Button>
       </Modal.Footer>
     </Modal>);
   }

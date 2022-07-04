@@ -3,18 +3,11 @@ from enum import Enum, unique
 
 TRACERSHOPDATABASENAME = 'TS_test'
 
-
-
-class USAGE(Enum):
-  """_summary_
-
-  Args:
-      Enum (_type_): _description_
-  """
-  Human = 1
-  Dyr = 2
-  Andet = 3
-
+USAGE = {
+  1 : "Human",
+  2 : "Dyr",
+  3 : "Andet"
+}
 
 NO_TORDER_FOUND = 50
 NO_ORDER_FOUND = 5

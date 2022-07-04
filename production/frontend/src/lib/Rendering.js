@@ -1,15 +1,16 @@
 import React, {} from "react";
 import { FormatDateStr } from "/src/lib/formatting";
-import { Form } from "react-bootstrap"
+import { Button, Form } from "react-bootstrap";
+import ReactHover, { Trigger, Hover  } from "react-hover";
 
 import { noop } from "/src/lib/utils";
 
 export function renderStatusImage(status, func) {
   const onclickFunc = (func === undefined) ? noop : func
-  if (status === 1) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard1.svg"></img>);
-  if (status === 2) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard2.svg"></img>);
-  if (status === 3) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard3.svg"></img>);
-  if (status === 0) return (<img onClick={onclickFunc} className="statusIcon" src="/static/images/clipboard0.svg"></img>);
+  if (status === 1) return renderClickableIcon("/static/images/clipboard1.svg", onclickFunc);
+  if (status === 2) return renderClickableIcon("/static/images/clipboard2.svg", onclickFunc);
+  if (status === 3) return renderClickableIcon("/static/images/clipboard3.svg", onclickFunc);
+  if (status === 0) return renderClickableIcon("/static/images/clipboard0.svg", onclickFunc);
 
   throw "Status not supproted!";
 }
@@ -74,4 +75,37 @@ export function renderSelect(Options, valueKey, nameKey, OnChange, selectValue){
       {Rendered}
     </Form.Select>
   );
+}
+
+export function renderComment(comment){
+  const TriggerOptions = {
+    followCursor:false,
+    shiftX: 20,
+    shiftY: 0
+  };
+
+  if(comment) {
+    return(
+      <ReactHover options={TriggerOptions}>
+        <Trigger type="trigger">
+          <img src="/static/images/comment.svg" className="statusIcon"></img>
+        </Trigger>
+        <Hover type="hover">
+          <div className="CommentDiv">
+            {comment}
+          </div>
+        </Hover>
+      </ReactHover>
+    );
+  } else {
+    return ("");
+  }
+};
+
+export function renderClickableIcon(imagePath, onClickFunc){
+  return (
+    <Button variant="light" onClick={onClickFunc}>
+      <img className="statusIcon" src={imagePath}></img>
+    </Button>
+  )
 }

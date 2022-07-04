@@ -4,6 +4,8 @@
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
+from constants import USAGE
+
 from typing import Type, List, Union
 from datetime import date,time,datetime
 from dataclasses import fields
@@ -15,27 +17,6 @@ from lib.Formatting import dateConverter, mergeDateAndTime
 from lib.utils import LMAP
 
 from TracerAuth.models import User
-
-
-def getCustomers(dataClass=CustomerDataClass) -> str:
-  return f"""
-    SELECT
-      {dataClass.getSQLFields()}
-    FROM
-      {dataClass.getSQLTable()}
-    WHERE
-      {dataClass.getSQLWhere()}
-  """
-
-def getCustomer(ID: int) -> str:
-  return f"""
-    SELECT
-      {CustomerDataClass.getSQLFields()}
-    FROM
-      {CustomerDataClass.getSQLTable()}
-    Where
-      Id={ID}
-  """
 
 def getElement(ID: int, dataClass) -> str:
   Query = f"""
@@ -410,4 +391,36 @@ def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
   idsStr = ", ".join(LMAP(str,ids)) # types are callable
   return f"""
     DELETE FROM {DataClass.getSQLTable()} WHERE {DataClass.getIDField()} IN ({idsStr})
+  """
+
+def createInjectionOrder(
+    Customer : CustomerDataClass,
+    Tracer : TracerDataClass,
+    deliver_datetime : datetime,
+    n_injections : int,
+    usage : int,
+    comment : str,
+    user):
+  return f"""
+    INSERT INTO t_orders(
+      BID,
+      deliver_datetime,
+      status,
+      batchnr,
+      tracer,
+      n_injections,
+      anvendelse,
+      comment,
+      userName
+    ) VALUES (
+      {SerilizeToSQLValue(Customer.ID)},
+      {SerilizeToSQLValue(deliver_datetime)},
+      2,
+      \"\",
+      {SerilizeToSQLValue(Tracer.id)},
+      {SerilizeToSQLValue(n_injections)},
+      {SerilizeToSQLValue(USAGE[usage])},
+      {SerilizeToSQLValue(comment)},
+      {SerilizeToSQLValue(user.username)}
+    )
   """

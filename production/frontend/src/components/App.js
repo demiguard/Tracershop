@@ -162,7 +162,7 @@ export default class App extends Component {
     const t_orders = new Map();
     for(const t_orderStr of greatState[JSON_INJECTION_ORDER]){
       const t_order = ParseJSONstr(t_orderStr);
-      orders.set(t_order.oid, t_order);
+      t_orders.set(t_order.oid, t_order);
     }
     db.set(DATABASE_INJECTION_ORDER, t_orders);
     //Tracers

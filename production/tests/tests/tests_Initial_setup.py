@@ -14,8 +14,6 @@ from lib.SQL import SQLExecuter
 from lib.SQL.SQLController import SQL
 
 class InitialSetupTestCase(TestCase):
-
-
   def test_django_databases(self):
     addresses = Address.objects.all()
     databases = Database.objects.all()

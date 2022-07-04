@@ -246,3 +246,22 @@ class SQL():
   @classmethod
   def deleteIDs(cls, ids, DataClass):
     cls.__Execute(SQLFactory.deleteIDs, JsonSerilizableDataClass, Fetching.NONE, ids, DataClass)
+
+  @classmethod
+  def createInjectionOrder(cls,
+    Customer : CustomerDataClass,
+    Tracer : TracerDataClass,
+    deliver_datetime : datetime,
+    n_injections : int,
+    usage : int,
+    comment : str,
+    user
+  ) -> InjectionOrderDataClass:
+    InjectionOrderList = cls.__ExecuteMany(
+      [SQLFactory.createInjectionOrder, SQLFactory.getLastElement],
+      InjectionOrderDataClass, Fetching.ONE,
+      [[Customer, Tracer, deliver_datetime, n_injections, usage, comment, user],
+        [InjectionOrderDataClass]
+      ]
+    )
+    return InjectionOrderList[0]

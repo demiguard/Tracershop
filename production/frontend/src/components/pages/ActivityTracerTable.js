@@ -689,7 +689,7 @@ export class ActivityTable extends Component {
         vials={this.props.vials}
         customer={this.state.ModalCustomer}
         customers={this.props.customer} // Your naming skills SUXXS
-        employees={this.props.employees}
+        employees={this.props.employee}
         onClose={this.closeModal.bind(this)}
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}

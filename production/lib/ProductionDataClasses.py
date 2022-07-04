@@ -247,6 +247,7 @@ class InjectionOrderDataClass(JsonSerilizableDataClass):
   comment : str
   username : str
   tracer : int
+  BID    : int
 
   @classmethod
   def getSQLTable(cls) -> str:

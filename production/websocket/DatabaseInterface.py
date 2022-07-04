@@ -177,6 +177,26 @@ class DatabaseInterface():
     return self.SQL.createGhostOrder(deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username)
 
   @database_sync_to_async
+  @typeCheckfunc
+  def createInjectionOrder(self,
+    Customer: CustomerDataClass,
+    Tracer  : TracerDataClass,
+    deliver_datetime : datetime,
+    n_injections : int,
+    usage : int,
+    comment : str,
+    user
+  ):
+    return self.SQL.createInjectionOrder(
+      Customer,
+      Tracer,
+      deliver_datetime,
+      n_injections,
+      usage,
+      comment, user
+    )
+
+  @database_sync_to_async
   def getServerConfig(self):
     return self.SQL.getServerConfig()
 

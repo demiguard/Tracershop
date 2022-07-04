@@ -182,7 +182,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if message[WEBSOCKET_DATATYPE] == JSON_VIAL:
       vial = VialDataClass.fromDict(message[WEBSOCKET_DATA])
       dataClass = await self.db.CreateVial(vial)
-      print(f"Created Vial {dataClass}")
     if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
       skeleton = message[WEBSOCKET_DATA]
       tracer = TracerDataClass.fromDict(skeleton[JSON_TRACER])
@@ -202,12 +201,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
         run
       )
     if message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
-      skeleton = data[WEBSOCKET_DATA]
+      skeleton = message[WEBSOCKET_DATA]
       tracer = TracerDataClass.fromDict(skeleton[JSON_TRACER])
       customer = CustomerDataClass.fromDict(skeleton[JSON_CUSTOMER])
-      deliver_datetime = toDateTime(skeleton[JSON_DELIVERTIMES], JSON_DATETIME_FORMAT)
+      deliver_datetime = toDateTime(skeleton[JSON_DELIVERTIME], JSON_DATETIME_FORMAT)
       n_injections = skeleton[KEYWORD_INJECTIONS]
-      #Missing Database stufff
+      usage = skeleton[KEYWORD_USAGE]
+      comment = skeleton[KEYWORD_COMMENT]
+      dataClass = await self.db.createInjectionOrder(
+        customer,
+        tracer,
+        deliver_datetime,
+        n_injections,
+        usage,
+        comment,
+        self.user
+      )
 
     # Checking for unhandled case
     if dataClass == None:
@@ -369,6 +378,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       dataClass = TracerDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_VIAL:
       dataClass = VialDataClass
+    elif message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
+      dataClass = InjectionOrderDataClass
 
     if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
       raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
