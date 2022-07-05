@@ -28,6 +28,15 @@ export class CreateInjectionOrderModal extends Component {
     }
   }
 
+  ChangeDatetime(event){
+    if(event.code == "Backspace"){
+      return;
+    }
+    if(event.target.value.length == 2){
+      this.setState({...this.state, deliverTime : event.target.value + ":"})
+    }
+  }
+
   SubmitOrder(){
     //Validation
     const injections = Number(this.state.injections);
@@ -97,7 +106,7 @@ export class CreateInjectionOrderModal extends Component {
             <Form.Control value={this.state.injections} onChange={changeState("injections", this).bind(this)}></Form.Control>
           </Col></Row>
         <Row><Col>Leverings tid</Col><Col>
-            <Form.Control value={this.state.deliverTime} onChange={changeState("deliverTime", this).bind(this)}></Form.Control>
+            <Form.Control value={this.state.deliverTime} onKeyDown={this.ChangeDatetime.bind(this)} onChange={changeState("deliverTime", this).bind(this)}></Form.Control>
           </Col></Row>
         <Row><Col>Kommentar</Col><Col>
             <Form.Control value={this.state.comment} onChange={changeState("comment", this).bind(this)}></Form.Control>

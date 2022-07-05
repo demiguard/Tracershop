@@ -92,7 +92,7 @@ export class ActivityTable extends Component {
    * @returns Map as described above
    */
   createOrderMapping(){
-    const today     = this.props.date.getDay() - 1; // FUCKING AMERICANS!
+    const today     = this.props.date.getDay();
     const JanOne    = new Date(this.props.date.getFullYear(),0,1);
     const NumDays   = Math.floor(this.props.date - JanOne) / (24 * 60 * 60 * 1000);
     const WeekNum   = Math.ceil((this.props.date.getDay() + 1 + NumDays) / 7);

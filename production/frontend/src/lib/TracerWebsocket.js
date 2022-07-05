@@ -92,14 +92,8 @@ class TracerWebSocket extends WebSocket {
           }
         break;
         case WEBSOCKET_MESSAGE_EDIT_STATE:
-        {
-          const Objects = [];
-          for(const ObjectStr of data[WEBSOCKET_DATA]){
-            Objects.push(ParseJSONstr(ObjectStr));
-          }
-          this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], Objects, data[WEBSOCKET_DATA_ID], true, []);
-        }
-        break;
+          this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], [ParseJSONstr(data[WEBSOCKET_DATA])], data[WEBSOCKET_DATA_ID], true, []);
+          break;
         case WEBSOCKET_MESSAGE_FREE_ORDER:
         {
           const ActivityOrders = [];

@@ -198,7 +198,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         float(amount),
         float(amount_overhead),
         tracer,
-        run
+        run,
+        self.user
       )
     if message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
       skeleton = message[WEBSOCKET_DATA]
@@ -245,9 +246,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     serverConfiguration = await self.db.getServerConfiguration()
     if serverConfiguration.LegacyMode:
       PrimaryVial = Vials[0]
-      UpdatedOrders = await self.db.assignVial(Order, PrimaryVial)
+      UpdatedOrders = await self.db.assignVial(Order, PrimaryVial, self.user)
       for Vial in Vials[1:]: #The first vial is assoc with the Primary order
-        newOrder = await self.db.createVialOrder(Vial, Order, tracerID)
+        newOrder = await self.db.createVialOrder(Vial, Order, tracerID, self.user)
         Vial.OrderMap = newOrder.oid
         UpdatedOrders.append(newOrder)
 

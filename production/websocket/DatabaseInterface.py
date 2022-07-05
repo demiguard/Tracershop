@@ -46,7 +46,8 @@ class DatabaseInterface():
   @database_sync_to_async
   def assignVial(self,
       Order : ActivityOrderDataClass,
-      Vial : VialDataClass
+      Vial : VialDataClass,
+      user
     ) -> List[ActivityOrderDataClass]:
     """Fills an order with data from the vialID given
 
@@ -60,14 +61,14 @@ class DatabaseInterface():
     #Order Changes:
     Order.frigivet_datetime = datetime.now()
     Order.frigivet_amount   = Vial.activity
-    Order.frigivet_af = self.user.OldTracerBaseID
+    Order.frigivet_af = user.OldTracerBaseID
     Order.volume = Vial.volume
     Order.batchnr = Vial.charge
 
     #Vial Changes
     Vial.OrderMap = Order.oid
 
-    return self.SQL.FreeOrder(Order, Vial, self.user)
+    return self.SQL.FreeOrder(Order, Vial, user)
 
   @database_sync_to_async
   @typeCheckfunc
@@ -75,7 +76,8 @@ class DatabaseInterface():
       self,
       Vial: VialDataClass,
       OriginalOrder: ActivityOrderDataClass,
-      tracerID : int
+      tracerID : int,
+      user
     ) -> ActivityOrderDataClass:
     """
       Creates an "empty" Order to indicate that an order was assigned multiple Vials
@@ -83,7 +85,7 @@ class DatabaseInterface():
       returns
         ActivityOrderClass: The order created
     """
-    return self.SQL.CreateNewFreeOrder(OriginalOrder, Vial, tracerID, self.user)
+    return self.SQL.CreateNewFreeOrder(OriginalOrder, Vial, tracerID, user)
 
   @database_sync_to_async
   def createPDF(
@@ -107,7 +109,8 @@ class DatabaseInterface():
     amount : float,
     amount_overhead : float,
     tracer : TracerDataClass,
-    run : int
+    run : int,
+    user
   ):
     return self.SQL.productionCreateOrder(
       deliver_datetime,
@@ -116,7 +119,7 @@ class DatabaseInterface():
       amount_overhead,
       tracer,
       run,
-      self.user.username
+      user.username
     )
 
   @database_sync_to_async
