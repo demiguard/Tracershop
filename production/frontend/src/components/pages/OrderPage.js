@@ -27,10 +27,7 @@ export class OrderPage extends Component {
       db.set("activeTracer", activeTracer);
     }
 
-    console.log(activeTracer);
-
     const activeTable = (activeTracer == -1) ? Tables["injections"] : Tables["activity"]
-
     this.state={
       date : today,
       activeTracer : activeTracer,

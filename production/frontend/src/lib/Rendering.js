@@ -102,9 +102,10 @@ export function renderComment(comment){
   }
 };
 
-export function renderClickableIcon(imagePath, onClickFunc){
+export function renderClickableIcon(imagePath, func){
+  const onClickFunc = (func === undefined) ? noop : func
   return (
-    <Button variant="light" onClick={onClickFunc}>
+    <Button variant="outline-light" onClick={onClickFunc}>
       <img className="statusIcon" src={imagePath}></img>
     </Button>
   )

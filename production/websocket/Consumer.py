@@ -365,15 +365,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
   @typeCheckfunc
   async def HandleEditState(self, message : Dict):
     if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
-      dataclass = ActivityOrderDataClass
+      dataClass = ActivityOrderDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_CUSTOMER:
       dataClass = CustomerDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIMES:
+    elif message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIME:
       dataClass = DeliverTimeDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_ISOTOPE:
       dataClass = IsotopeDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_RUN:
-      dataclass = RunsDataClass
+      dataClass = RunsDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_TRACER:
       dataClass = TracerDataClass
     elif message[WEBSOCKET_DATATYPE] == JSON_VIAL:

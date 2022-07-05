@@ -95,10 +95,10 @@ export default class ActivityModalAuthenticate extends Component {
             ErrorMessage={this.state.ErrorMessage}
             fit_in={false}
             />
-          </Col>  
+          </Col>
           <Col xs={8}>
             <Table striped bordered>
-              <tbody>    
+              <tbody>
                 {renderTableRow("0", ["Order ID", OrderID])}
                 {renderTableRow("1", ["Kunde nummber:", CustomerNumber])}
                 {renderTableRow("2", ["Navn:" , CustomerName])}
@@ -112,10 +112,6 @@ export default class ActivityModalAuthenticate extends Component {
           </Col>
           </Row>
         </Container>
-        
-
-        
-
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={this.props.cancel}> Tilbage </Button>

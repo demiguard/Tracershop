@@ -7,11 +7,15 @@ import { renderStatusImage, renderTableRow, renderComment } from '/src/lib/Rende
 import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
 import { WEBSOCKET_MESSAGE_EDIT_STATE } from "/src/lib/constants";
 import { CreateInjectionOrderModal } from "/src/components/modals/InjectionCreateOrderModal";
+import { renderClickableIcon } from "../../lib/Rendering";
+import { InjectionModalStatus2 } from "../modals/InjectionModalityStatus2";
 
 
 const /** Contains the components of the different modals this page can display  @Enum */ Modals  = {
   NoModal : null,
-  CreateOrder : CreateInjectionOrderModal
+  CreateOrder : CreateInjectionOrderModal,
+  InjectionStatus2 : InjectionModalStatus2
+
 }
 /** Page that contains all injections orders
  *
@@ -21,7 +25,8 @@ export class TOrderTable extends Component {
     super(props)
 
     this.state = {
-      modal : Modals.NoModal
+      modal : Modals.NoModal,
+      order : undefined
     }
   }
 
@@ -43,7 +48,22 @@ export class TOrderTable extends Component {
   }
 
   closeModal(){
-    this.setState({...this.state, modal : Modals.NoModal});
+    this.setState({...this.state, modal : Modals.NoModal, order : undefined});
+  }
+
+  AcceptOrder(Order){
+    console.log(Order);
+    if(Order.status == 2){
+      this.setState({
+        ...this.state,
+        modal : Modals.InjectionStatus2,
+        order : Order,
+      })
+    }
+  }
+
+  RejectOrder(Order){
+    console.log(Order);
   }
 
   renderOrder(Order) {
@@ -67,8 +87,8 @@ export class TOrderTable extends Component {
         TimeStr,
         Order.anvendelse,
         renderComment(Order.comment),
-        "",
-        ""
+        renderClickableIcon("/static/images/accept.svg", () => this.AcceptOrder(Order)),
+        renderClickableIcon("/static/images/decline.svg", () => this.RejectOrder(Order))
       ]
     )
   }
@@ -118,6 +138,8 @@ export class TOrderTable extends Component {
           tracers={this.props.tracers}
           websocket={this.props.websocket}
           onClose={this.closeModal.bind(this)}
+          order={this.state.order}
+          employee={this.props.employee}
         ></this.state.modal> : ""}
       </Container>
     );
