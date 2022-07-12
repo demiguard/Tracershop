@@ -16,7 +16,6 @@ export function ParseDanishNumber(numberString){
   } else {
     return numberString
   }
-
 }
 
 
@@ -28,8 +27,7 @@ export function parseDateToDanishDate(dateString){
    */
   if (!/^\d{4}-\d{2}-\d{2}$/g.test(dateString)) throw "Date not on format, Input: " + dateString;
 
-  return dateString.substr(8,2) + "/" + dateString.substr(5,2) + "/" +  dateString.substr(0,4);
-
+  return `${dateString.substr(8,2)}/${dateString.substr(5,2)}/${dateString.substr(0,4)}`;
 }
 
 /**
@@ -51,17 +49,12 @@ export function parseDateToDanishDate(dateString){
 */
 export function FormatTime (timeStr) {
 
-  if (/^\d{2}:\d{2}:\d{2}$/g.test(timeStr)) return timeStr;
-  if (/^\d{1}:\d{2}:\d{2}$/g.test(timeStr)) return "0" + timeStr;
-  if (/^\d{2}:\d{2}$/g.test(timeStr)) return timeStr + ":00";
-  if (/^\d{1}:\d{2}$/g.test(timeStr)) return "0" + timeStr + ":00"
-  if (/^\d{2}\.\d{2}$/g.test(timeStr)) return timeStr.substring(0,2) + ":" + timeStr.substring(3,5) + ":00";
-  if (/^\d{1}\.\d{2}$/g.test(timeStr)) return "0" + timeStr.substring(0,1) + ":" + timeStr.substring(2,4) + ":00";
-  if (/^\d{2}\.\d{2}\.\d{2}$/g.test(timeStr)) return timeStr.substring(0,2) + ":" + timeStr.substring(3,5) + ":" + timeStr.substring(6,8);
-  if (/^\d{1}\.\d{2}\.\d{2}$/g.test(timeStr)) return "0" + timeStr.substring(0,1) + ":" + timeStr.substring(2,4) + ":" + timeStr.timeStr.substring(5,7);
+  if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:[0-5][0-9]$/g.test(timeStr)) return timeStr;
+  if (/^[0-9]:[0-5][0-9]:[0-5][0-9]$/g.test(timeStr)) return "0" + timeStr;
+  if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/g.test(timeStr)) return timeStr + ":00";
+  if (/^[0-9]:[0-5][0-9]$/g.test(timeStr)) return "0" + timeStr + ":00";
 
   return null;
-
 }
 
 export function FormatNumber(NumberString) {
@@ -118,3 +111,4 @@ export function parseName(input){
 export function isNotNaN(number){
   return !isNaN(number);
 }
+

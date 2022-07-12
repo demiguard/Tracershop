@@ -2,7 +2,7 @@
   JSON module for production
 
   This module focuses on custom conversion between the different
-  Production Specific Classes 
+  Production Specific Classes
 
 """
 __author__ = "Christoffer Vilstrup Jensen"
@@ -28,7 +28,7 @@ class ProductionJSONEncoder(DjangoJSONEncoder):
         if i != len(fields) - 1:
           responseStr += f'  "{field}": {self.encode(oDict[field])},\n'
         else:
-          responseStr += f'  "{field}": {self.encode(oDict[field])}\n'  
+          responseStr += f'  "{field}": {self.encode(oDict[field])}\n'
       responseStr += '}'
       return responseStr
 

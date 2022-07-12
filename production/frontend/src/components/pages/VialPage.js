@@ -4,6 +4,7 @@ import { Container, Table, Row, Col, Button } from "react-bootstrap";
 import { JSON_VIAL, WEBSOCKET_MESSAGE_ECHO } from "/src/lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "/src/lib/formatting";
 import { autoAddCharacter } from "/src/lib/utils";
+import { changeState } from "../../lib/stateManagement";
 
 export {VialPage}
 
@@ -213,8 +214,9 @@ class VialPage extends Component {
 
       <Row>
         <Col>
-          <input value={this.state.filterBatch} onChange={(event) =>
-            {this.changeState("filterBatch", event.target.value)}}
+          <input
+            value={this.state.filterBatch}
+            onChange={changeState("filterBatch", this).bind(this)}
             placeholder="batch nummer"
           />
         </Col>

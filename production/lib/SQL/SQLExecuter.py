@@ -34,6 +34,7 @@ class DataBaseConnectionWrapper(object):
       'autocommit' : False,
       'raise_on_warnings': True
     }
+    self.databaseConfig = databaseConfig
 
     try:
       self.connection = mysql.connect(**databaseConfig)
@@ -61,6 +62,7 @@ def ExecuteQuery(SQLQuery : str, fetch = Fetching.ALL):
         raise DatabaseInvalidQueriesConfiguration
       Wrapper.connection.commit()
     else:
+      pprint(Wrapper.databaseConfig)
       raise DatabaseCouldNotConnect
   if fetch != Fetching.NONE:
     return FetchedVals

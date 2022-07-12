@@ -6,8 +6,11 @@ import { changeState } from "/src/lib/stateManagement";
 import { FormatTime, FormatDateStr } from "/src/lib/formatting";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
   JSON_TRACER, JSON_DELIVERTIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, } from "/src/lib/constants"
+import { addCharacter } from "../../lib/utils";
 
-export class CreateInjectionOrderModal extends Component {
+export { CreateInjectionOrderModal }
+
+class CreateInjectionOrderModal extends Component {
   constructor(props){
     super(props);
 
@@ -106,7 +109,7 @@ export class CreateInjectionOrderModal extends Component {
             <Form.Control value={this.state.injections} onChange={changeState("injections", this).bind(this)}></Form.Control>
           </Col></Row>
         <Row><Col>Leverings tid</Col><Col>
-            <Form.Control value={this.state.deliverTime} onKeyDown={this.ChangeDatetime.bind(this)} onChange={changeState("deliverTime", this).bind(this)}></Form.Control>
+            <Form.Control value={this.state.deliverTime} onKeyDown={addCharacter(':', "deliverTime", [2,5], this).bind(this)} onChange={changeState("deliverTime", this).bind(this)}></Form.Control>
           </Col></Row>
         <Row><Col>Kommentar</Col><Col>
             <Form.Control value={this.state.comment} onChange={changeState("comment", this).bind(this)}></Form.Control>

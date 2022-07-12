@@ -10,7 +10,15 @@ export const DAYS = {
   SATURDAY : 5,
   SUNDAY : 6,
 }
-
+export const DAYS_OBJECTS = [
+  {name : "Mandag", day : 1},
+  {name : "Tirsdag", day : 2},
+  {name : "Onsdag", day : 3},
+  {name : "Torsdag", day : 4},
+  {name : "Fredag", day : 5},
+  {name : "Lørdag", day : 6},
+  {name : "Søndag", day : 7},
+]
 
 
 // Shared Constants

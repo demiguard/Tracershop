@@ -5,6 +5,7 @@ import { changeState } from "../../lib/stateManagement";
 import { ajax } from "jquery";
 import { AUTH_DETAIL, AUTH_PASSWORD, AUTH_USERNAME, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
   JSON_INJECTION_ORDER} from "/src/lib/constants.js"
+import { FormatDateStr } from "../../lib/formatting";
 
 export { InjectionModalStatus2 }
 
@@ -34,16 +35,15 @@ class InjectionModalStatus2 extends Component {
         this.props.order.status = 3;
         this.props.order.batchnr = this.state.batchnr;
         const now = new Date();
-        this.props.order.frigivet_datetime = now;
+        this.props.order.frigivet_datetime = `${now.getFullYear()}-${FormatDateStr(now.getMonth())}-${FormatDateStr(now.getDate())} ${FormatDateStr(now.getHours())}:${FormatDateStr(now.getMinutes())}:${FormatDateStr(now.getSeconds())}`
         // Get the id of the user
-        var employeeID;
+        var employeeID = null;
         for(const [userID, user] of this.props.employee){
-          if (user.username == username){
+          if (user.Username == username){
             employeeID = userID;
             break;
           }
         }
-
         this.props.order.frigivet_af = employeeID;
         const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
         message[WEBSOCKET_DATA] = this.props.order;
