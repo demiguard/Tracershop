@@ -48,7 +48,7 @@ class InjectionModalStatus2 extends Component {
         const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
         message[WEBSOCKET_DATA] = this.props.order;
         message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
-        this.props.websocket.send(JSON.stringify(message));
+        this.props.websocket.send(message);
         this.props.onClose();
       } else {
         this.setState({...this.state, ErrorMessage : "Forkert Login"});

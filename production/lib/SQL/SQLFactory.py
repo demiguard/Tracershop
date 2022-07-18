@@ -170,6 +170,60 @@ def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
 
   return returnstr
 
+def updateVial(Vial: VialDataClass) -> str:
+  """This function is a special case of JsonDataClass
+  This is because the VialDataclass is construction of two tables
+  Hence it doesn't work, and needs this special case that takes into account
+  That it's two tables connected.
+
+  Really, I should just remove VialMapping Table, and add it to the VAL Table
+  Note that, I'm afriad that might break the input script.
+
+  It shouldn't but it's old tech
+
+  Args:
+      Vial (VialDataClass): This is the vial that's being updated
+
+  Raises:
+      KeyError: _description_
+      ValueError: _description_
+
+  Returns:
+      str: _description_
+  """
+  if Vial.ID == None:
+    raise KeyError("No ID define for updating Vial")
+  UpdateFields = []
+
+  def helper(name, entry):
+    if entry:
+      UpdateFields.append((name, SerilizeToSQLValue(entry)))
+  helper("customer", Vial.customer)
+  helper("charge",   Vial.charge)
+  helper("filldate", Vial.filldate)
+  helper("filltime", Vial.filltime)
+  helper("volume",   Vial.volume)
+  helper("activity", Vial.activity)
+
+  updateStr = ""
+
+  for i, (field, value) in enumerate(UpdateFields):
+    if i + 1 == len(UpdateFields):
+      updateStr +=f"{field}={value}\n"
+    else:
+      updateStr +=f"{field}={value},\n"
+
+  if not updateStr:
+    raise ValueError("Vial Update String is Empty")
+
+  return f"""
+    UPDATE VAL
+    SET
+      {updateStr}
+    WHERE
+     ID={Vial.ID}
+  """
+
 
 def authenticateUser(username: str, password: str) -> str:
   Query = f"""

@@ -22,7 +22,7 @@ from api.models import ServerConfiguration
 from constants import * # Import the many WEBSOCKET constants
 from lib import pdfs
 from lib.decorators import typeCheckfunc
-from lib.Formatting import FormatDateTimeJStoSQL, toDateTime
+from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLID, toDateTime
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
@@ -31,6 +31,7 @@ from lib.utils import LMAP
 from websocket.DatabaseInterface import DatabaseInterface
 
 import logging
+from pprint import pprint
 
 logger = logging.getLogger('DebugLogger')
 
@@ -91,7 +92,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     #dateStr      = message[WEBSOCKET_DATE] # mostly used on the front end
     messageType  = message[WEBSOCKET_MESSAGE_TYPE]
     if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
-      await self.HandleTheGreatStateMessage()
+      await self.HandleTheGreatStateMessage(message)
     elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
       await self.HandleCreateDataClass(message)
     elif messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
@@ -106,6 +107,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await self.HandleUpdateServerConfig
     elif messageType == WEBSOCKET_MESSAGE_EDIT_STATE:
       await self.HandleEditState(message)
+    elif messageType == WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
+      await self.HandleDeleteDataClass(message)
 
   async def sendEvent(self, event: Dict):
     """
@@ -114,9 +117,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.send_json(event)
 
   async def HandleEcho(self, message : Dict):
-    await self.send_json({WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO})
+    await self.send_json({
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+    })
 
-  async def HandleTheGreatStateMessage(self):
+  async def HandleTheGreatStateMessage(self, message):
     """This function is responsible for sending back the state,
       that the site should be in. It's once when the page is loaded by the App.js
 
@@ -162,7 +168,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         JSON_VIAL             : Vials,
         JSON_SERVER_CONFIG    : SerializedServerConfig
       },
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
     }
     await self.send_json(content)
 
@@ -223,18 +230,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if dataClass == None:
       error_message = f"Unhandled attempt to create a data class: {message[WEBSOCKET_DATATYPE]}"
       raise ValueError(error_message)
-    SQL_ID = dataClass.getIDField()
-    if '.' in SQL_ID:
-      _ , ID = SQL_ID.split(".")
-    else:
-      ID = SQL_ID
+    ID = ParseSQLID(dataClass.getIDField())
+
     await self.channel_layer.group_send(
       self.global_group,{
         WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_DATA : encode(dataClass),
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
-        WEBSOCKET_DATA_ID : ID
+        WEBSOCKET_DATA_ID : ID,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       }
     )
 
@@ -266,7 +271,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
             WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
             WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
             JSON_ACTIVITY_ORDER : SerlizedUpdatedOrders,
-            JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),Vials)
+            JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),Vials),
+            WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
           }
         )
     else:
@@ -338,6 +344,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
         JSON_ACTIVITY_ORDER : [encode(rOrder) for rOrder in returnOrders],
         WEBSOCKET_DEAD_ORDERS : deadOrders, # This is a list of OID so no need to encode this
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       }
     )
 
@@ -357,6 +364,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       JSON_ACTIVITY_ORDER : [encode(aorder) for aorder in activityOrders],
       JSON_INJECTION_ORDER : [encode(torder) for torder in injectionOrders],
       JSON_VIAL : [encode(vialdc) for vialdc in Vials],
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
     })
 
   @typeCheckfunc
@@ -365,32 +373,39 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   @typeCheckfunc
   async def HandleEditState(self, message : Dict):
-    if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
-      dataClass = ActivityOrderDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_CUSTOMER:
-      dataClass = CustomerDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIME:
-      dataClass = DeliverTimeDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_ISOTOPE:
-      dataClass = IsotopeDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_RUN:
-      dataClass = RunsDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_TRACER:
-      dataClass = TracerDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_VIAL:
-      dataClass = VialDataClass
-    elif message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
-      dataClass = InjectionOrderDataClass
+    dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
 
     if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
       raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
+
     dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
     await self.db.updateDataClass(dataClassInstance)
 
+    ID = ParseSQLID(dataClass.getIDField())
+
     await self.channel_layer.group_send(self.global_group, {
-      WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
+      WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_EDIT_STATE,
-      WEBSOCKET_DATA        : message[WEBSOCKET_DATA],
-      WEBSOCKET_DATATYPE    : message[WEBSOCKET_DATATYPE],
-      WEBSOCKET_DATA_ID     : dataClass.getIDField()
+      WEBSOCKET_DATA         : message[WEBSOCKET_DATA],
+      WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
+      WEBSOCKET_DATA_ID      : ID,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
     })
+
+  async def HandleDeleteDataClass(self, message : Dict):
+    dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
+    data = dataClass(**message[WEBSOCKET_DATA])
+
+    if(self.db.CanDelete(data)):
+      ID = ParseSQLID(dataClass.getIDField())
+
+      self.db.DeleteIDs([data.__getattribute__(ID)], dataClass)
+
+      await self.channel_layer.group_send(self.global_group, {
+        WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
+        WEBSOCKET_DATA         : message[WEBSOCKET_DATA],
+        WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
+        WEBSOCKET_DATA_ID      : ID,
+        WEBSOCKET_MESSAGE_ID   : message[WEBSOCKET_MESSAGE_ID],
+      })

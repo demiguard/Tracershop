@@ -10,8 +10,9 @@ import { CreateOrderModal } from "/src/components/modals/CreateOrderModal";
 import { JSON_CUSTOMER, JSON_VIAL,
   WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
-   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
-   KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME
+  JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
+  KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME, WEBSOCKET_MESSAGE_EDIT_STATE,
+
 } from "/src/lib/constants";
 
 
@@ -159,9 +160,9 @@ export class ActivityTable extends Component {
     Order.status = 2
 
     //One needs this way of object constrution to have constants keys
-    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_UPDATEORDERS);
-    jsonData[JSON_ACTIVITY_ORDER] = [Order]
-    this.props.websocket.send(JSON.stringify(jsonData));
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_UPDATEORDERS);
+    message[JSON_ACTIVITY_ORDER] = [Order]
+    this.props.websocket.send(message);
   }
 
 
@@ -232,9 +233,9 @@ export class ActivityTable extends Component {
 
         const Orders = [Order, OldMasterOrder];
 
-        const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-        jsonData[JSON_ACTIVITY_ORDER] = Orders;
-        this.props.websocket.send(JSON.stringify(jsonData));
+        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+        message[JSON_ACTIVITY_ORDER] = Orders;
+        this.props.websocket.send(message);
 
       } else {
         // Create a ghost order
@@ -278,10 +279,10 @@ export class ActivityTable extends Component {
 
           Orders.push(OldMasterOrder);
         }
-        const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-        jsonData[JSON_ACTIVITY_ORDER] = Orders;
-        jsonData[JSON_GHOST_ORDER] = GhostOrderData;
-        this.props.websocket.send(JSON.stringify(jsonData));
+        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+        message[JSON_ACTIVITY_ORDER] = Orders;
+        message[JSON_GHOST_ORDER] = GhostOrderData;
+        this.props.websocket.send(message);
       }
 
     } else {
@@ -324,9 +325,9 @@ export class ActivityTable extends Component {
       }
 
 
-      const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-      jsonData[JSON_ACTIVITY_ORDER] = Orders;
-      this.props.websocket.send(JSON.stringify(jsonData));
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+      message[JSON_ACTIVITY_ORDER] = Orders;
+      this.props.websocket.send(message);
     }
   }
 
@@ -392,7 +393,7 @@ export class ActivityTable extends Component {
         "activity" : Activity,
         "volume" : Volume
       };
-    this.props.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(message);
   }
 
   modalCreateOrder(customer, run, deliverTime, amount){
@@ -407,7 +408,7 @@ export class ActivityTable extends Component {
 
     message[WEBSOCKET_DATA] = skeleton;
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
-    this.props.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(message);
   }
 
   // This needs to change
@@ -431,7 +432,7 @@ export class ActivityTable extends Component {
     message[WEBSOCKET_DATA] = skeleton
     message[WEBSOCKET_DATATYPE] = JSON_VIAL
 
-    this.props.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(message);
   }
 
   /**
@@ -445,11 +446,11 @@ export class ActivityTable extends Component {
     const vials = vialIDs.map(id => this.props.vials.get(id));
     const order = this.props.orders.get(orderID);
     this.closeModal();
-    const jsonData = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ORDER);
-    jsonData[JSON_VIAL] = vials;
-    jsonData[JSON_TRACER] = this.props.tracer;
-    jsonData[JSON_ACTIVITY_ORDER] = order;
-    this.props.websocket.send(JSON.stringify(jsonData));
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ORDER);
+    message[JSON_VIAL] = vials;
+    message[JSON_TRACER] = this.props.tracer;
+    message[JSON_ACTIVITY_ORDER] = order;
+    this.props.websocket.send(message);
   }
 
   // Renders
@@ -696,6 +697,7 @@ export class ActivityTable extends Component {
         AcceptOrder={this.FreeOrder.bind(this)}
         createOrder={this.modalCreateOrder.bind(this)}
         date={this.props.date}
+        websocket={this.props.websocket}
       />
     : null }
     </div>

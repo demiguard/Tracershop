@@ -1,8 +1,12 @@
 import React, { Component } from "react";
 import { Modal, Button, Row, Container, Table, FormControl } from "react-bootstrap";
+import { JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
+import { renderClickableIcon,renderTableRow } from "../../lib/Rendering";
+import { changeState } from "../../lib/stateManagement";
+import { addCharacter } from "../../lib/utils";
 import { FormatTime, ParseDanishNumber, FormatDateStr } from "/src/lib/formatting";
-import { renderTableRow } from "/src/lib/Rendering";
 import { autoAddCharacter } from "/src/lib/utils";
+
 
 export { ActivityModalStatus2 }
 
@@ -72,12 +76,6 @@ export default class ActivityModalStatus2 extends Component {
     });
   }
 
-  changeState(value, stateField) {
-    const newState =  {...this.state};
-    newState[stateField] = value;
-    this.setState(newState);
-  }
-
   changeNewFieldTime(event){
     const newState = {...this.state};
     newState.newFillTime = autoAddCharacter(event, ":", new Set([2,5]), this.state.newFillTime);
@@ -118,7 +116,7 @@ export default class ActivityModalStatus2 extends Component {
     }
 
     const FillTime = FormatTime(this.state.newFillTime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse 
+    if (FillTime === null) { // This is the output if fillTime fails to parse
       ErrorInInput = true;
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
     }
@@ -155,29 +153,37 @@ export default class ActivityModalStatus2 extends Component {
     var ErrorInInput = false;
     var NewErrorMessage = "";
 
-    const BatchName = EditingData.newBatchName
+    console.log(EditingData);
+    const BatchName = EditingData.charge
     if (!BatchName){
       ErrorInInput = true;
       NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
     }
-    const NewActivity = ParseDanishNumber(EditingData.newActivity)
+    const NewActivity = ParseDanishNumber(EditingData.activity)
     if (isNaN(NewActivity)){
       ErrorInInput = true;
       NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
     } else if ( NewActivity <= 0) {
       ErrorInInput = true;
       NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
+    } else {
+      EditingData.activity
     }
-    const NewVolume = ParseDanishNumber(EditingData.newVolume)
+
+
+    const NewVolume = ParseDanishNumber(EditingData.volume)
     if (isNaN(NewVolume)){
       ErrorInInput = true;
       NewErrorMessage += "Volumen skal være et tal.\n"
     } else if ( NewVolume <= 0) {
       ErrorInInput = true;
       NewErrorMessage += "Volumen kan ikke være negativ.\n"
+    } else {
+      EditingData.volume = NewVolume;
     }
 
-    const FillTime = FormatTime(EditingData.newProductionTime);
+
+    const FillTime = FormatTime(EditingData.filltime);
     if (FillTime === null) { // This is the output if fillTime fails to parse
       ErrorInInput = true;
       NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
@@ -198,14 +204,10 @@ export default class ActivityModalStatus2 extends Component {
     }
 
     // This function causes an update to the props vials, so a re-render happens
-    this.props.editVial(
-      vialID,
-      BatchName,
-      FillTime,
-      Number(NewVolume.toFixed(2)),
-      Number(NewActivity.toFixed(2)),
-      CustomerNumber
-    );
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+    message[WEBSOCKET_DATATYPE] = JSON_VIAL;
+    message[WEBSOCKET_DATA] = EditingData;
+    this.props.websocket.send(message);
 
     const newEdittingMap = new Map(this.state.EditingVials);
     newEdittingMap.delete(vialID);
@@ -218,26 +220,34 @@ export default class ActivityModalStatus2 extends Component {
     this.setState({...this.state, EditingVials : newEdittingMap, ErrorMessage : ""})
   }
 
-  EditVialTimeField(vialID, event){
-    const newEdittingMap = new Map(this.state.EditingVials);
-    const newVialData = {...newEdittingMap.get(vialID)};
-    newVialData["newProductionTime"] = autoAddCharacter(
-      event,
-      ":",
-      new Set([2,5]),
-      newVialData["newProductionTime"]
-    );
-    newEdittingMap.set(vialID, newVialData);
-    this.setState({...this.state, EditingVials : newEdittingMap });
+  EditVialTimeField(vialID, This){
+    const returnFunction = (event) => {
+      const newEdittingMap = new Map(This.state.EditingVials);
+      const newVialData = {...newEdittingMap.get(vialID)};
+      if (event.code == "Backspace"){
+        return
+      } else if ([2,5].includes(event.target.value.length)){
+        newVialData["filltime"] = event.target.value + ':';
+        newEdittingMap.set(vialID, newVialData);
+        this.setState({...this.state, EditingVials : newEdittingMap });
+      } else {
+        return
+      }
+    }
+    return returnFunction;
   }
 
-  EditVialField(vialID, fieldName, NewValue){
-    const newEdittingMap = new Map(this.state.EditingVials)
-    const newData = {...newEdittingMap.get(vialID)}
-    newData[fieldName] = NewValue
-    newEdittingMap.set(vialID, newData)
-    this.setState({...this.state, EditingVials : newEdittingMap})
+  EditVialField(vialID, fieldName, This){
+    const returnFunction = (event) => {
+      const newEdittingMap = new Map(This.state.EditingVials)
+      const newData = {...newEdittingMap.get(vialID)}
+      newData[fieldName] = event.target.value
+      newEdittingMap.set(vialID, newData)
+      This.setState({...This.state, EditingVials : newEdittingMap})
+    }
+    return returnFunction.bind(this)
   }
+
 
   /** This function updates the state such that a user can edit a vial.
    *
@@ -248,15 +258,9 @@ export default class ActivityModalStatus2 extends Component {
       this.props.toggleVial(vialID);
     }
 
-    const vial = this.props.vials.get(vialID);
-    const EdittingData = {
-      newBatchName      : vial.charge,
-      newProductionTime : vial.filltime,
-      newVolume         : vial.volume,
-      newActivity       : vial.activity,
-    };
+    const vial = {...this.props.vials.get(vialID)};
     const newEdittingMap = new Map(this.state.EditingVials);
-    newEdittingMap.set(vialID, EdittingData);
+    newEdittingMap.set(vialID, vial);
 
     this.setState({...this.state,
       EditingVials : newEdittingMap
@@ -312,44 +316,44 @@ export default class ActivityModalStatus2 extends Component {
   renderEditingVial(vial){
     const editingState = this.state.EditingVials.get(vial.ID);
 
-    const BatchField = (<FormControl value={editingState.newBatchName}
-      onChange={(event) => this.EditVialField(vial.ID, "newBatchName", event.target.value)}/>);
-
-    const ProductionField = (<FormControl value={editingState.newProductionTime}
-      onChange={(event) => this.EditVialTimeField(vial.ID, event)}/>);
-
-    const VolumeField = (<FormControl value={editingState.newVolume}
-      onChange={(event) => this.EditVialField(vial.ID, "newVolume", event.target.value)}/>);
-
-    const ActivityField = (<FormControl value={editingState.newActivity}
-      onChange={(event) => this.EditVialField(vial.ID, "newActivity", event.target.value)}/>);
-
     return [vial.ID,
-      BatchField,
-      ProductionField,
-      VolumeField,
-      ActivityField,
-      (<Button variant="light" onClick={() => this.AcceptEditVial(vial.ID)}><img className="statusIcon" src="/static/images/accept.svg"></img></Button>),
-      (<Button variant="light" onClick={() => this.RejectEditVial(vial.ID)}><img className="statusIcon" src="/static/images/decline.svg"></img></Button>)
+      <FormControl
+        value={editingState.charge}
+        onChange={this.EditVialField(vial.ID, "charge").bind(this)}/>,
+      <FormControl
+        value={editingState.filltime}
+        onChange={this.EditVialField(vial.ID, "filltime", this).bind(this)}
+        onKeyDown={this.EditVialTimeField(vial.ID, this).bind(this)}/>,
+      <FormControl
+        value={editingState.volume}
+        onChange={this.EditVialField(vial.ID, "volume", this).bind(this)}/>,
+      <FormControl
+        value={editingState.activity}
+        onChange={this.EditVialField(vial.ID, "activity", this).bind(this)}/>,
+      renderClickableIcon("/static/images/accept.svg",
+        () => this.AcceptEditVial(vial.ID)),
+      renderClickableIcon("/static/images/decline.svg",
+        () => this.RejectEditVial(vial.ID))
     ]
   }
 
   renderNewVial(){
     const bacthInput = (<FormControl
       value={this.state.newCharge}
-      onChange={(event) => {this.changeState(event.target.value, "newCharge")}}
+      onChange={changeState("newCharge", this).bind(this)}
     />);
     const ProductionTimeInput = (<FormControl
       value={this.state.newFillTime}
-      onChange={(event) => {this.changeNewFieldTime(event)}}
+      onChange={changeState("newFillTime", this).bind(this)}
+      onKeyDown={addCharacter(':', "newFillTime",[2,5], this)}
     />);
     const VolumeInput = (<FormControl
       value={this.state.newVolume}
-      onChange={(event) => {this.changeState(event.target.value, "newVolume")}}
+      onChange={changeState("newVolume", this).bind(this)}
     />);
     const ActivityInput = (<FormControl
       value={this.state.newActivity}
-      onChange={(event) => {this.changeState(event.target.value, "newActivity")}}
+      onChange={changeState("newActivity", this).bind(this)}
     />);
     const AcceptButton = (<Button onClick={this.createNewVial.bind(this)}>Opret</Button>);
     const EmptyDiv = (<div></div>);

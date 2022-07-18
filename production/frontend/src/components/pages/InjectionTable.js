@@ -49,7 +49,7 @@ export class TOrderTable extends Component {
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
       message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
       message[WEBSOCKET_DATA] = Order;
-      this.props.websocket.send(JSON.stringify(message));
+      this.props.websocket.send(message);
     }
     else if(Order.status == 2){
       this.setState({

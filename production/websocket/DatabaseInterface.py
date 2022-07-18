@@ -209,7 +209,10 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def updateDataClass(self, dataClass : JsonSerilizableDataClass):
-    self.SQL.UpdateJsonDataClass(dataClass)
+    if type(dataClass) == VialDataClass:
+      self.SQL.updateVial(dataClass)
+    else:
+      self.SQL.UpdateJsonDataClass(dataClass)
 
   @database_sync_to_async
   def getDataClass(self, dataClass):
@@ -223,3 +226,7 @@ class DatabaseInterface():
   @typeCheckfunc
   def DeleteIDs(self, ids : List[int], DataClass):
     self.SQL.deleteIDs(ids, DataClass)
+
+  @database_sync_to_async
+  def CanDelete(self, data : JsonSerilizableDataClass):
+    return True

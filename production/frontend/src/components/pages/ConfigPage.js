@@ -79,7 +79,7 @@ export default class ConfigPage extends Component {
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
       message[WEBSOCKET_DATA] = Tracer;
       message[WEBSOCKET_DATATYPE] = JSON_TRACER;
-      this.props.websocket.send(JSON.stringify(message));
+      this.props.websocket.send(message);
     }
   }
 

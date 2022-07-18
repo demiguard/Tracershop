@@ -57,7 +57,7 @@ class ActivityModal extends Component {
   /**
    * This function is called to change the modal to an Authentication mode
    * This function is called from the status 2 Modal indicating, that the manager
-   * should render the authentication component instead of the status2 modal. 
+   * should render the authentication component instead of the status2 modal.
    */
   Authenticate(){
     this.setState({
@@ -92,6 +92,7 @@ class ActivityModal extends Component {
             onClose={this.props.onClose}
             vials={this.props.vials}
             employees={this.props.employees}
+            websocket={this.props.websocket}
           />
         );
       } else if (Order.status == 2) {
@@ -105,6 +106,7 @@ class ActivityModal extends Component {
             selectedVials={this.state.selectedVials}
             cancel={this.cancel.bind(this)}
             accept={this.props.AcceptOrder}
+            websocket={this.props.websocket}
           />)
         } else {
           return (<ActivityModalStatus2
@@ -119,6 +121,7 @@ class ActivityModal extends Component {
             toggleVial={this.toggleVial.bind(this)}
             Authenticate={this.Authenticate.bind(this)}
             date={this.props.date}
+            websocket={this.props.websocket}
           />)
         }
       }

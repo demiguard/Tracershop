@@ -94,7 +94,7 @@ class CustomerModal extends Component {
         const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
         message[WEBSOCKET_DATATYPE] = JSON_CUSTOMER;
         message[WEBSOCKET_DATA] = this.state.customer;
-        this.props.websocket.send(JSON.stringify(message));
+        this.props.websocket.send(message);
       } else {
         this.setState({...this.state, errorMessage : ErrorMessage});
       }
@@ -102,11 +102,14 @@ class CustomerModal extends Component {
     return returnFunction.bind(this);
   }
 
-  deleteDeliverTime(deliverTime){
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
-    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
-    message[WEBSOCKET_DATA] = deliverTime;
-    this.props.websocket.send(JSON.stringify(message));
+  deleteDeliverTime(deliverTime, This){
+    const returnFunction = (_event) => {
+      const message = This.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
+      message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
+      message[WEBSOCKET_DATA] = deliverTime;
+      This.props.websocket.send(message);
+    }
+    return returnFunction;
   }
 
   /**
@@ -131,20 +134,24 @@ class CustomerModal extends Component {
 
   createDeliverTime(){
     // Validation
-
+    const DeliverTime = FormatTime(this.state.new_dtime);
+    if (DeliverTime == null){
+      this.setState({...this.state, errorMessage : "Modtage tiden er ikke et tidspunkt"})
+      return;
+    }
 
     //
     const newDelivertime = {
       day : this.state.new_day,
       run : this.state.new_run,
-      dtime : this.state.new_dtime,
+      dtime : DeliverTime,
       repeat_t : this.state.new_repeat_t,
       BID : this.props.userid
     };
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
     message[WEBSOCKET_DATA] = newDelivertime;
     message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
-    this.props.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(message);
   }
 
 
@@ -159,10 +166,11 @@ class CustomerModal extends Component {
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
       message[WEBSOCKET_DATA] = deliverTime;
       message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
-      this.props.websocket.send(JSON.stringify(message));
+      this.props.websocket.send(message);
     };
     return returnFunction.bind(this)
   }
+
 
   changeDeliverTime(deliverTime){
     const returnFunction = (event) => {
@@ -174,6 +182,8 @@ class CustomerModal extends Component {
     }
     return returnFunction;
   }
+
+
   saveDeliverTime(deliverTime){
     const returnFunction = (_event) => {
       const FormattedTime = FormatTime(deliverTime.dtime);
@@ -181,7 +191,7 @@ class CustomerModal extends Component {
         const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
         message[WEBSOCKET_DATA] = deliverTime;
         message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
-        this.props.websocket.send(JSON.stringify(message));
+        this.props.websocket.send(message);
       } else {
         console.log(FormattedTime);
       }
@@ -190,61 +200,37 @@ class CustomerModal extends Component {
   }
 
   // Rendering Functions
-  renderDatePicker(deliverTime) {
-    return renderSelect(
-      DAYS_OBJECTS,
-      "day",
-      "name",
-      this.SelectUpdateDeliverTime("day", deliverTime).bind(this),
-      deliverTime.day
-    );
-  }
-
-  renderRunPicker(deliverTime) {
+  renderRow (deliverTime) {
     const options = [];
 
     for(const [_PTID, production] of this.props.runs){
       if(deliverTime.day === production.day) options.push(production);
     }
 
-    return renderSelect(
-      options,
-      "run",
-      "run",
-      this.SelectUpdateDeliverTime("run", deliverTime).bind(this),
-      deliverTime.run
-    )
-  }
-
-  renderReceiveTime(deliverTime) {
-    return(
-      <FormControl
-        value={deliverTime.dtime}
-        onBlur={this.saveDeliverTime(deliverTime)}
-        onChange={this.changeDeliverTime(deliverTime)}
-        onKeyDown={this.addCharacterDeliverTime(deliverTime).bind(this)}
-      />
-    );
-  }
-
-  renderRepeat(deliverTime) {
-    return renderSelect(
-      RunOptions,
-      "val",
-      "name",
-      this.SelectUpdateDeliverTime("repeat_t", deliverTime).bind(this),
-      deliverTime.repeat_t
-    );
-  }
-
-  renderRow (deliverTime) {
     const table = renderTableRow(deliverTime.DTID,[
-      this.renderDatePicker(deliverTime),
-      this.renderRunPicker(deliverTime),
-      this.renderReceiveTime(deliverTime),
-      this.renderRepeat(deliverTime),
+      renderSelect(
+        DAYS_OBJECTS, "day", "name",
+        this.SelectUpdateDeliverTime("day", deliverTime).bind(this),
+        deliverTime.day
+      ),
+      renderSelect(
+        options, "run", "run",
+        this.SelectUpdateDeliverTime("run", deliverTime).bind(this),
+        deliverTime.run
+      ),
+      (<FormControl
+          value={deliverTime.dtime}
+          onBlur={this.saveDeliverTime(deliverTime)}
+          onChange={this.changeDeliverTime(deliverTime)}
+          onKeyDown={this.addCharacterDeliverTime(deliverTime).bind(this)}
+        />),
+      renderSelect(
+          RunOptions, "val", "name",
+          this.SelectUpdateDeliverTime("repeat_t", deliverTime).bind(this),
+          deliverTime.repeat_t
+      ),
       renderClickableIcon("static/images/decline.svg",
-        () => this.deleteRow(deliverTime))
+        this.deleteDeliverTime(deliverTime, this).bind(this))
     ]);
     return table;
   }

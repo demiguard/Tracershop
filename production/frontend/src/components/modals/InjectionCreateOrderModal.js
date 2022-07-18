@@ -69,7 +69,7 @@ class CreateInjectionOrderModal extends Component {
     data_object[KEYWORD_COMMENT] = this.state.comment;
     message[WEBSOCKET_DATA] = data_object;
     message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
-    this.props.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(message);
     this.props.onClose();
   }
 

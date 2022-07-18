@@ -14,7 +14,7 @@ import { get as getCookie } from 'js-cookie';
 import { CloseDaysPage } from "/src/components/pages/CloseDaysPage";
 import { VialPage } from "/src/components/pages/VialPage.js";
 import { db } from "/src/lib/localStorageDriver.js";
-import { TracerWebSocket, safeSend } from "/src/lib/TracerWebsocket.js";
+import { TracerWebSocket } from "/src/lib/TracerWebsocket.js";
 import { ParseDjangoModelJson, ParseJSONstr } from "/src/lib/formatting.js";
 import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DELIVERTIME,
         JSON_EMPLOYEE, JSON_ISOTOPE, JSON_RUN, JSON_SERVER_CONFIG, JSON_TRACER,
@@ -78,10 +78,12 @@ export default class App extends Component {
     state[DATABASE_VIAL] = vials,
 
     this.state = state;
-
     this.MasterSocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
-    const Message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE);
-    const updateMessage = new Promise(() => {safeSend(Message, this.MasterSocket)});
+    this.MasterSocket.send(
+      this.MasterSocket.getMessage(
+        WEBSOCKET_MESSAGE_GREAT_STATE
+      )
+    );
 
     this.setActivePage = this.setActivePage.bind(this);
 
@@ -270,6 +272,7 @@ export default class App extends Component {
             Names={[]}
             setActivePage={() => {}}
             username={this.state.username}
+            isAuthenticated={this.state[DATABASE_IS_AUTH]}
             logout={this.logout}/>
           <Container className="navBarSpacer">
             <Authenticate

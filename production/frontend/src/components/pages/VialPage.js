@@ -1,9 +1,9 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button } from "react-bootstrap";
-import { JSON_VIAL, WEBSOCKET_MESSAGE_ECHO } from "/src/lib/constants";
+import { JSON_VIAL } from "/src/lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "/src/lib/formatting";
-import { autoAddCharacter } from "/src/lib/utils";
+import { addCharacter } from "/src/lib/utils";
 import { changeState } from "../../lib/stateManagement";
 
 export {VialPage}
@@ -84,24 +84,6 @@ class VialPage extends Component {
       }
       this.setState({...this.state, vials : newVialMap});
     })
-  }
-
-  /**
-   * This function updates a value of the state determined by the key to the newVale.
-   *
-   * @param {string} key
-   * @param {*} newValue
-   */
-  changeState(key,newValue){
-    const newState = {...this.state};
-    newState[key] = newValue;
-    this.setState(newState);
-  }
-
-  changeSearchDate(event){
-    const newState = {...this.state};
-    newState.filterSearchDate = autoAddCharacter(event, "/", new Set([2,5]), newState.filterSearchDate); 
-    this.setState(newState);
   }
 
   /**
@@ -227,7 +209,11 @@ class VialPage extends Component {
           </select>
         </Col>
         <Col>
-          <input onKeyDown={(event) => {this.keyDateSearch(event)}} value={this.state.filterSearchDate} onChange={(event) => this.changeSearchDate(event)} placeholder="Dato"/> 
+          <input
+            onKeyDown={addCharacter('/', "filterSearchDate", [2,5], this).bind(this)}
+            value={this.state.filterSearchDate} onChange={changeState("filterSearchDate", this).bind(this)}
+            placeholder="Dato"
+          />
         </Col>
         <Col>
           <Button  onClick={this.dateSearch.bind(this)}>Søg</Button>

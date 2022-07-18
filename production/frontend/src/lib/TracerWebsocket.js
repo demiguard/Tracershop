@@ -1,19 +1,21 @@
+import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "./constants";
+import { MapDataName } from "./localStorageDriver";
 import { DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER, DATABASE_VIAL, WEBSOCKET_MESSAGE_FREE_ORDER,
   WEBSOCKET_MESSAGE_TYPE,
   WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GREAT_STATE, JSON_GREAT_STATE,
   WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
   JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
-  JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
+  JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID,
 } from "/src/lib/constants";
 import { ParseJSONstr } from "/src/lib/formatting";
 
 export { safeSend, TracerWebSocket}
 
-class TracerWebSocket extends WebSocket {
+class TracerWebSocket{
   constructor(path, parent){
-    super(path)
-    this.StateHolder = parent
-
+    this._PromiseMap = new Map();
+    this._ws = new WebSocket(path);
+    this.StateHolder = parent;
 
     /** This function is called, when a message is received through the websocket from the server.
      *  This function handles all the different messages.
@@ -27,13 +29,12 @@ class TracerWebSocket extends WebSocket {
      * This means that the program have access to the state of the program but not any smaller sites
      * Such effect means that It should cause a site wide change for all users connected.
      *
-     * @param {*} e - Message that is received
+     * @param {*} messageEvent - Message that is received
      */
-    this.onmessage = function(e) {
-
-
-      const data = JSON.parse(e.data);
+    this._ws.onmessage = function(messageEvent) {
+      const data = JSON.parse(messageEvent.data);
       console.log(data)
+      this._PromiseMap.set(data[WEBSOCKET_MESSAGE_ID], data);
       switch(data[WEBSOCKET_MESSAGE_TYPE]) {
         /*
         * YEEEAH some really bad code ahead with double parsing: TODO: TODO: !IMPORTANT
@@ -50,7 +51,6 @@ class TracerWebSocket extends WebSocket {
           *
         * Additional programmer note: Create a new namespace for each handled case : using {}
         */
-
         case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS: //Merge to UpdateVial
           {
             const object_id = data[WEBSOCKET_DATA_ID];
@@ -109,15 +109,26 @@ class TracerWebSocket extends WebSocket {
           this.StateHolder.UpdateMap(DATABASE_VIAL, Vials, "ID", true, []);
         }
         break;
+        case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
+        {
+          const DataClass = data[WEBSOCKET_DATA];
+          const ID = WEBSOCKET_DATA[WEBSOCKET_DATA_ID]
+          this.StateHolder.UpdateMap(
+            MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
+        }
+        break;
       }
     }
 
-    this.onclose = function(e) {
+    this._ws.onmessage = this._ws.onmessage.bind(this)
+
+
+    this._ws.onclose = function(e) {
       //console.log("Websocket closed! with code:" + e.code)
       //console.log(e.reason)
     }
 
-    this.onerror = function(err) {
+    this._ws.onerror = function(err) {
       console.error("Socket encounter error: ", err.message);
       ws.close();
     }
@@ -130,13 +141,37 @@ class TracerWebSocket extends WebSocket {
    * @returns {Object} on json format, still need to add the data for the message
    */
   getMessage(messagetype) {
-    const jsonData = {};
-    jsonData[WEBSOCKET_MESSAGE_TYPE] = messagetype;
-    return jsonData;
+    const message = {};
+    message[WEBSOCKET_MESSAGE_TYPE] = messagetype;
+    return message;
   }
 
-  sendObejct(message){
-    this.send(JSON.stringify(message));
+  send(data){
+    var MessageID;
+    if (!data.hasOwnProperty(WEBSOCKET_MESSAGE_ID)){
+        var TestID =  Math.floor(Math.random() * 2147483647);
+
+        MessageID = TestID;
+        data[WEBSOCKET_MESSAGE_ID] = MessageID
+    } else {
+        MessageID = data[WEBSOCKET_MESSAGE_ID]
+    }
+
+    new Promise(() => safeSend(data, this._ws));
+
+    const promise = new Promise(async function (resolve, reject) {
+        var iter = 0
+        while(iter < 10){
+            if(this._PromiseMap.has(MessageID)){
+                resolve(this._PromiseMap.get(MessageID));
+            }
+            iter += 1;
+            await new Promise(r => setTimeout(r, 250*(1 + iter)))
+        }
+        reject(`Timeout for message: ${MessageID}`)
+    }.bind(this));
+
+    return promise;
   }
 }
 

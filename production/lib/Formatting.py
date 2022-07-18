@@ -53,3 +53,10 @@ def toDate(DateStr : str, Format: str=DATE_FORMAT) -> date:
 
 def mergeDateAndTime(Date : date, Time: time) -> datetime:
   return datetime(Date.year, Date.month, Date.day, Time.hour, Time.minute, Time.second)
+
+def ParseSQLID(SQL_ID) -> str:
+  if '.' in SQL_ID:
+    _ , ID = SQL_ID.split(".")
+  else:
+    ID = SQL_ID
+  return ID

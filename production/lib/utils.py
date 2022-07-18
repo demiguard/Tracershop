@@ -1,4 +1,10 @@
+"""Module for independant utility functions
 
+Note: this modules should not depend on any tracershop libraries
+to prevent circular imports
+"""
+
+__author__ = "Christoffer Vilstrup Jensen"
 
 def LMAP(func, List):
   return list(map(func, List))

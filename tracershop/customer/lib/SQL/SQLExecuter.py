@@ -49,8 +49,12 @@ def ExecuteQueryFetchOne(SQLQuery : str):
 def ExecuteQueryFetchAll(SQLQuery : str) -> list:
   with MySQLCursor() as cursor:
     if cursor:
-      cursor.execute(SQLQuery)
-      FetchedVals = cursor.fetchall()
+      try:
+        cursor.execute(SQLQuery)
+        FetchedVals = cursor.fetchall()
+      except mysql.Error as E:
+        print(SQLQuery)
+        raise E
     else:
       raise Exception
   return FetchedVals

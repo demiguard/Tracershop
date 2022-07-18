@@ -44,7 +44,7 @@ export class OrderPage extends Component {
   setActiveMonth(NewMonth) {
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
-    this.props.websocket.send(JSON.stringify(message));
+    this.props.websocket.send(message);
   }
 
   getColor(DateStr) {

@@ -3,6 +3,4 @@ import ReactDOM from 'react-dom';
 import { App } from "./components/App";
 import './bootstrap.min.css';
 
-ReactDOM.render(
-    <App></App> , document.getElementById("app")  
-);
+ReactDOM.render(<App></App> , document.getElementById("app"));

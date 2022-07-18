@@ -151,6 +151,9 @@ class SQL():
     )
     return returnList[0]
 
+  @classmethod
+  def updateVial(cls, Vial : VialDataClass) -> None:
+    cls.__Execute(SQLFactory.updateVial, JsonSerilizableDataClass, Fetching.NONE, Vial)
 
   @classmethod
   def FreeOrder(
