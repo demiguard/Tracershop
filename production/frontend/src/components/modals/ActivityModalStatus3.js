@@ -53,7 +53,7 @@ class ActivityModalStatus3 extends Component {
 
     const vials = [];
     for(const [vialID, vial] of this.props.vials) {
-      if (vial.OrderMap == this.props.Order.oid) {
+      if (vial.order_id == this.props.Order.oid) {
         vials.push(this.renderVial(vial));
       }
     }

@@ -51,12 +51,11 @@ class MailTemplate(canvas.Canvas):
     self.drawInlineImage("petlogo_small.png",  417, 750 , width= 128, height=32)
 
   def ApplyCustomer(self, x_cursor:int, y_cursor:int, Customer: CustomerDataClass):
-    self.setStrokeColorRGB(0.5,0.5,1.0)  
+    self.setStrokeColorRGB(0.5,0.5,1.0)
     self.setFont(self.__font, self.__font_size)
 
-    
-    y_top    = y_cursor 
-    
+    y_top = y_cursor
+
     y_cursor -= 15 # Move the Cursor Down
 
     Customer_identification_lines = [Customer.Realname, Customer.contact,Customer.tlf, Customer.email]
@@ -270,9 +269,9 @@ class MailTemplate(canvas.Canvas):
     """
     for TableTextLine in textLines:
       self.drawBox(
-          x_cursor, 
-          y_cursor, 
-          x_cursor + table_width, 
+          x_cursor,
+          y_cursor,
+          x_cursor + table_width,
           y_cursor + self.__line_width
         )
       self.drawTableTextLine(x_cursor, y_cursor, table_width, TableTextLine)
@@ -281,17 +280,17 @@ class MailTemplate(canvas.Canvas):
     return y_cursor
 
   def ApplyOrderActivitySimple(
-      self, 
-      x_cursor : int, 
-      y_cursor : int, 
-      Order: ActivityOrderDataClass, 
-      Vials: List[VialDataClass], 
-      Tracer : TracerDataClass, 
+      self,
+      x_cursor : int,
+      y_cursor : int,
+      Order: ActivityOrderDataClass,
+      Vials: List[VialDataClass],
+      Tracer : TracerDataClass,
       Isotope : IsotopeDataClass
     ):
     AssocVial = None
     for vial in Vials:
-      if vial.OrderMap == Order.oid:
+      if vial.order_id == Order.oid:
         AssocVial = vial
         break
 
@@ -309,7 +308,7 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug. Se Vial for batch Nr:")
 
     return y_cursor
-    
+
   def ApplySender(self, x_cursor, y_cursor):
     self.drawString(x_cursor, y_cursor, f"Venlig Hilsen")
 
@@ -321,28 +320,26 @@ class MailTemplate(canvas.Canvas):
 
     self.drawString(x_cursor, y_cursor, f"Rigshospitalet")
     y_cursor -= self.__line_width
-    
+
     self.drawString(x_cursor, y_cursor, f"Blegdamsvej 9")
     y_cursor -= self.__line_width
-    
+
     self.drawString(x_cursor, y_cursor, f"2100 København Ø")
     y_cursor -= self.__line_width * 2
 
     self.drawString(x_cursor, y_cursor, f"Tlf: +45 35453949")
     y_cursor -= self.__line_width
-  
-    
+
     return y_cursor
 
   def ApplyText(self, x_cursor:int, y_cursor : int, Tracer : TracerDataClass, Isotope : IsotopeDataClass):
-    
+
     self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug. Se Vial for batch Nr")
 
     y_cursor -= self.__line_width
 
     return y_cursor
-    
-    
+
 
 def DrawSimpleActivityOrder(filename :str,
     customer: CustomerDataClass,
@@ -355,7 +352,7 @@ def DrawSimpleActivityOrder(filename :str,
 
   x_cursor = 58
   y_cursor = 780
-     
+
   y_cursor = template.ApplyCustomer(x_cursor, y_cursor, customer)
 
   x_cursor += 10
@@ -372,7 +369,7 @@ def DrawSimpleActivityOrder(filename :str,
   y_cursor = template.ApplySender(x_cursor, y_cursor)
 
   template.save()
-  
+
 
 def DrawActivityOrder(
     filename: str,
@@ -382,11 +379,11 @@ def DrawActivityOrder(
     COID_ORDER: Optional[ActivityOrderDataClass] = None,
     VialOrders: Optional[List[ActivityOrderDataClass]] = None
   ):
-  template = MailTemplate(filename) 
+  template = MailTemplate(filename)
 
   x_cursor = 58
   y_cursor = 780
-     
+
   y_cursor = template.ApplyCustomer(x_cursor, y_cursor, customer)
 
   x_cursor += 10
@@ -417,7 +414,7 @@ def getPdfFilePath(customer: CustomerDataClass, Order: ActivityOrderDataClass):
 
   if not yearlyPath.exists():
     yearlyPath.mkdir()
-  
+
   if not monthlyPath.exists():
     monthlyPath.mkdir()
 

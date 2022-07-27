@@ -140,22 +140,7 @@ def CreateTestDatabase(DatabaseConfig):
     )
   """)
 
-  cur.execute("""
-    CREATE TABLE VAL(
-      customer VARCHAR(20),
-      charge VARCHAR(20),
-      deposPos TINYINT(4),
-      filldate DATE,
-      filltime TIME,
-      volume DECIMAL(7,2),
-      gros DECIMAL(7,2),
-      tare DECIMAL(7,2),
-      net  DECIMAL(7,2),
-      product VARCHAR(20),
-      ID INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-      activity DECIMAL(9,2)
-    )
-  """)
+
 
   cur.execute("""
   CREATE TABLE orders(
@@ -186,18 +171,36 @@ def CreateTestDatabase(DatabaseConfig):
   """)
 
   cur.execute("""
-  CREATE TABLE VialMapping(
-  Order_id INT,
-  VAL_id INT UNSIGNED,
-  FOREIGN KEY (Order_id) REFERENCES orders(OID)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
-  FOREIGN KEY (VAL_id) REFERENCES VAL(ID)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
-  UNIQUE KEY (VAL_id)
-  )
+    CREATE TABLE VAL(
+      customer VARCHAR(20),
+      charge VARCHAR(20),
+      deposPos TINYINT(4),
+      filldate DATE,
+      filltime TIME,
+      volume DECIMAL(7,2),
+      gros DECIMAL(7,2),
+      tare DECIMAL(7,2),
+      net  DECIMAL(7,2),
+      product VARCHAR(20),
+      ID INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
+      activity DECIMAL(9,2),
+      order_id int DEFAULT NULL REFERENCES orders(oid) ON UPDATE CASCADE ON DELETE RESTRICT
+    )
   """)
+
+  #cur.execute("""
+  #CREATE TABLE VialMapping(
+  #Order_id INT,
+  #VAL_id INT UNSIGNED,
+  #FOREIGN KEY (Order_id) REFERENCES orders(OID)
+  #  ON UPDATE CASCADE
+  #  ON DELETE RESTRICT,
+  #FOREIGN KEY (VAL_id) REFERENCES VAL(ID)
+  #  ON UPDATE CASCADE
+  #  ON DELETE RESTRICT,
+  #UNIQUE KEY (VAL_id)
+  #)
+  #""")
 
   cur.execute("""
     CREATE TABLE productionTimes(

@@ -404,7 +404,7 @@ export default class ActivityModalStatus2 extends Component {
     if (CustomerNumber) {
       for(let [_, vial] of this.props.vials){
 
-        if (vial.OrderMap !== null) continue;
+        if (vial.order_id !== null) continue;
         if (vial.customer !== CustomerNumber) continue;
         if (vial.filldate !==
           `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`) continue;

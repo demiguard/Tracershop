@@ -10,6 +10,7 @@
 __author__ = "Christoffer Vilstrup Jensen"
 
 
+from xmlrpc.client import Boolean
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 
@@ -18,10 +19,14 @@ from lib.decorators import typeCheckfunc
 from lib.SQL.SQLController import SQL
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib import pdfs
+from TracerAuth.models import User
 
 
 from datetime import datetime, date, timedelta
 from typing import Dict, List, Tuple
+import logging
+
+logger = logging.getLogger('DebugLogger')
 
 
 class DatabaseInterface():
@@ -29,10 +34,6 @@ class DatabaseInterface():
   """
   def __init__(self, SQL_Controller=SQL()):
     self.SQL = SQL_Controller
-
-  @database_sync_to_async
-  def CreateVial(self, Vial : VialDataClass) -> None:
-    return self.SQL.createVial(Vial)
 
   @database_sync_to_async
   def getServerConfiguration(self) -> ServerConfiguration:
@@ -43,50 +44,8 @@ class DatabaseInterface():
     """
     return self.SQL.getServerConfig()
 
-  @database_sync_to_async
-  def assignVial(self,
-      Order : ActivityOrderDataClass,
-      Vial : VialDataClass,
-      user
-    ) -> List[ActivityOrderDataClass]:
-    """Fills an order with data from the vialID given
 
-      Args:
-        Order  : ActivityOrderDataClass, is the order the vial is being assigned to
-        VialID : VialDataClass, corosponding to the vial that is being assigned
-
-      Returns:
-        List[ActivityOrderDataClass] : List of modified orders
-    """
-    #Order Changes:
-    Order.frigivet_datetime = datetime.now()
-    Order.frigivet_amount   = Vial.activity
-    Order.frigivet_af = user.OldTracerBaseID
-    Order.volume = Vial.volume
-    Order.batchnr = Vial.charge
-
-    #Vial Changes
-    Vial.OrderMap = Order.oid
-
-    return self.SQL.FreeOrder(Order, Vial, user)
-
-  @database_sync_to_async
-  @typeCheckfunc
-  def createVialOrder(
-      self,
-      Vial: VialDataClass,
-      OriginalOrder: ActivityOrderDataClass,
-      tracerID : int,
-      user
-    ) -> ActivityOrderDataClass:
-    """
-      Creates an "empty" Order to indicate that an order was assigned multiple Vials
-
-      returns
-        ActivityOrderClass: The order created
-    """
-    return self.SQL.CreateNewFreeOrder(OriginalOrder, Vial, tracerID, user)
-
+  ##### ----- Functions related to freeing Orders ----- #####
   @database_sync_to_async
   def createPDF(
     self,
@@ -101,26 +60,10 @@ class DatabaseInterface():
     return pdfPath
 
   @database_sync_to_async
-  @typeCheckfunc
-  def createOrder(
-    self,
-    deliver_datetime : datetime,
-    Customer : CustomerDataClass,
-    amount : float,
-    amount_overhead : float,
-    tracer : TracerDataClass,
-    run : int,
-    user
-  ):
-    return self.SQL.productionCreateOrder(
-      deliver_datetime,
-      Customer,
-      amount,
-      amount_overhead,
-      tracer,
-      run,
-      user.username
-    )
+  def freeDependantOrders(self, order : ActivityOrderDataClass, user : User):
+    return self.SQL.freeDependantOrder(order, user)
+
+  ###### ----- Free function End ----- ######
 
   @database_sync_to_async
   def getGreatState(self) -> Tuple[
@@ -162,9 +105,8 @@ class DatabaseInterface():
     Vials     = self.SQL.getDataClassRange(startDate, endDate, VialDataClass)
     T_Orders  = self.SQL.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
 
-
-
     return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, SC, list(databases), list(addresses))
+
 
   @database_sync_to_async
   @typeCheckfunc
@@ -179,25 +121,11 @@ class DatabaseInterface():
     ) -> ActivityOrderDataClass:
     return self.SQL.createGhostOrder(deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username)
 
+  ###### ----- Generic Methods ----- ######
+
   @database_sync_to_async
-  @typeCheckfunc
-  def createInjectionOrder(self,
-    Customer: CustomerDataClass,
-    Tracer  : TracerDataClass,
-    deliver_datetime : datetime,
-    n_injections : int,
-    usage : int,
-    comment : str,
-    user
-  ):
-    return self.SQL.createInjectionOrder(
-      Customer,
-      Tracer,
-      deliver_datetime,
-      n_injections,
-      usage,
-      comment, user
-    )
+  def createDataClass(self, skeleton : Dict, DataClass) -> JsonSerilizableDataClass:
+    return self.SQL.createDataClass(skeleton, DataClass)
 
   @database_sync_to_async
   def getServerConfig(self):
@@ -209,6 +137,13 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def updateDataClass(self, dataClass : JsonSerilizableDataClass):
+    """Updates an exists entry to the new values
+
+    Programer note, is to make this a method dependant on the dataclass similiar to that create
+
+    Args:
+        dataClass (JsonSerilizableDataClass): _description_
+    """
     if type(dataClass) == VialDataClass:
       self.SQL.updateVial(dataClass)
     else:
@@ -224,9 +159,11 @@ class DatabaseInterface():
 
   @database_sync_to_async
   @typeCheckfunc
-  def DeleteIDs(self, ids : List[int], DataClass):
+  def DeleteIDs(self, ids : List[int], DataClass) -> None:
     self.SQL.deleteIDs(ids, DataClass)
 
   @database_sync_to_async
-  def CanDelete(self, data : JsonSerilizableDataClass):
+  def CanDelete(self, data : JsonSerilizableDataClass) -> Boolean:
     return True
+
+

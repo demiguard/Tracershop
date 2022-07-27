@@ -115,6 +115,15 @@ class SQL():
       DataClass, Fetching.ALL,
       startDate, endDate, DataClass)
 
+  @classmethod
+  def createDataClass(cls, skeleton : Dict, DataClass) -> JsonSerilizableDataClass:
+    returnList = cls.__ExecuteMany(
+      [DataClass.createDataClassQuery, SQLFactory.getLastElement],
+      DataClass, Fetching.ONE, [[skeleton], [DataClass]]
+    )
+    return returnList[0]
+
+
   # Get methods from django Database
   @staticmethod
   def getServerConfig() -> ServerConfiguration:
@@ -133,7 +142,7 @@ class SQL():
     This data dublication should only last until BAM ID login is integrated, at which point the connection to the old DB should be cut.
 
     Returns:
-        _type_: _description_
+        List[EmployeeDataClass]: The list of all users
     """
     return LMAP(EmployeeDataClass.fromUser, User.objects.all())
 
@@ -156,74 +165,39 @@ class SQL():
     cls.__Execute(SQLFactory.updateVial, JsonSerilizableDataClass, Fetching.NONE, Vial)
 
   @classmethod
-  def FreeOrder(
+  def assignVial(
     cls,
     Order: ActivityOrderDataClass,
-    Vial: VialDataClass,
-    user: User) -> List[ActivityOrderDataClass]:
-    """[summary]
+    Vial: VialDataClass) -> None:
+    """SQL command for for assigning the vial
+
+    NOTE: CON-FUCKING-SIDER to remove the GOD DAMN EXTRA TABLE, AND JUST MAKE IT INTO THE VAL TABLE
 
     Args:
-        Order (ActivityOrderDataClass): [description]
-        Vial (VialDataClass): [description]
-
-    Returns:
-        List[ActivityOrderDataClass]: [description]
+        Order (ActivityOrderDataClass): Order that the Vial is being mapped to
+        Vial (VialDataClass): Vial that is being mapped
     """
-    return cls.__ExecuteMany(
-      [ SQLFactory.FreeExistingOrder,
-        SQLFactory.FreeDependantOrders,
-        SQLFactory.CreateVialMapping,
-        SQLFactory.getRelatedOrders],
-      ActivityOrderDataClass,
-      Fetching.ALL,
-      [[Order, Vial, user],[Order, user], [Order, Vial], [Order]])
+    return cls.__Execute(
+      SQLFactory.CreateVialMapping,JsonSerilizableDataClass,
+      Fetching.NONE, Order, Vial
+    )
 
   @classmethod
-  def CreateNewFreeOrder(
+  def freeDependantOrder(
       cls,
       OriginalOrder : ActivityOrderDataClass,
-      Vial : VialDataClass,
-      tracerID :int,
       user : User
-    ) -> ActivityOrderDataClass:
-    lastOrderList = cls.__ExecuteMany(
-      [SQLFactory.createLegacyFreeOrder, SQLFactory.getLastElement],
-      ActivityOrderDataClass, Fetching.ONE,
-      [[OriginalOrder, Vial, tracerID, user],[ActivityOrderDataClass]]
+    ) -> List[ActivityOrderDataClass]:
+    return cls.__ExecuteMany(
+      [SQLFactory.FreeDependantOrders, SQLFactory.getRelatedOrders],
+      ActivityOrderDataClass, Fetching.ALL,
+      [[OriginalOrder, user],[ActivityOrderDataClass]]
     )
-    lastOrder = lastOrderList[0]
-    # This should technically be a part of the last transaction and therefore does give a race condition,
-    # However such a race condition is rare, since it's in a low throughput server
-    # Also in the case where the race condition happens aka the vial appears unused while in truth it's used.
-    cls.__Execute(
-      SQLFactory.CreateVialMapping,
-      JsonSerilizableDataClass,
-      Fetching.NONE, lastOrder, Vial
-    )
-    return lastOrder
+
 
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
     return cls.__Execute(SQLFactory.authenticateUser, EmployeeDataClass, Fetching.ONE, username, password)[0]
-
-  @classmethod
-  def productionCreateOrder(
-    cls,
-    deliver_datetime : datetime,
-    Customer : CustomerDataClass,
-    amount : float,
-    amount_overhead : float,
-    tracer : TracerDataClass,
-    run : int,
-    username : str
-  ) -> ActivityOrderDataClass:
-    lastOrderList = cls.__ExecuteMany(
-      [SQLFactory.productionCreateOrder,SQLFactory.getLastElement],
-      ActivityOrderDataClass, Fetching.ONE,
-      [[deliver_datetime, Customer, amount, amount_overhead, tracer, run, username],
-      [ActivityOrderDataClass]])
-    return lastOrderList[0]
 
   @classmethod
   def createGhostOrder(
@@ -249,22 +223,3 @@ class SQL():
   @classmethod
   def deleteIDs(cls, ids, DataClass):
     cls.__Execute(SQLFactory.deleteIDs, JsonSerilizableDataClass, Fetching.NONE, ids, DataClass)
-
-  @classmethod
-  def createInjectionOrder(cls,
-    Customer : CustomerDataClass,
-    Tracer : TracerDataClass,
-    deliver_datetime : datetime,
-    n_injections : int,
-    usage : int,
-    comment : str,
-    user
-  ) -> InjectionOrderDataClass:
-    InjectionOrderList = cls.__ExecuteMany(
-      [SQLFactory.createInjectionOrder, SQLFactory.getLastElement],
-      InjectionOrderDataClass, Fetching.ONE,
-      [[Customer, Tracer, deliver_datetime, n_injections, usage, comment, user],
-        [InjectionOrderDataClass]
-      ]
-    )
-    return InjectionOrderList[0]

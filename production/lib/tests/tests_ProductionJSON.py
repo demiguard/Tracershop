@@ -10,7 +10,7 @@ from typing import Dict
 
 class ProductionJSONResponseTestCase(TestCase):
   json_kw_1 = "kw_1"
-  
+
   def setUp(self):
     pass
 
@@ -21,7 +21,7 @@ class ProductionJSONResponseTestCase(TestCase):
   def test_CorrectSubClassAssignment(self):
     self.assertTrue(issubclass(PJSON.ProductionJSONResponse, JsonResponse))
     self.assertTrue(issubclass(PJSON.ProductionJSONResponse, HttpResponse))
-  
+
   def test_CustomDataClass(self):
     timeInstance = time(11,55,33,12345)
 
@@ -37,7 +37,7 @@ class ProductionJSONResponseTestCase(TestCase):
 
     datastring = PJSON.encode(dataClass)
     self.assertEqual(datastring, "\"{\\n  \\\"day\\\": 1,\\n  \\\"ptime\\\": \\\"11:33:22\\\",\\n  \\\"run\\\": 1,\\n  \\\"PTID\\\": 123\\n}\"")
-    
+
   def test_DecodingToDict(self):
     jsonStr = "\"{\\n  \\\"day\\\": 1,\\n  \\\"ptime\\\": \\\"11:33:22\\\",\\n  \\\"run\\\": 1,\\n  \\\"PTID\\\": 123\\n}\""
     dataDict = PJSON.decode(jsonStr)
@@ -51,5 +51,3 @@ class ProductionJSONResponseTestCase(TestCase):
     self.assertEqual(dataDict["run"], 1)
 
     # Final step is in tests_ProductionDataClasses
-  
-

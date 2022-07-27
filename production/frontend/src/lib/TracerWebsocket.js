@@ -34,7 +34,9 @@ class TracerWebSocket{
     this._ws.onmessage = function(messageEvent) {
       const data = JSON.parse(messageEvent.data);
       console.log(data)
-      this._PromiseMap.set(data[WEBSOCKET_MESSAGE_ID], data);
+      const pipe = this._PromiseMap.get(data[WEBSOCKET_MESSAGE_ID]);
+      pipe.port2.postMessage(data);
+      //None promise update
       switch(data[WEBSOCKET_MESSAGE_TYPE]) {
         /*
         * YEEEAH some really bad code ahead with double parsing: TODO: TODO: !IMPORTANT
@@ -112,7 +114,8 @@ class TracerWebSocket{
         case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
         {
           const DataClass = data[WEBSOCKET_DATA];
-          const ID = WEBSOCKET_DATA[WEBSOCKET_DATA_ID]
+          const ID = data[WEBSOCKET_DATA_ID]
+          console.log(MapDataName(data[WEBSOCKET_DATATYPE]), ID, DataClass[ID])
           this.StateHolder.UpdateMap(
             MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
         }
@@ -147,28 +150,24 @@ class TracerWebSocket{
   }
 
   send(data){
-    var MessageID;
+    var messageID;
     if (!data.hasOwnProperty(WEBSOCKET_MESSAGE_ID)){
         var TestID =  Math.floor(Math.random() * 2147483647);
 
-        MessageID = TestID;
-        data[WEBSOCKET_MESSAGE_ID] = MessageID
+        messageID = TestID;
+        data[WEBSOCKET_MESSAGE_ID] = messageID
     } else {
-        MessageID = data[WEBSOCKET_MESSAGE_ID]
+        messageID = data[WEBSOCKET_MESSAGE_ID]
     }
 
     new Promise(() => safeSend(data, this._ws));
 
-    const promise = new Promise(async function (resolve, reject) {
-        var iter = 0
-        while(iter < 10){
-            if(this._PromiseMap.has(MessageID)){
-                resolve(this._PromiseMap.get(MessageID));
-            }
-            iter += 1;
-            await new Promise(r => setTimeout(r, 250*(1 + iter)))
-        }
-        reject(`Timeout for message: ${MessageID}`)
+    const promise = new Promise(async function (resolve) {
+      const pipe = new MessageChannel();
+      pipe.port1.onmessage = function (messageEvent) {
+        resolve(messageEvent.data);
+      }
+      this._PromiseMap.set(messageID, pipe);
     }.bind(this));
 
     return promise;

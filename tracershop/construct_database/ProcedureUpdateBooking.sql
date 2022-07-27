@@ -9,18 +9,18 @@ CREATE PROCEDURE UpdateBooking(
 )
 BEGIN
   IF 0 < (
-    SELECT COUNT(*) 
-    FROM customer_booking 
+    SELECT COUNT(*)
+    FROM customer_booking
     WHERE accessionNumber = InAccessionNumber )
-  THEN 
+  THEN
     IF (
-      SELECT startDate 
-      FROM  customer_booking 
+      SELECT startDate
+      FROM  customer_booking
       WHERE accessionNumber = InAccessionNumber
     ) < InStartDate THEN
       UPDATE
         customer_booking
-      SET 
+      SET
         startDate = InStartDate,
         startTime = InStartTime,
         location_id = InLocation_id,
@@ -31,7 +31,7 @@ BEGIN
     ELSE
       UPDATE
         customer_booking
-      SET 
+      SET
         startDate = InStartDate,
         startTime = InStartTime,
         location_id = InLocation_id,
@@ -54,6 +54,6 @@ BEGIN
       InProcedure_id
     );
   END IF;
-  
+
 END $$
 DELIMITER ;

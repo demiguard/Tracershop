@@ -14,20 +14,20 @@ __author__ = "Christoffer Vilstrup Jensen"
 import re
 from typing import List, Tuple, Dict, Any, Optional
 from datetime import datetime, date, time
+
 from lib.Formatting import dateConverter, timeConverter , datetimeConverter
-
-
 from lib.expections import SQLInjectionException
-from lib.ProductionDataClasses import JsonSerilizableDataClass
+
+
 
 def FormatSQLTuple(SQLQuery : List[Tuple], names : List[str]) -> List[Dict]:
   """
     This function takes a list of tuples and converts it into a list of dicts
     with the names from the arguments.
 
-    Names should have the same length as the tuple. 
+    Names should have the same length as the tuple.
     The final list of length equal to SQL query
-    
+
     Args:
       SQLQuery : List[Tuple]
       names    : List[Str]
@@ -37,14 +37,14 @@ def FormatSQLTuple(SQLQuery : List[Tuple], names : List[str]) -> List[Dict]:
     Example:
       >>>FormatSQLTuple([(1,2), (2,3)],["a","b"])
       [{"a" : 1, "b" : 2 }, {"a" : 2, "b" : 3 }]
-    
+
   """
-  return [ 
-    { name : query[i] for (i, name) in enumerate(names) } 
+  return [
+    { name : query[i] for (i, name) in enumerate(names)}
       for query in SQLQuery
   ]
 
-def FormatSQLTupleAsClass(SQLResult: Optional[List[Tuple]], cls : JsonSerilizableDataClass) -> Optional[List[JsonSerilizableDataClass]]:
+def FormatSQLTupleAsClass(SQLResult: Optional[List[Tuple]], cls):
   """
     This function converts a list of tuples queried from the database into a list
   """
@@ -56,12 +56,11 @@ def FormatSQLTupleAsClass(SQLResult: Optional[List[Tuple]], cls : JsonSerilizabl
 
 def checkForSQLInjection(SQLquery : str):
   """
-    Checks for common SQL injeciton patterns 
+    Checks for common SQL injeciton patterns
     Raises SQLInjecitonException if it finds one
   """
-  
   regex = re.compile(r";|--\%")
-  
+
   if regex.search(SQLquery):
     raise SQLInjectionException()
 
@@ -72,7 +71,7 @@ def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
       value (Any): [description]
 
   KWArgs:
-      NoneTypeRes (Any): This is the return value if the value is None 
+      NoneTypeRes (Any): This is the return value if the value is None
 
   Raises:
       TypeError: On an unsupported type it raises an TypeError
@@ -80,7 +79,7 @@ def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
   Returns:
       Any: returns a value ready to be inserted into the database by a format string. Type is dependant on input type
   """
-  
+
   valueType = type(value)
   if valueType == int:
     return value
@@ -99,6 +98,3 @@ def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
   if valueType == bool:
     return int(value)
   raise TypeError(f"Value of unknown type: {valueType}")
-
-
-  

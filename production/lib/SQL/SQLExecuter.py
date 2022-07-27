@@ -3,6 +3,8 @@ import enum
 from typing import List
 from pprint import pprint
 
+import logging
+
 # User packages:
 import constants
 from lib.SQL.SQLFormatter import checkForSQLInjection
@@ -10,6 +12,9 @@ from api.models import Database, ServerConfiguration
 from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect, DatabaseInvalidQueriesConfiguration
 
 __author__ = "Christoffer Vilstrup Jensen"
+
+logger = logging.getLogger("SQLLogger")
+logger.setLevel(logging.DEBUG)
 
 class Fetching(enum.Enum):
   ALL = 1
@@ -48,18 +53,19 @@ class DataBaseConnectionWrapper(object):
     if self.connected:
       self.connection.close()
 
-def ExecuteQuery(SQLQuery : str, fetch = Fetching.ALL):
+def ExecuteQuery(Query : str, fetch = Fetching.ALL):
   with DataBaseConnectionWrapper() as Wrapper:
     if Wrapper.connected:
-      checkForSQLInjection(SQLQuery)
-      Wrapper.cursor.execute(SQLQuery)
+      checkForSQLInjection(Query)
+      logger.debug(Query)
+      Wrapper.cursor.execute(Query)
       if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
         FetchedVals = Wrapper.cursor.fetchall()
       elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:
         FetchedVals = Wrapper.cursor.fetchone()
       if "FetchedVals" not in locals().keys() and fetch != Fetching.NONE:
         Wrapper.connection.rollback()
-        raise DatabaseInvalidQueriesConfiguration
+        raise DatabaseInvalidQueriesConfiguration(Query)
       Wrapper.connection.commit()
     else:
       pprint(Wrapper.databaseConfig)
@@ -73,6 +79,7 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
       Wrapper.connection.autocommit = False
       try:
         for Query in SQLQueries:
+          logger.debug(Query)
           Wrapper.cursor.execute(Query)
           if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
             FetchedVals = Wrapper.cursor.fetchall()
@@ -84,6 +91,6 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
         Wrapper.connection.commit()
       except mysql.Error as Err:
         Wrapper.connection.rollback()
-        raise DatabaseInvalidQueriesConfiguration
+        raise DatabaseInvalidQueriesConfiguration(Query)
   if fetch != Fetching.NONE:
     return FetchedVals

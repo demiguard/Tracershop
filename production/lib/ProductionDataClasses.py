@@ -10,19 +10,19 @@
 """
 __author__= "Christoffer Vilstrup Jensen"
 
+from contextlib import AbstractAsyncContextManager
 import dataclasses
 import json
 
+from abc import abstractclassmethod
 from dataclasses import dataclass, asdict, fields, Field
-from typing import Dict, Optional, List, Any, get_args, get_origin, Union
 from datetime import datetime, date, time
-
+from typing import Dict, Optional, List, Any, get_args, get_origin, Union
 from constants import DATETIME_FORMAT, DATE_FORMAT, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
-
-
 from lib.Formatting import toTime, toDateTime, toDate
 from TracerAuth.models import User
 from lib.utils import LMAP
+from lib.SQL.SQLFormatter import SerilizeToSQLValue
 
 
 @dataclass
@@ -89,6 +89,7 @@ class JsonSerilizableDataClass:
     return "TRUE"
 
   @classmethod
+  @abstractclassmethod
   def getSQLDateTime() -> str:
     """ This is abstract method, that is called when the SQL modules needs to constrtuct a query with an condition based on a date or datetime field
 
@@ -98,6 +99,7 @@ class JsonSerilizableDataClass:
     raise NotImplemented
 
   @classmethod
+  @abstractclassmethod
   def getIDField(cls) -> str:
     """Abstract method for generating ID
 
@@ -107,10 +109,26 @@ class JsonSerilizableDataClass:
     raise NotImplemented
 
   @classmethod
+  def createDataClassQuery(cls, skeleton) -> str:
+    Fields = []
+    Values = []
+
+    for (k, v) in skeleton.items():
+      Fields.append(k)
+      Values.append(SerilizeToSQLValue(v))
+
+    Fields += cls.getExtraFields()
+    Values += cls.getExtraValues()
+
+    return f"""INSERT INTO {cls.getSQLTable()}({
+      ", ".join(map(str, Fields))}) VALUES ({", ".join(map(str,Values))})"""
+
+  @classmethod
   def getSQLFields(cls):
     Fields = cls.getFields()
     return ", ".join([field.name for field in Fields])
 
+  @abstractclassmethod
   def getSQLTable(cls):
     """If relevant This function should be overwritten with the relevant SQL
 
@@ -120,6 +138,13 @@ class JsonSerilizableDataClass:
     """
     raise NotImplemented
 
+  @classmethod
+  def getExtraFields(cls) -> List:
+    return []
+
+  @classmethod
+  def getExtraValues(cls) -> List:
+    return []
 
   def __TypeSafeSetAttr(self, field : Field, fieldVal : Any) -> None:
     """This function attempts to set a field after performing type checking.
@@ -238,6 +263,14 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   def getIDField(cls) -> str:
     return "oid"
 
+  @classmethod
+  def getExtraFields(cls) -> List:
+    return ["COID", "status", "batchnr"]
+
+  @classmethod
+  def getExtraValues(cls) -> List:
+    return ["-1", "2", "\"\""]
+
 @dataclass(init=False)
 class InjectionOrderDataClass(JsonSerilizableDataClass):
   deliver_datetime : datetime
@@ -265,6 +298,14 @@ class InjectionOrderDataClass(JsonSerilizableDataClass):
   def getIDField(cls) -> str:
     return "oid"
 
+  @classmethod
+  def getExtraFields(cls) -> List:
+    return ["status"]
+
+  @classmethod
+  def getExtraValues(cls) -> List:
+    return ["2"]
+
 @dataclass(init=False)
 class VialDataClass(JsonSerilizableDataClass):
   customer : int
@@ -273,31 +314,43 @@ class VialDataClass(JsonSerilizableDataClass):
   filltime : time
   volume : float
   activity : float
-  ID : Optional[int]
-  OrderMap : Optional[int]
+  ID : int
+  order_id : Optional[int]
 
   @classmethod
   def getSQLFields(cls) -> str:
-    return """VAL.customer,
-      VAL.charge,
-      VAL.filldate,
-      TIME_FORMAT(VAL.filltime, \"%T\"),
-      VAL.volume,
-      VAL.activity,
-      VAL.ID,
-      VialMapping.Order_id"""
+    return """customer,
+      charge,
+      filldate,
+      TIME_FORMAT(filltime, \"%T\"),
+      volume,
+      activity,
+      ID,
+      order_id"""
 
   @classmethod
   def getSQLTable(cls) -> str:
-    return "VAL LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id"
+    return "VAL"
 
   @classmethod
   def getSQLDateTime(cls) -> str:
-    return "VAL.filldate"
+    return "filldate"
+
+  @classmethod
+  def createDataClassQuery(cls, skeleton) -> str:
+    Fields = []
+    Values = []
+
+    for (k, v) in skeleton.items():
+      Fields.append(k)
+      Values.append(SerilizeToSQLValue(v))
+
+    return f"""INSERT INTO VAL({
+      ", ".join(map(str,Fields))}) VALUES ({", ".join(map(str, Values))})"""
 
   @classmethod
   def getIDField(cls) -> str:
-    return "VAL.ID"
+    return "ID"
 
 @dataclass(init=False)
 class TracerCustomerMappingDataClass(JsonSerilizableDataClass):
@@ -330,7 +383,6 @@ class DeliverTimeDataClass(JsonSerilizableDataClass):
   @classmethod
   def getIDField(cls) -> str:
     return "DTID"
-
 
 @dataclass(init=False)
 class RunsDataClass(JsonSerilizableDataClass):

@@ -10,7 +10,9 @@ class MySQLCursor(object):
   def __init__(self):
     pass
   def __enter__(self):
-    databaseQuery = Database.objects.filter(databaseName=constants.TRACERSHOPDATABASENAME)
+    databaseQuery = Database.objects.filter(
+      databaseName=constants.TRACERSHOPDATABASENAME
+    )
     if not databaseQuery:
       raise Exception
     database = databaseQuery[0]

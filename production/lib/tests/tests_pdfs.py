@@ -92,7 +92,7 @@ class PDFsGenerationTest(TestCase):
     datetime(1993,11,20,12,30),
     "Test Kommentar",
     "Test_bioanalytiker"
-  ) 
+  )
 
   test_vial_order_2  = ActivityOrderDataClass(
     datetime(1993,11,20,11,30),
@@ -113,8 +113,8 @@ class PDFsGenerationTest(TestCase):
     datetime(1993,11,20,12,30),
     "Test Kommentar",
     "Test_bioanalytiker"
-  ) 
-  
+  )
+
   test_vial_1 = VialDataClass(
     test_customer.ID,
     "Test Batchnr",
@@ -149,9 +149,9 @@ class PDFsGenerationTest(TestCase):
   )
 
   test_tracer = TracerDataClass(
-    6, 
+    6,
     "FDG",
-    1, -1, 0, True, 1, 
+    1, -1, 0, True, 1,
     "Fludeoxyglucose"
   )
 
@@ -165,7 +165,7 @@ class PDFsGenerationTest(TestCase):
       self.test_Order,
       [self.test_vial_1],
       self.test_tracer, self.test_isotope
-    ) 
+    )
 
   def test_PDF_long_name(self):
     pdfs.DrawSimpleActivityOrder(
@@ -174,7 +174,7 @@ class PDFsGenerationTest(TestCase):
       self.test_Order,
       [self.test_vial_1],
       self.test_tracer, self.test_isotope
-    ) 
+    )
 
   def test_PDF_order_coid_single_vial(self):
     pdfs.DrawSimpleActivityOrder(
@@ -193,6 +193,3 @@ class PDFsGenerationTest(TestCase):
       [self.test_vial_1, self.test_vial_2, self.test_vial_3],
       self.test_tracer, self.test_isotope
     )
-
-
-  

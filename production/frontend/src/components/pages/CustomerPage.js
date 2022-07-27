@@ -52,15 +52,11 @@ export default class CustomerPage extends Component {
   }
 
   render() {
-    console.log(this.state);
     const customers = [];
     const FilterRegEx = new RegExp(this.state.filter,'g')
     for (const [ID, customer] of this.props.customer) {
       if (FilterRegEx.test(customer["UserName"])) {
-        customers.push(this.renderCustomer(
-          ID,
-          customer["UserName"]
-          ));
+        customers.push(this.renderCustomer(ID, customer["UserName"]));
       }
     }
 

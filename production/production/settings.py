@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from production.SECRET_KEY import KEY
-from production.config import debug_file_log
+from production.config import debug_file_log, SQL_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -164,7 +164,12 @@ LOGGING = {
             '()': 'django.utils.log.ServerFormatter',
             'format': '[{server_time}] {message}',
             'style': '{',
-        }
+        },
+        'SQL' : {
+            '()': 'django.utils.log.ServerFormatter',
+            'format' : '{asctime}\n{message}',
+            'style' : '{'
+        },
     },
     'handlers': {
         'console': {
@@ -186,7 +191,13 @@ LOGGING = {
             'level' : 'DEBUG',
             'class' : 'logging.FileHandler',
             'filename' : debug_file_log,
-            'formatter'  : 'django.server'
+            'formatter' : 'django.server'
+        },
+        'SQLHandler' : {
+            'level' : 'DEBUG',
+            'class' : 'logging.FileHandler',
+            'filename' : SQL_file_log,
+            'formatter' : 'SQL'
         }
     },
     'loggers': {
@@ -203,6 +214,9 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
+        'SQLLogger' : {
+            'handlers' : ['SQLHandler', 'console']
+        }
     }
 }
 

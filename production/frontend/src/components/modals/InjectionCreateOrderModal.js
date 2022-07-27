@@ -4,9 +4,9 @@ import { Button, Col, Form, FormControl, Modal, ModalBody, Row, Table } from "re
 import { renderSelect } from "/src/lib/Rendering";
 import { changeState } from "/src/lib/stateManagement";
 import { FormatTime, FormatDateStr } from "/src/lib/formatting";
-import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVERTIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, } from "/src/lib/constants"
 import { addCharacter } from "../../lib/utils";
+import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
+  JSON_TRACER, JSON_DELIVERTIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_TRACER } from "../../lib/constants";
 
 export { CreateInjectionOrderModal }
 
@@ -61,9 +61,9 @@ class CreateInjectionOrderModal extends Component {
 
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
     const data_object = {};
-    data_object[JSON_CUSTOMER] = this.props.customer.get(Number(this.state.customer));
-    data_object[JSON_TRACER] = this.props.tracers.get(Number(this.state.tracer));
-    data_object[JSON_DELIVERTIME] = deliver_datetime;
+    data_object[KEYWORD_BID] = Number(this.state.customer);
+    data_object[KEYWORD_TRACER] = Number(this.state.tracer);
+    data_object[KEYWORD_DELIVER_DATETIME] = deliver_datetime;
     data_object[KEYWORD_INJECTIONS] = injections;
     data_object[KEYWORD_USAGE] = Number(this.state.use);
     data_object[KEYWORD_COMMENT] = this.state.comment;

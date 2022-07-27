@@ -106,5 +106,5 @@ export function MapDataName(JSONName){
   if (JSONName == JSON_TRACER){return DATABASE_TRACER;}
   if (JSONName == JSON_VIAL){return DATABASE_VIAL;}
 
-  throw `Unknown JSON Name ${JSONName}`
+  throw `Unknown JSON Name ${JSONName}`;
 }

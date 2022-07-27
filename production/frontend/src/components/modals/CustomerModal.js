@@ -59,6 +59,17 @@ class CustomerModal extends Component {
     };
   }
 
+  componentDidUpdate(prevProps, _prevState, _snapshot){
+    if (prevProps.deliverTimes !== this.props.deliverTimes){
+      const DeliverTimes = new Map();
+        for(const [_DTID, deliverTime] of this.props.deliverTimes.entries()) {
+      if(deliverTime.BID == this.props.userid)
+        DeliverTimes.set(deliverTime.DTID, deliverTime);
+      }
+      this.setState({...this.state, deliverTimes : DeliverTimes})
+    }
+  }
+
   // ValidationFunctions
   OverheadValidation(overheadString, This){
     const overhead = ParseDanishNumber(overheadString);
@@ -139,8 +150,7 @@ class CustomerModal extends Component {
       this.setState({...this.state, errorMessage : "Modtage tiden er ikke et tidspunkt"})
       return;
     }
-
-    //
+    // Send data
     const newDelivertime = {
       day : this.state.new_day,
       run : this.state.new_run,
@@ -256,11 +266,12 @@ class CustomerModal extends Component {
       />,
       renderSelect(RunOptions, "val", "name",
         changeState("new_repeat_t", this), this.state.new_repeat_t),
-      renderClickableIcon("static/images/accept.svg")
+      renderClickableIcon("static/images/accept.svg", this.createDeliverTime.bind(this))
     ]);
   }
 
   renderbody(){
+    console.log(this.state)
     const deliverTimes = []
     for(const [_, deliverTime] of this.state.deliverTimes) {
       deliverTimes.push(deliverTime)

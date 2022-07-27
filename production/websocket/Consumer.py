@@ -5,10 +5,11 @@ this client.
 
 Note: This module doesn't scale at large, simply because all users are in
  a single group. So it should not surprise anybody if stuff starts to break
- if this starts to scale.
+ if Tracershop starts to scale.
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
+from turtle import tracer, update
 from django.core.serializers import serialize
 
 from asgiref.sync import async_to_sync
@@ -64,13 +65,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
     await self.accept()
-    logger.info(f"User: {self.user.username} connected")
 
   async def disconnect(self, close_code):
-
     for group_name in self.groups:
-      print(f"Leaving Group: {group_name}")
-
       await self.channel_layer.group_discard(
         group_name,
         self.channel_name
@@ -88,8 +85,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
-    logger.info(message)
-    #dateStr      = message[WEBSOCKET_DATE] # mostly used on the front end
+
+    pprint(message)
     messageType  = message[WEBSOCKET_MESSAGE_TYPE]
     if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
       await self.HandleTheGreatStateMessage(message)
@@ -187,47 +184,33 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     dataClass = None
     if message[WEBSOCKET_DATATYPE] == JSON_VIAL:
-      vial = VialDataClass.fromDict(message[WEBSOCKET_DATA])
-      dataClass = await self.db.CreateVial(vial)
+      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], VialDataClass)
+    if message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIME:
+      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], DeliverTimeDataClass)
     if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
-      skeleton = message[WEBSOCKET_DATA]
-      tracer = TracerDataClass.fromDict(skeleton[JSON_TRACER])
-      customer = CustomerDataClass.fromDict(skeleton[JSON_CUSTOMER])
-      deliver_datetime = toDateTime(skeleton[JSON_DELIVERTIME], JSON_DATETIME_FORMAT)
-
-      amount = skeleton[KEYWORD_AMOUNT]
-      amount_overhead = amount * (1 + customer.overhead / 100.0)
-      run = skeleton[JSON_RUN]
-
-      dataClass = await self.db.createOrder(
-        deliver_datetime,
-        customer,
-        float(amount),
-        float(amount_overhead),
-        tracer,
-        run,
-        self.user
-      )
+      spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spoky ok?
+      customer = await self.db.getElement(spooky_skeleton[KEYWORD_BID], CustomerDataClass)
+      deliver_datetime = toDateTime(spooky_skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
+      skeleton = {
+        KEYWORD_DELIVER_DATETIME : deliver_datetime,
+        KEYWORD_AMOUNT   : spooky_skeleton[KEYWORD_AMOUNT],
+        KEYWORD_AMOUNT_O : spooky_skeleton[KEYWORD_AMOUNT] * (1 + customer.overhead / 100.0),
+        KEYWORD_TOTAL_AMOUNT   : spooky_skeleton[KEYWORD_AMOUNT],
+        KEYWORD_TOTAL_AMOUNT_O : spooky_skeleton[KEYWORD_AMOUNT] * (1 + customer.overhead / 100.0),
+        KEYWORD_TRACER : spooky_skeleton[KEYWORD_TRACER],
+        KEYWORD_RUN : spooky_skeleton[KEYWORD_RUN],
+        KEYWORD_BID : spooky_skeleton[KEYWORD_BID],
+        KEYWORD_USERNAME : self.user.username
+      }
+      dataClass = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
     if message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
       skeleton = message[WEBSOCKET_DATA]
-      tracer = TracerDataClass.fromDict(skeleton[JSON_TRACER])
-      customer = CustomerDataClass.fromDict(skeleton[JSON_CUSTOMER])
-      deliver_datetime = toDateTime(skeleton[JSON_DELIVERTIME], JSON_DATETIME_FORMAT)
-      n_injections = skeleton[KEYWORD_INJECTIONS]
-      usage = skeleton[KEYWORD_USAGE]
-      comment = skeleton[KEYWORD_COMMENT]
-      dataClass = await self.db.createInjectionOrder(
-        customer,
-        tracer,
-        deliver_datetime,
-        n_injections,
-        usage,
-        comment,
-        self.user
-      )
-
+      deliver_datetime = toDateTime(skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
+      skeleton[KEYWORD_DELIVER_DATETIME] = deliver_datetime
+      skeleton[KEYWORD_USERNAME] = self.user.username
+      dataClass = await self.db.createDataClass(skeleton, InjectionOrderDataClass)
     # Checking for unhandled case
-    if dataClass == None:
+    if 'dataClass' not in locals():
       error_message = f"Unhandled attempt to create a data class: {message[WEBSOCKET_DATATYPE]}"
       raise ValueError(error_message)
     ID = ParseSQLID(dataClass.getIDField())
@@ -247,19 +230,54 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Order      = ActivityOrderDataClass.fromDict(message[JSON_ACTIVITY_ORDER])
     Vials      = [VialDataClass.fromDict(vialDict) for vialDict in message[JSON_VIAL]]
     tracerID   = message[JSON_TRACER]
+    updatedVials = []
+    updateOrders = []
 
     serverConfiguration = await self.db.getServerConfiguration()
     if serverConfiguration.LegacyMode:
       PrimaryVial = Vials[0]
-      UpdatedOrders = await self.db.assignVial(Order, PrimaryVial, self.user)
+      free_datetime = datetime.now()
+      Order.status = 3
+      Order.frigivet_af = self.user.OldTracerBaseID
+      Order.frigivet_amount = PrimaryVial.activity
+      Order.frigivet_datetime =  free_datetime
+      Order.volume = PrimaryVial.volume
+      Order.batchnr = PrimaryVial.charge
+      await self.db.updateDataClass(Order)
+      PrimaryVial.order_id = Order.oid
+      await self.db.updateDataClass(PrimaryVial)
+      updatedVials.append(PrimaryVial)
+      DependantOrders = await self.db.freeDependantOrders(Order, self.user)
+      if DependantOrders:
+        updateOrders.append(DependantOrders)
+
       for Vial in Vials[1:]: #The first vial is assoc with the Primary order
-        newOrder = await self.db.createVialOrder(Vial, Order, tracerID, self.user)
-        Vial.OrderMap = newOrder.oid
-        UpdatedOrders.append(newOrder)
+        skeleton = {
+          KEYWORD_DELIVER_DATETIME : Order.deliver_datetime,
+          KEYWORD_STATUS : 3,
+          KEYWORD_AMOUNT : 0,
+          KEYWORD_AMOUNT_O : 0,
+          KEYWORD_TOTAL_AMOUNT : 0,
+          KEYWORD_TOTAL_AMOUNT_O : 0,
+          KEYWORD_TRACER : tracerID,
+          KEYWORD_RUN : Order.run,
+          KEYWORD_COID : -1, #Could argue Order.oid
+          KEYWORD_BATCHNR : Vial.charge,
+          KEYWORD_FREED_BY : self.user.OldTracerBaseID,
+          KEYWORD_FREED_AMOUNT : Vial.activity,
+          KEYWORD_VOLUME : Vial.volume,
+          KEYWORD_FREED_DATETIME : free_datetime,
+          KEYWORD_COMMENT : f"Extra ordre generated due to multiple vials assigned to order: {Order.oid}",
+          KEYWORD_USERNAME : Order.username
+        }
+        newOrder = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
+        #newOrder = await self.db.createVialOrder(Vial, Order, tracerID, self.user)
+        Vial.order_id = newOrder.oid
+        await self.db.updateDataClass(Vial)
+        updatedVials.append(Vial)
+        updateOrders.append(newOrder)
 
-      SerlizedUpdatedOrders = LMAP(lambda x: encode(x.toJSON()), UpdatedOrders)
-
-      pdfFilePath = await self.db.createPDF(Order, Vials)
+      pdfFilePath = await self.db.createPDF(updateOrders, updatedVials)
       Customer    = await self.db.getElement(Order.BID, CustomerDataClass)
       try:
         sendMail(pdfFilePath, Customer, Order, serverConfiguration)
@@ -270,8 +288,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         self.global_group, {
             WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
             WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
-            JSON_ACTIVITY_ORDER : SerlizedUpdatedOrders,
-            JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),Vials),
+            JSON_ACTIVITY_ORDER : LMAP(lambda x: encode(x.toJSON()), updateOrders),
+            JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),updatedVials),
             WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
           }
         )
@@ -395,11 +413,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def HandleDeleteDataClass(self, message : Dict):
     dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
     data = dataClass(**message[WEBSOCKET_DATA])
-
     if(self.db.CanDelete(data)):
       ID = ParseSQLID(dataClass.getIDField())
 
-      self.db.DeleteIDs([data.__getattribute__(ID)], dataClass)
+      await self.db.DeleteIDs([data.__getattribute__(ID)], dataClass)
 
       await self.channel_layer.group_send(self.global_group, {
         WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,

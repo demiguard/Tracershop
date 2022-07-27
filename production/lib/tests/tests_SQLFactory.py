@@ -5,7 +5,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 from django.test import TestCase
 
 from lib import ProductionDataClasses as PDC
-from lib.SQL import SQLFactory 
+from lib.SQL import SQLFactory
 
 from datetime import date, datetime, time
 
@@ -22,19 +22,17 @@ class SQLFactoryTestCase(TestCase):
   def test_update_run_query(self):
     Query = SQLFactory.UpdateJsonDataClass(self.test_Run)
 
-    self.assertEqual("""
-    UPDATE productionTimes
+    self.assertEqual("""UPDATE productionTimes
     SET
       day=1,
 ptime="11:30:15",
 run=1
     WHERE
-      PTID=31\n  """, Query)
+      PTID=31""", Query)
 
   def test_update_tracer(self):
     Query = SQLFactory.UpdateJsonDataClass(self.test_Tracer)
-    self.assertEqual("""
-    UPDATE Tracers
+    self.assertEqual("""UPDATE Tracers
     SET
       name="FDG",
 isotope=6,
@@ -44,12 +42,11 @@ in_use=1,
 tracer_type=1,
 longName="I forgot this name"
     WHERE
-      id=6\n  """, Query)
+      id=6""", Query)
 
   def test_getElement_run(self):
     Query = SQLFactory.getElement(5, PDC.RunsDataClass)
-    self.assertEqual("""
-    SELECT
+    self.assertEqual("""SELECT
       day,
       TIME_FORMAT(ptime, "%T"),
       run,
@@ -57,12 +54,11 @@ longName="I forgot this name"
     FROM
       productionTimes
     Where
-      PTID=5\n  """, Query)
+      PTID=5""", Query)
 
   def test_getDataClass_run(self):
     Query = SQLFactory.getDataClass(PDC.RunsDataClass)
-    self.assertEqual("""
-    SELECT
+    self.assertEqual("""SELECT
       day,
       TIME_FORMAT(ptime, "%T"),
       run,
@@ -70,41 +66,38 @@ longName="I forgot this name"
     FROM
       productionTimes
     WHERE
-      TRUE\n  """, Query)
+      TRUE""", Query)
 
   def test_getDataClassRange_vial(self):
     Query = SQLFactory.getDataClassRange(self.start_date, self.end_date, PDC.VialDataClass)
-    self.assertEqual("""
-    SELECT
-      VAL.customer,
-      VAL.charge,
-      VAL.filldate,
-      TIME_FORMAT(VAL.filltime, "%T"),
-      VAL.volume,
-      VAL.activity,
-      VAL.ID,
-      VialMapping.Order_id
+    self.assertEqual("""SELECT
+      customer,
+      charge,
+      filldate,
+      TIME_FORMAT(filltime, "%T"),
+      volume,
+      activity,
+      ID,
+      order_id
     FROM
-      VAL LEFT JOIN VialMapping on VAL.ID=VialMapping.VAL_id
+      VAL
     WHERE
-      VAL.filldate BETWEEN \"2020-10-10\" AND \"2020-11-11\"\n  """, Query)
+      filldate BETWEEN \"2020-10-10\" AND \"2020-11-11\"""", Query)
 
   def test_getDataClassRange_injection_order(self):
     Query = SQLFactory.getDataClassRange(self.start_datetime, self.end_datetime, PDC.InjectionOrderDataClass)
-    self.assertEqual("""
-    SELECT
-      deliver_datetime, oid, status, n_injections, anvendelse, comment, username, tracer
+    self.assertEqual("""SELECT
+      deliver_datetime, oid, status, n_injections, anvendelse, comment, username, tracer, BID, batchnr, frigivet_af, frigivet_datetime
     FROM
       t_orders
     WHERE
-      deliver_datetime BETWEEN "2020-10-10 10:10:10" AND "2020-11-11 11:11:11"\n  """, Query)
+      deliver_datetime BETWEEN \"2020-10-10 10:10:10\" AND \"2020-11-11 11:11:11\"""", Query)
 
   def test_getDataClassRange_activity_order(self):
     Query = SQLFactory.getDataClassRange(self.start_datetime, self.end_datetime, PDC.ActivityOrderDataClass)
-    self.assertEqual("""
-    SELECT
+    self.assertEqual("""SELECT
       deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, tracer, run, BID, batchnr, COID, frigivet_af, frigivet_amount, volume, frigivet_datetime, comment, username
     FROM
       orders
     WHERE
-      deliver_datetime BETWEEN \"2020-10-10 10:10:10\" AND \"2020-11-11 11:11:11\"\n  """, Query)
+      deliver_datetime BETWEEN \"2020-10-10 10:10:10\" AND \"2020-11-11 11:11:11\"""", Query)

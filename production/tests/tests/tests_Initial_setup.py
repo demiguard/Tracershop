@@ -12,6 +12,7 @@ from django import db
 from api.models import Database, Address, ServerConfiguration
 from lib.SQL import SQLExecuter
 from lib.SQL.SQLController import SQL
+import constants
 
 class InitialSetupTestCase(TestCase):
   def test_django_databases(self):
@@ -36,22 +37,10 @@ class InitialSetupTestCase(TestCase):
 
 
   def test_legacy_tables_availability(self):
+    """
+      Note there's extra tables in there however they are not used by this program
+      NOTE: This test should not use SQLExecuter, but instead manually do the connection instead of using the wrapper
+    """
     tables_query = [ item for (item,) in SQLExecuter.ExecuteQuery("""SHOW TABLES""")]
 
-    tables = {
-      "Roles",
-      "TracerCustomer",
-      "Tracers",
-      "UserRoles",
-      "Users",
-      "VAL",
-      "VialMapping",
-      "blockDeliverDate",
-      "deliverTimes",
-      "isotopes",
-      "orders",
-      "productionTimes",
-      "t_orders",
-      "tracer_types"
-    }
-    self.assertSetEqual(set(tables_query), tables)
+    self.assertSetEqual(set(tables_query), constants.LEGACY_TABLES)

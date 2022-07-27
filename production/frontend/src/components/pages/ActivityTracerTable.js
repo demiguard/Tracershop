@@ -7,13 +7,11 @@ import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
 import { CountMinutes, CalculateProduction } from "/src/lib/physics";
 import { ActivityModal } from "/src/components/modals/ActivityModal.js";
 import { CreateOrderModal } from "/src/components/modals/CreateOrderModal";
-import { JSON_CUSTOMER, JSON_VIAL,
+import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
   WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
-  KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME, WEBSOCKET_MESSAGE_EDIT_STATE,
-
-} from "/src/lib/constants";
+  KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME, WEBSOCKET_MESSAGE_EDIT_STATE, KEYWORD_TRACER} from "../../lib/constants";
 
 
 /*
@@ -400,11 +398,11 @@ export class ActivityTable extends Component {
     const message = this.props.websocket.getMessage(
       WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
     const skeleton = {};
-    skeleton[JSON_CUSTOMER] = customer;
-    skeleton[JSON_DELIVERTIME] = deliverTime;
-    skeleton[JSON_RUN] = run;
+    skeleton[KEYWORD_BID] = customer.ID;
+    skeleton[KEYWORD_DELIVER_DATETIME] = deliverTime;
+    skeleton[KEYWORD_RUN] = run;
     skeleton[KEYWORD_AMOUNT] = amount;
-    skeleton[JSON_TRACER] = this.props.tracers.get(this.props.tracer);
+    skeleton[KEYWORD_TRACER] = this.props.tracer;
 
     message[WEBSOCKET_DATA] = skeleton;
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;

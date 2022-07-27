@@ -197,7 +197,8 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
       'filldate': '2021-12-10',
       'customer': 1,
       'activity': 1000,
-      'volume': 10
+      'volume': 10,
+      'ID' : 53120
     }
     Vial = VialDataClass(**data)
 
@@ -207,8 +208,8 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
     self.assertEqual(Vial.filltime, datetime.time(10,0))
     self.assertEqual(Vial.volume, 10)
     self.assertEqual(Vial.activity, 1000)
-    self.assertIsNone(Vial.ID)
-    self.assertIsNone(Vial.OrderMap)
+    self.assertEqual(Vial.ID, 53120)
+    self.assertIsNone(Vial.order_id)
 
   def test_TupleConstrution(self):
     testTuple = ('1', 'test', datetime.date(2021, 12, 10), '10:00:00', Decimal('10.00'), Decimal('10000.00'), 36066, None)
@@ -221,7 +222,7 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
     self.assertEqual(Vial.volume, 10)
     self.assertEqual(Vial.activity, 10000)
     self.assertEqual(Vial.ID, 36066)
-    self.assertIsNone(Vial.OrderMap)
+    self.assertIsNone(Vial.order_id)
 
   def test_ActivityOrderSQLFields(self):
     Expected = "deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, tracer, run, BID, batchnr, COID, frigivet_af, frigivet_amount, volume, frigivet_datetime, comment, username"

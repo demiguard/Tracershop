@@ -132,7 +132,7 @@ class VialPage extends Component {
         <td onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>  {vial.volume}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>{vial.activity}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customerName}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.OrderMap}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.order_map}</td>
       </tr>
     );
   }
@@ -164,7 +164,7 @@ class VialPage extends Component {
         case SearchOptions.OWNER:
           return invertedSearchFactor*(vial1.customer - vial2.customer);
         case SearchOptions.ORDER:
-          return invertedSearchFactor*(vial1.OrderMap - vial2.OrderMap)
+          return invertedSearchFactor*(vial1.order_map - vial2.order_map)
         default:
           throw "Unknown Searchpattern:" + this.state.SearchPattern
       }

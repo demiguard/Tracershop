@@ -1,5 +1,8 @@
 from enum import Enum, unique
 
+##### Python Specific constants #####
+# These constants are note shared with the frontend
+
 
 TRACERSHOPDATABASENAME = 'TS_test'
 
@@ -29,8 +32,28 @@ class EmailEvents(Enum):
   STATUS_SET_TO_3 = 1
   STATUS_SET_TO_0 = 2
 
+##### Test specific Constants #####
+# These keywords are only used in tests
+
+LEGACY_TABLES = {
+  "Roles",
+  "TracerCustomer",
+  "Tracers",
+  "UserRoles",
+  "Users",
+  "VAL",
+  "blockDeliverDate",
+  "deliverTimes",
+  "isotopes",
+  "orders",
+  "productionTimes",
+  "t_orders",
+  "tracer_types"
+}
+
+
 # Long list JSON key word used in Json messsages
-# These should have great overlap with production/frontend/src/lib/constants.js
+# These should have great overlap with the constants in production/frontend/src/lib/constants.js
 
 AUTH_USERNAME         = "username"
 AUTH_PASSWORD         = "password"
@@ -98,7 +121,7 @@ KEYWORD_ISOTOPE = "isotope"
 KEYWORD_LONG_NAME = "longName"
 KEYWORD_NAME = "name"
 KEYWORD_OID = "oid"
-KEYWORD_ORDERMAP = "OrderMap"
+KEYWORD_ORDER_ID = "order_id"
 KEYWORD_ORDER_BLOCK = "order_block"
 KEYWORD_OVERHEAD = "overhead"
 KEYWORD_PRODUCTION_ID = "PTID"

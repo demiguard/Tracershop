@@ -79,12 +79,11 @@ export default class App extends Component {
 
     this.state = state;
     this.MasterSocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
-    this.MasterSocket.send(
+    const promise = this.MasterSocket.send(
       this.MasterSocket.getMessage(
         WEBSOCKET_MESSAGE_GREAT_STATE
       )
     );
-
     this.setActivePage = this.setActivePage.bind(this);
 
     /**** AUTHENTICATION METHODS ****/
@@ -235,7 +234,6 @@ export default class App extends Component {
   }
 
   render() {
-    console.log(this.state)
     if (this.state[DATABASE_IS_AUTH]){ // User is logged in
       return (
         <div>
