@@ -452,7 +452,7 @@ class CustomerDataClass(JsonSerilizableDataClass):
   email3 : str
   email4 : str
   contact : str
-  tlf : str
+  tlf : int
   addr1 : str
   addr2 : str
   addr3 : str
@@ -464,6 +464,21 @@ class CustomerDataClass(JsonSerilizableDataClass):
     UpdatedFieldNames = LMAP(lambda field: "Users." + field, [field.name for field in fieldsNames])
 
     return ", ".join(UpdatedFieldNames)
+
+  @classmethod
+  def createDataClassQuery(cls, skeleton) -> str:
+    Fields = []
+    Values = []
+
+    for (k, v) in skeleton.items():
+      Fields.append(k)
+      Values.append(SerilizeToSQLValue(v))
+
+    Fields += cls.getExtraFields()
+    Values += cls.getExtraValues()
+
+    return f"""INSERT INTO Users({
+      ", ".join(map(str, Fields))}) VALUES ({", ".join(map(str,Values))})"""
 
   @staticmethod
   def getSQLTable():

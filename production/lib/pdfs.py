@@ -58,7 +58,7 @@ class MailTemplate(canvas.Canvas):
 
     y_cursor -= 15 # Move the Cursor Down
 
-    Customer_identification_lines = [Customer.Realname, Customer.contact,Customer.tlf, Customer.email]
+    Customer_identification_lines = [Customer.Realname, Customer.contact,str(Customer.tlf), Customer.email]
     max_text_length = 0
 
 
@@ -68,7 +68,7 @@ class MailTemplate(canvas.Canvas):
       max_text_length = max(max_text_length, len(line))
 
     Y_bot =  y_cursor + 10
-    
+
     line_width = 3
 
     encapsulating_x_line_start = x_cursor - line_width

@@ -6,6 +6,7 @@ import mysql.connector as mysql
 
 from api.models import Address, Database
 
+from asgiref.sync import sync_to_async
 from lib.SQL.SQLController import SQL
 
 from pprint import pprint
@@ -278,3 +279,7 @@ def DestroyTestDatabase(DatabaseConfig):
   """)
 
   conn.close()
+
+@sync_to_async
+def getModel(model, pk):
+  return model.objects.get(pk=pk)

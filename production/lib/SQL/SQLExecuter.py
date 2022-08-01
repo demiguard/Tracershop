@@ -87,7 +87,7 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
             FetchedVals = Wrapper.cursor.fetchone()
         if "FetchedVals" not in locals().keys() and fetch != Fetching.NONE:
           Wrapper.connection.rollback()
-          raise DatabaseInvalidQueriesConfiguration
+          raise DatabaseInvalidQueriesConfiguration(Query)
         Wrapper.connection.commit()
       except mysql.Error as Err:
         Wrapper.connection.rollback()

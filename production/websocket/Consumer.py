@@ -86,7 +86,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          needed to handle that message
     """
 
-    pprint(message)
+    #pprint(message)
     messageType  = message[WEBSOCKET_MESSAGE_TYPE]
     if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
       await self.HandleTheGreatStateMessage(message)

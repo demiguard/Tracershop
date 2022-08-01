@@ -37,11 +37,10 @@ class mail():
       "Realname",
       "Christoffer.vilstrup.Jensen@Regionh.dk",
       "Christoffer.vilstrup.Jensen@Regionh.dk",
-      "email3", 
-      "Christoffer.vilstrup.Jensen@Regionh.dk", 
-      "contact", "+45 20 99 05 50", "addr1", "addr2", "addr3", "addr4"
+      "email3",
+      "Christoffer.vilstrup.Jensen@Regionh.dk",
+      "contact", 20990550, "addr1", "addr2", "addr3", "addr4"
   )
-    
   test_order = ActivityOrderDataClass(
     datetime(1993,11,20,11,30), 9001,
     3, 100000, 120000, 200000, 240000,6,1,7,"Test Batch Nummer",-1,5,123456, 13.37,
