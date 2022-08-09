@@ -2,11 +2,12 @@ from django.test.runner import DiscoverRunner
 from django.test.utils import setup_databases as _setup_databases
 from django.apps import apps
 
+
 from pprint import pprint
 
 class CustomRunner(DiscoverRunner):
   def __init__(self, *args, **kwargs):
-    super().__init__(*args, **kwargs)
+    super().__init__()
 
   def setup_databases(self, aliases):
     pass

@@ -19,7 +19,7 @@ from channels.db import database_sync_to_async
 from datetime import datetime, date, timedelta
 from typing import Dict, List
 
-from api.models import ServerConfiguration
+from database.models import ServerConfiguration
 from constants import * # Import the many WEBSOCKET constants
 from lib import pdfs
 from lib.decorators import typeCheckfunc

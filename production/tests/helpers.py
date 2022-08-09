@@ -2,12 +2,14 @@
 
 """
 
+import functools
 import mysql.connector as mysql
 
-from api.models import Address, Database
+from database.models import Address, Database
 
 from asgiref.sync import sync_to_async
 from lib.SQL.SQLController import SQL
+from lib.SQL.SQLExecuter import Fetching, ExecuteQuery
 
 from pprint import pprint
 
@@ -283,3 +285,7 @@ def DestroyTestDatabase(DatabaseConfig):
 @sync_to_async
 def getModel(model, pk):
   return model.objects.get(pk=pk)
+
+@sync_to_async
+def async_ExecuteQuery(Query, fetching=Fetching.ALL):
+    return ExecuteQuery(Query, fetching)

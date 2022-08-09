@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
-from TracerAuth.models import User
+from database.models import User
 
 from lib.SQL.SQLController import SQL
 

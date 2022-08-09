@@ -17,10 +17,11 @@ import json
 from abc import abstractclassmethod
 from dataclasses import dataclass, asdict, fields, Field
 from datetime import datetime, date, time
+import re
 from typing import Dict, Optional, List, Any, get_args, get_origin, Union
 from constants import DATETIME_FORMAT, DATE_FORMAT, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
-from TracerAuth.models import User
+from database.models import User
 from lib.utils import LMAP
 from lib.SQL.SQLFormatter import SerilizeToSQLValue
 
@@ -115,10 +116,12 @@ class JsonSerilizableDataClass:
 
     for (k, v) in skeleton.items():
       Fields.append(k)
-      Values.append(SerilizeToSQLValue(v))
+      Values.append(SerilizeToSQLValue(v, NoneTypeRes="NULL"))
 
-    Fields += cls.getExtraFields()
-    Values += cls.getExtraValues()
+    for ExtraField, ExtraValue in zip(cls.getExtraFields(), cls.getExtraValues()):
+      if ExtraField not in Fields:
+        Fields.append(ExtraField)
+        Values.append(ExtraValue)
 
     return f"""INSERT INTO {cls.getSQLTable()}({
       ", ".join(map(str, Fields))}) VALUES ({", ".join(map(str,Values))})"""
@@ -162,7 +165,7 @@ class JsonSerilizableDataClass:
     """
 
     fieldValType = type(fieldVal)
-    if fieldValType == field.type:
+    if fieldValType == field.type or isinstance(fieldVal, field.type):
       self.__setattr__(field.name, fieldVal)
     elif get_origin(field.type) == Union:
       if fieldValType in get_args(field.type):
@@ -244,8 +247,8 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   BID : int
   batchnr : str
   COID : int
-  frigivet_af : int #id matching to OldDatabaseID
-  frigivet_amount : float
+  frigivet_af : Optional[int] #id matching to OldDatabaseID
+  frigivet_amount : Optional[float]
   volume : Optional[float]
   frigivet_datetime : Optional[datetime]
   comment : Optional[str]
@@ -335,18 +338,6 @@ class VialDataClass(JsonSerilizableDataClass):
   @classmethod
   def getSQLDateTime(cls) -> str:
     return "filldate"
-
-  @classmethod
-  def createDataClassQuery(cls, skeleton) -> str:
-    Fields = []
-    Values = []
-
-    for (k, v) in skeleton.items():
-      Fields.append(k)
-      Values.append(SerilizeToSQLValue(v))
-
-    return f"""INSERT INTO VAL({
-      ", ".join(map(str,Fields))}) VALUES ({", ".join(map(str, Values))})"""
 
   @classmethod
   def getIDField(cls) -> str:
@@ -474,9 +465,6 @@ class CustomerDataClass(JsonSerilizableDataClass):
       Fields.append(k)
       Values.append(SerilizeToSQLValue(v))
 
-    Fields += cls.getExtraFields()
-    Values += cls.getExtraValues()
-
     return f"""INSERT INTO Users({
       ", ".join(map(str, Fields))}) VALUES ({", ".join(map(str,Values))})"""
 
@@ -503,6 +491,8 @@ class EmployeeDataClass(JsonSerilizableDataClass):
     return cls(Username=user.username, OldTracerBaseID=user.OldTracerBaseID)
 
 
+
+# Data class constant mapping
 def findDataClass(dataType):
     if dataType == JSON_ACTIVITY_ORDER:
       dataClass = ActivityOrderDataClass

@@ -6,9 +6,9 @@ import { BooleanMapping } from "/src/lib/utils";
 import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "/src/lib/constants";
 import { renderTableRow } from "/src/lib/Rendering";
 
-export {ConfigPage}
+export {TracerPage}
 
-export default class ConfigPage extends Component {
+export default class TracerPage extends Component {
   constructor(props){
     super(props)
 

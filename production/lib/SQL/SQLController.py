@@ -17,14 +17,14 @@ from datetime import datetime, time, date
 from typing import Callable, Dict, List, Optional, Tuple, Type
 
 
-from api.models import ServerConfiguration, Database
+from database.models import ServerConfiguration, Database
 from lib.decorators import typeCheckfunc
 from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
 from lib.utils import LMAP
 
-from TracerAuth.models import User
+from database.models import User
 
 class SQL():
   """

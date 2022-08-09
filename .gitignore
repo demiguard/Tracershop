@@ -8,6 +8,8 @@ tracershop/customer/migrations/
 production/api/migrations/
 production/frontend/migrations/
 production/frontend/node_modules/
+production/database/migrations/
+production/TracerAuth/migrations
 *.sqlite3
 main.js
 main.js*
@@ -16,3 +18,4 @@ test_pdfs/
 pdfs/
 *.code-workspace
 legacy_code/
+.coverage

@@ -8,28 +8,30 @@ This means that this is an indirect test of:
     * ProductionDataclasses
     * ProductionJSON
 """
+from email import message
 from channels.auth import AuthMiddlewareStack
 from channels.routing import URLRouter, ProtocolTypeRouter
 from channels.testing import WebsocketCommunicator
 
 from django.core import serializers
 from django.core.asgi import get_asgi_application
-from django.test import TestCase
 from django.urls import re_path
+from django.test import TestCase
 
-from asgiref.sync import sync_to_async
+import datetime
 from json import loads
 from pprint import pprint
+from typing import Dict
 
-from api.models import ServerConfiguration
-from api.ModelsDir.NetworkModels import Address, Database
+from database.models import Address, Database, ServerConfiguration
 from constants import *
-from tests.test_DataClasses import * # This file standizes the dataclasses
-from lib.ProductionDataClasses import CustomerDataClass, DeliverTimeDataClass
-from lib.SQL.SQLExecuter import ExecuteQuery, ExecuteManyQueries, Fetching
+from lib.SQL.SQLExecuter import Fetching
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
+from lib.utils import LFILTER
+from tests.helpers import getModel, async_ExecuteQuery
+from tests.test_DataClasses import TEST_DATA_DICT, UseDataClass # This file standizes the dataclasses
 from websocket.DatabaseInterface import DatabaseInterface
 from websocket.Consumer import Consumer
-from tests.helpers import getModel
 
 django_asgi_app = get_asgi_application()
 
@@ -42,64 +44,137 @@ app = ProtocolTypeRouter({
   )
 })
 
+class FakeDatetime(datetime.datetime):
+  @classmethod
+  def now(cls):
+    return datetime.datetime(2012,10,11,11,22,33)
+
 
 
 #NOTE: that sadly the connection cannot be in a setup case,
 # due to it being in different event loop
 class ConsumerTestCase(TestCase):
-    message_id = 6942069
-    dbI = DatabaseInterface()
+  message_id = 6942069
+
+  async def _sendAndGetResponse(self, message : Dict):
+    comm = WebsocketCommunicator(app,"ws/")
+    conn, subprotocal = await comm.connect()
+    await comm.send_json_to(message)
+
+    response = await comm.receive_json_from()
+    await comm.disconnect()
+    return response
+
     # Dataclasses
-    async def test_connect_to_consumer(self):
-        comm = WebsocketCommunicator(app,"ws/")
-        conn, subprotocal = await comm.connect()
-        self.assertTrue(conn)
-        await comm.disconnect()
+  async def test_connect_to_consumer(self):
+      comm = WebsocketCommunicator(app,"ws/")
+      conn, subprotocal = await comm.connect()
+      self.assertTrue(conn)
+      await comm.disconnect()
 
-    async def test_echo(self):
-        comm = WebsocketCommunicator(app,"ws/")
-        conn, subprotocal = await comm.connect()
-        await comm.send_json_to({
-            WEBSOCKET_MESSAGE_ID : self.message_id,
-            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
-        })
+  async def test_echo(self):
+    response = await self._sendAndGetResponse({
+          WEBSOCKET_MESSAGE_ID : self.message_id,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
+      })
 
-        response = await comm.receive_json_from()
-        await comm.disconnect()
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_ECHO)
 
-    @UseDataClass(CustomerDataClass, DeliverTimeDataClass, IsotopeDataClass, RunsDataClass)
-    async def test_GreatState(self):
-        # Database setup
-        #await InsertCustomers()
+  @UseDataClass(ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass,
+      IsotopeDataClass, InjectionOrderDataClass, RunsDataClass, TracerDataClass,
+      VialDataClass)
+  async def test_GreatState(self):
+    response = await self._sendAndGetResponse({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE
+    })
+    self.assertEqual(self.message_id, response[WEBSOCKET_MESSAGE_ID])
+    #Validate
+    GreatState = response[JSON_GREAT_STATE]
+    # Decoding
+    address = [model.object for model in serializers.deserialize("json", GreatState[JSON_ADDRESS])]
+    database = [model.object for model in serializers.deserialize("json", GreatState[JSON_DATABASE])]
+    serverConfigMessage = [model.object for model in serializers.deserialize("json", GreatState[JSON_SERVER_CONFIG])]
+    #Legacy
+    #Dataclasses are double encoded.
+    Customers = [CustomerDataClass(**loads(loads(customerJson))) for customerJson in GreatState[JSON_CUSTOMER]]
+    DeliverTimes = [DeliverTimeDataClass(**loads(loads(deliverTimeJson))) for deliverTimeJson in GreatState[JSON_DELIVERTIME]]
+    Isotopes = [IsotopeDataClass(**loads(loads(isotopeJson))) for isotopeJson in GreatState[JSON_ISOTOPE]]
+    Runs = [RunsDataClass(**loads(loads(runsJson))) for runsJson in GreatState[JSON_RUN]]
+    Tracers = [TracerDataClass(**loads(loads(tracerJson))) for tracerJson in GreatState[JSON_TRACER]]
+    Orders = [ActivityOrderDataClass(**loads(loads(actorder))) for actorder in GreatState[JSON_ACTIVITY_ORDER]]
+    TOrders = [InjectionOrderDataClass(**loads(loads(injOrder))) for injOrder in GreatState[JSON_INJECTION_ORDER]]
+    Vials = [VialDataClass(**loads(loads(vial))) for vial in GreatState[JSON_VIAL]]
 
-        # Connection Setup
-        comm = WebsocketCommunicator(app,"ws/")
-        conn, subprotocal = await comm.connect()
-        # Test
-        await comm.send_json_to({
-            WEBSOCKET_MESSAGE_ID : self.message_id,
-            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE
-        })
-        response = await comm.receive_json_from()
-        GreatState = response[JSON_GREAT_STATE]
-        pprint(GreatState)
-        # Decoding
-        address = [model.object for model in serializers.deserialize("json", GreatState[JSON_ADDRESS])]
-        database = [model.object for model in serializers.deserialize("json", GreatState[JSON_DATABASE])]
-        serverConfig = [model.object for model in serializers.deserialize("json", GreatState[JSON_SERVER_CONFIG])]
-        #Legacy
-        #Dataclasses are double encoded.
-        Customers = [CustomerDataClass(**loads(loads(customerJson))) for customerJson in GreatState[JSON_CUSTOMER]]
 
-        # Validation
-        self.assertEqual(len(address),1)
-        self.assertEqual(len(database),1)
-        self.assertEqual(len(serverConfig),1)
-        self.assertEqual(address[0], await getModel(Address, 1))
-        self.assertEqual(database[0], await getModel(Database, "test_tracershop"))
-        self.assertEqual(serverConfig[0], await getModel(ServerConfiguration, 1))
+    serverConfig = await getModel(ServerConfiguration, 1)
+    now = datetime.datetime.now()
+    today = datetime.date.today()
+    startTime = now - datetime.timedelta(days=serverConfig.DateRange)
+    startDate = today - datetime.timedelta(days=serverConfig.DateRange)
+    endtime = now + datetime.timedelta(days=serverConfig.DateRange)
+    endDate = today + datetime.timedelta(days=serverConfig.DateRange)
+    # Validation
+    self.assertListEqual(address, [await getModel(Address, 1)])
+    self.assertListEqual(database, [await getModel(Database, "test_tracershop")])
+    self.assertListEqual(serverConfigMessage, [serverConfig])
 
-        self.assertListEqual(Customers, testCustomers)
+    self.assertListEqual(Customers, TEST_DATA_DICT[CustomerDataClass])
+    self.assertListEqual(DeliverTimes, TEST_DATA_DICT[DeliverTimeDataClass])
+    self.assertListEqual(Isotopes, TEST_DATA_DICT[IsotopeDataClass])
+    self.assertListEqual(Runs, TEST_DATA_DICT[RunsDataClass])
+    self.assertListEqual(Tracers, TEST_DATA_DICT[TracerDataClass])
 
-        # Database Teardown
-        #await RemoveCustomers()
+    # Date Sensitive information
+    correctActivityOrders = LFILTER(
+      lambda order: startTime < order.deliver_datetime and
+         order.deliver_datetime < endtime, TEST_DATA_DICT[ActivityOrderDataClass])
+    self.assertListEqual(Orders, correctActivityOrders)
+
+    correctInjectionOrders = LFILTER(
+      lambda order: startTime < order.deliver_datetime and
+         order.deliver_datetime < endtime, TEST_DATA_DICT[InjectionOrderDataClass])
+    self.assertListEqual(TOrders, correctInjectionOrders)
+
+    correctVials = LFILTER(lambda order: startDate < order.filldate and
+         order.filldate < endDate, TEST_DATA_DICT[VialDataClass])
+    self.assertListEqual(Vials, correctVials)
+
+  ##### Create Order #####
+  @UseDataClass(VialDataClass) # Added these to avoid an empty Vial database
+  async def test_createVial(self):
+    # Test
+    response = await self._sendAndGetResponse({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+      WEBSOCKET_DATATYPE : JSON_VIAL,
+      WEBSOCKET_DATA : {
+        KEYWORD_CUSTOMER : 1,
+        KEYWORD_CHARGE : "Test Charge",
+        KEYWORD_FILLDATE : "2022-08-01",
+        KEYWORD_FILLTIME : "06:32:11",
+        KEYWORD_VOLUME : 13.37,
+        KEYWORD_ACTIVITY : 13337
+      }
+    })
+
+    # Get side effects
+    JsonVial = loads(loads(response[WEBSOCKET_DATA]))
+    Vial = await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.ONE)
+
+    ResponseVial = VialDataClass.fromDict(JsonVial)
+    DatabaseVial = VialDataClass(*Vial)
+
+    # Asserting
+    self.assertEqual(ResponseVial, DatabaseVial)
+    self.assertEqual(response[WEBSOCKET_DATATYPE], JSON_VIAL)
+    self.assertEqual(response[WEBSOCKET_DATA_ID], "ID")
+    self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE],WEBSOCKET_MESSAGE_CREATE_DATA_CLASS)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+
+    #Clean up
+    await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.NONE)
+
+    # Edit Orders
+

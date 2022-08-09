@@ -2,7 +2,6 @@
   width: 20em;
   margin: 6em;
   border: 2px;
-  
   border-color: var(--secondary-color-1);
   border-style: solid;
   border-radius: 10px;
@@ -10,7 +9,6 @@
 
 .AuthenticationBoxNoFit {
   border: 2px;
-  
   border-color: var(--secondary-color-1);
   border-style: solid;
   border-radius: 10px;

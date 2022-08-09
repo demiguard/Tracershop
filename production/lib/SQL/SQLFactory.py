@@ -17,7 +17,7 @@ from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass,
 from lib.Formatting import dateConverter, mergeDateAndTime
 from lib.utils import LMAP
 
-from TracerAuth.models import User
+from database.models import User
 
 def getElement(ID: int, dataClass) -> str:
   Query = f"""SELECT

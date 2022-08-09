@@ -10,7 +10,7 @@ import constants
 from constants import EmailEvents
 
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
-from api.models import ServerConfiguration
+from database.models import ServerConfiguration
 
 from smtplib import SMTP
 from email import encoders

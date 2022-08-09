@@ -64,7 +64,18 @@ nav {
 }
 
 .OpenDate {
-
   border-color: var(--grey-4) !important;
   background-color: var(--grey-4) !important;
+}
+
+body {
+  min-height: 100vh;
+}
+
+#main {
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
 }

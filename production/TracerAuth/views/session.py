@@ -5,7 +5,7 @@ from django.utils.decorators import method_decorator
 
 from lib.ProductionJSON import ProductionJSONResponse
 from lib.Formatting import ParseJSONRequest
-from TracerAuth.models import User
+from database.models import User
 from constants import AUTH_IS_AUTHENTICATED
 
 class AuthSession(View):

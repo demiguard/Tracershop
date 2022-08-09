@@ -1,0 +1,12 @@
+.ErrorContainer {
+  border-style: solid !important;
+  border-color: black !important;
+  border-left: 2px;
+  border-right: 2px;
+  border-top: 0;
+  border-bottom: 0;
+  min-height: 100vh;
+  box-shadow: 3px 3px 6px 6px #888888;
+
+}
+

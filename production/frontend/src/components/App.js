@@ -3,13 +3,14 @@ import {Button, Container} from "react-bootstrap";
 
 import { getSession, handlePasswordChange, handleUserNameChange, isResponseOk, login_auth, login, logout } from "/src/lib/authentication.js"
 import { Navbar } from "/src/components/injectables/Navbar.js";
-import { ConfigPage } from "/src/components/pages/ConfigPage.js";
+import { TracerPage } from "/src/components/pages/TracerPage.js";
 import { OrderPage } from '/src/components/pages/OrderPage.js';
 import { CustomerPage } from "/src/components/pages/CustomerPage.js";
 import { EmailSetupPage } from "/src/components/pages/EmailSetupPage.js";
 import { ServerConfigPage } from "/src/components/pages/ServerConfig.js";
 import { Authenticate } from "/src/components/injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
+import { ErrorPage } from "/src/components/pages/ErrorPage.js";
 import { get as getCookie } from 'js-cookie';
 import { CloseDaysPage } from "/src/components/pages/CloseDaysPage";
 import { VialPage } from "/src/components/pages/VialPage.js";
@@ -29,7 +30,7 @@ export {App}
 const Pages = {
   Ordre : OrderPage,
   Kunder : CustomerPage,
-  Tracers : ConfigPage,
+  Tracers : TracerPage,
   Email : EmailSetupPage,
   Lukkedage : CloseDaysPage,
   Vial : VialPage,
@@ -61,7 +62,9 @@ export default class App extends Component {
       activePage : OrderPage,
       username        : "",
       password        : "",
-      error           : "",
+      login_error           : "",
+      site_error : "",
+      site_error_info : "",
     };
     state[DATABASE_IS_AUTH] = isAuth,
     state[DATABASE_ADDRESS] = address,
@@ -102,6 +105,19 @@ export default class App extends Component {
     });
     this.getSession();
   }
+
+  //static getDerivedStateFromError(error) {
+  //  console.log(error)
+  //  return {site_error : error}
+  //}
+
+  componentDidCatch(Error, errorInfo){
+    this.setState({...this.state,
+      site_error : Error,
+      site_error_info : errorInfo,
+    })
+  }
+
 
   getDatabaseMap(databaseField){
     var dbmap = db.get(databaseField);
@@ -234,15 +250,24 @@ export default class App extends Component {
   }
 
   render() {
-    if (this.state[DATABASE_IS_AUTH]){ // User is logged in
-      return (
+    var RenderedObject;
+
+    if (this.state.site_error){
+      return (<ErrorPage
+        SiteError={this.state.site_error}
+        SiteErrorInfo={this.state.site_error_info}
+      />);
+    }
+    if (this.state[DATABASE_IS_AUTH]) {
+      RenderedObject = (
         <div>
         <Navbar
           Names={Object.keys(Pages)}
           setActivePage={this.setActivePage}
           username={this.state.username}
           logout={this.logout}
-          isAuthenticated={this.state[DATABASE_IS_AUTH]}/>
+          isAuthenticated={this.state[DATABASE_IS_AUTH]}
+        />
         <Container className="navBarSpacer">
           <this.state.activePage
             username={this.state.username}
@@ -260,31 +285,35 @@ export default class App extends Component {
             vials={this.state.vial}
             websocket={this.MasterSocket}
           />
-        </Container>
-      </div>
-    );
+      </Container>
+      </div>);
     } else {
-      return (
+      RenderedObject = (
         <div>
           <Navbar
             Names={[]}
             setActivePage={() => {}}
             username={this.state.username}
             isAuthenticated={this.state[DATABASE_IS_AUTH]}
-            logout={this.logout}/>
+            logout={this.logout}
+          />
           <Container className="navBarSpacer">
             <Authenticate
               login_message="Log in"
               authenticate={this.login_auth.bind(this)}
-              ErrorMessage={this.state.error}
+              ErrorMessage={this.state.login_error}
               fit_in={true}
               websocket={this.websocket}
             />
           </Container>
         </div>
-      )
-    }
+        );
+      }
+
+
+    return RenderedObject
   }
 }
+
 
 

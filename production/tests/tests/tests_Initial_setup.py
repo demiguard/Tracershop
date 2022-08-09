@@ -9,7 +9,7 @@ import mysql.connector as mysql
 from django.test import TestCase
 from django import db
 
-from api.models import Database, Address, ServerConfiguration
+from database.models import Database, Address, ServerConfiguration
 from lib.SQL import SQLExecuter
 from lib.SQL.SQLController import SQL
 import constants

@@ -8,7 +8,7 @@ import logging
 # User packages:
 import constants
 from lib.SQL.SQLFormatter import checkForSQLInjection
-from api.models import Database, ServerConfiguration
+from database.models import Database, ServerConfiguration
 from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect, DatabaseInvalidQueriesConfiguration
 
 __author__ = "Christoffer Vilstrup Jensen"

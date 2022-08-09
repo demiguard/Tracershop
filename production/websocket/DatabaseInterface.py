@@ -1,3 +1,5 @@
+
+
 """
   This class is support to contain all the functions,
   that makes SQL calls to the database. This is in an attempt to clean up the Consumer
@@ -14,12 +16,11 @@ from xmlrpc.client import Boolean
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 
-from api.models import ServerConfiguration, Database, Address
+from database.models import ServerConfiguration, Database, Address, User
 from lib.decorators import typeCheckfunc
 from lib.SQL.SQLController import SQL
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib import pdfs
-from TracerAuth.models import User
 
 
 from datetime import datetime, date, timedelta
