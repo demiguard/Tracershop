@@ -5,7 +5,7 @@
 import functools
 import mysql.connector as mysql
 
-from database.models import Address, Database
+from database.models import Address, Database, User, UserGroups
 
 from asgiref.sync import sync_to_async
 from lib.SQL.SQLController import SQL
@@ -14,6 +14,13 @@ from lib.SQL.SQLExecuter import Fetching, ExecuteQuery
 from pprint import pprint
 
 __author__ = "Christoffer Vilstrup Jensen"
+
+
+TEST_ADMIN_USERNAME = "test_admin"
+TEST_ADMIN_PASSWORD = "test_admin_password"
+
+TEST_PRODUCTION_USERNAME = "test_production"
+TEST_PRODUCTION_PASSWORD = "test_production_password"
 
 
 def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
@@ -31,6 +38,14 @@ def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
     ).save()
 
   SC = SQL.getServerConfig()
+
+  test_admin = User(id=1, username=TEST_ADMIN_USERNAME, UserGroup=UserGroups.Admin, OldTracerBaseID=1337)
+  test_admin.set_password(TEST_ADMIN_PASSWORD)
+  test_admin.save()
+
+  test_production = User(id=2, username=TEST_PRODUCTION_USERNAME, UserGroup=UserGroups.Production, OldTracerBaseID=420)
+  test_production.set_password(TEST_PRODUCTION_PASSWORD)
+  test_production.save()
 
 
 def CreateTestDatabase(DatabaseConfig):
@@ -139,7 +154,8 @@ def CreateTestDatabase(DatabaseConfig):
       addr2 VARCHAR(60),
       addr3 VARCHAR(60),
       addr4 VARCHAR(60),
-      shortname VARCHAR(30)
+      shortname VARCHAR(30),
+      password VARCHAR(32)
     )
   """)
 

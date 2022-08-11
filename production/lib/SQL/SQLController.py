@@ -197,7 +197,11 @@ class SQL():
 
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
-    return cls.__Execute(SQLFactory.authenticateUser, EmployeeDataClass, Fetching.ONE, username, password)[0]
+    try:
+      Employee = cls.__Execute(SQLFactory.authenticateUser, EmployeeDataClass, Fetching.ONE, username, password)[0]
+    except IndexError:
+      return None
+    return Employee
 
   @classmethod
   def createGhostOrder(

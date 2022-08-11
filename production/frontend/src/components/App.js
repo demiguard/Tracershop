@@ -12,6 +12,7 @@ import { Authenticate } from "/src/components/injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
 import { ErrorPage } from "/src/components/pages/ErrorPage.js";
 import { get as getCookie } from 'js-cookie';
+import Cookies from "js-cookie";
 import { CloseDaysPage } from "/src/components/pages/CloseDaysPage";
 import { VialPage } from "/src/components/pages/VialPage.js";
 import { db } from "/src/lib/localStorageDriver.js";
@@ -21,8 +22,14 @@ import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DE
         JSON_EMPLOYEE, JSON_ISOTOPE, JSON_RUN, JSON_SERVER_CONFIG, JSON_TRACER,
         JSON_INJECTION_ORDER, JSON_VIAL, WEBSOCKET_MESSAGE_GREAT_STATE, DATABASE_ACTIVITY_ORDER, DATABASE_ADDRESS, DATABASE_CUSTOMER, DATABASE_DATABASE,
         DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE,
-        DATABASE_IS_AUTH, DATABASE_PRODUCTION,
-        DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL } from "/src/lib/constants.js";
+        DATABASE_IS_AUTH, DATABASE_PRODUCTION, KEYWORD_USERGROUP, USERGROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
+        DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+        AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_USER
+
+      } from "/src/lib/constants.js";
+import { AdminSite } from "./sites/AdminSite";
+import { ProductionSite } from "./sites/productionSite";
+import { ShopSite } from "./sites/ShopSite";
 
 
 export {App}
@@ -35,13 +42,14 @@ const Pages = {
   Lukkedage : CloseDaysPage,
   Vial : VialPage,
   Indstillinger : ServerConfigPage,
-}
+};
+
 
 export default class App extends Component {
   constructor(props) {
     super(props);
     // Init old state
-    var isAuth = db.get(DATABASE_IS_AUTH) ? true : false;
+
     const address  = this.getDatabaseMap(DATABASE_ADDRESS);
     const customer = this.getDatabaseMap(DATABASE_CUSTOMER);
     const databases = this.getDatabaseMap(DATABASE_DATABASE);
@@ -52,17 +60,12 @@ export default class App extends Component {
     const runs      = this.getDatabaseMap(DATABASE_PRODUCTION);
     const t_orders  = this.getDatabaseMap(DATABASE_INJECTION_ORDER);
     const tracers   = this.getDatabaseMap(DATABASE_TRACER);
-    var ServerConfig = db.get(DATABASE_SERVER_CONFIG);
-    if(!ServerConfig){
-      ServerConfig = undefined;
-    }
+    const ServerConfig = this.getDatabaseObject(DATABASE_SERVER_CONFIG);
+    const user      = this.getDatabaseObject(DATABASE_USER)
     const vials     = this.getDatabaseMap(DATABASE_VIAL);
 
     const state = {
-      activePage : OrderPage,
-      username        : "",
-      password        : "",
-      login_error           : "",
+      login_error : "",
       site_error : "",
       site_error_info : "",
     };
@@ -79,6 +82,11 @@ export default class App extends Component {
     state[DATABASE_TRACER] = tracers,
     state[DATABASE_SERVER_CONFIG] = ServerConfig,
     state[DATABASE_VIAL] = vials,
+    state[DATABASE_USER] = (user) ? user : {
+      username : "",
+      usergroup : USERGROUPS.ANON,
+      customer : [],
+    }
 
     this.state = state;
     this.MasterSocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
@@ -87,29 +95,102 @@ export default class App extends Component {
         WEBSOCKET_MESSAGE_GREAT_STATE
       )
     );
-    this.setActivePage = this.setActivePage.bind(this);
 
     /**** AUTHENTICATION METHODS ****/
-    this.getSession = getSession.bind(this);
+    //this.getSession = getSession.bind(this);
     //this.handlePasswordChange = handlePasswordChange.bind(this);
     //this.handleUserNameChange = handleUserNameChange.bind(this);
-    this.isResponseOk = isResponseOk.bind(this);
-    this.login_auth = login_auth.bind(this);
+    //this.isResponseOk = isResponseOk.bind(this);
+    //this.login_auth = login_auth.bind(this);
     //this.login = login.bind(this);
-    this.logout = logout.bind(this);
+    //this.logout = logout.bind(this);
 
     ajaxSetup({
       headers: {
         "X-CSRFToken": getCookie("csrftoken")
       }
     });
-    this.getSession();
+    this.whoami();
   }
 
-  //static getDerivedStateFromError(error) {
-  //  console.log(error)
-  //  return {site_error : error}
-  //}
+  // Authentication Methods
+  login(username, password){
+    const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGIN);
+    const auth = {}
+    auth[AUTH_USERNAME] = username
+    auth[AUTH_PASSWORD] = password
+    message[JSON_AUTH] = auth;
+    this.MasterSocket.send(message).then((data) => {
+      if (data[AUTH_IS_AUTHENTICATED]){
+        const user = {
+          username  : data[AUTH_USERNAME],
+          usergroup : data[KEYWORD_USERGROUP],
+          customers : data[KEYWORD_CUSTOMER],
+        }
+
+        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite : 'strict'})
+        const newState = {...this.state,
+          user : user,
+        };
+        newState[DATABASE_IS_AUTH] = true;
+
+        this.setState(newState);
+      } else {
+        const newState = {...this.state,
+          login_message : "Forkert Login",
+        }
+      }
+    })
+  }
+
+  logout(){
+    const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGOUT);
+    this.MasterSocket.send(message).then((data) => {
+      db.set(DATABASE_IS_AUTH, false);
+      const newState = {...this.state,
+        user : {
+          username : "",
+          usergroup : 0,
+          customers : data[KEYWORD_CUSTOMER],
+        },
+        activeUserGroup : 0,
+      };
+      newState[DATABASE_IS_AUTH] = false;
+      this.setState(newState);
+    })
+  }
+
+  whoami(){
+    const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI)
+    this.MasterSocket.send(message).then((data) => {
+      if (data[AUTH_IS_AUTHENTICATED]){
+        db.set(DATABASE_IS_AUTH, true)
+        const newState = {...this.state,
+          user : {
+            username : data[AUTH_USERNAME],
+            usergroup : data[KEYWORD_USERGROUP],
+            customers : data[KEYWORD_CUSTOMER],
+          },
+          activeUserGroup : data[KEYWORD_USERGROUP],
+
+        };
+        newState[DATABASE_IS_AUTH] = true;
+
+        this.setState(newState);
+      } else {
+        db.set(DATABASE_IS_AUTH, false);
+        const newState = {...this.state,
+          user : {
+            username : "",
+            usergroup : 0,
+            customers : data[KEYWORD_CUSTOMER],
+          },
+          activeUserGroup : 0,
+        };
+        newState[DATABASE_IS_AUTH] = false;
+      }
+    })
+  }
 
   componentDidCatch(Error, errorInfo){
     this.setState({...this.state,
@@ -118,7 +199,6 @@ export default class App extends Component {
     })
   }
 
-
   getDatabaseMap(databaseField){
     var dbmap = db.get(databaseField);
     if(!dbmap){
@@ -126,6 +206,13 @@ export default class App extends Component {
     }
     return dbmap;
   }
+
+  getDatabaseObject(databaseField){
+    var dbObject = db.get(databaseField)
+    if (!dbObject) return undefined
+    return dbObject
+  }
+
 
   /********* Websocket Methods *********/
   // These methods are invoked by the websocket
@@ -240,13 +327,7 @@ export default class App extends Component {
   }
 
   componentDidMount() {
-    this.getSession();
-  }
-
-  setActivePage(NewPageName) {
-    const NewPage = Pages[NewPageName];
-    const NewState = {...this.state, activePage : NewPage};
-    this.setState(NewState);
+    //this.getSession();
   }
 
   render() {
@@ -258,19 +339,61 @@ export default class App extends Component {
         SiteErrorInfo={this.state.site_error_info}
       />);
     }
+    if(this.state.user == undefined || this.state.user.usergroup == 0){
+      return (<div>
+        <Navbar
+          Names={[]}
+          setActivePage={() => {}}
+          isAuthenticated={false}
+          logout={this.logout}
+        />
+        <Container className="navBarSpacer">
+          <Authenticate
+            login_message="Log in"
+            authenticate={this.login.bind(this)}
+            ErrorMessage={this.state.login_error}
+            fit_in={true}
+          />
+        </Container>
+      </div>)
+    }
+    if(this.state.user.usergroup == 1){
+      return (<AdminSite
+        logout={this.logout}
+        user={this.state.user}
+      />);
+    }
+    if(this.state.user.usergroup in [2,3]){
+      return (<ProductionSite
+        logout={this.logout}
+        user={this.state.user}
+      />);
+    }
+    if(this.state.user.usergroup in [4,5,6]){
+      return (<ShopSite
+        logout={this.logout}
+        user={this.state.user}
+      />)
+    } else {
+      const errorMessage = "User have unknown usergroup:" + String(this.state.user.usergroup)
+      throw errorMessage;
+    }
+
+
+    /*
     if (this.state[DATABASE_IS_AUTH]) {
       RenderedObject = (
         <div>
         <Navbar
           Names={Object.keys(Pages)}
           setActivePage={this.setActivePage}
-          username={this.state.username}
+          username={this.state.user.username}
           logout={this.logout}
           isAuthenticated={this.state[DATABASE_IS_AUTH]}
         />
         <Container className="navBarSpacer">
           <this.state.activePage
-            username={this.state.username}
+            username={this.state.user.username}
             address={this.state.address}
             customer={this.state.customer}
             database={this.state.database}
@@ -293,14 +416,14 @@ export default class App extends Component {
           <Navbar
             Names={[]}
             setActivePage={() => {}}
-            username={this.state.username}
+            username={this.state.user.username}
             isAuthenticated={this.state[DATABASE_IS_AUTH]}
             logout={this.logout}
           />
           <Container className="navBarSpacer">
             <Authenticate
               login_message="Log in"
-              authenticate={this.login_auth.bind(this)}
+              authenticate={this.login.bind(this)}
               ErrorMessage={this.state.login_error}
               fit_in={true}
               websocket={this.websocket}
@@ -309,9 +432,8 @@ export default class App extends Component {
         </div>
         );
       }
-
-
     return RenderedObject
+    */
   }
 }
 

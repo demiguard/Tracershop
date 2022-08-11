@@ -20,6 +20,16 @@ export const DAYS_OBJECTS = [
   {name : "Søndag", day : 7},
 ]
 
+export const USERGROUPS = {
+  ANON : 0,
+  ADMIN : 1,
+  PRODUCTION_ADMIN : 2,
+  PRODUCTION_USER : 3,
+  SHOP_ADMIN : 4,
+  SHOP_USER : 5,
+  SHOP_EXTERNAL : 6
+}
+
 
 // Shared Constants
 
@@ -29,6 +39,7 @@ export const AUTH_DETAIL           = "detail";
 export const AUTH_IS_AUTHENTICATED = "isAuthenticated";
 
 // JSON - refers to a keyword in a json object
+export const JSON_AUTH = "auth"
 export const JSON_ACTIVITY_ORDER = "orders";
 export const JSON_ACTIVE_DATABASE = "active_database";
 export const JSON_ADDRESS  = "address";
@@ -103,6 +114,7 @@ export const KEYWORD_TOTAL_AMOUNT_O = "total_amount_o";
 export const KEYWORD_TRACER = "tracer";
 export const KEYWORD_TRACER_TYPE = "tracer_type";
 export const KEYWORD_USAGE = "anvendelse";
+export const KEYWORD_USERGROUP = "usergroup"
 export const KEYWORD_USERNAME = "username";
 export const KEYWORD_VOLUME = "volume";
 
@@ -110,22 +122,26 @@ export const KEYWORD_VOLUME = "volume";
 export const WEBSOCKET_DATA                 = "data";
 export const WEBSOCKET_DATATYPE             = "datatype";
 export const WEBSOCKET_DATA_ID              = "dataID";
-export const WEBSOCKET_DEAD_ORDERS     = "deadOrders";
+export const WEBSOCKET_DEAD_ORDERS          = "deadOrders";
 export const WEBSOCKET_DATE                 = "date";
+export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login"
+export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout"
+export const WEBSOCKET_MESSAGE_AUTH_WHOAMI  = "whoami"
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
+export const WEBSOCKET_MESSAGE_ECHO         = "echo";
 export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState";
 export const WEBSOCKET_MESSAGE_FREE_ORDER   = "freeOrder";
 export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState";
 export const WEBSOCKET_MESSAGE_ID           = "messageID"
+export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
 export const WEBSOCKET_MESSAGE_RECIEVE_VIAL = "recieveVial";
 export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
 export const WEBSOCKET_MESSAGE_UPDATEORDERS = "updateOrder";
 export const WEBSOCKET_SEND_EVENT           = "sendEvent";
 export const WEBSOCKET_EVENT_TYPE           = "type";
-export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
-export const WEBSOCKET_MESSAGE_ECHO         = "echo";
 export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
+export const WEBSOCKET_SESSION_ID           = "sessionid"
 export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
 
 // Javascript unique constants
@@ -146,3 +162,4 @@ export const DATABASE_TODAY = "today";
 export const DATABASE_TRACER = JSON_TRACER;
 export const DATABASE_SERVER_CONFIG = "serverConfig";
 export const DATABASE_VIAL = JSON_VIAL;
+export const DATABASE_USER = "user"

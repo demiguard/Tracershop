@@ -9,13 +9,18 @@ Note: This module doesn't scale at large, simply because all users are in
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
-from turtle import tracer, update
+from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
 from django.core.serializers import serialize
+from django.contrib.sessions.models import Session
+from django.contrib.sessions.backends.db import SessionStore
+from django.http import HttpRequest
+from django.middleware import csrf
 
-from asgiref.sync import async_to_sync
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from channels.auth import login, get_user, logout
 from channels.db import database_sync_to_async
 
+from asgiref.sync import sync_to_async
 from datetime import datetime, date, timedelta
 from typing import Dict, List
 
@@ -28,6 +33,7 @@ from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
 from lib.utils import LMAP
+from TracerAuth import auth
 
 from websocket.DatabaseInterface import DatabaseInterface
 
@@ -44,6 +50,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
   def __init__(self, db = DatabaseInterface()):
     super().__init__()
     self.db = db
+    self.sessionStore = SessionStore()
 
   ### --- JSON methods --- ###
   @classmethod
@@ -56,7 +63,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ### --- Websocket methods --- ####
   async def connect(self):
-    self.user = self.scope["user"]
     self.groups.append(self.global_group)
 
     await self.channel_layer.group_add(
@@ -86,8 +92,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          needed to handle that message
     """
 
-    #pprint(message)
     messageType  = message[WEBSOCKET_MESSAGE_TYPE]
+    if not auth.AuthMessage(self.scope['user'], messageType):
+      await self.HandleInsufficientPermissions(message)
+      return
     if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
       await self.HandleTheGreatStateMessage(message)
     elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
@@ -106,6 +114,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await self.HandleEditState(message)
     elif messageType == WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
       await self.HandleDeleteDataClass(message)
+    elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGIN:
+      await self.handleLogin(message)
+    elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGOUT:
+      await self.handleLogout(message)
+    elif messageType == WEBSOCKET_MESSAGE_AUTH_WHOAMI:
+      await self.handleWhoAmI(message)
+
 
   async def sendEvent(self, event: Dict):
     """
@@ -118,6 +133,70 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
     })
+
+  ##### AUTH METHODS #####
+  async def handleLogin(self, message):
+    auth = message[JSON_AUTH]
+    username = auth[AUTH_USERNAME]
+    password = auth[AUTH_PASSWORD]
+    user = await sync_to_async(authenticate)(username=username, password=password)
+    if user:
+      isAuth = True
+      await login(self.scope, user)
+      await sync_to_async(self.scope["session"].save)()
+      key = self.scope["session"].session_key
+      usergroup = user.UserGroup
+      customer = []
+    else:
+      isAuth = False
+      username = ""
+      usergroup = 0
+      key = ""
+      customer = []
+
+    await self.send_json({
+      AUTH_USERNAME : username,
+      KEYWORD_USERGROUP : usergroup,
+      KEYWORD_CUSTOMER : customer,
+      AUTH_IS_AUTHENTICATED : isAuth,
+      WEBSOCKET_SESSION_ID : key,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+    })
+
+  async def handleWhoAmI(self, message):
+    user = await get_user(self.scope)
+    if isinstance(user, User):
+      username = user.username
+      isAuth = True
+      usergroup = user.UserGroup
+      #queryCustomers = await database_sync_to_async(user.Customer.all)()
+      customer = []
+    else:
+      isAuth = False
+      username = ""
+      usergroup = 0
+      customer = []
+
+    await self.send_json({
+      AUTH_USERNAME : username,
+      KEYWORD_USERGROUP : usergroup,
+      KEYWORD_CUSTOMER : customer,
+      AUTH_IS_AUTHENTICATED : isAuth,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+    })
+
+
+  async def handleLogout(self, message):
+    await logout(self.scope)
+    await sync_to_async(self.scope['session'].save)()
+    await self.send_json({
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+    })
+
+  ##### END Auth methods
 
   async def HandleTheGreatStateMessage(self, message):
     """This function is responsible for sending back the state,
@@ -200,14 +279,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
         KEYWORD_TRACER : spooky_skeleton[KEYWORD_TRACER],
         KEYWORD_RUN : spooky_skeleton[KEYWORD_RUN],
         KEYWORD_BID : spooky_skeleton[KEYWORD_BID],
-        KEYWORD_USERNAME : self.user.username
+        KEYWORD_USERNAME : self.scope['user'].username
       }
       dataClass = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
     if message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
       skeleton = message[WEBSOCKET_DATA]
       deliver_datetime = toDateTime(skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
       skeleton[KEYWORD_DELIVER_DATETIME] = deliver_datetime
-      skeleton[KEYWORD_USERNAME] = self.user.username
+      skeleton[KEYWORD_USERNAME] = self.scope['user'].username
       dataClass = await self.db.createDataClass(skeleton, InjectionOrderDataClass)
     # Checking for unhandled case
     if 'dataClass' not in locals():
@@ -238,7 +317,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       PrimaryVial = Vials[0]
       free_datetime = datetime.now()
       Order.status = 3
-      Order.frigivet_af = self.user.OldTracerBaseID
+      Order.frigivet_af = self.scope['user'].OldTracerBaseID
       Order.frigivet_amount = PrimaryVial.activity
       Order.frigivet_datetime =  free_datetime
       Order.volume = PrimaryVial.volume
@@ -247,7 +326,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       PrimaryVial.order_id = Order.oid
       await self.db.updateDataClass(PrimaryVial)
       updatedVials.append(PrimaryVial)
-      DependantOrders = await self.db.freeDependantOrders(Order, self.user)
+      DependantOrders = await self.db.freeDependantOrders(Order, self.scope['user'])
       if DependantOrders:
         updateOrders.append(DependantOrders)
 
@@ -263,7 +342,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
           KEYWORD_RUN : Order.run,
           KEYWORD_COID : -1, #Could argue Order.oid
           KEYWORD_BATCHNR : Vial.charge,
-          KEYWORD_FREED_BY : self.user.OldTracerBaseID,
+          KEYWORD_FREED_BY : self.scope['user'].OldTracerBaseID,
           KEYWORD_FREED_AMOUNT : Vial.activity,
           KEYWORD_VOLUME : Vial.volume,
           KEYWORD_FREED_DATETIME : free_datetime,
@@ -271,7 +350,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
           KEYWORD_USERNAME : Order.username
         }
         newOrder = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
-        #newOrder = await self.db.createVialOrder(Vial, Order, tracerID, self.user)
         Vial.order_id = newOrder.oid
         await self.db.updateDataClass(Vial)
         updatedVials.append(Vial)
@@ -326,7 +404,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       amount_total_o = float(GhostOrderSkeleton["GhostOrderActivityOverhead"])
       Tracer = await self.db.getElement(GhostOrderSkeleton["Tracer"], TracerDataClass)
       run = int(GhostOrderSkeleton["GhostOrderRun"])
-      username = self.user.username
+      username = self.scope['user'].username
 
       GhostOrder = await self.db.createGhostOrder(
         deliverTime,
@@ -388,6 +466,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
   @typeCheckfunc
   async def HandleUpdateServerConfig(self, message : Dict):
     pass
+
+  async def HandleInsufficientPermissions(self, message: Dict):
+    await self.send_json({
+
+    })
 
   @typeCheckfunc
   async def HandleEditState(self, message : Dict):

@@ -8,7 +8,7 @@ export default class Navbar extends Component {
       <NavbarElement
         key={this.props.Names[i]}
         content={this.props.Names[i]}
-        onClick={() => this.props.setActivePage(this.props.Names[i])} 
+        onClick={() => this.props.setActivePage(this.props.Names[i])}
       />
     );
   }
@@ -16,7 +16,6 @@ export default class Navbar extends Component {
 
   render() {
     var  Elements = [];
-    
     for(let i = 0; i < this.props.Names.length; i++) {
       Elements.push(this.renderElement(i));
     }

@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'database.apps.DatabaseConfig',
     'tests.apps.TestConfig',
     'api.apps.ApiConfig',
     'frontend.apps.FrontendConfig',
@@ -123,7 +124,7 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "database.User"
 
 AUTHENTICATION_BACKENDS = ['TracerAuth.backend.TracershopAuthenticationBackend']
 

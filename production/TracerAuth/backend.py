@@ -1,6 +1,6 @@
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
-from database.models import User
+from database.models import User, UserGroups
 
 from lib.SQL.SQLController import SQL
 
@@ -18,7 +18,7 @@ class TracershopAuthenticationBackend(BaseBackend):
   def get_user_from_old_database(self, username, password):
     valid_old_user = self.SQL.authenticateUser(username, password)
     if valid_old_user:
-      user = User(username=username, OldTracerBaseID=valid_old_user.OldTracerBaseID)
+      user = User(username=username, OldTracerBaseID=valid_old_user.OldTracerBaseID, UserGroup=UserGroups.Production)
       user.set_password(password)
       user.save()
       return user
@@ -33,4 +33,5 @@ class TracershopAuthenticationBackend(BaseBackend):
   def __init__(self, SQL=SQL()):
     self.SQL=SQL
     super().__init__()
+
 

@@ -1,6 +1,11 @@
 from django.db import models
 from database.models import SubscribeableModel
 
+class TracerTypes(models.IntegerChoices):
+    injection = 1
+    activity = 2
+
+
 class Isotope(SubscribeableModel):
   ID = models.AutoField(primary_key=True)
   atomName = models.CharField(max_length=30)
@@ -8,18 +13,13 @@ class Isotope(SubscribeableModel):
   isotopeNumber = models.IntegerField(null=True) # Protons + neutrons
   symbol = models.CharField(max_length=5, null=True)
 
-class TracerType(SubscribeableModel):
-  """This class is an enum class defining the allowed types of tracers by default this is allowed
-  """
-  ID = models.BigAutoField(primary_key=True)
-  description = models.CharField(max_length=30)
-
 class Tracer(SubscribeableModel):
   ID = models.AutoField(primary_key=True)
   name = models.CharField(max_length=30, unique=True, null=True)
   longName = models.CharField(max_length=60, null=True, default=None)
   inUse = models.BooleanField(default=False)
   isotope = models.ForeignKey(Isotope, on_delete=models.SET_NULL, null=True)
+  tracerType = models.IntegerField(choices=TracerTypes.choices, default=TracerTypes.injection)
 
   def __str__(self):
     if self.name:

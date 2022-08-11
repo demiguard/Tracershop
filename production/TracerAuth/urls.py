@@ -9,12 +9,6 @@ from TracerAuth.views.logout import  AuthLogout
 from TracerAuth.views.session import AuthSession
 from TracerAuth.views.whoami import  AuthWhoAmI
 
-Views = [
-  AuthLogin,
-  AuthLogout,
-  AuthSession,
-  AuthWhoAmI,
-  AuthAuthenticate
-]
+Views = []
 
 urlpatterns = LMAP(lambda view: path(view.path, view.as_view(), name=view.name), Views)

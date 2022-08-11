@@ -13,7 +13,6 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 
 from xmlrpc.client import Boolean
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 
 from database.models import ServerConfiguration, Database, Address, User

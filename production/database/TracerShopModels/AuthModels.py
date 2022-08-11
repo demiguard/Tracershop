@@ -1,23 +1,9 @@
-from gettext import NullTranslations
 from database.TracerShopModels.BaseModels import SubscribeableModel
 
 from django.db import models
 from django.db.models import Model
 from django.contrib.auth.models import AbstractBaseUser
 
-
-class UserGroup(Model):
-  """This model resprents the differnt option for user groups. They are
-    1. Admin
-    2. Production
-    3. Ordering
-    4. Ordering (No RIS)
-  """
-  id = models.BigAutoField(primary_key=True)
-  description = models.CharField(max_length=64)
-
-  def __str__(self) -> str:
-    return self.description
 
 class Customer(Model):
   """This is the model represents a model
@@ -28,11 +14,22 @@ class Customer(Model):
   overhead = models.PositiveIntegerField(0)
   telefon = models.CharField(max_length=24)
 
+
+
+class UserGroups(models.IntegerChoices):
+  Anon = 0
+  Admin = 1
+  ProductionAdmin = 2
+  ProductionUser = 3
+  ShopAdmin = 4
+  ShopUser = 5
+  ShopExternal = 6
+
 class User(AbstractBaseUser):
   id = models.AutoField(primary_key=True)
   username = models.CharField(max_length=120, unique=True)
   password = models.CharField(max_length=120)
-  UserGroup = models.ForeignKey(UserGroup, on_delete=models.RESTRICT, null=True)
+  UserGroup = models.IntegerField(choices=UserGroups.choices)
 
   Customer = models.ManyToManyField(Customer)
   # This number overlaps with Users.id field of the old database.

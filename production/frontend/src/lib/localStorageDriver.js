@@ -70,6 +70,7 @@ export var db = {
     activeTracer : Number, //DATABASE_ACTIVE_TRACER
     isAuth : Boolean, //DATABASE_IS_AUTH
     serverConfig : Object, //DATABASE_SERVER_CONFIG
+    User : Object, //DATABASE_USER
     // Maps
     address : Map, // DATABASE_ADDRESS
     customer : Map, // DATABASE_CUSTOMER

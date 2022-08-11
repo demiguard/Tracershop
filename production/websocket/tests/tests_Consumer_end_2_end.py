@@ -8,9 +8,9 @@ This means that this is an indirect test of:
     * ProductionDataclasses
     * ProductionJSON
 """
-from email import message
 from channels.auth import AuthMiddlewareStack
 from channels.routing import URLRouter, ProtocolTypeRouter
+from channels.sessions import SessionMiddlewareStack
 from channels.testing import WebsocketCommunicator
 
 from django.core import serializers
@@ -23,12 +23,12 @@ from json import loads
 from pprint import pprint
 from typing import Dict
 
-from database.models import Address, Database, ServerConfiguration
+from database.models import Address, Database, ServerConfiguration, User, UserGroups
 from constants import *
 from lib.SQL.SQLExecuter import Fetching
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.utils import LFILTER
-from tests.helpers import getModel, async_ExecuteQuery
+from tests.helpers import getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
 from tests.test_DataClasses import TEST_DATA_DICT, UseDataClass # This file standizes the dataclasses
 from websocket.DatabaseInterface import DatabaseInterface
 from websocket.Consumer import Consumer
@@ -39,8 +39,8 @@ from websocket import routing # Import that this line is here, otherwise load or
 
 app = ProtocolTypeRouter({
   "http" : django_asgi_app,
-  "websocket" : AuthMiddlewareStack(
-    URLRouter([re_path(r'ws/$', Consumer.as_asgi())])
+  "websocket" : SessionMiddlewareStack(AuthMiddlewareStack(
+    URLRouter([re_path(r'ws/$', Consumer.as_asgi())]))
   )
 })
 
@@ -50,22 +50,35 @@ class FakeDatetime(datetime.datetime):
     return datetime.datetime(2012,10,11,11,22,33)
 
 
-
 #NOTE: that sadly the connection cannot be in a setup case,
 # due to it being in different event loop
 class ConsumerTestCase(TestCase):
   message_id = 6942069
 
-  async def _sendAndGetResponse(self, message : Dict):
-    comm = WebsocketCommunicator(app,"ws/")
-    conn, subprotocal = await comm.connect()
-    await comm.send_json_to(message)
+  loginAdminMessage = message = {
+      JSON_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : TEST_ADMIN_PASSWORD
+      },
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
+      WEBSOCKET_MESSAGE_ID : message_id
+    }
 
-    response = await comm.receive_json_from()
+  async def _sendReceive(self, comm : WebsocketCommunicator,   message : Dict):
+    await comm.send_json_to(message)
+    return await comm.receive_json_from()
+
+  async def _loginAdminSendRecieve(self, message : Dict):
+    comm = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm.connect()
+    _login_response = await self._sendReceive(comm, self.loginAdminMessage)
+    response = await self._sendReceive(comm, message)
+
     await comm.disconnect()
     return response
 
-    # Dataclasses
+
+  # Dataclasses
   async def test_connect_to_consumer(self):
       comm = WebsocketCommunicator(app,"ws/")
       conn, subprotocal = await comm.connect()
@@ -73,7 +86,9 @@ class ConsumerTestCase(TestCase):
       await comm.disconnect()
 
   async def test_echo(self):
-    response = await self._sendAndGetResponse({
+    comm = WebsocketCommunicator(app,"ws/")
+    conn, subprotocal = await comm.connect()
+    response = await self._sendReceive(comm, {
           WEBSOCKET_MESSAGE_ID : self.message_id,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
       })
@@ -81,11 +96,13 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
     self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_ECHO)
 
+
+
   @UseDataClass(ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass,
       IsotopeDataClass, InjectionOrderDataClass, RunsDataClass, TracerDataClass,
       VialDataClass)
   async def test_GreatState(self):
-    response = await self._sendAndGetResponse({
+    response = await self._loginAdminSendRecieve({
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE
     })
@@ -145,7 +162,7 @@ class ConsumerTestCase(TestCase):
   @UseDataClass(VialDataClass) # Added these to avoid an empty Vial database
   async def test_createVial(self):
     # Test
-    response = await self._sendAndGetResponse({
+    response = await self._loginAdminSendRecieve({
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
       WEBSOCKET_DATATYPE : JSON_VIAL,
@@ -176,5 +193,49 @@ class ConsumerTestCase(TestCase):
     #Clean up
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.NONE)
 
-    # Edit Orders
+  # Edit Orders
+
+  ##### Auth #####
+  async def test_login_persists(self):
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, _subprotocal = await comm.connect()
+
+    response = await self._sendReceive(comm, self.loginAdminMessage)
+    sessionID = response['sessionid']
+    await comm.disconnect()
+
+    sessionCookie = "sessionid=" + sessionID
+
+    recomm = WebsocketCommunicator(app, "ws/", headers=[("cookie".encode(), sessionCookie.encode())])
+    _conn, _subprotocal = await recomm.connect()
+
+    whoAmI_reponse = await self._sendReceive(recomm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id
+    })
+    await recomm.disconnect()
+
+    self.assertTrue(whoAmI_reponse[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(whoAmI_reponse[AUTH_USERNAME], TEST_ADMIN_USERNAME)
+    self.assertEqual(whoAmI_reponse[KEYWORD_USERGROUP], 1)
+
+  async def test_login_logout_whoamI(self):
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+
+    loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
+    logoutMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+      WEBSOCKET_MESSAGE_ID : self.message_id
+    })
+    whoAmIMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id
+    })
+
+    self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
+    self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
+
+
 
