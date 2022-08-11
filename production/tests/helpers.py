@@ -43,7 +43,7 @@ def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
   test_admin.set_password(TEST_ADMIN_PASSWORD)
   test_admin.save()
 
-  test_production = User(id=2, username=TEST_PRODUCTION_USERNAME, UserGroup=UserGroups.Production, OldTracerBaseID=420)
+  test_production = User(id=2, username=TEST_PRODUCTION_USERNAME, UserGroup=UserGroups.ProductionAdmin, OldTracerBaseID=420)
   test_production.set_password(TEST_PRODUCTION_PASSWORD)
   test_production.save()
 
