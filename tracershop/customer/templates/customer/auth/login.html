@@ -7,7 +7,7 @@
   <form method="POST">
     {% csrf_token %}
 
-    {% if not user.is_authenticated %}  
+    {% if not user.is_authenticated %}
       {% bootstrap_form login_form %}
       {% buttons %}
         <input id="login-btn" type="button" class="btn btn-primary" value="Log in">
@@ -21,7 +21,7 @@
     <input type="button" id="ResetPassword" class="btn btn-primary" value="Genskab Password">
   </form>
 {% endblock %}
-
+<div id="error-message-container"></div>
 {% block javascript %}
   <script type="module" src="{% static 'customer/javascript/sites/login.js' %}"></script>
 {% endblock javascript%}

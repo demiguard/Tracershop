@@ -2,7 +2,7 @@ import { destroyActiveDialog } from "./libs/htmlHelpers.js";
 
 let try_login = function() {
   $('#error-message-container').empty();
-  
+
   let username = $('#id_username').val();
   let password = $('#id_password').val();
 
@@ -19,7 +19,7 @@ let try_login = function() {
       }
     },
     error: function() {
-      error_message = document.createElement('p');
+      const error_message = document.createElement('p');
       error_message.classList.add('alert');
       error_message.classList.add('alert-danger');
       error_message.innerText = "Forkert login";
