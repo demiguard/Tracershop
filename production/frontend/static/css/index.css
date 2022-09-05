@@ -27,17 +27,6 @@ nav {
   background-color: var(--secondary-color-3) ;
 }
 
-.navbarElem {
-  background: var(--secondary-color-2);
-  padding : 10px;
-  margin-right: 15px;
-  margin-left: 15px;
-  border : 1px;
-  border-style: solid;
-  border-color: var(--secondary-color-1);
-  border-radius: 10px;
-}
-
 .tableButton {
   height: 35px;
   width: 35px;

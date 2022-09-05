@@ -8,6 +8,7 @@ This means that this is an indirect test of:
     * ProductionDataclasses
     * ProductionJSON
 """
+from unittest import skip
 from channels.auth import AuthMiddlewareStack
 from channels.routing import URLRouter, ProtocolTypeRouter
 from channels.sessions import SessionMiddlewareStack
@@ -22,6 +23,7 @@ import datetime
 from json import loads
 from pprint import pprint
 from typing import Dict
+import time
 
 from database.models import Address, Database, ServerConfiguration, User, UserGroups
 from constants import *
@@ -76,6 +78,13 @@ class ConsumerTestCase(TestCase):
 
     await comm.disconnect()
     return response
+
+  def setUp(self):
+    self.startTime = time.time()
+
+  def tearDown(self):
+    t = time.time() - self.startTime
+    print('%s: %.3f' % (self.id(), t))
 
 
   # Dataclasses
@@ -236,6 +245,59 @@ class ConsumerTestCase(TestCase):
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
     self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
     self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
+
+  @skip
+  async def test_move_order_ghost_order(self):
+    # Database Setup
+    today = datetime.date.today()
+
+    await async_ExecuteQuery(f"""
+      INSERT INTO orders(
+        deliver_datetime,
+        oid,
+        status,
+        amount,
+        amount_o,
+        total_amount,
+        total_amount_o,
+        tracer,
+        run,
+        BID,
+        batchnr,
+        COID
+      ) VALUES (
+        \"2022-10-11 11:30:00\",
+        1337,
+        2,
+        10000,
+        12000,
+        10000,
+        12000,
+        1,
+        2,
+        1,
+        \"\",
+        -1
+      )
+    """, Fetching.NONE)
+
+    # Connection Setup
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+    login_message = await self._sendReceive(comm, self.loginAdminMessage)
+
+
+
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
+      WEBSOCKET_DATA : {
+        KEYWORD_OID : 1337,
+        KEYWORD_RUN : 1
+      }
+    })
+
+
 
 
 

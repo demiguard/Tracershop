@@ -4,11 +4,10 @@
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
-from h11 import Data
 from constants import USAGE
 
 from typing import Type, List, Union
-from datetime import date,time,datetime
+from datetime import date, time, datetime
 from dataclasses import fields
 
 from lib.decorators import typeCheckfunc
@@ -38,81 +37,6 @@ def getDataClass(dataClass) -> str:
     WHERE
       {dataClass.getSQLWhere()}"""
 
-def getCustomerDeliverTimes(ID : int) -> str:
-  return f"""SELECT
-      deliverTimes.day,
-      repeat_t,
-      TIME_FORMAT(dtime, \"%T\"),
-      max,
-      run,
-      DTID
-    FROM
-      Users
-      INNER JOIN deliverTimes ON Users.ID=deliverTimes.BID
-    Where
-      Users.Id={ID}
-    ORDER BY
-      deliverTimes.day,
-      deliverTimes.dtime"""
-
-def getActivityOrders(requestDate: date, tracerID: int) -> str:
-  #Can't use SerilizeToSQLValue due to missing %
-  return f"""SELECT
-      {ActivityOrderDataClass.getSQLFields()}
-    FROM
-      orders
-    WHERE
-      deliver_datetime LIKE \"{dateConverter(requestDate)}%\" AND
-      tracer={tracerID}
-    ORDER BY
-      BID,
-      deliver_datetime"""
-
-def updateOrder(Order : ActivityOrderDataClass) -> str:
-  SQLQuery = """Update orders
-    Set
-  """
-  Fields = fields(Order)
-  for field in Fields:
-    fieldVal =  Order.__getattribute__(field.name)
-    if field.name == "oid" or not fieldVal:
-      continue
-    SQLQuery += f"{field.name}={SerilizeToSQLValue(fieldVal)},\n"
-  SQLQuery = SQLQuery[:-2] + SQLQuery[-1] # Remove the last ','
-  SQLQuery += f"""
-    WHERE
-      oid = {Order.oid}"""
-  return SQLQuery
-
-def InsertVial(Vial: VialDataClass) -> str:
-  Query = f"""INSERT INTO VAL(
-      customer,
-      charge,
-      depotpos,
-      filldate,
-      filltime,
-      volume,
-      gros,
-      tare,
-      net,
-      product,
-      activity
-    ) VALUES (
-      {SerilizeToSQLValue(Vial.customer)},
-      {SerilizeToSQLValue(Vial.charge)},
-      0,
-      {SerilizeToSQLValue(Vial.filldate)},
-      {SerilizeToSQLValue(Vial.filltime)},
-      {SerilizeToSQLValue(Vial.volume)},
-      0,
-      0,
-      0,
-      \"18F\",
-      {SerilizeToSQLValue(Vial.activity)}
-      )"""
-
-  return Query
-
 def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
   """Creates an string with a SQL Query for Updating an JsonSerilizableDataClass
      so that's matching to the input object.
@@ -122,11 +46,10 @@ def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
   Returns:
       string with a SQL Query for Updating an JsonSerilizableDataClass
   """
-  ID = getattr(DataClassObject, DataClassObject.getIDField())
-  if ID == None:
-    raise KeyError("No Valid ID for object, It should prob be created.")
-
-
+  try:
+    ID = getattr(DataClassObject, DataClassObject.getIDField())
+  except AttributeError as E:
+    raise E
   updateFields = []
 
   for field in DataClassObject.getFields():
@@ -370,3 +293,12 @@ def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
   idsStr = ", ".join(LMAP(str,ids)) # types are callable
   return f"""DELETE FROM {DataClass.getSQLTable()}
     WHERE {DataClass.getIDField()} IN ({idsStr})"""
+
+def GetConditionalElement(condition: str, dataClass):
+  Query = f"""SELECT
+      {dataClass.getSQLFields()}
+    FROM
+      {dataClass.getSQLTable()}
+    WHERE
+      {condition}"""
+  return Query

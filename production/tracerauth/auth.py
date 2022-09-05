@@ -15,7 +15,7 @@ def AuthMessage(user : User, messageType : str) -> bool:
     return False
   if user.UserGroup == UserGroups.Admin:
     return True
-  if user.UserGroup == UserGroups.Production:
+  if user.UserGroup == UserGroups.ProductionAdmin:
     if messageType in [
         WEBSOCKET_MESSAGE_GREAT_STATE,
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
@@ -25,18 +25,42 @@ def AuthMessage(user : User, messageType : str) -> bool:
         WEBSOCKET_MESSAGE_GET_ORDERS,
         WEBSOCKET_UPDATE_SERVERCONFIG,
         WEBSOCKET_MESSAGE_EDIT_STATE,
-        WEBSOCKET_MESSAGE_DELETE_DATA_CLASS]:
+        WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
+        WEBSOCKET_MESSAGE_UPDATEORDERS,]:
       return True
     else:
       return False
-  if user.UserGroup == UserGroups.Ordering:
+
+  if user.UserGroup == UserGroups.ProductionUser:
+    if messageType in [
+        WEBSOCKET_MESSAGE_GREAT_STATE,
+        WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+        WEBSOCKET_MESSAGE_FREE_ORDER,
+        WEBSOCKET_MESSAGE_MOVE_ORDERS,
+        WEBSOCKET_MESSAGE_ECHO,
+        WEBSOCKET_MESSAGE_GET_ORDERS,
+        WEBSOCKET_UPDATE_SERVERCONFIG,
+        WEBSOCKET_MESSAGE_EDIT_STATE,
+        WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
+        WEBSOCKET_MESSAGE_UPDATEORDERS,]:
+      return True
+    else:
+      return False
+
+  if user.UserGroup == UserGroups.ShopAdmin:
     if messageType in []:
       return True
     else:
       return False
-  if user.UserGroup == UserGroups.OrderingNoRis:
+
+  if user.UserGroup == UserGroups.ShopUser:
     if messageType in []:
       return True
     else:
       return False
-  return False
+
+  if user.UserGroup == UserGroups.ShopExternal:
+    if messageType in []:
+      return True
+    else:
+      return False

@@ -62,6 +62,9 @@ export var db = {
 
     return value;
   },
+  delete(key) {
+    localStorage.removeItem(key)
+  },
 
   // ENSURE THAT THIS IS OBJECT IS UP TO DATE WITH constants.js
   types : {
@@ -70,7 +73,7 @@ export var db = {
     activeTracer : Number, //DATABASE_ACTIVE_TRACER
     isAuth : Boolean, //DATABASE_IS_AUTH
     serverConfig : Object, //DATABASE_SERVER_CONFIG
-    User : Object, //DATABASE_USER
+    user : Object, //DATABASE_USER
     // Maps
     address : Map, // DATABASE_ADDRESS
     customer : Map, // DATABASE_CUSTOMER
@@ -82,6 +85,7 @@ export var db = {
     run : Map, //DATABASE_PRODUCTION
     t_orders : Map, //DATABASE_INJECTION_ORDER
     tracer : Map, //DATABASE_TRACER
+    tracer_mapping : Map, //DATABASE_TRACER_MAPPING
     vial    : Map, //DATABASE_VIAL
   },
 

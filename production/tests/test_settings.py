@@ -42,10 +42,9 @@ INSTALLED_APPS = [
     'channels',
     'database.apps.DatabaseConfig',
     'tests.apps.TestConfig',
-    'api.apps.ApiConfig',
     'frontend.apps.FrontendConfig',
     'lib.apps.LibConfig',
-    'TracerAuth.apps.AuthConfig',
+    'tracerauth.apps.AuthConfig',
     'websocket.apps.WebsocketConfig'
 ]
 
@@ -126,7 +125,7 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 AUTH_USER_MODEL = "database.User"
 
-AUTHENTICATION_BACKENDS = ['TracerAuth.backend.TracershopAuthenticationBackend']
+AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
 
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'

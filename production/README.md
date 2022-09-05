@@ -95,7 +95,7 @@ To ensure that the page can load without a copy of the state is saved in local m
 
 As described above this a one page site, this means that the user connect to the sites onces and in general doesn't makes additional HTTP requests, with the exception of making requests for resources. While this is goal, some of the code have been shamelessly stolen from the internet. The common use case is to use http protocol over websocket, hence the stolen parts are might be using some ajax ~ aka: HTTP requests.
 
-The site itself doesn't appear one site, and what you normally would considers differnt views can be found in *production/frontend/src/components/pages*
+The site itself doesn't appear one site, and what you normally would considers differnt views can be found in *production/frontend/src/components/ProductionPages*
 The different pages can be found in pages directory, and the Pages constant found in *App.js*. This means it should be fairly easy to extend the App with additional pages:
 1. Create a new React component
 2. Import and add the component to the Pages constant

@@ -114,7 +114,12 @@ export class ActivityTable extends Component {
         console.log(deliverTime);
         continue; // WHO CARES THAT STUFF DON'T WORK?
       }
-      customerMap.set(deliverTime.run, {MasterOrder : null, extraOrders : [], deliverTime : this.GetProductionDateTimeString(deliverTime.dtime)});
+      customerMap.set(deliverTime.run, {
+        MasterOrder : null,
+        extraOrders : [],
+        deliverTime : this.GetProductionDateTimeString(deliverTime.dtime),
+        DTID : DTID
+      });
     }
 
     for(const [oid, Order] of this.props.orders){

@@ -1,8 +1,8 @@
 import React, { Component } from "react";
-import { Button, Row, Col, Container } from 'react-bootstrap';
+import { Button, Row, Col, Container as div } from 'react-bootstrap';
 import { Calender } from '/src/components/injectables/calender.js';
-import { TOrderTable } from '/src/components/pages/InjectionTable';
-import { ActivityTable } from '/src/components/pages/ActivityTracerTable';
+import { TOrderTable } from '/src/components/ProductionPages/InjectionTable';
+import { ActivityTable } from '/src/components/ProductionPages/ActivityTracerTable';
 import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE } from "/src/lib/constants.js";
 import { db } from "/src/lib/localStorageDriver";
 import { CompareDates } from "/src/lib/utils";
@@ -112,7 +112,7 @@ export class OrderPage extends Component {
       </Button>));
 
     return (
-      <Container>
+      <div>
         <Row>
           <div>
             {TableSwitchButtons}
@@ -146,7 +146,7 @@ export class OrderPage extends Component {
               />
           </Col>
         </Row>
-      </Container>
+      </div>
     );
   }
 }

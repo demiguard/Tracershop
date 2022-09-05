@@ -1,14 +1,17 @@
 import React, {Component } from "react";
+import { Container } from "react-bootstrap";
 import Navbar from "../injectables/Navbar";
-import { CloseDaysPage } from "../pages/CloseDaysPage";
-import CustomerPage from "../pages/CustomerPage";
-import EmailSetupPage from "../pages/EmailSetupPage";
-import { OrderPage } from "../pages/OrderPage";
-import { ServerConfigPage } from "../pages/ServerConfig";
-import TracerPage from "../pages/TracerPage";
-import { VialPage } from "../pages/VialPage";
+import { CloseDaysPage } from "../ProductionPages/CloseDaysPage";
+import CustomerPage from "../ProductionPages/CustomerPage";
+import EmailSetupPage from "../ProductionPages/EmailSetupPage";
+import { OrderPage } from "../ProductionPages/OrderPage";
+import { ServerConfigPage } from "../ProductionPages/ServerConfig";
+import TracerPage from "../ProductionPages/TracerPage";
+import { VialPage } from "../ProductionPages/VialPage";
+import "/src/css/Navbar.css"
 
-export {ProductionSite}
+
+export { ProductionSite }
 
 
 
@@ -16,7 +19,7 @@ const Pages = {
   Ordre : OrderPage,
   Kunder : CustomerPage,
   Tracers : TracerPage,
-  Email : EmailSetupPage,
+  //Email : EmailSetupPage,
   Lukkedage : CloseDaysPage,
   Vial : VialPage,
   Indstillinger : ServerConfigPage,
@@ -43,17 +46,35 @@ class ProductionSite extends Component{
   }
 
   render(){
+
     return (
       <div>
         <Navbar
           Names={Object.keys(Pages)}
-          setActivePage={this.setActivePage}
+          setActivePage={this.setActivePage.bind(this)}
           logout={this.props.logout}
           isAuthenticated={true}
+          NavbarElements={this.props.NavbarElements}
         />
-        <this.state.ActivePage
-
-        />
+        <Container className="NavbarSpacer">
+          <this.state.ActivePage
+            user={this.props.user}
+            address={this.props.address}
+            customer={this.props.customer}
+            database={this.props.database}
+            deliverTimes={this.props.deliverTimes}
+            employee={this.props.employee}
+            isotopes={this.props.isotopes}
+            orders={this.props.orders}
+            runs={this.props.runs}
+            t_orders={this.props.t_orders}
+            tracers={this.props.tracers}
+            tracerMapping={this.props.tracerMapping}
+            serverConfig={this.props.serverConfig}
+            vials={this.props.vials}
+            websocket={this.props.websocket}
+            />
+          </Container>
       </div>
     )
   }

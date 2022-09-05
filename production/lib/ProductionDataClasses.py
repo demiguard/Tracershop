@@ -19,7 +19,7 @@ from dataclasses import dataclass, asdict, fields, Field
 from datetime import datetime, date, time
 import re
 from typing import Dict, Optional, List, Any, get_args, get_origin, Union
-from constants import DATETIME_FORMAT, DATE_FORMAT, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
+from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
 from database.models import User
 from lib.utils import LMAP
@@ -347,7 +347,15 @@ class VialDataClass(JsonSerilizableDataClass):
 class TracerCustomerMappingDataClass(JsonSerilizableDataClass):
   tracer_id : int
   customer_id : int
+  ID : int
 
+  @classmethod
+  def getSQLTable(cls) -> str:
+    return "TracerCustomer"
+
+  @classmethod
+  def getIDField(cls) -> str:
+    return "ID"
 
 @dataclass(init=False)
 class DeliverTimeDataClass(JsonSerilizableDataClass):
@@ -494,25 +502,28 @@ class EmployeeDataClass(JsonSerilizableDataClass):
 
 # Data class constant mapping
 def findDataClass(dataType):
-    if dataType == JSON_ACTIVITY_ORDER:
-      dataClass = ActivityOrderDataClass
-    elif dataType == JSON_CUSTOMER:
-      dataClass = CustomerDataClass
-    elif dataType == JSON_DELIVERTIME:
-      dataClass = DeliverTimeDataClass
-    elif dataType == JSON_ISOTOPE:
-      dataClass = IsotopeDataClass
-    elif dataType == JSON_RUN:
-      dataClass = RunsDataClass
-    elif dataType == JSON_TRACER:
-      dataClass = TracerDataClass
-    elif dataType == JSON_VIAL:
-      dataClass = VialDataClass
-    elif dataType == JSON_INJECTION_ORDER:
-      dataClass = InjectionOrderDataClass
+  if dataType == JSON_ACTIVITY_ORDER:
+    dataClass = ActivityOrderDataClass
+  elif dataType == JSON_CUSTOMER:
+    dataClass = CustomerDataClass
+  elif dataType == JSON_DELIVERTIME:
+    dataClass = DeliverTimeDataClass
+  elif dataType == JSON_ISOTOPE:
+    dataClass = IsotopeDataClass
+  elif dataType == JSON_RUN:
+    dataClass = RunsDataClass
+  elif dataType == JSON_TRACER:
+    dataClass = TracerDataClass
+  elif dataType == JSON_VIAL:
+    dataClass = VialDataClass
+  elif dataType == JSON_INJECTION_ORDER:
+    dataClass = InjectionOrderDataClass
+  elif dataType == JSON_TRACER_MAPPING:
+    dataClass = TracerCustomerMappingDataClass
 
-    if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
-      raise ValueError(f"Datatype: {dataType} is unknown to the consumer")
 
-    return dataClass
+  if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
+    raise ValueError(f"Datatype: {dataType} is unknown to the consumer")
+
+  return dataClass
 

@@ -11,6 +11,3 @@ def LMAP(func, List):
 
 def LFILTER(func, List):
   return list(filter(func, List))
-
-def iterable(object : object) -> bool:
-  return hasattr(object, "__iter__") and hasattr(object, "__next__")

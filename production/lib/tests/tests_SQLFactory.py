@@ -9,6 +9,8 @@ from lib.SQL import SQLFactory
 
 from datetime import date, datetime, time
 
+from tests.test_DataClasses import *
+
 
 class SQLFactoryTestCase(TestCase):
   def setUp(self):
@@ -43,6 +45,12 @@ tracer_type=1,
 longName="I forgot this name"
     WHERE
       id=6""", Query)
+
+  def test_update__no_ID(self):
+    testIsotopeDict = testIsotope_1.to_dict()
+    del testIsotopeDict['ID']
+    missingIDIsotope = PDC.IsotopeDataClass(**testIsotopeDict)
+    self.assertRaises(AttributeError, SQLFactory.UpdateJsonDataClass, missingIDIsotope)
 
   def test_getElement_run(self):
     Query = SQLFactory.getElement(5, PDC.RunsDataClass)

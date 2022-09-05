@@ -1,5 +1,7 @@
 import React, { Component } from "react";
-import { Navbar as BSNavbar, Nav  } from "react-bootstrap";
+import { Navbar as BSNavbar, Nav, Container  } from "react-bootstrap";
+import "/src/css/Navbar.css"
+
 export {Navbar}
 
 export default class Navbar extends Component {
@@ -15,7 +17,8 @@ export default class Navbar extends Component {
 
 
   render() {
-    var  Elements = [];
+
+    const Elements = (this.props.NavbarElements) ? this.props.NavbarElements : [];
     for(let i = 0; i < this.props.Names.length; i++) {
       Elements.push(this.renderElement(i));
     }
@@ -24,9 +27,11 @@ export default class Navbar extends Component {
     }
 
     return (
-     <BSNavbar fixed="top">
-       <img src="/static/images/logo.png" height="50px"></img>
-       {Elements}
+     <BSNavbar className="navbarmargin">
+        <NavbarElement
+          content={<img src="/static/images/logo.png" height="50px"/>}
+        />
+        {Elements}
      </BSNavbar>
    );
  }

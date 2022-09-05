@@ -5,6 +5,9 @@ import TracerModal from "/src/components/modals/TracerModal";
 import { BooleanMapping } from "/src/lib/utils";
 import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "/src/lib/constants";
 import { renderTableRow } from "/src/lib/Rendering";
+import { changeState } from "../../lib/stateManagement";
+import { renderClickableIcon } from "../../lib/Rendering";
+import { KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID } from "../../lib/constants";
 
 export {TracerPage}
 
@@ -33,6 +36,7 @@ export default class TracerPage extends Component {
    *
    */
   validateTracer(tracer){
+    // Yes you could one line this, but its unreadable and not as maintainable, FIGHT ME
     if (tracer.name.length === 0) return false;
 
     tracer.isotope = Number(tracer.isotope);
@@ -49,10 +53,8 @@ export default class TracerPage extends Component {
 
 
   showTracerModal(tracerID){
-    const ModalMap = (this.state.tracerCustomer.has(tracerID)) ? this.state.tracerCustomer.get(tracerID) : new Map();
     const newState = {...this.state,
       showModal : true,
-      ModalTracerMap : ModalMap,
       tracerID : tracerID
     };
     this.setState(newState);
@@ -157,8 +159,9 @@ export default class TracerPage extends Component {
         <option value={TRACER_TYPE_ACTIVITY}>Activitet</option>
         <option value={TRACER_TYPE_DOSE}>Dose</option>
       </select>,
-      <img src="/static/images/setting2.png" className="statusIcon"
-        onClick={(_event) => this.showTracerModal(tracer.id)}></img>
+      renderClickableIcon("/static/images/setting.png", () => {
+        this.showTracerModal(tracer.id)
+      })
     ]);
   }
 
@@ -170,9 +173,11 @@ export default class TracerPage extends Component {
     }
     Tracers.push(this.renderNewTracer());
 
+    
+
     return (
     <Container>
-      Tracer Filter: <FormControl value={this.state.filter} onChange={(event) => this.updateFilter(event)}/>
+      Tracer Filter: <FormControl value={this.state.filter} onChange={changeState("filter", this).bind(this)}/>
       <Table>
         <thead>
           <tr>
@@ -191,10 +196,11 @@ export default class TracerPage extends Component {
       { this.state.showModal ?
       <TracerModal
       show           = {this.state.showModal}
-      ModalTracerMap = {this.state.ModalTracerMap}
+      tracerMapping  = {this.props.tracerMapping}
       customers      = {this.props.customer}
       onClose        = {this.closeModal.bind(this)}
       tracerID       = {this.state.tracerID}
+      websocket      = {this.props.websocket}
       /> : ""
     }
     </Container>);

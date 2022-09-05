@@ -14,7 +14,6 @@ from django.core.serializers import serialize
 from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
 from django.http import HttpRequest
-from django.middleware import csrf
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.auth import login, get_user, logout
@@ -33,7 +32,7 @@ from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
 from lib.utils import LMAP
-from TracerAuth import auth
+from tracerauth import auth
 
 from websocket.DatabaseInterface import DatabaseInterface
 
@@ -91,7 +90,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
-
+    logger.info(f"Websocket recieved message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
     messageType  = message[WEBSOCKET_MESSAGE_TYPE]
     if not auth.AuthMessage(self.scope['user'], messageType):
       await self.HandleInsufficientPermissions(message)
@@ -121,6 +120,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     elif messageType == WEBSOCKET_MESSAGE_AUTH_WHOAMI:
       await self.handleWhoAmI(message)
 
+
+  async def sendErrorMessage(exception : Exception):
+    pass
 
   async def sendEvent(self, event: Dict):
     """
@@ -187,7 +189,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
     })
 
-
   async def handleLogout(self, message):
     await logout(self.scope)
     await sync_to_async(self.scope['session'].save)()
@@ -213,18 +214,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
     """
-    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, ServerConfig, Databases, Address = await self.db.getGreatState()
+    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TracerCustomers, ServerConfig, Databases, Address = await self.db.getGreatState()
 
     #Convert Dataclasses to python dict to send over
-    Employees    = LMAP(encode, Employees)
-    Customers    = LMAP(encode, Customers)
-    DeliverTimes = LMAP(encode, DeliverTimes)
-    Isotopes     = LMAP(encode, Isotopes)
-    Vials        = LMAP(encode, Vials)
-    Runs         = LMAP(encode, Runs)
-    Orders       = LMAP(encode, Orders)
-    T_Orders     = LMAP(encode, T_Orders)
-    Tracers      = LMAP(encode, Tracers)
+    Employees       = LMAP(encode, Employees)
+    Customers       = LMAP(encode, Customers)
+    DeliverTimes    = LMAP(encode, DeliverTimes)
+    Isotopes        = LMAP(encode, Isotopes)
+    Vials           = LMAP(encode, Vials)
+    Runs            = LMAP(encode, Runs)
+    Orders          = LMAP(encode, Orders)
+    T_Orders        = LMAP(encode, T_Orders)
+    Tracers         = LMAP(encode, Tracers)
+    TracerCustomers = LMAP(encode, TracerCustomers)
     SerializedDatabases = serialize('json', Databases)
     SerializedAddress = serialize('json', Address)
     SerializedServerConfig = serialize('json', [ServerConfig])
@@ -241,6 +243,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         JSON_RUN              : Runs,
         JSON_INJECTION_ORDER  : T_Orders,
         JSON_TRACER           : Tracers,
+        JSON_TRACER_MAPPING   : TracerCustomers,
         JSON_VIAL             : Vials,
         JSON_SERVER_CONFIG    : SerializedServerConfig
       },
@@ -339,6 +342,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
           KEYWORD_TOTAL_AMOUNT : 0,
           KEYWORD_TOTAL_AMOUNT_O : 0,
           KEYWORD_TRACER : tracerID,
+          KEYWORD_BID : Order.BID,
           KEYWORD_RUN : Order.run,
           KEYWORD_COID : -1, #Could argue Order.oid
           KEYWORD_BATCHNR : Vial.charge,
@@ -375,46 +379,106 @@ class Consumer(AsyncJsonWebsocketConsumer):
       print("No LegacyMode is no go")
 
   async def HandleMoveOrders(self, message : Dict):
-    """This handles the moving of order, Most of the calculation are already done by the client.
-    So this function operate very similar to UpdateOrders, however there still are some major differences
+    """ This handles a request to move an order.
 
-    It checks if an Orders is "dead" That's: The order doesn't contain any User ordered Activity, nor is there any activity to be delivered at this point in time
-    If the order is dead, the server deletes it.
+    TODO: Note that here we have some bad code in that the frontend does alot calculations
+    It should really be the server that does this because, the frontend should just be a pretty picture of
+    the underlying database.
 
-    The second major difference is that it checks a Ghost Order Field is present if it's then it creates a ghost order
 
     See README for terminologies.
 
     Args:
         message Dict: A Dict that have been converted from MoveOrder Message
     """
+
+
+    """
+    returnOrders = []
+
+    # Step 1. Detect if Request is valid
+    # Step 1.1 Get Data
+    move_request = message[WEBSOCKET_DATA]
+
+    OrderCorotine = self.db.getElement(move_request[KEYWORD_OID], ActivityOrderDataClass)
+    TargetRunCorotine = self.db.getElement(move_request[KEYWORD_RUN], DeliverTimeDataClass)
+
+
+    # Step 1.2 Await Data
+    order = await OrderCorotine
+    customerCorotine = self.db.getElement()
+    tracer = await self.db.getElement(order.tracer, TracerDataClass)
+    isotope = await self.db.getElement(tracer.isotope, IsotopeDataClass)
+    targetRun = await TargetRunCorotine
+
+
+    TargetOrderCorotine = self.db.getTargetOrder(
+      order, targetRun
+    )
+
+    minutesDifference = physics.countMinutes(order.deliver_datetime.time(), targetRun.dtime)
+    Activity          = physics.decay(isotope.halflife, minutesDifference, order.amount)
+
+    if order.COID != -1:
+      MasterOrderCorotine = self.db.getElement(order.COID, ActivityOrderDataClass)
+
+
+
+
+    TargetOrder = await TargetOrderCorotine
+    MasterOrder = await MasterOrderCorotine
+
+    # Step 2 Update State
+    if MasterOrder:
+      Master
+
+    # Step 3 If needed Create Ghost Order
+
+    # Step 4 Delete Extra Orders
+
+    # Step 5 Await State Changes
+
+    # Step 6 Respond
+    """
+
     def IsDead(Order: ActivityOrderDataClass) -> bool: #Helper that can be exported easily if need be
       return Order.amount == 0.0 and Order.total_amount < 1.0
 
     updatedOrders = message[JSON_ACTIVITY_ORDER]
-    GhostOrderSkeleton = message.get(JSON_GHOST_ORDER)
+    GhostOrderMessage = message.get(JSON_GHOST_ORDER)
     deadOrders   = []
     returnOrders = [] # this mainly done So I can uniformly update
-    if GhostOrderSkeleton:
+    if GhostOrderMessage:
       ### Create GhostOrder
       ### The Ghost kw should be moved into constants
-      deliverTime = toDateTime(GhostOrderSkeleton["GhostOrderDeliverTime"], JSON_DATETIME_FORMAT)
-      Customer    = await self.db.getElement(GhostOrderSkeleton["CustomerID"], CustomerDataClass)
-      amount_total = float(GhostOrderSkeleton["GhostOrderActivity"])
-      amount_total_o = float(GhostOrderSkeleton["GhostOrderActivityOverhead"])
-      Tracer = await self.db.getElement(GhostOrderSkeleton["Tracer"], TracerDataClass)
-      run = int(GhostOrderSkeleton["GhostOrderRun"])
-      username = self.scope['user'].username
+      deliverTime = toDateTime(GhostOrderMessage["GhostOrderDeliverTime"], JSON_DATETIME_FORMAT)
+      CustomerID = GhostOrderMessage["CustomerID"]
+      amount_total = float(GhostOrderMessage["GhostOrderActivity"])
+      amount_total_o = float(GhostOrderMessage["GhostOrderActivityOverhead"])
+      TracerID = GhostOrderMessage["Tracer"]
+      run = int(GhostOrderMessage["GhostOrderRun"])
 
-      GhostOrder = await self.db.createGhostOrder(
-        deliverTime,
-        Customer,
-        amount_total,
-        amount_total_o,
-        Tracer,
-        run,
-        username
-      ) # SQLConsumer method
+      GhostOrderSkeleton = {
+        KEYWORD_DELIVER_DATETIME : deliverTime,
+        KEYWORD_STATUS : 2,
+        KEYWORD_AMOUNT : 0,
+        KEYWORD_AMOUNT_O : 0,
+        KEYWORD_TOTAL_AMOUNT : amount_total,
+        KEYWORD_TOTAL_AMOUNT_O : amount_total_o,
+        KEYWORD_TRACER : TracerID,
+        KEYWORD_RUN : run,
+        KEYWORD_BID : CustomerID,
+        KEYWORD_BATCHNR : "",
+        KEYWORD_COID : -1, #Could argue Order.oid
+        KEYWORD_COMMENT : f"Ghost Order",
+        KEYWORD_USERNAME : self.scope['user'].username
+      }
+
+      GhostOrder = await self.db.createDataClass(
+        GhostOrderSkeleton,
+        ActivityOrderDataClass
+      )
+
       returnOrders.append(GhostOrder)
       #End GhostOrder IF
 
@@ -425,8 +489,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         #Delete Orders later
         deadOrders.append(order.oid)
       else:
-        if GhostOrderSkeleton:
-          if GhostOrderSkeleton["MappedOrder"] == order.oid:
+        if GhostOrderMessage:
+          if GhostOrderMessage["MappedOrder"] == order.oid:
             order.COID = GhostOrder.oid
 
         returnOrders.append(order)
@@ -468,16 +532,23 @@ class Consumer(AsyncJsonWebsocketConsumer):
     pass
 
   async def HandleInsufficientPermissions(self, message: Dict):
+    logger.error(f"Message {message[WEBSOCKET_MESSAGE_ID]} was not handle due to insuficeint permissions!")
+    logger.error(f"User: {self.scope['user']}")
+    logger.error(f"Get user: {await get_user(self.scope)}")
     await self.send_json({
 
     })
 
   @typeCheckfunc
   async def HandleEditState(self, message : Dict):
-    dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
+    try:
+      dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
+    except ValueError as E:
+      logger.error()
 
-    if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
-      raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
+
+    #if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
+    #  raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
 
     dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
     await self.db.updateDataClass(dataClassInstance)

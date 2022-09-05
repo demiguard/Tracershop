@@ -101,6 +101,14 @@ class SQL():
       None
 
   @classmethod
+  def getConditionalElement(cls, condition : str, dataClass):
+    returnList = cls.__Execute(SQLFactory.GetConditionalElement, dataClass, Fetching.ONE, condition, dataClass)
+    if returnList:
+      return returnList[0]
+    else:
+      None
+
+  @classmethod
   def UpdateJsonDataClass(cls, DataClassObject : JsonSerilizableDataClass):
     cls.__Execute(SQLFactory.UpdateJsonDataClass, JsonSerilizableDataClass, Fetching.NONE, DataClassObject)
 

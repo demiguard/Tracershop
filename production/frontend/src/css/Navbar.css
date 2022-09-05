@@ -1,11 +1,21 @@
-.navbar_custom {
-  background: var(--secondary-color-3);
+.navBarSpacer {
+  margin-top: 70px;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+.navbarmargin {
+  margin-bottom: 20px;
 }
 
 .navbar {
   top:0;
   width: 100%;
-  overflow: hidden;
+}
+
+
+.dropdown {
+  padding: 0px !important;
 }
 
 .navbarElem {
@@ -17,8 +27,4 @@
   border-style: solid;
   border-color: var(--secondary-color-1);
   border-radius: 10px;
-}
-
-.navbarElem a {
-  color:black;
 }
