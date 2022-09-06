@@ -5,7 +5,7 @@ from datetime import datetime, date, time, timedelta
 from customer.lib import calenderHelper
 from customer.lib import Formatting
 from customer import constants
-from customer.lib.SQL import SQLController as SQL 
+from customer.lib.SQL import SQLController as SQL
 from customer.models import Procedure, Booking, Tracer
 
 def calculateDosisFDG(booking, userID, times):
@@ -16,14 +16,14 @@ def calculateDosisFDG(booking, userID, times):
     #Also Error here
     return 0, None
   if (procedure := booking.procedure) == None:
-    return 0, None 
+    return 0, None
   if (delay := procedure.delay) == None:
     return 0, None
   if (baseDosis := procedure.baseDosis) == None:
     return 0, None
   if (halfLife := procedure.tracer.isotope.halfTime) == None:
     return 0, None
-  
+
   startdatetime = calenderHelper.combine_time_and_date(startDate, startTime)
   injectionTime = startdatetime + timedelta(minutes=delay)
   times = reversed(times)
@@ -36,11 +36,34 @@ def calculateDosisFDG(booking, userID, times):
 
   return 0, None
 
+def calculateDosisForTime(booking : Booking, productionTime : datetime):
+  """This function calculates the amount of activity that needs to Ordered at Production time
+
+  Args:
+      booking (Booking): The booking being ordered for
+      productionTime (datetime): This is requested time slot
+
+  Raises:
+      ValueError: If the production time is after booking starttime, the production can't deliver hence error.
+
+  Returns:
+      float: Amount of MBq that needs to be ordered
+  """
+  startdatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
+  injectionTime = startdatetime + timedelta(minutes=booking.procedure.delay)
+
+  if injectionTime > productionTime:
+    timeDelta = (injectionTime - productionTime).total_seconds()
+    return booking.procedure.baseDosis*math.exp((math.log(2) / booking.procedure.tracer.isotope.halfTime)*timeDelta)
+  else:
+    raise ValueError("Cannot Deliver injetion after it has been ordered")
+
+
 def insertTOrderBooking(booking : Booking, customerID : int , username):
 
   bookingDatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
   bookingDatetime += timedelta(minutes=booking.procedure.delay)
-  
+
   SQL.insertTOrder(1, bookingDatetime, booking.procedure.tracer.ID, "Human", customerID, username, f"Automaticly Generated {booking.procedure.tracer.tracerName} Order")
 
 def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: int):
@@ -87,22 +110,22 @@ def getMonthlyOrders(year, month, userID):
 def isOrderFDGAvailalbeForDate(date, closedDates, openDays):
   """
     This Function determines if FDG is availble for ordering
-  
+
   """
   now = datetime.now()
 
   if closedDates.get(date.strftime("%Y-%m-%d")):
     return False
-  
+
 
   if date.weekday() not in openDays:
     return False
-  
+
   deadlineWeekDate = (date.weekday() - 1) % 5
   deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN)
   while deadlineDateTime.weekday() != deadlineWeekDate:
     deadlineDateTime -= timedelta(days=1)
-  
+
   if deadlineDateTime < now:
     return False
 

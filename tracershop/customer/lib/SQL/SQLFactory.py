@@ -36,8 +36,8 @@ def createSQLQueryOrdersByDay(date, userID : int) -> str:
   if type(date) != str:
     date = calenderHelper.convert_to_SQL_date(date)
 
-  return f""" 
-  SELECT 
+  return f"""
+  SELECT
     status,
     OID,
     amount,
@@ -52,13 +52,13 @@ def createSQLQueryOrdersByDay(date, userID : int) -> str:
   WHERE DATE(deliver_datetime) = \'{date}\' AND
   BID = {userID}
   """
-  
+
 def createSQLQueryDailyRuns(date, userID : int) -> str:
   day_num = calenderHelper.get_day(date)
   return f"""
-  SELECT 
+  SELECT
     repeat_t,
-    dtime, 
+    dtime,
     max
   FROM
     deliverTimes
@@ -69,14 +69,14 @@ def createSQLQueryDailyRuns(date, userID : int) -> str:
     dtime
   """
 
-def createSQLQueryClosedDate(date) -> str: 
+def createSQLQueryClosedDate(date) -> str:
   if type(date) != str:
     date = calenderHelper.convert_to_SQL_date(date)
 
   return f"""
-  SELECT 
+  SELECT
     COUNT(*)
-  FROM 
+  FROM
     blockDeliverDate
   WHERE
     ddate = \"{date}\"
@@ -87,9 +87,9 @@ def createSQLQueryClosedDate(date) -> str:
 
 def createSQLQueryMaxCustomerNumber() -> str:
   return f"""
-  SELECT 
+  SELECT
     MAX(kundenr)
-  FROM 
+  FROM
     Users
   """
 
@@ -115,7 +115,6 @@ def createSQLQueryInsertFTGOrder(
       \"{userName}\",
       {run}
     )
-      
   """
 
 def createSQLQueryMaxOrderID() -> str:
@@ -144,8 +143,8 @@ def createSQLQueryTOrderForms(userID : int) -> str:
     Tracers.order_block,
     Tracers.id
   FROM
-    TracerCustomer 
-      INNER JOIN 
+    TracerCustomer
+      INNER JOIN
     Tracers
       ON Tracers.id=TracerCustomer.tracer_id
   WHERE
@@ -158,7 +157,7 @@ def createSQLQueryTOrderForms(userID : int) -> str:
 def createSQLQueryTOrders(date, userID : int) -> str:
   SQLDate = calenderHelper.convert_to_SQL_date(date)
   return f"""
-  SELECT 
+  SELECT
     t_orders.status,
     t_orders.OID,
     t_orders.deliver_datetime,
@@ -170,7 +169,7 @@ def createSQLQueryTOrders(date, userID : int) -> str:
   FROM
     t_orders
       INNER JOIN
-    Tracers 
+    Tracers
       ON
         Tracers.id=t_orders.tracer
   WHERE
@@ -217,7 +216,7 @@ def createSQLQueryActiveCustomers():
   return f"""
     SELECT DISTINCT
       Users.Username, Users.Id
-    FROM 
+    FROM
       deliverTimes
         INNER JOIN
       Users
@@ -265,7 +264,7 @@ def createSQLUpdateFDG(OrderID, NewAmount, Overhead, NewComment):
       total_amount = {NewAmount},
       total_amount_o = {Overhead},
       comment = \"{NewComment}\"
-    WHERE  
+    WHERE
       OID = {OrderID}
   """
 
@@ -277,7 +276,7 @@ def createSQLGetOverhead(CustomerID):
   return f"""
   SELECT overhead
   FROM Users
-  WHERE 
+  WHERE
     Id={CustomerID}
   """
 
@@ -287,11 +286,11 @@ def createSQLDeleteTOrders(OrderID):
 
 def createSQLGetTorderDate(OrderID):
   return f"""
-  SELECT 
+  SELECT
     status, deliver_datetime
-  From 
+  From
     t_orders
-  WHERE 
+  WHERE
     OID={OrderID}
   """
 
@@ -312,7 +311,7 @@ def createSQLupdateTOrder(
     comment      = \"{newComment}\",
     anvendelse   = \"{NewUse}\"
   WHERE
-    OID = {OrderID} AND 
+    OID = {OrderID} AND
     status = 1
   """
 

@@ -6,6 +6,9 @@ from datetime import date
 
 from customer.models import Customer
 from customer.lib.Filters import FilterBookings
+from customer.lib.SQL import SQLController as SQL
+from customer.modelsDir.authModels import Booking
+
 
 class ApiFutureBookingDay(View):
   name = "ApiFutureBookingDay"
@@ -14,21 +17,21 @@ class ApiFutureBookingDay(View):
   #Constants
   USERIDKEY = 'UserID'
 
-
   def post(self, request, year, month, day):
     try:
       queryDate = date(year, month, day)
     except Exception as E:
       print(E)
       return HttpResponseBadRequest()
-    
+
     #TODO Error Handling as statement below may not succeed
     customer = Customer.objects.get(ID=request.POST[self.USERIDKEY])
-    response = FilterBookings(customer, queryDate)
+    bookings = FilterBookings(customer, queryDate)
+    deliverTimes = SQL.getDailyRuns(queryDate, request.POST[self.USERIDKEY])
+
+    response = {
+      'bookings' : bookings,
+      'deliverTimes' : deliverTimes,
+    }
 
     return JsonResponse(response)
-    
-
-
-
-

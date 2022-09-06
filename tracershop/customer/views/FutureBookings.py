@@ -25,22 +25,28 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
 
   def get(self, request):
     NextWeekday = getNextWeekday(datetime.date.today())
-    
     customers = getCustomers(request.user)
-
     activeCustomer = GetActiveCustomer(request)
-    
+
     if activeCustomer == -1:
       redirect("customer:editMyCustomer")
 
     studies = FilterBookings(activeCustomer, NextWeekday)
+    deliverTimes = SQL.getDailyRuns(NextWeekday, activeCustomer)
+
+    deliverTimes = [{
+        'run' : run + 1,
+        'dtime' : deliverTime['dtime'].strftime("%H:%M")
+      } for run, deliverTime in enumerate(deliverTimes)]
+
+    deliverTimes.reverse()
 
     context = {
       'customerIDs' : LMap(lambda x: (x.ID, x.customerName), customers),
       'studies' : studies,
       'today' : NextWeekday.strftime("%Y-%m-%d"),
       'todayDanishFormat' : NextWeekday.strftime('%d/%m/%Y'),
-      'NextUpdate' : getNextUpdate()
+      'NextUpdate' : getNextUpdate(),
+      'deliverTimes' : deliverTimes,
     }
-    
     return render(request, self.template_name, context=context)

@@ -14,8 +14,6 @@ def queryOrderByMonth(year : int,month : int, userID : int) -> list:
   SQLQuery       = SQLFactory.createSQLQueryOrderStatusByMonth(year, month, userID)
   QueryResult    = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   return           SQLFormatter.FormatMonthlyOrders(QueryResult)
-  
-  
 
 def queryTOrderByMonth(year:int, month : int, userID : int) -> list:
   SQLQuery       = SQLFactory.createSQLQueryTOrderStatusByMonth(year, month, userID)
@@ -67,14 +65,14 @@ def getMaxCustomerNumber() -> int:
   SQLQuery = SQLFactory.createSQLQueryMaxCustomerNumber()
   CustomerNumbers = SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
   return max(CustomerNumbers)
-  
+
 
 def insertOrderFTG(
       amount      : int,
       comment     : str,
       deliverTime : Type[time],
       dato        : Type[date],
-      run         : int, 
+      run         : int,
       userID      : int,
       username    : str
     )      -> None:
@@ -97,7 +95,7 @@ def insertOrderFTG(
     userID,
     username
   )
-     
+
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 
@@ -117,7 +115,7 @@ def insertTOrder(
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 
-def getLastOrder() -> int: 
+def getLastOrder() -> int:
   SQLQuery = SQLFactory.createSQLQueryMaxOrderID()
   return SQLExecuter.ExecuteQueryFetchOne(SQLQuery)
 
@@ -133,11 +131,11 @@ def getTOrdersForms(userID: int) -> list:
 
   tupleNames = constants.TORDERFORMS
   nameDir    = constants.SQLTuples
-  return SQLFormatter.FormatSQLTuple(SQLResult, nameDir[tupleNames]) 
+  return SQLFormatter.FormatSQLTuple(SQLResult, nameDir[tupleNames])
 
 def getDailyTOrders(date, userID:int) -> list:
   SQLQuery = SQLFactory.createSQLQueryTOrders(date, userID)
-  TOrders  = SQLExecuter.ExecuteQueryFetchAll(SQLQuery) 
+  TOrders  = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
 
   tupleNames = constants.TORDERS
   nameDir    = constants.SQLTuples
@@ -161,14 +159,14 @@ def monthlyCloseDates(year:int, month:int):
     Args:
       Year: The Year in question for which the query is targeted
       Month: The Month in question for which the Query is targeted
-  
+
     Returns:
       A dict on the format
         {"Date" : 1}
       Use codesnippet to detect if the day is closed:
          if Dict.get(Date):
            #Code
-  """  
+  """
   SQLQuery = SQLFactory.createSQLQueryMonthlyClosedDates(year, month)
   closedDates = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   if closedDates:
@@ -179,7 +177,7 @@ def monthlyCloseDates(year:int, month:int):
 
 def getOpenDays(userID):
   SQLQuery = SQLFactory.createSQLAvailbleFDGDays(userID)
-  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery) 
+  QueryResult = SQLExecuter.ExecuteQueryFetchAll(SQLQuery)
   return SQLFormatter.FormatDaysList(QueryResult)
 
 def getPotentialUsers():
@@ -190,7 +188,7 @@ def getAll(Model):
   return Model.objects.all()
 
 def getSpecificObject(ID, Obejct ):
-  return Obejct.objects.get(ID=ID) 
+  return Obejct.objects.get(ID=ID)
 
 def getServerConfig():
   """
@@ -256,5 +254,3 @@ def VerifyCustomers():
   for (customerID, customerUserName) in old_customers:
     if customerID not in customerIDs:
       Customer(ID=customerID, customerName=customerUserName).save()
-
-

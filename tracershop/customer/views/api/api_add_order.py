@@ -14,7 +14,6 @@ class Api_add_order(LoginRequiredMixin, View):
 
   def parse_QueryDict(self, Dict):
     tempdate = datetime.strptime(Dict['dato'], '%d/%m/%Y')
-    
     return {
       'order'  : int(Dict['order']) - 1,
       'amount' : int(Dict['amount']),
@@ -40,13 +39,15 @@ class Api_add_order(LoginRequiredMixin, View):
         'successRate' : 'FAIL',
         'failMessage' : 'Missing Inputs'
       })
+    # Check for late ordering
+
 
     #Remember there's a selection here
     deliverTimeDict = SQL.getDailyRuns(FormatedDict['dato'], FormatedDict['customerID'])
     SelectdeliverTime = deliverTimeDict[FormatedDict['order']]
     deliverTime      = SelectdeliverTime['dtime']
 
-    run = FormatedDict['order'] + 1 
+    run = FormatedDict['order'] + 1
     SQL.insertOrderFTG(
         FormatedDict['amount'],     # amount
         FormatedDict['comment'],    # comment
@@ -67,5 +68,3 @@ class Api_add_order(LoginRequiredMixin, View):
       'amount'      : FormatedDict['amount'],
       'overhead'    : overhead
     })
-
-    

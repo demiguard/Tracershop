@@ -14,10 +14,8 @@ class CreateUserView(TemplateView):
   path = "createuser"
   name = "CreateUser"
 
-  
   @method_decorator(ensure_csrf_cookie)
   def get(self, request):
-    
     context = {
       'CreateUserForm' : CreateUserForm()
     }
@@ -40,7 +38,6 @@ class CreateUserView(TemplateView):
       return JsonResponse({
         success : "Brugeren er i gang med at blive opretet. Du skal ikke gører mere."
       })
-
 
     potentialuser = PotentialUser.objects.create(
       username = username,

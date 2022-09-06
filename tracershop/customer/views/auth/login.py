@@ -33,7 +33,7 @@ class APILoginView(View):
     if login_data.is_valid():
       user = authenticate(
         request,
-        username=request.POST['username'],
+        username=request.POST['username'].upper().strip(),
         password=request.POST['password']
       )
 
@@ -41,9 +41,9 @@ class APILoginView(View):
         login(request, user)
         success = True
       else:
-        pass         
+        pass
     else:
-      pass # LOG this 
+      pass # LOG this
 
     response = JsonResponse({
       'success' : success

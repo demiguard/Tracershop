@@ -10,12 +10,12 @@
 {% endblock %}
 
 {% block content %}
-  
+
   <div id="Study" class="col-9">
-    <div class="row"> 
+    <div class="row">
       <strong id="DateStrong">
         {{ todayDanishFormat }}
-      </strong> 
+      </strong>
       <div class="col-1"></div>
       <div id="Next update">
         Næste Opdatering: {{ NextUpdate.time | time:'H:i' }}
@@ -26,7 +26,7 @@
       <div class="col-12 overViewDiv">
         <input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> 
         <strong id="{{ forloop.counter0 }}-tracer">{{ key }}</strong>
-      </div> 
+      </div>
       <div class=hidden id="{{ forloop.counter0 }}-div">
         <table id="{{ forloop.counter0 }}-table" class="dataTable table">
           <thead>
@@ -35,6 +35,9 @@
           <th>Booking tidspunkt</th>
           <th>Injektions Tidspunkt</th>
           <th>Location</th>
+          {% if key == 'FDG' %}
+            <th>Kørsel</th>
+          {% endif %}
           <th></th>
         </thead>
         <tbody id="{{ forloop.counter0 }}-tbody">
@@ -45,6 +48,17 @@
             <td class="">{{ study.studyTime }} </td>
             <td class="">{{ study.injectionTime}}</td>
             <td>{{ study.location }}</td>
+            {% if key == 'FDG' %}
+            <td class="run">
+              <select class="run">
+                {% for deliverTime in deliverTimes %}
+                  {% if study.injectionTime > deliverTime.dtime %}
+                    <option value={{ deliverTime.dtime }}>{{ deliverTime.dtime }} </option>
+                  {% endif %}
+                {% endfor %}
+              </select>
+            </td>
+            {% endif %}
             {% if study.status == 0 %}
               <td class="checkbox"><input type="checkbox" id="{{ study.accessionNumber }}" checked></td>
             {% elif study.status == 2 %}
@@ -63,7 +77,6 @@
         </div>
         {% endif %}
       </div>
-        
       </div>
     </div>
     {% endfor %}
@@ -80,8 +93,8 @@
       </select>
     </div>
     <div id="calender"></div>
+    <div id="ErrorDiv"></div>
   </div>
-  
 
 {% endblock %}
 {% block javascript %}

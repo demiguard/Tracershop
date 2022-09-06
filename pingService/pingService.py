@@ -1,5 +1,5 @@
 #
-# See README.MD for 
+# See README.MD for useage
 #
 # Author: Christoffer Vilstrup Jensen
 #
@@ -314,5 +314,3 @@ if __name__ == "__main__":
             logger.error("Could Not connect to Ris")
       else:
         logger.error("Could not Create connection to Database")
-    
-  

@@ -8,7 +8,7 @@ import { createFDGForm } from "./libs/Factory.js"
 import { createCalculator } from "./libs/calculator.js";
 import { Table } from "./libs/TableFactory.js"
 
-// Today is variable that's created from GET request, 
+// Today is variable that's created from GET request,
 // it's provided from Django Template and can be found in index.html
 
 var CalenderInstance;
@@ -141,7 +141,7 @@ function CreateFGDOrderTable(data, Div, hasComment) {
   let Row = []
   for (let i = 0; i < data.length; i++) {
     const order = data[i];
-    
+
     var RowData = new Array();
     const statusImage = $('<img>', {
       src: `/static/customer/images/clipboard${order.status}.svg`,
@@ -161,7 +161,7 @@ function CreateFGDOrderTable(data, Div, hasComment) {
     (order.frigivet_datetime != null) ? RowData.push(order.frigivet_datetime.substr(11,5)) : RowData.push("");
     if (hasComment && order.comment) {
       const commentImage = $("<img>", {
-          src : "/static/customer/images/comment.svg", 
+          src : "/static/customer/images/comment.svg",
           class: "StatusIcon",
           title:order.comment
         });
@@ -172,12 +172,12 @@ function CreateFGDOrderTable(data, Div, hasComment) {
     RowIDs.push(`OrderRow-${order.OID}`);
     }
   if (hasComment) {
-    Header = ["Status", "Order ID", "Bestilt MBq", "Samlet Mbq","Batch-nr", "Frigivet MBq", "Frigivet", "Kommentar"] ;
+    Header = ["Status", "Order ID", "Bestilt MBq", "Samlet Mbq","Batch-nr", "Frigivet MBq", "Frigivet", "Kommentar"];
   }
   else {
-    Header = ["Status", "Order ID", "Bestilt MBq", "Samlet Mbq", "Batch-nr", "Frigivet MBq", "Frigivet"] 
-  } 
-  //Format such that Table factory can use it 
+    Header = ["Status", "Order ID", "Bestilt MBq", "Samlet Mbq", "Batch-nr", "Frigivet MBq", "Frigivet"];
+  }
+  //Format such that Table factory can use it
   const Skeleton = new Object();
   Skeleton.HeaderColumns  = Header;
   Skeleton.Rows           = Row;
@@ -221,7 +221,7 @@ async function fill_order_table(date, DateDiv, changeDateFunction) {
       contentStr = "Ukendt Data format fra JSON Fil";
     }
     createElement(dataRow, contentStr,'', 'div', ['col-11', 'row']);
-    
+
     createElement(dataRow, response['time'].substr(0,5),"", "div", ["order", "DisplayNone", response.data_type]);
     var informationRowDiv = createElement(dataRow,'','informationRow'+String(i+1),'div',['row']);
     // ----- Form Creation -----
@@ -229,10 +229,10 @@ async function fill_order_table(date, DateDiv, changeDateFunction) {
       createFDGForm(informationRowDiv, response["time"], response["order_num"], SendOrder);
     }
       // ----- Table Creation -----
-    if (response.data_type == 'data') { 
+    if (response.data_type == 'data') {
       CreateFGDOrderTable(response.data, informationRowDiv, response.hasComment); }
-  } 
-  // T-orders 
+  }
+  // T-orders
   if (data.tOrders.length != 0) {
     $('#T_orders').removeClass('DisplayNone');
     $("#torder_data").empty(); // Remove old content
@@ -263,12 +263,12 @@ async function fill_order_table(date, DateDiv, changeDateFunction) {
     var deliverTimeInput    = $("<input>", {
       type:"text",
       class:"timeField",
-      required:"", 
+      required:"",
       id:"id_deliverTime"
     });
     deliverTimeInput.appendTo($(deliverTimeTD));
     auto_char(deliverTimeInput, ':',2);
-    MaxCharInField(deliverTimeInput, 5);  
+    MaxCharInField(deliverTimeInput, 5);
     createElement(formRow, injectionFieldInputStr, "InjectionField", 'td', []);
     createElement(formRow, UseSelectStr, 'UseField','td',[]);
     const CommentTD    = createElement(formRow, '', '', 'td', []);
@@ -324,12 +324,12 @@ $(function() {
 
   CalenderInstance = new CalenderFactory(
     'calender',
-    Ztoday, 
-    dateColoringFunction, 
-    Date_onClick, 
+    Ztoday,
+    dateColoringFunction,
+    Date_onClick,
     Month_api_call,
     colorDict);
-  
+
     CustomerInstance = new CustomerSelect(
     $('#customer_select'),
     onChangeSelect

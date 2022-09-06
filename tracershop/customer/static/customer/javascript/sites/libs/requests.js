@@ -14,6 +14,23 @@ function SendOrder () {
   let amount = $('#' + MBQ_ID_HEADER +idStr).val();
   let comment = $('#' + COMMENT_ID_HEADER + idStr).val();
   let date = $('#dato').text().replace(/\s+/g, '');
+  let now = new Date();
+  let tomorrow = new Date(now)
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  while(!(tomorrow.getDay() in [1,2,3,4,5])){
+    tomorrow.setDate(tomorrow.getDate() + 1); // If it's a friday set tomorrow to next monday
+  }
+  const cutoffDate = `Dato:${tomorrow.getDate()}/${tomorrow.getMonth() + 1}/${tomorrow.getFullYear()}`
+  console.log(cutoffDate)
+  console.log(date)
+  if (date == cutoffDate && now.getHours() >= 13){
+    ErrorDiv.addClass("ErrorBox");
+    const p = $("<p>");
+    p.append("Du kan ikke bestille FDG til efter kl 13");
+
+    ErrorDiv.append(p);
+    return;
+  }
   let customerID = $("#customer_select").children("option:selected").val();
   let NumbersRegex = /^\d+$/;
   if (!NumbersRegex.test(amount)) {
@@ -31,14 +48,14 @@ function SendOrder () {
       'comment' : comment,
       'customerID' : customerID
     },
-    dataType: "JSON", 
+    dataType: "JSON",
     success: function(data) {
       const Row = $("#" + "Row-" + String(id))
       const Order = Row.find(".order");
       Order.removeClass("form");
       Order.addClass("data");
       var informationRowDiv = $('#informationRow' + String(id));
-      
+
       informationRowDiv.empty();
       const Total = data.amount * (1 + data.overhead / 100)
       var table = createElement(informationRowDiv,'','','table',["table"]);
@@ -68,7 +85,7 @@ function SendOrder () {
       createElement(tableRow, '', '', 'td', []);
       createElement(tableRow, 0, '', 'td', []);
       createElement(tableRow, "", '', 'td', []);
-    }, 
+    },
     error: function() {
       console.log("Error");
     }
@@ -114,7 +131,7 @@ function SendTOrder() {
         id: `TStatus-${data.lastOID}`
       });
       statusImage.click(EditTOrder);
-      
+
 
       const StatusRow = createElement(tableRow, '', '', 'td', []);
       $(StatusRow).append(statusImage);
@@ -135,7 +152,7 @@ function SendTOrder() {
       if (useVal === "0") { UseName = 'Human';}
       else if (useVal === "1") { UseName = "Dyr";}
       else { UseName = 'Andet'; }
-      createElement(tableRow, UseName, '', 'td', []);      
+      createElement(tableRow, UseName, '', 'td', []);
     }
   });
 }

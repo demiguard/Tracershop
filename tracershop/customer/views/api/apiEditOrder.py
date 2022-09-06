@@ -17,33 +17,30 @@ def typeCorrectData(JSONObject):
   JSONObject['ActiveCustomer'] = int(JSONObject['ActiveCustomer'])
   if not JSONObject.get("NewComment"):
     JSONObject["NewComment"] = ""
-  JSONObject["Date"] = datetime.strptime(JSONObject["Date"], "Dato:%d/%m/%Y") 
-
-  
-
+  JSONObject["Date"] = datetime.strptime(JSONObject["Date"], "Dato:%d/%m/%Y")
 
   return JSONObject
 
-def typeCorrectDataDelete(JSONObject):  
+def typeCorrectDataDelete(JSONObject):
   return int(JSONObject['OrderID'])
 
 class ApiEditOrder(LoginRequiredMixin, View):
   path = "api/EditOrder"
   name = "APIEditOrder"
 
-  def put(self, request):    
+  def put(self, request):
     StringData = ParseJSONRequest(request)
     data = typeCorrectData(StringData)
-    
-    monthlyCloseDates = SQL.monthlyCloseDates(data["Date"].year, data["Date"].month)  
-    if not isOrderFDGAvailalbeForDate(data["Date"], monthlyCloseDates, [0,1,2,3,4,5,6,7]):
+
+    monthlyCloseDates = SQL.monthlyCloseDates(data["Date"].year, data["Date"].month)
+    if not isOrderFDGAvailalbeForDate(data["Date"], monthlyCloseDates, [0,1,2,3,4]):
       return JsonResponse({
         "Success" : "InvalidDate"
       })
 
 
     SQL.updateFDGOrder(
-      data['OrderID'], 
+      data['OrderID'],
       data['NewAmount'],
       data['NewComment'],
       data['ActiveCustomer']
@@ -59,17 +56,13 @@ class ApiEditOrder(LoginRequiredMixin, View):
   def delete(self, request):
     Data = ParseJSONRequest(request)
     ID = typeCorrectDataDelete(Data)
-    Data["Date"] = datetime.strptime(Data["Date"], "Dato:%d/%m/%Y") 
-    monthlyCloseDates = SQL.monthlyCloseDates(Data["Date"].year, Data["Date"].month)  
+    Data["Date"] = datetime.strptime(Data["Date"], "Dato:%d/%m/%Y")
+    monthlyCloseDates = SQL.monthlyCloseDates(Data["Date"].year, Data["Date"].month)
     print(Data["Date"])
     if not isOrderFDGAvailalbeForDate(Data["Date"], monthlyCloseDates, [0,1,2,3,4,5,6,7]):
-      
-      
       return JsonResponse({
         "Success" : "InvalidDate"
       })
-
-
 
     SQL.deleteFDGOrder(ID)
     return constants.SUCCESSFUL_JSON_RESPONSE
