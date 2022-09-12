@@ -1,7 +1,8 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Button, Form, FormControl, Modal, Table } from "react-bootstrap";
-import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS } from "../../lib/constants";
+import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+import { renderTableRow } from "../../lib/Rendering";
 import { changeState } from "../../lib/stateManagement";
 
 export default class TracerModal extends Component {
@@ -32,32 +33,37 @@ export default class TracerModal extends Component {
       this.props.websocket.send(message);
 
     } else {
-      console.log("destroy")
+      const TracerMappingID = this.TracerMapping.get(CustomerID);
+      const data = {};
+      data[KEYWORD_CUSTOMER_ID] = CustomerID;
+      data[KEYWORD_TRACER_ID]   = this.props.tracerID;
+      data[KEYWORD_ID] = TracerMappingID;
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
+      message[WEBSOCKET_DATA] = data;
+      message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING;
+
+      this.props.websocket.send(message);
     }
   }
 
   renderCustomerRow(customer){
-    const allowedToOrder = this.props.tracerMapping.has(customer.ID)
+    const allowedToOrder = this.TracerMapping.has(customer.ID)
 
-    return (
-      <tr key={customer.ID}>
-        <td>{customer.UserName}</td>
-        <td>
-          <Form.Check
-            defaultChecked={allowedToOrder}
-            type="checkbox"
-            className="mb-2"
-            onClick={(event) => this.updateTracerCustomer(event, customer.ID)}
-          />
-        </td>
-      </tr>
-    )
+
+    return renderTableRow(customer.ID, [
+      customer.UserName, <Form.Check
+        defaultChecked={allowedToOrder}
+        type="checkbox"
+        className="mb-2"
+        onClick={(event) => this.updateTracerCustomer(event, customer.ID)}
+      />
+    ]);
   }
 
   renderBody(){
     const Customers = [];
     const filter = new RegExp(this.state.filter,"g");
-    for(const [_customer_id, customer] of this.props.customers.entries()){
+    for(const [_customer_id, customer] of this.props.customers){
       if(filter.test(customer.UserName)) {
         Customers.push(this.renderCustomerRow(customer));
       }
@@ -83,17 +89,15 @@ export default class TracerModal extends Component {
 
 
   render() {
-    const TracerMapping = new Set();
+    const TracerMapping = new Map();
     if(this.props.tracerID != null){
       for(const [TracerMappingID, TracerMappingTuple] of this.props.tracerMapping){
-        if(TracerMappingTuple[KEYWORD_TRACER_ID] == this.prosp.tracerID){
-          TracerMapping.add(TracerMappingTuple[KEYWORD_CUSTOMER_ID])
+        if(TracerMappingTuple[KEYWORD_TRACER_ID] == this.props.tracerID){
+          TracerMapping.set(TracerMappingTuple[KEYWORD_CUSTOMER_ID], TracerMappingID)
         }
       }
     }
-
-    this.TracerMapping = TracerMapping
-
+    this.TracerMapping = TracerMapping // Derived Property
 
     return (
       <Modal

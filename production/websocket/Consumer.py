@@ -91,37 +91,51 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          needed to handle that message
     """
     logger.info(f"Websocket recieved message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
-    messageType  = message[WEBSOCKET_MESSAGE_TYPE]
-    if not auth.AuthMessage(self.scope['user'], messageType):
-      await self.HandleInsufficientPermissions(message)
-      return
-    if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
-      await self.HandleTheGreatStateMessage(message)
-    elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
-      await self.HandleCreateDataClass(message)
-    elif messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
-      await self.HandleFreeOrder(message)
-    elif messageType == WEBSOCKET_MESSAGE_MOVE_ORDERS:
-      await self.HandleMoveOrders(message)
-    elif messageType == WEBSOCKET_MESSAGE_ECHO:
-      await self.HandleEcho(message)
-    elif messageType == WEBSOCKET_MESSAGE_GET_ORDERS:
-      await self.HandleGetOrders(message)
-    elif messageType == WEBSOCKET_UPDATE_SERVERCONFIG:
-      await self.HandleUpdateServerConfig
-    elif messageType == WEBSOCKET_MESSAGE_EDIT_STATE:
-      await self.HandleEditState(message)
-    elif messageType == WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
-      await self.HandleDeleteDataClass(message)
-    elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGIN:
-      await self.handleLogin(message)
-    elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGOUT:
-      await self.handleLogout(message)
-    elif messageType == WEBSOCKET_MESSAGE_AUTH_WHOAMI:
-      await self.handleWhoAmI(message)
+    try:
+      messageType  = message[WEBSOCKET_MESSAGE_TYPE]
+      if not auth.AuthMessage(self.scope['user'], messageType):
+        await self.HandleInsufficientPermissions(message)
+        return
+      if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
+        await self.HandleTheGreatStateMessage(message)
+      elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
+        await self.HandleCreateDataClass(message)
+      elif messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
+        await self.HandleFreeOrder(message)
+      elif messageType == WEBSOCKET_MESSAGE_MOVE_ORDERS:
+        await self.HandleMoveOrders(message)
+      elif messageType == WEBSOCKET_MESSAGE_ECHO:
+        await self.HandleEcho(message)
+      elif messageType == WEBSOCKET_MESSAGE_GET_ORDERS:
+        await self.HandleGetOrders(message)
+      elif messageType == WEBSOCKET_UPDATE_SERVERCONFIG:
+        await self.HandleUpdateServerConfig
+      elif messageType == WEBSOCKET_MESSAGE_EDIT_STATE:
+        await self.HandleEditState(message)
+      elif messageType == WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
+        await self.HandleDeleteDataClass(message)
+      elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGIN:
+        await self.handleLogin(message)
+      elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGOUT:
+        await self.handleLogout(message)
+      elif messageType == WEBSOCKET_MESSAGE_AUTH_WHOAMI:
+        await self.handleWhoAmI(message)
+    except Exception as E:
+      raise E
+      await self.HandleUnknownError(E, message)
 
+  async def HandleUnknownError(exception : Exception, FailingMessage : dict):
+    """This Function is triggered when an unhandle exception is happens server side.
+    It sends an Error message back to the client informing it,
+    that server was unable to process the request, due to some unknown bug.
+    The intent of this function is better displays bugs to the user, so that they can be fixed.
 
-  async def sendErrorMessage(exception : Exception):
+    Regarding security concerns of displaying code, this project is open source.
+
+    Args:
+        exception (Exception): _description_
+        FailingMessage : dict
+    """
     pass
 
   async def sendEvent(self, event: Dict):
@@ -545,7 +559,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     try:
       dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
     except ValueError as E:
-      logger.error()
+      logger.error(E)
 
 
     #if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
@@ -581,3 +595,5 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_DATA_ID      : ID,
         WEBSOCKET_MESSAGE_ID   : message[WEBSOCKET_MESSAGE_ID],
       })
+    else:
+      pass

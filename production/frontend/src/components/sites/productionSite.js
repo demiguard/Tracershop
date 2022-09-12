@@ -19,10 +19,8 @@ const Pages = {
   Ordre : OrderPage,
   Kunder : CustomerPage,
   Tracers : TracerPage,
-
   Lukkedage : CloseDaysPage,
-  Vial : VialPage,
-  Indstillinger : ServerConfigPage,
+  Hætteglas : VialPage,
 };
 
 

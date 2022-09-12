@@ -54,7 +54,7 @@ export default class CustomerPage extends Component {
   render() {
     const customers = [];
     const FilterRegEx = new RegExp(this.state.filter,'g')
-    for (const [ID, customer] of this.props.customer) {
+    for (const [ID, customer] of this.props.customers) {
       if (FilterRegEx.test(customer["UserName"])) {
         customers.push(this.renderCustomer(ID, customer["UserName"]));
       }
@@ -81,12 +81,12 @@ export default class CustomerPage extends Component {
     { this.state.showModal ?
       <CustomerModal
         show={this.state.showModal}
-        userid = {this.state.userIDModal}
-        onClose = {this.closeModal.bind(this)}
-        customer = {this.props.customer}
-        deliverTimes = {this.props.deliverTimes}
-        runs = {this.props.runs}
-        websocket = {this.props.websocket}
+        userid={this.state.userIDModal}
+        onClose={this.closeModal.bind(this)}
+        customers={this.props.customers}
+        deliverTimes={this.props.deliverTimes}
+        runs={this.props.runs}
+        websocket={this.props.websocket}
       /> : ""
     }
 

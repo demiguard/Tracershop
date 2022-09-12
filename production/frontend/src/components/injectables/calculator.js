@@ -3,7 +3,7 @@ import { Button, FormControl, Row, Table } from "react-bootstrap";
 import { FormatTime, ParseDanishNumber } from "../../lib/formatting";
 import { CalculateProduction, CountMinutes } from "../../lib/physics";
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
-import { removeIndex } from "../../lib/utils";
+import { CompareDates, removeIndex } from "../../lib/utils";
 
 export { Calculator, standardOrderMapping }
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.

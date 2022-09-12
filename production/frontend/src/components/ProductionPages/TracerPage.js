@@ -173,8 +173,6 @@ export default class TracerPage extends Component {
     }
     Tracers.push(this.renderNewTracer());
 
-    
-
     return (
     <Container>
       Tracer Filter: <FormControl value={this.state.filter} onChange={changeState("filter", this).bind(this)}/>
@@ -197,7 +195,7 @@ export default class TracerPage extends Component {
       <TracerModal
       show           = {this.state.showModal}
       tracerMapping  = {this.props.tracerMapping}
-      customers      = {this.props.customer}
+      customers      = {this.props.customers}
       onClose        = {this.closeModal.bind(this)}
       tracerID       = {this.state.tracerID}
       websocket      = {this.props.websocket}

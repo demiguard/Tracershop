@@ -8,17 +8,13 @@ export { ErrorPage }
 export default class ErrorPage extends Component {
   constructor(props){
     super(props);
-
-
   }
-
 
   render() {
     const StackTraceFull = this.props.SiteErrorInfo.componentStack;
     const StackTracePaths = StackTraceFull.split("\n");
 
     const files = StackTracePaths.filter((string) => {return (string.includes("@") && !string.includes("node_modules"));})
-    console.log(files)
 
     const fileRows = []
     for(const fullfilepath of files){
@@ -32,16 +28,15 @@ export default class ErrorPage extends Component {
       fileRows.push([(<p key={fileRows.length}>Filen: {file} Linje: {Line}</p>)])
     }
 
-
-
     return(<Container
       className="ErrorContainer"
     >
-      <h1>Fejl</h1>
-      <p>Der er sket en unkendt og derfor uhåndteret fejl.</p>
-      <p>Kontakt den ansvarlige for Tracershop.</p>
+      <h1>Ukendt fejl</h1>
+      <p>Der er sket en unkendt fejl og derfor er den uhåndteret.</p>
+      <p>Kontakt den ansvarlige for Tracershop, og beskriv hvordan hvad du lavede før du fik denne fejl.</p>
+      <p>Den ansvarlige person kan kontaktes på {"@AdminTelefon"} eller {"@AdminMail"}</p>
       <h1>Teknisk infomation</h1>
-      <p>Error: {this.props.SiteError}</p>
+      <p>Error: {String(this.props.SiteError)}</p>
       <hr></hr>
       <h3>StackTrace:</h3>
       {fileRows}

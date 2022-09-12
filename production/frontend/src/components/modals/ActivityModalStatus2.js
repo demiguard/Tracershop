@@ -76,6 +76,65 @@ export default class ActivityModalStatus2 extends Component {
     });
   }
 
+  /** This function validates user input to create a vial.
+   * In case of error It updates state with relevant error message.
+   *
+   * @param {*} charge - User input representing Charge or Batchnumber to be validated
+   * @param {*} Activity - User input representing A positive number
+   * @param {*} Volume - User input representing Volume of vial.
+   * @param {*} FillTime - User input representing fill time of vial.
+   * @returns {Boolean} - if the vial is valid or not
+   */
+  validateVial(charge, activity, volume, FillTimeStr){
+    var ErrorInInput = false;
+    var NewErrorMessage = "";
+
+    if (!charge){ // Ask jacob for format
+      ErrorInInput = true;
+      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
+    }
+    const NewActivity = ParseDanishNumber(activity)
+    if (isNaN(NewActivity)){
+      ErrorInInput = true;
+      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
+    } else if ( NewActivity <= 0) {
+      ErrorInInput = true;
+      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
+    }
+    const NewVolume = ParseDanishNumber(volume)
+    if (isNaN(NewVolume)){
+      ErrorInInput = true;
+      NewErrorMessage += "Volumen skal være et tal.\n"
+    } else if ( NewVolume <= 0) {
+      ErrorInInput = true;
+      NewErrorMessage += "Volumen kan ikke være negativ.\n"
+    }
+
+    const FillTime = FormatTime(FillTimeStr);
+    if (FillTime === null) { // This is the output if fillTime fails to parse
+      ErrorInInput = true;
+      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
+    }
+
+    const order = this.props.orders.get(this.props.order);
+    const Customer = this.props.customers.get(order.BID);
+    const CustomerNumber = Customer.kundenr;
+
+    if (CustomerNumber === null) {
+      ErrorInInput = true;
+      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
+    }
+
+    if (ErrorInInput){
+      this.setState({
+        ...this.state,
+        ErrorMessage : NewErrorMessage
+      });
+    }
+
+    return ErrorInInput;
+  }
+
   changeNewFieldTime(event){
     const newState = {...this.state};
     newState.newFillTime = autoAddCharacter(event, ":", new Set([2,5]), this.state.newFillTime);
@@ -143,51 +202,18 @@ export default class ActivityModalStatus2 extends Component {
   *
   */
   createNewVial(){
-    var ErrorInInput = false;
-    var NewErrorMessage = "";
-
-    if (!this.state.newCharge){
-      ErrorInInput = true;
-      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
+    if(this.validateVial(this.state.newCharge, this.state.newActivity, this.state.newVolume,this.state.newFillTime)){
+      return;
     }
-    const NewActivity = ParseDanishNumber(this.state.newActivity)
-    if (isNaN(NewActivity)){
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
-    } else if ( NewActivity <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
-    }
-    const NewVolume = ParseDanishNumber(this.state.newVolume)
-    if (isNaN(NewVolume)){
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen skal være et tal.\n"
-    } else if ( NewVolume <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen kan ikke være negativ.\n"
-    }
-
+    const NewVolume = ParseDanishNumber(this.state.newVolume);
+    const NewActivity = ParseDanishNumber(this.state.newActivity);
     const FillTime = FormatTime(this.state.newFillTime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse
-      ErrorInInput = true;
-      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    }
-    const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.kundenr : null
-
-    if (CustomerNumber === null) {
-      ErrorInInput = true;
-      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
-    }
-
-    if (ErrorInInput){
-      console.log(NewErrorMessage);
-      this.setState({...this.state, ErrorMessage : NewErrorMessage})
-      return
-    }
+    const order = this.props.orders.get(this.props.order);
+    const Customer = this.props.customers.get(order.BID);
+    const CustomerNumber = Customer.kundenr;
 
     // This function will trigger an update to the prop Vials, that in turn will trigger an update, and then we'll be able to see the Vial when the backend have accepted it.
-    // Note that other users will also be able to see this vial, since it's created using the websocket. 
+    // Note that other users will also be able to see this vial, since it's created using the websocket.
     this.props.createVial(this.state.newCharge, FillTime, Number(NewVolume.toFixed(2)), Number(NewActivity.toFixed(2)), CustomerNumber)
     this.StopCreatingNewVial()
   }
@@ -198,56 +224,7 @@ export default class ActivityModalStatus2 extends Component {
     //Validate the data, if ok then Pass it on the table, that will use its websocket to probergate the change onward.
     const EditingData = this.state.EditingVials.get(vialID);
 
-    var ErrorInInput = false;
-    var NewErrorMessage = "";
-
-    console.log(EditingData);
-    const BatchName = EditingData.charge
-    if (!BatchName){
-      ErrorInInput = true;
-      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
-    }
-    const NewActivity = ParseDanishNumber(EditingData.activity)
-    if (isNaN(NewActivity)){
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
-    } else if ( NewActivity <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
-    } else {
-      EditingData.activity
-    }
-
-
-    const NewVolume = ParseDanishNumber(EditingData.volume)
-    if (isNaN(NewVolume)){
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen skal være et tal.\n"
-    } else if ( NewVolume <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen kan ikke være negativ.\n"
-    } else {
-      EditingData.volume = NewVolume;
-    }
-
-
-    const FillTime = FormatTime(EditingData.filltime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse
-      ErrorInInput = true;
-      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    }
-
-    const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.kundenr : null
-
-    if (CustomerNumber === null) {
-      ErrorInInput = true;
-      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
-    }
-
-    if (ErrorInInput){
-      console.log(NewErrorMessage);
-      this.setState({...this.state, ErrorMessage : NewErrorMessage});
+    if(this.validateVial(EditingData.charge, EditingData.activity, EditingData.volume, EditingData.filltime)){
       return;
     }
 
@@ -327,10 +304,10 @@ export default class ActivityModalStatus2 extends Component {
     this.setState({...this.state, ErrorMessage : ""})
 
     if(this.state.CreatingVial){
-      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med Oprette en vial.\n";
+      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med oprette et hætteglas.\n";
     }
     if(this.state.EditingVials.size !== 0){
-      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med redigerer en vial.\n";
+      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med redigerer et hætteglas.\n";
     }
     if (this.props.selectedVials.size === 0) {
       newErrorMessage += "Du kan ikke godkende en ordre, uden at vælge mindst 1 vial.\n"

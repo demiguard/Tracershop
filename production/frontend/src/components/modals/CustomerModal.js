@@ -25,9 +25,9 @@ class CustomerModal extends Component {
   constructor(props) {
     super(props)
 
-    const customer = this.props.customer.get(this.props.userid);
+    const customer = this.props.customers.get(this.props.userid);
     const DeliverTimes = new Map();
-    for(const [_DTID, deliverTime] of this.props.deliverTimes.entries()) {
+    for(const [_DTID, deliverTime] of this.props.deliverTimes) {
       if(deliverTime.BID == this.props.userid)
         DeliverTimes.set(deliverTime.DTID, deliverTime);
     }
@@ -62,7 +62,7 @@ class CustomerModal extends Component {
   componentDidUpdate(prevProps, _prevState, _snapshot){
     if (prevProps.deliverTimes !== this.props.deliverTimes){
       const DeliverTimes = new Map();
-        for(const [_DTID, deliverTime] of this.props.deliverTimes.entries()) {
+        for(const [_DTID, deliverTime] of this.props.deliverTimes) {
       if(deliverTime.BID == this.props.userid)
         DeliverTimes.set(deliverTime.DTID, deliverTime);
       }

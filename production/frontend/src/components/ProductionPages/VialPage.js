@@ -1,10 +1,11 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
-import { Container, Table, Row, Col, Button } from "react-bootstrap";
+import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
 import { JSON_VIAL } from "/src/lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "/src/lib/formatting";
 import { addCharacter } from "/src/lib/utils";
 import { changeState } from "../../lib/stateManagement";
+import { renderSelect } from "../../lib/Rendering";
 
 export {VialPage}
 
@@ -114,7 +115,7 @@ class VialPage extends Component {
   renderVial(vial){
     // Sadly I need some extra functionality so can't really use the table rendering function :(
     var customerName = "";
-    for(const [_, customer] of this.props.customer){
+    for(const [_, customer] of this.props.customers){
       if (customer.kundenr == vial.customer){
         customerName = customer.UserName;
         break;
@@ -183,8 +184,8 @@ class VialPage extends Component {
       }
     }
 
-    const CustomerOptions = []
-    for(const [_, customer] of this.props.customer){
+    const CustomerOptions = [<option key="-1" value="null" >-----</option>]
+    for(const [_, customer] of this.props.customers){
       CustomerOptions.push(
         <option value={customer.kundenr} key={customer.kundenr}
           >{customer.UserName}</option>
@@ -196,20 +197,19 @@ class VialPage extends Component {
 
       <Row>
         <Col>
-          <input
+          <FormControl
             value={this.state.filterBatch}
             onChange={changeState("filterBatch", this).bind(this)}
             placeholder="batch nummer"
           />
         </Col>
         <Col>
-          <select onChange={(event) => {this.changeSelectState(event.target.value)}}>
-            <option value="null" >-----</option>
+          <Form.Select onChange={(event) => {this.changeSelectState(event.target.value)}}>
             {CustomerOptions}
-          </select>
+          </Form.Select>
         </Col>
         <Col>
-          <input
+          <FormControl
             onKeyDown={addCharacter('/', "filterSearchDate", [2,5], this).bind(this)}
             value={this.state.filterSearchDate} onChange={changeState("filterSearchDate", this).bind(this)}
             placeholder="Dato"
