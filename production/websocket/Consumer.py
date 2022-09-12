@@ -531,12 +531,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def HandleUpdateServerConfig(self, message : Dict):
     pass
 
-  async def HandleInsufficientPermissions(self, message: Dict):
+  async def HandleInsufficientPermissions(self, message: Dict, reason = "Unspecified"):
     logger.error(f"Message {message[WEBSOCKET_MESSAGE_ID]} was not handle due to insuficeint permissions!")
     logger.error(f"User: {self.scope['user']}")
     logger.error(f"Get user: {await get_user(self.scope)}")
     await self.send_json({
-
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : reason
     })
 
   @typeCheckfunc

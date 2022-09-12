@@ -521,9 +521,7 @@ def findDataClass(dataType):
   elif dataType == JSON_TRACER_MAPPING:
     dataClass = TracerCustomerMappingDataClass
 
-
   if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
     raise ValueError(f"Datatype: {dataType} is unknown to the consumer")
 
   return dataClass
-

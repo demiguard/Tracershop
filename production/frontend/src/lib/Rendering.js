@@ -1,6 +1,6 @@
 import React, {} from "react";
 import { FormatDateStr } from "/src/lib/formatting";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Image } from "react-bootstrap";
 import ReactHover, { Trigger, Hover  } from "react-hover";
 
 import { noop } from "/src/lib/utils";
@@ -106,7 +106,7 @@ export function renderClickableIcon(imagePath, func){
   const onClickFunc = (func === undefined) ? noop : func
   return (
     <Button variant="outline-light" onClick={onClickFunc}>
-      <img className="statusIcon" src={imagePath}></img>
+      <Image className="statusIcon" src={imagePath}/>
     </Button>
   )
 }

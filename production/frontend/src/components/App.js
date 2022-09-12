@@ -1,20 +1,13 @@
 import React, { Component } from "react";
-import {Button, Container} from "react-bootstrap";
+import { Container} from "react-bootstrap";
 
-import { getSession, handlePasswordChange, handleUserNameChange, isResponseOk, login_auth, login, logout } from "/src/lib/authentication.js"
 import { Navbar } from "/src/components/injectables/Navbar.js";
-import { TracerPage } from "/src/components/ProductionPages/TracerPage.js";
-import { OrderPage } from '/src/components/ProductionPages/OrderPage.js';
-import { CustomerPage } from "/src/components/ProductionPages/CustomerPage.js";
-import { EmailSetupPage } from "/src/components/ProductionPages/EmailSetupPage.js";
-import { ServerConfigPage } from "/src/components/ProductionPages/ServerConfig.js";
 import { Authenticate } from "/src/components/injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
 import { ErrorPage } from "/src/components/ProductionPages/ErrorPage.js";
 import { get as getCookie } from 'js-cookie';
 import Cookies from "js-cookie";
-import { CloseDaysPage } from "/src/components/ProductionPages/CloseDaysPage";
-import { VialPage } from "/src/components/ProductionPages/VialPage.js";
+
 import { db } from "/src/lib/localStorageDriver.js";
 import { TracerWebSocket } from "/src/lib/TracerWebsocket.js";
 import { ParseDjangoModelJson, ParseJSONstr } from "/src/lib/formatting.js";
@@ -109,8 +102,9 @@ export default class App extends Component {
     auth[AUTH_USERNAME] = username
     auth[AUTH_PASSWORD] = password
     message[JSON_AUTH] = auth;
-    this.MasterSocket.send(message).then((data) => {
+    const loginPromise = this.MasterSocket.send(message).then((data) => {
       if (data[AUTH_IS_AUTHENTICATED]){
+        console.log("This happens")
         const user = {
           username  : data[AUTH_USERNAME],
           usergroup : data[KEYWORD_USERGROUP],
@@ -129,7 +123,7 @@ export default class App extends Component {
           login_message : "Forkert Login",
         }
       }
-    })
+    });
   }
 
   logout(){
@@ -374,7 +368,7 @@ export default class App extends Component {
     return (<Site
       user={this.state.user}
       address={this.state.address}
-      customer={this.state.customer}
+      customers={this.state.customer}
       database={this.state.database}
       deliverTimes={this.state.deliverTimes}
       employee={this.state.employee}

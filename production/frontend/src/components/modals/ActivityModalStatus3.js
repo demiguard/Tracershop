@@ -38,11 +38,13 @@ class ActivityModalStatus3 extends Component {
 
 
   render(){
+    const Order = this.props.orders.get(this.props.order)
+    const Customer = this.props.customers.get(Order.BID)
+    const username = Customer.UserName;
 
-    const username = this.props.customer.UserName;
-    const year     = this.props.Order.deliver_datetime.substring(0,4);
-    const month    = this.props.Order.deliver_datetime.substring(5,7);
-    const oid      = this.props.Order.oid
+    const year     = Order.deliver_datetime.substring(0,4);
+    const month    = Order.deliver_datetime.substring(5,7);
+    const oid      = Order.oid
 
     const ToPDF = () => {
       let path = `/static/frontend/pdfs/${username}/${year}/${month}/${oid}.pdf`
@@ -53,7 +55,7 @@ class ActivityModalStatus3 extends Component {
 
     const vials = [];
     for(const [vialID, vial] of this.props.vials) {
-      if (vial.order_id == this.props.Order.oid) {
+      if (vial.order_id == Order.oid) {
         vials.push(this.renderVial(vial));
       }
     }
@@ -64,20 +66,20 @@ class ActivityModalStatus3 extends Component {
       size="lg"
       onHide={this.CloseModal.bind(this)}
     >
-      <Modal.Header>Frigivet Ordre {this.props.Order.oid}</Modal.Header>
+      <Modal.Header>Frigivet Ordre {Order.oid}</Modal.Header>
       <Modal.Body>
         <Table striped bordered>
           <tbody>
-            {renderTableRow(0,["Order ID:", this.props.Order.oid])}
-            {renderTableRow(1,["Kunde:", this.props.customer.UserName + " - " + this.props.customer.Realname])}
-            {renderTableRow(2,["Bestilt Aktivitet:", this.props.Order.amount])}
-            {renderTableRow(3,["Udleveret Aktivitet",this.props.Order.frigivet_amount])}
-            {renderTableRow(4,["Bestilt til:",renderDateTime(this.props.Order.deliver_datetime)])}
-            {renderTableRow(5,["Frigivet kl:",renderDateTime(this.props.Order.frigivet_datetime)])}
-            {renderTableRow(6,["Frigivet af:", this.getUserMapping(this.props.Order.frigivet_af)])}
-            {renderTableRow(7,["Batch Nummer:", this.props.Order.batchnr])}
-            {renderTableRow(8, ["Bestilt Af:",  this.props.Order.username])}
-            {this.props.Order.comment ? renderTableRow(9, ["Kommentar", this.props.Order.comment]) : null}
+            {renderTableRow(0,["Order ID:", Order.oid])}
+            {renderTableRow(1,["Kunde:", Customer.UserName + " - " + Customer.Realname])}
+            {renderTableRow(2,["Bestilt Aktivitet:", Order.amount])}
+            {renderTableRow(3,["Udleveret Aktivitet",Order.frigivet_amount])}
+            {renderTableRow(4,["Bestilt til:",renderDateTime(Order.deliver_datetime)])}
+            {renderTableRow(5,["Frigivet kl:",renderDateTime(Order.frigivet_datetime)])}
+            {renderTableRow(6,["Frigivet af:", this.getUserMapping(Order.frigivet_af)])}
+            {renderTableRow(7,["Batch Nummer:", Order.batchnr])}
+            {renderTableRow(8, ["Bestilt Af:",  Order.username])}
+            {Order.comment ? renderTableRow(9, ["Kommentar", Order.comment]) : null}
           </tbody>
         </Table>
         <Table striped bordered>
@@ -102,5 +104,4 @@ class ActivityModalStatus3 extends Component {
       </Modal.Footer>
     </Modal>)
   }
-
 }

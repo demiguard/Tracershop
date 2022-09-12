@@ -144,7 +144,7 @@ export const WEBSOCKET_MESSAGE_UPDATEORDERS = "updateOrder";
 export const WEBSOCKET_SEND_EVENT           = "sendEvent";
 export const WEBSOCKET_EVENT_TYPE           = "type";
 export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
-export const WEBSOCKET_SESSION_ID           = "sessionid"
+export const WEBSOCKET_SESSION_ID           = "sessionid";
 export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
 
 // Javascript unique constants
@@ -165,5 +165,6 @@ export const DATABASE_TODAY = "today";
 export const DATABASE_TRACER = JSON_TRACER;
 export const DATABASE_TRACER_MAPPING = JSON_TRACER_MAPPING;
 export const DATABASE_SERVER_CONFIG = "serverConfig";
+export const DATABASE_SHOP_CUSTOMER = "shopCustomer";
 export const DATABASE_VIAL = JSON_VIAL;
 export const DATABASE_USER = "user"

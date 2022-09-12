@@ -70,7 +70,7 @@ export class TOrderTable extends Component {
 
     const Tracer = this.props.tracers.get(Order.tracer);
     const TracerName = Tracer.name;
-    const customer = this.props.customer.get(Order.BID);
+    const customer = this.props.customers.get(Order.BID);
 
     const customerName = customer.UserName;
 
@@ -99,7 +99,7 @@ export class TOrderTable extends Component {
     const Free_time_str = FormatDateStr(Free_datetime.getHours()) + ':' + FormatDateStr(Free_datetime.getMinutes());
     const Tracer = this.props.tracers.get(Order.tracer);
     const TracerName = Tracer.name;
-    const customer = this.props.customer.get(Order.BID);
+    const customer = this.props.customers.get(Order.BID);
 
     const customerName = customer.UserName;
 
@@ -191,7 +191,7 @@ export class TOrderTable extends Component {
       {this.state.modal != Modals.NoModal ?
         <this.state.modal
           date={this.props.date}
-          customer={this.props.customer}
+          customers={this.props.customers}
           tracers={this.props.tracers}
           websocket={this.props.websocket}
           onClose={this.closeModal.bind(this)}

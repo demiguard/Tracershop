@@ -40,14 +40,6 @@ export class ActivityTable extends Component {
   constructor(props) {
     super(props);
 
-    //this.websocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
-
-    // I should look into local storage, to put in stuff like
-    // * runs
-    // * customers
-    // * employees
-    // To create initial state
-
     this.OrderMapping = this.createOrderMapping();
 
     this.state = {
@@ -63,7 +55,7 @@ export class ActivityTable extends Component {
   componentDidUpdate(prevProps) {
     if(this.props.date !== prevProps.date ||
        this.props.orders !== prevProps.orders ||
-       this.props.customer !== prevProps.customer ||
+       this.props.customers !== prevProps.customers ||
        this.props.deliverTimes !== prevProps.deliverTimes
       ){
       this.OrderMapping = this.createOrderMapping();
@@ -84,7 +76,7 @@ export class ActivityTable extends Component {
    *         keys:deliverTime.run, {MasterOrder - Optional[Number], extraOrders - Array[Number] , deliverTime - String}>
    *     >
    *
-   *  The master order is the order that is expanded if other orders are moved to this time slot. 
+   *  The master order is the order that is expanded if other orders are moved to this time slot.
    *  extraOrders is a list of additional orders, that is / should be delivered in this time slot
    *  delivertime is the delivertime for this run.
    *
@@ -99,7 +91,7 @@ export class ActivityTable extends Component {
 
     const NewOrderMapping = new Map();
 
-    for(const [customerID, _] of this.props.customer){
+    for(const [customerID, _] of this.props.customers){
       NewOrderMapping.set(customerID, new Map());
     }
 
@@ -189,7 +181,7 @@ export class ActivityTable extends Component {
      */
     const Order         = this.props.orders.get(oid);
     const OrderDate = new Date(Order.deliver_datetime);
-    const Customer      = this.props.customer.get(Order.BID);
+    const Customer      = this.props.customers.get(Order.BID);
     const Tracer        = this.props.tracers.get(this.props.tracer);
     const isotope       = this.props.isotopes.get(Tracer.isotope);
 
@@ -343,7 +335,6 @@ export class ActivityTable extends Component {
     this.setState({...this.state,
       showModal : false,
       ModalOrder : null,
-      ModalCustomer : null,
       Modal : null,
     });
   }
@@ -353,15 +344,9 @@ export class ActivityTable extends Component {
    * @param {number} oid
    */
   activateOrderModal(oid){
-    const Order = this.props.orders.get(oid);
-    if(Order === null) throw "Order is null";
-    if(Order === undefined) throw "Order is undefined";
-    const Customer = this.props.customer.get(Order.BID)
-
     this.setState({...this.state,
       showModal : true,
-      ModalOrder : Order,
-      ModalCustomer : Customer,
+      ModalOrder : oid,
       Modal : ActivityModal
     });
   }
@@ -521,7 +506,7 @@ export class ActivityTable extends Component {
     const Employee     = this.props.employee.get(order.frigivet_af)
     const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
 
-    const customer = this.props.customer.get(order.BID)
+    const customer = this.props.customers.get(order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
     const TotalAmount  = (order.COID === -1) ? order.total_amount_o : "Flyttet til:" + order.COID;
 
@@ -542,7 +527,7 @@ export class ActivityTable extends Component {
     const OrderDT   = new Date(Order.deliver_datetime)
     const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
     const Run       = this.renderRun(Order);
-    const customer = this.props.customer.get(Order.BID)
+    const customer = this.props.customers.get(Order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : Order.BID;
     const TotalAmount  = (Order.COID === -1) ? Math.floor(Order.total_amount) : "Flyttet til:" + Order.COID;
     const TotalAmountO = (Order.COID === -1) ? Math.floor(Order.total_amount_o) : "";
@@ -686,13 +671,13 @@ export class ActivityTable extends Component {
       </Table> : <div/>
     }
     { this.state.showModal ?
-      < this.state.Modal
+      <this.state.Modal
         show={this.state.showModal}
-        Order={this.state.ModalOrder}
+        order={this.state.ModalOrder}
+        orders={this.props.orders}
         DeliverTimeMap={this.OrderMapping}
         vials={this.props.vials}
-        customer={this.state.ModalCustomer}
-        customers={this.props.customer} // Your naming skills SUXXS
+        customers={this.props.customers}
         employees={this.props.employee}
         onClose={this.closeModal.bind(this)}
         createVial={this.createVial.bind(this)}

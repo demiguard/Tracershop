@@ -6,6 +6,7 @@ import { ActivityTable } from '/src/components/ProductionPages/ActivityTracerTab
 import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE } from "/src/lib/constants.js";
 import { db } from "/src/lib/localStorageDriver";
 import { CompareDates } from "/src/lib/utils";
+import { standardOrderMapping } from "../injectables/calculator";
 
 const Tables = {
   activity : ActivityTable,
@@ -47,38 +48,6 @@ export class OrderPage extends Component {
     this.props.websocket.send(message);
   }
 
-  getColor(DateStr) {
-    // Maybe do this calculation once instead of 30 times
-    var MinimumActivityStatus = 5;
-    var MinimumInjectionStatus = 5;
-    const date = new Date(DateStr);
-    for(const [_, ActivityOrder] of this.props.orders){
-      if(CompareDates(date, new Date(ActivityOrder.deliver_datetime))){
-        MinimumActivityStatus = Math.min(MinimumActivityStatus, ActivityOrder.status);
-      }
-    }
-    for(const [_, InjectionOrder] of this.props.t_orders){
-      if(CompareDates(date, new Date(InjectionOrder.deliver_datetime))){
-        MinimumInjectionStatus = Math.min(MinimumInjectionStatus, InjectionOrder.status);
-      }
-    }
-    if (MinimumActivityStatus == 5){
-      var CanProduce = false;
-      for(const [_PTID, Run] of this.props.runs){
-        if(Run.day == date.getDay()){
-          CanProduce = true;
-          break;
-        }
-      }
-      if(CanProduce){
-        const now = new Date();
-        if(date > now){
-          MinimumActivityStatus = 0;
-        }
-      }
-    }
-    return "date-status" + String(MinimumInjectionStatus) + String(MinimumActivityStatus);
-  }
   // ##### End Calender Functions ##### //
   // ##### Render functions ##### //
 
@@ -121,16 +90,15 @@ export class OrderPage extends Component {
         <Row>
           <Col sm={8}>
             <this.state.activeTable
+              customers={this.props.customers}
               date={this.state.date}
-              tracer={this.state.activeTracer}
-              username={this.props.username}
-              customer={this.props.customer}
               deliverTimes={this.props.deliverTimes}
               employee={this.props.employee}
               isotopes={this.props.isotopes}
               orders={this.props.orders}
               runs={this.props.runs}
               t_orders={this.props.t_orders}
+              tracer={this.state.activeTracer}
               tracers={this.props.tracers}
               vials={this.props.vials}
               websocket={this.props.websocket}
@@ -142,7 +110,7 @@ export class OrderPage extends Component {
               date={this.state.date}
               onDayClick={this.setActiveDate.bind(this)}
               onMonthChange={this.setActiveMonth.bind(this)}
-              getColor={this.getColor.bind(this)}
+              getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs)}
               />
           </Col>
         </Row>

@@ -6,7 +6,7 @@ from django.contrib.auth.models import AbstractBaseUser
 
 
 class Customer(Model):
-  """This is the model represents a model
+  """This is the model represents an endpoint
   """
   id = models.BigAutoField(primary_key=True)
   shortname = models.CharField(max_length=60)
@@ -36,7 +36,7 @@ class User(AbstractBaseUser):
   # Note for user in this database and not in the other database,
   # this field is an auto incremented with an offset of 10000.
   # However it should be ensured with appilcation level code, Sorry.
-  OldTracerBaseID = models.IntegerField(unique=True)
+  OldTracerBaseID = models.IntegerField(unique=True, null=True, default=None)
 
 
 

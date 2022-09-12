@@ -19,7 +19,7 @@ const Pages = {
   Ordre : OrderPage,
   Kunder : CustomerPage,
   Tracers : TracerPage,
-  //Email : EmailSetupPage,
+
   Lukkedage : CloseDaysPage,
   Vial : VialPage,
   Indstillinger : ServerConfigPage,
@@ -58,9 +58,8 @@ class ProductionSite extends Component{
         />
         <Container className="NavbarSpacer">
           <this.state.ActivePage
-            user={this.props.user}
             address={this.props.address}
-            customer={this.props.customer}
+            customers={this.props.customers}
             database={this.props.database}
             deliverTimes={this.props.deliverTimes}
             employee={this.props.employee}
@@ -73,6 +72,7 @@ class ProductionSite extends Component{
             serverConfig={this.props.serverConfig}
             vials={this.props.vials}
             websocket={this.props.websocket}
+            user={this.props.user}
             />
           </Container>
       </div>

@@ -5,7 +5,6 @@ class TracerTypes(models.IntegerChoices):
     injection = 1
     activity = 2
 
-
 class Isotope(SubscribeableModel):
   ID = models.AutoField(primary_key=True)
   atomName = models.CharField(max_length=30)

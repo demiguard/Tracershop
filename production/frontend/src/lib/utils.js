@@ -1,4 +1,4 @@
-export { CompareDates, BooleanMapping, noop, autoAddCharacter, addCharacter }
+export { CompareDates, BooleanMapping, noop, autoAddCharacter, addCharacter, removeIndex }
 
 
 function CompareDates(d1, d2) {
@@ -50,4 +50,13 @@ function addCharacter(character, kw, indexes, This){
       }
     }
   return returnFunction.bind(this);
+}
+
+/** Removes an element from a list
+ *
+ * @param {Array} arr - Array to have an element removed
+ * @param {Number} index - Index to be removed
+ */
+function removeIndex(arr, index){
+  return arr.slice(0,index-1).concat(arr.slice(index, arr.length));
 }
