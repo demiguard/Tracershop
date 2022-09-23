@@ -1,5 +1,7 @@
 import React, {Component } from "react";
 import { NavDropdown } from "react-bootstrap";
+import { DATABASE_ADMIN_PAGE } from "../../lib/constants";
+import { db } from "../../lib/localStorageDriver";
 import { ControlPanel } from "./ControlPanel";
 import { ProductionSite } from "./productionSite";
 import { ShopSite } from "./ShopSite";
@@ -22,13 +24,20 @@ class AdminSite extends Component {
   constructor(props){
     super(props)
 
+    var ActiveSite = db.get(DATABASE_ADMIN_PAGE);
+    if (ActiveSite === undefined || ActiveSite === null){
+      ActiveSite = "Production";
+      db.set(DATABASE_ADMIN_PAGE, ActiveSite);
+    }
+
     this.state = {
-      ActiveSite : "Production"
+      ActiveSite : ActiveSite
     }
   }
 
   changeSite(){
     const returnFunction = (event) => {
+      db.set(DATABASE_ADMIN_PAGE, event.target.text);
       this.setState({...this.state,
         ActiveSite : event.target.text
       })

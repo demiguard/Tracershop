@@ -199,7 +199,7 @@ class SQL():
     return cls.__ExecuteMany(
       [SQLFactory.FreeDependantOrders, SQLFactory.getRelatedOrders],
       ActivityOrderDataClass, Fetching.ALL,
-      [[OriginalOrder, user],[ActivityOrderDataClass]]
+      [[OriginalOrder, user],[OriginalOrder]]
     )
 
 

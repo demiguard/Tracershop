@@ -26,12 +26,6 @@ TIME_FORMAT = "%H:%M:%S"
 DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
 JSON_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}"
 
-@unique
-class EmailEvents(Enum):
-  #Note that due to this being database ID, we are 1 indexed instead of 0 indexed
-  STATUS_SET_TO_3 = 1
-  STATUS_SET_TO_0 = 2
-
 ##### Test specific Constants #####
 # These keywords are only used in tests
 
@@ -51,6 +45,8 @@ LEGACY_TABLES = {
   "tracer_types"
 }
 
+JAVASCRIPT_VERSION = "1.0.1" # Remember to update this to catch bugs
+
 
 # Long list JSON key word used in Json messsages
 # These should have great overlap with the constants in production/frontend/src/lib/constants.js
@@ -59,6 +55,16 @@ AUTH_USERNAME         = "username"
 AUTH_PASSWORD         = "password"
 AUTH_DETAIL           = "detail"
 AUTH_IS_AUTHENTICATED = "isAuthenticated"
+
+# Errors string
+
+ERROR_INVALID_DATACLASS_TYPE = "NoDataClass"
+ERROR_INVALID_JAVASCRIPT_VERSION = "InvalidJavascriptVersion"
+ERROR_NO_JAVASCRIPT_VERSION = "NoJavaScriptVersion"
+ERROR_NO_MESSAGE_ID = "NoMessageID"
+ERROR_NO_MESSAGE_TYPE = "NoMessageType"
+ERROR_INSUFICIENT_PERMISSIONS = "InsuficientPermissions"
+ERROR_UNKNOWN_FAILURE = "unknownError"
 
 # There is some problems regarding what the difference is between a JSON_ var and a WEBSOCKET_DATA_ constant
 
@@ -150,6 +156,7 @@ WEBSOCKET_DATA_ID              = "dataID"
 WEBSOCKET_DATE                 = "date"
 WEBSOCKET_DEAD_ORDERS          = "deadOrders"
 WEBSOCKET_ERROR                = "error"
+WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion"
 WEBSOCKET_MESSAGE_ANSWER       = "answer"
 WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login"
 WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout"
@@ -166,7 +173,6 @@ WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder"
 WEBSOCKET_MESSAGE_RECIEVE_VIAL = "recieveVial"
 WEBSOCKET_MESSAGE_SUCCESS      = "success"
 WEBSOCKET_MESSAGE_TYPE         = "messageType"
-WEBSOCKET_MESSAGE_UPDATEORDERS = "updateOrder"
 WEBSOCKET_SEND_EVENT           = "sendEvent"
 WEBSOCKET_SESSION_ID           = "sessionid"
 WEBSOCKET_EVENT_TYPE           = "type"

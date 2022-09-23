@@ -4,7 +4,8 @@ import { Container} from "react-bootstrap";
 import { Navbar } from "/src/components/injectables/Navbar.js";
 import { Authenticate } from "/src/components/injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
-import { ErrorPage } from "/src/components/ProductionPages/ErrorPage.js";
+import { ErrorPage } from "/src/components/ErrorPages/ErrorPage.js";
+import InvalidVersionPage from "./ErrorPages/InvalidVersionPage.js"
 import { get as getCookie } from 'js-cookie';
 import Cookies from "js-cookie";
 
@@ -18,7 +19,7 @@ import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DE
         DATABASE_IS_AUTH, DATABASE_PRODUCTION, KEYWORD_USERGROUP, USERGROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
         DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
         AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_USER,
-        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID
+        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFICIENT_PERMISSIONS
       } from "../lib/constants.js";
 import { AdminSite } from "./sites/AdminSite";
 import { ProductionSite } from "./sites/productionSite";
@@ -88,6 +89,8 @@ export default class App extends Component {
     //this.login = login.bind(this);
     //this.logout = logout.bind(this);
 
+    console.log
+
     ajaxSetup({
       headers: {
         "X-CSRFToken": getCookie("csrftoken")
@@ -104,7 +107,6 @@ export default class App extends Component {
     message[JSON_AUTH] = auth;
     const loginPromise = this.MasterSocket.send(message).then((data) => {
       if (data[AUTH_IS_AUTHENTICATED]){
-        console.log("This happens")
         const user = {
           username  : data[AUTH_USERNAME],
           usergroup : data[KEYWORD_USERGROUP],
@@ -331,11 +333,17 @@ export default class App extends Component {
     var RenderedObject;
 
     if (this.state.site_error){
+      if(this.state.site_error == ERROR_INVALID_JAVASCRIPT_VERSION) {
+        return (<InvalidVersionPage/>);
+      } else if (this.state.site_error == ERROR_INSUFICIENT_PERMISSIONS) {
+        // Do Nothing? Assume the operation have handled the insuficient permissions
+      } else
       return (<ErrorPage
         SiteError={this.state.site_error}
         SiteErrorInfo={this.state.site_error_info}
       />);
     }
+
     if(this.state.user == undefined || this.state.user.usergroup == 0){
       return (<div>
         <Navbar

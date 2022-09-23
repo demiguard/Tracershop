@@ -49,9 +49,10 @@ class DatabaseInterface():
   @database_sync_to_async
   def createPDF(
     self,
-    Order: ActivityOrderDataClass,
+    Orders: List[ActivityOrderDataClass],
     Vials: List[VialDataClass]
   ):
+    Order = Orders[0]
     customer = self.SQL.getElement(Order.BID, CustomerDataClass)
     Tracer = self.SQL.getElement(Order.tracer, TracerDataClass)
     Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)

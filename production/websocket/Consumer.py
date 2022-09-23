@@ -9,6 +9,8 @@ Note: This module doesn't scale at large, simply because all users are in
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
+
+from unittest import async_case
 from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
 from django.core.serializers import serialize
 from django.contrib.sessions.models import Session
@@ -21,6 +23,7 @@ from channels.db import database_sync_to_async
 
 from asgiref.sync import sync_to_async
 from datetime import datetime, date, timedelta
+import decimal
 from typing import Dict, List
 
 from database.models import ServerConfiguration
@@ -50,6 +53,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     super().__init__()
     self.db = db
     self.sessionStore = SessionStore()
+    decimal.getcontext().prec = 2
 
   ### --- JSON methods --- ###
   @classmethod
@@ -78,6 +82,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
         self.channel_name
       )
 
+  async def sendEvent(self, event: Dict):
+    """
+      Send the event to each websocket. Note this function gets call for each websocket connected to the group
+    """
+    await self.send_json(event)
+
+
   #Receive data from Websocket
   async def receive_json(self, message: Dict) -> None:
     """
@@ -90,12 +101,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
-    logger.info(f"Websocket recieved message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
     try:
-      messageType  = message[WEBSOCKET_MESSAGE_TYPE]
-      if not auth.AuthMessage(self.scope['user'], messageType):
-        await self.HandleInsufficientPermissions(message)
+      #pprint(message)
+      if error := auth.validateMessage(message):
+        print(f"error:{error}")
+        await self.HandleKnownError(message, error)
         return
+      logger.info(f"Websocket recieved message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
+      if not auth.AuthMessage(self.scope['user'], message):
+        await self.HandleKnownError(message, ERROR_INSUFICIENT_PERMISSIONS)
+        return
+      messageType  = message[WEBSOCKET_MESSAGE_TYPE]
       if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
         await self.HandleTheGreatStateMessage(message)
       elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
@@ -124,6 +140,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       raise E
       await self.HandleUnknownError(E, message)
 
+  ### Error handling ###
   async def HandleUnknownError(exception : Exception, FailingMessage : dict):
     """This Function is triggered when an unhandle exception is happens server side.
     It sends an Error message back to the client informing it,
@@ -138,16 +155,25 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     pass
 
-  async def sendEvent(self, event: Dict):
-    """
-      Send the event to each websocket. Note this function gets call for each websocket connected to the group
-    """
-    await self.send_json(event)
+  async def HandleKnownError(self, message, error):
+    if error == ERROR_NO_MESSAGE_ID:
+      await self.send_json({
+        WEBSOCKET_MESSAGE_SUCCESS: error
+      })
+    else:
+      print(error, message)
+      await self.send_json({
+        WEBSOCKET_MESSAGE_SUCCESS: error,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+      })
 
+  ##### Handlers #####
+  # Universal Handlers
   async def HandleEcho(self, message : Dict):
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
 
   ##### AUTH METHODS #####
@@ -177,7 +203,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       AUTH_IS_AUTHENTICATED : isAuth,
       WEBSOCKET_SESSION_ID : key,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
 
   async def handleWhoAmI(self, message):
@@ -200,7 +227,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
 
   async def handleLogout(self, message):
@@ -208,7 +236,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await sync_to_async(self.scope['session'].save)()
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
 
   ##### END Auth methods
@@ -263,6 +292,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       },
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     }
     await self.send_json(content)
 
@@ -319,13 +349,21 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_DATA_ID : ID,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       }
     )
 
   async def HandleFreeOrder(self, message : Dict):
-    Order      = ActivityOrderDataClass.fromDict(message[JSON_ACTIVITY_ORDER])
-    Vials      = [VialDataClass.fromDict(vialDict) for vialDict in message[JSON_VIAL]]
-    tracerID   = message[JSON_TRACER]
+    """THIS FUNCTION IS NOT VERY SAFE
+
+    Args:
+        message (Dict): _description_
+    """
+    data = message[WEBSOCKET_DATA]
+    Order      = await self.db.getElement(data[JSON_ACTIVITY_ORDER], ActivityOrderDataClass)
+
+    Vials      = [await self.db.getElement(vialID, VialDataClass) for vialID in data[JSON_VIAL]]
+
     updatedVials = []
     updateOrders = []
 
@@ -335,11 +373,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
       free_datetime = datetime.now()
       Order.status = 3
       Order.frigivet_af = self.scope['user'].OldTracerBaseID
-      Order.frigivet_amount = PrimaryVial.activity
+      Order.frigivet_amount = int(PrimaryVial.activity)
       Order.frigivet_datetime =  free_datetime
-      Order.volume = PrimaryVial.volume
+      Order.volume = round(float(PrimaryVial.volume),2)
       Order.batchnr = PrimaryVial.charge
       await self.db.updateDataClass(Order)
+      pprint(Order)
+      updateOrders.append(Order)
       PrimaryVial.order_id = Order.oid
       await self.db.updateDataClass(PrimaryVial)
       updatedVials.append(PrimaryVial)
@@ -355,7 +395,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
           KEYWORD_AMOUNT_O : 0,
           KEYWORD_TOTAL_AMOUNT : 0,
           KEYWORD_TOTAL_AMOUNT_O : 0,
-          KEYWORD_TRACER : tracerID,
+          KEYWORD_TRACER : Order.tracer,
           KEYWORD_BID : Order.BID,
           KEYWORD_RUN : Order.run,
           KEYWORD_COID : -1, #Could argue Order.oid
@@ -378,7 +418,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
       try:
         sendMail(pdfFilePath, Customer, Order, serverConfiguration)
       except Exception as E:
-        print(f"could not send mail because: {E}")
+        logger.error(f"could not send mail because: {E}")
+
+      print(updateOrders)
+      print(updatedVials)
 
       await self.channel_layer.group_send(
         self.global_group, {
@@ -387,6 +430,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
             JSON_ACTIVITY_ORDER : LMAP(lambda x: encode(x.toJSON()), updateOrders),
             JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),updatedVials),
             WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+            WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
           }
         )
     else:
@@ -519,6 +563,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         JSON_ACTIVITY_ORDER : [encode(rOrder) for rOrder in returnOrders],
         WEBSOCKET_DEAD_ORDERS : deadOrders, # This is a list of OID so no need to encode this
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       }
     )
 
@@ -539,20 +584,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
       JSON_INJECTION_ORDER : [encode(torder) for torder in injectionOrders],
       JSON_VIAL : [encode(vialdc) for vialdc in Vials],
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
 
   @typeCheckfunc
   async def HandleUpdateServerConfig(self, message : Dict):
     pass
 
-  async def HandleInsufficientPermissions(self, message: Dict, reason = "Unspecified"):
-    logger.error(f"Message {message[WEBSOCKET_MESSAGE_ID]} was not handle due to insuficeint permissions!")
-    logger.error(f"User: {self.scope['user']}")
-    logger.error(f"Get user: {await get_user(self.scope)}")
-    await self.send_json({
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : reason
-    })
+
 
   @typeCheckfunc
   async def HandleEditState(self, message : Dict):
@@ -560,6 +599,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
     except ValueError as E:
       logger.error(E)
+      await self.HandleKnownError(message, ERROR_INVALID_DATACLASS_TYPE)
+      return
 
 
     #if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type

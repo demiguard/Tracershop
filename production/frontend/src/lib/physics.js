@@ -9,6 +9,14 @@ function CountMinutes(past,future) {
   return hours * 60 + future.getMinutes() - past.getMinutes()
 }
 
+/** Calculates the amount of radioactive material is needed, if a certain amount is required after a time period
+ *
+ * NB: my docs here is bad
+ * @param {Number} halflife - Halflife in seconds of the radioactive isotope
+ * @param {Number} minutes - The amount of minutes the material is waiting
+ * @param {Number} MBQ - The desired amount of activity after the time period.
+ * @returns {Number} - MBq needed at the previous time.
+ */
 function CalculateProduction(halflife, minutes, MBQ) {
   const hf_in_min = halflife / 60
 

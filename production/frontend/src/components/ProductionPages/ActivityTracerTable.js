@@ -8,7 +8,7 @@ import { CountMinutes, CalculateProduction } from "/src/lib/physics";
 import { ActivityModal } from "/src/components/modals/ActivityModal.js";
 import { CreateOrderModal } from "/src/components/modals/CreateOrderModal";
 import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
-  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_UPDATEORDERS, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
   KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME, WEBSOCKET_MESSAGE_EDIT_STATE, KEYWORD_TRACER} from "../../lib/constants";
@@ -155,8 +155,10 @@ export class ActivityTable extends Component {
     Order.status = 2
 
     //One needs this way of object constrution to have constants keys
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_UPDATEORDERS);
-    message[JSON_ACTIVITY_ORDER] = [Order]
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+    message[WEBSOCKET_DATA] = Order;
+    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
+
     this.props.websocket.send(message);
   }
 
@@ -429,15 +431,14 @@ export class ActivityTable extends Component {
    * @param {Set<number>} vialSet
    */
   FreeOrder(orderID, vialSet){
-    console.log(vialSet);
     const vialIDs = [...vialSet];
-    const vials = vialIDs.map(id => this.props.vials.get(id));
-    const order = this.props.orders.get(orderID);
     this.closeModal();
+
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ORDER);
-    message[JSON_VIAL] = vials;
-    message[JSON_TRACER] = this.props.tracer;
-    message[JSON_ACTIVITY_ORDER] = order;
+    const data = {};
+    data[JSON_VIAL] = vialIDs;
+    data[JSON_ACTIVITY_ORDER] = orderID;
+    message[WEBSOCKET_DATA] = data;
     this.props.websocket.send(message);
   }
 
@@ -508,7 +509,7 @@ export class ActivityTable extends Component {
 
     const customer = this.props.customers.get(order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
-    const TotalAmount  = (order.COID === -1) ? order.total_amount_o : "Flyttet til:" + order.COID;
+    const TotalAmount  = (order.COID === -1) ? order.total_amount * (1 + customer.overhead / 100) : "Flyttet til:" + order.COID;
 
     return renderTableRow(order.oid, [
       renderStatusImage(order.status, () => this.activateOrderModal(order.oid)),
@@ -530,7 +531,7 @@ export class ActivityTable extends Component {
     const customer = this.props.customers.get(Order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : Order.BID;
     const TotalAmount  = (Order.COID === -1) ? Math.floor(Order.total_amount) : "Flyttet til:" + Order.COID;
-    const TotalAmountO = (Order.COID === -1) ? Math.floor(Order.total_amount_o) : "";
+    const TotalAmountO = (Order.COID === -1) ? Math.floor(Order.total_amount * (1 + customer.overhead / 100)) : "";
 
     return renderTableRow(Order.oid, [renderStatusImage(Order.status, () => this.activateOrderModal(Order.oid)),
       Order.oid,
@@ -548,25 +549,37 @@ export class ActivityTable extends Component {
   renderTotal(Production) {
     var total = 0;
     var total_o = 0
+    const tracer = this.props.tracers.get(this.props.tracer);
+    const isotope = this.props.isotopes.get(tracer.isotope);
     for(const [_, DeliverTimeMap] of this.OrderMapping){
       const RelvantDeliverTime = DeliverTimeMap.get(Production.run);
-
+      const ProductionDatetime = new Date(
+        this.props.date.getFullYear(),
+        this.props.date.getMonth(),
+        this.props.date.getDate(),
+        Number(Production.ptime.substring(0,2)),
+        Number(Production.ptime.substring(3,5))
+        )
 
       if(RelvantDeliverTime){ // If there's mapping else It doesn't matter
         if(RelvantDeliverTime.MasterOrder) {
           const MasterOrder = this.props.orders.get(RelvantDeliverTime.MasterOrder);
+          const MasterOrderCustomer = this.props.customers.get(MasterOrder.BID);
           if(MasterOrder === undefined){
             console.log(this.props.orders)
             console.log(DeliverTimeMap);
             console.log(RelvantDeliverTime);
           }
-          total += MasterOrder.total_amount;
-          total_o += MasterOrder.total_amount_o;
+          const TimeDelta = CountMinutes(ProductionDatetime, new Date(MasterOrder.deliver_datetime));
+          total += CalculateProduction(isotope.halflife, TimeDelta, MasterOrder.total_amount);
+          total_o += CalculateProduction(isotope.halflife, TimeDelta, MasterOrder.total_amount * (1 + MasterOrderCustomer.overhead / 100));
         }
         for(const OrderID of RelvantDeliverTime.extraOrders){
           const ExtraOrder = this.props.orders.get(OrderID);
-          total += ExtraOrder.total_amount;
-          total_o += ExtraOrder.total_amount_o;
+          const ExtraOrderCustomer = this.props.customers.get(ExtraOrder.BID);
+          const TimeDelta = CountMinutes(ProductionDatetime, new Date(ExtraOrder.deliver_datetime));
+          total += CalculateProduction(isotope.halflife, TimeDelta, ExtraOrder.total_amount);
+          total_o += CalculateProduction(isotope.halflife, TimeDelta, ExtraOrder.total_amount * (1 + ExtraOrderCustomer.overhead / 100))
         }
       }
     }

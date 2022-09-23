@@ -74,6 +74,8 @@ export var db = {
     isAuth : Boolean, //DATABASE_IS_AUTH
     serverConfig : Object, //DATABASE_SERVER_CONFIG
     user : Object, //DATABASE_USER
+    // Admin
+    adminPage : String, // DATABASE_ADMIN_PAGE
     // shop
     shopCustomer : Number, // DATABASE_SHOP_CUSTOMER
 

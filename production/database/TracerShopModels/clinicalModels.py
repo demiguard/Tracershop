@@ -1,5 +1,6 @@
 from django.db import models
 from database.models import SubscribeableModel
+from database.TracerShopModels.AuthModels import Customer
 
 class TracerTypes(models.IntegerChoices):
     injection = 1
@@ -40,3 +41,26 @@ class Procedure(SubscribeableModel):
   class Meta:
     verbose_name = "Procedure"
     verbose_name_plural = "Procedures"
+
+class Location(SubscribeableModel):
+  location   = models.CharField(max_length=16, primary_key=True)
+  LocName    = models.CharField(max_length=32, default="")
+  AssignedTo = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, default=None)
+
+  def __str__(self):
+    if self.LocName:
+      return self.LocName
+    else:
+      return self.location
+
+class Booking(SubscribeableModel):
+  procedure       = models.ForeignKey(Procedure, on_delete=models.CASCADE)
+  location        = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
+  accessionNumber = models.CharField(max_length=16, primary_key=True)
+  startDate       = models.DateField()
+  startTime       = models.TimeField()
+  status          = models.IntegerField(default=0)
+  orderNumber     = models.IntegerField(default=None, null=True)
+
+  def __str__(self):
+    return str(self.accessionNumber)

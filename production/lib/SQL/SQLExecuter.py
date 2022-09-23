@@ -44,6 +44,7 @@ class DataBaseConnectionWrapper(object):
     try:
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True
+      self.connection.get_warnings = True
       self.cursor = self.connection.cursor()
       return self
     except mysql.Error as Err:
@@ -59,6 +60,9 @@ def ExecuteQuery(Query : str, fetch = Fetching.ALL):
       checkForSQLInjection(Query)
       logger.debug(Query)
       Wrapper.cursor.execute(Query)
+      warns = Wrapper.cursor.fetchwarnings()
+      if warns:
+        logger.warn(warns)
       if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
         FetchedVals = Wrapper.cursor.fetchall()
       elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:
@@ -81,6 +85,9 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
         for Query in SQLQueries:
           logger.debug(Query)
           Wrapper.cursor.execute(Query)
+          warns = Wrapper.cursor.fetchwarnings()
+          if warns:
+            logger.warn(warns)
           if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
             FetchedVals = Wrapper.cursor.fetchall()
           elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:

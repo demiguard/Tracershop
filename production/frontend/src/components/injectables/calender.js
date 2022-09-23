@@ -83,10 +83,17 @@ export class Calender extends Component {
   renderDay(date) {
     const DateObject  = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date, 12);
     const DateStr     = String(DateObject.getFullYear()) + '-' + FormatDateStr(DateObject.getMonth() + 1) + '-' + FormatDateStr(DateObject.getDate());
-    const StatusClass = this.props.getColor(DateStr, this.state.DateColors);
+    var StatusClass = "calender-row date-base-class " + this.props.getColor(DateStr, this.state.DateColors);
+    if (this.props.date.getDate() == DateObject.getDate() &&
+          this.props.date.getMonth() == DateObject.getMonth() &&
+          this.props.date.getFullYear() == DateObject.getFullYear()
+     ){
+      StatusClass += " today";
+    }
+
 
     return (
-      <div className={"calender-row date-base-class " + StatusClass}  onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
+      <div className={StatusClass}  onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
     );
   }
 

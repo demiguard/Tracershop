@@ -12,7 +12,7 @@ export function renderStatusImage(status, func) {
   if (status === 3) return renderClickableIcon("/static/images/clipboard3.svg", onclickFunc);
   if (status === 0) return renderClickableIcon("/static/images/clipboard0.svg", onclickFunc);
 
-  throw "Status not supproted!";
+  throw `Status ${status} not supproted!`;
 }
 
 export function renderTableRow(key, list_of_tds) {

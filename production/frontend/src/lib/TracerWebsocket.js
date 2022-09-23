@@ -1,12 +1,10 @@
-import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "./constants";
-import { MapDataName } from "./localStorageDriver";
-import { DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER, DATABASE_VIAL, WEBSOCKET_MESSAGE_FREE_ORDER,
+import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS, DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER, DATABASE_VIAL, WEBSOCKET_MESSAGE_FREE_ORDER,
   WEBSOCKET_MESSAGE_TYPE,
   WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GREAT_STATE, JSON_GREAT_STATE,
   WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
   JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
-  JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID,
-} from "/src/lib/constants";
+  JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, } from "./constants";
+import { MapDataName } from "./localStorageDriver";
 import { ParseJSONstr } from "/src/lib/formatting";
 
 export { safeSend, TracerWebSocket}
@@ -34,6 +32,14 @@ class TracerWebSocket{
     this._ws.onmessage = function(messageEvent) {
       const data = JSON.parse(messageEvent.data);
       console.log(data)
+      if (data[WEBSOCKET_MESSAGE_SUCCESS] != WEBSOCKET_MESSAGE_SUCCESS){
+        this.StateHolder.setState({
+          ...this.state,
+          site_error : data[WEBSOCKET_MESSAGE_SUCCESS],
+          site_error_info : ""
+        });
+        return;
+      }
       const pipe = this._PromiseMap.get(data[WEBSOCKET_MESSAGE_ID]);
       pipe.port2.postMessage(data);
       //None promise update
@@ -158,6 +164,9 @@ class TracerWebSocket{
         data[WEBSOCKET_MESSAGE_ID] = messageID
     } else {
         messageID = data[WEBSOCKET_MESSAGE_ID]
+    }
+    if (!data.hasOwnProperty(WEBSOCKET_JAVASCRIPT_VERSION)){
+      data[WEBSOCKET_JAVASCRIPT_VERSION] = JAVASCRIPT_VERSION
     }
 
     new Promise(() => safeSend(data, this._ws));

@@ -6,7 +6,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 from constants import USAGE
 
-from typing import Type, List, Union
+from typing import Type, List, Union, Any, Tuple
 from datetime import date, time, datetime
 from dataclasses import fields
 
@@ -302,3 +302,29 @@ def GetConditionalElement(condition: str, dataClass):
     WHERE
       {condition}"""
   return Query
+
+def tupleInsertQuery(TupleList : List[Tuple[str, Any]], Table : str) -> str:
+  """Fancy way of creating an insert Query.
+  This function creates an insert query where it's easy to see the value pairs of items.
+
+  Note the query is not very human readable
+
+  Args:
+      TupleList (List[Tuple[str, Any]]): _description_
+      Table (str): _description_
+
+  Returns:
+      str: _description_
+  """
+
+  columnString = ""
+  valueString = ""
+
+  for i, (column, value) in enumerate(TupleList):
+    columnString += column
+    valueString += str(SerilizeToSQLValue(value))
+    if i != len(TupleList) - 1:
+      columnString += ", "
+      valueString += ", "
+
+  return f"""INSERT INTO {Table} ({columnString}) VALUES ({valueString})"""

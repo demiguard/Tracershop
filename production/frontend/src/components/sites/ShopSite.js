@@ -21,28 +21,9 @@ const Pages = {
 class ShopSite extends Component {
   constructor(props){
     super(props);
-
-    var customer = this.props.customers.get(db.get(DATABASE_SHOP_CUSTOMER));
-
-    if(customer == undefined){
-      for(const [CID, _customer] of this.props.customers){
-        db.set(DATABASE_SHOP_CUSTOMER, CID)
-        customer = _customer
-        break;
-      }
-    }
-
-    var today = db.get(DATABASE_TODAY);
-
-    if(today == null || today == undefined){
-      today = new Date();
-      db.set(DATABASE_TODAY, today)
-    }
-
     this.state = {
       ActivePage : ShopOrderPage,
-      activeCustomer : customer,
-      today : today,
+      
     };
   }
 
@@ -63,7 +44,18 @@ class ShopSite extends Component {
           setActivePage={this.setActivePage.bind(this)}
         />
         <this.state.ActivePage
-
+          // composing with props
+          customers={this.props.customers}
+          deliverTimes={this.props.deliverTimes}
+          employee={this.props.employee}
+          isotopes={this.props.isotopes}
+          orders={this.props.orders}
+          runs={this.props.runs}
+          t_orders={this.props.t_orders}
+          tracers={this.props.tracers}
+          tracerMapping={this.props.tracerMapping}
+          vials={this.props.vials}
+          websocket={this.props.websocket}
         />
       </div>
     )

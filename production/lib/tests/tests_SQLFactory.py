@@ -109,3 +109,12 @@ longName="I forgot this name"
       orders
     WHERE
       deliver_datetime BETWEEN \"2020-10-10 10:10:10\" AND \"2020-11-11 11:11:11\"""", Query)
+
+  def test_insertQuery(self):
+    """Note the query generated is not valid in a database"""
+    Query = SQLFactory.tupleInsertQuery([
+      ("col1", "val1"),
+      ("col2", "val2"),
+      ("col3", 123)
+    ],"TestTable")
+    self.assertEqual(Query, "INSERT INTO TestTable (col1, col2, col3) VALUES (\"val1\", \"val2\", 123)")

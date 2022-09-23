@@ -348,7 +348,7 @@ def DrawSimpleActivityOrder(filename :str,
     Tracer : TracerDataClass,
     Isotope : IsotopeDataClass
   ):
-  template  = MailTemplate(filename) 
+  template  = MailTemplate(filename)
 
   x_cursor = 58
   y_cursor = 780

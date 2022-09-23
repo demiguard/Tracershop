@@ -97,7 +97,11 @@ def CreateTestDatabase(DatabaseConfig):
   """)
 
   cur.execute("""
-  CREATE TABLE TracerCustomer(tracer_id INT, customer_id INT)
+  CREATE TABLE TracerCustomer(
+    tracer_id INT,
+    customer_id INT,
+    ID INT AUTO_INCREMENT PRIMARY KEY
+  )
   """)
 
   cur.execute("""

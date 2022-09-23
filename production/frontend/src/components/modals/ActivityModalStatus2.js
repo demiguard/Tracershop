@@ -146,6 +146,7 @@ export default class ActivityModalStatus2 extends Component {
     const retfunc = (event) => {
       if(this.state.editingOrderedActivity){
         const order = this.props.orders.get(this.props.order);
+        const customer = this.props.customers.get(order.BID);
         const newActivity = Number(this.state.editOrderActivity)
         if(isNaN(newActivity) ){
           this.setState({
@@ -164,8 +165,8 @@ export default class ActivityModalStatus2 extends Component {
         const externalActivity = order.total_amount - order.amount;
         const newTotalActivity = newActivity + externalActivity;
 
-        const newAmountOverhead = (1 + this.props.customer.overhead / 100) * newActivity;
-        const newTotalAmountOverhead = (1 + this.props.customer.overhead / 100) * newTotalActivity;
+        const newAmountOverhead = (1 + customer.overhead / 100) * newActivity;
+        const newTotalAmountOverhead = (1 + customer.overhead / 100) * newTotalActivity;
 
         const newOrder = {...order};
         // This is why python is better
@@ -391,10 +392,8 @@ export default class ActivityModalStatus2 extends Component {
 
   renderOrder(){
     const Order = this.props.orders.get(this.props.order);
-    const OrderID = (Order) ? Order.oid : "";
 
     const Customer = this.props.customers.get(Order.BID);
-    const CustomerNumber = (Customer) ? Customer.kundenr  : "";
     const CustomerName   = (Customer) ? Customer.UserName + " - " + Customer.Realname : "";
 
     var AssignedActivity = 0;
@@ -403,16 +402,21 @@ export default class ActivityModalStatus2 extends Component {
       AssignedActivity += Number(Vial.activity)
     }
 
-    // The Close icon have been decreed by an external source
+    //Format is HH:MM - DD/MM/YYYY - Input format is YYYY-MM-DDTHH:MM:SS
+    const formattetOrderTime = `${Order.deliver_datetime.substring(11,13)
+    }:${Order.deliver_datetime.substring(14,16)} - ${Order.deliver_datetime.substring(8,10)
+    }/${Order.deliver_datetime.substring(5,7)}/${Order.deliver_datetime.substring(0,4)}`;
 
+    // The close icons of edit / calc have been decreed by an external source
     return(
       <div>
         <Table striped bordered>
           <tbody>
-            {renderTableRow("0", ["Order ID", OrderID])}
-            {renderTableRow("1", ["Kunde nummber:", CustomerNumber])}
-            {renderTableRow("2", ["Navn:" , CustomerName])}
-            {renderTableRow("3", ["Bestilt aktivitet",
+            {renderTableRow("1", ["Destination:" , CustomerName])}
+            {renderTableRow("2", ["Kørsel: ", Order.run])}
+            {renderTableRow("3", ["Bestilt til:", formattetOrderTime])}
+            {renderTableRow("4", ["Bestilt af:", Order.username])}
+            {renderTableRow("5", ["Bestilt aktivitet",
           <Row>
             <Col>{this.state.editingOrderedActivity ?
               <FormControl
@@ -427,9 +431,9 @@ export default class ActivityModalStatus2 extends Component {
               {renderClickableIcon("/static/images/calculator.svg")}</Col>
           </Row>
           ])}
-            {renderTableRow("4", ["Ønsket aktivitet:", Order.total_amount_o])}
-            {renderTableRow("5", ["Allokeret Aktivitet:", AssignedActivity])}
-            {Order.comment ? renderTableRow("6", ["Kommentar", Order.comment]) : null}
+            {renderTableRow("6", ["Total aktivitet:", Order.total_amount * (1 + Customer.overhead / 100)])}
+            {renderTableRow("7", ["Allokeret Aktivitet:", AssignedActivity])}
+            {Order.comment ? renderTableRow("8", ["Kommentar", Order.comment]) : null}
           </tbody>
         </Table>
       </div>);

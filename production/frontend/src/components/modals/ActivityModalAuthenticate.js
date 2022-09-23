@@ -2,14 +2,9 @@ import React, { Component } from "react";
 import { Modal, Button, Container, Col, Table, Row } from "react-bootstrap";
 import Authenticate from "/src/components/injectables/Authenticate";
 import { renderTableRow } from "/src/lib/Rendering";
-import { ajax } from "jquery"
-import { AUTH_DETAIL, AUTH_PASSWORD, AUTH_USERNAME } from "/src/lib/constants";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/constants";
 
 export { ActivityModalAuthenticate }
-
-const initial_state = {
-
-};
 
 /**
  * Props
@@ -27,10 +22,28 @@ export default class ActivityModalAuthenticate extends Component {
   constructor(props){
     super(props);
     this.state = {
-      ErrorMessage : ""
+      login_message : ""
     }
   }
 
+  auth(username, password){
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGIN);
+    const auth = {}
+    auth[AUTH_USERNAME] = username
+    auth[AUTH_PASSWORD] = password
+    message[JSON_AUTH] = auth;
+    const loginPromise = this.props.websocket.send(message).then((data) => {
+      if (data[AUTH_IS_AUTHENTICATED]){
+        this.props.accept(this.props.order, this.props.selectedVials);
+      } else {
+        const newState = {...this.state,
+          login_message : "Forkert Login",
+        }
+      }
+    });
+  }
+
+  /*
   submitLogin(username, password){
     const dataObject = {};
 
@@ -43,7 +56,7 @@ export default class ActivityModalAuthenticate extends Component {
       data:JSON.stringify(dataObject)
     }).then((data) => {
       if (data[AUTH_DETAIL]) {
-        this.props.accept(this.props.Order.oid, this.props.selectedVials);
+        this.props.accept(this.props.order, this.props.selectedVials);
       } else {
         this.setState({
           ...this.state, ErrorMessage : "Forkert Login"
@@ -51,7 +64,7 @@ export default class ActivityModalAuthenticate extends Component {
       }
     });
   }
-
+  */
 
   CloseModal(){
     this.setState(initial_state);
@@ -59,12 +72,12 @@ export default class ActivityModalAuthenticate extends Component {
   }
 
   render() {
-    const Order = this.props.Order;
+    const Order = this.props.orders.get(this.props.order);
     const OrderID = (Order) ? Order.oid : "";
 
-    const Customer = (this.props.customer) ? this.props.customer : null;
-    const CustomerNumber = (Customer) ? Customer.CustomerNumber  : "";
-    const CustomerName   = (Customer) ? Customer.username + " - " + Customer.Name : "";
+    const Customer = this.props.customers.get(Order.BID);
+    const CustomerNumber = (Customer) ? Customer.kundenr  : "";
+    const CustomerName   = (Customer) ? Customer.UserName + " - " + Customer.Realname : "";
     const Activity       = (Order) ? Order.total_amount_o : "";
 
     const Vials = [];
@@ -91,7 +104,7 @@ export default class ActivityModalAuthenticate extends Component {
           <Col xs={4}>
           <Authenticate
             login_message="Frigiv Ordre"
-            authenticate={this.submitLogin.bind(this)}
+            authenticate={this.auth.bind(this)}
             ErrorMessage={this.state.ErrorMessage}
             fit_in={false}
             />

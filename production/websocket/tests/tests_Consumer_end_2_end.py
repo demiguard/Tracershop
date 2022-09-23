@@ -28,6 +28,7 @@ import time
 from database.models import Address, Database, ServerConfiguration, User, UserGroups
 from constants import *
 from lib.SQL.SQLExecuter import Fetching
+from lib.SQL import SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.utils import LFILTER
 from tests.helpers import getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
@@ -62,9 +63,36 @@ class ConsumerTestCase(TestCase):
         AUTH_USERNAME : TEST_ADMIN_USERNAME,
         AUTH_PASSWORD : TEST_ADMIN_PASSWORD
       },
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
       WEBSOCKET_MESSAGE_ID : message_id
     }
+
+  activityOrderStatus2Str = SQLFactory.tupleInsertQuery(
+    [ ("deliver_datetime","2022-10-11 11:30:00"),
+      ("oid", 1337),
+      ("status", 2),
+      ("amount", 10000),
+      ("amount_o", 12000),
+      ("total_amount", 10000),
+      ("total_amount_o", 12000),
+      ("tracer", 1),
+      ("run", 2),
+      ("BID", 1),
+      ("batchnr", ""),
+      ("COID", -1),
+    ], "orders"
+  )
+
+  vialStr = SQLFactory.tupleInsertQuery([
+    ("customer", 1),
+    ("charge", "Test_CE2E_1"),
+    ("filldate", "2022-10-11"),
+    ("filltime", "11:27:11"),
+    ("volume", 8.91),
+    ("activity", 12942.12),
+    ("ID", 62104)
+  ], "VAL")
 
   async def _sendReceive(self, comm : WebsocketCommunicator,   message : Dict):
     await comm.send_json_to(message)
@@ -84,10 +112,9 @@ class ConsumerTestCase(TestCase):
 
   def tearDown(self):
     t = time.time() - self.startTime
-    print('%s: %.3f' % (self.id(), t))
+    #print('%s: %.3f' % (self.id(), t))
 
-
-  # Dataclasses
+  #Universal Messages
   async def test_connect_to_consumer(self):
       comm = WebsocketCommunicator(app,"ws/")
       conn, subprotocal = await comm.connect()
@@ -99,13 +126,12 @@ class ConsumerTestCase(TestCase):
     conn, subprotocal = await comm.connect()
     response = await self._sendReceive(comm, {
           WEBSOCKET_MESSAGE_ID : self.message_id,
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
       })
 
     self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
     self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_ECHO)
-
-
 
   @UseDataClass(ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass,
       IsotopeDataClass, InjectionOrderDataClass, RunsDataClass, TracerDataClass,
@@ -113,7 +139,8 @@ class ConsumerTestCase(TestCase):
   async def test_GreatState(self):
     response = await self._loginAdminSendRecieve({
       WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
     })
     self.assertEqual(self.message_id, response[WEBSOCKET_MESSAGE_ID])
     #Validate
@@ -167,13 +194,60 @@ class ConsumerTestCase(TestCase):
          order.filldate < endDate, TEST_DATA_DICT[VialDataClass])
     self.assertListEqual(Vials, correctVials)
 
-  ##### Create Order #####
+    ##### Auth #####
+  async def test_login_persists(self):
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, _subprotocal = await comm.connect()
+
+    response = await self._sendReceive(comm, self.loginAdminMessage)
+    sessionID = response['sessionid']
+    await comm.disconnect()
+
+    sessionCookie = "sessionid=" + sessionID
+
+    recomm = WebsocketCommunicator(app, "ws/", headers=[("cookie".encode(), sessionCookie.encode())])
+    _conn, _subprotocal = await recomm.connect()
+
+    whoAmI_reponse = await self._sendReceive(recomm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    await recomm.disconnect()
+
+    self.assertTrue(whoAmI_reponse[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(whoAmI_reponse[AUTH_USERNAME], TEST_ADMIN_USERNAME)
+    self.assertEqual(whoAmI_reponse[KEYWORD_USERGROUP], 1)
+
+  async def test_login_logout_whoamI(self):
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+
+    loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
+    logoutMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    whoAmIMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+
+    self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
+    self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
+
+  ##### Create Dataclass #####
+
   @UseDataClass(VialDataClass) # Added these to avoid an empty Vial database
   async def test_createVial(self):
     # Test
     response = await self._loginAdminSendRecieve({
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_DATATYPE : JSON_VIAL,
       WEBSOCKET_DATA : {
         KEYWORD_CUSTOMER : 1,
@@ -184,7 +258,6 @@ class ConsumerTestCase(TestCase):
         KEYWORD_ACTIVITY : 13337
       }
     })
-
     # Get side effects
     JsonVial = loads(loads(response[WEBSOCKET_DATA]))
     Vial = await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.ONE)
@@ -202,102 +275,45 @@ class ConsumerTestCase(TestCase):
     #Clean up
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.NONE)
 
-  # Edit Orders
 
-  ##### Auth #####
-  async def test_login_persists(self):
-    comm = WebsocketCommunicator(app,"ws/", headers=b'')
-    _conn, _subprotocal = await comm.connect()
+  ##### Free Order ####
+  @UseDataClass(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
+  async def test_free_order(self):
+    await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr, Fetching.NONE)
 
-    response = await self._sendReceive(comm, self.loginAdminMessage)
-    sessionID = response['sessionid']
-    await comm.disconnect()
-
-    sessionCookie = "sessionid=" + sessionID
-
-    recomm = WebsocketCommunicator(app, "ws/", headers=[("cookie".encode(), sessionCookie.encode())])
-    _conn, _subprotocal = await recomm.connect()
-
-    whoAmI_reponse = await self._sendReceive(recomm, {
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-      WEBSOCKET_MESSAGE_ID : self.message_id
-    })
-    await recomm.disconnect()
-
-    self.assertTrue(whoAmI_reponse[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmI_reponse[AUTH_USERNAME], TEST_ADMIN_USERNAME)
-    self.assertEqual(whoAmI_reponse[KEYWORD_USERGROUP], 1)
-
-  async def test_login_logout_whoamI(self):
-    comm = WebsocketCommunicator(app,"ws/", headers=b'')
-    _conn, subprotocal = await comm.connect()
-
-    loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
-    logoutMessage = await self._sendReceive(comm, {
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
-      WEBSOCKET_MESSAGE_ID : self.message_id
-    })
-    whoAmIMessage = await self._sendReceive(comm, {
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-      WEBSOCKET_MESSAGE_ID : self.message_id
-    })
-
-    self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
-    self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
-
-  @skip
-  async def test_move_order_ghost_order(self):
-    # Database Setup
-    today = datetime.date.today()
-
-    await async_ExecuteQuery(f"""
-      INSERT INTO orders(
-        deliver_datetime,
-        oid,
-        status,
-        amount,
-        amount_o,
-        total_amount,
-        total_amount_o,
-        tracer,
-        run,
-        BID,
-        batchnr,
-        COID
-      ) VALUES (
-        \"2022-10-11 11:30:00\",
-        1337,
-        2,
-        10000,
-        12000,
-        10000,
-        12000,
-        1,
-        2,
-        1,
-        \"\",
-        -1
-      )
-    """, Fetching.NONE)
-
-    # Connection Setup
-    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
     _conn, subprotocal = await comm.connect()
     login_message = await self._sendReceive(comm, self.loginAdminMessage)
 
-
-
     response = await self._sendReceive(comm, {
       WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_DATA : {
-        KEYWORD_OID : 1337,
-        KEYWORD_RUN : 1
+        JSON_ACTIVITY_ORDER : 1337,
+        JSON_VIAL : [62104]
       }
     })
 
+    Vial = VialDataClass(*await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62104", Fetching.ONE))
+    Order = ActivityOrderDataClass(*await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE oid=1337", Fetching.ONE))
 
+    pprint(Order)
 
+    #Message Validation
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(len(response[JSON_ACTIVITY_ORDER]),1)
+    self.assertEqual(len(response[JSON_VIAL]),1)
+    #Vial Validation
+    self.assertEqual(Vial.order_id, 1337)
+    #Order Validation
+    self.assertEqual(Order.status, 3)
+    self.assertEqual(Order.batchnr, Vial.charge)
+    self.assertEqual(Order.frigivet_amount, Vial.activity)
+    self.assertEqual(Order.volume, Vial.volume)
 
-
+    # Cleanup
+    await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
+    await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
