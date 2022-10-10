@@ -53,7 +53,7 @@ class SQL():
       if fetch == Fetching.ALL:
         return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
       elif fetch == Fetching.ONE:
-        return [returnClass(*SQLResult)]
+        return [returnClass(**SQLResult)]
       else:
         return []
     else:
@@ -71,7 +71,7 @@ class SQL():
       if fetch == Fetching.ALL:
         return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
       elif fetch == Fetching.ONE:
-        return [returnClass(*SQLResult)]
+        return [returnClass(**SQLResult)]
       else:
         return []
     else:

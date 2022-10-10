@@ -17,7 +17,9 @@ import json
 from abc import abstractclassmethod
 from dataclasses import dataclass, asdict, fields, Field
 from datetime import datetime, date, time
+from pprint import pprint
 import re
+from types import NoneType
 from typing import Dict, Optional, List, Any, get_args, get_origin, Union
 from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
@@ -149,6 +151,48 @@ class JsonSerilizableDataClass:
   def getExtraValues(cls) -> List:
     return []
 
+  def __TargetedSetAttr__(self,value, fieldName, fieldType):
+    fieldValType = type(value)
+    if fieldType == date:
+      if fieldValType == str:
+        self.__setattr__(fieldName, toDate(value))
+      if fieldValType == date:
+        self.__setattr__(fieldName, value)
+      if fieldValType == datetime:
+        self.__setattr__(fieldName, value.date())
+    elif fieldType == datetime:
+      if fieldValType == str:
+        try:
+          self.__setattr__(fieldName, toDateTime(value))
+        except ValueError:
+          self.__setattr__(fieldName, toDateTime(value, Format=JSON_DATETIME_FORMAT))
+    elif fieldType == time:
+      self.__setattr__(fieldName, toTime(value))
+    elif fieldType == int:
+      if fieldValType == type(None):
+        self.__setattr__(fieldName, 0)
+      elif fieldValType == str:
+        try:
+          self.__setattr__(fieldName, int(value))
+        except ValueError as E:
+          errorMessage = f"""In the construction of the Class {self.__class__} The Field: {fieldName} was Assigned the string {value}
+            The dataclass cannot nativily convert this to {fieldType}"""
+          raise TypeError(errorMessage)
+      else:
+        try:
+          self.__setattr__(fieldName, fieldType(value))
+        except ValueError:
+          ErrorMessage = f"""In the construction of the Class {self.__class__} The Field: {fieldName} was Assigned a object of type: {type(value)}
+            The dataclass cannot nativily convert this to {fieldType}"""
+          raise TypeError(ErrorMessage)
+    else:
+      try:
+        self.__setattr__(fieldName, fieldType(value))
+      except ValueError:
+        ErrorMessage = f"""In the construction of the Class {self.__class__} The Field: {fieldName} was Assigned a object of type: {type(value)}
+          The dataclass cannot nativily convert this to {fieldType}"""
+        raise TypeError(ErrorMessage)
+
   def __TypeSafeSetAttr(self, field : Field, fieldVal : Any) -> None:
     """This function attempts to set a field after performing type checking.
     If Typechecking fails, it will attempt to perform some conversion between
@@ -168,41 +212,25 @@ class JsonSerilizableDataClass:
     if fieldValType == field.type or isinstance(fieldVal, field.type):
       self.__setattr__(field.name, fieldVal)
     elif get_origin(field.type) == Union:
-      if fieldValType in get_args(field.type):
-        self.__setattr__(field.name, fieldVal)
-    elif field.type == date:
-      self.__setattr__(field.name, toDate(fieldVal))
-    elif field.type == datetime:
-      try:
-        self.__setattr__(field.name, toDateTime(fieldVal))
-      except ValueError:
-        self.__setattr__(field.name, toDateTime(fieldVal, Format=JSON_DATETIME_FORMAT))
-    elif field.type == time:
-
-      self.__setattr__(field.name, toTime(fieldVal))
-    elif field.type == int:
-      if fieldValType == type(None):
-        self.__setattr__(field.name,0)
-      else:
+      for UnionType in get_args(field.type):
+        if UnionType == NoneType:
+          continue
         try:
-          self.__setattr__(field.name, field.type(fieldVal))
-        except ValueError:
-          ErrorMessage = f"""In the construction of the Class {self.__class__} The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
-            The dataclass cannot nativily convert this to {field.type}"""
-          raise TypeError(ErrorMessage)
+          self.__TargetedSetAttr__(fieldVal, field.name, UnionType)
+        except TypeError:
+          pass
+      if not hasattr(self, field.name):
+        errorMessage = f"""In the construction of the Class {self.__class__} The Field: {field.Name} was Assigned the Value: {fieldVal}
+            However The dataclass cannot nativily convert this to one of the types {get_args(field.type)}"""
+        raise TypeError(errorMessage)
     else:
-      try:
-        self.__setattr__(field.name, field.type(fieldVal))
-      except ValueError:
-        ErrorMessage = f"""In the construction of the Class {self.__class__} The Field: {field.name} was Assigned a object of type: {type(fieldVal)}
-          The dataclass cannot nativily convert this to {field.type}"""
-        raise TypeError(ErrorMessage)
+      self.__TargetedSetAttr__(fieldVal, field.name, field.type)
 
   def __init__(self, *args, **kwargs):
     Myfields = self.getFields()
     fieldDict = { field.name : field for field in Myfields}
 
-    # Initialize Optionals as None
+    #Initialize Optionals as None
     # Note that Optional[types] is just shorthand for Union[Types, Nonetype]
     for field in Myfields:
       if get_origin(field.type) == Union and type(None) in get_args(field.type):
@@ -215,8 +243,17 @@ class JsonSerilizableDataClass:
       if field := fieldDict.get(fieldName):
         self.__TypeSafeSetAttr(field, fieldVal)
       else:
-        ErrorString = f"In the construction of the Class {self.__class__} an Unknown keyword in construction:{fieldName} was encountered"
-        raise KeyError(ErrorString)
+        if fieldName.startswith("TIME_FORMAT("): # The Keyword is hidden in a some formatting
+          formattedStr, _ = fieldName.split(",", 1)
+          fieldName = formattedStr[12:]
+          if field := fieldDict.get(fieldName):
+            self.__TypeSafeSetAttr(field, fieldVal)
+          else:
+            ErrorString = f"In the construction of the Class {self.__class__} an Unknown keyword in construction:{fieldName} was encountered"
+            raise KeyError(ErrorString)
+        else:
+          ErrorString = f"In the construction of the Class {self.__class__} an Unknown keyword in construction:{fieldName} was encountered"
+          raise KeyError(ErrorString)
 
   ##### This is good to have since the init mehtod might be over written and it ensure type safity
   def __post_init__(self):
@@ -248,7 +285,7 @@ class ActivityOrderDataClass(JsonSerilizableDataClass):
   batchnr : str
   COID : int
   frigivet_af : Optional[int] #id matching to OldDatabaseID
-  frigivet_amount : Optional[float]
+  frigivet_amount : Optional[int]
   volume : Optional[float]
   frigivet_datetime : Optional[datetime]
   comment : Optional[str]

@@ -31,8 +31,8 @@ from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.utils import LFILTER
-from tests.helpers import getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
-from tests.test_DataClasses import TEST_DATA_DICT, UseDataClass # This file standizes the dataclasses
+from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
+from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
 from websocket.DatabaseInterface import DatabaseInterface
 from websocket.Consumer import Consumer
 
@@ -84,13 +84,29 @@ class ConsumerTestCase(TestCase):
     ], "orders"
   )
 
+  activityOrderDependant = SQLFactory.tupleInsertQuery(
+    [ ("deliver_datetime","2022-10-11 11:30:00"),
+      ("oid", 1338),
+      ("status", 2),
+      ("amount", 10000),
+      ("amount_o", 12000),
+      ("total_amount", 0),
+      ("total_amount_o", 0),
+      ("tracer", 1),
+      ("run", 2),
+      ("BID", 1),
+      ("batchnr", ""),
+      ("COID", 1337),
+    ], "orders"
+  )
+
   vialStr = SQLFactory.tupleInsertQuery([
     ("customer", 1),
     ("charge", "Test_CE2E_1"),
     ("filldate", "2022-10-11"),
     ("filltime", "11:27:11"),
     ("volume", 8.91),
-    ("activity", 12942.12),
+    ("activity", 12942),
     ("ID", 62104)
   ], "VAL")
 
@@ -111,6 +127,7 @@ class ConsumerTestCase(TestCase):
     self.startTime = time.time()
 
   def tearDown(self):
+    cleanTable("oid", "orders", self._testMethodName)
     t = time.time() - self.startTime
     #print('%s: %.3f' % (self.id(), t))
 
@@ -133,7 +150,7 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
     self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_ECHO)
 
-  @UseDataClass(ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass,
+  @useDataClassAsync(ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass,
       IsotopeDataClass, InjectionOrderDataClass, RunsDataClass, TracerDataClass,
       VialDataClass)
   async def test_GreatState(self):
@@ -240,8 +257,7 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
 
   ##### Create Dataclass #####
-
-  @UseDataClass(VialDataClass) # Added these to avoid an empty Vial database
+  @useDataClassAsync(VialDataClass) # Added these to avoid an empty Vial database
   async def test_createVial(self):
     # Test
     response = await self._loginAdminSendRecieve({
@@ -263,7 +279,7 @@ class ConsumerTestCase(TestCase):
     Vial = await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.ONE)
 
     ResponseVial = VialDataClass.fromDict(JsonVial)
-    DatabaseVial = VialDataClass(*Vial)
+    DatabaseVial = VialDataClass(**Vial)
 
     # Asserting
     self.assertEqual(ResponseVial, DatabaseVial)
@@ -277,7 +293,7 @@ class ConsumerTestCase(TestCase):
 
 
   ##### Free Order ####
-  @UseDataClass(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
+  @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
   async def test_free_order(self):
     await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
     await async_ExecuteQuery(self.vialStr, Fetching.NONE)
@@ -296,10 +312,15 @@ class ConsumerTestCase(TestCase):
       }
     })
 
-    Vial = VialDataClass(*await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62104", Fetching.ONE))
-    Order = ActivityOrderDataClass(*await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE oid=1337", Fetching.ONE))
+    Vial = VialDataClass(**await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62104", Fetching.ONE))
+    Order = ActivityOrderDataClass(**await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE oid=1337", Fetching.ONE))
 
-    pprint(Order)
+    responseVial = VialDataClass(**loads(response[JSON_VIAL][0]))
+    try:
+      responseOrder = ActivityOrderDataClass(**loads(response[JSON_ACTIVITY_ORDER][0]))
+    except Exception as E:
+      print(E)
+      print(response[JSON_ACTIVITY_ORDER][0])
 
     #Message Validation
     self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
@@ -317,3 +338,47 @@ class ConsumerTestCase(TestCase):
     # Cleanup
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
     await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
+
+  @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
+  async def test_free_dependant_orders(self):
+    await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
+    await async_ExecuteQuery(self.activityOrderDependant, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr, Fetching.NONE)
+
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+    login_message = await self._sendReceive(comm, self.loginAdminMessage)
+
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATA : {
+        JSON_ACTIVITY_ORDER : 1337,
+        JSON_VIAL : [62104]
+      }
+    })
+
+    Vial = VialDataClass(**await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62104", Fetching.ONE))
+    Order = ActivityOrderDataClass(**await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE oid=1337", Fetching.ONE))
+    DependantOrder = ActivityOrderDataClass(**await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE oid=1338", Fetching.ONE))
+
+    #Message Validation
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(len(response[JSON_ACTIVITY_ORDER]),2)
+    self.assertEqual(len(response[JSON_VIAL]),1)
+    #Vial Validation
+    self.assertEqual(Vial.order_id, 1337)
+    #Order Validation
+    self.assertEqual(Order.status, 3)
+    self.assertEqual(Order.batchnr, Vial.charge)
+    self.assertEqual(Order.frigivet_amount, Vial.activity)
+    self.assertEqual(Order.volume, Vial.volume)
+
+
+
+    # Cleanup
+    await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
+    await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
+    await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1338", Fetching.NONE)

@@ -414,7 +414,7 @@ TEST_DATA_DICT = {
     VialDataClass : testVials
 }
 
-def UseDataClass(*DataClasses : JsonSerilizableDataClass):
+def useDataClassAsync(*DataClasses : JsonSerilizableDataClass):
   """
     This decorator initialized data into the test database and cleans up the data afterwards.
   """
@@ -449,3 +449,34 @@ def UseDataClass(*DataClasses : JsonSerilizableDataClass):
     return wrapper
   return decorator
 
+def useDataClass(*DataClasses : JsonSerilizableDataClass):
+  def decorator(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+      # Database Construction
+      for DataClass in DataClasses:
+        if DataClass == CustomerDataClass:
+          UserRolePairs = []
+          for testCustomer in testCustomers:
+            ExecuteQuery(
+            CustomerDataClass.createDataClassQuery(testCustomer.to_dict()), Fetching.NONE)
+            UserRolePairs.append(f"({testCustomer.ID},4)")
+            ExecuteQuery(f"""INSERT INTO UserRoles(Id_User, Id_Role) VALUES {", ".join(UserRolePairs)}""", Fetching.NONE)
+        else:
+          for testDataClass in TEST_DATA_DICT[DataClass]:
+              ExecuteQuery(
+              DataClass.createDataClassQuery(
+              testDataClass.to_dict()), Fetching.NONE)
+      res = func(*args, **kwargs)
+      # Database Deconstruction
+      for DataClass in DataClasses:
+        if DataClass == CustomerDataClass:
+          UserIDs = ",".join(map(lambda U: str(U.ID), testCustomers))
+          ExecuteQuery(f"""DELETE FROM UserRoles WHERE Id_User IN ({UserIDs})""", Fetching.NONE)
+          ExecuteQuery(f"""DELETE FROM Users WHERE id IN ({UserIDs})""", Fetching.NONE)
+        else:
+          IDs = [str(dataInstance.__getattribute__(DataClass.getIDField())) for dataInstance in TEST_DATA_DICT[DataClass]]
+          ExecuteQuery(f"""DELETE FROM {DataClass.getSQLTable()} WHERE {DataClass.getIDField()} IN ({",".join(IDs)})""", Fetching.NONE)
+      return res
+    return wrapper
+  return decorator

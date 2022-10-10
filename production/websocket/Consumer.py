@@ -137,6 +137,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       elif messageType == WEBSOCKET_MESSAGE_AUTH_WHOAMI:
         await self.handleWhoAmI(message)
     except Exception as E:
+      pprint(message)
       raise E
       await self.HandleUnknownError(E, message)
 
@@ -378,14 +379,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
       Order.volume = round(float(PrimaryVial.volume),2)
       Order.batchnr = PrimaryVial.charge
       await self.db.updateDataClass(Order)
-      pprint(Order)
       updateOrders.append(Order)
       PrimaryVial.order_id = Order.oid
       await self.db.updateDataClass(PrimaryVial)
       updatedVials.append(PrimaryVial)
       DependantOrders = await self.db.freeDependantOrders(Order, self.scope['user'])
       if DependantOrders:
-        updateOrders.append(DependantOrders)
+        updateOrders += DependantOrders
 
       for Vial in Vials[1:]: #The first vial is assoc with the Primary order
         skeleton = {
@@ -419,9 +419,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
         sendMail(pdfFilePath, Customer, Order, serverConfiguration)
       except Exception as E:
         logger.error(f"could not send mail because: {E}")
-
-      print(updateOrders)
-      print(updatedVials)
 
       await self.channel_layer.group_send(
         self.global_group, {

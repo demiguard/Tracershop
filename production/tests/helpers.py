@@ -211,20 +211,6 @@ def CreateTestDatabase(DatabaseConfig):
     )
   """)
 
-  #cur.execute("""
-  #CREATE TABLE VialMapping(
-  #Order_id INT,
-  #VAL_id INT UNSIGNED,
-  #FOREIGN KEY (Order_id) REFERENCES orders(OID)
-  #  ON UPDATE CASCADE
-  #  ON DELETE RESTRICT,
-  #FOREIGN KEY (VAL_id) REFERENCES VAL(ID)
-  #  ON UPDATE CASCADE
-  #  ON DELETE RESTRICT,
-  #UNIQUE KEY (VAL_id)
-  #)
-  #""")
-
   cur.execute("""
     CREATE TABLE productionTimes(
       day TINYINT,
@@ -309,3 +295,15 @@ def getModel(model, pk):
 @sync_to_async
 def async_ExecuteQuery(Query, fetching=Fetching.ALL):
     return ExecuteQuery(Query, fetching)
+
+def cleanTable(IDstr : str, tableStr : str, testName : str) -> None:
+    ids = ExecuteQuery(f"SELECT {IDstr} FROM {tableStr}""",Fetching.ALL)
+    if ids:
+      print(f"\nTest {testName} did not clean {tableStr}\n")
+      idsStr = ""
+      for i, (id,) in enumerate(ids):
+        if i != len(ids) - 1:
+          idsStr += f"{id},"
+        else:
+          idsStr += f"{id}"
+      ExecuteQuery(f"DELETE FROM {tableStr} WHERE {id} in ({idsStr})", Fetching.NONE)

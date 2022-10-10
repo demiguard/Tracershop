@@ -45,7 +45,7 @@ class DataBaseConnectionWrapper(object):
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True
       self.connection.get_warnings = True
-      self.cursor = self.connection.cursor()
+      self.cursor = self.connection.cursor(dictionary=True)
       return self
     except mysql.Error as Err:
       self.connected = False

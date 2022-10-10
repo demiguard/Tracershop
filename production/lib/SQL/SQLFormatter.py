@@ -49,7 +49,7 @@ def FormatSQLTupleAsClass(SQLResult: Optional[List[Tuple]], cls):
     This function converts a list of tuples queried from the database into a list
   """
   if SQLResult:
-    return list(map(lambda ClassTuple : cls(*ClassTuple), SQLResult))
+    return list(map(lambda ClassTuple : cls(**ClassTuple), SQLResult))
   else:
     return None
 
