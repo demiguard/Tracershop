@@ -21,7 +21,7 @@ from pprint import pprint
 import re
 from types import NoneType
 from typing import Dict, Optional, List, Any, get_args, get_origin, Union
-from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
+from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_CLOSEDDATE, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
 from database.models import User
 from lib.utils import LMAP
@@ -535,30 +535,37 @@ class EmployeeDataClass(JsonSerilizableDataClass):
   def fromUser(cls, user: User):
     return cls(Username=user.username, OldTracerBaseID=user.OldTracerBaseID)
 
+@dataclass(init=False)
+class ClosedDateDataClass(JsonSerilizableDataClass):
+  BDID : int
+  ddate : date
 
+  @staticmethod
+  def getSQLTable() -> str:
+    return "blockDeliverDate"
+
+  @staticmethod
+  def getIDField() -> str:
+    return "BDID"
+
+DATACLASSES = {
+    JSON_ACTIVITY_ORDER : ActivityOrderDataClass,
+    JSON_CUSTOMER : CustomerDataClass,
+    JSON_CLOSEDDATE : ClosedDateDataClass,
+    JSON_DELIVERTIME : DeliverTimeDataClass,
+    JSON_ISOTOPE : IsotopeDataClass,
+    JSON_INJECTION_ORDER : InjectionOrderDataClass,
+    JSON_RUN : RunsDataClass,
+    JSON_TRACER : TracerDataClass,
+    JSON_TRACER_MAPPING : TracerCustomerMappingDataClass,
+    JSON_VIAL : VialDataClass
+  }
 
 # Data class constant mapping
 def findDataClass(dataType):
-  if dataType == JSON_ACTIVITY_ORDER:
-    dataClass = ActivityOrderDataClass
-  elif dataType == JSON_CUSTOMER:
-    dataClass = CustomerDataClass
-  elif dataType == JSON_DELIVERTIME:
-    dataClass = DeliverTimeDataClass
-  elif dataType == JSON_ISOTOPE:
-    dataClass = IsotopeDataClass
-  elif dataType == JSON_RUN:
-    dataClass = RunsDataClass
-  elif dataType == JSON_TRACER:
-    dataClass = TracerDataClass
-  elif dataType == JSON_VIAL:
-    dataClass = VialDataClass
-  elif dataType == JSON_INJECTION_ORDER:
-    dataClass = InjectionOrderDataClass
-  elif dataType == JSON_TRACER_MAPPING:
-    dataClass = TracerCustomerMappingDataClass
+  dataClass = DATACLASSES.get(dataType)
 
-  if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
+  if dataClass == None: # This is a handy way to see if i've set up a dataclass for the data type
     raise ValueError(f"Datatype: {dataType} is unknown to the consumer")
 
   return dataClass

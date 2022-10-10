@@ -683,6 +683,15 @@ export class ActivityTable extends Component {
         </tbody>
       </Table> : <div/>
     }
+    { FinishedOrders.length == 0 && pendingOrders == 0 ?
+    <div>
+      <p>Der er ingen Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
+    </div> :
+      null
+
+    }
+
+
     { this.state.showModal ?
       <this.state.Modal
         show={this.state.showModal}

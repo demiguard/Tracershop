@@ -1,6 +1,6 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
-import { Calender } from "/src/components/injectables/calender";
+import { Calender, standardOrderMapping, producitonGetMonthlyOrders } from "../injectables/calender";
 
 import { FormatDateStr } from "/src/lib/formatting";
 
@@ -18,13 +18,6 @@ export class CloseDaysPage extends Component {
 
   }
 
-  changeColors (year, month) {
-  }
-
-  getColor(datestring, ColorDict) {
-
-  }
-
 
   render() {
     return(
@@ -32,8 +25,8 @@ export class CloseDaysPage extends Component {
       <Calender
         date={this.state.today}
         onDayClick={this.changeCloseDay}
-        updateColors={this.changeColors}
-        getColor={this.getColor}
+        onMonthChange={producitonGetMonthlyOrders(this.props.websocket)}
+        getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs)}
       ></Calender>
     </div>);
   }

@@ -28,26 +28,32 @@ const Pages = {
 class ProductionSite extends Component{
   constructor(props){
     super(props);
-
-    const state = {
-      ActivePage : OrderPage
+    var firstKey;
+    for(const key of Object.keys(Pages)){
+      firstKey = key;
+      break;
     }
 
-    this.state = state
+
+    const state = {
+      ActivePage : firstKey
+    }
+
+    this.state = state;
 
   }
 
   setActivePage(NewPageName) {
-    const NewPage = Pages[NewPageName];
-    const NewState = {...this.state, ActivePage : NewPage};
+    const NewState = {...this.state, ActivePage : NewPageName};
     this.setState(NewState);
   }
 
   render(){
-
+    const UserPage = Pages[this.state.ActivePage];
     return (
       <div>
         <Navbar
+          ActiveKey={this.state.ActivePage}
           Names={Object.keys(Pages)}
           setActivePage={this.setActivePage.bind(this)}
           logout={this.props.logout}
@@ -55,7 +61,7 @@ class ProductionSite extends Component{
           NavbarElements={this.props.NavbarElements}
         />
         <Container className="NavbarSpacer">
-          <this.state.ActivePage
+          <UserPage
             address={this.props.address}
             customers={this.props.customers}
             database={this.props.database}

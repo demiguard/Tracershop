@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { Col, Container, Form, FormGroup, Row } from "react-bootstrap";
-import { standardOrderMapping } from "../injectables/calculator";
-import { Calender } from "../injectables/calender";
+import { Calender, standardOrderMapping } from "../injectables/calender";
 import { FutureBooking } from "./FutureBookings";
 import { OrderReview } from "./OrderReview";
 import { db } from "../../lib/localStorageDriver";

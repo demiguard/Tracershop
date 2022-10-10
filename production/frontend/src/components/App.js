@@ -76,21 +76,11 @@ export default class App extends Component {
 
     this.state = state;
     this.MasterSocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
-
-    const promise = this.MasterSocket.send(
-      this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
-
-    /**** AUTHENTICATION METHODS ****/
-    //this.getSession = getSession.bind(this);
-    //this.handlePasswordChange = handlePasswordChange.bind(this);
-    //this.handleUserNameChange = handleUserNameChange.bind(this);
-    //this.isResponseOk = isResponseOk.bind(this);
-    //this.login_auth = login_auth.bind(this);
-    //this.login = login.bind(this);
-    //this.logout = logout.bind(this);
-
-    console.log
-
+    if (user) { // If we know, that the client is logged in, Getting the great state will not be authorized, hence no need for the query
+      const promise = this.MasterSocket.send(
+        this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
+    }
+    // While this is not needed, it's nice if the client start to use Ajax query again
     ajaxSetup({
       headers: {
         "X-CSRFToken": getCookie("csrftoken")
@@ -119,7 +109,9 @@ export default class App extends Component {
         };
         newState[DATABASE_IS_AUTH] = true;
 
+
         this.setState(newState);
+        this.MasterSocket.send(this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
       } else {
         const newState = {...this.state,
           login_message : "Forkert Login",
@@ -352,7 +344,7 @@ export default class App extends Component {
           isAuthenticated={false}
           logout={this.logout}
         />
-        <Container className="navBarSpacer">
+        <Container>
           <Authenticate
             login_message="Log in"
             authenticate={this.login.bind(this)}

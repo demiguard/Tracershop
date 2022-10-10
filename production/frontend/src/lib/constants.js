@@ -57,6 +57,7 @@ export const JSON_ACTIVITY_ORDER = "orders";
 export const JSON_ACTIVE_DATABASE = "active_database";
 export const JSON_ADDRESS  = "address";
 export const JSON_CUSTOMER  = "customer";
+export const JSON_CLOSEDDATE = "closedDate";
 export const JSON_DATABASE = "database";
 export const JSON_DELIVERTIME = "deliverTimes";
 export const JSON_EMPLOYEE = "employee";

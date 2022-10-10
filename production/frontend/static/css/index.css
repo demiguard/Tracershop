@@ -17,15 +17,6 @@
 }
 
 
-.navBarSpacer {
-  margin-top: 70px;
-  width: 100% !important;
-  max-width: 100% !important;
-}
-
-nav {
-  background-color: var(--secondary-color-3) ;
-}
 
 .tableButton {
   height: 35px;

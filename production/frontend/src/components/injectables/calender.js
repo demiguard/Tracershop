@@ -1,7 +1,10 @@
 import React, { Component } from "react";
-
+import { CompareDates } from "../../lib/utils";
 import { FormatDateStr } from '/src/lib/formatting'
 import {DAYS, DAYS_PER_WEEK} from '/src/lib/constants'
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants";
+
+export {Calender, standardOrderMapping, producitonGetMonthlyOrders }
 
 
 /** This is a calender, where stuff can be injected on date click and on month change
@@ -13,7 +16,7 @@ import {DAYS, DAYS_PER_WEEK} from '/src/lib/constants'
  *  onDayChange -
  *  getColor - function that adds css classes, primarily to add a different color to the date
  */
-export class Calender extends Component {
+class Calender extends Component {
   constructor(props) {
     super(props);
      // This is because when you change the month in the calender,
@@ -147,4 +150,51 @@ export class Calender extends Component {
       {weeks}
     </div>);
   }
+}
+
+
+function standardOrderMapping(orders, tOrders, runs) {
+  // Maybe do this calculation once instead of 30 times
+  const retfunc = (DateStr) => {
+
+    var MinimumActivityStatus = 5;
+    var MinimumInjectionStatus = 5;
+  const date = new Date(DateStr);
+  for(const [_, ActivityOrder] of orders){
+    if(CompareDates(date, new Date(ActivityOrder.deliver_datetime))){
+      MinimumActivityStatus = Math.min(MinimumActivityStatus, ActivityOrder.status);
+    }
+  }
+  for(const [_, InjectionOrder] of tOrders){
+    if(CompareDates(date, new Date(InjectionOrder.deliver_datetime))){
+      MinimumInjectionStatus = Math.min(MinimumInjectionStatus, InjectionOrder.status);
+    }
+  }
+  if (MinimumActivityStatus == 5){
+    var CanProduce = false;
+    for(const [_PTID, Run] of runs){
+      if(Run.day == date.getDay()){
+        CanProduce = true;
+        break;
+      }
+    }
+    if(CanProduce){
+      const now = new Date();
+      if(date > now){
+        MinimumActivityStatus = 0;
+      }
+    }
+  }
+  return "date-status" + String(MinimumInjectionStatus) + String(MinimumActivityStatus);
+  }
+  return retfunc
+}
+
+function producitonGetMonthlyOrders(websocket){
+  const retfunc = (NewMonth) => {
+    const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
+    message[WEBSOCKET_DATE] = NewMonth;
+    websocket.send(message);
+  }
+  return retfunc
 }

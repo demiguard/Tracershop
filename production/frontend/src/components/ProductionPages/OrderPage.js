@@ -1,12 +1,11 @@
 import React, { Component } from "react";
 import { Button, Row, Col, Container as div } from 'react-bootstrap';
-import { Calender } from '/src/components/injectables/calender.js';
 import { TOrderTable } from '/src/components/ProductionPages/InjectionTable';
 import { ActivityTable } from '/src/components/ProductionPages/ActivityTracerTable';
-import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE } from "/src/lib/constants.js";
+import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE } from "../../lib/constants.js";
 import { db } from "/src/lib/localStorageDriver";
 import { CompareDates } from "/src/lib/utils";
-import { standardOrderMapping } from "../injectables/calculator";
+import { Calender, producitonGetMonthlyOrders, standardOrderMapping } from "../injectables/calender.js";
 
 const Tables = {
   activity : ActivityTable,
@@ -52,13 +51,15 @@ export class OrderPage extends Component {
   // ##### Render functions ##### //
 
   renderTableSwitchButton(tracer) {
+    const underline = tracer.id === this.state.activeTracer;
+
     return (
       <Button className="navbarElem" key={tracer.name} sz="sm" onClick={() => {
         db.set("activeTracer", tracer.id);
 
         this.setState({...this.state, activeTracer : tracer.id, activeTable : Tables["activity"]})}}
       >
-        {tracer.name}
+        {underline ? <u>{tracer.name}</u> : tracer.name}
       </Button>
     );
   }
@@ -70,6 +71,8 @@ export class OrderPage extends Component {
         TableSwitchButtons.push(this.renderTableSwitchButton(tracer));
     }
 
+    const underlineSpecial = this.state.activeTracer === -1;
+
     TableSwitchButtons.push((
       <Button
         className="navbarElem"
@@ -77,7 +80,7 @@ export class OrderPage extends Component {
         sz="sm"
         onClick={() => {db.set("activeTracer", -1);this.setState({...this.state, activeTracer : -1, activeTable : Tables["injections"]})}}
       >
-          Special
+          { underlineSpecial ? <u>Special</u> : "Special"}
       </Button>));
 
     return (
@@ -109,7 +112,7 @@ export class OrderPage extends Component {
             <Calender
               date={this.state.date}
               onDayClick={this.setActiveDate.bind(this)}
-              onMonthChange={this.setActiveMonth.bind(this)}
+              onMonthChange={producitonGetMonthlyOrders(this.props.websocket)}
               getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs)}
               />
           </Col>

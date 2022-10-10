@@ -101,8 +101,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
-    try:
       #pprint(message)
+    try:
       if error := auth.validateMessage(message):
         print(f"error:{error}")
         await self.HandleKnownError(message, error)
@@ -111,31 +111,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
       if not auth.AuthMessage(self.scope['user'], message):
         await self.HandleKnownError(message, ERROR_INSUFICIENT_PERMISSIONS)
         return
-      messageType  = message[WEBSOCKET_MESSAGE_TYPE]
-      if messageType == WEBSOCKET_MESSAGE_GREAT_STATE:
-        await self.HandleTheGreatStateMessage(message)
-      elif messageType == WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:
-        await self.HandleCreateDataClass(message)
-      elif messageType == WEBSOCKET_MESSAGE_FREE_ORDER:
-        await self.HandleFreeOrder(message)
-      elif messageType == WEBSOCKET_MESSAGE_MOVE_ORDERS:
-        await self.HandleMoveOrders(message)
-      elif messageType == WEBSOCKET_MESSAGE_ECHO:
-        await self.HandleEcho(message)
-      elif messageType == WEBSOCKET_MESSAGE_GET_ORDERS:
-        await self.HandleGetOrders(message)
-      elif messageType == WEBSOCKET_UPDATE_SERVERCONFIG:
-        await self.HandleUpdateServerConfig
-      elif messageType == WEBSOCKET_MESSAGE_EDIT_STATE:
-        await self.HandleEditState(message)
-      elif messageType == WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
-        await self.HandleDeleteDataClass(message)
-      elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGIN:
-        await self.handleLogin(message)
-      elif messageType == WEBSOCKET_MESSAGE_AUTH_LOGOUT:
-        await self.handleLogout(message)
-      elif messageType == WEBSOCKET_MESSAGE_AUTH_WHOAMI:
-        await self.handleWhoAmI(message)
+
+      handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
+      if handler == None:
+        await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
+
+      await handler(message)
     except Exception as E:
       pprint(message)
       raise E
@@ -635,3 +616,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
       })
     else:
       pass
+
+  Handlers = {
+    WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
+    WEBSOCKET_MESSAGE_AUTH_LOGOUT : handleLogout,
+    WEBSOCKET_MESSAGE_AUTH_WHOAMI : handleWhoAmI,
+    WEBSOCKET_MESSAGE_CREATE_DATA_CLASS : HandleCreateDataClass,
+    WEBSOCKET_MESSAGE_DELETE_DATA_CLASS : HandleDeleteDataClass,
+    WEBSOCKET_MESSAGE_ECHO : HandleEcho,
+    WEBSOCKET_MESSAGE_EDIT_STATE : HandleEditState,
+    WEBSOCKET_MESSAGE_FREE_ORDER : HandleFreeOrder,
+    WEBSOCKET_MESSAGE_GREAT_STATE : HandleTheGreatStateMessage,
+    WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetOrders,
+    WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
+  }

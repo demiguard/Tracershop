@@ -1,7 +1,18 @@
+nav {
+  background-color: var(--secondary-color-3) ;
+}
+
+
 .navBarSpacer {
-  margin-top: 70px;
-  width: 100% !important;
-  max-width: 100% !important;
+  width : 150px;
+  background: var(--secondary-color-2) !important;
+  padding : 10px;
+  margin-right: 15px;
+  margin-left: 15px;
+  border : 1px;
+  border-style: solid;
+  border-color: var(--secondary-color-1);
+  border-radius: 10px;
 }
 
 .navbarmargin {
@@ -27,4 +38,9 @@
   border-style: solid;
   border-color: var(--secondary-color-1);
   border-radius: 10px;
+}
+
+.w-200px {
+  min-width: 200px;
+  width: 200px !important;
 }

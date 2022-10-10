@@ -5,7 +5,7 @@ import { CalculateProduction, CountMinutes } from "../../lib/physics";
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
 import { CompareDates, removeIndex } from "../../lib/utils";
 
-export { Calculator, standardOrderMapping }
+export { Calculator }
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.
  * Given a desired amount at a given time.
  *
@@ -204,40 +204,3 @@ class Calculator extends Component {
   }
 }
 
-
-function standardOrderMapping(orders, tOrders, runs) {
-  // Maybe do this calculation once instead of 30 times
-  const retfunc = (DateStr) => {
-
-    var MinimumActivityStatus = 5;
-    var MinimumInjectionStatus = 5;
-  const date = new Date(DateStr);
-  for(const [_, ActivityOrder] of orders){
-    if(CompareDates(date, new Date(ActivityOrder.deliver_datetime))){
-      MinimumActivityStatus = Math.min(MinimumActivityStatus, ActivityOrder.status);
-    }
-  }
-  for(const [_, InjectionOrder] of tOrders){
-    if(CompareDates(date, new Date(InjectionOrder.deliver_datetime))){
-      MinimumInjectionStatus = Math.min(MinimumInjectionStatus, InjectionOrder.status);
-    }
-  }
-  if (MinimumActivityStatus == 5){
-    var CanProduce = false;
-    for(const [_PTID, Run] of runs){
-      if(Run.day == date.getDay()){
-        CanProduce = true;
-        break;
-      }
-    }
-    if(CanProduce){
-      const now = new Date();
-      if(date > now){
-        MinimumActivityStatus = 0;
-      }
-    }
-  }
-  return "date-status" + String(MinimumInjectionStatus) + String(MinimumActivityStatus);
-  }
-  return retfunc
-}
