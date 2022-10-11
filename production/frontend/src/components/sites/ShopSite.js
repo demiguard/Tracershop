@@ -45,6 +45,7 @@ class ShopSite extends Component {
         />
         <this.state.ActivePage
           // composing with props
+          closeddates={this.props.closeddates}
           customers={this.props.customers}
           deliverTimes={this.props.deliverTimes}
           employee={this.props.employee}

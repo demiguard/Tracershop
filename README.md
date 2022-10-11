@@ -1,5 +1,4 @@
 # Tracershop
-
 This is the source code for tracershop. Troubleshooting and installtion guide.
 Tracershop is the bookkeeping system for Rigshospital nuclear cylotrones for tracers for PET and CTs scans.
 
@@ -112,3 +111,7 @@ Belows is a list words that is used throught the Documentation and this is the m
 
 * **Ghost Order** A ghost order is an artificalial order created by tracershop when the production moves an order to another timeslot without a host Order.
 * **Dead Order** A dead order is an order that doesn't contain ordered activity or deliever activity
+
+
+## References & Attributes
+Icons are made by in documentation are made by https://www.flaticon.com/authors/freepik

@@ -64,6 +64,7 @@ class ProductionSite extends Component{
           <UserPage
             address={this.props.address}
             customers={this.props.customers}
+            closeddates={this.props.closeddates}
             database={this.props.database}
             deliverTimes={this.props.deliverTimes}
             employee={this.props.employee}

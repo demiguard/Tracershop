@@ -81,6 +81,7 @@ class AdminSite extends Component {
     return(<ActiveSite
       user={this.props.user}
       address={this.props.address}
+      closeddates={this.props.closeddates}
       customers={this.props.customers}
       database={this.props.database}
       deliverTimes={this.props.deliverTimes}
