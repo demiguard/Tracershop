@@ -548,6 +548,10 @@ class ClosedDateDataClass(JsonSerilizableDataClass):
   def getIDField() -> str:
     return "BDID"
 
+  @staticmethod
+  def getSQLDateTime() -> str:
+    return "ddate"
+
 DATACLASSES = {
     JSON_ACTIVITY_ORDER : ActivityOrderDataClass,
     JSON_CUSTOMER : CustomerDataClass,

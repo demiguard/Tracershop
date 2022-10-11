@@ -81,6 +81,7 @@ export var db = {
 
     // Maps
     address : Map, // DATABASE_ADDRESS
+    closeddate : Map, // DATABASE_CLOSEDDATE
     customer : Map, // DATABASE_CUSTOMER
     database : Map, // DATABASE_DATABASE
     deliverTimes : Map, //DATABASE_DELIVERTIME

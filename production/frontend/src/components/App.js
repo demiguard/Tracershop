@@ -19,7 +19,7 @@ import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DE
         DATABASE_IS_AUTH, DATABASE_PRODUCTION, KEYWORD_USERGROUP, USERGROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
         DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
         AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_USER,
-        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFICIENT_PERMISSIONS
+        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFICIENT_PERMISSIONS, DATABASE_CLOSEDDATE, JSON_CLOSEDDATE
       } from "../lib/constants.js";
 import { AdminSite } from "./sites/AdminSite";
 import { ProductionSite } from "./sites/productionSite";
@@ -35,6 +35,7 @@ export default class App extends Component {
     // Init old state
 
     const address  = this.getDatabaseMap(DATABASE_ADDRESS);
+    const closeddate = this.getDatabaseMap(DATABASE_CLOSEDDATE);
     const customer = this.getDatabaseMap(DATABASE_CUSTOMER);
     const databases = this.getDatabaseMap(DATABASE_DATABASE);
     const deliverTimes = this.getDatabaseMap(DATABASE_DELIVER_TIME);
@@ -56,6 +57,7 @@ export default class App extends Component {
       site_error_info : "",
     };
     state[DATABASE_ADDRESS] = address;
+    state[DATABASE_CLOSEDDATE] = closeddate;
     state[DATABASE_CUSTOMER] = customer;
     state[DATABASE_DATABASE] = databases;
     state[DATABASE_DELIVER_TIME] = deliverTimes;
@@ -201,6 +203,12 @@ export default class App extends Component {
      * react model happy, one would have to recreate the object,
      * which is annoying, since most of the maps are (mostly) static
      */
+    const closeddates = new Map();
+    for(const closeddateStr of greatState[JSON_CLOSEDDATE]){
+      const closeddate = ParseJSONstr(closeddateStr);
+      closeddateStr.set(closeddate.BDID, closeddate);
+    }
+    db.set(DATABASE_CLOSEDDATE, closeddates)
 
     const customers = new Map();
     for(const customerStr of greatState[JSON_CUSTOMER]){
@@ -284,19 +292,20 @@ export default class App extends Component {
 
     const state = {...this.state}
     // State Updates
-    state[DATABASE_ADDRESS] = Addresses,
-    state[DATABASE_CUSTOMER] = customers  ,
-    state[DATABASE_DATABASE] = Databases,
-    state[DATABASE_DELIVER_TIME] = deliverTimes,
-    state[DATABASE_EMPLOYEE] = employees,
-    state[DATABASE_ISOTOPE] = isotopes,
-    state[DATABASE_ACTIVITY_ORDER] = orders,
-    state[DATABASE_PRODUCTION] = runs,
-    state[DATABASE_INJECTION_ORDER] = t_orders,
-    state[DATABASE_TRACER] = Tracers,
-    state[DATABASE_TRACER_MAPPING] = TracerMapping,
-    state[DATABASE_SERVER_CONFIG] = ServerConfig,
-    state[DATABASE_VIAL] = Vials,
+    state[DATABASE_ADDRESS] = Addresses;
+    state[DATABASE_CLOSEDDATE] = closeddates;
+    state[DATABASE_CUSTOMER] = customers;
+    state[DATABASE_DATABASE] = Databases;
+    state[DATABASE_DELIVER_TIME] = deliverTimes;
+    state[DATABASE_EMPLOYEE] = employees;
+    state[DATABASE_ISOTOPE] = isotopes;
+    state[DATABASE_ACTIVITY_ORDER] = orders;
+    state[DATABASE_PRODUCTION] = runs;
+    state[DATABASE_INJECTION_ORDER] = t_orders;
+    state[DATABASE_TRACER] = Tracers;
+    state[DATABASE_TRACER_MAPPING] = TracerMapping;
+    state[DATABASE_SERVER_CONFIG] = ServerConfig;
+    state[DATABASE_VIAL] = Vials;
 
     this.setState(state);
   }
@@ -368,19 +377,20 @@ export default class App extends Component {
     return (<Site
       user={this.state.user}
       address={this.state.address}
+      closeddates={this.state[DATABASE_CLOSEDDATE]}
       customers={this.state.customer}
       database={this.state.database}
       deliverTimes={this.state.deliverTimes}
       employee={this.state.employee}
-      isotopes={this.state.isotopes}
+      isotopes={this.state[DATABASE_ISOTOPE]}
       logout={this.logout.bind(this)}
-      orders={this.state.orders}
+      orders={this.state[DATABASE_ACTIVITY_ORDER]}
       runs={this.state.run}
       t_orders={this.state.t_orders}
       tracers={this.state.tracer}
       tracerMapping={this.state[DATABASE_TRACER_MAPPING]}
       serverConfig={this.state.serverConfig}
-      vials={this.state.vial}
+      vials={this.state[DATABASE_VIAL]}
       websocket={this.MasterSocket}
       />);
     }

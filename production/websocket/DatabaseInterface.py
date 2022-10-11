@@ -18,7 +18,7 @@ from channels.db import database_sync_to_async
 from database.models import ServerConfiguration, Database, Address, User
 from lib.decorators import typeCheckfunc
 from lib.SQL.SQLController import SQL
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib import pdfs
 
 
@@ -78,7 +78,8 @@ class DatabaseInterface():
       List[InjectionOrderDataClass],
       ServerConfiguration,
       List[Database],
-      List[Address]]:
+      List[Address],
+      List[ClosedDateDataClass]]:
 
     """This function is responsible for gathering the state of the database.
 
@@ -106,8 +107,9 @@ class DatabaseInterface():
     Orders    = self.SQL.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
     Vials     = self.SQL.getDataClassRange(startDate, endDate, VialDataClass)
     T_Orders  = self.SQL.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
+    closeDate = self.SQL.getDataClassRange(startDate.date(), endDate.date(), ClosedDateDataClass)
 
-    return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TCustomer, SC, list(databases), list(addresses))
+    return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TCustomer, SC, list(databases), list(addresses), closeDate)
 
 
   @database_sync_to_async

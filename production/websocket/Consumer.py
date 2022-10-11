@@ -1,7 +1,10 @@
-"""This module is divided into two parts the consumer and the SQL consumer.
-This module handles all websocket messages between the server and all clients
-The other module handles all communication between the underlying database and
-this client.
+"""This module contains the Websocket that handles ALL communication between the server and the client!
+
+Namely the Consumer Class.
+
+The Consumer class has a DatabaseInterface which is responsible for all communication with database
+
+
 
 Note: This module doesn't scale at large, simply because all users are in
  a single group. So it should not surprise anybody if stuff starts to break
@@ -10,25 +13,20 @@ Note: This module doesn't scale at large, simply because all users are in
 __author__ = "Christoffer Vilstrup Jensen"
 
 
-from unittest import async_case
 from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
 from django.core.serializers import serialize
-from django.contrib.sessions.models import Session
 from django.contrib.sessions.backends.db import SessionStore
 from django.http import HttpRequest
 
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.auth import login, get_user, logout
-from channels.db import database_sync_to_async
 
 from asgiref.sync import sync_to_async
 from datetime import datetime, date, timedelta
 import decimal
 from typing import Dict, List
 
-from database.models import ServerConfiguration
 from constants import * # Import the many WEBSOCKET constants
-from lib import pdfs
 from lib.decorators import typeCheckfunc
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLID, toDateTime
 from lib.ProductionJSON import encode, decode
@@ -46,6 +44,17 @@ logger = logging.getLogger('DebugLogger')
 
 
 class Consumer(AsyncJsonWebsocketConsumer):
+  """This is the websocket that communicates with all clients.
+
+  The most import method is the receive_json method,
+  which is called when a websocket recieves message on the json format.
+  Any message not on the json format is invalid!
+  recieve_json calls a handler found Handlers property at the end of the file.
+
+  Programmers Note:
+   Communication with all clients are needed because the client might cause updates that all clients are need to be aware of.
+   Because of the low user count this is ok.
+  """
   channel_name = 'websocket'
   global_group = "Global"
 
@@ -91,20 +100,25 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   #Receive data from Websocket
   async def receive_json(self, message: Dict) -> None:
-    """
-      This is the server side handler for new message.
-      This function should be handler that just Detects the message and then proceeds
-       to hand the function to Another function
+    """This is the server side handler for new message.
+    This function should be handler that just Detects the message and then proceeds
+    to hand the function to Another handler function.
+
+    Programmer Note:
+      So these handler functions should be refactored such that they call a sub method,
+      for all the processing and then just returns the message. Because such a thing is actually testable :)
+
+      Programmer Note to Programmer note:
+        It is end-2-end testable.
 
       Args:
         message - Dict - the json message converted into a python dictionary
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
-      #pprint(message)
     try:
       if error := auth.validateMessage(message):
-        print(f"error:{error}")
+        logger.error(f"The message {message} was send It's not valid by the error: {error}")
         await self.HandleKnownError(message, error)
         return
       logger.info(f"Websocket recieved message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
@@ -116,8 +130,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       if handler == None:
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
 
-      await handler(message)
-    except Exception as E:
+      await handler(self, message)
+    except Exception as E: # Very broad catch here, to prevent a hanging message on the client side
       pprint(message)
       raise E
       await self.HandleUnknownError(E, message)
@@ -239,19 +253,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
     """
-    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TracerCustomers, ServerConfig, Databases, Address = await self.db.getGreatState()
+    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TracerCustomers, ServerConfig, Databases, Address, ClosedDates = await self.db.getGreatState()
 
     #Convert Dataclasses to python dict to send over
-    Employees       = LMAP(encode, Employees)
     Customers       = LMAP(encode, Customers)
+    ClosedDates     = LMAP(encode, ClosedDates)
     DeliverTimes    = LMAP(encode, DeliverTimes)
+    Employees       = LMAP(encode, Employees)
     Isotopes        = LMAP(encode, Isotopes)
-    Vials           = LMAP(encode, Vials)
-    Runs            = LMAP(encode, Runs)
     Orders          = LMAP(encode, Orders)
     T_Orders        = LMAP(encode, T_Orders)
     Tracers         = LMAP(encode, Tracers)
     TracerCustomers = LMAP(encode, TracerCustomers)
+    Runs            = LMAP(encode, Runs)
+    Vials           = LMAP(encode, Vials)
     SerializedDatabases = serialize('json', Databases)
     SerializedAddress = serialize('json', Address)
     SerializedServerConfig = serialize('json', [ServerConfig])
@@ -259,6 +274,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     content = {
       JSON_GREAT_STATE : {
         JSON_ADDRESS          : SerializedAddress,
+        JSON_CLOSEDDATE       : ClosedDates,
         JSON_CUSTOMER         : Customers,
         JSON_DATABASE         : SerializedDatabases,
         JSON_DELIVERTIME      : DeliverTimes,
@@ -281,6 +297,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def HandleCreateDataClass(self, message : Dict):
     """Websocket handler function for production data class creation.
 
+    Programmer Note: I don't really think that the method dict is particulary effective here, just because of how different the functions are.
+      While such method is possible by creating a bunch of local method, you're kinda getting the same, result. Look if you disagree fucking fight me!
+
     Args:
         message (Dict): received message with the following fields
           WEBSOCKET_DATA     - Dict with fields suficient to create a dataclass
@@ -291,10 +310,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
         ValueError: raised when an unknown WEBSOCKET_DATATYPE is encountered
     """
     dataClass = None
+    # The pretty Creates methods
     if message[WEBSOCKET_DATATYPE] == JSON_VIAL:
       dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], VialDataClass)
     if message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIME:
       dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], DeliverTimeDataClass)
+    if message[WEBSOCKET_DATATYPE] == JSON_CLOSEDDATE:
+      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], ClosedDateDataClass)
+    # The aesthetically challenged methods
     if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
       spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spoky ok?
       customer = await self.db.getElement(spooky_skeleton[KEYWORD_BID], CustomerDataClass)
@@ -336,7 +359,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
   async def HandleFreeOrder(self, message : Dict):
-    """THIS FUNCTION IS NOT VERY SAFE
+    """
 
     Args:
         message (Dict): _description_
@@ -419,7 +442,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     TODO: Note that here we have some bad code in that the frontend does alot calculations
     It should really be the server that does this because, the frontend should just be a pretty picture of
-    the underlying database.
+    the underlying database. It also opens a creative soul to, put in whatever in an object and the server will just eat it.
+
+    Potentially bringing the database to an invalid state.
 
 
     See README for terminologies.
@@ -580,13 +605,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await self.HandleKnownError(message, ERROR_INVALID_DATACLASS_TYPE)
       return
 
-
-    #if 'dataClass' not in locals().keys(): # This is a handy way to see if i've set up a dataclass for the data type
-    #  raise ValueError(f"Datatype: {message[WEBSOCKET_DATATYPE]} is unknown to the consumer")
-
     dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
     await self.db.updateDataClass(dataClassInstance)
-
     ID = ParseSQLID(dataClass.getIDField())
 
     await self.channel_layer.group_send(self.global_group, {
@@ -595,7 +615,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_DATA         : message[WEBSOCKET_DATA],
       WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
       WEBSOCKET_DATA_ID      : ID,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS
     })
 
   async def HandleDeleteDataClass(self, message : Dict):
@@ -613,6 +634,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_DATA_ID      : ID,
         WEBSOCKET_MESSAGE_ID   : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       })
     else:
       pass

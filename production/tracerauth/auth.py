@@ -85,7 +85,6 @@ def validateMessage(message : Dict) -> str:
       str: empty if valid otherwise a ERROR_XXX from constants.py is returned
   """
   if not message.get(WEBSOCKET_MESSAGE_ID):
-    print(message)
     return ERROR_NO_MESSAGE_ID
   if not message.get(WEBSOCKET_MESSAGE_TYPE):
     return ERROR_NO_MESSAGE_TYPE

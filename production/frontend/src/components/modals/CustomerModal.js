@@ -59,8 +59,9 @@ class CustomerModal extends Component {
     };
   }
 
-  componentDidUpdate(prevProps, _prevState, _snapshot){
+  componentDidUpdate(prevProps){
     if (prevProps.deliverTimes !== this.props.deliverTimes){
+      console.log("New Props detected!")
       const DeliverTimes = new Map();
         for(const [_DTID, deliverTime] of this.props.deliverTimes) {
       if(deliverTime.BID == this.props.userid)
@@ -271,7 +272,6 @@ class CustomerModal extends Component {
   }
 
   renderbody(){
-    console.log(this.state)
     const deliverTimes = []
     for(const [_, deliverTime] of this.state.deliverTimes) {
       deliverTimes.push(deliverTime)

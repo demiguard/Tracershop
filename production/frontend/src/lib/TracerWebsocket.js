@@ -118,13 +118,13 @@ class TracerWebSocket{
         }
         break;
         case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
-        {
-          const DataClass = data[WEBSOCKET_DATA];
-          const ID = data[WEBSOCKET_DATA_ID]
-          console.log(MapDataName(data[WEBSOCKET_DATATYPE]), ID, DataClass[ID])
-          this.StateHolder.UpdateMap(
-            MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
-        }
+          {
+            const DataClass = data[WEBSOCKET_DATA];
+            const ID = data[WEBSOCKET_DATA_ID]
+            console.log(MapDataName(data[WEBSOCKET_DATATYPE]), ID, DataClass[ID])
+            this.StateHolder.UpdateMap(
+              MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
+          }
         break;
       }
     }
@@ -133,8 +133,8 @@ class TracerWebSocket{
 
 
     this._ws.onclose = function(e) {
-      //console.log("Websocket closed! with code:" + e.code)
-      //console.log(e.reason)
+      console.log("Websocket closed! with code:" + e.code)
+      console.log(e.reason)
     }
 
     this._ws.onerror = function(err) {
