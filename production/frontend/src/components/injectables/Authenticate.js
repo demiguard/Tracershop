@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 
 import { Form, Button, Container } from "react-bootstrap";
-import "/src/css/styleAuthenticate.css"
+import styles from "/src/css/Authenticate.module.css"
+import SiteStyles from "/src/css/Site.module.css"
 
 export { Authenticate }
 
@@ -43,16 +44,16 @@ export default class Authenticate extends Component {
 
   render() {
     return (
-      <div className={this.props.fit_in ? "AuthenticationBox" : "AuthenticationBoxNoFit"}>
-        <h3 className="text-center AuthenticationHeader">Log in</h3>
-        <hr className="myHR"/>
+      <div className={this.props.fit_in ? styles.AuthenticationBox : styles.AuthenticationBoxNoFit}>
+        <h3 className={"text-center " + styles.AuthenticationHeader}>Log in</h3>
+        <hr className={SiteStyles.Margin0tb}/>
         <div>
           <Form onSubmit={this.onSubmitFunc.bind(this)}>
-            <div className="form-group formRow">
+            <div className={"form-group " + styles.formRow}>
               <label htmlFor="username">Bruger navn</label>
               <input type="text" className="form-control" id="username" name="username" autoComplete="new-password" value={this.state.username} onChange={this.handleUserNameChange} />
             </div>
-            <div className="form-group formRow">
+            <div className={"form-group " + styles.formRow}>
               <label htmlFor="username">Kodeord</label>
               <input type="password"
                      className="form-control"
@@ -62,14 +63,14 @@ export default class Authenticate extends Component {
                      value={this.state.password}
                      onChange={this.handlePasswordChange}/>
             </div>
-            <div className="form-group formRow">
+            <div className={"form-group " + styles.formRow}>
               <Button type="submit" className="btn btn-primary">{this.props.login_message}</Button>
             </div>
           </Form>
           {this.props.ErrorMessage ?
             <div>
               <hr className="myHR"/>
-                <div className="ErrorBox text-center">{this.props.ErrorMessage}</div>
+                <div className={"form-group " + styles.ErrorBox}>{this.props.ErrorMessage}</div>
             </div> : <div/>
           }
         </div>

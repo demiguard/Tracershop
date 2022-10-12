@@ -6,6 +6,8 @@ import { ControlPanel } from "./ControlPanel";
 import { ProductionSite } from "./productionSite";
 import { ShopSite } from "./ShopSite";
 
+import styles from "/src/css/Navbar.module.css"
+
 export { AdminSite }
 
 const AdminPages = {
@@ -62,7 +64,7 @@ class AdminSite extends Component {
     const NavbarAdmin = [
       (
       <NavDropdown
-        className="navbarElem"
+        className={styles.NavbarElement}
         title={this.state.ActiveSite}
         key="SiteSelector"
       >

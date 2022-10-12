@@ -206,7 +206,7 @@ export default class App extends Component {
     const closeddates = new Map();
     for(const closeddateStr of greatState[JSON_CLOSEDDATE]){
       const closeddate = ParseJSONstr(closeddateStr);
-      closeddateStr.set(closeddate.BDID, closeddate);
+      closeddates.set(closeddate.BDID, closeddate);
     }
     db.set(DATABASE_CLOSEDDATE, closeddates)
 

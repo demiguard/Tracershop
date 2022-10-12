@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Container } from "react-bootstrap";
 
-import "/src/css/ErrorPage.css"
+import styles from "/src/css/Errors.module.css"
 
 export { InvalidVersionPage }
 
@@ -13,7 +13,7 @@ export default class InvalidVersionPage extends Component {
   render() {
 
     return(<Container
-      className="ErrorContainer"
+      className={styles.ErrorContainer}
     >
       <h1>Forkert Version af tracershop</h1>
       <p>Serveren kører en nyere version af tracershop end chrome</p>

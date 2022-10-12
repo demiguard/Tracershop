@@ -178,52 +178,6 @@ def getRelatedOrders(Order: ActivityOrderDataClass) -> str:
     WHERE
       COID={Order.oid}"""
 
-def createLegacyFreeOrder(
-    OriginalOrder : ActivityOrderDataClass,
-    Vial : VialDataClass,
-    tracerID:int,
-    user : User) -> str:
-
-  now = datetime.now()
-
-  return f"""INSERT INTO orders(
-      amount,
-      amount_o,
-      batchnr,
-      BID,
-      COID,
-      comment,
-      deliver_datetime,
-      frigivet_datetime,
-      run,
-      status,
-      total_amount,
-      total_amount_o,
-      tracer,
-      userName,
-      frigivet_amount,
-      frigivet_af,
-      volume
-    ) VALUES (
-      0,
-      0,
-      \"{Vial.charge}\",
-      {OriginalOrder.BID},
-      -1,
-      {SerilizeToSQLValue(f"Extra Vial for Order: {OriginalOrder.oid}")},
-      {SerilizeToSQLValue(OriginalOrder.deliver_datetime)},
-      {SerilizeToSQLValue(now)},
-      {OriginalOrder.run},
-      3,
-      0,
-      0,
-      {tracerID},
-      NULL,
-      {Vial.activity},
-      {user.OldTracerBaseID},
-      {Vial.volume}
-    )"""
-
 def getLastElement(DataClass : JsonSerilizableDataClass) -> str:
   return f"""SELECT
       {DataClass.getSQLFields()}
@@ -246,48 +200,6 @@ def getDataClassRange(startDate: Union[datetime, date], endDate : Union[datetime
     WHERE
       {DataClass.getSQLDateTime()} BETWEEN {
         SerilizeToSQLValue(startDate)} AND {SerilizeToSQLValue(endDate)}"""
-
-
-@typeCheckfunc
-def createGhostOrder(
-      deliver_datetime : datetime,
-      Customer : CustomerDataClass,
-      amount_total : float,
-      amount_total_overhead : float,
-      tracer : TracerDataClass,
-      run : int,
-      username : str
-    ) -> str:
-  return f"""INSERT INTO orders(
-      amount,
-      amount_o,
-      total_amount,
-      total_amount_o,
-      batchnr,
-      BID,
-      COID,
-      comment,
-      deliver_datetime,
-      run,
-      status,
-      tracer,
-      userName
-      )
-    VALUES (
-      0,0,
-      {SerilizeToSQLValue(amount_total)},
-      {SerilizeToSQLValue(amount_total_overhead)},
-      \"\",
-      {SerilizeToSQLValue(Customer.ID)},
-      -1,
-      \"\",
-      {SerilizeToSQLValue(deliver_datetime)},
-      {SerilizeToSQLValue(run)},
-      2,
-      {SerilizeToSQLValue(tracer.id)},
-      {SerilizeToSQLValue(username)}
-    )"""
-
 
 def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
   idsStr = ", ".join(LMAP(str,ids)) # types are callable

@@ -402,7 +402,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
           KEYWORD_TRACER : Order.tracer,
           KEYWORD_BID : Order.BID,
           KEYWORD_RUN : Order.run,
-          KEYWORD_COID : -1, #Could argue Order.oid
+          KEYWORD_COID : Order.oid,
           KEYWORD_BATCHNR : Vial.charge,
           KEYWORD_FREED_BY : self.scope['user'].OldTracerBaseID,
           KEYWORD_FREED_AMOUNT : Vial.activity,
@@ -530,8 +530,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         KEYWORD_RUN : run,
         KEYWORD_BID : CustomerID,
         KEYWORD_BATCHNR : "",
-        KEYWORD_COID : -1, #Could argue Order.oid
-        KEYWORD_COMMENT : f"Ghost Order",
+        KEYWORD_COID : -1,
+        KEYWORD_COMMENT : f"Spøgelse bestilling",
         KEYWORD_USERNAME : self.scope['user'].username
       }
 

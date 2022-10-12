@@ -13,6 +13,7 @@ import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON
   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
   KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME, WEBSOCKET_MESSAGE_EDIT_STATE, KEYWORD_TRACER} from "../../lib/constants";
 
+import SiteStyles from "/src/css/Site.module.css"
 
 /*
   As all documentation in code, this might be out of date and should look at what the code does.
@@ -685,7 +686,7 @@ export class ActivityTable extends Component {
     }
     { FinishedOrders.length == 0 && pendingOrders == 0 ?
     <div>
-      <p>Der er ingen Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
+      <p className={SiteStyles.mariLfont}>Der er ingen Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
     </div> :
       null
 

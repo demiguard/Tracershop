@@ -6,6 +6,8 @@ import { OrderReview } from "./OrderReview";
 import { db } from "../../lib/localStorageDriver";
 import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants";
 
+
+
 export { ShopOrderPage }
 
 const Content = {
@@ -65,7 +67,17 @@ class ShopOrderPage extends Component {
   }
 
   render(){
-    const customer = this.props.customers.get(Number(this.state.activeCustomer));
+    var activeCustomer = this.props.customers.get(Number(this.state.activeCustomer));
+    if (activeCustomer == undefined){
+      console.log("Undefined Customer not found")
+      for(const [ID, customer] of this.props.customers){
+        activeCustomer = customer;
+        db.set(DATABASE_SHOP_CUSTOMER, ID);
+        break;
+      }
+    }
+    const customer = activeCustomer;
+
     const day = this.state.today.getDay(); // WELL WELL WELL, IT LOOKS LIKE THERE'S DISAGREEMENTS WITH THE BACKEND WHAT SUNDAY IS CALLED.
 
     const oneJan = new Date(this.state.today.getFullYear(),0,1);
@@ -119,22 +131,26 @@ class ShopOrderPage extends Component {
     <div>
       <Row>
         <Col sm={8}>
-          <this.state.View
-            orders={orders}
-            tOrders={tOrders}
-            deliverTimes={deliverTimes}
-            tracerMapping={tracerMapping}
-            activeCustomer={this.state.activeCustomer}
-            // State injection
-            date={this.state.today}
-            // Props injection
-            customers={this.props.customers}
-            employee={this.props.employee}
-            isotopes={this.props.isotopes}
-            runs={this.props.runs}
-            tracers={this.props.tracers}
-            websocket={this.props.websocket}
-            />
+          <Row></Row>
+          <Row>
+            <this.state.View
+              orders={orders}
+              tOrders={tOrders}
+              deliverTimes={deliverTimes}
+              tracerMapping={tracerMapping}
+              activeCustomer={this.state.activeCustomer}
+              // State injection
+              date={this.state.today}
+              // Props injection
+              closeddates={this.props.closeddates}
+              customers={this.props.customers}
+              employee={this.props.employee}
+              isotopes={this.props.isotopes}
+              runs={this.props.runs}
+              tracers={this.props.tracers}
+              websocket={this.props.websocket}
+              />
+          </Row>
         </Col>
         <Col>
           <Container
@@ -161,7 +177,7 @@ class ShopOrderPage extends Component {
               <div>
                 <Calender
                   date={this.state.today}
-                  getColor={standardOrderMapping(orders, tOrders, this.props.runs)}
+                  getColor={standardOrderMapping(orders, tOrders, this.props.runs, this.props.closeddates)}
                   onDayClick={this.setActiveDate.bind(this)}
                   onMonthChange={this.setActiveMonth.bind(this)}
                 />

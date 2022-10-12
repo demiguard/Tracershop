@@ -212,26 +212,5 @@ class SQL():
     return Employee
 
   @classmethod
-  def createGhostOrder(
-    cls,
-    deliver_datetime : datetime,
-    Customer : CustomerDataClass,
-    amount_total : float,
-    amount_total_overhead : float,
-    tracer : TracerDataClass,
-    run : int,
-    username : str
-  ):
-    """ This function creates an empty order,
-    this should be invoked when a user moves an order from a time slot with out an order existsing
-    """
-    GhostOrderList = cls.__ExecuteMany(
-      [SQLFactory.createGhostOrder, SQLFactory.getLastElement],
-      ActivityOrderDataClass, Fetching.ONE,
-      [[deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username],
-        [ActivityOrderDataClass]] )
-    return GhostOrderList[0]
-
-  @classmethod
   def deleteIDs(cls, ids, DataClass):
     cls.__Execute(SQLFactory.deleteIDs, JsonSerilizableDataClass, Fetching.NONE, ids, DataClass)

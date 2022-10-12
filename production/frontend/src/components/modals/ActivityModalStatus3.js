@@ -46,8 +46,10 @@ class ActivityModalStatus3 extends Component {
     const month    = Order.deliver_datetime.substring(5,7);
     const oid      = Order.oid
 
+    const pdfID = Order.COID == -1 ? oid : Order.COID;
+
     const ToPDF = () => {
-      let path = `/static/frontend/pdfs/${username}/${year}/${month}/${oid}.pdf`
+      let path = `pdfs/${username}/${year}/${month}/${pdfID}`
       window.location.href = path;
     }
 

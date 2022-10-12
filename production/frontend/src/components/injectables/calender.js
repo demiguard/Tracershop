@@ -153,9 +153,15 @@ class Calender extends Component {
 }
 
 
-function standardOrderMapping(orders, tOrders, runs) {
+function standardOrderMapping(orders, tOrders, runs, closedDate) {
   // Maybe do this calculation once instead of 30 times
+  const closedDateSet = new Set();
+  for(const [BDID, cdate] of closedDate){
+    closedDateSet.add(cdate.ddate)
+  }
+
   const retfunc = (DateStr) => {
+    if (closedDateSet.has(DateStr)) return "date-status55";
 
     var MinimumActivityStatus = 5;
     var MinimumInjectionStatus = 5;

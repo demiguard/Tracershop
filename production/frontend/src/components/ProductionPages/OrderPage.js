@@ -113,7 +113,7 @@ export class OrderPage extends Component {
               date={this.state.date}
               onDayClick={this.setActiveDate.bind(this)}
               onMonthChange={producitonGetMonthlyOrders(this.props.websocket)}
-              getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs)}
+              getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs, this.props.closeddates)}
               />
           </Col>
         </Row>

@@ -23,7 +23,6 @@ class ShopSite extends Component {
     super(props);
     this.state = {
       ActivePage : ShopOrderPage,
-      
     };
   }
 

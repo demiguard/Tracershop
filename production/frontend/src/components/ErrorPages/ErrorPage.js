@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import { Container } from "react-bootstrap";
-
-import "/src/css/ErrorPage.css"
+import styles from "/src/css/Errors.module.css"
 
 export { ErrorPage }
 
@@ -29,7 +28,7 @@ export default class ErrorPage extends Component {
     }
 
     return(<Container
-      className="ErrorContainer"
+      className={styles.ErrorContainer}
     >
       <h1>Ukendt fejl</h1>
       <p>Der er sket en unkendt fejl og derfor er den uhåndteret.</p>

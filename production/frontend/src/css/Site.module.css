@@ -1,0 +1,18 @@
+.Margin15tb {
+  margin-top: 15px;
+  margin-bottom: 15px;
+}
+
+.Margin0tb {
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+
+.Margin50lr {
+  margin-left: 50px !important;
+  margin-right: 50px !important;
+}
+
+.mariLfont{
+  font-family: "marilight", "Helvetica Neue, Helvetica, Arial, sans-serif";
+}

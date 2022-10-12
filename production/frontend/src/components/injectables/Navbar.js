@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Navbar as BSNavbar, Nav, Container, Button  } from "react-bootstrap";
-import "/src/css/Navbar.css"
+import styles from "/src/css/Navbar.module.css"
 
 export {Navbar}
 
@@ -16,7 +16,7 @@ export default class Navbar extends Component {
     for(const name of this.props.Names) {
 
       Elements.push(<Button
-        className="navBarSpacer"
+        className={styles.NavbarElement}
 
         variant={NavBarButtonType}
         key={name}
@@ -25,18 +25,15 @@ export default class Navbar extends Component {
     }
     if(this.props.isAuthenticated){
       Elements.push((<Button
-        className="navBarSpacer"
+        className={styles.NavbarElement}
         key="logout"
         onClick={this.props.logout}
         variant={NavBarButtonType}>Log ud</Button>));
     }
 
     return (
-     <BSNavbar className="navbarmargin">
-        <Button
-          className="navBarSpacer w-200px"
-          variant={NavBarButtonType}
-        ><img src="/static/images/logo.png" height="50px"/></Button>
+     <BSNavbar className={styles.navbarMargin}>
+        <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
         {Elements}
      </BSNavbar>
    );

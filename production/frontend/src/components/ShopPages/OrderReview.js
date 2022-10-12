@@ -4,6 +4,8 @@ import { JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_BATCHNR,
 import { FormatDateStr } from "../../lib/formatting";
 import { renderClickableIcon, renderStatusImage, renderTableRow } from "../../lib/Rendering";
 
+import styles from '/src/css/Site.module.css'
+
 export { OrderReview }
 
 const DeliverTimeStatus = {
@@ -117,8 +119,7 @@ class OrderReview extends Component {
       }
 
       const showActivityError = newOrder.errorActivity != "";
-      const showCommentError = newOrder.errorcomment != "";
-
+      const showCommentError = newOrder.errorComment != "";
 
       return (
         <Row key={deliverTime.run}>
@@ -268,8 +269,12 @@ class OrderReview extends Component {
     }
 
     return(
-    <Container>
-      {orderPoints}
+    <Container className={styles.Margin50lr}>
+      {orderPoints.length > 0 ? orderPoints :
+        <div>
+          <p>Det er ikke muligt at bestille til denne dato, da kunden ikke har nogle modtage tidspunkter til denne dag.</p>
+        </div>
+      }
     </Container>)
   }
 

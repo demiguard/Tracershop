@@ -215,7 +215,7 @@ export default class ActivityModalStatus2 extends Component {
 
     // This function will trigger an update to the prop Vials, that in turn will trigger an update, and then we'll be able to see the Vial when the backend have accepted it.
     // Note that other users will also be able to see this vial, since it's created using the websocket.
-    this.props.createVial(this.state.newCharge, FillTime, Number(NewVolume.toFixed(2)), Number(NewActivity.toFixed(2)), CustomerNumber)
+    this.props.createVial(this.state.newCharge, FillTime, Number(NewVolume.toFixed(2)), Number(NewActivity.toFixed(0)), CustomerNumber)
     this.StopCreatingNewVial()
   }
 

@@ -121,7 +121,6 @@ class TracerWebSocket{
           {
             const DataClass = data[WEBSOCKET_DATA];
             const ID = data[WEBSOCKET_DATA_ID]
-            console.log(MapDataName(data[WEBSOCKET_DATATYPE]), ID, DataClass[ID])
             this.StateHolder.UpdateMap(
               MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
           }

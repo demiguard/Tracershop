@@ -8,7 +8,7 @@ import { OrderPage } from "../ProductionPages/OrderPage";
 import { ServerConfigPage } from "../ProductionPages/ServerConfig";
 import TracerPage from "../ProductionPages/TracerPage";
 import { VialPage } from "../ProductionPages/VialPage";
-import "/src/css/Navbar.css"
+import styles from "/src/css/Navbar.module.css"
 
 
 export { ProductionSite }
@@ -60,7 +60,7 @@ class ProductionSite extends Component{
           isAuthenticated={true}
           NavbarElements={this.props.NavbarElements}
         />
-        <Container className="NavbarSpacer">
+        <Container>
           <UserPage
             address={this.props.address}
             customers={this.props.customers}
