@@ -164,12 +164,6 @@ def FreeDependantOrders(Order: ActivityOrderDataClass, user: User) -> str:
   WHERE
     COID={Order.oid}"""
 
-def CreateVialMapping(Order: ActivityOrderDataClass, Vial : VialDataClass)-> str:
-  return f"""INSERT INTO VialMapping(
-      Order_id,
-      VAL_id
-    ) Values ({Order.oid},{Vial.ID})"""
-
 def getRelatedOrders(Order: ActivityOrderDataClass) -> str:
   return f"""SELECT
       {Order.getSQLFields()}

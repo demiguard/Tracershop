@@ -594,7 +594,7 @@ export class ActivityTable extends Component {
   render() {
     const FinishedOrders = [];
     const pendingOrders = [];
-
+    const Tracer = this.props.tracers.get(this.props.tracer);
 
     // This Object is newer than the state version
     // Yeah so this is really anonying here is why
@@ -618,7 +618,7 @@ export class ActivityTable extends Component {
 
     for (const order of Orders){
       const orderDate = new Date(order.deliver_datetime);
-      if (CompareDates(this.props.date, orderDate)){
+      if (CompareDates(this.props.date, orderDate) && order.tracer == this.props.tracer ){
         (order.status == 3) ?
           FinishedOrders.push(this.renderFinishedOrder(order)) :
           pendingOrders.push(this.renderPendingOrder(order));
@@ -686,7 +686,7 @@ export class ActivityTable extends Component {
     }
     { FinishedOrders.length == 0 && pendingOrders == 0 ?
     <div>
-      <p className={SiteStyles.mariLfont}>Der er ingen Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
+      <p className={SiteStyles.mariLfont}>Der er ingen {Tracer.name} Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
     </div> :
       null
 

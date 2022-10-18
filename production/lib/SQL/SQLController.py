@@ -173,24 +173,6 @@ class SQL():
     cls.__Execute(SQLFactory.updateVial, JsonSerilizableDataClass, Fetching.NONE, Vial)
 
   @classmethod
-  def assignVial(
-    cls,
-    Order: ActivityOrderDataClass,
-    Vial: VialDataClass) -> None:
-    """SQL command for for assigning the vial
-
-    NOTE: CON-FUCKING-SIDER to remove the GOD DAMN EXTRA TABLE, AND JUST MAKE IT INTO THE VAL TABLE
-
-    Args:
-        Order (ActivityOrderDataClass): Order that the Vial is being mapped to
-        Vial (VialDataClass): Vial that is being mapped
-    """
-    return cls.__Execute(
-      SQLFactory.CreateVialMapping,JsonSerilizableDataClass,
-      Fetching.NONE, Order, Vial
-    )
-
-  @classmethod
   def freeDependantOrder(
       cls,
       OriginalOrder : ActivityOrderDataClass,
