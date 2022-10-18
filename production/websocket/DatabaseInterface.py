@@ -111,20 +111,6 @@ class DatabaseInterface():
 
     return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TCustomer, SC, list(databases), list(addresses), closeDate)
 
-
-  @database_sync_to_async
-  @typeCheckfunc
-  def createGhostOrder(self,
-      deliver_datetime : datetime,
-      Customer : CustomerDataClass,
-      amount_total : float,
-      amount_total_overhead : float,
-      tracer : TracerDataClass,
-      run : int,
-      username : str
-    ) -> ActivityOrderDataClass:
-    return self.SQL.createGhostOrder(deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username)
-
   ###### ----- Generic Methods ----- ######
 
   @database_sync_to_async

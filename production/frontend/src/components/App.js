@@ -111,13 +111,12 @@ export default class App extends Component {
         };
         newState[DATABASE_IS_AUTH] = true;
 
-
         this.setState(newState);
         this.MasterSocket.send(this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
       } else {
-        const newState = {...this.state,
-          login_message : "Forkert Login",
-        }
+        this.setState({...this.state,
+          login_error : "Forkert Login",
+        });
       }
     });
   }

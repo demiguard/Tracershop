@@ -1,13 +1,11 @@
 import React, { Component } from "react";
 import { Container, Table, FormControl, Form } from "react-bootstrap";
-import { ajax } from "jquery";
 import TracerModal from "/src/components/modals/TracerModal";
 import { BooleanMapping } from "/src/lib/utils";
-import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "/src/lib/constants";
 import { renderTableRow } from "/src/lib/Rendering";
 import { changeState } from "../../lib/stateManagement";
-import { renderClickableIcon } from "../../lib/Rendering";
-import { KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID } from "../../lib/constants";
+import { renderClickableIcon, renderSelect } from "../../lib/Rendering";
+import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE } from "../../lib/constants";
 
 export {TracerPage}
 
@@ -85,29 +83,14 @@ export default class TracerPage extends Component {
     }
   }
 
-
-
   NewIsotopeChange(){
     return function(event){
       this.changeNewValue("newIsotope", event);
     }.bind(this)
   }
 
-
   renderIsotopeSelect(initialValue, eventFunction) {
-    const options = [];
-
-    for (const [_, isotope] of this.props.isotopes) {
-      options.push((<option key={isotope.ID} value={isotope.ID}>{isotope.name}</option>))
-    }
-
-    return (
-      <select
-        value={initialValue}
-        onChange={(event) => {eventFunction(event)}}>
-        {options}
-      </select>
-    )
+    return renderSelect(this.props.isotopes.values(), "ID", "name", eventFunction, initialValue);
   }
 
   changeNewValue(key, event) {
@@ -138,6 +121,13 @@ export default class TracerPage extends Component {
 
   renderTracer(tracer) {
     const checked = tracer.in_use > 0;
+    const TracerTypeOptions = [{
+      id : TRACER_TYPE_ACTIVITY,
+      name : "Aktivitet"
+    },{
+      id : TRACER_TYPE_DOSE,
+      name : "Dosis"
+    }]
 
     return renderTableRow(tracer.id,[
       <FormControl value={tracer.name} onChange={(event) =>
@@ -151,14 +141,12 @@ export default class TracerPage extends Component {
       <Form.Check
         defaultChecked={checked} type="checkbox" className="mb-2"
           onClick={(event) => {this.updateTracer(
-            tracer, "in_use", BooleanMapping(event.target.checked))
+            tracer.id, "in_use", BooleanMapping(event.target.checked))
           }}
       />,
-      <select value={tracer.tracer_type} onChange={(event) =>
-        {this.updateTracer(tracer, "tracer_type", event.target.value)}}>
-        <option value={TRACER_TYPE_ACTIVITY}>Activitet</option>
-        <option value={TRACER_TYPE_DOSE}>Dose</option>
-      </select>,
+      renderSelect(TracerTypeOptions, "id", "name", (event) => {
+        this.updateTracer(tracer.id, "tracer_type", event.target.value)
+      }, tracer.tracer_type),
       renderClickableIcon("/static/images/setting.png", () => {
         this.showTracerModal(tracer.id)
       })

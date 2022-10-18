@@ -510,7 +510,7 @@ export class ActivityTable extends Component {
 
     const customer = this.props.customers.get(order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
-    const TotalAmount  = (order.COID === -1) ? order.total_amount * (1 + customer.overhead / 100) : "Flyttet til:" + order.COID;
+    const TotalAmount  = (order.COID === -1) ? Math.floor(order.total_amount * (1 + customer.overhead / 100)) : "Flyttet til:" + order.COID;
 
     return renderTableRow(order.oid, [
       renderStatusImage(order.status, () => this.activateOrderModal(order.oid)),

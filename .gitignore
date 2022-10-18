@@ -16,6 +16,8 @@ main.js*
 SECRET_KEY.py
 test_pdfs/
 pdfs/
+fonts/
 *.code-workspace
 legacy_code/
 .coverage
+config.py

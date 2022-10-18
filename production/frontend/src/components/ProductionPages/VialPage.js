@@ -133,7 +133,7 @@ class VialPage extends Component {
         <td onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>  {vial.volume}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>{vial.activity}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customerName}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.order_map}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.order_id}</td>
       </tr>
     );
   }

@@ -61,7 +61,7 @@ export function renderDateTime(dateString){
 }
 
 
-export function renderSelect(Options, valueKey, nameKey, OnChange, selectValue){
+export function renderSelect(Options, valueKey, nameKey, OnChange, initialValue){
   const Rendered = [];
 
   for(const Option of Options){
@@ -71,7 +71,7 @@ export function renderSelect(Options, valueKey, nameKey, OnChange, selectValue){
   }
 
   return(
-    <Form.Select value={selectValue} onChange={OnChange}>
+    <Form.Select value={initialValue} onChange={OnChange}>
       {Rendered}
     </Form.Select>
   );

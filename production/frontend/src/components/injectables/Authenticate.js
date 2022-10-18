@@ -45,7 +45,7 @@ export default class Authenticate extends Component {
   render() {
     return (
       <div className={this.props.fit_in ? styles.AuthenticationBox : styles.AuthenticationBoxNoFit}>
-        <h3 className={"text-center " + styles.AuthenticationHeader}>Log in</h3>
+        <h3 className={"text-center " + styles.AuthenticationHeader + " " + SiteStyles.mariBold}>Log in</h3>
         <hr className={SiteStyles.Margin0tb}/>
         <div>
           <Form onSubmit={this.onSubmitFunc.bind(this)}>
@@ -69,7 +69,7 @@ export default class Authenticate extends Component {
           </Form>
           {this.props.ErrorMessage ?
             <div>
-              <hr className="myHR"/>
+              <hr className={SiteStyles.Margin0tb}/>
                 <div className={"form-group " + styles.ErrorBox}>{this.props.ErrorMessage}</div>
             </div> : <div/>
           }

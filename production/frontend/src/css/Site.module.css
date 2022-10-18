@@ -13,6 +13,10 @@
   margin-right: 50px !important;
 }
 
-.mariLfont{
+.mariLight{
   font-family: "marilight", "Helvetica Neue, Helvetica, Arial, sans-serif";
+}
+
+.mariBold{
+  font-family: "maribold", "Helvetica Neue, Helvetica, Arial, sans-serif";
 }
