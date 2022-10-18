@@ -1,42 +1,43 @@
 import React, { Component } from "react";
-import { Navbar as BSNavbar, Nav  } from "react-bootstrap";
+import { Navbar as BSNavbar, Nav, Container, Button  } from "react-bootstrap";
+import styles from "/src/css/Navbar.module.css"
+
 export {Navbar}
 
+const NavBarButtonType = "outline-primary";
+
 export default class Navbar extends Component {
-  renderElement(i) {
-    return (
-      <NavbarElement
-        key={this.props.Names[i]}
-        content={this.props.Names[i]}
-        onClick={() => this.props.setActivePage(this.props.Names[i])} 
-      />
-    );
+  constructor(props){
+    super(props)
   }
 
-
   render() {
-    var  Elements = [];
-    
-    for(let i = 0; i < this.props.Names.length; i++) {
-      Elements.push(this.renderElement(i));
+    const Elements = (this.props.NavbarElements) ? this.props.NavbarElements : [];
+    for(const name of this.props.Names) {
+
+      Elements.push(<Button
+        className={styles.NavbarElement}
+
+        variant={NavBarButtonType}
+        key={name}
+        onClick={() => this.props.setActivePage(name)}
+      >{name === this.props.ActiveKey ? <div>{name}</div> : <div>{name}</div>}</Button>);
     }
     if(this.props.isAuthenticated){
-      Elements.push((<NavbarElement key="logout" content={"Log ud"} onClick={this.props.logout} ></NavbarElement>));
+      Elements.push((<Button
+        className={styles.NavbarElement}
+        key="logout"
+        onClick={this.props.logout}
+        variant={NavBarButtonType}>Log ud</Button>));
     }
 
     return (
-     <BSNavbar fixed="top">
-       <img src="/static/images/logo.png" height="50px"></img>
-       {Elements}
+     <BSNavbar className={styles.navbarMargin}>
+        <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
+        {Elements}
      </BSNavbar>
    );
  }
 }
 
-
-function NavbarElement(props) {
-  return (
-    <Nav.Link className="navbarElem" onClick={props.onClick}>{ props.content }</Nav.Link>
-  );
-}
 

@@ -29,7 +29,6 @@ class User(AbstractBaseUser):
   location = CharField(max_length=60,  blank=True, null=True)
   cityname = CharField(max_length=60,  blank=True, null=True)
   postcode = CharField(max_length=30,  blank=True, null=True)
-  
 
   USERNAME_FIELD = 'username'
   REQUIRED_FIELDS = ['password']

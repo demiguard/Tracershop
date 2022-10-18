@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
-import "/src/css/MyRow.css"
+import styles from "/src/css/Site.module.css"
 import { ParseDanishNumber } from "/src/lib/formatting";
 export { CreateOrderModal }
 
@@ -115,7 +115,7 @@ class CreateOrderModal extends Component {
         <Modal.Header> Opret Order </Modal.Header>
         <Modal.Body>
           <Container>
-            <Row className="myRow">
+            <Row className={styles.Margin15tb}>
               <InputGroup>
               <InputGroup.Text>Kunde</InputGroup.Text>
               <select onChange={this.changeCustomer.bind(this)} value={this.state.activeCustomerID} className="form-select">
@@ -123,7 +123,7 @@ class CreateOrderModal extends Component {
               </select>
               </InputGroup>
             </Row>
-            <Row className="myRow">
+            <Row className={styles.Margin15tb}>
               <InputGroup>
                 <InputGroup.Text>Kørsel</InputGroup.Text>
                 <select onChange={this.changeRun.bind(this)} value={this.state.activeRun} className="form-select">
@@ -131,7 +131,7 @@ class CreateOrderModal extends Component {
                 </select>
               </InputGroup>
             </Row>
-            <Row className="myRow">
+            <Row className={styles.Margin15tb}>
               <InputGroup>
                 <InputGroup.Text>Aktivitet</InputGroup.Text>
                 <FormControl onChange={this.changeAmount.bind(this)} value={this.state.amount}></FormControl>

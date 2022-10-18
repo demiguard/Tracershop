@@ -1,12 +1,15 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Button, Form, FormControl, Modal, Table } from "react-bootstrap";
+import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+import { renderTableRow } from "../../lib/Rendering";
+import { changeState } from "../../lib/stateManagement";
 
 export default class TracerModal extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      filterText : ""
+      filter : ""
     }
   }
 
@@ -18,43 +21,49 @@ export default class TracerModal extends Component {
   }
 
   updateTracerCustomer(event, CustomerID){
-    const checked = event.target.checked;
+    if(event.target.checked){
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS)
+      const data = {};
+      data[KEYWORD_CUSTOMER_ID] = CustomerID;
+      data[KEYWORD_TRACER_ID] = this.props.tracerID;
 
-    ajax({
-      url:"api/updateTracerCustomer",
-      type:"PUT",
-      dataType:"json",
-      data:JSON.stringify({
-        newValue : checked,
-        customer_id : CustomerID,
-        tracer_id : this.props.tracerID
-      })
+      message[WEBSOCKET_DATA] = data
+      message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING
 
-    });
+      this.props.websocket.send(message);
+
+    } else {
+      const TracerMappingID = this.TracerMapping.get(CustomerID);
+      const data = {};
+      data[KEYWORD_CUSTOMER_ID] = CustomerID;
+      data[KEYWORD_TRACER_ID]   = this.props.tracerID;
+      data[KEYWORD_ID] = TracerMappingID;
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
+      message[WEBSOCKET_DATA] = data;
+      message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING;
+
+      this.props.websocket.send(message);
+    }
   }
 
   renderCustomerRow(customer){
-    const allowedToOrder = this.props.ModalTracerMap.has(customer.ID)
+    const allowedToOrder = this.TracerMapping.has(customer.ID)
 
-    return (
-      <tr key={customer.ID}>
-        <td>{customer.UserName}</td>
-        <td>
-          <Form.Check
-            defaultChecked={allowedToOrder}
-            type="checkbox"
-            className="mb-2"
-            onClick={(event) => this.updateTracerCustomer(event, customer.ID)}
-          />
-        </td>
-      </tr>
-    )
+
+    return renderTableRow(customer.ID, [
+      customer.UserName, <Form.Check
+        defaultChecked={allowedToOrder}
+        type="checkbox"
+        className="mb-2"
+        onClick={(event) => this.updateTracerCustomer(event, customer.ID)}
+      />
+    ]);
   }
 
   renderBody(){
     const Customers = [];
-    const filter = new RegExp(this.state.filterText,"g");
-    for(const [_customer_id, customer] of this.props.customers.entries()){
+    const filter = new RegExp(this.state.filter,"g");
+    for(const [_customer_id, customer] of this.props.customers){
       if(filter.test(customer.UserName)) {
         Customers.push(this.renderCustomerRow(customer));
       }
@@ -63,7 +72,7 @@ export default class TracerModal extends Component {
 
     return (
     <div>
-      Filter: <FormControl value={this.state.filterText} onChange={(event) => {this.updateFilter(event)}}/>
+      Filter: <FormControl value={this.state.filterText} onChange={changeState("filter", this).bind(this)}/>
       <Table>
         <thead>
           <tr>
@@ -80,6 +89,16 @@ export default class TracerModal extends Component {
 
 
   render() {
+    const TracerMapping = new Map();
+    if(this.props.tracerID != null){
+      for(const [TracerMappingID, TracerMappingTuple] of this.props.tracerMapping){
+        if(TracerMappingTuple[KEYWORD_TRACER_ID] == this.props.tracerID){
+          TracerMapping.set(TracerMappingTuple[KEYWORD_CUSTOMER_ID], TracerMappingID)
+        }
+      }
+    }
+    this.TracerMapping = TracerMapping // Derived Property
+
     return (
       <Modal
         show={this.props.show}

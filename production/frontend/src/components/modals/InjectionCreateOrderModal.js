@@ -15,7 +15,7 @@ class CreateInjectionOrderModal extends Component {
     super(props);
 
     var customerID;
-    for(const [cid, _] of this.props.customer){customerID = cid; break;}
+    for(const [cid, _] of this.props.customers){customerID = cid; break;}
 
     var tracerID;
     for (const [tid, _] of this.props.tracers){tracerID = tid; break;}
@@ -75,11 +75,11 @@ class CreateInjectionOrderModal extends Component {
 
   render(){
     const customerSelect = renderSelect(
-      this.props.customer.values(),
+      this.props.customers.values(),
       "ID",
       "UserName",
       changeState("customer", this).bind(this),
-      this.state.customer
+      this.state.customers
     );
     const tracers_all = Array.from((this.props.tracers.values()));
     const tracers = tracers_all.filter(tracer => {return tracer.tracer_type == 2});

@@ -9,6 +9,8 @@ from lib.SQL import SQLFactory
 
 from datetime import date, datetime, time
 
+from tests.test_DataClasses import *
+
 
 class SQLFactoryTestCase(TestCase):
   def setUp(self):
@@ -43,6 +45,12 @@ tracer_type=1,
 longName="I forgot this name"
     WHERE
       id=6""", Query)
+
+  def test_update__no_ID(self):
+    testIsotopeDict = testIsotope_1.to_dict()
+    del testIsotopeDict['ID']
+    missingIDIsotope = PDC.IsotopeDataClass(**testIsotopeDict)
+    self.assertRaises(AttributeError, SQLFactory.UpdateJsonDataClass, missingIDIsotope)
 
   def test_getElement_run(self):
     Query = SQLFactory.getElement(5, PDC.RunsDataClass)
@@ -101,3 +109,12 @@ longName="I forgot this name"
       orders
     WHERE
       deliver_datetime BETWEEN \"2020-10-10 10:10:10\" AND \"2020-11-11 11:11:11\"""", Query)
+
+  def test_insertQuery(self):
+    """Note the query generated is not valid in a database"""
+    Query = SQLFactory.tupleInsertQuery([
+      ("col1", "val1"),
+      ("col2", "val2"),
+      ("col3", 123)
+    ],"TestTable")
+    self.assertEqual(Query, "INSERT INTO TestTable (col1, col2, col3) VALUES (\"val1\", \"val2\", 123)")

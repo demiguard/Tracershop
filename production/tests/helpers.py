@@ -2,16 +2,25 @@
 
 """
 
+import functools
 import mysql.connector as mysql
 
-from api.models import Address, Database
+from database.models import Address, Database, User, UserGroups
 
 from asgiref.sync import sync_to_async
 from lib.SQL.SQLController import SQL
+from lib.SQL.SQLExecuter import Fetching, ExecuteQuery
 
 from pprint import pprint
 
 __author__ = "Christoffer Vilstrup Jensen"
+
+
+TEST_ADMIN_USERNAME = "test_admin"
+TEST_ADMIN_PASSWORD = "test_admin_password"
+
+TEST_PRODUCTION_USERNAME = "test_production"
+TEST_PRODUCTION_PASSWORD = "test_production_password"
 
 
 def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
@@ -29,6 +38,14 @@ def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
     ).save()
 
   SC = SQL.getServerConfig()
+
+  test_admin = User(id=1, username=TEST_ADMIN_USERNAME, UserGroup=UserGroups.Admin, OldTracerBaseID=1337)
+  test_admin.set_password(TEST_ADMIN_PASSWORD)
+  test_admin.save()
+
+  test_production = User(id=2, username=TEST_PRODUCTION_USERNAME, UserGroup=UserGroups.ProductionAdmin, OldTracerBaseID=420)
+  test_production.set_password(TEST_PRODUCTION_PASSWORD)
+  test_production.save()
 
 
 def CreateTestDatabase(DatabaseConfig):
@@ -80,7 +97,11 @@ def CreateTestDatabase(DatabaseConfig):
   """)
 
   cur.execute("""
-  CREATE TABLE TracerCustomer(tracer_id INT, customer_id INT)
+  CREATE TABLE TracerCustomer(
+    tracer_id INT,
+    customer_id INT,
+    ID INT AUTO_INCREMENT PRIMARY KEY
+  )
   """)
 
   cur.execute("""
@@ -137,7 +158,8 @@ def CreateTestDatabase(DatabaseConfig):
       addr2 VARCHAR(60),
       addr3 VARCHAR(60),
       addr4 VARCHAR(60),
-      shortname VARCHAR(30)
+      shortname VARCHAR(30),
+      password VARCHAR(32)
     )
   """)
 
@@ -188,20 +210,6 @@ def CreateTestDatabase(DatabaseConfig):
       order_id int DEFAULT NULL REFERENCES orders(oid) ON UPDATE CASCADE ON DELETE RESTRICT
     )
   """)
-
-  #cur.execute("""
-  #CREATE TABLE VialMapping(
-  #Order_id INT,
-  #VAL_id INT UNSIGNED,
-  #FOREIGN KEY (Order_id) REFERENCES orders(OID)
-  #  ON UPDATE CASCADE
-  #  ON DELETE RESTRICT,
-  #FOREIGN KEY (VAL_id) REFERENCES VAL(ID)
-  #  ON UPDATE CASCADE
-  #  ON DELETE RESTRICT,
-  #UNIQUE KEY (VAL_id)
-  #)
-  #""")
 
   cur.execute("""
     CREATE TABLE productionTimes(
@@ -260,6 +268,13 @@ def CreateTestDatabase(DatabaseConfig):
     )
   """)
 
+  cur.execute("""
+    CREATE TABLE blockDeliverDate(
+      BDID INT PRIMARY KEY AUTO_INCREMENT,
+      ddate DATE
+    )
+  """)
+
 
   conn.close()
   return databaseName
@@ -283,3 +298,19 @@ def DestroyTestDatabase(DatabaseConfig):
 @sync_to_async
 def getModel(model, pk):
   return model.objects.get(pk=pk)
+
+@sync_to_async
+def async_ExecuteQuery(Query, fetching=Fetching.ALL):
+    return ExecuteQuery(Query, fetching)
+
+def cleanTable(IDstr : str, tableStr : str, testName : str) -> None:
+    ids = ExecuteQuery(f"SELECT {IDstr} FROM {tableStr}""",Fetching.ALL)
+    if ids:
+      print(f"\nTest {testName} did not clean {tableStr}\n")
+      idsStr = ""
+      for i, (id,) in enumerate(ids):
+        if i != len(ids) - 1:
+          idsStr += f"{id},"
+        else:
+          idsStr += f"{id}"
+      ExecuteQuery(f"DELETE FROM {tableStr} WHERE {id} in ({idsStr})", Fetching.NONE)

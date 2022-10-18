@@ -1,6 +1,6 @@
 import React, {} from "react";
 import { FormatDateStr } from "/src/lib/formatting";
-import { Button, Form } from "react-bootstrap";
+import { Button, Form, Image } from "react-bootstrap";
 import ReactHover, { Trigger, Hover  } from "react-hover";
 
 import { noop } from "/src/lib/utils";
@@ -12,7 +12,7 @@ export function renderStatusImage(status, func) {
   if (status === 3) return renderClickableIcon("/static/images/clipboard3.svg", onclickFunc);
   if (status === 0) return renderClickableIcon("/static/images/clipboard0.svg", onclickFunc);
 
-  throw "Status not supproted!";
+  throw `Status ${status} not supproted!`;
 }
 
 export function renderTableRow(key, list_of_tds) {
@@ -61,7 +61,7 @@ export function renderDateTime(dateString){
 }
 
 
-export function renderSelect(Options, valueKey, nameKey, OnChange, selectValue){
+export function renderSelect(Options, valueKey, nameKey, OnChange, initialValue){
   const Rendered = [];
 
   for(const Option of Options){
@@ -71,7 +71,7 @@ export function renderSelect(Options, valueKey, nameKey, OnChange, selectValue){
   }
 
   return(
-    <Form.Select value={selectValue} onChange={OnChange}>
+    <Form.Select value={initialValue} onChange={OnChange}>
       {Rendered}
     </Form.Select>
   );
@@ -106,7 +106,7 @@ export function renderClickableIcon(imagePath, func){
   const onClickFunc = (func === undefined) ? noop : func
   return (
     <Button variant="outline-light" onClick={onClickFunc}>
-      <img className="statusIcon" src={imagePath}></img>
+      <Image className="statusIcon" src={imagePath}/>
     </Button>
   )
 }

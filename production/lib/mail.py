@@ -1,16 +1,10 @@
 from dataclasses import dataclass
 
-import email
-import smtplib
-import ssl
 import re
-import typing
-
 import constants
-from constants import EmailEvents
 
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
-from api.models import ServerConfiguration
+from database.models import ServerConfiguration
 
 from smtplib import SMTP
 from email import encoders
@@ -40,7 +34,7 @@ def validifyEmailAddress(potentialEmail : str) -> bool:
   emailRegex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
   if re.fullmatch(emailRegex, potentialEmail):
     return True
-  return False  
+  return False
 
 def prepareMail(emailHeader :EmailHeader, fileBytes):
   fname = "følgeseddel.pdf"
@@ -50,9 +44,9 @@ def prepareMail(emailHeader :EmailHeader, fileBytes):
   mail["Subject"] = emailHeader.Subject
   mail["To"]      = emailHeader.To
   mail["From"]    = emailHeader.From
-  
+
   text = MIMEText(emailHeader.message.encode("utf-8"),"plain", _charset="utf-8")
-  
+
   mail.attach(text)
   payload = MIMEBase('application', 'octate-stream', Name=fname)
   payload.set_payload(fileBytes)
@@ -73,7 +67,7 @@ def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDa
 
   with open(pdfPath, 'rb') as f:
     fileBytes = f.read()
-    
+
   for email in emails:
     if not validifyEmailAddress(email):
       continue

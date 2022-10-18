@@ -4,11 +4,10 @@
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
-from h11 import Data
 from constants import USAGE
 
-from typing import Type, List, Union
-from datetime import date,time,datetime
+from typing import Type, List, Union, Any, Tuple
+from datetime import date, time, datetime
 from dataclasses import fields
 
 from lib.decorators import typeCheckfunc
@@ -17,7 +16,7 @@ from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass,
 from lib.Formatting import dateConverter, mergeDateAndTime
 from lib.utils import LMAP
 
-from TracerAuth.models import User
+from database.models import User
 
 def getElement(ID: int, dataClass) -> str:
   Query = f"""SELECT
@@ -38,81 +37,6 @@ def getDataClass(dataClass) -> str:
     WHERE
       {dataClass.getSQLWhere()}"""
 
-def getCustomerDeliverTimes(ID : int) -> str:
-  return f"""SELECT
-      deliverTimes.day,
-      repeat_t,
-      TIME_FORMAT(dtime, \"%T\"),
-      max,
-      run,
-      DTID
-    FROM
-      Users
-      INNER JOIN deliverTimes ON Users.ID=deliverTimes.BID
-    Where
-      Users.Id={ID}
-    ORDER BY
-      deliverTimes.day,
-      deliverTimes.dtime"""
-
-def getActivityOrders(requestDate: date, tracerID: int) -> str:
-  #Can't use SerilizeToSQLValue due to missing %
-  return f"""SELECT
-      {ActivityOrderDataClass.getSQLFields()}
-    FROM
-      orders
-    WHERE
-      deliver_datetime LIKE \"{dateConverter(requestDate)}%\" AND
-      tracer={tracerID}
-    ORDER BY
-      BID,
-      deliver_datetime"""
-
-def updateOrder(Order : ActivityOrderDataClass) -> str:
-  SQLQuery = """Update orders
-    Set
-  """
-  Fields = fields(Order)
-  for field in Fields:
-    fieldVal =  Order.__getattribute__(field.name)
-    if field.name == "oid" or not fieldVal:
-      continue
-    SQLQuery += f"{field.name}={SerilizeToSQLValue(fieldVal)},\n"
-  SQLQuery = SQLQuery[:-2] + SQLQuery[-1] # Remove the last ','
-  SQLQuery += f"""
-    WHERE
-      oid = {Order.oid}"""
-  return SQLQuery
-
-def InsertVial(Vial: VialDataClass) -> str:
-  Query = f"""INSERT INTO VAL(
-      customer,
-      charge,
-      depotpos,
-      filldate,
-      filltime,
-      volume,
-      gros,
-      tare,
-      net,
-      product,
-      activity
-    ) VALUES (
-      {SerilizeToSQLValue(Vial.customer)},
-      {SerilizeToSQLValue(Vial.charge)},
-      0,
-      {SerilizeToSQLValue(Vial.filldate)},
-      {SerilizeToSQLValue(Vial.filltime)},
-      {SerilizeToSQLValue(Vial.volume)},
-      0,
-      0,
-      0,
-      \"18F\",
-      {SerilizeToSQLValue(Vial.activity)}
-      )"""
-
-  return Query
-
 def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
   """Creates an string with a SQL Query for Updating an JsonSerilizableDataClass
      so that's matching to the input object.
@@ -122,11 +46,10 @@ def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
   Returns:
       string with a SQL Query for Updating an JsonSerilizableDataClass
   """
-  ID = getattr(DataClassObject, DataClassObject.getIDField())
-  if ID == None:
-    raise KeyError("No Valid ID for object, It should prob be created.")
-
-
+  try:
+    ID = getattr(DataClassObject, DataClassObject.getIDField())
+  except AttributeError as E:
+    raise E
   updateFields = []
 
   for field in DataClassObject.getFields():
@@ -255,52 +178,6 @@ def getRelatedOrders(Order: ActivityOrderDataClass) -> str:
     WHERE
       COID={Order.oid}"""
 
-def createLegacyFreeOrder(
-    OriginalOrder : ActivityOrderDataClass,
-    Vial : VialDataClass,
-    tracerID:int,
-    user : User) -> str:
-
-  now = datetime.now()
-
-  return f"""INSERT INTO orders(
-      amount,
-      amount_o,
-      batchnr,
-      BID,
-      COID,
-      comment,
-      deliver_datetime,
-      frigivet_datetime,
-      run,
-      status,
-      total_amount,
-      total_amount_o,
-      tracer,
-      userName,
-      frigivet_amount,
-      frigivet_af,
-      volume
-    ) VALUES (
-      0,
-      0,
-      \"{Vial.charge}\",
-      {OriginalOrder.BID},
-      -1,
-      {SerilizeToSQLValue(f"Extra Vial for Order: {OriginalOrder.oid}")},
-      {SerilizeToSQLValue(OriginalOrder.deliver_datetime)},
-      {SerilizeToSQLValue(now)},
-      {OriginalOrder.run},
-      3,
-      0,
-      0,
-      {tracerID},
-      NULL,
-      {Vial.activity},
-      {user.OldTracerBaseID},
-      {Vial.volume}
-    )"""
-
 def getLastElement(DataClass : JsonSerilizableDataClass) -> str:
   return f"""SELECT
       {DataClass.getSQLFields()}
@@ -324,49 +201,42 @@ def getDataClassRange(startDate: Union[datetime, date], endDate : Union[datetime
       {DataClass.getSQLDateTime()} BETWEEN {
         SerilizeToSQLValue(startDate)} AND {SerilizeToSQLValue(endDate)}"""
 
-
-@typeCheckfunc
-def createGhostOrder(
-      deliver_datetime : datetime,
-      Customer : CustomerDataClass,
-      amount_total : float,
-      amount_total_overhead : float,
-      tracer : TracerDataClass,
-      run : int,
-      username : str
-    ) -> str:
-  return f"""INSERT INTO orders(
-      amount,
-      amount_o,
-      total_amount,
-      total_amount_o,
-      batchnr,
-      BID,
-      COID,
-      comment,
-      deliver_datetime,
-      run,
-      status,
-      tracer,
-      userName
-      )
-    VALUES (
-      0,0,
-      {SerilizeToSQLValue(amount_total)},
-      {SerilizeToSQLValue(amount_total_overhead)},
-      \"\",
-      {SerilizeToSQLValue(Customer.ID)},
-      -1,
-      \"\",
-      {SerilizeToSQLValue(deliver_datetime)},
-      {SerilizeToSQLValue(run)},
-      2,
-      {SerilizeToSQLValue(tracer.id)},
-      {SerilizeToSQLValue(username)}
-    )"""
-
-
 def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
   idsStr = ", ".join(LMAP(str,ids)) # types are callable
   return f"""DELETE FROM {DataClass.getSQLTable()}
     WHERE {DataClass.getIDField()} IN ({idsStr})"""
+
+def GetConditionalElement(condition: str, dataClass):
+  Query = f"""SELECT
+      {dataClass.getSQLFields()}
+    FROM
+      {dataClass.getSQLTable()}
+    WHERE
+      {condition}"""
+  return Query
+
+def tupleInsertQuery(TupleList : List[Tuple[str, Any]], Table : str) -> str:
+  """Fancy way of creating an insert Query.
+  This function creates an insert query where it's easy to see the value pairs of items.
+
+  Note the query is not very human readable
+
+  Args:
+      TupleList (List[Tuple[str, Any]]): _description_
+      Table (str): _description_
+
+  Returns:
+      str: _description_
+  """
+
+  columnString = ""
+  valueString = ""
+
+  for i, (column, value) in enumerate(TupleList):
+    columnString += column
+    valueString += str(SerilizeToSQLValue(value))
+    if i != len(TupleList) - 1:
+      columnString += ", "
+      valueString += ", "
+
+  return f"""INSERT INTO {Table} ({columnString}) VALUES ({valueString})"""

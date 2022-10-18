@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from production.SECRET_KEY import KEY
-from production.config import debug_file_log
+from production.config import debug_file_log, SQL_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -40,11 +40,11 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
+    'database.apps.DatabaseConfig',
     'tests.apps.TestConfig',
-    'api.apps.ApiConfig',
     'frontend.apps.FrontendConfig',
     'lib.apps.LibConfig',
-    'TracerAuth.apps.AuthConfig',
+    'tracerauth.apps.AuthConfig',
     'websocket.apps.WebsocketConfig'
 ]
 
@@ -123,9 +123,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "database.User"
 
-AUTHENTICATION_BACKENDS = ['TracerAuth.backend.TracershopAuthenticationBackend']
+AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
 
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
@@ -165,7 +165,12 @@ LOGGING = {
             '()': 'django.utils.log.ServerFormatter',
             'format': '[{server_time}] {message}',
             'style': '{',
-        }
+        },
+        'SQL' : {
+            '()': 'django.utils.log.ServerFormatter',
+            'format' : '{message}',
+            'style' : '{'
+        },
     },
     'handlers': {
         'console': {
@@ -186,8 +191,14 @@ LOGGING = {
         'myHandler' : {
             'level' : 'DEBUG',
             'class' : 'logging.FileHandler',
-            'filename' : debug_file_log,
+            'filename' : 'log/production_test.log',
             'formatter'  : 'django.server'
+        },
+        'SQLHandler' : {
+            'level' : 'DEBUG',
+            'class' : 'logging.FileHandler',
+            'filename' : 'log/sql_test.log',
+            'formatter' : 'SQL'
         }
     },
     'loggers': {
@@ -203,6 +214,9 @@ LOGGING = {
             'handlers': ['django.server'],
             'level': 'INFO',
             'propagate': False,
+        },
+        'SQLLogger' : {
+            'handlers' : ['SQLHandler', 'console']
         },
     }
 }

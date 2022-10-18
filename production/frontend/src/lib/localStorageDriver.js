@@ -1,4 +1,4 @@
-import { DATABASE_ACTIVITY_ORDER, DATABASE_CUSTOMER, DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE, DATABASE_PRODUCTION, DATABASE_TRACER, DATABASE_VIAL, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, JSON_DELIVERTIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL } from "./constants";
+import { DATABASE_ACTIVITY_ORDER, DATABASE_CLOSEDDATE, DATABASE_CUSTOMER, DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE, DATABASE_PRODUCTION, DATABASE_TRACER, DATABASE_VIAL, JSON_ACTIVITY_ORDER, JSON_CLOSEDDATE, JSON_CUSTOMER, JSON_DELIVERTIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL } from "./constants";
 
 // Stealing code from https://stackoverflow.com/questions/2010892/how-to-store-objects-in-html5-localstorage
 export var db = {
@@ -62,6 +62,9 @@ export var db = {
 
     return value;
   },
+  delete(key) {
+    localStorage.removeItem(key)
+  },
 
   // ENSURE THAT THIS IS OBJECT IS UP TO DATE WITH constants.js
   types : {
@@ -70,8 +73,15 @@ export var db = {
     activeTracer : Number, //DATABASE_ACTIVE_TRACER
     isAuth : Boolean, //DATABASE_IS_AUTH
     serverConfig : Object, //DATABASE_SERVER_CONFIG
+    user : Object, //DATABASE_USER
+    // Admin
+    adminPage : String, // DATABASE_ADMIN_PAGE
+    // shop
+    shopCustomer : Number, // DATABASE_SHOP_CUSTOMER
+
     // Maps
     address : Map, // DATABASE_ADDRESS
+    closeddate : Map, // DATABASE_CLOSEDDATE
     customer : Map, // DATABASE_CUSTOMER
     database : Map, // DATABASE_DATABASE
     deliverTimes : Map, //DATABASE_DELIVERTIME
@@ -81,6 +91,7 @@ export var db = {
     run : Map, //DATABASE_PRODUCTION
     t_orders : Map, //DATABASE_INJECTION_ORDER
     tracer : Map, //DATABASE_TRACER
+    tracer_mapping : Map, //DATABASE_TRACER_MAPPING
     vial    : Map, //DATABASE_VIAL
   },
 
@@ -105,6 +116,7 @@ export function MapDataName(JSONName){
   if (JSONName == JSON_RUN){return DATABASE_PRODUCTION;}
   if (JSONName == JSON_TRACER){return DATABASE_TRACER;}
   if (JSONName == JSON_VIAL){return DATABASE_VIAL;}
+  if (JSONName == JSON_CLOSEDDATE) {return DATABASE_CLOSEDDATE;}
 
   throw `Unknown JSON Name ${JSONName}`;
 }

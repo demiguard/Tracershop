@@ -40,10 +40,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'channels',
-    'api.apps.ApiConfig',
+    'database.apps.DatabaseConfig',
     'frontend.apps.FrontendConfig',
     'lib.apps.LibConfig',
-    'TracerAuth.apps.AuthConfig',
+    'tracerauth.apps.AuthConfig',
     'websocket.apps.WebsocketConfig'
 ]
 
@@ -122,9 +122,9 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
-AUTH_USER_MODEL = "auth.User"
+AUTH_USER_MODEL = "database.User"
 
-AUTHENTICATION_BACKENDS = ['TracerAuth.backend.TracershopAuthenticationBackend']
+AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
 
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
@@ -183,7 +183,7 @@ LOGGING = {
             'formatter': 'django.server',
         },
         'mail_admins': {
-            'level': 'ERROR',
+            'level': 'CRITICAL',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },

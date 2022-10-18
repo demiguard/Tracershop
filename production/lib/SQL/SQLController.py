@@ -17,14 +17,14 @@ from datetime import datetime, time, date
 from typing import Callable, Dict, List, Optional, Tuple, Type
 
 
-from api.models import ServerConfiguration, Database
+from database.models import ServerConfiguration, Database
 from lib.decorators import typeCheckfunc
 from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
 from lib.utils import LMAP
 
-from TracerAuth.models import User
+from database.models import User
 
 class SQL():
   """
@@ -53,7 +53,7 @@ class SQL():
       if fetch == Fetching.ALL:
         return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
       elif fetch == Fetching.ONE:
-        return [returnClass(*SQLResult)]
+        return [returnClass(**SQLResult)]
       else:
         return []
     else:
@@ -71,7 +71,7 @@ class SQL():
       if fetch == Fetching.ALL:
         return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
       elif fetch == Fetching.ONE:
-        return [returnClass(*SQLResult)]
+        return [returnClass(**SQLResult)]
       else:
         return []
     else:
@@ -95,6 +95,14 @@ class SQL():
   @classmethod
   def getElement(cls, ID:int, Dataclass) -> Optional[JsonSerilizableDataClass]:
     returnList = cls.__Execute(SQLFactory.getElement, Dataclass, Fetching.ONE, ID, Dataclass)
+    if returnList:
+      return returnList[0]
+    else:
+      None
+
+  @classmethod
+  def getConditionalElement(cls, condition : str, dataClass):
+    returnList = cls.__Execute(SQLFactory.GetConditionalElement, dataClass, Fetching.ONE, condition, dataClass)
     if returnList:
       return returnList[0]
     else:
@@ -191,34 +199,17 @@ class SQL():
     return cls.__ExecuteMany(
       [SQLFactory.FreeDependantOrders, SQLFactory.getRelatedOrders],
       ActivityOrderDataClass, Fetching.ALL,
-      [[OriginalOrder, user],[ActivityOrderDataClass]]
+      [[OriginalOrder, user],[OriginalOrder]]
     )
 
 
   @classmethod
   def authenticateUser(cls, username:str, password:str) -> Optional[EmployeeDataClass]:
-    return cls.__Execute(SQLFactory.authenticateUser, EmployeeDataClass, Fetching.ONE, username, password)[0]
-
-  @classmethod
-  def createGhostOrder(
-    cls,
-    deliver_datetime : datetime,
-    Customer : CustomerDataClass,
-    amount_total : float,
-    amount_total_overhead : float,
-    tracer : TracerDataClass,
-    run : int,
-    username : str
-  ):
-    """ This function creates an empty order,
-    this should be invoked when a user moves an order from a time slot with out an order existsing
-    """
-    GhostOrderList = cls.__ExecuteMany(
-      [SQLFactory.createGhostOrder, SQLFactory.getLastElement],
-      ActivityOrderDataClass, Fetching.ONE,
-      [[deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username],
-        [ActivityOrderDataClass]] )
-    return GhostOrderList[0]
+    try:
+      Employee = cls.__Execute(SQLFactory.authenticateUser, EmployeeDataClass, Fetching.ONE, username, password)[0]
+    except IndexError:
+      return None
+    return Employee
 
   @classmethod
   def deleteIDs(cls, ids, DataClass):

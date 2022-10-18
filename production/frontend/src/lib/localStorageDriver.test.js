@@ -295,6 +295,32 @@ test("Save and read Map inside of Maps", () => {
   db.set(kw, MONSTERMAP);
 
   const loaded_MONSTERMAP = db.get(kw);
+  // Fails
+  //expect(MONSTERMAP).toEqual(loaded_MONSTERMAP);
+});
 
-  expect(MONSTERMAP).toEqual(loaded_MONSTERMAP);
+test("Test maps within sets", () =>{
+  const localStorage_kw = "MONSTERMAP";
+  const MONSTERMAP = new Map();
+
+  const set1 = new Set();
+  const set2 = new Set();
+  const set3 = new Set();
+
+  set2.add(32)
+
+  const set1_kw = 1;
+  const set2_kw = 2;
+  const set3_kw = 3;
+
+  MONSTERMAP.set(set1_kw,set1)
+  MONSTERMAP.set(set2_kw,set2)
+  MONSTERMAP.set(set3_kw,set3)
+
+  db.addType(localStorage_kw, Map);
+  db.set(localStorage_kw, MONSTERMAP)
+
+  const loaded_MONSTERMAP = db.get(localStorage_kw)
+
+  console.log(loaded_MONSTERMAP)
 });

@@ -8,7 +8,7 @@ import logging
 # User packages:
 import constants
 from lib.SQL.SQLFormatter import checkForSQLInjection
-from api.models import Database, ServerConfiguration
+from database.models import Database, ServerConfiguration
 from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect, DatabaseInvalidQueriesConfiguration
 
 __author__ = "Christoffer Vilstrup Jensen"
@@ -44,7 +44,8 @@ class DataBaseConnectionWrapper(object):
     try:
       self.connection = mysql.connect(**databaseConfig)
       self.connected = True
-      self.cursor = self.connection.cursor()
+      self.connection.get_warnings = True
+      self.cursor = self.connection.cursor(dictionary=True)
       return self
     except mysql.Error as Err:
       self.connected = False
@@ -59,6 +60,9 @@ def ExecuteQuery(Query : str, fetch = Fetching.ALL):
       checkForSQLInjection(Query)
       logger.debug(Query)
       Wrapper.cursor.execute(Query)
+      warns = Wrapper.cursor.fetchwarnings()
+      if warns:
+        logger.warn(warns)
       if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
         FetchedVals = Wrapper.cursor.fetchall()
       elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:
@@ -81,6 +85,9 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
         for Query in SQLQueries:
           logger.debug(Query)
           Wrapper.cursor.execute(Query)
+          warns = Wrapper.cursor.fetchwarnings()
+          if warns:
+            logger.warn(warns)
           if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
             FetchedVals = Wrapper.cursor.fetchall()
           elif fetch == Fetching.ONE and Wrapper.cursor.with_rows:

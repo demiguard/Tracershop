@@ -1,3 +1,5 @@
+
+
 """
   This class is support to contain all the functions,
   that makes SQL calls to the database. This is in an attempt to clean up the Consumer
@@ -11,15 +13,13 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 
 from xmlrpc.client import Boolean
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.db import database_sync_to_async
 
-from api.models import ServerConfiguration, Database, Address
+from database.models import ServerConfiguration, Database, Address, User
 from lib.decorators import typeCheckfunc
 from lib.SQL.SQLController import SQL
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib import pdfs
-from TracerAuth.models import User
 
 
 from datetime import datetime, date, timedelta
@@ -49,9 +49,10 @@ class DatabaseInterface():
   @database_sync_to_async
   def createPDF(
     self,
-    Order: ActivityOrderDataClass,
+    Orders: List[ActivityOrderDataClass],
     Vials: List[VialDataClass]
   ):
+    Order = Orders[0]
     customer = self.SQL.getElement(Order.BID, CustomerDataClass)
     Tracer = self.SQL.getElement(Order.tracer, TracerDataClass)
     Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)
@@ -77,7 +78,8 @@ class DatabaseInterface():
       List[InjectionOrderDataClass],
       ServerConfiguration,
       List[Database],
-      List[Address]]:
+      List[Address],
+      List[ClosedDateDataClass]]:
 
     """This function is responsible for gathering the state of the database.
 
@@ -101,25 +103,13 @@ class DatabaseInterface():
     Isotopes  = self.SQL.getDataClass(IsotopeDataClass)
     Runs      = self.SQL.getDataClass(RunsDataClass)
     Tracers   = self.SQL.getDataClass(TracerDataClass)
+    TCustomer = self.SQL.getDataClass(TracerCustomerMappingDataClass)
     Orders    = self.SQL.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
     Vials     = self.SQL.getDataClassRange(startDate, endDate, VialDataClass)
     T_Orders  = self.SQL.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
+    closeDate = self.SQL.getDataClassRange(startDate.date(), endDate.date(), ClosedDateDataClass)
 
-    return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, SC, list(databases), list(addresses))
-
-
-  @database_sync_to_async
-  @typeCheckfunc
-  def createGhostOrder(self,
-      deliver_datetime : datetime,
-      Customer : CustomerDataClass,
-      amount_total : float,
-      amount_total_overhead : float,
-      tracer : TracerDataClass,
-      run : int,
-      username : str
-    ) -> ActivityOrderDataClass:
-    return self.SQL.createGhostOrder(deliver_datetime, Customer, amount_total, amount_total_overhead, tracer, run, username)
+    return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TCustomer, SC, list(databases), list(addresses), closeDate)
 
   ###### ----- Generic Methods ----- ######
 
@@ -144,10 +134,7 @@ class DatabaseInterface():
     Args:
         dataClass (JsonSerilizableDataClass): _description_
     """
-    if type(dataClass) == VialDataClass:
-      self.SQL.updateVial(dataClass)
-    else:
-      self.SQL.UpdateJsonDataClass(dataClass)
+    self.SQL.UpdateJsonDataClass(dataClass)
 
   @database_sync_to_async
   def getDataClass(self, dataClass):

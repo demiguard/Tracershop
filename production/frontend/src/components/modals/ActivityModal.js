@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import { ActivityModalStatus3 } from "./ActivityModalStatus3";
 import ActivityModalAuthenticate from "./ActivityModalAuthenticate";
 import ActivityModalStatus2 from "./ActivityModalStatus2";
+import { ActivityModalStatus1 } from "./ActivityModalStatus1";
 
 export { ActivityModal }
 
@@ -80,55 +81,41 @@ class ActivityModal extends Component {
   }
 
   render(){
-    const Order = this.props.Order;
+    const Order = this.props.orders.get(this.props.order);
 
-    if(Order) {
-      if (Order.status == 3) {
-        return (
-          <ActivityModalStatus3
-            show={this.props.show}
-            Order={this.props.Order}
-            customer={this.props.customer}
-            onClose={this.props.onClose}
-            vials={this.props.vials}
-            employees={this.props.employees}
-            websocket={this.props.websocket}
-          />
-        );
-      } else if (Order.status == 2) {
-        if (this.state.isAuthenticating) {
-          return (<ActivityModalAuthenticate
-            show={this.props.show}
-            Order={this.props.Order}
-            customer={this.props.customer}
-            onClose={this.props.onClose}
-            vials={this.props.vials}
-            selectedVials={this.state.selectedVials}
-            cancel={this.cancel.bind(this)}
-            accept={this.props.AcceptOrder}
-            websocket={this.props.websocket}
-          />)
-        } else {
-          return (<ActivityModalStatus2
-            show={this.props.show}
-            Order={this.props.Order}
-            customer={this.props.customer}
-            onClose={this.props.onClose}
-            vials={this.props.vials}
-            editVial={this.props.editVial}
-            createVial={this.props.createVial}
-            selectedVials={this.state.selectedVials}
-            toggleVial={this.toggleVial.bind(this)}
-            Authenticate={this.Authenticate.bind(this)}
-            date={this.props.date}
-            websocket={this.props.websocket}
-          />)
-        }
-      }
+    var MyModal = null;
+    switch(Order.status){
+      case 1:
+        MyModal = ActivityModalStatus1;
+      break;
+      case 2:
+        this.state.isAuthenticating ? MyModal = ActivityModalAuthenticate :
+          MyModal = ActivityModalStatus2;
+      break;
+      case 3:
+        MyModal = ActivityModalStatus3;
     }
 
-    return(
-    <div></div>
-    );
+    if (MyModal != null) return (<MyModal
+        accept={this.props.AcceptOrder}
+        Authenticate={this.Authenticate.bind(this)}
+        cancel={this.cancel.bind(this)}
+        createVial={this.props.createVial}
+        customers={this.props.customers}
+        date={this.props.date}
+        editVial={this.props.editVial}
+        employees={this.props.employees}
+        order={this.props.order}
+        orders={this.props.orders}
+        onClose={this.props.onClose}
+        selectedVials={this.state.selectedVials}
+        show={this.props.show}
+        toggleVial={this.toggleVial.bind(this)}
+        vials={this.props.vials}
+        websocket={this.props.websocket}
+      />);
+
+
+    return(<div></div>);
   }
 }

@@ -1,27 +1,14 @@
 import React, { Component } from "react";
-import { Modal, Button, Row, Container, Table, FormControl } from "react-bootstrap";
-import { JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
+import { Modal, Button, Row, Container, Table, FormControl, Col, Image } from "react-bootstrap";
+import { JSON_ACTIVITY_ORDER, JSON_VIAL, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_TOTAL_AMOUNT, KEYWORD_TOTAL_AMOUNT_O, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
 import { renderClickableIcon,renderTableRow } from "../../lib/Rendering";
-import { changeState } from "../../lib/stateManagement";
+import { changeState, toggleState } from "../../lib/stateManagement";
 import { addCharacter } from "../../lib/utils";
 import { FormatTime, ParseDanishNumber, FormatDateStr } from "/src/lib/formatting";
 import { autoAddCharacter } from "/src/lib/utils";
 
 
 export { ActivityModalStatus2 }
-
-const initial_state = {
-  ErrorMessage : "",
-
-  EditingVials : new Map(),
-
-  CreatingVial : false,
-  newCharge : "",
-  newFillTime : "",
-  newVolume : "",
-  newActivity : "",
-  ErrorMessage :"",
-};
 
 
 /** This class renders a Modal for an order with status two.
@@ -45,12 +32,25 @@ export default class ActivityModalStatus2 extends Component {
   constructor(props){
     super(props);
 
-    this.state = initial_state;
+    const order = this.props.orders.get(this.props.order);
+
+    this.state = {
+      ErrorMessage : "",
+      EditingVials : new Map(),
+
+      editingOrderedActivity : false,
+      editOrderActivity : order.amount,
+      CreatingVial : false,
+      newCharge : "",
+      newFillTime : "",
+      newVolume : "",
+      newActivity : "",
+      ErrorMessage :"",
+    };
   }
 
   // ********* State Update Functions ********* //
   CloseModal(){
-    this.setState(initial_state);
     this.props.onClose();
   }
 
@@ -76,6 +76,65 @@ export default class ActivityModalStatus2 extends Component {
     });
   }
 
+  /** This function validates user input to create a vial.
+   * In case of error It updates state with relevant error message.
+   *
+   * @param {*} charge - User input representing Charge or Batchnumber to be validated
+   * @param {*} Activity - User input representing A positive number
+   * @param {*} Volume - User input representing Volume of vial.
+   * @param {*} FillTime - User input representing fill time of vial.
+   * @returns {Boolean} - if the vial is valid or not
+   */
+  validateVial(charge, activity, volume, FillTimeStr){
+    var ErrorInInput = false;
+    var NewErrorMessage = "";
+
+    if (!charge){ // Ask jacob for format
+      ErrorInInput = true;
+      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
+    }
+    const NewActivity = ParseDanishNumber(activity)
+    if (isNaN(NewActivity)){
+      ErrorInInput = true;
+      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
+    } else if ( NewActivity <= 0) {
+      ErrorInInput = true;
+      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
+    }
+    const NewVolume = ParseDanishNumber(volume)
+    if (isNaN(NewVolume)){
+      ErrorInInput = true;
+      NewErrorMessage += "Volumen skal være et tal.\n"
+    } else if ( NewVolume <= 0) {
+      ErrorInInput = true;
+      NewErrorMessage += "Volumen kan ikke være negativ.\n"
+    }
+
+    const FillTime = FormatTime(FillTimeStr);
+    if (FillTime === null) { // This is the output if fillTime fails to parse
+      ErrorInInput = true;
+      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
+    }
+
+    const order = this.props.orders.get(this.props.order);
+    const Customer = this.props.customers.get(order.BID);
+    const CustomerNumber = Customer.kundenr;
+
+    if (CustomerNumber === null) {
+      ErrorInInput = true;
+      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
+    }
+
+    if (ErrorInInput){
+      this.setState({
+        ...this.state,
+        ErrorMessage : NewErrorMessage
+      });
+    }
+
+    return ErrorInInput;
+  }
+
   changeNewFieldTime(event){
     const newState = {...this.state};
     newState.newFillTime = autoAddCharacter(event, ":", new Set([2,5]), this.state.newFillTime);
@@ -83,6 +142,59 @@ export default class ActivityModalStatus2 extends Component {
     this.setState(newState);
   }
 
+  toggleActivity(){
+    const retfunc = (event) => {
+      if(this.state.editingOrderedActivity){
+        const order = this.props.orders.get(this.props.order);
+        const customer = this.props.customers.get(order.BID);
+        const newActivity = Number(this.state.editOrderActivity)
+        if(isNaN(newActivity) ){
+          this.setState({
+            errorMessage : "Den bestilte aktivitet er ikke et tal"
+          });
+          return;
+        }
+        if(newActivity < 0 ){
+          this.setState({
+            errorMessage : "Der bestilte aktivitet kan ikke være negativ"
+          });
+          return;
+        }
+
+        // Activity from other orders assigned to total_* attributes
+        const externalActivity = order.total_amount - order.amount;
+        const newTotalActivity = newActivity + externalActivity;
+
+        const newAmountOverhead = (1 + customer.overhead / 100) * newActivity;
+        const newTotalAmountOverhead = (1 + customer.overhead / 100) * newTotalActivity;
+
+        const newOrder = {...order};
+        // This is why python is better
+        newOrder[KEYWORD_AMOUNT] = newActivity;
+        newOrder[KEYWORD_AMOUNT_O] = newAmountOverhead;
+        newOrder[KEYWORD_TOTAL_AMOUNT] = newTotalActivity;
+        newOrder[KEYWORD_TOTAL_AMOUNT_O] = newTotalAmountOverhead
+
+        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+        message[WEBSOCKET_DATA] = newOrder;
+        message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
+
+        this.props.websocket.send(message);
+
+        this.setState({
+          ...this.state,
+          errorMessage : "",
+          editingOrderedActivity : false
+        });
+      } else {
+        this.setState({
+          ...this.state,
+          editingOrderedActivity : true
+        })
+      }
+    }
+    return retfunc.bind(this)
+  }
   // ********* Vial Functions ********** //
 
   /*
@@ -91,57 +203,20 @@ export default class ActivityModalStatus2 extends Component {
   *
   */
   createNewVial(){
-    var ErrorInInput = false;
-    var NewErrorMessage = "";
-
-    if (!this.state.newCharge){
-      ErrorInInput = true;
-      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
+    if(this.validateVial(this.state.newCharge, this.state.newActivity, this.state.newVolume,this.state.newFillTime)){
+      return;
     }
-    const NewActivity = ParseDanishNumber(this.state.newActivity)
-    if (isNaN(NewActivity)){
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
-    } else if ( NewActivity <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
-    }
-    const NewVolume = ParseDanishNumber(this.state.newVolume)
-    if (isNaN(NewVolume)){
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen skal være et tal.\n"
-    } else if ( NewVolume <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen kan ikke være negativ.\n"
-    }
-
+    const NewVolume = ParseDanishNumber(this.state.newVolume);
+    const NewActivity = ParseDanishNumber(this.state.newActivity);
     const FillTime = FormatTime(this.state.newFillTime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse
-      ErrorInInput = true;
-      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    }
-    const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.kundenr : null
+    const order = this.props.orders.get(this.props.order);
+    const Customer = this.props.customers.get(order.BID);
+    const CustomerNumber = Customer.kundenr;
 
-    if (CustomerNumber === null) {
-      ErrorInInput = true;
-      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
-    }
-
-    if (ErrorInInput){
-      console.log(NewErrorMessage);
-      this.setState({...this.state, ErrorMessage : NewErrorMessage})
-      return
-    }
-
-
-    const editingSet = this.state.EditingVials
-    const new_state = {...initial_state}
-    new_state.EditingVials = editingSet
     // This function will trigger an update to the prop Vials, that in turn will trigger an update, and then we'll be able to see the Vial when the backend have accepted it.
-    // Note that other users will also be able to see this vial, since it's created using the websocket. 
-    this.props.createVial(this.state.newCharge, FillTime, Number(NewVolume.toFixed(2)), Number(NewActivity.toFixed(2)), CustomerNumber)
-    this.setState(new_state);
+    // Note that other users will also be able to see this vial, since it's created using the websocket.
+    this.props.createVial(this.state.newCharge, FillTime, Number(NewVolume.toFixed(2)), Number(NewActivity.toFixed(0)), CustomerNumber)
+    this.StopCreatingNewVial()
   }
 
   // * Editing Functions * //
@@ -150,56 +225,7 @@ export default class ActivityModalStatus2 extends Component {
     //Validate the data, if ok then Pass it on the table, that will use its websocket to probergate the change onward.
     const EditingData = this.state.EditingVials.get(vialID);
 
-    var ErrorInInput = false;
-    var NewErrorMessage = "";
-
-    console.log(EditingData);
-    const BatchName = EditingData.charge
-    if (!BatchName){
-      ErrorInInput = true;
-      NewErrorMessage += "Der er ikke skrevet Noget Batch Nummer.\n"
-    }
-    const NewActivity = ParseDanishNumber(EditingData.activity)
-    if (isNaN(NewActivity)){
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset skal være et tal.\n"
-    } else if ( NewActivity <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Aktiviten i glasset Kan ikke være negativ.\n"
-    } else {
-      EditingData.activity
-    }
-
-
-    const NewVolume = ParseDanishNumber(EditingData.volume)
-    if (isNaN(NewVolume)){
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen skal være et tal.\n"
-    } else if ( NewVolume <= 0) {
-      ErrorInInput = true;
-      NewErrorMessage += "Volumen kan ikke være negativ.\n"
-    } else {
-      EditingData.volume = NewVolume;
-    }
-
-
-    const FillTime = FormatTime(EditingData.filltime);
-    if (FillTime === null) { // This is the output if fillTime fails to parse
-      ErrorInInput = true;
-      NewErrorMessage += "Tidsformattet er ikke korrekt.\n"
-    }
-
-    const Customer = (this.props.customer) ? (this.props.customer) : null
-    const CustomerNumber = (Customer) ? Customer.kundenr : null
-
-    if (CustomerNumber === null) {
-      ErrorInInput = true;
-      NewErrorMessage += "Kunne ikke finde denne kunden's Kundenummer.\n"
-    }
-
-    if (ErrorInInput){
-      console.log(NewErrorMessage);
-      this.setState({...this.state, ErrorMessage : NewErrorMessage});
+    if(this.validateVial(EditingData.charge, EditingData.activity, EditingData.volume, EditingData.filltime)){
       return;
     }
 
@@ -279,10 +305,10 @@ export default class ActivityModalStatus2 extends Component {
     this.setState({...this.state, ErrorMessage : ""})
 
     if(this.state.CreatingVial){
-      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med Oprette en vial.\n";
+      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med oprette et hætteglas.\n";
     }
     if(this.state.EditingVials.size !== 0){
-      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med redigerer en vial.\n";
+      newErrorMessage += "Du kan ikke godkende en ordre imens du er i gang med redigerer et hætteglas.\n";
     }
     if (this.props.selectedVials.size === 0) {
       newErrorMessage += "Du kan ikke godkende en ordre, uden at vælge mindst 1 vial.\n"
@@ -365,13 +391,10 @@ export default class ActivityModalStatus2 extends Component {
   // * Render Body * //
 
   renderOrder(){
-    const Order = this.props.Order;
-    const OrderID = (Order) ? Order.oid : "";
+    const Order = this.props.orders.get(this.props.order);
 
-    const Customer = (this.props.customer) ? this.props.customer : null;
-    const CustomerNumber = (Customer) ? Customer.kundenr  : "";
+    const Customer = this.props.customers.get(Order.BID);
     const CustomerName   = (Customer) ? Customer.UserName + " - " + Customer.Realname : "";
-    const Activity       = (Order) ? Order.total_amount_o : "";
 
     var AssignedActivity = 0;
     for (let vialID of this.props.selectedVials) {
@@ -379,35 +402,57 @@ export default class ActivityModalStatus2 extends Component {
       AssignedActivity += Number(Vial.activity)
     }
 
+    //Format is HH:MM - DD/MM/YYYY - Input format is YYYY-MM-DDTHH:MM:SS
+    const formattetOrderTime = `${Order.deliver_datetime.substring(11,13)
+    }:${Order.deliver_datetime.substring(14,16)} - ${Order.deliver_datetime.substring(8,10)
+    }/${Order.deliver_datetime.substring(5,7)}/${Order.deliver_datetime.substring(0,4)}`;
+
+    // The close icons of edit / calc have been decreed by an external source
     return(
       <div>
         <Table striped bordered>
           <tbody>
-            {renderTableRow("0", ["Order ID", OrderID])}
-            {renderTableRow("1", ["Kunde nummber:", CustomerNumber])}
-            {renderTableRow("2", ["Navn:" , CustomerName])}
-            {renderTableRow("3", ["Ønsket aktivitet:", Activity])}
-            {renderTableRow("4", ["Allokeret Aktivitet:", AssignedActivity])}
-            {renderTableRow("5", ["Bestilt Af:",  Order.username])}
-            {Order.comment ? renderTableRow("6", ["Kommentar", Order.comment]) : null}
+            {renderTableRow("1", ["Destination:" , CustomerName])}
+            {renderTableRow("2", ["Kørsel: ", Order.run])}
+            {renderTableRow("3", ["Bestilt til:", formattetOrderTime])}
+            {renderTableRow("4", ["Bestilt af:", Order.username])}
+            {renderTableRow("5", ["Bestilt aktivitet",
+          <Row>
+            <Col>{this.state.editingOrderedActivity ?
+              <FormControl
+                value={this.state.editOrderActivity}
+                onChange={changeState("editOrderActivity", this).bind(this)}
+              />
+             : Order.amount}</Col>
+            <Col md="auto" className="justify-content-end">{
+              this.state.editingOrderedActivity ?
+                renderClickableIcon("/static/images/accept.svg", this.toggleActivity().bind(this)) :
+                renderClickableIcon("/static/images/pen.svg", this.toggleActivity().bind(this))}
+              {renderClickableIcon("/static/images/calculator.svg")}</Col>
+          </Row>
+          ])}
+            {renderTableRow("6", ["Total aktivitet:", Order.total_amount * (1 + Customer.overhead / 100)])}
+            {renderTableRow("7", ["Allokeret Aktivitet:", AssignedActivity])}
+            {Order.comment ? renderTableRow("8", ["Kommentar", Order.comment]) : null}
           </tbody>
         </Table>
       </div>);
   }
 
   renderVials(){
-    const Order = this.props.Order;
+    const order = this.props.orders.get(this.props.order);
+    const Customer = this.props.customers.get(order.BID)
 
-    const Customer = (this.props.customer) ? this.props.customer : null;
     const CustomerNumber = (Customer) ? Customer.kundenr  : "";
     const vials_in_use = [];
     if (CustomerNumber) {
-      for(let [_, vial] of this.props.vials){
+      for(const [_, vial] of this.props.vials){
 
         if (vial.order_id !== null) continue;
         if (vial.customer !== CustomerNumber) continue;
         if (vial.filldate !==
-          `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`) continue;
+          `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${
+            FormatDateStr(this.props.date.getDate())}`) continue;
         vials_in_use.push(vial);
       }
     }
@@ -474,13 +519,15 @@ export default class ActivityModalStatus2 extends Component {
   // * Main render function * //
 
   render() {
+    const order = this.props.orders.get(this.props.order);
+
     return (
       <Modal
       show={this.props.show}
       size="lg"
       onHide={this.CloseModal.bind(this)}
       >
-      <Modal.Header>Order {this.props.Order.oid}</Modal.Header>
+      <Modal.Header>Order {order.oid}</Modal.Header>
       <Modal.Body>{this.renderBody()}</Modal.Body>
       <Modal.Footer>
         <Button onClick={this.confirmOrder.bind(this)}>Godkend</Button>

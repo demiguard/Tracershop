@@ -8,3 +8,6 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 def LMAP(func, List):
   return list(map(func, List))
+
+def LFILTER(func, List):
+  return list(filter(func, List))

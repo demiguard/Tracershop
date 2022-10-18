@@ -4,12 +4,13 @@
 
 """
 import collections
+from pprint import pprint
 import mysql.connector as mysql
 
 from django.test import TestCase
 from django import db
 
-from api.models import Database, Address, ServerConfiguration
+from database.models import Database, Address, ServerConfiguration
 from lib.SQL import SQLExecuter
 from lib.SQL.SQLController import SQL
 import constants
@@ -41,6 +42,7 @@ class InitialSetupTestCase(TestCase):
       Note there's extra tables in there however they are not used by this program
       NOTE: This test should not use SQLExecuter, but instead manually do the connection instead of using the wrapper
     """
-    tables_query = [ item for (item,) in SQLExecuter.ExecuteQuery("""SHOW TABLES""")]
+    tablesQuery = [QueryDict["Tables_in_test_tracershop"]
+      for QueryDict in SQLExecuter.ExecuteQuery("""SHOW TABLES""")]
 
-    self.assertSetEqual(set(tables_query), constants.LEGACY_TABLES)
+    self.assertSetEqual(set(tablesQuery), constants.LEGACY_TABLES)

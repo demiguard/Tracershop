@@ -21,7 +21,7 @@ class ApiOrderDate(View):
     except ValueError:
       return HttpResponseBadRequest()
     userID = request.GET['UserID']
-    
+
     closedDates = SQL.monthlyCloseDates(year, month)
     openDays = SQL.getOpenDays(userID)
     order = SQL.queryOrderByDate(dt_object, userID)

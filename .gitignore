@@ -8,11 +8,16 @@ tracershop/customer/migrations/
 production/api/migrations/
 production/frontend/migrations/
 production/frontend/node_modules/
+production/database/migrations/
+production/TracerAuth/migrations
 *.sqlite3
 main.js
 main.js*
 SECRET_KEY.py
 test_pdfs/
 pdfs/
+fonts/
 *.code-workspace
 legacy_code/
+.coverage
+config.py
