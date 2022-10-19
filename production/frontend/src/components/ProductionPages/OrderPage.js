@@ -7,6 +7,8 @@ import { db } from "/src/lib/localStorageDriver";
 import { CompareDates } from "/src/lib/utils";
 import { Calender, producitonGetMonthlyOrders, standardOrderMapping } from "../injectables/calender.js";
 
+import SiteStyles from '../../css/Site.module.css'
+
 const Tables = {
   activity : ActivityTable,
   injections : TOrderTable
@@ -54,7 +56,7 @@ export class OrderPage extends Component {
     const underline = tracer.id === this.state.activeTracer;
 
     return (
-      <Button className="navbarElem" key={tracer.name} sz="sm" onClick={() => {
+      <Button className={SiteStyles.Margin15lr} key={tracer.name} sz="sm" onClick={() => {
         db.set("activeTracer", tracer.id);
 
         this.setState({...this.state, activeTracer : tracer.id, activeTable : Tables["activity"]})}}
@@ -75,7 +77,7 @@ export class OrderPage extends Component {
 
     TableSwitchButtons.push((
       <Button
-        className="navbarElem"
+        className={SiteStyles.Margin15lr}
         key="special"
         sz="sm"
         onClick={() => {db.set("activeTracer", -1);this.setState({...this.state, activeTracer : -1, activeTable : Tables["injections"]})}}

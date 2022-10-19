@@ -38,8 +38,6 @@ class User(AbstractBaseUser):
   # However it should be ensured with appilcation level code, Sorry.
   OldTracerBaseID = models.IntegerField(unique=True, null=True, default=None)
 
-
-
   USERNAME_FIELD = 'username'
 
   def __str__(self):

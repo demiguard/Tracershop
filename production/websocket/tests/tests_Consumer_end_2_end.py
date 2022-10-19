@@ -27,10 +27,11 @@ import time
 
 from database.models import Address, Database, ServerConfiguration, User, UserGroups
 from constants import *
+
 from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
-from lib.utils import LFILTER
+from lib.utils import LFILTER, LMAP
 from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
 from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
 from websocket.DatabaseInterface import DatabaseInterface
@@ -50,13 +51,15 @@ app = ProtocolTypeRouter({
 class FakeDatetime(datetime.datetime):
   @classmethod
   def now(cls):
-    return datetime.datetime(2012,10,11,11,22,33)
+    return datetime.datetime(2012,10,11,11,22,33) # pragma: no cover
 
 
 #NOTE: that sadly the connection cannot be in a setup case,
 # due to it being in different event loop
 class ConsumerTestCase(TestCase):
   message_id = 6942069
+
+  SQL = DatabaseInterface()
 
   loginAdminMessage = message = {
       JSON_AUTH : {
@@ -100,7 +103,7 @@ class ConsumerTestCase(TestCase):
     ], "orders"
   )
 
-  vialStr = SQLFactory.tupleInsertQuery([
+  vialStr_1 = SQLFactory.tupleInsertQuery([
     ("customer", 1),
     ("charge", "Test_CE2E_1"),
     ("filldate", "2022-10-11"),
@@ -109,6 +112,37 @@ class ConsumerTestCase(TestCase):
     ("activity", 12942),
     ("ID", 62104)
   ], "VAL")
+
+  vialStr_2 = SQLFactory.tupleInsertQuery([
+    ("customer", 1),
+    ("charge", "Test_CE2E_1"),
+    ("filldate", "2022-10-11"),
+    ("filltime", "11:27:11"),
+    ("volume", 8.91),
+    ("activity", 32942),
+    ("ID", 62105)
+  ], "VAL")
+
+  vialStr_3 = SQLFactory.tupleInsertQuery([
+    ("customer", 1),
+    ("charge", "Test_CE2E_1"),
+    ("filldate", "2022-10-11"),
+    ("filltime", "11:27:11"),
+    ("volume", 8.91),
+    ("activity", 22942),
+    ("ID", 62106)
+  ], "VAL")
+
+  tracerStr = SQLFactory.tupleInsertQuery([
+    ("id", 863),
+    ("name", "TestTracer"),
+    ("isotope", 1),
+    ("n_injections", 3),
+    ("order_block", 60),
+    ("in_use", True),
+    ("tracer_type", 1),
+    ("longName", "TestTracerLongName")
+  ], "Tracers")
 
   async def _sendReceive(self, comm : WebsocketCommunicator,   message : Dict):
     await comm.send_json_to(message)
@@ -128,6 +162,7 @@ class ConsumerTestCase(TestCase):
 
   def tearDown(self):
     cleanTable("oid", "orders", self._testMethodName)
+    cleanTable("Id", "Users",self._testMethodName)
     t = time.time() - self.startTime
     #print('%s: %.3f' % (self.id(), t))
 
@@ -211,7 +246,8 @@ class ConsumerTestCase(TestCase):
          order.filldate < endDate, TEST_DATA_DICT[VialDataClass])
     self.assertListEqual(Vials, correctVials)
 
-    ##### Auth #####
+
+  ##### Auth #####
   async def test_login_persists(self):
     comm = WebsocketCommunicator(app,"ws/", headers=b'')
     _conn, _subprotocal = await comm.connect()
@@ -257,6 +293,7 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
 
   ##### Create Dataclass #####
+
   @useDataClassAsync(VialDataClass) # Added these to avoid an empty Vial database
   async def test_createVial(self):
     # Test
@@ -289,14 +326,43 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
 
     #Clean up
+
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID={JsonVial[KEYWORD_ID]}", Fetching.NONE)
 
+  async def test_CreateTracer(self):
+    BeforeTracers = await async_ExecuteQuery(f"SELECT * FROM Tracers WHERE {KEYWORD_NAME}=\"CreatedTracer\"", Fetching.ALL)
+    self.assertEqual(BeforeTracers, [])
+    TracerSkeleton = {
+          KEYWORD_NAME : "CreatedTracer",
+          KEYWORD_ISOTOPE: 1,
+          KEYWORD_INJECTIONS: 3,
+          KEYWORD_ORDER_BLOCK: 60,
+          KEYWORD_IN_USE : True,
+          KEYWORD_TRACER_TYPE : 1,
+          KEYWORD_LONG_NAME : "TestTracerLongName",
+      }
+
+    response = await self._loginAdminSendRecieve({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATATYPE : JSON_TRACER,
+      WEBSOCKET_DATA : TracerSkeleton
+    })
+
+    Tracers = await async_ExecuteQuery(f"SELECT * FROM Tracers WHERE {KEYWORD_NAME}=\"CreatedTracer\"", Fetching.ALL)
+    self.assertEqual(len(Tracers), 1)
+    Tracer = Tracers[0]
+
+    # Cleanup
+    await async_ExecuteQuery(f"DELETE FROM Tracers WHERE id={Tracer['id']}", Fetching.NONE)
 
   ##### Free Order ####
+
   @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
   async def test_free_order(self):
     await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
-    await async_ExecuteQuery(self.vialStr, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr_1, Fetching.NONE)
 
     comm = WebsocketCommunicator(app, "ws/", headers=b'')
     _conn, subprotocal = await comm.connect()
@@ -319,8 +385,9 @@ class ConsumerTestCase(TestCase):
     try:
       responseOrder = ActivityOrderDataClass(**loads(response[JSON_ACTIVITY_ORDER][0]))
     except Exception as E:
-      print(E)
-      print(response[JSON_ACTIVITY_ORDER][0])
+      pass
+      #print(E)
+      #print(response[JSON_ACTIVITY_ORDER][0])
 
     #Message Validation
     self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
@@ -336,14 +403,16 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(Order.volume, Vial.volume)
 
     # Cleanup
+    await comm.disconnect()
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
     await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
+
 
   @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
   async def test_free_dependant_orders(self):
     await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
     await async_ExecuteQuery(self.activityOrderDependant, Fetching.NONE)
-    await async_ExecuteQuery(self.vialStr, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr_1, Fetching.NONE)
 
     comm = WebsocketCommunicator(app, "ws/", headers=b'')
     _conn, subprotocal = await comm.connect()
@@ -376,9 +445,98 @@ class ConsumerTestCase(TestCase):
     self.assertEqual(Order.frigivet_amount, Vial.activity)
     self.assertEqual(Order.volume, Vial.volume)
 
-
-
     # Cleanup
+    await comm.disconnect()
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
     await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
     await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1338", Fetching.NONE)
+
+  @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
+  async def test_free_vial_dependant_orders(self):
+    await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
+    await async_ExecuteQuery(self.activityOrderDependant, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr_1, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr_2, Fetching.NONE)
+    await async_ExecuteQuery(self.vialStr_3, Fetching.NONE)
+
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+    login_message = await self._sendReceive(comm, self.loginAdminMessage)
+
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATA : {
+        JSON_ACTIVITY_ORDER : 1337,
+        JSON_VIAL : [62104, 62105, 62106]
+      }
+    })
+
+    Vial_1 = VialDataClass(**await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62104", Fetching.ONE))
+    Vial_2 = VialDataClass(**await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62105", Fetching.ONE))
+    Vial_3 = VialDataClass(**await async_ExecuteQuery(f"SELECT {VialDataClass.getSQLFields()} FROM VAL WHERE ID=62106", Fetching.ONE))
+    Order = ActivityOrderDataClass(**await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE oid=1337", Fetching.ONE))
+    DependantOrders = LMAP(lambda x: ActivityOrderDataClass(**x), await async_ExecuteQuery(f"SELECT {ActivityOrderDataClass.getSQLFields()} FROM orders WHERE COID=1337", Fetching.ALL))
+
+    #Message Validation
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(len(response[JSON_ACTIVITY_ORDER]),4)
+    self.assertEqual(len(response[JSON_VIAL]),3)
+    #Vial Validation
+    self.assertEqual(Vial_1.order_id, 1337)
+    #Order Validation
+    self.assertEqual(Order.status, 3)
+    self.assertEqual(Order.batchnr, Vial_1.charge)
+    self.assertEqual(Order.frigivet_amount, Vial_1.activity)
+    self.assertEqual(Order.volume, Vial_1.volume)
+
+    # Cleanup
+    await comm.disconnect()
+    await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
+    await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62105", Fetching.NONE)
+    await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62106", Fetching.NONE)
+    await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
+    for DependantOrder in DependantOrders:
+      await async_ExecuteQuery(f"DELETE FROM orders WHERE oid={DependantOrder.oid}", Fetching.NONE)
+
+
+
+  ##### Deleting Dataclasses #####
+
+  @useDataClassAsync(IsotopeDataClass)
+  async def test_HandleDeleteDataclass_Success(self):
+    await async_ExecuteQuery(self.tracerStr, Fetching.NONE)
+
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+    login_message = await self._sendReceive(comm, self.loginAdminMessage)
+
+    response = await self._sendReceive(comm,{
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
+      WEBSOCKET_DATATYPE : JSON_TRACER,
+      WEBSOCKET_DATA : {
+          "id" : 863, # Bug with naming Here, GOD I HATE THAT OLD DB
+          KEYWORD_NAME : "TestTracer",
+          KEYWORD_ISOTOPE: 1,
+          KEYWORD_INJECTIONS: 3,
+          KEYWORD_ORDER_BLOCK: 60,
+          KEYWORD_IN_USE : True,
+          KEYWORD_TRACER_TYPE : 1,
+          KEYWORD_LONG_NAME : "TestTracerLongName",
+      }
+    })
+
+
+    await comm.disconnect()
+    Tracers = await async_ExecuteQuery("""SELECT * from Tracers WHERE ID=863""", Fetching.ALL)
+    self.assertListEqual(Tracers, [])
+
+
+
+  ##### Error handling #####
+  # These Test showcase how the Consumer handles messages, that are invalid in some form or another
+

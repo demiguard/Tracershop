@@ -186,10 +186,13 @@ class PDFsGenerationTest(TestCase):
     )
 
   def test_PDF_Order_COID_many_vials(self):
-    pdfs.DrawSimpleActivityOrder  (
+    pdfs.DrawSimpleActivityOrder(
       "test_pdfs/mail_template_order_coid_many_vial.pdf",
       self.test_customer,
       self.test_Order,
       [self.test_vial_1, self.test_vial_2, self.test_vial_3],
       self.test_tracer, self.test_isotope
     )
+
+  def test_PDF_Order(self): # Maybe Take another look here, There seams to be some issue here
+    pdfs.DrawActivityOrder("test_pdfs/DrawActivityOrder.pdf", self.test_customer, self.test_Order, [self.test_vial_1])

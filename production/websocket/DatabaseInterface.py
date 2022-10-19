@@ -23,7 +23,7 @@ from lib import pdfs
 
 
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Tuple
+from typing import Dict, List, Optional, Tuple
 import logging
 
 logger = logging.getLogger('DebugLogger')
@@ -122,7 +122,7 @@ class DatabaseInterface():
     return self.SQL.getServerConfig()
 
   @database_sync_to_async
-  def getElement(self, ID: int, Dataclass):
+  def getElement(self, ID: int, Dataclass) -> Optional[JsonSerilizableDataClass]:
     return self.SQL.getElement(ID, Dataclass)
 
   @database_sync_to_async

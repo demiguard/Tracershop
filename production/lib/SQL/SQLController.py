@@ -51,13 +51,11 @@ class SQL():
 
     if SQLResult:
       if fetch == Fetching.ALL:
-        return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
+        return SQLFormatter.FormatSQLDictAsClass(SQLResult, returnClass)
       elif fetch == Fetching.ONE:
         return [returnClass(**SQLResult)]
-      else:
-        return []
-    else:
-      return []
+
+    return []
 
   @staticmethod
   def __ExecuteMany(
@@ -69,13 +67,11 @@ class SQL():
     SQLResult = SQLExecuter.ExecuteManyQueries(Queries, fetch=fetch)
     if SQLResult:
       if fetch == Fetching.ALL:
-        return SQLFormatter.FormatSQLTupleAsClass(SQLResult, returnClass)
+        return SQLFormatter.FormatSQLDictAsClass(SQLResult, returnClass)
       elif fetch == Fetching.ONE:
         return [returnClass(**SQLResult)]
-      else:
-        return []
-    else:
-      return []
+
+    return []
   # Get methods
   ##### Universal methods #####
   @classmethod
@@ -154,23 +150,6 @@ class SQL():
     """
     return LMAP(EmployeeDataClass.fromUser, User.objects.all())
 
-  @classmethod
-  def createVial(cls, Vial : VialDataClass) -> VialDataClass:
-    """This takes a vial skeleton and creates it in the database.
-      Then it fetches it and creates a updated Vial
-
-    Args:
-        Vial (VialDataClass): Vial to saved to database
-    """
-    returnList = cls.__ExecuteMany(
-      [SQLFactory.InsertVial, SQLFactory.getLastElement],
-      VialDataClass, Fetching.ONE, [[Vial],[VialDataClass]]
-    )
-    return returnList[0]
-
-  @classmethod
-  def updateVial(cls, Vial : VialDataClass) -> None:
-    cls.__Execute(SQLFactory.updateVial, JsonSerilizableDataClass, Fetching.NONE, Vial)
 
   @classmethod
   def freeDependantOrder(

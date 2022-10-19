@@ -268,14 +268,6 @@ def CreateTestDatabase(DatabaseConfig):
     )
   """)
 
-  cur.execute("""
-    CREATE TABLE blockDeliverDate(
-      BDID INT PRIMARY KEY AUTO_INCREMENT,
-      ddate DATE
-    )
-  """)
-
-
   conn.close()
   return databaseName
 

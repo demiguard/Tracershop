@@ -28,7 +28,7 @@ from typing import Dict, List
 
 from constants import * # Import the many WEBSOCKET constants
 from lib.decorators import typeCheckfunc
-from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLID, toDateTime
+from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
@@ -41,7 +41,7 @@ import logging
 from pprint import pprint
 
 logger = logging.getLogger('DebugLogger')
-
+error_logger = logging.getLogger("ErrorLogger")
 
 class Consumer(AsyncJsonWebsocketConsumer):
   """This is the websocket that communicates with all clients.
@@ -132,12 +132,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
       await handler(self, message)
     except Exception as E: # Very broad catch here, to prevent a hanging message on the client side
-      pprint(message)
       raise E
-      await self.HandleUnknownError(E, message)
+      #await self.HandleUnknownError(E, message)
 
   ### Error handling ###
-  async def HandleUnknownError(exception : Exception, FailingMessage : dict):
+  async def HandleUnknownError(self, exception : Exception, FailingMessage : dict):
     """This Function is triggered when an unhandle exception is happens server side.
     It sends an Error message back to the client informing it,
     that server was unable to process the request, due to some unknown bug.
@@ -149,7 +148,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
         exception (Exception): _description_
         FailingMessage : dict
     """
-    pass
+    # Error_logger.error(f"Message {FailingMessage} Failed with Exception {exception} ")
+    await self.send_json({
+      { WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
+        WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
+      }
+    })
 
   async def HandleKnownError(self, message, error):
     if error == ERROR_NO_MESSAGE_ID:
@@ -317,6 +321,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], DeliverTimeDataClass)
     if message[WEBSOCKET_DATATYPE] == JSON_CLOSEDDATE:
       dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], ClosedDateDataClass)
+    if message[WEBSOCKET_DATATYPE] == JSON_TRACER:
+      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], TracerDataClass)
     # The aesthetically challenged methods
     if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
       spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spoky ok?
@@ -341,10 +347,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
       skeleton[KEYWORD_USERNAME] = self.scope['user'].username
       dataClass = await self.db.createDataClass(skeleton, InjectionOrderDataClass)
     # Checking for unhandled case
-    if 'dataClass' not in locals():
+    if dataClass == None:
       error_message = f"Unhandled attempt to create a data class: {message[WEBSOCKET_DATATYPE]}"
       raise ValueError(error_message)
-    ID = ParseSQLID(dataClass.getIDField())
+    ID = ParseSQLField(dataClass.getIDField())
 
     await self.channel_layer.group_send(
       self.global_group,{
@@ -435,7 +441,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
           }
         )
     else:
-      print("No LegacyMode is no go")
+      print("No LegacyMode is no go") # pragma: no cover
 
   async def HandleMoveOrders(self, message : Dict):
     """ This handles a request to move an order.
@@ -607,7 +613,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
     await self.db.updateDataClass(dataClassInstance)
-    ID = ParseSQLID(dataClass.getIDField())
+    ID = ParseSQLField(dataClass.getIDField())
 
     await self.channel_layer.group_send(self.global_group, {
       WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,
@@ -622,8 +628,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def HandleDeleteDataClass(self, message : Dict):
     dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
     data = dataClass(**message[WEBSOCKET_DATA])
-    if(self.db.CanDelete(data)):
-      ID = ParseSQLID(dataClass.getIDField())
+    if(await self.db.CanDelete(data)):
+      ID = ParseSQLField(dataClass.getIDField())
 
       await self.db.DeleteIDs([data.__getattribute__(ID)], dataClass)
 

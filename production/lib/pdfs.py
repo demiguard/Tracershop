@@ -93,7 +93,7 @@ class MailTemplate(canvas.Canvas):
       COID_ORDER : Optional[ActivityOrderDataClass] = None,
       VialOrders : Optional[List[ActivityOrderDataClass]] = None
     ):
-  
+
     #Helper Funcions
     def ExtractOrderData(Order : ActivityOrderDataClass):
       freeDateTimestr = "Fejl i database"
@@ -112,15 +112,15 @@ class MailTemplate(canvas.Canvas):
 
     self.setFont(self.__font, self.__font_size)
     self.setStrokeColorRGB(0.0,0.0,0.0)
-    
-    #Text 
+
+    #Text
     if COID_ORDER:
       self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet, den indeholder også Sporestof til Order {COID_ORDER.oid}")
     else:
       self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet.")
     y_cursor -= self.__line_width *2
-    
-    # Table 
+
+    # Table
     HeaderText = [
       "Order ID",
       "Bestilt",
@@ -132,7 +132,7 @@ class MailTemplate(canvas.Canvas):
     OrderData = ExtractOrderData(Order)
 
     lines = [HeaderText, OrderData]
-    
+
     if COID_ORDER:
       CoidData = ExtractOrderData(COID_ORDER)
       lines.append(CoidData)
@@ -142,7 +142,7 @@ class MailTemplate(canvas.Canvas):
         VialData = ExtractOrderData(VialOrder)
         lines.append(VialData)
 
-    
+
     y_cursor = self.drawTable(x_cursor, y_cursor, self.__table_width, lines)
     y_cursor -= 5
 
@@ -153,7 +153,7 @@ class MailTemplate(canvas.Canvas):
     """[summary]
 
     Args:
-        x_cursor (int): The Cursor 
+        x_cursor (int): The Cursor
         y_cursor (int): [description]
         Vials (List[VialDataClass]): [description]
     Returns:
@@ -180,7 +180,7 @@ class MailTemplate(canvas.Canvas):
     ]
     for Vial in Vials:
       lines.append(ExtractVial(Vial))
-    
+
     y_cursor = self.drawTable(x_cursor, y_cursor, self.__table_width, lines)
 
     return y_cursor
@@ -211,7 +211,7 @@ class MailTemplate(canvas.Canvas):
     """
     x_start, x_end = order_pair(x_1, x_2)
     y_start, y_end = order_pair(y_1, y_2)
-    
+
     box_top_line = (x_start, y_start, x_end, y_start)
     box_lef_line = (x_start, y_start, x_start, y_end)
     box_bot_line = (x_start, y_end, x_end, y_end)

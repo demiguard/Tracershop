@@ -8,6 +8,11 @@
   margin-bottom: 0px;
 }
 
+.Margin15lr {
+  margin-left: 15px;
+  margin-right: 15px;
+}
+
 .Margin50lr {
   margin-left: 50px !important;
   margin-right: 50px !important;
@@ -19,4 +24,9 @@
 
 .mariBold{
   font-family: "maribold", "Helvetica Neue, Helvetica, Arial, sans-serif";
+}
+
+.pad0tb {
+  padding-top: 0px;
+  padding-bottom: 0px;
 }

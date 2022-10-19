@@ -18,40 +18,14 @@ from datetime import datetime, date, time
 from lib.Formatting import dateConverter, timeConverter , datetimeConverter
 from lib.expections import SQLInjectionException
 
-
-
-def FormatSQLTuple(SQLQuery : List[Tuple], names : List[str]) -> List[Dict]:
-  """
-    This function takes a list of tuples and converts it into a list of dicts
-    with the names from the arguments.
-
-    Names should have the same length as the tuple.
-    The final list of length equal to SQL query
-
-    Args:
-      SQLQuery : List[Tuple]
-      names    : List[Str]
-    Return
-      List[Dict] - The tuples converted to dicts
-
-    Example:
-      >>>FormatSQLTuple([(1,2), (2,3)],["a","b"])
-      [{"a" : 1, "b" : 2 }, {"a" : 2, "b" : 3 }]
-
-  """
-  return [
-    { name : query[i] for (i, name) in enumerate(names)}
-      for query in SQLQuery
-  ]
-
-def FormatSQLTupleAsClass(SQLResult: Optional[List[Tuple]], cls):
+def FormatSQLDictAsClass(SQLResult: List[Tuple], cls):
   """
     This function converts a list of tuples queried from the database into a list
   """
   if SQLResult:
     return list(map(lambda ClassTuple : cls(**ClassTuple), SQLResult))
   else:
-    return None
+    return []
 
 
 def checkForSQLInjection(SQLquery : str):
@@ -79,7 +53,6 @@ def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
   Returns:
       Any: returns a value ready to be inserted into the database by a format string. Type is dependant on input type
   """
-
   valueType = type(value)
   if valueType == int:
     return value

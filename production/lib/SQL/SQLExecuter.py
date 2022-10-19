@@ -21,13 +21,15 @@ class Fetching(enum.Enum):
   ONE = 2
   NONE = 3
 
+# There's a quite few #pragma: no cover, this is cases where there the server have been incorrectly configured or can't connect to the database
+
 class DataBaseConnectionWrapper(object):
   def __init__(self):
     pass
   def __enter__(self):
     try:
       SC = ServerConfiguration.objects.get(ID=1)
-    except ServerConfiguration.DoesNotExist:
+    except ServerConfiguration.DoesNotExist: # pragma: no cover
       raise DatabaseNotSetupException
     database = SC.ExternalDatabase
     databaseConfig = {
@@ -46,10 +48,9 @@ class DataBaseConnectionWrapper(object):
       self.connected = True
       self.connection.get_warnings = True
       self.cursor = self.connection.cursor(dictionary=True)
-      return self
-    except mysql.Error as Err:
+    except mysql.Error as Err: # pragma: no cover
       self.connected = False
-      return self
+    return self
   def __exit__(self, type, value, traceback):
     if self.connected:
       self.connection.close()
@@ -61,7 +62,7 @@ def ExecuteQuery(Query : str, fetch = Fetching.ALL):
       logger.debug(Query)
       Wrapper.cursor.execute(Query)
       warns = Wrapper.cursor.fetchwarnings()
-      if warns:
+      if warns: # pragma: no cover
         logger.warn(warns)
       if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
         FetchedVals = Wrapper.cursor.fetchall()
@@ -71,7 +72,7 @@ def ExecuteQuery(Query : str, fetch = Fetching.ALL):
         Wrapper.connection.rollback()
         raise DatabaseInvalidQueriesConfiguration(Query)
       Wrapper.connection.commit()
-    else:
+    else: #pragma: no cover
       pprint(Wrapper.databaseConfig)
       raise DatabaseCouldNotConnect
   if fetch != Fetching.NONE:
@@ -86,7 +87,7 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
           logger.debug(Query)
           Wrapper.cursor.execute(Query)
           warns = Wrapper.cursor.fetchwarnings()
-          if warns:
+          if warns: # pragma: no cover
             logger.warn(warns)
           if fetch == Fetching.ALL and Wrapper.cursor.with_rows:
             FetchedVals = Wrapper.cursor.fetchall()

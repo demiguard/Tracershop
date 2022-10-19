@@ -2,12 +2,14 @@
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
+from dataclasses import dataclass
 from django.test import TestCase
 
 from lib import ProductionDataClasses as PDC
 from lib.SQL import SQLFactory
 
 from datetime import date, datetime, time
+from lib.utils import LMAP
 
 from tests.test_DataClasses import *
 
@@ -118,3 +120,68 @@ longName="I forgot this name"
       ("col3", 123)
     ],"TestTable")
     self.assertEqual(Query, "INSERT INTO TestTable (col1, col2, col3) VALUES (\"val1\", \"val2\", 123)")
+
+  def test_AuthenticateUser(self):
+    """This test agaisnt the old database authentication system
+     A system where it have unencrypted passwords!
+    """
+    test_username = "Test"
+    test_password = "TestPassword"
+
+    Query = SQLFactory.authenticateUser(test_username, test_password)
+
+    self.assertEqual(Query, f"""SELECT
+      Username,
+      Id
+    FROM
+      Users
+    WHERE
+      Username=\"{test_username}\" AND
+      Password=\"{test_password}\"""")
+
+  def test_GetConditionalElement(self):
+    """ I think this is get just a GetElemenet but fancy?
+    """
+
+    testTable = "TestTable"
+    condition = "attr = \"Hello world\""
+
+    @dataclass(init=False)
+    class TestDataClass(JsonSerilizableDataClass):
+      attr1 : str
+      attr2 : int
+
+      @classmethod
+      def getSQLTable(cls):
+        return testTable
+
+    Query = SQLFactory.GetConditionalElement(condition, TestDataClass)
+
+    self.assertEqual(Query, f"""SELECT
+      attr1, attr2
+    FROM
+      {testTable}
+    WHERE
+      {condition}""")
+
+  def test_deleteIDs(self):
+    testTable = "TestTable"
+
+    @dataclass(init=False)
+    class TestDataClass(JsonSerilizableDataClass):
+      attr1 : str
+      attr2 : int
+
+      @classmethod
+      def getSQLTable(cls):
+        return testTable
+
+      @classmethod
+      def getIDField(cls):
+        return "attr2"
+
+    ids = [1,2,3,4,5]
+
+    Query = SQLFactory.deleteIDs(ids, TestDataClass)
+    self.assertEqual(Query, f"""DELETE FROM {testTable}
+    WHERE attr2 IN ({", ".join(LMAP(str,ids))})""")

@@ -2,10 +2,28 @@ from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
 from database.models import User, UserGroups
 
+import re
+
 from lib.SQL.SQLController import SQL
 
+
+def validString(string :str) -> bool:
+  """Checks if a string contains any funny Characters
+
+  Args:
+      string (str): String to be checked
+
+  Returns:
+      bool: Indicates if the string is valid or not, so if False, somebody might try and do some funny stuff
+  """
+  regex = re.compile(r"^[A-z0-9æøåÆØÅ]+$")
+
+  if regex.match(string): # This returns a match object and we just truthy of that object
+    return True
+  return False
+
 class TracershopAuthenticationBackend(BaseBackend):
-  def authenticate(self,request, username=None, password=None) -> User:
+  def authenticate(self, request, username=None, password=None) -> User:
     if username and password:
       try:
         user = User.objects.get(username=username)
@@ -18,7 +36,7 @@ class TracershopAuthenticationBackend(BaseBackend):
   def get_user_from_old_database(self, username, password):
     valid_old_user = self.SQL.authenticateUser(username, password)
     if valid_old_user:
-      user = User(username=username, OldTracerBaseID=valid_old_user.OldTracerBaseID, UserGroup=UserGroups.Production)
+      user = User(username=username, OldTracerBaseID=valid_old_user.Id, UserGroup=UserGroups.ProductionUser)
       user.set_password(password)
       user.save()
       return user

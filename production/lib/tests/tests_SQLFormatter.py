@@ -1,8 +1,9 @@
 from datetime import datetime
 from django.test import TestCase
 
-from lib.ProductionDataClasses import ActivityOrderDataClass
-from lib.SQL.SQLFormatter import FormatSQLTupleAsClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, IsotopeDataClass
+from lib.SQL.SQLFormatter import FormatSQLDictAsClass, SerilizeToSQLValue, checkForSQLInjection
+from lib.expections import SQLInjectionException
 
 
 class SQLFormatterTestCase(TestCase):
@@ -27,8 +28,8 @@ class SQLFormatterTestCase(TestCase):
      "username" : "TestUser",
   }
 
-  def test_FormatSQLTupleAsClass_ActivtityOrderDataClass(self):
-    AODC = FormatSQLTupleAsClass([self.ActivityOrderDataClassData], ActivityOrderDataClass)[0]
+  def test_FormatSQLDictAsClass_ActivtityOrderDataClass(self):
+    AODC = FormatSQLDictAsClass([self.ActivityOrderDataClassData], ActivityOrderDataClass)[0]
 
     self.assertEqual(AODC.deliver_datetime,datetime(2022, 10, 11, 11, 30, 0))
     self.assertEqual(AODC.status, 3)
@@ -47,3 +48,14 @@ class SQLFormatterTestCase(TestCase):
     self.assertEqual(AODC.comment, "Test Comment")
     self.assertEqual(AODC.username, "TestUser")
     self.assertEqual(AODC.frigivet_datetime, datetime(2022, 10, 11, 11, 27, 12))
+
+  def test_FormatSQLDictAsClass_empty(self):
+    self.assertEqual(len(FormatSQLDictAsClass([], ActivityOrderDataClass)), 0)
+
+
+  def test_SQLInjection(self):
+    SQLInjectionQuery = """SELECT * FROM Users WHERE username = \"user\"; DROP DATABASE database"""
+    self.assertRaises(SQLInjectionException, checkForSQLInjection, SQLInjectionQuery)
+
+  def test_UnknownSQL(self):
+    self.assertRaises(TypeError, SerilizeToSQLValue, IsotopeDataClass(ID=3, name="TestIsotope", halflife=964.12))

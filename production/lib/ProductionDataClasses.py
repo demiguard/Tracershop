@@ -99,7 +99,7 @@ class JsonSerilizableDataClass:
     Raises:
         NotImplemented: If the super class doesn't have field upon which you can create a datetime, then this raises an not implemented.
     """
-    raise NotImplemented
+    raise NotImplemented # pragma: no cover
 
   @classmethod
   @abstractclassmethod
@@ -109,7 +109,7 @@ class JsonSerilizableDataClass:
     Raises:
         NotImplemented: _description_
     """
-    raise NotImplemented
+    raise NotImplemented # pragma: no cover
 
   @classmethod
   def createDataClassQuery(cls, skeleton) -> str:
@@ -529,11 +529,15 @@ class CustomerDataClass(JsonSerilizableDataClass):
 class EmployeeDataClass(JsonSerilizableDataClass):
   #This datacase is not a datastruct from the old but instead is technically a user
   Username : str
-  OldTracerBaseID : int
+  Id : int
+
+  @staticmethod
+  def getSQLTable():
+    return "Users"
 
   @classmethod
   def fromUser(cls, user: User):
-    return cls(Username=user.username, OldTracerBaseID=user.OldTracerBaseID)
+    return cls(Username=user.username, Id=user.id)
 
 @dataclass(init=False)
 class ClosedDateDataClass(JsonSerilizableDataClass):

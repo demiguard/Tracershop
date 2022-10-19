@@ -188,7 +188,7 @@ export class TOrderTable extends Component {
       }
       { Orders_complete.length == 0 && Orders_incompelte.length == 0 ?
         <div>
-          <p>Der er ingen ordre af vise til {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
+          <p>Der er ingen Special ordre af vise til {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
         </div> : null
 
       }

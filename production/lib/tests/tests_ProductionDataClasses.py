@@ -227,3 +227,6 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
   def test_ActivityOrderSQLFields(self):
     Expected = "deliver_datetime, oid, status, amount, amount_o, total_amount, total_amount_o, tracer, run, BID, batchnr, COID, frigivet_af, frigivet_amount, volume, frigivet_datetime, comment, username"
     self.assertEqual(ActivityOrderDataClass.getSQLFields(), Expected)
+
+  def test_UnknownDataClasss(self):
+    self.assertRaises(ValueError, findDataClass, "UnknownDataClass")

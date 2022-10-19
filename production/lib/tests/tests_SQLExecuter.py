@@ -16,6 +16,10 @@ from tests.helpers import cleanTable
 
 from threading import Thread, Event
 
+# There's a quite few #pragma: no cover in  SQLExecuter,
+# This is cases where there the server have been incorrectly configured or can't connect to the database
+# They are also there to make the debugging a bit eaiser by rasing queries if an invalid query is made
+
 class SQLExecuterBasicsTestCase(TestCase):
   ##### Easy basic tests #####
   # These tests just shows the very basic use case for SQLExecuter
@@ -58,7 +62,29 @@ class SQLExecuterBasicsTestCase(TestCase):
     self.assertListEqual([self.isotope_tuple], select_res_1)
     self.assertListEqual(select_res_2,[])
 
+  def test_invalid_fetching_TrueFetchingIsNone_ExecuteQuery(self):
+    self.assertRaises(DatabaseInvalidQueriesConfiguration, SQLExecuter.ExecuteQuery, f"""INSERT INTO isotopes(name, halflife, id)
+            VALUES (\"{self.isotope_tuple["name"]}\",{self.isotope_tuple["halflife"]},{self.isotope_tuple["id"]})
+    """, Fetching.ALL)
+
+    self.assertEqual(SQLExecuter.ExecuteQuery(f"""
+        SELECT name, halflife, id FROM isotopes
+    """), [])
+
+
+  def test_invalid_fetching_TrueFetchingIsNone_ExecuteManyQueries(self):
+    self.assertRaises(DatabaseInvalidQueriesConfiguration, SQLExecuter.ExecuteManyQueries, [f"""INSERT INTO isotopes(name, halflife, id)
+            VALUES (\"{self.isotope_tuple["name"]}\",{self.isotope_tuple["halflife"]},{self.isotope_tuple["id"]})
+    """], Fetching.ALL)
+
+    self.assertEqual(SQLExecuter.ExecuteQuery(f"""
+        SELECT name, halflife, id FROM isotopes
+    """), [])
+
+
+
   # Actual tests
+
   def test_many_query_rollback(self):
     """Tests if ExecuteManyQueries query rolls back after invalid an invalid Query"""
     invalidQuery = f"""SELECT name, halflife, id, doesntExists FROM isotopes"""

@@ -1,5 +1,7 @@
+from doctest import testmod
 from django.test import TestCase
 from django.http import HttpResponse, JsonResponse
+from django.db import models
 
 from datetime import time
 
@@ -7,6 +9,8 @@ from lib import ProductionJSON as PJSON
 from lib import ProductionDataClasses as DC
 from typing import Dict
 
+
+# Very lackluster testing :(
 
 class ProductionJSONResponseTestCase(TestCase):
   json_kw_1 = "kw_1"
@@ -51,3 +55,18 @@ class ProductionJSONResponseTestCase(TestCase):
     self.assertEqual(dataDict["run"], 1)
 
     # Final step is in tests_ProductionDataClasses
+
+  def test_model_encoding(self):
+    # This is a sharp edge of program, see when a program sends a message to the server
+    # There's a regis database layer. Now this database can only accept, standard dict or objects.
+    # Which these model classes are too complicated for. Therefore this test is kinda pointless
+    # Since in any case where this code runs, the regis layer is gonna throw an error.
+    # Never the less, this is a shortcomming of regis not my program.
+    # No shade, Regis is an amazing piece of software
+    class testModel(models.Model):
+      ID = models.IntegerField(primary_key=True)
+
+    tm = testModel(ID=3)
+
+    self.assertEqual(PJSON.encode(tm), '\"{\\\"model\\\": \\\"lib.testmodel\\\", \\\"pk\\\": 3, \\\"fields\\\": {}}\"')
+

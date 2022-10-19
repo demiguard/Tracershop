@@ -1,22 +1,17 @@
 import json
 
-from constants import TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
+import re
+
+from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_JS, SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
 from datetime import date, time, datetime
 
-def ParseJSONRequest(request):
-  if request.body:
-    return json.load(request)
-  else:
-    return {}
-
-def convertIntToStrLen2(INT : int) -> str:
-  INT = str(INT)
-  if len(INT) == 1:
-    return "0" + INT
-  return INT
-
 def FormatDateTimeJStoSQL(datetimestr : str) -> str:
-  return datetimestr.replace("T", " ")
+  if re.match(DATETIME_REGULAR_EXPRESSION_JS, datetimestr):
+    return datetimestr.replace("T", " ")
+  if re.match(DATETIME_REGULAR_EXPRESSION, datetimestr):
+    return datetimestr
+  else: #
+    raise ValueError("Input is not datetime format")
 
 def dateConverter(Date : date, Format: str=DATE_FORMAT) -> str:
   """
@@ -54,9 +49,24 @@ def toDate(DateStr : str, Format: str=DATE_FORMAT) -> date:
 def mergeDateAndTime(Date : date, Time: time) -> datetime:
   return datetime(Date.year, Date.month, Date.day, Time.hour, Time.minute, Time.second)
 
-def ParseSQLID(SQL_ID) -> str:
-  if '.' in SQL_ID:
-    _ , ID = SQL_ID.split(".")
+def ParseSQLField(SQL_Field : str) -> str:
+  """Extracts the Field name from a composite field
+
+  Args:
+      SQL_Field (str): The string on the format <table>.<name>
+
+  Returns:
+      str: <name>
+  """
+  # Some dataclasses are compositions of multiple tables.
+  # So their field name is <table>.<name>, which is not a valid python attribute value
+  # This Functions extract the correct name
+
+  if not re.match(SQL_TABLE_REGULAR_EXPRESSION, SQL_Field):
+    raise ValueError("Input is not on correct format")
+
+  if '.' in SQL_Field:
+    _ , ID = SQL_Field.split(".")
   else:
-    ID = SQL_ID
+    ID = SQL_Field
   return ID

@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from production.SECRET_KEY import KEY
-from production.config import debug_file_log, SQL_file_log
+from production.config import debug_file_log, SQL_file_log, error_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -189,15 +189,22 @@ LOGGING = {
         },
         'myHandler' : {
             'level' : 'DEBUG',
-            'class' : 'logging.FileHandler',
+            'class' : 'logging.FileHandler', # Should be changed to rotating file handler
             'filename' : debug_file_log,
             'formatter' : 'django.server'
         },
         'SQLHandler' : {
             'level' : 'DEBUG',
-            'class' : 'logging.FileHandler',
+            'class' : 'logging.FileHandler', # Should be changed to rotating file handler
             'filename' : SQL_file_log,
             'formatter' : 'SQL'
+        },
+        'ErrorHandler' : {
+            'level' : 'ERROR',
+            'class' : 'logging.FileHandler', # Should be changed to rotating file handler
+            'filename' : error_file_log,
+            'formatter' : 'django.server'
+
         }
     },
     'loggers': {
@@ -215,7 +222,12 @@ LOGGING = {
             'propagate': False,
         },
         'SQLLogger' : {
-            'handlers' : ['SQLHandler', 'console']
+            'handlers' : ['SQLHandler', 'console'],
+            'level' : 'INFO'
+        },
+        'ErrorLogger' : {
+            'handlers': ['ErrorHandler'],
+            'level' : 'ERROR'
         }
     }
 }

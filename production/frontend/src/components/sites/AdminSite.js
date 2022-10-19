@@ -7,6 +7,7 @@ import { ProductionSite } from "./productionSite";
 import { ShopSite } from "./ShopSite";
 
 import styles from "/src/css/Navbar.module.css"
+import SiteStyles from "/src/css/Site.module.css"
 
 export { AdminSite }
 
@@ -64,7 +65,7 @@ class AdminSite extends Component {
     const NavbarAdmin = [
       (
       <NavDropdown
-        className={styles.NavbarElement}
+        className={styles.NavbarElement + " btn-outline-primary " + SiteStyles.pad0tb}
         title={this.state.ActiveSite}
         key="SiteSelector"
       >
