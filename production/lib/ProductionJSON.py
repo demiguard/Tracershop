@@ -10,6 +10,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.db.models import Model
+from django.core.serializers import serialize
 
 from lib.ProductionDataClasses import JsonSerilizableDataClass
 
@@ -19,7 +20,8 @@ import json
 class ProductionJSONEncoder(DjangoJSONEncoder):
   def default(self, o):
     if isinstance(o, Model):
-      return str(o)
+      stuff = serialize('json', [o])
+      return stuff[1:-1]
     if isinstance(o, JsonSerilizableDataClass):
       responseStr = '{\n'
       fields = [ field.name for field in o.getFields()]
