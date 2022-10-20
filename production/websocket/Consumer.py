@@ -128,7 +128,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
         return
 
       handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
-      if handler == None:
+      if handler == None: # pragma no cover
+        # This should be imposible to reach, since the validatemessage should throw an error.
+        # The only case this should happen is when a message type have been added but a handler have been made
+        # I.E It's a NOT implimented case.
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
 
       await handler(self, message)
@@ -136,9 +139,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       user = self.scope['user']
       error_logger.error(f"SQL injection detected by user: {user.username}")
       # Log Some stuff
-
-    except Exception as E: # Very broad catch here, to prevent a hanging message on the client side
-      raise E
+    except Exception as E: # pragma: no cover
+      raise E # Very broad catch here, to prevent a hanging message on the client side
       #await self.HandleUnknownError(E, message)
 
   ### Error handling ###
@@ -159,7 +161,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       { WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
         WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
       }
-    })
+    }) # pragma: cover
 
   async def HandleKnownError(self, message, error):
     if error == ERROR_NO_MESSAGE_ID:
@@ -167,7 +169,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_SUCCESS: error
       })
     else:
-      print(error, message)
       await self.send_json({
         WEBSOCKET_MESSAGE_SUCCESS: error,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]

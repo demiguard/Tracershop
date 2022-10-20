@@ -19,8 +19,11 @@ from django.core.asgi import get_asgi_application
 from django.urls import re_path
 from django.test import TestCase
 
+from asyncio.exceptions import TimeoutError
+
 import datetime
 from json import loads
+from logging import ERROR
 from pprint import pprint
 from typing import Dict
 import time
@@ -30,7 +33,7 @@ from constants import *
 
 from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFactory
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.utils import LFILTER, LMAP
 from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
 from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
@@ -357,6 +360,108 @@ class ConsumerTestCase(TestCase):
     # Cleanup
     await async_ExecuteQuery(f"DELETE FROM Tracers WHERE id={Tracer['id']}", Fetching.NONE)
 
+  async def test_CreateBlockDeliverDate(self):
+    BDDskeleton = {
+      KEYWORD_DDATE : "2019-11-20"
+    }
+    BeforeBlockDeliverDates = await async_ExecuteQuery(f"SELECT * FROM blockDeliverDate WHERE {KEYWORD_DDATE}=\"2019-11-20\"", Fetching.ALL)
+    self.assertListEqual(BeforeBlockDeliverDates, [])
+    response = await self._loginAdminSendRecieve({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATATYPE : JSON_CLOSEDDATE,
+      WEBSOCKET_DATA : BDDskeleton
+    })
+
+    AfterBlockDeliverDates = await async_ExecuteQuery(f"SELECT * FROM blockDeliverDate WHERE {KEYWORD_DDATE}=\"2019-11-20\"", Fetching.ALL)
+    self.assertEqual(len(AfterBlockDeliverDates), 1)
+
+    BDD = ClosedDateDataClass(**AfterBlockDeliverDates[0])
+    self.assertEqual(BDD.ddate, datetime.date(2019, 11, 20))
+
+    await async_ExecuteQuery(f"DELETE FROM blockDeliverDate WHERE BDID={BDD.BDID}", Fetching.NONE)
+
+
+  @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass)
+  async def test_CreateInjectionOrder(self):
+    InjectionSkeleton = {
+      KEYWORD_BID : 1,
+      KEYWORD_TRACER : 5,
+      KEYWORD_DELIVER_DATETIME : "2022-11-20T11:30:00",
+      KEYWORD_INJECTIONS : 3,
+      KEYWORD_USAGE : "human",
+      KEYWORD_COMMENT : "test Kommentar"
+    }
+
+    response = await self._loginAdminSendRecieve({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATATYPE : JSON_INJECTION_ORDER,
+      WEBSOCKET_DATA : InjectionSkeleton
+    })
+
+    IODC = InjectionOrderDataClass.fromDict(loads(loads(response[WEBSOCKET_DATA])))
+
+    self.assertEqual(IODC.BID, InjectionSkeleton[KEYWORD_BID])
+    self.assertEqual(IODC.status, 2)
+    self.assertEqual(IODC.anvendelse, InjectionSkeleton[KEYWORD_USAGE])
+    self.assertEqual(IODC.username, TEST_ADMIN_USERNAME)
+
+    await async_ExecuteQuery(f"""DELETE FROM t_orders WHERE oid={IODC.oid}""", Fetching.NONE)
+
+
+  @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass)
+  async def test_CreateInjectionOrder_SQLInjection(self):
+    InjectionSkeleton = {
+      KEYWORD_BID : 1,
+      KEYWORD_TRACER : 5,
+      KEYWORD_DELIVER_DATETIME : "2022-11-20T11:30:00",
+      KEYWORD_INJECTIONS : 3,
+      KEYWORD_USAGE : "human",
+      KEYWORD_COMMENT : "test Kommentar\"; DROP DATABASE database;--"
+    }
+
+    with self.assertLogs("ErrorLogger", ERROR) as LoggingManager:
+      with self.assertRaises(TimeoutError):
+        await self._loginAdminSendRecieve({ #
+          WEBSOCKET_MESSAGE_ID : self.message_id,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_DATATYPE : JSON_INJECTION_ORDER,
+          WEBSOCKET_DATA : InjectionSkeleton
+        })
+      self.assertEqual(len(LoggingManager.output), 1)
+      # I'm not going to write more comprehensive tests, as they introduce alot of fragility into the tests
+
+  @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, RunsDataClass)
+  async def test_CreateActivityOrder(self):
+    ActivitySkeleton = {
+      KEYWORD_BID : 1,
+      KEYWORD_TRACER : 1,
+      KEYWORD_DELIVER_DATETIME : "2022-11-20T11:30:00",
+      KEYWORD_AMOUNT : 3000,
+      KEYWORD_RUN : 1,
+      KEYWORD_COMMENT : "test Kommentar"
+    }
+
+    response = await self._loginAdminSendRecieve({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATATYPE : JSON_ACTIVITY_ORDER,
+      WEBSOCKET_DATA : ActivitySkeleton
+    })
+
+    AODC = ActivityOrderDataClass.fromDict(loads(loads(response[WEBSOCKET_DATA])))
+
+    self.assertEqual(AODC.BID, ActivitySkeleton[KEYWORD_BID])
+    self.assertEqual(AODC.status, 2)
+    self.assertEqual(AODC.username, TEST_ADMIN_USERNAME)
+
+    await async_ExecuteQuery(f"""DELETE FROM orders WHERE oid={AODC.oid}""", Fetching.NONE)
+
   ##### Free Order ####
 
   @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
@@ -539,4 +644,38 @@ class ConsumerTestCase(TestCase):
 
   ##### Error handling #####
   # These Test showcase how the Consumer handles messages, that are invalid in some form or another
+  async def test_invalidated_Message(self):
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
 
+    response = await self._sendReceive(comm, {})
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_NO_MESSAGE_ID)
+
+    await comm.disconnect()
+
+  async def test_insuficientPermissions(self):
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INSUFICIENT_PERMISSIONS)
+
+    await comm.disconnect()
+
+  async def test_InvalidMessageType(self):
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
+
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_TYPE : "Not a message type!",
+
+    })
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INVALID_MESSAGE_TYPE)
+
+    await comm.disconnect()

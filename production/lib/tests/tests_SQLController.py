@@ -55,6 +55,8 @@ class SQLControllerTestCase(TestCase):
       ("frigivet_amount", 105348),
       ("frigivet_datetime", "2022-10-11 11:18:42"),
     ]
+
+
   def tearDown(self):
     cleanTable("oid", "orders", self._testMethodName)
     cleanTable("DTID", "deliverTimes", self._testMethodName)
