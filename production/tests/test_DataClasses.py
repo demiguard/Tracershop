@@ -339,6 +339,16 @@ testTracer_4 = TracerDataClass.fromDict({
   KEYWORD_IN_USE : True,
   KEYWORD_TRACER_TYPE : 1,
   KEYWORD_LONG_NAME : "test_long_name_4"
+}),
+testTracer_4 = TracerDataClass.fromDict({
+  KEYWORD_SMALL_ID : 5,
+  KEYWORD_NAME : "test_name_5",
+  KEYWORD_ISOTOPE : 3,
+  KEYWORD_INJECTIONS : 60,
+  KEYWORD_ORDER_BLOCK : 33,
+  KEYWORD_IN_USE : True,
+  KEYWORD_TRACER_TYPE : 2,
+  KEYWORD_LONG_NAME : "test_long_name_5"
 })
 
 testTracers = [testTracer_1, testTracer_2, testTracer_3, testTracer_4]

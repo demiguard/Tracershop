@@ -85,6 +85,7 @@ def ExecuteManyQueries(SQLQueries : List[str], fetch=Fetching.ALL):
       try:
         for Query in SQLQueries:
           logger.debug(Query)
+          checkForSQLInjection(Query)
           Wrapper.cursor.execute(Query)
           warns = Wrapper.cursor.fetchwarnings()
           if warns: # pragma: no cover

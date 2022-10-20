@@ -33,6 +33,7 @@ from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
 from lib.utils import LMAP
+from lib.expections import SQLInjectionException
 from tracerauth import auth
 
 from websocket.DatabaseInterface import DatabaseInterface
@@ -131,6 +132,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
 
       await handler(self, message)
+    except SQLInjectionException as E:
+      user = self.scope['user']
+      error_logger.error(f"SQL injection detected by user: {user.username}")
+      # Log Some stuff
+
     except Exception as E: # Very broad catch here, to prevent a hanging message on the client side
       raise E
       #await self.HandleUnknownError(E, message)
@@ -313,18 +319,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Raises:
         ValueError: raised when an unknown WEBSOCKET_DATATYPE is encountered
     """
-    dataClass = None
-    # The pretty Creates methods
-    if message[WEBSOCKET_DATATYPE] == JSON_VIAL:
-      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], VialDataClass)
-    if message[WEBSOCKET_DATATYPE] == JSON_DELIVERTIME:
-      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], DeliverTimeDataClass)
-    if message[WEBSOCKET_DATATYPE] == JSON_CLOSEDDATE:
-      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], ClosedDateDataClass)
-    if message[WEBSOCKET_DATATYPE] == JSON_TRACER:
-      dataClass = await self.db.createDataClass(message[WEBSOCKET_DATA], TracerDataClass)
-    # The aesthetically challenged methods
-    if message[WEBSOCKET_DATATYPE] == JSON_ACTIVITY_ORDER:
+    dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
+    # Specialized Dataclass creations
+    if dataClass == ActivityOrderDataClass:
       spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spoky ok?
       customer = await self.db.getElement(spooky_skeleton[KEYWORD_BID], CustomerDataClass)
       deliver_datetime = toDateTime(spooky_skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
@@ -339,24 +336,24 @@ class Consumer(AsyncJsonWebsocketConsumer):
         KEYWORD_BID : spooky_skeleton[KEYWORD_BID],
         KEYWORD_USERNAME : self.scope['user'].username
       }
-      dataClass = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
-    if message[WEBSOCKET_DATATYPE] == JSON_INJECTION_ORDER:
+      Instance = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
+    elif dataClass == InjectionOrderDataClass:
       skeleton = message[WEBSOCKET_DATA]
       deliver_datetime = toDateTime(skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
       skeleton[KEYWORD_DELIVER_DATETIME] = deliver_datetime
       skeleton[KEYWORD_USERNAME] = self.scope['user'].username
-      dataClass = await self.db.createDataClass(skeleton, InjectionOrderDataClass)
-    # Checking for unhandled case
-    if dataClass == None:
-      error_message = f"Unhandled attempt to create a data class: {message[WEBSOCKET_DATATYPE]}"
-      raise ValueError(error_message)
+      Instance = await self.db.createDataClass(skeleton, InjectionOrderDataClass)
+    else:
+      # General Creation
+      Instance = await self.db.createDataClass(message[WEBSOCKET_DATA], dataClass)
+
     ID = ParseSQLField(dataClass.getIDField())
 
     await self.channel_layer.group_send(
       self.global_group,{
         WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-        WEBSOCKET_DATA : encode(dataClass),
+        WEBSOCKET_DATA : encode(Instance),
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_DATA_ID : ID,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],

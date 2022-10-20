@@ -118,6 +118,7 @@ KEYWORD_CUSTOMER = "customer"
 KEYWORD_CUSTOMER_NUMBER = "kundenr"
 KEYWORD_CUSTOMER_USERNAME = "UserName" # This exists because legacy reasons
 KEYWORD_DAY = "day"
+KEYWORD_DDATE = "ddate"
 KEYWORD_DELIVER_DATETIME = "deliver_datetime"
 KEYWORD_DELIVER_TIME = "dtime"
 KEYWORD_DELIVER_TIME_ID = "DTID"
