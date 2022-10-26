@@ -21,6 +21,8 @@ from django.http import HttpRequest
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels.auth import login, get_user, logout
 
+
+from calendar import monthrange
 from asgiref.sync import sync_to_async
 from datetime import datetime, date, timedelta
 import decimal
@@ -28,7 +30,7 @@ from typing import Dict, List
 
 from constants import * # Import the many WEBSOCKET constants
 from lib.decorators import typeCheckfunc
-from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime
+from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
 from lib.mail import sendMail
@@ -643,6 +645,51 @@ class Consumer(AsyncJsonWebsocketConsumer):
     else:
       pass
 
+
+  async def HandleGetHistory(self, message : dict):
+    """This function retrieves order hisotry of a user from a specific month.
+          Note that the final CSV requires extra data needed, however this data should be found in the frontend copy of the database.
+
+    Args:
+        message (dict): Message recieved by the websocket with the args
+          * WEBSOCKET_DATE - Date with the month data is to be retrieved from
+          * WEBSOCKET_DATA - Customer ID
+    """
+    Period = toDate(message[WEBSOCKET_DATE])
+    _, EndDate = monthrange(Period.year, Period.month)
+    StartDate = datetime(Period.year, Period.month, 1, 1, 1,1)
+    EndDate   = datetime(Period.year, Period.month, EndDate, 1, 1,1)
+
+    Orders = {}
+
+    condition_AODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {ActivityOrderDataClass.getSQLDateTime()} BETWEEN {SerilizeToSQLValue(StartDate)} AND { SerilizeToSQLValue(EndDate)}"
+    condition_IODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {InjectionOrderDataClass.getSQLDateTime()} BETWEEN {SerilizeToSQLValue(StartDate)} AND {SerilizeToSQLValue(EndDate)}"
+
+    AODCsCorotine = self.db.GetConditionalElements(condition_AODC, ActivityOrderDataClass)
+    IODCsCorotine = self.db.GetConditionalElements(condition_IODC, InjectionOrderDataClass)
+
+    for AODC in await AODCsCorotine:
+      receipt = [AODC.oid, AODC.batchnr, AODC.deliver_datetime, AODC.amount, AODC.frigivet_amount]
+      if AODC.tracer in Orders:
+        Orders[AODC.tracer].append(receipt)
+      else:
+        Orders[AODC.tracer] = [receipt]
+
+    for IODC in await IODCsCorotine:
+      receipt = [IODC.oid, AODC.batchnr, AODC.deliver_datetime, IODC.n_injections, IODC.anvendelse]
+      if IODC.tracer in Orders:
+        Orders[IODC.tracer].append(receipt)
+      else:
+        Orders[IODC.tracer] = [receipt]
+
+    await self.send_json({
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_HISTORY,
+      WEBSOCKET_DATA : Orders,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+    })
+
+
   Handlers = {
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT : handleLogout,
@@ -653,6 +700,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_EDIT_STATE : HandleEditState,
     WEBSOCKET_MESSAGE_FREE_ORDER : HandleFreeOrder,
     WEBSOCKET_MESSAGE_GREAT_STATE : HandleTheGreatStateMessage,
+    WEBSOCKET_MESSAGE_GET_HISTORY : HandleGetHistory,
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetOrders,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
   }

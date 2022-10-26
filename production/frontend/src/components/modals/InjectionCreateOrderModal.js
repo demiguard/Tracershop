@@ -8,6 +8,8 @@ import { addCharacter } from "../../lib/utils";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
   JSON_TRACER, JSON_DELIVERTIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_TRACER } from "../../lib/constants";
 
+import styles from '../../css/Site.module.css'
+
 export { CreateInjectionOrderModal }
 
 class CreateInjectionOrderModal extends Component {
@@ -97,6 +99,7 @@ class CreateInjectionOrderModal extends Component {
     <Modal
       show={true}
       onHide={this.props.onClose}
+      className={styles.mariLight}
     >
       <Modal.Header>
         Opret ny injektion ordre

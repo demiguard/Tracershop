@@ -94,7 +94,6 @@ class Calender extends Component {
       StatusClass += " today";
     }
 
-
     return (
       <div className={StatusClass}  onClick={() => this.props.onDayClick(DateObject)}> {DateObject.getDate()}</div>
     );

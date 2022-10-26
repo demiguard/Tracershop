@@ -159,6 +159,8 @@ export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO         = "echo";
 export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState";
 export const WEBSOCKET_MESSAGE_FREE_ORDER   = "freeOrder";
+export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
+export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history";
 export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState";
 export const WEBSOCKET_MESSAGE_ID           = "messageID"
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
@@ -167,7 +169,6 @@ export const WEBSOCKET_MESSAGE_SUCCESS      = "success";
 export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
 export const WEBSOCKET_SEND_EVENT           = "sendEvent";
 export const WEBSOCKET_EVENT_TYPE           = "type";
-export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
 export const WEBSOCKET_SESSION_ID           = "sessionid";
 export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
 

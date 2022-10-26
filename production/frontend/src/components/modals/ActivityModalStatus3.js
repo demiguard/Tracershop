@@ -2,6 +2,8 @@ import React, { Component } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
 import { renderDateTime, renderTableRow } from "/src/lib/Rendering";
 
+import styles from '../../css/Site.module.css'
+
 
 export { ActivityModalStatus3 }
 
@@ -67,6 +69,7 @@ class ActivityModalStatus3 extends Component {
       show={this.props.show}
       size="lg"
       onHide={this.CloseModal.bind(this)}
+      className={styles.mariLight}
     >
       <Modal.Header>Frigivet Ordre {Order.oid}</Modal.Header>
       <Modal.Body>

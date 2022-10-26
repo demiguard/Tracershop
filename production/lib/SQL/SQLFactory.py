@@ -135,7 +135,7 @@ def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
   return f"""DELETE FROM {DataClass.getSQLTable()}
     WHERE {DataClass.getIDField()} IN ({idsStr})"""
 
-def GetConditionalElement(condition: str, dataClass):
+def GetConditionalElements(condition: str, dataClass : JsonSerilizableDataClass):
   Query = f"""SELECT
       {dataClass.getSQLFields()}
     FROM

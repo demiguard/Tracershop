@@ -7,24 +7,7 @@ import { ActivityModalStatus1 } from "./ActivityModalStatus1";
 export { ActivityModal }
 
 
-/*
- * This is the modal that shows up when the user click on an order to recieve additional information
- * This modal also handles
- *
- *
- * Props :
- *  - show      - Boolean indicating if the modal should be shown
- *  - Order     - JavaScript Object with the following values:
- *      * oid    - int - the orders id
- *      * status - int - The status of an order where 1 = Ordered, 2 = Accepted, 3 = Finished, 4 Cancelled
- *  - Customer  - Javascript Object with the customer Information
- *  - onClose   - Function that closes the modal without any external state
- *  - onStatus3 - Function called when the user changes the status of an order to 3
- *  - applyVial - Function called when the user assigns a vial to an order.
- *
- *  TODO: This should be a composition of 3 (4 cancelled orders) different modals, dependant on which is shown.
- *
- */
+
 
 const initial_state = {
   selectedVials : new Set(),
@@ -32,6 +15,23 @@ const initial_state = {
 }
 
 class ActivityModal extends Component {
+  /** This is the modal that shows up when the user click on an order to recieve additional information
+  * This modal also handles
+  *
+  *
+  * @param {Object} props - Object with attributes:
+  *  - show      - Boolean indicating if the modal should be shown
+  *  - Order     - JavaScript Object with the following values:
+  *      * oid    - int - the orders id
+  *      * status - int - The status of an order where 1 = Ordered, 2 = Accepted, 3 = Finished, 4 Cancelled
+  *  - Customer  - Javascript Object with the customer Information
+  *  - onClose   - Function that closes the modal without any external state
+  *  - onStatus3 - Function called when the user changes the status of an order to 3
+  *  - applyVial - Function called when the user assigns a vial to an order.
+  *
+  *  TODO: This should be a composition of 3 (4 cancelled orders) different modals, dependant on which is shown.
+  *
+  */
   constructor(props){
     super(props);
 

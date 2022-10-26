@@ -537,7 +537,7 @@ class EmployeeDataClass(JsonSerilizableDataClass):
 
   @classmethod
   def fromUser(cls, user: User):
-    return cls(Username=user.username, Id=user.id)
+    return cls(Username=user.username, Id=user.OldTracerBaseID)
 
 @dataclass(init=False)
 class ClosedDateDataClass(JsonSerilizableDataClass):

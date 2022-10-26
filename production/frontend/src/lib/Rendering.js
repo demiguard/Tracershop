@@ -110,3 +110,7 @@ export function renderClickableIcon(imagePath, func){
     </Button>
   )
 }
+
+export function renderOnClose(closeFunc) {
+  return (<Button onClick={closeFunc}>Luk</Button>)
+}

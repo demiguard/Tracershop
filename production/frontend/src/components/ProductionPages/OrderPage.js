@@ -88,9 +88,10 @@ export class OrderPage extends Component {
     return (
       <div>
         <Row>
-          <div>
+          <Col>
             {TableSwitchButtons}
-          </div>
+          </Col>
+          
         </Row>
         <Row>
           <Col sm={8}>

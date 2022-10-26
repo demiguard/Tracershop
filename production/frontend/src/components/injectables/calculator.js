@@ -1,9 +1,11 @@
 import React, { Component } from "react";
-import { Button, FormControl, Row, Table } from "react-bootstrap";
+import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
 import { FormatTime, ParseDanishNumber } from "../../lib/formatting";
 import { CalculateProduction, CountMinutes } from "../../lib/physics";
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
 import { CompareDates, removeIndex } from "../../lib/utils";
+
+import styles from '../../css/Calculator.module.css'
 
 export { Calculator }
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.
@@ -162,7 +164,7 @@ class Calculator extends Component {
       totalActivity += CalculateProduction(isotope.halflife, timedelta, entry.activity)
     }
 
-    EntryTableRows.append(
+    EntryTableRows.push(renderTableRow(
       "-1", [
         <FormControl
           value={this.state.newEntry.time}
@@ -174,12 +176,14 @@ class Calculator extends Component {
         />,
         renderClickableIcon("/static/images/accept.svg", this.addEntry().bind(this))
       ]
-    );
+    ));
 
     return (
-    <div className="calculator">
-      <Row className="calculatorHeader">Lommeregner</Row>
-      <Row className="calculatorInfo">
+    <div className={styles.Calculator}>
+      <Row className={styles.CalculatorHeader}>
+        <h3>Dosislommeregner</h3>
+      </Row>
+      <Row className={styles.CalculatorInfo}>
         <p>Tracer - {this.props.tracer.name}</p>
         <p>Halvering tid - {isotope.halflife} s</p>
         <p>Aktivitet som bliver Tilføjet: {totalActivity}</p>
@@ -193,12 +197,18 @@ class Calculator extends Component {
               <th></th>
             </tr>
           </thead>
-          <tbody></tbody>
+          <tbody>
+            {EntryTableRows}
+          </tbody>
         </Table>
       </Row>
-      <Row className="calculatorButtons">
-        <Button onClick={this.commit}></Button>
-        <Button onClick={this.props.cancel}>Tilbage</Button>
+      <Row>
+        <Col>
+          <Button className={styles.CalculatorButton} onClick={this.commit.bind(this)}>Udregn</Button>
+        </Col>
+        <Col>
+          <Button className={styles.CalculatorButton} onClick={this.props.cancel}>Tilbage</Button>
+        </Col>
       </Row>
     </div>)
   }

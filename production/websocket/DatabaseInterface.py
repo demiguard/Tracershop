@@ -153,4 +153,6 @@ class DatabaseInterface():
   def CanDelete(self, data : JsonSerilizableDataClass) -> Boolean:
     return True
 
-
+  @database_sync_to_async
+  def GetConditionalElements(self, condition : str, dataClass : JsonSerilizableDataClass ) -> List[JsonSerilizableDataClass]:
+    return self.SQL.getConditionalElements(condition, dataClass)

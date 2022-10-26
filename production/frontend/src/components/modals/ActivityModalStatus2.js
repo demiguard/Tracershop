@@ -7,6 +7,8 @@ import { addCharacter } from "../../lib/utils";
 import { FormatTime, ParseDanishNumber, FormatDateStr } from "/src/lib/formatting";
 import { autoAddCharacter } from "/src/lib/utils";
 
+import styles from '../../css/Site.module.css'
+
 
 export { ActivityModalStatus2 }
 
@@ -428,7 +430,7 @@ export default class ActivityModalStatus2 extends Component {
               this.state.editingOrderedActivity ?
                 renderClickableIcon("/static/images/accept.svg", this.toggleActivity().bind(this)) :
                 renderClickableIcon("/static/images/pen.svg", this.toggleActivity().bind(this))}
-              {renderClickableIcon("/static/images/calculator.svg")}</Col>
+            </Col>
           </Row>
           ])}
             {renderTableRow("6", ["Total aktivitet:", Order.total_amount * (1 + Customer.overhead / 100)])}
@@ -526,6 +528,7 @@ export default class ActivityModalStatus2 extends Component {
       show={this.props.show}
       size="lg"
       onHide={this.CloseModal.bind(this)}
+      className={styles.mariLight}
       >
       <Modal.Header>Order {order.oid}</Modal.Header>
       <Modal.Body>{this.renderBody()}</Modal.Body>

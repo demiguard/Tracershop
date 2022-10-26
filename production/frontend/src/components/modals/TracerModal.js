@@ -5,6 +5,8 @@ import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID
 import { renderTableRow } from "../../lib/Rendering";
 import { changeState } from "../../lib/stateManagement";
 
+import styles from '../../css/Site.module.css'
+
 export default class TracerModal extends Component {
   constructor(props) {
     super(props);
@@ -104,6 +106,7 @@ export default class TracerModal extends Component {
         show={this.props.show}
         size="lg"
         onHide={this.props.onClose}
+        className={styles.mariLight}
       >
         <Modal.Header>
           <Modal.Title>Tracer Konfiguration</Modal.Title>

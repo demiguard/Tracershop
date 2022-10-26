@@ -1,8 +1,11 @@
 import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
-import styles from "/src/css/Site.module.css"
+import { renderClickableIcon, renderStatusImage } from "../../lib/Rendering";
+import { Calculator } from "../injectables/calculator";
 import { ParseDanishNumber } from "/src/lib/formatting";
 export { CreateOrderModal }
+
+import styles from '../../css/Site.module.css'
 
 class CreateOrderModal extends Component {
   constructor(props){
@@ -26,6 +29,7 @@ class CreateOrderModal extends Component {
     }
 
     this.state = {
+      showCalculator : false,
       productions : DeliverTimeMapping,
       activeCustomerID : activeCustomer.ID,
       activeRun : run,
@@ -87,7 +91,30 @@ class CreateOrderModal extends Component {
     this.props.onClose();
   }
 
+  showCalculator(){
+    this.setState({...this.state,
+      showCalculator : true
+    })
+  }
+
+  hideCalculator(){
+    this.setState({...this.state,
+      showCalculator : false
+    })
+  }
+
+  commitCalculator(Activity){
+    this.setState({...this.state,
+      showCalculator : false,
+      amount : Activity,
+    });
+  }
+
   render(){
+    const Tracer = this.props.tracers.get(this.props.tracer)
+    const activeProduction = this.state.productions.get(this.state.activeRun)
+    const TargetDatetime = new Date(activeProduction.deliverTime)
+
     const options = [];
     for(const [customerID, customer] of this.props.customers){
       const DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);
@@ -109,10 +136,20 @@ class CreateOrderModal extends Component {
       <Modal
         show={this.props.show}
         onHide={this.props.onClose}
+        className={styles.mariLight}
       >
         <Modal.Header> Opret Order </Modal.Header>
         <Modal.Body>
-          <Container>
+          { this.state.showCalculator ?
+          <Calculator
+            isotopes={this.props.isotopes}
+            tracer={Tracer}
+            productionTime={TargetDatetime}
+            defaultMBq={300}
+            cancel={this.hideCalculator.bind(this)}
+            commit={this.commitCalculator.bind(this)}
+          /> :
+            <Container>
             <Row className={styles.Margin15tb}>
               <InputGroup>
               <InputGroup.Text>Kunde</InputGroup.Text>
@@ -134,6 +171,9 @@ class CreateOrderModal extends Component {
                 <InputGroup.Text>Aktivitet</InputGroup.Text>
                 <FormControl onChange={this.changeAmount.bind(this)} value={this.state.amount}></FormControl>
                 <InputGroup.Text>MBq</InputGroup.Text>
+                <InputGroup.Text>
+                  {renderClickableIcon("/static/images/calculator.svg", this.showCalculator.bind(this))}
+                </InputGroup.Text>
               </InputGroup>
             </Row>
             {Err ? <Row>
@@ -142,10 +182,11 @@ class CreateOrderModal extends Component {
               </Container>
             </Row> : null }
           </Container>
+          }
 
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={this.createOrder.bind(this)}>Opret Ordre</Button>
+          {this.state.showCalculator ? null : <Button onClick={this.createOrder.bind(this)}>Opret Ordre</Button>}
           <Button onClick={this.props.onClose}>Luk</Button>
         </Modal.Footer>
       </Modal>

@@ -7,10 +7,14 @@ import { ParseTelefonNumber, FormatTime, parseName, ParseEmail, isNotNaN } from 
 import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_DELIVERTIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, DAYS_OBJECTS,
-} from "/src/lib/constants.js"
+} from "../../lib/constants.js"
 import { ParseDanishNumber } from "../../lib/formatting";
 import { KEYWORD_DELIVER_TIME } from "../../lib/constants";
 import { addCharacter } from "../../lib/utils";
+import { renderOnClose } from "../../lib/Rendering.js";
+
+import styles from '../../css/Site.module.css'
+
 
 const RunOptions = [
   {name : "Hver uge", val : 1},
@@ -25,10 +29,10 @@ class CustomerModal extends Component {
   constructor(props) {
     super(props)
 
-    const customer = this.props.customers.get(this.props.userid);
+    const customer = this.props.activeCustomer;
     const DeliverTimes = new Map();
     for(const [_DTID, deliverTime] of this.props.deliverTimes) {
-      if(deliverTime.BID == this.props.userid)
+      if(deliverTime.BID == customer.ID)
         DeliverTimes.set(deliverTime.DTID, deliverTime);
     }
 
@@ -64,7 +68,7 @@ class CustomerModal extends Component {
       console.log("New Props detected!")
       const DeliverTimes = new Map();
         for(const [_DTID, deliverTime] of this.props.deliverTimes) {
-      if(deliverTime.BID == this.props.userid)
+      if(deliverTime.BID == this.props.activeCustomer.ID)
         DeliverTimes.set(deliverTime.DTID, deliverTime);
       }
       this.setState({...this.state, deliverTimes : DeliverTimes})
@@ -405,6 +409,7 @@ class CustomerModal extends Component {
         show={this.props.show}
         size="lg"
         onHide ={this.props.onClose}
+        className = {styles.mariLight}
       >
         <Modal.Header>
           <Modal.Title>Kunde Konfigurering - {this.state.customer.UserName}</Modal.Title>
@@ -413,9 +418,7 @@ class CustomerModal extends Component {
           {this.renderbody()}
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={this.props.onClose}>
-            Luk
-          </Button>
+          {renderOnClose(this.props.onClose)}
         </Modal.Footer>
       </Modal>
     );

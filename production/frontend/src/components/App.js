@@ -226,7 +226,7 @@ export default class App extends Component {
     const employees = new Map();
     for(const employeeStr of greatState[JSON_EMPLOYEE]){
       const employee = ParseJSONstr(employeeStr);
-      employees.set(employee.OldTracerBaseID, employee);
+      employees.set(employee.Id, employee);
     }
     db.set(DATABASE_EMPLOYEE, employees);
     //Isotopes

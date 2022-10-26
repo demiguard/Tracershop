@@ -3,22 +3,24 @@ import { Modal, Button, Container, Col, Table, Row } from "react-bootstrap";
 import Authenticate from "/src/components/injectables/Authenticate";
 import { renderTableRow } from "/src/lib/Rendering";
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/constants";
+import { renderOnClose } from "../../lib/Rendering";
+
+import styles from '../../css/Site.module.css'
 
 export { ActivityModalAuthenticate }
 
-/**
- * Props
- *  @param {Boolean} show - Should the modal be shown or not
- *  @param {CallableFunction} onClose - Function to be called if the user wishes to close the modal
- *  @param {CallableFunction} cancel - Function called when the user wish to cancel the authentication
- *  @param {Object} Order - Object with information on the order
 
-            customer={this.props.customer}
-            vials={this.props.vials}
- * @param {} selectedVials  {this.state.selectedVials}
+export default class ActivityModalAuthenticate extends Component {
+  /**
+    * Props
+    *  @param {Boolean} show - Should the modal be shown or not
+    *  @param {CallableFunction} onClose - Function to be called if the user wishes to close the modal
+    *  @param {CallableFunction} cancel - Function called when the user wish to cancel the authentication
+    *  @param {Object} Order - Object with information on the order
+    *  @param {} selectedVials
             accept={this.props.AcceptOrder}
  */
-export default class ActivityModalAuthenticate extends Component {
+
   constructor(props){
     super(props);
     this.state = {
@@ -43,31 +45,7 @@ export default class ActivityModalAuthenticate extends Component {
     });
   }
 
-  /*
-  submitLogin(username, password){
-    const dataObject = {};
-
-    dataObject[AUTH_USERNAME] = username;
-    dataObject[AUTH_PASSWORD] = password;
-
-    ajax({
-      url:"auth/authenticate",
-      type:"post",
-      data:JSON.stringify(dataObject)
-    }).then((data) => {
-      if (data[AUTH_DETAIL]) {
-        this.props.accept(this.props.order, this.props.selectedVials);
-      } else {
-        this.setState({
-          ...this.state, ErrorMessage : "Forkert Login"
-        });
-      }
-    });
-  }
-  */
-
   CloseModal(){
-    this.setState(initial_state);
     this.props.onClose();
   }
 
@@ -94,7 +72,8 @@ export default class ActivityModalAuthenticate extends Component {
       <Modal
       show={this.props.show}
       size="lg"
-      onHide={this.CloseModal.bind(this)}
+      onHide={renderOnClose(this.props.onClose)}
+      className={styles.mariLight}
       >
       <Modal.Header>Frigiv Order {OrderID}</Modal.Header>
       <Modal.Body>
@@ -128,7 +107,7 @@ export default class ActivityModalAuthenticate extends Component {
       </Modal.Body>
       <Modal.Footer>
         <Button onClick={this.props.cancel}> Tilbage </Button>
-        <Button onClick={this.CloseModal.bind(this)}> Luk </Button>
+        {renderOnClose(this.props.onClose)}
       </Modal.Footer>
     </Modal>);
   }

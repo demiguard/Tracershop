@@ -4,6 +4,8 @@ import { JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_TOTAL_AM
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
 
 
+import styles from '../../css/Site.module.css'
+
 export { ActivityModalStatus1 }
 
 class ActivityModalStatus1 extends Component {
@@ -85,6 +87,7 @@ class ActivityModalStatus1 extends Component {
         show={this.props.show}
         size="lg"
         onHide={this.props.onClose}
+        className={styles.mariLight}
       >
         <Modal.Header>Order {order.oid}</Modal.Header>
         <Modal.Body>

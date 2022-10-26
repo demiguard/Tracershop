@@ -505,12 +505,12 @@ export class ActivityTable extends Component {
     const FreeDT    = (order.frigivet_datetime) ? new Date(order.frigivet_datetime) : "-";
     const FreeTime  = (FreeDT != "-") ? FormatDateStr(FreeDT.getHours()) + ":" + FormatDateStr(FreeDT.getMinutes()) : FreeDT
 
-    const Employee     = this.props.employee.get(order.frigivet_af)
+    const Employee     = this.props.employee.get(order.frigivet_af);
     const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
 
     const customer = this.props.customers.get(order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
-    const TotalAmount  = (order.COID === -1) ? Math.floor(order.total_amount * (1 + customer.overhead / 100)) : "Flyttet til:" + order.COID;
+    const TotalAmount  = (order.COID === -1) ? Math.floor(order.total_amount * (1 + customer.overhead / 100)) : "Flyttet til: " + order.COID;
 
     return renderTableRow(order.oid, [
       renderStatusImage(order.status, () => this.activateOrderModal(order.oid)),
@@ -695,6 +695,9 @@ export class ActivityTable extends Component {
 
     { this.state.showModal ?
       <this.state.Modal
+        tracer={this.props.tracer}
+        tracers={this.props.tracers}
+        isotopes={this.props.isotopes}
         show={this.state.showModal}
         order={this.state.ModalOrder}
         orders={this.props.orders}

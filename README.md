@@ -114,4 +114,4 @@ Belows is a list words that is used throught the Documentation and this is the m
 
 
 ## References & Attributes
-Icons are made by in documentation are made by https://www.flaticon.com/authors/freepik
+Icons are made by in documentation are made by https://www.flaticon.com/authors/freepik & https://www.flaticon.com/authors/kiranshastry
