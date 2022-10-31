@@ -30,5 +30,7 @@ config.py
 *.glg
 *.glo
 *.gls
+*.out
 *.glsdefs
 *.ist
+*.drawio

@@ -3,10 +3,17 @@
 \usepackage[T1]{fontenc}
 \usepackage{graphicx}
 \usepackage[a4paper, margin=2cm]{geometry}
+\usepackage{hyperref}
 \usepackage{lastpage}
 \usepackage{fancyhdr}
 \usepackage{datetime}
 \usepackage{glossaries}
+
+\hypersetup{
+  colorlinks = true,
+  urlcolor = blue
+}
+
 
 \makeglossaries
 
@@ -62,7 +69,9 @@ so it should be considered a important piece of software.\\
 The list of customer is not limited to users on the regions intranet, therefore the service needs to be accessible from the internet.\\
 The system based around a MySQL 5.1 database running on a openSUSE 11.2 distribution.
 The user interface is a  Zope 2-2.13 web interface allowing the users interface with the main database.
-There's a dispenser of the tracer, that ensures the dispensed amount tracer and the digital amount of tracer is the same.
+It is normal that software packages ceases updating after a period of support, and part of the maintenance of a software product,
+however that have not been available due to insufficient resources.\\
+There's a dispenser in the ecosystem. The dispenser ensures the dispensed amount of product and the digital amount of product is the same.
 The dispenser writes to it own database, which does not support multiple concurrent connections.
 A Tracershop component retrieves the data of the dispensed vial by opening the database as a file, seeks to an offset just before the new line was added and
 adds an entry in the database. The author of this script no longer works at Rigshospitalet. This solution is highly fragile, as an update to the database would
@@ -115,7 +124,7 @@ The Tables in the Tracershop main database, note the tables casing does not conf
   \item Tokens - Likely Zope related, Likely defines the length of active sessions.
   \item TracerCustomer - Defines which user have access to order which injection Tracer.
   \item Tracers - Catalog of tracer available in tracershop.
-  \item UserRoles - Relates user to a Role from the Role table.The way a web server 
+  \item UserRoles - Relates user to a Role from the Role table.
   \item productions - Production of tracers.
   \item storage - Old mails, assumed not in use.
   \item t\_orders - List of injection orders.
@@ -132,8 +141,52 @@ The best plan of action would be replace each individual component,
 and if possible have old component running as a backup in the event that a new component has an error.\\
 The largest and easiest to replace component is the web interface, as it can connect to the MySQL database and updates done by the new and old system can co-exists,
 as long as the old and the new system follows the same assumptions.\\
+This report suggest a new web server. The project is open source found at:\\
+\url{https://github.com/demiguard/Tracershop}\\
 Once the basic functionality of a new component is fulfilled and the robustness of the system have been verified. The old system can be retried and
 any assumptions held by the old system can be dropped.
+The new system hosted on Center for IT and Medico technologies servers, who is responsible for general IT in the Capital Region,
+including maintaining the network spanning all the hospitals in the Region, and therefore would be in line with Rigshospitalet policies regarding software.
+To ensure the new system works correctly, the new system is using common software packages, these are:
+\begin{itemize}
+  \item React - Frontend Javascript library developed by facebook. \url{https://reactjs.org}
+  \item Django - Backend Python web server library \url{https://djangoproject.com}
+  \item Channels - Django extension for using websockets. \url{https://channels.readthedocs.io./en/stable}
+\end{itemize}
+These packages are well supported and all in active development, so they will continue to provide security updates.
+The new Tracershop utilize websockets instead of http communication, because websockets allows the server to push updates to the users,
+because the protocol uses a persistance connection, while http does not use a persistent connection.
+This means that user always view up to date data, while in old system users might operate on out of date data, because another user have altered such data.
+
+To ensure correct behavior of the new tracershop handles message in a three step plan seen below:
+
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=0.6\linewidth]{MessageHandeling.png}
+    \caption{Message handling by the backend}
+  \end{center}
+\end{figure}
+
+\begin{enumerate}
+  \item Validate the message - ensure that the message is correctly formatted and therefore would not cause an error if processed by the webserver.
+  \item Authenticate the message - Now the server can assume, the message is of a valid structure and determine it type.
+  Then it can check if the authenticated user is allowed to complete such a message.
+  \item Apply the message - Now the message is both valid and authorized, so the server will handle the message.
+\end{enumerate}
+
+Since the frontend doesn't have any contact with the database,
+it is sufficient to ensure that the backend updates the database correctly on corresponding messages.
+This is done by a series of unit tests and end to end tests, which have a 92\% code coverage,
+which proves the web server handles user message correctly.
+
+\section*{Conclusion}
+The old tracershop fulfils the requirement set forwards by \GLS{gmp}, but is running on modules that have reached end of life.
+Therefore a new system is proposed, that fulfils \GLS{gmp} and no longer uses component, that is no longer supported.
+
+
+
+
+
 
 \clearpage
 

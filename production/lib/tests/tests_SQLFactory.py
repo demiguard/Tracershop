@@ -122,7 +122,7 @@ longName="I forgot this name"
     self.assertEqual(Query, "INSERT INTO TestTable (col1, col2, col3) VALUES (\"val1\", \"val2\", 123)")
 
   def test_AuthenticateUser(self):
-    """This test agaisnt the old database authentication system
+    """This test tests the old database authentication system
      A system where it have unencrypted passwords!
     """
     test_username = "Test"
@@ -140,7 +140,7 @@ longName="I forgot this name"
       Password=\"{test_password}\"""")
 
   def test_GetConditionalElement(self):
-    """ I think this is get just a GetElemenet but fancy?
+    """ I think this is get just a GetElement but fancy?
     """
 
     testTable = "TestTable"
@@ -155,7 +155,7 @@ longName="I forgot this name"
       def getSQLTable(cls):
         return testTable
 
-    Query = SQLFactory.GetConditionalElement(condition, TestDataClass)
+    Query = SQLFactory.GetConditionalElements(condition, TestDataClass)
 
     self.assertEqual(Query, f"""SELECT
       attr1, attr2
