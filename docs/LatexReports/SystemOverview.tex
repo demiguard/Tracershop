@@ -56,22 +56,30 @@
 \section*{Resume}
 This document describes the current Tracershop ecosystem,
 a bookkeeping system for the production of radioactive tracers for clinical procedures produced at Rigshospitalet.
-As the system was designed in 2004, the field of Computer Science have moved quite far, this document presents a replacement system with the aims
-to improve the user experience, functionality, and improve IT-security.
-This document describes a new web interface and makes a risk assessment of the current and the new system.
+The system was designed in 2004 and in the field of Computer Science such a system is considered ancient.
+This document presents a replacement system with the aims to improve the user experience, functionality, and improve IT-security, namely
+ a react-django new web server and makes a risk assessment of the current and the new system.
 
 \section*{Tracershop - Current system}
-The original Tracershop was originally produced in 2004. Various people have contributed to the ecosystem over the years,
-however active development the system stopped around 2012.
-The main functionality of Tracershop is fulfilling the documentations requirements specified by \gls{gmp} in Rigshospitalets production of radioactive Tracers.
-Rigshospitalet delivers to many hospitals and scientific institutions,
-so it should be considered a important piece of software.\\
-The list of customer is not limited to users on the regions intranet, therefore the service needs to be accessible from the internet.\\
-The system based around a MySQL 5.1 database running on a openSUSE 11.2 distribution.
-The user interface is a  Zope 2-2.13 web interface allowing the users interface with the main database.
-It is normal that software packages ceases updating after a period of support, and part of the maintenance of a software product,
-however that have not been available due to insufficient resources.\\
-There's a dispenser in the ecosystem. The dispenser ensures the dispensed amount of product and the digital amount of product is the same.
+The original Tracershop was originally produced in 2004. Various contributions to the ecosystem have been made over the years,
+however development the system stopped around 2012.
+The main functionality of Tracershop is fulfilling the documentations requirements in Rigshospitalets production of radioactive tracers specified by \gls{gmp}.
+Rigshospitalet delivers radioactive tracers to many hospitals and scientific institutions, that would not be able to perform various PET and SPECT scans without the tracer.
+Therefore Tracershop should be considered a important piece of software.\\
+The system is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers.
+The user interface is a Zope 2-2.13 web interface allowing the users interface with the main database.
+It is normal that software packages deprecated after a period of support, and keeping a software product up to date is part of the maintenance of a software products life cycle,
+however that have not been possible due to insufficient resources.\\
+An overview of the system can be seen in figure \ref{fig:oldsys}.
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=0.6\linewidth]{OldSetup.png}
+    \caption{Tracershop system overview}
+    \label{fig:oldsys}
+  \end{center}
+\end{figure}
+
+There's a dispenser in the ecosystem. The dispenser ensures the dispensed amount of product and the digital record of the product is correct.
 The dispenser writes to it own database, which does not support multiple concurrent connections.
 A Tracershop component retrieves the data of the dispensed vial by opening the database as a file, seeks to an offset just before the new line was added and
 adds an entry in the database. The author of this script no longer works at Rigshospitalet. This solution is highly fragile, as an update to the database would
@@ -88,14 +96,6 @@ however that's no longer sufficient for a good IT product. Sadly IT-criminality 
 such as tracershop.\\
 Currently it's the The Department of clinical physiology nuclear medicine which hosts the server.
 
-An overview of the system can be seen in figure \ref{fig:oldsys}.
-\begin{figure}[ht]
-  \begin{center}
-    \includegraphics[width=0.6\linewidth]{OldSetup.png}
-    \caption{Tracershop system overview}
-    \label{fig:oldsys}
-  \end{center}
-\end{figure}
 
 \subsection*{Abstractions}
 Tracershop have two different types of orders. Activity based orders and Injection based orders.
