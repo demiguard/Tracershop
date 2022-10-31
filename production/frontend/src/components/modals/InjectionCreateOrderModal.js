@@ -1,9 +1,10 @@
 
 import React, {Component,} from "react";
 import { Button, Col, Form, FormControl, Modal, ModalBody, Row, Table } from "react-bootstrap";
-import { renderSelect } from "/src/lib/Rendering";
-import { changeState } from "/src/lib/stateManagement";
-import { FormatTime, FormatDateStr } from "/src/lib/formatting";
+
+import { renderSelect } from "../../lib/Rendering";
+import { changeState } from "../../lib/stateManagement";
+import { FormatTime, FormatDateStr } from "../../lib/formatting";
 import { addCharacter } from "../../lib/utils";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
   JSON_TRACER, JSON_DELIVERTIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_TRACER } from "../../lib/constants";

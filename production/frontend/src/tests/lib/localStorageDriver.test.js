@@ -1,5 +1,5 @@
 
-import { db } from "./localStorageDriver"
+import { db } from "../../lib/localStorageDriver.js"
 
 test("Save and Read string", () => {
   const testKeyString = "key-string";
@@ -320,7 +320,5 @@ test("Test maps within sets", () =>{
   db.addType(localStorage_kw, Map);
   db.set(localStorage_kw, MONSTERMAP)
 
-  const loaded_MONSTERMAP = db.get(localStorage_kw)
-
-  console.log(loaded_MONSTERMAP)
+  const loaded_MONSTERMAP = db.get(localStorage_kw);
 });

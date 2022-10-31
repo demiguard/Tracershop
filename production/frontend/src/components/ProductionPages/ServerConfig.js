@@ -1,7 +1,8 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Container, Row } from "react-bootstrap";
-import { JSON_ACTIVE_DATABASE, JSON_DATABASE, JSON_FIELD_TO_UPDATE } from "/src/lib/constants";
+
+import { JSON_ACTIVE_DATABASE, JSON_DATABASE, JSON_FIELD_TO_UPDATE } from "../../lib/constants";
 
 export class ServerConfigPage extends Component {
   constructor(props){

@@ -1,6 +1,9 @@
 import React, { Component } from "react";
 import { Button, Modal, Table, Row, Col } from "react-bootstrap";
-import { JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_TOTAL_AMOUNT, KEYWORD_TOTAL_AMOUNT_O, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
+import {
+  JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_TOTAL_AMOUNT,
+  KEYWORD_TOTAL_AMOUNT_O, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
+  WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
 
 

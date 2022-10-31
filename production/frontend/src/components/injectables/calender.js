@@ -1,10 +1,9 @@
 import React, { Component } from "react";
 import { CompareDates } from "../../lib/utils";
-import { FormatDateStr } from '/src/lib/formatting'
-import {DAYS, DAYS_PER_WEEK} from '/src/lib/constants'
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants";
+import { FormatDateStr } from '../../lib/formatting';
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK } from "../../lib/constants";
 
-export {Calender, standardOrderMapping, producitonGetMonthlyOrders }
+export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 
 
 /** This is a calender, where stuff can be injected on date click and on month change
@@ -28,11 +27,11 @@ class Calender extends Component {
 
   /** This function is called when the user changes the current month
    *
-   * @param {Number} changeby - This number indicates how many months you wish to change by
+   * @param {Number} changeBy - This number indicates how many months you wish to change by
    */
-  changeMonth(changeby) {
+  changeMonth(changeBy) {
     const year  = this.state.activeMonth.getFullYear();
-    const month = this.state.activeMonth.getMonth() + changeby;
+    const month = this.state.activeMonth.getMonth() + changeBy;
 
     const NewMonth = new Date(year, month, 1);
 
@@ -46,11 +45,11 @@ class Calender extends Component {
   /** Calculate the amount of days in the month
    *
    * Programmers Note and complaint
-   * This takes advantage of javascript date system to largest goldmedaæ.
+   * This takes advantage of javascript date system to largest gold medal.
    * Since the "zeroth" day of a month doesn't exists, (* Yeah 0-index is not for days *)
    * The date time system creates the last day of the previous month.
    * Note that there's not a +1 in front of the month, however here the next parcularity of
-   * Javascripts Date system. Months ARE zero indexed, so the +1 is kinda build in.
+   * JavaScript's Date system. Months ARE zero indexed, so the +1 is kinda build in.
    * Then just select the date
    *
    *
@@ -62,7 +61,7 @@ class Calender extends Component {
     return new Date(year, month,0).getDate();
   };
 
-  LastmondayInLastMonth(year,month){
+  LastMondayInLastMonth(year,month){
     var pivot = 1;
     var pivotDate = new Date(year, month, pivot);
     while(pivotDate.getDay() != DAYS.MONDAY){
@@ -114,7 +113,7 @@ class Calender extends Component {
   }
 
   render() {
-    var startingDate = this.LastmondayInLastMonth(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth())
+    var startingDate = this.LastMondayInLastMonth(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth())
     const EndingDate = this.FirstSundayInNextMonth(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth())
 
     const weeks = [];
@@ -159,7 +158,7 @@ function standardOrderMapping(orders, tOrders, runs, closedDate) {
     closedDateSet.add(cdate.ddate)
   }
 
-  const retfunc = (DateStr) => {
+  const retFunc = (DateStr) => {
     if (closedDateSet.has(DateStr)) return "date-status55";
 
     var MinimumActivityStatus = 5;
@@ -192,14 +191,14 @@ function standardOrderMapping(orders, tOrders, runs, closedDate) {
   }
   return "date-status" + String(MinimumInjectionStatus) + String(MinimumActivityStatus);
   }
-  return retfunc
+  return retFunc
 }
 
-function producitonGetMonthlyOrders(websocket){
-  const retfunc = (NewMonth) => {
+function productionGetMonthlyOrders(websocket){
+  const retFunc = (NewMonth) => {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
     websocket.send(message);
   }
-  return retfunc
+  return retFunc
 }

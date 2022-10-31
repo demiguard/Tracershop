@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "webpack --mode development --watch",
     "build": "webpack --mode production",
-    "test": "jest"
+    "test": "jest --coverage"
   },
   "keywords": [],
   "author": "Christoffer Vilstrup Jensen",
@@ -15,11 +15,14 @@
     "@babel/plugin-proposal-class-properties": "^7.14.5",
     "@babel/preset-env": "^7.14.7",
     "@babel/preset-react": "^7.14.5",
+    "@babel/preset-typescript": "^7.18.6",
     "@popperjs/core": "^2.11.6",
+    "babel-jest": "^29.2.2",
     "babel-loader": "^8.2.2",
     "bootstrap": "^5.0.2",
     "file-loader": "^6.2.0",
     "history": "^5.3.0",
+    "jest-css-modules": "^2.1.0",
     "jquery": "^3.6.0",
     "js-cookie": "^2.2.1",
     "react": "^17.0.2",
@@ -42,8 +45,12 @@
     "sass-loader": "^12.1.0"
   },
   "jest": {
+    "rootDir": "./",
     "setupFilesAfterEnv": [
       "<rootDir>/src/setupTests.js"
-    ]
+    ],
+    "moduleNameMapper": {
+      "\\.(css|less|scss|sss|styl)$": "<rootDir>/node_modules/jest-css-modules"
+    }
   }
 }

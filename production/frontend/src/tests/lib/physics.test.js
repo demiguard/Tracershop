@@ -1,4 +1,4 @@
-import { CountMinutes, CalculateProduction } from "./physics"
+import { CountMinutes, CalculateProduction } from "../../lib/physics.js"
 
 
 test("CountMinutes: Counting minutes between 07:00 and 08:30", () => {
@@ -17,19 +17,19 @@ test("CountMinutes: Counting minutes between 07:15 and 08:30", () => {
 test("CountMinutes: Year is irrelevant for this function", () => {
   const DT1 = new Date("2021-11-20T07:00:00")
   const DT2 = new Date("1993-11-20T08:30:00")
-  expect(CountMinutes(DT1, DT2)).toBe(90)
+  expect(() => CountMinutes(DT1, DT2)).toThrow("Past and Future is not same day")
 });
 
 test("CountMinutes: Month is irrelevant for this function", () => {
   const DT1 = new Date("1993-12-20T07:00:00")
   const DT2 = new Date("1993-11-20T08:30:00")
-  expect(CountMinutes(DT1, DT2)).toBe(90)
+  expect(() => CountMinutes(DT1, DT2)).toThrow("Past and Future is not same day")
 });
 
 test("CountMinutes: Day is irrelevant for this function", () => {
   const DT1 = new Date("1993-11-20T07:00:00")
   const DT2 = new Date("1993-11-21T08:30:00")
-  expect(CountMinutes(DT1, DT2)).toBe(90)
+  expect(() => CountMinutes(DT1, DT2)).toThrow("Past and Future is not same day")
 });
 
 

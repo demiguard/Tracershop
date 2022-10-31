@@ -1,17 +1,17 @@
 import React, { Component } from "react";
 import { Container} from "react-bootstrap";
 
-import { Navbar } from "/src/components/injectables/Navbar.js";
-import { Authenticate } from "/src/components/injectables/Authenticate.js";
+import { Navbar } from "./injectables/Navbar.js";
+import { Authenticate } from "./injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
-import { ErrorPage } from "/src/components/ErrorPages/ErrorPage.js";
+import { ErrorPage } from "./ErrorPages/ErrorPage.js";
 import InvalidVersionPage from "./ErrorPages/InvalidVersionPage.js"
 import { get as getCookie } from 'js-cookie';
 import Cookies from "js-cookie";
 
-import { db } from "/src/lib/localStorageDriver.js";
-import { TracerWebSocket } from "/src/lib/TracerWebsocket.js";
-import { ParseDjangoModelJson, ParseJSONstr } from "/src/lib/formatting.js";
+import { db } from "../lib/localStorageDriver.js";
+import { TracerWebSocket } from "../lib/TracerWebsocket.js";
+import { ParseDjangoModelJson, ParseJSONstr } from "../lib/formatting.js";
 import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DELIVERTIME,
         JSON_EMPLOYEE, JSON_ISOTOPE, JSON_RUN, JSON_SERVER_CONFIG, JSON_TRACER,
         JSON_INJECTION_ORDER, JSON_VIAL, WEBSOCKET_MESSAGE_GREAT_STATE, DATABASE_ACTIVITY_ORDER, DATABASE_ADDRESS, DATABASE_CUSTOMER, DATABASE_DATABASE,

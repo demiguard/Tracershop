@@ -1,8 +1,10 @@
 import React, { Component } from "react";
 import { Modal, Button, Container, Col, Table, Row } from "react-bootstrap";
-import Authenticate from "/src/components/injectables/Authenticate";
-import { renderTableRow } from "/src/lib/Rendering";
+
+import Authenticate from "../injectables/Authenticate";
+
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/constants";
+import { renderTableRow } from "../../lib/Rendering";
 import { renderOnClose } from "../../lib/Rendering";
 
 import styles from '../../css/Site.module.css'

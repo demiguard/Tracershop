@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
+
 import { FormatTime, ParseDanishNumber } from "../../lib/formatting";
 import { CalculateProduction, CountMinutes } from "../../lib/physics";
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";

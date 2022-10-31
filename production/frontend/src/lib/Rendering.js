@@ -1,9 +1,9 @@
 import React, {} from "react";
-import { FormatDateStr } from "/src/lib/formatting";
 import { Button, Form, Image } from "react-bootstrap";
 import ReactHover, { Trigger, Hover  } from "react-hover";
+import { FormatDateStr } from "./formatting.js";
 
-import { noop } from "/src/lib/utils";
+import { noop } from "./utils.js";
 
 export function renderStatusImage(status, func) {
   const onclickFunc = (func === undefined) ? noop : func

@@ -1,13 +1,13 @@
 
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
-import { CompareDates } from "/src/lib/utils";
-import { renderStatusImage, renderTableRow, renderComment } from '/src/lib/Rendering';
 
-import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
-import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER } from "/src/lib/constants";
-import { CreateInjectionOrderModal } from "/src/components/modals/InjectionCreateOrderModal";
+import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER } from "../../lib/constants";
+import { FormatDateStr, ParseJSONstr } from "../../lib/formatting";
+import { renderStatusImage, renderTableRow, renderComment } from '../../lib/Rendering';
 import { renderClickableIcon } from "../../lib/Rendering";
+import { CompareDates } from "../../lib/utils";
+import { CreateInjectionOrderModal } from "../modals/InjectionCreateOrderModal";
 import { InjectionModalStatus2 } from "../modals/InjectionModalityStatus2";
 
 

@@ -1,8 +1,8 @@
 import React, { Component } from "react";
 
-import { Form, Button, Container } from "react-bootstrap";
-import styles from "/src/css/Authenticate.module.css"
-import SiteStyles from "/src/css/Site.module.css"
+import { Form, Button } from "react-bootstrap";
+import styles from "../../css/Authenticate.module.css"
+import SiteStyles from "../../css/Site.module.css"
 
 export { Authenticate }
 

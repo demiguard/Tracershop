@@ -1,7 +1,9 @@
-import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Button, Form, FormControl, Modal, Table } from "react-bootstrap";
-import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+
+import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID,
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
 import { renderTableRow } from "../../lib/Rendering";
 import { changeState } from "../../lib/stateManagement";
 

@@ -5,7 +5,6 @@ import { CloseDaysPage } from "../ProductionPages/CloseDaysPage";
 import CustomerPage from "../ProductionPages/CustomerPage";
 import EmailSetupPage from "../ProductionPages/EmailSetupPage";
 import { OrderPage } from "../ProductionPages/OrderPage";
-import { ServerConfigPage } from "../ProductionPages/ServerConfig";
 import TracerPage from "../ProductionPages/TracerPage";
 import { VialPage } from "../ProductionPages/VialPage";
 import styles from "/src/css/Navbar.module.css"

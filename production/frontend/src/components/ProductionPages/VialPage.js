@@ -1,9 +1,9 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
-import { JSON_VIAL } from "/src/lib/constants";
-import { parseDate, parseDateToDanishDate, ParseJSONstr } from "/src/lib/formatting";
-import { addCharacter } from "/src/lib/utils";
+import { JSON_VIAL } from "../../lib/constants";
+import { parseDate, parseDateToDanishDate, ParseJSONstr } from "../../lib/formatting";
+import { addCharacter } from "../../lib/utils";
 import { changeState } from "../../lib/stateManagement";
 import { renderSelect } from "../../lib/Rendering";
 

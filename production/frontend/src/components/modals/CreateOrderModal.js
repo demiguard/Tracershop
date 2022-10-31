@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
+
 import { renderClickableIcon, renderStatusImage } from "../../lib/Rendering";
 import { Calculator } from "../injectables/calculator";
-import { ParseDanishNumber } from "/src/lib/formatting";
-export { CreateOrderModal }
+import { ParseDanishNumber } from "../../lib/formatting";
 
 import styles from '../../css/Site.module.css'
+
+export { CreateOrderModal }
 
 class CreateOrderModal extends Component {
   constructor(props){

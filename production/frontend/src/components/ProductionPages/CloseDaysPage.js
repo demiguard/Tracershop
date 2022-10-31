@@ -3,7 +3,7 @@ import React, { Component } from "react";
 import { JSON_CLOSEDDATE, KEYWORD_DDATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
 import { Calender, standardOrderMapping, producitonGetMonthlyOrders } from "../injectables/calender";
 
-import { FormatDateStr } from "/src/lib/formatting";
+import { FormatDateStr } from "../../lib/formatting.js";
 
 export class CloseDaysPage extends Component {
   constructor(props){

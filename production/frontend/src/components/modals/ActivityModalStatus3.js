@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Modal, Table, Button } from "react-bootstrap";
-import { renderDateTime, renderTableRow } from "/src/lib/Rendering";
+import { renderDateTime, renderTableRow } from "../../lib/Rendering";
 
 import styles from '../../css/Site.module.css'
 

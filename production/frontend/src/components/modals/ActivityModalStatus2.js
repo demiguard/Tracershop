@@ -3,9 +3,8 @@ import { Modal, Button, Row, Container, Table, FormControl, Col, Image } from "r
 import { JSON_ACTIVITY_ORDER, JSON_VIAL, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_TOTAL_AMOUNT, KEYWORD_TOTAL_AMOUNT_O, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
 import { renderClickableIcon,renderTableRow } from "../../lib/Rendering";
 import { changeState, toggleState } from "../../lib/stateManagement";
-import { addCharacter } from "../../lib/utils";
-import { FormatTime, ParseDanishNumber, FormatDateStr } from "/src/lib/formatting";
-import { autoAddCharacter } from "/src/lib/utils";
+import { FormatTime, ParseDanishNumber, FormatDateStr } from "../../lib/formatting";
+import { autoAddCharacter, addCharacter } from "../../lib/utils";
 
 import styles from '../../css/Site.module.css'
 
@@ -18,10 +17,10 @@ export { ActivityModalStatus2 }
  *
  * Props:
  *  show  - Boolean - Should the modal be shown or not?
- *  Order - Obejct - The order to be rendered
+ *  Order - Object - The order to be rendered
  *  customer - Object - The customer related to the order
  *  onClose - func - Function that closes the modal
- *  vials - Map<int,Obejcts> - A mapping with all vials.
+ *  vials - Map<int, Objects> - A mapping with all vials.
  *  editVial - func - Function that communicates an edit to a vial.
  *  createVial - func - Function that creates a vial on the backend
  *  selectedVials - Set - Set of vials, that should be associated with this order
@@ -81,7 +80,7 @@ export default class ActivityModalStatus2 extends Component {
   /** This function validates user input to create a vial.
    * In case of error It updates state with relevant error message.
    *
-   * @param {*} charge - User input representing Charge or Batchnumber to be validated
+   * @param {*} charge - User input representing Charge or Batch number to be validated
    * @param {*} Activity - User input representing A positive number
    * @param {*} Volume - User input representing Volume of vial.
    * @param {*} FillTime - User input representing fill time of vial.

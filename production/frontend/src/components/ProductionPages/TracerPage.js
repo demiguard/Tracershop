@@ -1,11 +1,13 @@
 import React, { Component } from "react";
 import { Container, Table, FormControl, Form } from "react-bootstrap";
-import TracerModal from "/src/components/modals/TracerModal";
-import { BooleanMapping } from "/src/lib/utils";
-import { renderTableRow } from "/src/lib/Rendering";
+
+import TracerModal from "../modals/TracerModal";
+import { BooleanMapping } from "../../lib/utils";
+import { renderTableRow } from "../../lib/Rendering";
 import { changeState } from "../../lib/stateManagement";
 import { renderClickableIcon, renderSelect } from "../../lib/Rendering";
-import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE } from "../../lib/constants";
+import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY,
+  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE } from "../../lib/constants";
 
 export {TracerPage}
 

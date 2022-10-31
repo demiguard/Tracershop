@@ -1,17 +1,18 @@
 
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container } from 'react-bootstrap'
-import { renderStatusImage, renderTableRow } from "/src/lib/Rendering";
-import { CompareDates } from "/src/lib/utils";
-import { FormatDateStr, ParseJSONstr } from "/src/lib/formatting";
-import { CountMinutes, CalculateProduction } from "/src/lib/physics";
-import { ActivityModal } from "/src/components/modals/ActivityModal.js";
-import { CreateOrderModal } from "/src/components/modals/CreateOrderModal";
+import { renderStatusImage, renderTableRow } from "../../lib/Rendering";
+import { CompareDates } from "../../lib/utils";
+import { FormatDateStr, ParseJSONstr } from "../../lib/formatting";
+import { CountMinutes, CalculateProduction } from "../../lib/physics";
+import { ActivityModal } from "../../components/modals/ActivityModal.js";
+import { CreateOrderModal } from "../../components/modals/CreateOrderModal";
 import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
   WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
-  KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME, WEBSOCKET_MESSAGE_EDIT_STATE, KEYWORD_TRACER} from "../../lib/constants";
+  KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME,
+  WEBSOCKET_MESSAGE_EDIT_STATE, KEYWORD_TRACER} from "../../lib/constants";
 
 import SiteStyles from "/src/css/Site.module.css"
 

@@ -1,9 +1,12 @@
-import { Authenticate } from "/src/components/injectables/Authenticate.js"
 import React, {Component,} from "react";
 import { Button, Col, Row, FormControl, Modal, Container } from "react-bootstrap";
+
+import { Authenticate } from "../injectables/Authenticate.js"
+
 import { changeState } from "../../lib/stateManagement";
 import { FormatDateStr } from "../../lib/formatting";
-import { WEBSOCKET_MESSAGE_AUTH_LOGIN, AUTH_DETAIL, AUTH_PASSWORD, AUTH_USERNAME, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
+import { WEBSOCKET_MESSAGE_AUTH_LOGIN, AUTH_PASSWORD, AUTH_USERNAME,
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
   JSON_INJECTION_ORDER, JSON_AUTH, AUTH_IS_AUTHENTICATED } from "../../lib/constants";
 
 import styles from '../../css/Site.module.css'
