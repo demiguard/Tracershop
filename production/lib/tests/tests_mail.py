@@ -2,7 +2,7 @@ import socket
 
 from django.test import TestCase
 
-from lib import mail
+from lib.mail import sendMail, validateEmailAddress, EmailHeader
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
 
 from datetime import datetime
@@ -10,24 +10,9 @@ from database import models
 
 from lib.SQL.SQLController import SQL
 
-class mail():
+class mail_TestCase(TestCase):
   def setUp(self):
-    add = models.Address(
-      ip="127.0.0.1",
-      port=5000,
-      description="Tracershop Database Address"
-    ).save()
-
-    models.Database.objects.create(
-      databaseName="TS_test",
-      username="tracershop",
-      password="fdg4sale",
-      address=add,
-      testinDatabase=0
-    )
-
     self.sc = SQL.getServerConfig()
-
 
   test_customer = CustomerDataClass(
       "UserName",
@@ -49,14 +34,21 @@ class mail():
 
   filename = "test_pdfs/mail_template_order_single_vial.pdf"
 
-  emailHeader = mail.EmailHeader("Christoffer.vilstrup.Jensen@Regionh.dk", "test Subject" , "test Message")
+  emailHeader = EmailHeader("Christoffer.vilstrup.Jensen@Regionh.dk", "test Subject" , "test Message")
 
   #def test_prepareMail(self):
   #  mail.prepareMail(self.emailHeader, self.filename)
 
   def test_sendMail(self): # This test have a dependency on the mail server working
     try:
-      mail.sendMail(self.filename, self.test_customer, self.test_order, self.sc)
+      sendMail(self.filename, self.test_customer, self.test_order, self.sc)
     except socket.gaierror:
       pass
 
+  def test_valid_email(self):
+    self.assertFalse(validateEmailAddress("NotAnEmailaddress"))
+    self.assertFalse(validateEmailAddress("Not.An.Emailaddress.dk"))
+    self.assertFalse(validateEmailAddress("NotAnEmailaddress@"))
+    self.assertFalse(validateEmailAddress("NotAnEmailaddress@still"))
+
+    self.assertTrue(validateEmailAddress("AnEmail@address.dk"))

@@ -2,7 +2,43 @@ from django.contrib.auth.models import AnonymousUser
 
 from constants import *
 from database.models import User, UserGroups
-from typing import Dict
+from typing import Any, Dict, Type
+
+requiredMessageFields = {
+  WEBSOCKET_MESSAGE_FREE_INJECTION : [WEBSOCKET_DATA, JSON_AUTH]
+}
+
+requiredDataFields = {
+  WEBSOCKET_MESSAGE_FREE_INJECTION : [(KEYWORD_OID, int), (KEYWORD_BATCHNR, str)]
+}
+
+
+def ValidateAuthObject(AuthObj: Dict) -> bool:
+  """Validates that the auth object contains a username and password
+
+  Username name might not exists and if it does password may not be correct.
+
+  Args:
+      message (Dict): An object that should contain AUTH_USERNAME and AUTH_PASSWORD
+
+  Returns:
+      bool: Validity of Auth object
+  """
+  # Auth object should always contain a username and a password
+  return AUTH_USERNAME in AuthObj and AUTH_PASSWORD in AuthObj
+
+def ValidateType(value : Any, targetType: Type) -> bool:
+  """Checks if a value is of a certain type
+
+  Args:
+      value (_type_): _description_
+      targetType (_type_): _description_
+
+  Returns:
+      bool: _description_
+  """
+
+  return True
 
 def AuthMessage(user : User, message : Dict) -> bool:
   """_summary_
@@ -30,7 +66,8 @@ def AuthMessage(user : User, message : Dict) -> bool:
     if messageType in [
         WEBSOCKET_MESSAGE_GREAT_STATE,
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-        WEBSOCKET_MESSAGE_FREE_ORDER,
+        WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+        WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_MESSAGE_MOVE_ORDERS,
         WEBSOCKET_MESSAGE_ECHO,
         WEBSOCKET_MESSAGE_GET_ORDERS,
@@ -45,7 +82,8 @@ def AuthMessage(user : User, message : Dict) -> bool:
     if messageType in [
         WEBSOCKET_MESSAGE_GREAT_STATE,
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-        WEBSOCKET_MESSAGE_FREE_ORDER,
+        WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+        WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_MESSAGE_MOVE_ORDERS,
         WEBSOCKET_MESSAGE_ECHO,
         WEBSOCKET_MESSAGE_GET_ORDERS,
@@ -94,5 +132,20 @@ def validateMessage(message : Dict) -> str:
     return ERROR_NO_JAVASCRIPT_VERSION
   if not message[WEBSOCKET_JAVASCRIPT_VERSION] == JAVASCRIPT_VERSION:
     return ERROR_INVALID_JAVASCRIPT_VERSION
+
+  for field in requiredMessageFields.get(message[WEBSOCKET_MESSAGE_TYPE], []):
+    if field not in message:
+      return ERROR_INVALID_MESSAGE
+
+  if WEBSOCKET_DATA in message:
+    data = message[WEBSOCKET_DATA]
+    for field, Type in requiredDataFields.get(message[WEBSOCKET_MESSAGE_TYPE], []):
+      if field not in data or not ValidateType(data[field], Type):
+        return ERROR_INSUFFICIENT_DATA
+
+  if JSON_AUTH in message and not ValidateAuthObject(message[JSON_AUTH]):
+    return ERROR_INVALID_AUTH
+
+
 
   return ""

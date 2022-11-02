@@ -9,6 +9,8 @@ from tracerauth.auth import AuthMessage, validateMessage
 from lib.utils import LMAP
 
 
+from tests.helpers import TEST_ADMIN_PASSWORD, TEST_ADMIN_USERNAME
+
 from constants import *
 
 def createShellMessage(messageType : str) -> Dict:
@@ -27,17 +29,20 @@ class authTestCase(TestCase):
     WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
     WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
     WEBSOCKET_MESSAGE_EDIT_STATE,
-    WEBSOCKET_MESSAGE_FREE_ORDER,
+    WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+    WEBSOCKET_MESSAGE_FREE_INJECTION,
     WEBSOCKET_MESSAGE_GET_ORDERS,
     WEBSOCKET_MESSAGE_GREAT_STATE,
     WEBSOCKET_MESSAGE_MOVE_ORDERS,
   ])
 
+  message_id = 6940269
+
 
   def test_AuthMessage_anon(self):
     anon = AnonymousUser()
     responses = LMAP(lambda message : AuthMessage(anon, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 7)
+    self.assertListEqual(responses, [True] * 4 + [False] * 8)
 
 
   def test_AuthMessage_admin(self):
@@ -64,18 +69,18 @@ class authTestCase(TestCase):
   def test_AuthMessage_ShopAdmin(self):
     ShopAdmin = User(username="ShopAdmin", UserGroup=UserGroups.ShopAdmin, OldTracerBaseID=4)
     responses = LMAP(lambda message : AuthMessage(ShopAdmin, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 7)
+    self.assertListEqual(responses, [True] * 4 + [False] * 8)
 
 
   def test_AuthMessage_ShopUser(self):
     ShopUser = User(username="ShopUser", UserGroup=UserGroups.ShopUser, OldTracerBaseID=5)
     responses = LMAP(lambda message : AuthMessage(ShopUser, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 7)
+    self.assertListEqual(responses, [True] * 4 + [False] * 8)
 
   def test_AuthMessage_ShopExternal(self):
     ShopExternal = User(username="ShopExternal", UserGroup=UserGroups.ShopExternal, OldTracerBaseID=6)
     responses = LMAP(lambda message : AuthMessage(ShopExternal, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 7)
+    self.assertListEqual(responses, [True] * 4 + [False] * 8)
 
   def test_validateMessage_validMessage(self):
     self.assertEqual(validateMessage({
@@ -89,5 +94,22 @@ class authTestCase(TestCase):
       {'messageType': 'whoami',
       'messageID': 900288973,
       'javascriptVersion': '1.0.0'}), ERROR_INVALID_JAVASCRIPT_VERSION
-
     )
+
+  def test_validateMessage_FreeInjectionOrder(self):
+    self.assertEqual(validateMessage(
+      {
+      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      WEBSOCKET_DATA : {
+        KEYWORD_BATCHNR : "messageBatchNumber",
+        KEYWORD_OID     : 6631
+      },
+      JSON_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : TEST_ADMIN_PASSWORD
+      }
+    }
+    ), "")
+    

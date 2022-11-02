@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from typing import Union, Optional, List, Any
 
-from lib.decorators import typeCheckfunc
+from lib.decorators import typeCheckFunc
 
 class TypeCheckingTest(TestCase):
   def test_dummy_function(self):
@@ -96,39 +96,39 @@ class TypeCheckingTest(TestCase):
   #def test_anyType(self):
   #  self.assertEqual(testFunctionAny("123"), "123")
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunction(x:int , y:int):
   return x + y
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionNoAnnotations(x, y):
   return x + y
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionPartial(x: int, y):
   return x + y
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionKWargAnnotation(x: int, y: int, aKW : int=3):
   return x + y + aKW
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionUnionType(x: Union[int, str]):
   return x
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionAny(x:Any):
   return x
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionList(l : List[int]):
   return list(map(lambda x: x+1,l))
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionManyArgs(x:int, y:int, *args):
   return x + y
 
-@typeCheckfunc
+@typeCheckFunc
 def testFunctionNestedList(ll : List[List[int]]):
   #Okay It's clear from this syntax that python is not the world best functional language
   return list(

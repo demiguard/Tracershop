@@ -1,9 +1,11 @@
 from dataclasses import dataclass
 
 import re
+from types import UnionType
+from typing import Union
 import constants
 
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
+from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass
 from database.models import ServerConfiguration
 
 from smtplib import SMTP
@@ -20,7 +22,7 @@ class EmailHeader:
   message : str
   From    : str = constants.EMAIL_SENDER_ADDRESS
 
-def validifyEmailAddress(potentialEmail : str) -> bool:
+def validateEmailAddress(potentialEmail : str) -> bool:
   """
     Checks if an email address is valid:
 
@@ -28,7 +30,7 @@ def validifyEmailAddress(potentialEmail : str) -> bool:
       potentialEmail : str - the text string checking if it's a RFC 5322 Standard valid email
 
     returns
-      bool - the outcome of the comparision. Note this is not a re.match object
+      bool - the outcome of the comparison. Note this is not a re.match object
 
   """
   emailRegex = r"(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)"
@@ -38,7 +40,6 @@ def validifyEmailAddress(potentialEmail : str) -> bool:
 
 def prepareMail(emailHeader :EmailHeader, fileBytes):
   fname = "følgeseddel.pdf"
-
 
   mail = MIMEMultipart()
   mail["Subject"] = emailHeader.Subject
@@ -59,7 +60,7 @@ def prepareMail(emailHeader :EmailHeader, fileBytes):
   return mail
 
 
-def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDataClass, serverConfiguration : ServerConfiguration):
+def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: Union[ActivityOrderDataClass, InjectionOrderDataClass], serverConfiguration : ServerConfiguration):
   emails = [Customer.email, Customer.email2, Customer.email3, Customer.email4]
 
   Text_message = "Dette er en føgleseddel til tracershop."
@@ -69,8 +70,8 @@ def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDa
     fileBytes = f.read()
 
   for email in emails:
-    if not validifyEmailAddress(email):
-      continue
+    if not validateEmailAddress(email):
+      continue #pragma: no cover
 
     Header = EmailHeader(
       To=email,
@@ -83,4 +84,4 @@ def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: ActivityOrderDa
     ip = str(ServerConfiguration.SMTPServer)
 
     with SMTP(ip) as smtp:
-      smtp.sendmail(constants.EMAIL_SENDER_ADDRESS, [email], mail.as_string())
+      smtp.sendmail(constants.EMAIL_SENDER_ADDRESS, [email], mail.as_string()) #pragma: no cover

@@ -10,7 +10,7 @@ from pathlib import Path
 
 from lib.SQL.SQLController import SQL
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
-from lib import pdfs
+from lib import pdfGeneration
 from lib.utils import LMAP
 
 # This is an (almost) single page appilication
@@ -45,6 +45,6 @@ def pdfView(request, customer:str, year: int, month : int, ID):
     Tracer = SQL.getElement(Order.tracer, TracerDataClass)
     Isotope = SQL.getElement(Tracer.isotope, IsotopeDataClass)
 
-    pdfs.DrawSimpleActivityOrder(filename, Customer, Order, Vials, Tracer, Isotope)
+    pdfGeneration.DrawSimpleActivityOrder(filename, Customer, Order, Vials, Tracer, Isotope)
 
   return FileResponse(open(filename, 'rb'))

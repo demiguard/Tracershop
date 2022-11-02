@@ -29,7 +29,7 @@ import decimal
 from typing import Dict, List
 
 from constants import * # Import the many WEBSOCKET constants
-from lib.decorators import typeCheckfunc
+from lib.decorators import typeCheckFunc
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
 from lib.ProductionJSON import encode, decode
 from lib.ProductionDataClasses import *
@@ -50,9 +50,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
   """This is the websocket that communicates with all clients.
 
   The most import method is the receive_json method,
-  which is called when a websocket recieves message on the json format.
+  which is called when a websocket receives message on the json format.
   Any message not on the json format is invalid!
-  recieve_json calls a handler found Handlers property at the end of the file.
+  receive_json calls a handler found Handlers property at the end of the file.
 
   Programmers Note:
    Communication with all clients are needed because the client might cause updates that all clients are need to be aware of.
@@ -124,16 +124,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
         logger.error(f"The message {message} was send It's not valid by the error: {error}")
         await self.HandleKnownError(message, error)
         return
-      logger.info(f"Websocket recieved message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
+      logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
       if not auth.AuthMessage(self.scope['user'], message):
-        await self.HandleKnownError(message, ERROR_INSUFICIENT_PERMISSIONS)
+        await self.HandleKnownError(message, ERROR_INSUFFICIENT_PERMISSIONS)
         return
 
       handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
       if handler == None: # pragma no cover
-        # This should be imposible to reach, since the validatemessage should throw an error.
+        # This should be impossible to reach, since the validateMessage should throw an error.
         # The only case this should happen is when a message type have been added but a handler have been made
-        # I.E It's a NOT implimented case.
+        # I.E It's a NOT implemented case.
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
 
       await handler(self, message)
@@ -147,7 +147,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ### Error handling ###
   async def HandleUnknownError(self, exception : Exception, FailingMessage : dict):
-    """This Function is triggered when an unhandle exception is happens server side.
+    """This Function is triggered when an unhandled exception is happens server side.
     It sends an Error message back to the client informing it,
     that server was unable to process the request, due to some unknown bug.
     The intent of this function is better displays bugs to the user, so that they can be fixed.
@@ -159,7 +159,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         FailingMessage : dict
     """
     # Error_logger.error(f"Message {FailingMessage} Failed with Exception {exception} ")
-    await self.send_json({
+    # If a test case reaches here It should be a known error and either handled or thrown back to the websocket
+    await self.send_json({ #pragma: no cover
       { WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
         WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
       }
@@ -196,18 +197,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await login(self.scope, user)
       await sync_to_async(self.scope["session"].save)()
       key = self.scope["session"].session_key
-      usergroup = user.UserGroup
+      userGroup = user.UserGroup
       customer = []
     else:
       isAuth = False
       username = ""
-      usergroup = 0
+      userGroup = 0
       key = ""
       customer = []
 
     await self.send_json({
       AUTH_USERNAME : username,
-      KEYWORD_USERGROUP : usergroup,
+      KEYWORD_USERGROUP : userGroup,
       KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
       WEBSOCKET_SESSION_ID : key,
@@ -221,18 +222,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, User):
       username = user.username
       isAuth = True
-      usergroup = user.UserGroup
+      userGroup = user.UserGroup
       #queryCustomers = await database_sync_to_async(user.Customer.all)()
       customer = []
     else:
       isAuth = False
       username = ""
-      usergroup = 0
+      userGroup = 0
       customer = []
 
     await self.send_json({
       AUTH_USERNAME : username,
-      KEYWORD_USERGROUP : usergroup,
+      KEYWORD_USERGROUP : userGroup,
       KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
@@ -310,12 +311,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def HandleCreateDataClass(self, message : Dict):
     """Websocket handler function for production data class creation.
 
-    Programmer Note: I don't really think that the method dict is particulary effective here, just because of how different the functions are.
+    Programmer Note: I don't really think that the method dict is particularly effective here, just because of how different the functions are.
       While such method is possible by creating a bunch of local method, you're kinda getting the same, result. Look if you disagree fucking fight me!
 
     Args:
         message (Dict): received message with the following fields
-          WEBSOCKET_DATA     - Dict with fields suficient to create a dataclass
+          WEBSOCKET_DATA     - Dict with fields sufficient to create a dataclass
           WEBSOCKET_DATATYPE - Constant specifying the type of data class to be created
           ----- different arguments might be present due to late standardization -----
 
@@ -364,7 +365,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
       }
     )
 
-  async def HandleFreeOrder(self, message : Dict):
+  async def __RejectFreeing(self, message : Dict) -> None:
+    await self.send_json({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      AUTH_IS_AUTHENTICATED : False
+    })
+
+  async def HandleFreeActivityOrder(self, message : Dict):
     """
 
     Args:
@@ -433,7 +441,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await self.channel_layer.group_send(
         self.global_group, {
             WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
             JSON_ACTIVITY_ORDER : LMAP(lambda x: encode(x.toJSON()), updateOrders),
             JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),updatedVials),
             WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -443,10 +451,66 @@ class Consumer(AsyncJsonWebsocketConsumer):
     else:
       print("No LegacyMode is no go") # pragma: no cover
 
+  async def HandleFreeInjectionOrder(self, message : Dict) -> None:
+    """This function handles freeing Injection based orders
+
+    Args:
+        message (Dict): Message with the following fields
+          WEBSOCKET_DATA - Dict with:
+            KEYWORD_OID - ID of injection order to freed
+            KEYWORD_BATCHNR - batch number of material.
+          JSON_AUTH - Dict with:
+            AUTH_USERNAME : username
+            AUTH_PASSWORD : password for username
+    """
+    # Step 1: Determine the user credentials are valid
+    Auth = message[JSON_AUTH]
+
+    # Quick check if user and auth user matches before any database connection start working
+    if not Auth[AUTH_USERNAME] == self.scope['user'].username:
+      return await self.__RejectFreeing(message)
+
+    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME], password=Auth[AUTH_PASSWORD])
+    if not user:
+      return await self.__RejectFreeing(message)
+
+    # Step 2: Update the database
+    data = message[WEBSOCKET_DATA]
+    ConditionalString = f"oid = {data[KEYWORD_OID]} AND status = 2" # the status is there to prevent over writing an already freed order
+
+    ListIODC = await self.db.GetConditionalElements(ConditionalString, InjectionOrderDataClass)
+
+    if ListIODC:
+      IODC = ListIODC[0]
+
+
+      IODC.status = 3
+      IODC.batchnr = data[KEYWORD_BATCHNR]
+      IODC.frigivet_af = self.scope['user'].OldTracerBaseID
+      fdt = datetime.now() # all of this to get rid of micro seconds
+
+      IODC.frigivet_datetime = datetime(fdt.year, fdt.month, fdt.day, fdt.hour, fdt.minute, fdt.second )
+
+      await self.db.updateDataClass(IODC)
+
+      pdfPath = await self.db.createInjectionPDF(IODC)
+      await self.channel_layer.group_send(self.global_group, {
+        WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+        JSON_INJECTION_ORDER : encode(IODC.toJSON()),
+        AUTH_IS_AUTHENTICATED : True
+      })
+    else:
+      await self.HandleKnownError(message, ERROR_OBJECT_NOT_FOUND)
+
+
+
   async def HandleMoveOrders(self, message : Dict):
     """ This handles a request to move an order.
 
-    TODO: Note that here we have some bad code in that the frontend does alot calculations
+    TODO: Note that here we have some bad code in that the frontend does a lot calculations
     It should really be the server that does this because, the frontend should just be a pretty picture of
     the underlying database. It also opens a creative soul to, put in whatever in an object and the server will just eat it.
 
@@ -577,18 +641,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
 
-  @typeCheckfunc
+  @typeCheckFunc
   async def HandleGetOrders(self, message : Dict):
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
     SC = await self.db.getServerConfig()
     startDate = client_date - timedelta(days=SC.DateRange)
     endDate = client_date + timedelta(days=SC.DateRange)
     activityOrders = await self.db.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
+    ClosedDates = await self.db.getDataClassRange(startDate, endDate, ClosedDateDataClass)
     injectionOrders = await self.db.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
     Vials = await self.db.getDataClassRange(startDate, endDate, VialDataClass)
 
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
+      JSON_CLOSEDDATE : [encode(aClosedDate) for aClosedDate in ClosedDates],
       JSON_ACTIVITY_ORDER : [encode(aorder) for aorder in activityOrders],
       JSON_INJECTION_ORDER : [encode(torder) for torder in injectionOrders],
       JSON_VIAL : [encode(vialdc) for vialdc in Vials],
@@ -596,13 +662,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
 
-  @typeCheckfunc
+  @typeCheckFunc
   async def HandleUpdateServerConfig(self, message : Dict):
     pass
 
 
 
-  @typeCheckfunc
+  @typeCheckFunc
   async def HandleEditState(self, message : Dict):
     try:
       dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
@@ -698,7 +764,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_DELETE_DATA_CLASS : HandleDeleteDataClass,
     WEBSOCKET_MESSAGE_ECHO : HandleEcho,
     WEBSOCKET_MESSAGE_EDIT_STATE : HandleEditState,
-    WEBSOCKET_MESSAGE_FREE_ORDER : HandleFreeOrder,
+    WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrder,
+    WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
     WEBSOCKET_MESSAGE_GREAT_STATE : HandleTheGreatStateMessage,
     WEBSOCKET_MESSAGE_GET_HISTORY : HandleGetHistory,
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetOrders,

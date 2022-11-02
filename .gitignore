@@ -11,6 +11,7 @@ production/frontend/node_modules/
 production/frontend/coverage/
 production/database/migrations/
 production/TracerAuth/migrations
+production/pdfData/
 *.sqlite3
 main.js
 main.js*

@@ -11,7 +11,9 @@
 
 \hypersetup{
   colorlinks = true,
-  urlcolor = blue
+  urlcolor = blue,
+  citecolor = black,
+  linkcolor = black
 }
 
 
@@ -24,6 +26,9 @@
 }
 
 \newglossaryentry{fdg}{name={FDG},description={[$^{18}$F]Fluorodeoxyglucose, a common radioactive tracer used for PET images}}
+
+\newglossaryentry{CIMT}{name={CIMT},description={Center for IT and Medico technologies. Responsible department for IT in the Capital Region of Denmark}}
+
 
 \graphicspath{{./figures/}}
 
@@ -78,30 +83,26 @@ An overview of the system can be seen in figure \ref{fig:oldsys}.
     \label{fig:oldsys}
   \end{center}
 \end{figure}
-
-There's a dispenser in the ecosystem. The dispenser ensures the dispensed amount of product and the digital record of the product is correct.
-The dispenser writes to it own database, which does not support multiple concurrent connections.
-A Tracershop component retrieves the data of the dispensed vial by opening the database as a file, seeks to an offset just before the new line was added and
-adds an entry in the database. The author of this script no longer works at Rigshospitalet. This solution is highly fragile, as an update to the database would
-render the script inoperable as the byte offset would no longer be correct.
-In such a case the script would read garbage would not be able to construct a valid entry and thus would mostly likely fail.
-At which point the production would have to manually write the data into Tracershops database, which introduces another human error.\\
-Due to the nature of the dispenser, a less fragile solution is impossible, it's therefore recommended to replace the dispenser, with one fulfils the requirements of either:
+The dispenser ensures the amount of product in vials and the digital record of the product are equal.
+The dispenser writes these records to it own database, which does not support multiple concurrent connections, making it impossible to retrieve them the conventional way.
+A script circumvents this obstacle by opening the database as a file, and by using a byte offset retrieves the data of the dispensed vial.
+This solution is highly fragile, and an update to the database could change the file format of the database.
+This would render the script inoperable as the byte offset would no longer be correct.\\
+Should the offset be incorrect the script would read garbage, so it could not construct a valid entry and thus would mostly likely fail.
+In that event the production staff would have to manually read the data from the dispenser and then write the data into Tracershops database, which introduces another human error.\\
+It's therefore recommended to replace the dispenser, with one fulfils the requirements of either:
 \begin{itemize}
   \item Writes dispensed tracer data to a database that allows multiple connections.
   \item Writes dispensed tracer data to a file.
 \end{itemize}
-Tracershop software components reached end of life, and as such continued usage is not advised. Tracershop was build with correctness in mind,
-however that's no longer sufficient for a good IT product. Sadly IT-criminality is on the rise, as such it necessary to bad actors, even in a low risk system,
-such as tracershop.\\
 Currently it's the The Department of clinical physiology nuclear medicine which hosts the server.
-
+Which is not desired because hosting server is a core task \GLS{CIMT} and not the clinical departments.
 
 \subsection*{Abstractions}
-Tracershop have two different types of orders. Activity based orders and Injection based orders.
-An "Activity Order" is defined as an order, where the user orders an amount of MBq radioactive tracer at a predetermined time slot known as a "deliver time".
-Hence it's the user responsibility to account for radioactive decay and order a sufficient amount tracer.
-While an injection order consists of a number of injections, and it's Tracershops responsibility to account for any decay between production time and injection time.
+Tracershop handles two different types of orders. Activity based orders and Injection based orders.\\
+An \textbf{activity order} is defined as an order, where the user orders an amount of MBq radioactive tracer at a predetermined time slot known as a "deliver time".
+It's the user responsibility to account for radioactive decay between injection time and delivery time.\\
+An \textbf{injection order} is an order with a number of injections with a predefined amount of activity, and it's Tracershops responsibility to account for any decay between production time and injection time.
 Users er limited per user basis which injection tracers they can order.
 
 \subsection*{Requirements}
@@ -109,8 +110,8 @@ Users er limited per user basis which injection tracers they can order.
 \begin{itemize}
   \item A user can order radioactive tracer from the internet while not connected to the Capital Region intranet.
   A user can be limited in their selection of tracers and limited time window where such tracers are available for ordering.
-  \item A user can review any order they have made, and view batch number of tracer that they have ordered. They cannot view or alter order, which doesn't belong to them.
-  \item It's possible to track, which staff member produced which order. A released order must have a valid batch number.
+  \item A user can review any order they have made, and view batch number of tracer that they have ordered. They cannot view or alter order, which doesn't belong to them. They cannot alter delivered orders.
+  \item A released order has a batch number and a record of who released it.
   \item Non authenticated users cannot alter or view information in tracershop.
 \end{itemize}
 
@@ -125,6 +126,14 @@ The Tables in the Tracershop main database, note the tables casing does not conf
   \item TracerCustomer - Defines which user have access to order which injection Tracer.
   \item Tracers - Catalog of tracer available in tracershop.
   \item UserRoles - Relates user to a Role from the Role table.
+  \item Users - All users able to be authenticated in tracershop
+  \item VAL - Record of a vial with tracer, produced by the dispenser.
+  \item VAL2 - Not in use.
+  \item blockDeliverDate - Extraordinary dates where tracershop is closed, such a holydays.
+  \item deliverTimes - Weekly points in time specifying when a customer can place an activity order.
+  \item isotopes - Catalog of radioactive isotope used in the tracers.
+  \item orders - List of activity orders.
+  \item productionTimes - Weekly points in time, where a production should happen. Entries are also referred as a run.
   \item productions - Production of tracers.
   \item storage - Old mails, assumed not in use.
   \item t\_orders - List of injection orders.
@@ -132,56 +141,66 @@ The Tables in the Tracershop main database, note the tables casing does not conf
 The database are not utilizing the foreign key restriction, meaning that the relations are ensured at application level and not the database level.
 It's recommend to utilize the these functionality to ensure that the database stays in a valid state.
 For instance if a tracer entry is dropped or updated, it may not be possible to determine the tracer of any historic order, that might have used this tracer.\\
-Despite Activity orders having a tracer field, this is ignored by the web interface and assumed to be \Gls{fdg}.
+Despite Activity orders having a tracer field, this is ignored by the Zope application and assumed to be \Gls{fdg}.
 
-\section*{New System}
+\section*{New web server}
 Tracershop is a system of individual components, so a simple switch of system is not advised, as any of new components would likely contain early adopter errors.
 While these errors likely are easy to resolve, they would still take the system down, which is unacceptable.
-The best plan of action would be replace each individual component,
-and if possible have old component running as a backup in the event that a new component has an error.\\
-The largest and easiest to replace component is the web interface, as it can connect to the MySQL database and updates done by the new and old system can co-exists,
-as long as the old and the new system follows the same assumptions.\\
-This report suggest a new web server. The project is open source found at:\\
+The best plan of action would be replace each individual component one at a time.
+If possible the old component should be running as a backup in the event that a new component has an error and is unavailable.\\
+The largest but easiest to replace component is the web server, as it can connect to the old MySQL database and therefore can co-exists with the old system,
+as long as the old and the new web server follows the same assumptions. Once the new tracershop is considered stable, the Zope web service can be discarded. \\
+This report suggest a django web server with a react front end. The project is open source found at:\\
 \url{https://github.com/demiguard/Tracershop}\\
-Once the basic functionality of a new component is fulfilled and the robustness of the system have been verified. The old system can be retried and
-any assumptions held by the old system can be dropped.
-The new system hosted on Center for IT and Medico technologies servers, who is responsible for general IT in the Capital Region,
-including maintaining the network spanning all the hospitals in the Region, and therefore would be in line with Rigshospitalet policies regarding software.
-To ensure the new system works correctly, the new system is using common software packages, these are:
+The new system uses common software packages for web servers:
 \begin{itemize}
   \item React - Frontend Javascript library developed by facebook. \url{https://reactjs.org}
   \item Django - Backend Python web server library \url{https://djangoproject.com}
   \item Channels - Django extension for using websockets. \url{https://channels.readthedocs.io./en/stable}
 \end{itemize}
-These packages are well supported and all in active development, so they will continue to provide security updates.
-The new Tracershop utilize websockets instead of http communication, because websockets allows the server to push updates to the users,
+These packages are well supported and all in active development, so their developers will continue to provide security updates.\\
+The new Tracershop utilize websockets instead of http communication, because websockets allows the server to push updates to the users unprompted,
 because the protocol uses a persistance connection, while http does not use a persistent connection.
-This means that user always view up to date data, while in old system users might operate on out of date data, because another user have altered such data.
+An overview of the communication can be found in figure \ref*{fig:websocketMessage}
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=0.6\linewidth]{websocketMessage.png}
+    \label{fig:websocketMessage}
+    \caption{Overview of the message handling.}
+  \end{center}
+\end{figure}
+This means that user always view up to date data, while in old system users might operate on out of date data, if another user have altered that data.
 
-To ensure correct behavior of the new tracershop handles message in a three step plan seen below:
+The new system should be hosted hosted on \GLS{CIMT} servers, which would be in line with Rigshospitalet policies regarding software.
 
+To ensure that the new tracershop handles message correctly behavior and follows requirements of \GLS{gmp}. The message is p in a three step plan seen below:
 \begin{figure}[ht]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{MessageHandeling.png}
     \caption{Message handling by the backend}
+    \label{fig:messageHandle}
   \end{center}
 \end{figure}
 
 \begin{enumerate}
-  \item Validate the message - ensure that the message is correctly formatted and therefore would not cause an error if processed by the webserver.
+  \item Validate the message - ensure that the message is correctly formatted and therefore would not cause an error if processed by the web server.
   \item Authenticate the message - Now the server can assume, the message is of a valid structure and determine it type.
   Then it can check if the authenticated user is allowed to complete such a message.
   \item Apply the message - Now the message is both valid and authorized, so the server will handle the message.
 \end{enumerate}
 
 Since the frontend doesn't have any contact with the database,
-it is sufficient to ensure that the backend updates the database correctly on corresponding messages.
-This is done by a series of unit tests and end to end tests, which have a 92\% code coverage,
-which proves the web server handles user message correctly.
+it is sufficient to ensure that the backend handles the users messages correctly.
+This is done by a series of unit tests and end to end tests, which have a 92\% code coverage.
+Which means that there's a program, which creates a test environment and run a number of tests where 92\% of all statement in the program is executed at least once.
+Having above 90\% code coverage is considered good coverage as not all code is easily testable, nor does a code coverage of 100\% ensure that the program have no errors.
+The testing proves the web server with high confidence handles messages correctly.
 
 \section*{Conclusion}
 The old tracershop fulfils the requirement set forwards by \GLS{gmp}, but is running on modules that have reached end of life.
-Therefore a new system is proposed, that fulfils \GLS{gmp} and no longer uses component, that is no longer supported.
+
+A new system is proposed, that fulfils \GLS{gmp}, no longer uses, and improves various aspects of the tracershop system.
+An extensive test sweep ensure that the django web server handles messages correctly.
 
 
 

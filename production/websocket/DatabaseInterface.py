@@ -16,14 +16,14 @@ from xmlrpc.client import Boolean
 from channels.db import database_sync_to_async
 
 from database.models import ServerConfiguration, Database, Address, User
-from lib.decorators import typeCheckfunc
+from lib.decorators import typeCheckFunc
 from lib.SQL.SQLController import SQL
 from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
-from lib import pdfs
+from lib import pdfGeneration
 
 
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Type
 import logging
 
 logger = logging.getLogger('DebugLogger')
@@ -49,15 +49,31 @@ class DatabaseInterface():
   @database_sync_to_async
   def createPDF(
     self,
-    Orders: List[ActivityOrderDataClass],
-    Vials: List[VialDataClass]
+    Orders: ActivityOrderDataClass,
+    Vials: List[VialDataClass],
+    CoidOrder = None,
+    VialOrders = None,
   ):
     Order = Orders[0]
     customer = self.SQL.getElement(Order.BID, CustomerDataClass)
     Tracer = self.SQL.getElement(Order.tracer, TracerDataClass)
     Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)
-    pdfPath = pdfs.getPdfFilePath(customer, Order)
-    pdfs.DrawSimpleActivityOrder(pdfPath, customer, Order, Vials, Tracer, Isotope)
+    pdfPath = pdfGeneration.getPdfFilePath(customer, Order)
+    pdfGeneration.DrawActivityOrder(pdfPath, customer, Order, Vials, Isotope, Tracer, COID_ORDER=CoidOrder, VialOrders=VialOrders)
+    return pdfPath
+
+  @database_sync_to_async
+  def createInjectionPDF(
+      self,
+      InjectionOrder : InjectionOrderDataClass,
+    ):
+    customer = self.SQL.getElement(InjectionOrder.BID, CustomerDataClass)
+    Tracer = self.SQL.getElement(InjectionOrder.tracer, TracerDataClass)
+    Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)
+
+    pdfPath = pdfGeneration.getPdfFilePath(customer, InjectionOrder)
+    pdfGeneration.DrawInjectionOrder(pdfPath, customer, InjectionOrder, Isotope, Tracer)
+
     return pdfPath
 
   @database_sync_to_async
@@ -137,7 +153,7 @@ class DatabaseInterface():
     self.SQL.UpdateJsonDataClass(dataClass)
 
   @database_sync_to_async
-  def getDataClass(self, dataClass):
+  def getDataClass(self, dataClass : Type) -> List[JsonSerilizableDataClass]:
     return self.SQL.getDataClass(dataClass)
 
   @database_sync_to_async
@@ -145,8 +161,8 @@ class DatabaseInterface():
     return self.SQL.getDataClassRange(startDate, endDate, DataClass)
 
   @database_sync_to_async
-  @typeCheckfunc
-  def DeleteIDs(self, ids : List[int], DataClass) -> None:
+  @typeCheckFunc
+  def DeleteIDs(self, ids : List[int], DataClass : Type) -> None:
     self.SQL.deleteIDs(ids, DataClass)
 
   @database_sync_to_async
@@ -154,5 +170,5 @@ class DatabaseInterface():
     return True
 
   @database_sync_to_async
-  def GetConditionalElements(self, condition : str, dataClass : JsonSerilizableDataClass ) -> List[JsonSerilizableDataClass]:
+  def GetConditionalElements(self, condition : str, dataClass : Type ) -> List[JsonSerilizableDataClass]:
     return self.SQL.getConditionalElements(condition, dataClass)

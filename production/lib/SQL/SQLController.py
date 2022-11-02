@@ -18,7 +18,7 @@ from typing import Callable, Dict, List, Optional, Tuple, Type
 
 
 from database.models import ServerConfiguration, Database
-from lib.decorators import typeCheckfunc
+from lib.decorators import typeCheckFunc
 from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass

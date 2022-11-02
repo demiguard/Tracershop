@@ -4,22 +4,34 @@ import os
 from pathlib import Path
 
 
-from lib.decorators import typeCheckfunc
+from lib.decorators import typeCheckFunc
 from lib.SQL import SQLController
 from lib.ProductionDataClasses import CustomerDataClass, ActivityOrderDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
 from typing import Optional, Tuple, List
 from reportlab.pdfgen import canvas
+import reportlab.rl_config
+reportlab.rl_config.warnOnMissingFontGlyphs = 0
+
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+
 from PIL import Image
 
 """
   This file is responsible for the rendering of PDF files.
   Note that Python is not reaaaaaly a good rendering program for these kind of tasks
-  However it's one of those No win situations, since the other solution to this 
+  However it's one of those No win situations, since the other solution to this
   was to generate a Latex file and then compile it.
 
   Most of this file is drawings of different primitives such as lines
 """
 
+pdfmetrics.registerFont(TTFont('Mari', 'pdfData/Mari.ttf'))
+pdfmetrics.registerFont(TTFont('Mari_Bold', 'pdfData/Mari_Bold.ttf'))
+pdfmetrics.registerFont(TTFont('Mari_Book', 'pdfData/Mari_Book.ttf'))
+pdfmetrics.registerFont(TTFont('Mari_Heavy', 'pdfData/Mari_Heavy.ttf'))
+pdfmetrics.registerFont(TTFont('Mari_Light', 'pdfData/Mari_Light.ttf'))
+pdfmetrics.registerFont(TTFont('Mari_Poster', 'pdfData/Mari_Poster.ttf'))
 
 #A pdf page is (595.27 , 841.89)
 
@@ -27,14 +39,17 @@ from PIL import Image
 TOP_LINE    = (50,50, 545, 50)
 BOTTOM_LINE = (50, 791, 545, 791)
 
-defaultFont = "Helvetica"
-defaultFontSize = 11
+defaultFont = "Mari_Light"
+defaultFontSize = 13
+
+start_x_cursor = 58
+start_y_cursor = 780
 
 def order_pair(i,j):
   return (min(i,j), max(i,j))
 
 class MailTemplate(canvas.Canvas):
-  __line_width = 15 # How large is a text line
+  __line_width = 18 # How large is a text line
   __font       = defaultFont
   __font_size  = defaultFontSize
   __Length_per_character = 6.5
@@ -48,7 +63,8 @@ class MailTemplate(canvas.Canvas):
       TOP_LINE,
       BOTTOM_LINE
     ])
-    self.drawInlineImage("petlogo_small.png",  417, 750 , width= 128, height=32)
+
+    self.drawInlineImage("pdfData/petlogo_small.png",  417, 750 , width= 128, height=32)
 
   def ApplyCustomer(self, x_cursor:int, y_cursor:int, Customer: CustomerDataClass):
     self.setStrokeColorRGB(0.5,0.5,1.0)
@@ -90,6 +106,8 @@ class MailTemplate(canvas.Canvas):
       x_cursor: int,
       y_cursor: int,
       Order: ActivityOrderDataClass,
+      Isotope : IsotopeDataClass,
+      Tracer : TracerDataClass,
       COID_ORDER : Optional[ActivityOrderDataClass] = None,
       VialOrders : Optional[List[ActivityOrderDataClass]] = None
     ):
@@ -114,11 +132,17 @@ class MailTemplate(canvas.Canvas):
     self.setStrokeColorRGB(0.0,0.0,0.0)
 
     #Text
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug.")
+    y_cursor -= self.__line_width
+
+    freedDate = Order.frigivet_datetime.strftime("%d/%m/%Y")
+
     if COID_ORDER:
-      self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet, den indeholder også Sporestof til Order {COID_ORDER.oid}")
+      self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet den {freedDate}, Orderen indeholder også Sporestof til Orderen {COID_ORDER.oid}.")
     else:
-      self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet.")
+      self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet den {freedDate}.")
     y_cursor -= self.__line_width *2
+
 
     # Table
     HeaderText = [
@@ -148,7 +172,7 @@ class MailTemplate(canvas.Canvas):
 
     return y_cursor
 
-  @typeCheckfunc
+  @typeCheckFunc
   def applyVials(self, x_cursor:int, y_cursor : int, Vials: List[VialDataClass]):
     """[summary]
 
@@ -187,8 +211,16 @@ class MailTemplate(canvas.Canvas):
 
 
   def drawBox(self, t4: Tuple[int,int,int,int]):
-    x_1,y_1,x_2,y_2 = t4
-    return self.drawBox(x_1, y_1, x_2, y_2)
+    """Overloaded function of draw box.
+
+    Args:
+        t4 (Tuple[int,int,int,int]): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    x_1,y_1,x_2,y_2 = t4  #pragma: no cover
+    return self.drawBox(x_1, y_1, x_2, y_2) # pragma: no cover
 
   def drawBox(self, x_1 :int, y_1:int, x_2:int, y_2:int):
     """Draw a box on the canvas
@@ -232,7 +264,7 @@ class MailTemplate(canvas.Canvas):
     Texts : List[str],
     font : str = defaultFont,
     font_size : int = defaultFontSize,
-    seperator_lines : bool = True
+    separator_lines : bool = True
   ):
     """[summary]
 
@@ -243,7 +275,7 @@ class MailTemplate(canvas.Canvas):
         Texts (List[str]): [description]
         font (str, optional): [description]. Defaults to defaultFont.
         font_size (int, optional): [description]. Defaults to defaultFontSize.
-        seperator_lines (bool, optional): [description]. Defaults to True.
+        separator_lines (bool, optional): [description]. Defaults to True.
     """
     self.setFont(font, font_size)
 
@@ -252,7 +284,7 @@ class MailTemplate(canvas.Canvas):
     for i, text in enumerate(Texts):
       self.drawString(x, line_y + 2 , text)
       x += line_length / len(Texts)
-      if seperator_lines and i != len(Texts) -1:
+      if separator_lines and i != len(Texts) -1:
         self.line(x - 5, line_y + self.__line_width, x - 5, line_y )
 
   def drawTable(self, x_cursor: int, y_cursor: int, table_width: int, textLines: List[List[str]]):
@@ -279,40 +311,38 @@ class MailTemplate(canvas.Canvas):
 
     return y_cursor
 
-  def ApplyOrderActivitySimple(
+  def ApplyInjectionOrder(
       self,
       x_cursor : int,
       y_cursor : int,
-      Order: ActivityOrderDataClass,
-      Vials: List[VialDataClass],
-      Tracer : TracerDataClass,
-      Isotope : IsotopeDataClass
-    ):
-    AssocVial = None
-    for vial in Vials:
-      if vial.order_id == Order.oid:
-        AssocVial = vial
-        break
-
-    if AssocVial == None:
-      raise ValueError("Vial matching order was not found")
-
-    self.drawString(x_cursor, y_cursor, f"Ordrenr.: {Order.oid}")
+      IODC: InjectionOrderDataClass,
+      Isotope : IsotopeDataClass,
+      Tracer : TracerDataClass) -> int:
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {IODC.oid} - {Tracer.longName} - {Isotope.name} Injektion til {IODC.anvendelse}")
     y_cursor -= self.__line_width
 
-    freedate = Order.frigivet_datetime.strftime("%d.%m.%Y")
+    freedDatetime = IODC.frigivet_datetime.strftime("%d/%m/%Y %H:%M")
 
-    self.drawString(x_cursor, y_cursor, f"Dato.: {freedate}")
-    y_cursor -= self.__line_width
+    self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {IODC.n_injections} injektioner med batch nummer: {IODC.batchnr}")
 
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug. Se Vial for batch Nr:")
+
+    y_cursor -= self.__line_width * 2
 
     return y_cursor
+
 
   def ApplySender(self, x_cursor, y_cursor):
     self.drawString(x_cursor, y_cursor, f"Venlig Hilsen")
 
-    x_cursor += 5
+    x_cursor += 15
+    y_cursor -= self.__line_width
+
+    self.drawString(x_cursor, y_cursor, "Nic Gillings")
+
+    y_cursor -= self.__line_width * 8.2
+
+    self.drawInlineImage("pdfData/sig.png", x_cursor + 30, y_cursor, 128, 109, preserveAspectRatio=True)
+
     y_cursor -= self.__line_width * 2
 
     self.drawString(x_cursor, y_cursor, f"PET & Cyklotronenheden UK 3982")
@@ -332,70 +362,59 @@ class MailTemplate(canvas.Canvas):
 
     return y_cursor
 
-  def ApplyText(self, x_cursor:int, y_cursor : int, Tracer : TracerDataClass, Isotope : IsotopeDataClass):
-
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug. Se Vial for batch Nr")
-
-    y_cursor -= self.__line_width
-
-    return y_cursor
-
-
-def DrawSimpleActivityOrder(filename :str,
-    customer: CustomerDataClass,
-    Order: ActivityOrderDataClass,
-    Vials: List[VialDataClass],
-    Tracer : TracerDataClass,
-    Isotope : IsotopeDataClass
-  ):
-  template  = MailTemplate(filename)
-
-  x_cursor = 58
-  y_cursor = 780
-
-  y_cursor = template.ApplyCustomer(x_cursor, y_cursor, customer)
-
-  x_cursor += 10
-  y_cursor -= 20
-
-  y_cursor = template.ApplyOrderActivitySimple(x_cursor, y_cursor, Order, Vials, Tracer, Isotope)
-
-  y_cursor -= 50
-
-  y_cursor = template.applyVials(x_cursor, y_cursor, Vials)
-
-  y_cursor -= 50
-
-  y_cursor = template.ApplySender(x_cursor, y_cursor)
-
-  template.save()
-
 
 def DrawActivityOrder(
     filename: str,
     customer: CustomerDataClass,
     Order: ActivityOrderDataClass,
     vials: List[VialDataClass],
+    Isotope : IsotopeDataClass,
+    Tracer : TracerDataClass,
     COID_ORDER: Optional[ActivityOrderDataClass] = None,
     VialOrders: Optional[List[ActivityOrderDataClass]] = None
   ):
   template = MailTemplate(filename)
-
-  x_cursor = 58
-  y_cursor = 780
+  x_cursor = start_x_cursor
+  y_cursor = start_y_cursor
 
   y_cursor = template.ApplyCustomer(x_cursor, y_cursor, customer)
 
   x_cursor += 10
   y_cursor -= 20
 
-  y_cursor = template.ApplyOrderActivity(x_cursor, y_cursor, Order, COID_ORDER=COID_ORDER, VialOrders=VialOrders)
-
+  y_cursor = template.ApplyOrderActivity(x_cursor, y_cursor, Order, Isotope, Tracer, COID_ORDER=COID_ORDER, VialOrders=VialOrders)
   y_cursor -= 10
 
-  y_cursor -= template.applyVials(x_cursor, y_cursor, vials)
+
+  y_cursor = template.applyVials(x_cursor, y_cursor, vials)
+  y_cursor -= 10
+  y_cursor = template.ApplySender(x_cursor, y_cursor)
+
 
   template.save()
+
+def DrawInjectionOrder(
+    filename: Path,
+    Customer : CustomerDataClass,
+    IODC : InjectionOrderDataClass,
+    Isotope : IsotopeDataClass,
+    Tracer : TracerDataClass
+  ):
+  template = MailTemplate(filename)
+  x_cursor = start_x_cursor
+  y_cursor = start_y_cursor
+
+  y_cursor = template.ApplyCustomer(x_cursor, y_cursor, Customer)
+
+  x_cursor += 10
+  y_cursor -= 20
+
+  y_cursor = template.ApplyInjectionOrder(x_cursor, y_cursor, IODC, Isotope, Tracer)
+
+  y_cursor = template.ApplySender(x_cursor, y_cursor)
+
+  template.save()
+
 
 def getPdfFilePath(customer: CustomerDataClass, Order: ActivityOrderDataClass):
   year = Order.deliver_datetime.strftime("%Y")
@@ -407,15 +426,15 @@ def getPdfFilePath(customer: CustomerDataClass, Order: ActivityOrderDataClass):
   monthlyPath =Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}/{month}")
 
   if not pdfsPath.exists():
-    pdfsPath.mkdir()
+    pdfsPath.mkdir() #pragma: no cover
 
   if not customerPath.exists():
-    customerPath.mkdir()
+    customerPath.mkdir() #pragma: no cover
 
   if not yearlyPath.exists():
-    yearlyPath.mkdir()
+    yearlyPath.mkdir() #pragma: no cover
 
   if not monthlyPath.exists():
-    monthlyPath.mkdir()
+    monthlyPath.mkdir() #pragma: no cover
 
   return f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}/{month}/{Order.oid}.pdf"

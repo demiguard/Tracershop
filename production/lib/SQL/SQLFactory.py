@@ -10,7 +10,7 @@ from typing import Type, List, Union, Any, Tuple
 from datetime import date, time, datetime
 from dataclasses import fields
 
-from lib.decorators import typeCheckfunc
+from lib.decorators import typeCheckFunc
 from lib.SQL.SQLFormatter import SerilizeToSQLValue
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib.Formatting import dateConverter, mergeDateAndTime
@@ -120,7 +120,7 @@ def getLastElement(DataClass : JsonSerilizableDataClass) -> str:
       )"""
 
 
-@typeCheckfunc
+@typeCheckFunc
 def getDataClassRange(startDate: Union[datetime, date], endDate : Union[datetime, date], DataClass) -> str:
   return f"""SELECT
       {DataClass.getSQLFields()}

@@ -35,7 +35,7 @@ from lib.SQL.SQLExecuter import Fetching
 from lib.SQL import SQLFactory
 from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.utils import LFILTER, LMAP
-from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD
+from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD, TEST_PRODUCTION_PASSWORD, TEST_PRODUCTION_USERNAME
 from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
 from websocket.DatabaseInterface import DatabaseInterface
 from websocket.Consumer import Consumer
@@ -74,6 +74,9 @@ class ConsumerTestCase(TestCase):
       WEBSOCKET_MESSAGE_ID : message_id
     }
 
+  InjectionOrderStatus2OID = 6631
+
+
   activityOrderStatus2Str = SQLFactory.tupleInsertQuery(
     [ ("deliver_datetime","2022-10-11 11:30:00"),
       ("oid", 1337),
@@ -88,6 +91,20 @@ class ConsumerTestCase(TestCase):
       ("batchnr", ""),
       ("COID", -1),
     ], "orders"
+  )
+
+  InjectionOrderStatus2Str = SQLFactory.tupleInsertQuery(
+    [ ("deliver_datetime", "2222-10-10 09:11:11"),
+      ("oid", InjectionOrderStatus2OID),
+      ("status", 2),
+      ("n_injections", 3),
+      ("anvendelse", "Human"),
+      ("comment", "Test Kommentar"),
+      ("username", "Test User"),
+      ("tracer", 5),
+      ("BID", 2),
+      ("batchnr", "")
+    ], "t_orders"
   )
 
   activityOrderDependant = SQLFactory.tupleInsertQuery(
@@ -253,7 +270,7 @@ class ConsumerTestCase(TestCase):
   ##### Auth #####
   async def test_login_persists(self):
     comm = WebsocketCommunicator(app,"ws/", headers=b'')
-    _conn, _subprotocal = await comm.connect()
+    _conn, _subprotocol = await comm.connect()
 
     response = await self._sendReceive(comm, self.loginAdminMessage)
     sessionID = response['sessionid']
@@ -262,7 +279,7 @@ class ConsumerTestCase(TestCase):
     sessionCookie = "sessionid=" + sessionID
 
     recomm = WebsocketCommunicator(app, "ws/", headers=[("cookie".encode(), sessionCookie.encode())])
-    _conn, _subprotocal = await recomm.connect()
+    _conn, _subprotocol = await recomm.connect()
 
     whoAmI_reponse = await self._sendReceive(recomm, {
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
@@ -277,7 +294,7 @@ class ConsumerTestCase(TestCase):
 
   async def test_login_logout_whoamI(self):
     comm = WebsocketCommunicator(app,"ws/", headers=b'')
-    _conn, subprotocal = await comm.connect()
+    _conn, subprotocol = await comm.connect()
 
     loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
     logoutMessage = await self._sendReceive(comm, {
@@ -285,6 +302,34 @@ class ConsumerTestCase(TestCase):
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
     })
+    whoAmIMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+
+    self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
+    self.assertEqual(whoAmIMessage[KEYWORD_USERGROUP], 0)
+
+  async def test_login_wrong_password(self):
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, subprotocol = await comm.connect()
+
+    response = await self._sendReceive(comm, {
+      JSON_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : "Not_ADMIN_password"
+      },
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+
+    })
+
+    self.assertFalse(response[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
+
     whoAmIMessage = await self._sendReceive(comm, {
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
       WEBSOCKET_MESSAGE_ID : self.message_id,
@@ -463,7 +508,6 @@ class ConsumerTestCase(TestCase):
     await async_ExecuteQuery(f"""DELETE FROM orders WHERE oid={AODC.oid}""", Fetching.NONE)
 
   ##### Free Order ####
-
   @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
   async def test_free_order(self):
     await async_ExecuteQuery(self.activityOrderStatus2Str, Fetching.NONE)
@@ -475,7 +519,7 @@ class ConsumerTestCase(TestCase):
 
     response = await self._sendReceive(comm, {
       WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_DATA : {
         JSON_ACTIVITY_ORDER : 1337,
@@ -525,7 +569,7 @@ class ConsumerTestCase(TestCase):
 
     response = await self._sendReceive(comm, {
       WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_DATA : {
         JSON_ACTIVITY_ORDER : 1337,
@@ -570,7 +614,7 @@ class ConsumerTestCase(TestCase):
 
     response = await self._sendReceive(comm, {
       WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_DATA : {
         JSON_ACTIVITY_ORDER : 1337,
@@ -606,6 +650,195 @@ class ConsumerTestCase(TestCase):
     for DependantOrder in DependantOrders:
       await async_ExecuteQuery(f"DELETE FROM orders WHERE oid={DependantOrder.oid}", Fetching.NONE)
 
+  #
+  @useDataClassAsync(CustomerDataClass, IsotopeDataClass, TracerDataClass)
+  async def test_Free_Injection_Order(self):
+    #Setup
+    messageBatchNumber = "MessageBatchNumber"
+
+    await async_ExecuteQuery(self.InjectionOrderStatus2Str, Fetching.NONE)
+    message = {
+      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      WEBSOCKET_DATA : {
+        KEYWORD_BATCHNR : messageBatchNumber,
+        KEYWORD_OID     : self.InjectionOrderStatus2OID
+      },
+      JSON_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : TEST_ADMIN_PASSWORD
+      }
+    }
+
+    response = await self._loginAdminSendRecieve(message)
+
+    self.assertTrue(response[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], response[WEBSOCKET_MESSAGE_SUCCESS])
+
+    IODC_Message = InjectionOrderDataClass(**loads(response[JSON_INJECTION_ORDER]))
+
+    IODCDictList = await async_ExecuteQuery(
+      f"SELECT {InjectionOrderDataClass.getSQLFields()} FROM {InjectionOrderDataClass.getSQLTable()} WHERE oid={self.InjectionOrderStatus2OID}", Fetching.ALL)
+
+    self.assertEqual(len(IODCDictList),1)
+    IODC = InjectionOrderDataClass(**IODCDictList[0])
+
+    self.assertEqual(IODC.status, 3)
+    self.assertEqual(IODC.batchnr, messageBatchNumber)
+
+    #Compare Messages
+    self.assertEqual(IODC_Message.deliver_datetime, IODC.deliver_datetime)
+    self.assertEqual(IODC_Message.oid, IODC.oid)
+    self.assertEqual(IODC_Message.status, IODC.status)
+    self.assertEqual(IODC_Message.n_injections, IODC.n_injections)
+    self.assertEqual(IODC_Message.anvendelse, IODC.anvendelse)
+    self.assertEqual(IODC_Message.comment, IODC.comment)
+    self.assertEqual(IODC_Message.username, IODC.username)
+    self.assertEqual(IODC_Message.tracer, IODC.tracer)
+    self.assertEqual(IODC_Message.BID, IODC.BID)
+    self.assertEqual(IODC_Message.batchnr, IODC.batchnr)
+    self.assertEqual(IODC_Message.frigivet_af, IODC.frigivet_af)
+    self.assertEqual(IODC_Message.frigivet_datetime, IODC.frigivet_datetime)
+
+    await async_ExecuteQuery(f"DELETE FROM t_orders WHERE oid={self.InjectionOrderStatus2OID}", Fetching.NONE)
+
+  @useDataClassAsync(CustomerDataClass, IsotopeDataClass, TracerDataClass)
+  async def test_Free_Injection_Order_User_MissMatch(self):
+    #Setup
+    messageBatchNumber = "MessageBatchNumber"
+
+    await async_ExecuteQuery(self.InjectionOrderStatus2Str, Fetching.NONE)
+    message = {
+      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      WEBSOCKET_DATA : {
+        KEYWORD_BATCHNR : messageBatchNumber,
+        KEYWORD_OID     : self.InjectionOrderStatus2OID
+      },
+      JSON_AUTH : {
+        AUTH_USERNAME : TEST_PRODUCTION_USERNAME,
+        AUTH_PASSWORD : TEST_PRODUCTION_PASSWORD
+      }
+    }
+
+    response = await self._loginAdminSendRecieve(message)
+
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], response[WEBSOCKET_MESSAGE_SUCCESS])
+    self.assertFalse(response[AUTH_IS_AUTHENTICATED])
+
+    IODCDictList = await async_ExecuteQuery(
+      f"SELECT {InjectionOrderDataClass.getSQLFields()} FROM {InjectionOrderDataClass.getSQLTable()} WHERE oid={self.InjectionOrderStatus2OID}", Fetching.ALL)
+
+    self.assertEqual(len(IODCDictList),1)
+
+    IODC = InjectionOrderDataClass(**IODCDictList[0])
+    self.assertEqual(IODC.status, 2)
+    self.assertEqual(IODC.batchnr, "")
+
+    await async_ExecuteQuery(f"DELETE FROM t_orders WHERE oid={self.InjectionOrderStatus2OID}", Fetching.NONE)
+
+  @useDataClassAsync(CustomerDataClass, IsotopeDataClass, TracerDataClass)
+  async def test_Free_Injection_Order_User_InvalidLogin(self):
+    #Setup
+    messageBatchNumber = "MessageBatchNumber"
+
+    await async_ExecuteQuery(self.InjectionOrderStatus2Str, Fetching.NONE)
+    message = {
+      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      WEBSOCKET_DATA : {
+        KEYWORD_BATCHNR : messageBatchNumber,
+        KEYWORD_OID     : self.InjectionOrderStatus2OID
+      },
+      JSON_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : "not_ADMINs_password"
+      }
+    }
+
+    response = await self._loginAdminSendRecieve(message)
+
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], response[WEBSOCKET_MESSAGE_SUCCESS])
+    self.assertFalse(response[AUTH_IS_AUTHENTICATED])
+
+    IODCDictList = await async_ExecuteQuery(
+      f"SELECT {InjectionOrderDataClass.getSQLFields()} FROM {InjectionOrderDataClass.getSQLTable()} WHERE oid={self.InjectionOrderStatus2OID}", Fetching.ALL)
+
+    self.assertEqual(len(IODCDictList),1)
+
+    IODC = InjectionOrderDataClass(**IODCDictList[0])
+    self.assertEqual(IODC.status, 2)
+    self.assertEqual(IODC.batchnr, "")
+
+    await async_ExecuteQuery(f"DELETE FROM t_orders WHERE oid={self.InjectionOrderStatus2OID}", Fetching.NONE)
+
+
+  async def test_HandleGetOrders(self):
+    await async_ExecuteQuery(SQLFactory.tupleInsertQuery(
+      [ ("deliver_datetime","2022-10-11 11:30:00"),
+        ("oid", 10001),
+        ("status", 2),
+        ("amount", 10000),
+        ("amount_o", 12000),
+        ("total_amount", 10000),
+        ("total_amount_o", 12000),
+        ("tracer", 1),
+        ("run", 2),
+        ("BID", 1),
+        ("batchnr", ""),
+        ("COID", -1),
+      ], "orders"
+    ), Fetching.NONE)
+
+    await async_ExecuteQuery(SQLFactory.tupleInsertQuery(
+      [ ("deliver_datetime", "2022-10-10 09:11:11"),
+        ("oid", 10001),
+        ("status", 2),
+        ("n_injections", 3),
+        ("anvendelse", "Human"),
+        ("comment", "Test Kommentar"),
+        ("username", "Test User"),
+        ("tracer", 5),
+        ("BID", 2),
+        ("batchnr", "")
+      ], "t_orders"
+    ), Fetching.NONE)
+
+    await async_ExecuteQuery(SQLFactory.tupleInsertQuery(
+      [ ("deliver_datetime", "2022-10-15 09:11:11"),
+        ("oid", 10002),
+        ("status", 3),
+        ("n_injections", 3),
+        ("anvendelse", "Human"),
+        ("comment", "Test Kommentar"),
+        ("username", "Test User"),
+        ("tracer", 5),
+        ("BID", 2),
+        ("batchnr", "")
+      ], "t_orders"
+    ), Fetching.NONE)
+
+
+    message = {
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
+      WEBSOCKET_DATE : "2022-10-10T12:30:11.18382"
+    }
+
+    response = await self._loginAdminSendRecieve(message)
+
+    ##### Data removal #####
+    await async_ExecuteQuery("DELETE FROM orders WHERE oid= 10001" ,Fetching.NONE)
+
+    await async_ExecuteQuery("DELETE FROM t_orders WHERE oid=10001" ,Fetching.NONE)
+    await async_ExecuteQuery("DELETE FROM t_orders WHERE oid=10002" ,Fetching.NONE)
 
 
   ##### Deleting Dataclasses #####
@@ -614,11 +847,7 @@ class ConsumerTestCase(TestCase):
   async def test_HandleDeleteDataclass_Success(self):
     await async_ExecuteQuery(self.tracerStr, Fetching.NONE)
 
-    comm = WebsocketCommunicator(app, "ws/", headers=b'')
-    _conn, subprotocal = await comm.connect()
-    login_message = await self._sendReceive(comm, self.loginAdminMessage)
-
-    response = await self._sendReceive(comm,{
+    response = await self._loginAdminSendRecieve({
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
@@ -635,8 +864,6 @@ class ConsumerTestCase(TestCase):
       }
     })
 
-
-    await comm.disconnect()
     Tracers = await async_ExecuteQuery("""SELECT * from Tracers WHERE ID=863""", Fetching.ALL)
     self.assertListEqual(Tracers, [])
 
@@ -653,7 +880,7 @@ class ConsumerTestCase(TestCase):
 
     await comm.disconnect()
 
-  async def test_insuficientPermissions(self):
+  async def test_insufficientPermissions(self):
     comm = WebsocketCommunicator(app, "ws/", headers=b'')
     _conn, subprotocal = await comm.connect()
 
@@ -662,7 +889,7 @@ class ConsumerTestCase(TestCase):
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE,
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
     })
-    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INSUFICIENT_PERMISSIONS)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INSUFFICIENT_PERMISSIONS)
 
     await comm.disconnect()
 

@@ -3,7 +3,7 @@ import inspect
 from inspect import signature, Signature
 from typing import Union, List, Tuple, Any, Optional, get_origin, get_args
 
-def typeCheckfunc(func):
+def typeCheckFunc(func):
   @functools.wraps(func)
   def wrapper(*args, **kwargs):
     sig = inspect.signature(func)
