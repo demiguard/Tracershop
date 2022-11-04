@@ -5,8 +5,8 @@ import { renderStatusImage, renderTableRow } from "../../lib/Rendering";
 import { CompareDates } from "../../lib/utils";
 import { FormatDateStr, ParseJSONstr } from "../../lib/formatting";
 import { CountMinutes, CalculateProduction } from "../../lib/physics";
-import { ActivityModal } from "../../components/modals/ActivityModal.js";
-import { CreateOrderModal } from "../../components/modals/CreateOrderModal";
+import { ActivityModal } from "../modals/ActivityModal.js";
+import { CreateOrderModal } from "../modals/CreateOrderModal";
 import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
   WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
@@ -24,18 +24,18 @@ import SiteStyles from "/src/css/Site.module.css"
   in the javascript frame work at time of writting this doc.
 
   The props for this is the following:
-            date : Date Object - The day that the table is displaying
-            tracer : Number - An id to enter in the map tracers
-            username : Username of log in user, should be passed to Modal, for verification
             customer : Map <CustomerDataClass.ID, CustomerDataClass>
+            date : Date Object - The day that the table is displaying
             deliverTimes : Map <DeliverTimeDataClass.DTID, DeliverTimeDataClass>
             employees : Map<EmployeeDataClass.OldTracerBaseID, EmployeeDataClass>
             isotopes :  Map<IsotopeDataClass.ID, IsotopeDataClass>
             orders : Map<ActivityOrderDataClass.oid, ActivityOrderDataClass>
             runs : Map<RunsDataClass.PTID, RunsDataClass>
-            t_orders : Map<InjectionOrderDataClass.oid, InjectionOrderDataClass>
+            tracer : Number - An id to enter in the map tracers
             tracers : Map<TracerDataClass.id, TracerDataClass>
+            t_orders : Map<InjectionOrderDataClass.oid, InjectionOrderDataClass>
             vials : Map<VialDataClass.ID, VialDataClass>
+            username : Username of log in user, should be passed to Modal, for verification
             websocket : Active and connected Websocket Object from TracerWebsocket
 */
 export class ActivityTable extends Component {
@@ -637,11 +637,11 @@ export class ActivityTable extends Component {
       <Container>
         <Row>
           <Col sm={10}>
-            <Row> Produktioner - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}: </Row>
+            <Row>Produktioner - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}:</Row>
             {RenderedRuns}
           </Col>
           <Col sm={2}>
-            <Button onClick={this.activateCreateModal.bind(this)}> Opret ny ordre</Button>
+            <Button name="createOrder" onClick={this.activateCreateModal.bind(this)}>Opret ny ordre</Button>
           </Col>
         </Row>
       </Container>
@@ -683,16 +683,14 @@ export class ActivityTable extends Component {
         <tbody>
           {FinishedOrders}
         </tbody>
-      </Table> : <div/>
+      </Table> : null
     }
     { FinishedOrders.length == 0 && pendingOrders == 0 ?
     <div>
       <p className={SiteStyles.mariLfont}>Der er ingen {Tracer.name} Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
     </div> :
       null
-
     }
-
 
     { this.state.showModal ?
       <this.state.Modal

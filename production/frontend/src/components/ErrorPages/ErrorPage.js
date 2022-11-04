@@ -11,7 +11,9 @@ export default class ErrorPage extends Component {
 
   render() {
     const StackTraceFull = this.props.SiteErrorInfo.componentStack;
-    const StackTracePaths = StackTraceFull.split("\n");
+    const StackTracePaths = StackTraceFull != undefined ? StackTraceFull.split("\n") : [];
+
+    const StackTraceEmpty = StackTracePaths == [] ? "Stack trace is empty" : "";
 
     const files = StackTracePaths.filter((string) => {return (string.includes("@") && !string.includes("node_modules"));})
 
@@ -37,8 +39,13 @@ export default class ErrorPage extends Component {
       <h1>Teknisk infomation</h1>
       <p>Error: {String(this.props.SiteError)}</p>
       <hr></hr>
-      <h3>StackTrace:</h3>
-      {fileRows}
+      {fileRows.length > 0 ?
+      <div>
+        <h3>StackTrace:</h3>
+        {fileRows}
+      </div> :
+        StackTraceEmpty
+      }
     </Container>);
   }
 }

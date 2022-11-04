@@ -6,7 +6,6 @@ import { Authenticate } from "./injectables/Authenticate.js";
 import { ajaxSetup } from "jquery";
 import { ErrorPage } from "./ErrorPages/ErrorPage.js";
 import InvalidVersionPage from "./ErrorPages/InvalidVersionPage.js"
-import { get as getCookie } from 'js-cookie';
 import Cookies from "js-cookie";
 
 import { db } from "../lib/localStorageDriver.js";
@@ -77,7 +76,8 @@ export default class App extends Component {
     };
 
     this.state = state;
-    this.MasterSocket = new TracerWebSocket("ws://" + window.location.host + "/ws/", this);
+    this.MasterSocket = new TracerWebSocket(
+      new WebSocket("ws://" + window.location.host + "/ws/"), this);
     if (user) { // If we know, that the client is logged in, Getting the great state will not be authorized, hence no need for the query
       const promise = this.MasterSocket.send(
         this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
@@ -85,7 +85,7 @@ export default class App extends Component {
     // While this is not needed, it's nice if the client start to use Ajax query again
     ajaxSetup({
       headers: {
-        "X-CSRFToken": getCookie("csrftoken")
+        "X-CSRFToken": Cookies.get("csrftoken")
       }
     });
   }

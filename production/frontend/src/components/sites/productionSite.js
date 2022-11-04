@@ -3,7 +3,6 @@ import { Container } from "react-bootstrap";
 import Navbar from "../injectables/Navbar";
 import { CloseDaysPage } from "../ProductionPages/CloseDaysPage";
 import CustomerPage from "../ProductionPages/CustomerPage";
-import EmailSetupPage from "../ProductionPages/EmailSetupPage";
 import { OrderPage } from "../ProductionPages/OrderPage";
 import TracerPage from "../ProductionPages/TracerPage";
 import { VialPage } from "../ProductionPages/VialPage";

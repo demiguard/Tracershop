@@ -1,11 +1,11 @@
 import React, { Component } from "react";
 import { Button, Row, Col, Container as div } from 'react-bootstrap';
 import { TOrderTable } from './InjectionTable.js';
-import { ActivityTable } from './ActivityTracerTable.js';
+import { ActivityTable } from './ActivityTable.js';
 import { TRACER_TYPE_ACTIVITY, JSON_ISOTOPE, JSON_TRACER, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE } from "../../lib/constants.js";
 import { db } from "../../lib/localStorageDriver";
 
-import { Calender, producitonGetMonthlyOrders as productionGetMonthlyOrders, standardOrderMapping } from "../injectables/calender.js";
+import { Calender, productionGetMonthlyOrders as productionGetMonthlyOrders, standardOrderMapping } from "../injectables/calender.js";
 
 import SiteStyles from '../../css/Site.module.css'
 

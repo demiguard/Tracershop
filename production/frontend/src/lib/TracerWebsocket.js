@@ -10,9 +10,9 @@ import { ParseJSONstr } from "./formatting.js";
 export { safeSend, TracerWebSocket}
 
 class TracerWebSocket{
-  constructor(path, parent){
+  constructor(Websocket, parent){
     this._PromiseMap = new Map();
-    this._ws = new WebSocket(path);
+    this._ws = Websocket;
     this.StateHolder = parent;
 
     /** This function is called, when a message is received through the websocket from the server.
@@ -145,12 +145,12 @@ class TracerWebSocket{
 
   /** Creates a message object, that latter can be send by the websocket
    *
-   * @param {String} messagetype - a WEBSOCKET_MESSAGE_* constants
+   * @param {String} messageType - a WEBSOCKET_MESSAGE_* constants
    * @returns {Object} on json format, still need to add the data for the message
    */
-  getMessage(messagetype) {
+  getMessage(messageType) {
     const message = {};
-    message[WEBSOCKET_MESSAGE_TYPE] = messagetype;
+    message[WEBSOCKET_MESSAGE_TYPE] = messageType;
     return message;
   }
 

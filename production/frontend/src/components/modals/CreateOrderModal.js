@@ -16,6 +16,8 @@ class CreateOrderModal extends Component {
     var activeCustomer;
     var DeliverTimeMapping;
 
+    console.log(this.props.DeliverTimeMap)
+
     for(const [customerID, customer] of this.props.customers){
       activeCustomer = customer;
       DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);

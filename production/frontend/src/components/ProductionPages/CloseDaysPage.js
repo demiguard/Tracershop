@@ -1,7 +1,7 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
 import { JSON_CLOSEDDATE, KEYWORD_DDATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
-import { Calender, standardOrderMapping, producitonGetMonthlyOrders } from "../injectables/calender";
+import { Calender, standardOrderMapping, productionGetMonthlyOrders } from "../injectables/calender";
 
 import { FormatDateStr } from "../../lib/formatting.js";
 
@@ -52,7 +52,7 @@ export class CloseDaysPage extends Component {
         closeddates={this.props.closeddates}
         date={this.state.today}
         onDayClick={this.changeCloseDay}
-        onMonthChange={producitonGetMonthlyOrders(this.props.websocket)}
+        onMonthChange={productionGetMonthlyOrders(this.props.websocket)}
         getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs, this.props.closeddates)}
         websocket={this.props.websocket}
       ></Calender>
