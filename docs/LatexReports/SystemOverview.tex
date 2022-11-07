@@ -29,12 +29,19 @@
 
 \newglossaryentry{CIMT}{name={CIMT},description={Center for IT and Medico technologies. Responsible department for IT in the Capital Region of Denmark}}
 
+\newglossaryentry{git}{name={Git},description={Git is a free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency. Found at \url{https://git-scm.com}}}
+\newglossaryentry{invalid state}{name={invalid state},description={This is a database}}
+
+\newglossaryentry{invalid data}{name={invalid data},description={Nonsensical data that could never be valid. Examples include a reference to an nonexistent object or Negative halflife or activity.}}
+\newglossaryentry{incorrect data}{name={incorrect data},description={Data that doesn't reflect reality. Examples include a misspelled batch number or an activity entry which does not match actual activity in the vial.}}
 
 \graphicspath{{./figures/}}
 
 \fancyhf{}
 \fancyfoot[L]{\today}
 \fancyfoot[R]{Page \thepage \, of \pageref{LastPage}}
+\fancyhead[L]{Technical documentation \& Risk assessment of Tracershop}
+\fancyhead[R]{Doc nr: <I'm a document Number>}
 \pagestyle{fancy}
 
 \author{Christoffer Vilstrup Jensen}
@@ -71,7 +78,7 @@ however development the system stopped around 2012.
 The main functionality of Tracershop is fulfilling the documentations requirements in Rigshospitalets production of radioactive tracers specified by \gls{gmp}.
 Rigshospitalet delivers radioactive tracers to many hospitals and scientific institutions, that would not be able to perform various PET and SPECT scans without the tracer.
 Therefore Tracershop should be considered a important piece of software.\\
-The system is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers.
+The system is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers. This database is back up on an external machine every day at midnight.
 The user interface is a Zope 2-2.13 web interface allowing the users interface with the main database.
 It is normal that software packages deprecated after a period of support, and keeping a software product up to date is part of the maintenance of a software products life cycle,
 however that have not been possible due to insufficient resources.\\
@@ -170,7 +177,6 @@ An overview of the communication can be found in figure \ref*{fig:websocketMessa
   \end{center}
 \end{figure}
 This means that user always view up to date data, while in old system users might operate on out of date data, if another user have altered that data.
-
 The new system should be hosted hosted on \GLS{CIMT} servers, which would be in line with Rigshospitalet policies regarding software.
 
 To ensure that the new tracershop handles message correctly behavior and follows requirements of \GLS{gmp}. The message is p in a three step plan seen below:
@@ -188,13 +194,93 @@ To ensure that the new tracershop handles message correctly behavior and follows
   Then it can check if the authenticated user is allowed to complete such a message.
   \item Apply the message - Now the message is both valid and authorized, so the server will handle the message.
 \end{enumerate}
-
 Since the frontend doesn't have any contact with the database,
 it is sufficient to ensure that the backend handles the users messages correctly.
 This is done by a series of unit tests and end to end tests, which have a 92\% code coverage.
 Which means that there's a program, which creates a test environment and run a number of tests where 92\% of all statement in the program is executed at least once.
 Having above 90\% code coverage is considered good coverage as not all code is easily testable, nor does a code coverage of 100\% ensure that the program have no errors.
 The testing proves the web server with high confidence handles messages correctly.
+
+The django application has its own database to keep track of user session, which have been extended to to include general web site configuration.
+This means that the django application database doesn't contain any records of orders or customers. This allows easy creation of test environments,
+since the record database is a field in the django database, it can be easily exchanged to a connection to a database with a test environment.
+There's a also a Regis database required by channels to exchange messages correctly. For performance reasons these databases should be running on the same machine.
+
+\section*{Test highlight}
+This section highlights a number of test cases which ensures that
+
+
+
+\section*{Risk assessment}
+A risk assessment is a collections of risks, each risk consists of a description, a likelihood of how likely an incident is to occur and a damage estimate of an incident
+and final a plan of action if an incident happen. \\
+This risk assessment doesn't include malicious usage of tracershop, production related risks.
+Additionally it assumes correct data from the dispenser as both the program transferring and producing data have modified by the new Tracershop,
+and therefore derives its validity from previous documentation Se document number.: CVP-PROD-TS-001-14.01 in the D4 document management system,
+for the latest validation of the dispenser.
+
+\begin{itemize}
+  \item Loss of a server.
+  \begin{itemize}
+    \item[Description] - A hosting server might become unavailable for a number a reasons:
+      A foreign threat might encrypt the entire server, or a critical files might become corrupted due to aging hard drive.
+      This is not an exhaustive list of reasons for server loss, but it's beneficial to have plan of action in the event of an incident.
+    \item[Likelihood] - Low to medium - Currently the service runs on old hardware, insecure protocols and outdated software.
+    Which raises the likelihood of an incident occurring. Switching to \GLS{CIMT} hosted service with the new web server will eliminate these problems.
+    \item[Damages] - Medium to critical - Currently if a server becomes unavailable the source code to the original tracershop is lost.
+    This means that restoration of the old system is impossible. Additionally any records made since the last backup would be lost.
+    Due to the daily backup, this would be up to 30 orders.\\
+    In the event, that both the backup PC and the server would become unavailable simultaneously all records would be lost.
+    Due to the fragility of the dispenser script, automated import of vial data could be unavailable for a long period of time.
+    \item[Plan] - In the event of server loss, if the loss was coursed by faulty hardware, repairing the server hardware might be possible and could restore the system to a pre-incident state, within 1-5 working days.
+    If that's not possible to repair a new server is required. Assuming that the system is not deployed on \GLS{CIMT}s services and a spare server is not available,
+    procuring a new server would take between 4-12 weeks with a 1 week installation period afterwards. Due to limited experience with replacement servers from \GLS{CIMT} it's unknown how quickly they could procure a new server, however the installation period would remain the same.
+    If the server is virtualized and backed up, and the back ups are not lost, then the downtime would be around 1 day.\\
+    In the cases where the original source code is lost, the new solution would be forced to be used. Note that the new solution doesn't suffer the same vulnerability due to be hosted online.
+    In the case where github becomes unavailable, a replacement service would not be difficult to find as github is build around \Gls{git}.
+  \end{itemize}
+  \item Database is brought into an invalid state.
+  \begin{itemize}
+    \item[Description] - Due to the fact that it's the application responsibility to ensure correctness of the database.
+    If the record database is in an invalid state, undefined behavior might occur or the data might be invalid.\\
+    Consider an example where a tracer is deleted. All orders with that tracer can no longer be determined to be of that tracer.
+    \item[Likelihood] - Low - The web services doesn't allow, the user to perform arbitrary SQL queries.
+    Only predefined queries that take the database from one valid state to another valid state. However it's difficult to ensure all possible user inputs.
+    Hence it's possible that a user query might bring the database into an invalid state.
+    Another way an incident could happen is if a system administrator creates a query that brings the database is into an invalid state.
+    \item[Damages] - Low - The new tracershop can handle invalid database entries to an extend, meaning tracershop still works for unrelated entires and therefore not take the service down.
+    The system will instead display, that certain information is undefined or not display the incorrect data at all. If the invalid state persist unnoticed for more 1 day the backup will be over written and the damage made permanent. However in such a case, it's unlikely to critical data, that have been corrupted.
+    \item[Plan of action] - A system administrator would go into the database and revert the database. All queries made through tracershop to the record database is logged, which can greatly help system administrator to undo the damage.
+    In worst case scenario is to restore to a backup of the record database.
+  \end{itemize}
+  \item Incorrect user input
+  \begin{itemize}
+    \item[Description] - Tracershop have a number of fields, where the user must write some data in. Because it's humans that write this data, the system is subject to human error.
+    It's incredible difficult to prevent this as there's nothing inherently wrong with \gls{incorrect data} user input. This also includes whenever a user forgets to update a piece of data.
+    \item[Likelihood] - Very high. Humans use this program, no further elaboration required.
+    \item[Damages] - None to Low - Very often human error will be spotted even ever a fresh set of eyes is looking at the \gls{incorrect data}.
+    Whenever this happen the plan of action can be applied and most likely reverse any damage done. Incorrect data is also likely to cause other data become incorrect, however it's possible.
+    \item[Plan] - The new tracershop allows user to edit non committed information their, and require users to sign in whenever they commit something to tracershop, while the information about to be committed is being displayed.
+    Should the incorrect data be committed to the database, the personnel who finds the incorrect data should contact the system administrators and await their instructions.
+    For instance if an order is committed with insufficient vials, the system administrator will request the personnel to create an additional order with the remaining vials.
+  \end{itemize}
+  \item The dispenser script stops working
+  \begin{itemize}
+    \item[Description] - As stated above, the program that ties the dispenser and database is highly fragile and could break, if the database is updated or if the hardcoded ip addresses changes.
+    \item[Likelihood] - Low to medium - A user might accidental update the dispenser, or original server might be moved. However despite all of the alarm bells of fragility ringing, the system have been operating for 12 years.
+    \item[Damages] - Low - The service would be very difficult to repair, due to the author of the program no longer working at Rigshospitalet, and is a forking perl script.
+    However the loss of the service would not incorrect or \gls{invalid data} by itself. Only an additional source of error and additional human labor is required.
+    \item[Plan] - Users would be forced to manually input data, that normally would have been transferred automatically and correctly.
+  \end{itemize}
+  \item Email server is unavailable
+  \begin{itemize}
+    \item[Description] - The email service is external, thus may for any reason be unavailable for an undefined amount of time.
+    \item[Likelihood] - Unknown - The author have so limited experience with the available of the mail server, that a valid likelihood estimate is difficult to make.
+    \item[Damages] - None to low - Customers are required to wait for confirmation that the tracer passed quality assurance mandated by \GLS{gmp}, so if the email server is down, the customer can not be notified through email.
+    \item[Plan] - Due to websockets, updates to orders can be seen on tracershop in real time. Additionally users can download the email from tracershop from the associated order if needed or internal bookkeeping without any emails involved.
+  \end{itemize}
+\end{itemize}
+
 
 \section*{Conclusion}
 The old tracershop fulfils the requirement set forwards by \GLS{gmp}, but is running on modules that have reached end of life.
