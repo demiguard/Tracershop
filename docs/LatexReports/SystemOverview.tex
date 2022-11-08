@@ -203,54 +203,81 @@ The testing proves the web server with high confidence handles messages correctl
 The django application has its own database to keep track of user session, which have been extended to to include general web site configuration.
 This means that the django application database doesn't contain any records of orders or customers. This allows easy creation of test environments,
 since the record database is a field in the django database, it can be easily exchanged to a connection to a database with a test environment.
-There's a also a Regis database required by channels to exchange messages correctly. For performance reasons these databases should be running on the same machine.
+The websocket requires a Regis database to broadcast messages.
 
 \section*{Test highlight}
-This section highlights a number of test cases which ensures that
+This section highlights a number of test cases, which ensures critical functionality of Tracershop.\\
+In general the validation of Tracershop doesn't concern themselves with \gls{incorrect data} since, the defining feature of incorrect data is,
+that it doesn't break any restrictions placed upon the the system, but doesn't reflect reality. The implication is that tracershop cannot detect incorrect data.
+The only method to combat \gls{incorrect data} is to allow users to modify data.\\
+Tracershop is a bookkeeping tool not a measuring tool. It's the various measuring tools responsibility to measure correctly, which should have their own risk assessment and quality assurance.
 
-
+\begin{itemize}
+  \item \texttt{websocket.tests.test\_Consumer\_end\_2\_end.test\_GreatState}\\
+  Ensures that when a user connects they receive a correct image of the database.
+  \item \texttt{websocket.tests.test\_Consumer\_end\_2\_end.test\_free\_vial\_dependant\_orders}\\
+  Ensures that an activity order is freed correctly.
+  \item \texttt{lib.tests.tests\_pdfGeneration.test\_PDF\_Order}\\
+  Ensures that the generated pdf matching the Activity Order. This test require manual verification since pdf files are not an easily parsed format.
+  \item \texttt{lib.tests.tests\_pdfGeneration.test\_PDFInjectionOrder}\\
+  Ensures that the generated pdf matching the Injection Order. This test require manual verification since pdf files are not an easily parsed format.
+  \item \texttt{frontend.src.tests.components.ProductionPages.ActivityTable.White Box Order Rendering}\\
+  Ensures that order data is displayed correctly.
+\end{itemize}
 
 \section*{Risk assessment}
-A risk assessment is a collections of risks, each risk consists of a description, a likelihood of how likely an incident is to occur and a damage estimate of an incident
-and final a plan of action if an incident happen. \\
-This risk assessment doesn't include malicious usage of tracershop, production related risks.
-Additionally it assumes correct data from the dispenser as both the program transferring and producing data have modified by the new Tracershop,
-and therefore derives its validity from previous documentation Se document number.: CVP-PROD-TS-001-14.01 in D4 ,
-for the latest validation of the dispenser.
+A risk assessment is a collections of risks. Each risk consists of:
+\begin{itemize}
+  \item A description of the risk.
+  \item A likelihood of how likely an incident is to occur.
+  \item A damage estimate of an incident.
+  \item A plan of action if an incident happen.
+\end{itemize}
+This risk assessment doesn't include production related risks such a dropped vial, or tracers not passing quality assurance.
+The dispenser and the program transferring data have not modified by the new Tracershop, and therefore derives its validity from previous risk assessments.
+See document number.: CVP-PROD-TS-001-14.01 in D4, for the latest validation of the dispenser.
 
 \begin{itemize}
   \item Loss of a server.
   \begin{itemize}
     \item[Description] - A hosting server might become unavailable for a number a reasons:
-      A foreign threat might encrypt the entire server, or a critical files might become corrupted due to aging hard drive.
-      This is not an exhaustive list of reasons for server loss, but it's beneficial to have plan of action in the event of an incident.
-    \item[Likelihood] - Low to medium - Currently the service runs on old hardware, insecure protocols and outdated software.
-    Which raises the likelihood of an incident occurring. Switching to \GLS{CIMT} hosted service with the new web server will eliminate these problems.
+      A foreign threat might encrypt the entire server, hardware failure, or a critical files might become corrupted due to aging hard drive.
+      This is not an exhaustive list of reasons for server loss however other factors have minimal likelihood.
+      It's beneficial to have plan of action in the event of an incident caused by an unknown risk.
+    \item[Likelihood] - Low to medium - Currently the service runs on old hardware, insecure protocols and outdated software,
+    which raises the likelihood of an incident occurring.
+    Switching to \GLS{CIMT} hosted service with the new web server will eliminate these problems and thus reduce the risk.
     \item[Damages] - Medium to critical - Currently if a server becomes unavailable the source code to the original tracershop is lost.
-    This means that restoration of the old system is impossible. Additionally any records made since the last backup would be lost.
-    Due to the daily backup, this would be up to 30 orders.\\
+    This means that restoration of the old system is impossible and any records made since the last backup would be lost.
+    Due to the daily backup, an estimate of lost order would be up to 20.\\
     In the event, that both the backup PC and the server would become unavailable simultaneously all records would be lost.
-    Due to the fragility of the dispenser script, automated import of vial data could be unavailable for a long period of time.
+    Due to the fragility of the dispenser script, automated import of vial data could become unavailable.
     \item[Plan] - In the event of server loss, if the loss was coursed by faulty hardware, repairing the server hardware might be possible and could restore the system to a pre-incident state, within 1-5 working days.
     If that's not possible to repair a new server is required. Assuming that the system is not deployed on \GLS{CIMT}s services and a spare server is not available,
-    procuring a new server would take between 4-12 weeks with a 1 week installation period afterwards. Due to limited experience with replacement servers from \GLS{CIMT} it's unknown how quickly they could procure a new server, however the installation period would remain the same.
-    If the server is virtualized and backed up, and the back ups are not lost, then the downtime would be around 1 day.\\
-    In the cases where the original source code is lost, the new solution would be forced to be used. Note that the new solution doesn't suffer the same vulnerability due to be hosted online.
+    procuring a new server would take between 4-12 weeks with a 1 week installation period afterwards.
+    If the server is virtualized and backed up, and the back ups are not lost, then the downtime would be around 1 day, which \GLS{CIMT} does.\\
+    If the original source code is lost, the new web server would be forced to be used.
+    Note that the new solution doesn't suffer the same vulnerability due to be hosted on github.
     In the case where github becomes unavailable, a replacement service would not be difficult to find as github is build around \Gls{git}.
   \end{itemize}
-  \item Database is brought into an invalid state.
+  \item Database is brought into an invalid state or incorrect state.
   \begin{itemize}
-    \item[Description] - Due to the fact that it's the application responsibility to ensure correctness of the database.
-    If the record database is in an invalid state, undefined behavior might occur or the data might be invalid.\\
+    \item[Description] - Due to the fact that it's the application responsibility to ensure correctness of the database, this is a risk.
+    If the record database is in an invalid state, undefined behavior might occur because some data is invalid.\\
     Consider an example where a tracer is deleted. All orders with that tracer can no longer be determined to be of that tracer.
-    \item[Likelihood] - Low - The web services doesn't allow, the user to perform arbitrary SQL queries.
-    Only predefined queries that take the database from one valid state to another valid state. However it's difficult to ensure all possible user inputs.
-    Hence it's possible that a user query might bring the database into an invalid state.
-    Another way an incident could happen is if a system administrator creates a query that brings the database is into an invalid state.
-    \item[Damages] - Low - The new tracershop can handle invalid database entries to an extend, meaning tracershop still works for unrelated entires and therefore not take the service down.
-    The system will instead display, that certain information is undefined or not display the incorrect data at all. If the invalid state persist unnoticed for more 1 day the backup will be over written and the damage made permanent. However in such a case, it's unlikely to critical data, that have been corrupted.
-    \item[Plan of action] - A system administrator would go into the database and revert the database. All queries made through tracershop to the record database is logged, which can greatly help system administrator to undo the damage.
-    In worst case scenario is to restore to a backup of the record database.
+    \item[Likelihood] - Low - The web services doesn't allow, the user to perform arbitrary SQL queries,
+    only predefined queries that take the database from one valid state to another valid state.
+    It's difficult to ensure all possible user inputs, so it's possible that a user query might bring the database into an invalid state.
+    An incident could occur if a system administrator creates a query that brings the database is into an invalid state.
+    \item[Damages] - None to Low - The new tracershop can handle invalid database entries to an extend,
+    meaning tracershop still works for unrelated entires and therefore not take the service down.
+    The system will instead display, that certain information is undefined or not display the incorrect data at all.
+    If the invalid state persist unnoticed for more 1 day the backup will be over written and the damage made permanent.
+    However in such a case, it's unlikely to critical data, that have been corrupted.
+    \item[Plan of action] - Upon notice a system administrator would enter the database and create a query to revert the database into a valid state.
+    All queries made by tracershop to the record database is logged,
+    which can greatly help system administrator to undo the damage.
+    If the system administrator unable to restore the data using a query, then the plan switches to rollback to a backup of the record database, causing 1 days worth of data loss.
   \end{itemize}
   \item Incorrect user input
   \begin{itemize}
@@ -277,6 +304,15 @@ for the latest validation of the dispenser.
     \item[Likelihood] - Unknown - The author have so limited experience with the available of the mail server, that a valid likelihood estimate is difficult to make.
     \item[Damages] - None to low - Customers are required to wait for confirmation that the tracer passed quality assurance mandated by \GLS{gmp}, so if the email server is down, the customer can not be notified through email.
     \item[Plan] - Due to websockets, updates to orders can be seen on tracershop in real time. Additionally users can download the email from tracershop from the associated order if needed or internal bookkeeping without any emails involved.
+  \end{itemize}
+  \item Malicious usage of tracershop
+  \begin{itemize}
+    \item[Description] - A user of tracershop attempt to sabotage the site.
+    \item[Likelyhood] - Minimal - Users both staff and customers are verified users, which minimizes the risk of malicious usage.
+    \item[Damages] - Low - Even in the event of that a user some how manages to destroy the record database, the backup is stored externally and thus not subject to any attack by the malicious user.
+    \item[Plan] - All account are Personal.
+    Critical actions such as freeing orders are audit logged. Allowing system administrator to identify the malicious user.
+    There's a detection of SQL injections before the execution of each query.
   \end{itemize}
 \end{itemize}
 
