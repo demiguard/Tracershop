@@ -1,4 +1,4 @@
-from database.TracerShopModels.BaseModels import SubscribeableModel
+from database.TracerShopModels.baseModels import SubscribableModel
 
 from django.db import models
 from django.db.models import Model

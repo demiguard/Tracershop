@@ -196,11 +196,10 @@ To ensure that the new tracershop handles message correctly behavior and follows
 \end{enumerate}
 Since the frontend doesn't have any contact with the database,
 it is sufficient to ensure that the backend handles the users messages correctly.
-This is done by a series of unit tests and end to end tests, which have a 92\% code coverage.
-Which means that there's a program, which creates a test environment and run a number of tests where 92\% of all statement in the program is executed at least once.
+This is done by a series of unit tests and end to end tests, which have a 95\% code coverage.
+Which means that there's a program, which creates a test environment and run a number of tests where 95\% of all statement in the program is executed at least once.
 Having above 90\% code coverage is considered good coverage as not all code is easily testable, nor does a code coverage of 100\% ensure that the program have no errors.
-The testing proves the web server with high confidence handles messages correctly.
-
+The testing proves the web server with high confidence handles messages correctly.\\
 The django application has its own database to keep track of user session, which have been extended to to include general web site configuration.
 This means that the django application database doesn't contain any records of orders or customers. This allows easy creation of test environments,
 since the record database is a field in the django database, it can be easily exchanged to a connection to a database with a test environment.
@@ -216,7 +215,7 @@ A risk assessment is a collections of risks, each risk consists of a description
 and final a plan of action if an incident happen. \\
 This risk assessment doesn't include malicious usage of tracershop, production related risks.
 Additionally it assumes correct data from the dispenser as both the program transferring and producing data have modified by the new Tracershop,
-and therefore derives its validity from previous documentation Se document number.: CVP-PROD-TS-001-14.01 in the D4 document management system,
+and therefore derives its validity from previous documentation Se document number.: CVP-PROD-TS-001-14.01 in D4 ,
 for the latest validation of the dispenser.
 
 \begin{itemize}

@@ -1,39 +1,39 @@
 from django.db import models
-from database.models import SubscribeableModel
-from database.TracerShopModels.AuthModels import Customer
+from database.models import SubscribableModel
+from database.TracerShopModels.authModels import Customer
 
 class TracerTypes(models.IntegerChoices):
     injection = 1
     activity = 2
 
-class Isotope(SubscribeableModel):
+class Isotope(SubscribableModel):
   ID = models.AutoField(primary_key=True)
   atomName = models.CharField(max_length=30)
   halfTime = models.IntegerField(null=True)
   isotopeNumber = models.IntegerField(null=True) # Protons + neutrons
   symbol = models.CharField(max_length=5, null=True)
 
-class Tracer(SubscribeableModel):
+class Tracer(SubscribableModel):
   ID = models.AutoField(primary_key=True)
   name = models.CharField(max_length=30, unique=True, null=True)
   longName = models.CharField(max_length=60, null=True, default=None)
   inUse = models.BooleanField(default=False)
-  isotope = models.ForeignKey(Isotope, on_delete=models.SET_NULL, null=True)
+  isotope = models.ForeignKey(Isotope, on_delete=models.RESTRICT, null=True)
   tracerType = models.IntegerField(choices=TracerTypes.choices, default=TracerTypes.injection)
 
   def __str__(self):
     if self.name:
       return self.name
     else:
-      return f"This Tracer-{self.ID} have no name. Please fix"
+      return super().__str__()
 
-class Procedure(SubscribeableModel):
+class Procedure(SubscribableModel):
   ID        = models.AutoField(primary_key=True)
   title     = models.CharField(unique=True, max_length=128)
   baseDosis = models.IntegerField(null=True)
   delay     = models.IntegerField(default=0)
   inUse     = models.BooleanField(default=False)
-  tracer    = models.ForeignKey(Tracer, on_delete=models.SET_NULL, null=True)
+  tracer    = models.ForeignKey(Tracer, on_delete=models.RESTRICT, null=True)
 
   def __str__(self):
     return self.title
@@ -42,20 +42,20 @@ class Procedure(SubscribeableModel):
     verbose_name = "Procedure"
     verbose_name_plural = "Procedures"
 
-class Location(SubscribeableModel):
-  location   = models.CharField(max_length=16, primary_key=True)
-  LocName    = models.CharField(max_length=32, default="")
+class Location(SubscribableModel):
+  roomCode   = models.CharField(max_length=16, primary_key=True)
+  locName    = models.CharField(max_length=32, default="")
   AssignedTo = models.ForeignKey(Customer, on_delete=models.SET_NULL, null=True, default=None)
 
   def __str__(self):
-    if self.LocName:
-      return self.LocName
+    if self.locName:
+      return self.locName
     else:
-      return self.location
+      return self.roomCode
 
-class Booking(SubscribeableModel):
-  procedure       = models.ForeignKey(Procedure, on_delete=models.CASCADE)
-  location        = models.ForeignKey(Location, on_delete=models.SET_NULL, null=True)
+class Booking(SubscribableModel):
+  procedure       = models.ForeignKey(Procedure, on_delete=models.RESTRICT)
+  location        = models.ForeignKey(Location, on_delete=models.RESTRICT, null=True)
   accessionNumber = models.CharField(max_length=16, primary_key=True)
   startDate       = models.DateField()
   startTime       = models.TimeField()

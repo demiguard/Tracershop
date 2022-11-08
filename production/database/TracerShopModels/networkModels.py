@@ -1,7 +1,7 @@
 from django.db import models
-from database.TracerShopModels.BaseModels import SubscribeableModel
+from database.TracerShopModels.baseModels import SubscribableModel
 
-class Address(SubscribeableModel):
+class Address(SubscribableModel):
   ID   = models.AutoField(primary_key=True)
   ip   = models.CharField(max_length=30, null=True)
   port = models.CharField(max_length=6, null=True)
@@ -13,7 +13,7 @@ class Address(SubscribeableModel):
     else:
       return "This Address does not have a description please fix"
 
-class Database(SubscribeableModel):
+class Database(SubscribableModel):
   databaseName = models.CharField(max_length=32, primary_key=True)
   username = models.CharField(max_length=32)
   password = models.CharField(max_length=32, null=True)
