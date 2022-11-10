@@ -1,18 +1,23 @@
-export { CompareDates, BooleanMapping, noop, autoAddCharacter, addCharacter, removeIndex }
+/** This module is for library functions which doesn't belong in other  */
 
-
-function CompareDates(d1, d2) {
+/**
+ * 
+ * @param {Date} d1 - Date 1
+ * @param {Date} d2 - Date 2
+ * @returns Checks if date 1 and date 2 are the same day
+ */
+export function CompareDates(d1, d2) {
   //Compares if two date objects refer to the same date
   return d1.getFullYear() == d2.getFullYear() && d1.getMonth() == d2.getMonth() && d1.getDate() == d2.getDate();
 }
 
-function BooleanMapping(bool){
+export function BooleanMapping(bool){
   return (bool) ? 1 : 0
 }
 
-function noop(){
+/** istanbul ignore next */
+export function noop(){}
 
-}
 /**
  * This functions adds a string at certain indexes.
  * This is useable for instance in when users are typing numbers for a time stamp
@@ -23,7 +28,7 @@ function noop(){
  * @param { String } old_string - This is the old string.
  * @returns { String } - A potential modified string.
  */
-function autoAddCharacter(event, insert_character, indexes, old_string){
+export function autoAddCharacter(event, insert_character, indexes, old_string){
   const nativeEvent = event.nativeEvent;
   if (nativeEvent.inputType !== "insertText") return event.target.value;
   if (indexes.has(old_string.length) && nativeEvent.data !== insert_character) {
@@ -37,10 +42,10 @@ function autoAddCharacter(event, insert_character, indexes, old_string){
  * @param {*} character -
  * @param {String} kw - String
  * @param {Array} indexes - Array of indexes
- * @param {Object} This - Stateholder
+ * @param {Object} This - StateHolder
  * @returns {CallableFunction} - Function that adds a
  */
-function addCharacter(character, kw, indexes, This){
+export function addCharacter(character, kw, indexes, This){
   const returnFunction = (event) => {
       if(event.code == "Backspace") return;
       if(indexes.includes(event.target.value.length)){
@@ -56,7 +61,9 @@ function addCharacter(character, kw, indexes, This){
  *
  * @param {Array} arr - Array to have an element removed
  * @param {Number} index - Index to be removed
+ * @returns {Array}
  */
-function removeIndex(arr, index){
-  return arr.slice(0,index-1).concat(arr.slice(index, arr.length));
+export function removeIndex(arr, index){
+  if (index < 0) return arr;
+  return arr.slice(0,index).concat(arr.slice(index + 1 , arr.length));
 }

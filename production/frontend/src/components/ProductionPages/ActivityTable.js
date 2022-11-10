@@ -8,7 +8,7 @@ import { CountMinutes, CalculateProduction } from "../../lib/physics";
 import { ActivityModal } from "../modals/ActivityModal.js";
 import { CreateOrderModal } from "../modals/CreateOrderModal";
 import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
-  WEBSOCKET_MESSAGE_FREE_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVERTIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
   KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME,
@@ -436,7 +436,7 @@ export class ActivityTable extends Component {
     const vialIDs = [...vialSet];
     this.closeModal();
 
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ORDER);
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
     data[JSON_VIAL] = vialIDs;
     data[JSON_ACTIVITY_ORDER] = orderID;

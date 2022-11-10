@@ -56,7 +56,7 @@ LEGACY_TABLES = {
 JAVASCRIPT_VERSION = "1.0.1" # Remember to update this to catch bugs
 
 
-# Long list JSON key word used in Json messsages
+# Long list JSON key word used in Json messages
 # These should have great overlap with the constants in production/frontend/src/lib/constants.js
 
 AUTH_USERNAME         = "username"
@@ -83,10 +83,10 @@ ERROR_UNKNOWN_FAILURE = "unknownError"
 
 JSON_ACTIVITY_ORDER = "orders"
 JSON_ACTIVE_DATABASE = "active_database"
-JSON_AUTH = "auth"
 JSON_ADDRESS  = "address"
-JSON_CUSTOMER  = "customer"
+JSON_AUTH = "auth"
 JSON_CLOSEDDATE = "closeddate"
+JSON_CUSTOMER  = "customer"
 JSON_DATABASE = "database"
 JSON_DELIVERTIME = "deliverTimes"
 JSON_EMPLOYEE = "employee"

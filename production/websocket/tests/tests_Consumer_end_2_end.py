@@ -238,7 +238,7 @@ class ConsumerTestCase(TestCase):
     today = datetime.date.today()
     startTime = now - datetime.timedelta(days=serverConfig.DateRange)
     startDate = today - datetime.timedelta(days=serverConfig.DateRange)
-    endtime = now + datetime.timedelta(days=serverConfig.DateRange)
+    endTime = now + datetime.timedelta(days=serverConfig.DateRange)
     endDate = today + datetime.timedelta(days=serverConfig.DateRange)
     # Validation
     self.assertListEqual(address, [await getModel(Address, 1)])
@@ -254,12 +254,12 @@ class ConsumerTestCase(TestCase):
     # Date Sensitive information
     correctActivityOrders = LFILTER(
       lambda order: startTime < order.deliver_datetime and
-         order.deliver_datetime < endtime, TEST_DATA_DICT[ActivityOrderDataClass])
+         order.deliver_datetime < endTime, TEST_DATA_DICT[ActivityOrderDataClass])
     self.assertListEqual(Orders, correctActivityOrders)
 
     correctInjectionOrders = LFILTER(
       lambda order: startTime < order.deliver_datetime and
-         order.deliver_datetime < endtime, TEST_DATA_DICT[InjectionOrderDataClass])
+         order.deliver_datetime < endTime, TEST_DATA_DICT[InjectionOrderDataClass])
     self.assertListEqual(TOrders, correctInjectionOrders)
 
     correctVials = LFILTER(lambda order: startDate < order.filldate and

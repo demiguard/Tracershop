@@ -10,3 +10,14 @@
 
 }
 
+.hint {
+  border-color: var(--tertiary-color-1);
+}
+
+.Warning {
+  border-color: #e69705
+}
+
+.Error {
+  border-color: #fc0c04;
+}

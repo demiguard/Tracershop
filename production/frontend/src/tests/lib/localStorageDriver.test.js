@@ -1,5 +1,6 @@
 
-import { db } from "../../lib/localStorageDriver.js"
+import { DATABASE_ACTIVITY_ORDER, DATABASE_CLOSEDDATE, DATABASE_CUSTOMER, DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE, DATABASE_PRODUCTION, DATABASE_TRACER, DATABASE_VIAL, JSON_ACTIVITY_ORDER, JSON_CLOSEDDATE, JSON_CUSTOMER, JSON_DELIVERTIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL } from "../../lib/constants.js";
+import { db, MapDataName } from "../../lib/localStorageDriver.js"
 
 test("Save and Read string", () => {
   const testKeyString = "key-string";
@@ -275,8 +276,26 @@ test("Jest map equal test", () => {
   map2.set(key, value);
 
   expect(map1).toEqual(map2);
-
 });
+
+test("Save And read String", () => {
+  const kw = "str";
+  const testStr = "testString";
+  db.addType(kw, String)
+
+  db.set(kw, testStr);
+  expect(db.get(kw)).toEqual(testStr);
+});
+
+test("Delete a key", () => {
+  const kw = "str";
+  const testStr = "testString";
+  db.addType(kw, String)
+
+  db.set(kw, testStr);
+  db.delete(kw);
+  expect(db.get(kw)).toEqual(null);
+})
 
 test("Save and read Map inside of Maps", () => {
   // This unit test shows a limitation of the local storage
@@ -322,3 +341,39 @@ test("Test maps within sets", () =>{
 
   const loaded_MONSTERMAP = db.get(localStorage_kw);
 });
+
+test("Get and Set of unknown Keys", () => {
+  const unknown_Key = "Not_Defined";
+  try{
+    db.get(unknown_Key)
+    expect(true).toBe(false);
+  } catch (e){
+    expect(e).toEqual(`Type of ${unknown_Key} unknown!`);
+  }
+  try{
+    db.set(unknown_Key, "dummy")
+    expect(true).toBe(false);
+  } catch (e){
+    expect(e).toEqual(`Type of ${unknown_Key} unknown!`);
+  }
+});
+
+test("MapDatabaseName test", () => {
+  expect(MapDataName(JSON_ACTIVITY_ORDER)).toEqual(DATABASE_ACTIVITY_ORDER);
+  expect(MapDataName(JSON_CUSTOMER)).toEqual(DATABASE_CUSTOMER);
+  expect(MapDataName(JSON_DELIVERTIME)).toEqual(DATABASE_DELIVER_TIME);
+  expect(MapDataName(JSON_EMPLOYEE)).toEqual(DATABASE_EMPLOYEE);
+  expect(MapDataName(JSON_INJECTION_ORDER)).toEqual(DATABASE_INJECTION_ORDER);
+  expect(MapDataName(JSON_ISOTOPE)).toEqual(DATABASE_ISOTOPE);
+  expect(MapDataName(JSON_RUN)).toEqual(DATABASE_PRODUCTION);
+  expect(MapDataName(JSON_TRACER)).toEqual(DATABASE_TRACER);
+  expect(MapDataName(JSON_VIAL)).toEqual(DATABASE_VIAL);
+  expect(MapDataName(JSON_CLOSEDDATE)).toEqual(DATABASE_CLOSEDDATE);
+  const input = "Nonsense";
+  try{
+    MapDataName(input);
+    expect(true).toBe(false)
+  } catch (e) {
+    expect(e).toEqual(`Unknown JSON Name ${input}`);
+  }
+})

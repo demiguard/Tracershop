@@ -53,14 +53,14 @@ class Calculator extends Component {
   }
 
   addEntry(){
-    const retfunc = (_event) => {
+    const retFunc = (_event) => {
       const formattedTime = FormatTime(this.state.newEntry.time);
       if(formattedTime === null){
         this.setState({...this.state, errorMessage : "Tidspunktet er ikke læseligt af systemet"});
         return;
       }
-      const hour = Number(entry.time.substr(0,2));
-      const min  = Number(entry.time.substr(3,2));
+      const hour = Number(formattedTime.substring(0,2));
+      const min  = Number(formattedTime.substring(3,5));
       const entryDate = new Date(
         this.props.productionTime.getFullYear(),
         this.props.productionTime.getMonth(),
@@ -103,17 +103,17 @@ class Calculator extends Component {
         }};
       this.setState(newState);
     }
-    return retfunc.bind(this);
+    return retFunc.bind(this);
   }
 
   removeEntry(index){
-    const retfunc = (_event) => {
+    const retFunc = (_event) => {
       const newEntries = removeIndex(this.state.entries, index);
       this.setState({...this.state,
         entries : newEntries
       });
     }
-    return retfunc.bind(this);
+    return retFunc.bind(this);
   }
 
   commit(event) {
@@ -129,8 +129,8 @@ class Calculator extends Component {
         hour,
         min
       )
-      const timedelta = CountMinutes(this.props.productionTime, entryDate);
-      activity += CalculateProduction(isotope.halflife, timedelta, entry.activity)
+      const timeDelta = CountMinutes(this.props.productionTime, entryDate);
+      activity += CalculateProduction(isotope.halflife, timeDelta, entry.activity)
     }
 
     this.props.commit(activity);
@@ -202,6 +202,9 @@ class Calculator extends Component {
             {EntryTableRows}
           </tbody>
         </Table>
+      </Row>
+      <Row>
+        
       </Row>
       <Row>
         <Col>

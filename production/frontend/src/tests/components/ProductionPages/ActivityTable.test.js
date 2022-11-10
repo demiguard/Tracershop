@@ -334,9 +334,33 @@ describe("The Activity Table tracer", () =>{
   expect(NoOrderDiv.textContent).toBe(
     `Der er ingen ${testTracerName} Ordre til den ${ExpectedDateStr}`)
   });
+
+  it("White box Order Rendering", async () => {
+    const props = getProps();
+    setRuns(props);
+    setCustomerDeliverTimes(props);
+    //setOrders(props);
+
+    act(() => {root.render(<ActivityTable
+      customers={props.customers}
+      date={props.date}
+      deliverTimes={props.deliverTimes}
+      employees={props.employees}
+      isotopes={props.isotopes}
+      orders={props.orders}
+      runs={props.runs}
+      tracer={props.tracer}
+      tracers={props.tracers}
+      t_orders={props.t_orders}
+      vials={props.vials}
+      username={props.username}
+      websocket={props.websocket}/>
+    );});
+
+  })
 });
 
-// Testing Library / react tests
+// Testing Library / react tests / Black box tests
 
 describe("Testing-library/react tests", () =>{
   it("Minimal render test", async () => {

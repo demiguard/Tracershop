@@ -2,7 +2,7 @@ import React, {Component } from "react";
 import { NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "../../lib/constants";
 import { db } from "../../lib/localStorageDriver";
-import { ControlPanel } from "./ControlPanel";
+import { ConfigSite } from "./ConfigSite";
 import { ProductionSite } from "./productionSite";
 import { ShopSite } from "./ShopSite";
 
@@ -11,13 +11,9 @@ import SiteStyles from "/src/css/Site.module.css"
 
 export { AdminSite }
 
-const AdminPages = {
-
-}
-
 
 const sites = {
-  Admin : ControlPanel,
+  Admin : ConfigSite,
   Production : ProductionSite,
   Shop : ShopSite
 }

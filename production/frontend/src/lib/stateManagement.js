@@ -1,10 +1,11 @@
+
 export function changeState(stateKeyWord, This){
   const returnFunction = (event) => {
     const newState = {...This.state};
     newState[stateKeyWord] = event.target.value;
     This.setState(newState);
   }
-  return returnFunction.bind(This)
+  return returnFunction.bind(This);
 }
 
 /** Toggles a state parameter between true and false
@@ -20,5 +21,5 @@ export function toggleState(stateKeyWord, This){
     newState[stateKeyWord] = !oldValue;
     This.setState(newState);
   }
-  return returnFunction.bind(This)
+  return returnFunction.bind(This);
 }

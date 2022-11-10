@@ -41,21 +41,26 @@ export const AUTH_DETAIL           = "detail";
 export const AUTH_IS_AUTHENTICATED = "isAuthenticated";
 
 // Error strings
-
-export const ERROR_INVALID_JAVASCRIPT_VERSION = "InvalidJavascriptVersion";
-export const ERROR_NO_JAVASCRIPT_VERSION = "NoJavaScriptVersion";
-export const ERROR_NO_MESSAGE_ID = "NoMessageID";
-export const ERROR_NO_MESSAGE_TYPE = "NoMessageType";
-export const ERROR_INSUFICIENT_PERMISSIONS = "InsuficientPermissions";
-export const ERROR_UNKNOWN_FAILURE = "unknownError";
+export const ERROR_INVALID_AUTH = "InvalidAuth"
+export const ERROR_INVALID_DATACLASS_TYPE = "NoDataClass"
+export const ERROR_INVALID_JAVASCRIPT_VERSION = "InvalidJavascriptVersion"
+export const ERROR_INVALID_MESSAGE = "InvalidMessage"
+export const ERROR_INVALID_MESSAGE_TYPE = "InvalidMessageType"
+export const ERROR_OBJECT_NOT_FOUND = "objectNotFound"
+export const ERROR_NO_JAVASCRIPT_VERSION = "NoJavaScriptVersion"
+export const ERROR_NO_MESSAGE_ID = "NoMessageID"
+export const ERROR_NO_MESSAGE_TYPE = "NoMessageType"
+export const ERROR_INSUFFICIENT_PERMISSIONS = "InsufficientPermissions"
+export const ERROR_INSUFFICIENT_DATA = "InsufficientData"
+export const ERROR_UNKNOWN_FAILURE = "unknownError"
 
 
 
 // JSON - refers to a keyword in a json object
-export const JSON_AUTH = "auth"
 export const JSON_ACTIVITY_ORDER = "orders";
 export const JSON_ACTIVE_DATABASE = "active_database";
 export const JSON_ADDRESS  = "address";
+export const JSON_AUTH = "auth"
 export const JSON_CUSTOMER  = "customer";
 export const JSON_CLOSEDDATE = "closeddate";
 export const JSON_DATABASE = "database";
@@ -144,33 +149,34 @@ export const KEYWORD_VOLUME = "volume";
 // IF A MESSAGE GLOBAL TO ALL SITE IT'S
 // WEBSOCKET_MESSAGE_<MESSAGE_KW>
 
-export const WEBSOCKET_DATA                 = "data";
-export const WEBSOCKET_DATATYPE             = "datatype";
-export const WEBSOCKET_DATA_ID              = "dataID";
-export const WEBSOCKET_DEAD_ORDERS          = "deadOrders";
-export const WEBSOCKET_DATE                 = "date";
-export const WEBSOCKET_ERROR                = "error";
-export const WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion";
-export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login";
-export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout";
-export const WEBSOCKET_MESSAGE_AUTH_WHOAMI  = "whoami";
-export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
-export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
-export const WEBSOCKET_MESSAGE_ECHO         = "echo";
-export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState";
-export const WEBSOCKET_MESSAGE_FREE_ORDER   = "freeOrder";
-export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
-export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history";
-export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState";
+export const WEBSOCKET_DATA                 = "data"
+export const WEBSOCKET_DATATYPE             = "datatype"
+export const WEBSOCKET_DATA_ID              = "dataID"
+export const WEBSOCKET_DATE                 = "date"
+export const WEBSOCKET_DEAD_ORDERS          = "deadOrders"
+export const WEBSOCKET_ERROR                = "error"
+export const WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion"
+export const WEBSOCKET_MESSAGE_ANSWER       = "answer"
+export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login"
+export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout"
+export const WEBSOCKET_MESSAGE_AUTH_WHOAMI  = "whoami"
+export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass"
+export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass"
+export const WEBSOCKET_MESSAGE_ECHO         = "echo"
+export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState"
+export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity"
+export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection"
+export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history"
+export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders"
+export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState"
 export const WEBSOCKET_MESSAGE_ID           = "messageID"
-export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
-export const WEBSOCKET_MESSAGE_RECIEVE_VIAL = "recieveVial";
-export const WEBSOCKET_MESSAGE_SUCCESS      = "success";
-export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
-export const WEBSOCKET_SEND_EVENT           = "sendEvent";
-export const WEBSOCKET_EVENT_TYPE           = "type";
-export const WEBSOCKET_SESSION_ID           = "sessionid";
-export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
+export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder"
+export const WEBSOCKET_MESSAGE_SUCCESS      = "success"
+export const WEBSOCKET_MESSAGE_TYPE         = "messageType"
+export const WEBSOCKET_SEND_EVENT           = "sendEvent"
+export const WEBSOCKET_SESSION_ID           = "sessionid"
+export const WEBSOCKET_EVENT_TYPE           = "type"
+export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig"
 
 // BETTER MESSAGE CONSTANTS
 

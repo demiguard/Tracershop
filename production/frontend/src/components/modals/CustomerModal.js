@@ -7,7 +7,7 @@ import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_D
   JSON_DELIVERTIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, DAYS_OBJECTS,
 } from "../../lib/constants.js"
-import { ParseTelefonNumber, FormatTime, parseName, ParseEmail, isNotNaN, ParseDanishNumber } from "../../lib/formatting.js"
+import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js"
 import { KEYWORD_DELIVER_TIME } from "../../lib/constants";
 import { addCharacter } from "../../lib/utils";
 import { renderOnClose } from "../../lib/Rendering.js";

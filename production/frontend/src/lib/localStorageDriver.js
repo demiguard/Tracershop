@@ -56,8 +56,6 @@ export var db = {
           value.set(MaybeNumberKey, val);
         }
       }
-    } else {
-      value = new Type(value);
     }
 
     return value;
@@ -107,6 +105,8 @@ export var db = {
  * @throws "Unknown JSON name" on unknown input
  */
 export function MapDataName(JSONName){
+  // A more elegant solution would be to create a object with all the keys HOWEVER,
+  // Because javascript is a fucking STUPID language, you cannot initialize an object with variables or constants
   if (JSONName == JSON_ACTIVITY_ORDER) {return DATABASE_ACTIVITY_ORDER};
   if (JSONName == JSON_CUSTOMER) {return DATABASE_CUSTOMER;}
   if (JSONName == JSON_DELIVERTIME){return DATABASE_DELIVER_TIME;}
