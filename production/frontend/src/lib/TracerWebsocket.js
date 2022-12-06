@@ -4,7 +4,7 @@ import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS, DATABAS
   WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
   JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
   JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, } from "./constants";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSEDDATE, DATABASE_CLOSEDDATE, } from "./constants";
 import { MapDataName } from "./localStorageDriver.js";
 import { ParseJSONstr } from "./formatting.js";
 
@@ -42,7 +42,11 @@ class TracerWebSocket{
         return;
       }
       const pipe = this._PromiseMap.get(data[WEBSOCKET_MESSAGE_ID]);
-      pipe.port2.postMessage(data);
+      // If this websocket isn't the author of the request, then there's no promise to update.
+      // A websocket might receive a message from due to another persons update.
+      if(pipe != undefined){
+        pipe.port2.postMessage(data);
+      }
       //None promise update
       switch(data[WEBSOCKET_MESSAGE_TYPE]) {
         /*
@@ -86,6 +90,7 @@ class TracerWebSocket{
             const ActivityOrders = [];
             const InjectionOrders = [];
             const Vials = [];
+            const CloseDates = []
             for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
               ActivityOrders.push(ParseJSONstr(ActivityStr));
             }
@@ -95,13 +100,28 @@ class TracerWebSocket{
             for(const VialStr of data[JSON_VIAL]){
               Vials.push(ParseJSONstr(VialStr));
             }
-            this.StateHolder.UpdateMap(DATABASE_ACTIVITY_ORDER, ActivityOrders, "oid", false, []);
-            this.StateHolder.UpdateMap(DATABASE_INJECTION_ORDER, InjectionOrders, "oid", false, []);
-            this.StateHolder.UpdateMap(DATABASE_VIAL, Vials, "ID", true, []);
+            for(const closeDateStr of data[JSON_CLOSEDDATE]){
+              CloseDates.push(ParseJSONstr(closeDateStr))
+            }
+
+            this.StateHolder.UpdateMaps(
+              [DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER,
+                DATABASE_VIAL, DATABASE_CLOSEDDATE],
+              [ActivityOrders, InjectionOrders, Vials, CloseDates],
+              ["oid", "oid", "ID", "BDID"],
+              [true, true, true, true],
+              [[],[],[],[]]
+            )
           }
         break;
         case WEBSOCKET_MESSAGE_EDIT_STATE:
-          this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], [ParseJSONstr(data[WEBSOCKET_DATA])], data[WEBSOCKET_DATA_ID], true, []);
+          this.StateHolder.UpdateMap(
+            data[WEBSOCKET_DATATYPE],
+            [ParseJSONstr(data[WEBSOCKET_DATA])],
+            data[WEBSOCKET_DATA_ID],
+            true,
+            []
+          );
           break;
         case WEBSOCKET_MESSAGE_FREE_ACTIVITY:
         {
@@ -118,14 +138,18 @@ class TracerWebSocket{
           this.StateHolder.UpdateMap(DATABASE_VIAL, Vials, "ID", true, []);
         }
         break;
-        case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS:
-          {
+        case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS: {
             const DataClass = data[WEBSOCKET_DATA];
             const ID = data[WEBSOCKET_DATA_ID]
             this.StateHolder.UpdateMap(
               MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
           }
         break;
+        case WEBSOCKET_MESSAGE_FREE_INJECTION: {
+            const UpdatedOrder = ParseJSONstr(data[JSON_INJECTION_ORDER]);
+            this.StateHolder.UpdateMap(DATABASE_INJECTION_ORDER, [UpdatedOrder], 'oid', true, []);
+          }
+          break;
       }
     }
 

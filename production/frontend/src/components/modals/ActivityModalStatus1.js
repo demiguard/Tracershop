@@ -1,30 +1,41 @@
 import React, { Component } from "react";
 import { Button, Modal, Table, Row, Col } from "react-bootstrap";
+import PropTypes from 'prop-types'
+
 import {
   JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_TOTAL_AMOUNT,
   KEYWORD_TOTAL_AMOUNT_O, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   WEBSOCKET_MESSAGE_EDIT_STATE } from "../../lib/constants";
-import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
+import { renderClickableIcon, renderOnClose, renderTableRow } from "../../lib/Rendering";
 
 
 import styles from '../../css/Site.module.css'
+import { AlertBox, ERROR_LEVELS } from "../injectables/ErrorBox";
+import { TracerWebSocket } from "../../lib/TracerWebsocket";
 
 export { ActivityModalStatus1 }
 
 class ActivityModalStatus1 extends Component {
+  static propTypes = {
+    customers : PropTypes.instanceOf(Map).isRequired,
+    order : PropTypes.number.isRequired,
+    orders : PropTypes.instanceOf(Map).isRequired,
+    onClose : PropTypes.func.isRequired,
+    websocket : PropTypes.instanceOf(TracerWebSocket).isRequired,
+  }
   constructor(props){
     super(props);
-
     const order = this.props.orders.get(this.props.order);
 
     this.state = {
       editingOrderedActivity : false,
-      editOrderActivity : order.amount
+      editOrderActivity : order.amount,
+      errorMessage : "",
     }
   }
 
   toggleActivity(){
-    const retfunc = (event) => {
+    const retFunc = (event) => {
       if(this.state.editingOrderedActivity){
         const order = this.props.orders.get(this.props.order);
         const customer = this.props.customers.get(order.BID);
@@ -74,7 +85,16 @@ class ActivityModalStatus1 extends Component {
         })
       }
     }
-    return retfunc.bind(this)
+    return retFunc.bind(this)
+  }
+
+  acceptOrder(){
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+    const order = {...this.props.orders.get(this.props.order)};
+    order.status = 2;
+    message[WEBSOCKET_DATA] = order;
+    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
+    this.props.websocket.send(message);
   }
 
   render(){
@@ -87,7 +107,7 @@ class ActivityModalStatus1 extends Component {
 
     return (
       <Modal
-        show={this.props.show}
+        show={true}
         size="lg"
         onHide={this.props.onClose}
         className={styles.mariLight}
@@ -121,11 +141,16 @@ class ActivityModalStatus1 extends Component {
               {order.comment ? renderTableRow("7", ["Kommentar", order.comment]) : null}
             </tbody>
           </Table>
+          {this.state.errorMessage ?
+            <AlertBox
+              message={this.state.errorMessage}
+              level={ERROR_LEVELS.error}
+            /> : null}
         </div>
         </Modal.Body>
         <Modal.Footer>
-          <Button>Accepter</Button>
-          <Button onClick={this.props.onClose}>Luk</Button>
+          <Button onClick={this.acceptOrder.bind(this)}>Accepter</Button>
+          {renderOnClose(this.props.onClose)}
         </Modal.Footer>
       </Modal>);
   }

@@ -570,7 +570,19 @@ DATACLASSES = {
   }
 
 # Data class constant mapping
-def findDataClass(dataType):
+def findDataClass(dataType: str) -> type:
+  """Mapping of the string identifiers and production-data-class-types
+    Raises ValueError if data class not found.
+
+  Args:
+      dataType (str): JSON_XXX matching a 
+
+  Raises:
+      ValueError: _description_
+
+  Returns:
+      type: _description_
+  """
   dataClass = DATACLASSES.get(dataType)
 
   if dataClass == None: # This is a handy way to see if i've set up a dataclass for the data type

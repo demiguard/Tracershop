@@ -19,7 +19,7 @@ class ActivityModalStatus3 extends Component {
     this.props.onClose();
   }
 
-  /** returns the name of the corrosponding Employee
+  /** returns the name of the corresponding Employee
    * @param {Number} employeeID
    * @returns {String} The name of the user
    */

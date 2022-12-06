@@ -54,6 +54,7 @@ export default class App extends Component {
       login_error : "",
       site_error : "",
       site_error_info : "",
+      spinner : false,
     };
     state[DATABASE_ADDRESS] = address;
     state[DATABASE_CLOSEDDATE] = closeddate;
@@ -92,6 +93,11 @@ export default class App extends Component {
 
   // Authentication Methods
   login(username, password){
+    this.setState({
+      ...this.state,
+      login_error : "",
+      spinner : true,
+    });
     const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGIN);
     const auth = {}
     auth[AUTH_USERNAME] = username
@@ -108,6 +114,7 @@ export default class App extends Component {
         Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite : 'strict'})
         const newState = {...this.state,
           user : user,
+          spinner : false,
         };
         newState[DATABASE_IS_AUTH] = true;
 
@@ -116,6 +123,7 @@ export default class App extends Component {
       } else {
         this.setState({...this.state,
           login_error : "Forkert Login",
+          spinner : false
         });
       }
     });
@@ -309,10 +317,10 @@ export default class App extends Component {
     this.setState(state);
   }
 
-  UpdateMap(mapName, ArrayNewObejct, IDkey, KeepOld, DeleteKeys){
+  UpdateMap(mapName, arrayNewObject, IDkey, KeepOld, DeleteKeys){
     const NewStateMap = (KeepOld) ? new Map(this.state[mapName]) : new Map();
 
-    if(ArrayNewObejct) for(const obj of ArrayNewObejct){
+    if(arrayNewObject) for(const obj of arrayNewObject){
       NewStateMap.set(obj[IDkey], obj);
     }
     if(DeleteKeys) for(const id_to_delete of DeleteKeys){
@@ -323,6 +331,38 @@ export default class App extends Component {
     newState[mapName] = NewStateMap;
     this.setState(newState); // Trigger Rerendering
     db.set(mapName, NewStateMap);
+  }
+
+  /**
+   * 
+   * @param {Array<string>} mapNames 
+   * @param {Array<Array<Object>>} mapsArrays 
+   * @param {Array<string>} IDs 
+   * @param {Array<boolean>} keepOlds 
+   * @param {Array<Array<Number>>} deleteKeys 
+   */
+  UpdateMaps(mapNames, mapsArrays, IDs, keepOlds, deleteKeys){
+    const newState = {...this.state};
+    for(const mapIdx in mapNames){
+      const mapName = mapNames[mapIdx];
+      const ID = IDs[mapIdx];
+      const keepOld = keepOlds[mapIdx];
+      const objects = mapsArrays[mapIdx];
+      const toBeDeleted = deleteKeys[mapIdx];
+
+      const newStateMap = (keepOld) ? new Map(this.state[mapName]) : new Map();
+
+      if(objects) for(const obj of objects){
+        newStateMap.set(obj[ID], obj);
+      }
+
+      if(toBeDeleted) for(const deleteID of toBeDeleted){
+        newStateMap.delete(deleteID);
+      }
+      newState[mapName] = newStateMap;
+      db.set(mapName, newStateMap);
+    }
+    this.setState(newState);
   }
 
   componentDidMount() {
@@ -354,10 +394,11 @@ export default class App extends Component {
         />
         <Container>
           <Authenticate
-            login_message="Log in"
             authenticate={this.login.bind(this)}
-            ErrorMessage={this.state.login_error}
+            errorMessage={this.state.login_error}
+            headerMessage="Log in"
             fit_in={true}
+            spinner={this.state.spinner}
           />
         </Container>
       </div>)

@@ -1,11 +1,12 @@
 import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
 
-import { renderClickableIcon, renderStatusImage } from "../../lib/Rendering";
+import { renderClickableIcon, renderHoverMessage, renderStatusImage } from "../../lib/Rendering";
 import { Calculator } from "../injectables/calculator";
 import { ParseDanishNumber } from "../../lib/formatting";
 
 import styles from '../../css/Site.module.css'
+import { HoverBox } from "../injectables/HoverBox";
 
 export { CreateOrderModal }
 
@@ -94,6 +95,8 @@ class CreateOrderModal extends Component {
   }
 
   showCalculator(){
+    console.log(this)
+
     this.setState({...this.state,
       showCalculator : true
     })
@@ -188,7 +191,11 @@ class CreateOrderModal extends Component {
 
         </Modal.Body>
         <Modal.Footer>
-          {this.state.showCalculator ? null : <Button onClick={this.createOrder.bind(this)}>Opret Ordre</Button>}
+          {this.state.showCalculator ? <HoverBox
+            Base={<Button disabled={true}>Opret Ordre</Button>}
+            Hover={<div>Du kan ikke opret en ordre imens at du bruger lommeregneren</div>}
+          ></HoverBox>
+           : <Button onClick={this.createOrder.bind(this)}>Opret Ordre</Button>}
           <Button onClick={this.props.onClose}>Luk</Button>
         </Modal.Footer>
       </Modal>

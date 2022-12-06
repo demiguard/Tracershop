@@ -49,12 +49,10 @@ export class CloseDaysPage extends Component {
     return(
     <div>
       <Calender
-        closeddates={this.props.closeddates}
         date={this.state.today}
         onDayClick={this.changeCloseDay}
         onMonthChange={productionGetMonthlyOrders(this.props.websocket)}
         getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs, this.props.closeddates)}
-        websocket={this.props.websocket}
       ></Calender>
     </div>);
   }

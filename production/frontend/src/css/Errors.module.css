@@ -12,12 +12,57 @@
 
 .hint {
   border-color: var(--tertiary-color-1);
+  font-family: 'mariRegular';
+  margin: 15px !important;
+  border: 3px;
+  border-style: solid;
+  border-radius: 5px;
 }
 
-.Warning {
-  border-color: #e69705
+.hintHeader {
+  font-size: large;
+  font-family: 'mariPoster';
+  background-color: var(--tertiary-color-1);
+  color: #FFF;
+  vertical-align: middle;
+  padding: 0.5rem;
 }
 
-.Error {
+.warning {
+  border-color: #c80;
+  font-family: 'mariRegular';
+  margin: 15px !important;
+  border: 3px;
+  border-style: solid;
+  border-radius: 5px;
+  background-color: #fd9;
+}
+
+.warningHeader {
+  font-size: large;
+  font-family: 'mariPoster';
+  background-color: #c80;
+  color: #FFF;
+  vertical-align: middle;
+  padding: 0.5rem;
+}
+
+.error {
+  font-family: 'mariRegular';
+  display: block;
+  margin: 15px !important;
+  border: 3px;
+  border-style: solid;
   border-color: #fc0c04;
+  border-radius: 5px;
+  background-color: #ffcaca;
+}
+
+.errorHeader {
+  font-size: large;
+  font-family: 'mariPoster';
+  background-color: #fc0c04;
+  color: #FFF;
+
+  padding: 0.5rem;
 }

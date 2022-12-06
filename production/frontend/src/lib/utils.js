@@ -1,7 +1,7 @@
 /** This module is for library functions which doesn't belong in other  */
 
 /**
- * 
+ *
  * @param {Date} d1 - Date 1
  * @param {Date} d2 - Date 2
  * @returns Checks if date 1 and date 2 are the same day

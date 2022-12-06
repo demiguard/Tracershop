@@ -2,11 +2,23 @@ import React, { Component } from "react";
 import { Navbar as BSNavbar, Nav, Container, Button  } from "react-bootstrap";
 import styles from "../../css/Navbar.module.css"
 
+import PropTypes from 'prop-types'
+
 export {Navbar}
 
 const NavBarButtonType = "outline-primary";
 
 export default class Navbar extends Component {
+  static propTypes = {
+    ActiveKey : PropTypes.string,
+    logout : PropTypes.func.isRequired,
+    isAuthenticated : PropTypes.bool.isRequired,
+    Names : PropTypes.arrayOf(PropTypes.string),
+    NavbarElements: PropTypes.arrayOf(PropTypes.element),
+    setActivePage : PropTypes.func.isRequired,
+  }
+
+
   constructor(props){
     super(props)
   }
@@ -14,10 +26,8 @@ export default class Navbar extends Component {
   render() {
     const Elements = (this.props.NavbarElements) ? this.props.NavbarElements : [];
     for(const name of this.props.Names) {
-
       Elements.push(<Button
         className={styles.NavbarElement}
-
         variant={NavBarButtonType}
         key={name}
         onClick={() => this.props.setActivePage(name)}

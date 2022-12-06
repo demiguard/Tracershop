@@ -12,11 +12,12 @@ import { ActivityTable } from "../../../components/ProductionPages/ActivityTable
 import { TracerWebSocket} from "../../../lib/TracerWebsocket.js"
 import { TRACER_TYPE_ACTIVITY } from "../../../lib/constants.js";
 
-let container = null;
-let root = null
-beforeEach(() => {
-  container = document.createElement("div");
-  root = createRoot(container);
+
+  let container = null;
+  let root = null
+  beforeEach(() => {
+    container = document.createElement("div");
+    root = createRoot(container);
 });
 
 afterEach(() => {
@@ -265,10 +266,10 @@ describe("The Activity Table tracer", () =>{
       vials={props.vials}
       username={props.username}
       websocket={props.websocket}
-    />);
-  });
+      />);
+    });
 
-  // Validate
+    // Validate
   const MainDiv = container.querySelector("div");
   const ExpectedDateStr = `${testDate.getDate()}/${testDate.getMonth() + 1}/${testDate.getFullYear()}`
 
@@ -308,7 +309,7 @@ describe("The Activity Table tracer", () =>{
       vials={props.vials}
       username={props.username}
       websocket={props.websocket}
-    />);
+      />);
   });
 
   // Validate
@@ -355,10 +356,10 @@ describe("The Activity Table tracer", () =>{
       vials={props.vials}
       username={props.username}
       websocket={props.websocket}/>
-    );});
+      );});
 
-  })
-});
+    })
+  });
 
 // Testing Library / react tests / Black box tests
 
@@ -367,11 +368,11 @@ describe("Testing-library/react tests", () =>{
     const props = getProps();
     const ExpectedDateStr = `${
       testDate.getDate()}/${
-      testDate.getMonth() + 1}/${
+        testDate.getMonth() + 1}/${
       testDate.getFullYear()}`;
 
-    // Act
-    const AT = render(<ActivityTable
+      // Act
+      const AT = render(<ActivityTable
       customers={props.customers}
       date={props.date}
       deliverTimes={props.deliverTimes}
@@ -391,7 +392,7 @@ describe("Testing-library/react tests", () =>{
       await screen.findByRole('button', {exact : false, name : /Opret ny ordre/i})
       ).toBeVisible();
 
-    expect(await screen.findByText(`Produktioner - ${ExpectedDateStr}:`)).toBeVisible();
+      expect(await screen.findByText(`Produktioner - ${ExpectedDateStr}:`)).toBeVisible();
   });
 
   it("Run render test", async () => {
@@ -401,7 +402,7 @@ describe("Testing-library/react tests", () =>{
       testDate.getMonth() + 1}/${
       testDate.getFullYear()}`;
 
-    setRuns(props);
+      setRuns(props);
 
     // Act
     const AT = render(<ActivityTable
@@ -418,7 +419,7 @@ describe("Testing-library/react tests", () =>{
       vials={props.vials}
       username={props.username}
       websocket={props.websocket}
-    />);
+      />);
 
     expect(
       await screen.findByRole('button', {exact : false, name : /Opret ny ordre/i})
@@ -490,14 +491,13 @@ describe("Testing-library/react tests", () =>{
       vials={props.vials}
       username={props.username}
       websocket={props.websocket}
-    />
+      />
 
-    const RAT = render(AT, {target : container});
+      const RAT = render(AT, {target : container});
 
-    fireEvent(
+      fireEvent(
       await screen.getByRole('button', {name : /Opret ny ordre/}),
       new MouseEvent('click', {bubbles : true, cancelable : true})
     );
   });
-
 });

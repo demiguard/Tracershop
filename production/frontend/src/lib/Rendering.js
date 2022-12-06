@@ -1,9 +1,11 @@
 import React, {} from "react";
 import { Button, Form, Image } from "react-bootstrap";
 import ReactHover, { Trigger, Hover  } from "react-hover";
+import { HoverBox } from "../components/injectables/HoverBox.js";
 import { FormatDateStr } from "./formatting.js";
 
 import { noop } from "./utils.js";
+
 
 export function renderStatusImage(status, func) {
   const onclickFunc = (func === undefined) ? noop : func
@@ -78,28 +80,14 @@ export function renderSelect(Options, valueKey, nameKey, OnChange, initialValue)
 }
 
 export function renderComment(comment){
-  const TriggerOptions = {
-    followCursor:false,
-    shiftX: 20,
-    shiftY: 0
-  };
-
-  if(comment) {
-    return(
-      <ReactHover options={TriggerOptions}>
-        <Trigger type="trigger">
-          <img src="/static/images/comment.svg" className="statusIcon"></img>
-        </Trigger>
-        <Hover type="hover">
-          <div className="CommentDiv">
-            {comment}
-          </div>
-        </Hover>
-      </ReactHover>
-    );
-  } else {
-    return ("");
+  if(comment){
+    const CommentImage = renderClickable("/static/images/comment.svg");
+    return <HoverBox
+      Base={CommentImage}
+      Hover={<div>{comment}</div>}
+    />
   }
+  return null;
 };
 
 export function renderClickableIcon(imagePath, func){

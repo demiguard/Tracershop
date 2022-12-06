@@ -30,3 +30,13 @@
   padding-top: 0px;
   padding-bottom: 0px;
 }
+
+.hoverBox {
+  max-width: 350px;
+  background-color: #FFFFFF;
+  padding: 5px;
+
+  border: 1px;
+  border-style: solid;
+  border-color: var(--grey-1);
+}

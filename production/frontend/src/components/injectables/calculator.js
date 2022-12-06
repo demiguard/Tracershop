@@ -1,26 +1,46 @@
 import React, { Component } from "react";
 import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
 
-import { FormatTime, ParseDanishNumber } from "../../lib/formatting";
+import propTypes from 'prop-types'
+
+import { FormatDateStr, FormatTime, ParseDanishNumber } from "../../lib/formatting";
 import { CalculateProduction, CountMinutes } from "../../lib/physics";
 import { renderClickableIcon, renderTableRow } from "../../lib/Rendering";
-import { CompareDates, removeIndex } from "../../lib/utils";
+import { autoAddCharacter, CompareDates, removeIndex } from "../../lib/utils";
 
 import styles from '../../css/Calculator.module.css'
+import SiteStyles from '../../css/Site.module.css'
+import { AlertBox, ERROR_LEVELS } from "./ErrorBox";
+import { ClickableIcon } from "./Icons";
 
 export { Calculator }
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.
  * Given a desired amount at a given time.
  *
  * Props:
- *  tracer - Object Active Tracer for the material in question
+ *  cancel - Callable[event], this function is called when the user wish to return without any updates.
+ *  commit - Callable[float], this function is called at when a user is satified with their calculations, and returns with the amount calculated
+ *  defaultMBq - float|str this is the default amount of a new entry
  *  isotopes - Map<Number,Object> Map of isotopes the tracers could be made from.
  *  productionTime - Date The time the radioactive material is produced.
- *  defaultMBq - float|str this is the default amount of a new entry
- *  commit - Callable[float], this function is called at when a user is satified with their calculations, and returns with the amount calculated
- *  cancel - Callable[event], this function is called when the user wish to return without any updates.
+ *  tracer - Object Active Tracer for the material in question
  */
 class Calculator extends Component {
+  static propTypes = {
+    cancel : propTypes.func.isRequired,
+    commit : propTypes.func.isRequired,
+    defaultMBq : propTypes.number,
+    isotopes : propTypes.instanceOf(Map).isRequired,
+    productionTime : propTypes.instanceOf(Date).isRequired,
+    tracer : propTypes.instanceOf(Object).isRequired,
+  }
+
+  static defaultProps = {
+    defaultMBq : 300,
+  }
+
+  static stateTypes
+
   constructor(props){
     super(props);
 
@@ -35,14 +55,24 @@ class Calculator extends Component {
     };
   }
 
+  _addColon(timeStr){
+    if(timeStr.length == 2){
+      return timeStr + ":"
+    } else {
+      return timeStr
+    }
+  }
+
   changeNewEntry(key){
     const retfunc = (event) => {
-      const newNewEntry = { // Look it's a new newEntry, I didn't decide on the naming conventions.
-        // Ooh wait.
+      const newNewEntry = { // Look it's a new newEntry, I didn't make up this naming conventions.
+        // Ooh wait. I open for feedback.
         time : this.state.newEntry.time,
         activity : this.state.newEntry.activity
       };
-      newNewEntry[key] = event.target.value;
+      const value = (key == "time") ? this._addColon(event.target.value) : event.target.value
+
+      newNewEntry[key] = value;
       const newState = {
         ...this.state,
         newEntry : newNewEntry
@@ -52,11 +82,18 @@ class Calculator extends Component {
     return retfunc.bind(this)
   }
 
+  // Error Messages
+  static ErrorInvalidTimeFormat = "Tidspunktet er ikke læseligt af systemet"
+  static ErrorTimeAfterProduction = "Tidspunktet er før produktions tidspunktet"
+  static ErrorActivityInvalidNumber = "Aktiviten er ikke et tal"
+  static ErrorActivityZero = "Der kan ikke bestilles et nul mændge af aktivitet"
+  static ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge af aktivitet"
+
   addEntry(){
     const retFunc = (_event) => {
       const formattedTime = FormatTime(this.state.newEntry.time);
       if(formattedTime === null){
-        this.setState({...this.state, errorMessage : "Tidspunktet er ikke læseligt af systemet"});
+        this.setState({...this.state, errorMessage : Calculator.ErrorInvalidTimeFormat });
         return;
       }
       const hour = Number(formattedTime.substring(0,2));
@@ -68,22 +105,22 @@ class Calculator extends Component {
         hour,
         min
       )
-      if (entryDate > this.props.productionTime){
-        this.setState({...this.state, errorMessage : "Tidspunktet er før produktions tidspunktet"});
+      if (entryDate < this.props.productionTime){
+        this.setState({...this.state, errorMessage : Calculator.ErrorTimeAfterProduction});
         return;
       }
 
       const activity = ParseDanishNumber(this.state.newEntry.activity)
       if(isNaN(activity)){
-        this.setState({...this.state, errorMessage : "Aktiviten er ikke et tal"});
+        this.setState({...this.state, errorMessage : Calculator.ErrorActivityInvalidNumber});
         return;
       }
       if(activity == 0){
-        this.setState({...this.state, errorMessage : "Der kan ikke bestilles et nul mændge af aktivitet"});
+        this.setState({...this.state, errorMessage : Calculator.ErrorActivityZero});
         return;
       }
-      if(activity > 0){
-        this.setState({...this.state, errorMessage : "Der kan ikke bestilles et negativt mændge af aktivitet"});
+      if(activity < 0){
+        this.setState({...this.state, errorMessage : Calculator.ErrorActivityNegative});
         return;
       }
 
@@ -138,15 +175,20 @@ class Calculator extends Component {
 
   render(){
     const isotope = this.props.isotopes.get(this.props.tracer.isotope);
+    const ProductionTimeString = `${FormatDateStr(this.props.productionTime.getHours())}:${FormatDateStr(this.props.productionTime.getMinutes())}`;
 
     const EntryTableRows = [];
     var totalActivity = 0.0;
 
     for(const entryIdx in this.state.entries){
-      EntryTableRows.append(renderTableRow(entryIdx,[
+      EntryTableRows.push(renderTableRow(entryIdx,[
         this.state.entries[entryIdx].time,
         this.state.entries[entryIdx].activity,
-        renderClickableIcon("/static/images/decline.svg", this.removeElement(entryIdx).bind(this))
+        <ClickableIcon
+          src={"/static/images/decline.svg"}
+          onClick={this.removeEntry(entryIdx).bind(this)}
+          label={"delete-"+entryIdx.toString()}
+        />
       ]));
     }
 
@@ -165,17 +207,25 @@ class Calculator extends Component {
       totalActivity += CalculateProduction(isotope.halflife, timedelta, entry.activity)
     }
 
+    totalActivity = Math.floor(totalActivity);
+
     EntryTableRows.push(renderTableRow(
       "-1", [
         <FormControl
+          aria-label="time-new"
           value={this.state.newEntry.time}
           onChange={this.changeNewEntry("time")}
         />,
         <FormControl
+          aria-label="activity-new"
           value={this.state.newEntry.activity}
           onChange={this.changeNewEntry("activity")}
         />,
-        renderClickableIcon("/static/images/accept.svg", this.addEntry().bind(this))
+        <ClickableIcon
+          src={"/static/images/accept.svg"}
+          onClick={this.addEntry().bind(this)}
+          altText={"Tilføj"}
+        />
       ]
     ));
 
@@ -184,8 +234,10 @@ class Calculator extends Component {
       <Row className={styles.CalculatorHeader}>
         <h3>Dosislommeregner</h3>
       </Row>
+      <hr/>
       <Row className={styles.CalculatorInfo}>
         <p>Tracer - {this.props.tracer.name}</p>
+        <p>Produktions tidpunkt - {ProductionTimeString}</p>
         <p>Halvering tid - {isotope.halflife} s</p>
         <p>Aktivitet som bliver Tilføjet: {totalActivity}</p>
       </Row>
@@ -203,9 +255,10 @@ class Calculator extends Component {
           </tbody>
         </Table>
       </Row>
-      <Row>
-        
-      </Row>
+      {this.state.errorMessage ? <AlertBox
+          message={this.state.errorMessage}
+          level={ERROR_LEVELS.error}
+      /> : null}
       <Row>
         <Col>
           <Button className={styles.CalculatorButton} onClick={this.commit.bind(this)}>Udregn</Button>

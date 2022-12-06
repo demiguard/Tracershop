@@ -34,7 +34,6 @@ export const USERGROUPS = {
 
 
 // Shared Constants
-
 export const AUTH_USERNAME         = "username";
 export const AUTH_PASSWORD         = "password";
 export const AUTH_DETAIL           = "detail";
@@ -183,7 +182,6 @@ export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig"
 //export const WEBSOCKET_MESSAGE_SHOP_CREATE_ORDER = "shopCreateOrder"
 
 // Javascript unique constants
-
 export const DATABASE_ACTIVE_TRACER = "activeTracer";
 export const DATABASE_ACTIVITY_ORDER = JSON_ACTIVITY_ORDER;
 export const DATABASE_ADMIN_PAGE = "adminPage";
@@ -205,3 +203,7 @@ export const DATABASE_SERVER_CONFIG = "serverConfig";
 export const DATABASE_SHOP_CUSTOMER = "shopCustomer";
 export const DATABASE_VIAL = JSON_VIAL;
 export const DATABASE_USER = "user"
+
+export const ERROR_TYPE_HINT = "hint";
+export const ERROR_TYPE_WARNING = "warning";
+export const ERROR_TYPE_ERROR = "error";

@@ -1,16 +1,16 @@
 import React, { Component } from "react";
-import { Container } from "react-bootstrap";
+import { Container, Col, Row } from "react-bootstrap";
 import PropTypes from 'prop-types'
 
 import ErrorStyles from "../../css/Errors.module.css"
+import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_WARNING } from "../../lib/constants";
 
-/**
- * @enum
- */
-export const WARNING_LEVELS = [
-  "hint", // Move to Constants
-  "warning",
-  "error"
+export { ERROR_LEVELS, AlertBox }
+
+const warning_levels = [
+  ERROR_TYPE_HINT,
+  ERROR_TYPE_WARNING,
+  ERROR_TYPE_ERROR
 ]
 
 const Warning_names = {
@@ -20,30 +20,47 @@ const Warning_names = {
 }
 
 const stylings = {
-  hint : ErrorStyles.hint
+  hint : ErrorStyles.hint,
+  warning : ErrorStyles.warning,
+  error : ErrorStyles.error
+}
+
+const headerStylings = {
+  hint : ErrorStyles.hintHeader,
+  warning : ErrorStyles.warningHeader,
+  error : ErrorStyles.errorHeader,
+}
+
+/**
+ * @enum
+ */
+const ERROR_LEVELS = {
+  hint : ERROR_TYPE_HINT,
+  warning : ERROR_TYPE_WARNING,
+  error : ERROR_TYPE_ERROR
 }
 
 
 /** Stateless Box displaying an important message
  *
  */
-export class AlertBox extends Component {
+class AlertBox extends Component {
   static propTypes = {
-    alertLevel : PropTypes.oneOf(WARNING_LEVELS),
-    Message    : PropTypes.string
+    level : PropTypes.oneOf(warning_levels),
+    message    : PropTypes.string
   }
 
   static defaultProps = {
-    alertLevel : "error"
+    level : ERROR_TYPE_ERROR,
+    message : ""
   }
 
   render(){
-
-
     return (
-      <Container>
-        {this.props.Message}
-      </Container>
+      <Row className={stylings[this.props.level] + " justify-content-start"}>
+        <Col md={{span : 2}} className={"justify-content-start text-center " + headerStylings[this.props.level]}>{Warning_names[this.props.level]}</Col>
+        <Col md={{span : 9, offset: 1}} className="p-2 justify-content-start">{this.props.message}</Col>
+      </Row>
     );
   }
 }

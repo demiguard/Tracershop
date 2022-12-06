@@ -378,6 +378,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
         message (Dict): _description_
     """
+    # Step 1 Check if user is valid
+    Auth = message[JSON_AUTH]
+
+    # Quick check if user and auth user matches before any database connection start working
+    if not Auth[AUTH_USERNAME] == self.scope['user'].username:
+      return await self.__RejectFreeing(message)
+
+    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME], password=Auth[AUTH_PASSWORD])
+    if not user:
+      return await self.__RejectFreeing(message)
+
+
+
     data = message[WEBSOCKET_DATA]
     Order      = await self.db.getElement(data[JSON_ACTIVITY_ORDER], ActivityOrderDataClass)
 
@@ -446,6 +459,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
             JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),updatedVials),
             WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
             WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+            AUTH_IS_AUTHENTICATED : True
           }
         )
     else:

@@ -1,8 +1,9 @@
 import React, { Component } from "react";
-
-import { Form, Button } from "react-bootstrap";
+import propTypes from 'prop-types'
+import { Form, Button, Spinner } from "react-bootstrap";
 import styles from "../../css/Authenticate.module.css"
 import SiteStyles from "../../css/Site.module.css"
+import { AlertBox, ERROR_LEVELS } from "./ErrorBox";
 
 export { Authenticate }
 
@@ -20,6 +21,21 @@ export { Authenticate }
  * @author Christoffer Vilstrup Jensen
  */
 export default class Authenticate extends Component {
+  static propTypes = {
+    authenticate : propTypes.func.isRequired,
+    errorMessage : propTypes.string,
+    headerMessage : propTypes.string,
+    fit_in : propTypes.bool,
+    spinner : propTypes.bool,
+  }
+
+  static defaultProps = {
+    errorMessage : "",
+    headerMessage : "Log in",
+    fit_in : false,
+    spinner : false,
+  }
+
   constructor(props){
     super(props);
 
@@ -45,13 +61,22 @@ export default class Authenticate extends Component {
   render() {
     return (
       <div className={this.props.fit_in ? styles.AuthenticationBox : styles.AuthenticationBoxNoFit}>
-        <h3 className={"text-center " + styles.AuthenticationHeader + " " + SiteStyles.mariBold}>Log in</h3>
+        <h3 className={"text-center " + styles.AuthenticationHeader + " " + SiteStyles.mariBold}>{this.props.headerMessage}</h3>
         <hr className={SiteStyles.Margin0tb}/>
         <div>
           <Form onSubmit={this.onSubmitFunc.bind(this)}>
             <div className={"form-group " + styles.formRow}>
               <label htmlFor="username">Bruger navn</label>
-              <input type="text" className="form-control" id="username" name="username" autoComplete="new-password" value={this.state.username} onChange={this.handleUserNameChange} />
+              <input
+                type="text"
+                className="form-control"
+                id="username"
+                name="username"
+                aria-label="username"
+                autoComplete="new-password"
+                value={this.state.username}
+                onChange={this.handleUserNameChange}
+              />
             </div>
             <div className={"form-group " + styles.formRow}>
               <label htmlFor="username">Kodeord</label>
@@ -60,19 +85,30 @@ export default class Authenticate extends Component {
                      id="password"
                      autoComplete="new-password"
                      name="password"
+                     aria-label="password"
                      value={this.state.password}
                      onChange={this.handlePasswordChange}/>
             </div>
+            {this.props.errorMessage ?
+              <AlertBox
+                level={ERROR_LEVELS.error}
+                message={this.props.errorMessage}
+              /> : null
+            }
             <div className={"form-group " + styles.formRow}>
-              <Button type="submit" className="btn btn-primary">{this.props.login_message}</Button>
+              { this.props.spinner ?
+                  <Spinner
+                    animation="border"
+                    variant="primary"
+                  /> :
+                  <Button
+                    type="submit"
+                    className="btn btn-primary">
+                      Log in
+                  </Button>
+              }
             </div>
           </Form>
-          {this.props.ErrorMessage ?
-            <div>
-              <hr className={SiteStyles.Margin0tb}/>
-                <div className={"form-group " + styles.ErrorBox}>{this.props.ErrorMessage}</div>
-            </div> : <div/>
-          }
         </div>
       </div>
     )

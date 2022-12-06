@@ -3,6 +3,8 @@ import { CompareDates } from "../../lib/utils";
 import { FormatDateStr } from '../../lib/formatting';
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK } from "../../lib/constants";
 
+import PropTypes from 'prop-types'
+
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 
 
@@ -16,6 +18,13 @@ export {Calender, standardOrderMapping, productionGetMonthlyOrders }
  *  getColor - function that adds css classes, primarily to add a different color to the date
  */
 class Calender extends Component {
+  static propTypes = {
+    date: PropTypes.objectOf(Date).isRequired,
+    getColor: PropTypes.func.isRequired,
+    onDayClick: PropTypes.func.isRequired,
+    onMonthChange: PropTypes.func.isRequired,
+  }
+
   constructor(props) {
     super(props);
      // This is because when you change the month in the calender,
@@ -85,7 +94,7 @@ class Calender extends Component {
   renderDay(date) {
     const DateObject  = new Date(this.state.activeMonth.getFullYear(), this.state.activeMonth.getMonth(), date, 12);
     const DateStr     = String(DateObject.getFullYear()) + '-' + FormatDateStr(DateObject.getMonth() + 1) + '-' + FormatDateStr(DateObject.getDate());
-    var StatusClass = "calender-row date-base-class " + this.props.getColor(DateStr, this.state.DateColors);
+    var StatusClass = "calender-row date-base-class " + this.props.getColor(DateStr);
     if (this.props.date.getDate() == DateObject.getDate() &&
           this.props.date.getMonth() == DateObject.getMonth() &&
           this.props.date.getFullYear() == DateObject.getFullYear()
@@ -127,13 +136,13 @@ class Calender extends Component {
     <div className="calender">
       <div className="calender-header flex-row d-flex justify-content-around">
         <div onClick={() => this.changeMonth(-1)}>
-          <img className="tableButton" src="/static/images/prev.svg"/>
+          <img className="tableButton" id="DecrementMonth" alt="Sidste" src="/static/images/prev.svg"/>
         </div>
         <div>
           {this.state.activeMonth.toLocaleString('default', {month:"long"})}
         </div>
         <div onClick={() => this.changeMonth(1)}>
-          <img className="tableButton" src="/static/images/next.svg"/>
+          <img className="tableButton" id="IncreaseMonth" alt="Næste" src="/static/images/next.svg"/>
         </div>
       </div>
         <div className="calender-dates d-flex">
@@ -163,35 +172,35 @@ function standardOrderMapping(orders, tOrders, runs, closedDate) {
 
     var MinimumActivityStatus = 5;
     var MinimumInjectionStatus = 5;
-  const date = new Date(DateStr);
-  for(const [_, ActivityOrder] of orders){
-    if(CompareDates(date, new Date(ActivityOrder.deliver_datetime))){
-      MinimumActivityStatus = Math.min(MinimumActivityStatus, ActivityOrder.status);
-    }
-  }
-  for(const [_, InjectionOrder] of tOrders){
-    if(CompareDates(date, new Date(InjectionOrder.deliver_datetime))){
-      MinimumInjectionStatus = Math.min(MinimumInjectionStatus, InjectionOrder.status);
-    }
-  }
-  if (MinimumActivityStatus == 5){
-    var CanProduce = false;
-    for(const [_PTID, Run] of runs){
-      if(Run.day == date.getDay()){
-        CanProduce = true;
-        break;
+    const date = new Date(DateStr);
+    for(const [_, ActivityOrder] of orders){
+      if(CompareDates(date, new Date(ActivityOrder.deliver_datetime))){
+        MinimumActivityStatus = Math.min(MinimumActivityStatus, ActivityOrder.status);
       }
     }
-    if(CanProduce){
-      const now = new Date();
-      if(date > now){
-        MinimumActivityStatus = 0;
+    for(const [_, InjectionOrder] of tOrders){
+      if(CompareDates(date, new Date(InjectionOrder.deliver_datetime))){
+        MinimumInjectionStatus = Math.min(MinimumInjectionStatus, InjectionOrder.status);
       }
     }
+    if (MinimumActivityStatus == 5){
+      var CanProduce = false;
+      for(const [_PTID, Run] of runs){
+        if(Run.day == date.getDay()){
+          CanProduce = true;
+          break;
+        }
+      }
+      if(CanProduce){
+        const now = new Date();
+        if(date > now){
+          MinimumActivityStatus = 0;
+        }
+      }
+    }
+    return "date-status" + String(MinimumInjectionStatus) + String(MinimumActivityStatus);
   }
-  return "date-status" + String(MinimumInjectionStatus) + String(MinimumActivityStatus);
-  }
-  return retFunc
+  return retFunc;
 }
 
 function productionGetMonthlyOrders(websocket){
