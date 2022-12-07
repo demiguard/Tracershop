@@ -19,7 +19,7 @@ export default class ErrorPage extends Component {
 
     const fileRows = []
     for(const fullfilepath of files){
-      const fileParts = fullfilepath.split("Tracershop-frontend/.");
+      const fileParts = fullfilepath.split("tracershop_frontend/.");
       const fileLineCharacter = fileParts[1];
       const fileLineCharacterParts = fileLineCharacter.split("?");
       const file = fileLineCharacterParts[0];

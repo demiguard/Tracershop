@@ -4,14 +4,16 @@ import ActivityModalAuthenticate from "./ActivityModalAuthenticate";
 import ActivityModalStatus2 from "./ActivityModalStatus2";
 import { ActivityModalStatus1 } from "./ActivityModalStatus1";
 import PropTypes from 'prop-types'
-import { Button, ButtonGroup, Modal, Table } from "react-bootstrap";
+import { Button, ButtonGroup, Col, FormControl, Modal, Row, Table } from "react-bootstrap";
 
 
 import styles from '../../css/Site.module.css'
-import { renderClickableIcon, renderComment, renderHoverMessage, renderOnClose, renderTableRow } from "../../lib/Rendering";
+import { renderClickableIcon, renderComment, renderOnClose, renderTableRow } from "../../lib/Rendering";
 import { changeState, toggleState } from "../../lib/stateManagement";
 import { Calculator } from "../injectables/calculator";
 import Authenticate from "../injectables/Authenticate";
+import { HoverBox } from "../injectables/HoverBox";
+import { CloseButton, MarginButton } from "../injectables/Buttons";
 
 export { ActivityModal }
 
@@ -34,8 +36,12 @@ const modals = {
 
 class ActivityModal extends Component {
   static propTypes = {
+    customers: PropTypes.instanceOf(Map).isRequired,
     isotopes : PropTypes.instanceOf(Map).isRequired,
-    tracers  : PropTypes.instanceOf(Map).isRequired
+    tracers  : PropTypes.instanceOf(Map).isRequired,
+    order    : PropTypes.number.isRequired,
+    orders   : PropTypes.instanceOf(Map).isRequired,
+    vials    : PropTypes.instanceOf(Map).isRequired,
   }
 
   /** This is the modal that shows up when the user click on an order to receive additional information
@@ -92,59 +98,18 @@ class ActivityModal extends Component {
    * This function is called from the status 2 Modal indicating, that the manager
    * should render the authentication component instead of the status2 modal.
    */
-  FreeingOrder(){
+  StartFreeingOrder(){
     this.setState({
       ...this.state,
       isFreeing : true
     });
   }
 
-  cancel(){
+  cancelFreeing(){
     this.setState({
       ...this.state,
       isFreeing : false
     });
-  }
-  // Render functions
-
-  CloseModal(){
-    this.props.onClose();
-  }
-
-  render(){
-    const Order = this.props.orders.get(this.props.order);
-
-    var MyModal = null;
-    switch(Order.status){
-      case 1:
-        MyModal = ActivityModalStatus1;
-      break;
-      case 2:
-        this.state.isFreeing ? MyModal = ActivityModalAuthenticate :
-          MyModal = ActivityModalStatus2;
-      break;
-      case 3:
-        MyModal = ActivityModalStatus3;
-    }
-
-    if (MyModal != null) return (<MyModal
-        Authenticate={this.FreeingOrder.bind(this)}
-        cancel={this.cancel.bind(this)}
-        createVial={this.props.createVial}
-        customers={this.props.customers}
-        date={this.props.date}
-        editVial={this.props.editVial}
-        employees={this.props.employees}
-        order={this.props.order}
-        orders={this.props.orders}
-        onClose={this.props.onClose}
-        selectedVials={this.state.selectedVials}
-        show={this.props.show}
-        toggleVial={this.toggleVial.bind(this)}
-        vials={this.props.vials}
-        websocket={this.props.websocket}
-      />);
-    return null;
   }
 
   onClickAccept(){
@@ -167,17 +132,61 @@ class ActivityModal extends Component {
     window.location.href = path;
   }
 
-  render_2() {
+  // Render Functions
+  render_button_group() {
     const order = this.props.orders.get(this.props.order);
     const customer = this.props.customers.get(order.BID);
 
-    const ColWidth = (this.state.usingCalculator || this.state.isFreeing) ? 6 : 12;
+    const AcceptButton =  <MarginButton onClick={this.onClickAccept.bind(this)}>Accepter Ordre</MarginButton>;
+    const ConfirmButton = <MarginButton onClick={this.StartFreeingOrder.bind(this)}>Frigiv Ordre</MarginButton>;
+    const CancelFreeButton = <MarginButton onClick={this.cancelFreeing.bind(this)}>Rediger Ordre</MarginButton>
+    const PDFButton =        <MarginButton onClick={this.onClickToPDF.bind(this)}>Se føgleseddel</MarginButton>;
 
-
-    const DestinationHover = renderHoverMessage(
-      <div>Destination:</div>,
-      "Kundens brugernavn, rigtige navn og bestillerens profil, hvis tilgændelig."
+    return (<div>
+              {order.status == 1 ? AcceptButton : "" }
+              {order.status == 2 && !this.state.isFreeing ? ConfirmButton : ""}
+              {order.status == 2 && this.state.isFreeing ? CancelFreeButton : ""}
+              {order.status == 3 ? PDFButton : ""}
+              <CloseButton onClick={this.props.onClose} />
+      </div>
     );
+  }
+
+  render_vial_table(){
+    const order = this.props.orders.get(this.props.order);
+    const customer = this.props.customers.get(order.BID);
+    const TableVials = []
+
+    return (
+    <div>
+      <Table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Batch</th>
+            <th>Produktions Tidpunkt</th>
+            <th>Volume</th>
+            <th>Aktivitet</th>
+            <th></th>
+            <th>Brug</th>
+          </tr>
+        </thead>
+        <tbody>
+          {TableVials}
+        </tbody>
+      </Table>
+    </div>)
+  }
+
+  render_description_table(){
+    const order = this.props.orders.get(this.props.order);
+    const customer = this.props.customers.get(order.BID);
+
+
+    const DestinationHover = <HoverBox
+      Base={<div>Destination:</div>}
+      Hover={<div>Kundens brugernavn, rigtige navn og bestillerens profil, hvis tilgændelig.</div>}
+    />;
     const DestinationMessage = order.username ?
                                 `${customer.UserName} - ${customer.Realname} - ${order.username}` :
                                 `${customer.UserName} - ${customer.Realname}`;
@@ -185,18 +194,16 @@ class ActivityModal extends Component {
     }:${order.deliver_datetime.substring(14,16)} - ${order.deliver_datetime.substring(8,10)
     }/${order.deliver_datetime.substring(5,7)}/${order.deliver_datetime.substring(0,4)} - Kørsel ${order.run}`;
 
-    const ActivityTableCellEditable = <Col
-                                        md="auto"
-                                        className="justify-content-end">
-      <Col>{Math.floor(order.amount)}</Col>
-      <Col>{renderClickableIcon("/static/images/pen.svg")}</Col>
-      <Col>{renderClickableIcon("/static/images/calculator.png")}</Col>
-    </Col>
+    const ActivityTableCellEditable = <Row>
+      <Col md={8} className="p-2">{Math.floor(order.amount)}</Col>
+      <Col md={2} className="p-2">{renderClickableIcon("/static/images/pen.svg")}</Col>
+      <Col md={2} className="p-2">{renderClickableIcon("/static/images/calculator.svg")}</Col>
+    </Row>
 
-    const ActivityHover = renderHoverMessage(
-        <div>Bestilt Aktivitet</div>,
-        "Den mængde af aktivit kunden ønsket ved denne ordre. \
-        Ikke korrigeret for andre ordre eller eventuel overhead.")
+    const ActivityHover = <HoverBox
+        Base={<div>Bestilt Aktivitet</div>}
+        Hover={<div>Den mængde af aktivit kunden ønsket ved denne ordre. \
+        Ikke korrigeret for andre ordre eller eventuel overhead.</div>}/>
 
     const ActivityTableCellEditing = <Col md="auto" >
         <FormControl value={this.state.activityValue} onChange={changeState("activityValue", this)}/>
@@ -215,10 +222,11 @@ class ActivityModal extends Component {
       ActivityTableCell = ActivityTableCellEditable
     }
 
-    const TotalActivityHover = renderHoverMessage(
-        <div>Total Aktivitet</div>,
-        "Mængde af aktivitet der skal produceres til ordren."
-    )
+    const TotalActivityHover = <HoverBox
+      Base={<div>Total Aktivitet</div>}
+      Hover={<div>Mængde af aktivitet der skal produceres til ordren.</div>}
+    />;
+
     const totalActivity = Math.floor(
       order.total_amount * (1 + customer.overhead / 100));
 
@@ -241,7 +249,35 @@ class ActivityModal extends Component {
     }:${order.frigivet_datetime.substring(14,16)} - ${order.frigivet_datetime.substring(8,10)
     }/${order.frigivet_datetime.substring(5,7)}/${order.frigivet_datetime.substring(0,4)}` : null
 
-    var SideElement = null;
+    const TableRows = [
+      renderTableRow("1", [DestinationHover, DestinationMessage]),
+      renderTableRow("2", ["Levering tidspunkt:", formattetOrderTime]),
+      renderTableRow("3", [ActivityHover, ActivityTableCell]),
+      renderTableRow("4", [TotalActivityHover, totalActivity]),
+    ]
+
+    if (hasAllocation) TableRows.push(AllocationRow);
+    if (freedTime != null) TableRows.push(
+      renderTableRow("6", ["Frigivet tidspunkt:", freedTime])
+    );
+    if (order.comment != undefined) TableRows.push(
+      renderTableRow("99", ["Kommentar:", order.comment])
+    )
+
+    return (<Table>
+              <tbody>
+                {TableRows}
+              </tbody>
+            </Table>);
+  }
+
+
+  render() {
+    const order = this.props.orders.get(this.props.order);
+    const customer = this.props.customers.get(order.BID);
+    const ColWidth = (this.state.usingCalculator || this.state.isFreeing) ? 6 : 12;
+
+    var SideElement = <div></div>;
     if(this.state.usingCalculator){
       SideElement = (<Col md={6}>
         <Calculator
@@ -249,7 +285,6 @@ class ActivityModal extends Component {
           commit={this.commit_calculator}
           defaultMBq={300}
           isotope={this.props.isotopes}
-
         />
       </Col>)
     } else if (this.state.isFreeing){
@@ -264,42 +299,25 @@ class ActivityModal extends Component {
       </Col>)
     }
 
-    const AcceptButton = <Button onClick={this.onClickAccept}>Accepter Ordre</Button>;
-    const ConfirmButton = <Button onClick={this.onClickConfirm}>Godkend Ordre</Button>;
-    const PDFButton = <Button onClick={this.onClickToPDF}>Se føgleseddel</Button>;
 
     return(
     <Modal
+      data-testid="test"
       show={true}
       size="lg"
       onHide={this.props.onClose}
       className={styles.mariLight}>
-      <Modal.Header>Order {order.oid}</Modal.Header>
+      <Modal.Header>Ordre {order.oid}</Modal.Header>
       <Modal.Body>
         <Row>
           <Col md={ColWidth}>
-            <Table>
-              <tbody>
-                {renderTableRow("1", [DestinationHover, DestinationMessage])}
-                {renderTableRow("2", ["Levering tidspunkt:", formattetOrderTime])}
-                {renderTableRow("3", [ActivityHover, ActivityTableCell])}
-                {renderTableRow("4", [TotalActivityHover, totalActivity])}
-                {hasAllocation ? AllocationRow : null}
-                {freedTime != null ? renderTableRow("6", ["Frigivet tidspunkt:", freedTime]) : null}
-                {order.comment ? renderTableRow("99", ["Kommentar:", order.comment]) : null}
-              </tbody>
-            </Table>
+            {this.render_description_table()}
           </Col>
-          <SideElement/>
+          {SideElement}
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        <ButtonGroup>
-          {order.status == 1 ? <AcceptButton/> : null }
-          {order.status == 2 && !this.state.isFreeing ? <ConfirmButton/> : null}
-          {order.status == 3 ? <PDFButton/> : null}
-          {renderOnClose(this.props.onClose)}
-        </ButtonGroup>
+        {this.render_button_group()}
       </Modal.Footer>
     </Modal>)
   }
