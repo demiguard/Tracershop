@@ -18,14 +18,12 @@ from abc import abstractclassmethod
 from dataclasses import dataclass, asdict, fields, Field
 from datetime import datetime, date, time
 from pprint import pprint
-import re
-from types import NoneType
-from typing import Dict, Optional, List, Any, get_args, get_origin, Union
+from typing import Dict, Optional, List, Any, get_args, get_origin, Union, Type
 from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_CLOSEDDATE, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
 from database.models import User
 from lib.utils import LMAP
-from lib.SQL.SQLFormatter import SerilizeToSQLValue
+from lib.SQL.SQLFormatter import SerializeToSQLValue
 
 
 @dataclass
@@ -93,7 +91,7 @@ class JsonSerilizableDataClass:
 
   @classmethod
   @abstractclassmethod
-  def getSQLDateTime() -> str:
+  def getSQLDateTime(cls) -> str:
     """ This is abstract method, that is called when the SQL modules needs to constrtuct a query with an condition based on a date or datetime field
 
     Raises:
@@ -118,7 +116,7 @@ class JsonSerilizableDataClass:
 
     for (k, v) in skeleton.items():
       Fields.append(k)
-      Values.append(SerilizeToSQLValue(v, NoneTypeRes="NULL"))
+      Values.append(SerializeToSQLValue(v, NoneTypeRes="NULL"))
 
     for ExtraField, ExtraValue in zip(cls.getExtraFields(), cls.getExtraValues()):
       if ExtraField not in Fields:
@@ -213,7 +211,7 @@ class JsonSerilizableDataClass:
       self.__setattr__(field.name, fieldVal)
     elif get_origin(field.type) == Union:
       for UnionType in get_args(field.type):
-        if UnionType == NoneType:
+        if UnionType == type(None):
           continue
         try:
           self.__TargetedSetAttr__(fieldVal, field.name, UnionType)
@@ -503,12 +501,14 @@ class CustomerDataClass(JsonSerilizableDataClass):
 
   @classmethod
   def createDataClassQuery(cls, skeleton) -> str:
+
+
     Fields = []
     Values = []
 
     for (k, v) in skeleton.items():
       Fields.append(k)
-      Values.append(SerilizeToSQLValue(v))
+      Values.append(SerializeToSQLValue(v))
 
     return f"""INSERT INTO Users({
       ", ".join(map(str, Fields))}) VALUES ({", ".join(map(str,Values))})"""
@@ -570,7 +570,7 @@ DATACLASSES = {
   }
 
 # Data class constant mapping
-def findDataClass(dataType: str) -> type:
+def findDataClass(dataType: str) -> Type[JsonSerilizableDataClass]:
   """Mapping of the string identifiers and production-data-class-types
     Raises ValueError if data class not found.
 

@@ -216,7 +216,6 @@ describe("Activity Modal Test", () => {
 
     const button = screen.getByRole('button', {name : "Frigiv Ordre"});
     fireEvent.click(button);
-    fireEvent.click(screen.getByRole('button', {name: "Rediger Ordre"}))
     expect(screen.queryByRole('button', {name : "Log in"})).toBeNull();
   })
 })

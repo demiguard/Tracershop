@@ -1,5 +1,7 @@
 from asgiref.sync import sync_to_async
 from datetime import date, datetime, time, timedelta
+from typing import Dict,List, Type
+
 
 import functools
 
@@ -424,7 +426,7 @@ TEST_DATA_DICT = {
     VialDataClass : testVials
 }
 
-def useDataClassAsync(*DataClasses : JsonSerilizableDataClass):
+def useDataClassAsync(*DataClasses : Type[JsonSerilizableDataClass]):
   """
     This decorator initialized data into the test database and cleans up the data afterwards.
   """

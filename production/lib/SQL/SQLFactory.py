@@ -11,7 +11,7 @@ from datetime import date, time, datetime
 from dataclasses import fields
 
 from lib.decorators import typeCheckFunc
-from lib.SQL.SQLFormatter import SerilizeToSQLValue
+from lib.SQL.SQLFormatter import SerializeToSQLValue
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib.Formatting import dateConverter, mergeDateAndTime
 from lib.utils import LMAP
@@ -37,7 +37,7 @@ def getDataClass(dataClass) -> str:
     WHERE
       {dataClass.getSQLWhere()}"""
 
-def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
+def UpdateJsonDataClass(DataClassObject: Type[JsonSerilizableDataClass]) -> str:
   """Creates an string with a SQL Query for Updating an JsonSerilizableDataClass
      so that's matching to the input object.
 
@@ -58,7 +58,7 @@ def UpdateJsonDataClass(DataClassObject : JsonSerilizableDataClass) -> str:
     FieldValue = getattr(DataClassObject, field.name)
     if FieldValue == None:
       continue
-    updateFields.append((field.name, SerilizeToSQLValue(FieldValue)))
+    updateFields.append((field.name, SerializeToSQLValue(FieldValue)))
 
   updateString = ""
 
@@ -85,8 +85,8 @@ def authenticateUser(username: str, password: str) -> str:
     FROM
       Users
     WHERE
-      Username={SerilizeToSQLValue(username)} AND
-      Password={SerilizeToSQLValue(password)}"""
+      Username={SerializeToSQLValue(username)} AND
+      Password={SerializeToSQLValue(password)}"""
 
   return Query
 
@@ -95,7 +95,7 @@ def FreeDependantOrders(Order: ActivityOrderDataClass, user: User) -> str:
   SET
     status=3,
     frigivet_af={user.OldTracerBaseID},
-    frigivet_datetime={SerilizeToSQLValue(datetime.now())}
+    frigivet_datetime={SerializeToSQLValue(datetime.now())}
   WHERE
     COID={Order.oid}"""
 
@@ -128,7 +128,7 @@ def getDataClassRange(startDate: Union[datetime, date], endDate : Union[datetime
       {DataClass.getSQLTable()}
     WHERE
       {DataClass.getSQLDateTime()} BETWEEN {
-        SerilizeToSQLValue(startDate)} AND {SerilizeToSQLValue(endDate)}"""
+        SerializeToSQLValue(startDate)} AND {SerializeToSQLValue(endDate)}"""
 
 def deleteIDs(ids : List[int], DataClass : JsonSerilizableDataClass) -> str:
   idsStr = ", ".join(LMAP(str,ids)) # types are callable
@@ -163,7 +163,7 @@ def tupleInsertQuery(TupleList : List[Tuple[str, Any]], Table : str) -> str:
 
   for i, (column, value) in enumerate(TupleList):
     columnString += column
-    valueString += str(SerilizeToSQLValue(value))
+    valueString += str(SerializeToSQLValue(value))
     if i != len(TupleList) - 1:
       columnString += ", "
       valueString += ", "

@@ -2,7 +2,7 @@ from datetime import datetime
 from django.test import TestCase
 
 from lib.ProductionDataClasses import ActivityOrderDataClass, IsotopeDataClass
-from lib.SQL.SQLFormatter import FormatSQLDictAsClass, SerilizeToSQLValue, checkForSQLInjection
+from lib.SQL.SQLFormatter import FormatSQLDictAsClass, SerializeToSQLValue, checkForSQLInjection
 from lib.expections import SQLInjectionException
 
 
@@ -58,4 +58,4 @@ class SQLFormatterTestCase(TestCase):
     self.assertRaises(SQLInjectionException, checkForSQLInjection, SQLInjectionQuery)
 
   def test_UnknownSQL(self):
-    self.assertRaises(TypeError, SerilizeToSQLValue, IsotopeDataClass(ID=3, name="TestIsotope", halflife=964.12))
+    self.assertRaises(TypeError, SerializeToSQLValue, IsotopeDataClass(ID=3, name="TestIsotope", halflife=964.12))

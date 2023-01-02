@@ -89,7 +89,7 @@ class SQL():
     return model.objects.all()
 
   @classmethod
-  def getElement(cls, ID:int, Dataclass) -> Optional[JsonSerilizableDataClass]:
+  def getElement(cls, ID:int, Dataclass: Type[JsonSerilizableDataClass]) -> Optional[JsonSerilizableDataClass]:
     returnList = cls.__Execute(SQLFactory.getElement, Dataclass, Fetching.ONE, ID, Dataclass)
     if returnList:
       return returnList[0]
@@ -97,7 +97,7 @@ class SQL():
       None
 
   @classmethod
-  def getConditionalElement(cls, condition : str, dataClass):
+  def getConditionalElement(cls, condition : str, dataClass: Type[JsonSerilizableDataClass]):
     returnList = cls.__Execute(SQLFactory.GetConditionalElements, dataClass, Fetching.ONE, condition, dataClass)
     if returnList:
       return returnList[0]
@@ -105,11 +105,11 @@ class SQL():
       None
 
   @classmethod
-  def getConditionalElements(cls, condition : str, dataClass : JsonSerilizableDataClass):
+  def getConditionalElements(cls, condition : str, dataClass: Type[JsonSerilizableDataClass]):
     return cls.__Execute(SQLFactory.GetConditionalElements, dataClass, Fetching.ALL, condition, dataClass)
 
   @classmethod
-  def UpdateJsonDataClass(cls, DataClassObject : JsonSerilizableDataClass):
+  def UpdateJsonDataClass(cls, DataClassObject: Type[JsonSerilizableDataClass]):
     cls.__Execute(SQLFactory.UpdateJsonDataClass, JsonSerilizableDataClass, Fetching.NONE, DataClassObject)
 
   @classmethod

@@ -26,7 +26,7 @@ from calendar import monthrange
 from asgiref.sync import sync_to_async
 from datetime import datetime, date, timedelta
 import decimal
-from typing import Dict, List
+from typing import Dict, List, Callable, Coroutine
 
 from constants import * # Import the many WEBSOCKET constants
 from lib.decorators import typeCheckFunc
@@ -73,11 +73,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
     return encode(text_data)
 
   @classmethod
-  async def decode_json(cls, content):
+  async def decode_json(cls, content: str) -> Dict:
     return decode(content)
 
   ### --- Websocket methods --- ####
   async def connect(self):
+
     self.groups.append(self.global_group)
 
     await self.channel_layer.group_add(
@@ -130,13 +131,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
         return
 
       handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
-      if handler == None: # pragma no cover
+      if handler is None: # pragma no cover
         # This should be impossible to reach, since the validateMessage should throw an error.
         # The only case this should happen is when a message type have been added but a handler have been made
         # I.E It's a NOT implemented case.
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
-
-      await handler(self, message)
+      else:
+        await handler(self, message)
     except SQLInjectionException as E:
       user = self.scope['user']
       error_logger.error(f"SQL injection detected by user: {user.username}")
@@ -161,9 +162,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # Error_logger.error(f"Message {FailingMessage} Failed with Exception {exception} ")
     # If a test case reaches here It should be a known error and either handled or thrown back to the websocket
     await self.send_json({ #pragma: no cover
-      { WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
-        WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
-      }
+       WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
+       WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
     }) # pragma: cover
 
   async def HandleKnownError(self, message, error):
@@ -669,9 +669,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
       JSON_CLOSEDDATE : [encode(aClosedDate) for aClosedDate in ClosedDates],
-      JSON_ACTIVITY_ORDER : [encode(aorder) for aorder in activityOrders],
-      JSON_INJECTION_ORDER : [encode(torder) for torder in injectionOrders],
-      JSON_VIAL : [encode(vialdc) for vialdc in Vials],
+      JSON_ACTIVITY_ORDER : [encode(aOrder) for aOrder in activityOrders],
+      JSON_INJECTION_ORDER : [encode(tOrder) for tOrder in injectionOrders],
+      JSON_VIAL : [encode(vialDataclass) for vialDataclass in Vials],
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
@@ -727,11 +727,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def HandleGetHistory(self, message : dict):
-    """This function retrieves order hisotry of a user from a specific month.
+    """This function retrieves order history of a user from a specific month.
           Note that the final CSV requires extra data needed, however this data should be found in the frontend copy of the database.
 
     Args:
-        message (dict): Message recieved by the websocket with the args
+        message (dict): Message received by the websocket with the args
           * WEBSOCKET_DATE - Date with the month data is to be retrieved from
           * WEBSOCKET_DATA - Customer ID
     """
@@ -742,8 +742,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     Orders = {}
 
-    condition_AODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {ActivityOrderDataClass.getSQLDateTime()} BETWEEN {SerilizeToSQLValue(StartDate)} AND { SerilizeToSQLValue(EndDate)}"
-    condition_IODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {InjectionOrderDataClass.getSQLDateTime()} BETWEEN {SerilizeToSQLValue(StartDate)} AND {SerilizeToSQLValue(EndDate)}"
+    condition_AODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {ActivityOrderDataClass.getSQLDateTime()} BETWEEN {SerializeToSQLValue(StartDate)} AND { SerializeToSQLValue(EndDate)}"
+    condition_IODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {InjectionOrderDataClass.getSQLDateTime()} BETWEEN {SerializeToSQLValue(StartDate)} AND {SerializeToSQLValue(EndDate)}"
 
     AODCsCorotine = self.db.GetConditionalElements(condition_AODC, ActivityOrderDataClass)
     IODCsCorotine = self.db.GetConditionalElements(condition_IODC, InjectionOrderDataClass)

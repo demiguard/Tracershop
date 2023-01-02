@@ -10,7 +10,7 @@ import { renderClickableIcon, renderOnClose, renderTableRow } from "../../lib/Re
 
 
 import styles from '../../css/Site.module.css'
-import { AlertBox, ERROR_LEVELS } from "../injectables/ErrorBox";
+import { AlertBox, ERROR_LEVELS } from "../injectables/AlertBox";
 import { TracerWebSocket } from "../../lib/TracerWebsocket";
 
 export { ActivityModalStatus1 }

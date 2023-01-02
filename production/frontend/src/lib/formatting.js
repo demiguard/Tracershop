@@ -16,6 +16,14 @@ export function parseDate(inputStr){
   throw "Date not on known format, Date: "+inputStr
 }
 
+/**
+ * Formats a string written with a "," to indicate decimals.
+ * Accepts english variations as well.
+ *
+ * @idempotent
+ * @param {String | Number} numberString - The string to be formatted
+ * @returns {Number} - The number the string represent
+ */
 export function ParseDanishNumber(numberString){
   if (typeof numberString == "string") {
     const parsedNumber = numberString.replace(/,/g, ".");
@@ -50,9 +58,9 @@ export function parseDateToDanishDate(dateString){
  * - (0)H.MM -> 0H:MM:00
  * Number in paraentens are missing from the text and are assumed to be there.
  * If the string is not on the format returns null.
- *
-  * @param {string} timeStr
-  * @returns {string} time string on format HH:MM:SS
+ * @idempotent
+ * @param {string} timeStr
+ * @returns {string} time string on format HH:MM:SS
 */
 export function FormatTime (timeStr) {
 
@@ -141,4 +149,13 @@ export function StringValidator(input, min_length, max_length){
     valid : valid,
     value : value,
   };
+}
+
+/**
+ * Determines if a 
+ * @param {String} str A potential Batch number
+ * @returns {boolean} - true if str is a batch number false if not
+ */
+export function batchNumberValidator(str){
+  return /[a-zA-Z]+-\d{6}-[1-9]\d*/g.test(str);
 }

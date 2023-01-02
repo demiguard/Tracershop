@@ -149,6 +149,7 @@ export default class App extends Component {
   whoami(){
     const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI)
     this.MasterSocket.send(message).then((data) => {
+      console.log(data)
       if (data[AUTH_IS_AUTHENTICATED]){
         const user = {
           username : data[AUTH_USERNAME],

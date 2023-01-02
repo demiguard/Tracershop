@@ -93,7 +93,7 @@ describe("Calculator Test", () =>{
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
-    expect(await screen.findByText("09:15:00")).toBeVisible()
+    expect(await screen.findByText("09:15")).toBeVisible()
     expect(await screen.findByText("10000")).toBeVisible()
     expect(await screen.findByLabelText("delete-0")).toBeVisible();
 

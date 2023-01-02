@@ -7,7 +7,7 @@ import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup } from "@testing-library/react";
 
-import { AlertBox, ERROR_LEVELS } from "../../../components/injectables/ErrorBox.js"
+import { AlertBox, ERROR_LEVELS } from "../../../components/injectables/AlertBox.js/index.js"
 
 
 let container = null;

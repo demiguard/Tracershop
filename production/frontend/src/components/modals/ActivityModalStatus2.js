@@ -144,7 +144,7 @@ export default class ActivityModalStatus2 extends Component {
   }
 
   toggleActivity(){
-    const retfunc = (event) => {
+    const RetFunc = (event) => {
       if(this.state.editingOrderedActivity){
         const order = this.props.orders.get(this.props.order);
         const customer = this.props.customers.get(order.BID);
@@ -194,7 +194,7 @@ export default class ActivityModalStatus2 extends Component {
         })
       }
     }
-    return retfunc.bind(this)
+    return RetFunc.bind(this)
   }
   // ********* Vial Functions ********** //
 

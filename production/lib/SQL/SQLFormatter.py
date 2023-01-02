@@ -38,7 +38,7 @@ def checkForSQLInjection(SQLquery : str):
   if regex.search(SQLquery):
     raise SQLInjectionException()
 
-def SerilizeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
+def SerializeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:
   """This function converts a value to be inserted into the database.
 
   Args:

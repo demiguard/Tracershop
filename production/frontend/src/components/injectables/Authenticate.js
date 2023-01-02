@@ -3,7 +3,7 @@ import propTypes from 'prop-types'
 import { Form, Button, Spinner } from "react-bootstrap";
 import styles from "../../css/Authenticate.module.css"
 import SiteStyles from "../../css/Site.module.css"
-import { AlertBox, ERROR_LEVELS } from "./ErrorBox";
+import { AlertBox, ERROR_LEVELS } from "./AlertBox";
 
 export { Authenticate }
 
@@ -27,6 +27,7 @@ export default class Authenticate extends Component {
     headerMessage : propTypes.string,
     fit_in : propTypes.bool,
     spinner : propTypes.bool,
+    buttonMessage : "Log in"
   }
 
   static defaultProps = {
@@ -34,6 +35,7 @@ export default class Authenticate extends Component {
     headerMessage : "Log in",
     fit_in : false,
     spinner : false,
+    buttonMessage : "Log in"
   }
 
   constructor(props){
@@ -104,7 +106,7 @@ export default class Authenticate extends Component {
                   <Button
                     type="submit"
                     className="btn btn-primary">
-                      Log in
+                      {this.props.buttonMessage}
                   </Button>
               }
             </div>
