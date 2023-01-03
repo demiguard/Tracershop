@@ -389,11 +389,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if not user:
       return await self.__RejectFreeing(message)
 
-
-
     data = message[WEBSOCKET_DATA]
     Order      = await self.db.getElement(data[JSON_ACTIVITY_ORDER], ActivityOrderDataClass)
-
     Vials      = [await self.db.getElement(vialID, VialDataClass) for vialID in data[JSON_VIAL]]
 
     updatedVials = []

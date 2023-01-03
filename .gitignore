@@ -22,6 +22,7 @@ fonts/
 *.code-workspace
 legacy_code/
 .coverage
+coverage/
 config.py
 *.aux
 *.fdb_latexmk

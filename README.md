@@ -1,109 +1,60 @@
 # Tracershop
-This is the source code for tracershop. Troubleshooting and installtion guide.
-Tracershop is the bookkeeping system for Rigshospital nuclear cylotrones for tracers for PET and CTs scans.
 
-The bookkeeping system is a django webservice that runs on top of a mysql database. Note that due to the projects complexsity the webservice is connected to another mysql service, due to the fact that it must integrate with an older service.
+Tracershop is a bookkeeping, and web shop for radioactive tracers and is therefore to some extend affected by GMP. It's used by the danish Rigshospitalet's cyclotron unit and various hospitals around the capital. Tracershop is build on top of a zope app also named tracershop. This program will be referred to as "Old Tracershop". This project was developed in 2004 and maintained through to 2012.
+
+The new tracershop is designed to be able to run in parallel with the old system, using a common MySQL database. The development of tracershop have taken years, and the skill set of the programmer have improved, which have lead to inconsistent programming style, and many stupid design decisions.
+
+The system is heavily integrated with the hospitals IT system, and therefore has limited usage outside.
 
 ## Components of Tracershop
 
-* **Django app - Customer** *(UWSGI DJANGO / Pure Javascript + JQuery WEBSERVER)* The main internal webservice for placing orders.
-* **pingService** *(System Service)* A service that retrieves internal studies to provide for easy ordering. This is a Customer Subsystem.
-* **Production** *(AWSGI DJANGO / REACT WEBSERVER)* This site is the productions view of tracershop, it configures availble tracers and accepts orders.
+Tracershop like most other web services isn't just a single program, but rather an eco system of programs. Below is a list of program and the machines that they're running on.
 
-## Old System & improvements
+* **Old Tracershop** - The old system and database host.
+  * Zope 2
+  * MySQL 5.1 - Database
+  * Script for fetching dispersions of radioactive tracer.
+* **Django app - Customer** *(UWSGI DJANGO / Pure Javascript + JQuery WEB SERVER)* The main internal web service for placing orders.
+  * HTTP client -> Nginx -> emperor(uWSGI) -> Django web server - Dataflow.
+  * MySQL 5.7 - User database, with booking
+  * AutoSSH - Tunnel to old tracershop mysql database
+* **pingService** *(System Service)* A service that retrieves internal studies to provide for easy ordering in the customer module. This is a Customer Subsystem. Should be though of as a crontab process.
+* **Production** *(AWSGI DJANGO / REACT WEBSERVER)* This site is the productions view of tracershop, it configures available tracers and accepts orders.
+  * Http client -> Apache (reverse proxy) -> Supervisor -> Daphne -> Channels (Django) App
+  * MySQL 5.7 - User database
+  * Redis - Database used by websockets.
+  * AutoSSH - Tunnel to old tracershop mysql database
 
-The System runs a 'copy' of the old database on the new database, this is done so that cutting the cord from the old service is very easy.
+## Goal
 
-Note that the customer number 'kundenummer' from the user table is unused, instead the BID is used for most things. Note that this external Database prevent you from creating stuff like a nice and pretty REST API.
+As seen above, the tech stack is rather complicated, and a simplification is desired. The desired system can be seen in:
 
-Obviously if you are looking at this and wish to improve upon this system, upgrading and having a look and remaking the database system should be your top priority.
+[Tech stack picture!](docs/LatexReports/figures/TracershopSystemOverview.png)
 
-Secondly I would also recommend rewritting the Customer to be a React / Django App. Once you start maintaining both the production and the Customer APP then you'll know the difference. 
+Most notable it merges the different web services into a single service. This is to reduce data replication, and to create a single entry point similar to the old tracershop system, which all types of users used.
 
-### Programmer Notes
+A major difference between the old system and the new system. Is a desire to run 2 database. A "record" database and a "web server" database.
 
-  This code base tries to follow the code standard set forward by <https://www.python.org/dev/peps/pep-0008/> with camelcase Note that not all code is this, but It should aim.
-  Therefore if you make updates please try and follow this style guide.
-  With the following exceptions:
-  
-* Use 2 spaces instead of 4 for indentation
-* Allow multiple spaces after multiple assignments to line them up
+* **Record database** - Contains all orders, customers, bookings and tracers.
+* **Web server database** - Contains all users, IP of different services, session and other django overhead.
 
-Simlarly The javascript should follow the google styleguide found here: <https://google.github.io/styleguide/jsguide.html>.
-Note that it was decided 1.5 year into development that this style guide should be followed so there's plenty of errors. The Quick and dirty of it using lowercase CamelCase.
+## Style Guide
+
+Standard <https://www.python.org/dev/peps/pep-0008/>
+
+Note that Channels are not properly type hinted, but code should be type hinted.
+
+* camelcase in general, PascalCase for classes.
+* Use 2 spaces
+* No trailing spaces!
+
+With the following exceptions:
+
+* Allowing multiple spaces after multiple assignments to line them up
+* No trailing spaces!
+
+The javascript code should follow the google styleguide found here: <https://google.github.io/styleguide/jsguide.html>.
 Also this site might be helpful <https://jsdoc.app/index.html>
-
-### Difference from the old system
-
-The user group have changed quite a bit, now instead of having a single user, a customer can have multiple users so that a department don't have to share a single profile.
-
-### Equvivalent tables
-
-Note that all new tables (to the right) have a customer_ ommited and that not all attributes are mapped over only those in use
-
-* Old table : New Table
-* Users     : Customer
-
-## Installation Process
-
-In general the process will look something like this.
-
-1. Download the git repo from url:
-2. Install Mysql and update the django parameters to match the database (Note this is easier said than done)
-3. Fill in relevant tables in the mysql database (inside of tracershop/construct_database there's a couple fo scripts that might be helpful)
-4. Install pingService. See pingService/README.md for installation
-5. Install SyncoDBService. See SyncoDbService
-6. Install UWSGI see tracershop/README.md for guide there
-
-Apologies for any holes in the Documentation
-
-
-### Notes To self
-
-Here's a list of some the useful tutorials that have helped setting up the production
-
-* <https://medium.com/analytics-vidhya/django-react-integration-37acc304e984>
-
-### Javascript Tips and Tricks
-
-So if you're not a Javascript Shark, here are some stuff that might help you to understand what the code is doing. There's quite a few "Particulars." Said nicely...
-
-For loops of vs in - Objects such as maps and arrays can be iterated like this:
-
-```javascript
-for(const Element of Array){
-  // Here the element is the data of the array
-}
-
-for(const index in Array){
-  // Here it's the index of the element of the array
-  // To access the array you need Array[index]
-}
-
-for(const [key, value] of Map){
-  // here the only thing you should know is that Map.get(key) == value
-}
-
-// In general I do not use the in keyword a lot and i try to avoid it
-```
-
-The months of javascript is 0 indexed FOR SOME REASON ie: 0 - Jan, 1 - Feb, ... It very stupid.
-
-Object creation in javascript is wierd to say the least, with regards to object creation
-
-```javascript
-
-const text = "HelloWorld";
-
-const Obj = { text : text}; // Produces an object { text : "HelloWorld"}
-// while 
-const Obj2 = {};
-Obj2[text] = text
-// produces Obj2 = { HelloWorld : "HelloWorld"} 
-
-```
-
-Note this is mostly applicable in Object with constants. One should perhaps say create dataclass for Javascript, but that is of the time doc writting not the case.
 
 ### Terminologies
 
@@ -112,6 +63,6 @@ Belows is a list words that is used throught the Documentation and this is the m
 * **Ghost Order** A ghost order is an artificalial order created by tracershop when the production moves an order to another timeslot without a host Order.
 * **Dead Order** A dead order is an order that doesn't contain ordered activity or deliever activity
 
-
 ## References & Attributes
-Icons are made by in documentation are made by https://www.flaticon.com/authors/freepik & https://www.flaticon.com/authors/kiranshastry
+
+Icons are made by in documentation are made by <https://www.flaticon.com/authors/freepik> & <https://www.flaticon.com/authors/kiranshastry>

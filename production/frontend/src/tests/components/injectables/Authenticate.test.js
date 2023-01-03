@@ -7,7 +7,7 @@ import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { Authenticate } from "../../../components/injectables/Authenticate.js"
+import { Authenticate } from "../../../components/injectable/authenticate.js/index.js.js"
 
 
 let container = null;

@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import {ActivityModal} from '../../../components/modals/ActivityModal'
+import {ActivityModal} from '../../../components/modals/activity_modal'
 
 let container = null;
 beforeEach(() => {

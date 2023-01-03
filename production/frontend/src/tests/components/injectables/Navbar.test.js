@@ -6,7 +6,7 @@ import React from "react";
 import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
-import Navbar from "../../../components/injectables/Navbar";
+import Navbar from "../../../components/injectable/navbar";
 import { jest } from '@jest/globals'
 
 let container = null;
