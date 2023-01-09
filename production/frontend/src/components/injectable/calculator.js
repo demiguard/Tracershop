@@ -6,7 +6,7 @@ import propTypes from 'prop-types'
 import { FormatDateStr, FormatTime, ParseDanishNumber } from "../../lib/formatting";
 import { CalculateProduction, CountMinutes } from "../../lib/physics";
 import { renderClickableIcon, renderTableRow } from "../../lib/rendering";
-import { autoAddCharacter, CompareDates, removeIndex } from "../../lib/utils";
+import { autoAddCharacter, compareDates, removeIndex } from "../../lib/utils";
 
 import styles from '../../css/Calculator.module.css'
 import SiteStyles from '../../css/Site.module.css'

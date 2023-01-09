@@ -1,9 +1,9 @@
 export const JAVASCRIPT_VERSION = "1.0.1";
 
 export const TRACER_TYPE_ACTIVITY = 1;
-export const TRACER_TYPE_DOSE     = 2;
+export const TRACER_TYPE_DOSE = 2;
 export const DAYS_PER_WEEK = 7;
-export const DAYS = { // THIS IS NOT THE JAVASCRIPT BECAUSE EVERYONE KNOWN THAT THE FIRST DAY OF THE WEEK IS SUNDAY
+export const DAYS = { // So in the modern part of the world, aka the ones that use metric units, the first day of the week is Monday
   MONDAY : 0,
   TUESDAY : 1,
   WENDSDAY : 2,
@@ -22,6 +22,7 @@ export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
   {name : "Søndag", day : 7},
 ]
 
+
 export const USERGROUPS = {
   ANON : 0,
   ADMIN : 1,
@@ -30,6 +31,16 @@ export const USERGROUPS = {
   SHOP_ADMIN : 4,
   SHOP_USER : 5,
   SHOP_EXTERNAL : 6
+}
+
+/**
+ * Enum describing options of an Injections order usage field
+ * @enum {string}
+ */
+export const INJECTION_USAGE = {
+  "1" : "Human",
+  "2" : "Dyr",
+  "3" : "Andet",
 }
 
 
@@ -148,34 +159,35 @@ export const KEYWORD_VOLUME = "volume";
 // IF A MESSAGE GLOBAL TO ALL SITE IT'S
 // WEBSOCKET_MESSAGE_<MESSAGE_KW>
 
-export const WEBSOCKET_DATA                 = "data"
-export const WEBSOCKET_DATATYPE             = "datatype"
-export const WEBSOCKET_DATA_ID              = "dataID"
-export const WEBSOCKET_DATE                 = "date"
-export const WEBSOCKET_DEAD_ORDERS          = "deadOrders"
-export const WEBSOCKET_ERROR                = "error"
-export const WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion"
-export const WEBSOCKET_MESSAGE_ANSWER       = "answer"
-export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login"
-export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout"
-export const WEBSOCKET_MESSAGE_AUTH_WHOAMI  = "whoami"
-export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass"
-export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass"
-export const WEBSOCKET_MESSAGE_ECHO         = "echo"
-export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState"
-export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity"
-export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection"
-export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history"
-export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders"
-export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState"
-export const WEBSOCKET_MESSAGE_ID           = "messageID"
-export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder"
-export const WEBSOCKET_MESSAGE_SUCCESS      = "success"
-export const WEBSOCKET_MESSAGE_TYPE         = "messageType"
-export const WEBSOCKET_SEND_EVENT           = "sendEvent"
-export const WEBSOCKET_SESSION_ID           = "sessionid"
-export const WEBSOCKET_EVENT_TYPE           = "type"
-export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig"
+export const WEBSOCKET_DATA                 = "data";
+export const WEBSOCKET_DATATYPE             = "datatype";
+export const WEBSOCKET_DATA_ID              = "dataID";
+export const WEBSOCKET_DATE                 = "date";
+export const WEBSOCKET_DEAD_ORDERS          = "deadOrders";
+export const WEBSOCKET_ERROR                = "error";
+export const WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion";
+export const WEBSOCKET_MESSAGE_ANSWER       = "answer";
+export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login";
+export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout";
+export const WEBSOCKET_MESSAGE_AUTH_WHOAMI  = "whoami";
+export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
+export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
+export const WEBSOCKET_MESSAGE_ECHO         = "echo";
+export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState";
+export const WEBSOCKET_MESSAGE_EDIT_DJANGO  = "editDjango";
+export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
+export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
+export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history";
+export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
+export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState";
+export const WEBSOCKET_MESSAGE_ID           = "messageID";
+export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
+export const WEBSOCKET_MESSAGE_SUCCESS      = "success";
+export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
+export const WEBSOCKET_SEND_EVENT           = "sendEvent";
+export const WEBSOCKET_SESSION_ID           = "sessionid";
+export const WEBSOCKET_EVENT_TYPE           = "type";
+export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
 
 // BETTER MESSAGE CONSTANTS
 

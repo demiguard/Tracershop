@@ -2,18 +2,18 @@
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
 
-import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER } from "../../lib/constants.js";
+import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER, INJECTION_USAGE } from "../../lib/constants.js";
 import { FormatDateStr, ParseJSONstr } from "../../lib/formatting.js";
-import { renderStatusImage, renderTableRow, renderComment, renderClickableIcon } from '../../lib/rendering.js';
-import { CompareDates } from "../../lib/utils.js";
+import { renderTableRow, renderComment } from '../../lib/rendering.js';
+import { compareDates } from "../../lib/utils.js";
 import { CreateInjectionOrderModal } from "../modals/create_injection_modal.js";
 import { InjectionModal } from "../modals/injection_modal.js";
+import { StatusIcon, ClickableIcon } from "../injectable/icons.js";
 
 const /** Contains the components of the different modals this page can display  @Enum */ Modals  = {
   NoModal : null,
   CreateOrder : CreateInjectionOrderModal,
-  InjectionStatus2 : InjectionModal
-
+  InjectionStatus : InjectionModal
 }
 /** Page that contains all injections orders
  *
@@ -40,80 +40,99 @@ export class TOrderTable extends Component {
    *
    * @param {Object} Order - The order that was accepted
    */
-  AcceptOrder(Order){
+  acceptOrder(Order){
     if(Order.status == 1){
       Order.status = 2;
-      var test;
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
       message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
       message[WEBSOCKET_DATA] = Order;
       this.props.websocket.send(message);
     }
-    else if(Order.status == 2){
-      this.setState({
-        ...this.state,
-        modal : Modals.InjectionStatus2,
-        order : Order,
-      })
+    else {
+      this.openOrderModal(Order)
     }
+  }
+
+  /**
+   * Opens the injection modal for an order.
+   * @param {Object} order - Injection order that will open modal
+   */
+  openOrderModal(order){
+    this.setState({
+      ...this.state,
+      modal : Modals.InjectionStatus,
+      order : order,
+    })
   }
 
   RejectOrder(Order){
     console.log(Order);
   }
 
-  renderIncompleteOrder(Order) {
-    const OrderDT = new Date(Order.deliver_datetime)
+  renderIncompleteOrder(order) {
+    const OrderDT = new Date(order.deliver_datetime)
     const TimeStr = FormatDateStr(OrderDT.getHours()) + ':' + FormatDateStr(OrderDT.getMinutes());
 
-    const Tracer = this.props.tracers.get(Order.tracer);
+    const Tracer = this.props.tracers.get(order.tracer);
     const TracerName = Tracer.name;
-    const customer = this.props.customers.get(Order.BID);
+    const customer = this.props.customers.get(order.BID);
 
     const customerName = customer.UserName;
 
 
     return renderTableRow(
-      Order.oid,[
-        renderStatusImage(Order.status, () => this.AcceptOrder(Order).bind(this)),
-        Order.oid,
+      order.oid,[
+        <StatusIcon
+          status={order.status}
+          onClick={() => this.openOrderModal(order).bind(this)}
+        />,
+        order.oid,
         customerName,
         TracerName,
-        Order.n_injections,
+        order.n_injections,
         TimeStr,
-        Order.anvendelse,
-        renderComment(Order.comment),
-        renderClickableIcon("/static/images/accept.svg", () => this.AcceptOrder(Order)),
-        renderClickableIcon("/static/images/decline.svg", () => this.RejectOrder(Order))
+        INJECTION_USAGE[String(order.anvendelse)],
+        renderComment(order.comment),
+        <ClickableIcon src={"/static/images/accept.svg"} onClick={() => this.acceptOrder(order)}/>,
+        <ClickableIcon src={"/static/images/decline.svg"} onClick={() => this.RejectOrder(order)}/>,
       ]
     )
   }
 
-  renderCompleteOrder(Order) {
-    const OrderDT = new Date(Order.deliver_datetime)
+  renderCompleteOrder(order) {
+    const OrderDT = new Date(order.deliver_datetime)
     const TimeStr = FormatDateStr(OrderDT.getHours()) + ':' + FormatDateStr(OrderDT.getMinutes());
 
-    const Free_datetime = new Date(Order.frigivet_datetime);
+    const Free_datetime = new Date(order.frigivet_datetime);
     const Free_time_str = FormatDateStr(Free_datetime.getHours()) + ':' + FormatDateStr(Free_datetime.getMinutes());
-    const Tracer = this.props.tracers.get(Order.tracer);
+    const Tracer = this.props.tracers.get(order.tracer);
     const TracerName = Tracer.name;
-    const customer = this.props.customers.get(Order.BID);
+    const customer = this.props.customers.get(order.BID);
 
     const customerName = customer.UserName;
 
+    const employee = this.props.employee.get(order.frigivet_af);
+    let employeeName;
+    if (employee == undefined){
+      employeeName = `Ukendt frigiver med ID ${order.frigivet_af}`;
+    } else {
+      employeeName = employee.Username;
+    }
+
+    console.log(this.props)
 
     return renderTableRow(
-      Order.oid,[
-        renderStatusImage(Order.status),
-        Order.oid,
+      order.oid,[
+        <StatusIcon status={order.status} onClick={() => this.openOrderModal(order)}/>,
+        order.oid,
         customerName,
         TracerName,
-        Order.n_injections,
+        order.n_injections,
         TimeStr,
-        Order.anvendelse,
-        renderComment(Order.comment),
+        INJECTION_USAGE[String(order.anvendelse)],
+        renderComment(order.comment),
         Free_time_str,
-        Order.frigivet_af
+        employeeName
       ]
     )
   }
@@ -122,16 +141,16 @@ export class TOrderTable extends Component {
   render() {
     console.log(this.props);
 
-    const Orders_incompelte = [];
-    const Orders_complete = [];
+    const ordersIncomplete = [];
+    const ordersComplete = [];
 
     for(const [_oid, t_order] of this.props.t_orders){
       const orderDate = new Date(t_order.deliver_datetime)
-      if (CompareDates(this.props.date, orderDate)){
+      if (compareDates(this.props.date, orderDate)){
         if(t_order.status < 3){
-          Orders_incompelte.push(t_order);
+          ordersIncomplete.push(t_order);
         } else if (t_order.status == 3){
-          Orders_complete.push(t_order);
+          ordersComplete.push(t_order);
         }
       }
     }
@@ -143,7 +162,7 @@ export class TOrderTable extends Component {
             <Button onClick={this.openCreateOrderModal.bind(this)}>Opret ny ordre</Button>
           </Col>
         </Row>
-      { Orders_incompelte.length > 0 ?
+      { ordersIncomplete.length > 0 ?
         <Table>
           <thead>
             <tr>
@@ -160,10 +179,10 @@ export class TOrderTable extends Component {
             </tr>
           </thead>
           <tbody>
-            {Orders_incompelte.map(this.renderIncompleteOrder.bind(this))}
+            {ordersIncomplete.map(this.renderIncompleteOrder.bind(this))}
           </tbody>
         </Table> : ""
-      } {Orders_complete.length > 0 ?
+      } {ordersComplete.length > 0 ?
         <Table>
         <thead>
           <tr>
@@ -180,11 +199,11 @@ export class TOrderTable extends Component {
           </tr>
         </thead>
         <tbody>
-          {Orders_complete.map(this.renderCompleteOrder.bind(this))}
+          {ordersComplete.map(this.renderCompleteOrder.bind(this))}
         </tbody>
       </Table> : ""
       }
-      { Orders_complete.length == 0 && Orders_incompelte.length == 0 ?
+      { ordersComplete.length == 0 && ordersIncomplete.length == 0 ?
         <div>
           <p>Der er ingen Special ordre af vise til {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
         </div> : null
@@ -196,6 +215,7 @@ export class TOrderTable extends Component {
           date={this.props.date}
           customers={this.props.customers}
           tracers={this.props.tracers}
+          isotopes={this.props.isotopes}
           websocket={this.props.websocket}
           onClose={this.closeModal.bind(this)}
           order={this.state.order}

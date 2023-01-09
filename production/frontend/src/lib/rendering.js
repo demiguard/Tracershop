@@ -2,35 +2,36 @@ import React, {} from "react";
 import { Button, Form, Image } from "react-bootstrap";
 import ReactHover, { Trigger, Hover  } from "react-hover";
 import { HoverBox } from "../components/injectable/hover_box.js";
+import { ClickableIcon } from "../components/injectable/icons.js";
 import { FormatDateStr } from "./formatting.js";
 
 import { noop } from "./utils.js";
 
-
+/**
+ * @deprecated
+ * @param {*} status 
+ * @param {*} func 
+ * @returns 
+ */
 export function renderStatusImage(status, func) {
   const onclickFunc = (func === undefined) ? noop : func
-  if (status === 1) return renderClickableIcon("/static/images/clipboard1.svg", onclickFunc);
-  if (status === 2) return renderClickableIcon("/static/images/clipboard2.svg", onclickFunc);
-  if (status === 3) return renderClickableIcon("/static/images/clipboard3.svg", onclickFunc);
-  if (status === 0) return renderClickableIcon("/static/images/clipboard0.svg", onclickFunc);
+  if (status === 1) return <ClickableIcon src={"/static/images/clipboard1.svg"} onClick={onclickFunc}/>;
+  if (status === 2) return <ClickableIcon src={"/static/images/clipboard2.svg"} onClick={onclickFunc}/>;
+  if (status === 3) return <ClickableIcon src={"/static/images/clipboard3.svg"} onClick={onclickFunc}/>;
+  if (status === 0) return <ClickableIcon src={"/static/images/clipboard0.svg"} onClick={onclickFunc}/>;
 
   throw `Status ${status} not supproted!`;
 }
 
-export function renderTableRow(key, list_of_tds) {
-  /**
-   * This function is for building Tables, it creates a single row.
-   * It has a variable amount of entries allowing to be used for creation of all Tables
-   * The function was introduced late in the development, so might not have been used everywhere
-   * But its usage is on the todo list.
-   *
-   * @param {Number} key - The key that's appied to row
-   * @param {Array<Object>} list_of_tds This is the list of tds, can contain typescirpt
-   * @returns {JSX.Element} - Type script that contains a table row with index key
-   *
-   *
-   *  rendered typescript.
+/**
+  * This function is for building Tables, it creates a single row.
+  * It has a variable amount of entries allowing to be used for creation of all Tables.
+  *
+  * @param {Number} key - The key of the constructed row
+  * @param {Array<Object>} list_of_tds This is the list of tds, can contain typescirpt
+  * @returns {JSX.Element} - Table row with index key
   */
+export function renderTableRow(key, list_of_tds) {
   var index = 0;
 
   const tds = [];
@@ -79,9 +80,14 @@ export function renderSelect(Options, valueKey, nameKey, OnChange, initialValue)
   );
 }
 
+/**
+ * 
+ * @param {*} comment
+ * @returns
+ */
 export function renderComment(comment){
   if(comment){
-    const CommentImage = renderClickable("/static/images/comment.svg");
+    const CommentImage = <ClickableIcon src={"/static/images/comment.svg"}/>
     return <HoverBox
       Base={CommentImage}
       Hover={<div>{comment}</div>}
@@ -90,6 +96,12 @@ export function renderComment(comment){
   return null;
 };
 
+/**
+ * @deprecated
+ * @param {*} imagePath 
+ * @param {*} func 
+ * @returns 
+ */
 export function renderClickableIcon(imagePath, func){
   const onClickFunc = (func === undefined) ? noop : func
   return (

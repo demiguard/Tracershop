@@ -2,7 +2,7 @@
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container } from 'react-bootstrap'
 import { renderStatusImage, renderTableRow } from "../../lib/rendering.js";
-import { CompareDates } from "../../lib/utils.js";
+import { compareDates } from "../../lib/utils.js";
 import { FormatDateStr } from "../../lib/formatting.js";
 import { CountMinutes, CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
@@ -119,7 +119,7 @@ export class ActivityTable extends Component {
       // This just build things up with out checking for data integrety.
       // You might need to add some validation, that gives some sort of warning if stuff breaks.
       const orderDate = new Date(Order.deliver_datetime);
-      if (!CompareDates(this.props.date, orderDate) || Order.tracer !== this.props.tracer) continue; //note this.props.tracer is an ID
+      if (!compareDates(this.props.date, orderDate) || Order.tracer !== this.props.tracer) continue; //note this.props.tracer is an ID
 
       const customerMap = NewOrderMapping.get(Order.BID);
       if(customerMap === undefined){
@@ -617,7 +617,7 @@ export class ActivityTable extends Component {
 
     for (const order of Orders){
       const orderDate = new Date(order.deliver_datetime);
-      if (CompareDates(this.props.date, orderDate) && order.tracer == this.props.tracer ){
+      if (compareDates(this.props.date, orderDate) && order.tracer == this.props.tracer ){
         (order.status == 3) ?
           FinishedOrders.push(this.renderFinishedOrder(order)) :
           pendingOrders.push(this.renderPendingOrder(order));

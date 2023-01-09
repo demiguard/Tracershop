@@ -6,7 +6,7 @@
  * @param {Date} d2 - Date 2
  * @returns Checks if date 1 and date 2 are the same day
  */
-export function CompareDates(d1, d2) {
+export function compareDates(d1, d2) {
   //Compares if two date objects refer to the same date
   return d1.getFullYear() == d2.getFullYear() && d1.getMonth() == d2.getMonth() && d1.getDate() == d2.getDate();
 }

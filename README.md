@@ -44,7 +44,7 @@ Standard <https://www.python.org/dev/peps/pep-0008/>
 
 Note that Channels are not properly type hinted, but code should be type hinted.
 
-* camelcase in general, PascalCase for classes.
+* camelCase in general, PascalCase for classes.
 * Use 2 spaces
 * No trailing spaces!
 
@@ -54,7 +54,10 @@ With the following exceptions:
 * No trailing spaces!
 
 The javascript code should follow the google styleguide found here: <https://google.github.io/styleguide/jsguide.html>.
-Also this site might be helpful <https://jsdoc.app/index.html>
+
+With the following extra rules:
+
+* Always include curly brakes for for-loops and if-statements.
 
 ### Terminologies
 

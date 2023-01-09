@@ -4,8 +4,6 @@ Namely the Consumer Class.
 
 The Consumer class has a DatabaseInterface which is responsible for all communication with database
 
-
-
 Note: This module doesn't scale at large, simply because all users are in
  a single group. So it should not surprise anybody if stuff starts to break
  if Tracershop starts to scale.
@@ -121,8 +119,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          needed to handle that message
     """
     try:
-      if error := auth.validateMessage(message):
-        logger.error(f"The message {message} was send It's not valid by the error: {error}")
+      error = auth.validateMessage(message)
+      if error != "":
+        logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
         await self.HandleKnownError(message, error)
         return
       logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
@@ -651,6 +650,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       }
     )
 
+  async def HandleEditDjango(self, message: Dict) -> None:
+    pass
 
   @typeCheckFunc
   async def HandleGetOrders(self, message : Dict):
@@ -672,12 +673,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
-
-  @typeCheckFunc
-  async def HandleUpdateServerConfig(self, message : Dict):
-    pass
-
-
 
   @typeCheckFunc
   async def HandleEditState(self, message : Dict):
@@ -775,6 +770,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_DELETE_DATA_CLASS : HandleDeleteDataClass,
     WEBSOCKET_MESSAGE_ECHO : HandleEcho,
     WEBSOCKET_MESSAGE_EDIT_STATE : HandleEditState,
+    WEBSOCKET_MESSAGE_EDIT_DJANGO : HandleEditDjango,
     WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrder,
     WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
     WEBSOCKET_MESSAGE_GREAT_STATE : HandleTheGreatStateMessage,
@@ -782,3 +778,5 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetOrders,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
   }
+
+  djangoModels = {""}

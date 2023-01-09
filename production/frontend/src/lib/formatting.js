@@ -68,6 +68,9 @@ export function FormatTime (timeStr) {
   if (/^[0-9]:[0-5][0-9]:[0-5][0-9]$/g.test(timeStr)) return "0" + timeStr;
   if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]$/g.test(timeStr)) return timeStr + ":00";
   if (/^[0-9]:[0-5][0-9]$/g.test(timeStr)) return "0" + timeStr + ":00";
+  if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:$/g.test(timeStr)) return timeStr + "00";
+  if (/^[0-9]:[0-5][0-9]:$/g.test(timeStr)) return "0" + timeStr + "00";
+
 
   return null;
 }

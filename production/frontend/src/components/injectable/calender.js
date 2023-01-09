@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import { CompareDates } from "../../lib/utils";
+import { compareDates } from "../../lib/utils";
 import { FormatDateStr } from '../../lib/formatting';
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK } from "../../lib/constants";
 
@@ -174,12 +174,12 @@ function standardOrderMapping(orders, tOrders, runs, closedDate) {
     var MinimumInjectionStatus = 5;
     const date = new Date(DateStr);
     for(const [_, ActivityOrder] of orders){
-      if(CompareDates(date, new Date(ActivityOrder.deliver_datetime))){
+      if(compareDates(date, new Date(ActivityOrder.deliver_datetime))){
         MinimumActivityStatus = Math.min(MinimumActivityStatus, ActivityOrder.status);
       }
     }
     for(const [_, InjectionOrder] of tOrders){
-      if(CompareDates(date, new Date(InjectionOrder.deliver_datetime))){
+      if(compareDates(date, new Date(InjectionOrder.deliver_datetime))){
         MinimumInjectionStatus = Math.min(MinimumInjectionStatus, InjectionOrder.status);
       }
     }

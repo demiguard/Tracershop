@@ -22,7 +22,7 @@
 \newglossaryentry{gmp}
 {
   name=GMP,
-  description={Good manufacturing practice, created by the EU and Danish medicines agency.}
+  description={Good manufacturing practice}
 }
 
 \newglossaryentry{fdg}{name={FDG},description={[$^{18}$F]Fluorodeoxyglucose, a common radioactive tracer used for PET images}}
@@ -32,8 +32,8 @@
 \newglossaryentry{git}{name={Git},description={Git is a free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency. Found at \url{https://git-scm.com}}}
 \newglossaryentry{invalid state}{name={invalid state},description={This is a database}}
 
-\newglossaryentry{invalid data}{name={invalid data},description={Nonsensical data that could never be valid. Examples include a reference to an nonexistent object or Negative halflife or activity.}}
-\newglossaryentry{incorrect data}{name={incorrect data},description={Data that doesn't reflect reality. Examples include a misspelled batch number or an activity entry which does not match actual activity in the vial.}}
+\newglossaryentry{invalid data}{name={invalid data},description={Nonsensical data that could never be valid. Examples include a reference to an nonexistent object or Negative halflife or activity}}
+\newglossaryentry{incorrect data}{name={incorrect data},description={Data that doesn't reflect reality. Examples include a misspelled batch number or an activity entry which does not match actual activity in the vial}}
 
 \graphicspath{{./figures/}}
 
@@ -62,34 +62,55 @@
     \Huge Technical documentation and risk assessment for Tracershop \\
     \vspace{1cm}
     \Large Christoffer Vilstrup Jensen\\
+    MSc. Computer Science\\
   \end{center}
 \end{titlepage}
 
-\section*{Resume}
-This document describes the current Tracershop ecosystem,
-a bookkeeping system for the production of radioactive tracers for clinical procedures produced at Rigshospitalet.
-The system was designed in 2004 and in the field of Computer Science such a system is considered ancient.
-This document presents a replacement system with the aims to improve the user experience, functionality, and improve IT-security, namely
- a react-django new web server and makes a risk assessment of the current and the new system.
+\section*{Introduction}
+This document describes the electronic bookkeeping system, Tracershop, used for ordering
+and release of radioactive tracers for clinical procedures produced at Rigshospitalet's cyclotron unit.
+Rigshospitalet delivers radioactive tracers to hospitals and scientific institutions near Copenhagen,
+that would not be able to perform various PET scans without the tracers.
+Therefore Tracershop should be considered a important piece of software.\\
+The original tracershop was released in 2004 and in the field of Computer Science such a system is considered ancient.
+This document contains an exploration of various risks with the old system and presents a replacement system with the aims to improve the user experience,
+functionality, and improve IT-security, namely a react-django new web server and makes a risk assessment of the current and the new system.
+
+\subsection*{Abstractions}
+Tracershop handles two different types of orders. Activity based orders and Injection based orders.\\
+An \textbf{activity order} is defined as an order, where a customer orders an amount of MBq radioactive tracer at a predetermined time slot known as a "deliver time".
+It's the user responsibility to account for radioactive decay between injection time and delivery time.\\
+An \textbf{injection order} is an order with a number of injections with a predefined amount of activity, and it's Tracershops responsibility to account for any decay between production time and injection time.
+Users er limited per user basis which injection tracers they can order.
+
+\subsection*{Requirements}
+
+\begin{itemize}
+  \item A user can order radioactive tracer from the internet while not connected to the Capital Region intranet.
+  A user can be limited in their selection of tracers and limited time window where such tracers are available for ordering.
+  \item A user can review any order they have made, and view batch number of tracer that they have ordered. They cannot view or alter order, which doesn't belong to them. They cannot alter delivered orders.
+  \item A released order has a batch number and a record of who released it.
+  \item Non authenticated users cannot alter or view information in tracershop.
+\end{itemize}
+
+
 
 \section*{Tracershop - Current system}
-The original Tracershop was originally produced in 2004. Various contributions to the ecosystem have been made over the years,
-however development the system stopped around 2012.
-The main functionality of Tracershop is fulfilling the documentations requirements in Rigshospitalets production of radioactive tracers specified by \gls{gmp}.
-Rigshospitalet delivers radioactive tracers to many hospitals and scientific institutions, that would not be able to perform various PET and SPECT scans without the tracer.
-Therefore Tracershop should be considered a important piece of software.\\
-The system is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers. This database is back up on an external machine every day at midnight.
-The user interface is a Zope 2-2.13 web interface allowing the users interface with the main database.
-It is normal that software packages deprecated after a period of support, and keeping a software product up to date is part of the maintenance of a software products life cycle,
+Since 2004, the software ecosystem is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers. 
+This database is back up on an external machine every day at midnight.\\
+The web site is a Zope 2-2.13 web interface at \url{http://pet.rh.dk} allowing the users to systematically write to the main database.
+It is normal that software is deprecated after a period of support, and keeping a software product up to date is part of the maintenance of a software products life cycle,
 however that have not been possible due to insufficient resources.\\
-An overview of the system can be seen in figure \ref{fig:oldsys}.
+An overview of the current system can be seen in figure \ref{fig:oldsys}.
 \begin{figure}[ht]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{OldSetup.png}
-    \caption{Tracershop system overview}
+    \caption{Current Tracershop system}
     \label{fig:oldsys}
   \end{center}
 \end{figure}
+
+
 The dispenser ensures the amount of product in vials and the digital record of the product are equal.
 The dispenser writes these records to it own database, which does not support multiple concurrent connections, making it impossible to retrieve them the conventional way.
 A script circumvents this obstacle by opening the database as a file, and by using a byte offset retrieves the data of the dispensed vial.
@@ -105,22 +126,6 @@ It's therefore recommended to replace the dispenser, with one fulfils the requir
 Currently it's the The Department of clinical physiology nuclear medicine which hosts the server.
 Which is not desired because hosting server is a core task \GLS{CIMT} and not the clinical departments.
 
-\subsection*{Abstractions}
-Tracershop handles two different types of orders. Activity based orders and Injection based orders.\\
-An \textbf{activity order} is defined as an order, where the user orders an amount of MBq radioactive tracer at a predetermined time slot known as a "deliver time".
-It's the user responsibility to account for radioactive decay between injection time and delivery time.\\
-An \textbf{injection order} is an order with a number of injections with a predefined amount of activity, and it's Tracershops responsibility to account for any decay between production time and injection time.
-Users er limited per user basis which injection tracers they can order.
-
-\subsection*{Requirements}
-
-\begin{itemize}
-  \item A user can order radioactive tracer from the internet while not connected to the Capital Region intranet.
-  A user can be limited in their selection of tracers and limited time window where such tracers are available for ordering.
-  \item A user can review any order they have made, and view batch number of tracer that they have ordered. They cannot view or alter order, which doesn't belong to them. They cannot alter delivered orders.
-  \item A released order has a batch number and a record of who released it.
-  \item Non authenticated users cannot alter or view information in tracershop.
-\end{itemize}
 
 \subsection*{Database layout}
 The Tables in the Tracershop main database, note the tables casing does not conform to the snake casing that standard for SQL databases:
@@ -150,7 +155,7 @@ It's recommend to utilize the these functionality to ensure that the database st
 For instance if a tracer entry is dropped or updated, it may not be possible to determine the tracer of any historic order, that might have used this tracer.\\
 Despite Activity orders having a tracer field, this is ignored by the Zope application and assumed to be \Gls{fdg}.
 
-\section*{New web server}
+\section*{The new Tracershop}
 Tracershop is a system of individual components, so a simple switch of system is not advised, as any of new components would likely contain early adopter errors.
 While these errors likely are easy to resolve, they would still take the system down, which is unacceptable.
 The best plan of action would be replace each individual component one at a time.
@@ -204,6 +209,30 @@ The django application has its own database to keep track of user session, which
 This means that the django application database doesn't contain any records of orders or customers. This allows easy creation of test environments,
 since the record database is a field in the django database, it can be easily exchanged to a connection to a database with a test environment.
 The websocket requires a Regis database to broadcast messages.
+
+\section*{New login system}
+
+The new tracershop system uses an external authentication system, provided by the Capital region called BAM ID, managed by \GLS{CIMT}. All members of staff working in the capital region
+have a BAM ID login. This login have various security features build in, such as automatic deprecation of passwords and minimum complexity requirements to passwords.
+Secondary tracershop doesn't need store passwords and can rely on \GLS{CIMT}s services for password reset and deactivation of inactive accounts.\\
+A secondary difference is that all users are personal even for customers, which is the organization ordering the tracer. A user is connected to one or more customers.
+
+As not all members of staff of the capital region should be able to access tracershop, a number of Active directory groups will be added to the different user roles.
+The groups are as follows:
+
+\begin{itemize}
+  \item[Shop - External] - The user isn't an employee of the Capital region and doesn't have BAM ID. They can view their assigned customer's orders and order tracer authorized to the customer.
+  Each of these user are connected to an external customer. The user is managed by an production admin.
+  \item[Shop - Internal] - This is an employee of the Capital region, and has the as the external user except they have different admins.
+  They have access to additional features such as automatic calculation of orders.
+  \item[Shop - Admin] - This is an internal shop user with additional rights to modify the automatic generated order based on a RIS booking.
+  They can grant an internal user access to the same customers that they have access to.
+  \item[Produciton - User] - The user can view orders from all customers and release tracer of authorized types.
+  \item[Produciton - Admin] - Everything the production user can. Grant release rights to other production users, create new tracers, allow tracers to ordered by customers, and
+  manage external user.
+  \item[Site Admin] - Super user has all the functionality of other roles. The user isn't intended to use tracershop only to support it.
+\end{itemize}
+
 
 \section*{Test highlight}
 This section highlights a number of test cases, which ensures critical functionality of Tracershop.\\
@@ -318,7 +347,7 @@ See document number.: CVP-PROD-TS-001-14.01 in D4, for the latest validation of 
 
 
 \section*{Conclusion}
-The old tracershop fulfils the requirement set forwards by \GLS{gmp}, but is running on modules that have reached end of life.
+The old tracershop fulfils the requirement set forwards by \GLS{gmp} annex 11, but is running on modules that have reached end of life.
 
 A new system is proposed, that fulfils \GLS{gmp}, no longer uses, and improves various aspects of the tracershop system.
 An extensive test sweep ensure that the django web server handles messages correctly.
@@ -330,5 +359,5 @@ An extensive test sweep ensure that the django web server handles messages corre
 
 \clearpage
 
-\printglossaries
+\printglossary[type=main,style=long,nonumberlist]
 \end{document}

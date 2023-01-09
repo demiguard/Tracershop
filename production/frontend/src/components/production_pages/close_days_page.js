@@ -17,30 +17,30 @@ export class CloseDaysPage extends Component {
 
   changeCloseDay (DateObject, Calender) {
     const closedDateSet = new Set();
-    for(const [BDID, cdate] of this.closeddates){
+    for(const [BDID, cdate] of this.props.closeddates){
       closedDateSet.add(cdate.ddate)
     }
     const dateStr = `${DateObject.getFullYear()}-${FormatDateStr(DateObject.getMonth() + 1)}-${FormatDateStr(FormatDateStr(DateObject.getDate()))}`
     if (closedDateSet.has(dateStr)){
-      // Yeah my datastructures REALLY are working against me here
-      var data;
-      for(const [_BDID, closeDate] of this.closeddates){
+      // Yeah my data structures REALLY are working against me here
+      let data;
+      for(const [_BDID, closeDate] of this.props.closeddates){
         if (closeDate.ddate == dateStr){
           data = closeDate;
           break;
         }
       }
-      const message = this.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
       message[WEBSOCKET_DATATYPE] = JSON_CLOSEDDATE;
       message[WEBSOCKET_DATA] = data;
-      this.websocket.send(message);
+      this.props.websocket.send(message);
     } else { // Delete it
       const data = {}
       data[KEYWORD_DDATE] = dateStr
-      const message = this.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
+      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
       message[WEBSOCKET_DATA] = data;
       message[WEBSOCKET_DATATYPE] = JSON_CLOSEDDATE;
-      this.websocket.send(message);
+      this.props.websocket.send(message);
     }
   }
 
@@ -50,7 +50,7 @@ export class CloseDaysPage extends Component {
     <div>
       <Calender
         date={this.state.today}
-        onDayClick={this.changeCloseDay}
+        onDayClick={this.changeCloseDay.bind(this)}
         onMonthChange={productionGetMonthlyOrders(this.props.websocket)}
         getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs, this.props.closeddates)}
       ></Calender>

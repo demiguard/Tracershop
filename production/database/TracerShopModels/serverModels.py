@@ -17,7 +17,6 @@ class ServerConfiguration(SubscribableModel):
   """
   ID = models.AutoField(primary_key=True)
 
-  LegacyMode = models.BooleanField(default=True) # This field decide if the server should take into account the legacy server is running
   ExternalDatabase = models.ForeignKey(Database, on_delete=models.SET_NULL, null=True)
   SMTPServer = models.GenericIPAddressField(default="10.140.209.2")
   DateRange = models.PositiveIntegerField(default=32)

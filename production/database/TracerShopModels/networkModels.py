@@ -17,6 +17,7 @@ class Database(SubscribableModel):
   databaseName = models.CharField(max_length=32, primary_key=True)
   username = models.CharField(max_length=32)
   password = models.CharField(max_length=32, null=True)
+  legacy_database = models.BooleanField(default=False)
   address  = models.ForeignKey(
     Address,
     on_delete=models.SET_NULL,

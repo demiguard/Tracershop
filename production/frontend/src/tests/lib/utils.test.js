@@ -1,4 +1,4 @@
-import { BooleanMapping, CompareDates, removeIndex } from "../../lib/utils"
+import { BooleanMapping, compareDates, removeIndex } from "../../lib/utils"
 
 test("Compare Dates Tests", () => {
   const date_1 = new Date(2011,10,30,11,30,22);
@@ -8,12 +8,12 @@ test("Compare Dates Tests", () => {
   const date_5 = new Date(2011,9,30,11,30,22);
   const date_6 = new Date(2012,10,30,11,30,22);
 
-  expect(CompareDates(date_1, date_1)).toBeTruthy();
-  expect(CompareDates(date_1, date_2)).toBeTruthy();
-  expect(CompareDates(date_3,date_4)).toBeTruthy()
-  expect(CompareDates(date_1, date_3)).toBeFalsy();
-  expect(CompareDates(date_1, date_5)).toBeFalsy();
-  expect(CompareDates(date_1, date_6)).toBeFalsy();
+  expect(compareDates(date_1, date_1)).toBeTruthy();
+  expect(compareDates(date_1, date_2)).toBeTruthy();
+  expect(compareDates(date_3,date_4)).toBeTruthy()
+  expect(compareDates(date_1, date_3)).toBeFalsy();
+  expect(compareDates(date_1, date_5)).toBeFalsy();
+  expect(compareDates(date_1, date_6)).toBeFalsy();
 });
 
 test("BooleanMapping Tests", () => {

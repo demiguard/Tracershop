@@ -36,7 +36,7 @@ class HoverBox extends Component {
 
     return (
     <ReactHover options={TriggerOptions}>
-      <Trigger>
+      <Trigger type="trigger" styles={{width : '100%'}}>
         <div>{this.props.Base}</div>
       </Trigger>
       <Hover type="Hover">

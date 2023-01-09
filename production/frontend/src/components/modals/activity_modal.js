@@ -4,15 +4,15 @@ import { Button, ButtonGroup, Col, Form, FormControl, Modal, Row, Table } from "
 
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 import styles from '../../css/Site.module.css'
-import { renderClickableIcon, renderComment, renderOnClose, renderTableRow } from "../../lib/rendering.js";
+import { renderTableRow } from "../../lib/rendering.js";
 import { changeState, toggleState } from "../../lib/state_management.js";
 import { Calculator } from "../injectable/calculator.js";
 import Authenticate from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon } from "../injectable/icons.js";
-import { CompareDates as compareDates } from "../../lib/utils.js";
-import { AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_VIAL, WEBSOCKET_DATA,
+import { compareDates as compareDates } from "../../lib/utils.js";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_VIAL, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "../../lib/constants.js";
 import { batchNumberValidator, FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
@@ -510,11 +510,19 @@ class ActivityModal extends Component {
     auth[AUTH_USERNAME] = username;
     auth[AUTH_PASSWORD] = password;
     message[JSON_AUTH] = auth;
-    await this.props.websocket.send(message)
-    this.setState({...this.state,
-      isFreeing : false,
-      errorMessage : "",
-      errorLevel : null,
+    this.props.websocket.send(message).then((data) =>{
+      if (data[AUTH_IS_AUTHENTICATED]){
+        this.setState({...this.state,
+          isFreeing : false,
+          errorMessage : "",
+          errorLevel : null,
+        });
+      } else {
+        this.setState({...this.state,
+          errorMessage : "Forkert login",
+          errorLevel : ERROR_LEVELS.error,
+        });
+      }
     });
   }
 
@@ -703,7 +711,7 @@ class ActivityModal extends Component {
 
     const activityTableCellEditing = <Col md="auto" >
         <FormControl value={this.state.activityValue} onChange={changeState("activityValue", this)}/>
-        {renderClickableIcon("/static/images/accept.svg", this.acceptNewActivity)}
+        <ClickableIcon src={"/static/images/accept.svg"} onClick={this.acceptNewActivity}/>
       </Col>
 
     const activityTableCellFixed = <div>{Math.floor(order.amount)}</div>
