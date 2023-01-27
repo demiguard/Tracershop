@@ -1,9 +1,10 @@
 import React, { Component } from "react";
 import { Button, Form, FormControl, Modal, Spinner, Row, Col} from "react-bootstrap";
 import { CSVDownload, CSVLink } from "react-csv";
+import { CloseButton } from "../injectable/buttons.js"
 import { TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_HISTORY } from "../../lib/constants";
 import { FormatDateStr } from "../../lib/formatting";
-import { renderOnClose, renderSelect } from "../../lib/rendering";
+import { renderSelect } from "../../lib/rendering";
 import { changeState } from "../../lib/state_management";
 
 import styles from '../../css/Site.module.css';
@@ -123,7 +124,8 @@ class HistoryModal extends Component {
   }
 
   renderDownload() {
-    const Download = this.state.history.length ? <p><CSVLink data={this.state.history}><Button>Download</Button></CSVLink></p> : <p>Der er ingen Ordre i {this.state.month}/{this.state.year}</p>;
+    const Download = this.state.history.length ? <p><CSVLink data={this.state.history}><Button>Download</Button></CSVLink></p> :
+     <p>Der er ingen Ordre i {this.state.month}/{this.state.year}</p>;
 
     return (<div>
       {Download}
@@ -148,7 +150,7 @@ class HistoryModal extends Component {
           {stateRenderingFunction()}
         </Modal.Body>
         <Modal.Footer>
-          {renderOnClose(this.props.onClose)}
+          <CloseButton onClick={this.props.onClose}/>
         </Modal.Footer>
       </Modal>);
   }

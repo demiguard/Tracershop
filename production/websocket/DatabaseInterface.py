@@ -11,8 +11,7 @@
 
 __author__ = "Christoffer Vilstrup Jensen"
 
-
-from xmlrpc.client import Boolean
+from django.db.models import Model, ForeignKey, IntegerField
 from channels.db import database_sync_to_async
 
 from database.models import ServerConfiguration, Database, Address, User
@@ -21,12 +20,19 @@ from lib.SQL.SQLController import SQL
 from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
 from lib import pdfGeneration
 
+from constants import JSON_ADDRESS, JSON_DATABASE, JSON_SERVER_CONFIG
 
 from datetime import datetime, date, timedelta
-from typing import Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Optional, Tuple, Type
 import logging
 
 logger = logging.getLogger('DebugLogger')
+
+djangoModels: Dict[str, Type[Model]] = {
+  JSON_ADDRESS : Address,
+  JSON_DATABASE : Database,
+  JSON_SERVER_CONFIG : ServerConfiguration,
+}
 
 
 class DatabaseInterface():
@@ -157,18 +163,36 @@ class DatabaseInterface():
     return self.SQL.getDataClass(dataClass)
 
   @database_sync_to_async
-  def getDataClassRange(self, startDate, endDate, DataClass):
+  def getDataClassRange(self, startDate: date, endDate: date, DataClass: Type[JsonSerilizableDataClass]) -> List[JsonSerilizableDataClass]:
     return self.SQL.getDataClassRange(startDate, endDate, DataClass)
 
   @database_sync_to_async
   @typeCheckFunc
-  def DeleteIDs(self, ids : List[int], DataClass : Type) -> None:
+  def DeleteIDs(self, ids : List[int], DataClass : Type[JsonSerilizableDataClass]) -> None:
     self.SQL.deleteIDs(ids, DataClass)
 
   @database_sync_to_async
-  def CanDelete(self, data : JsonSerilizableDataClass) -> Boolean:
+  def CanDelete(self, data : JsonSerilizableDataClass) -> bool:
     return True
 
   @database_sync_to_async
   def GetConditionalElements(self, condition : str, dataClass : Type ) -> List[JsonSerilizableDataClass]:
     return self.SQL.getConditionalElements(condition, dataClass)
+
+  @database_sync_to_async
+  def editDjango(self, model_identifier : str, model : Dict, modelID: Any):
+    modelType = djangoModels.get(model_identifier)
+    if modelType is None:
+      raise KeyError("Unknown model")
+
+    instance: Model = modelType.objects.get(pk=modelID)
+
+    for key, value in model.items():
+      field = instance._meta.get_field(key)
+      if isinstance(field, ForeignKey):
+        value = field.remote_field.model.objects.get(pk=value)
+      elif isinstance(field, IntegerField):
+        value = int(value)
+      instance.__setattr__(key, value)
+
+    instance.save()

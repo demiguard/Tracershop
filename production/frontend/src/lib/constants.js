@@ -87,7 +87,6 @@ export const JSON_TRACER = "tracer"
 export const JSON_TRACER_MAPPING = "tracer_mapping";
 export const JSON_SERVER_CONFIG = "server_config";
 export const JSON_VIAL = "vial";
-export const JSON_VIAL_MAPPING = "vial_mapping";
 
 
 //Keywords - Refers to a keyword with in a data class
@@ -197,10 +196,10 @@ export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
 export const DATABASE_ACTIVE_TRACER = "activeTracer";
 export const DATABASE_ACTIVITY_ORDER = JSON_ACTIVITY_ORDER;
 export const DATABASE_ADMIN_PAGE = "adminPage";
-export const DATABASE_ADDRESS = "address";
+export const DATABASE_ADDRESS = JSON_ADDRESS;
 export const DATABASE_CUSTOMER = JSON_CUSTOMER;
 export const DATABASE_CLOSEDDATE = JSON_CLOSEDDATE;
-export const DATABASE_DATABASE = "database";
+export const DATABASE_DATABASE = JSON_DATABASE;
 export const DATABASE_DELIVER_TIME = JSON_DELIVERTIME;
 export const DATABASE_EMPLOYEE = JSON_EMPLOYEE;
 export const DATABASE_INJECTION_ORDER = JSON_INJECTION_ORDER
@@ -211,7 +210,7 @@ export const DATABASE_PRODUCTION = JSON_RUN;
 export const DATABASE_TODAY = "today";
 export const DATABASE_TRACER = JSON_TRACER;
 export const DATABASE_TRACER_MAPPING = JSON_TRACER_MAPPING;
-export const DATABASE_SERVER_CONFIG = "serverConfig";
+export const DATABASE_SERVER_CONFIG = JSON_SERVER_CONFIG;
 export const DATABASE_SHOP_CUSTOMER = "shopCustomer";
 export const DATABASE_VIAL = JSON_VIAL;
 export const DATABASE_USER = "user"
@@ -219,3 +218,8 @@ export const DATABASE_USER = "user"
 export const ERROR_TYPE_HINT = "hint";
 export const ERROR_TYPE_WARNING = "warning";
 export const ERROR_TYPE_ERROR = "error";
+
+export const PROP_LOGOUT = "logout";
+export const PROP_NAVBAR_ELEMENTS = "NavbarElements";
+export const PROP_WEBSOCKET = "websocket";
+export const PROP_USER = DATABASE_USER;

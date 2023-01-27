@@ -215,27 +215,35 @@ The websocket requires a Regis database to broadcast messages.
 The new tracershop system uses an external authentication system, provided by the Capital region called BAM ID, managed by \GLS{CIMT}. All members of staff working in the capital region
 have a BAM ID login. This login have various security features build in, such as automatic deprecation of passwords and minimum complexity requirements to passwords.
 Secondary tracershop doesn't need store passwords and can rely on \GLS{CIMT}s services for password reset and deactivation of inactive accounts.\\
-A secondary difference is that all users are personal even for customers, which is the organization ordering the tracer. A user is connected to one or more customers.
+All users in the new tracershop are personal and have a role. These are divided into 3 catagories.
 
-As not all members of staff of the capital region should be able to access tracershop, a number of Active directory groups will be added to the different user roles.
+\begin{itemize}
+  \item Shop - Users ordering tracers
+  \item Production - Users producing tracers
+  \item Admin - Users administrating the site, otherwise detached from both ordering and production of tracers
+\end{itemize}
+
+In addition there's different user subgroups that enable different features within tracershop.\\
 The groups are as follows:
 
 \begin{itemize}
-  \item[Shop - External] - The user isn't an employee of the Capital region and doesn't have BAM ID. They can view their assigned customer's orders and order tracer authorized to the customer.
+  \item Shop - External - The user isn't an employee of the Capital region and doesn't have BAM ID. They can view their assigned customer's orders and order tracer authorized to the customer.
   Each of these user are connected to an external customer. The user is managed by an production admin.
-  \item[Shop - Internal] - This is an employee of the Capital region, and has the as the external user except they have different admins.
-  They have access to additional features such as automatic calculation of orders.
-  \item[Shop - Admin] - This is an internal shop user with additional rights to modify the automatic generated order based on a RIS booking.
-  They can grant an internal user access to the same customers that they have access to.
-  \item[Produciton - User] - The user can view orders from all customers and release tracer of authorized types.
-  \item[Produciton - Admin] - Everything the production user can. Grant release rights to other production users, create new tracers, allow tracers to ordered by customers, and
+  \item Shop - Internal - This is an employee of the Capital region and therefore have a BAM ID. A user is associated with one or more internal customers. This user is managed by a "Shop Superuser" user.
+  \item Shop - Superuser - This is an internal shop user with additional rights to modify the automatic generated order based on a RIS booking.
+  They can grant an internal user access to the same customers that they moderate.
+  \item Production - User - The user can view orders from all customers and release tracer of authorized types.
+  \item Production - Admin - Everything the production user can. Grant release rights to other production users, create new tracers, allow tracers to ordered by customers, and
   manage external user.
-  \item[Site Admin] - Super user has all the functionality of other roles. The user isn't intended to use tracershop only to support it.
+  \item Site Admin - The equivalent of a root user. The user can mimic all the functionality of other roles. The user isn't intended to use tracershop only to support it.
 \end{itemize}
 
+A shop user is associated and represent a number of customers. These associations are managed by the various admins and superusers of the site.
 
 \section*{Test highlight}
-This section highlights a number of test cases, which ensures critical functionality of Tracershop.\\
+
+To ensure correctness of tracershop, 
+
 In general the validation of Tracershop doesn't concern themselves with \gls{incorrect data} since, the defining feature of incorrect data is,
 that it doesn't break any restrictions placed upon the the system, but doesn't reflect reality. The implication is that tracershop cannot detect incorrect data.
 The only method to combat \gls{incorrect data} is to allow users to modify data.\\

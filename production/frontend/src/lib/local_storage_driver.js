@@ -74,7 +74,7 @@ export var db = {
     lastUpdated : Date, //DATABASE_LAST_UPDATED
     activeTracer : Number, //DATABASE_ACTIVE_TRACER
     isAuth : Boolean, //DATABASE_IS_AUTH
-    serverConfig : Object, //DATABASE_SERVER_CONFIG
+    server_config : Object, //DATABASE_SERVER_CONFIG
     user : Object, //DATABASE_USER
     // Admin
     adminPage : String, // DATABASE_ADMIN_PAGE

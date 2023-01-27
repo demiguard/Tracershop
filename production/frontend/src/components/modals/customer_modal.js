@@ -9,7 +9,7 @@ import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_D
 } from "../../lib/constants.js"
 import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js"
 import { addCharacter } from "../../lib/utils.js";
-import { renderOnClose } from "../../lib/rendering.js";
+import { CloseButton } from "../injectable/buttons.js";
 
 import styles from '../../css/Site.module.css'
 
@@ -416,7 +416,7 @@ class CustomerModal extends Component {
           {this.renderbody()}
         </Modal.Body>
         <Modal.Footer>
-          {renderOnClose(this.props.onClose)}
+          <CloseButton onClick={this.props.onClose}/>
         </Modal.Footer>
       </Modal>
     );

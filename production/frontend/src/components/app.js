@@ -18,7 +18,7 @@ import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DE
         DATABASE_IS_AUTH, DATABASE_PRODUCTION, KEYWORD_USERGROUP, USERGROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
         DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
         AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_USER,
-        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSEDDATE, JSON_CLOSEDDATE
+        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSEDDATE, JSON_CLOSEDDATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT
       } from "../lib/constants.js";
 import { AdminSite } from "./sites/admin_site.js";
 import { ProductionSite } from "./sites/production_site.js";
@@ -413,24 +413,30 @@ export default class App extends Component {
       const errorMessage = "User have unknown usergroup:" + String(this.state.user.usergroup);
       throw errorMessage;
     }
+
+    const props = {}
+
+    props[JSON_ADDRESS] = this.state[JSON_ADDRESS];
+    props[JSON_DATABASE] = this.state[JSON_DATABASE];
+    props[JSON_CLOSEDDATE] = this.state[JSON_CLOSEDDATE];
+    props[JSON_CUSTOMER] = this.state[JSON_CUSTOMER];
+    props[JSON_DELIVERTIME] = this.state[JSON_DELIVERTIME];
+    props[JSON_EMPLOYEE] = this.state[JSON_EMPLOYEE];
+    props[JSON_ISOTOPE] = this.state[JSON_ISOTOPE];
+    props[PROP_LOGOUT] = this.logout.bind(this);
+    props[PROP_NAVBAR_ELEMENTS] = [];
+    props[JSON_ACTIVITY_ORDER] = this.state[JSON_ACTIVITY_ORDER];
+    props[JSON_RUN] = this.state[JSON_RUN];
+    props[JSON_INJECTION_ORDER] = this.state[JSON_INJECTION_ORDER];
+    props[JSON_TRACER] = this.state[JSON_TRACER];
+    props[JSON_TRACER_MAPPING] = this.state[JSON_TRACER_MAPPING];
+    props[JSON_SERVER_CONFIG] = this.state[JSON_SERVER_CONFIG];
+    props[JSON_VIAL] = this.state[JSON_VIAL];
+    props[PROP_WEBSOCKET] = this.MasterSocket;
+    props[PROP_USER] = this.state[PROP_USER]
+
     return (<Site
-      user={this.state.user}
-      address={this.state.address}
-      closeddates={this.state[DATABASE_CLOSEDDATE]}
-      customers={this.state.customer}
-      database={this.state.database}
-      deliverTimes={this.state.deliverTimes}
-      employee={this.state.employee}
-      isotopes={this.state[DATABASE_ISOTOPE]}
-      logout={this.logout.bind(this)}
-      orders={this.state[DATABASE_ACTIVITY_ORDER]}
-      runs={this.state.run}
-      t_orders={this.state.t_orders}
-      tracers={this.state.tracer}
-      tracerMapping={this.state[DATABASE_TRACER_MAPPING]}
-      serverConfig={this.state.serverConfig}
-      vials={this.state[DATABASE_VIAL]}
-      websocket={this.MasterSocket}
+      {...props}
       />);
     }
   }

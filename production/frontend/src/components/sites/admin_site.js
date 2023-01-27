@@ -2,6 +2,7 @@ import React, {Component } from "react";
 import { NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "../../lib/constants.js";
 import { db } from "../../lib/local_storage_driver.js";
+import { propsExtraction } from "../../lib/props_management.js";
 import { ConfigSite } from "./config_site.js";
 import { ProductionSite } from "./production_site.js";
 import { ShopSite } from "./shop_site.js";
@@ -77,25 +78,12 @@ class AdminSite extends Component {
       throw errorString;
     }
 
+    const props = propsExtraction(this.props)
+
+    console.log(this.props)
+
     return(<ActiveSite
-      user={this.props.user}
-      address={this.props.address}
-      closeddates={this.props.closeddates}
-      customers={this.props.customers}
-      database={this.props.database}
-      deliverTimes={this.props.deliverTimes}
-      employee={this.props.employee}
-      isotopes={this.props.isotopes}
-      logout={this.props.logout}
-      NavbarElements={NavbarAdmin}
-      orders={this.props.orders}
-      runs={this.props.runs}
-      t_orders={this.props.t_orders}
-      tracers={this.props.tracers}
-      tracerMapping={this.props.tracerMapping}
-      serverConfig={this.props.serverConfig}
-      vials={this.props.vials}
-      websocket={this.props.websocket}
+      {...props}
     />);
   }
 }

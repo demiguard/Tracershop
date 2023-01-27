@@ -1,4 +1,5 @@
 import React, {Component} from "react"
+import { propsExtraction } from "../../lib/props_management.js"
 import { ControlPanel } from "../admin_pages/control_panel.js"
 import Navbar from "../injectable/navbar.js"
 
@@ -26,6 +27,8 @@ class ConfigSite extends Component {
   render(){
     const ActiveSite = Pages[this.state.ActivePage];
 
+    const props = propsExtraction(this.props);
+
     return(
       <div>
         <Navbar
@@ -37,22 +40,7 @@ class ConfigSite extends Component {
           NavbarElements={this.props.NavbarElements}
         />
         <ActiveSite
-          Address={this.props.address}
-          customers={this.props.customers}
-          closeddates={this.props.closeddates}
-          Database={this.props.database}
-          deliverTimes={this.props.deliverTimes}
-          employee={this.props.employee}
-          isotopes={this.props.isotopes}
-          orders={this.props.orders}
-          runs={this.props.runs}
-          t_orders={this.props.t_orders}
-          tracers={this.props.tracers}
-          tracerMapping={this.props.tracerMapping}
-          ServerConfig={this.props.serverConfig}
-          vials={this.props.vials}
-          websocket={this.props.websocket}
-          user={this.props.user}
+          {...props}
         />
       </div>
     )

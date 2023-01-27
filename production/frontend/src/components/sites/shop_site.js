@@ -1,4 +1,5 @@
 import React, {Component } from "react";
+import { propsExtraction } from "../../lib/props_management";
 import Navbar from "../injectable/navbar";
 import { FutureBooking } from "../shop_pages/future_bookings.js";
 import { LocationSetup } from "../shop_pages/location_setup.js";
@@ -29,7 +30,9 @@ class ShopSite extends Component {
     this.setState(NewState);
   }
 
+
   render(){
+    const props = propsExtraction(this.props);
     return(
       <div>
         <Navbar
@@ -40,19 +43,7 @@ class ShopSite extends Component {
           setActivePage={this.setActivePage.bind(this)}
         />
         <this.state.ActivePage
-          // composing with props
-          closeddates={this.props.closeddates}
-          customers={this.props.customers}
-          deliverTimes={this.props.deliverTimes}
-          employee={this.props.employee}
-          isotopes={this.props.isotopes}
-          orders={this.props.orders}
-          runs={this.props.runs}
-          t_orders={this.props.t_orders}
-          tracers={this.props.tracers}
-          tracerMapping={this.props.tracerMapping}
-          vials={this.props.vials}
-          websocket={this.props.websocket}
+          {...props}
         />
       </div>
     )

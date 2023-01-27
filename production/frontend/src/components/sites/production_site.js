@@ -1,5 +1,6 @@
 import React, {Component } from "react";
 import { Container } from "react-bootstrap";
+import { propsExtraction } from "../../lib/props_management.js";
 import Navbar from "../injectable/navbar.js";
 import { CloseDaysPage } from "../production_pages/close_days_page.js";
 import CustomerPage from "../production_pages/customer_page.js";
@@ -47,6 +48,7 @@ class ProductionSite extends Component{
 
   render(){
     const UserPage = Pages[this.state.ActivePage];
+    const props = propsExtraction(this.props);
     return (
       <div>
         <Navbar
@@ -59,22 +61,7 @@ class ProductionSite extends Component{
         />
         <Container>
           <UserPage
-            address={this.props.address}
-            customers={this.props.customers}
-            closeddates={this.props.closeddates}
-            database={this.props.database}
-            deliverTimes={this.props.deliverTimes}
-            employee={this.props.employee}
-            isotopes={this.props.isotopes}
-            orders={this.props.orders}
-            runs={this.props.runs}
-            t_orders={this.props.t_orders}
-            tracers={this.props.tracers}
-            tracerMapping={this.props.tracerMapping}
-            serverConfig={this.props.serverConfig}
-            vials={this.props.vials}
-            websocket={this.props.websocket}
-            user={this.props.user}
+            {...this.props}
             />
           </Container>
       </div>

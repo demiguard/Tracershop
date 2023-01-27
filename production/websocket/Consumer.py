@@ -651,7 +651,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
   async def HandleEditDjango(self, message: Dict) -> None:
-    pass
+    updatedModel = await self.db.editDjango(
+      message[WEBSOCKET_DATATYPE],
+      message[WEBSOCKET_DATA],
+      message[WEBSOCKET_DATA_ID]
+    )
 
   @typeCheckFunc
   async def HandleGetOrders(self, message : Dict):
@@ -778,5 +782,3 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetOrders,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
   }
-
-  djangoModels = {""}
