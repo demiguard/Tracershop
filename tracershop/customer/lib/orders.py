@@ -2,6 +2,8 @@ import math
 
 from datetime import datetime, date, time, timedelta
 
+from typing import List, Dict
+
 from customer.lib import calenderHelper
 from customer.lib import Formatting
 from customer import constants
@@ -36,7 +38,7 @@ def calculateDosisFDG(booking, userID, times):
 
   return 0, None
 
-def calculateDosisForTime(booking : Booking, productionTime : datetime):
+def calculateDosisForTime(booking: Booking, productionTime : datetime):
   """This function calculates the amount of activity that needs to Ordered at Production time
 
   Args:
@@ -54,7 +56,7 @@ def calculateDosisForTime(booking : Booking, productionTime : datetime):
 
   if injectionTime > productionTime:
     timeDelta = (injectionTime - productionTime).total_seconds()
-    return booking.procedure.baseDosis*math.exp((math.log(2) / booking.procedure.tracer.isotope.halfTime)*timeDelta)
+    return booking.procedure.baseDosis * math.exp((math.log(2) / booking.procedure.tracer.isotope.halfTime)*timeDelta)
   else:
     raise ValueError("Cannot Deliver injetion after it has been ordered")
 
@@ -85,7 +87,7 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: 
     dateStr = f"{year}-{monthStr}-{dayStr}"
     if FDGStatus := FDG.get(dateStr):
       status += FDGStatus
-    else:  
+    else:
       if not(isOrderFDGAvailalbeForDate(calenderDate, closedDates, openDays)):
         status += 5
     if TOrderStatus := TOrders.get(dateStr):
@@ -93,8 +95,7 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: 
     else:
       if not(isOrderTAvailableForDate(calenderDate, closedDates)):
         status += 50
-      
-    
+
     returnDict[dateStr] = status
 
   return returnDict
@@ -107,10 +108,17 @@ def getMonthlyOrders(year, month, userID):
   return mergedOrders
 
 
-def isOrderFDGAvailalbeForDate(date, closedDates, openDays):
+def isOrderFDGAvailalbeForDate(date : date, closedDates, openDays : List[int]) -> bool:
   """
-    This Function determines if FDG is availble for ordering
+    This function check if you place a FDG order to the specified date right now
 
+    Args:
+      date: Date - The Date in questing
+      closedDates - Set[str]
+      openDays - List[int] - list of days tracershop is open
+
+    Returns:
+      bool: if allowed or not
   """
   now = datetime.now()
 
@@ -121,10 +129,23 @@ def isOrderFDGAvailalbeForDate(date, closedDates, openDays):
   if date.weekday() not in openDays:
     return False
 
-  deadlineWeekDate = (date.weekday() - 1) % 5
-  deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN)
-  while deadlineDateTime.weekday() != deadlineWeekDate:
-    deadlineDateTime -= timedelta(days=1)
+  # This is an old piece of code for where mondays must be ordered on the friday
+  #deadlineWeekDate = (date.weekday() - 1) % 5
+  #deadlineDateTime = datetime(date.year, date.month, date.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN)
+  #while deadlineDateTime.weekday() != deadlineWeekDate:
+  #  deadlineDateTime -= timedelta(days=1)
+
+
+  # I wanna put a small comment here why it's plus a timedelta and not just date.day + 1
+  # Consider the date 2011-01-31, correct day here would be 2011-02-01 not 2011-01-32
+  # Hence this is why
+  deadlineDateTime = datetime(
+    date.year,
+    date.month,
+    date.day,
+    constants.ORDERDEADLINEHOUR,
+    constants.ORDERDEADLINEMIN
+  ) + timedelta(days=1)
 
   if deadlineDateTime < now:
     return False

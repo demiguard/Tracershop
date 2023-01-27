@@ -44,10 +44,10 @@ modelHashMap = {
   "Procedure"           : models.Procedure,
   "Tracer"              : models.Tracer,
   "ServerConfiguration" : models.ServerConfiguration
-} 
+}
 
 
-def getactiveModels(modelName):  
+def getactiveModels(modelName):
   activeModel = modelHashMap.get(modelName)
   if not activeModel:
     print("Could not find model")
@@ -55,7 +55,7 @@ def getactiveModels(modelName):
   return activeModel
 
 class RESTAPI(View):
-  #Note this entire REST is included in 
+  #Note this entire REST is included in
   name = 'RESTAPI'
   path = 'api/REST/<str:model>'
 
@@ -67,21 +67,20 @@ class RESTAPI(View):
       activeModel = getactiveModels(model)
     except Http404 as err:
       if modelname == "Models":
-        return JsonResponse({"models" : list(modelHashMap.keys())})  
+        return JsonResponse({"models" : list(modelHashMap.keys())})
       else: 
         raise err
 
     requestData = ParseJSONRequest(request)
     if len(requestData.keys()) == 0:
-      #See note on serializers in Serializer 
-      serializeAllModels = Serializer.SerializeAll(activeModel) 
+      #See note on serializers in Serializer
+      serializeAllModels = Serializer.SerializeAll(activeModel)
       return JsonResponse(serializeAllModels)
     else:
       Instances = activeModel.obejcts.all()
       FilteredInstances = Serializer.FilterModels(Instances, requestData)
       return JsonResponse(Serializer.SerializeInstaced(FilteredInstances))
 
-    
   def post(self, request, model):
     if not request.user.is_admin:
       raise PermissionDenied
@@ -99,7 +98,7 @@ class RESTAPI(View):
 
       This is the put part of the REST functionality. It selectes a single entity and updates it. If you wanna create an entry use a POST request.
       This REST API only exposes the local Django database, so custom entraces are needed for the external Database.  So it's the other API endpoints. Could you restify them?
-      Yes, but that allows others to 
+      Yes, but that allows others to
 
       ---------
       Args:
@@ -143,7 +142,6 @@ class RESTAPI(View):
       instance = instances[0]
       instance = Serializer.DeserializeInstance(instance, Update) #This is the same object but for the sake your sanity there's an assignment
       instance.save()
-    
 
     return constants.SUCCESSFUL_JSON_RESPONSE
 

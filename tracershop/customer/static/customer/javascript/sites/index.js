@@ -59,7 +59,7 @@ var Date_onClick = function (div, date) {
     change_date(div, date);
     clear_order_table();
     fill_order_table(date).then(() => {
-      $(this).click(anno);  
+      $(this).click(anno);
     });
   }
   var jdiv = $(div);
@@ -74,7 +74,7 @@ var Month_api_call = function(year, month) {
   return {
     url: "api/monthStatus/" + String(year) + "/" + String(month + 1),
     data: {"userID" : $('#customer_select')[0].value},
-    success: function (data){return data} 
+    success: function (data){return data}
   }
 };
 
@@ -208,7 +208,7 @@ async function fill_order_table(date, DateDiv, changeDateFunction) {
       return data;
     }
   })
-  
+
   var contentDiv = $("#content");
   // FTG Orders
   for (let i = 0; i < data.responses.length; i++) {

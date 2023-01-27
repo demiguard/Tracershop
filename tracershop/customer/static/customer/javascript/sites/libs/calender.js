@@ -15,7 +15,7 @@ class CalenderFactory {
       div.parentNode.removeChild(div);
     }
   };
-  
+
   DaysInAMonth(year, month){
     return new Date(year, month,0).getDate();
   };
@@ -51,11 +51,11 @@ class CalenderFactory {
       div,
       today,
       date_coloring_function,
-      date_onClick_function, 
+      date_onClick_function,
       month_api_function,
       date_status
       //dateOnClickFunction
-    ){ 
+    ){
     this.month_api_function = month_api_function;
     this.today = today;
     this.activeDate = today;
@@ -100,7 +100,7 @@ class CalenderFactory {
     this.headDiv.append(this.nextDiv);
 
     this.main_div.append(this.headDiv);
-    
+
     this.datesdiv = document.createElement("div");
     this.datesdiv.classList.add('calender-dates');
     this.datesdiv.classList.add('d-flex');
@@ -114,11 +114,11 @@ class CalenderFactory {
     this.main_div.append(this.datesdiv);
 
     this.create_weekdays(this.today.getFullYear(), this.today.getMonth());
-    
-  };  
+
+  };
 
   create_weekdays(year, month) {
-    var startingDate = this.LastmondayInLastMonth(year, month);    
+    var startingDate = this.LastmondayInLastMonth(year, month);
     var EndingDate = this.FirstSundayInNextMonth(year, month);
 
     while (startingDate <= EndingDate) {
@@ -130,13 +130,12 @@ class CalenderFactory {
         var dayDiv = document.createElement("div");
         dayDiv.classList.add('calender-row');
         var day = new Date(year, month, pivotday);
-        
-        
+
         if (day.getUTCDate() == this.activeDate.getUTCDate() && day.getMonth() == this.activeDate.getMonth()) {
           dayDiv.classList.add('today')
         }
         var day_str = String(day.getFullYear()) + "-";
-        
+
         if (day.getMonth() < 9) {
           day_str += "0" + String(day.getMonth() + 1) + "-";
         } else {
@@ -158,12 +157,12 @@ class CalenderFactory {
     }
   };
 
-  
+
   //Activated when next month button is clicked
   change_month(change_by) {
     if (this.Updating) return;
     this.Updating = true;
-    const parentObj = this 
+    const parentObj = this
     this.remove_weekdays();
     var year  = this.today.getFullYear();
     var month = this.today.getMonth() + change_by;
@@ -172,10 +171,10 @@ class CalenderFactory {
     //This is the easiest way to not think about conversion of dates
     var month = this.today.getMonth();
     var year  = this.today.getFullYear();
-    
+
     this.monthDiv.innerText = this.today.toLocaleString('default', {month:'long'});
     var parent = this
-    
+
     var api_call = this.month_api_function(year, month)
     $.get(api_call).then(function(data) {
       parent.date_status = data;

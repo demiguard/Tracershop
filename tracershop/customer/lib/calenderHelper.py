@@ -20,8 +20,8 @@ def convert_to_datetime_time(user_input):
 
 def get_day(date):
   """
-    Accepts Datetime or Date obejcts. 
-    Note that this uses our custom date format 
+    Accepts Datetime or Date objects.
+    Note that this uses our custom date format
       Monday: 1
       Thursday: 2
       ...
@@ -29,7 +29,7 @@ def get_day(date):
   return calendar.weekday(date.year, date.month, date.day) + 1
 
 
-def convert_to_SQL_date(date):  
+def convert_to_SQL_date(date):
   return date.strftime('%Y-%m-%d')
 
 def pad_0_to_num(num:int) -> str:
@@ -39,7 +39,7 @@ def pad_0_to_num(num:int) -> str:
     return str(num)
 
 
-def compare_hours(date_one, date_two): 
+def compare_hours(date_one, date_two):
   date_one = convert_to_datetime_time(date_one)
   date_two = convert_to_datetime_time(date_two)
   return date_one == date_two
