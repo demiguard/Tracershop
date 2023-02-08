@@ -47,7 +47,7 @@ const ERROR_LEVELS = {
 class AlertBox extends Component {
   static propTypes = {
     level : propTypes.oneOf(warning_levels),
-    message    : propTypes.string
+    message    : propTypes.oneOfType([propTypes.string, propTypes.element])
   }
 
   static defaultProps = {

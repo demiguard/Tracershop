@@ -10,7 +10,7 @@ import { ParseJSONstr } from "./formatting.js";
 
 export { safeSend, TracerWebSocket }
 
-class TracerWebSocket{
+class TracerWebSocket {
   constructor(Websocket, parent){
     this._PromiseMap = new Map();
     this._ws = Websocket;

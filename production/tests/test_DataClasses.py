@@ -5,6 +5,7 @@ from typing import Dict,List, Type
 
 import functools
 
+from mysql.connector.errors import IntegrityError
 from constants import *
 from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.SQL.SQLExecuter import ExecuteQuery, Fetching
@@ -415,7 +416,7 @@ testVials = [testVial_1, testVial_2, testVial_3, testVial_4]
 
 # Powerful Stuff
 
-TEST_DATA_DICT = {
+TEST_DATA_DICT= {
     ActivityOrderDataClass : testOrders,
     CustomerDataClass : testCustomers,
     DeliverTimeDataClass : testDeliverDateTime,
@@ -444,19 +445,24 @@ def useDataClassAsync(*DataClasses : Type[JsonSerilizableDataClass]):
           await async_ExecuteQuery(f"""INSERT INTO UserRoles(Id_User, Id_Role) VALUES {", ".join(UserRolePairs)}""", Fetching.NONE)
         else:
           for testDataClass in TEST_DATA_DICT[DataClass]:
-            await async_ExecuteQuery(
-              DataClass.createDataClassQuery(
-              testDataClass.to_dict()), Fetching.NONE)
-      res = await func(*args, **kwargs)
+            try:
+              await async_ExecuteQuery(
+                DataClass.createDataClassQuery(
+                testDataClass.to_dict()), Fetching.NONE)
+            except IntegrityError:
+              print(testDataClass)
+      try:
+        res = await func(*args, **kwargs)
+      finally:
       # Database Deconstruction
-      for DataClass in DataClasses:
-        if DataClass == CustomerDataClass:
-          UserIDs = ",".join(map(lambda U: str(U.ID), testCustomers))
-          await async_ExecuteQuery(f"""DELETE FROM UserRoles WHERE Id_User IN ({UserIDs})""", Fetching.NONE)
-          await async_ExecuteQuery(f"""DELETE FROM Users WHERE id IN ({UserIDs})""", Fetching.NONE)
-        else:
-          IDs = [str(dataInstance.__getattribute__(DataClass.getIDField())) for dataInstance in TEST_DATA_DICT[DataClass]]
-          await async_ExecuteQuery(f"""DELETE FROM {DataClass.getSQLTable()} WHERE {DataClass.getIDField()} IN ({",".join(IDs)})""", Fetching.NONE)
+        for DataClass in DataClasses:
+          if DataClass == CustomerDataClass:
+            UserIDs = ",".join(map(lambda U: str(U.ID), testCustomers))
+            await async_ExecuteQuery(f"""DELETE FROM UserRoles WHERE Id_User IN ({UserIDs})""", Fetching.NONE)
+            await async_ExecuteQuery(f"""DELETE FROM Users WHERE id IN ({UserIDs})""", Fetching.NONE)
+          else:
+            IDs = [str(dataInstance.__getattribute__(DataClass.getIDField())) for dataInstance in TEST_DATA_DICT[DataClass]]
+            await async_ExecuteQuery(f"""DELETE FROM {DataClass.getSQLTable()} WHERE {DataClass.getIDField()} IN ({",".join(IDs)})""", Fetching.NONE)
       return res
     return wrapper
   return decorator

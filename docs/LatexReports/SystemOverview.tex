@@ -8,6 +8,8 @@
 \usepackage{fancyhdr}
 \usepackage{datetime}
 \usepackage{glossaries}
+\usepackage{xurl}
+
 
 \hypersetup{
   colorlinks = true,
@@ -31,6 +33,8 @@
 
 \newglossaryentry{git}{name={Git},description={Git is a free and open source distributed version control system designed to handle everything from small to very large projects with speed and efficiency. Found at \url{https://git-scm.com}}}
 \newglossaryentry{invalid state}{name={invalid state},description={This is a database}}
+
+\newglossaryentry{ema}{name={EMA}, description={European medicines Agency - \url{www.ema.europa.eu}}}
 
 \newglossaryentry{invalid data}{name={invalid data},description={Nonsensical data that could never be valid. Examples include a reference to an nonexistent object or Negative halflife or activity}}
 \newglossaryentry{incorrect data}{name={incorrect data},description={Data that doesn't reflect reality. Examples include a misspelled batch number or an activity entry which does not match actual activity in the vial}}
@@ -67,40 +71,43 @@
 \end{titlepage}
 
 \section*{Introduction}
-This document describes the electronic bookkeeping system, Tracershop, used for ordering
-and release of radioactive tracers for clinical procedures produced at Rigshospitalet's cyclotron unit.
-Rigshospitalet delivers radioactive tracers to hospitals and scientific institutions near Copenhagen,
-that would not be able to perform various PET scans without the tracers.
-Therefore Tracershop should be considered a important piece of software.\\
-The original tracershop was released in 2004 and in the field of Computer Science such a system is considered ancient.
-This document contains an exploration of various risks with the old system and presents a replacement system with the aims to improve the user experience,
-functionality, and improve IT-security, namely a react-django new web server and makes a risk assessment of the current and the new system.
 
-\subsection*{Abstractions}
-Tracershop handles two different types of orders. Activity based orders and Injection based orders.\\
-An \textbf{activity order} is defined as an order, where a customer orders an amount of MBq radioactive tracer at a predetermined time slot known as a "deliver time".
-It's the user responsibility to account for radioactive decay between injection time and delivery time.\\
-An \textbf{injection order} is an order with a number of injections with a predefined amount of activity, and it's Tracershops responsibility to account for any decay between production time and injection time.
-Users er limited per user basis which injection tracers they can order.
+This document describes the electronic web shop, Tracershop, used for ordering and release of radioactive tracers for clinical procedures produced at Rigshospitalet's cyclotron unit. Since radioactive tracers are medicinal products, Tracershop must fulfil some documentation requirements stated by GMP Volume 4 annex 11, which this document fulfil.\\
+Rigshospitalet delivers radioactive tracers to hospitals and scientific institutions around Copenhagen, that would not be able to perform various PET scans without these tracers. Therefore Tracershop should be considered a important piece of software.\\
+Tracershop was released in 2004 and is used to this day. Due to it's age a new system have been developed with the intent to replace the old system. This document contains a short description of the old system, then a deeper explication in of some techniques and technologies that the system is using to obtain a "Better" software product.\\
+Since annex 11 is dated, \gls*{ema} has released a concept paper on annex 11\footnote{\url{https://www.ema.europa.eu/en/documents/regulatory-procedural-guideline/concept-paper-revision-annex-11-guidelines-good-manufacturing-practice-medicinal-products_en.pdf}} containing various comments on the guidelines presented in annex 11. These comments have also been considered when applicable. \\
+The document have been review with Jacob Madsen and Helle Østergren Bak as Process owners, and Christoffer Vilstrup Jensen as developer.
 
-\subsection*{Requirements}
+\subsection*{User Requirements}
+
+The requirements of the software, that tracershop fulfils are:
 
 \begin{itemize}
-  \item A user can order radioactive tracer from the internet while not connected to the Capital Region intranet.
-  A user can be limited in their selection of tracers and limited time window where such tracers are available for ordering.
-  \item A user can review any order they have made, and view batch number of tracer that they have ordered. They cannot view or alter order, which doesn't belong to them. They cannot alter delivered orders.
+  \item A user can order radioactive tracer.
+  \item A user can review any order they have made, and view batch numbers of any product that they have received. They cannot alter confirmed or released orders.
+  \item A user cannot view or alter order, which doesn't belong to a related customer.
+  \item A certified user can release a radioactive tracer.
   \item A released order has a batch number and a record of who released it.
   \item Non authenticated users cannot alter or view information in tracershop.
+  \item A released tracer must display if it's intended for veterinary usage or human usage.
 \end{itemize}
 
+\subsection*{Terminology}
+
+Tracershop handles two different types of orders. Activity based orders and Injection based orders.\\
+An \textbf{activity order} is defined as: An order, where a customer orders an amount of MBq radioactive tracer at a predetermined time slot known as a "deliver time".
+It's the user responsibility to account for radioactive decay between injection time and delivery time.\\
+An \textbf{injection order} is an order with a number of injections with a predefined amount of activity, and it's Tracershops responsibility to account for any radioactive decay between production time and injection time.\\
+Users er limited which injection tracers they can order.
 
 
 \section*{Tracershop - Current system}
-Since 2004, the software ecosystem is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers. 
-This database is back up on an external machine every day at midnight.\\
-The web site is a Zope 2-2.13 web interface at \url{http://pet.rh.dk} allowing the users to systematically write to the main database.
-It is normal that software is deprecated after a period of support, and keeping a software product up to date is part of the maintenance of a software products life cycle,
-however that have not been possible due to insufficient resources.\\
+
+The software ecosystem is centered around a MySQL 5.1 database running on a openSUSE 11.2 distribution, which contains all the records and logs about the production of tracers. This database is back up on an external machine every day at midnight.
+
+Tracershop is a web site hosted with Zope 2-2.13 web interface at \url{http://pet.rh.dk} allowing the users to systematically write to the main database. These messages are logged.\\
+The website is deprecated and no longer receive updates.
+The system contains an dispenser, that records how much radioactive material was dispensed, allowing accurate tracking of activity in vials and minimizing human error. This data is pushed via a script to tracershop.\\
 An overview of the current system can be seen in figure \ref{fig:oldsys}.
 \begin{figure}[ht]
   \begin{center}
@@ -110,25 +117,11 @@ An overview of the current system can be seen in figure \ref{fig:oldsys}.
   \end{center}
 \end{figure}
 
-
-The dispenser ensures the amount of product in vials and the digital record of the product are equal.
-The dispenser writes these records to it own database, which does not support multiple concurrent connections, making it impossible to retrieve them the conventional way.
-A script circumvents this obstacle by opening the database as a file, and by using a byte offset retrieves the data of the dispensed vial.
-This solution is highly fragile, and an update to the database could change the file format of the database.
-This would render the script inoperable as the byte offset would no longer be correct.\\
-Should the offset be incorrect the script would read garbage, so it could not construct a valid entry and thus would mostly likely fail.
-In that event the production staff would have to manually read the data from the dispenser and then write the data into Tracershops database, which introduces another human error.\\
-It's therefore recommended to replace the dispenser, with one fulfils the requirements of either:
-\begin{itemize}
-  \item Writes dispensed tracer data to a database that allows multiple connections.
-  \item Writes dispensed tracer data to a file.
-\end{itemize}
-Currently it's the The Department of clinical physiology nuclear medicine which hosts the server.
-Which is not desired because hosting server is a core task \GLS{CIMT} and not the clinical departments.
-
+The system is hosted on internal server owned by The Department of clinical physiology nuclear medicine.
+This is not desired because hosting server is a core task for \GLS{CIMT} and not for the clinical departments.
 
 \subsection*{Database layout}
-The Tables in the Tracershop main database, note the tables casing does not conform to the snake casing that standard for SQL databases:
+The database contains the following tables:
 \begin{enumerate}
   \item Log - Likely Zope related. No longer in use as the last entry was in 2010-03-18.
   \item MiscData - Likely Zope related. Likely a temporary value container.
@@ -150,30 +143,58 @@ The Tables in the Tracershop main database, note the tables casing does not conf
   \item storage - Old mails, assumed not in use.
   \item t\_orders - List of injection orders.
 \end{enumerate}
-The database are not utilizing the foreign key restriction, meaning that the relations are ensured at application level and not the database level.
-It's recommend to utilize the these functionality to ensure that the database stays in a valid state.
-For instance if a tracer entry is dropped or updated, it may not be possible to determine the tracer of any historic order, that might have used this tracer.\\
-Despite Activity orders having a tracer field, this is ignored by the Zope application and assumed to be \Gls{fdg}.
+
+The database is not utilizing the foreign key restriction, meaning that the relations are ensured at application level and not the database level, and as such only reaches the first level of database normalization.
+This low level of normalization allow a number of error to be present in the database:
+\begin{itemize}
+  \item Reference errors - When a field references another table without the foreign key restriction, then the reference can point an entry that doesn't exists, which is a error, therefore any change to an ID, must by application logic update the rest of database.
+  \item Transitive functional dependencies may not respected. As an example: An activity order contains both the amount of radioactive material was ordered and how much tracer should be produced while taking into account the overhead percentage of the customer. If the ordered amount is edited then the database integrity relies on application logic to update overhead amount.
+\end{itemize}
+It's considered an industry standard to keep databases in third normal form, which require the database to be designed in such a way, that these errors cannot occur.
 
 \section*{The new Tracershop}
-Tracershop is a system of individual components, so a simple switch of system is not advised, as any of new components would likely contain early adopter errors.
-While these errors likely are easy to resolve, they would still take the system down, which is unacceptable.
-The best plan of action would be replace each individual component one at a time.
-If possible the old component should be running as a backup in the event that a new component has an error and is unavailable.\\
-The largest but easiest to replace component is the web server, as it can connect to the old MySQL database and therefore can co-exists with the old system,
-as long as the old and the new web server follows the same assumptions. Once the new tracershop is considered stable, the Zope web service can be discarded. \\
-This report suggest a django web server with a react front end. The project is open source found at:\\
-\url{https://github.com/demiguard/Tracershop}\\
-The new system uses common software packages for web servers:
+
+The idealized setup can be seen in figure \ref{fig:TSO}, it's two virtual computers hosted by \gls{CIMT} running Red hat 9 \url{https://www.redhat.com/en}:
+
+\begin{itemize}
+  \item tracershop.unix.regionh.top.local - Default server for common usage.
+  \item tracershop-dev.unix-regionh.top.local - Development server, intended for backup usage and development.
+\end{itemize}
+
+The servers run the following programs:
+
+\begin{itemize}
+  \item Apache - open source web server, \url{https://www.apache.org}
+  \item Daphne - Websocket protocol server, developed for django channels \url{https://github.com/django/daphne}
+  \item Dispenser script - This is script responsible for fetching data from the dispenser, however this might not necessary run on machine tracershop.unix.regionh.top.local, since it's dependant on file events, however ideally it runs on the host machine.
+  \item MariaDB - Open source Mysql database - \url{https://www.mariadb.org}
+  \item Redis Database - Open source in memory database - \url{https://www.redis.io}
+  \item Supervisor - Monitor program for Daphne \url{http://www.supervisord.org}
+\end{itemize}
+
+The web server daphne hosts is an open source django / channels web server found at \url{https://github.com/demiguard/Tracershop}, this program will be refed to as "the new Tracershop".
+
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=0.6\textwidth]{figures/TracershopSystemOverview.png}
+  \end{center}
+  \caption{The desired system}
+  \label{fig:TSO}
+\end{figure}
+
+The new tracershop uses common software packages for web servers:
 \begin{itemize}
   \item React - Frontend Javascript library developed by facebook. \url{https://reactjs.org}
   \item Django - Backend Python web server library \url{https://djangoproject.com}
   \item Channels - Django extension for using websockets. \url{https://channels.readthedocs.io./en/stable}
 \end{itemize}
-These packages are well supported and all in active development, so their developers will continue to provide security updates.\\
-The new Tracershop utilize websockets instead of http communication, because websockets allows the server to push updates to the users unprompted,
+These packages are well supported and all in active development, so their developers will continue to provide security updates.
+
+\subsection*{Message handling}
+
+The new Tracershop utilize websockets instead of purely http communication, because websockets allows the server to push updates to the users unprompted,
 because the protocol uses a persistance connection, while http does not use a persistent connection.
-An overview of the communication can be found in figure \ref*{fig:websocketMessage}
+This technology allow the communication protocol seen in figure \ref*{fig:websocketMessage}
 \begin{figure}[ht]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{websocketMessage.png}
@@ -181,10 +202,23 @@ An overview of the communication can be found in figure \ref*{fig:websocketMessa
     \caption{Overview of the message handling.}
   \end{center}
 \end{figure}
-This means that user always view up to date data, while in old system users might operate on out of date data, if another user have altered that data.
-The new system should be hosted hosted on \GLS{CIMT} servers, which would be in line with Rigshospitalet policies regarding software.
 
-To ensure that the new tracershop handles message correctly behavior and follows requirements of \GLS{gmp}. The message is p in a three step plan seen below:
+\begin{enumerate}
+  \item A user causes an update, that needs processing from the server.
+  \item A message is send by the server
+  \item The message is processed by the server
+  \item the server sends a responses, that the message have been processed. If the message type require an update websites state, then the server informs all clients by broadcasting the message.
+  \item The server rerenders the website with the modified state in mind.
+\end{enumerate}
+
+To ensure that each message is valid, and that user is authorized to send that message, all message are processed in a three step plan seen in figure \ref*{fig:messageHandle}
+
+\begin{enumerate}
+  \item Validate message - The server determines if the message has all the needed fields and that the fields contains values of the expected type. It also ensures that sender doesn't have an outdated version of the frontend client. If validation fails, there's no update to the database.
+  \item This checks that the sender is authorized to send, this message type. If authentication fails, there's no update to the database.
+  \item Message processing, this step performs the message.
+\end{enumerate}
+
 \begin{figure}[ht]
   \begin{center}
     \includegraphics[width=0.6\linewidth]{MessageHandeling.png}
@@ -193,29 +227,12 @@ To ensure that the new tracershop handles message correctly behavior and follows
   \end{center}
 \end{figure}
 
-\begin{enumerate}
-  \item Validate the message - ensure that the message is correctly formatted and therefore would not cause an error if processed by the web server.
-  \item Authenticate the message - Now the server can assume, the message is of a valid structure and determine it type.
-  Then it can check if the authenticated user is allowed to complete such a message.
-  \item Apply the message - Now the message is both valid and authorized, so the server will handle the message.
-\end{enumerate}
-Since the frontend doesn't have any contact with the database,
-it is sufficient to ensure that the backend handles the users messages correctly.
-This is done by a series of unit tests and end to end tests, which have a 95\% code coverage.
-Which means that there's a program, which creates a test environment and run a number of tests where 95\% of all statement in the program is executed at least once.
-Having above 90\% code coverage is considered good coverage as not all code is easily testable, nor does a code coverage of 100\% ensure that the program have no errors.
-The testing proves the web server with high confidence handles messages correctly.\\
-The django application has its own database to keep track of user session, which have been extended to to include general web site configuration.
-This means that the django application database doesn't contain any records of orders or customers. This allows easy creation of test environments,
-since the record database is a field in the django database, it can be easily exchanged to a connection to a database with a test environment.
-The websocket requires a Regis database to broadcast messages.
+\subsection*{New login system}
 
-\section*{New login system}
-
-The new tracershop system uses an external authentication system, provided by the Capital region called BAM ID, managed by \GLS{CIMT}. All members of staff working in the capital region
-have a BAM ID login. This login have various security features build in, such as automatic deprecation of passwords and minimum complexity requirements to passwords.
-Secondary tracershop doesn't need store passwords and can rely on \GLS{CIMT}s services for password reset and deactivation of inactive accounts.\\
-All users in the new tracershop are personal and have a role. These are divided into 3 catagories.
+The new tracershop system uses an external authentication system, provided by the Capital region called BAM ID, managed by \GLS{CIMT}. All members of staff working in the capital region have a BAM ID login.\\
+This login have various security features build in, such as automatic deprecation of passwords, password reset, deactivation of inactive accounts, and minimum complexity requirements to passwords. \GLS{CIMT} also handles reestablishment forgotten passwords.
+Secondary tracershop doesn't need store passwords and instead store tokens that the system can authenticate against CIMTs systems. That was if the system is compromised, no data about the users passwords is leaked.\\
+All users in the new tracershop are personal and have a role. These roles are divided into 3 catagories:
 
 \begin{itemize}
   \item Shop - Users ordering tracers
@@ -223,8 +240,9 @@ All users in the new tracershop are personal and have a role. These are divided 
   \item Admin - Users administrating the site, otherwise detached from both ordering and production of tracers
 \end{itemize}
 
-In addition there's different user subgroups that enable different features within tracershop.\\
-The groups are as follows:
+Users from different catagories uses a different interface. This is because the task in tracershop performed by users in different catagories are fundamentally different.\\
+A user acquires a role by contacting the local active directory manager, requesting the role. The manager can then determine if the role that is requested is appropriate and accept or deny the request based on their judgement.\\
+All the roles are as follows:
 
 \begin{itemize}
   \item Shop - External - The user isn't an employee of the Capital region and doesn't have BAM ID. They can view their assigned customer's orders and order tracer authorized to the customer.
@@ -233,21 +251,55 @@ The groups are as follows:
   \item Shop - Superuser - This is an internal shop user with additional rights to modify the automatic generated order based on a RIS booking.
   They can grant an internal user access to the same customers that they moderate.
   \item Production - User - The user can view orders from all customers and release tracer of authorized types.
-  \item Production - Admin - Everything the production user can. Grant release rights to other production users, create new tracers, allow tracers to ordered by customers, and
-  manage external user.
+  \item Production - Admin - Everything the production user can. Grant release rights to other production users, create new tracers, allow tracers to ordered by customers, and manage external user.
   \item Site Admin - The equivalent of a root user. The user can mimic all the functionality of other roles. The user isn't intended to use tracershop only to support it.
 \end{itemize}
 
-A shop user is associated and represent a number of customers. These associations are managed by the various admins and superusers of the site.
+A shop user is associated a number of customers. These associations are managed by the various admins and superusers of the site. By default user isn't associated with any customers, and therefore cannot view any orders until they have been associated with a customer, then they can view and order on behalf of that customer.
 
-\section*{Test highlight}
+\subsection*{Logging}
+Annex 11 is very light on it's requirement of logging, therefore we refer to the comments in the concept paper. The raw logs are only accessible by system administrators, however information contained in the logs may be visible in tracershop. Each log entry have a time stamp, and a record of the user which invoked the user statement. An anonymous User is given to any log message triggered by a user, who is not logged in.
+The new tracershop contains the following logs:
 
-To ensure correctness of tracershop, 
+\begin{itemize}
+  \item Audit log: The audit log contains significant action with regards to GMP. The log is permanent, but not backed up.  The following actions are log in the audit trail:
+  \begin{itemize}
+    \item The system automatically assign a user group to a user.
+    \item The system automatically removes a user group from a user.
+    \item A production user / admin manually adds a vial, data of the vial is logged.
+    \item A production user / admin manually edits an existing vial, both old and new data is logged.
+    \item A production user / admin frees an order.
+    \item A production admin grants releasing rights to a production user.
+  \end{itemize}
+  There's a number of actions which where considered for the audit log but, were left out due to reducing cluttering of the audit log. These are:
+  \begin{itemize}
+    \item A shop user creates an order
+    \item A production user accepts an order
+    \item A production user moves an activity order to another activity delivery.
+    \item The system creates a ghost order due to movement of an activity order
+    \item A user edits an unconfirmed or accepted order
+    \item The system creates a vial from the dispenser script.
+    \item A user logs in, the IP of the machine is also included in this log message.
+    \item A user fails to log in, due to incorrect password. The IP of the machine attempting to log in is also included.
+  \end{itemize}
+  \item Operational Log: General operational messages - Indented for debugging. Weekly Rotating log, up to 4 logs are kept
+  \item SQL log: Log of SQL command to the underlying database - Indented for debugging. Weekly Rotating log, up to logs are kept
+\end{itemize}
 
-In general the validation of Tracershop doesn't concern themselves with \gls{incorrect data} since, the defining feature of incorrect data is,
-that it doesn't break any restrictions placed upon the the system, but doesn't reflect reality. The implication is that tracershop cannot detect incorrect data.
-The only method to combat \gls{incorrect data} is to allow users to modify data.\\
-Tracershop is a bookkeeping tool not a measuring tool. It's the various measuring tools responsibility to measure correctly, which should have their own risk assessment and quality assurance.
+
+\subsection*{Testing and Development}
+
+Tracershop is a program is developed under the strategy of "continuous test-driven development". This means that the development team will continue to develop new features at the request of users, assuming the resources are available. To ensure correctness of new features and that the changes doesn't break any previous functionality of tracershop, test programs are written. These program execute a predetermined feature or functionality of tracershop, then compare the actual state and return value to the expected state and return values and flags any disparity.
+
+Currently there is 139 tests for the backed server and 121 tests for the frontend. However these are numbers are likely to increase as development time is increases. A small high light of these tests cases are seen below, showing core functionality of tracershop.
+
+% To ensure correctness of tracershop, a set of programs testing the various features of tracershop.
+
+%In general the validation of Tracershop doesn't concern themselves with \gls{incorrect data} since, the defining feature of incorrect data is,
+%that it doesn't break any restrictions placed upon the the system, but doesn't reflect reality. The implication is that tracershop cannot detect incorrect data.
+%The only method to combat \gls{incorrect data} is to allow users to modify data.\\
+%Tracershop is a bookkeeping tool not a measuring tool. It's the various measuring tools responsibility to measure correctly, which should have their own risk assessment and quality assurance.
+
 
 \begin{itemize}
   \item \texttt{websocket.tests.test\_Consumer\_end\_2\_end.test\_GreatState}\\
@@ -263,74 +315,82 @@ Tracershop is a bookkeeping tool not a measuring tool. It's the various measurin
 \end{itemize}
 
 \section*{Risk assessment}
-A risk assessment is a collections of risks. Each risk consists of:
+
+Tests cannot by definition only showcase that the program works in a predefined "idealized" environment nor do they deal with incorrect data.
+To combat the problems uncovered by the automated testing. There has been made a risk assessment below.\\
+A risk assessment is a collections of risks, where each risk consists of:
+
 \begin{itemize}
   \item A description of the risk.
+  \item A highlight of the current system
   \item A likelihood of how likely an incident is to occur.
   \item A damage estimate of an incident.
   \item A plan of action if an incident happen.
+  \item How the new system reduces this risk
 \end{itemize}
+
 This risk assessment doesn't include production related risks such a dropped vial, or tracers not passing quality assurance.
 The dispenser and the program transferring data have not modified by the new Tracershop, and therefore derives its validity from previous risk assessments.
-See document number.: CVP-PROD-TS-001-14.01 in D4, for the latest validation of the dispenser.
+See document number.: PVP-PROD-Tracershop-001-14.01 in D4, for the latest validation of Tracershop.
 
 \begin{itemize}
   \item Loss of a server.
   \begin{itemize}
     \item[Description] - A hosting server might become unavailable for a number a reasons:
-      A foreign threat might encrypt the entire server, hardware failure, or a critical files might become corrupted due to aging hard drive.
-      This is not an exhaustive list of reasons for server loss however other factors have minimal likelihood.
-      It's beneficial to have plan of action in the event of an incident caused by an unknown risk.
-    \item[Likelihood] - Low to medium - Currently the service runs on old hardware, insecure protocols and outdated software,
+    A foreign threat might encrypt the entire server, hardware failure, or a critical files might become corrupted due to aging hard drive.
+    This is not an exhaustive list of reasons for server loss however other factors have minimal likelihood.
+    It's beneficial to have plan of action in the event of an incident caused by an unknown risk.
+    \item[Currently] - Currently the service runs on old hardware, insecure protocols and outdated software,
     which raises the likelihood of an incident occurring.
-    Switching to \GLS{CIMT} hosted service with the new web server will eliminate these problems and thus reduce the risk.
-    \item[Damages] - Medium to critical - Currently if a server becomes unavailable the source code to the original tracershop is lost.
-    This means that restoration of the old system is impossible and any records made since the last backup would be lost.
-    Due to the daily backup, an estimate of lost order would be up to 20.\\
-    In the event, that both the backup PC and the server would become unavailable simultaneously all records would be lost.
-    Due to the fragility of the dispenser script, automated import of vial data could become unavailable.
-    \item[Plan] - In the event of server loss, if the loss was coursed by faulty hardware, repairing the server hardware might be possible and could restore the system to a pre-incident state, within 1-5 working days.
-    If that's not possible to repair a new server is required. Assuming that the system is not deployed on \GLS{CIMT}s services and a spare server is not available,
-    procuring a new server would take between 4-12 weeks with a 1 week installation period afterwards.
-    If the server is virtualized and backed up, and the back ups are not lost, then the downtime would be around 1 day, which \GLS{CIMT} does.\\
-    If the original source code is lost, the new web server would be forced to be used.
-    Note that the new solution doesn't suffer the same vulnerability due to be hosted on github.
-    In the case where github becomes unavailable, a replacement service would not be difficult to find as github is build around \Gls{git}.
+    \item[Likelihood] - Low to medium, Likelihood is increasing with age of the system.
+    \item[Damages] - High - Without the server, it would be impossible to create electronic records of produced tracers.
+    \item[Plan] - Repairing the server hardware might be possible and could restore the system to a pre-incident state, within 1-5 working days.
+    If that's not possible to repair a new server is required. Assuming that the system is not deployed on \GLS{CIMT}s services and a spare server is not available, procuring a new server would take between 4-12 weeks with a 1 week installation period afterwards.\\
+    Any data not in the backup would be lost.
+    \item[New System] - The system is hosted by CIMT, in a virtualized environment, allowing for easy cloning and therefore the recovery period. A backup server is also available for usage.
   \end{itemize}
   \item Database is brought into an invalid state or incorrect state.
   \begin{itemize}
-    \item[Description] - Due to the fact that it's the application responsibility to ensure correctness of the database, this is a risk.
+    \item[Description] - Due to the fact that it's the application responsibility to ensure correctness of the database, this is a risk of incident.\\
     If the record database is in an invalid state, undefined behavior might occur because some data is invalid.\\
-    Consider an example where a tracer is deleted. All orders with that tracer can no longer be determined to be of that tracer.
+    Consider an example where a tracer is deleted. All orders with that tracer can no longer be determined to be of that tracer.\\
+    A common source of errors have been duplicate acceptance messages, this have causes orders appear released. In the new tracershop, both accepting and releasing orders are idempotence operations.
+    \item[Currently] - If the database is in an invalid state, the site is unavailable.
     \item[Likelihood] - Low - The web services doesn't allow, the user to perform arbitrary SQL queries,
     only predefined queries that take the database from one valid state to another valid state.
     It's difficult to ensure all possible user inputs, so it's possible that a user query might bring the database into an invalid state.
     An incident could occur if a system administrator creates a query that brings the database is into an invalid state.
-    \item[Damages] - None to Low - The new tracershop can handle invalid database entries to an extend,
-    meaning tracershop still works for unrelated entires and therefore not take the service down.
-    The system will instead display, that certain information is undefined or not display the incorrect data at all.
+    \item[Damages] - None to Low - Restoring the database is an easy task for a system administrator, worst case would be to revert to a backup.
     If the invalid state persist unnoticed for more 1 day the backup will be over written and the damage made permanent.
-    However in such a case, it's unlikely to critical data, that have been corrupted.
-    \item[Plan of action] - Upon notice a system administrator would enter the database and create a query to revert the database into a valid state.
-    All queries made by tracershop to the record database is logged,
-    which can greatly help system administrator to undo the damage.
-    If the system administrator unable to restore the data using a query, then the plan switches to rollback to a backup of the record database, causing 1 days worth of data loss.
+    \item[Plan] - Upon notice a system administrator would enter the database and create a query to revert the database into a valid state.
+    All queries made by tracershop to the record database is logged, which can greatly help system administrator to undo the damage.
+    If the system administrator unable to restore the data using a query, then the plan switches to rollback to a backup of the record database, causing 1 days worth of data loss.\\
+    Note that direct queries to the database is not logged to the audit log, therefore their actions are untraceable, similarly their edits might not record the previous data, that is required to be logged.
+    \item[New system] - A new database have been designed which is on 5 normal form, eliminating reference and transitive errors, making it impossible to bring the state in a invalid state. A page for unexpected errors has been created, giving some hints to what the error might.
   \end{itemize}
   \item Incorrect user input
   \begin{itemize}
-    \item[Description] - Tracershop have a number of fields, where the user must write some data in. Because it's humans that write this data, the system is subject to human error.
+    \item[Description] - Tracershop have a number of fields, where the user must write some data in. Most critically this includes batch numberBecause it's humans that write this data, the system is subject to human error.
     It's incredible difficult to prevent this as there's nothing inherently wrong with \gls{incorrect data} user input. This also includes whenever a user forgets to update a piece of data.
+    \item[Currently] - No warnings are given when attempting to release an order from another day.
     \item[Likelihood] - Very high. Humans use this program, no further elaboration required.
-    \item[Damages] - None to Low - Very often human error will be spotted even ever a fresh set of eyes is looking at the \gls{incorrect data}.
-    Whenever this happen the plan of action can be applied and most likely reverse any damage done. Incorrect data is also likely to cause other data become incorrect, however it's possible.
-    \item[Plan] - The new tracershop allows user to edit non committed information their, and require users to sign in whenever they commit something to tracershop, while the information about to be committed is being displayed.
-    Should the incorrect data be committed to the database, the personnel who finds the incorrect data should contact the system administrators and await their instructions.
-    For instance if an order is committed with insufficient vials, the system administrator will request the personnel to create an additional order with the remaining vials.
+    \item[Damages] - None to High - Not all data in tracershop is critical, however if incorrect batch number is written to the database and the error is not noticed, then that could put patient safety at risk. If the incorrect data is auxillary, then there's no damages.
+    \item[Plan] - If the data is committed, a system administrator must edit the data, if not the data can be edited in tracershop.
+    \item[New Systems] - Additional warning has been made for commons errors, like freeing orders from the wrong date. See figure \ref{fig:dayhint}.
+
+    \begin{figure}[ht]
+      \begin{center}
+        \includegraphics[width=0.6\linewidth]{figures/DayHint.png}
+      \end{center}
+      \caption{Modal for releasing an order}
+      \label{fig:dayhint}
+    \end{figure}
+
   \end{itemize}
   \item The dispenser script stops working
   \begin{itemize}
-    \item[Description] - As stated above, the program that ties the dispenser and database is highly fragile and could break, if the database is updated or if the hardcoded ip addresses changes.
-    \item[Likelihood] - Low to medium - A user might accidental update the dispenser, or original server might be moved. However despite all of the alarm bells of fragility ringing, the system have been operating for 12 years.
+    \item[Description] - The script that pushes data is highly fragile. The exporting of data is not a build in feature of the dispenser, instead it writes to a local database. By monitoring file events the operating system can call a script which uses a predefined offset into this binary file. Then the script reads the data and export it to the database via SQL. The Author of this script no longer works at Rigshospitalet. Configuration of the script is also not known at time of writing, that might cause difficultly in moving the script, however moving would not prevent current operation.
+    \item[Likelihood] - Low to medium - An update to the dispensers database would render the offset incorrect. There might be other sources of errors that might cause the offset to wrong, and in such a case recovery might be difficult.
     \item[Damages] - Low - The service would be very difficult to repair, due to the author of the program no longer working at Rigshospitalet, and is a forking perl script.
     However the loss of the service would not incorrect or \gls{invalid data} by itself. Only an additional source of error and additional human labor is required.
     \item[Plan] - Users would be forced to manually input data, that normally would have been transferred automatically and correctly.
@@ -340,32 +400,37 @@ See document number.: CVP-PROD-TS-001-14.01 in D4, for the latest validation of 
     \item[Description] - The email service is external, thus may for any reason be unavailable for an undefined amount of time.
     \item[Likelihood] - Unknown - The author have so limited experience with the available of the mail server, that a valid likelihood estimate is difficult to make.
     \item[Damages] - None to low - Customers are required to wait for confirmation that the tracer passed quality assurance mandated by \GLS{gmp}, so if the email server is down, the customer can not be notified through email.
-    \item[Plan] - Due to websockets, updates to orders can be seen on tracershop in real time. Additionally users can download the email from tracershop from the associated order if needed or internal bookkeeping without any emails involved.
+    \item[Plan] - Delivery bills can be send via mails, phone calls and other communication.
+    \item[New system] - The users can download delivery bills in new system, emails are deprecated and will shut down.
   \end{itemize}
   \item Malicious usage of tracershop
   \begin{itemize}
-    \item[Description] - A user of tracershop attempt to sabotage the site.
+    \item[Description] - A user of tracershop attempt to sabotage the site. This risk also includes impersonation of staff members.
+    \item[Currently] - All communication is unencrypted, the service is vulnerable to SQL injections.
     \item[Likelyhood] - Minimal - Users both staff and customers are verified users, which minimizes the risk of malicious usage.
     \item[Damages] - Low - Even in the event of that a user some how manages to destroy the record database, the backup is stored externally and thus not subject to any attack by the malicious user.
-    \item[Plan] - All account are Personal.
-    Critical actions such as freeing orders are audit logged. Allowing system administrator to identify the malicious user.
-    There's a detection of SQL injections before the execution of each query.
+    \item[Plan] - All account are Personal. Critical actions such as freeing orders are audit logged. Allowing system administrator to identify the malicious user.
+    There's a detection of SQL injections before the execution of each query, if it detects an injection it discards the query.
+    \item[New system] - Security whole with SQL injections are patched. Communication is send over encrypted channels.
   \end{itemize}
 \end{itemize}
 
 
 \section*{Conclusion}
-The old tracershop fulfils the requirement set forwards by \GLS{gmp} annex 11, but is running on modules that have reached end of life.
 
-A new system is proposed, that fulfils \GLS{gmp}, no longer uses, and improves various aspects of the tracershop system.
-An extensive test sweep ensure that the django web server handles messages correctly.
-
-
-
-
-
+The new system contains substantial upgrades to user experience, IT security, and functionality. It fulfil the requirements stated by GMP Volume 4 Annex 11.
 
 \clearpage
 
 \printglossary[type=main,style=long,nonumberlist]
+
+\clearpage
+
+\section*{Appendix}
+
+\begin{figure}[ht]
+  \begin{center}
+    \includegraphics[width=\textwidth]{figures/risk_analyse.png}
+  \end{center}
+\end{figure}
 \end{document}

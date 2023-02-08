@@ -86,7 +86,7 @@ class ActivityModal extends Component {
    * @returns {boolean} - If the vial is acceptable
    */
   validateVial(vial){
-    var errorMessages = [];
+    const errorMessages = [];
     if(vial.charge == "") {
       errorMessages.push(<p key="charge">Batch nummer er ikke tastet ind</p>);
     } else if(!batchNumberValidator(vial.charge)){
@@ -153,7 +153,7 @@ class ActivityModal extends Component {
   cancelCalculator() {
     this.setState({...this.state,
       usingCalculator : false
-    })
+    });
   }
 
   /**
@@ -447,7 +447,7 @@ class ActivityModal extends Component {
       });
     }
 
-  throw "unknown key!"
+  throw "unknown key!";
   }
 
   /**
@@ -567,17 +567,23 @@ class ActivityModal extends Component {
     const orderDate = order.deliver_datetime.substring(0,10);
     const customer = this.props.customers.get(order.BID);
     const tableVials = []
-    for(var [vialID, vial] of this.props.vials){
-      if (vial.customer != customer.kundenr || vial.filldate != orderDate){
-        continue
+    for(let [vialID, vial] of this.props.vials){
+      if (order.status == 2 || order.status == 1){
+        if (vial.customer != customer.kundenr || vial.filldate != orderDate || vial.order_id){
+          continue
+        }
+      } else if (order.status == 3) {
+        if (order.oid != vial.order_id){
+          continue
+        }
       }
       const selected = this.state.selectedVials.has(vialID);
       const editing = this.state.editingVials.has(vialID);
       const freeing = this.state.isFreeing;
 
 
-      var editButton;
-      var useButton;
+      let editButton;
+      let useButton;
 
       if (freeing){
         editButton = <div/>
@@ -589,12 +595,12 @@ class ActivityModal extends Component {
       else if(editing){
         editButton = <ClickableIcon  // Accept Edits
           src={"/static/images/accept.svg"}
-          altText={"Accept"}
+          altText={`accept-${vialID}`}
           onClick={this.commitEditVial(vialID).bind(this)}
         />;
         useButton = <ClickableIcon  // Reject Edits
         src={"/static/images/decline.svg"}
-        altText={"decline"}
+        altText={`decline-${vialID}`}
         onClick={this.rejectEditVial(vialID).bind(this)}
       />;
       } else {
@@ -603,12 +609,12 @@ class ActivityModal extends Component {
         } else {
           editButton = <ClickableIcon // Start editing
             src={"/static/images/pen.svg"}
-            altText="rediger"
+            altText={`edit-vial-${vialID}`}
             onClick={this.startEditVial(vialID).bind(this)}
           />;
         }
         useButton = <Form.Check  // Select TVeVial(VialID)).bind(this)}
-          id={`vial-usage-${vial.ID}`}
+          aria-label={`vial-usage-${vial.ID}`}
           onChange={this.toggleVial(vialID).bind(this)}
         />
       }
@@ -619,10 +625,10 @@ class ActivityModal extends Component {
         tableVials.push(renderTableRow(
           vialID, [
             vial.ID,
-            <FormControl onChange={this.editVial(vial.ID, "charge").bind(this)} value={vial.charge}/>,
-            <FormControl onChange={this.editVial(vial.ID, "filltime").bind(this)} value={vial.filltime}/>,
-            <FormControl onChange={this.editVial(vial.ID, "volume").bind(this)} value={vial.volume}/>,
-            <FormControl onChange={this.editVial(vial.ID, "activity").bind(this)} value={vial.activity}/>,
+            <FormControl aria-label={`charge-${vialID}`} onChange={this.editVial(vial.ID, "charge").bind(this)} value={vial.charge}/>,
+            <FormControl aria-label={`filltime-${vialID}`} onChange={this.editVial(vial.ID, "filltime").bind(this)} value={vial.filltime}/>,
+            <FormControl aria-label={`volume-${vialID}`} onChange={this.editVial(vial.ID, "volume").bind(this)} value={vial.volume}/>,
+            <FormControl aria-label={`activity-${vialID}`} onChange={this.editVial(vial.ID, "activity").bind(this)} value={vial.activity}/>,
             editButton,
             useButton
           ]));
@@ -643,12 +649,12 @@ class ActivityModal extends Component {
     if(this.state.addingVial){
       tableVials.push(renderTableRow(-1,[
         "Ny",
-        <FormControl onChange={this.editAddingVial("charge").bind(this)} value={this.state.newVial.charge}/>,
-        <FormControl onChange={this.editAddingVial("filltime").bind(this)} value={this.state.newVial.filltime}/>,
-        <FormControl onChange={this.editAddingVial("volume").bind(this)} value={this.state.newVial.volume}/>,
-        <FormControl onChange={this.editAddingVial("activity").bind(this)} value={this.state.newVial.activity}/>,
-        <ClickableIcon src={"/static/images/plus.svg"} onClick={this.commitNewVial.bind(this)}/>,
-        <ClickableIcon src={"/static/images/decline.svg"} onClick={this.stopAddingVial.bind(this)}/>
+        <FormControl aria-label={`charge-new`} onChange={this.editAddingVial("charge").bind(this)} value={this.state.newVial.charge}/>,
+        <FormControl aria-label={`filltime-new`} onChange={this.editAddingVial("filltime").bind(this)} value={this.state.newVial.filltime}/>,
+        <FormControl aria-label={`volume-new`} onChange={this.editAddingVial("volume").bind(this)} value={this.state.newVial.volume}/>,
+        <FormControl aria-label={`activity-new`} onChange={this.editAddingVial("activity").bind(this)} value={this.state.newVial.activity}/>,
+        <ClickableIcon altText={"accept-new"} src={"/static/images/plus.svg"} onClick={this.commitNewVial.bind(this)}/>,
+        <ClickableIcon altText={"decline-new"} src={"/static/images/decline.svg"} onClick={this.stopAddingVial.bind(this)}/>
       ]));
     }
 
@@ -671,7 +677,8 @@ class ActivityModal extends Component {
         </tbody>
       </Table>
       <div className="flex-row-reverse d-flex">
-        {(this.state.addingVial || this.state.isFreeing) ? "" : <div>{<ClickableIcon src={"/static/images/plus.svg"} onClick={this.startAddingVial.bind(this)}/>}</div>}
+        {(this.state.addingVial || this.state.isFreeing) ? "" :
+          <div>{<ClickableIcon altText={"add-new-vial"} src={"/static/images/plus.svg"} onClick={this.startAddingVial.bind(this)}/>}</div>}
       </div>
     </div>)
   }
@@ -699,6 +706,7 @@ class ActivityModal extends Component {
       <Col md={10} className="p-2">{Math.floor(order.amount)}</Col>
       {this.state.usingCalculator ? "" :
         <Col md={2} className="p-2">{<ClickableIcon
+                                      altText={"edit-order"}
                                       src={"/static/images/calculator.svg"}
                                       onClick={this.startCalculator.bind(this)}/>}
         </Col>}
@@ -783,15 +791,17 @@ class ActivityModal extends Component {
     const deliver_datetime = new Date(order.deliver_datetime)
     var sideElement = <div></div>;
     if(this.state.usingCalculator){
+      const initial_MBq = Number(order.amount);
+
       sideElement = (<Col md={6}>
         <Calculator
+          initial_MBq={initial_MBq}
           cancel={this.cancelCalculator.bind(this)}
           commit={this.commitCalculator.bind(this)}
-          defaultMBq={300}
+          defaultMBq={Number(300)}
           isotopes={this.props.isotopes}
           productionTime={deliver_datetime}
           tracer={this.props.tracers.get(order.tracer)}
-          initial_MBq={Number(order.amount)}
         />
       </Col>)
     } else if (this.state.isFreeing){

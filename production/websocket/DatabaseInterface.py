@@ -144,6 +144,13 @@ class DatabaseInterface():
     return self.SQL.getServerConfig()
 
   @database_sync_to_async
+  def getExternalDatabase(self, serverConfig: ServerConfiguration) -> Database:
+    if serverConfig.ExternalDatabase is not None:
+      return serverConfig.ExternalDatabase
+    raise Exception
+
+
+  @database_sync_to_async
   def getElement(self, ID: int, Dataclass) -> Optional[JsonSerilizableDataClass]:
     return self.SQL.getElement(ID, Dataclass)
 
@@ -170,6 +177,13 @@ class DatabaseInterface():
   @typeCheckFunc
   def DeleteIDs(self, ids : List[int], DataClass : Type[JsonSerilizableDataClass]) -> None:
     self.SQL.deleteIDs(ids, DataClass)
+
+  @database_sync_to_async
+  def DeleteInstance(self, dataClass: JsonSerilizableDataClass) -> None:
+    id_field = dataClass.getIDField()
+    ID = getattr(dataClass,id_field)
+
+    self.SQL.deleteIDs([ID], dataClass.__class__)
 
   @database_sync_to_async
   def CanDelete(self, data : JsonSerilizableDataClass) -> bool:

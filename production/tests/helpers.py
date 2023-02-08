@@ -34,7 +34,8 @@ def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
     username=DatabaseConfig["USER"],
     password=DatabaseConfig["PASSWORD"],
     address=Address.objects.all()[0],
-    testinDatabase=True
+    testinDatabase=True,
+    legacy_database=True
     ).save()
 
   SC = SQL.getServerConfig()
@@ -305,4 +306,4 @@ def cleanTable(IDstr : str, tableStr : str, testName : str) -> None:
           idsStr += f"{id},"
         else:
           idsStr += f"{id}"
-      ExecuteQuery(f"DELETE FROM {tableStr} WHERE {id} in ({idsStr})", Fetching.NONE)
+      ExecuteQuery(f"DELETE FROM {tableStr} WHERE {IDstr} in ({idsStr})", Fetching.NONE)
