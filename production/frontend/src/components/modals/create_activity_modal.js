@@ -1,16 +1,32 @@
 import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
-
-import { renderClickableIcon, renderHoverMessage, renderStatusImage } from "../../lib/rendering";
+import propTypes from "prop-types";
 import { Calculator } from "../injectable/calculator";
 import { ParseDanishNumber } from "../../lib/formatting";
 
+
+import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, KEYWORD_AMOUNT, KEYWORD_TRACER,
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS } from "../../lib/constants.js"
+
 import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
+import { TracerWebSocket } from "../../lib/tracer_websocket";
+import { ClickableIcon } from "../injectable/icons";
 
 export { CreateOrderModal }
 
 class CreateOrderModal extends Component {
+  static propTypes = {
+    customers : propTypes.instanceOf(Map),
+    DeliverTimeMap : propTypes.instanceOf(Map),
+    isotopes : propTypes.instanceOf(Map),
+    tracer : propTypes.number,
+    onClose : propTypes.func,
+
+    tracers : propTypes.instanceOf(Map),
+    //websocket : propTypes.instanceOf(TracerWebSocket) This is needed but javascript is a fucked language...
+  }
+
   constructor(props){
     super(props);
 
@@ -51,9 +67,9 @@ class CreateOrderModal extends Component {
   changeCustomer(event){
     const newCustomer = this.props.customers.get(Number(event.target.value));
     const NewProductions = this.props.DeliverTimeMap.get(newCustomer.ID);
-    var run;
-    for(const [DTrun, _] of NewProductions){
-      run = DTrun;
+    let run;
+    for(const [deliverTimeRun, _] of NewProductions){
+      run = deliverTimeRun;
       break;
     }
 
@@ -74,29 +90,32 @@ class CreateOrderModal extends Component {
   }
 
   createOrder(){
-    const AmountNumber = ParseDanishNumber(this.state.amount);
+    const amountNumber = ParseDanishNumber(this.state.amount);
 
-    if(isNaN(AmountNumber)){
+    if(isNaN(amountNumber)){
       this.setState({
         ErrorMessage : "Aktiviteten er ikke et læstbart tal"
       });
-      return
+      return;
     }
     const customer = this.props.customers.get(Number(this.state.activeCustomerID));
     const activeProduction = this.state.productions.get(this.state.activeRun);
 
-    this.props.createOrder(
-      customer,
-      this.state.activeRun,
-      activeProduction.deliverTime,
-      AmountNumber
-    );
+    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
+    const skeleton = {};
+    skeleton[KEYWORD_BID] = customer.ID;
+    skeleton[KEYWORD_DELIVER_DATETIME] = activeProduction.deliverTime;
+    skeleton[KEYWORD_RUN] = this.state.activeRun;
+    skeleton[KEYWORD_AMOUNT] = amountNumber;
+    skeleton[KEYWORD_TRACER] = this.props.tracer;
+
+    message[WEBSOCKET_DATA] = skeleton;
+    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
+    this.props.websocket.send(message);
     this.props.onClose();
   }
 
   showCalculator(){
-    console.log(this)
-
     this.setState({...this.state,
       showCalculator : true
     })
@@ -108,17 +127,18 @@ class CreateOrderModal extends Component {
     })
   }
 
-  commitCalculator(Activity){
+  commitCalculator(activity){
+    console.log(activity)
     this.setState({...this.state,
       showCalculator : false,
-      amount : Activity,
+      amount : activity,
     });
   }
 
   render(){
     const Tracer = this.props.tracers.get(this.props.tracer)
     const activeProduction = this.state.productions.get(this.state.activeRun)
-    const TargetDatetime = new Date(activeProduction.deliverTime)
+    const TargetDateTime = new Date(activeProduction.deliverTime)
 
     const options = [];
     for(const [customerID, customer] of this.props.customers){
@@ -137,9 +157,9 @@ class CreateOrderModal extends Component {
     // Verbosity is mostly for the reader sake, so don't say I didn't think about you
     const Err = this.state.ErrorMessage.length == 0 ? false : true;
 
-    return  (
+    return (
       <Modal
-        show={this.props.show}
+        show={true}
         onHide={this.props.onClose}
         className={styles.mariLight}
       >
@@ -149,7 +169,7 @@ class CreateOrderModal extends Component {
           <Calculator
             isotopes={this.props.isotopes}
             tracer={Tracer}
-            productionTime={TargetDatetime}
+            productionTime={TargetDateTime}
             defaultMBq={300}
             cancel={this.hideCalculator.bind(this)}
             commit={this.commitCalculator.bind(this)}
@@ -158,7 +178,11 @@ class CreateOrderModal extends Component {
             <Row className={styles.Margin15tb}>
               <InputGroup>
               <InputGroup.Text>Kunde</InputGroup.Text>
-              <select onChange={this.changeCustomer.bind(this)} value={this.state.activeCustomerID} className="form-select">
+              <select
+                onChange={this.changeCustomer.bind(this)}
+                value={this.state.activeCustomerID}
+                aria-label={"customer-select"}
+                className="form-select">
                 {options}
               </select>
               </InputGroup>
@@ -166,7 +190,12 @@ class CreateOrderModal extends Component {
             <Row className={styles.Margin15tb}>
               <InputGroup>
                 <InputGroup.Text>Kørsel</InputGroup.Text>
-                <select onChange={this.changeRun.bind(this)} value={this.state.activeRun} className="form-select">
+                <select
+                  aria-label={"run-select"}
+                  onChange={this.changeRun.bind(this)}
+                  value={this.state.activeRun}
+                  className="form-select"
+                >
                   {runs}
                 </select>
               </InputGroup>
@@ -174,10 +203,17 @@ class CreateOrderModal extends Component {
             <Row className={styles.Margin15tb}>
               <InputGroup>
                 <InputGroup.Text>Aktivitet</InputGroup.Text>
-                <FormControl onChange={this.changeAmount.bind(this)} value={this.state.amount}></FormControl>
+                <FormControl
+                  aria-label={"activity-input"}
+                  onChange={this.changeAmount.bind(this)}
+                  value={this.state.amount}
+                />
                 <InputGroup.Text>MBq</InputGroup.Text>
                 <InputGroup.Text>
-                  {renderClickableIcon("/static/images/calculator.svg", this.showCalculator.bind(this))}
+                  {<ClickableIcon
+                     src="/static/images/calculator.svg"
+                     onClick={this.showCalculator.bind(this)}
+                     altText={"calculator"}/>}
                 </InputGroup.Text>
               </InputGroup>
             </Row>

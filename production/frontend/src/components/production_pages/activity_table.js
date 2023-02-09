@@ -385,7 +385,7 @@ export class ActivityTable extends Component {
       };
     this.props.websocket.send(message);
   }
-
+  /*
   modalCreateOrder(customer, run, deliverTime, amount){
     const message = this.props.websocket.getMessage(
       WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
@@ -400,7 +400,7 @@ export class ActivityTable extends Component {
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
     this.props.websocket.send(message);
   }
-
+  */
   // This needs to change
   editVial(ID,
     Charge,
@@ -706,7 +706,7 @@ export class ActivityTable extends Component {
         createVial={this.createVial.bind(this)}
         editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}
-        createOrder={this.modalCreateOrder.bind(this)}
+        //createOrder={this.modalCreateOrder.bind(this)}
         date={this.props.date}
         websocket={this.props.websocket}
       />
