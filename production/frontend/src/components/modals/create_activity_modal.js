@@ -22,9 +22,8 @@ class CreateOrderModal extends Component {
     isotopes : propTypes.instanceOf(Map),
     tracer : propTypes.number,
     onClose : propTypes.func,
-
     tracers : propTypes.instanceOf(Map),
-    //websocket : propTypes.instanceOf(TracerWebSocket) This is needed but javascript is a fucked language...
+    //websocket : propTypes.instanceOf(TracerWebSocket) //This is needed but javascript is a fucked language...
   }
 
   constructor(props){
@@ -128,7 +127,7 @@ class CreateOrderModal extends Component {
   }
 
   commitCalculator(activity){
-    console.log(activity)
+    //console.log(activity)
     this.setState({...this.state,
       showCalculator : false,
       amount : activity,
