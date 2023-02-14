@@ -8,7 +8,9 @@ const mockGetMessage = jest.fn((kw) => {
     messageType : kw
   }
 })
-const mockSend = jest.fn((data) => {});
+const mockSend = jest.fn((data) => {
+  return new Promise((data) => {return data})
+});
 
 tracer_websocket.TracerWebSocket.mockImplementation(() =>  {
   const object = Object.create(tracer_websocket.TracerWebSocket.prototype);

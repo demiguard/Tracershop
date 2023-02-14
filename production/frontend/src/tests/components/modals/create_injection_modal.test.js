@@ -8,7 +8,6 @@ import { jest } from '@jest/globals'
 
 import { CreateInjectionOrderModal } from "../../../components/modals/create_injection_modal.js"
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
-import { custom } from "babel-loader";
 
 const onClose = jest.fn()
 const module = jest.mock('../../../lib/tracer_websocket.js');

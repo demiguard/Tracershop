@@ -102,7 +102,8 @@ class CustomerModal extends Component {
 
   // Customer updates
   /**
-   * This function
+   * This function produces anonymous functions that updates the customer
+   *  Note that the customer is duplicated in state and props.
    * @param {String} kw - Keyword of the Customer, that is being altered
    * @param {CallableFunction} validateFunction - A function that validate the keyword
    * @param {Object} This - the customer modal
@@ -163,7 +164,7 @@ class CustomerModal extends Component {
       return;
     }
     // Send data
-    const newDelivertime = {
+    const newDeliverTime = {
       day : this.state.new_day,
       run : this.state.new_run,
       dtime : DeliverTime,
@@ -171,7 +172,7 @@ class CustomerModal extends Component {
       BID : this.props.userid
     };
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    message[WEBSOCKET_DATA] = newDelivertime;
+    message[WEBSOCKET_DATA] = newDeliverTime;
     message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
     this.props.websocket.send(message);
   }
@@ -214,8 +215,6 @@ class CustomerModal extends Component {
         message[WEBSOCKET_DATA] = deliverTime;
         message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
         this.props.websocket.send(message);
-      } else {
-        console.log(FormattedTime);
       }
     }
     return returnFunction.bind(this);
@@ -249,8 +248,8 @@ class CustomerModal extends Component {
       (<FormControl
           aria-label={`delivertime-dtime-${deliverTime.DTID}`}
           value={deliverTime.dtime}
-          onBlur={this.saveDeliverTime(deliverTime)}
-          onChange={this.changeDeliverTime(deliverTime)}
+          onBlur={this.saveDeliverTime(deliverTime).bind(this)}
+          onChange={this.changeDeliverTime(deliverTime).bind(this)}
           onKeyDown={this.addCharacterDeliverTime(deliverTime).bind(this)}
         />),
       <Select
@@ -330,9 +329,11 @@ class CustomerModal extends Component {
     for(const [_, deliverTime] of this.state.deliverTimes) {
       deliverTimes.push(deliverTime)
     }
-    deliverTimes.sort((dt1, dt2) => {if (dt1.day - dt2.day != 0){
-      return dt1.day - dt2.day
-    } else {return dt1.run - dt2.day}} );
+    deliverTimes.sort((dt1, dt2) => {
+      if (dt1.day - dt2.day != 0){
+        return dt1.day - dt2.day
+      } else {return dt1.run - dt2.day}
+    });
     const renderedDeliverTimes = []; // Filtering have been done
     for(const dt of deliverTimes){
       renderedDeliverTimes.push(this.renderRow(dt));

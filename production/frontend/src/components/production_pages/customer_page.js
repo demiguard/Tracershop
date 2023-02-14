@@ -1,9 +1,11 @@
 import React, { Component } from "react";
 import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
-import { renderClickableIcon, renderTableRow } from "../../lib/rendering.js";
+import { renderTableRow } from "../../lib/rendering.js";
 import { changeState } from "../../lib/state_management.js";
 import { HistoryModal } from "../modals/history_modal.js";
 import { CustomerModal } from "../modals/customer_modal.js";
+import { JSON_CUSTOMER, JSON_DELIVERTIME, JSON_RUN, JSON_TRACER, PROP_WEBSOCKET } from "../../lib/constants.js";
+import { ClickableIcon } from "../injectable/icons.js"
 
 export { CustomerPage }
 
@@ -36,7 +38,7 @@ export default class CustomerPage extends Component {
       This.setState({
         ...This.state,
         Modal : Modal,
-        activeCustomer : This.props.customers.get(key),
+        activeCustomer : This.props[JSON_CUSTOMER].get(key),
       });
     }
     return retFunc
@@ -45,15 +47,15 @@ export default class CustomerPage extends Component {
   render() {
     const customers = [];
     const FilterRegEx = new RegExp(this.state.filter,'g')
-    for (const [ID, customer] of this.props.customers) {
+    for (const [ID, customer] of this.props[JSON_CUSTOMER]) {
       if (FilterRegEx.test(customer["UserName"])) {
         customers.push(renderTableRow(ID,[
           <Container>
             <Row className="justify-content-between">
               <Col xs={3}>{customer.UserName}</Col>
               <Col xs={2}>
-                {renderClickableIcon('/static/images/setting.png', this.ActivateModal(ID, Modals.CUSTOMER, this))}
-                {renderClickableIcon('/static/images/bill.png', this.ActivateModal(ID, Modals.HISTORY, this))}
+                <ClickableIcon src={'/static/images/setting.png'} onClick={this.ActivateModal(ID, Modals.CUSTOMER, this)}/>
+                <ClickableIcon src={'/static/images/bill.png'} onClick={this.ActivateModal(ID, Modals.HISTORY, this)}/>
               </Col>
 
             </Row>
@@ -84,14 +86,13 @@ export default class CustomerPage extends Component {
       </tbody>
     </Table>
     {this.state.Modal ? <Modal
-        show={this.state.Modal}
         activeCustomer={this.state.activeCustomer}
         onClose={this.closeModal.bind(this)}
-        customers={this.props.customers}
-        deliverTimes={this.props.deliverTimes}
-        runs={this.props.runs}
-        tracers={this.props.tracers}
-        websocket={this.props.websocket}
+        customer={this.props[JSON_CUSTOMER]}
+        deliverTimes={this.props[JSON_DELIVERTIME]}
+        runs={this.props[JSON_RUN]}
+        tracers={this.props[JSON_TRACER]}
+        websocket={this.props[PROP_WEBSOCKET]}
       /> : null}
 
     </Container>
