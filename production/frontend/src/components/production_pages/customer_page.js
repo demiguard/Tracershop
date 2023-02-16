@@ -19,8 +19,8 @@ export default class CustomerPage extends Component {
     super(props);
 
     this.state = {
-      filter      : "",
-      Modal   : null,
+      filter : "",
+      Modal : null,
       activeCustomer : null,
     }
   }

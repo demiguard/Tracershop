@@ -4,11 +4,13 @@ import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS, DATABAS
   WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
   JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
   JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSEDDATE, DATABASE_CLOSEDDATE, } from "./constants.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSEDDATE, DATABASE_CLOSEDDATE, ERROR_NO_MESSAGE_ID, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, } from "./constants.js";
 import { MapDataName } from "./local_storage_driver.js";
 import { ParseJSONstr } from "./formatting.js";
 
 export { safeSend, TracerWebSocket }
+
+const { MessageChannel } = require('node:worker_threads')
 
 class TracerWebSocket {
   constructor(Websocket, parent){
@@ -32,13 +34,19 @@ class TracerWebSocket {
      */
     this._ws.onmessage = function(messageEvent) {
       const data = JSON.parse(messageEvent.data);
-      console.log(data)
-      if (data[WEBSOCKET_MESSAGE_SUCCESS] != WEBSOCKET_MESSAGE_SUCCESS){
-        this.StateHolder.setState({
-          ...this.state,
-          site_error : data[WEBSOCKET_MESSAGE_SUCCESS],
-          site_error_info : ""
-        });
+      //console.log(data)
+      if (!this.validateMessage(data)){
+        if (data.hasOwnProperty(WEBSOCKET_MESSAGE_SUCCESS)) {
+          this.StateHolder.setError({
+            site_error : data[WEBSOCKET_MESSAGE_SUCCESS],
+            site_error_info : ""
+          });
+        } else {
+          this.StateHolder.setError({
+            site_error : ERROR_NO_MESSAGE_STATUS,
+            site_error_info : ""
+          });
+        }
         return;
       }
       const pipe = this._PromiseMap.get(data[WEBSOCKET_MESSAGE_ID]);
@@ -64,11 +72,10 @@ class TracerWebSocket {
           *
         * Additional programmer note: Create a new namespace for each handled case : using {}
         */
-        case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS: //Merge to UpdateVial
-          {
+        case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:{ //Merge to UpdateVial
             const object_id = data[WEBSOCKET_DATA_ID];
-            var data_class = ParseJSONstr(data[WEBSOCKET_DATA]);
-            this.StateHolder.UpdateMap(data[WEBSOCKET_DATATYPE], [data_class], object_id, true, [])
+            let data_class = ParseJSONstr(data[WEBSOCKET_DATA]);
+            this.StateHolder.UpdateMap(MapDataName(data[WEBSOCKET_DATATYPE]), [data_class], object_id, true, [])
           }
           break;
         case WEBSOCKET_MESSAGE_GREAT_STATE:
@@ -76,8 +83,7 @@ class TracerWebSocket {
             data[JSON_GREAT_STATE]
           );
           break;
-        case WEBSOCKET_MESSAGE_MOVE_ORDERS:
-          {  // There's A double state change with this
+        case WEBSOCKET_MESSAGE_MOVE_ORDERS: {
             const ActivityOrders = [];
             for (const OrderStr of data[JSON_ACTIVITY_ORDER]) {
               ActivityOrders.push(ParseJSONstr(OrderStr));
@@ -123,52 +129,59 @@ class TracerWebSocket {
             []
           );
           break;
-        case WEBSOCKET_MESSAGE_FREE_ACTIVITY: {
-          const ActivityOrders = [];
-          for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
-            ActivityOrders.push(ParseJSONstr(ActivityStr));
-          }
-          const Vials = [];
-          for(const VialStr of data[JSON_VIAL]){
-            Vials.push(ParseJSONstr(VialStr));
-          }
-          this.StateHolder.UpdateMaps(
-            [DATABASE_ACTIVITY_ORDER, DATABASE_VIAL],
-            [ActivityOrders, Vials],
-            ["oid", "ID"]
-            [true, true],
-            [[],[]]
-          );
-        }
-        break;
         case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS: {
             const DataClass = data[WEBSOCKET_DATA];
             const ID = data[WEBSOCKET_DATA_ID]
             this.StateHolder.UpdateMap(
               MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
+        }
+        break;
+        case WEBSOCKET_MESSAGE_FREE_ACTIVITY: {
+          if(data[AUTH_IS_AUTHENTICATED]){
+            const ActivityOrders = [];
+            for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
+              ActivityOrders.push(ParseJSONstr(ActivityStr));
+            }
+            const Vials = [];
+            for(const VialStr of data[JSON_VIAL]){
+              Vials.push(ParseJSONstr(VialStr));
+            }
+            this.StateHolder.UpdateMaps(
+              [DATABASE_ACTIVITY_ORDER, DATABASE_VIAL],
+              [ActivityOrders, Vials],
+              ["oid", "ID"],
+              [true, true],
+              [[],[]]
+            );
           }
+        }
         break;
         case WEBSOCKET_MESSAGE_FREE_INJECTION: {
+          if (data[AUTH_IS_AUTHENTICATED]){
             const UpdatedOrder = ParseJSONstr(data[JSON_INJECTION_ORDER]);
             this.StateHolder.UpdateMap(DATABASE_INJECTION_ORDER, [UpdatedOrder], 'oid', true, []);
           }
-          break;
+        }
+        break;
       }
     }
 
-    this._ws.onmessage = this._ws.onmessage.bind(this)
-
-
     this._ws.onclose = function(e) {
-      console.log("Websocket closed! with code:" + e.code)
-      console.log(e.reason)
+      for(const [messageID, channel] of this._PromiseMap){
+        channel.port1.close();
+        channel.port2.close();
+      }
+      //console.log("Websocket closed! with code:" + e.code)
+      //console.log(e.reason)
     }
 
     this._ws.onerror = function(err) {
       console.error("Socket encounter error: ", err.message);
       ws.close();
     }
-
+    this._ws.onmessage = this._ws.onmessage.bind(this)
+    this._ws.onclose = this._ws.onclose.bind(this)
+    this._ws.onerror = this._ws.onerror.bind(this)
   }
 
   /** Creates a message object, that latter can be send by the websocket
@@ -183,7 +196,7 @@ class TracerWebSocket {
   }
 
   send(data){
-    var messageID;
+    let messageID;
     if (!data.hasOwnProperty(WEBSOCKET_MESSAGE_ID)){
         var TestID =  Math.floor(Math.random() * 2147483647);
 
@@ -208,8 +221,45 @@ class TracerWebSocket {
 
     return promise;
   }
-}
+  /**
+   * This function checks if a message send by the server is valid or not.
+   * @param {Object} message - The message to be validated
+   * @returns {Boolean} - If the message is valid or not
+   */
+  validateMessage(message) {
+    if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_SUCCESS)) return false;
+    if(message[WEBSOCKET_MESSAGE_SUCCESS] != WEBSOCKET_MESSAGE_SUCCESS) return false;
+    if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_ID)) return false;
+    if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_TYPE)) return false;
 
+    switch(message[WEBSOCKET_MESSAGE_TYPE]){
+      case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:{
+        if(!message.hasOwnProperty(WEBSOCKET_DATA_ID)) return false;
+        if(!message.hasOwnProperty(WEBSOCKET_DATA)) return false;
+        if(!message.hasOwnProperty(WEBSOCKET_DATATYPE)) return false;
+      }
+      break;
+      case WEBSOCKET_MESSAGE_GREAT_STATE:{
+        if(!message.hasOwnProperty(JSON_GREAT_STATE)) return false;
+      }
+      break;
+      case WEBSOCKET_MESSAGE_MOVE_ORDERS:{
+        if(!message.hasOwnProperty(JSON_ACTIVITY_ORDER)) return false;
+        if(!message.hasOwnProperty(WEBSOCKET_DEAD_ORDERS)) return false;
+      }
+      break;
+      case WEBSOCKET_MESSAGE_GET_ORDERS:{
+        if(!message.hasOwnProperty(JSON_ACTIVITY_ORDER)) return false;
+        if(!message.hasOwnProperty(JSON_INJECTION_ORDER)) return false;
+        if(!message.hasOwnProperty(JSON_VIAL)) return false;
+        if(!message.hasOwnProperty(JSON_CLOSEDDATE)) return false;
+      }
+      break;
+    }
+
+    return true;
+  }
+}
 
 async function safeSend(message, websocket){
   var iter = 0;
