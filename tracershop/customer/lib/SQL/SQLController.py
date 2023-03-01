@@ -9,6 +9,9 @@ from customer.lib import calenderHelper
 from customer.lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
 from customer.models import User, PotentialUser, ServerConfiguration, Database, Customer, Location, Booking
 
+from logging import getLogger
+
+logger = getLogger('TracershopLogger')
 
 def queryOrderByMonth(year : int,month : int, userID : int) -> list:
   SQLQuery       = SQLFactory.createSQLQueryOrderStatusByMonth(year, month, userID)
@@ -77,6 +80,8 @@ def insertOrderFTG(
       username    : str
     )      -> None:
 
+  logger.info(f"Inserting FTG order to {userID}")
+
 
   overhead = getCustomerOverhead(userID)
   if overhead:
@@ -101,7 +106,7 @@ def insertOrderFTG(
 
 def insertTOrder(
     injections : int,
-    deliver_datetime : Type[datetime],
+    deliver_datetime : datetime,
     tracerID   : int,
     usage      : str,
     userID     : int,
@@ -112,6 +117,7 @@ def insertTOrder(
   SQLQuery = SQLFactory.createSQLQUeryInsertTOrder(
     userID, deliver_datetime,tracerID, injections, usage, username, comment
   )
+  logger.info(f"Inserting Injection order to {userID}")
   SQLExecuter.ExecuteQuery(SQLQuery)
 
 

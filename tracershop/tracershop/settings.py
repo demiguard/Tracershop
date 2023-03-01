@@ -31,8 +31,6 @@ AUTH_USER_MODEL = 'customer.User'
 AUTHENTICATION_BACKENDS = ['customer.backends.SimpleBackend']
 LOGIN_URL = '/'
 
-
-
 # Application definition
 
 INSTALLED_APPS = [
@@ -97,7 +95,7 @@ DATABASES = {
         'NAME': 'tracerstore',
         'USER': 'tracershop',
         'PASSWORD': 'tracer',
-        'HOST': 'localhost', 
+        'HOST': 'localhost',
         'PORT': '3306'
     }
 }
@@ -142,3 +140,45 @@ USE_L10N = True
 STATIC_URL = '/static/'
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 STATIC_ROOT = os.path.join(BASE_DIR, "customer/static")
+
+TracershopLoggerFilePath = os.environ.get('TRACERSHOP_LOGGING_PATH','log.log')
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'filters': {
+        'require_debug_false' : {
+            '()': 'django.utils.log.RequireDebugFalse',
+        },
+        'require_debug_true' : {
+            '()': 'django.utils.log.RequireDebugTrue',
+        },
+    },
+    'formatters': {
+        'django.server': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '[{server_time}] {message}',
+            'style': '{',
+        },
+        'TracershopFormatter': {
+            '()': 'django.utils.log.ServerFormatter',
+            'format': '{server_time} {funcName} {message}',
+            'style': '{',
+        }
+    },
+    'handlers': {
+        'django.server': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter' : 'django.server'
+        },
+        'TracershopLogger': {
+            'level': 'INFO',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': TracershopLoggerFilePath,
+            'formatter': 'TracershopFormatter',
+            'when': 'D',
+            'backupCount': 0, # Keeps all backups
+        }
+    },
+}

@@ -180,7 +180,7 @@ def createSQLQueryTOrders(date, userID : int) -> str:
 
 def createSQLQUeryInsertTOrder(
     userID : int,
-    deliver_datetime : Type[datetime],
+    deliver_datetime : datetime,
     tracer : int,
     n_injections : int,
     anvendelse : str,

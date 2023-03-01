@@ -6,7 +6,7 @@ from django.http import JsonResponse, HttpResponseBadRequest
 
 from datetime import datetime, date
 
-from customer.lib.orders import isOrderFDGAvailalbeForDate
+from customer.lib.orders import isOrderFDGAvailableForDate
 from customer.lib.Formatting import ParseJSONRequest
 from customer.lib.SQL import SQLController as SQL
 from customer import constants
@@ -33,7 +33,7 @@ class ApiEditOrder(LoginRequiredMixin, View):
     data = typeCorrectData(StringData)
 
     monthlyCloseDates = SQL.monthlyCloseDates(data["Date"].year, data["Date"].month)
-    if not isOrderFDGAvailalbeForDate(data["Date"], monthlyCloseDates, [0,1,2,3,4]):
+    if not isOrderFDGAvailableForDate(data["Date"], monthlyCloseDates, [0,1,2,3,4]):
       return JsonResponse({
         "Success" : "InvalidDate"
       })
@@ -59,7 +59,7 @@ class ApiEditOrder(LoginRequiredMixin, View):
     Data["Date"] = datetime.strptime(Data["Date"], "Dato:%d/%m/%Y")
     monthlyCloseDates = SQL.monthlyCloseDates(Data["Date"].year, Data["Date"].month)
     print(Data["Date"])
-    if not isOrderFDGAvailalbeForDate(Data["Date"], monthlyCloseDates, [0,1,2,3,4,5,6,7]):
+    if not isOrderFDGAvailableForDate(Data["Date"], monthlyCloseDates, [0,1,2,3,4,5,6,7]):
       return JsonResponse({
         "Success" : "InvalidDate"
       })

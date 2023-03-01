@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect
 from django.views.generic import TemplateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.http import HttpRequest
 
 import datetime
 import json
@@ -20,8 +21,8 @@ class IndexView(LoginRequiredMixin, TemplateView):
   redirect_field_name = 'loginView'
   name = "index"
   path = ""
-  
-  def get(self, request):
+
+  def get(self, request: HttpRequest):
     today = datetime.date.today()
     active_customerID = activeCustomer.GetActiveCustomer(request)
     serverConfiguration = SQL.getServerConfig()
@@ -29,14 +30,13 @@ class IndexView(LoginRequiredMixin, TemplateView):
 
     customerIDs = LMap(
       lambda x: (x.CustomerID.ID, x.CustomerID.customerName),
-      models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))    
+      models.UserHasAccess.objects.filter(userID=request.user).order_by('CustomerID'))
     ### Data construction ###
     # get data #
     is_closed  = SQL.getClosed(today)
     runs       = SQL.getDailyRuns(today, active_customerID)
     injections = SQL.queryOrderByDate(today, active_customerID)
-    openDays   = SQL.getOpenDays(request.user.ID)
-
+    openDays   = SQL.getOpenDays(request.user.ID) #type: ignore # Login required - Defensive programming might be argued here
 
     #Compute
 
@@ -45,21 +45,17 @@ class IndexView(LoginRequiredMixin, TemplateView):
     MonthlyOrders           = orders.getMonthlyOrders(today.year, today.month, active_customerID)
 
     secondaryOrderFormQuery = SQL.getTOrdersForms(active_customerID)
-    
 
     data = Filters.matchOrders(injections, runs)
-    
-    if not orders.isOrderFDGAvailalbeForDate(today, monthlyCloseDates, openDays):
-      data = orders.removeOrdersFromList(data) 
 
-
+    if not orders.isOrderFDGAvailableForDate(today, monthlyCloseDates, openDays):
+      data = orders.removeOrdersFromList(data)
 
     if orders.isOrderTAvailableForDate(today, monthlyCloseDates):
       secondaryOrdersForms = formFactory.SecondaryOrderForms(secondaryOrderFormQuery)
     else:
       secondaryOrdersForms = []
     DailyTOrders            = SQL.getDailyTOrders(today, active_customerID)
-    
 
     context = {
       'customerIDs'     : customerIDs,
@@ -76,5 +72,5 @@ class IndexView(LoginRequiredMixin, TemplateView):
       'OrderMinute'     : calenderHelper.pad_0_to_num(constants.ORDERDEADLINEMIN),
     }
     response = render(request, self.template_name, context=context)
-    response.set_cookie("ActiveCustomer", active_customerID, samesite="strict")
+    response.set_cookie("ActiveCustomer", str(active_customerID), samesite="strict")
     return response

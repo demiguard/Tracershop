@@ -4,11 +4,15 @@ from datetime import datetime, date, time, timedelta
 
 from typing import List, Dict
 
+from logging import getLogger
+
 from customer.lib import calenderHelper
 from customer.lib import Formatting
 from customer import constants
 from customer.lib.SQL import SQLController as SQL
 from customer.models import Procedure, Booking, Tracer
+
+logger = getLogger('TracershopLogger')
 
 def calculateDosisFDG(booking, userID, times):
   if not(startDate := booking.startDate):
@@ -26,8 +30,8 @@ def calculateDosisFDG(booking, userID, times):
   if (halfLife := procedure.tracer.isotope.halfTime) == None:
     return 0, None
 
-  startdatetime = calenderHelper.combine_time_and_date(startDate, startTime)
-  injectionTime = startdatetime + timedelta(minutes=delay)
+  start_datetime = calenderHelper.combine_time_and_date(startDate, startTime)
+  injectionTime = start_datetime + timedelta(minutes=delay)
   times = reversed(times)
 
   for time in times:
@@ -51,14 +55,32 @@ def calculateDosisForTime(booking: Booking, productionTime : datetime):
   Returns:
       float: Amount of MBq that needs to be ordered
   """
-  startdatetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
-  injectionTime = startdatetime + timedelta(minutes=booking.procedure.delay)
+  start_datetime = calenderHelper.combine_time_and_date(booking.startDate, booking.startTime)
+  injectionTime = start_datetime + timedelta(minutes=booking.procedure.delay)
 
   if injectionTime > productionTime:
+    baseDosis = booking.procedure.baseDosis
+    if baseDosis is None:
+      logger.error("Base Dosis is None!")
+      baseDosis = 0
+
+    tracer = booking.procedure.tracer
+    if tracer is None:
+      logger.error(f"Procedure: {booking.procedure} does not have a Tracer associated with it")
+      halflife = 1
+    elif tracer.isotope is None:
+      logger.error(f"Tracer: {tracer} does not have a isotope associated with it")
+      halflife = 1
+    elif tracer.isotope.halfTime is None:
+      logger.error(f"Isotope: {tracer.isotope} doesn't have a halflife")
+      halflife = 1
+    else:
+      halflife = tracer.isotope.halfTime
+
     timeDelta = (injectionTime - productionTime).total_seconds()
-    return booking.procedure.baseDosis * math.exp((math.log(2) / booking.procedure.tracer.isotope.halfTime)*timeDelta)
+    return baseDosis * math.exp((math.log(2) / halflife)*timeDelta)
   else:
-    raise ValueError("Cannot Deliver injetion after it has been ordered")
+    raise ValueError("Cannot Deliver injection order after it has been ordered")
 
 
 def insertTOrderBooking(booking : Booking, customerID : int , username):
@@ -88,7 +110,7 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: 
     if FDGStatus := FDG.get(dateStr):
       status += FDGStatus
     else:
-      if not(isOrderFDGAvailalbeForDate(calenderDate, closedDates, openDays)):
+      if not(isOrderFDGAvailableForDate(calenderDate, closedDates, openDays)):
         status += 5
     if TOrderStatus := TOrders.get(dateStr):
       status += 10 * TOrderStatus
@@ -104,11 +126,11 @@ def getMonthlyOrders(year, month, userID):
   MonthlyStatusFDG     = SQL.queryOrderByMonth(year, month, userID)
   MonthlyStatusTOrders = SQL.queryTOrderByMonth(year, month, userID)
   mergedOrders         = MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders, userID) 
-  
+
   return mergedOrders
 
 
-def isOrderFDGAvailalbeForDate(date : date, closedDates, openDays : List[int]) -> bool:
+def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int]) -> bool:
   """
     This function check if you place a FDG order to the specified date right now
 
@@ -123,10 +145,12 @@ def isOrderFDGAvailalbeForDate(date : date, closedDates, openDays : List[int]) -
   now = datetime.now()
 
   if closedDates.get(date.strftime("%Y-%m-%d")):
+    logger.info("Denied, Closed day")
     return False
 
 
   if date.weekday() not in openDays:
+    logger.info("Denied, not an open day")
     return False
 
   # This is an old piece of code for where mondays must be ordered on the friday
@@ -148,31 +172,35 @@ def isOrderFDGAvailalbeForDate(date : date, closedDates, openDays : List[int]) -
   ) + timedelta(days=1)
 
   if deadlineDateTime < now:
+    logger.info("Denied, Deadline passed")
     return False
 
+  logger.info("Accepted")
   return True
 
 
-def isOrderTAvailableForDate(date, closedDates):
-  now = datetime.now()
-
-  nextDeadlineday  = now + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - now.weekday()) % 7)
-  deadlineDateTime = datetime(nextDeadlineday.year, nextDeadlineday.month, nextDeadlineday.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
+def isOrderTAvailableForDate(date, closedDates, now= datetime.now()) -> bool:
+  nextDeadlineDay  = now + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - now.weekday()) % 7)
+  deadlineDateTime = datetime(nextDeadlineDay.year, nextDeadlineDay.month, nextDeadlineDay.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
   if now.weekday() == constants.TORDERDEADLINEWEEKDAY:
     nowDT = datetime(date.year, date.month, date.day, now.hour, now.minute)
   else:
     nowDT = datetime(date.year, date.month, date.day, 0, 0)
-  if nowDT < deadlineDateTime :
+
+  if nowDT < deadlineDateTime:
+    logger.info("Denied, Deadline passed")
     return False
 
   if closedDates.get(date.strftime("%Y-%m-%d")):
+    logger.info("Denied, Closed day")
     return False
 
+  logger.info("Accepted")
   return True
 
 def removeOrdersFromList(responses):
-  returnlist = []
+  return_list = []
   for response in responses:
     if response['data_type'] != "form":
-      returnlist.append(response)
-  return returnlist
+      return_list.append(response)
+  return return_list

@@ -34,8 +34,8 @@ class ApiOrderDate(View):
     else:
       tOrderForms = []
 
-    if not orders.isOrderFDGAvailalbeForDate(dt_object, closedDates, openDays):
-      responses = orders.removeOrdersFromList(responses) 
+    if not orders.isOrderFDGAvailableForDate(dt_object, closedDates, openDays):
+      responses = orders.removeOrdersFromList(responses)
 
     response_dir = {
       'responses'    : responses,
@@ -47,4 +47,4 @@ class ApiOrderDate(View):
       if order['data_type'] == "form":
         del order['data']
 
-    return JsonResponse(response_dir)    
+    return JsonResponse(response_dir)

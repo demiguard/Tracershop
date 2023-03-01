@@ -5,12 +5,15 @@ from django.http import JsonResponse, HttpResponseBadRequest
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 
 from datetime import datetime, date
-
+from logging import getLogger
+from typing import Any, Optional, Tuple
 
 from customer.constants import SUCCESSFUL_JSON_RESPONSE
 from customer.models import Tracer, Booking, Procedure
 from customer.lib import orders, calenderHelper, Formatting
 from customer.lib.SQL import SQLController as SQL
+
+logger = getLogger('TracershopLogger')
 
 datetimeFormatStr = "%Y-%m-%d %H-%M"
 
@@ -18,12 +21,11 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
   path = "api/MassAddOrder"
   name = "APIMassAddOrder"
 
-  def processData(self,qDict):
+  def processData(self,qDict) -> Tuple[Optional[Tracer], Any, Any]:
     tracer = None,
     customer = None
     studies = {}
     for key,item in qDict.items():
-      print("key: ", key, "Item: ", item)
       if key == 'tracer':
         try:
           tracer = Tracer.objects.get(tracerName=item)
@@ -42,11 +44,12 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
     username = request.user.username
     data = Formatting.ParseJSONRequest(request)
     tracer, customerID, studies = self.processData(data)
-    if not studies:
-      print("Empty mass order")
+    if len(studies) == 0:
+      logger.error("Empty mass order")
       return JsonResponse({})
 
-    if not(tracer and customerID and studies):
+    if tracer is None or customerID is None:
+      logger.error(f"Missing tracer or customerID\nTracer: {tracer}\nCustomerID: {customerID}")
       return JsonResponse({})
 
     tmpAccessionNumber = list(studies.keys())[0]
@@ -59,16 +62,16 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
     if isFDG := tracer.tracerName == "FDG":
       # Activity Tracers have different allowance than injections tracers
       monthlyCloseDates = SQL.monthlyCloseDates(startDate.year, startDate.month)
-      AllowedToOrder = orders.isOrderFDGAvailalbeForDate(startDate, monthlyCloseDates, [0,1,2,3,4])
+      AllowedToOrder = orders.isOrderFDGAvailableForDate(startDate, monthlyCloseDates, [0,1,2,3,4])
     else:
       pass
 
 
     if not AllowedToOrder:
+      logger.info(f"A Late order attempt made by: {username}")
       return JsonResponse({
         'Success' : 'lateOrdering'
       })
-
 
     if isFDG:
       times = {calenderHelper.combine_time_and_date(startDate, item['dtime']) : 0
