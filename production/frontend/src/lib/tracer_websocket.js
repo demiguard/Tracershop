@@ -10,8 +10,6 @@ import { ParseJSONstr } from "./formatting.js";
 
 export { safeSend, TracerWebSocket }
 
-const { MessageChannel } = require('node:worker_threads')
-
 class TracerWebSocket {
   constructor(Websocket, parent){
     this._PromiseMap = new Map();
