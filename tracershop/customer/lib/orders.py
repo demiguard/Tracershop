@@ -172,7 +172,7 @@ def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int]) -> 
   ) + timedelta(days=1)
 
   if deadlineDateTime < now:
-    logger.info("Denied, Deadline passed")
+    logger.info(f"Denied, Deadline for {date} passed is {deadlineDateTime}")
     return False
 
   logger.info("Accepted")
@@ -188,7 +188,7 @@ def isOrderTAvailableForDate(date, closedDates, now= datetime.now()) -> bool:
     nowDT = datetime(date.year, date.month, date.day, 0, 0)
 
   if nowDT < deadlineDateTime:
-    logger.info("Denied, Deadline passed")
+    logger.info(f"Denied, Deadline for {date} passed is {deadlineDateTime}")
     return False
 
   if closedDates.get(date.strftime("%Y-%m-%d")):

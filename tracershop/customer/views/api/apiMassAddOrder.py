@@ -64,7 +64,7 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
       monthlyCloseDates = SQL.monthlyCloseDates(startDate.year, startDate.month)
       AllowedToOrder = orders.isOrderFDGAvailableForDate(startDate, monthlyCloseDates, [0,1,2,3,4])
     else:
-      pass
+      AllowedToOrder = orders.isOrderTAvailableForDate(startDate, monthlyCloseDates)
 
 
     if not AllowedToOrder:
