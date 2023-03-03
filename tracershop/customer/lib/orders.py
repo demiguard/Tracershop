@@ -187,7 +187,7 @@ def isOrderTAvailableForDate(date, closedDates, now= datetime.now()) -> bool:
   else:
     nowDT = datetime(date.year, date.month, date.day, 0, 0)
 
-  if nowDT < deadlineDateTime:
+  if nowDT > deadlineDateTime:
     logger.info(f"Denied, Deadline for {date} passed is {deadlineDateTime}")
     return False
 
