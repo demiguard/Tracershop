@@ -170,27 +170,23 @@ def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int], now
   ) + timedelta(days=1)
 
   if deadlineDateTime < now:
-    logger.info("Denied, Deadline passed")
+    logger.info(f"Denied, Deadline for {date} passed is {deadlineDateTime}")
     return False
 
   logger.info("Accepted")
   return True
 
 
-def isOrderTAvailableForDate(date, closedDates, now=datetime.now()) -> bool:
-  nextDeadlineDay  = now + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - now.weekday()) % 7)
-  deadlineDateTime = datetime(nextDeadlineDay.year, nextDeadlineDay.month, nextDeadlineDay.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
-  if now.weekday() == constants.TORDERDEADLINEWEEKDAY:
-    nowDT = datetime(date.year, date.month, date.day, now.hour, now.minute)
-  else:
-    nowDT = datetime(date.year, date.month, date.day, 0, 0)
-
-  if nowDT < deadlineDateTime:
-    logger.info("Denied, Deadline passed")
-    return False
-
+def isOrderTAvailableForDate(date: date, closedDates, now=datetime.now()) -> bool:
   if closedDates.get(date.strftime("%Y-%m-%d")):
     logger.info("Denied, Closed day")
+    return False
+
+  nextDeadlineDay  = date + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - date.weekday()) % 7)
+  deadlineDateTime = datetime(nextDeadlineDay.year, nextDeadlineDay.month, nextDeadlineDay.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
+
+  if deadlineDateTime < now:
+    logger.info(f"Denied, Deadline for {date} passed is {deadlineDateTime}")
     return False
 
   logger.info("Accepted")

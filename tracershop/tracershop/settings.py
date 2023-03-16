@@ -181,4 +181,10 @@ LOGGING = {
             'backupCount': 0, # Keeps all backups
         }
     },
+    'loggers' : {
+        'TracershopLogger' : {
+            'handlers' : ['TracershopLogger'],
+            'level': 'DEBUG'
+        }
+    }
 }
