@@ -13,19 +13,34 @@
 
   <div id="Study" class="col-9">
     <div class="row">
-      <strong id="DateStrong">
-        {{ todayDanishFormat }}
-      </strong>
       <div class="col-1"></div>
       <div id="Next update">
         Næste Opdatering: {{ NextUpdate.time | time:'H:i' }}
       </div>
     </div>
+    <div class="row">
+      Deadline for FDG til den: &nbsp; <strong id="DateStrong">
+        {{ todayDanishFormat }}
+      </strong> &nbsp; er &nbsp;
+      <strong id="deadline-FDG">
+        {{ Deadline }}
+      </strong>
+    </div>
+    <div class="row" >
+      Deadline for Special Tracers til den: &nbsp;
+      <strong id="DateStrong-special">
+        {{ todayDanishFormat }}
+      </strong> &nbsp; er &nbsp;
+      <strong id="deadline-special">
+        {{ Deadline_Special }}
+      </strong>
+    </div>
     {% for key, list in studies.items %}
     <div class="TracerDiv row col-12">
       <div class="col-12 overViewDiv">
-        <input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data"> 
+        <input class="btn btn-info tableButton" id="{{ forloop.counter0 }}-button" type="button" value="Vis data">
         <strong id="{{ forloop.counter0 }}-tracer">{{ key }}</strong>
+
       </div>
       <div class=hidden id="{{ forloop.counter0 }}-div">
         <table id="{{ forloop.counter0 }}-table" class="dataTable table">

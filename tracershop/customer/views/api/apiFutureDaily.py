@@ -4,11 +4,11 @@ from django.http import JsonResponse, HttpResponseBadRequest
 
 from datetime import date
 
-from customer.models import Customer
+from customer.models import Customer, Tracer
 from customer.lib.Filters import FilterBookings
 from customer.lib.SQL import SQLController as SQL
+from customer.lib.orders import getDeadline
 from customer.modelsDir.authModels import Booking
-
 
 class ApiFutureBookingDay(View):
   name = "ApiFutureBookingDay"
@@ -29,9 +29,17 @@ class ApiFutureBookingDay(View):
     bookings = FilterBookings(customer, queryDate)
     deliverTimes = SQL.getDailyRuns(queryDate, request.POST[self.USERIDKEY])
 
+    fdg = Tracer.objects.get(tracerName="FDG")
+    pib = Tracer.objects.get(tracerName="PIB")
+
+    fdg_deadline = getDeadline(queryDate, fdg)
+    pib_deadline = getDeadline(queryDate, pib)
+
     response = {
       'bookings' : bookings,
       'deliverTimes' : deliverTimes,
+      'Deadline' : fdg_deadline.strftime("%H:%M %d/%m/%Y"),
+      'Deadline_special' : pib_deadline.strftime("%H:%M %d/%m/%Y"),
     }
 
     return JsonResponse(response)

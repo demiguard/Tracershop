@@ -125,12 +125,12 @@ def MergeMonthlyOrders(year: int, month: int, FDG: dict, TOrders: dict, userID: 
 def getMonthlyOrders(year, month, userID):
   MonthlyStatusFDG     = SQL.queryOrderByMonth(year, month, userID)
   MonthlyStatusTOrders = SQL.queryTOrderByMonth(year, month, userID)
-  mergedOrders         = MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders, userID) 
+  mergedOrders         = MergeMonthlyOrders(year, month, MonthlyStatusFDG, MonthlyStatusTOrders, userID)
 
   return mergedOrders
 
 
-def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int]) -> bool:
+def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int], now=datetime.now()) -> bool:
   """
     This function check if you place a FDG order to the specified date right now
 
@@ -142,8 +142,6 @@ def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int]) -> 
     Returns:
       bool: if allowed or not
   """
-  now = datetime.now()
-
   if closedDates.get(date.strftime("%Y-%m-%d")):
     logger.info("Denied, Closed day")
     return False
@@ -179,7 +177,7 @@ def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int]) -> 
   return True
 
 
-def isOrderTAvailableForDate(date, closedDates, now= datetime.now()) -> bool:
+def isOrderTAvailableForDate(date, closedDates, now=datetime.now()) -> bool:
   nextDeadlineDay  = now + timedelta(days=(constants.TORDERDEADLINEWEEKDAY - now.weekday()) % 7)
   deadlineDateTime = datetime(nextDeadlineDay.year, nextDeadlineDay.month, nextDeadlineDay.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
   if now.weekday() == constants.TORDERDEADLINEWEEKDAY:
@@ -198,9 +196,24 @@ def isOrderTAvailableForDate(date, closedDates, now= datetime.now()) -> bool:
   logger.info("Accepted")
   return True
 
+
 def removeOrdersFromList(responses):
   return_list = []
   for response in responses:
     if response['data_type'] != "form":
       return_list.append(response)
   return return_list
+
+
+def getDeadline(date: date, tracer: Tracer) -> datetime:
+  returnTime = datetime.now()
+
+  if tracer.tracerName == "FDG":
+    day_of_deadline = date - timedelta(days=1)
+    returnTime = datetime(day_of_deadline.year, day_of_deadline.month, day_of_deadline.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN)
+  else:
+    day_of_deadline = date
+    while day_of_deadline.isocalendar().week == date.isocalendar().week or day_of_deadline.weekday() != constants.TORDERDEADLINEWEEKDAY:
+      day_of_deadline -= timedelta(days=1)
+    returnTime = datetime(day_of_deadline.year, day_of_deadline.month, day_of_deadline.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
+  return returnTime

@@ -6,10 +6,11 @@ import datetime
 
 from customer.lib.calenderHelper import getNextWeekday
 from customer.lib.CustomTools import LMap
+from customer.lib.orders import getDeadline
 from customer.lib.Filters import FilterBookings
 from customer.lib.SQL import  SQLController as SQL
 from customer.lib.activeCustomer import GetActiveCustomer, getCustomers
-from customer.models import Booking, UserHasAccess, UpdateTimeStamp
+from customer.models import Booking, UserHasAccess, UpdateTimeStamp, Tracer
 
 def getNextUpdate():
   timeStamps = SQL.getAll(UpdateTimeStamp)
@@ -27,6 +28,12 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
     NextWeekday = getNextWeekday(datetime.date.today())
     customers = getCustomers(request.user)
     activeCustomer = GetActiveCustomer(request)
+
+    fdg = Tracer.objects.get(tracerName="FDG")
+    pib = Tracer.objects.get(tracerName="PIB")
+
+    fdg_deadline = getDeadline(NextWeekday, fdg)
+    pib_deadline = getDeadline(NextWeekday, pib)
 
     if activeCustomer == -1:
       redirect("customer:editMyCustomer")
@@ -48,5 +55,7 @@ class FutureBooking(LoginRequiredMixin, TemplateView):
       'todayDanishFormat' : NextWeekday.strftime('%d/%m/%Y'),
       'NextUpdate' : getNextUpdate(),
       'deliverTimes' : deliverTimes,
+      'Deadline' : fdg_deadline.strftime("%H:%M %d/%m/%Y"),
+      'Deadline_Special' : pib_deadline.strftime("%H:%M %d/%m/%Y"),
     }
     return render(request, self.template_name, context=context)
