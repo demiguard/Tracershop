@@ -209,7 +209,7 @@ def getDeadline(date: date, tracer: Tracer) -> datetime:
     returnTime = datetime(day_of_deadline.year, day_of_deadline.month, day_of_deadline.day, constants.ORDERDEADLINEHOUR, constants.ORDERDEADLINEMIN)
   else:
     day_of_deadline = date
-    while day_of_deadline.isocalendar().week == date.isocalendar().week or day_of_deadline.weekday() != constants.TORDERDEADLINEWEEKDAY:
+    while day_of_deadline.isocalendar()[1] == date.isocalendar()[1] or day_of_deadline.weekday() != constants.TORDERDEADLINEWEEKDAY:
       day_of_deadline -= timedelta(days=1)
     returnTime = datetime(day_of_deadline.year, day_of_deadline.month, day_of_deadline.day, constants.TORDERDEADLINEHOUR, constants.TORDERDEADLINEMIN)
   return returnTime
