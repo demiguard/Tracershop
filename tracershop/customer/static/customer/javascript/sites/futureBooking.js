@@ -159,6 +159,7 @@ var DateOnClick = function(div, date) {
     ChangeTable(date);
     let NewDateString = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
     $("#DateStrong").text(NewDateString);
+    $("#DateStrong-special").text(NewDateString);
   });
 }
 
@@ -193,6 +194,8 @@ var ChangeTable = function(date) {
     var TracerNumber = 0;
     var CanOrder = false;
 
+    $("#deadline-FDG").text(data["Deadline"])
+    $("#deadline-special").text(data["Deadline_special"])
 
     for (const [Tracer, Studies] of Object.entries(data['bookings'])) {
       const TracerDiv      = createElement(DataDiv,'','','div',["TracerDiv","row", "col-12"]);
