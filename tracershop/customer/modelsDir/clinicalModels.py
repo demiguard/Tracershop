@@ -64,7 +64,7 @@ class Tracer(SubscribeableModel):
       return False
 
     if self.daily_deadline is not None:
-      print("daily deadline")
+
       hours_str, min_str = self.daily_deadline.split(':')
 
       deadlineDateTime = datetime.datetime(
@@ -79,14 +79,11 @@ class Tracer(SubscribeableModel):
     elif self.produce_weekdays_dates is not None and self.produce_weekdays_deadline_hours is not None:
       available_days = bitmask_dates_decode(self.produce_weekdays_dates)
       if date.weekday() not in available_days:
-        print("Not in weekdays")
         return False
 
       deadline = datetime.datetime(date.year, date.month, date.day) - datetime.timedelta(seconds=3600 * self.produce_weekdays_deadline_hours)
-      value = deadline > now
-      print(f"deadline: {deadline} {now}: now")
-      return value
-    print("Default exit")
+      return deadline > now
+      
     return False
 
 
