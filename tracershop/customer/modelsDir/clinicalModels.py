@@ -83,7 +83,6 @@ class Tracer(SubscribeableModel):
 
       deadline = datetime.datetime(date.year, date.month, date.day) - datetime.timedelta(seconds=3600 * self.produce_weekdays_deadline_hours)
       return deadline > now
-      
     return False
 
 
