@@ -130,7 +130,7 @@ def getMonthlyOrders(year, month, userID):
   return mergedOrders
 
 
-def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int], now=datetime.now()) -> bool:
+def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int], now=None) -> bool:
   """
     This function check if you place a FDG order to the specified date right now
 
@@ -142,6 +142,9 @@ def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int], now
     Returns:
       bool: if allowed or not
   """
+  if now is None:
+    now = datetime.now()
+
   if closedDates.get(date.strftime("%Y-%m-%d")):
     logger.info("Denied, Closed day")
     return False
@@ -177,7 +180,10 @@ def isOrderFDGAvailableForDate(date: date, closedDates, openDays: List[int], now
   return True
 
 
-def isOrderTAvailableForDate(input_date: date, closedDates, now=datetime.now()) -> bool:
+def isOrderTAvailableForDate(input_date: date, closedDates, now=None) -> bool:
+  if now is None:
+    now = datetime.now()
+
   if closedDates.get(input_date.strftime("%Y-%m-%d")):
     logger.info("Denied, Closed day")
     return False

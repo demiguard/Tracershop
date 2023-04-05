@@ -26,7 +26,7 @@ class ResetPasswordView(TemplateView):
     if ResetPasswordRequest.expire < now:
       ResetPasswordRequest.delete()
       return Http404
-      
+
 
     context = {
       "Request" :  ResetPasswordRequest
@@ -44,7 +44,7 @@ class ResetPasswordView(TemplateView):
 
     if ResetPasswordRequest.expire < now:
       ResetPasswordRequest.delete()
-      return Http404()    
+      return Http404()
 
     NewData = ParseJSONRequest(request)
     userInstance = ResetPasswordRequest.UserID
