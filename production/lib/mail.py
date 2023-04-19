@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 
 import re
-from types import UnionType
 from typing import Union
 import constants
 
