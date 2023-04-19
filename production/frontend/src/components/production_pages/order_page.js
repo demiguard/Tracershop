@@ -68,7 +68,7 @@ export class OrderPage extends Component {
 
   render() {
     const TableSwitchButtons = []
-    for (const [_, tracer] of this.props.tracers){
+    for (const [_, tracer] of this.props.tracer){
       if(tracer.tracer_type === TRACER_TYPE_ACTIVITY)
         TableSwitchButtons.push(this.renderTableSwitchButton(tracer));
     }
@@ -95,17 +95,17 @@ export class OrderPage extends Component {
         <Row>
           <Col sm={8}>
             <this.state.activeTable
-              customers={this.props.customers}
+              customers={this.props.customer}
               date={this.state.date}
               deliverTimes={this.props.deliverTimes}
               employee={this.props.employee}
               isotopes={this.props.isotopes}
               orders={this.props.orders}
-              runs={this.props.runs}
+              runs={this.props.run}
               t_orders={this.props.t_orders}
               tracer={this.state.activeTracer}
-              tracers={this.props.tracers}
-              vials={this.props.vials}
+              tracers={this.props.tracer}
+              vials={this.props.vial}
               websocket={this.props.websocket}
             />
           </Col>
@@ -115,7 +115,7 @@ export class OrderPage extends Component {
               date={this.state.date}
               onDayClick={this.setActiveDate.bind(this)}
               onMonthChange={productionGetMonthlyOrders(this.props.websocket)}
-              getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.runs, this.props.closeddates)}
+              getColor={standardOrderMapping(this.props.orders, this.props.t_orders, this.props.run, this.props.closeddate)}
               />
           </Col>
         </Row>

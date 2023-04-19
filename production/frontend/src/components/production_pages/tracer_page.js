@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import { Container, Table, FormControl, Form } from "react-bootstrap";
 
-import TracerModal from "../modals/tracer_modal.js";
+import { TracerModal } from "../modals/tracer_modal.js";
 import { BooleanMapping } from "../../lib/utils.js";
 import { renderTableRow } from "../../lib/rendering.js";
 import { changeState } from "../../lib/state_management.js";

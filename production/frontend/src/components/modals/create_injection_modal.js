@@ -2,6 +2,8 @@
 import React, {Component,} from "react";
 import { Button, Col, Form, FormControl, Modal, ModalBody, Row, Table } from "react-bootstrap";
 
+import propTypes  from "prop-types";
+
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box";
 import { renderSelect } from "../../lib/rendering";
 import { changeState } from "../../lib/state_management";
@@ -15,6 +17,13 @@ import styles from '../../css/Site.module.css'
 export { CreateInjectionOrderModal }
 
 class CreateInjectionOrderModal extends Component {
+  static propTypes = {
+    date : propTypes.instanceOf(Date),
+    customers : propTypes.instanceOf(Map).isRequired,
+    tracers : propTypes.instanceOf(Map).isRequired,
+    onClose : propTypes.func.isRequired
+    //websocket : propTypes.instanceOf(TracerWebSocket).isRequired
+  }
   constructor(props){
     super(props);
 
@@ -106,6 +115,7 @@ class CreateInjectionOrderModal extends Component {
           <Col>Injektioner</Col>
           <Col>
             <Form.Control
+              aria-label="injection-input"
               value={this.state.injections}
               onChange={changeState("injections", this).bind(this)}
             />
@@ -115,6 +125,7 @@ class CreateInjectionOrderModal extends Component {
           <Col>Leverings tid</Col>
           <Col>
             <Form.Control
+              aria-label="delivery-input"
               value={this.state.deliverTime}
               onKeyDown={addCharacter(':', "deliverTime", [2,5], this).bind(this)}
               onChange={changeState("deliverTime", this).bind(this)}
@@ -125,6 +136,7 @@ class CreateInjectionOrderModal extends Component {
           <Col>Kommentar</Col>
           <Col>
             <Form.Control
+              aria-label="comment-input"
               value={this.state.comment}
               onChange={changeState("comment", this).bind(this)}
             />

@@ -8,7 +8,7 @@ import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from '@testing-library/user-event'
 
-import { HoverBox } from "../../../components/injectable/hover_box"
+import { HoverBox } from "../../../components/injectable/hover_box.js"
 
 
 let container = null;

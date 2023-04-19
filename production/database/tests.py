@@ -1,8 +1,7 @@
 from django.test import TestCase
 from django.db.models import CharField
 
-from database.models import User, SubscribableModel, Address, Database, Tracer, Booking, Location, Procedure
-
+from database.models import User, SubscribableModel, Address, Database
 
 # Create your tests here.
 class ModelTestCases(TestCase):
@@ -20,31 +19,6 @@ class ModelTestCases(TestCase):
     test_databaseName = "testDatabase"
     database = Database(databaseName=test_databaseName, username="username", password="password", address=add_desc)
     self.assertEqual(str(database), test_databaseName)
-
-    #Tracer
-    test_tracerName = "tracerName"
-    namelessTracer = Tracer()
-    tracer = Tracer(name=test_tracerName)
-    self.assertEqual(str(namelessTracer),"Tracer object (None)")
-    self.assertEqual(str(tracer), test_tracerName)
-
-    #Procedure
-    test_ProcedureTitle = "TestTitle"
-    procedure = Procedure(title=test_ProcedureTitle)
-    self.assertEqual(str(procedure), test_ProcedureTitle)
-
-    #Location
-    test_RoomCode = "kva-02122"
-    test_LocationName = "Room 3"
-    loc = Location(roomCode=test_RoomCode)
-    loc_name = Location(roomCode = test_RoomCode, locName=test_LocationName)
-    self.assertEqual(str(loc), test_RoomCode)
-    self.assertEqual(str(loc_name), test_LocationName)
-
-    #Booking
-    test_accessionNumber = "REGH1239511"
-    testBooking = Booking(accessionNumber=test_accessionNumber)
-    self.assertEqual(str(testBooking), test_accessionNumber)
 
     # User
     testUserName="testUser"

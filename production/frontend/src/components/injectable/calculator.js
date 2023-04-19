@@ -33,11 +33,12 @@ class Calculator extends Component {
     isotopes : propTypes.instanceOf(Map).isRequired,
     productionTime : propTypes.instanceOf(Date).isRequired,
     tracer : propTypes.instanceOf(Object).isRequired,
-    initial_MBq : propTypes.instanceOf(Number)
+    initial_MBq : propTypes.number,
   }
 
   static defaultProps = {
     defaultMBq : 300,
+    initial_MBq : 0,
   }
 
   static stateTypes
@@ -195,6 +196,7 @@ class Calculator extends Component {
   render(){
     const isotope = this.props.isotopes.get(this.props.tracer.isotope);
     const ProductionTimeString = `${FormatDateStr(this.props.productionTime.getHours())}:${FormatDateStr(this.props.productionTime.getMinutes())}`;
+
 
     const EntryTableRows = [];
     var totalActivity = 0.0;

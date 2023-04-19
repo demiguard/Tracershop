@@ -121,7 +121,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
     try:
       error = auth.validateMessage(message)
       if error != "":
-        logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
+        if WEBSOCKET_MESSAGE_ID in message:
+          logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
+        else:
+          logger.error(f"A message without message ID was send, it's not valid by the error: {error}")
         await self.HandleKnownError(message, error)
         return
       logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
@@ -396,7 +399,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     updateOrders = []
 
     serverConfiguration = await self.db.getServerConfiguration()
-    if serverConfiguration.LegacyMode:
+    externalDatabase = await self.db.getExternalDatabase(serverConfiguration)
+    if externalDatabase.legacy_database:
       PrimaryVial = Vials[0]
       free_datetime = datetime.now()
       Order.status = 3
@@ -705,16 +709,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
     dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
     data = dataClass(**message[WEBSOCKET_DATA])
     if(await self.db.CanDelete(data)):
-      ID = ParseSQLField(dataClass.getIDField())
+      #ID = ParseSQLField(dataClass.getIDField())
+      await self.db.DeleteInstance(data)
+      id_field = dataClass.getIDField()
+      ID = getattr(data, id_field)
 
-      await self.db.DeleteIDs([data.__getattribute__(ID)], dataClass)
 
       await self.channel_layer.group_send(self.global_group, {
         WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
         WEBSOCKET_DATA         : message[WEBSOCKET_DATA],
         WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
-        WEBSOCKET_DATA_ID      : ID,
+        WEBSOCKET_DATA_ID      : [ID],
         WEBSOCKET_MESSAGE_ID   : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       })

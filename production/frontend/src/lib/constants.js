@@ -59,10 +59,11 @@ export const ERROR_INVALID_MESSAGE_TYPE = "InvalidMessageType"
 export const ERROR_OBJECT_NOT_FOUND = "objectNotFound"
 export const ERROR_NO_JAVASCRIPT_VERSION = "NoJavaScriptVersion"
 export const ERROR_NO_MESSAGE_ID = "NoMessageID"
+export const ERROR_NO_MESSAGE_STATUS = "NoMessageStatus";
 export const ERROR_NO_MESSAGE_TYPE = "NoMessageType"
 export const ERROR_INSUFFICIENT_PERMISSIONS = "InsufficientPermissions"
-export const ERROR_INSUFFICIENT_DATA = "InsufficientData"
-export const ERROR_UNKNOWN_FAILURE = "unknownError"
+export const ERROR_INSUFFICIENT_DATA = "InsufficientData";
+export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
 
 
@@ -165,6 +166,7 @@ export const WEBSOCKET_DATE                 = "date";
 export const WEBSOCKET_DEAD_ORDERS          = "deadOrders";
 export const WEBSOCKET_ERROR                = "error";
 export const WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion";
+export const WEBSOCKET_FILTER               = "dataFilter";
 export const WEBSOCKET_MESSAGE_ANSWER       = "answer";
 export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout";
@@ -178,6 +180,7 @@ export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
 export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history";
 export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
+export const WEBSOCKET_MESSAGE_GET_DATA_CLASS = "getDataClass";
 export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState";
 export const WEBSOCKET_MESSAGE_ID           = "messageID";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";

@@ -538,8 +538,9 @@ class ConsumerTestCase(TestCase):
     try:
       responseOrder = ActivityOrderDataClass(**loads(response[JSON_ACTIVITY_ORDER][0]))
     except Exception as E:
+      print("Exception!")
+      print(E)
       pass
-      #print(E)
       #print(response[JSON_ACTIVITY_ORDER][0])
 
     #Message Validation
@@ -559,7 +560,6 @@ class ConsumerTestCase(TestCase):
     await comm.disconnect()
     await async_ExecuteQuery(f"DELETE FROM VAL WHERE ID=62104", Fetching.NONE)
     await async_ExecuteQuery(f"DELETE FROM orders WHERE oid=1337", Fetching.NONE)
-
 
   @useDataClassAsync(CustomerDataClass, TracerDataClass, IsotopeDataClass, VialDataClass)
   async def test_free_dependant_orders(self):
@@ -847,14 +847,12 @@ class ConsumerTestCase(TestCase):
     response = await self._loginAdminSendRecieve(message)
 
     ##### Data removal #####
-    await async_ExecuteQuery("DELETE FROM orders WHERE oid= 10001" ,Fetching.NONE)
-
-    await async_ExecuteQuery("DELETE FROM t_orders WHERE oid=10001" ,Fetching.NONE)
-    await async_ExecuteQuery("DELETE FROM t_orders WHERE oid=10002" ,Fetching.NONE)
+    await async_ExecuteQuery("DELETE FROM orders WHERE oid=10001", Fetching.NONE)
+    await async_ExecuteQuery("DELETE FROM t_orders WHERE oid=10001", Fetching.NONE)
+    await async_ExecuteQuery("DELETE FROM t_orders WHERE oid=10002", Fetching.NONE)
 
 
   ##### Deleting Dataclasses #####
-
   @useDataClassAsync(IsotopeDataClass)
   async def test_HandleDeleteDataclass_Success(self):
     await async_ExecuteQuery(self.tracerStr, Fetching.NONE)

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import { Navbar as BSNavbar, Nav, Container, Button  } from "react-bootstrap";
 import styles from "../../css/Navbar.module.css"
 
-import PropTypes from 'prop-types'
+import propTypes from 'prop-types'
 
 export {Navbar}
 
@@ -10,12 +10,12 @@ const NavBarButtonType = "outline-primary";
 
 export default class Navbar extends Component {
   static propTypes = {
-    ActiveKey : PropTypes.string,
-    logout : PropTypes.func.isRequired,
-    isAuthenticated : PropTypes.bool.isRequired,
-    Names : PropTypes.arrayOf(PropTypes.string),
-    NavbarElements: PropTypes.arrayOf(PropTypes.element),
-    setActivePage : PropTypes.func.isRequired,
+    ActiveKey : propTypes.string,
+    logout : propTypes.func.isRequired,
+    isAuthenticated : propTypes.bool.isRequired,
+    Names : propTypes.arrayOf(propTypes.string),
+    NavbarElements: propTypes.arrayOf(propTypes.element),
+    setActivePage : propTypes.func.isRequired,
   }
 
 

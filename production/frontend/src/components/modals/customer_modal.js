@@ -1,15 +1,19 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl, Col, Form } from "react-bootstrap";
-import { changeState } from "../../lib/state_management.js"
-import {renderTableRow, renderClickableIcon, renderSelect} from "../../lib/rendering.js"
+import { changeState } from "../../lib/state_management.js";
+import {renderTableRow, renderSelect} from "../../lib/rendering.js";
 import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_DELIVERTIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, KEYWORD_DELIVER_TIME,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, DAYS_OBJECTS,
-} from "../../lib/constants.js"
-import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js"
+} from "../../lib/constants.js";
+import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
 import { addCharacter } from "../../lib/utils.js";
 import { CloseButton } from "../injectable/buttons.js";
+import propTypes from "prop-types";
+import { Select } from "../injectable/select.js"
+import { ClickableIcon } from "../injectable/icons.js";
+import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js"
 
 import styles from '../../css/Site.module.css'
 
@@ -24,8 +28,16 @@ const RunOptions = [
 export { CustomerModal }
 
 class CustomerModal extends Component {
+  static propTypes = {
+    activeCustomer : propTypes.object,
+    deliverTimes : propTypes.instanceOf(Map),
+    onClose : propTypes.func.isRequired,
+    runs : propTypes.instanceOf(Map),
+    //websocket : propTypes.instanceOf(TracerWebsocket),
+  }
+
   constructor(props) {
-    super(props)
+    super(props);
 
     const customer = this.props.activeCustomer;
     const DeliverTimes = new Map();
@@ -35,7 +47,6 @@ class CustomerModal extends Component {
     }
 
     this.state = {
-
       customer : customer,
       deliverTimes : DeliverTimes,
 
@@ -63,7 +74,6 @@ class CustomerModal extends Component {
 
   componentDidUpdate(prevProps){
     if (prevProps.deliverTimes !== this.props.deliverTimes){
-      console.log("New Props detected!")
       const DeliverTimes = new Map();
         for(const [_DTID, deliverTime] of this.props.deliverTimes) {
       if(deliverTime.BID == this.props.activeCustomer.ID)
@@ -92,7 +102,8 @@ class CustomerModal extends Component {
 
   // Customer updates
   /**
-   * This function
+   * This function produces anonymous functions that updates the customer
+   *  Note that the customer is duplicated in state and props.
    * @param {String} kw - Keyword of the Customer, that is being altered
    * @param {CallableFunction} validateFunction - A function that validate the keyword
    * @param {Object} This - the customer modal
@@ -101,7 +112,6 @@ class CustomerModal extends Component {
   changeCustomer(kw, validateFunction){
     const returnFunction = (_event) => {
       const ErrorMessage = validateFunction(this.state[kw], this);
-
       if (ErrorMessage === ""){
         this.setState({...this.state, errorMessage : ErrorMessage});
         this.state.customer[kw] = this.state[kw];
@@ -154,7 +164,7 @@ class CustomerModal extends Component {
       return;
     }
     // Send data
-    const newDelivertime = {
+    const newDeliverTime = {
       day : this.state.new_day,
       run : this.state.new_run,
       dtime : DeliverTime,
@@ -162,7 +172,7 @@ class CustomerModal extends Component {
       BID : this.props.userid
     };
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    message[WEBSOCKET_DATA] = newDelivertime;
+    message[WEBSOCKET_DATA] = newDeliverTime;
     message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
     this.props.websocket.send(message);
   }
@@ -205,8 +215,6 @@ class CustomerModal extends Component {
         message[WEBSOCKET_DATA] = deliverTime;
         message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
         this.props.websocket.send(message);
-      } else {
-        console.log(FormattedTime);
       }
     }
     return returnFunction.bind(this);
@@ -214,62 +222,105 @@ class CustomerModal extends Component {
 
   // Rendering Functions
   renderRow (deliverTime) {
-    const options = [];
+    const productionOptions = [];
 
     for(const [_PTID, production] of this.props.runs){
-      if(deliverTime.day === production.day) options.push(production);
+      if(deliverTime.day === production.day) productionOptions.push(production);
     }
 
-    const table = renderTableRow(deliverTime.DTID,[
-      renderSelect(
-        DAYS_OBJECTS, "day", "name",
-        this.SelectUpdateDeliverTime("day", deliverTime).bind(this),
-        deliverTime.day
-      ),
-      renderSelect(
-        options, "run", "run",
-        this.SelectUpdateDeliverTime("run", deliverTime).bind(this),
-        deliverTime.run
-      ),
+    const tableRow = renderTableRow(deliverTime.DTID,[
+      <Select
+        label={`delivertime-day-${deliverTime.DTID}`}
+        options={DAYS_OBJECTS}
+        valueKey={"day"}
+        nameKey={"name"}
+        onChange={this.SelectUpdateDeliverTime("day", deliverTime).bind(this)}
+        initialValue={deliverTime.day}
+      />,
+      <Select
+        label={`delivertime-run-${deliverTime.DTID}`}
+        options={productionOptions}
+        valueKey={"run"}
+        nameKey={"run"}
+        onChange={this.SelectUpdateDeliverTime("run", deliverTime).bind(this)}
+        initialValue={deliverTime.run}
+      />,
       (<FormControl
+          aria-label={`delivertime-dtime-${deliverTime.DTID}`}
           value={deliverTime.dtime}
-          onBlur={this.saveDeliverTime(deliverTime)}
-          onChange={this.changeDeliverTime(deliverTime)}
+          onBlur={this.saveDeliverTime(deliverTime).bind(this)}
+          onChange={this.changeDeliverTime(deliverTime).bind(this)}
           onKeyDown={this.addCharacterDeliverTime(deliverTime).bind(this)}
         />),
-      renderSelect(
-          RunOptions, "val", "name",
-          this.SelectUpdateDeliverTime("repeat_t", deliverTime).bind(this),
-          deliverTime.repeat_t
-      ),
-      renderClickableIcon("static/images/decline.svg",
-        this.deleteDeliverTime(deliverTime, this).bind(this))
+      <Select
+      label={`delivertime-repeat_t-${deliverTime.DTID}`}
+        options={RunOptions}
+        valueKey={"val"}
+        nameKey={"name"}
+        onChange={this.SelectUpdateDeliverTime("repeat_t", deliverTime).bind(this)}
+        initialValue={deliverTime.repeat_t}
+      />,
+      <ClickableIcon
+        altText={`delete-delivertime-${deliverTime.DTID}`}
+        src="static/images/decline.svg"
+        onClick={this.deleteDeliverTime(deliverTime, this).bind(this)}/>
     ]);
-    return table;
+    return tableRow;
   }
 
   renderAddRow() {
     // Yeah there's dublicate code, that could be solved by some dependency injection & composition magic
     // Sorry for the bad code
-    const productions = [];
+    const productionOptions = [];
+
+    let initialRun = undefined;
+
 
     for(const [_PTID, production] of this.props.runs){
-      if(Number(this.state.new_day) === production.day) productions.push(production);
+      if(Number(this.state.new_day) === production.day){
+        if(initialRun === undefined){
+          initialRun = production.run
+        }
+        productionOptions.push(production);
+      }
     }
 
     return renderTableRow(-1,[
-      renderSelect(DAYS_OBJECTS, "day", "name",
-        changeState("new_day", this), this.state.new_day),
-      renderSelect(productions, "run", "run",
-        changeState("new_run", this), this.state.new_run),
-      <FormControl
-        value={this.state.new_dtime}
-        onChange={changeState("new_dtime", this)}
-        onKeyDown={addCharacter(':', "new_dtime", [2,5], this).bind(this)}
+      <Select
+        label={`delivertime-day-new`}
+        options={DAYS_OBJECTS}
+        valueKey={"day"}
+        nameKey={"name"}
+        onChange={changeState("new_day", this).bind(this)}
+        initialValue={1}
       />,
-      renderSelect(RunOptions, "val", "name",
-        changeState("new_repeat_t", this), this.state.new_repeat_t),
-      renderClickableIcon("static/images/accept.svg", this.createDeliverTime.bind(this))
+      <Select
+        label={`delivertime-run-new`}
+        options={productionOptions}
+        valueKey={"run"}
+        nameKey={"run"}
+        onChange={changeState("new_run")}
+        initialValue={initialRun}
+      />,
+      (<FormControl
+          aria-label={`delivertime-dtime-new`}
+          value={this.state.new_dtime}
+          onChange={changeState("new_dtime", this)}
+          onKeyDown={addCharacter(':',"new_dtime",[2,5],this).bind(this)}
+        />),
+      <Select
+        label={`delivertime-repeat_t-new`}
+        options={RunOptions}
+        valueKey={"val"}
+        nameKey={"name"}
+        onChange={changeState("new_repeat_t", this).bind(this)}
+        initialValue={1}
+      />,
+      <ClickableIcon
+        src={"static/images/accept.svg"}
+        onClick={this.createDeliverTime.bind(this)}
+        altText={"add-new-delivertime"}
+      />
     ]);
   }
 
@@ -278,9 +329,11 @@ class CustomerModal extends Component {
     for(const [_, deliverTime] of this.state.deliverTimes) {
       deliverTimes.push(deliverTime)
     }
-    deliverTimes.sort((dt1, dt2) => {if (dt1.day - dt2.day != 0){
-      return dt1.day - dt2.day
-    } else {return dt1.run - dt2.day}} );
+    deliverTimes.sort((dt1, dt2) => {
+      if (dt1.day - dt2.day != 0){
+        return dt1.day - dt2.day
+      } else {return dt1.run - dt2.day}
+    });
     const renderedDeliverTimes = []; // Filtering have been done
     for(const dt of deliverTimes){
       renderedDeliverTimes.push(this.renderRow(dt));
@@ -294,6 +347,7 @@ class CustomerModal extends Component {
           {renderTableRow(1, [
             "Navn:",
             <FormControl
+              aria-label="customer-realname"
               value={this.state.Realname}
               onChange={changeState("Realname", this)}
               onBlur={this.changeCustomer("Realname",
@@ -301,6 +355,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(2, ["Overhead:", <FormControl
+              aria-label="customer-overhead"
               value={this.state.overhead}
               onChange={changeState("overhead", this)}
               onBlur={this.changeCustomer("overhead",
@@ -309,6 +364,7 @@ class CustomerModal extends Component {
           }
           {renderTableRow(3, [
             "Kontakt Person:", <FormControl
+            aria-label="customer-contact"
               value={this.state.contact}
               onChange={changeState("contact", this)}
               onBlur={this.changeCustomer("contact",
@@ -316,6 +372,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(4,["Telefon", <FormControl
+              aria-label="customer-tlf"
               value = {this.state.tlf}
               onChange={changeState("tlf", this)}
               onBlur={this.changeCustomer("tlf",
@@ -323,6 +380,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(5, ["Afdeling", <FormControl
+              aria-label="customer-addr-1"
               value = {this.state.addr1}
               onChange={changeState("addr1", this)}
               onBlur={this.changeCustomer("addr1",
@@ -330,6 +388,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(6, ["Hospital", <FormControl
+              aria-label="customer-addr-2"
               value = {this.state.addr2}
               onChange={changeState("addr2", this)}
               onBlur={this.changeCustomer("addr2",
@@ -337,6 +396,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(7, ["Addresse", <FormControl
+              aria-label="customer-addr-3"
               value = {this.state.addr3}
               onChange={changeState("addr3", this)}
               onBlur={this.changeCustomer("addr3",
@@ -344,6 +404,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(8, ["Post nummer", <FormControl
+              aria-label="customer-addr-4"
               value = {this.state.addr4}
               onChange={changeState("addr4", this)}
               onBlur={this.changeCustomer("addr4",
@@ -351,6 +412,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(9, ["Email", <FormControl
+              aria-label="customer-email-1"
               value = {this.state.email}
               onChange={changeState("email", this)}
               onBlur={this.changeCustomer("email",
@@ -358,6 +420,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(10, ["Email", <FormControl
+              aria-label="customer-email-2"
               value = {this.state.email2}
               onChange={changeState("email2", this)}
               onBlur={this.changeCustomer("email2",
@@ -365,6 +428,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(11, ["Email", <FormControl
+              aria-label="customer-email-3"
               value = {this.state.email3}
               onChange={changeState("email3", this)}
               onBlur={this.changeCustomer("email3",
@@ -372,6 +436,7 @@ class CustomerModal extends Component {
             />])
           }
           {renderTableRow(12, ["Email", <FormControl
+              aria-label="customer-email-4"
               value = {this.state.email4}
               onChange={changeState("email4", this)}
               onBlur={this.changeCustomer("email4",
@@ -380,6 +445,12 @@ class CustomerModal extends Component {
           }
         </tbody>
       </Table>
+        {
+          this.state.errorMessage != "" ? <AlertBox
+            message={this.state.errorMessage}
+            level={ERROR_LEVELS.error}
+          /> : <div/>
+        }
         <Row>
           <Col className="col-12" > Kunde nummer: {this.state.customer.kundenr}</Col>
         </Row>
@@ -404,7 +475,7 @@ class CustomerModal extends Component {
   render() {
     return (
       <Modal
-        show={this.props.show}
+        show={true}
         size="lg"
         onHide ={this.props.onClose}
         className = {styles.mariLight}

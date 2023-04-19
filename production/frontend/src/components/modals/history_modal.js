@@ -1,11 +1,12 @@
 import React, { Component } from "react";
 import { Button, Form, FormControl, Modal, Spinner, Row, Col} from "react-bootstrap";
-import { CSVDownload, CSVLink } from "react-csv";
+import { CSVLink } from "react-csv";
 import { CloseButton } from "../injectable/buttons.js"
-import { TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_HISTORY } from "../../lib/constants";
+import { WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_HISTORY } from "../../lib/constants";
 import { FormatDateStr } from "../../lib/formatting";
-import { renderSelect } from "../../lib/rendering";
 import { changeState } from "../../lib/state_management";
+import propTypes from "prop-types";
+import { Select } from "../injectable/select.js";
 
 import styles from '../../css/Site.module.css';
 
@@ -26,7 +27,6 @@ const Months = [
   {name : "December", val : 12},
 ]
 
-
 class HistoryModal extends Component {
   /** Modal for user to get order history / reciepts of a user.
    *    The modal have 3 states
@@ -42,6 +42,13 @@ class HistoryModal extends Component {
    *    - ActiveCustomer - Object, Customer
    *    - websocket - TracerWebsocket, Websocket to do communication over
    */
+  static propTypes = {
+    onClose : propTypes.func.isRequired,
+    tracers : propTypes.objectOf(Map).isRequired,
+    activeCustomer : propTypes.object.isRequired,
+    //websocket
+  }
+
   constructor(props){
     super(props);
 
@@ -50,13 +57,13 @@ class HistoryModal extends Component {
     this.state = {
       month : today.getMonth() + 1, // Note this uses a non-zero indexed month format
       year  : today.getFullYear(),
-      state : "GETMONTH",
-      hisotry : [],
+      state : "GET_MONTH",
+      history : [],
     }
   }
 
   states = {
-    GETMONTH : this.renderGetMonth,
+    GET_MONTH : this.renderGetMonth,
     LOADING  : this.renderLoading,
     DOWNLOAD : this.renderDownload
   }
@@ -71,7 +78,6 @@ class HistoryModal extends Component {
       const data = [];
 
       for (const TracerIDstr of Object.keys(history)){
-        console.log(TracerIDstr)
         const Tracer = this.props.tracers.get(Number(TracerIDstr));
         for(const OrderList of history[TracerIDstr]){
           data.push([
@@ -79,7 +85,6 @@ class HistoryModal extends Component {
               Tracer.name,
             ].concat(OrderList))
         }
-        data.push([])
       }
 
       this.setState({
@@ -92,8 +97,8 @@ class HistoryModal extends Component {
   resetModal(){
     this.setState({
       ...this.state,
-      state : "GETMONTH",
-      hisotry : [],
+      state : "GET_MONTH",
+      history : [],
     })
   }
 
@@ -102,11 +107,16 @@ class HistoryModal extends Component {
     return (
       <Row>
         <Col>
-          {renderSelect(Months, "val", "name", changeState("month", this), this.state.month)}
-
+          <Select
+            label={"month-selector"}
+            options={Months}
+            valueKey="val"
+            nameKey="name"
+            onChange={changeState("month", this)}
+            initialValue={this.state.month}/>
         </Col>
         <Col>
-          <FormControl value={this.state.year} onChange={changeState("year", this)}></FormControl>
+          <FormControl aria-label="year-selector" value={this.state.year} onChange={changeState("year", this)}></FormControl>
         </Col>
         <Col>
           <Button onClick={this.getHistory.bind(this)}>Hent historik</Button>
@@ -124,8 +134,10 @@ class HistoryModal extends Component {
   }
 
   renderDownload() {
+    const noOrderStr = `Der er ingen ordre i ${this.state.month}/${this.state.year}`
+
     const Download = this.state.history.length ? <p><CSVLink data={this.state.history}><Button>Download</Button></CSVLink></p> :
-     <p>Der er ingen Ordre i {this.state.month}/{this.state.year}</p>;
+     <p>{noOrderStr}</p>;
 
     return (<div>
       {Download}

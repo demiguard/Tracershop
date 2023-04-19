@@ -182,7 +182,7 @@ export class ActivityTable extends Component {
      * Also this is not a problem since for now there's only 2 productions per day, however This will be a problem someday!
      */
     const Order         = this.props.orders.get(oid);
-    const OrderDate = new Date(Order.deliver_datetime);
+    const OrderDate     = new Date(Order.deliver_datetime);
     const Customer      = this.props.customers.get(Order.BID);
     const Tracer        = this.props.tracers.get(this.props.tracer);
     const isotope       = this.props.isotopes.get(Tracer.isotope);
@@ -359,70 +359,6 @@ export class ActivityTable extends Component {
       Modal : CreateOrderModal,
       showModal : true,
     })
-  }
-
-  createVial(
-    Charge,
-    FillTime,
-    Volume,
-    Activity,
-    CustomerNumber
-  ){
-    const FillDate = String(this.props.date.getFullYear()) + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
-      FormatDateStr(this.props.date.getDate());
-
-    const message = this.props.websocket.getMessage(
-      WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    message[WEBSOCKET_DATATYPE] = JSON_VIAL;
-    message[WEBSOCKET_DATA] = {
-        "charge" : Charge,
-        "filltime" : FillTime,
-        "filldate" : FillDate,
-        "customer" : CustomerNumber,
-        "activity" : Activity,
-        "volume" : Volume
-      };
-    this.props.websocket.send(message);
-  }
-
-  modalCreateOrder(customer, run, deliverTime, amount){
-    const message = this.props.websocket.getMessage(
-      WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    const skeleton = {};
-    skeleton[KEYWORD_BID] = customer.ID;
-    skeleton[KEYWORD_DELIVER_DATETIME] = deliverTime;
-    skeleton[KEYWORD_RUN] = run;
-    skeleton[KEYWORD_AMOUNT] = amount;
-    skeleton[KEYWORD_TRACER] = this.props.tracer;
-
-    message[WEBSOCKET_DATA] = skeleton;
-    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
-    this.props.websocket.send(message);
-  }
-
-  // This needs to change
-  editVial(ID,
-    Charge,
-    FillTime,
-    Volume,
-    Activity,
-    CustomerNumber)
-  {
-    const FillDate = `${this.props.date.getFullYear()}-${FormatDateStr(this.props.date.getMonth() + 1)}-${FormatDateStr(this.props.date.getDate())}`;
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
-    const skeleton = {};
-    skeleton[KEYWORD_ID] = ID;
-    skeleton[KEYWORD_CHARGE] = Charge;
-    skeleton[KEYWORD_FILLTIME] = FillTime;
-    skeleton[KEYWORD_FILLDATE] = FillDate;
-    skeleton[KEYWORD_CUSTOMER] = CustomerNumber; // Note that due to bad setup, it's using the Customer Keyword
-    skeleton[KEYWORD_ACTIVITY] = Activity;
-    skeleton[KEYWORD_VOLUME] = Volume;
-    message[WEBSOCKET_DATA] = skeleton
-    message[WEBSOCKET_DATATYPE] = JSON_VIAL
-
-    this.props.websocket.send(message);
   }
 
   /**
@@ -703,10 +639,10 @@ export class ActivityTable extends Component {
         customers={this.props.customers}
         employees={this.props.employee}
         onClose={this.closeModal.bind(this)}
-        createVial={this.createVial.bind(this)}
-        editVial={this.editVial.bind(this)}
+        //createVial={this.createVial.bind(this)}
+        //editVial={this.editVial.bind(this)}
         AcceptOrder={this.FreeOrder.bind(this)}
-        createOrder={this.modalCreateOrder.bind(this)}
+        //createOrder={this.modalCreateOrder.bind(this)}
         date={this.props.date}
         websocket={this.props.websocket}
       />
