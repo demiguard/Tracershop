@@ -7,9 +7,19 @@ import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID
 import { renderTableRow } from "../../lib/rendering";
 import { changeState } from "../../lib/state_management";
 
-import styles from '../../css/Site.module.css'
+import propTypes from "prop-types";
 
-export default class TracerModal extends Component {
+import styles from '../../css/Site.module.css';
+
+export { TracerModal }
+
+class TracerModal extends Component {
+  static propTypes = {
+    customers : propTypes.objectOf(Map).isRequired,
+    tracerMapping : propTypes.objectOf(Map).isRequired,
+    tracerID : propTypes.number.isRequired
+    // websocket
+  }
   constructor(props) {
     super(props);
     this.state = {
@@ -17,12 +27,6 @@ export default class TracerModal extends Component {
     }
   }
 
-  updateFilter(event){
-    const newState = { ...this.state,
-      filterText : event.target.value
-    };
-    this.setState(newState);
-  }
 
   updateTracerCustomer(event, CustomerID){
     if(event.target.checked){
@@ -35,7 +39,6 @@ export default class TracerModal extends Component {
       message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING
 
       this.props.websocket.send(message);
-
     } else {
       const TracerMappingID = this.TracerMapping.get(CustomerID);
       const data = {};
@@ -52,10 +55,9 @@ export default class TracerModal extends Component {
 
   renderCustomerRow(customer){
     const allowedToOrder = this.TracerMapping.has(customer.ID)
-
-
     return renderTableRow(customer.ID, [
       customer.UserName, <Form.Check
+        aria-label={`check-${customer.ID}`}
         defaultChecked={allowedToOrder}
         type="checkbox"
         className="mb-2"
@@ -76,7 +78,10 @@ export default class TracerModal extends Component {
 
     return (
     <div>
-      Filter: <FormControl value={this.state.filterText} onChange={changeState("filter", this).bind(this)}/>
+      Filter: <FormControl
+        aria-label="input-filter"
+        value={this.state.filterText}
+        onChange={changeState("filter", this).bind(this)}/>
       <Table>
         <thead>
           <tr>
@@ -94,18 +99,18 @@ export default class TracerModal extends Component {
 
   render() {
     const TracerMapping = new Map();
-    if(this.props.tracerID != null){
-      for(const [TracerMappingID, TracerMappingTuple] of this.props.tracerMapping){
-        if(TracerMappingTuple[KEYWORD_TRACER_ID] == this.props.tracerID){
-          TracerMapping.set(TracerMappingTuple[KEYWORD_CUSTOMER_ID], TracerMappingID)
-        }
+
+    for(const [TracerMappingID, TracerMappingTuple] of this.props.tracerMapping){
+      if(TracerMappingTuple[KEYWORD_TRACER_ID] == this.props.tracerID){
+        TracerMapping.set(TracerMappingTuple[KEYWORD_CUSTOMER_ID], TracerMappingID)
       }
     }
+
     this.TracerMapping = TracerMapping // Derived Property
 
     return (
       <Modal
-        show={this.props.show}
+        show={true}
         size="lg"
         onHide={this.props.onClose}
         className={styles.mariLight}
@@ -117,9 +122,6 @@ export default class TracerModal extends Component {
           {this.renderBody()}
         </Modal.Body>
         <Modal.Footer>
-          <Button onClick={this.props.deleteTracer}>
-            Slet Tracer
-          </Button>
           <Button
             onClick={this.props.onClose}
           >Færdig</Button>

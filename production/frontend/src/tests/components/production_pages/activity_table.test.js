@@ -8,8 +8,8 @@ import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/
 import { createRoot } from "react-dom/client";
 
 import { WS } from "jest-websocket-mock";
-import { ActivityTable } from "../../../components/production_pages/activity_table.js/index.js.js"
-import { TracerWebSocket} from "../../../lib/tracer_websocket.js/index.js"
+import { ActivityTable } from "../../../components/production_pages/activity_table.js"
+import { TracerWebSocket} from "../../../lib/tracer_websocket.js"
 import { TRACER_TYPE_ACTIVITY } from "../../../lib/constants.js";
 
 

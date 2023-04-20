@@ -24,9 +24,9 @@ class InjectionModal extends Component {
     customers : propTypes.instanceOf(Map).isRequired,
     isotopes : propTypes.instanceOf(Map).isRequired,
     onClose : propTypes.func.isRequired,
-    order : propTypes.object.isRequired,
+    order : propTypes.object.isRequired, // InjectionOrderDataClass
     tracers : propTypes.instanceOf(Map).isRequired,
-    websocket : propTypes.instanceOf(TracerWebSocket).isRequired,
+    //websocket : propTypes.instanceOf(TracerWebSocket).isRequired, // is required but  fucks tests up
   }
   constructor(props){
     super(props);
@@ -50,6 +50,15 @@ class InjectionModal extends Component {
   }
 
   startFreeing(){
+    if(!batchNumberValidator(this.state.batchnr)){
+      this.setState({
+        ...this.state,
+        errorMessage : "Batch nummeret er ikke i det korrekte format",
+        errorLevel : ERROR_LEVELS.error,
+      });
+      return;
+    }
+
     const today = new Date();
     const orderDate = new Date(this.props.order.deliver_datetime);
     if(!compareDates(today, orderDate)){
@@ -59,7 +68,7 @@ class InjectionModal extends Component {
         errorMessage : "Du er i gang med at frigive en ordre som ikke er bestilt til i dag!",
         freeing : true,
       });
-      return;
+      return; // This return statement is there to prevent two updates instead of one
     }
 
     this.setState({
@@ -76,15 +85,6 @@ class InjectionModal extends Component {
   }
 
   freeOrder(username, password){
-    if(!batchNumberValidator(this.state.batchnr)){
-      this.setState({
-        ...this.state,
-        errorMessage : "Batch nummeret er ikke i det korrekte format",
-        errorLevel : ERROR_LEVELS.error,
-      });
-      return;
-    }
-
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_INJECTION);
     const auth = {};
     auth[AUTH_USERNAME] = username;
@@ -114,7 +114,6 @@ class InjectionModal extends Component {
   }
 
   renderDescriptionTable(){
-    console.log(this.props);
     const customer = this.props.customers.get(this.props.order.BID);
     const tracer = this.props.tracers.get(this.props.order.tracer);
     const isotope = this.props.isotopes.get(tracer.isotope);
@@ -155,10 +154,10 @@ class InjectionModal extends Component {
       ]));
     }
 
-    if (this.state.freeing){
+    if (this.props.order.status == 2 || this.props.order.status == 3){
       const BatchHover = <HoverBox
-        Base={<div>Batch Nummer</div>}
-        Hover={
+      Base={<div>Batch Nummer</div>}
+      Hover={
         <div>En kode på formattet XXXX-YYMMDD-R
           <ul>
             <li>XXXX - Tracer kode, ikke nødvendigvis på 4 bogstaver</li>
@@ -167,10 +166,17 @@ class InjectionModal extends Component {
           </ul>
         </div>}
       />
-      tableRows.push(renderTableRow("999", [BatchHover, <FormControl
-        value={this.state.batchnr}
-        onChange={changeState("batchnr", this).bind(this)}
-      />]));
+      if(this.props.order.status == 2 && !this.state.freeing){
+        tableRows.push(renderTableRow("999", [BatchHover, <FormControl
+          aria-label="batchnr-input"
+          value={this.state.batchnr}
+          onChange={changeState("batchnr", this).bind(this)}
+          />]));
+      } else if (this.props.order.status == 2){
+        tableRows.push(renderTableRow("999", [BatchHover, this.state.batchnr]));
+      } else {
+        tableRows.push(renderTableRow("999", [BatchHover, this.props.order.batchnr]));
+      }
     }
 
     return (

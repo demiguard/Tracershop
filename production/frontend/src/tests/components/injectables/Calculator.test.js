@@ -7,8 +7,8 @@ import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { Calculator } from "../../../components/injectable/calculator"
-import { CalculateProduction } from "../../../lib/physics"
+import { Calculator } from "../../../components/injectable/calculator.js"
+import { CalculateProduction } from "../../../lib/physics.js"
 
 let container = null;
 beforeEach(() => {

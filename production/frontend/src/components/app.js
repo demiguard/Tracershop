@@ -199,6 +199,11 @@ export default class App extends Component {
     return dbObject
   }
 
+  setError(errorObject){
+    this.setState({
+      ...this.state, ...errorObject,
+    })
+  }
 
   /********* Websocket Methods *********/
   // These methods are invoked by the websocket

@@ -9,7 +9,7 @@ import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from '@testing-library/user-event'
 import { jest } from '@jest/globals'
 
-import { Calender, standardOrderMapping, productionGetMonthlyOrders } from '../../../components/injectable/calender'
+import { Calender, standardOrderMapping, productionGetMonthlyOrders } from '../../../components/injectable/calender.js'
 
 let container = null;
 let root = null

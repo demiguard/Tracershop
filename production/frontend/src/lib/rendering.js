@@ -63,7 +63,15 @@ export function renderDateTime(dateString){
   return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
 
-
+/**
+ * @deprecated
+ * @param {*} Options
+ * @param {*} valueKey
+ * @param {*} nameKey
+ * @param {*} OnChange
+ * @param {*} initialValue
+ * @returns
+ */
 export function renderSelect(Options, valueKey, nameKey, OnChange, initialValue){
   const Rendered = [];
 

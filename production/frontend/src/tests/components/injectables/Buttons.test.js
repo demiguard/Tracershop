@@ -7,7 +7,7 @@ import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent, getByTestId } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { MarginButton, CloseButton } from "../../../components/injectable/buttons";
+import { MarginButton, CloseButton } from "../../../components/injectable/buttons.js";
 
 import styles from '../../../css/Site.module.css'
 
