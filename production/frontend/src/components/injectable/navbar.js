@@ -11,11 +11,19 @@ const NavBarButtonType = "outline-primary";
 export default class Navbar extends Component {
   static propTypes = {
     ActiveKey : propTypes.string,
-    logout : propTypes.func.isRequired,
+    logout : propTypes.func,
     isAuthenticated : propTypes.bool.isRequired,
     Names : propTypes.arrayOf(propTypes.string),
     NavbarElements: propTypes.arrayOf(propTypes.element),
     setActivePage : propTypes.func.isRequired,
+  }
+
+  static defaultProps = {
+    Names : [],
+    isAuthenticated : false,
+    NavbarElements : [],
+    logout : () => {},
+    setActivePage : () => {},
   }
 
 

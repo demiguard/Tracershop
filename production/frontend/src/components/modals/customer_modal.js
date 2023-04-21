@@ -4,7 +4,7 @@ import { Modal, Button, Table, Row, FormControl, Col, Form } from "react-bootstr
 import { changeState } from "../../lib/state_management.js";
 import {renderTableRow, renderSelect} from "../../lib/rendering.js";
 import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
-  JSON_DELIVERTIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, KEYWORD_DELIVER_TIME,
+  JSON_DELIVER_TIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, KEYWORD_DELIVER_TIME,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, DAYS_OBJECTS,
 } from "../../lib/constants.js";
 import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
@@ -129,7 +129,7 @@ class CustomerModal extends Component {
   deleteDeliverTime(deliverTime, This){
     const returnFunction = (_event) => {
       const message = This.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
-      message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
+      message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
       message[WEBSOCKET_DATA] = deliverTime;
       This.props.websocket.send(message);
     }
@@ -173,7 +173,7 @@ class CustomerModal extends Component {
     };
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
     message[WEBSOCKET_DATA] = newDeliverTime;
-    message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
+    message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
     this.props.websocket.send(message);
   }
 
@@ -188,7 +188,7 @@ class CustomerModal extends Component {
 
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
       message[WEBSOCKET_DATA] = deliverTime;
-      message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
+      message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
       this.props.websocket.send(message);
     };
     return returnFunction.bind(this)
@@ -213,7 +213,7 @@ class CustomerModal extends Component {
       if(FormattedTime){
         const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
         message[WEBSOCKET_DATA] = deliverTime;
-        message[WEBSOCKET_DATATYPE] = JSON_DELIVERTIME;
+        message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
         this.props.websocket.send(message);
       }
     }

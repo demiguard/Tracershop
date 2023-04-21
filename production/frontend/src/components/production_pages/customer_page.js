@@ -4,7 +4,7 @@ import { renderTableRow } from "../../lib/rendering.js";
 import { changeState } from "../../lib/state_management.js";
 import { HistoryModal } from "../modals/history_modal.js";
 import { CustomerModal } from "../modals/customer_modal.js";
-import { JSON_CUSTOMER, JSON_DELIVERTIME, JSON_RUN, JSON_TRACER, PROP_WEBSOCKET } from "../../lib/constants.js";
+import { JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_RUN, JSON_TRACER, PROP_WEBSOCKET } from "../../lib/constants.js";
 import { ClickableIcon } from "../injectable/icons.js"
 
 export { CustomerPage }
@@ -89,7 +89,7 @@ export default class CustomerPage extends Component {
         activeCustomer={this.state.activeCustomer}
         onClose={this.closeModal.bind(this)}
         customer={this.props[JSON_CUSTOMER]}
-        deliverTimes={this.props[JSON_DELIVERTIME]}
+        deliverTimes={this.props[JSON_DELIVER_TIME]}
         runs={this.props[JSON_RUN]}
         tracers={this.props[JSON_TRACER]}
         websocket={this.props[PROP_WEBSOCKET]}

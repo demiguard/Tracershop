@@ -4,7 +4,7 @@ import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS, DATABAS
   WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
   JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
   JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSEDDATE, DATABASE_CLOSEDDATE, ERROR_NO_MESSAGE_ID, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, } from "./constants.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSED_DATE, DATABASE_CLOSED_DATE, ERROR_NO_MESSAGE_ID, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, } from "./constants.js";
 import { MapDataName } from "./local_storage_driver.js";
 import { ParseJSONstr } from "./formatting.js";
 
@@ -104,13 +104,13 @@ class TracerWebSocket {
             for(const VialStr of data[JSON_VIAL]){
               Vials.push(ParseJSONstr(VialStr));
             }
-            for(const closeDateStr of data[JSON_CLOSEDDATE]){
+            for(const closeDateStr of data[JSON_CLOSED_DATE]){
               CloseDates.push(ParseJSONstr(closeDateStr))
             }
 
             this.StateHolder.UpdateMaps(
               [DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER,
-                DATABASE_VIAL, DATABASE_CLOSEDDATE],
+                DATABASE_VIAL, DATABASE_CLOSED_DATE],
               [ActivityOrders, InjectionOrders, Vials, CloseDates],
               ["oid", "oid", "ID", "BDID"],
               [true, true, true, true],
@@ -250,7 +250,7 @@ class TracerWebSocket {
         if(!message.hasOwnProperty(JSON_ACTIVITY_ORDER)) return false;
         if(!message.hasOwnProperty(JSON_INJECTION_ORDER)) return false;
         if(!message.hasOwnProperty(JSON_VIAL)) return false;
-        if(!message.hasOwnProperty(JSON_CLOSEDDATE)) return false;
+        if(!message.hasOwnProperty(JSON_CLOSED_DATE)) return false;
       }
       break;
     }

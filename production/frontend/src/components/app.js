@@ -11,18 +11,20 @@ import InvalidVersionPage from "./error_pages/invalid_version_page.js"
 import { db } from "../lib/local_storage_driver.js";
 import { TracerWebSocket } from "../lib/tracer_websocket.js";
 import { ParseDjangoModelJson, ParseJSONstr } from "../lib/formatting.js";
-import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DELIVERTIME,
+import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DELIVER_TIME,
         JSON_EMPLOYEE, JSON_ISOTOPE, JSON_RUN, JSON_SERVER_CONFIG, JSON_TRACER,
         JSON_INJECTION_ORDER, JSON_VIAL, WEBSOCKET_MESSAGE_GREAT_STATE, DATABASE_ACTIVITY_ORDER, DATABASE_ADDRESS, DATABASE_CUSTOMER, DATABASE_DATABASE,
         DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE,
-        DATABASE_IS_AUTH, DATABASE_PRODUCTION, KEYWORD_USERGROUP, USERGROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
+        DATABASE_IS_AUTH, DATABASE_PRODUCTION, KEYWORD_USERGROUP, USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
         DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
         AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_USER,
-        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSEDDATE, JSON_CLOSEDDATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT
+        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSED_DATE, JSON_CLOSED_DATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER
       } from "../lib/constants.js";
 import { AdminSite } from "./sites/admin_site.js";
 import { ProductionSite } from "./sites/production_site.js";
 import { ShopSite } from "./sites/shop_site.js";
+import { User } from "../dataclasses/user.js";
+import { TracerShop } from "./sites/tracer_shop.js";
 
 export { App }
 
@@ -32,7 +34,7 @@ export default class App extends Component {
     // Init old state
 
     const address  = this.getDatabaseMap(DATABASE_ADDRESS);
-    const closeddate = this.getDatabaseMap(DATABASE_CLOSEDDATE);
+    const closed_date = this.getDatabaseMap(DATABASE_CLOSED_DATE);
     const customer = this.getDatabaseMap(DATABASE_CUSTOMER);
     const databases = this.getDatabaseMap(DATABASE_DATABASE);
     const deliverTimes = this.getDatabaseMap(DATABASE_DELIVER_TIME);
@@ -44,9 +46,15 @@ export default class App extends Component {
     const tracers = this.getDatabaseMap(DATABASE_TRACER);
     const tracerMapping = this.getDatabaseMap(DATABASE_TRACER_MAPPING);
     const ServerConfig = this.getDatabaseObject(DATABASE_SERVER_CONFIG);
-    const user = this.getDatabaseObject(DATABASE_USER)
+    let user = this.getDatabaseObject(DATABASE_USER)
     const vials = this.getDatabaseMap(DATABASE_VIAL);
 
+
+    if(user && !(user instanceof User)){
+      user = new User(user.username, user.user_group, user.customer);
+    } else {
+      user = new User();
+    }
 
     const state = {
       login_error : "",
@@ -55,7 +63,7 @@ export default class App extends Component {
       spinner : false,
     };
     state[DATABASE_ADDRESS] = address;
-    state[DATABASE_CLOSEDDATE] = closeddate;
+    state[DATABASE_CLOSED_DATE] = closed_date;
     state[DATABASE_CUSTOMER] = customer;
     state[DATABASE_DATABASE] = databases;
     state[DATABASE_DELIVER_TIME] = deliverTimes;
@@ -68,17 +76,15 @@ export default class App extends Component {
     state[DATABASE_TRACER_MAPPING] = tracerMapping;
     state[DATABASE_SERVER_CONFIG] = ServerConfig;
     state[DATABASE_VIAL] = vials;
-    state[DATABASE_USER] = (user) ? user : {
-      username : "",
-      usergroup : USERGROUPS.ANON,
-      customer : [],
-    };
+    state[DATABASE_USER] = user
 
     this.state = state;
     this.MasterSocket = new TracerWebSocket(
       new WebSocket("ws://" + window.location.host + "/ws/"), this);
-    if (user) { // If we know, that the client is logged in, Getting the great state will not be authorized, hence no need for the query
-      const promise = this.MasterSocket.send(
+    if (user) {
+      // If we know, that the client is not logged in,
+      // Getting the great state will not be authorized
+      this.MasterSocket.send(
         this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
     }
     // While this is not needed, it's nice if the client start to use Ajax query again
@@ -89,92 +95,27 @@ export default class App extends Component {
     });
   }
 
-  // Authentication Methods
-  login(username, password){
-    this.setState({
-      ...this.state,
-      login_error : "",
-      spinner : true,
-    });
-    const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGIN);
-    const auth = {}
-    auth[AUTH_USERNAME] = username
-    auth[AUTH_PASSWORD] = password
-    message[JSON_AUTH] = auth;
-    const loginPromise = this.MasterSocket.send(message).then((data) => {
-      if (data[AUTH_IS_AUTHENTICATED]){
-        const user = {
-          username  : data[AUTH_USERNAME],
-          usergroup : data[KEYWORD_USERGROUP],
-          customers : data[KEYWORD_CUSTOMER],
-        }
-        db.set(DATABASE_USER, user);
-        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite : 'strict'})
-        const newState = {...this.state,
-          user : user,
-          spinner : false,
-        };
-        newState[DATABASE_IS_AUTH] = true;
-
-        this.setState(newState);
-        this.MasterSocket.send(this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GREAT_STATE));
-      } else {
-        this.setState({...this.state,
-          login_error : "Forkert Login",
-          spinner : false
-        });
-      }
-    });
-  }
 
   logout(){
     const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGOUT);
     this.MasterSocket.send(message).then((data) => {
-      db.delete(DATABASE_USER)
-      const newState = {...this.state,
-        user : {
-          username : "",
-          usergroup : 0,
-          customers : data[KEYWORD_CUSTOMER],
-        },
-        activeUserGroup : 0,
-      };
-      newState[DATABASE_IS_AUTH] = false;
-      this.setState(newState);
+      this.set_user(new User());
     })
   }
 
   whoami(){
     const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI)
     this.MasterSocket.send(message).then((data) => {
-      console.log(data)
+      let user;
       if (data[AUTH_IS_AUTHENTICATED]){
-        const user = {
-          username : data[AUTH_USERNAME],
-          usergroup : data[KEYWORD_USERGROUP],
-          customers : data[KEYWORD_CUSTOMER],
-        }
-        db.set(DATABASE_USER, user)
-        const newState = {...this.state,
-          user : user,
-          activeUserGroup : data[KEYWORD_USERGROUP],
-
-        };
-        newState[DATABASE_IS_AUTH] = true;
-
-        this.setState(newState);
+        user = new User(data[AUTH_USERNAME],
+                        data[KEYWORD_USERGROUP],
+                        data[KEYWORD_CUSTOMER],
+        )
       } else {
-        const user = {
-          username : "",
-          usergroup : 0,
-          customers : data[KEYWORD_CUSTOMER],
-        }
-        db.delete(DATABASE_USER)
-        const newState = {...this.state,
-          user : user,
-        };
-        this.setState(newState);
+        user = new User();
       }
+      this.set_user(user)
     })
   }
 
@@ -215,11 +156,11 @@ export default class App extends Component {
      * which is annoying, since most of the maps are (mostly) static
      */
     const closeddates = new Map();
-    for(const closeddateStr of greatState[JSON_CLOSEDDATE]){
+    for(const closeddateStr of greatState[JSON_CLOSED_DATE]){
       const closeddate = ParseJSONstr(closeddateStr);
       closeddates.set(closeddate.BDID, closeddate);
     }
-    db.set(DATABASE_CLOSEDDATE, closeddates)
+    db.set(DATABASE_CLOSED_DATE, closeddates)
 
     const customers = new Map();
     for(const customerStr of greatState[JSON_CUSTOMER]){
@@ -229,7 +170,7 @@ export default class App extends Component {
     db.set(DATABASE_CUSTOMER, customers);
     //DeliverTimes
     const deliverTimes = new Map();
-    for(const deliverTimeStr of greatState[JSON_DELIVERTIME]){
+    for(const deliverTimeStr of greatState[JSON_DELIVER_TIME]){
       const deliverTime = ParseJSONstr(deliverTimeStr);
       deliverTimes.set(deliverTime.DTID, deliverTime);
     }
@@ -304,7 +245,7 @@ export default class App extends Component {
     const state = {...this.state}
     // State Updates
     state[DATABASE_ADDRESS] = Addresses;
-    state[DATABASE_CLOSEDDATE] = closeddates;
+    state[DATABASE_CLOSED_DATE] = closeddates;
     state[DATABASE_CUSTOMER] = customers;
     state[DATABASE_DATABASE] = Databases;
     state[DATABASE_DELIVER_TIME] = deliverTimes;
@@ -339,7 +280,7 @@ export default class App extends Component {
 
   /**
    * 
-   * @param {Array<string>} mapNames 
+   * @param {Array<string>} mapNames
    * @param {Array<Array<Object>>} mapsArrays 
    * @param {Array<string>} IDs 
    * @param {Array<boolean>} keepOlds 
@@ -369,63 +310,31 @@ export default class App extends Component {
     this.setState(newState);
   }
 
+  set_user(user) {
+    if(!user instanceof User){
+      user = new User(user.username, user.user_group, user.customer);
+    }
+    if(user.user_group == USER_GROUPS.ANON){
+      db.delete(DATABASE_USER);
+    } else {
+      db.set(DATABASE_USER, user);
+    }
+
+    this.setState({...this.state, user : user});
+  }
+
   componentDidMount() {
     this.whoami();
   }
 
   render() {
-    var RenderedObject;
-
-    if (this.state.site_error){
-      if(this.state.site_error == ERROR_INVALID_JAVASCRIPT_VERSION) {
-        return (<InvalidVersionPage/>);
-      } else if (this.state.site_error == ERROR_INSUFFICIENT_PERMISSIONS) {
-        // Do Nothing? Assume the operation have handled the insuficient permissions
-      } else
-      return (<ErrorPage
-        SiteError={this.state.site_error}
-        SiteErrorInfo={this.state.site_error_info}
-      />);
-    }
-
-    if(this.state.user == undefined || this.state.user.usergroup == 0){
-      return (<div>
-        <Navbar
-          Names={[]}
-          setActivePage={() => {}}
-          isAuthenticated={false}
-          logout={this.logout}
-        />
-        <Container>
-          <Authenticate
-            authenticate={this.login.bind(this)}
-            errorMessage={this.state.login_error}
-            headerMessage="Log in"
-            fit_in={true}
-            spinner={this.state.spinner}
-          />
-        </Container>
-      </div>)
-    }
-    var Site;
-    if(this.state.user.usergroup == 1){
-      Site = AdminSite
-    } else if (this.state.usergroup in [2,3]) {
-      Site = ProductionSite;
-    } else if (this.state.usergroup in [4,5,6]) {
-      Site = ShopSite;
-    } else {
-      const errorMessage = "User have unknown usergroup:" + String(this.state.user.usergroup);
-      throw errorMessage;
-    }
-
-    const props = {}
+    const props = {};
 
     props[JSON_ADDRESS] = this.state[JSON_ADDRESS];
     props[JSON_DATABASE] = this.state[JSON_DATABASE];
-    props[JSON_CLOSEDDATE] = this.state[JSON_CLOSEDDATE];
+    props[JSON_CLOSED_DATE] = this.state[JSON_CLOSED_DATE];
     props[JSON_CUSTOMER] = this.state[JSON_CUSTOMER];
-    props[JSON_DELIVERTIME] = this.state[JSON_DELIVERTIME];
+    props[JSON_DELIVER_TIME] = this.state[JSON_DELIVER_TIME];
     props[JSON_EMPLOYEE] = this.state[JSON_EMPLOYEE];
     props[JSON_ISOTOPE] = this.state[JSON_ISOTOPE];
     props[PROP_LOGOUT] = this.logout.bind(this);
@@ -437,10 +346,11 @@ export default class App extends Component {
     props[JSON_TRACER_MAPPING] = this.state[JSON_TRACER_MAPPING];
     props[JSON_SERVER_CONFIG] = this.state[JSON_SERVER_CONFIG];
     props[JSON_VIAL] = this.state[JSON_VIAL];
-    props[PROP_WEBSOCKET] = this.MasterSocket;
+    props[PROP_SET_USER] = this.set_user.bind(this);
     props[PROP_USER] = this.state[PROP_USER]
+    props[PROP_WEBSOCKET] = this.MasterSocket;
 
-    return (<Site
+    return (<TracerShop
       {...props}
       />);
     }

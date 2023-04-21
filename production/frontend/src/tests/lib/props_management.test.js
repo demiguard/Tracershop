@@ -1,5 +1,5 @@
 
-import {JSON_ADDRESS, JSON_DATABASE, JSON_CLOSEDDATE, JSON_CUSTOMER, JSON_DELIVERTIME, JSON_EMPLOYEE, JSON_ISOTOPE, PROP_LOGOUT, PROP_NAVBAR_ELEMENTS, JSON_ACTIVITY_ORDER, JSON_RUN, JSON_INJECTION_ORDER, JSON_TRACER, JSON_TRACER_MAPPING, JSON_SERVER_CONFIG, JSON_VIAL, PROP_WEBSOCKET, PROP_USER} from '../../lib/constants.js'
+import {JSON_ADDRESS, JSON_DATABASE, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_ISOTOPE, PROP_LOGOUT, PROP_NAVBAR_ELEMENTS, JSON_ACTIVITY_ORDER, JSON_RUN, JSON_INJECTION_ORDER, JSON_TRACER, JSON_TRACER_MAPPING, JSON_SERVER_CONFIG, JSON_VIAL, PROP_WEBSOCKET, PROP_USER} from '../../lib/constants.js'
 import { propsExtraction } from '../../lib/props_management.js'
 
 describe("props management test suite", () => {
@@ -27,9 +27,9 @@ describe("props management test suite", () => {
 
     inputObject[JSON_ADDRESS] = JSON_ADDRESS_val;
     inputObject[JSON_DATABASE] = JSON_DATABASE_val;
-    inputObject[JSON_CLOSEDDATE] = JSON_CLOSEDDATE_val;
+    inputObject[JSON_CLOSED_DATE] = JSON_CLOSEDDATE_val;
     inputObject[JSON_CUSTOMER] = JSON_CUSTOMER_val;
-    inputObject[JSON_DELIVERTIME] = JSON_DELIVERTIME_val;
+    inputObject[JSON_DELIVER_TIME] = JSON_DELIVERTIME_val;
     inputObject[JSON_EMPLOYEE] = JSON_EMPLOYEE_val;
     inputObject[JSON_ISOTOPE] = JSON_ISOTOPE_val;
     inputObject[PROP_LOGOUT] = PROP_LOGOUT_val;
@@ -48,9 +48,9 @@ describe("props management test suite", () => {
 
     expect(outputObject[JSON_ADDRESS]).toEqual(JSON_ADDRESS_val)
     expect(outputObject[JSON_DATABASE]).toEqual(JSON_DATABASE_val)
-    expect(outputObject[JSON_CLOSEDDATE]).toEqual(JSON_CLOSEDDATE_val)
+    expect(outputObject[JSON_CLOSED_DATE]).toEqual(JSON_CLOSEDDATE_val)
     expect(outputObject[JSON_CUSTOMER]).toEqual(JSON_CUSTOMER_val)
-    expect(outputObject[JSON_DELIVERTIME]).toEqual(JSON_DELIVERTIME_val)
+    expect(outputObject[JSON_DELIVER_TIME]).toEqual(JSON_DELIVERTIME_val)
     expect(outputObject[JSON_EMPLOYEE]).toEqual(JSON_EMPLOYEE_val)
     expect(outputObject[JSON_ISOTOPE]).toEqual(JSON_ISOTOPE_val)
     expect(outputObject[PROP_LOGOUT]).toEqual(PROP_LOGOUT_val)
@@ -92,9 +92,9 @@ describe("props management test suite", () => {
 
     inputObject[JSON_ADDRESS] = JSON_ADDRESS_val;
     inputObject[JSON_DATABASE] = JSON_DATABASE_val;
-    inputObject[JSON_CLOSEDDATE] = JSON_CLOSEDDATE_val;
+    inputObject[JSON_CLOSED_DATE] = JSON_CLOSEDDATE_val;
     inputObject[JSON_CUSTOMER] = JSON_CUSTOMER_val;
-    inputObject[JSON_DELIVERTIME] = JSON_DELIVERTIME_val;
+    inputObject[JSON_DELIVER_TIME] = JSON_DELIVERTIME_val;
     inputObject[JSON_EMPLOYEE] = JSON_EMPLOYEE_val;
     inputObject[JSON_ISOTOPE] = JSON_ISOTOPE_val;
     inputObject[PROP_LOGOUT] = PROP_LOGOUT_val;
@@ -120,9 +120,9 @@ describe("props management test suite", () => {
     const properties = [
       JSON_ADDRESS,
       JSON_DATABASE,
-      JSON_CLOSEDDATE,
+      JSON_CLOSED_DATE,
       JSON_CUSTOMER,
-      JSON_DELIVERTIME,
+      JSON_DELIVER_TIME,
       JSON_EMPLOYEE,
       JSON_ISOTOPE,
       JSON_ACTIVITY_ORDER,

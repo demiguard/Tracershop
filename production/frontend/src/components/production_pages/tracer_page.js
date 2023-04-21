@@ -7,7 +7,7 @@ import { renderTableRow } from "../../lib/rendering.js";
 import { changeState } from "../../lib/state_management.js";
 import { renderClickableIcon, renderSelect } from "../../lib/rendering.js";
 import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY,
-  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE } from "../../lib/constants.js";
+  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_TRACER_MAPPING, JSON_CUSTOMER, PROP_WEBSOCKET } from "../../lib/constants.js";
 
 export {TracerPage}
 
@@ -20,7 +20,7 @@ export default class TracerPage extends Component {
       tracerID : null,
       showModal : false,
 
-      tracers : new Map(this.props.tracers),
+      tracers : new Map(this.props[JSON_TRACER]),
 
       newTracerName : "",
       newIsotope    : 1,
@@ -128,7 +128,7 @@ export default class TracerPage extends Component {
       name : "Aktivitet"
     },{
       id : TRACER_TYPE_DOSE,
-      name : "Dosis"
+      name : "Injektioner"
     }]
 
     return renderTableRow(tracer.id,[
@@ -184,11 +184,11 @@ export default class TracerPage extends Component {
       { this.state.showModal ?
       <TracerModal
       show           = {this.state.showModal}
-      tracerMapping  = {this.props.tracerMapping}
-      customers      = {this.props.customers}
+      tracerMapping  = {this.props[JSON_TRACER_MAPPING]}
+      customers      = {this.props[JSON_CUSTOMER]}
       onClose        = {this.closeModal.bind(this)}
       tracerID       = {this.state.tracerID}
-      websocket      = {this.props.websocket}
+      websocket      = {this.props[PROP_WEBSOCKET]}
       /> : ""
     }
     </Container>);

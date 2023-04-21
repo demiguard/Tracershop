@@ -2,12 +2,14 @@ import React, {Component} from "react"
 import { propsExtraction } from "../../lib/props_management.js"
 import { ControlPanel } from "../admin_pages/control_panel.js"
 import Navbar from "../injectable/navbar.js"
+import { ImitationPage } from "../admin_pages/imitation.js"
 
 
 export { ConfigSite }
 
 const Pages = {
-  Kontrolpanel : ControlPanel // Danish for key since keys are displayed.
+  Kontrolpanel : ControlPanel, // Danish for key since keys are displayed.
+  Bruger_Imitation : ImitationPage
 }
 
 class ConfigSite extends Component {
@@ -16,6 +18,7 @@ class ConfigSite extends Component {
 
     this.state = {
       ActivePage : "Kontrolpanel"
+
     }
   }
 

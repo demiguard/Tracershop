@@ -4,7 +4,7 @@ import { Calender, standardOrderMapping } from "../injectable/calender.js";
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
+import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
 
 
 export { ShopOrderPage }
@@ -21,7 +21,7 @@ class ShopOrderPage extends Component {
 
     let customer = db.get(DATABASE_SHOP_CUSTOMER);
     if(customer === undefined){
-      for(const [CID, _customer] of this.props.customers){
+      for(const [CID, _customer] of this.props[JSON_CUSTOMER]){
         db.set(DATABASE_SHOP_CUSTOMER, CID)
         customer = CID
         break;
@@ -49,9 +49,9 @@ class ShopOrderPage extends Component {
   }
 
   setActiveMonth(NewMonth) {
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
+    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
-    this.props.websocket.send(message);
+    this.props[PROP_WEBSOCKET].send(message);
   }
 
   setActiveCustomer(This){
@@ -66,10 +66,11 @@ class ShopOrderPage extends Component {
   }
 
   render(){
-    let activeCustomer = this.props.customers.get(Number(this.state.activeCustomer));
+    console.log(this.props)
+    let activeCustomer = this.props[JSON_CUSTOMER].get(Number(this.state.activeCustomer));
     if (activeCustomer == undefined){
       console.log("Undefined Customer not found")
-      for(const [ID, customer] of this.props.customers){
+      for(const [ID, customer] of this.props[JSON_CUSTOMER]){
         activeCustomer = customer;
         db.set(DATABASE_SHOP_CUSTOMER, ID);
         break;
@@ -83,7 +84,7 @@ class ShopOrderPage extends Component {
     const numberOfDays = Math.floor((this.state.today - oneJan) / (24 * 60 * 60 * 1000));
     const WeekNumber = Math.ceil(( this.state.today.getDay() + 1 + numberOfDays) / 7);
 
-    const RelevantDeliverTimes = Array.from(this.props.deliverTimes.values()).filter((DT) => {
+    const RelevantDeliverTimes = Array.from(this.props[JSON_DELIVER_TIME].values()).filter((DT) => {
       let WeeklyOrdering = true;
       switch(DT.repeat){
         case 2:
@@ -99,15 +100,15 @@ class ShopOrderPage extends Component {
              WeeklyOrdering;
     });
 
-    const RelevantOrders = Array.from(this.props.orders.values()).filter((order) => {
+    const RelevantOrders = Array.from(this.props[JSON_ACTIVITY_ORDER].values()).filter((order) => {
       return order.BID == customer.ID;
     });
 
-    const RelevantTOrders = Array.from(this.props.t_orders.values()).filter((t_order) => {
+    const RelevantTOrders = Array.from(this.props[JSON_INJECTION_ORDER].values()).filter((t_order) => {
         t_order.BID == customer.ID;
     });
 
-    const RelevantTracerMapping = Array.from(this.props.tracerMapping.values()).filter((tracerMapping) => {
+    const RelevantTracerMapping = Array.from(this.props.tracer_mapping.values()).filter((tracerMapping) => {
       return tracerMapping.customer_id == customer.ID
     })
 
@@ -122,7 +123,7 @@ class ShopOrderPage extends Component {
     const tracerMapping = new Map(RelevantTracerMapping.map((TM) => [TM.ID, TM]))
 
     const customerOptions = [];
-    for(const [_CID, customer] of this.props.customers){ // Note new namespace for customer
+    for(const [_CID, customer] of this.props[JSON_CUSTOMER]){ // Note new namespace for customer
       customerOptions.push(<option key={customer.ID} value={customer.ID}>{customer.UserName}</option>)
     } // End customer namespace
 
@@ -141,13 +142,13 @@ class ShopOrderPage extends Component {
               // State injection
               date={this.state.today}
               // Props injection
-              closeddates={this.props.closeddates}
-              customers={this.props.customers}
-              employee={this.props.employee}
-              isotopes={this.props.isotopes}
-              runs={this.props.runs}
-              tracers={this.props.tracers}
-              websocket={this.props.websocket}
+              closeddates={this.props[JSON_CLOSED_DATE]}
+              customers={this.props[JSON_CUSTOMER]}
+              employee={this.props[JSON_EMPLOYEE]}
+              isotopes={this.props[JSON_ISOTOPE]}
+              runs={this.props[JSON_RUN]}
+              tracers={this.props[JSON_TRACER]}
+              websocket={this.props[PROP_WEBSOCKET]}
               />
           </Row>
         </Col>
@@ -176,7 +177,7 @@ class ShopOrderPage extends Component {
               <div>
                 <Calender
                   date={this.state.today}
-                  getColor={standardOrderMapping(orders, tOrders, this.props.runs, this.props.closeddates)}
+                  getColor={standardOrderMapping(orders, tOrders, this.props[JSON_RUN], this.props[JSON_CLOSED_DATE])}
                   onDayClick={this.setActiveDate.bind(this)}
                   onMonthChange={this.setActiveMonth.bind(this)}
                 />

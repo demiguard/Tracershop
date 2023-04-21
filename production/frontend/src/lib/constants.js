@@ -23,7 +23,7 @@ export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
 ]
 
 
-export const USERGROUPS = {
+export const USER_GROUPS = {
   ANON : 0,
   ADMIN : 1,
   PRODUCTION_ADMIN : 2,
@@ -64,6 +64,7 @@ export const ERROR_NO_MESSAGE_TYPE = "NoMessageType"
 export const ERROR_INSUFFICIENT_PERMISSIONS = "InsufficientPermissions"
 export const ERROR_INSUFFICIENT_DATA = "InsufficientData";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
+export const ERROR_UNHANDLED_USER_GROUP = "UnhandledUserGroup";
 
 
 
@@ -73,9 +74,9 @@ export const JSON_ACTIVE_DATABASE = "active_database";
 export const JSON_ADDRESS  = "address";
 export const JSON_AUTH = "auth"
 export const JSON_CUSTOMER  = "customer";
-export const JSON_CLOSEDDATE = "closeddate";
+export const JSON_CLOSED_DATE = "closeddate";
 export const JSON_DATABASE = "database";
-export const JSON_DELIVERTIME = "deliverTimes";
+export const JSON_DELIVER_TIME = "deliverTimes";
 export const JSON_EMPLOYEE = "employee";
 export const JSON_FIELD_TO_UPDATE = "FieldToUpdate";
 export const JSON_GHOST_ORDER = "ghostOrder";
@@ -201,9 +202,9 @@ export const DATABASE_ACTIVITY_ORDER = JSON_ACTIVITY_ORDER;
 export const DATABASE_ADMIN_PAGE = "adminPage";
 export const DATABASE_ADDRESS = JSON_ADDRESS;
 export const DATABASE_CUSTOMER = JSON_CUSTOMER;
-export const DATABASE_CLOSEDDATE = JSON_CLOSEDDATE;
+export const DATABASE_CLOSED_DATE = JSON_CLOSED_DATE;
 export const DATABASE_DATABASE = JSON_DATABASE;
-export const DATABASE_DELIVER_TIME = JSON_DELIVERTIME;
+export const DATABASE_DELIVER_TIME = JSON_DELIVER_TIME;
 export const DATABASE_EMPLOYEE = JSON_EMPLOYEE;
 export const DATABASE_INJECTION_ORDER = JSON_INJECTION_ORDER
 export const DATABASE_ISOTOPE = JSON_ISOTOPE;
@@ -226,3 +227,4 @@ export const PROP_LOGOUT = "logout";
 export const PROP_NAVBAR_ELEMENTS = "NavbarElements";
 export const PROP_WEBSOCKET = "websocket";
 export const PROP_USER = DATABASE_USER;
+export const PROP_SET_USER = "set_user";

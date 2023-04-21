@@ -1,6 +1,6 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
-import { JSON_ACTIVITY_ORDER, JSON_CLOSEDDATE, JSON_INJECTION_ORDER, JSON_RUN, KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+import { JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_RUN, KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
 import { Calender, standardOrderMapping, productionGetMonthlyOrders } from "../injectable/calender";
 
 import { FormatDateStr } from "../../lib/formatting.js";
@@ -17,21 +17,21 @@ export class CloseDaysPage extends Component {
 
   changeCloseDay (DateObject, Calender) {
     const closedDateSet = new Set();
-    for(const [BDID, cdate] of this.props[JSON_CLOSEDDATE]){
+    for(const [BDID, cdate] of this.props[JSON_CLOSED_DATE]){
       closedDateSet.add(cdate.ddate)
     }
     const dateStr = `${DateObject.getFullYear()}-${FormatDateStr(DateObject.getMonth() + 1)}-${FormatDateStr(FormatDateStr(DateObject.getDate()))}`
     if (closedDateSet.has(dateStr)){
       // Yeah my data structures REALLY are working against me here
       let data;
-      for(const [_BDID, closeDate] of this.props[JSON_CLOSEDDATE]){
+      for(const [_BDID, closeDate] of this.props[JSON_CLOSED_DATE]){
         if (closeDate.ddate == dateStr){
           data = closeDate;
           break;
         }
       }
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
-      message[WEBSOCKET_DATATYPE] = JSON_CLOSEDDATE;
+      message[WEBSOCKET_DATATYPE] = JSON_CLOSED_DATE;
       message[WEBSOCKET_DATA] = data;
       this.props.websocket.send(message);
     } else { // Delete it
@@ -39,7 +39,7 @@ export class CloseDaysPage extends Component {
       data[KEYWORD_DDATE] = dateStr
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
       message[WEBSOCKET_DATA] = data;
-      message[WEBSOCKET_DATATYPE] = JSON_CLOSEDDATE;
+      message[WEBSOCKET_DATATYPE] = JSON_CLOSED_DATE;
       this.props.websocket.send(message);
     }
   }
@@ -52,7 +52,7 @@ export class CloseDaysPage extends Component {
         date={this.state.today}
         onDayClick={this.changeCloseDay.bind(this)}
         onMonthChange={productionGetMonthlyOrders(this.props[PROP_WEBSOCKET])}
-        getColor={standardOrderMapping(this.props[JSON_ACTIVITY_ORDER], this.props[JSON_INJECTION_ORDER], this.props[JSON_RUN], this.props[JSON_CLOSEDDATE])}
+        getColor={standardOrderMapping(this.props[JSON_ACTIVITY_ORDER], this.props[JSON_INJECTION_ORDER], this.props[JSON_RUN], this.props[JSON_CLOSED_DATE])}
       ></Calender>
     </div>);
   }
