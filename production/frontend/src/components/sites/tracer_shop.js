@@ -4,10 +4,11 @@ import { LoginSite } from "./login_site";
 import { AdminSite } from "./admin_site";
 import { ShopSite } from "./shop_site";
 import { ProductionSite } from "./production_site";
-import { ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_UNHANDLED_USER_GROUP, PROP_USER, USER_GROUPS } from "../../lib/constants";
+import { ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_UNHANDLED_USER_GROUP, PROP_USER, USER_GROUPS, PROP_TRACERSHOP_SITE } from "../../lib/constants";
 import ErrorPage from "../error_pages/error_page";
 import InvalidVersionPage from "../error_pages/invalid_version_page";
 import { User } from "../../dataclasses/user";
+import { propsExtraction } from "../../lib/props_management";
 
 const SITES = {
   log_in_site : LoginSite,
@@ -72,8 +73,12 @@ class TracerShop extends Component {
     }
     try {
       let Site = this.get_site_from_user(this.props[PROP_USER])
+      let new_props = propsExtraction(this.props);
+
+      new_props[PROP_TRACERSHOP_SITE] = TracerShop
+
       return (<Site
-        {...this.props}
+        {...new_props}
         />)
     } catch {
       return (<ErrorPage

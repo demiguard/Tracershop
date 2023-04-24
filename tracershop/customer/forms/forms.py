@@ -2,7 +2,7 @@ from django import forms
 from django.forms import Form, ModelForm
 
 from customer.lib.Enums import USECASENAMING
-from customer.models import PotentialUser, Procedure, Location, Procedure
+from customer.models import PotentialUser, Procedure, Location, Procedure, Database, Address, ServerConfiguration
 
 class OrderForm(Form):
   order_MBQ = forms.IntegerField(min_value=0, required=False, label="Antal MBQ")
@@ -24,19 +24,18 @@ class LoginForm(Form):
   password = forms.CharField(widget=forms.PasswordInput())
 
 class CreateUserForm(Form):
-
   username         = forms.CharField(max_length=120)
   password         = forms.CharField(widget=forms.PasswordInput()) 
   password_confirm = forms.CharField(widget=forms.PasswordInput())
   email_1 = forms.EmailField(max_length=256, widget=forms.EmailInput(), label="Email 1*")
-  
+
 
 class EditUserForm(Form):
   password         = forms.CharField(widget=forms.PasswordInput(), required=False) 
   password_confirm = forms.CharField(widget=forms.PasswordInput(), required=False)
   email_1 = forms.EmailField(max_length=256, widget=forms.EmailInput(), required=False)
-  
-  
+
+
 class VerifyUserForm(Form):
   is_staff = forms.BooleanField(required=False)
   is_admin = forms.BooleanField(required=False)
@@ -59,7 +58,7 @@ class ActiveCustomerForm(Form):
   def __init__(self, name, initalValue, *args, **kwargs):
     super().__init__(*args, **kwargs)
     self.fields[name] = forms.BooleanField(required=False, initial=initalValue)
-    
+
 class ProcedureForm(ModelForm):
   class Meta:
     model = Procedure
@@ -97,3 +96,17 @@ class LocationForm(ModelForm):
     self.fields['AssignedTo'].widget.attrs['id'] = f"select-{locationName}"
     self.fields['AssignedTo'].widget.attrs['class'] = f"AssignedToInput"
 
+class DatabaseForm(ModelForm):
+  class Meta:
+    model = Database
+    fields = ["databaseName", "username", "password", "address"]
+
+class AddressForm(ModelForm):
+  class Meta:
+    model = Address
+    fields = ["ip", "port", "description"]
+
+class ServerConfigurationForm(ModelForm):
+  class Meta:
+    model = ServerConfiguration
+    fields = ["ExternalDatabase"]

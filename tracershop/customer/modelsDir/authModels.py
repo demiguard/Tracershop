@@ -24,7 +24,7 @@ class PotentialUser(AbstractBaseUser, SubscribeableModel):
   location = CharField(max_length=60,  blank=True, null=True)
   cityname = CharField(max_length=60,  blank=True, null=True)
   postcode = CharField(max_length=30,  blank=True, null=True)
-  # 
+  #
 
   USERNAME_FIELD = 'username'
   REQUIRED_FIELDS = ['password']
@@ -33,21 +33,20 @@ class PotentialUser(AbstractBaseUser, SubscribeableModel):
     return self.username
 
 
-
-
-
 class UpdateTimeStamp(SubscribeableModel):
   ID = IntegerField(primary_key=True)
   timeStamp = DateTimeField()
-  
+
 
 class Customer(SubscribeableModel):
   ID                    = AutoField(primary_key=True)
   customerName          = CharField(max_length=30)
   is_REGH               = BooleanField(default=False)
-  defualtActiveCustomer = BooleanField(default=False) #This means the customer would be assigned to new Users
+  #This means the customer would be assigned to new Users
+  defualtActiveCustomer = BooleanField(default=False)
   AET                   = CharField(max_length=16, null=True, default=None)
-  TestCustomer          = BooleanField(default=False) #This means it will not show up in 
+  #This means it will not show up in
+  TestCustomer          = BooleanField(default=False)
 
   def __str__(self):
     return self.customerName
@@ -55,7 +54,7 @@ class Customer(SubscribeableModel):
 class Location(SubscribeableModel):
   location   = CharField(max_length=16, primary_key=True)
   LocName    = CharField(max_length=32, default="")
-  AssignedTo = ForeignKey(Customer, on_delete=SET_NULL, null=True, default=None) 
+  AssignedTo = ForeignKey(Customer, on_delete=SET_NULL, null=True, default=None)
 
   def __str__(self):
     if self.LocName:

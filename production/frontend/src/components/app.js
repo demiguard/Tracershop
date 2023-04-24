@@ -1,12 +1,7 @@
 import React, { Component } from "react";
-import { Container} from "react-bootstrap";
 import Cookies from "js-cookie";
 import { ajaxSetup } from "jquery";
 
-import { Navbar } from "./injectable/navbar.js";
-import { Authenticate } from "./injectable/authenticate.js";
-import { ErrorPage } from "./error_pages/error_page.js";
-import InvalidVersionPage from "./error_pages/invalid_version_page.js"
 
 import { db } from "../lib/local_storage_driver.js";
 import { TracerWebSocket } from "../lib/tracer_websocket.js";
@@ -20,9 +15,6 @@ import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DE
         AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_USER,
         DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSED_DATE, JSON_CLOSED_DATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER
       } from "../lib/constants.js";
-import { AdminSite } from "./sites/admin_site.js";
-import { ProductionSite } from "./sites/production_site.js";
-import { ShopSite } from "./sites/shop_site.js";
 import { User } from "../dataclasses/user.js";
 import { TracerShop } from "./sites/tracer_shop.js";
 

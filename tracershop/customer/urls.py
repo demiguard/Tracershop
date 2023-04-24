@@ -12,6 +12,8 @@ from customer.views.admin.adminLocations import AdminLocationsView
 from customer.views.admin.admin_users import AdminUserView
 from customer.views.admin.adminPanel import AdminPanel
 from customer.views.admin.adminConfirmUser import AdminConfirmUser
+from customer.views.admin.admin_change_database import AdminChangeDatabase
+
 from customer.views.api.apiAdminChangePassword import ApiAdminChangePassword
 from customer.views.api.apiAdminUpdateRights import ApiAdminUpdateRights
 from customer.views.api.apiConfirmUser import ApiConfirmUser
@@ -45,20 +47,21 @@ Views = [
   FutureBooking,
   ProcedureEditor,
   #Admin
-  AdminUserView, 
+  AdminUserView,
   AdminPanel,
   AdminLocationsView,
   AdminConfirmUser,
   ApiAdminChangePassword,
   ApiAdminUpdateRights,
   ApiConfirmUser,
+  AdminChangeDatabase,
   #Authen
   CreateUserView,
   CreateUserSuccess,
-  LoginView, 
+  LoginView,
   APICreateNewPasswordResetRequest,
   ResetPasswordView,
-  APILoginView, 
+  APILoginView,
   APILogoutView,
   EditMyCustomers,
   EditMyUser,
@@ -69,7 +72,7 @@ Views = [
   ApiMassAddOrder,
   Api_add_torder,
   ApiFutureBookingDay,
-  ApiUpdateProcedure, 
+  ApiUpdateProcedure,
   ApiEditTOrder,
   APIUserAccess,
   RESTAPI,

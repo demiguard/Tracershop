@@ -228,3 +228,4 @@ export const PROP_NAVBAR_ELEMENTS = "NavbarElements";
 export const PROP_WEBSOCKET = "websocket";
 export const PROP_USER = DATABASE_USER;
 export const PROP_SET_USER = "set_user";
+export const PROP_TRACERSHOP_SITE = "tracershop_site";
