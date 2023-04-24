@@ -2,7 +2,7 @@ from django.http.response import JsonResponse
 
 
 #
-TRACERSHOPDATABASENAME = 'TS_test'
+TRACERSHOPDATABASENAME = 'TracerShop'
 
 TRACERSHOPNAME = "tracershop-int"
 
