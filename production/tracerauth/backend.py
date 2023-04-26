@@ -1,9 +1,13 @@
+# Python Standard Library
+import re
+from typing import Optional
+
+# Third party packages
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
+
+# Tracershop Production Packages
 from database.models import User, UserGroups
-
-import re
-
 from lib.SQL.SQLController import SQL
 
 
@@ -23,7 +27,7 @@ def validString(string :str) -> bool:
   return False
 
 class TracershopAuthenticationBackend(BaseBackend):
-  def authenticate(self, request, username=None, password=None) -> User:
+  def authenticate(self, request, username=None, password=None) -> Optional[User]:
     if username and password:
       try:
         user = User.objects.get(username=username)

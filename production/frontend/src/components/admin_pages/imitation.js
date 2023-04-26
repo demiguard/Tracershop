@@ -2,10 +2,21 @@ import React, { Component } from "react";
 import { User } from "../../dataclasses/user";
 import { PROP_LOGOUT, PROP_SET_USER, PROP_USER, PROP_WEBSOCKET, USER_GROUPS, PROP_TRACERSHOP_SITE } from "../../lib/constants";
 import { ImitatedTracerWebsocket } from "../../lib/imitated_tracer_websocket";
-import { Container, Row } from "react-bootstrap";
-
+import { Container, FormControl, InputGroup, Row } from "react-bootstrap";
+import { Select } from "../injectable/select";
 
 export {ImitationPage}
+
+
+const User_group_options = {
+  0 : "Anonmym Bruger",
+  1 : "Adminstrator",
+  2 : "Produktion Administrator",
+  3 : "Produktion Bruger",
+  4 : "Shop Administrator",
+  5 : "Shop Intern Kunde",
+  6 : "Shop External Kunde"
+}
 
 class ImitationPage extends Component {
   constructor(props){
@@ -46,12 +57,18 @@ class ImitationPage extends Component {
     props[PROP_SET_USER] = this.imitated_set_user.bind(this);
     props[PROP_LOGOUT] = this.imitated_logout.bind(this);
     props[PROP_USER] = imitated_user;
-    props[PROP_WEBSOCKET] = new ImitatedTracerWebsocket(this);
+
     const Site = props[PROP_TRACERSHOP_SITE]
-    
+
 
     return(<Container>
-      <Row></Row>
+      <Row>
+        <InputGroup>
+          <FormControl></FormControl>
+          <Select></Select>
+          <FormControl></FormControl>
+        </InputGroup>
+      </Row>
       <Row>
         <Site
           {...props}

@@ -5,8 +5,8 @@ import { TracerWebSocket } from "./tracer_websocket";
 export { ImitatedTracerWebsocket }
 
 class ImitatedTracerWebsocket extends TracerWebSocket {
-  constructor(parent) {
-    this.StateHolder = parent
+  constructor(websocket, parent) {
+    super(websocket, parent)
   }
 
   send(message){
