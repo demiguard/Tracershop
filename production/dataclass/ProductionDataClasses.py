@@ -10,20 +10,23 @@
 """
 __author__= "Christoffer Vilstrup Jensen"
 
-from contextlib import AbstractAsyncContextManager
-import dataclasses
-import json
 
+# Standard python library
 from abc import abstractclassmethod
 from dataclasses import dataclass, asdict, fields, Field
 from datetime import datetime, date, time
+import json
 from pprint import pprint
-from typing import Dict, Optional, List, Any, get_args, get_origin, Union, Type
+from typing import Dict, Optional, List, Any, get_args, get_origin, Union, Tuple, Type
+
+# Third party Packages
+
+# Tracershop Production Packages
+from database.models import User
 from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_CLOSEDDATE, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
-from database.models import User
 from lib.utils import LMAP
-from lib.SQL.SQLFormatter import SerializeToSQLValue
+from database.production_database.SQLFormatter import SerializeToSQLValue
 
 
 @dataclass
@@ -58,7 +61,7 @@ class JsonSerilizableDataClass:
 
   @classmethod
   def fromDict(cls, ClassDict : Dict):
-    f"""Alternative consturctor from a dictionary
+    f"""Alternative constructor from a dictionary
 
     Args:
         ClassDict (Dict): Dict with the fields: {", ".join([field.name for field in cls.getFields()])}
@@ -69,7 +72,7 @@ class JsonSerilizableDataClass:
     return cls(**ClassDict)
 
   @classmethod
-  def getFields(cls) -> List[Field]:
+  def getFields(cls) -> Tuple[Field]:
     """[summary]
 
     Returns:
@@ -84,12 +87,12 @@ class JsonSerilizableDataClass:
     By Default this is just TRUE, hence no filtering, however the function that
     need filtering are expected to implement their own version of this function
 
-    Returns:
+    Returns:AdminSite
         str: SubQuery with valid SQL condition statement
     """
     return "TRUE"
 
-  @classmethod
+
   @abstractclassmethod
   def getSQLDateTime(cls) -> str:
     """ This is abstract method, that is called when the SQL modules needs to constrtuct a query with an condition based on a date or datetime field
@@ -99,7 +102,7 @@ class JsonSerilizableDataClass:
     """
     raise NotImplemented # pragma: no cover
 
-  @classmethod
+
   @abstractclassmethod
   def getIDField(cls) -> str:
     """Abstract method for generating ID
@@ -108,6 +111,15 @@ class JsonSerilizableDataClass:
         NotImplemented: _description_
     """
     raise NotImplemented # pragma: no cover
+
+  @abstractclassmethod
+  def getSQLTable(cls):
+    """If relevant This function should be overwritten with the relevant SQL
+
+    Raises:
+        NotImplemented: This function must be implemented by a superclass
+            if it isn't and this function is called, NotImplemented is raised
+    """
 
   @classmethod
   def createDataClassQuery(cls, skeleton) -> str:
@@ -130,16 +142,6 @@ class JsonSerilizableDataClass:
   def getSQLFields(cls):
     Fields = cls.getFields()
     return ", ".join([field.name for field in Fields])
-
-  @abstractclassmethod
-  def getSQLTable(cls):
-    """If relevant This function should be overwritten with the relevant SQL
-
-    Raises:
-        NotImplemented: This function must be implemented by a superclass
-            if it isn't and this function is called, NotImplemented is raised
-    """
-    raise NotImplemented
 
   @classmethod
   def getExtraFields(cls) -> List:
@@ -225,16 +227,16 @@ class JsonSerilizableDataClass:
       self.__TargetedSetAttr__(fieldVal, field.name, field.type)
 
   def __init__(self, *args, **kwargs):
-    Myfields = self.getFields()
-    fieldDict = { field.name : field for field in Myfields}
+    MyFields = self.getFields()
+    fieldDict = { field.name : field for field in MyFields}
 
     #Initialize Optionals as None
     # Note that Optional[types] is just shorthand for Union[Types, Nonetype]
-    for field in Myfields:
+    for field in MyFields:
       if get_origin(field.type) == Union and type(None) in get_args(field.type):
         self.__setattr__(field.name, None)
 
-    for field, fieldVal in zip(Myfields, args):
+    for field, fieldVal in zip(MyFields, args):
       self.__TypeSafeSetAttr(field, fieldVal)
 
     for fieldName, fieldVal in kwargs.items():

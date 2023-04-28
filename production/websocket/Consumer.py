@@ -11,35 +11,34 @@ Note: This module doesn't scale at large, simply because all users are in
 __author__ = "Christoffer Vilstrup Jensen"
 
 
-from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
-from django.core.serializers import serialize
-from django.contrib.sessions.backends.db import SessionStore
-from django.http import HttpRequest
-
-from channels.generic.websocket import AsyncJsonWebsocketConsumer
-from channels.auth import login, get_user, logout
-
-
-from calendar import monthrange
+# Python standard Library
 from asgiref.sync import sync_to_async
+from calendar import monthrange
 from datetime import datetime, date, timedelta
 import decimal
-from typing import Dict, List, Callable, Coroutine
-
-from constants import * # Import the many WEBSOCKET constants
-from lib.decorators import typeCheckFunc
-from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
-from lib.ProductionJSON import encode, decode
-from lib.ProductionDataClasses import *
-from lib.mail import sendMail
-from lib.utils import LMAP
-from lib.expections import SQLInjectionException
-from tracerauth import auth
-
-from websocket.DatabaseInterface import DatabaseInterface
-
 import logging
 from pprint import pprint
+from typing import Dict, List, Callable, Coroutine
+
+# Django packages
+from channels.auth import login, get_user, logout
+from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
+from django.contrib.sessions.backends.db import SessionStore
+from django.core.serializers import serialize
+
+# Tracershop Production packages
+from constants import * # Import the many WEBSOCKET constants, TO DO change this
+from database.database_interface import DatabaseInterface
+from lib.decorators import typeCheckFunc
+from core.exceptions import SQLInjectionException
+from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
+from lib.mail import sendMail
+from lib.ProductionJSON import encode, decode
+from dataclass.ProductionDataClasses import *
+from lib.utils import LMAP
+from tracerauth import auth
+
 
 logger = logging.getLogger('DebugLogger')
 error_logger = logging.getLogger("ErrorLogger")
@@ -76,22 +75,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ### --- Websocket methods --- ####
   async def connect(self):
-
-    self.groups.append(self.global_group)
-
-    await self.channel_layer.group_add(
-      self.global_group,
-      self.channel_name
-    )
+    if self.groups is not None:
+      self.groups.append(self.global_group)
+    if self.channel_layer is not None:
+      await self.channel_layer.group_add(
+        self.global_group,
+        self.channel_name
+      )
 
     await self.accept()
 
   async def disconnect(self, close_code):
-    for group_name in self.groups:
-      await self.channel_layer.group_discard(
-        group_name,
-        self.channel_name
-      )
+    if self.groups is not None and self.channel_layer is not None:
+      for group_name in self.groups:
+        await self.channel_layer.group_discard(group_name,self.channel_name)
 
   async def sendEvent(self, event: Dict):
     """

@@ -13,6 +13,12 @@ class Address(SubscribableModel):
     else:
       return "This Address does not have a description please fix"
 
+class DatabaseType(models.IntegerChoices):
+  UnknownDatabase = 0
+  DjangoDatabase = 1
+  TracershopProductionDatabaseLegacy = 2
+  TracershopProductionDatabaseV1 = 3
+
 class Database(SubscribableModel):
   databaseName = models.CharField(max_length=32, primary_key=True)
   username = models.CharField(max_length=32)
@@ -24,6 +30,7 @@ class Database(SubscribableModel):
     null=True
   )
   testinDatabase = models.BooleanField(default=False) #testing databases do not send mails
+  databaseType = models.IntegerField(choices=DatabaseType.choices, default=DatabaseType.UnknownDatabase)
 
   def __str__(self):
     return self.databaseName

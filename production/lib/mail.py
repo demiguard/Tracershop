@@ -4,7 +4,7 @@ import re
 from typing import Union
 import constants
 
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass
 from database.models import ServerConfiguration
 
 from smtplib import SMTP

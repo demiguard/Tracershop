@@ -1,14 +1,26 @@
+"""Module for Creating dataclasses to reduce the amount of boiler plate code
+in test cases.
+
+Notable Functions:
+ * useDataClass - Decorator, that creates and destroys dataclasses around testcase
+ * useDataClassAsync - Async version of useDataClass
+"""
+
+# Python3 standard library
 from asgiref.sync import sync_to_async
 from datetime import date, datetime, time, timedelta
 from typing import Dict,List, Type
 
+# Third party packages
+
+#
 
 import functools
 
 from mysql.connector.errors import IntegrityError
 from constants import *
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass, RunsDataClass, TracerDataClass, VialDataClass
-from lib.SQL.SQLExecuter import ExecuteQuery, Fetching
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass, RunsDataClass, TracerDataClass, VialDataClass
+from database.production_database.SQLExecuter import ExecuteQuery, Fetching
 from tests.helpers import async_ExecuteQuery
 
 today = datetime.now()
@@ -416,7 +428,8 @@ testVials = [testVial_1, testVial_2, testVial_3, testVial_4]
 
 # Powerful Stuff
 
-TEST_DATA_DICT= {
+TEST_DATA_DICT: Dict[Type[JsonSerilizableDataClass],
+                     List[JsonSerilizableDataClass]] = { # type: ignore
     ActivityOrderDataClass : testOrders,
     CustomerDataClass : testCustomers,
     DeliverTimeDataClass : testDeliverDateTime,
@@ -467,7 +480,7 @@ def useDataClassAsync(*DataClasses : Type[JsonSerilizableDataClass]):
     return wrapper
   return decorator
 
-def useDataClass(*DataClasses : JsonSerilizableDataClass):
+def useDataClass(*DataClasses : Type[JsonSerilizableDataClass]):
   def decorator(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):

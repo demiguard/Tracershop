@@ -1,17 +1,31 @@
-import mysql.connector as mysql
-import enum
-from typing import List
-from pprint import pprint
+"""_summary_
 
+  Raises:
+      DatabaseNotSetupException: _description_
+      DatabaseInvalidQueriesConfiguration: _description_
+      DatabaseCouldNotConnect: _description_
+      DatabaseInvalidQueriesConfiguration: _description_
+      DatabaseInvalidQueriesConfiguration: _description_
+
+  Returns:
+      _type_: _description_
+"""
+
+__author__ = "Christoffer Vilstrup Jensen"
+# Python Standard library
+import enum
 import logging
+from pprint import pprint
+from typing import List
+
+# Thrid Party Packages
+import mysql.connector as mysql
 
 # User packages:
 import constants
-from lib.SQL.SQLFormatter import checkForSQLInjection
+from database.production_database.SQLFormatter import checkForSQLInjection
 from database.models import Database, ServerConfiguration
-from lib.expections import DatabaseNotSetupException, DatabaseCouldNotConnect, DatabaseInvalidQueriesConfiguration
-
-__author__ = "Christoffer Vilstrup Jensen"
+from core.exceptions import DatabaseNotSetupException, DatabaseCouldNotConnect, DatabaseInvalidQueriesConfiguration
 
 logger = logging.getLogger("SQLLogger")
 logger.setLevel(logging.DEBUG)
@@ -32,6 +46,14 @@ class DataBaseConnectionWrapper(object):
     except ServerConfiguration.DoesNotExist: # pragma: no cover
       raise DatabaseNotSetupException
     database = SC.ExternalDatabase
+    if database is None:
+      logger.error("Server Configuration doesn't have an external Database")
+      raise DatabaseNotSetupException
+
+    if database.address is None:
+      logger.error("Database doesn't have an Address")
+      raise DatabaseNotSetupException
+
     databaseConfig = {
       'database' : database.databaseName,
       'user' : database.username,

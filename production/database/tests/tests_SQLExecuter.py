@@ -1,20 +1,27 @@
+""""""
 
-from distutils.command.clean import clean
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python standard library
 from pprint import pprint
-from select import select
-import constants
+from threading import Thread, Event
 
+# Third party packages
 from django.test import TestCase
-from lib import ProductionDataClasses as PDC
-from lib.SQL import SQLExecuter
-from lib.SQL import SQLFactory
-from lib.SQL.SQLExecuter import DataBaseConnectionWrapper, Fetching
-from lib.expections import DatabaseInvalidQueriesConfiguration
+
+# Tracershop Production Packages
+import constants
+from core.exceptions import DatabaseInvalidQueriesConfiguration
+from database.production_database import SQLExecuter, SQLFactory
+from database.production_database.SQLExecuter import DataBaseConnectionWrapper, Fetching
+from dataclass import ProductionDataClasses as PDC
 from lib.utils import LMAP
+
+# Test Packages
 from tests.test_DataClasses import useDataClass, testDeliverDateTime
 from tests.helpers import cleanTable
 
-from threading import Thread, Event
+
 
 # There's a quite few #pragma: no cover in  SQLExecuter,
 # This is cases where there the server have been incorrectly configured or can't connect to the database
@@ -164,5 +171,6 @@ class SQLExecuterBasicsTestCase(TestCase):
   def test_GetAll_deliverTimes(self):
     selectQuery = SQLFactory.getDataClass(PDC.DeliverTimeDataClass)
     result = SQLExecuter.ExecuteQuery(selectQuery, Fetching.ALL)
-    target = LMAP(lambda x: PDC.DeliverTimeDataClass(**x), result)
+    target = [PDC.DeliverTimeDataClass(**deliver_time_data_class)
+              for deliver_time_data_class in result]
     self.assertListEqual(target, testDeliverDateTime)

@@ -12,7 +12,7 @@ from django.http import JsonResponse
 from django.db.models import Model
 from django.core.serializers import serialize
 
-from lib.ProductionDataClasses import JsonSerilizableDataClass
+from dataclass.ProductionDataClasses import JsonSerilizableDataClass
 
 from typing import Dict
 import json

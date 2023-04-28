@@ -1,30 +1,25 @@
-"""
-  This module is responsible for overseeing all data transfers between databases and the server
+"""This module is responsible for overseeing all data transfers between databases and the server
   This Module is that have been modified into a class for depency injections sake.
   So that this module can easily be replaced if one decide to change the underlying database
   This is also helpful for testing sake.
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
-from django.db.models import Model
-from django.db.models.base import ModelBase
-from django.db.models.query import QuerySet
-from django.db import connection
+# Python Standard Library
+from datetime import datetime, date
+from typing import Callable, Dict, List, Optional, Tuple, Type, Union
+
+# Third party Packages
 from django.core.exceptions import ObjectDoesNotExist
+from django.db.models import Model
+from django.db.models.query import QuerySet
 
-from dataclasses import fields
-from datetime import datetime, time, date
-from typing import Callable, Dict, List, Optional, Tuple, Type
+# Tracershop Production packages
+from database.models import ServerConfiguration, Database, User
+from database.production_database.SQLExecuter import Fetching
+from database.production_database import SQLFormatter, SQLExecuter, SQLFactory
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, EmployeeDataClass, JsonSerilizableDataClass
 
-
-from database.models import ServerConfiguration, Database
-from lib.decorators import typeCheckFunc
-from lib.SQL.SQLExecuter import Fetching
-from lib.SQL import SQLFormatter, SQLExecuter, SQLFactory
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, JsonSerilizableDataClass,RunsDataClass, TracerDataClass,  VialDataClass
-from lib.utils import LMAP
-
-from database.models import User
 
 class SQL():
   """
@@ -35,7 +30,7 @@ class SQL():
   @staticmethod
   def __Execute(
       SQLFactoryMethod : Callable[..., str],
-      returnClass : JsonSerilizableDataClass,
+      returnClass : Type[JsonSerilizableDataClass],
       fetch : Fetching, *args) -> List[JsonSerilizableDataClass]:
     """This is the method for executing a single SQL statement transaction
 
@@ -117,7 +112,10 @@ class SQL():
     return cls.__Execute(SQLFactory.getDataClass, DataClass, Fetching.ALL, DataClass)
 
   @classmethod
-  def getDataClassRange(cls, startDate: datetime, endDate : datetime, DataClass):
+  def getDataClassRange(cls,
+                        startDate: Union[datetime, date],
+                        endDate : Union[datetime, date],
+                        DataClass):
     return cls.__Execute(
       SQLFactory.getDataClassRange,
       DataClass, Fetching.ALL,
@@ -152,7 +150,7 @@ class SQL():
     Returns:
         List[EmployeeDataClass]: The list of all users
     """
-    return LMAP(EmployeeDataClass.fromUser, User.objects.all())
+    return [EmployeeDataClass.fromUser(user) for user in User.objects.all()]
 
 
   @classmethod

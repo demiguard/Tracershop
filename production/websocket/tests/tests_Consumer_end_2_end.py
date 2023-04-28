@@ -8,41 +8,50 @@ This means that this is an indirect test of:
     * ProductionDataclasses
     * ProductionJSON
 """
+
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python standard library
+from asyncio.exceptions import TimeoutError
+import datetime
+from json import loads
+from logging import ERROR
+from pprint import pprint
+import time
+from typing import Dict
 from unittest import skip
+
+# Third party packages
 from channels.auth import AuthMiddlewareStack
 from channels.routing import URLRouter, ProtocolTypeRouter
 from channels.sessions import SessionMiddlewareStack
 from channels.testing import WebsocketCommunicator
-
 from django.core import serializers
 from django.core.asgi import get_asgi_application
 from django.urls import re_path
 from django.test import TestCase
 
-from asyncio.exceptions import TimeoutError
-
-import datetime
-from json import loads
-from logging import ERROR
-from pprint import pprint
-from typing import Dict
-import time
-
-from database.models import Address, Database, ServerConfiguration, User, UserGroups
+# Tracershop Production
 from constants import *
-
-from lib.SQL.SQLExecuter import Fetching
-from lib.SQL import SQLFactory
-from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
+from database.database_interface import DatabaseInterface
+from database.models import Address, Database, ServerConfiguration, User, UserGroups
+from database.production_database.SQLExecuter import Fetching
+from database.production_database import SQLFactory
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
 from lib.utils import LFILTER, LMAP
-from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD, TEST_PRODUCTION_PASSWORD, TEST_PRODUCTION_USERNAME
-from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
-from websocket.DatabaseInterface import DatabaseInterface
 from websocket.Consumer import Consumer
 
+# Test Helpers
+from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD, TEST_PRODUCTION_PASSWORD, TEST_PRODUCTION_USERNAME
+from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
+
+
+
+# Asgi Loading
 django_asgi_app = get_asgi_application()
 
 from websocket import routing # Import that this line is here, otherwise load order is fucked up
+#
 
 app = ProtocolTypeRouter({
   "http" : django_asgi_app,

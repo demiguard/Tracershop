@@ -1,14 +1,20 @@
+""""""
+
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python standard library
+from datetime import datetime
 import socket
 
+# Third party packages
 from django.test import TestCase
 
+# Tracershop Production
 from lib.mail import sendMail, validateEmailAddress, EmailHeader
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
-
-from datetime import datetime
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass
 from database import models
+from database.production_database.SQLController import SQL
 
-from lib.SQL.SQLController import SQL
 
 class mail_TestCase(TestCase):
   def setUp(self):

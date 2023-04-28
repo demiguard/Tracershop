@@ -1,5 +1,4 @@
-"""
-  SQL Formatter
+"""SQL Formatter
 
   This module transforms Query results into more accessable dataformats than
   the default tuples that come out of the MYSQL connector module.
@@ -11,31 +10,43 @@
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
-import re
-from typing import List, Tuple, Dict, Any, Optional
+# Python Standard Library
 from datetime import datetime, date, time
+import re
+from typing import List, Tuple, Dict, Any, Optional, Type
 
+# Third Party Packages
+#from dataclass.ProductionDataClasses import JsonSerilizableDataClass
+
+# Tracershop production packages
 from lib.Formatting import dateConverter, timeConverter , datetimeConverter
-from lib.expections import SQLInjectionException
+from core.exceptions import SQLInjectionException
 
-def FormatSQLDictAsClass(SQLResult: List[Tuple], cls):
+
+
+def FormatSQLDictAsClass(SQLResult: List[Dict[str, Any]], cls: Type['JsonSerilizableDataClass']):
   """
     This function converts a list of tuples queried from the database into a list
   """
   if SQLResult:
-    return list(map(lambda ClassTuple : cls(**ClassTuple), SQLResult))
+    return [cls(**ClassTuple) for ClassTuple in SQLResult]
   else:
     return []
 
 
-def checkForSQLInjection(SQLquery : str):
-  """
-    Checks for common SQL injeciton patterns
-    Raises SQLInjecitonException if it finds one
+def checkForSQLInjection(Query : str):
+  """Checks for common SQL injeciton patterns
+    Raises SQLInjectionException if it finds one
+
+    Args:
+      Query (str): SQL-Query to be checked if it's a malicious query.
+
+    Raises:
+      SQLInjectionException: If an SQLInjection is found
   """
   regex = re.compile(r";|--\%")
 
-  if regex.search(SQLquery):
+  if regex.search(Query):
     raise SQLInjectionException()
 
 def SerializeToSQLValue(value : Any, NoneTypeRes: Any ="\"\"") -> Any:

@@ -4,7 +4,7 @@ import { Calender, standardOrderMapping } from "../injectable/calender.js";
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
+import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_TRACER_MAPPING, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
 
 
 export { ShopOrderPage }
@@ -66,7 +66,6 @@ class ShopOrderPage extends Component {
   }
 
   render(){
-    console.log(this.props)
     let activeCustomer = this.props[JSON_CUSTOMER].get(Number(this.state.activeCustomer));
     if (activeCustomer == undefined){
       console.log("Undefined Customer not found")
@@ -108,7 +107,7 @@ class ShopOrderPage extends Component {
         t_order.BID == customer.ID;
     });
 
-    const RelevantTracerMapping = Array.from(this.props.tracer_mapping.values()).filter((tracerMapping) => {
+    const RelevantTracerMapping = Array.from(this.props[JSON_TRACER_MAPPING].values()).filter((tracerMapping) => {
       return tracerMapping.customer_id == customer.ID
     })
 
@@ -148,6 +147,7 @@ class ShopOrderPage extends Component {
               isotopes={this.props[JSON_ISOTOPE]}
               runs={this.props[JSON_RUN]}
               tracers={this.props[JSON_TRACER]}
+              user={this.props[PROP_USER]}
               websocket={this.props[PROP_WEBSOCKET]}
               />
           </Row>

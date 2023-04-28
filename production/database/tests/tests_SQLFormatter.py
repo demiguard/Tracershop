@@ -1,9 +1,9 @@
 from datetime import datetime
 from django.test import TestCase
 
-from lib.ProductionDataClasses import ActivityOrderDataClass, IsotopeDataClass
-from lib.SQL.SQLFormatter import FormatSQLDictAsClass, SerializeToSQLValue, checkForSQLInjection
-from lib.expections import SQLInjectionException
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, IsotopeDataClass
+from database.production_database.SQLFormatter import FormatSQLDictAsClass, SerializeToSQLValue, checkForSQLInjection
+from core.exceptions import SQLInjectionException
 
 
 class SQLFormatterTestCase(TestCase):

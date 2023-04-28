@@ -1,19 +1,21 @@
 """ These tests validates that the legacy database &
   django database is set up correctly
-
-
 """
-import collections
-from pprint import pprint
+
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python Standard Library
+
+# Third party packages
+from django import db
+from django.test import TestCase
 import mysql.connector as mysql
 
-from django.test import TestCase
-from django import db
-
-from database.models import Database, Address, ServerConfiguration
-from lib.SQL import SQLExecuter
-from lib.SQL.SQLController import SQL
+# Tracershop Production packages
 import constants
+from database.models import Database, Address, ServerConfiguration
+from database.production_database import SQLExecuter
+from database.production_database.SQLController import SQL
 
 class InitialSetupTestCase(TestCase):
   def test_django_databases(self):
@@ -34,8 +36,6 @@ class InitialSetupTestCase(TestCase):
 
     self.assertEqual(database.address, address)
     self.assertEqual(SC.ExternalDatabase, database)
-
-
 
   def test_legacy_tables_availability(self):
     """

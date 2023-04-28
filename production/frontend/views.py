@@ -1,15 +1,21 @@
-from http.client import HTTPResponse
-from django.http import FileResponse
-from django.shortcuts import render
-from django.http import HttpResponseNotFound
-from django.views.decorators.csrf import ensure_csrf_cookie
-from django.core.exceptions import PermissionDenied
-from database.models import UserGroups
+""""""
 
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python Standard Library
 from pathlib import Path
 
-from lib.SQL.SQLController import SQL
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
+# Third party Packages
+from django.core.exceptions import PermissionDenied
+from django.http import FileResponse, HttpResponseNotFound
+from django.shortcuts import render
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+
+# Tracershop Production
+from database.models import UserGroups
+from database.production_database.SQLController import SQL
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
 from lib import pdfGeneration
 from lib.utils import LMAP
 
@@ -19,15 +25,18 @@ def indexView(request, *args, **kwargs):
   return render(request, "frontend/index.html")
 
 def pdfView(request, customer:str, year: int, month : int, ID):
-  if request.user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+  if request.user.UserGroup not in [
+      UserGroups.Admin,
+      UserGroups.ProductionAdmin,
+      UserGroups.ProductionUser]:
     raise PermissionDenied
 
   if month < 10:
-    month = f"0{month}"
+    month_text = f"0{month}"
   else:
-    month = str(month)
+    month_text = str(month)
 
-  filename = f"frontend/static/frontend/pdfs/{customer}/{year}/{month}/{ID}.pdf"
+  filename = f"frontend/static/frontend/pdfs/{customer}/{year}/{month_text}/{ID}.pdf"
 
   if not Path(filename).exists():
     Order = SQL.getElement(ID, ActivityOrderDataClass)
@@ -39,9 +48,9 @@ def pdfView(request, customer:str, year: int, month : int, ID):
     for RelatedOrder in RelatedOrders:
       oids.append(RelatedOrder.oid)
 
-    oidsstr = ", ".join(LMAP(str, oids))
+    oidsStr = ", ".join([str(oid) for oid in oids])
 
-    Vials = SQL.getConditionalElements(f"order_id IN ({oidsstr})", VialDataClass)
+    Vials = SQL.getConditionalElements(f"order_id IN ({oidsStr})", VialDataClass)
     Tracer = SQL.getElement(Order.tracer, TracerDataClass)
     Isotope = SQL.getElement(Tracer.isotope, IsotopeDataClass)
 

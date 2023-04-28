@@ -1,20 +1,21 @@
+"""This module contains helper function for initializing the test environment
+This mostly consists of creating the database in a default, because tracershop
+uses their database for configuration
 """
-
-"""
-
-import functools
-import mysql.connector as mysql
-
-from database.models import Address, Database, User, UserGroups
-
-from asgiref.sync import sync_to_async
-from lib.SQL.SQLController import SQL
-from lib.SQL.SQLExecuter import Fetching, ExecuteQuery
-
-from pprint import pprint
 
 __author__ = "Christoffer Vilstrup Jensen"
 
+# Python Standard Library
+from asgiref.sync import sync_to_async
+from pprint import pprint
+
+# Third Party packages
+import mysql.connector as mysql
+
+# Tracershop Production Packages
+from database.models import Address, Database, User, UserGroups
+from database.production_database.SQLController import SQL
+from database.production_database.SQLExecuter import Fetching, ExecuteQuery
 
 TEST_ADMIN_USERNAME = "test_admin"
 TEST_ADMIN_PASSWORD = "test_admin_password"

@@ -5,21 +5,25 @@
 """
 __author__ = "Christoffer Vilstrup Jensen"
 
+# Python standard library
+from asgiref.sync import sync_to_async
 from datetime import datetime
 from pprint import pprint
 from typing import get_args, get_origin, Union
 from unittest import skip
-from django.test import TestCase
 
+# Third Party package
+from django.test import TestCase
 from mysql.connector.errors import InternalError
 
-from asgiref.sync import sync_to_async
-
-from lib.SQL.SQLController import SQL
-from lib.SQL import SQLExecuter as Exec
-from lib.SQL import SQLFactory as Fact
-from lib.ProductionDataClasses import ActivityOrderDataClass, DeliverTimeDataClass
+# Tracershop Production Packages
+from database.production_database.SQLController import SQL
+from database.production_database import SQLExecuter as Exec
+from database.production_database import SQLFactory as Fact
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, DeliverTimeDataClass
 from lib.Formatting import toDateTime
+
+# Test packages
 from tests.test_DataClasses import useDataClass, testOrders
 from tests.helpers import cleanTable
 

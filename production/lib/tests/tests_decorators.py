@@ -10,7 +10,7 @@ class TypeCheckingTest(TestCase):
 
   def test_dummy_function_type_error(self):
     try:
-      testFunction("hello", 4)
+      testFunction("hello", 4) # type: ignore
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "Argument x is of type: <class 'str'>, but this doesn't match the annotations\n")
@@ -27,7 +27,7 @@ class TypeCheckingTest(TestCase):
 
   def test_Partial_args_x(self):
     try:
-      testFunctionPartial("hello", 4)
+      testFunctionPartial("hello", 4) # type: ignore
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "Argument x is of type: <class 'str'>, but this doesn't match the annotations\n")
@@ -47,13 +47,14 @@ class TypeCheckingTest(TestCase):
 
   def test_KW_weird_call(self):
     try:
-      testFunctionKWargAnnotation(3,4,3, aKW=3) # this is a standard python lib, but It still shows that it's that throws an exception and not my function
+      # this is a standard python lib, but It still shows that it's that throws an exception and not my function
+      testFunctionKWargAnnotation(3,4,3, aKW=3) # type: ignore
     except TypeError as Err:
       self.assertEqual(str(Err), "testFunctionKWargAnnotation() got multiple values for argument 'aKW'")
 
   def test_KW_type_error(self):
     try:
-      testFunctionKWargAnnotation(3, 4, aKW="str")
+      testFunctionKWargAnnotation(3, 4, aKW="str")  # type: ignore
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "Argument aKW is of type: <class 'str'>, but this doesn't match the annotations\n")
@@ -62,12 +63,12 @@ class TypeCheckingTest(TestCase):
   def test_UnionType_int(self):
     self.assertEqual(testFunctionUnionType(3), 3)
 
-  def test_UnionType_int(self):
+  def test_UnionType_str(self):
     self.assertEqual(testFunctionUnionType("hello world"), "hello world")
 
   def test_UnionType_float(self):
     try:
-      testFunctionUnionType(3.14159265359)
+      testFunctionUnionType(3.14159265359) # type: ignore
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "Argument x is of type: <class 'float'>, but this doesn't match the annotations\n")
@@ -77,7 +78,7 @@ class TypeCheckingTest(TestCase):
 
   def test_ListType_incorrectType(self):
     try:
-      testFunctionList(["zxcv","wers","helloworld","wqer"])
+      testFunctionList(["zxcv","wers","helloworld","wqer"]) # type: ignore
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "An element of iterable l is not of type: <class 'int'>")
@@ -87,7 +88,7 @@ class TypeCheckingTest(TestCase):
 
   def test_ListListTypeFail(self):
     try:
-      testFunctionNestedList([[1,2,3],[4,"asdf",6],[7,8,9]])
+      testFunctionNestedList([[1,2,3],[4,"asdf",6],[7,8,9]]) # type: ignore
       self.assertEqual(1, 2)
     except TypeError as Err:
       self.assertEqual(str(Err), "An element of iterable ll is not of type: typing.List[int]")
@@ -131,13 +132,12 @@ def testFunctionManyArgs(x:int, y:int, *args):
 @typeCheckFunc
 def testFunctionNestedList(ll : List[List[int]]):
   #Okay It's clear from this syntax that python is not the world best functional language
-  return list(
-      map(
-        lambda l: list(map(lambda x: x + 1, l)), ll))
+  return [[x + 1 for x in l] for l in ll]
 
 class TestFunctionalClass:
   def testFunction(self, x: int, y: int):
     return x + y
 
+  @staticmethod
   def testFunctionStatic(x: int, y: int):
     return x + y

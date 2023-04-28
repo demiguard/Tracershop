@@ -4,7 +4,7 @@ from reportlab.pdfgen import canvas
 from datetime import datetime,date, time
 
 from lib import pdfGeneration
-from lib.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
 
 
 

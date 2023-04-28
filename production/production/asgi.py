@@ -19,11 +19,12 @@ from django.apps import apps
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
 django_asgi_app = get_asgi_application()
 
-from websocket import routing # Import that this line is here, otherwise load order is fucked up
+# Import that this line is here, otherwise load order is fucked up
+from websocket import routing
 
 application = ProtocolTypeRouter({
   "http" : django_asgi_app,
-  "websocket" : AllowedHostsOriginValidator( 
+  "websocket" : AllowedHostsOriginValidator(
     SessionMiddlewareStack(
     AuthMiddlewareStack(
     URLRouter(routing.websocket_urlpatterns))

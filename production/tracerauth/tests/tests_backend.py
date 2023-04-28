@@ -2,8 +2,8 @@ from ast import Delete
 from django.test import TestCase
 from django.conf import settings
 
-from lib.SQL.SQLExecuter import ExecuteQuery, Fetching
-from lib.SQL.SQLFactory import tupleInsertQuery
+from database.production_database.SQLExecuter import ExecuteQuery, Fetching
+from database.production_database.SQLFactory import tupleInsertQuery
 from tests.helpers import cleanTable
 
 from tracerauth.backend import TracershopAuthenticationBackend, validString

@@ -1,30 +1,27 @@
-
-
-"""
-  This class is support to contain all the functions,
-  that makes SQL calls to the database. This is in an attempt to clean up the Consumer
-  as it will get bloated with code otherwise.
-
-  Most of this code is simply just an way to put the decorator on top.
-  Really there shouldn't be too much code down here, however it'll save you a few hundred lines in Real consumer
+"""This module contains the database Interface class, which is a representation
+of the underlying database. This should provide a single face to the rather
+complicated database setup of tracershop.
 """
 
 __author__ = "Christoffer Vilstrup Jensen"
 
-from django.db.models import Model, ForeignKey, IntegerField
-from channels.db import database_sync_to_async
-
-from database.models import ServerConfiguration, Database, Address, User
-from lib.decorators import typeCheckFunc
-from lib.SQL.SQLController import SQL
-from lib.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
-from lib import pdfGeneration
-
-from constants import JSON_ADDRESS, JSON_DATABASE, JSON_SERVER_CONFIG
-
+# Python Standard library
 from datetime import datetime, date, timedelta
 from typing import Any, Dict, List, Optional, Tuple, Type
 import logging
+
+# Django Packages
+from channels.db import database_sync_to_async
+from django.db.models import Model, ForeignKey, IntegerField
+
+# Tracershop Production Packages
+from constants import JSON_ADDRESS, JSON_DATABASE, JSON_SERVER_CONFIG
+from database.models import ServerConfiguration, Database, Address, User
+from database.production_database.SQLController import SQL
+from lib.decorators import typeCheckFunc
+from lib import pdfGeneration
+from dataclass.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
+
 
 logger = logging.getLogger('DebugLogger')
 
@@ -36,7 +33,8 @@ djangoModels: Dict[str, Type[Model]] = {
 
 
 class DatabaseInterface():
-  """_summary_
+  """This class is the interface for the production database. This includes
+  both the Django database and the Production database
   """
   def __init__(self, SQL_Controller=SQL()):
     self.SQL = SQL_Controller

@@ -5,8 +5,8 @@ __author__ = "Christoffer Vilstrup Jensen"
 from dataclasses import dataclass
 from django.test import TestCase
 
-from lib import ProductionDataClasses as PDC
-from lib.SQL import SQLFactory
+from dataclass import ProductionDataClasses as PDC
+from database.production_database import SQLFactory
 
 from datetime import date, datetime, time
 from lib.utils import LMAP

@@ -1,37 +1,41 @@
-from django.conf import settings
+"""This file is responsible for the rendering of PDF files.
+  This relates to generation of delivery notes for tracers
 
+Most of the functionality is found in:
+  * DrawActivityOrder
+  * DrawInjectionOrder
+"""
+
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python standard library
 import os
 from pathlib import Path
-
-
-from lib.decorators import typeCheckFunc
-from lib.SQL import SQLController
-from lib.ProductionDataClasses import CustomerDataClass, ActivityOrderDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
 from typing import Optional, Tuple, List
+
+# Django packages
+from django.conf import settings
+
+# Third party packages
 from reportlab.pdfgen import canvas
 import reportlab.rl_config
-reportlab.rl_config.warnOnMissingFontGlyphs = 0
-
+reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
-from PIL import Image
-
-"""
-  This file is responsible for the rendering of PDF files.
-  Note that Python is not reaaaaaly a good rendering program for these kind of tasks
-  However it's one of those No win situations, since the other solution to this
-  was to generate a Latex file and then compile it.
-
-  Most of this file is drawings of different primitives such as lines
-"""
-
 pdfmetrics.registerFont(TTFont('Mari', 'pdfData/Mari.ttf'))
 pdfmetrics.registerFont(TTFont('Mari_Bold', 'pdfData/Mari_Bold.ttf'))
 pdfmetrics.registerFont(TTFont('Mari_Book', 'pdfData/Mari_Book.ttf'))
 pdfmetrics.registerFont(TTFont('Mari_Heavy', 'pdfData/Mari_Heavy.ttf'))
 pdfmetrics.registerFont(TTFont('Mari_Light', 'pdfData/Mari_Light.ttf'))
 pdfmetrics.registerFont(TTFont('Mari_Poster', 'pdfData/Mari_Poster.ttf'))
+
+# Tracershop Production packages
+from database.production_database import SQLController
+from lib.decorators import typeCheckFunc
+from dataclass.ProductionDataClasses import CustomerDataClass, ActivityOrderDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
+
+##### Constant declarations #####
+
 
 #A pdf page is (595.27 , 841.89)
 
@@ -48,12 +52,14 @@ start_y_cursor = 780
 def order_pair(i,j):
   return (min(i,j), max(i,j))
 
+
+
 class MailTemplate(canvas.Canvas):
-  __line_width = 18 # How large is a text line
-  __font       = defaultFont
-  __font_size  = defaultFontSize
-  __Length_per_character = 6.5
-  __table_width = 450
+  _line_width = 18 # How large is a text line
+  _font       = defaultFont
+  _font_size  = defaultFontSize
+  _Length_per_character = 6.5
+  _table_width = 450
 
   def __init__(self, filename: str):
     super().__init__(filename)
@@ -68,7 +74,7 @@ class MailTemplate(canvas.Canvas):
 
   def ApplyCustomer(self, x_cursor:int, y_cursor:int, Customer: CustomerDataClass):
     self.setStrokeColorRGB(0.5,0.5,1.0)
-    self.setFont(self.__font, self.__font_size)
+    self.setFont(self._font, self._font_size)
 
     y_top = y_cursor
 
@@ -80,7 +86,7 @@ class MailTemplate(canvas.Canvas):
 
     for line in Customer_identification_lines:
       self.drawString(x_cursor, y_cursor, line)
-      y_cursor -= self.__line_width
+      y_cursor -= self._line_width
       max_text_length = max(max_text_length, len(line))
 
     Y_bot =  y_cursor + 10
@@ -88,7 +94,7 @@ class MailTemplate(canvas.Canvas):
     line_width = 3
 
     encapsulating_x_line_start = x_cursor - line_width
-    encapsulating_x_line_stop = max(200, x_cursor + max_text_length * self.__Length_per_character + line_width)
+    encapsulating_x_line_stop = max(200, x_cursor + max_text_length * self._Length_per_character + line_width)
 
     encapsulating_top_line    = (encapsulating_x_line_start, y_top, encapsulating_x_line_stop, y_top)
     encapsulating_bot_line = (encapsulating_x_line_start, Y_bot, encapsulating_x_line_stop, Y_bot)
@@ -128,12 +134,12 @@ class MailTemplate(canvas.Canvas):
 
     #End helper function
 
-    self.setFont(self.__font, self.__font_size)
+    self.setFont(self._font, self._font_size)
     self.setStrokeColorRGB(0.0,0.0,0.0)
 
     #Text
     self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug.")
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     freedDate = Order.frigivet_datetime.strftime("%d/%m/%Y")
 
@@ -141,7 +147,7 @@ class MailTemplate(canvas.Canvas):
       self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet den {freedDate}, Orderen indeholder også Sporestof til Orderen {COID_ORDER.oid}.")
     else:
       self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet den {freedDate}.")
-    y_cursor -= self.__line_width *2
+    y_cursor -= self._line_width *2
 
 
     # Table
@@ -167,7 +173,7 @@ class MailTemplate(canvas.Canvas):
         lines.append(VialData)
 
 
-    y_cursor = self.drawTable(x_cursor, y_cursor, self.__table_width, lines)
+    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, lines)
     y_cursor -= 5
 
     return y_cursor
@@ -205,7 +211,7 @@ class MailTemplate(canvas.Canvas):
     for Vial in Vials:
       lines.append(ExtractVial(Vial))
 
-    y_cursor = self.drawTable(x_cursor, y_cursor, self.__table_width, lines)
+    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, lines)
 
     return y_cursor
 
@@ -285,7 +291,7 @@ class MailTemplate(canvas.Canvas):
       self.drawString(x, line_y + 2 , text)
       x += line_length / len(Texts)
       if separator_lines and i != len(Texts) -1:
-        self.line(x - 5, line_y + self.__line_width, x - 5, line_y )
+        self.line(x - 5, line_y + self._line_width, x - 5, line_y )
 
   def drawTable(self, x_cursor: int, y_cursor: int, table_width: int, textLines: List[List[str]]):
     """[summary]
@@ -304,10 +310,10 @@ class MailTemplate(canvas.Canvas):
           x_cursor,
           y_cursor,
           x_cursor + table_width,
-          y_cursor + self.__line_width
+          y_cursor + self._line_width
         )
       self.drawTableTextLine(x_cursor, y_cursor, table_width, TableTextLine)
-      y_cursor -= self.__line_width
+      y_cursor -= self._line_width
 
     return y_cursor
 
@@ -319,14 +325,14 @@ class MailTemplate(canvas.Canvas):
       Isotope : IsotopeDataClass,
       Tracer : TracerDataClass) -> int:
     self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {IODC.oid} - {Tracer.longName} - {Isotope.name} Injektion til {IODC.anvendelse}")
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     freedDatetime = IODC.frigivet_datetime.strftime("%d/%m/%Y %H:%M")
 
     self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {IODC.n_injections} injektioner med batch nummer: {IODC.batchnr}")
 
 
-    y_cursor -= self.__line_width * 2
+    y_cursor -= self._line_width * 2
 
     return y_cursor
 
@@ -335,30 +341,30 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"Venlig Hilsen")
 
     x_cursor += 15
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     self.drawString(x_cursor, y_cursor, "Nic Gillings")
 
-    y_cursor -= self.__line_width * 8.2
+    y_cursor -= self._line_width * 8.2
 
     self.drawInlineImage("pdfData/sig.png", x_cursor + 30, y_cursor, 128, 109, preserveAspectRatio=True)
 
-    y_cursor -= self.__line_width * 2
+    y_cursor -= self._line_width * 2
 
     self.drawString(x_cursor, y_cursor, f"PET & Cyklotronenheden UK 3982")
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     self.drawString(x_cursor, y_cursor, f"Rigshospitalet")
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     self.drawString(x_cursor, y_cursor, f"Blegdamsvej 9")
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     self.drawString(x_cursor, y_cursor, f"2100 København Ø")
-    y_cursor -= self.__line_width * 2
+    y_cursor -= self._line_width * 2
 
     self.drawString(x_cursor, y_cursor, f"Tlf: +45 35453949")
-    y_cursor -= self.__line_width
+    y_cursor -= self._line_width
 
     return y_cursor
 

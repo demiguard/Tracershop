@@ -1,12 +1,18 @@
-from doctest import testmod
-from django.test import TestCase
-from django.http import HttpResponse, JsonResponse
-from django.db import models
+""""""
 
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python standard library
 from datetime import time
 
+# Third Party Package
+from django.db import models
+from django.http import HttpResponse, JsonResponse
+from django.test import TestCase
+
+# Tracershop Production Package
 from lib import ProductionJSON as PJSON
-from lib import ProductionDataClasses as DC
+from dataclass import ProductionDataClasses as DC
 from typing import Dict
 
 

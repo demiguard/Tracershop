@@ -1,12 +1,16 @@
 import React, { Component } from "react";
 import { Col, Container, Row, Button, FormGroup, FormControl, FormLabel, Table, OverlayTrigger, Tooltip, Popover } from "react-bootstrap";
-import { JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_BATCHNR, KEYWORD_BID, KEYWORD_COID, KEYWORD_COMMENT, KEYWORD_CUSTOMER, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, KEYWORD_STATUS, KEYWORD_TOTAL_AMOUNT, KEYWORD_TOTAL_AMOUNT_O, KEYWORD_TRACER, KEYWORD_USERNAME, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_SHOP_CREATE_ORDER } from "../../lib/constants";
+import { JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_BATCHNR, KEYWORD_BID, KEYWORD_COID, KEYWORD_COMMENT, KEYWORD_CUSTOMER, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, KEYWORD_STATUS, KEYWORD_TOTAL_AMOUNT, KEYWORD_TOTAL_AMOUNT_O, KEYWORD_TRACER, KEYWORD_USERNAME, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_SHOP_CREATE_ORDER, PROP_WEBSOCKET } from "../../lib/constants";
 import { FormatDateStr } from "../../lib/formatting";
-import { renderClickableIcon, renderStatusImage, renderTableRow } from "../../lib/rendering";
+import { renderTableRow } from "../../lib/rendering";
 
 import styles from '/src/css/Site.module.css'
+import { ClickableIcon, StatusIcon } from "../injectable/icons";
+import { HoverBox } from "../injectable/hover_box";
 
 export { OrderReview }
+
+
 
 const DeliverTimeStatus = {
   AVAILBLE_FOR_ORDER : 0,
@@ -23,28 +27,43 @@ const newOrderObject = {
 
 
 class OrderReview extends Component {
+  static ERROR_MESSAGE_NAN_ACTIVITY = "Den ønsket Aktiviten kan ikke tolkes som\
+   et tal, og kan derfor ikke bestilles"
+  static ERROR_MESSAGE_NEGATIVE_ACTIVITY = "Den ønsket aktiviten er negativ,\
+   og kan derfor ikke bestilles"
+  static ERROR_MESSAGE_COMMENT_TOO_LONG = "Kommentaren kan ikke være længere en\
+  d 8000 karakterer";
+
   constructor(props){
     super(props)
 
     // This map may contain redundant information, however it's trivially small
     const newOrdersMap = new Map();
-    for(const [DTID, _DT] of this.props.deliverTimes) newOrdersMap.set(DTID, newOrderObject);
+    for(const [DTID, _DT] of this.props.deliverTimes) newOrdersMap.set(DTID, {...newOrderObject});
 
     this.state = {
-      newOrders : newOrdersMap // Maps for containing informaiton on new Orders.
+      newOrders : newOrdersMap // Maps for containing information on new Orders.
     }
   }
 
   componentDidUpdate(prevProps){
     if(this.props.deliverTimes != prevProps.deliverTimes){
       const newOrdersMap = new Map();
-      for(const [DTID, _DT] of this.props.deliverTimes) newOrdersMap.set(DTID, newOrderObject);
+      for(const [DTID, _DT] of this.props.deliverTimes) newOrdersMap.set(DTID, {...newOrderObject});
 
       this.setState({
         ...this.state,
-        newOrders : newOrdersMap // Maps for containing informaiton on new Orders.
+        newOrders : newOrdersMap // Maps for containing information on new Orders.
       });
     }
+  }
+
+  setNewOrdersMap(deliverTimeID, newOrderData){
+    const newMap = new Map(this.state.newOrders)
+    newMap.set(deliverTimeID, newOrderData)
+    this.setState({...this.state,
+      newOrders : newMap
+    });
   }
 
   // NewOrder Functions
@@ -61,15 +80,15 @@ class OrderReview extends Component {
         FormatDateStr(This.props.date.getMonth() + 1)}-${
         FormatDateStr(This.props.date.getDate())} ${deliverTime.dtime}`;
 
-      const baseActivtiy = Number(newOrder.newActivity); // Validated in this.validateNewOrder()
-      const overheadActivity = baseActivtiy * (1 + customer.overhead / 100);
+      const baseActivity = Number(newOrder.newActivity); // Validated in this.validateNewOrder()
+      const overheadActivity = baseActivity * (1 + customer.overhead / 100);
 
 
       const data = {};
       data[KEYWORD_DELIVER_DATETIME] = deliverDateTimeStr;
       data[KEYWORD_STATUS] = 1;
-      data[KEYWORD_AMOUNT] = baseActivtiy;
-      data[KEYWORD_TOTAL_AMOUNT] = baseActivtiy;
+      data[KEYWORD_AMOUNT] = baseActivity;
+      data[KEYWORD_TOTAL_AMOUNT] = baseActivity;
       data[KEYWORD_AMOUNT_O] = overheadActivity;
       data[KEYWORD_TOTAL_AMOUNT_O] = overheadActivity;
       data[KEYWORD_TRACER] = This.props.activeTracer;
@@ -84,7 +103,7 @@ class OrderReview extends Component {
       message[WEBSOCKET_DATA] = data;
       message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
 
-      This.props.websocket.send(message);
+      This.props[PROP_WEBSOCKET].send(message);
     }
     return retfunc;
   }
@@ -92,19 +111,44 @@ class OrderReview extends Component {
   setNewOrder(DTID, KW, This){
     const retfunc = (event) => {
       const newOrder = {...This.state.newOrders.get(DTID)};
+      if(KW == "newActivity"){
+        newOrder.errorActivity = "";
+      }
+      if(KW == "newComment"){
+        newOrder.errorComment = "";
+      }
+
       newOrder[KW] = event.target.value;
-      const newNewOrdersMap = new Map(This.state.newOrders);
-      newNewOrdersMap.set(DTID, newOrder)
-      This.setState({...This.state,
-        newOrders : newNewOrdersMap
-      });
+      This.setNewOrdersMap(DTID, newOrder)
     }
     return retfunc;
   }
 
   validateNewOrder(DTID){
     const newOrderData = this.state.newOrders.get(DTID);
+    const activity = Number(newOrderData.newActivity)
 
+    const newNewOrderData = {...newOrderData}
+
+    if (isNaN(activity)){
+      newNewOrderData.errorActivity = OrderReview.ERROR_MESSAGE_NAN_ACTIVITY;
+      this.setNewOrdersMap(DTID, newNewOrderData);
+      return false;
+    }
+
+    if (activity < 0){
+      newNewOrderData.errorActivity = OrderReview.ERROR_MESSAGE_NEGATIVE_ACTIVITY;
+      this.setNewOrdersMap(DTID, newNewOrderData);
+      return false;
+    }
+
+    if (newOrderData.newComment.length > 8000){
+      newNewOrderData.errorComment = OrderReview.ERROR_MESSAGE_COMMENT_TOO_LONG;
+      this.setNewOrdersMap(DTID, newNewOrderData);
+      return false;
+    }
+
+    return true
   }
 
   renderDeliverTime(deliverTime){
@@ -115,7 +159,7 @@ class OrderReview extends Component {
     if (DeliverTimeOrders.length == 0){
       var newOrder = this.state.newOrders.get(deliverTime.DTID);
       if(newOrder == undefined){
-        newOrder = newOrderObject;
+        newOrder = {...newOrderObject};
       }
 
       const showActivityError = newOrder.errorActivity != "";
@@ -182,7 +226,11 @@ class OrderReview extends Component {
             </FormGroup>
             </OverlayTrigger>
           </Col>
-          <Col><Button>Bestil</Button></Col>
+          <Col>
+            <Button onClick={this.sendNewOrder(deliverTime.DTID, this).bind(this)}>
+              Bestiling
+            </Button>
+          </Col>
         </Row>
       </Row>)
   } else {
@@ -191,28 +239,17 @@ class OrderReview extends Component {
       const batchNumStr = order.batchnr ? order.batchnr : "-";
       const freeAmountStr = order.frigivet_amount ? order.frigivet_amount : "-";
       const freeDateTimeStr = order.frigivet_datetime ? order.frigivet_datetime : "-";
-      const CommnentBubble = order.comment ? <OverlayTrigger
-          placement="top"
-          delay={{
-            show : 50, hide : 100
-          }}
-          overlay={
-            <Popover>
-              <Popover.Body>{order.comment}</Popover.Body>
-            </Popover>
-          }
-        >{renderClickableIcon("/static/images/comment.svg")}
-        </OverlayTrigger> : "-";
+      const CommentBubble = order.comment ? <HoverBox Base={<ClickableIcon src="static/images/comment.svg"/>} /> : "-";
       renderedOrders.push(
         renderTableRow(order.oid, [
-          renderStatusImage(order.status),
+          <StatusIcon status={order.status}/>,
           order.oid,
           order.amount,
           order.total_amount,
           batchNumStr,
           freeAmountStr,
           freeDateTimeStr,
-          CommnentBubble
+          CommentBubble
         ])
       );
     }

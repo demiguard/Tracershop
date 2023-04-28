@@ -8,7 +8,7 @@ from django.contrib.auth.hashers import check_password
 
 # Tracershop Production Packages
 from database.models import User, UserGroups
-from lib.SQL.SQLController import SQL
+from database.production_database.SQLController import SQL
 
 
 def validString(string :str) -> bool:

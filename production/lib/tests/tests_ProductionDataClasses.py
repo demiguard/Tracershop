@@ -10,15 +10,19 @@ The upside to this is a very small code base once you understand what's going on
 
 __author__ = "Christoffer Vilstrup Jensen"
 
+# Python standard library
+from datetime import date, time
+from decimal import Decimal
 from dataclasses import dataclass, fields
+from time import perf_counter
+from typing import Union, Optional
 
+# Third party packages
 from django.test import TestCase
 
-from lib.ProductionDataClasses import *
-from typing import Union, Optional
-from time import perf_counter
-from decimal import Decimal
-import datetime
+# Tracershop Packages
+from dataclass.ProductionDataClasses import *
+
 
 @dataclass(init=False)
 class DummyJsonSerilizableDataClass(JsonSerilizableDataClass):
@@ -204,21 +208,21 @@ class DummyJsonSerilizableDataClassTestCase(TestCase):
 
     self.assertEqual(Vial.customer, 1 )
     self.assertEqual(Vial.charge, "test")
-    self.assertEqual(Vial.filldate, datetime.date(2021, 12, 10))
-    self.assertEqual(Vial.filltime, datetime.time(10,0))
+    self.assertEqual(Vial.filldate, date(2021, 12, 10))
+    self.assertEqual(Vial.filltime, time(10,0))
     self.assertEqual(Vial.volume, 10)
     self.assertEqual(Vial.activity, 1000)
     self.assertEqual(Vial.ID, 53120)
     self.assertIsNone(Vial.order_id)
 
-  def test_TupleConstrution(self):
-    testTuple = ('1', 'test', datetime.date(2021, 12, 10), '10:00:00', Decimal('10.00'), Decimal('10000.00'), 36066, None)
+  def test_TupleConstruction(self):
+    testTuple = ('1', 'test', date(2021, 12, 10), '10:00:00', Decimal('10.00'), Decimal('10000.00'), 36066, None)
     Vial = VialDataClass(*testTuple)
 
     self.assertEqual(Vial.customer, 1 )
     self.assertEqual(Vial.charge, "test")
-    self.assertEqual(Vial.filldate, datetime.date(2021, 12, 10))
-    self.assertEqual(Vial.filltime, datetime.time(10,0))
+    self.assertEqual(Vial.filldate, date(2021, 12, 10))
+    self.assertEqual(Vial.filltime, time(10,0))
     self.assertEqual(Vial.volume, 10)
     self.assertEqual(Vial.activity, 10000)
     self.assertEqual(Vial.ID, 36066)
