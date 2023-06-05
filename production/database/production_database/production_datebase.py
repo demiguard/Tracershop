@@ -138,10 +138,8 @@ class ProductionDatabase():
       if not SuccessCursorClosure:
         logger.error("Could not close the cursor")
 
-  def build_legacy_production_database(self):
-
+  def BuildLegacyProductionDatabase(self):
     if self._database.databaseType != DatabaseType.TracershopProductionDatabaseLegacy:
-      logger.error("Attempting to Create a Legacy database in a none legacy database")
       logger.error("Attempting to Create a Legacy database in a none legacy database")
       raise Exception
     cursor = self.GetCursor()
@@ -334,5 +332,11 @@ class ProductionDatabase():
         userName VARCHAR(128)
       )
     """)
-
     cursor.close()
+
+  def buildProductionDatabase(self):
+    cursor = self.GetCursor()
+    if self._database.databaseType != DatabaseType.TracershopProductionDatabase:
+      logger.error("Attempting to build a Database of the wrong type")
+
+

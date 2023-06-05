@@ -1,4 +1,6 @@
-from database.TracerShopModels.authModels import User, UserGroups
+from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import SubscribableModel
-from database.TracerShopModels.networkModels import Address, Database, DatabaseType
-from database.TracerShopModels.serverModels import ServerConfiguration
+from database.TracerShopModels.clinicalModels import *
+from database.TracerShopModels.customerModels import *
+from database.TracerShopModels.networkModels import *
+from database.TracerShopModels.serverModels import *
