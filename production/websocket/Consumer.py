@@ -28,14 +28,14 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
 
 # Tracershop Production packages
+from core.exceptions import SQLInjectionException
+from dataclass.ProductionDataClasses import *
 from constants import * # Import the many WEBSOCKET constants, TO DO change this
 from database.database_interface import DatabaseInterface
 from lib.decorators import typeCheckFunc
-from core.exceptions import SQLInjectionException
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
 from lib.mail import sendMail
 from lib.ProductionJSON import encode, decode
-from dataclass.ProductionDataClasses import *
 from lib.utils import LMAP
 from tracerauth import auth
 
@@ -251,6 +251,48 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ##### END Auth methods
 
+  ### GET STATE
+  async def HandleGetState(self, message: Dict):
+    """Retrieves state from the user in scope
+
+    Args:
+      message: (Dict) - This is message send by the user.
+                        It have no specialized keys
+    """
+    # Assumed to have no Field in the message since it can use the user in scope
+    instances = await auth.getUserModelInstances(await get_user(self.scope))
+    serialized_instances = {
+      key : serialize('json', models) for key, models in instances.items()
+    }
+
+    await self.send_json({
+      WEBSOCKET_DATA :  serialized_instances,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+    })
+
+  async def HandleModelDelete(self, message: Dict[str, Any]):
+    """Handler function for Deletes a model
+
+    Args:
+      message (Dict[str, Any]): Dictionary containing the information to delete
+                                A model. Specify the tags:
+                                    WEBSOCKET_DATA_ID
+                                    WEBSOCKET_DATATYPE
+
+    """
+    await self.db.deleteModel(
+      message[WEBSOCKET_DATATYPE],
+      message[WEBSOCKET_DATA_ID],
+    )
+    await self.channel_layer.group_send(self.global_group,{
+      WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
+      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE
+    })
+
+
   async def HandleTheGreatStateMessage(self, message):
     """This function is responsible for sending back the state,
       that the site should be in. It's once when the page is loaded by the App.js
@@ -266,8 +308,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
     """
+    logger.warning("DEPRECATED FUNCTION HandleTheGreatStateMessage, USE HandleGetStateMessage instead")
     Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TracerCustomers, ServerConfig, Databases, Address, ClosedDates = await self.db.getGreatState()
-
     #Convert Dataclasses to python dict to send over
     Customers       = LMAP(encode, Customers)
     ClosedDates     = LMAP(encode, ClosedDates)
@@ -307,6 +349,25 @@ class Consumer(AsyncJsonWebsocketConsumer):
     }
     await self.send_json(content)
 
+  async def handleModelCreate(self, message: Dict[str, Any]):
+    """
+    Creates a django model and broadcasts it to global
+
+    Args:
+      message: Dict[str, Any] - Requires additional tag:
+                                  WEBSOCKET_DATA
+                                  WEBSOCKET_DATATYPE
+    """
+    instance = await self.db.createModel(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
+
+    await self.channel_layer.group_send(self.global_group,{
+      WEBSOCKET_DATA : serialize(instance),
+      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE
+    })
+
+
   async def HandleCreateDataClass(self, message : Dict):
     """Websocket handler function for production data class creation.
 
@@ -325,7 +386,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
     # Specialized Dataclass creations
     if dataClass == ActivityOrderDataClass:
-      spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spoky ok?
+      spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spooky ok?
       customer = await self.db.getElement(spooky_skeleton[KEYWORD_BID], CustomerDataClass)
       deliver_datetime = toDateTime(spooky_skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
       skeleton = {
@@ -461,6 +522,29 @@ class Consumer(AsyncJsonWebsocketConsumer):
         )
     else:
       print("No LegacyMode is no go") # pragma: no cover
+
+
+  async def HandleFreeActivityOrder(self, message: Dict[str, Any]):
+    """This functions frees an order at a certain time.
+        message (Dict): Message with the extra fields
+          WEBSOCKET_DATA - Dict with:
+            KEYWORD_OID - ID of activity order to freed
+            JSON_VIAL - A list of Vial ID that's being freed with this order
+          JSON_AUTH - Dict with:
+            AUTH_USERNAME : username
+            AUTH_PASSWORD : password for username
+
+    """
+    # Turn this into a function
+    Auth = message[JSON_AUTH]
+
+    # Quick check if user and auth user matches before any database connection start working
+    if not Auth[AUTH_USERNAME] == self.scope['user'].username:
+      return await self.__RejectFreeing(message)
+
+    # Authentication successful update
+    order = self.db.getModel(JSON_ACTIVITY_ORDER, message[WEBSOCKET_DATA][KEYWORD_OID])
+
 
   async def HandleFreeInjectionOrder(self, message : Dict) -> None:
     """This function handles freeing Injection based orders
@@ -652,7 +736,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
   async def HandleEditDjango(self, message: Dict) -> None:
-    updatedModel = await self.db.editDjango(
+    updatedModel = await self.db.editModel(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA],
       message[WEBSOCKET_DATA_ID]

@@ -12,7 +12,7 @@ from django.db import models
 from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField
 
 # Tracershop Packages
-from database.TracerShopModels.baseModels import SubscribableModel
+from database.TracerShopModels.baseModels import TracershopModel
 
 
 from django.contrib.auth.models import AbstractBaseUser

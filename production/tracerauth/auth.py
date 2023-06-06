@@ -1,11 +1,22 @@
+# Python Standard Library
+from typing import Any, Dict, List, Type
+
+# Third party Libraries
+from channels.db import database_sync_to_async
+from django.apps import get_models
+from django.db.models import Model
 from django.contrib.auth.models import AnonymousUser
 
+# Tracershop App
 from constants import *
 from database.models import User, UserGroups
-from typing import Any, Dict, Type
+
+
 
 requiredMessageFields = {
-  WEBSOCKET_MESSAGE_FREE_INJECTION : [WEBSOCKET_DATA, JSON_AUTH]
+  WEBSOCKET_MESSAGE_FREE_INJECTION : [WEBSOCKET_DATA, JSON_AUTH],
+  WEBSOCKET_MESSAGE_GET_STATE : [],
+  WEBSOCKET_MESSAGE_MODEL_DELETE : [WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE]
 }
 
 requiredDataFields = {
@@ -146,6 +157,30 @@ def validateMessage(message : Dict) -> str:
   if JSON_AUTH in message and not ValidateAuthObject(message[JSON_AUTH]):
     return ERROR_INVALID_AUTH
 
-
-
   return ""
+
+
+
+modelGetters = {}
+
+
+def getAuthenticatedUserModels(user: User) -> List[Type[Model]]:
+  if user.UserGroup == UserGroups.Admin:
+    return get_models()
+
+  return []
+
+@database_sync_to_async
+def getUserModelInstances(user) -> Dict[str, List[Model]]:
+  models = getAuthenticatedUserModels(user)
+
+  instances = {}
+
+  for model in models:
+    if model.__name__ in modelGetters:
+      instances[model.__name__] = modelGetters[model.__name__](user)
+    else:
+      instances[model.__name__] = model.objects.all()
+
+
+  return instances

@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models import CharField
 
-from database.models import User, SubscribableModel, Address, Database
+from database.models import User, TracershopModel, Address, Database
 
 # Create your tests here.
 class ModelTestCases(TestCase):
@@ -26,7 +26,7 @@ class ModelTestCases(TestCase):
     self.assertEqual(str(user), testUserName)
 
   def test_Subscription(self):
-    class testModel(SubscribableModel):
+    class testModel(TracershopModel):
       testField = CharField(max_length=16)
 
     testFieldValue = "Foo"
@@ -41,4 +41,4 @@ class ModelTestCases(TestCase):
     self.assertRaises(KeyError, tm.__setitem__, "NotAField", testFieldValue2)
 
   def test_abstractSubscription(self):
-    self.assertRaises(TypeError,SubscribableModel)
+    self.assertRaises(TypeError,TracershopModel)

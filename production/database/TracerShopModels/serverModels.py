@@ -1,9 +1,9 @@
 from django.db import models
-from database.TracerShopModels.baseModels import SubscribableModel
+from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.networkModels import Database
 
 
-class ServerConfiguration(SubscribableModel):
+class ServerConfiguration(TracershopModel):
   """
     This model describe configurable fields for server operations
     Fields:

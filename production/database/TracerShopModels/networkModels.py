@@ -9,10 +9,10 @@ __author__ = "Christoffer Vilstrup Jensen"
 from django.db.models import BigAutoField, BooleanField, CharField, ForeignKey, SET_NULL, IntegerField, IntegerChoices, SmallIntegerField
 
 # Tracershop Packages
-from database.TracerShopModels.baseModels import SubscribableModel
+from database.TracerShopModels.baseModels import TracershopModel
 
 
-class Address(SubscribableModel):
+class Address(TracershopModel):
   ID = BigAutoField(primary_key=True)
   ip   = CharField(max_length=30, null=True)
   port = CharField(max_length=6, null=True)
@@ -30,7 +30,7 @@ class DatabaseType(IntegerChoices):
   TracershopProductionDatabaseLegacy = 2
   TracershopProductionDatabase = 3
 
-class Database(SubscribableModel):
+class Database(TracershopModel):
   databaseName = CharField(max_length=32, primary_key=True)
   username = CharField(max_length=32)
   password = CharField(max_length=32, null=True)

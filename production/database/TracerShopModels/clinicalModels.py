@@ -10,10 +10,10 @@ __author__ = "Christoffer Vilstrup Jensen"
 from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT , CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL
 
 # Tracershop Packages
-from database.TracerShopModels.baseModels import SubscribableModel, Days
+from database.TracerShopModels.baseModels import TracershopModel, Days
 
 
-class Isotope(SubscribableModel):
+class Isotope(TracershopModel):
   isotope_id = BigAutoField(primary_key=True)
   atomic_number = SmallIntegerField()
   atomic_mass = SmallIntegerField()
@@ -24,7 +24,7 @@ class TracerTypes(IntegerChoices):
   ActivityBased = 1
   InjectionBased = 2
 
-class Tracer(SubscribableModel):
+class Tracer(TracershopModel):
   tracer_id = BigAutoField(primary_key=True)
   shortname = CharField(max_length=32)
   clinical_name = CharField(max_length=256)

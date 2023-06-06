@@ -15,8 +15,14 @@ from channels.db import database_sync_to_async
 from django.db.models import Model, ForeignKey, IntegerField
 
 # Tracershop Production Packages
-from constants import JSON_ADDRESS, JSON_DATABASE, JSON_SERVER_CONFIG
-from database.models import ServerConfiguration, Database, Address, User
+from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
+    JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVERTIME, \
+    JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
+    JSON_ACTIVITY_ORDER, JSON_CLOSEDDATE, JSON_LOCATION, JSON_ENDPOINT,\
+    JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
+    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT
+from database.models import ServerConfiguration, Database, Address, User,\
+    UserGroups, getModel, TracershopModel
 from database.production_database.SQLController import SQL
 from lib.decorators import typeCheckFunc
 from lib import pdfGeneration
@@ -25,11 +31,6 @@ from dataclass.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDa
 
 logger = logging.getLogger('DebugLogger')
 
-djangoModels: Dict[str, Type[Model]] = {
-  JSON_ADDRESS : Address,
-  JSON_DATABASE : Database,
-  JSON_SERVER_CONFIG : ServerConfiguration,
-}
 
 
 class DatabaseInterface():
@@ -192,19 +193,36 @@ class DatabaseInterface():
     return self.SQL.getConditionalElements(condition, dataClass)
 
   @database_sync_to_async
-  def editDjango(self, model_identifier : str, model : Dict, modelID: Any):
-    modelType = djangoModels.get(model_identifier)
-    if modelType is None:
-      raise KeyError("Unknown model")
-
-    instance: Model = modelType.objects.get(pk=modelID)
-
-    for key, value in model.items():
-      field = instance._meta.get_field(key)
-      if isinstance(field, ForeignKey):
-        value = field.remote_field.model.objects.get(pk=value)
-      elif isinstance(field, IntegerField):
-        value = int(value)
-      instance.__setattr__(key, value)
-
+  def editModel(self, model_identifier: str, model : Dict, modelID: Any):
+    instance: Model = getModel(model_identifier).objects.get(pk=modelID)
+    instance.assignDict(model)
     instance.save()
+
+  @database_sync_to_async
+  def getModel(self, model: Type[Model], identifier: Any, key = None):
+    if key is None:
+      return model.objects.get(pk=identifier)
+    else:
+      return model.objects.get(key=identifier)
+
+  @database_sync_to_async
+  def deleteModel(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
+    """Deletes a model instance """
+
+    model = getModel(modelIdentifier).objects.get(pk=modelID)
+    canDelete = model.canDelete(modelID, user)
+    if canDelete:
+      model.delete()
+    return canDelete
+
+  @database_sync_to_async
+  def createModel(self, modelIdentifier: str, modelDict: Dict):
+    instance = getModel(modelIdentifier)()
+    instance.assignDict(modelDict)
+    instance.save()
+
+    return instance
+
+  @database_sync_to_async
+  def saveModel(self, model: TracershopModel) -> None:
+    model.save()

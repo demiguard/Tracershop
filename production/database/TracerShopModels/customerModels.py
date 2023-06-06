@@ -10,17 +10,17 @@ __author__ = "Christoffer Vilstrup Jensen"
 from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField
 
 # Tracershop Packages
-from database.TracerShopModels.baseModels import SubscribableModel
+from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.authModels import User
 from database.TracerShopModels.clinicalModels import ActivityProduction, Procedure, Tracer
 
 
-class ClosedDate(SubscribableModel):
+class ClosedDate(TracershopModel):
   close_date_id = BigAutoField(primary_key=True)
   close_date = DateField()
 
 
-class Customer(SubscribableModel):
+class Customer(TracershopModel):
   """This represents the organization that is ordering tracers in tracershop"""
   customer_id = BigAutoField(primary_key=True)
   short_name = CharField(max_length=32)
@@ -34,7 +34,7 @@ class Customer(SubscribableModel):
   active_directory_code = CharField(max_length=128, null=True, default=None)
 
 
-class TracerCatalog(SubscribableModel):
+class TracerCatalog(TracershopModel):
   tracer_catalog_id = BigAutoField(primary_key=True)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
@@ -45,7 +45,7 @@ class TracerCatalog(SubscribableModel):
     unique_together = ('customer_id', 'tracer_id')
 
 
-class UserAssignment(SubscribableModel):
+class UserAssignment(TracershopModel):
   user_assignment = BigAutoField(primary_key=True)
   user_id = ForeignKey(User, on_delete=CASCADE)
   customer_id = ForeignKey(Customer, on_delete=RESTRICT)
@@ -54,13 +54,13 @@ class UserAssignment(SubscribableModel):
     unique_together = ('user_id', 'customer_id')
 
 
-class Message(SubscribableModel):
+class Message(TracershopModel):
   message_id = BigAutoField(primary_key=True)
   message = TextField(max_length=8000)
   expiration = DateField(null=True, default=None)
 
 
-class MessageAssignment(SubscribableModel):
+class MessageAssignment(TracershopModel):
   message_assignment_id = BigAutoField(primary_key=True)
   message_id = ForeignKey(Message, on_delete=CASCADE)
   customer_id = ForeignKey(Customer, on_delete=RESTRICT)
@@ -69,7 +69,7 @@ class MessageAssignment(SubscribableModel):
     unique_together = ('message_id', 'customer_id')
 
 
-class DeliveryEndpoint(SubscribableModel):
+class DeliveryEndpoint(TracershopModel):
   tracer_endpoint_id = BigAutoField(primary_key=True)
   address = CharField(max_length=32, null=True, default=None)
   city = CharField(max_length=32, null=True, default=None)
@@ -79,14 +79,14 @@ class DeliveryEndpoint(SubscribableModel):
   owner = ForeignKey(Customer, on_delete=RESTRICT)
 
 
-class Location(SubscribableModel):
+class Location(TracershopModel):
   location_id = BigAutoField(primary_key=True)
   location_code = CharField(max_length=120)
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   common_name = CharField(max_length=120, null=True, default=None)
 
 
-class Booking(SubscribableModel):
+class Booking(TracershopModel):
   booking_id = BigAutoField(primary_key=True)
   status = SmallIntegerField()
   location = ForeignKey(Location, on_delete=RESTRICT)
@@ -102,7 +102,7 @@ class WeeklyRepeat(IntegerChoices):
   OddWeek = 2
 
 
-class ActivityDeliveryTimeSlot(SubscribableModel):
+class ActivityDeliveryTimeSlot(TracershopModel):
   activity_delivery_time_slot_id = BigAutoField(primary_key=True)
   weekly_repeat = SmallIntegerField(choices=WeeklyRepeat.choices)
   delivery_time = TimeField()
@@ -117,7 +117,7 @@ class OrderStatus(IntegerChoices):
   Released = 3
   Rejected = 4
 
-class ActivityOrder(SubscribableModel):
+class ActivityOrder(TracershopModel):
   activity_order_id = BigAutoField(primary_key=True)
   ordered_activity = FloatField()
   delivery_date = DateField()
@@ -155,7 +155,7 @@ class TracerUsage(IntegerChoices):
   animal = 1
   other = 2
 
-class InjectionOrder(SubscribableModel):
+class InjectionOrder(TracershopModel):
   injection_order_id = BigAutoField(primary_key=True)
   delivery_time = TimeField()
   delivery_date = DateField()
@@ -170,7 +170,7 @@ class InjectionOrder(SubscribableModel):
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
 
 
-class Vial(SubscribableModel):
+class Vial(TracershopModel):
   vial_id = BigAutoField(primary_key=True)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT, null=True)
   activity = FloatField()
@@ -181,16 +181,16 @@ class Vial(SubscribableModel):
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
 
-class LegacyProductionMember(SubscribableModel):
+class LegacyProductionMember(TracershopModel):
   legacy_user_id = IntegerField(primary_key=True)
   legacy_production_username = CharField(max_length=50)
 
-class LegacyInjectionOrder(SubscribableModel):
+class LegacyInjectionOrder(TracershopModel):
   legacy_order_id = IntegerField(primary_key=True)
   new_order_id = IntegerField()
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
 
-class LegacyActivityOrder(SubscribableModel):
+class LegacyActivityOrder(TracershopModel):
   legacy_order_id = IntegerField(primary_key=True)
   new_order_id = BigIntegerField()
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
