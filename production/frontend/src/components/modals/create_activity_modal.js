@@ -5,7 +5,7 @@ import { Calculator } from "../injectable/calculator";
 import { ParseDanishNumber } from "../../lib/formatting";
 
 
-import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, KEYWORD_AMOUNT, KEYWORD_TRACER,
+import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS } from "../../lib/constants.js"
 
 import styles from '../../css/Site.module.css'
@@ -102,11 +102,11 @@ class CreateOrderModal extends Component {
 
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
     const skeleton = {};
-    skeleton[KEYWORD_BID] = customer.ID;
-    skeleton[KEYWORD_DELIVER_DATETIME] = activeProduction.deliverTime;
-    skeleton[KEYWORD_RUN] = this.state.activeRun;
-    skeleton[KEYWORD_AMOUNT] = amountNumber;
-    skeleton[KEYWORD_TRACER] = this.props.tracer;
+    skeleton[LEGACY_KEYWORD_BID] = customer.ID;
+    skeleton[LEGACY_KEYWORD_DELIVER_DATETIME] = activeProduction.deliverTime;
+    skeleton[LEGACY_KEYWORD_RUN] = this.state.activeRun;
+    skeleton[LEGACY_KEYWORD_AMOUNT] = amountNumber;
+    skeleton[LEGACY_KEYWORD_TRACER] = this.props.tracer;
 
     message[WEBSOCKET_DATA] = skeleton;
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;

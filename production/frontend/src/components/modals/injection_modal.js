@@ -5,7 +5,7 @@ import { Authenticate } from "../injectable/authenticate.js"
 
 import { changeState } from "../../lib/state_management.js";
 import { WEBSOCKET_MESSAGE_AUTH_LOGIN, AUTH_PASSWORD, AUTH_USERNAME,
-  JSON_AUTH, AUTH_IS_AUTHENTICATED, KEYWORD_BATCHNR, KEYWORD_OID, INJECTION_USAGE,
+  JSON_AUTH, AUTH_IS_AUTHENTICATED, LEGACY_KEYWORD_BATCHNR, LEGACY_KEYWORD_OID, INJECTION_USAGE,
   WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION } from "../../lib/constants.js";
 
 import styles from '../../css/Site.module.css'
@@ -91,8 +91,8 @@ class InjectionModal extends Component {
     auth[AUTH_PASSWORD] = password;
     message[JSON_AUTH] = auth;
     const data = {};
-    data[KEYWORD_OID] = this.props.order.oid;
-    data[KEYWORD_BATCHNR] = this.state.batchnr;
+    data[LEGACY_KEYWORD_OID] = this.props.order.oid;
+    data[LEGACY_KEYWORD_BATCHNR] = this.state.batchnr;
     message[WEBSOCKET_DATA] = data;
 
     this.props.websocket.send(message).then((data) => {

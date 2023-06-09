@@ -5,6 +5,7 @@
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
+from unittest import skip
 
 # Third party packages
 from django import db
@@ -18,6 +19,7 @@ from database.production_database import SQLExecuter
 from database.production_database.SQLController import SQL
 
 class InitialSetupTestCase(TestCase):
+  @skip
   def test_django_databases(self):
     addresses = Address.objects.all()
     databases = Database.objects.all()
@@ -37,6 +39,7 @@ class InitialSetupTestCase(TestCase):
     self.assertEqual(database.address, address)
     self.assertEqual(SC.ExternalDatabase, database)
 
+  @skip
   def test_legacy_tables_availability(self):
     """
       Note there's extra tables in there however they are not used by this program

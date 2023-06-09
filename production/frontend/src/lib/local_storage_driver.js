@@ -2,10 +2,11 @@ import {
   DATABASE_ACTIVITY_ORDER, DATABASE_CLOSED_DATE, DATABASE_CUSTOMER, DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE,
   DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE, DATABASE_PRODUCTION, DATABASE_TRACER, DATABASE_VIAL, JSON_ACTIVITY_ORDER,
   JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, 
+  JSON_KEYWORDS, 
   JSON_RUN, JSON_TRACER, JSON_VIAL } from "./constants";
 
 // Stealing code from https://stackoverflow.com/questions/2010892/how-to-store-objects-in-html5-localstorage
-export var db = {
+export const db = {
   set: function(key, value){
     if (!key || value == undefined) return;
 
@@ -80,26 +81,15 @@ export var db = {
     adminPage : String, // DATABASE_ADMIN_PAGE
     // shop
     shopCustomer : Number, // DATABASE_SHOP_CUSTOMER
-
-    // Maps
-    address : Map, // DATABASE_ADDRESS
-    closeddate : Map, // DATABASE_CLOSEDDATE
-    customer : Map, // DATABASE_CUSTOMER
-    database : Map, // DATABASE_DATABASE
-    deliverTimes : Map, //DATABASE_DELIVERTIME
-    employee : Map, //DATABASE_EMPLOYEE
-    isotopes : Map, //DATABASE_ISOTOPE
-    orders : Map, //DATABASE_ACTIVITY_ORDER
-    run : Map, //DATABASE_PRODUCTION
-    t_orders : Map, //DATABASE_INJECTION_ORDER
-    tracer : Map, //DATABASE_TRACER
-    tracer_mapping : Map, //DATABASE_TRACER_MAPPING
-    vial    : Map, //DATABASE_VIAL
   },
 
   addType: function(key, typeClass){
     this.types[key] = typeClass;
   }
+}
+// GOD JAVASCRIPT IS STUPID
+for (const keyword of JSON_KEYWORDS) {
+  db.types[keyword] = Map;
 }
 
 /**

@@ -22,12 +22,17 @@ import reportlab.rl_config
 reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-pdfmetrics.registerFont(TTFont('Mari', 'pdfData/Mari.ttf'))
-pdfmetrics.registerFont(TTFont('Mari_Bold', 'pdfData/Mari_Bold.ttf'))
-pdfmetrics.registerFont(TTFont('Mari_Book', 'pdfData/Mari_Book.ttf'))
-pdfmetrics.registerFont(TTFont('Mari_Heavy', 'pdfData/Mari_Heavy.ttf'))
-pdfmetrics.registerFont(TTFont('Mari_Light', 'pdfData/Mari_Light.ttf'))
-pdfmetrics.registerFont(TTFont('Mari_Poster', 'pdfData/Mari_Poster.ttf'))
+try:
+  pdfmetrics.registerFont(TTFont('Mari', 'pdfData/Mari.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Bold', 'pdfData/Mari_Bold.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Book', 'pdfData/Mari_Book.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Heavy', 'pdfData/Mari_Heavy.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Light', 'pdfData/Mari_Light.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Poster', 'pdfData/Mari_Poster.ttf'))
+  fonts = True
+except:
+  fonts = False
+
 
 # Tracershop Production packages
 from database.production_database import SQLController
@@ -43,7 +48,10 @@ from dataclass.ProductionDataClasses import CustomerDataClass, ActivityOrderData
 TOP_LINE    = (50,50, 545, 50)
 BOTTOM_LINE = (50, 791, 545, 791)
 
-defaultFont = "Mari_Light"
+if fonts:
+  defaultFont = "Mari_Light"
+else:
+  defaultFont = "helvetica"
 defaultFontSize = 13
 
 start_x_cursor = 58

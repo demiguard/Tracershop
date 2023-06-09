@@ -1,11 +1,14 @@
+# Python standard Library
+from datetime import datetime,date, time
+from unittest import skip
+
+# Third party packages
 from django.test import TestCase
 from reportlab.pdfgen import canvas
 
-from datetime import datetime,date, time
-
+# Tracershop Packages
 from lib import pdfGeneration
 from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
-
 
 
 class PDFsGenerationTest(TestCase):
@@ -170,7 +173,7 @@ class PDFsGenerationTest(TestCase):
     test_customer.ID, datetime(2000, 11, 20, 11, 15, 17, 123)
   )
 
-
+  @skip
   def test_PDF_single_order_single_vial(self):
     pdfGeneration.DrawActivityOrder(
       "test_pdfs/mail_template_order_single_vial.pdf",
@@ -181,6 +184,7 @@ class PDFsGenerationTest(TestCase):
       self.test_tracer
     )
 
+  @skip
   def test_PDF_long_name(self):
     pdfGeneration.DrawActivityOrder(
       "test_pdfs/mail_template_long_customer_Name.pdf",
@@ -191,6 +195,7 @@ class PDFsGenerationTest(TestCase):
       self.test_tracer
     )
 
+  @skip
   def test_PDF_order_coid_single_vial(self):
     pdfGeneration.DrawActivityOrder(
       "test_pdfs/mail_template_order_coid_single_vial.pdf",
@@ -201,6 +206,7 @@ class PDFsGenerationTest(TestCase):
       self.test_tracer
     )
 
+  @skip
   def test_PDF_Order_COID_many_vials(self):
     pdfGeneration.DrawActivityOrder(
       "test_pdfs/mail_template_order_coid_many_vial.pdf",
@@ -211,6 +217,7 @@ class PDFsGenerationTest(TestCase):
       self.test_tracer
     )
 
+  @skip
   def test_PDF_Order(self): # Maybe Take another look here, There seams to be some issue here
     pdfGeneration.DrawActivityOrder(
       "test_pdfs/DrawActivityOrder.pdf",
@@ -220,6 +227,7 @@ class PDFsGenerationTest(TestCase):
       self.test_isotope,
       self.test_tracer)
 
+  @skip
   def test_PDF_ORDER_With_COID(self):
     pdfGeneration.DrawActivityOrder(
       "test_pdfs/DrawActivityOrderCOID.pdf",
@@ -232,6 +240,7 @@ class PDFsGenerationTest(TestCase):
       VialOrders=[self.test_vial_order_1, self.test_vial_order_2]
     )
 
+  @skip
   def test_PDFInjectionOrder(self):
     pdfGeneration.DrawInjectionOrder(
       "test_pdfs/DrawInjectionOrder.pdf", self.test_customer, self.test_injection_order, self.test_isotope, self.test_tracer

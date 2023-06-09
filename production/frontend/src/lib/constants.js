@@ -72,84 +72,119 @@ export const ERROR_UNHANDLED_USER_GROUP = "UnhandledUserGroup";
 export const JSON_ACTIVITY_ORDER = "orders";
 export const JSON_ACTIVE_DATABASE = "active_database";
 export const JSON_ADDRESS  = "address";
-export const JSON_AUTH = "auth"
+export const JSON_AUTH = "auth";
+export const JSON_CLOSEDDATE = "closeddate";
 export const JSON_CUSTOMER  = "customer";
-export const JSON_CLOSED_DATE = "closeddate";
 export const JSON_DATABASE = "database";
-export const JSON_DELIVER_TIME = "deliverTimes";
+export const JSON_DELIVERTIME = "deliverTimes";
 export const JSON_EMPLOYEE = "employee";
 export const JSON_FIELD_TO_UPDATE = "FieldToUpdate";
 export const JSON_GHOST_ORDER = "ghostOrder";
 export const JSON_GREAT_STATE = "GREATSTATE";
 export const JSON_INJECTION_ORDER = "t_orders";
 export const JSON_ISOTOPE = "isotopes";
+export const JSON_ORDERS  = "orders";
 export const JSON_PRODUCTION = "production";
 export const JSON_RUN = "run";
-export const JSON_TRACER = "tracer"
+export const JSON_TRACER = "tracer";
 export const JSON_TRACER_MAPPING = "tracer_mapping";
 export const JSON_SERVER_CONFIG = "server_config";
 export const JSON_VIAL = "vial";
+export const JSON_SECONDARY_EMAIL = "secondaryEmail";
+export const JSON_PROCEDURE = "procedure";
+export const JSON_USER = "user";
+export const JSON_USER_ASSIGNMENT = "userAssignment";
+export const JSON_MESSAGE = "message";
+export const JSON_MESSAGE_ASSIGNMENT = "messageAssignment";
+export const JSON_ENDPOINT = "deliveryEndpoint";
+export const JSON_LOCATION = "location";
+export const JSON_BOOKING = "booking";
 
+
+export const JSON_KEYWORDS = [
+  JSON_ADDRESS,
+  JSON_ACTIVITY_ORDER,
+  JSON_BOOKING,
+  JSON_CLOSEDDATE,
+  JSON_CUSTOMER,
+  JSON_DATABASE,
+  JSON_DELIVERTIME,
+  JSON_ENDPOINT,
+  JSON_INJECTION_ORDER,
+  JSON_ISOTOPE,
+  JSON_LOCATION,
+  JSON_MESSAGE,
+  JSON_MESSAGE_ASSIGNMENT,
+  JSON_TRACER,
+  JSON_TRACER_MAPPING,
+  JSON_PROCEDURE,
+  JSON_PRODUCTION,
+  JSON_SECONDARY_EMAIL,
+  JSON_SERVER_CONFIG,
+  JSON_USER,
+  JSON_USER_ASSIGNMENT,
+  JSON_VIAL,
+]
 
 //Keywords - Refers to a keyword with in a data class
-export const KEYWORD_ACTIVITY = "activity";
-export const KEYWORD_ADDRESS_1 = "addr1";
-export const KEYWORD_ADDRESS_2 = "addr2";
-export const KEYWORD_ADDRESS_3 = "addr3";
-export const KEYWORD_ADDRESS_4 = "addr4";
-export const KEYWORD_AMOUNT = "amount";
-export const KEYWORD_AMOUNT_O = "amount_o";
-export const KEYWORD_BID = "BID";
-export const KEYWORD_BATCHNR = "batchnr";
-export const KEYWORD_CHARGE = "charge";
-export const KEYWORD_COID = "COID";
-export const KEYWORD_COMMENT = "comment";
-export const KEYWORD_CONTACT = "contact";
-export const KEYWORD_CUSTOMER = "customer";
-export const KEYWORD_CUSTOMER_ID = "customer_id";
-export const KEYWORD_CUSTOMER_NUMBER = "kundenr";
-export const KEYWORD_CUSTOMER_USERNAME = "UserName"; // This exists because legacy reasons
-export const KEYWORD_DAY = "day";
-export const KEYWORD_DDATE = "ddate";
-export const KEYWORD_DELIVER_DATETIME = "deliver_datetime";
-export const KEYWORD_DELIVER_TIME = "dtime";
-export const KEYWORD_DELIVER_TIME_ID = "DTID";
-export const KEYWORD_EMAIL_1 = "email";
-export const KEYWORD_EMAIL_2 = "email2";
-export const KEYWORD_EMAIL_3 = "email3";
-export const KEYWORD_EMAIL_4 = "email4";
-export const KEYWORD_FILLDATE = "filldate";
-export const KEYWORD_FILLTIME = "filltime";
-export const KEYWORD_FREED_BY = "frigivet_af";
-export const KEYWORD_FREED_AMOUNT = "frigivet_amount";
-export const KEYWORD_FREED_DATETIME = "frigivet_datetime";
-export const KEYWORD_HALFLIFE = "halflife";
-export const KEYWORD_ID = "ID";
-export const KEYWORD_INJECTIONS = "n_injections";
-export const KEYWORD_IN_USE = "in_use";
-export const KEYWORD_ISOTOPE = "isotope";
-export const KEYWORD_LONG_NAME = "longName";
-export const KEYWORD_NAME = "name";
-export const KEYWORD_OID = "oid";
-export const KEYWORD_ORDER_ID = "order_id";
-export const KEYWORD_ORDER_BLOCK = "order_block";
-export const KEYWORD_OVERHEAD = "overhead";
-export const KEYWORD_PRODUCTION_ID = "PTID";
-export const KEYWORD_PRODUCTION_TIME = "ptime";
-export const KEYWORD_REAL_NAME = "Realname";
-export const KEYWORD_REPEAT = "repeat_t";
-export const KEYWORD_RUN = "run";
-export const KEYWORD_STATUS = "status";
-export const KEYWORD_TELEFON_NUMBER = "tlf";
-export const KEYWORD_TOTAL_AMOUNT = "total_amount";
-export const KEYWORD_TOTAL_AMOUNT_O = "total_amount_o";
-export const KEYWORD_TRACER = "tracer";
-export const KEYWORD_TRACER_ID = "tracer_id";
-export const KEYWORD_TRACER_TYPE = "tracer_type";
-export const KEYWORD_USAGE = "anvendelse";
-export const KEYWORD_USERGROUP = "usergroup"
-export const KEYWORD_USERNAME = "username";
-export const KEYWORD_VOLUME = "volume";
+export const LEGACY_KEYWORD_ACTIVITY = "activity";
+export const LEGACY_KEYWORD_ADDRESS_1 = "addr1";
+export const LEGACY_KEYWORD_ADDRESS_2 = "addr2";
+export const LEGACY_KEYWORD_ADDRESS_3 = "addr3";
+export const LEGACY_KEYWORD_ADDRESS_4 = "addr4";
+export const LEGACY_KEYWORD_AMOUNT = "amount";
+export const LEGACY_KEYWORD_AMOUNT_O = "amount_o";
+export const LEGACY_KEYWORD_BID = "BID";
+export const LEGACY_KEYWORD_BATCHNR = "batchnr";
+export const LEGACY_KEYWORD_CHARGE = "charge";
+export const LEGACY_KEYWORD_COID = "COID";
+export const LEGACY_KEYWORD_COMMENT = "comment";
+export const LEGACY_KEYWORD_CONTACT = "contact";
+export const LEGACY_KEYWORD_CUSTOMER = "customer";
+export const LEGACY_KEYWORD_CUSTOMER_ID = "customer_id";
+export const LEGACY_KEYWORD_CUSTOMER_NUMBER = "kundenr";
+export const LEGACY_KEYWORD_CUSTOMER_USERNAME = "UserName"; // This exists because legacy reasons
+export const LEGACY_KEYWORD_DAY = "day";
+export const LEGACY_KEYWORD_DDATE = "ddate";
+export const LEGACY_KEYWORD_DELIVER_DATETIME = "deliver_datetime";
+export const LEGACY_KEYWORD_DELIVER_TIME = "dtime";
+export const LEGACY_KEYWORD_DELIVER_TIME_ID = "DTID";
+export const LEGACY_KEYWORD_EMAIL_1 = "email";
+export const LEGACY_KEYWORD_EMAIL_2 = "email2";
+export const LEGACY_KEYWORD_EMAIL_3 = "email3";
+export const LEGACY_KEYWORD_EMAIL_4 = "email4";
+export const LEGACY_KEYWORD_FILLDATE = "filldate";
+export const LEGACY_KEYWORD_FILLTIME = "filltime";
+export const LEGACY_KEYWORD_FREED_BY = "frigivet_af";
+export const LEGACY_KEYWORD_FREED_AMOUNT = "frigivet_amount";
+export const LEGACY_KEYWORD_FREED_DATETIME = "frigivet_datetime";
+export const LEGACY_KEYWORD_HALFLIFE = "halflife";
+export const LEGACY_KEYWORD_ID = "ID";
+export const LEGACY_KEYWORD_INJECTIONS = "n_injections";
+export const LEGACY_KEYWORD_IN_USE = "in_use";
+export const LEGACY_KEYWORD_ISOTOPE = "isotope";
+export const LEGACY_KEYWORD_LONG_NAME = "longName";
+export const LEGACY_KEYWORD_NAME = "name";
+export const LEGACY_KEYWORD_OID = "oid";
+export const LEGACY_KEYWORD_ORDER_ID = "order_id";
+export const LEGACY_KEYWORD_ORDER_BLOCK = "order_block";
+export const LEGACY_KEYWORD_OVERHEAD = "overhead";
+export const LEGACY_KEYWORD_PRODUCTION_ID = "PTID";
+export const LEGACY_KEYWORD_PRODUCTION_TIME = "ptime";
+export const LEGACY_KEYWORD_REAL_NAME = "Realname";
+export const LEGACY_KEYWORD_REPEAT = "repeat_t";
+export const LEGACY_KEYWORD_RUN = "run";
+export const LEGACY_KEYWORD_STATUS = "status";
+export const LEGACY_KEYWORD_TELEFON_NUMBER = "tlf";
+export const LEGACY_KEYWORD_TOTAL_AMOUNT = "total_amount";
+export const LEGACY_KEYWORD_TOTAL_AMOUNT_O = "total_amount_o";
+export const LEGACY_KEYWORD_TRACER = "tracer";
+export const LEGACY_KEYWORD_TRACER_ID = "tracer_id";
+export const LEGACY_KEYWORD_TRACER_TYPE = "tracer_type";
+export const LEGACY_KEYWORD_USAGE = "anvendelse";
+export const LEGACY_KEYWORD_USERGROUP = "usergroup"
+export const LEGACY_KEYWORD_USERNAME = "username";
+export const LEGACY_KEYWORD_VOLUME = "volume";
 
 // WEBSOCKET MESSAGES
 
@@ -167,7 +202,6 @@ export const WEBSOCKET_DATE                 = "date";
 export const WEBSOCKET_DEAD_ORDERS          = "deadOrders";
 export const WEBSOCKET_ERROR                = "error";
 export const WEBSOCKET_JAVASCRIPT_VERSION   = "javascriptVersion";
-export const WEBSOCKET_FILTER               = "dataFilter";
 export const WEBSOCKET_MESSAGE_ANSWER       = "answer";
 export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout";
@@ -179,18 +213,27 @@ export const WEBSOCKET_MESSAGE_EDIT_STATE   = "editState";
 export const WEBSOCKET_MESSAGE_EDIT_DJANGO  = "editDjango";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
+export const WEBSOCKET_MESSAGE_FREE_ORDER = "freeOrder";
 export const WEBSOCKET_MESSAGE_GET_HISTORY  = "history";
 export const WEBSOCKET_MESSAGE_GET_ORDERS   = "getOrders";
-export const WEBSOCKET_MESSAGE_GET_DATA_CLASS = "getDataClass";
 export const WEBSOCKET_MESSAGE_GREAT_STATE  = "getGREATState";
+export const WEBSOCKET_MESSAGE_GET_STATE  = "getState";
 export const WEBSOCKET_MESSAGE_ID           = "messageID";
+export const WEBSOCKET_MESSAGE_MASS_ORDER   = "massOrder";
+export const WEBSOCKET_MESSAGE_ORDER_ACTIVITY = "OrderActivity";
+export const WEBSOCKET_MESSAGE_ORDER_INJECTION = "OrderInjection";
+export const WEBSOCKET_MESSAGE_MODEL_CREATE = "createModel";
+export const WEBSOCKET_MESSAGE_MODEL_DELETE = "deleteModel";
+export const WEBSOCKET_MESSAGE_MODEL_EDIT   = "editModel";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
 export const WEBSOCKET_MESSAGE_SUCCESS      = "success";
 export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
+export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_SEND_EVENT           = "sendEvent";
 export const WEBSOCKET_SESSION_ID           = "sessionid";
 export const WEBSOCKET_EVENT_TYPE           = "type";
 export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
+
 
 // BETTER MESSAGE CONSTANTS
 

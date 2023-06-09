@@ -27,7 +27,7 @@ from tests.helpers import cleanTable
 # This is cases where there the server have been incorrectly configured or can't connect to the database
 # They are also there to make the debugging a bit eaiser by rasing queries if an invalid query is made
 
-class SQLExecuterBasicsTestCase(TestCase):
+class SQLExecuterBasicsTestCase():
   ##### Easy basic tests #####
   # These tests just shows the very basic use case for SQLExecuter
   isotope_tuple = { "name" : "test_isotope", "halflife" : 1337, "id" : 420}

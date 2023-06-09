@@ -61,7 +61,7 @@ def CreateTestDatabase(DatabaseConfig):
   databaseName = "test_tracershop"
 
   db_config = {
-    'user' : DatabaseConfig["USER"],
+    'user'     : DatabaseConfig["USER"],
     "password" : DatabaseConfig["PASSWORD"],
     "host"     : DatabaseConfig["HOST"],
     "port"     : DatabaseConfig["PORT"]

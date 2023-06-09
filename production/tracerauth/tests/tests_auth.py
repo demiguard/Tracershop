@@ -32,7 +32,6 @@ class authTestCase(TestCase):
     WEBSOCKET_MESSAGE_FREE_ACTIVITY,
     WEBSOCKET_MESSAGE_FREE_INJECTION,
     WEBSOCKET_MESSAGE_GET_ORDERS,
-    WEBSOCKET_MESSAGE_GREAT_STATE,
     WEBSOCKET_MESSAGE_MOVE_ORDERS,
   ])
 
@@ -42,7 +41,7 @@ class authTestCase(TestCase):
   def test_AuthMessage_anon(self):
     anon = AnonymousUser()
     responses = LMAP(lambda message : AuthMessage(anon, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 8)
+    self.assertListEqual(responses, [True] * 4 + [False] * 7)
 
 
   def test_AuthMessage_admin(self):
@@ -69,18 +68,18 @@ class authTestCase(TestCase):
   def test_AuthMessage_ShopAdmin(self):
     ShopAdmin = User(username="ShopAdmin", UserGroup=UserGroups.ShopAdmin, OldTracerBaseID=4)
     responses = LMAP(lambda message : AuthMessage(ShopAdmin, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 8)
+    self.assertListEqual(responses, [True] * 4 + [False] * 7)
 
 
   def test_AuthMessage_ShopUser(self):
     ShopUser = User(username="ShopUser", UserGroup=UserGroups.ShopUser, OldTracerBaseID=5)
     responses = LMAP(lambda message : AuthMessage(ShopUser, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 8)
+    self.assertListEqual(responses, [True] * 4 + [False] * 7)
 
   def test_AuthMessage_ShopExternal(self):
     ShopExternal = User(username="ShopExternal", UserGroup=UserGroups.ShopExternal, OldTracerBaseID=6)
     responses = LMAP(lambda message : AuthMessage(ShopExternal, message), self.messages)
-    self.assertListEqual(responses, [True] * 4 + [False] * 8)
+    self.assertListEqual(responses, [True] * 4 + [False] * 7)
 
   def test_validateMessage_validMessage(self):
     self.assertEqual(validateMessage({
@@ -103,8 +102,8 @@ class authTestCase(TestCase):
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
       WEBSOCKET_DATA : {
-        KEYWORD_BATCHNR : "messageBatchNumber",
-        KEYWORD_OID     : 6631
+        LEGACY_KEYWORD_BATCHNR : "messageBatchNumber",
+        LEGACY_KEYWORD_OID     : 6631
       },
       JSON_AUTH : {
         AUTH_USERNAME : TEST_ADMIN_USERNAME,
@@ -112,4 +111,3 @@ class authTestCase(TestCase):
       }
     }
     ), "")
-    

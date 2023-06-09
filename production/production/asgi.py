@@ -16,6 +16,7 @@ from channels.sessions import SessionMiddlewareStack
 
 from django.core.asgi import get_asgi_application
 from django.apps import apps
+
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
 django_asgi_app = get_asgi_application()
 

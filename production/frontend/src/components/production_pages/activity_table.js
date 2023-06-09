@@ -8,12 +8,12 @@ import { CountMinutes, CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
 
-import { KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
+import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
-  JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, KEYWORD_AMOUNT, KEYWORD_ID, KEYWORD_CHARGE, KEYWORD_FILLTIME,
-  KEYWORD_FILLDATE, KEYWORD_CUSTOMER, KEYWORD_ACTIVITY, KEYWORD_VOLUME,
-  WEBSOCKET_MESSAGE_EDIT_STATE, KEYWORD_TRACER} from "../../lib/constants.js";
+  JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_CHARGE, LEGACY_KEYWORD_FILLTIME,
+  LEGACY_KEYWORD_FILLDATE, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_ACTIVITY, LEGACY_KEYWORD_VOLUME,
+  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER} from "../../lib/constants.js";
 
 import SiteStyles from "/src/css/Site.module.css"
 
@@ -65,7 +65,7 @@ export class ActivityTable extends Component {
   }
 
   GetProductionDateTimeString(ProductionTime) {
-    return String(  this.props.date.getFullYear()) + '-' +
+    return String(this.props.date.getFullYear()) + '-' +
       FormatDateStr(this.props.date.getMonth() + 1) + '-' +
       FormatDateStr(this.props.date.getDate()) + "T" +
       ProductionTime;

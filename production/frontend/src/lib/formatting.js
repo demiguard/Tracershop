@@ -92,7 +92,7 @@ export function ParseJSONstr(JSONString){
 }
 
 export function ParseDjangoModelJson(JSONString){
-  var json = ParseJSONstr(JSONString);
+  const json = ParseJSONstr(JSONString);
   const ModelMap = new Map();
   // Use that it's a list of objects with information in the following form
   //{ model : string of model name on format module.model for instance api.database

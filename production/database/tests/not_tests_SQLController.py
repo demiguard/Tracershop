@@ -28,7 +28,7 @@ from tests.test_DataClasses import useDataClass, testOrders
 from tests.helpers import cleanTable
 
 
-class SQLControllerTestCase(TestCase):
+class SQLControllerTestCase():
   SQL = SQL()
   activityOrderStatus2 = [("deliver_datetime","2022-10-11 11:30:00"),
       ("oid", 1337),

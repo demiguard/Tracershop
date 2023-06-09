@@ -7,14 +7,16 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
 from datetime import datetime, date, timedelta
-from typing import Any, Dict, List, Optional, Tuple, Type
+from typing import Any, Dict, List, Iterable, Optional, Tuple, Type
 import logging
 
 # Django Packages
 from channels.db import database_sync_to_async
 from django.db.models import Model, ForeignKey, IntegerField
+from django.core.serializers import serialize
 
 # Tracershop Production Packages
+from core.side_effect_injection import DateTimeNow
 from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
     JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVERTIME, \
     JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
@@ -22,7 +24,8 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT
 from database.models import ServerConfiguration, Database, Address, User,\
-    UserGroups, getModel, TracershopModel
+    UserGroups, getModel, TracershopModel, ActivityOrder, OrderStatus,\
+    InjectionOrder, Vial, ClosedDate
 from database.production_database.SQLController import SQL
 from lib.decorators import typeCheckFunc
 from lib import pdfGeneration
@@ -37,17 +40,20 @@ class DatabaseInterface():
   """This class is the interface for the production database. This includes
   both the Django database and the Production database
   """
-  def __init__(self, SQL_Controller=SQL()):
+  def __init__(self, SQL_Controller=SQL(), datetimeNow = DateTimeNow()):
     self.SQL = SQL_Controller
+    self.datetimeNow = datetimeNow
 
   @database_sync_to_async
   def getServerConfiguration(self) -> ServerConfiguration:
     """Get the server configuration
 
+    Here because it needs an async counterpart
+
     Returns:
         ServerConfiguration: the server configuration Instance
     """
-    return self.SQL.getServerConfig()
+    return ServerConfiguration.get()
 
 
   ##### ----- Functions related to freeing Orders ----- #####
@@ -82,124 +88,13 @@ class DatabaseInterface():
     return pdfPath
 
   @database_sync_to_async
-  def freeDependantOrders(self, order : ActivityOrderDataClass, user : User):
-    return self.SQL.freeDependantOrder(order, user)
-
-  ###### ----- Free function End ----- ######
-
-  @database_sync_to_async
-  def getGreatState(self) -> Tuple[
-      List[EmployeeDataClass],
-      List[CustomerDataClass],
-      List[DeliverTimeDataClass],
-      List[IsotopeDataClass],
-      List[VialDataClass],
-      List[RunsDataClass],
-      List[ActivityOrderDataClass],
-      List[InjectionOrderDataClass],
-      ServerConfiguration,
-      List[Database],
-      List[Address],
-      List[ClosedDateDataClass]]:
-
-    """This function is responsible for gathering the state of the database.
-
-      Returns:
-        Tuple[List[],]
-    """
-    SC = self.SQL.getServerConfig()
-    databases = self.SQL.getModels(Database)
-    addresses = self.SQL.getModels(Address)
-
-    dateRange = SC.DateRange # Move this to serverconfiguration
-
-
-    today = datetime.now()
-    startDate = today - timedelta(days=dateRange)
-    endDate = today + timedelta(days=dateRange)
-
-    Employees = self.SQL.getEmployees() # Not a legacy db concept
-    Customers = self.SQL.getDataClass(CustomerDataClass)
-    DeliTimes = self.SQL.getDataClass(DeliverTimeDataClass)
-    Isotopes  = self.SQL.getDataClass(IsotopeDataClass)
-    Runs      = self.SQL.getDataClass(RunsDataClass)
-    Tracers   = self.SQL.getDataClass(TracerDataClass)
-    TCustomer = self.SQL.getDataClass(TracerCustomerMappingDataClass)
-    Orders    = self.SQL.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
-    Vials     = self.SQL.getDataClassRange(startDate, endDate, VialDataClass)
-    T_Orders  = self.SQL.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
-    closeDate = self.SQL.getDataClassRange(startDate.date(), endDate.date(), ClosedDateDataClass)
-
-    return (Employees, Customers, DeliTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TCustomer, SC, list(databases), list(addresses), closeDate)
-
-  ###### ----- Generic Methods ----- ######
-
-  @database_sync_to_async
-  def createDataClass(self, skeleton : Dict, DataClass) -> JsonSerilizableDataClass:
-    return self.SQL.createDataClass(skeleton, DataClass)
-
-  @database_sync_to_async
-  def getServerConfig(self):
-    return self.SQL.getServerConfig()
-
-  @database_sync_to_async
-  def getExternalDatabase(self, serverConfig: ServerConfiguration) -> Database:
-    if serverConfig.ExternalDatabase is not None:
-      return serverConfig.ExternalDatabase
-    raise Exception
-
-
-  @database_sync_to_async
-  def getElement(self, ID: int, Dataclass) -> Optional[JsonSerilizableDataClass]:
-    return self.SQL.getElement(ID, Dataclass)
-
-  @database_sync_to_async
-  def updateDataClass(self, dataClass : JsonSerilizableDataClass):
-    """Updates an exists entry to the new values
-
-    Programer note, is to make this a method dependant on the dataclass similiar to that create
-
-    Args:
-        dataClass (JsonSerilizableDataClass): _description_
-    """
-    self.SQL.UpdateJsonDataClass(dataClass)
-
-  @database_sync_to_async
-  def getDataClass(self, dataClass : Type) -> List[JsonSerilizableDataClass]:
-    return self.SQL.getDataClass(dataClass)
-
-  @database_sync_to_async
-  def getDataClassRange(self, startDate: date, endDate: date, DataClass: Type[JsonSerilizableDataClass]) -> List[JsonSerilizableDataClass]:
-    return self.SQL.getDataClassRange(startDate, endDate, DataClass)
-
-  @database_sync_to_async
-  @typeCheckFunc
-  def DeleteIDs(self, ids : List[int], DataClass : Type[JsonSerilizableDataClass]) -> None:
-    self.SQL.deleteIDs(ids, DataClass)
-
-  @database_sync_to_async
-  def DeleteInstance(self, dataClass: JsonSerilizableDataClass) -> None:
-    id_field = dataClass.getIDField()
-    ID = getattr(dataClass,id_field)
-
-    self.SQL.deleteIDs([ID], dataClass.__class__)
-
-  @database_sync_to_async
-  def CanDelete(self, data : JsonSerilizableDataClass) -> bool:
-    return True
-
-  @database_sync_to_async
-  def GetConditionalElements(self, condition : str, dataClass : Type ) -> List[JsonSerilizableDataClass]:
-    return self.SQL.getConditionalElements(condition, dataClass)
-
-  @database_sync_to_async
   def editModel(self, model_identifier: str, model : Dict, modelID: Any):
     instance: Model = getModel(model_identifier).objects.get(pk=modelID)
     instance.assignDict(model)
     instance.save()
 
   @database_sync_to_async
-  def getModel(self, model: Type[Model], identifier: Any, key = None):
+  def getModel(self, model: Type[Model], identifier: Any, key = None) -> TracershopModel:
     if key is None:
       return model.objects.get(pk=identifier)
     else:
@@ -226,3 +121,54 @@ class DatabaseInterface():
   @database_sync_to_async
   def saveModel(self, model: TracershopModel) -> None:
     model.save()
+
+  @database_sync_to_async
+  def saveModels(self,model: Type[TracershopModel], models: List[TracershopModel], tags: List[str]):
+    model.objects.bulk_update(models, fields=tags)
+
+  @database_sync_to_async
+  def releaseOrders(self, deliverTime: ActivityOrderDataClass, release_date: date, user: User):
+    """Releases an order"""
+    now = self.datetimeNow.now()
+
+    order = ActivityOrder.objects.filter(ordered_time_slot=deliverTime,
+                                         delivery_date=release_date)
+
+    order.update(status=OrderStatus.Released, freed_datetime=now, freed_by=user)
+
+    moved_orders = ActivityOrder.objects.filter(moved_to_time_slot=deliverTime,
+                                                delivery_date=order.delivery_date)
+
+    moved_orders.update(
+      status=OrderStatus.Released, freed_datetime=now, freed_by=user
+    )
+
+    return order + moved_orders
+
+  @database_sync_to_async
+  def getTimeSensitiveData(self, centralDate: datetime, user: User):
+    serverConfig = ServerConfiguration.get()
+
+    startDate = centralDate - timedelta(days=serverConfig.DateRange)
+    endDate = centralDate + timedelta(days=serverConfig.DateRange)
+
+    return {
+      JSON_ACTIVITY_ORDER : ActivityOrder.objects.filter(
+        delivery_date__range=[startDate, endDate]
+      ),
+      JSON_INJECTION_ORDER : InjectionOrder.objects.filter(
+        delivery_date__range=[startDate, endDate]
+      ),
+      JSON_VIAL : Vial.objects.filter(
+        fill_date__range=[startDate, endDate]
+      ),
+      JSON_CLOSEDDATE : ClosedDate.objects.filter(
+        close_date__range=[startDate, endDate]
+      )
+    }
+
+  @database_sync_to_async
+  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]):
+    return {
+      key : serialize('json', models) for key, models in instances.items()
+    }

@@ -1,26 +1,25 @@
 # Python Standard Library
-from typing import Any, Dict, List, Type
+from datetime import datetime
+from typing import Any,Callable, Dict, Iterable, List, Type
 
 # Third party Libraries
 from channels.db import database_sync_to_async
-from django.apps import get_models
-from django.db.models import Model
+from django.apps import apps
 from django.contrib.auth.models import AnonymousUser
 
 # Tracershop App
 from constants import *
-from database.models import User, UserGroups
-
-
+from database.models import User, UserGroups, TracershopModel, Tracer, INVERTED_MODELS, MODELS
 
 requiredMessageFields = {
+  WEBSOCKET_MESSAGE_AUTH_LOGIN : [JSON_AUTH],
   WEBSOCKET_MESSAGE_FREE_INJECTION : [WEBSOCKET_DATA, JSON_AUTH],
   WEBSOCKET_MESSAGE_GET_STATE : [],
   WEBSOCKET_MESSAGE_MODEL_DELETE : [WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE]
 }
 
 requiredDataFields = {
-  WEBSOCKET_MESSAGE_FREE_INJECTION : [(KEYWORD_OID, int), (KEYWORD_BATCHNR, str)]
+  WEBSOCKET_MESSAGE_FREE_INJECTION : [(LEGACY_KEYWORD_OID, int), (LEGACY_KEYWORD_BATCHNR, str)]
 }
 
 
@@ -51,8 +50,8 @@ def ValidateType(value : Any, targetType: Type) -> bool:
 
   return True
 
-def AuthMessage(user : User, message : Dict) -> bool:
-  """_summary_
+def AuthMessage(user: User, message: Dict) -> bool:
+  """Check if a user is allowed to send a message
 
   Args:
       user (User): _description_
@@ -75,7 +74,6 @@ def AuthMessage(user : User, message : Dict) -> bool:
     return True
   if user.UserGroup == UserGroups.ProductionAdmin:
     if messageType in [
-        WEBSOCKET_MESSAGE_GREAT_STATE,
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_MESSAGE_FREE_ACTIVITY,
         WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -91,7 +89,6 @@ def AuthMessage(user : User, message : Dict) -> bool:
 
   if user.UserGroup == UserGroups.ProductionUser:
     if messageType in [
-        WEBSOCKET_MESSAGE_GREAT_STATE,
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_MESSAGE_FREE_ACTIVITY,
         WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -161,26 +158,27 @@ def validateMessage(message : Dict) -> str:
 
 
 
-modelGetters = {}
+__modelGetters: Dict[str, Callable[[User],Iterable[TracershopModel]]] = {}
 
 
-def getAuthenticatedUserModels(user: User) -> List[Type[Model]]:
+def getAuthenticatedUserModels(user: User) -> List[Type[TracershopModel]]:
   if user.UserGroup == UserGroups.Admin:
-    return get_models()
+    return apps.get_app_config('database').get_models()
 
   return []
 
 @database_sync_to_async
-def getUserModelInstances(user) -> Dict[str, List[Model]]:
+def getUserModelInstances(user) -> Dict[str, List[TracershopModel]]:
   models = getAuthenticatedUserModels(user)
-
   instances = {}
-
   for model in models:
-    if model.__name__ in modelGetters:
-      instances[model.__name__] = modelGetters[model.__name__](user)
+    modelKeyword = INVERTED_MODELS.get(model)
+    if modelKeyword is None:
+      continue
+    if modelKeyword in __modelGetters:
+      instances[modelKeyword] = __modelGetters[modelKeyword](user)
     else:
-      instances[model.__name__] = model.objects.all()
-
+      instances[modelKeyword] = model.objects.all()
 
   return instances
+

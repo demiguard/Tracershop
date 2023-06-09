@@ -4,7 +4,7 @@ import { Modal, Button, Table, Row, FormControl, Col, Form } from "react-bootstr
 import { changeState } from "../../lib/state_management.js";
 import {renderTableRow, renderSelect} from "../../lib/rendering.js";
 import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
-  JSON_DELIVER_TIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, KEYWORD_DELIVER_TIME,
+  JSON_DELIVER_TIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, LEGACY_KEYWORD_DELIVER_TIME,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, DAYS_OBJECTS,
 } from "../../lib/constants.js";
 import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
@@ -199,7 +199,7 @@ class CustomerModal extends Component {
     const returnFunction = (event) => {
       const newState = {...this.state};
       const NewDeliverTime = {...deliverTime};
-      NewDeliverTime[KEYWORD_DELIVER_TIME] = event.target.value;
+      NewDeliverTime[LEGACY_KEYWORD_DELIVER_TIME] = event.target.value;
       newState.deliverTimes.set(NewDeliverTime.DTID, NewDeliverTime);
       this.setState(newState);
     }

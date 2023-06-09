@@ -1,7 +1,7 @@
 import React, {Component,} from "react";
 import { Button, Form, FormControl, Modal, Table } from "react-bootstrap";
 
-import { JSON_TRACER_MAPPING, KEYWORD_CUSTOMER_ID, KEYWORD_ID, KEYWORD_TRACER_ID,
+import { JSON_TRACER_MAPPING, LEGACY_KEYWORD_CUSTOMER_ID, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_TRACER_ID,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
 import { renderTableRow } from "../../lib/rendering";
@@ -32,8 +32,8 @@ class TracerModal extends Component {
     if(event.target.checked){
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS)
       const data = {};
-      data[KEYWORD_CUSTOMER_ID] = CustomerID;
-      data[KEYWORD_TRACER_ID] = this.props.tracerID;
+      data[LEGACY_KEYWORD_CUSTOMER_ID] = CustomerID;
+      data[LEGACY_KEYWORD_TRACER_ID] = this.props.tracerID;
 
       message[WEBSOCKET_DATA] = data
       message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING
@@ -42,9 +42,9 @@ class TracerModal extends Component {
     } else {
       const TracerMappingID = this.TracerMapping.get(CustomerID);
       const data = {};
-      data[KEYWORD_CUSTOMER_ID] = CustomerID;
-      data[KEYWORD_TRACER_ID]   = this.props.tracerID;
-      data[KEYWORD_ID] = TracerMappingID;
+      data[LEGACY_KEYWORD_CUSTOMER_ID] = CustomerID;
+      data[LEGACY_KEYWORD_TRACER_ID]   = this.props.tracerID;
+      data[LEGACY_KEYWORD_ID] = TracerMappingID;
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
       message[WEBSOCKET_DATA] = data;
       message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING;
@@ -101,8 +101,8 @@ class TracerModal extends Component {
     const TracerMapping = new Map();
 
     for(const [TracerMappingID, TracerMappingTuple] of this.props.tracerMapping){
-      if(TracerMappingTuple[KEYWORD_TRACER_ID] == this.props.tracerID){
-        TracerMapping.set(TracerMappingTuple[KEYWORD_CUSTOMER_ID], TracerMappingID)
+      if(TracerMappingTuple[LEGACY_KEYWORD_TRACER_ID] == this.props.tracerID){
+        TracerMapping.set(TracerMappingTuple[LEGACY_KEYWORD_CUSTOMER_ID], TracerMappingID)
       }
     }
 

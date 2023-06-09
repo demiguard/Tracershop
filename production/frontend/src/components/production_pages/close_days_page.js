@@ -1,6 +1,6 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
-import { JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_RUN, KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+import { JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
 import { Calender, standardOrderMapping, productionGetMonthlyOrders } from "../injectable/calender";
 
 import { FormatDateStr } from "../../lib/formatting.js";
@@ -36,7 +36,7 @@ export class CloseDaysPage extends Component {
       this.props.websocket.send(message);
     } else { // Delete it
       const data = {}
-      data[KEYWORD_DDATE] = dateStr
+      data[LEGACY_KEYWORD_DDATE] = dateStr
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
       message[WEBSOCKET_DATA] = data;
       message[WEBSOCKET_DATATYPE] = JSON_CLOSED_DATE;

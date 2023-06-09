@@ -22,3 +22,7 @@ class ServerConfiguration(TracershopModel):
   DateRange = models.PositiveIntegerField(default=32)
   AdminPhoneNumber = models.CharField(max_length=32, default="35454147")
   AdminEmail = models.EmailField(max_length=64, default="christoffer.vilstrup.jensen@regionh.dk")
+
+  @classmethod
+  def get(cls):
+    return cls.objects.get_or_create(pk=1)[0]

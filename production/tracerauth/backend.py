@@ -11,7 +11,7 @@ from database.models import User, UserGroups
 from database.production_database.SQLController import SQL
 
 
-def validString(string :str) -> bool:
+def validString(string: str) -> bool:
   """Checks if a string contains any funny Characters
 
   Args:
@@ -38,13 +38,13 @@ class TracershopAuthenticationBackend(BaseBackend):
     return None
 
   def get_user_from_old_database(self, username, password):
+    return None
     valid_old_user = self.SQL.authenticateUser(username, password)
     if valid_old_user:
       user = User(username=username, OldTracerBaseID=valid_old_user.Id, UserGroup=UserGroups.ProductionUser)
       user.set_password(password)
       user.save()
       return user
-    return None
 
   def get_user(self, user_id):
     try:

@@ -4,7 +4,7 @@ import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS, DATABAS
   WEBSOCKET_DEAD_ORDERS, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,
   JSON_INJECTION_ORDER, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_DATA_ID,
   JSON_VIAL, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_ID,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSED_DATE, DATABASE_CLOSED_DATE, ERROR_NO_MESSAGE_ID, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, } from "./constants.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_FREE_INJECTION, JSON_CLOSED_DATE, DATABASE_CLOSED_DATE, ERROR_NO_MESSAGE_ID, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_GET_STATE, } from "./constants.js";
 import { MapDataName } from "./local_storage_driver.js";
 import { ParseJSONstr } from "./formatting.js";
 
@@ -53,79 +53,15 @@ class TracerWebSocket {
       if(pipe != undefined){
         pipe.port2.postMessage(data);
       }
-      //None promise update
-      switch(data[WEBSOCKET_MESSAGE_TYPE]) {
-        /*
-        * YEEEAH some really bad code ahead with double parsing: TODO: TODO: !IMPORTANT
-        * Hours Spend fixing this: 3
-        * So Here are the efforts so far. The problem lies in the fact that:
-        * That default python json encoder doesn't handle objects every well.
-        * Now I did extrend a python json encoder such that it works,
-        * The encoder is called when you send data from server to Client.
-          * Only problem is that not how websocket is set up.
-          * It goes like this: Server -> Redis DB -> Server -> Client.
-          * The problem is that redis is a string based so it needs a json encoding of the objects.
-          * AND here it uses the default python json encoder.
-          * So the fix to this is to create new type of channel layer that have a custom JSON encoder.
-          *
-        * Additional programmer note: Create a new namespace for each handled case : using {}
-        */
-        case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:{ //Merge to UpdateVial
-            const object_id = data[WEBSOCKET_DATA_ID];
-            let data_class = ParseJSONstr(data[WEBSOCKET_DATA]);
-            this.StateHolder.UpdateMap(MapDataName(data[WEBSOCKET_DATATYPE]), [data_class], object_id, true, [])
-          }
-          break;
-        case WEBSOCKET_MESSAGE_GREAT_STATE:
-          this.StateHolder.updateGreatState(
-            data[JSON_GREAT_STATE]
-          );
-          break;
-        case WEBSOCKET_MESSAGE_MOVE_ORDERS: {
-            const ActivityOrders = [];
-            for (const OrderStr of data[JSON_ACTIVITY_ORDER]) {
-              ActivityOrders.push(ParseJSONstr(OrderStr));
-            }
-            this.StateHolder.UpdateMap(DATABASE_ACTIVITY_ORDER, ActivityOrders, "oid", true, data[WEBSOCKET_DEAD_ORDERS]);
-          }
-          break;
-        case WEBSOCKET_MESSAGE_GET_ORDERS:
-          { // ensure Namespace is clean
-            const ActivityOrders = [];
-            const InjectionOrders = [];
-            const Vials = [];
-            const CloseDates = []
-            for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
-              ActivityOrders.push(ParseJSONstr(ActivityStr));
-            }
-            for(const injectionStr of data[JSON_INJECTION_ORDER]){
-              InjectionOrders.push(ParseJSONstr(injectionStr));
-            }
-            for(const VialStr of data[JSON_VIAL]){
-              Vials.push(ParseJSONstr(VialStr));
-            }
-            for(const closeDateStr of data[JSON_CLOSED_DATE]){
-              CloseDates.push(ParseJSONstr(closeDateStr))
-            }
 
-            this.StateHolder.UpdateMaps(
-              [DATABASE_ACTIVITY_ORDER, DATABASE_INJECTION_ORDER,
-                DATABASE_VIAL, DATABASE_CLOSED_DATE],
-              [ActivityOrders, InjectionOrders, Vials, CloseDates],
-              ["oid", "oid", "ID", "BDID"],
-              [true, true, true, true],
-              [[],[],[],[]]
-            )
-          }
-        break;
-        case WEBSOCKET_MESSAGE_EDIT_STATE:
-          this.StateHolder.UpdateMap(
-            data[WEBSOCKET_DATATYPE],
-            [ParseJSONstr(data[WEBSOCKET_DATA])],
-            data[WEBSOCKET_DATA_ID],
-            true,
-            []
-          );
+      /**This is the state updating messages send by the server */
+      switch(data[WEBSOCKET_MESSAGE_TYPE]) {
+        case WEBSOCKET_MESSAGE_UPDATE_STATE:
+          /**Assumes message is on format:
+           * WEBSOCKET_DATA -
+           *  JSON_XXX : List of Objects
+           */
+          this.StateHolder.updateState(data[WEBSOCKET_DATA]);
           break;
         case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS: {
             const DataClass = data[WEBSOCKET_DATA];
@@ -134,34 +70,13 @@ class TracerWebSocket {
               MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
         }
         break;
-        case WEBSOCKET_MESSAGE_FREE_ACTIVITY: {
+        case WEBSOCKET_MESSAGE_FREE_ORDER: {
           if(data[AUTH_IS_AUTHENTICATED]){
-            const ActivityOrders = [];
-            for(const ActivityStr of data[JSON_ACTIVITY_ORDER]){
-              ActivityOrders.push(ParseJSONstr(ActivityStr));
-            }
-            const Vials = [];
-            for(const VialStr of data[JSON_VIAL]){
-              Vials.push(ParseJSONstr(VialStr));
-            }
-            this.StateHolder.UpdateMaps(
-              [DATABASE_ACTIVITY_ORDER, DATABASE_VIAL],
-              [ActivityOrders, Vials],
-              ["oid", "ID"],
-              [true, true],
-              [[],[]]
-            );
+            this.updateState(data[WEBSOCKET_DATA])
           }
         }
         break;
-        case WEBSOCKET_MESSAGE_FREE_INJECTION: {
-          if (data[AUTH_IS_AUTHENTICATED]){
-            const UpdatedOrder = ParseJSONstr(data[JSON_INJECTION_ORDER]);
-            this.StateHolder.UpdateMap(DATABASE_INJECTION_ORDER, [UpdatedOrder], 'oid', true, []);
-          }
         }
-        break;
-      }
     }
 
     this._ws.onclose = function(e) {
@@ -169,8 +84,6 @@ class TracerWebSocket {
         channel.port1.close();
         channel.port2.close();
       }
-      //console.log("Websocket closed! with code:" + e.code)
-      //console.log(e.reason)
     }
 
     this._ws.onerror = function(err) {
@@ -229,32 +142,6 @@ class TracerWebSocket {
     if(message[WEBSOCKET_MESSAGE_SUCCESS] != WEBSOCKET_MESSAGE_SUCCESS) return false;
     if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_ID)) return false;
     if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_TYPE)) return false;
-
-    switch(message[WEBSOCKET_MESSAGE_TYPE]){
-      case WEBSOCKET_MESSAGE_CREATE_DATA_CLASS:{
-        if(!message.hasOwnProperty(WEBSOCKET_DATA_ID)) return false;
-        if(!message.hasOwnProperty(WEBSOCKET_DATA)) return false;
-        if(!message.hasOwnProperty(WEBSOCKET_DATATYPE)) return false;
-      }
-      break;
-      case WEBSOCKET_MESSAGE_GREAT_STATE:{
-        if(!message.hasOwnProperty(JSON_GREAT_STATE)) return false;
-      }
-      break;
-      case WEBSOCKET_MESSAGE_MOVE_ORDERS:{
-        if(!message.hasOwnProperty(JSON_ACTIVITY_ORDER)) return false;
-        if(!message.hasOwnProperty(WEBSOCKET_DEAD_ORDERS)) return false;
-      }
-      break;
-      case WEBSOCKET_MESSAGE_GET_ORDERS:{
-        if(!message.hasOwnProperty(JSON_ACTIVITY_ORDER)) return false;
-        if(!message.hasOwnProperty(JSON_INJECTION_ORDER)) return false;
-        if(!message.hasOwnProperty(JSON_VIAL)) return false;
-        if(!message.hasOwnProperty(JSON_CLOSED_DATE)) return false;
-      }
-      break;
-    }
-
     return true;
   }
 }

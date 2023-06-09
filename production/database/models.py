@@ -40,5 +40,11 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_VIAL : Vial,
 }
 
+INVERTED_MODELS = {
+    model : key for key, model in MODELS.items()
+}
+
+
 def getModel(identifier: str) -> Type[TracershopModel]:
     return MODELS[identifier]
+

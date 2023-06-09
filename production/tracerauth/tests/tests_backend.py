@@ -1,4 +1,5 @@
-from ast import Delete
+from unittest import skip
+
 from django.test import TestCase
 from django.conf import settings
 
@@ -6,9 +7,9 @@ from database.production_database.SQLExecuter import ExecuteQuery, Fetching
 from database.production_database.SQLFactory import tupleInsertQuery
 from tests.helpers import cleanTable
 
+
 from tracerauth.backend import TracershopAuthenticationBackend, validString
 from database.models import User, UserGroups
-# Create your tests here.
 
 
 class TracerAuthBackendTestCase(TestCase):
@@ -22,7 +23,6 @@ class TracerAuthBackendTestCase(TestCase):
   ], "Users")
 
   def setUp(self) -> None:
-
     self.basicUserName = "basicUser"
     self.basicPassword = "basicPassword"
 
@@ -34,7 +34,6 @@ class TracerAuthBackendTestCase(TestCase):
   def tearDown(self) -> None:
     self.basicUser.delete()
 
-    cleanTable("Id", "Users",self._testMethodName)
 
 
   # Test Valid Password / usernames
@@ -58,6 +57,7 @@ class TracerAuthBackendTestCase(TestCase):
   def test_Authentication_wrongPassword(self):
     self.assertIsNone(self.backend.authenticate(None, self.basicUserName, "WrongPassword"))
 
+  @skip
   def test_Authenticate_OldDatabaseUserMigration(self):
     ExecuteQuery(self.UserInsertQuery, Fetching.NONE)
 

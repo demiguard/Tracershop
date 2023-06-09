@@ -13,14 +13,13 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from asgiref.sync import sync_to_async
-from calendar import monthrange
-from datetime import datetime, date, timedelta
 import decimal
 import logging
 from pprint import pprint
 from typing import Dict, List, Callable, Coroutine
 
 # Django packages
+from channels.db import database_sync_to_async
 from channels.auth import login, get_user, logout
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
@@ -28,15 +27,17 @@ from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
 
 # Tracershop Production packages
+from core.side_effect_injection import DateTimeNow
 from core.exceptions import SQLInjectionException
 from dataclass.ProductionDataClasses import *
 from constants import * # Import the many WEBSOCKET constants, TO DO change this
 from database.database_interface import DatabaseInterface
-from lib.decorators import typeCheckFunc
+from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
+      OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
+      TracerTypes, DeliveryEndpoint, ActivityProduction
+from lib import orders
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
-from lib.mail import sendMail
 from lib.ProductionJSON import encode, decode
-from lib.utils import LMAP
 from tracerauth import auth
 
 
@@ -58,9 +59,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
   channel_name = 'websocket'
   global_group = "Global"
 
-  def __init__(self, db = DatabaseInterface()):
+  def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
     super().__init__()
     self.db = db
+    self.datetimeNow = datetimeNow
     self.sessionStore = SessionStore()
     decimal.getcontext().prec = 2
 
@@ -90,7 +92,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
       for group_name in self.groups:
         await self.channel_layer.group_discard(group_name,self.channel_name)
 
-  async def sendEvent(self, event: Dict):
+  async def __boardcast(self, message: Dict):
+    message['type'] = "__sendEvent" # This is needed to point it to the send place
+    await self.channel_layer.group_send(self.global_group, message)
+
+  async def __sendEvent(self, event: Dict):
     """
       Send the event to each websocket. Note this function gets call for each websocket connected to the group
     """
@@ -117,6 +123,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     try:
       error = auth.validateMessage(message)
+
       if error != "":
         if WEBSOCKET_MESSAGE_ID in message:
           logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
@@ -125,7 +132,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.HandleKnownError(message, error)
         return
       logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
-      if not auth.AuthMessage(self.scope['user'], message):
+      user = await get_user(self.scope)
+      if not auth.AuthMessage(user, message):
         await self.HandleKnownError(message, ERROR_INSUFFICIENT_PERMISSIONS)
         return
 
@@ -134,6 +142,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         # This should be impossible to reach, since the validateMessage should throw an error.
         # The only case this should happen is when a message type have been added but a handler have been made
         # I.E It's a NOT implemented case.
+        logger.critical(f"Missing handler for {message[WEBSOCKET_MESSAGE_TYPE]}")
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
       else:
         await handler(self, message)
@@ -186,11 +195,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   ##### AUTH METHODS #####
-  async def handleLogin(self, message):
+  async def handleLogin(self, message: Dict[str, Any]):
+    """Handles a login request by the user
+
+    Args:
+      message (Dict[str, Any]): message send by the user with extra fields:
+                                  JSON_AUTH
+                                    AUTH_USERNAME
+                                    AUTH_PASSWORD
+    """
     auth = message[JSON_AUTH]
     username = auth[AUTH_USERNAME]
     password = auth[AUTH_PASSWORD]
-    user = await sync_to_async(authenticate)(username=username, password=password)
+    user = await database_sync_to_async(authenticate)(username=username, password=password)
+
     if user:
       isAuth = True
       await login(self.scope, user)
@@ -207,8 +225,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     await self.send_json({
       AUTH_USERNAME : username,
-      KEYWORD_USERGROUP : userGroup,
-      KEYWORD_CUSTOMER : customer,
+      LEGACY_KEYWORD_USERGROUP : userGroup,
+      LEGACY_KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
       WEBSOCKET_SESSION_ID : key,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
@@ -232,8 +250,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     await self.send_json({
       AUTH_USERNAME : username,
-      KEYWORD_USERGROUP : userGroup,
-      KEYWORD_CUSTOMER : customer,
+      LEGACY_KEYWORD_USERGROUP : userGroup,
+      LEGACY_KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -250,6 +268,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   ##### END Auth methods
+  async def __boardcastState(self, message: Dict[str, Any], state: Dict[str, Any]):
+    """Sends an update message to the global group
+
+    Args:
+      message (Dict[str, Any]): The original message send by the user
+      state (Dict[str, Any]): A serilized new state where each keyword is a JSON_XXX
+                              And the Value is a list of that type of objects.
+    """
+    await self.__boardcast({
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : state,
+    })
+
+
 
   ### GET STATE
   async def HandleGetState(self, message: Dict):
@@ -261,97 +295,48 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     # Assumed to have no Field in the message since it can use the user in scope
     instances = await auth.getUserModelInstances(await get_user(self.scope))
-    serialized_instances = {
-      key : serialize('json', models) for key, models in instances.items()
-    }
-
+    state = await self.db.serialize_dict(instances)
     await self.send_json({
-      WEBSOCKET_DATA :  serialized_instances,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : state
     })
 
+  ### Model modification
   async def HandleModelDelete(self, message: Dict[str, Any]):
-    """Handler function for Deletes a model
-
+    """Primitive endpoint for delete a model
+    Broadcasts it to global if successful, reponeds if failed.
     Args:
       message (Dict[str, Any]): Dictionary containing the information to delete
                                 A model. Specify the tags:
                                     WEBSOCKET_DATA_ID
                                     WEBSOCKET_DATATYPE
-
     """
-    await self.db.deleteModel(
+    success = await self.db.deleteModel(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA_ID],
     )
-    await self.channel_layer.group_send(self.global_group,{
-      WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
-      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE
-    })
+    if success:
+      await self.channel_layer.group_send(self.global_group,{
+        WEBSOCKET_DATA : True,
+        WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
+        WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      })
+    else:
+      await self.send_json({
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_DATA : False,
+      })
 
-
-  async def HandleTheGreatStateMessage(self, message):
-    """This function is responsible for sending back the state,
-      that the site should be in. It's once when the page is loaded by the App.js
-
-      It fills the following Maps with data:
-        orders
-        runs
-        customer
-        vials
-        employees
-        deliverTimes
-        T_orders
-
-
-    """
-    logger.warning("DEPRECATED FUNCTION HandleTheGreatStateMessage, USE HandleGetStateMessage instead")
-    Employees, Customers, DeliverTimes, Isotopes, Vials, Runs, Orders, T_Orders, Tracers, TracerCustomers, ServerConfig, Databases, Address, ClosedDates = await self.db.getGreatState()
-    #Convert Dataclasses to python dict to send over
-    Customers       = LMAP(encode, Customers)
-    ClosedDates     = LMAP(encode, ClosedDates)
-    DeliverTimes    = LMAP(encode, DeliverTimes)
-    Employees       = LMAP(encode, Employees)
-    Isotopes        = LMAP(encode, Isotopes)
-    Orders          = LMAP(encode, Orders)
-    T_Orders        = LMAP(encode, T_Orders)
-    Tracers         = LMAP(encode, Tracers)
-    TracerCustomers = LMAP(encode, TracerCustomers)
-    Runs            = LMAP(encode, Runs)
-    Vials           = LMAP(encode, Vials)
-    SerializedDatabases = serialize('json', Databases)
-    SerializedAddress = serialize('json', Address)
-    SerializedServerConfig = serialize('json', [ServerConfig])
-
-    content = {
-      JSON_GREAT_STATE : {
-        JSON_ADDRESS          : SerializedAddress,
-        JSON_CLOSEDDATE       : ClosedDates,
-        JSON_CUSTOMER         : Customers,
-        JSON_DATABASE         : SerializedDatabases,
-        JSON_DELIVERTIME      : DeliverTimes,
-        JSON_EMPLOYEE         : Employees,
-        JSON_ISOTOPE          : Isotopes,
-        JSON_ACTIVITY_ORDER   : Orders,
-        JSON_RUN              : Runs,
-        JSON_INJECTION_ORDER  : T_Orders,
-        JSON_TRACER           : Tracers,
-        JSON_TRACER_MAPPING   : TracerCustomers,
-        JSON_VIAL             : Vials,
-        JSON_SERVER_CONFIG    : SerializedServerConfig
-      },
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GREAT_STATE,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    }
-    await self.send_json(content)
-
-  async def handleModelCreate(self, message: Dict[str, Any]):
-    """
-    Creates a django model and broadcasts it to global
+  async def HandleModelCreate(self, message: Dict[str, Any]):
+    """Primitive endpoint for creating a model
+    Broadcasts it to global
 
     Args:
       message: Dict[str, Any] - Requires additional tag:
@@ -359,72 +344,37 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATATYPE
     """
     instance = await self.db.createModel(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
-
-    await self.channel_layer.group_send(self.global_group,{
-      WEBSOCKET_DATA : serialize(instance),
-      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE
+    await self.__boardcastState(message, {
+      message[WEBSOCKET_DATATYPE] : serialize('json', [instance])
     })
 
 
-  async def HandleCreateDataClass(self, message : Dict):
-    """Websocket handler function for production data class creation.
+  async def HandleModelEdit(self, message: Dict) -> None:
+    """Primitive endpoint for editting a model
 
-    Programmer Note: I don't really think that the method dict is particularly effective here, just because of how different the functions are.
-      While such method is possible by creating a bunch of local method, you're kinda getting the same, result. Look if you disagree fucking fight me!
+    Boardcasts the model if successful
 
     Args:
-        message (Dict): received message with the following fields
-          WEBSOCKET_DATA     - Dict with fields sufficient to create a dataclass
-          WEBSOCKET_DATATYPE - Constant specifying the type of data class to be created
-          ----- different arguments might be present due to late standardization -----
-
-    Raises:
-        ValueError: raised when an unknown WEBSOCKET_DATATYPE is encountered
+      message (Dict[str, Any]): message sendt by the user
     """
-    dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
-    # Specialized Dataclass creations
-    if dataClass == ActivityOrderDataClass:
-      spooky_skeleton = message[WEBSOCKET_DATA] # A skeleton for a skeleton is pretty spooky ok?
-      customer = await self.db.getElement(spooky_skeleton[KEYWORD_BID], CustomerDataClass)
-      deliver_datetime = toDateTime(spooky_skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
-      skeleton = {
-        KEYWORD_DELIVER_DATETIME : deliver_datetime,
-        KEYWORD_AMOUNT   : spooky_skeleton[KEYWORD_AMOUNT],
-        KEYWORD_AMOUNT_O : spooky_skeleton[KEYWORD_AMOUNT] * (1 + customer.overhead / 100.0),
-        KEYWORD_TOTAL_AMOUNT   : spooky_skeleton[KEYWORD_AMOUNT],
-        KEYWORD_TOTAL_AMOUNT_O : spooky_skeleton[KEYWORD_AMOUNT] * (1 + customer.overhead / 100.0),
-        KEYWORD_TRACER : spooky_skeleton[KEYWORD_TRACER],
-        KEYWORD_RUN : spooky_skeleton[KEYWORD_RUN],
-        KEYWORD_BID : spooky_skeleton[KEYWORD_BID],
-        KEYWORD_USERNAME : self.scope['user'].username
-      }
-      Instance = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
-    elif dataClass == InjectionOrderDataClass:
-      skeleton = message[WEBSOCKET_DATA]
-      deliver_datetime = toDateTime(skeleton[KEYWORD_DELIVER_DATETIME], JSON_DATETIME_FORMAT)
-      skeleton[KEYWORD_DELIVER_DATETIME] = deliver_datetime
-      skeleton[KEYWORD_USERNAME] = self.scope['user'].username
-      Instance = await self.db.createDataClass(skeleton, InjectionOrderDataClass)
+    updatedModel = await self.db.editModel(
+      message[WEBSOCKET_DATATYPE],
+      message[WEBSOCKET_DATA],
+      message[WEBSOCKET_DATA_ID]
+    )
+    if updatedModel is not None:
+      self.__boardcastState(message, {
+        message[WEBSOCKET_DATATYPE] : [serialize('json', updatedModel)]
+      })
     else:
-      # General Creation
-      Instance = await self.db.createDataClass(message[WEBSOCKET_DATA], dataClass)
-
-    ID = ParseSQLField(dataClass.getIDField())
-
-    await self.channel_layer.group_send(
-      self.global_group,{
-        WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-        WEBSOCKET_DATA : encode(Instance),
-        WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
-        WEBSOCKET_DATA_ID : ID,
+      self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      }
-    )
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
+      })
 
+  ### End Model Primitives
+  # Order functions
   async def __RejectFreeing(self, message : Dict) -> None:
     await self.send_json({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -432,109 +382,26 @@ class Consumer(AsyncJsonWebsocketConsumer):
       AUTH_IS_AUTHENTICATED : False
     })
 
-  async def HandleFreeActivityOrder(self, message : Dict):
-    """
 
-    Args:
-        message (Dict): _description_
-    """
-    # Step 1 Check if user is valid
-    Auth = message[JSON_AUTH]
+  async def HandleFreeActivityOrderTimeSlot(self, message: Dict[str, Any]):
+    """Handler for freeing an activity order
 
-    # Quick check if user and auth user matches before any database connection start working
-    if not Auth[AUTH_USERNAME] == self.scope['user'].username:
-      return await self.__RejectFreeing(message)
-
-    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME], password=Auth[AUTH_PASSWORD])
-    if not user:
-      return await self.__RejectFreeing(message)
-
-    data = message[WEBSOCKET_DATA]
-    Order      = await self.db.getElement(data[JSON_ACTIVITY_ORDER], ActivityOrderDataClass)
-    Vials      = [await self.db.getElement(vialID, VialDataClass) for vialID in data[JSON_VIAL]]
-
-    updatedVials = []
-    updateOrders = []
-
-    serverConfiguration = await self.db.getServerConfiguration()
-    externalDatabase = await self.db.getExternalDatabase(serverConfiguration)
-    if externalDatabase.legacy_database:
-      PrimaryVial = Vials[0]
-      free_datetime = datetime.now()
-      Order.status = 3
-      Order.frigivet_af = self.scope['user'].OldTracerBaseID
-      Order.frigivet_amount = int(PrimaryVial.activity)
-      Order.frigivet_datetime =  free_datetime
-      Order.volume = round(float(PrimaryVial.volume),2)
-      Order.batchnr = PrimaryVial.charge
-      await self.db.updateDataClass(Order)
-      updateOrders.append(Order)
-      PrimaryVial.order_id = Order.oid
-      await self.db.updateDataClass(PrimaryVial)
-      updatedVials.append(PrimaryVial)
-      DependantOrders = await self.db.freeDependantOrders(Order, self.scope['user'])
-      if DependantOrders:
-        updateOrders += DependantOrders
-
-      for Vial in Vials[1:]: #The first vial is assoc with the Primary order
-        skeleton = {
-          KEYWORD_DELIVER_DATETIME : Order.deliver_datetime,
-          KEYWORD_STATUS : 3,
-          KEYWORD_AMOUNT : 0,
-          KEYWORD_AMOUNT_O : 0,
-          KEYWORD_TOTAL_AMOUNT : 0,
-          KEYWORD_TOTAL_AMOUNT_O : 0,
-          KEYWORD_TRACER : Order.tracer,
-          KEYWORD_BID : Order.BID,
-          KEYWORD_RUN : Order.run,
-          KEYWORD_COID : Order.oid,
-          KEYWORD_BATCHNR : Vial.charge,
-          KEYWORD_FREED_BY : self.scope['user'].OldTracerBaseID,
-          KEYWORD_FREED_AMOUNT : Vial.activity,
-          KEYWORD_VOLUME : Vial.volume,
-          KEYWORD_FREED_DATETIME : free_datetime,
-          KEYWORD_COMMENT : f"Extra ordre generated due to multiple vials assigned to order: {Order.oid}",
-          KEYWORD_USERNAME : Order.username
-        }
-        newOrder = await self.db.createDataClass(skeleton, ActivityOrderDataClass)
-        Vial.order_id = newOrder.oid
-        await self.db.updateDataClass(Vial)
-        updatedVials.append(Vial)
-        updateOrders.append(newOrder)
-
-      pdfFilePath = await self.db.createPDF(updateOrders, updatedVials)
-      Customer    = await self.db.getElement(Order.BID, CustomerDataClass)
-      try:
-        sendMail(pdfFilePath, Customer, Order, serverConfiguration)
-      except Exception as E:
-        logger.error(f"could not send mail because: {E}")
-
-      await self.channel_layer.group_send(
-        self.global_group, {
-            WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
-            JSON_ACTIVITY_ORDER : LMAP(lambda x: encode(x.toJSON()), updateOrders),
-            JSON_VIAL : LMAP(lambda v: encode(v.toJSON()),updatedVials),
-            WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-            WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-            AUTH_IS_AUTHENTICATED : True
-          }
-        )
-    else:
-      print("No LegacyMode is no go") # pragma: no cover
-
-
-  async def HandleFreeActivityOrder(self, message: Dict[str, Any]):
-    """This functions frees an order at a certain time.
-        message (Dict): Message with the extra fields
+      Args:
+        message (Dict): Message send by the user with the fields
           WEBSOCKET_DATA - Dict with:
-            KEYWORD_OID - ID of activity order to freed
+            KEYWORD_DELIVER_TIME_ID - ID of activity order time slot to be freed
             JSON_VIAL - A list of Vial ID that's being freed with this order
           JSON_AUTH - Dict with:
             AUTH_USERNAME : username
             AUTH_PASSWORD : password for username
 
     """
+    # This is 4 step function
+    # 1. Authenticate, if fail return
+    # 2. Assign vials to order
+    # 3. update order
+    # 4. Broadcast to users
+
     # Turn this into a function
     Auth = message[JSON_AUTH]
 
@@ -543,7 +410,27 @@ class Consumer(AsyncJsonWebsocketConsumer):
       return await self.__RejectFreeing(message)
 
     # Authentication successful update
-    order = self.db.getModel(JSON_ACTIVITY_ORDER, message[WEBSOCKET_DATA][KEYWORD_OID])
+    deliverTime: ActivityDeliveryTimeSlot = await self.db.getModel(JSON_DELIVERTIME, message[WEBSOCKET_DATA][LEGACY_KEYWORD_DELIVER_TIME_ID])
+
+    orders = self.db.releaseOrders(deliverTime, self.scope['user'])
+    order = orders[0]
+
+    # Update Vials
+    vials: List[Vial] = [await self.db.getModel(JSON_VIAL, vialID) for vialID in message[WEBSOCKET_DATA][JSON_VIAL]]
+    for vial in vials:
+      vial.assigned_to = order
+    await self.db.saveModels(Vial, vials, ['assigned_to'])
+
+    self.channel_layer.group_send(self.global_group, {
+      AUTH_IS_AUTHENTICATED : True,
+      WEBSOCKET_DATA : {
+        JSON_ACTIVITY_ORDER : serialize('json', orders),
+        JSON_VIAL : serialize('json', vials),
+      },
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+    })
 
 
   async def HandleFreeInjectionOrder(self, message : Dict) -> None:
@@ -558,6 +445,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
             AUTH_USERNAME : username
             AUTH_PASSWORD : password for username
     """
+    # This is 3 step function
+    # 1. Authenticate, if fail return
+    # 2. update order
+    # 3. Broadcast to users
+
     # Step 1: Determine the user credentials are valid
     Auth = message[JSON_AUTH]
 
@@ -569,303 +461,119 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if not user:
       return await self.__RejectFreeing(message)
 
-    # Step 2: Update the database
-    data = message[WEBSOCKET_DATA]
-    ConditionalString = f"oid = {data[KEYWORD_OID]} AND status = 2" # the status is there to prevent over writing an already freed order
+    # Step 2
+    order: InjectionOrder = await self.db.getModel(JSON_INJECTION_ORDER, message[WEBSOCKET_DATA][LEGACY_KEYWORD_OID])
+    order.lot_number = message[WEBSOCKET_DATA][LEGACY_KEYWORD_BATCHNR]
+    order.freed_datetime = self.datetimeNow.now()
+    order.freed_by = self.scope['user']
+    order.status = OrderStatus.Released
+    self.db.saveModel(order)
 
-    ListIODC = await self.db.GetConditionalElements(ConditionalString, InjectionOrderDataClass)
-
-    if ListIODC:
-      IODC = ListIODC[0]
-
-
-      IODC.status = 3
-      IODC.batchnr = data[KEYWORD_BATCHNR]
-      IODC.frigivet_af = self.scope['user'].OldTracerBaseID
-      fdt = datetime.now() # all of this to get rid of micro seconds
-
-      IODC.frigivet_datetime = datetime(fdt.year, fdt.month, fdt.day, fdt.hour, fdt.minute, fdt.second )
-
-      await self.db.updateDataClass(IODC)
-
-      pdfPath = await self.db.createInjectionPDF(IODC)
-      await self.channel_layer.group_send(self.global_group, {
-        WEBSOCKET_EVENT_TYPE : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-        JSON_INJECTION_ORDER : encode(IODC.toJSON()),
-        AUTH_IS_AUTHENTICATED : True
-      })
-    else:
-      await self.HandleKnownError(message, ERROR_OBJECT_NOT_FOUND)
-
+    # Step 3 Boardcast it
+    self.channel_layer.group_send(self.global_group, {
+      AUTH_IS_AUTHENTICATED : True,
+      WEBSOCKET_DATA : {
+        JSON_INJECTION_ORDER : serialize('json', [order]),
+      },
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+    })
 
 
   async def HandleMoveOrders(self, message : Dict):
-    """ This handles a request to move an order.
-
-    TODO: Note that here we have some bad code in that the frontend does a lot calculations
-    It should really be the server that does this because, the frontend should just be a pretty picture of
-    the underlying database. It also opens a creative soul to, put in whatever in an object and the server will just eat it.
-
-    Potentially bringing the database to an invalid state.
-
-
-    See README for terminologies.
+    """Moves an order to another time slot
 
     Args:
-        message Dict: A Dict that have been converted from MoveOrder Message
+      message (Dict[str, Any]): message send by the user with extra fields:
+        WEBSOCKET_DATA
+          JSON_ACTIVITY_ORDER
+          JSON_DELIVERTIME
     """
+    order: ActivityOrder = self.db.getModel(JSON_ACTIVITY_ORDER, message[WEBSOCKET_DATA][JSON_ACTIVITY_ORDER])
+    delivertime: ActivityDeliveryTimeSlot = self.db.getModel(JSON_DELIVERTIME, message[WEBSOCKET_DATA][JSON_DELIVERTIME])
 
+    if order.ordered_time_slot == delivertime:
+      order.moved_to_time_slot = None
+    else:
+      order.moved_to_time_slot = delivertime
 
+    self.__boardcastState(message, {
+      JSON_ACTIVITY_ORDER : serialize('json', [order])
+    })
+
+  async def HandleGetTimeSensitiveData(self, message: Dict[str, Any]):
+    """Gets the orders around a point in time
+
+    Args:
+      message (Dict[str, Any]): request to get the orders, contains extra fields:
+                                  WEBSOCKET_DATE - Central date
     """
-    returnOrders = []
-
-    # Step 1. Detect if Request is valid
-    # Step 1.1 Get Data
-    move_request = message[WEBSOCKET_DATA]
-
-    OrderCorotine = self.db.getElement(move_request[KEYWORD_OID], ActivityOrderDataClass)
-    TargetRunCorotine = self.db.getElement(move_request[KEYWORD_RUN], DeliverTimeDataClass)
-
-
-    # Step 1.2 Await Data
-    order = await OrderCorotine
-    customerCorotine = self.db.getElement()
-    tracer = await self.db.getElement(order.tracer, TracerDataClass)
-    isotope = await self.db.getElement(tracer.isotope, IsotopeDataClass)
-    targetRun = await TargetRunCorotine
-
-
-    TargetOrderCorotine = self.db.getTargetOrder(
-      order, targetRun
-    )
-
-    minutesDifference = physics.countMinutes(order.deliver_datetime.time(), targetRun.dtime)
-    Activity          = physics.decay(isotope.halflife, minutesDifference, order.amount)
-
-    if order.COID != -1:
-      MasterOrderCorotine = self.db.getElement(order.COID, ActivityOrderDataClass)
-
-
-
-
-    TargetOrder = await TargetOrderCorotine
-    MasterOrder = await MasterOrderCorotine
-
-    # Step 2 Update State
-    if MasterOrder:
-      Master
-
-    # Step 3 If needed Create Ghost Order
-
-    # Step 4 Delete Extra Orders
-
-    # Step 5 Await State Changes
-
-    # Step 6 Respond
-    """
-
-    def IsDead(Order: ActivityOrderDataClass) -> bool: #Helper that can be exported easily if need be
-      return Order.amount == 0.0 and Order.total_amount < 1.0
-
-    updatedOrders = message[JSON_ACTIVITY_ORDER]
-    GhostOrderMessage = message.get(JSON_GHOST_ORDER)
-    deadOrders   = []
-    returnOrders = [] # this mainly done So I can uniformly update
-    if GhostOrderMessage:
-      ### Create GhostOrder
-      ### The Ghost kw should be moved into constants
-      deliverTime = toDateTime(GhostOrderMessage["GhostOrderDeliverTime"], JSON_DATETIME_FORMAT)
-      CustomerID = GhostOrderMessage["CustomerID"]
-      amount_total = float(GhostOrderMessage["GhostOrderActivity"])
-      amount_total_o = float(GhostOrderMessage["GhostOrderActivityOverhead"])
-      TracerID = GhostOrderMessage["Tracer"]
-      run = int(GhostOrderMessage["GhostOrderRun"])
-
-      GhostOrderSkeleton = {
-        KEYWORD_DELIVER_DATETIME : deliverTime,
-        KEYWORD_STATUS : 2,
-        KEYWORD_AMOUNT : 0,
-        KEYWORD_AMOUNT_O : 0,
-        KEYWORD_TOTAL_AMOUNT : amount_total,
-        KEYWORD_TOTAL_AMOUNT_O : amount_total_o,
-        KEYWORD_TRACER : TracerID,
-        KEYWORD_RUN : run,
-        KEYWORD_BID : CustomerID,
-        KEYWORD_BATCHNR : "",
-        KEYWORD_COID : -1,
-        KEYWORD_COMMENT : f"Spøgelse bestilling",
-        KEYWORD_USERNAME : self.scope['user'].username
-      }
-
-      GhostOrder = await self.db.createDataClass(
-        GhostOrderSkeleton,
-        ActivityOrderDataClass
-      )
-
-      returnOrders.append(GhostOrder)
-      #End GhostOrder IF
-
-    #Update the orders in the Database
-    for orderDict in updatedOrders:
-      order = ActivityOrderDataClass.fromDict(orderDict)
-      if IsDead(order):
-        #Delete Orders later
-        deadOrders.append(order.oid)
-      else:
-        if GhostOrderMessage:
-          if GhostOrderMessage["MappedOrder"] == order.oid:
-            order.COID = GhostOrder.oid
-
-        returnOrders.append(order)
-        await self.db.updateDataClass(order)
-
-    if deadOrders: await self.db.DeleteIDs(deadOrders, ActivityOrderDataClass)
-
-    await self.channel_layer.group_send(
-      self.global_group, {
-        WEBSOCKET_EVENT_TYPE  : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
-        JSON_ACTIVITY_ORDER : [encode(rOrder) for rOrder in returnOrders],
-        WEBSOCKET_DEAD_ORDERS : deadOrders, # This is a list of OID so no need to encode this
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      }
-    )
-
-  async def HandleEditDjango(self, message: Dict) -> None:
-    updatedModel = await self.db.editModel(
-      message[WEBSOCKET_DATATYPE],
-      message[WEBSOCKET_DATA],
-      message[WEBSOCKET_DATA_ID]
-    )
-
-  @typeCheckFunc
-  async def HandleGetOrders(self, message : Dict):
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
-    SC = await self.db.getServerConfig()
-    startDate = client_date - timedelta(days=SC.DateRange)
-    endDate = client_date + timedelta(days=SC.DateRange)
-    activityOrders = await self.db.getDataClassRange(startDate, endDate, ActivityOrderDataClass)
-    ClosedDates = await self.db.getDataClassRange(startDate, endDate, ClosedDateDataClass)
-    injectionOrders = await self.db.getDataClassRange(startDate, endDate, InjectionOrderDataClass)
-    Vials = await self.db.getDataClassRange(startDate, endDate, VialDataClass)
-
+    data = await self.db.getTimeSensitiveData(client_date, self.scope['user'])
     await self.send_json({
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
-      JSON_CLOSEDDATE : [encode(aClosedDate) for aClosedDate in ClosedDates],
-      JSON_ACTIVITY_ORDER : [encode(aOrder) for aOrder in activityOrders],
-      JSON_INJECTION_ORDER : [encode(tOrder) for tOrder in injectionOrders],
-      JSON_VIAL : [encode(vialDataclass) for vialDataclass in Vials],
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : {key : serialize('json', value) for key, value in data.items()},
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    })
-
-  @typeCheckFunc
-  async def HandleEditState(self, message : Dict):
-    try:
-      dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
-    except ValueError as E:
-      logger.error(E)
-      await self.HandleKnownError(message, ERROR_INVALID_DATACLASS_TYPE)
-      return
-
-    dataClassInstance = dataClass.fromDict(message[WEBSOCKET_DATA])
-    await self.db.updateDataClass(dataClassInstance)
-    ID = ParseSQLField(dataClass.getIDField())
-
-    await self.channel_layer.group_send(self.global_group, {
-      WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_EDIT_STATE,
-      WEBSOCKET_DATA         : message[WEBSOCKET_DATA],
-      WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
-      WEBSOCKET_DATA_ID      : ID,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS
     })
 
-  async def HandleDeleteDataClass(self, message : Dict):
-    dataClass = findDataClass(message[WEBSOCKET_DATATYPE])
-    data = dataClass(**message[WEBSOCKET_DATA])
-    if(await self.db.CanDelete(data)):
-      #ID = ParseSQLField(dataClass.getIDField())
-      await self.db.DeleteInstance(data)
-      id_field = dataClass.getIDField()
-      ID = getattr(data, id_field)
+
+  async def handleBookingOrders(self, message: Dict[str, Any]):
+    """handles a request to place an order based on bookings
+    Only handle a single tracer
+
+    if successful boardcast new orders to all users
+
+    Args:
+      message (Dict[str, Any]):
+        WEBSOCKET_DATA:
+          JSON_TRACER - int mapped to the tracer
+          JSON_BOOKING - List[int] - List of IDs of bookings
+    """
+    # This function does the following things
+    # 1. Check if user can order and is not exceeding any deadlines
+    # 2. Accumulating the activity / injections of tracer over endpoint / delivery times
+    #       Note here there's a difference because activity orders are places at time slots
+    #       While injection orders are simply placed
 
 
-      await self.channel_layer.group_send(self.global_group, {
-        WEBSOCKET_EVENT_TYPE   : WEBSOCKET_SEND_EVENT,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,
-        WEBSOCKET_DATA         : message[WEBSOCKET_DATA],
-        WEBSOCKET_DATATYPE     : message[WEBSOCKET_DATATYPE],
-        WEBSOCKET_DATA_ID      : [ID],
-        WEBSOCKET_MESSAGE_ID   : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      })
+    now = self.datetimeNow.now()
+    tracer = await self.db.getModel(JSON_TRACER,
+                                    message[WEBSOCKET_DATA][JSON_TRACER],
+                                    self.scope['user'])
+
+
+    if await orders.canOrder(now, tracer):
+      bookings, booking_orders = await orders.orderBookings(tracer, message[WEBSOCKET_DATA][JSON_BOOKING])
     else:
       pass
 
+    if tracer.tracer_type == TracerTypes.ActivityBased:
+      order_type = JSON_ACTIVITY_ORDER
+    elif tracer.tracer_type == TracerTypes.InjectionBased:
+      order_type = JSON_INJECTION_ORDER
+    else:
+      raise Exception
 
-  async def HandleGetHistory(self, message : dict):
-    """This function retrieves order history of a user from a specific month.
-          Note that the final CSV requires extra data needed, however this data should be found in the frontend copy of the database.
-
-    Args:
-        message (dict): Message received by the websocket with the args
-          * WEBSOCKET_DATE - Date with the month data is to be retrieved from
-          * WEBSOCKET_DATA - Customer ID
-    """
-    Period = toDate(message[WEBSOCKET_DATE])
-    _, EndDate = monthrange(Period.year, Period.month)
-    StartDate = datetime(Period.year, Period.month, 1, 1, 1,1)
-    EndDate   = datetime(Period.year, Period.month, EndDate, 1, 1,1)
-
-    Orders = {}
-
-    condition_AODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {ActivityOrderDataClass.getSQLDateTime()} BETWEEN {SerializeToSQLValue(StartDate)} AND { SerializeToSQLValue(EndDate)}"
-    condition_IODC = f"BID={message[WEBSOCKET_DATA]} AND status=3 AND {InjectionOrderDataClass.getSQLDateTime()} BETWEEN {SerializeToSQLValue(StartDate)} AND {SerializeToSQLValue(EndDate)}"
-
-    AODCsCorotine = self.db.GetConditionalElements(condition_AODC, ActivityOrderDataClass)
-    IODCsCorotine = self.db.GetConditionalElements(condition_IODC, InjectionOrderDataClass)
-
-    for AODC in await AODCsCorotine:
-      receipt = [AODC.oid, AODC.batchnr, AODC.deliver_datetime, AODC.amount, AODC.frigivet_amount]
-      if AODC.tracer in Orders:
-        Orders[AODC.tracer].append(receipt)
-      else:
-        Orders[AODC.tracer] = [receipt]
-
-    for IODC in await IODCsCorotine:
-      receipt = [IODC.oid, AODC.batchnr, AODC.deliver_datetime, IODC.n_injections, IODC.anvendelse]
-      if IODC.tracer in Orders:
-        Orders[IODC.tracer].append(receipt)
-      else:
-        Orders[IODC.tracer] = [receipt]
-
-    await self.send_json({
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_HISTORY,
-      WEBSOCKET_DATA : Orders,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+    self.__boardcastState(message,{
+      JSON_BOOKING : bookings,
+      order_type : booking_orders,
     })
+
 
 
   Handlers = {
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT : handleLogout,
     WEBSOCKET_MESSAGE_AUTH_WHOAMI : handleWhoAmI,
-    WEBSOCKET_MESSAGE_CREATE_DATA_CLASS : HandleCreateDataClass,
-    WEBSOCKET_MESSAGE_DELETE_DATA_CLASS : HandleDeleteDataClass,
     WEBSOCKET_MESSAGE_ECHO : HandleEcho,
-    WEBSOCKET_MESSAGE_EDIT_STATE : HandleEditState,
-    WEBSOCKET_MESSAGE_EDIT_DJANGO : HandleEditDjango,
-    WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrder,
-    WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
-    WEBSOCKET_MESSAGE_GREAT_STATE : HandleTheGreatStateMessage,
-    WEBSOCKET_MESSAGE_GET_HISTORY : HandleGetHistory,
-    WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetOrders,
+    WEBSOCKET_MESSAGE_MODEL_CREATE : HandleModelCreate,
+    WEBSOCKET_MESSAGE_MODEL_EDIT : HandleModelEdit,
+    WEBSOCKET_MESSAGE_MODEL_DELETE : HandleModelDelete,
+    WEBSOCKET_MESSAGE_GET_STATE : HandleGetState,
+    WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetTimeSensitiveData,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
+    WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrderTimeSlot,
+    WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
   }

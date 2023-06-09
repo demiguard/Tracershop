@@ -24,6 +24,7 @@ if __name__ == "__main__":
         failures = test_runner.run_tests()
     #Destroy Test database
     except Exception as E:
+        print(f"Failed to do the thing  because of {E}")
         traceback.print_exc()
     finally:
         teardown_databases(old_config, 1)

@@ -10,7 +10,7 @@ import { changeState } from "../../lib/state_management";
 import { FormatTime, FormatDateStr } from "../../lib/formatting";
 import { addCharacter } from "../../lib/utils";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVER_TIME, KEYWORD_INJECTIONS, KEYWORD_USAGE, KEYWORD_COMMENT, KEYWORD_BID, KEYWORD_DELIVER_DATETIME, KEYWORD_TRACER } from "../../lib/constants";
+  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER } from "../../lib/constants";
 
 import styles from '../../css/Site.module.css'
 
@@ -65,12 +65,12 @@ class CreateInjectionOrderModal extends Component {
 
       const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
       const data_object = {};
-      data_object[KEYWORD_BID] = Number(this.state.customer);
-      data_object[KEYWORD_TRACER] = Number(this.state.tracer);
-      data_object[KEYWORD_DELIVER_DATETIME] = deliver_datetime;
-      data_object[KEYWORD_INJECTIONS] = injections;
-      data_object[KEYWORD_USAGE] = Number(this.state.use);
-      data_object[KEYWORD_COMMENT] = this.state.comment;
+      data_object[LEGACY_KEYWORD_BID] = Number(this.state.customer);
+      data_object[LEGACY_KEYWORD_TRACER] = Number(this.state.tracer);
+      data_object[LEGACY_KEYWORD_DELIVER_DATETIME] = deliver_datetime;
+      data_object[LEGACY_KEYWORD_INJECTIONS] = injections;
+      data_object[LEGACY_KEYWORD_USAGE] = Number(this.state.use);
+      data_object[LEGACY_KEYWORD_COMMENT] = this.state.comment;
       message[WEBSOCKET_DATA] = data_object;
       message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
       this.props.websocket.send(message);

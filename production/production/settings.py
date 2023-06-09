@@ -33,6 +33,7 @@ ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.189
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -96,9 +97,9 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'production',
+        'NAME': 'tracershop',
         'USER': 'tracershop',
-        'PASSWORD': 'tracer',
+        'PASSWORD': 'fdg2world',
         'HOST': 'localhost',
         'PORT': '3306'
     }

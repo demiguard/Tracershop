@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Col, Container, Row, Button, FormGroup, FormControl, FormLabel, Table, OverlayTrigger, Tooltip, Popover } from "react-bootstrap";
-import { JSON_ACTIVITY_ORDER, KEYWORD_AMOUNT, KEYWORD_AMOUNT_O, KEYWORD_BATCHNR, KEYWORD_BID, KEYWORD_COID, KEYWORD_COMMENT, KEYWORD_CUSTOMER, KEYWORD_DELIVER_DATETIME, KEYWORD_RUN, KEYWORD_STATUS, KEYWORD_TOTAL_AMOUNT, KEYWORD_TOTAL_AMOUNT_O, KEYWORD_TRACER, KEYWORD_USERNAME, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_SHOP_CREATE_ORDER, PROP_WEBSOCKET } from "../../lib/constants";
+import { JSON_ACTIVITY_ORDER, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_AMOUNT_O, LEGACY_KEYWORD_BATCHNR, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_COID, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_STATUS, LEGACY_KEYWORD_TOTAL_AMOUNT, LEGACY_KEYWORD_TOTAL_AMOUNT_O, LEGACY_KEYWORD_TRACER, LEGACY_KEYWORD_USERNAME, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_SHOP_CREATE_ORDER, PROP_WEBSOCKET } from "../../lib/constants";
 import { FormatDateStr } from "../../lib/formatting";
 import { renderTableRow } from "../../lib/rendering";
 
@@ -85,19 +85,19 @@ class OrderReview extends Component {
 
 
       const data = {};
-      data[KEYWORD_DELIVER_DATETIME] = deliverDateTimeStr;
-      data[KEYWORD_STATUS] = 1;
-      data[KEYWORD_AMOUNT] = baseActivity;
-      data[KEYWORD_TOTAL_AMOUNT] = baseActivity;
-      data[KEYWORD_AMOUNT_O] = overheadActivity;
-      data[KEYWORD_TOTAL_AMOUNT_O] = overheadActivity;
-      data[KEYWORD_TRACER] = This.props.activeTracer;
-      data[KEYWORD_RUN] = deliverTime.run;
-      data[KEYWORD_BID] = This.props.activeCustomer;
-      data[KEYWORD_BATCHNR] = "";
-      data[KEYWORD_COID] = -1;
-      data[KEYWORD_COMMENT] = newOrder.newComment;
-      data[KEYWORD_USERNAME] = This.props.user.username;
+      data[LEGACY_KEYWORD_DELIVER_DATETIME] = deliverDateTimeStr;
+      data[LEGACY_KEYWORD_STATUS] = 1;
+      data[LEGACY_KEYWORD_AMOUNT] = baseActivity;
+      data[LEGACY_KEYWORD_TOTAL_AMOUNT] = baseActivity;
+      data[LEGACY_KEYWORD_AMOUNT_O] = overheadActivity;
+      data[LEGACY_KEYWORD_TOTAL_AMOUNT_O] = overheadActivity;
+      data[LEGACY_KEYWORD_TRACER] = This.props.activeTracer;
+      data[LEGACY_KEYWORD_RUN] = deliverTime.run;
+      data[LEGACY_KEYWORD_BID] = This.props.activeCustomer;
+      data[LEGACY_KEYWORD_BATCHNR] = "";
+      data[LEGACY_KEYWORD_COID] = -1;
+      data[LEGACY_KEYWORD_COMMENT] = newOrder.newComment;
+      data[LEGACY_KEYWORD_USERNAME] = This.props.user.username;
 
       const message = This.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
       message[WEBSOCKET_DATA] = data;

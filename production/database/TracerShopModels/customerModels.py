@@ -86,9 +86,15 @@ class Location(TracershopModel):
   common_name = CharField(max_length=120, null=True, default=None)
 
 
+class BookingStatus(IntegerChoices):
+  Initial = 0
+  Ordered = 1
+  Rejected = 2
+  Released = 3
+
 class Booking(TracershopModel):
   booking_id = BigAutoField(primary_key=True)
-  status = SmallIntegerField()
+  status = SmallIntegerField(choices=BookingStatus.choices)
   location = ForeignKey(Location, on_delete=RESTRICT)
   procedure = ForeignKey(Procedure, on_delete=RESTRICT)
   accession_number = CharField(max_length=32)
@@ -112,10 +118,10 @@ class ActivityDeliveryTimeSlot(TracershopModel):
 
 
 class OrderStatus(IntegerChoices):
-  Ordered = 1
-  Accepted = 2
-  Released = 3
-  Rejected = 4
+  Ordered = 0
+  Accepted = 1
+  Released = 2
+  Rejected = 3
 
 class ActivityOrder(TracershopModel):
   activity_order_id = BigAutoField(primary_key=True)
@@ -160,14 +166,16 @@ class InjectionOrder(TracershopModel):
   delivery_time = TimeField()
   delivery_date = DateField()
   injections = PositiveSmallIntegerField()
-  lot_number = CharField(max_length=32, null=True, default=None)
   status = SmallIntegerField(choices=OrderStatus.choices)
   tracer_usage = SmallIntegerField(choices=TracerUsage.choices)
   comment = CharField(max_length=800, null=True, default=None)
   ordered_by = ForeignKey(User, on_delete=SET_NULL, null=True, default=None, related_name="injection_ordered_by")
+  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+  # 
+  lot_number = CharField(max_length=32, null=True, default=None)
   freed_datetime = DateTimeField(null=True, default=None)
   freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by")
-  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
 
 
 class Vial(TracershopModel):

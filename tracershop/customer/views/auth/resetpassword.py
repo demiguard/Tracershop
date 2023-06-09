@@ -48,7 +48,6 @@ class ResetPasswordView(TemplateView):
 
     NewData = ParseJSONRequest(request)
     userInstance = ResetPasswordRequest.UserID
-    
     userInstance.set_password(NewData['NewPassword'])
     userInstance.save()
 

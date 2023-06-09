@@ -6,7 +6,7 @@ from database.production_database.SQLFormatter import FormatSQLDictAsClass, Seri
 from core.exceptions import SQLInjectionException
 
 
-class SQLFormatterTestCase(TestCase):
+class SQLFormatterTestCase():
   ActivityOrderDataClassData = {
      "deliver_datetime" : "2022-10-11 11:30:00",
      "oid" : 13337,

@@ -14,7 +14,7 @@ from lib.utils import LMAP
 from tests.test_DataClasses import *
 
 
-class SQLFactoryTestCase(TestCase):
+class SQLFactoryTestCase():
   def setUp(self):
     self.test_Run = PDC.RunsDataClass(1, time(11,30,15), 1, 31)
     self.test_Tracer = PDC.TracerDataClass(6, "FDG", 6, -1, -1, True, 1, "I forgot this name")
