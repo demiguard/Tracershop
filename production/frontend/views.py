@@ -14,12 +14,11 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 
 # Tracershop Production
 from database.models import UserGroups
-from database.production_database.SQLController import SQL
+#from database.production_database.SQLController import SQL
 from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
-from lib import pdfGeneration
 from lib.utils import LMAP
 
-# This is an (almost) single page appilication
+# This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
   return render(request, "frontend/index.html")
@@ -38,7 +37,8 @@ def pdfView(request, customer:str, year: int, month : int, ID):
 
   filename = f"frontend/static/frontend/pdfs/{customer}/{year}/{month_text}/{ID}.pdf"
 
-  if not Path(filename).exists():
+  
+  """  if not Path(filename).exists():
     Order = SQL.getElement(ID, ActivityOrderDataClass)
     if Order == None:
       return HttpResponseNotFound
@@ -57,3 +57,5 @@ def pdfView(request, customer:str, year: int, month : int, ID):
     pdfGeneration.DrawSimpleActivityOrder(filename, Customer, Order, Vials, Tracer, Isotope)
 
   return FileResponse(open(filename, 'rb'))
+
+  """

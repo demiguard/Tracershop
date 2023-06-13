@@ -73,10 +73,10 @@ export const JSON_ACTIVITY_ORDER = "orders";
 export const JSON_ACTIVE_DATABASE = "active_database";
 export const JSON_ADDRESS  = "address";
 export const JSON_AUTH = "auth";
-export const JSON_CLOSEDDATE = "closeddate";
+export const JSON_CLOSED_DATE = "closeddate";
 export const JSON_CUSTOMER  = "customer";
 export const JSON_DATABASE = "database";
-export const JSON_DELIVERTIME = "deliverTimes";
+export const JSON_DELIVER_TIME = "deliverTimes";
 export const JSON_EMPLOYEE = "employee";
 export const JSON_FIELD_TO_UPDATE = "FieldToUpdate";
 export const JSON_GHOST_ORDER = "ghostOrder";
@@ -105,10 +105,10 @@ export const JSON_KEYWORDS = [
   JSON_ADDRESS,
   JSON_ACTIVITY_ORDER,
   JSON_BOOKING,
-  JSON_CLOSEDDATE,
+  JSON_CLOSED_DATE,
   JSON_CUSTOMER,
   JSON_DATABASE,
-  JSON_DELIVERTIME,
+  JSON_DELIVER_TIME,
   JSON_ENDPOINT,
   JSON_INJECTION_ORDER,
   JSON_ISOTOPE,
@@ -260,7 +260,7 @@ export const DATABASE_TRACER_MAPPING = JSON_TRACER_MAPPING;
 export const DATABASE_SERVER_CONFIG = JSON_SERVER_CONFIG;
 export const DATABASE_SHOP_CUSTOMER = "shopCustomer";
 export const DATABASE_VIAL = JSON_VIAL;
-export const DATABASE_USER = "user"
+export const DATABASE_CURRENT_USER = "current_user"
 
 export const ERROR_TYPE_HINT = "hint";
 export const ERROR_TYPE_WARNING = "warning";
@@ -269,6 +269,13 @@ export const ERROR_TYPE_ERROR = "error";
 export const PROP_LOGOUT = "logout";
 export const PROP_NAVBAR_ELEMENTS = "NavbarElements";
 export const PROP_WEBSOCKET = "websocket";
-export const PROP_USER = DATABASE_USER;
+export const PROP_USER = DATABASE_CURRENT_USER;
 export const PROP_SET_USER = "set_user";
 export const PROP_TRACERSHOP_SITE = "tracershop_site";
+export const PROP_ACTIVE_TRACER = "active_tracer"
+export const PROP_ACTIVE_DATE = "active_date"
+export const PROP_MODAL_ORDER = "modal_order"
+export const PROP_ORDER_MAPPING = "order_mapping"
+export const PROP_ON_CLOSE = "on_close"
+
+export const KEYWORD_ID = 'id'

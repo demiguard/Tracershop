@@ -42,16 +42,16 @@ class TracerCatalog(TracershopModel):
   overhead_multiplier = FloatField(default=1)
 
   class Meta:
-    unique_together = ('customer_id', 'tracer_id')
+    unique_together = ('customer', 'tracer')
 
 
 class UserAssignment(TracershopModel):
   user_assignment = BigAutoField(primary_key=True)
-  user_id = ForeignKey(User, on_delete=CASCADE)
-  customer_id = ForeignKey(Customer, on_delete=RESTRICT)
+  user = ForeignKey(User, on_delete=CASCADE)
+  customer = ForeignKey(Customer, on_delete=RESTRICT)
 
   class Meta:
-    unique_together = ('user_id', 'customer_id')
+    unique_together = ('user', 'customer')
 
 
 class Message(TracershopModel):
@@ -71,8 +71,8 @@ class MessageAssignment(TracershopModel):
 
 class DeliveryEndpoint(TracershopModel):
   tracer_endpoint_id = BigAutoField(primary_key=True)
-  address = CharField(max_length=32, null=True, default=None)
-  city = CharField(max_length=32, null=True, default=None)
+  address = CharField(max_length=128, null=True, default=None)
+  city = CharField(max_length=128, null=True, default=None)
   zip_code = CharField(max_length=8, null=True, default=None)
   phone = CharField(max_length=32, null=True, default=None)
   name = CharField(max_length=32, null=True, default=None)
@@ -115,6 +115,9 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   destination = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   production_run = ForeignKey(ActivityProduction, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+
+  def __str__(self) -> str:
+    return f"ActivityDeliveryTimeSlot at {self.production_run.production_day} - {self.delivery_time} to {self.destination.owner.short_name}"
 
 
 class OrderStatus(IntegerChoices):
@@ -172,7 +175,7 @@ class InjectionOrder(TracershopModel):
   ordered_by = ForeignKey(User, on_delete=SET_NULL, null=True, default=None, related_name="injection_ordered_by")
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
-  # 
+  #
   lot_number = CharField(max_length=32, null=True, default=None)
   freed_datetime = DateTimeField(null=True, default=None)
   freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by")
@@ -195,12 +198,12 @@ class LegacyProductionMember(TracershopModel):
 
 class LegacyInjectionOrder(TracershopModel):
   legacy_order_id = IntegerField(primary_key=True)
-  new_order_id = IntegerField()
+  new_order_id = ForeignKey(InjectionOrder, on_delete=RESTRICT)
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
 
 class LegacyActivityOrder(TracershopModel):
   legacy_order_id = IntegerField(primary_key=True)
-  new_order_id = BigIntegerField()
+  new_order_id = ForeignKey(ActivityOrder, on_delete=RESTRICT)
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
   legacy_freed_amount = FloatField(null=True, default=None)
   legacy_lot_number = CharField(max_length=32)

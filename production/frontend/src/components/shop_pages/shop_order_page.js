@@ -4,7 +4,7 @@ import { Calender, standardOrderMapping } from "../injectable/calender.js";
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_TRACER_MAPPING, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
+import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_RUN, JSON_TRACER, JSON_TRACER_MAPPING, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
 
 
 export { ShopOrderPage }
@@ -175,12 +175,14 @@ class ShopOrderPage extends Component {
             </Row>
             <Row>
               <div>
+                {/*
                 <Calender
                   date={this.state.today}
-                  getColor={standardOrderMapping(orders, tOrders, this.props[JSON_RUN], this.props[JSON_CLOSED_DATE])}
+                  getColor={standardOrderMapping(orders, tOrders, this.props[JSON_PRODUCTION], this.props[JSON_CLOSED_DATE])}
                   onDayClick={this.setActiveDate.bind(this)}
                   onMonthChange={this.setActiveMonth.bind(this)}
                 />
+                */}
               </div>
             </Row>
           </Container>

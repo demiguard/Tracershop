@@ -91,15 +91,16 @@ export function ParseJSONstr(JSONString){
   return json;
 }
 
-export function ParseDjangoModelJson(JSONString){
+export function ParseDjangoModelJson(JSONString, originalMap){
   const json = ParseJSONstr(JSONString);
-  const ModelMap = new Map();
+  const ModelMap =  (originalMap instanceof Map ) ?  new Map(originalMap) : new Map;
   // Use that it's a list of objects with information in the following form
   //{ model : string of model name on format module.model for instance api.database
   //  pk    : Something that is the primary key of the model instance
   //  fields : Object with table names
   //}
   for (const model of json){
+    model.fields.id = model.pk
     ModelMap.set(model.pk, model.fields)
   }
   return ModelMap;

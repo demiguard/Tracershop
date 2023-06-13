@@ -1,7 +1,7 @@
 import { ajax } from "jquery";
 import React, {Component,} from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
-import { JSON_CUSTOMER, JSON_VIAL, WEBSOCKET_DATATYPE, WEBSOCKET_FILTER, WEBSOCKET_MESSAGE_GET_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS } from "../../lib/constants";
+import { JSON_CUSTOMER, JSON_VIAL, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_SUCCESS } from "../../lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "../../lib/formatting";
 import { addCharacter } from "../../lib/utils";
 import { changeState } from "../../lib/state_management";
@@ -62,6 +62,8 @@ class VialPage extends Component {
       this.setState({...this.state, vials : new Map(this.props.vials)});
       return;
     }
+    console.log("This function needs fixing!")
+
     var parsedDate;
     try {
       parsedDate = parseDate(this.state.filterSearchDate);
@@ -70,7 +72,7 @@ class VialPage extends Component {
       console.log("caught Error");
       return;
     }
-
+    /*
     const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_GET_DATA_CLASS)
     message[WEBSOCKET_DATATYPE] = [JSON_VIAL]
     message[WEBSOCKET_FILTER] = {
@@ -94,6 +96,7 @@ class VialPage extends Component {
 
       }
     })
+    */
   }
 
   /**

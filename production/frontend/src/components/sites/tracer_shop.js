@@ -22,7 +22,7 @@ export { TracerShop }
 /**Main site class */
 class TracerShop extends Component {
   static propTypes = {
-    user : propTypes.instanceOf(User) // PROP_USER
+    current_user : propTypes.instanceOf(User) // PROP_USER
   }
 
   constructor(props){
@@ -57,6 +57,18 @@ class TracerShop extends Component {
     throw "Unknown User group: " + user.user_group;
   }
 
+  /**
+   * This function updates state if
+   * @param {*} Error - The error
+   * @param {*} errorInfo Stack trace of the error
+   */
+  componentDidCatch(Error, errorInfo){
+    this.setState({...this.state,
+      site_error : Error,
+      site_error_info : errorInfo,
+    })
+  }
+
 
   render() {
 
@@ -73,7 +85,7 @@ class TracerShop extends Component {
     }
     try {
       let Site = this.get_site_from_user(this.props[PROP_USER])
-      let new_props = propsExtraction(this.props);
+      let new_props = {...this.props}
 
       new_props[PROP_TRACERSHOP_SITE] = TracerShop
 
@@ -82,8 +94,8 @@ class TracerShop extends Component {
         />)
     } catch {
       return (<ErrorPage
-        SiteError="Unknown User Group"
-        SiteErrorInfo=""
+        SiteError={this.state.site_error}
+        SiteErrorInfo={this.state.site_error_info}
       />);
     }
   }

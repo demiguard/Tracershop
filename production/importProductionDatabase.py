@@ -5,7 +5,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 if __name__ != '__main__':
   raise Exception("This is a script not a module!")
 
-
+from pprint import pprint
 import datetime
 import mysql.connector as mysql
 import django
@@ -15,6 +15,8 @@ from typing import Dict, List
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
 django.setup()
 
+
+from django.utils import timezone
 
 from database.models import *
 
@@ -93,12 +95,14 @@ def map_day(day):
     return Days.Tuesday
   if day == 2:
     return Days.Wednesday
-  if day == 4:
+  if day == 3:
     return Days.Thursday
-  if day == 5:
+  if day == 4:
     return Days.Friday
-  if day == 6:
-    Days.Saturday
+  if day == 5:
+    return Days.Saturday
+
+  print(f"day: {day}")
   return Days.Sunday
 
 
@@ -108,15 +112,13 @@ cursor.execute("SELECT day, ptime from productionTimes ORDER BY ptime")
 for raw_production in cursor.fetchall(): # type: ignore
   day = map_day(raw_production['day']-1)
 
-  print(type(raw_production['ptime']))
-
   production = ActivityProduction(
     tracer = fdg,
     production_day = day,
-    production_time = raw_production['ptime']
+    production_time = str(raw_production['ptime'])
   )
 
-  if productions.get(day) is not None:
+  if day in productions:
     productions[day].append(production)
   else:
     productions[day] = [production]
@@ -140,7 +142,6 @@ for raw_customer in cursor.fetchall(): # type: ignore
     billing_address = raw_customer['addr1'],
     billing_city = raw_customer['addr2'],
   )
-
   customer.save()
 
   endpoint = DeliveryEndpoint(
@@ -167,7 +168,7 @@ for raw_production_member in cursor.fetchall(): # type:ignore
     legacy_production_username = raw_production_member['Username']
   )
   lpm.save()
-  legacy_production_members[raw_production_member] = lpm
+  legacy_production_members[raw_production_member['Id']] = lpm
 
 
 cursor.execute("""SELECT
@@ -182,7 +183,10 @@ for raw_tracer_customer in cursor.fetchall(): # type:ignore
     tracer = tracer,
     customer = customer
   )
-  tc.save()
+  try:
+    tc.save() # THERE ARE FUCKING DUPLICATES IN THE DATABASE
+  except:
+    continue
 
 
 
@@ -199,7 +203,7 @@ def get_production(day, production_time):
   prod = prods[0]
 
   if prod.production_time > production_time:
-    prod[1]
+    prod = prods[1]
 
   return prod
 
@@ -216,26 +220,29 @@ for raw_deliveryTime in cursor.fetchall(): # type: ignore
   if endpoint is None:
     print(f"Skipping BID {raw_deliveryTime['BID']}")
     continue
-  day = map_day(raw_deliveryTime['day'])
-  production = get_production(day, raw_deliveryTime['dtime'])
+  day = map_day(raw_deliveryTime['day'] - 1)
+
+  delivery_time = str(raw_deliveryTime['dtime'])
+
+  production = get_production(day, delivery_time)
   delivery_time_slot = ActivityDeliveryTimeSlot(
     weekly_repeat = map_repeat(raw_deliveryTime['day']),
-    endpoint = endpoint,
+    destination = endpoint,
     tracer = fdg,
-    delivery_time = raw_deliveryTime['dtime'],
+    delivery_time = delivery_time,
     production_run = production,
   )
 
   delivery_time_slot.save()
-  if raw_deliveryTime['BID'] in delivery_time_slot:
-    daily_slots = {}
+  if raw_deliveryTime['BID'] in delivery_time_slots:
+    daily_slots = delivery_time_slots[raw_deliveryTime['BID']]
   else:
     daily_slots = {}
     delivery_time_slots[raw_deliveryTime['BID']] = daily_slots
   if day in daily_slots:
-    daily_slots[day] = [delivery_time_slot]
-  else:
     daily_slots[day].append(delivery_time_slot)
+  else:
+    daily_slots[day] = [delivery_time_slot]
 
 
 def map_status(status):
@@ -255,22 +262,31 @@ def map_anvendelse(usage):
     return TracerUsage.animal
   return TracerUsage.other
 
+tz = timezone.get_current_timezone()
 
+
+injectionOrders = []
+legacyInjectionOrders = []
 cursor.execute("""SELECT
-    BID, oid  deliver_datetime, status, batchnr, frigivet_datetime, frigivet_af,
+    BID, oid, deliver_datetime, status, batchnr, frigivet_datetime, frigivet_af,
     n_injections, anvendelse, tracer
   FROM
     t_orders
 """)
 for raw_t_order in cursor.fetchall(): #type: ignore
-  delivery_datetime = datetime.datetime.strptime(raw_t_order['deliver_datetime'],"%Y-%m-%d %H:%M:%S")
+  delivery_datetime = raw_t_order['deliver_datetime']
+
+  if delivery_datetime is None:
+    continue
 
   tracer = tracers.get(raw_t_order['tracer'])
   endpoint = endpoints.get(raw_t_order['BID'])
   if raw_t_order['frigivet_datetime'] != "0000-00-00 00:00:00":
-    freed_datetime = datetime.datetime.strptime(raw_t_order['frigivet_datetime'],"%Y-%m-%d %H:%M:%S")
+    freed_datetime = raw_t_order['frigivet_datetime']
   else:
     freed_datetime = None
+  if freed_datetime is not None:
+    freed_datetime = freed_datetime.replace(tzinfo=tz)
 
   injection_order = InjectionOrder(
     delivery_time = delivery_datetime.time(),
@@ -280,7 +296,8 @@ for raw_t_order in cursor.fetchall(): #type: ignore
     freed_datetime = freed_datetime,
     endpoint = endpoint,
     status = map_status(raw_t_order['status']),
-    batch_number = raw_t_order['batchnr'],
+    lot_number = raw_t_order['batchnr'],
+    tracer = tracers[raw_t_order['tracer']],
   )
 
   injection_order.save()
@@ -289,31 +306,50 @@ for raw_t_order in cursor.fetchall(): #type: ignore
     lio = LegacyInjectionOrder(
       legacy_order_id = raw_t_order['oid'],
       legacy_freed_id = legacy_production_members.get(raw_t_order['BID']),
-      new_order_id = injection_order.injection_order_id
+      new_order_id = injection_order
     )
     lio.save()
 
+#InjectionOrder.objects.bulk_create(injectionOrders)
+#LegacyInjectionOrder.objects.bulk_create(legacyInjectionOrders)
+
+
+activityOrders = []
+legacyActivityOrders = []
 
 cursor.execute("""SELECT
     BID, OID, amount, deliver_datetime, status, frigivet_amount, frigivet_datetime, run, COID, frigivet_af, batchnr
   FROM
     orders
 """)
-
 for raw_order in cursor.fetchall(): #type:ignore
-  delivery_datetime = datetime.datetime.strptime(raw_order['deliver_datetime'],"%Y-%m-%d %H:%M:%S")
-  day = map_day(delivery_datetime.weekday)
-  daily_slots = delivery_time_slots[raw_order['BID']]
+  delivery_datetime: datetime.datetime = raw_order['deliver_datetime']
+  delivery_datetime.replace(tzinfo=tz)
 
-  activity_delivery_time_slot = daily_slots[day][raw_order['run'] - 1]
-  if raw_order['COID'] != -1:
-    moved_time_slot = daily_slots[day][0]
+  day = map_day(delivery_datetime.weekday())
+  daily_slots = delivery_time_slots[raw_order['BID']]
+  if day in daily_slots:
+    time_slots = daily_slots[day]
   else:
+    continue
+
+  if raw_order['run'] - 1 < len(time_slots):
+    activity_delivery_time_slot = daily_slots[day][raw_order['run'] - 1]
+  else:
+    activity_delivery_time_slot = time_slots[0] # This a known problem
+
+  try:
+    if raw_order['COID'] != -1:
+      moved_time_slot = daily_slots[day][0]
+    else:
+      moved_time_slot = None
+  except:
     moved_time_slot = None
   freed_datetime = None
   if raw_order['status'] == 3:
     try:
-      freed_datetime = datetime.datetime.strptime(raw_order['frigivet_datetime'],"%Y-%m-%d %H:%M:%S")
+      freed_datetime = raw_order['frigivet_datetime']
+      freed_datetime = freed_datetime.replace(tzinfo=tz)
     except:
       pass
 
@@ -329,17 +365,26 @@ for raw_order in cursor.fetchall(): #type:ignore
 
   ao.save()
 
-  if raw_order['status'] == 3:
+  if raw_order['status'] == 3 and raw_order['frigivet_af'] is not None:
+    if raw_order['frigivet_af'] not in legacy_production_members:
+      continue
+    legacy_user = legacy_production_members[raw_order['frigivet_af']]
+
     lao = LegacyActivityOrder(
       legacy_order_id = raw_order['OID'],
-      new_order_id = ao.activity_order_id,
-      legacy_freed_id = raw_order['frigivet_af'],
+      new_order_id = ao,
+      legacy_freed_id = legacy_user,
       legacy_freed_amount = raw_order['frigivet_amount'],
       legacy_lot_number = raw_order['batchnr']
     )
-
     lao.save()
+    #legacyActivityOrders.append(lao)
 
+#ActivityOrder.objects.bulk_create(activityOrders)
+#LegacyActivityOrder.objects.bulk_create(legacyActivityOrders)
+
+
+vials = []
 cursor.execute("""SELECT
     customer, charge, filldate, filltime, volume, activity
   FROM
@@ -356,10 +401,13 @@ for raw_vial in cursor.fetchall(): # type:ignore
     volume = raw_vial['volume'],
     lot_number = raw_vial['charge'],
     owner = customer,
-    fill_time = raw_vial['filltime'],
-    fill_date = raw_vial['filldate']
+    fill_time = str(raw_vial['filltime']),
+    fill_date = str(raw_vial['filldate'])
   )
-  vial.save()
+  try:
+    vial.save()
+  except:
+    pass
 
 
 

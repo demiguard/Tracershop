@@ -1,11 +1,11 @@
 # Python Standard Library
-from typing import Dict, Type
+from typing import Dict, Tuple, Type
 
 # Packages Tracershop
 from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
-    JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVERTIME, \
+    JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVER_TIME, \
     JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
-    JSON_ACTIVITY_ORDER, JSON_CLOSEDDATE, JSON_LOCATION, JSON_ENDPOINT,\
+    JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT
 from database.TracerShopModels.authModels import *
@@ -19,10 +19,10 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_ADDRESS : Address,
   JSON_ACTIVITY_ORDER : ActivityOrder,
   JSON_BOOKING : Booking,
-  JSON_CLOSEDDATE : ClosedDate,
+  JSON_CLOSED_DATE : ClosedDate,
   JSON_CUSTOMER : Customer,
   JSON_DATABASE : Database,
-  JSON_DELIVERTIME : ActivityDeliveryTimeSlot,
+  JSON_DELIVER_TIME : ActivityDeliveryTimeSlot,
   JSON_ENDPOINT : DeliveryEndpoint,
   JSON_INJECTION_ORDER : InjectionOrder,
   JSON_ISOTOPE : Isotope,
@@ -44,7 +44,14 @@ INVERTED_MODELS = {
     model : key for key, model in MODELS.items()
 }
 
+TIME_SENSITIVE_FIELDS : Dict[str, str] = {
+    JSON_ACTIVITY_ORDER :  'delivery_date',
+    JSON_CLOSED_DATE : 'close_date',
+    JSON_INJECTION_ORDER : 'delivery_date',
+    JSON_VIAL : 'fill_date',
+}
+
 
 def getModel(identifier: str) -> Type[TracershopModel]:
-    return MODELS[identifier]
+    return MODELS[identifier] # type ignore
 

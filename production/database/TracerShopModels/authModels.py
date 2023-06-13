@@ -27,7 +27,7 @@ class UserGroups(IntegerChoices):
   ShopUser = 5
   ShopExternal = 6
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, TracershopModel):
   id = BigAutoField(primary_key=True)
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=120)
@@ -45,7 +45,7 @@ class User(AbstractBaseUser):
     return self.username
 
 
-class SecondaryEmail(Model):
+class SecondaryEmail(TracershopModel):
   secondary_email_id = BigAutoField(primary_key=True)
   email = EmailField()
   record_user = ForeignKey(User, on_delete=CASCADE)

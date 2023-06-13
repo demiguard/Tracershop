@@ -92,13 +92,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
       for group_name in self.groups:
         await self.channel_layer.group_discard(group_name,self.channel_name)
 
-  async def __boardcast(self, message: Dict):
+  async def __broadcast(self, message: Dict):
     message['type'] = "__sendEvent" # This is needed to point it to the send place
-    await self.channel_layer.group_send(self.global_group, message)
+    await self.channel_layer.group_send(self.global_group, message) # 
 
   async def __sendEvent(self, event: Dict):
-    """
-      Send the event to each websocket. Note this function gets call for each websocket connected to the group
+    """Send the event to each subscriber to the websocket.
+    Note this function gets call for each websocket connected to the group
+
+    This function is called by __broadcast
     """
     await self.send_json(event)
 
@@ -268,7 +270,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   ##### END Auth methods
-  async def __boardcastState(self, message: Dict[str, Any], state: Dict[str, Any]):
+  async def __broadcastState(self, message: Dict[str, Any], state: Dict[str, Any]):
     """Sends an update message to the global group
 
     Args:
@@ -276,7 +278,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       state (Dict[str, Any]): A serilized new state where each keyword is a JSON_XXX
                               And the Value is a list of that type of objects.
     """
-    await self.__boardcast({
+    await self.__broadcast({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -294,8 +296,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
                         It have no specialized keys
     """
     # Assumed to have no Field in the message since it can use the user in scope
-    instances = await auth.getUserModelInstances(await get_user(self.scope))
+    instances = await self.db.getState(self.datetimeNow.now(),
+                                       await get_user(self.scope))
+
     state = await self.db.serialize_dict(instances)
+
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -344,18 +349,21 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATATYPE
     """
     instance = await self.db.createModel(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
-    await self.__boardcastState(message, {
-      message[WEBSOCKET_DATATYPE] : serialize('json', [instance])
+    serialized_data = await self.db.serialize_dict({
+        message[WEBSOCKET_DATATYPE] : [instance]
+      })
+    await self.__broadcastState(message, {
+      message[WEBSOCKET_DATATYPE] : serialized_data
     })
 
 
   async def HandleModelEdit(self, message: Dict) -> None:
-    """Primitive endpoint for editting a model
+    """Primitive endpoint for editing a model
 
-    Boardcasts the model if successful
+    Broadcasts the model if successful
 
     Args:
-      message (Dict[str, Any]): message sendt by the user
+      message (Dict[str, Any]): message sent by the user
     """
     updatedModel = await self.db.editModel(
       message[WEBSOCKET_DATATYPE],
@@ -363,11 +371,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message[WEBSOCKET_DATA_ID]
     )
     if updatedModel is not None:
-      self.__boardcastState(message, {
-        message[WEBSOCKET_DATATYPE] : [serialize('json', updatedModel)]
+      serialized_data = await self.db.serialize_dict({
+        message[WEBSOCKET_DATATYPE] : [updatedModel]
       })
+      await self.__broadcastState(message, serialized_data)
     else:
-      self.send_json({
+      await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
@@ -410,7 +419,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       return await self.__RejectFreeing(message)
 
     # Authentication successful update
-    deliverTime: ActivityDeliveryTimeSlot = await self.db.getModel(JSON_DELIVERTIME, message[WEBSOCKET_DATA][LEGACY_KEYWORD_DELIVER_TIME_ID])
+    deliverTime: ActivityDeliveryTimeSlot = await self.db.getModel(JSON_DELIVER_TIME, message[WEBSOCKET_DATA][LEGACY_KEYWORD_DELIVER_TIME_ID])
 
     orders = self.db.releaseOrders(deliverTime, self.scope['user'])
     order = orders[0]
@@ -467,14 +476,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
     order.freed_datetime = self.datetimeNow.now()
     order.freed_by = self.scope['user']
     order.status = OrderStatus.Released
-    self.db.saveModel(order)
+    await self.db.saveModel(order)
 
     # Step 3 Boardcast it
-    self.channel_layer.group_send(self.global_group, {
+    new_state = await self.db.serialize_dict({
+        JSON_INJECTION_ORDER : [order],
+      })
+
+
+    self.channel_layer.group_send(self.global_group, { # type: ignore
       AUTH_IS_AUTHENTICATED : True,
-      WEBSOCKET_DATA : {
-        JSON_INJECTION_ORDER : serialize('json', [order]),
-      },
+      WEBSOCKET_DATA : new_state,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
@@ -490,17 +502,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
           JSON_ACTIVITY_ORDER
           JSON_DELIVERTIME
     """
-    order: ActivityOrder = self.db.getModel(JSON_ACTIVITY_ORDER, message[WEBSOCKET_DATA][JSON_ACTIVITY_ORDER])
-    delivertime: ActivityDeliveryTimeSlot = self.db.getModel(JSON_DELIVERTIME, message[WEBSOCKET_DATA][JSON_DELIVERTIME])
+    order: ActivityOrder = await  self.db.getModel(JSON_ACTIVITY_ORDER, message[WEBSOCKET_DATA][JSON_ACTIVITY_ORDER])
+    delivertime: ActivityDeliveryTimeSlot = await self.db.getModel(JSON_DELIVER_TIME, message[WEBSOCKET_DATA][JSON_DELIVER_TIME])
 
     if order.ordered_time_slot == delivertime:
       order.moved_to_time_slot = None
     else:
       order.moved_to_time_slot = delivertime
 
-    self.__boardcastState(message, {
-      JSON_ACTIVITY_ORDER : serialize('json', [order])
+    data = await self.db.serialize_dict({
+      JSON_ACTIVITY_ORDER : [order]
     })
+
+    await self.__broadcastState(message, data)
 
   async def HandleGetTimeSensitiveData(self, message: Dict[str, Any]):
     """Gets the orders around a point in time
@@ -510,9 +524,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATE - Central date
     """
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
-    data = await self.db.getTimeSensitiveData(client_date, self.scope['user'])
+    data = await self.db.serialize_dict(
+      await self.db.getTimeSensitiveData(client_date, self.scope['user']))
+
     await self.send_json({
-      WEBSOCKET_DATA : {key : serialize('json', value) for key, value in data.items()},
+      WEBSOCKET_DATA : data,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -547,7 +563,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if await orders.canOrder(now, tracer):
       bookings, booking_orders = await orders.orderBookings(tracer, message[WEBSOCKET_DATA][JSON_BOOKING])
     else:
-      pass
+      return
 
     if tracer.tracer_type == TracerTypes.ActivityBased:
       order_type = JSON_ACTIVITY_ORDER
@@ -556,7 +572,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     else:
       raise Exception
 
-    self.__boardcastState(message,{
+    await self.__broadcastState(message,{
       JSON_BOOKING : bookings,
       order_type : booking_orders,
     })

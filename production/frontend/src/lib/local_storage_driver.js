@@ -9,7 +9,6 @@ import {
 export const db = {
   set: function(key, value){
     if (!key || value == undefined) return;
-
     const Type = this.types[key];
 
     if (Type === undefined){
@@ -76,7 +75,7 @@ export const db = {
     activeTracer : Number, //DATABASE_ACTIVE_TRACER
     isAuth : Boolean, //DATABASE_IS_AUTH
     server_config : Object, //DATABASE_SERVER_CONFIG
-    user : Object, //DATABASE_USER
+    current_user : Object, //DATABASE_USER
     // Admin
     adminPage : String, // DATABASE_ADMIN_PAGE
     // shop

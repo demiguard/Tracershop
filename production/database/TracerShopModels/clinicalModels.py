@@ -34,7 +34,7 @@ class Tracer(TracershopModel):
   vial_tag = CharField(max_length=32)
 
 
-class Procedure(Model):
+class Procedure(TracershopModel):
   procedure_id = BigAutoField(primary_key=True)
   series_description = CharField(max_length=128)
   tracer_units = FloatField()
@@ -42,8 +42,9 @@ class Procedure(Model):
   delay_minutes = FloatField()
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
 
-class ActivityProduction(Model):
+class ActivityProduction(TracershopModel):
   activity_production_id = BigAutoField(primary_key=True)
   production_day = SmallIntegerField(choices=Days.choices)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
+

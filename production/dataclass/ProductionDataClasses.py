@@ -23,7 +23,7 @@ from typing import Dict, Optional, List, Any, get_args, get_origin, Union, Tuple
 
 # Tracershop Production Packages
 from database.models import User
-from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_CLOSEDDATE, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVERTIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
+from constants import DATETIME_FORMAT, DATE_FORMAT, JSON_CLOSED_DATE, JSON_TRACER_MAPPING, TIME_FORMAT, JSON_DATETIME_FORMAT, JSON_ACTIVITY_ORDER,  JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL, JSON_INJECTION_ORDER
 from lib.Formatting import toTime, toDateTime, toDate
 from lib.utils import LMAP
 from database.production_database.SQLFormatter import SerializeToSQLValue
@@ -561,8 +561,8 @@ class ClosedDateDataClass(JsonSerilizableDataClass):
 DATACLASSES = {
     JSON_ACTIVITY_ORDER : ActivityOrderDataClass,
     JSON_CUSTOMER : CustomerDataClass,
-    JSON_CLOSEDDATE : ClosedDateDataClass,
-    JSON_DELIVERTIME : DeliverTimeDataClass,
+    JSON_CLOSED_DATE : ClosedDateDataClass,
+    JSON_DELIVER_TIME : DeliverTimeDataClass,
     JSON_ISOTOPE : IsotopeDataClass,
     JSON_INJECTION_ORDER : InjectionOrderDataClass,
     JSON_RUN : RunsDataClass,
@@ -577,13 +577,13 @@ def findDataClass(dataType: str) -> Type[JsonSerilizableDataClass]:
     Raises ValueError if data class not found.
 
   Args:
-      dataType (str): JSON_XXX matching a 
+      dataType (str): JSON_XXX matching a dataclass.
 
   Raises:
-      ValueError: _description_
+      ValueError: When the input string doesn't match a dataclass.
 
   Returns:
-      type: _description_
+      type: Type[JsonSerilizableDataClass]
   """
   dataClass = DATACLASSES.get(dataType)
 

@@ -1,6 +1,6 @@
 import { ajax } from "jquery";
 import React, { Component } from "react";
-import { JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+import { JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
 import { Calender, standardOrderMapping, productionGetMonthlyOrders } from "../injectable/calender";
 
 import { FormatDateStr } from "../../lib/formatting.js";
@@ -48,12 +48,14 @@ export class CloseDaysPage extends Component {
   render() {
     return(
     <div>
+      {/*
       <Calender
         date={this.state.today}
         onDayClick={this.changeCloseDay.bind(this)}
         onMonthChange={productionGetMonthlyOrders(this.props[PROP_WEBSOCKET])}
-        getColor={standardOrderMapping(this.props[JSON_ACTIVITY_ORDER], this.props[JSON_INJECTION_ORDER], this.props[JSON_RUN], this.props[JSON_CLOSED_DATE])}
-      ></Calender>
+        getColor={standardOrderMapping(this.props[JSON_ACTIVITY_ORDER], this.props[JSON_INJECTION_ORDER], this.props[JSON_PRODUCTION], this.props[JSON_CLOSED_DATE])}
+      />
+      */}
     </div>);
   }
 }

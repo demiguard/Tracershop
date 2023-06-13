@@ -48,8 +48,6 @@ class ProductionSite extends Component{
 
   render(){
     const UserPage = Pages[this.state.ActivePage];
-    const props = propsExtraction(this.props);
-
     return (
       <div>
         <Navbar

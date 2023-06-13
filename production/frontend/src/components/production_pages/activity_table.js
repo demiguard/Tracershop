@@ -13,7 +13,7 @@ import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_CHARGE, LEGACY_KEYWORD_FILLTIME,
   LEGACY_KEYWORD_FILLDATE, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_ACTIVITY, LEGACY_KEYWORD_VOLUME,
-  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER} from "../../lib/constants.js";
+  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_MODAL_ORDER, PROP_ORDER_MAPPING, PROP_ON_CLOSE} from "../../lib/constants.js";
 
 import SiteStyles from "/src/css/Site.module.css"
 
@@ -50,14 +50,11 @@ export class ActivityTable extends Component {
       Modal: null
     }
   }
-
-
-  //Since Order mapping doesn't effect rendering, it's not updated when props are updated
   componentDidUpdate(prevProps) {
-    if(this.props.date !== prevProps.date ||
-       this.props.orders !== prevProps.orders ||
-       this.props.customers !== prevProps.customers ||
-       this.props.deliverTimes !== prevProps.deliverTimes
+    if(this.props[PROP_ACTIVE_DATE] !== prevProps[PROP_ACTIVE_DATE] ||
+       this.props[JSON_ACTIVITY_ORDER] !== prevProps[JSON_ACTIVITY_ORDER] ||
+       this.props[JSON_CUSTOMER] !== prevProps[JSON_CUSTOMER] ||
+       this.props[JSON_DELIVER_TIME] !== prevProps[JSON_DELIVER_TIME]
       ){
       this.OrderMapping = this.createOrderMapping();
 
@@ -65,9 +62,9 @@ export class ActivityTable extends Component {
   }
 
   GetProductionDateTimeString(ProductionTime) {
-    return String(this.props.date.getFullYear()) + '-' +
-      FormatDateStr(this.props.date.getMonth() + 1) + '-' +
-      FormatDateStr(this.props.date.getDate()) + "T" +
+    return String(this.props[PROP_ACTIVE_DATE].getFullYear()) + '-' +
+      FormatDateStr(this.props[PROP_ACTIVE_DATE].getMonth() + 1) + '-' +
+      FormatDateStr(this.props[PROP_ACTIVE_DATE].getDate()) + "T" +
       ProductionTime;
   }
 
@@ -84,19 +81,19 @@ export class ActivityTable extends Component {
    * @returns Map as described above
    */
   createOrderMapping(){
-    const today     = this.props.date.getDay();
-    const JanOne    = new Date(this.props.date.getFullYear(),0,1);
-    const NumDays   = Math.floor(this.props.date - JanOne) / (24 * 60 * 60 * 1000);
-    const WeekNum   = Math.ceil((this.props.date.getDay() + 1 + NumDays) / 7);
+    const today     = this.props[PROP_ACTIVE_DATE].getDay();
+    const JanOne    = new Date(this.props[PROP_ACTIVE_DATE].getFullYear(),0,1);
+    const NumDays   = Math.floor(this.props[PROP_ACTIVE_DATE] - JanOne) / (24 * 60 * 60 * 1000);
+    const WeekNum   = Math.ceil((this.props[PROP_ACTIVE_DATE].getDay() + 1 + NumDays) / 7);
     const WeekNumIsEven = WeekNum % 2 === 0;
 
     const NewOrderMapping = new Map();
 
-    for(const [customerID, _] of this.props.customers){
+    for(const [customerID, _] of this.props[JSON_CUSTOMER]){
       NewOrderMapping.set(customerID, new Map());
     }
 
-    for(const [DTID, deliverTime] of this.props.deliverTimes){
+    for(const [DTID, deliverTime] of this.props[JSON_DELIVER_TIME]){
       // Check if date is ok?
       if (deliverTime.day !== today) continue;
       if (deliverTime.repeat_t === 2 && !WeekNumIsEven) continue;
@@ -115,11 +112,11 @@ export class ActivityTable extends Component {
       });
     }
 
-    for(const [oid, Order] of this.props.orders){
+    for(const [oid, Order] of this.props[JSON_ACTIVITY_ORDER]){
       // This just build things up with out checking for data integrety.
       // You might need to add some validation, that gives some sort of warning if stuff breaks.
       const orderDate = new Date(Order.deliver_datetime);
-      if (!compareDates(this.props.date, orderDate) || Order.tracer !== this.props.tracer) continue; //note this.props.tracer is an ID
+      if (!compareDates(this.props[PROP_ACTIVE_DATE], orderDate) || Order.tracer !== this.props[PROP_ACTIVE_TRACER]) continue;
 
       const customerMap = NewOrderMapping.get(Order.BID);
       if(customerMap === undefined){
@@ -152,14 +149,14 @@ export class ActivityTable extends Component {
    * @param {Number} oid  Order ID to be accepted.
    */
   AcceptOrder(oid) {
-    const Order = this.props.orders.get(oid);
+    const Order = this.props[JSON_ACTIVITY_ORDER].get(oid);
     Order.status = 2
 
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
     message[WEBSOCKET_DATA] = Order;
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
 
-    this.props.websocket.send(message);
+    this.props[PROP_WEBSOCKET].send(message);
   }
 
 
@@ -181,11 +178,11 @@ export class ActivityTable extends Component {
      * Really this is something that might best be handled on the backend
      * Also this is not a problem since for now there's only 2 productions per day, however This will be a problem someday!
      */
-    const Order         = this.props.orders.get(oid);
+    const Order         = this.props[JSON_ACTIVITY_ORDER].get(oid);
     const OrderDate     = new Date(Order.deliver_datetime);
-    const Customer      = this.props.customers.get(Order.BID);
-    const Tracer        = this.props.tracers.get(this.props.tracer);
-    const isotope       = this.props.isotopes.get(Tracer.isotope);
+    const Customer      = this.props[JSON_CUSTOMER].get(Order.BID);
+    const Tracer        = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
+    const isotope       = this.props[JSON_ISOTOPE].get(Tracer.isotope);
 
     // Find Master Order
     const DeliverTimeMapping = this.OrderMapping.get(Customer.ID);
@@ -210,9 +207,9 @@ export class ActivityTable extends Component {
         if(Order.COID === -1){
           throw "You got some data corruption in your orders! Because this should already be a master Order";
         }
-        let OldMasterOrder   = this.props.orders.get(Order.COID);
+        let OldMasterOrder   = this.props[JSON_ACTIVITY_ORDER].get(Order.COID);
         while (OldMasterOrder.COID !== -1){ // There might be a chain of orders
-          OldMasterOrder = this.props.orders.get(OldMasterOrder.COID);
+          OldMasterOrder = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrder.COID);
         }
         const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
         const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
@@ -230,9 +227,9 @@ export class ActivityTable extends Component {
 
         const Orders = [Order, OldMasterOrder];
 
-        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+        const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
         message[JSON_ACTIVITY_ORDER] = Orders;
-        this.props.websocket.send(message);
+        this.props[PROP_WEBSOCKET].send(message);
 
       } else {
         // Create a ghost order
@@ -247,7 +244,7 @@ export class ActivityTable extends Component {
           GhostOrderActivityOverhead : GhostOrderActivityOverhead,
           GhostOrderDeliverTime : DeliverTimeObejct.deliverTime,
           GhostOrderRun : newRun,
-          Tracer : this.props.tracer,
+          Tracer : this.props[PROP_ACTIVE_TRACER],
           MappedOrder : Order.oid, // Because the server needs to create the order
           CustomerID : Order.BID
         }
@@ -260,9 +257,9 @@ export class ActivityTable extends Component {
         const Orders = [Order];
 
         if(Order.COID !== -1){
-          let OldMasterOrder   = this.props.orders.get(Order.COID);
+          let OldMasterOrder   = this.props[JSON_ACTIVITY_ORDER].get(Order.COID);
           while (OldMasterOrder.COID !== -1){
-            OldMasterOrder = this.props.orders.get(OldMasterOrder.COID);
+            OldMasterOrder = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrder.COID);
           }
 
           const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
@@ -276,16 +273,16 @@ export class ActivityTable extends Component {
 
           Orders.push(OldMasterOrder);
         }
-        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+        const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
         message[JSON_ACTIVITY_ORDER] = Orders;
         message[JSON_GHOST_ORDER] = GhostOrderData;
-        this.props.websocket.send(message);
+        this.props[PROP_WEBSOCKET].send(message);
       }
 
     } else {
       //This is updates the Master and Original Order
       const OldMasterOrderID = Order.COID;
-      const MasterOrder = this.props.orders.get(DeliverTimeObejct.MasterOrder);
+      const MasterOrder = this.props[JSON_ACTIVITY_ORDER].get(DeliverTimeObejct.MasterOrder);
       const MasterOrderDate = new Date(MasterOrder.deliver_datetime);
 
       const Minutes = CountMinutes(MasterOrderDate, OrderDate);
@@ -304,9 +301,9 @@ export class ActivityTable extends Component {
       const Orders = [Order, MasterOrder];
 
       if(OldMasterOrderID !== -1){
-        let OldMasterOrder   = this.props.orders.get(OldMasterOrderID);
+        let OldMasterOrder   = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrderID);
         while (OldMasterOrder.COID !== -1){
-          OldMasterOrder = this.props.orders.get(OldMasterOrder.COID);
+          OldMasterOrder = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrder.COID);
         }
 
         const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
@@ -322,9 +319,9 @@ export class ActivityTable extends Component {
       }
 
 
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+      const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
       message[JSON_ACTIVITY_ORDER] = Orders;
-      this.props.websocket.send(message);
+      this.props[PROP_WEBSOCKET].send(message);
     }
   }
 
@@ -359,23 +356,6 @@ export class ActivityTable extends Component {
       Modal : CreateOrderModal,
       showModal : true,
     })
-  }
-
-  /**
-   * This function takes a validated order and send the information back to
-   * @param {number} orderID
-   * @param {Set<number>} vialSet
-   */
-  FreeOrder(orderID, vialSet){
-    const vialIDs = [...vialSet];
-    this.closeModal();
-
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
-    const data = {};
-    data[JSON_VIAL] = vialIDs;
-    data[JSON_ACTIVITY_ORDER] = orderID;
-    message[WEBSOCKET_DATA] = data;
-    this.props.websocket.send(message);
   }
 
   // Renders
@@ -440,10 +420,10 @@ export class ActivityTable extends Component {
     const FreeDT    = (order.frigivet_datetime) ? new Date(order.frigivet_datetime) : "-";
     const FreeTime  = (FreeDT != "-") ? FormatDateStr(FreeDT.getHours()) + ":" + FormatDateStr(FreeDT.getMinutes()) : FreeDT
 
-    const Employee     = this.props.employee.get(order.frigivet_af);
+    const Employee     = undefined; // this.props.employee.get(order.frigivet_af);
     const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
 
-    const customer = this.props.customers.get(order.BID)
+    const customer = this.props[JSON_CUSTOMER].get(order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
     const TotalAmount  = (order.COID === -1) ? Math.floor(order.total_amount * (1 + customer.overhead / 100)) : "Flyttet til: " + order.COID;
 
@@ -464,7 +444,7 @@ export class ActivityTable extends Component {
     const OrderDT   = new Date(Order.deliver_datetime)
     const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
     const Run       = this.renderRun(Order);
-    const customer = this.props.customers.get(Order.BID)
+    const customer = this.props[JSON_CUSTOMER].get(Order.BID)
     const CustomerName = (customer !== undefined) ? customer.UserName : Order.BID;
     const TotalAmount  = (Order.COID === -1) ? Math.floor(Order.total_amount) : "Flyttet til:" + Order.COID;
     const TotalAmountO = (Order.COID === -1) ? Math.floor(Order.total_amount * (1 + customer.overhead / 100)) : "";
@@ -485,24 +465,24 @@ export class ActivityTable extends Component {
   renderTotal(Production) {
     let total = 0;
     let total_o = 0
-    const tracer = this.props.tracers.get(this.props.tracer);
-    const isotope = this.props.isotopes.get(tracer.isotope);
+    const tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
+    const isotope = this.props[JSON_ISOTOPE].get(tracer.isotope);
     for(const [_, DeliverTimeMap] of this.OrderMapping){
       const RelvantDeliverTime = DeliverTimeMap.get(Production.run);
       const ProductionDatetime = new Date(
-        this.props.date.getFullYear(),
-        this.props.date.getMonth(),
-        this.props.date.getDate(),
+        this.props[PROP_ACTIVE_DATE].getFullYear(),
+        this.props[PROP_ACTIVE_DATE].getMonth(),
+        this.props[PROP_ACTIVE_DATE].getDate(),
         Number(Production.ptime.substring(0,2)),
         Number(Production.ptime.substring(3,5))
         )
 
       if(RelvantDeliverTime){ // If there's mapping else It doesn't matter
         if(RelvantDeliverTime.MasterOrder) {
-          const MasterOrder = this.props.orders.get(RelvantDeliverTime.MasterOrder);
-          const MasterOrderCustomer = this.props.customers.get(MasterOrder.BID);
+          const MasterOrder = this.props[JSON_ACTIVITY_ORDER].get(RelvantDeliverTime.MasterOrder);
+          const MasterOrderCustomer = this.props[JSON_CUSTOMER].get(MasterOrder.BID);
           if(MasterOrder === undefined){
-            console.log(this.props.orders)
+            console.log(this.props[JSON_ACTIVITY_ORDER])
             console.log(DeliverTimeMap);
             console.log(RelvantDeliverTime);
           }
@@ -529,14 +509,14 @@ export class ActivityTable extends Component {
   render() {
     const FinishedOrders = [];
     const pendingOrders = [];
-    const Tracer = this.props.tracers.get(this.props.tracer);
+    const Tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
 
     // This Object is newer than the state version
     // Yeah so this is really anonying here is why
     // So There might be a solution to make it variable that's not state, since it technically isn't a state,
     // But an object that's dependant on props
     this.OrderMapping = this.createOrderMapping();
-    const Orders = [...this.props.orders.values()].sort((order_1, order_2) => {
+    const Orders = [...this.props[JSON_ORDERS].values()].sort((order_1, order_2) => {
       if (order_1.BID < order_2.BID) {
         return -1;
       } else if (order_1.BID > order_2.BID){
@@ -553,7 +533,7 @@ export class ActivityTable extends Component {
 
     for (const order of Orders){
       const orderDate = new Date(order.deliver_datetime);
-      if (compareDates(this.props.date, orderDate) && order.tracer == this.props.tracer ){
+      if (compareDates(this.props[PROP_ACTIVE_DATE], orderDate) && order.tracer == this.props[PROP_ACTIVE_TRACER] ){
         (order.status == 3) ?
           FinishedOrders.push(this.renderFinishedOrder(order)) :
           pendingOrders.push(this.renderPendingOrder(order));
@@ -561,17 +541,33 @@ export class ActivityTable extends Component {
     }
 
     const RenderedRuns = [];
+    /*
     for (const [PTID, run] of this.props.runs) {
       if (run.day === this.props.date.getDay()){
         RenderedRuns.push(this.renderTotal(run));
       }
     }
+    */
+
+    const modalProps = {}
+    modalProps[PROP_MODAL_ORDER] = this.state[PROP_MODAL_ORDER]
+    modalProps[PROP_ORDER_MAPPING] = this.OrderMapping
+    modalProps[PROP_ON_CLOSE] = this.closeModal.bind(this)
+
+    modalProps[PROP_WEBSOCKET] = this.props[PROP_WEBSOCKET]
+    modalProps[PROP_ACTIVE_DATE] = this.props[PROP_ACTIVE_DATE]
+    modalProps[PROP_ACTIVE_TRACER] = this.props[PROP_ACTIVE_TRACER]
+    modalProps[JSON_TRACER] = this.props[JSON_TRACER]
+    modalProps[JSON_ISOTOPE] = this.props[JSON_ISOTOPE]
+    modalProps[JSON_ACTIVITY_ORDER] = this.props[JSON_ACTIVITY_ORDER]
+    modalProps[JSON_VIAL] = this.props[JSON_VIAL]
+    modalProps[JSON_CUSTOMER] = this.props[JSON_CUSTOMER]
 
     return (<div>
       <Container>
         <Row>
           <Col sm={10}>
-            <Row>Produktioner - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}:</Row>
+            <Row>Produktioner - {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}:</Row>
             {RenderedRuns}
           </Col>
           <Col sm={2}>
@@ -621,30 +617,14 @@ export class ActivityTable extends Component {
     }
     { FinishedOrders.length == 0 && pendingOrders == 0 ?
     <div>
-      <p className={SiteStyles.mariLfont}>Der er ingen {Tracer.name} Ordre til den {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
+      <p className={SiteStyles.mariLfont}>Der er ingen {Tracer.name} Ordre til den {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props.date.getFullYear()}</p>
     </div> :
       null
     }
 
     { this.state.showModal ?
       <this.state.Modal
-        tracer={this.props.tracer}
-        tracers={this.props.tracers}
-        isotopes={this.props.isotopes}
-        show={this.state.showModal}
-        order={this.state.ModalOrder}
-        orders={this.props.orders}
-        DeliverTimeMap={this.OrderMapping}
-        vials={this.props.vials}
-        customers={this.props.customers}
-        employees={this.props.employee}
-        onClose={this.closeModal.bind(this)}
-        //createVial={this.createVial.bind(this)}
-        //editVial={this.editVial.bind(this)}
-        AcceptOrder={this.FreeOrder.bind(this)}
-        //createOrder={this.modalCreateOrder.bind(this)}
-        date={this.props.date}
-        websocket={this.props.websocket}
+        {...modalProps}
       />
     : null }
     </div>

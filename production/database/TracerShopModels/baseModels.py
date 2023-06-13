@@ -65,6 +65,7 @@ class TracershopModel(Model):
     return True
 
 
+
 class Days(IntegerChoices):
   Monday = 0
   Thursday = 1

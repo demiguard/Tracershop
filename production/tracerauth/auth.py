@@ -135,6 +135,7 @@ def validateMessage(message : Dict) -> str:
   if not message.get(WEBSOCKET_MESSAGE_TYPE):
     return ERROR_NO_MESSAGE_TYPE
   if not message[WEBSOCKET_MESSAGE_TYPE] in WEBSOCKET_MESSAGE_TYPES:
+    print(f"{message[WEBSOCKET_MESSAGE_TYPE]} not in WEBSOCKET_MESSAGE_TYPES")
     return ERROR_INVALID_MESSAGE_TYPE
   if not message.get(WEBSOCKET_JAVASCRIPT_VERSION):
     return ERROR_NO_JAVASCRIPT_VERSION
@@ -155,30 +156,4 @@ def validateMessage(message : Dict) -> str:
     return ERROR_INVALID_AUTH
 
   return ""
-
-
-
-__modelGetters: Dict[str, Callable[[User],Iterable[TracershopModel]]] = {}
-
-
-def getAuthenticatedUserModels(user: User) -> List[Type[TracershopModel]]:
-  if user.UserGroup == UserGroups.Admin:
-    return apps.get_app_config('database').get_models()
-
-  return []
-
-@database_sync_to_async
-def getUserModelInstances(user) -> Dict[str, List[TracershopModel]]:
-  models = getAuthenticatedUserModels(user)
-  instances = {}
-  for model in models:
-    modelKeyword = INVERTED_MODELS.get(model)
-    if modelKeyword is None:
-      continue
-    if modelKeyword in __modelGetters:
-      instances[modelKeyword] = __modelGetters[modelKeyword](user)
-    else:
-      instances[modelKeyword] = model.objects.all()
-
-  return instances
 

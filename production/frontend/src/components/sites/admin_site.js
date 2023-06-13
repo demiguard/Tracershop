@@ -77,7 +77,7 @@ class AdminSite extends Component {
       throw errorString;
     }
 
-    const props = propsExtraction(this.props)
+    const props = {...this.props}
     props["NavbarElements"] = NavbarAdmin
 
     return(<ActiveSite

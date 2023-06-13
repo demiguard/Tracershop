@@ -97,9 +97,9 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'tracershop',
+        'NAME': 'production',
         'USER': 'tracershop',
-        'PASSWORD': 'fdg2world',
+        'PASSWORD': 'tracer',
         'HOST': 'localhost',
         'PORT': '3306'
     }
