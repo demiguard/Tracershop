@@ -6,7 +6,7 @@ import { ParseDanishNumber } from "../../lib/formatting";
 
 
 import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
-  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS } from "../../lib/constants.js"
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_CUSTOMER } from "../../lib/constants.js"
 
 import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
@@ -16,6 +16,8 @@ import { ClickableIcon } from "../injectable/icons";
 export { CreateOrderModal }
 
 class CreateOrderModal extends Component {
+  /**
+   * 
   static propTypes = {
     customers : propTypes.instanceOf(Map),
     DeliverTimeMap : propTypes.instanceOf(Map),
@@ -25,18 +27,21 @@ class CreateOrderModal extends Component {
     tracers : propTypes.instanceOf(Map),
     //websocket : propTypes.instanceOf(TracerWebSocket) //This is needed but javascript is a fucked language...
   }
+  */
 
   constructor(props){
     super(props);
 
-    var activeCustomer;
-    var DeliverTimeMapping;
+    let activeCustomer = undefined;
+    let DeliverTimeMapping = new Map();
 
-    for(const [customerID, customer] of this.props.customers){
-      activeCustomer = customer;
+    for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
       DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);
       if (DeliverTimeMapping.size){ //If it's empty pick a new one, since you can't order there
         break;
+      }
+      if (activeCustomer === undefined){
+        activeCustomer = customer;
       }
     }
 
@@ -49,7 +54,7 @@ class CreateOrderModal extends Component {
     this.state = {
       showCalculator : false,
       productions : DeliverTimeMapping,
-      activeCustomerID : activeCustomer.ID,
+      activeCustomerID : activeCustomer.id,
       activeRun : run,
       amount : "",
       ErrorMessage : "",

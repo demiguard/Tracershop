@@ -13,9 +13,10 @@ import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_CHARGE, LEGACY_KEYWORD_FILLTIME,
   LEGACY_KEYWORD_FILLDATE, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_ACTIVITY, LEGACY_KEYWORD_VOLUME,
-  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_MODAL_ORDER, PROP_ORDER_MAPPING, PROP_ON_CLOSE} from "../../lib/constants.js";
+  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_MODAL_ORDER, PROP_ORDER_MAPPING, PROP_ON_CLOSE, JSON_PRODUCTION, JSON_ENDPOINT} from "../../lib/constants.js";
 
 import SiteStyles from "/src/css/Site.module.css"
+import { KEYWORD_ActivityDeliveryTimeSlot_DESTINATION, KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN } from "../../dataclasses/keywords.js";
 
 /*
   For the dataclasses described see Tracershop/production/lib/ProductionDataClasses.py
@@ -80,7 +81,7 @@ export class ActivityTable extends Component {
    *
    * @returns Map as described above
    */
-  createOrderMapping(){
+  __createOrderMapping(){
     const today     = this.props[PROP_ACTIVE_DATE].getDay();
     const JanOne    = new Date(this.props[PROP_ACTIVE_DATE].getFullYear(),0,1);
     const NumDays   = Math.floor(this.props[PROP_ACTIVE_DATE] - JanOne) / (24 * 60 * 60 * 1000);
@@ -138,6 +139,27 @@ export class ActivityTable extends Component {
       }
     }
     return NewOrderMapping;
+  }
+
+  createOrderMapping(){
+    const OrderMapping = new Map()
+
+    for(const [activityDeliveryTimeSlotId,activityDeliveryTimeSlot] of this.props[JSON_DELIVER_TIME]){
+      const production = this.props[JSON_PRODUCTION].get(activityDeliveryTimeSlot[KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN])
+      if(production === undefined || production.production_day !== ((this.props[PROP_ACTIVE_DATE].getDay() + 6) % 7)){
+        //console.log("Skipping:", production)
+        continue
+      }
+      const endpoint = this.props[JSON_ENDPOINT].get(activityDeliveryTimeSlot[KEYWORD_ActivityDeliveryTimeSlot_DESTINATION])
+      const owner = this.props[JSON_CUSTOMER].get(endpoint.owner);
+      if(owner === undefined){
+        console.log("STUFF IS WRONG") // THIS SHOULDN*T HAPPEN
+      }
+      if(OrderMapping.has(owner.id)){
+        OrderMapping.get(owner.id).push(activityDeliveryTimeSlot);
+      }
+    }
+    console.log(OrderMapping)
   }
 
   // State Changing Functions
@@ -467,46 +489,16 @@ export class ActivityTable extends Component {
     let total_o = 0
     const tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
     const isotope = this.props[JSON_ISOTOPE].get(tracer.isotope);
-    for(const [_, DeliverTimeMap] of this.OrderMapping){
-      const RelvantDeliverTime = DeliverTimeMap.get(Production.run);
-      const ProductionDatetime = new Date(
-        this.props[PROP_ACTIVE_DATE].getFullYear(),
-        this.props[PROP_ACTIVE_DATE].getMonth(),
-        this.props[PROP_ACTIVE_DATE].getDate(),
-        Number(Production.ptime.substring(0,2)),
-        Number(Production.ptime.substring(3,5))
-        )
 
-      if(RelvantDeliverTime){ // If there's mapping else It doesn't matter
-        if(RelvantDeliverTime.MasterOrder) {
-          const MasterOrder = this.props[JSON_ACTIVITY_ORDER].get(RelvantDeliverTime.MasterOrder);
-          const MasterOrderCustomer = this.props[JSON_CUSTOMER].get(MasterOrder.BID);
-          if(MasterOrder === undefined){
-            console.log(this.props[JSON_ACTIVITY_ORDER])
-            console.log(DeliverTimeMap);
-            console.log(RelvantDeliverTime);
-          }
-          const TimeDelta = CountMinutes(ProductionDatetime, new Date(MasterOrder.deliver_datetime));
-          total += CalculateProduction(isotope.halflife, TimeDelta, MasterOrder.total_amount);
-          total_o += CalculateProduction(isotope.halflife, TimeDelta, MasterOrder.total_amount * (1 + MasterOrderCustomer.overhead / 100));
-        }
-        for(const OrderID of RelvantDeliverTime.extraOrders){
-          const ExtraOrder = this.props.orders.get(OrderID);
-          const ExtraOrderCustomer = this.props.customers.get(ExtraOrder.BID);
-          const TimeDelta = CountMinutes(ProductionDatetime, new Date(ExtraOrder.deliver_datetime));
-          total += CalculateProduction(isotope.halflife, TimeDelta, ExtraOrder.total_amount);
-          total_o += CalculateProduction(isotope.halflife, TimeDelta, ExtraOrder.total_amount * (1 + ExtraOrderCustomer.overhead / 100))
-        }
-      }
-    }
 
     return (
-    <Row key={Production.run}>
-      Kørsel : {Production.run} - {Production.ptime} : {Math.floor(total)} MBq / Overhead : {Math.floor(total_o)} MBq
+    <Row key={Production.id}>
+      Kørsel {Production.production_time} : {Math.floor(total)} MBq / Overhead : {Math.floor(total_o)} MBq
     </Row>);
   }
 
   render() {
+    console.log(this.props)
     const FinishedOrders = [];
     const pendingOrders = [];
     const Tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
@@ -516,7 +508,7 @@ export class ActivityTable extends Component {
     // So There might be a solution to make it variable that's not state, since it technically isn't a state,
     // But an object that's dependant on props
     this.OrderMapping = this.createOrderMapping();
-    const Orders = [...this.props[JSON_ORDERS].values()].sort((order_1, order_2) => {
+    const Orders = [...this.props[JSON_ACTIVITY_ORDER].values()].sort((order_1, order_2) => {
       if (order_1.BID < order_2.BID) {
         return -1;
       } else if (order_1.BID > order_2.BID){
@@ -541,27 +533,16 @@ export class ActivityTable extends Component {
     }
 
     const RenderedRuns = [];
-    /*
-    for (const [PTID, run] of this.props.runs) {
-      if (run.day === this.props.date.getDay()){
-        RenderedRuns.push(this.renderTotal(run));
+    for (const [PTID, production] of this.props[JSON_PRODUCTION]) {
+      if (production.production_day === this.props[PROP_ACTIVE_DATE].getDay()){
+        RenderedRuns.push(this.renderTotal(production));
       }
     }
-    */
 
-    const modalProps = {}
+    const modalProps = {...this.props}
     modalProps[PROP_MODAL_ORDER] = this.state[PROP_MODAL_ORDER]
     modalProps[PROP_ORDER_MAPPING] = this.OrderMapping
     modalProps[PROP_ON_CLOSE] = this.closeModal.bind(this)
-
-    modalProps[PROP_WEBSOCKET] = this.props[PROP_WEBSOCKET]
-    modalProps[PROP_ACTIVE_DATE] = this.props[PROP_ACTIVE_DATE]
-    modalProps[PROP_ACTIVE_TRACER] = this.props[PROP_ACTIVE_TRACER]
-    modalProps[JSON_TRACER] = this.props[JSON_TRACER]
-    modalProps[JSON_ISOTOPE] = this.props[JSON_ISOTOPE]
-    modalProps[JSON_ACTIVITY_ORDER] = this.props[JSON_ACTIVITY_ORDER]
-    modalProps[JSON_VIAL] = this.props[JSON_VIAL]
-    modalProps[JSON_CUSTOMER] = this.props[JSON_CUSTOMER]
 
     return (<div>
       <Container>
@@ -617,7 +598,7 @@ export class ActivityTable extends Component {
     }
     { FinishedOrders.length == 0 && pendingOrders == 0 ?
     <div>
-      <p className={SiteStyles.mariLfont}>Der er ingen {Tracer.name} Ordre til den {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props.date.getFullYear()}</p>
+      <p className={SiteStyles.mariLfont}>Der er ingen {Tracer.name} Ordre til den {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}</p>
     </div> :
       null
     }

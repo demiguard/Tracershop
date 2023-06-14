@@ -37,7 +37,7 @@ export default class TracerPage extends Component {
    */
   validateTracer(tracer){
     // Yes you could one line this, but its unreadable and not as maintainable, FIGHT ME
-    if (tracer.name.length === 0) return false;
+    if (tracer.shortname.length === 0) return false;
 
     tracer.isotope = Number(tracer.isotope);
     if (isNaN(tracer.isotope)) return false;

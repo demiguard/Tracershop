@@ -46,12 +46,6 @@ export default class App extends Component {
     this.state = state;
     this.MasterSocket = new TracerWebSocket(
       new WebSocket("ws://" + window.location.host + "/ws/"), this);
-    if (user) {
-      // If we know, that the client is not logged in,
-      // Getting the great state will not be authorized
-      this.MasterSocket.send(
-        this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE));
-    }
   }
 
 
@@ -126,11 +120,16 @@ export default class App extends Component {
       db.set(DATABASE_CURRENT_USER, user);
     }
 
-    this.setState({...this.state, user : user});
+    const newState = {...this.state}
+    newState[PROP_USER] = user;
+
+    this.setState(user);
+    this.MasterSocket.send(
+      this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE));
   }
 
   componentDidMount() {
-    this.whoami();
+    this.whoami(); // This triggers a get state
   }
 
   createPropsWithStateDatabase() {

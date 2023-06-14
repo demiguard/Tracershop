@@ -22,8 +22,6 @@ const Pages = {
   Hætteglas : VialPage,
 };
 
-
-
 class ProductionSite extends Component{
   constructor(props){
     super(props);

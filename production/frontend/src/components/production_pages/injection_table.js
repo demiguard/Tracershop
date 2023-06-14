@@ -2,7 +2,7 @@
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
 
-import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER, INJECTION_USAGE } from "../../lib/constants.js";
+import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER, INJECTION_USAGE, JSON_TRACER, JSON_CUSTOMER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, PROP_WEBSOCKET } from "../../lib/constants.js";
 import { FormatDateStr, ParseJSONstr } from "../../lib/formatting.js";
 import { renderTableRow, renderComment } from '../../lib/rendering.js';
 import { compareDates } from "../../lib/utils.js";
@@ -18,7 +18,7 @@ const /** Contains the components of the different modals this page can display 
 /** Page that contains all injections orders
  *
  */
-export class TOrderTable extends Component {
+export class InjectionTable extends Component {
   constructor(props) {
     super(props)
 
@@ -43,10 +43,10 @@ export class TOrderTable extends Component {
   acceptOrder(Order){
     if(Order.status == 1){
       Order.status = 2;
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+      const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
       message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
       message[WEBSOCKET_DATA] = Order;
-      this.props.websocket.send(message);
+      this.props[PROP_WEBSOCKET].send(message);
     }
     else {
       this.openOrderModal(Order)
@@ -73,9 +73,9 @@ export class TOrderTable extends Component {
     const OrderDT = new Date(order.deliver_datetime)
     const TimeStr = FormatDateStr(OrderDT.getHours()) + ':' + FormatDateStr(OrderDT.getMinutes());
 
-    const Tracer = this.props.tracers.get(order.tracer);
+    const Tracer = this.props[JSON_TRACER].get(order.tracer);
     const TracerName = Tracer.name;
-    const customer = this.props.customers.get(order.BID);
+    const customer = this.props[JSON_CUSTOMER].get(order.BID);
 
     const customerName = customer.UserName;
 
@@ -105,13 +105,13 @@ export class TOrderTable extends Component {
 
     const Free_datetime = new Date(order.frigivet_datetime);
     const Free_time_str = FormatDateStr(Free_datetime.getHours()) + ':' + FormatDateStr(Free_datetime.getMinutes());
-    const Tracer = this.props.tracers.get(order.tracer);
+    const Tracer = this.props[JSON_TRACER].get(order.tracer);
     const TracerName = Tracer.name;
-    const customer = this.props.customers.get(order.BID);
+    const customer = this.props[JSON_CUSTOMER].get(order.BID);
 
     const customerName = customer.UserName;
 
-    const employee = this.props.employee.get(order.frigivet_af);
+    const employee = undefined // this.props.employee.get(order.frigivet_af);
     let employeeName;
     if (employee == undefined){
       employeeName = `Ukendt frigiver med ID ${order.frigivet_af}`;
@@ -139,14 +139,17 @@ export class TOrderTable extends Component {
 
 
   render() {
-    console.log(this.props);
+    const modalProps ={...this.props};
+
+    modalProps[PROP_ON_CLOSE] = this.closeModal.bind(this);
+    modalProps[PROP_MODAL_ORDER] = this.state.order;
 
     const ordersIncomplete = [];
     const ordersComplete = [];
 
-    for(const [_oid, t_order] of this.props.t_orders){
+    for(const [_oid, t_order] of this.props[JSON_INJECTION_ORDER]){
       const orderDate = new Date(t_order.deliver_datetime)
-      if (compareDates(this.props.date, orderDate)){
+      if (compareDates(this.props[PROP_ACTIVE_DATE], orderDate)){
         if(t_order.status < 3){
           ordersIncomplete.push(t_order);
         } else if (t_order.status == 3){
@@ -157,7 +160,7 @@ export class TOrderTable extends Component {
     return (
       <Container>
         <Row>
-          <Col sm={10}>Produktion - {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</Col>
+          <Col sm={10}>Produktion - {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}</Col>
           <Col sm={2}>
             <Button onClick={this.openCreateOrderModal.bind(this)}>Opret ny ordre</Button>
           </Col>
@@ -205,21 +208,14 @@ export class TOrderTable extends Component {
       }
       { ordersComplete.length == 0 && ordersIncomplete.length == 0 ?
         <div>
-          <p>Der er ingen Special ordre af vise til {this.props.date.getDate()}/{this.props.date.getMonth() + 1}/{this.props.date.getFullYear()}</p>
+          <p>Der er ingen Special ordre af vise til {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}</p>
         </div> : null
 
       }
 
       {this.state.modal != Modals.NoModal ?
         <this.state.modal
-          date={this.props.date}
-          customers={this.props.customers}
-          tracers={this.props.tracers}
-          isotopes={this.props.isotopes}
-          websocket={this.props.websocket}
-          onClose={this.closeModal.bind(this)}
-          order={this.state.order}
-          employee={this.props.employee}
+          {...modalProps}
         ></this.state.modal> : ""}
       </Container>
     );

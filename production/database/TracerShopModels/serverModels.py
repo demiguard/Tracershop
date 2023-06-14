@@ -1,6 +1,22 @@
+
+
+
 from django.db import models
-from database.TracerShopModels.baseModels import TracershopModel
+from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.networkModels import Database
+
+
+
+class DeadlineTypes(models.IntegerChoices):
+  daily = 0
+  weekly = 1
+
+
+class Deadline(TracershopModel):
+  deadline_id = models.BigAutoField(primary_key=True)
+  deadline_type = models.SmallIntegerField(choices=DeadlineTypes.choices)
+  deadline_time = models.TimeField(null=True, default=None)
+  deadline_day = models.SmallIntegerField(choices=Days.choices, null=True, default=True)
 
 
 class ServerConfiguration(TracershopModel):
@@ -22,6 +38,16 @@ class ServerConfiguration(TracershopModel):
   DateRange = models.PositiveIntegerField(default=32)
   AdminPhoneNumber = models.CharField(max_length=32, default="35454147")
   AdminEmail = models.EmailField(max_length=64, default="christoffer.vilstrup.jensen@regionh.dk")
+  global_activity_deadline = models.ForeignKey(Deadline,
+                                               on_delete=models.SET_NULL,
+                                               default=None,
+                                               null=True,
+                                               related_name="global_activity_deadline")
+  global_injection_deadline = models.ForeignKey(Deadline,
+                                                on_delete=models.SET_NULL,
+                                                default=None,
+                                                null=True,
+                                                related_name="global_injection_deadline")
 
   @classmethod
   def get(cls):

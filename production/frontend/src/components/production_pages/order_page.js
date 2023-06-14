@@ -1,29 +1,30 @@
 import React, { Component } from "react";
 import { Button, Row, Col, Container } from 'react-bootstrap';
-import { TOrderTable } from './injection_table.js';
+import { InjectionTable } from './injection_table.js';
 import { ActivityTable } from './activity_table.js';
-import { TRACER_TYPE_ACTIVITY, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE, JSON_PRODUCTION, JSON_CUSTOMER, PROP_WEBSOCKET, JSON_DELIVER_TIME, JSON_ISOTOPE, JSON_ACTIVITY_ORDER, JSON_TRACER, JSON_INJECTION_ORDER, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE, KEYWORD_ID, JSON_CLOSED_DATE } from "../../lib/constants.js";
+import { TRACER_TYPE_ACTIVITY, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE, JSON_PRODUCTION, JSON_CUSTOMER, PROP_WEBSOCKET, JSON_DELIVER_TIME, JSON_ISOTOPE, JSON_ACTIVITY_ORDER, JSON_TRACER, JSON_INJECTION_ORDER, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE, KEYWORD_ID, JSON_CLOSED_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, CALENDER_PROP_DATE, JSON_SERVER_CONFIG, JSON_DEADLINE } from "../../lib/constants.js";
 import { db } from "../../lib/local_storage_driver.js";
 
-import { Calender, productionGetMonthlyOrders as productionGetMonthlyOrders, standardOrderMapping } from "../injectable/calender.js";
+import { Calender, getColorProduction, productionGetMonthlyOrders as productionGetMonthlyOrders, standardOrderMapping } from "../injectable/calender.js";
 
 import SiteStyles from '../../css/Site.module.css'
+import { KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE, KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE } from "../../dataclasses/keywords.js";
 
 const Tables = {
   activity : ActivityTable,
-  injections : TOrderTable
+  injections : InjectionTable
 };
 
 export class OrderPage extends Component {
   constructor(props) {
     super(props)
 
-    var today = db.get("today");
-    if(!today){
+    let today = db.get("today");
+    if(!today || !today instanceof Date){
       today = new Date();
     }
 
-    var activeTracer = db.get("activeTracer");
+    let activeTracer = db.get("activeTracer");
     if(!activeTracer) {
       activeTracer = -1;
       db.set("activeTracer", activeTracer);
@@ -54,8 +55,6 @@ export class OrderPage extends Component {
 
   renderTableSwitchButton(tracer) {
     const underline = tracer[KEYWORD_ID] === this.state.activeTracer;
-
-    console.log(tracer)
 
     return (
       <Button className={SiteStyles.Margin15lr} key={tracer.shortname} sz="sm" onClick={() => {
@@ -88,29 +87,26 @@ export class OrderPage extends Component {
       </Button>));
 
     // Keyword setting
-    const props = {}
-    // Inherited Keywords
-    props[JSON_ACTIVITY_ORDER] = this.props[JSON_ACTIVITY_ORDER]
-    props[JSON_CUSTOMER] = this.props[JSON_CUSTOMER]
-    props[JSON_DELIVER_TIME] = this.props[JSON_DELIVER_TIME]
-    props[JSON_ISOTOPE] = this.props[JSON_ISOTOPE]
-    props[JSON_INJECTION_ORDER] = this.props[JSON_INJECTION_ORDER]
-    props[JSON_PRODUCTION] = this.props[JSON_PRODUCTION]
-    props[JSON_TRACER] = this.props[JSON_TRACER]
-    props[PROP_WEBSOCKET] = this.props[PROP_WEBSOCKET]
+    const props = {...this.props}
     // State Keywords
     props[PROP_ACTIVE_TRACER] = this.state.activeTracer;
     props[PROP_ACTIVE_DATE] = this.state.date
 
-    console.log(this.props)
-    const calenderProps = {}
-    calenderProps.date = this.state.date;
-    calenderProps.onDayClick = this.setActiveDate.bind(this)
-    calenderProps.onMonthChange = productionGetMonthlyOrders(this.props[PROP_WEBSOCKET])
-    calenderProps.getColor = standardOrderMapping(this.props[JSON_ACTIVITY_ORDER],
-                                                  this.props[JSON_INJECTION_ORDER],
-                                                  this.props[JSON_PRODUCTION],
-                                                  this.props[JSON_CLOSED_DATE])
+    const serverConfig = this.props[JSON_SERVER_CONFIG].get(1)
+
+    const activity_deadline = this.props[JSON_DEADLINE].get(serverConfig[KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE]);
+    const injection_deadline = this.props[JSON_DEADLINE].get(serverConfig[KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE]);
+
+    const calenderProps = {};
+    calenderProps[CALENDER_PROP_DATE] = this.state.date;
+    calenderProps[CALENDER_PROP_GET_COLOR] = getColorProduction(activity_deadline,
+                                                                injection_deadline,
+                                                                this.props[JSON_ACTIVITY_ORDER],
+                                                                this.props[JSON_CLOSED_DATE],
+                                                                this.props[JSON_INJECTION_ORDER],
+                                                                this.props[JSON_PRODUCTION])
+    calenderProps[CALENDER_PROP_ON_DAY_CLICK] = this.setActiveDate.bind(this);
+    calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = productionGetMonthlyOrders(this.props[PROP_WEBSOCKET]);
 
     return (
       <Container>
@@ -121,22 +117,9 @@ export class OrderPage extends Component {
         </Row>
         <Row>
           <Col sm={8}>
-            {/*
             <this.state.activeTable
-              customer={this.props[JSON_CUSTOMER]}
-              deliverTimes={this.props.deliverTimes}
-              employee={this.props.employee}
-              isotopes={this.props.isotopes}
-              orders={this.props.orders}
-              runs={this.props.run}
-              t_orders={this.props.t_orders}
-              active_tracer={this.state.activeTracer}
-              tracers={this.props.tracer}
-              vials={this.props.vial}
-              websocket={this.props[PROP_WEBSOCKET]}
-              date={this.state.date}
+              {...props}
             />
-            */}
           </Col>
           <Col sm={1}></Col>
           <Col sm={3}>

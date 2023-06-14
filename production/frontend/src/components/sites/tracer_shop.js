@@ -71,6 +71,7 @@ class TracerShop extends Component {
 
 
   render() {
+    console.log(this.props)
 
     if (this.state.site_error){
       if(this.state.site_error == ERROR_INVALID_JAVASCRIPT_VERSION) {

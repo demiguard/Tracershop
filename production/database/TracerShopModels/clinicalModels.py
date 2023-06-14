@@ -47,4 +47,3 @@ class ActivityProduction(TracershopModel):
   production_day = SmallIntegerField(choices=Days.choices)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
-

@@ -6,6 +6,7 @@ Tracershop.
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Packages
+from typing import List
 
 # Third party Packages
 from django.db import models
@@ -13,7 +14,7 @@ from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
-
+from lib.utils import classproperty
 
 from django.contrib.auth.models import AbstractBaseUser
 
@@ -40,6 +41,10 @@ class User(AbstractBaseUser, TracershopModel):
   OldTracerBaseID = SmallIntegerField(unique=True, null=True, default=None)
 
   USERNAME_FIELD = 'username'
+
+  @classproperty
+  def exclude(cls) -> List[str]:
+    return ['password']
 
   def __str__(self):
     return self.username

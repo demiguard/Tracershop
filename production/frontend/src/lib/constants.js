@@ -3,6 +3,7 @@ export const JAVASCRIPT_VERSION = "1.0.1";
 export const TRACER_TYPE_ACTIVITY = 1;
 export const TRACER_TYPE_DOSE = 2;
 export const DAYS_PER_WEEK = 7;
+// Note that to correct day from date.getDay -> (date.getDate() + 6) % 7
 export const DAYS = { // So in the modern part of the world, aka the ones that use metric units, the first day of the week is Monday
   MONDAY : 0,
   TUESDAY : 1,
@@ -21,6 +22,11 @@ export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
   {name : "Lørdag", day : 6},
   {name : "Søndag", day : 7},
 ]
+
+export const DEADLINE_TYPES = {
+  DAILY : 0,
+  WEEKLY : 1,
+}
 
 
 export const USER_GROUPS = {
@@ -76,6 +82,7 @@ export const JSON_AUTH = "auth";
 export const JSON_CLOSED_DATE = "closeddate";
 export const JSON_CUSTOMER  = "customer";
 export const JSON_DATABASE = "database";
+export const JSON_DEADLINE = "deadline"
 export const JSON_DELIVER_TIME = "deliverTimes";
 export const JSON_EMPLOYEE = "employee";
 export const JSON_FIELD_TO_UPDATE = "FieldToUpdate";
@@ -108,6 +115,7 @@ export const JSON_KEYWORDS = [
   JSON_CLOSED_DATE,
   JSON_CUSTOMER,
   JSON_DATABASE,
+  JSON_DEADLINE,
   JSON_DELIVER_TIME,
   JSON_ENDPOINT,
   JSON_INJECTION_ORDER,
@@ -279,3 +287,8 @@ export const PROP_ORDER_MAPPING = "order_mapping"
 export const PROP_ON_CLOSE = "on_close"
 
 export const KEYWORD_ID = 'id'
+
+export const CALENDER_PROP_DATE = "calender_date";
+export const CALENDER_PROP_GET_COLOR = "calender_get_color";
+export const CALENDER_PROP_ON_DAY_CLICK = "calender_on_day_click";
+export const CALENDER_PROP_ON_MONTH_CHANGE = "calender_on_month_change";

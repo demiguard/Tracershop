@@ -80,6 +80,8 @@ class AdminSite extends Component {
     const props = {...this.props}
     props["NavbarElements"] = NavbarAdmin
 
+    console.log(this.props)
+
     return(<ActiveSite
       {...props}
     />);

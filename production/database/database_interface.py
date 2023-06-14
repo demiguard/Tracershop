@@ -62,6 +62,12 @@ class DatabaseInterface():
       JSON_VIAL : self.__timeUserSensitiveFilter(JSON_VIAL),
     }
 
+  @property
+  def __modelSerializer(self):
+    return {
+
+    }
+
 
   @database_sync_to_async
   def getServerConfiguration(self) -> ServerConfiguration:
@@ -198,6 +204,8 @@ class DatabaseInterface():
 
     return query.filter(**filter)
 
+
+
   def __userFilter(self, query: QuerySet[TracershopModel], user: User):
     return query
 
@@ -210,9 +218,18 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]):
-    return {
-      key : serialize('json', models) for key, models in instances.items()
-    }
+    serialized_dict = {}
+
+    for key, models in instances.items():
+      model = MODELS[key]
+      serialized_models = serialize('python', models)
+      for serialized_model in serialized_models:
+        fields= serialized_model['fields']
+        for keyword in model.exclude: #type: ignore
+          del fields[keyword]
+      serialized_dict[key] = serialized_models
+
+    return serialized_dict
 
   def getModels(self, user: User) -> List[Type[TracershopModel]]:
     if user.UserGroup == UserGroups.Admin:

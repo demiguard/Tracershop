@@ -8,6 +8,7 @@ from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
 from django.core.exceptions import FieldDoesNotExist
 
 # Tracershop Modules
+from lib.utils import classproperty
 
 
 class TracershopModel(Model):
@@ -25,6 +26,10 @@ class TracershopModel(Model):
       setattr(self, name, value)
     except FieldDoesNotExist:
       raise KeyError("This is not valid Field")
+
+  @classproperty
+  def exclude(cls) -> List[str]:
+    return []
 
   class Meta:
     abstract = True

@@ -14,32 +14,32 @@
   margin: 3px;
 }
 
-.date-status0 {
+.date-status00 {
   background-color: var(--status0);
   border-color:     var(--status0);
 }
 
-.date-status1 {
+.date-status10 {
   background-color: var(--status1);
   border-color:     var(--status0);
 }
 
-.date-status2 {
+.date-status20 {
   background-color: var(--status2);
   border-color:     var(--status0);
 }
 
-.date-status3 {
+.date-status30 {
   background-color: var(--status3);
   border-color:     var(--status0);
 }
 
-.date-status5 {
+.date-status50 {
   background-color: var(--status5);
   border-color:     var(--status0);
 }
 
-.date-status0 {
+.date-status00 {
   background-color: var(--status0);
   border-color:     var(--status0);
 }
