@@ -1,10 +1,19 @@
+""""""
+
+__author__ = "Christoffer Vilstrup Jensen"
+
+# Python Standard library
+
+# third party packages
+
+# Tracershop Packages
+
 from dataclasses import dataclass
 
 import re
 from typing import Union
 import constants
 
-from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, InjectionOrderDataClass
 from database.models import ServerConfiguration
 
 from smtplib import SMTP
@@ -59,7 +68,7 @@ def prepareMail(emailHeader :EmailHeader, fileBytes):
   return mail
 
 
-def sendMail(pdfPath : str, Customer : CustomerDataClass, Order: Union[ActivityOrderDataClass, InjectionOrderDataClass], serverConfiguration : ServerConfiguration):
+def sendMail(pdfPath : str, Customer, Order, serverConfiguration : ServerConfiguration):
   emails = [Customer.email, Customer.email2, Customer.email3, Customer.email4]
 
   Text_message = "Dette er en føgleseddel til tracershop."

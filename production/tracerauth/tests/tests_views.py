@@ -1,15 +1,13 @@
 # Python Standard Library
 
 # Third party Packages
-from django.test import TestCase, RequestFactory
-from django.conf import settings
-
+from django.test import RequestFactory, TransactionTestCase
 
 # Tracershop Production
 from database.models import User, UserGroups
 from tracerauth.views import ExternalLoginView
 
-class ExternalLoginTestCase(TestCase):
+class ExternalLoginTestCase(TransactionTestCase):
   def setUp(self) -> None:
     self.factory = RequestFactory()
     self.view = ExternalLoginView()

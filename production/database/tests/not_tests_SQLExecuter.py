@@ -18,7 +18,7 @@ from dataclass import ProductionDataClasses as PDC
 from lib.utils import LMAP
 
 # Test Packages
-from tests.test_DataClasses import useDataClass, testDeliverDateTime
+from production.legacy.test_DataClasses import useDataClass, testDeliverDateTime
 from tests.helpers import cleanTable
 
 

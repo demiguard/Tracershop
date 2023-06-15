@@ -6,6 +6,7 @@ __pycache__/
 .vscode/settings.json
 tracershop/customer/migrations/
 production/api/migrations/
+production/production/config.py
 production/frontend/migrations/
 production/frontend/node_modules/
 production/frontend/coverage/

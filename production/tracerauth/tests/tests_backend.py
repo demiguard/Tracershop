@@ -1,26 +1,16 @@
 from unittest import skip
 
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 from django.conf import settings
-
-from database.production_database.SQLExecuter import ExecuteQuery, Fetching
-from database.production_database.SQLFactory import tupleInsertQuery
-from tests.helpers import cleanTable
 
 
 from tracerauth.backend import TracershopAuthenticationBackend, validString
 from database.models import User, UserGroups
 
 
-class TracerAuthBackendTestCase(TestCase):
+class TracerAuthBackendTestCase(TransactionTestCase):
   OldUserName = "OldUser"
   OldPassword = "OldPassword"
-
-  UserInsertQuery = tupleInsertQuery([
-    ("Username", OldUserName),
-    ("Id", 751),
-    ("Password", OldPassword)
-  ], "Users")
 
   def setUp(self) -> None:
     self.basicUserName = "basicUser"
@@ -48,26 +38,14 @@ class TracerAuthBackendTestCase(TestCase):
     user = self.backend.authenticate(None, self.basicUserName, self.basicPassword)
     self.assertEqual(user, self.basicUser)
 
-  def test_Authentication_UserDoenstExists(self):
+  def test_Authentication_UserDoesNotExists(self):
     self.assertIsNone(self.backend.authenticate(None, "JohnDoe", "JohnDoesPW"))
 
-  def test_Authentication_missingPW(self):
+  def test_Authentication_missingPassword(self):
     self.assertIsNone(self.backend.authenticate(None, self.basicUserName, ""))
 
   def test_Authentication_wrongPassword(self):
     self.assertIsNone(self.backend.authenticate(None, self.basicUserName, "WrongPassword"))
-
-  @skip
-  def test_Authenticate_OldDatabaseUserMigration(self):
-    ExecuteQuery(self.UserInsertQuery, Fetching.NONE)
-
-    user = self.backend.authenticate(None, self.OldUserName, self.OldPassword)
-    userFromDB = User.objects.get(username=self.OldUserName)
-    self.assertEqual(user, userFromDB)
-
-    # Clean up
-    user.delete()
-    ExecuteQuery("""DELETE FROM Users WHERE Id=751""", Fetching.NONE )
 
   def test_GetNoUser(self):
     self.assertIsNone(self.backend.get_user(2340598))

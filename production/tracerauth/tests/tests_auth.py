@@ -1,26 +1,33 @@
+""""""
+
+__author__ = "Christoffer"
+
+# Python Standard Library
 from email import message
 from typing import Dict
 from unittest import skip
-from django.test import TestCase
+
+# Third party packages
+from django.test import TransactionTestCase
 from django.contrib.auth.models import AnonymousUser
 
+# Tracershop packages
+from constants import *
 from database.models import User, UserGroups
-from tracerauth.auth import AuthMessage, validateMessage
 from lib.utils import LMAP
+from tracerauth.auth import AuthMessage, validateMessage
 
 
+# Test Specific packages
 from tests.helpers import TEST_ADMIN_PASSWORD, TEST_ADMIN_USERNAME
 
-from constants import *
 
 def createShellMessage(messageType : str) -> Dict:
   return {
     WEBSOCKET_MESSAGE_TYPE : messageType
   }
 
-
-# Create your tests here.
-class authTestCase(TestCase):
+class authTestCase(TransactionTestCase):
   messages = LMAP(createShellMessage, [
     WEBSOCKET_MESSAGE_AUTH_LOGIN,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT,

@@ -16,7 +16,7 @@ from asgiref.sync import sync_to_async
 import decimal
 import logging
 from pprint import pprint
-from typing import Dict, List, Callable, Coroutine
+from typing import Any, Dict, List, Callable, Coroutine
 
 # Django packages
 from channels.db import database_sync_to_async
@@ -29,12 +29,11 @@ from django.core.serializers import serialize
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import SQLInjectionException
-from dataclass.ProductionDataClasses import *
 from constants import * # Import the many WEBSOCKET constants, TO DO change this
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
-      TracerTypes, DeliveryEndpoint, ActivityProduction
+      TracerTypes, DeliveryEndpoint, ActivityProduction, User
 from lib import orders
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
 from lib.ProductionJSON import encode, decode
@@ -93,16 +92,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(group_name,self.channel_name)
 
   async def __broadcast(self, message: Dict):
-    message['type'] = "__sendEvent" # This is needed to point it to the send place
-    await self.channel_layer.group_send(self.global_group, message) # 
+    message['type'] = "broadcastMessage" # This is needed to point it to the send place
+    await self.channel_layer.group_send(self.global_group, message) #
 
-  async def __sendEvent(self, event: Dict):
+  async def broadcastMessage(self, message: Dict):
     """Send the event to each subscriber to the websocket.
     Note this function gets call for each websocket connected to the group
 
     This function is called by __broadcast
+
+    Note that this function CANNOT have a leading underscore by channels
     """
-    await self.send_json(event)
+    await self.send_json(message)
 
 
   #Receive data from Websocket

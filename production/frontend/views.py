@@ -11,12 +11,8 @@ from django.http import FileResponse, HttpResponseNotFound
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
-
 # Tracershop Production
 from database.models import UserGroups
-#from database.production_database.SQLController import SQL
-from dataclass.ProductionDataClasses import ActivityOrderDataClass, CustomerDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
-from lib.utils import LMAP
 
 # This is an (almost) single page application
 @ensure_csrf_cookie

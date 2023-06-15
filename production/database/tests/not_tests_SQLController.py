@@ -24,7 +24,7 @@ from dataclass.ProductionDataClasses import ActivityOrderDataClass, DeliverTimeD
 from lib.Formatting import toDateTime
 
 # Test packages
-from tests.test_DataClasses import useDataClass, testOrders
+from production.legacy.test_DataClasses import useDataClass, testOrders
 from tests.helpers import cleanTable
 
 

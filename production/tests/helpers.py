@@ -14,8 +14,8 @@ import mysql.connector as mysql
 
 # Tracershop Production Packages
 from database.models import Address, Database, User, UserGroups
-from database.production_database.SQLController import SQL
-from database.production_database.SQLExecuter import Fetching, ExecuteQuery
+#from database.production_database.SQLController import SQL
+#from database.production_database.SQLExecuter import Fetching, ExecuteQuery
 
 TEST_ADMIN_USERNAME = "test_admin"
 TEST_ADMIN_PASSWORD = "test_admin_password"
@@ -39,7 +39,6 @@ def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
     legacy_database=True
     ).save()
 
-  SC = SQL.getServerConfig()
 
   test_admin = User(id=1, username=TEST_ADMIN_USERNAME, UserGroup=UserGroups.Admin, OldTracerBaseID=1337)
   test_admin.set_password(TEST_ADMIN_PASSWORD)
@@ -288,23 +287,3 @@ def DestroyTestDatabase(DatabaseConfig):
   """)
 
   conn.close()
-
-@sync_to_async
-def getModel(model, pk):
-  return model.objects.get(pk=pk)
-
-@sync_to_async
-def async_ExecuteQuery(Query, fetching=Fetching.ALL):
-    return ExecuteQuery(Query, fetching)
-
-def cleanTable(IDstr : str, tableStr : str, testName : str) -> None:
-    ids = ExecuteQuery(f"SELECT {IDstr} FROM {tableStr}""",Fetching.ALL)
-    if ids:
-      print(f"\nTest {testName} did not clean {tableStr}\n")
-      idsStr = ""
-      for i, (id,) in enumerate(ids):
-        if i != len(ids) - 1:
-          idsStr += f"{id},"
-        else:
-          idsStr += f"{id}"
-      ExecuteQuery(f"DELETE FROM {tableStr} WHERE {IDstr} in ({idsStr})", Fetching.NONE)

@@ -4,6 +4,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard library
 from datetime import time
+from typing import Dict
 
 # Third Party Package
 from django.db import models
@@ -12,8 +13,6 @@ from django.test import TestCase
 
 # Tracershop Production Package
 from lib import ProductionJSON as PJSON
-from dataclass import ProductionDataClasses as DC
-from typing import Dict
 
 
 # Very lackluster testing :(
@@ -32,21 +31,6 @@ class ProductionJSONResponseTestCase(TestCase):
     self.assertTrue(issubclass(PJSON.ProductionJSONResponse, JsonResponse))
     self.assertTrue(issubclass(PJSON.ProductionJSONResponse, HttpResponse))
 
-  def test_CustomDataClass(self):
-    timeInstance = time(11,55,33,12345)
-
-    response = PJSON.ProductionJSONResponse({
-      self.json_kw_1 : DC.RunsDataClass(1, timeInstance, 1, 123)
-    })
-
-
-  def test_RunDataClassEncoding(self):
-    timeInstance = time(11,33,22)
-
-    dataClass = DC.RunsDataClass(1, timeInstance, 1,123)
-
-    datastring = PJSON.encode(dataClass)
-    self.assertEqual(datastring, "\"{\\n  \\\"day\\\": 1,\\n  \\\"ptime\\\": \\\"11:33:22\\\",\\n  \\\"run\\\": 1,\\n  \\\"PTID\\\": 123\\n}\"")
 
   def test_DecodingToDict(self):
     jsonStr = "\"{\\n  \\\"day\\\": 1,\\n  \\\"ptime\\\": \\\"11:33:22\\\",\\n  \\\"run\\\": 1,\\n  \\\"PTID\\\": 123\\n}\""

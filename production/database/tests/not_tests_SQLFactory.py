@@ -11,7 +11,7 @@ from database.production_database import SQLFactory
 from datetime import date, datetime, time
 from lib.utils import LMAP
 
-from tests.test_DataClasses import *
+from production.legacy.test_DataClasses import *
 
 
 class SQLFactoryTestCase():

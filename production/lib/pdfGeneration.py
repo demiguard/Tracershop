@@ -35,9 +35,8 @@ except:
 
 
 # Tracershop Production packages
-from database.production_database import SQLController
 from lib.decorators import typeCheckFunc
-from dataclass.ProductionDataClasses import CustomerDataClass, ActivityOrderDataClass, InjectionOrderDataClass, IsotopeDataClass, TracerDataClass, VialDataClass
+
 
 ##### Constant declarations #####
 
@@ -61,7 +60,6 @@ def order_pair(i,j):
   return (min(i,j), max(i,j))
 
 
-
 class MailTemplate(canvas.Canvas):
   _line_width = 18 # How large is a text line
   _font       = defaultFont
@@ -80,7 +78,7 @@ class MailTemplate(canvas.Canvas):
 
     self.drawInlineImage("pdfData/petlogo_small.png",  417, 750 , width= 128, height=32)
 
-  def ApplyCustomer(self, x_cursor:int, y_cursor:int, Customer: CustomerDataClass):
+  def ApplyCustomer(self, x_cursor:int, y_cursor:int, Customer):
     self.setStrokeColorRGB(0.5,0.5,1.0)
     self.setFont(self._font, self._font_size)
 
@@ -119,15 +117,15 @@ class MailTemplate(canvas.Canvas):
       self,
       x_cursor: int,
       y_cursor: int,
-      Order: ActivityOrderDataClass,
-      Isotope : IsotopeDataClass,
-      Tracer : TracerDataClass,
-      COID_ORDER : Optional[ActivityOrderDataClass] = None,
-      VialOrders : Optional[List[ActivityOrderDataClass]] = None
+      Order ,
+      Isotope,
+      Tracer ,
+      COID_ORDER= None,
+      VialOrders= None
     ):
 
     #Helper Funcions
-    def ExtractOrderData(Order : ActivityOrderDataClass):
+    def ExtractOrderData(Order):
       freeDateTimestr = "Fejl i database"
       if Order.frigivet_datetime != None:
         freeDateTimestr = Order.frigivet_datetime.strftime("%H:%M")
@@ -187,7 +185,7 @@ class MailTemplate(canvas.Canvas):
     return y_cursor
 
   @typeCheckFunc
-  def applyVials(self, x_cursor:int, y_cursor : int, Vials: List[VialDataClass]):
+  def applyVials(self, x_cursor:int, y_cursor : int, Vials):
     """[summary]
 
     Args:
@@ -197,7 +195,7 @@ class MailTemplate(canvas.Canvas):
     Returns:
         int - end position of the y cursor
     """
-    def ExtractVial(Vial: VialDataClass):
+    def ExtractVial(Vial):
       return [
         str(Vial.charge),
         Vial.filltime.strftime("%H:%M"),
@@ -329,9 +327,9 @@ class MailTemplate(canvas.Canvas):
       self,
       x_cursor : int,
       y_cursor : int,
-      IODC: InjectionOrderDataClass,
-      Isotope : IsotopeDataClass,
-      Tracer : TracerDataClass) -> int:
+      IODC,
+      Isotope ,
+      Tracer) -> int:
     self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {IODC.oid} - {Tracer.longName} - {Isotope.name} Injektion til {IODC.anvendelse}")
     y_cursor -= self._line_width
 
@@ -378,14 +376,14 @@ class MailTemplate(canvas.Canvas):
 
 
 def DrawActivityOrder(
-    filename: str,
-    customer: CustomerDataClass,
-    Order: ActivityOrderDataClass,
-    vials: List[VialDataClass],
-    Isotope : IsotopeDataClass,
-    Tracer : TracerDataClass,
-    COID_ORDER: Optional[ActivityOrderDataClass] = None,
-    VialOrders: Optional[List[ActivityOrderDataClass]] = None
+    filename:str,
+    customer ,
+    Order ,
+    vials,
+    Isotope,
+    Tracer,
+    COID_ORDER = None,
+    VialOrders = None
   ):
   template = MailTemplate(filename)
   x_cursor = start_x_cursor
@@ -409,10 +407,10 @@ def DrawActivityOrder(
 
 def DrawInjectionOrder(
     filename: Path,
-    Customer : CustomerDataClass,
-    IODC : InjectionOrderDataClass,
-    Isotope : IsotopeDataClass,
-    Tracer : TracerDataClass
+    Customer,
+    IODC,
+    Isotope,
+    Tracer
   ):
   template = MailTemplate(filename)
   x_cursor = start_x_cursor
@@ -430,7 +428,7 @@ def DrawInjectionOrder(
   template.save()
 
 
-def getPdfFilePath(customer: CustomerDataClass, Order: ActivityOrderDataClass):
+def getPdfFilePath(customer, Order):
   year = Order.deliver_datetime.strftime("%Y")
   month = Order.deliver_datetime.strftime("%m")
 

@@ -1,8 +1,7 @@
 """
   JSON module for production
 
-  This module focuses on custom conversion between the different
-  Production Specific Classes
+  Maybe redundant after deprication of JsonSerializableDataClasses
 
 """
 __author__ = "Christoffer Vilstrup Jensen"
@@ -12,7 +11,6 @@ from django.http import JsonResponse
 from django.db.models import Model
 from django.core.serializers import serialize
 
-from dataclass.ProductionDataClasses import JsonSerilizableDataClass
 
 from typing import Dict
 import json
@@ -22,6 +20,7 @@ class ProductionJSONEncoder(DjangoJSONEncoder):
     if isinstance(o, Model):
       stuff = serialize('json', [o])
       return stuff[1:-1]
+    """
     if isinstance(o, JsonSerilizableDataClass):
       responseStr = '{\n'
       fields = [ field.name for field in o.getFields()]
@@ -32,7 +31,9 @@ class ProductionJSONEncoder(DjangoJSONEncoder):
         else:
           responseStr += f'  "{field}": {self.encode(oDict[field])}\n'
       responseStr += '}'
+
       return responseStr
+    """
 
     return super().default(o)
 

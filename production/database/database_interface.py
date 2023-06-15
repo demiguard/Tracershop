@@ -9,6 +9,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 from datetime import datetime, date, timedelta
 from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type
 import logging
+import json
 
 # Django Packages
 from channels.db import database_sync_to_async
@@ -28,11 +29,9 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT
 from database.models import ServerConfiguration, Database, Address, User,\
     UserGroups, getModel, TracershopModel, ActivityOrder, OrderStatus,\
-    InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS, TIME_SENSITIVE_FIELDS
-
-from lib.decorators import typeCheckFunc
-from lib import pdfGeneration
-from dataclass.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, EmployeeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerCustomerMappingDataClass, TracerDataClass, VialDataClass, JsonSerilizableDataClass
+    InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
+    TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot
+from lib.ProductionJSON import ProductionJSONEncoder
 
 
 logger = logging.getLogger('DebugLogger')
@@ -43,8 +42,8 @@ class DatabaseInterface():
   """This class is the interface for the production database. This includes
   both the Django database and the Production database
   """
-  def __init__(self, datetimeNow = DateTimeNow()):
-    self.datetimeNow = datetimeNow
+  def __init__(self, json_encoder:ProductionJSONEncoder = ProductionJSONEncoder()):
+    self.json_encoder = json_encoder
 
 
   @property
@@ -157,7 +156,7 @@ class DatabaseInterface():
     model.objects.bulk_update(models, fields=tags)
 
   @database_sync_to_async
-  def releaseOrders(self, deliverTime: ActivityOrderDataClass, release_date: date, user: User):
+  def releaseOrders(self, deliverTime: ActivityDeliveryTimeSlot, release_date: date, user: User):
     """Releases an order"""
     now = self.datetimeNow.now()
 
@@ -229,7 +228,7 @@ class DatabaseInterface():
           del fields[keyword]
       serialized_dict[key] = serialized_models
 
-    return serialized_dict
+    return self.json_encoder.encode(serialized_dict)
 
   def getModels(self, user: User) -> List[Type[TracershopModel]]:
     if user.UserGroup == UserGroups.Admin:

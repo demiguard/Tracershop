@@ -37,16 +37,8 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from core.side_effect_injection import DateTimeNow
 from constants import *
 from database.database_interface import DatabaseInterface
-from database.models import Address, Database, ServerConfiguration, User, UserGroups
-from dataclass.ProductionDataClasses import ActivityOrderDataClass, ClosedDateDataClass, CustomerDataClass, DeliverTimeDataClass, InjectionOrderDataClass, IsotopeDataClass, RunsDataClass, TracerDataClass, VialDataClass
-from lib.utils import LFILTER, LMAP
+from database.models import Address, ClosedDate, Database, ServerConfiguration, User, UserGroups, MODELS
 from websocket.Consumer import Consumer
-
-# Test Helpers
-from tests.helpers import cleanTable, getModel, async_ExecuteQuery, TEST_ADMIN_USERNAME, TEST_ADMIN_PASSWORD, TEST_PRODUCTION_PASSWORD, TEST_PRODUCTION_USERNAME
-from tests.test_DataClasses import TEST_DATA_DICT, useDataClassAsync # This file standizes the dataclasses
-
-
 
 # Asgi Loading
 django_asgi_app = get_asgi_application()
@@ -65,6 +57,9 @@ app = ProtocolTypeRouter({
 class FakeDatetime(DateTimeNow):
   def now(self):
     return datetime.datetime(2012,10,11,11,22,33) # pragma: no cover
+
+TEST_ADMIN_USERNAME = "admin_username"
+TEST_ADMIN_PASSWORD = "admin_password"
 
 
 #NOTE: that sadly the connection cannot be in a setup case,
@@ -134,6 +129,7 @@ class ConsumerTestCase(TransactionTestCase):
     comm = WebsocketCommunicator(app,"ws/", headers=b'')
     _conn, _subprotocol = await comm.connect()
 
+
     response = await self._sendReceive(comm, self.loginAdminMessage)
     sessionID = response['sessionid']
     await comm.disconnect()
@@ -144,9 +140,9 @@ class ConsumerTestCase(TransactionTestCase):
     _conn, _subprotocol = await recomm.connect()
 
     whoAmI_reponse = await self._sendReceive(recomm, {
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
     })
     await recomm.disconnect()
 
@@ -268,22 +264,36 @@ class ConsumerTestCase(TransactionTestCase):
     self.assertEqual(self.message_id, response[WEBSOCKET_MESSAGE_ID])
 
 
-  async def test_ModelCreate_tracer(self):
+  #
+  async def test_ModelCreate_ClosedDate(self):
+    keyword = JSON_CLOSED_DATE
+    Model = MODELS[keyword]
+
     comm = WebsocketCommunicator(app,"ws/")
     _conn, _subprotocal = await comm.connect()
     #_login_response = await self._sendReceive(comm, self.loginAdminMessage)
     await comm.send_json_to(self.loginAdminMessage)
     _login_response = await comm.receive_json_from()
 
+
     await comm.send_json_to({
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
       WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      WEBSOCKET_DATATYPE : JSON_CLOSED_DATE,
+      WEBSOCKET_DATATYPE : keyword,
       WEBSOCKET_DATA : {
         "close_date" : "2021-11-30"
       }
     })
 
-
+    response = await comm.receive_json_from()
     await comm.disconnect()
+    closedDate: ClosedDate = await database_sync_to_async(ClosedDate.objects.get)(close_date=datetime.date(2021,11,30))
+
+    self.assertIn(WEBSOCKET_DATA, response)
+    data = response[WEBSOCKET_DATA]
+    self.assertIn(keyword, data)
+    models = data[keyword]
+
+
+

@@ -135,7 +135,6 @@ def validateMessage(message : Dict) -> str:
   if not message.get(WEBSOCKET_MESSAGE_TYPE):
     return ERROR_NO_MESSAGE_TYPE
   if not message[WEBSOCKET_MESSAGE_TYPE] in WEBSOCKET_MESSAGE_TYPES:
-    print(f"{message[WEBSOCKET_MESSAGE_TYPE]} not in WEBSOCKET_MESSAGE_TYPES")
     return ERROR_INVALID_MESSAGE_TYPE
   if not message.get(WEBSOCKET_JAVASCRIPT_VERSION):
     return ERROR_NO_JAVASCRIPT_VERSION
