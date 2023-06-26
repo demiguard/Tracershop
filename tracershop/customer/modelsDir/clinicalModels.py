@@ -15,7 +15,7 @@ class Isotope(SubscribeableModel):
   symbol = models.CharField(max_length=5, null=True)
 
 def bitmask_dates_decode(bitmask: int) -> List[int]:
-  """Encodes a int
+  """Decodes a bit, encoded so that first bit is monday, second bit is tuesday
 
   Args:
       bitmask (int): _description_

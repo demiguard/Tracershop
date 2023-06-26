@@ -114,17 +114,17 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   delivery_time = TimeField()
   destination = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   production_run = ForeignKey(ActivityProduction, on_delete=RESTRICT)
-  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+  expiration_date = DateField(null=True, default=None)
 
   def __str__(self) -> str:
     return f"ActivityDeliveryTimeSlot at {self.production_run.production_day} - {self.delivery_time} to {self.destination.owner.short_name}"
 
 
 class OrderStatus(IntegerChoices):
-  Ordered = 0
-  Accepted = 1
-  Released = 2
-  Rejected = 3
+  Ordered = 1
+  Accepted = 2
+  Released = 3
+  Rejected = 4
 
 class ActivityOrder(TracershopModel):
   activity_order_id = BigAutoField(primary_key=True)

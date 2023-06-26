@@ -66,6 +66,7 @@ class ShopOrderPage extends Component {
   }
 
   render(){
+    return (<div></div>)
     let activeCustomer = this.props[JSON_CUSTOMER].get(Number(this.state.activeCustomer));
     if (activeCustomer == undefined){
       console.log("Undefined Customer not found")

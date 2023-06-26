@@ -1,21 +1,19 @@
-import { ajax } from "jquery";
+
 import React, { Component } from "react";
-import { Modal, Button, Table, Row, FormControl, Col, Form } from "react-bootstrap";
-import { changeState } from "../../lib/state_management.js";
-import {renderTableRow, renderSelect} from "../../lib/rendering.js";
-import { JSON_CUSTOMER,WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
-  JSON_DELIVER_TIME, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, LEGACY_KEYWORD_DELIVER_TIME,
-  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, DAYS_OBJECTS,
-} from "../../lib/constants.js";
-import { FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
-import { addCharacter } from "../../lib/utils.js";
+import { Modal, Button, Table, Row, FormControl, Col, Form, Container, Card, InputGroup } from "react-bootstrap";
+import { DAYS, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_TIME_SLOTS, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_TIME_KEYWORD, } from "../../lib/constants.js";
 import { CloseButton } from "../injectable/buttons.js";
 import propTypes from "prop-types";
 import { Select } from "../injectable/select.js"
 import { ClickableIcon } from "../injectable/icons.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js"
+import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 
 import styles from '../../css/Site.module.css'
+import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "../../dataclasses/dataclasses.js";
+import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME, KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN } from "../../dataclasses/keywords.js";
+import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "../../lib/formatting.js";
+import { changeState } from "../../lib/state_management.js";
 
 
 const RunOptions = [
@@ -24,470 +22,565 @@ const RunOptions = [
   {name : "Ulige uger", val : 3}
 ];
 
+function MarginInputGroup({children}){
+  return <InputGroup style={{marginTop : "5px"}}>
+    {children}
+  </InputGroup>
+}
+
 
 export { CustomerModal }
 
+const cleanTimeSlot = {
+  weekly_repeat : 0,
+  delivery_time : "",
+  production_run : 0,
+};
+
+const cleanEndpoint = {
+  name : "",
+  address : "",
+  city : "",
+  zip_code : "",
+  phone : "",
+}
+
+const timeSlotErrorContainer = {
+  delivery_time_error : false,
+}
+
+
+const propType = {}
+
 class CustomerModal extends Component {
-  static propTypes = {
-    activeCustomer : propTypes.object,
-    deliverTimes : propTypes.instanceOf(Map),
-    onClose : propTypes.func.isRequired,
-    runs : propTypes.instanceOf(Map),
-    //websocket : propTypes.instanceOf(TracerWebsocket),
-  }
+  static propTypes = propType
 
   constructor(props) {
     super(props);
 
-    const customer = this.props.activeCustomer;
-    const DeliverTimes = new Map();
-    for(const [_DTID, deliverTime] of this.props.deliverTimes) {
-      if(deliverTime.BID == customer.ID)
-        DeliverTimes.set(deliverTime.DTID, deliverTime);
+    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
+
+
+    const endpointIDs = []
+    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
+      const /**@type {DeliveryEndpoint} */ endpoint = _endpoint
+
+      if(endpoint.owner == customer.id){
+        endpointIDs.push(endpointID)
+      }
+    }
+
+    const activeEndpointID = endpointIDs[0]
+    const activeEndpoint = this.props[JSON_ENDPOINT].get(activeEndpointID);
+    let activeTracer = undefined;
+    for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
+      const /**@type {Tracer} */ tracer = _tracer
+      if(tracer.tracer_type == TRACER_TYPE_ACTIVITY){
+        activeTracer = tracerID;
+        break;
+      }
+    }
+
+    if (activeEndpoint === undefined){
+      activeEndpoint = {...cleanEndpoint}
     }
 
     this.state = {
-      customer : customer,
-      deliverTimes : DeliverTimes,
-
-      Realname : customer.Realname,
-      contact : customer.contact,
-      tlf : customer.tlf,
-      email : customer.email,
-      email2 : customer.email2,
-      email3 : customer.email3,
-      email4 : customer.email4,
-      addr1  : customer.addr1,
-      addr2  : customer.addr2,
-      addr3  : customer.addr3,
-      addr4  : customer.addr4,
-      overhead : customer.overhead,
-
-      new_day : 1,
-      new_run : 1,
-      new_dtime : "",
-      new_repeat_t : 1,
-
-      errorMessage : "",
-    };
+      errors : {},
+      customerDirty : false,
+      endpointDirty : false,
+      timeSlotDirty : false,
+      endpoints : endpointIDs,
+      activeEndpoint : activeEndpointID,
+      activeTimeSlot : undefined,
+      tempCustomer : {...customer},
+      tempEndpoint : {...activeEndpoint},
+      tempTimeSlot : {...cleanTimeSlot}
   }
+}
 
-  componentDidUpdate(prevProps){
-    if (prevProps.deliverTimes !== this.props.deliverTimes){
-      const DeliverTimes = new Map();
-        for(const [_DTID, deliverTime] of this.props.deliverTimes) {
-      if(deliverTime.BID == this.props.activeCustomer.ID)
-        DeliverTimes.set(deliverTime.DTID, deliverTime);
-      }
-      this.setState({...this.state, deliverTimes : DeliverTimes})
-    }
-  }
-
-  // ValidationFunctions
-  OverheadValidation(overheadString, This){
-    const overhead = ParseDanishNumber(overheadString);
-    if(isNaN(overhead)){
-      return "Overhead skal være et tal.";
-    }
-    if(overhead < 0){
-      return "Overhead skal være 0 eller positivt tal";
-    }
-    This.setState({...This.state, overhead : overhead});
-    return "";
-  }
-
-  AlwaysValidate(){
-    return "";
-  }
-
-  // Customer updates
   /**
-   * This function produces anonymous functions that updates the customer
-   *  Note that the customer is duplicated in state and props.
-   * @param {String} kw - Keyword of the Customer, that is being altered
-   * @param {CallableFunction} validateFunction - A function that validate the keyword
-   * @param {Object} This - the customer modal
-   * @returns {CallableFunction} -
+   * 
+   * @param {ActivityDeliveryTimeSlot} timeSlot 
+   * @returns {Number}
    */
-  changeCustomer(kw, validateFunction){
-    const returnFunction = (_event) => {
-      const ErrorMessage = validateFunction(this.state[kw], this);
-      if (ErrorMessage === ""){
-        this.setState({...this.state, errorMessage : ErrorMessage});
-        this.state.customer[kw] = this.state[kw];
-        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
-        message[WEBSOCKET_DATATYPE] = JSON_CUSTOMER;
-        message[WEBSOCKET_DATA] = this.state.customer;
-        this.props.websocket.send(message);
-      } else {
-        this.setState({...this.state, errorMessage : ErrorMessage});
-      }
-    };
-    return returnFunction.bind(this);
-  }
-
-  deleteDeliverTime(deliverTime, This){
-    const returnFunction = (_event) => {
-      const message = This.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
-      message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
-      message[WEBSOCKET_DATA] = deliverTime;
-      This.props.websocket.send(message);
-    }
-    return returnFunction;
+  weeklyTimeTableDayGetter(timeSlot) {
+    const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run);
+    return production.production_day;
   }
 
   /**
-   * This works like the addCharacter, however since it's doesn't effect a direct state
-   * change, thus it doesn't work.
-   * @param {Object} deliverTime - Delivertime to be updated
-   * @returns {CallableFunction} - Event function , that handles the different delivertimes dtime ':' to be added
+   * 
+   * @param {ActivityDeliveryTimeSlot} timeSlot 
+   * @returns {Number}
    */
-  addCharacterDeliverTime(deliverTime){
-    const returnFunction = (event) =>{
-      if(event.code == "Backspace") return;
-      if([2,5].includes(event.target.value.length)){
-        const newState = {...this.state}
-        const newDeliverTime = {...deliverTime};
-        newDeliverTime.dtime = event.target.value + ':';
-        newState.deliverTimes.set(newDeliverTime.DTID, newDeliverTime);
-        this.setState(newState);
-      }
-    }
-    return returnFunction.bind(this);
+  weeklyTimeTableHourGetter(timeSlot) {
+    const hour = Number(timeSlot.delivery_time.substring(0,2));
+    const minutes = Number(timeSlot.delivery_time.substring(3,5));
+    return hour + minutes / 60
   }
 
-  createDeliverTime(){
-    // Validation
-    const DeliverTime = FormatTime(this.state.new_dtime);
-    if (DeliverTime == null){
-      this.setState({...this.state, errorMessage : "Modtage tiden er ikke et tidspunkt"})
-      return;
+  /**
+   * This produces the function that is called when the user clicks on an floating
+   * timeslot (entry)
+   * @param {ActivityDeliveryTimeSlot} entry
+   */
+  weeklyTimeTableEntryOnClick(entry){
+    const returnFunction = () => {
+      this.setState({...this.state, activeTimeSlot : entry.id, tempTimeSlot : {...entry},  timeSlotDirty: false})
     }
-    // Send data
-    const newDeliverTime = {
-      day : this.state.new_day,
-      run : this.state.new_run,
-      dtime : DeliverTime,
-      repeat_t : this.state.new_repeat_t,
-      BID : this.props.userid
-    };
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    message[WEBSOCKET_DATA] = newDeliverTime;
-    message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
-    this.props.websocket.send(message);
-  }
 
-
-  SelectUpdateDeliverTime(kw, deliverTime){
-    const returnFunction = (event) => {
-      const formattedValue = Number(event.target.value);
-      const newState = {...this.state};
-      const NewDeliverTime = {...deliverTime};
-      NewDeliverTime[kw] = formattedValue;
-      newState.deliverTimes.set(NewDeliverTime.DTID, NewDeliverTime);
-
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
-      message[WEBSOCKET_DATA] = deliverTime;
-      message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
-      this.props.websocket.send(message);
-    };
     return returnFunction.bind(this)
   }
 
+  weeklyTimeTableInnerText(entry){
+    return <div style={{
+      display: 'block',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      width: '50%',
+      //padding : '0px',
+    }}><ClickableIcon
+      src={"static/images/delivery.svg"}
+    /></div>
+  }
 
-  changeDeliverTime(deliverTime){
-    const returnFunction = (event) => {
+  /**
+   * 
+   * @param {*} entry 
+   * @returns {string}
+   */
+  weeklyTimeTableEntryColor(entry){
+    if(entry.id == this.state.activeTimeSlot){
+      return 'orange';
+    }
+
+    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ALL){
+      return 'lightblue';
+    }
+    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.EVEN){
+      return 'lightgreen';
+    }
+    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ODD){
+      return '#FFEE99';
+    }
+    throw "Unknown weekly repeat"
+  }
+
+  changeTempObject(tempObjectKeyword, tempKeyword, dirtyKeyword){
+    const event_function = (event) => {
       const newState = {...this.state};
-      const NewDeliverTime = {...deliverTime};
-      NewDeliverTime[LEGACY_KEYWORD_DELIVER_TIME] = event.target.value;
-      newState.deliverTimes.set(NewDeliverTime.DTID, NewDeliverTime);
-      this.setState(newState);
+      const newTempObject = {...this.state[tempObjectKeyword]}
+      newTempObject[tempKeyword] = event.target.value;
+      newState[tempObjectKeyword] = newTempObject;
+      newState[dirtyKeyword] = true;
+      this.setState(newState)
     }
-    return returnFunction;
+    return event_function.bind(this)
+  }
+
+  /**
+   * Checks if the timeslot's field contains valid data
+   * @param {ActivityDeliveryTimeSlot} timeSlot - timeslot in question
+   * @returns {bool} - True if timeSlot is valid, false otherwise.
+   */
+  validateTimeSlot(timeSlot){
+    const delivery_time = FormatTime(timeSlot.delivery_time)
+    if(delivery_time === null){
+      return false;
+    }
+
+    if(!this.state.activeEndpoint){ // database indexes are 1 index therefore always return true on valid endpotin
+      return false
+    }
+
+    return true;
+  }
+
+  /**
+   * Function called in response to the user clicking the plus icon over Endpoints
+   *
+   * Should update state for a new endpoint to be filled
+   */
+  initializeEndpoint(){
+    this.setState({
+      activeEndpoint : undefined,
+      endpointDirty : false,
+      tempEndpoint : {...cleanEndpoint},
+    })
+  }
+  /**
+   * Function called in response to the user clicking the plus icon over Time slots
+   *
+   * Should update state for a new endpoint to be filled
+   */
+  initializeTimeSlotEndpoint(){
+    this.setState({
+      activeTimeSlot : undefined,
+      tempTimeSlot : {...cleanTimeSlot},
+      timeSlotDirty : false,
+    })
+  }
+
+  /**
+   * Function called in response to the user clicking accept key on customers
+   *
+   * Should update the customer
+   */
+  confirmCustomer(){
+    const customer = {...this.state.tempCustomer}
+
+    const promise = this.props[PROP_WEBSOCKET].sendEditModel(JSON_CUSTOMER, [customer]).then(() => {
+      this.setState({...this.state, customerDirty : false})
+    })
   }
 
 
-  saveDeliverTime(deliverTime){
-    const returnFunction = (_event) => {
-      const FormattedTime = FormatTime(deliverTime.dtime);
-      if(FormattedTime){
-        const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
-        message[WEBSOCKET_DATA] = deliverTime;
-        message[WEBSOCKET_DATATYPE] = JSON_DELIVER_TIME;
-        this.props.websocket.send(message);
+  /**
+   * Function called in response to the user clicking accept key on endpoint
+   *
+   * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
+   */
+  confirmEndpoint(){
+    // This is the object that will be send to the server
+    const endpoint = {...this.state.tempEndpoint};
+    endpoint.owner = this.props[PROP_ACTIVE_CUSTOMER];
+    let promise;
+    if(this.state.activeEndpoint === undefined){
+      promise = this.props[PROP_WEBSOCKET].sendCreateModel(JSON_ENDPOINT, [endpoint])
+    } else {
+      promise = this.props[PROP_WEBSOCKET].sendEditModel(JSON_ENDPOINT, [endpoint])
+    }
+    promise.then((response) => {
+      console.log(response)
+      const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][JSON_ENDPOINT])
+
+      let endpointID, endpoint;
+      for(const [_endpointID, _endpoint] of map){ // it's only one iteration long
+        endpointID = _endpointID;
+        endpoint = _endpoint;
+        break;
+      }
+
+      this.setState({
+        ...this.state,
+        endpointDirty : false,
+        tempEndpoint: {...endpoint},
+        activeEndpoint : endpointID,
+      })
+    })
+  }
+
+
+  /**
+   * Function called in response to the user clicking accept key on timeslots
+   *
+   * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
+   */
+  confirmTimeSlot(){
+    if(!this.validateTimeSlot(this.state.tempTimeSlot)){
+      // validateTimeSlot is responsible for updating state, such that errors
+      // are displayed
+      return;
+    }
+    // This is the object that will be send to the server
+    const timeSlot = {...this.state.tempTimeSlot};
+    timeSlot.destination = this.state.activeEndpoint
+    timeSlot.delivery_time = FormatTime(this.state.tempTimeSlot.delivery_time);
+    let promise;
+    if(this.state.activeTimeSlot === undefined){
+      promise = this.props[PROP_WEBSOCKET].sendCreateModel(JSON_DELIVER_TIME, [timeSlot])
+    } else {
+      promise = this.props[PROP_WEBSOCKET].sendEditModel(JSON_DELIVER_TIME, [timeSlot])
+    }
+    promise.then((_data) => {
+      this.setState({...this.state, timeSlotDirty : false, tempTimeSlot : {...cleanTimeSlot} })
+    })
+  }
+
+
+  renderCustomerConfiguration(){
+    //const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
+    const tempCustomerShortName = nullParser(this.state.tempCustomer.short_name);
+    const tempCustomerLongName = nullParser(this.state.tempCustomer.long_name);
+    const tempCustomerBillingAddress = nullParser(this.state.tempCustomer.billing_address);
+    const tempCustomerBillingCity = nullParser(this.state.tempCustomer.billing_city);
+    const tempCustomerBillingZipCode = nullParser(this.state.tempCustomer.zip_code);
+    const tempCustomerBillingBillingEmail = nullParser(this.state.tempCustomer.billing_email);
+
+    return (<Col>
+      <Row>
+        <Col><h4>Kunde</h4></Col>
+        {this.state.customerDirty ?
+          <Col style={{ justifyContent : "right", display: "flex"}}>
+            <ClickableIcon src={"static/images/accept.svg"} onClick={this.confirmCustomer.bind(this)}/>
+          </Col> : ""}
+      </Row>
+      <MarginInputGroup>
+        <InputGroup.Text>Internt Navn</InputGroup.Text>
+        <Form.Control
+          value={tempCustomerShortName}
+          onChange={this.changeTempObject('tempCustomer', 'short_name', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Kunde Navn</InputGroup.Text>
+        <Form.Control
+          value={tempCustomerLongName}
+          onChange={this.changeTempObject('tempCustomer', 'long_name', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings Addresse</InputGroup.Text>
+        <Form.Control
+          value={tempCustomerBillingAddress}
+          onChange={this.changeTempObject('tempCustomer', 'billing_address', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings By</InputGroup.Text>
+        <Form.Control
+          value={tempCustomerBillingCity}
+          onChange={this.changeTempObject('tempCustomer', 'billing_city', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
+        <Form.Control
+          value={tempCustomerBillingZipCode}
+          onChange={this.changeTempObject('tempCustomer', 'billing_zip_code', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings Email</InputGroup.Text>
+        <Form.Control
+          value={tempCustomerBillingBillingEmail}
+          onChange={this.changeTempObject('tempCustomer', 'billing_email', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Dispenser id</InputGroup.Text>
+        <Form.Control
+          value={this.state.tempCustomer.dispenser_id}
+          onChange={this.changeTempObject('tempCustomer', 'dispenser_id', 'customerDirty').bind(this)}
+        />
+      </MarginInputGroup>
+    </Col>)
+  }
+
+  renderActiveEndpoint(){
+    const /**@type {DeliveryEndpoint} */ endpoint = this.props[JSON_ENDPOINT].get(this.state.activeEndpoint)
+
+    const endpointOptions = [];
+    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
+      const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
+      if(endpoint.owner === this.props[PROP_ACTIVE_CUSTOMER]){
+        endpointOptions.push({id : endpointID, name : endpoint.name})
       }
     }
-    return returnFunction.bind(this);
-  }
-
-  // Rendering Functions
-  renderRow (deliverTime) {
-    const productionOptions = [];
-
-    for(const [_PTID, production] of this.props.runs){
-      if(deliverTime.day === production.day) productionOptions.push(production);
-    }
-
-    const tableRow = renderTableRow(deliverTime.DTID,[
-      <Select
-        label={`delivertime-day-${deliverTime.DTID}`}
-        options={DAYS_OBJECTS}
-        valueKey={"day"}
-        nameKey={"name"}
-        onChange={this.SelectUpdateDeliverTime("day", deliverTime).bind(this)}
-        initialValue={deliverTime.day}
-      />,
-      <Select
-        label={`delivertime-run-${deliverTime.DTID}`}
-        options={productionOptions}
-        valueKey={"run"}
-        nameKey={"run"}
-        onChange={this.SelectUpdateDeliverTime("run", deliverTime).bind(this)}
-        initialValue={deliverTime.run}
-      />,
-      (<FormControl
-          aria-label={`delivertime-dtime-${deliverTime.DTID}`}
-          value={deliverTime.dtime}
-          onBlur={this.saveDeliverTime(deliverTime).bind(this)}
-          onChange={this.changeDeliverTime(deliverTime).bind(this)}
-          onKeyDown={this.addCharacterDeliverTime(deliverTime).bind(this)}
-        />),
-      <Select
-      label={`delivertime-repeat_t-${deliverTime.DTID}`}
-        options={RunOptions}
-        valueKey={"val"}
-        nameKey={"name"}
-        onChange={this.SelectUpdateDeliverTime("repeat_t", deliverTime).bind(this)}
-        initialValue={deliverTime.repeat_t}
-      />,
-      <ClickableIcon
-        altText={`delete-delivertime-${deliverTime.DTID}`}
-        src="static/images/decline.svg"
-        onClick={this.deleteDeliverTime(deliverTime, this).bind(this)}/>
-    ]);
-    return tableRow;
-  }
-
-  renderAddRow() {
-    // Yeah there's dublicate code, that could be solved by some dependency injection & composition magic
-    // Sorry for the bad code
-    const productionOptions = [];
-
-    let initialRun = undefined;
-
-
-    for(const [_PTID, production] of this.props.runs){
-      if(Number(this.state.new_day) === production.day){
-        if(initialRun === undefined){
-          initialRun = production.run
-        }
-        productionOptions.push(production);
+    const activityTracersOptions = [];
+    for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
+      const /**@type {Tracer} */ tracer = _tracer
+      if(tracer.tracer_type == TRACER_TYPE_ACTIVITY){
+        activityTracersOptions.push({id : tracerID, name : tracer.shortname});
       }
     }
 
-    return renderTableRow(-1,[
-      <Select
-        label={`delivertime-day-new`}
-        options={DAYS_OBJECTS}
-        valueKey={"day"}
-        nameKey={"name"}
-        onChange={changeState("new_day", this).bind(this)}
-        initialValue={1}
-      />,
-      <Select
-        label={`delivertime-run-new`}
-        options={productionOptions}
-        valueKey={"run"}
-        nameKey={"run"}
-        onChange={changeState("new_run")}
-        initialValue={initialRun}
-      />,
-      (<FormControl
-          aria-label={`delivertime-dtime-new`}
-          value={this.state.new_dtime}
-          onChange={changeState("new_dtime", this)}
-          onKeyDown={addCharacter(':',"new_dtime",[2,5],this).bind(this)}
-        />),
-      <Select
-        label={`delivertime-repeat_t-new`}
-        options={RunOptions}
-        valueKey={"val"}
-        nameKey={"name"}
-        onChange={changeState("new_repeat_t", this).bind(this)}
-        initialValue={1}
-      />,
-      <ClickableIcon
-        src={"static/images/accept.svg"}
-        onClick={this.createDeliverTime.bind(this)}
-        altText={"add-new-delivertime"}
-      />
-    ]);
+    const tempEndpointName = nullParser(this.state.tempEndpoint.name);
+    const tempEndpointAddress = nullParser(this.state.tempEndpoint.address);
+    const tempEndpointCity = nullParser(this.state.tempEndpoint.city);
+    const tempEndpointZipCode = nullParser(this.state.tempEndpoint.zip_code);
+    const tempEndpointPhone = nullParser(this.state.tempEndpoint.phone);
+
+    return(<Col>
+      <Row>
+        <Col><h4>LeveringsSted</h4></Col>
+        <Col style={{display: "flex", justifyContent: "right"}}>
+          {this.state.endpointDirty ? <ClickableIcon
+                                        src={"static/images/accept.svg"}
+                                        onClick={this.confirmEndpoint.bind(this)}
+                                        /> : ""}
+          {this.state.activeEndpoint != undefined
+            ? <ClickableIcon
+                src={"static/images/plus.svg"}
+                onClick={this.initializeEndpoint.bind(this)}
+              /> : ""}
+        </Col>
+      </Row>
+      <MarginInputGroup>
+        <InputGroup.Text>Leveringssteder</InputGroup.Text>
+        <Select
+          options={endpointOptions}
+          nameKey='name'
+          valueKey='id'
+          onChange={changeState('activeEndpoint', this)}
+          initialValue={this.state.activeEndpoint}
+        ></Select>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Aktivitets Tracer</InputGroup.Text>
+        <Select
+          options={activityTracersOptions}
+          nameKey="name"
+          valueKey="id"
+          initialValue={this.state.activeTracer}
+          onChange={changeState('activeTracer', this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Internt Navn</InputGroup.Text>
+        <Form.Control
+          value={tempEndpointName}
+          onChange={this.changeTempObject('tempEndpoint', 'name', 'endpointDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings Addresse</InputGroup.Text>
+        <Form.Control
+          value={tempEndpointAddress}
+          onChange={this.changeTempObject('tempEndpoint', 'address', 'endpointDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings By</InputGroup.Text>
+        <Form.Control
+          value={tempEndpointCity}
+          onChange={this.changeTempObject('tempEndpoint', 'city', 'endpointDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
+        <Form.Control
+          onChange={this.changeTempObject('tempEndpoint', 'zip_code', 'endpointDirty').bind(this)}
+          value={tempEndpointZipCode}></Form.Control>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
+        <Form.Control
+          onChange={this.changeTempObject('tempEndpoint', 'phone', 'endpointDirty').bind(this)}
+          value={tempEndpointPhone}
+        />
+      </MarginInputGroup>
+    </Col>)
   }
 
-  renderbody(){
-    const deliverTimes = []
-    for(const [_, deliverTime] of this.state.deliverTimes) {
-      deliverTimes.push(deliverTime)
-    }
-    deliverTimes.sort((dt1, dt2) => {
-      if (dt1.day - dt2.day != 0){
-        return dt1.day - dt2.day
-      } else {return dt1.run - dt2.day}
-    });
-    const renderedDeliverTimes = []; // Filtering have been done
-    for(const dt of deliverTimes){
-      renderedDeliverTimes.push(this.renderRow(dt));
-    }
-    renderedDeliverTimes.push(this.renderAddRow());
+  renderDeliveryTimeTable(){
+    const timeSlots = []
+    const /**@type {DeliveryEndpoint} */ endpoint = (this.state.activeEndpoint != undefined) ? this.props[JSON_ENDPOINT].get(this.state.activeEndpoint) : this.state.tempEndpoint;
 
-    return (
-      <div>
-      <Table>
-        <tbody>
-          {renderTableRow(1, [
-            "Navn:",
-            <FormControl
-              aria-label="customer-realname"
-              value={this.state.Realname}
-              onChange={changeState("Realname", this)}
-              onBlur={this.changeCustomer("Realname",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(2, ["Overhead:", <FormControl
-              aria-label="customer-overhead"
-              value={this.state.overhead}
-              onChange={changeState("overhead", this)}
-              onBlur={this.changeCustomer("overhead",
-                          this.OverheadValidation).bind(this)}
-            />])
-          }
-          {renderTableRow(3, [
-            "Kontakt Person:", <FormControl
-            aria-label="customer-contact"
-              value={this.state.contact}
-              onChange={changeState("contact", this)}
-              onBlur={this.changeCustomer("contact",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(4,["Telefon", <FormControl
-              aria-label="customer-tlf"
-              value = {this.state.tlf}
-              onChange={changeState("tlf", this)}
-              onBlur={this.changeCustomer("tlf",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(5, ["Afdeling", <FormControl
-              aria-label="customer-addr-1"
-              value = {this.state.addr1}
-              onChange={changeState("addr1", this)}
-              onBlur={this.changeCustomer("addr1",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(6, ["Hospital", <FormControl
-              aria-label="customer-addr-2"
-              value = {this.state.addr2}
-              onChange={changeState("addr2", this)}
-              onBlur={this.changeCustomer("addr2",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(7, ["Addresse", <FormControl
-              aria-label="customer-addr-3"
-              value = {this.state.addr3}
-              onChange={changeState("addr3", this)}
-              onBlur={this.changeCustomer("addr3",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(8, ["Post nummer", <FormControl
-              aria-label="customer-addr-4"
-              value = {this.state.addr4}
-              onChange={changeState("addr4", this)}
-              onBlur={this.changeCustomer("addr4",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(9, ["Email", <FormControl
-              aria-label="customer-email-1"
-              value = {this.state.email}
-              onChange={changeState("email", this)}
-              onBlur={this.changeCustomer("email",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(10, ["Email", <FormControl
-              aria-label="customer-email-2"
-              value = {this.state.email2}
-              onChange={changeState("email2", this)}
-              onBlur={this.changeCustomer("email2",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(11, ["Email", <FormControl
-              aria-label="customer-email-3"
-              value = {this.state.email3}
-              onChange={changeState("email3", this)}
-              onBlur={this.changeCustomer("email3",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-          {renderTableRow(12, ["Email", <FormControl
-              aria-label="customer-email-4"
-              value = {this.state.email4}
-              onChange={changeState("email4", this)}
-              onBlur={this.changeCustomer("email4",
-                          this.AlwaysValidate).bind(this)}
-            />])
-          }
-        </tbody>
-      </Table>
-        {
-          this.state.errorMessage != "" ? <AlertBox
-            message={this.state.errorMessage}
-            level={ERROR_LEVELS.error}
-          /> : <div/>
-        }
-        <Row>
-          <Col className="col-12" > Kunde nummer: {this.state.customer.kundenr}</Col>
-        </Row>
-        <Table>
-          <thead>
-            <tr>
-              <th>Ugedag</th>
-              <th>Kørsel</th>
-              <th>Modtagetid</th>
-              <th>Gentage</th>
-              <th/>
-            </tr>
-          </thead>
-          <tbody>
-            {renderedDeliverTimes}
-          </tbody>
-        </Table>
-      </div>
-    );
+    for(const [timeSlotID, _timeSlot] of this.props[JSON_DELIVER_TIME]){
+      const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
+      // Note that if it's a new endpoint, then id is undefined
+      if(timeSlot.destination == endpoint.id){
+        timeSlots.push(timeSlot);
+      }
+    }
+
+    const weeklyTimeTableProps = {};
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRIES] = timeSlots;
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_DAY_GETTER] = this.weeklyTimeTableDayGetter.bind(this);
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] = this.weeklyTimeTableHourGetter.bind(this); // Bind is redundant
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] = this.weeklyTimeTableEntryOnClick.bind(this);
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] = this.weeklyTimeTableEntryColor.bind(this);
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_INNER_TEXT] = this.weeklyTimeTableInnerText.bind(this);
+
+    return(<WeeklyTimeTable {...weeklyTimeTableProps}/>);
   }
+
+  renderActiveTimeSlot(){
+    const timeSlot = this.props[JSON_DELIVER_TIME].get(this.state.activeTimeSlot)
+
+    const WeeklyRepeatOptions = [
+      { id : 0, name : "Alle Uger"},
+      { id : 1, name : "Lige Uger"},
+      { id : 2, name : "Ulige Uger"},
+    ]
+
+    const productionOptions = [];
+    for(const [productionID, _production] of this.props[JSON_PRODUCTION]){
+      const /**@type {ActivityProduction} */ production = _production;
+      productionOptions.push({
+        id : productionID, name : `${getDateName(production.production_day)} - ${production.production_time}`
+      })
+    }
+
+    return (<Col>
+      <Row>
+        <Col><h4>Leveringstidspunkt</h4></Col>
+        <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
+        {this.state.timeSlotDirty ?
+          <ClickableIcon
+            src={"static/images/accept.svg"}
+            onClick={this.confirmTimeSlot.bind(this)}
+          /> : ""}
+        {this.state.activeTimeSlot != undefined ?
+          <ClickableIcon
+            src={"static/images/plus.svg"}
+            onClick={this.initializeTimeSlotEndpoint.bind(this)}
+          /> : ""}
+        </Col>
+
+      </Row>
+      <MarginInputGroup>
+        <InputGroup.Text>Leveringstid</InputGroup.Text>
+        <Form.Control
+          value={this.state.tempTimeSlot.delivery_time}
+          onChange={this.changeTempObject('tempTimeSlot', 'delivery_time', 'timeSlotDirty').bind(this)}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Ugenlig gentagelse</InputGroup.Text>
+        <Select
+          options={WeeklyRepeatOptions}
+          nameKey={"name"}
+          valueKey ={"id"}
+          onChange={this.changeTempObject('tempTimeSlot', 'weekly_repeat', 'timeSlotDirty').bind(this)}
+          initialValue={this.state.tempTimeSlot.weekly_repeat}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Levering fra Production</InputGroup.Text>
+        <Select
+          options={productionOptions}
+          nameKey={"name"}
+          valueKey ={"id"}
+          onChange={this.changeTempObject('tempTimeSlot', 'production_run', 'timeSlotDirty').bind(this)}
+          initialValue={this.state.tempTimeSlot.production_run}
+        />
+      </MarginInputGroup>
+    </Col>)
+
+  }
+
 
   render() {
+    console.log(this.props, this.state)
+
+    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
+
     return (
       <Modal
         show={true}
-        size="lg"
-        onHide ={this.props.onClose}
+        size="xl"
+        onHide ={this.props[PROP_ON_CLOSE]}
         className = {styles.mariLight}
       >
         <Modal.Header>
-          <Modal.Title>Kunde Konfigurering - {this.state.customer.UserName}</Modal.Title>
+          <Modal.Title>Kunde Konfigurering - {customer.short_name} </Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {this.renderbody()}
+          <Container>
+            <Row>
+              {this.renderCustomerConfiguration()}
+              {this.renderActiveEndpoint()}
+              {this.renderActiveTimeSlot()}
+            </Row>
+            <br></br>
+            <Row>{this.renderDeliveryTimeTable()}</Row>
+          </Container>
         </Modal.Body>
         <Modal.Footer>
-          <CloseButton onClick={this.props.onClose}/>
+          <CloseButton onClick={this.props[PROP_ON_CLOSE]}/>
         </Modal.Footer>
       </Modal>
     );

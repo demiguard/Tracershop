@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 import propTypes from 'prop-types'
 import { Button, ButtonGroup, Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
-
+import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction } from "../../dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 import styles from '../../css/Site.module.css'
 import { renderTableRow } from "../../lib/rendering.js";
@@ -10,12 +10,13 @@ import { Calculator } from "../injectable/calculator.js";
 import Authenticate from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
-import { ClickableIcon } from "../injectable/icons.js";
+import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { compareDates as compareDates } from "../../lib/utils.js";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_VIAL, WEBSOCKET_DATA,
-  WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE,
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "../../lib/constants.js";
-import { batchNumberValidator, FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING, PROP_WEBSOCKET, WEBSOCKET_DATA,
+  WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_MODEL_CREATE,  WEBSOCKET_MESSAGE_MODEL_EDIT} from "../../lib/constants.js";
+import { batchNumberValidator, dateToDateString, FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
+import { KEYWORD_ActivityDeliveryTimeSlot_DESTINATION, KEYWORD_ActivityOrder_STATUS, KEYWORD_DeliveryEndpoint_OWNER, KEYWORD_Vial_ACTIVITY, KEYWORD_Vial_FILL_TIME, KEYWORD_Vial_LOT_NUMBER, KEYWORD_Vial_VOLUME } from "../../dataclasses/keywords.js";
 
 export { ActivityModal }
 
@@ -32,8 +33,8 @@ const initial_state = {
   errorMessage : "",
   addingVial: false,
   newVial : {
-    charge : "",
-    filltime : "",
+    lot_number : "",
+    fill_time : "",
     volume : "",
     activity : "",
   }
@@ -42,6 +43,8 @@ const initial_state = {
 
 
 class ActivityModal extends Component {
+  /*
+   *
   static propTypes = {
     customers: propTypes.instanceOf(Map).isRequired,
     isotopes : propTypes.instanceOf(Map).isRequired,
@@ -50,15 +53,26 @@ class ActivityModal extends Component {
     orders   : propTypes.instanceOf(Map).isRequired,
     vials    : propTypes.instanceOf(Map).isRequired,
   }
+  */
 
   constructor(props){
     super(props);
-    const order = this.props.orders.get(this.props.order);
-    const state = initial_state;
-    state.activityValue = order.amount;
-    if (order.status == 3) for (const [_, vial] of this.props.vials){
-      if(vial.order_id == order.oid){
-        state.selectedVials.add(vial.ID)
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
+    const state = {...initial_state}
+    this.minimum_status = 5
+
+    const orderIDs = []
+    for(const order of orders){
+      this.minimum_status = Math.min(this.minimum_status, order.status)
+      orderIDs.push(order.id)
+    }
+
+    if(this.minimum_status == 3){
+      for(const [vialID, _vial] of this.props[JSON_VIAL]){
+        const /**@type {Vial} */ vial = _vial
+        if(orderIDs.includes(vial.assigned_to)){
+          state.selectedVials.add(vialID)
+        }
       }
     }
 
@@ -87,19 +101,19 @@ class ActivityModal extends Component {
    */
   validateVial(vial){
     const errorMessages = [];
-    if(vial.charge == "") {
+    if(vial.lot_number == "") {
       errorMessages.push(<p key="charge">Batch nummer er ikke tastet ind</p>);
-    } else if(!batchNumberValidator(vial.charge)){
+    } else if(!batchNumberValidator(vial.lot_number)){
       errorMessages.push(<p key="charge">Batch nummer ikke i korrekt format</p>);
     }
 
-    const fillTime = FormatTime(vial.filltime)
-    if(vial.filltime == "") {
+    const fillTime = FormatTime(vial.fill_time)
+    if(vial.fill_time == "") {
       errorMessages.push(<p key="time">produktions tidpunktet er ikke tastet ind</p>);
     } else if(fillTime == null){
       errorMessages.push(<p key="time">Tidspunktet er ikke formateret korrekt: HH:MM:SS</p>);
     } else {
-      vial.filltime = fillTime;
+      vial.fill_time = fillTime;
     }
 
     const volume = ParseDanishNumber(vial.volume);
@@ -181,7 +195,7 @@ class ActivityModal extends Component {
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
     message[WEBSOCKET_DATA] = newOrder;
 
-    this.props.websocket.send(message);
+    this.props[PROP_WEBSOCKET].send(message);
     this.setState({
       usingCalculator : false
     });
@@ -195,6 +209,9 @@ class ActivityModal extends Component {
    */
   toggleVial(vialID){
     const retFunc = (event) => {
+      if(this.minimum_status == 3) {
+        return
+      }
       const selectedVials = new Set(this.state.selectedVials) //make a copy for new state
       if (selectedVials.has(vialID)){
         selectedVials.delete(vialID)
@@ -231,7 +248,7 @@ class ActivityModal extends Component {
       errorMessage : "",
       newVial : {
         charge : "",
-        filltime : "",
+        fill_time : "",
         volume : "",
         activity : "",
       }
@@ -247,24 +264,31 @@ class ActivityModal extends Component {
       return;
     }
 
-    const order = this.props.orders.get(this.props.order);
-    const customer = this.props.customers.get(order.BID)
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot  = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID]);
+    const /**@type {DeliveryEndpoint } */ endpoint = this.props[JSON_ENDPOINT].get(timeSlot.destination)
+    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint.owner)
 
-    const newVial = this.state.newVial;
-    newVial.filldate = order.deliver_datetime.substring(0, 10);
-    newVial.customer = customer.kundenr
 
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
+    const newVial = {};
+    newVial[KEYWORD_Vial_ACTIVITY] = this.state.newVial.activity;
+    newVial[KEYWORD_Vial_FILL_TIME] = this.state.newVial.fill_time;
+    newVial[KEYWORD_Vial_VOLUME] = this.state.newVial.volume;
+    newVial[KEYWORD_Vial_LOT_NUMBER] = this.state.newVial.lot_number;
+
+    newVial.fill_date = dateToDateString(this.props[PROP_ACTIVE_DATE])
+    newVial.owner = customer.id
+
+    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
     message[WEBSOCKET_DATA] = newVial;
     message[WEBSOCKET_DATATYPE] = JSON_VIAL;
-    this.props.websocket.send(message);
+    this.props[PROP_WEBSOCKET].send(message);
     this.setState({
       ...this.state,
       errorLevel : null,
       errorMessage : "",
       newVial : {
-        charge : "",
-        filltime : "",
+        lot_number : "",
+        fill_time : "",
         volume : "",
         activity : "",
       },
@@ -280,28 +304,28 @@ class ActivityModal extends Component {
   editAddingVial(key){
     // Okay I have a lot of repeated code here and it's by choice,
     // such that it's possible to easily add custom formatting to each input.
-    if(key == "charge")
+    if(key == "lot_number")
       return (event) => {
         const newState = {
           ...this.state
         };
         const newNewVial = {...this.state.newVial};
-        newNewVial.charge = event.target.value;
+        newNewVial.lot_number = event.target.value;
         newState.newVial = newNewVial
         this.setState(newState);
       }
 
-    if(key == "filltime")
+    if(key == "fill_time")
       return (event) => {
         const newState = {
           ...this.state
         };
         const newNewVial = {...this.state.newVial};
-        if(this.state.newVial.filltime.length < event.target.value.length &&
+        if(this.state.newVial.fill_time.length < event.target.value.length &&
           (event.target.value.length == 2 || event.target.value.length == 5)){
-            newNewVial.filltime = event.target.value + ':';
+            newNewVial.fill_time = event.target.value + ':';
         } else {
-          newNewVial.filltime = event.target.value;
+          newNewVial.fill_time = event.target.value;
         }
         newState.newVial = newNewVial
         this.setState(newState);
@@ -339,7 +363,8 @@ class ActivityModal extends Component {
    * @returns {CallableFunction} - Function adds vial to editing
    */
   startEditVial(vialID) {
-    const Vial = this.props.vials.get(vialID)
+    const Vial = this.props[JSON_VIAL].get(vialID)
+
     const retFunc = () => {
       const newState = { ...this.state };
       const editingVials = new Map(this.state.editingVials);
@@ -378,11 +403,11 @@ class ActivityModal extends Component {
         return;
       }
 
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
+      const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_EDIT);
       message[WEBSOCKET_DATATYPE] = JSON_VIAL;
       message[WEBSOCKET_DATA] = vial;
 
-      this.props.websocket.send(message);
+      this.props[PROP_WEBSOCKET].send(message);
       const newEditVials = new Map(this.state.editingVials);
       newEditVials.delete(vialID);
       this.setState({
@@ -394,11 +419,11 @@ class ActivityModal extends Component {
   }
 
   editVial(vialID, key){
-    if(key == "charge")
+    if(key == "lot_number")
     return (event) => {
       const editVial = {...this.state.editingVials.get(vialID)};
       const newEditingVials = new Map(this.state.editingVials);
-      editVial.charge = event.target.value;
+      editVial.lot_number = event.target.value;
       newEditingVials.set(vialID, editVial);
       this.setState({
         ...this.state,
@@ -406,14 +431,14 @@ class ActivityModal extends Component {
       });
     }
 
-  if(key == "filltime")
+  if(key == "fill_time")
     return (event) => {
-      const editVial = {...this.state.editingVials.get(vialID)};
-      if(editVial.filltime.length < event.target.value.length &&
+      const /**@type {Vial} */ editVial = {...this.state.editingVials.get(vialID)};
+      if(editVial.fill_time.length < event.target.value.length &&
         (event.target.value.length == 2 || event.target.value.length == 5)){
-          editVial.filltime = event.target.value + ':';
+          editVial.fill_time = event.target.value + ':';
       } else {
-        editVial.filltime = event.target.value;
+        editVial.fill_time = event.target.value;
       }
       const newEditingVials = new Map(this.state.editingVials);
       newEditingVials.set(vialID, editVial);
@@ -458,15 +483,19 @@ class ActivityModal extends Component {
   startFreeingOrder(){
     // ***** warnings *****
     const today = new Date();
-    const order = this.props.orders.get(this.props.order)
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
+    let date_mismatch = false;
 
-    const orderDate = new Date(order.deliver_datetime);
-    if(!compareDates(today, orderDate)){
+    for(const order of orders){
+      const orderDate = new Date(order.delivery_date);
+      date_mismatch |= (!compareDates(today, orderDate))
+    }
+    if(date_mismatch){
       this.setState({
         isFreeing : true,
         errorMessage : "Bemærk Du er i gang med at frigive en ordre, der ikke er til i dag!",
         errorLevel : ERROR_LEVELS.hint,
-      })
+      });
       return;
     }
 
@@ -486,12 +515,19 @@ class ActivityModal extends Component {
   }
 
   onClickAccept(){
-    const order = {...this.props.orders.get(this.props.order)}
-    order.status = 2;
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
-    message[WEBSOCKET_DATA] = order;
-    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
-    this.props.websocket.send(message);
+    const orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
+    const modified_orders = []
+    for(const order of orders){
+      if (order.status == 1){
+        order.status = 2
+        modified_orders.push(order)
+      }
+    }
+    if(modified_orders.length == 0){
+      return;
+    }
+
+    this.props[PROP_WEBSOCKET].sendEditState(JSON_ACTIVITY_ORDER, modified_orders)
   }
 
 
@@ -501,16 +537,22 @@ class ActivityModal extends Component {
    * @param {*} password - Inputted Password of the user
    */
   async onFree(username, password){
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
+    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
-    data[JSON_ACTIVITY_ORDER] = this.props.order;
+    const orderIDs = []
+    for(const order of orders){
+      orderIDs.push(order.id)
+    }
+    data[JSON_DELIVER_TIME] = this.props[PROP_TIME_SLOT_ID]
+    data[JSON_ACTIVITY_ORDER] = orderIDs
     data[JSON_VIAL] = [...this.state.selectedVials];
     message[WEBSOCKET_DATA] = data;
     const auth = {};
     auth[AUTH_USERNAME] = username;
     auth[AUTH_PASSWORD] = password;
     message[JSON_AUTH] = auth;
-    this.props.websocket.send(message).then((data) =>{
+    this.props[PROP_WEBSOCKET].send(message).then((data) =>{
       if (data[AUTH_IS_AUTHENTICATED]){
         this.setState({...this.state,
           isFreeing : false,
@@ -541,42 +583,149 @@ class ActivityModal extends Component {
   }
 
   // Render Functions
-  renderButtonGroup() {
-    const order = this.props.orders.get(this.props.order);
-    const customer = this.props.customers.get(order.BID);
+    /**
+   * Creates the top table with basic order information
+   * @returns {JSX.Element}
+   */
+  renderDescriptionTable(){
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot  = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID]);
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
+    const /**@type {DeliveryEndpoint } */ endpoint = this.props[JSON_ENDPOINT].get(timeSlot.destination)
+    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER])
 
-    const AcceptButton =  <MarginButton onClick={this.onClickAccept.bind(this)}>Accepter Ordre</MarginButton>;
-    const ConfirmButton = this.canFree() ? <MarginButton onClick={this.startFreeingOrder.bind(this)}>Godkend Ordre</MarginButton>
-      : <MarginButton disabled onClick={this.startFreeingOrder.bind(this)}>Godkend Ordre</MarginButton>;
 
-    const CancelFreeButton = <MarginButton onClick={this.cancelFreeing.bind(this)}>Rediger Ordre</MarginButton>
-    const PDFButton =        <MarginButton onClick={this.onClickToPDF.bind(this)}>Se føgleseddel</MarginButton>;
+    let minimum_status = 5;
+    let ordered_activity = 0;
+    let freed_time = null
+    let commentString = "";
+    let orderIDs = []
 
-    return (<div>
-              {!this.state.usingCalculator && order.status == 1 ? AcceptButton : "" }
-              {!this.state.usingCalculator && order.status == 2 && !this.state.isFreeing ? ConfirmButton : ""}
-              {!this.state.usingCalculator && order.status == 2 && this.state.isFreeing ? CancelFreeButton : ""}
-              {order.status == 3 ? PDFButton : ""}
-              <CloseButton onClick={this.props.onClose} />
-      </div>
+    for(const order of orders) {
+      ordered_activity += order.ordered_activity
+      minimum_status = Math.min(minimum_status, order.status)
+      if (order.comment){
+        commentString += `Orderer ${order.id} - ${order.comment}\n`;
+      }
+      if (freed_time == null && order.freed_datetime){
+        freed_time = order.freed_datetime;
+      }
+      orderIDs.push(<Row key={order.id}>
+        <Col>{order.id}: { order.ordered_activity } MBq</Col>
+        <Col><StatusIcon status={order.status}/></Col>
+      </Row>)
+    }
+
+    const destinationHover = <HoverBox
+      Base={<div>Destination:</div>}
+      Hover={<div>Kundens brugernavn, rigtige navn og <br/>
+        bestillerens profil, hvis tilgændelig.</div>}
+    />;
+    const destinationMessage = `${customer.long_name} - ${endpoint.name}`
+    const formattetOrderTime = `${timeSlot.delivery_time}`
+
+    const activityTableCellEditable = <Row>
+      <Col md={10} className="p-2">{Math.floor(ordered_activity)}</Col>
+      {this.state.usingCalculator ? "" :
+        <Col md={2} className="p-2">{<ClickableIcon
+                                      altText={"edit-order"}
+                                      src={"/static/images/calculator.svg"}
+                                      onClick={this.startCalculator.bind(this)}/>}
+        </Col>}
+    </Row>
+
+    const activityHover = <HoverBox
+        Base={<div>Bestilt Aktivitet</div>}
+        Hover={<div>Den mængde af aktivit kunden ønsket ved denne ordre. <br/>
+        Ikke korrigeret for andre ordre eller eventuel overhead.</div>}/>
+
+    const activityTableCellEditing = <Col md="auto" >
+        <FormControl value={this.state.activityValue} onChange={changeState("activityValue", this)}/>
+        <ClickableIcon src={"/static/images/accept.svg"} onClick={this.acceptNewActivity}/>
+      </Col>
+
+    const activityTableCellFixed = <div>{Math.floor(ordered_activity)}</div>
+
+    const canEdit = (minimum_status == 1 || minimum_status == 2) && !this.state.isFreeing;
+    let activityTableCell;
+    if (!canEdit) {
+      activityTableCell = activityTableCellFixed;
+    } else if (this.state.editingActivity){
+      activityTableCell = activityTableCellEditing
+    } else {
+      activityTableCell = activityTableCellEditable
+    }
+
+    const totalActivityHover = <HoverBox
+      Base={<div>Total Aktivitet</div>}
+      Hover={<div>Mængde af aktivitet der skal produceres til ordren.</div>}
+    />;
+
+    const totalActivity = ordered_activity;
+
+    const hasAllocation = minimum_status == 2 || minimum_status == 3;
+    const allocationMessage = minimum_status == 2 ?
+                      "Allokeret aktivitet:"
+                    : "Frigivet aktivitet:";
+    var allocationTotal = 0;
+    for(const vid of this.state.selectedVials.values()){
+      const vial = this.props[JSON_VIAL].get(vid);
+      allocationTotal += vial.activity;
+    }
+
+    const AllocationRow = renderTableRow(
+      "5",
+      [allocationMessage, Math.floor(allocationTotal)]
+    )
+
+    const TableRows = [
+      renderTableRow("1", [destinationHover, destinationMessage]),
+      renderTableRow("2", ["Levering tidspunkt:", formattetOrderTime]),
+      renderTableRow("3", ["Ordre: ", <div>{orderIDs}</div>]),
+      renderTableRow("4", [activityHover, activityTableCell]),
+    ]
+
+    if (hasAllocation) TableRows.push(AllocationRow);
+    if (freed_time != null) TableRows.push(
+      renderTableRow("6", ["Frigivet tidspunkt:", freed_time])
     );
+    if (commentString != "") TableRows.push(
+      renderTableRow("99", ["Kommentar:", commentString])
+    )
+
+    return (<Table>
+              <tbody>
+                {TableRows}
+              </tbody>
+            </Table>);
   }
 
+
   renderVialTable(){
-    const order = this.props.orders.get(this.props.order);
-    const orderDate = order.deliver_datetime.substring(0,10);
-    const customer = this.props.customers.get(order.BID);
-    const tableVials = []
-    for(let [vialID, vial] of this.props.vials){
-      if (order.status == 2 || order.status == 1){
-        if (vial.customer != customer.kundenr || vial.filldate != orderDate || vial.order_id){
-          continue
-        }
-      } else if (order.status == 3) {
-        if (order.oid != vial.order_id){
-          continue
-        }
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID]);
+    const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run)
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(timeSlot.id);
+    const orderIDs = []
+    for (const order of orders){
+      orderIDs.push(order.id)
+    }
+    const today = new Date(this.props[PROP_ACTIVE_DATE]);
+    const tableVials = [];
+
+    for(const [_vialID, _vial] of this.props[JSON_VIAL]){
+      const /**@type {Number} */ vialID = _vialID
+      const /**@type {Vial}*/ vial = _vial
+      const vial_date = new Date(vial.fill_date)
+      if (vial.tracer != null && vial.tracer != production.tracer){
+        continue;
       }
+      if (!compareDates(today, vial_date)){
+        continue;
+      }
+      if(vial.assigned_to != null && (!orderIDs.includes(vial.assigned_to)) ){
+        continue
+      }
+
+
       const selected = this.state.selectedVials.has(vialID);
       const editing = this.state.editingVials.has(vialID);
       const freeing = this.state.isFreeing;
@@ -588,69 +737,71 @@ class ActivityModal extends Component {
       if (freeing){
         editButton = <div/>
         useButton = <Form.Check // If select you can unselect it
-          id={`vial-usage-${vial.ID}`}
+          id={`vial-usage-${vial.id}`}
           disabled
         />
       }
       else if(editing){
         editButton = <ClickableIcon  // Accept Edits
-          src={"/static/images/accept.svg"}
-          altText={`accept-${vialID}`}
+        src={"/static/images/accept.svg"}
+        altText={`accept-${vialID}`}
           onClick={this.commitEditVial(vialID).bind(this)}
         />;
         useButton = <ClickableIcon  // Reject Edits
         src={"/static/images/decline.svg"}
         altText={`decline-${vialID}`}
         onClick={this.rejectEditVial(vialID).bind(this)}
-      />;
+        />;
       } else {
         if(selected) {
           editButton = <div></div> // If selected you cannot vial
         } else {
           editButton = <ClickableIcon // Start editing
-            src={"/static/images/pen.svg"}
-            altText={`edit-vial-${vialID}`}
-            onClick={this.startEditVial(vialID).bind(this)}
+          src={"/static/images/pen.svg"}
+          altText={`edit-vial-${vialID}`}
+          onClick={this.startEditVial(vialID).bind(this)}
           />;
         }
         useButton = <Form.Check  // Select TVeVial(VialID)).bind(this)}
           aria-label={`vial-usage-${vial.ID}`}
           onChange={this.toggleVial(vialID).bind(this)}
+          checked
         />
       }
 
       if(editing){
-        vial = this.state.editingVials.get(vialID)
+        const /**@type {Vial} */ temp_vial = this.state.editingVials.get(vialID)
 
         tableVials.push(renderTableRow(
           vialID, [
-            vial.ID,
-            <FormControl aria-label={`charge-${vialID}`} onChange={this.editVial(vial.ID, "charge").bind(this)} value={vial.charge}/>,
-            <FormControl aria-label={`filltime-${vialID}`} onChange={this.editVial(vial.ID, "filltime").bind(this)} value={vial.filltime}/>,
-            <FormControl aria-label={`volume-${vialID}`} onChange={this.editVial(vial.ID, "volume").bind(this)} value={vial.volume}/>,
-            <FormControl aria-label={`activity-${vialID}`} onChange={this.editVial(vial.ID, "activity").bind(this)} value={vial.activity}/>,
+            temp_vial.id,
+            <FormControl aria-label={`lot_number-${vialID}`} onChange={this.editVial(temp_vial.id, "lot_number").bind(this)} value={temp_vial.lot_number}/>,
+            <FormControl aria-label={`fill_time-${vialID}`} onChange={this.editVial(temp_vial.id, "fill_time").bind(this)} value={temp_vial.fill_time}/>,
+            <FormControl aria-label={`volume-${vialID}`} onChange={this.editVial(temp_vial.id, "volume").bind(this)} value={temp_vial.volume}/>,
+            <FormControl aria-label={`activity-${vialID}`} onChange={this.editVial(temp_vial.id, "activity").bind(this)} value={temp_vial.activity}/>,
             editButton,
             useButton
           ]));
-      } else {
-        tableVials.push(renderTableRow(
-          vialID, [
-          vial.ID,
-          vial.charge,
-          vial.filltime,
-          vial.volume,
-          vial.activity,
-          editButton,
-          useButton
+        } else {
+          tableVials.push(renderTableRow(
+            vialID, [
+            vial.id,
+            vial.lot_number,
+            vial.fill_time,
+            vial.volume,
+            vial.activity,
+            editButton,
+            useButton
         ]));
       }
-    } // End Vial iteration
+    }
+     // End Vial iteration
 
     if(this.state.addingVial){
       tableVials.push(renderTableRow(-1,[
         "Ny",
-        <FormControl aria-label={`charge-new`} onChange={this.editAddingVial("charge").bind(this)} value={this.state.newVial.charge}/>,
-        <FormControl aria-label={`filltime-new`} onChange={this.editAddingVial("filltime").bind(this)} value={this.state.newVial.filltime}/>,
+        <FormControl aria-label={`charge-new`} onChange={this.editAddingVial("lot_number").bind(this)} value={this.state.newVial.lot_number}/>,
+        <FormControl aria-label={`filltime-new`} onChange={this.editAddingVial("fill_time").bind(this)} value={this.state.newVial.fill_time}/>,
         <FormControl aria-label={`volume-new`} onChange={this.editAddingVial("volume").bind(this)} value={this.state.newVial.volume}/>,
         <FormControl aria-label={`activity-new`} onChange={this.editAddingVial("activity").bind(this)} value={this.state.newVial.activity}/>,
         <ClickableIcon altText={"accept-new"} src={"/static/images/plus.svg"} onClick={this.commitNewVial.bind(this)}/>,
@@ -683,134 +834,70 @@ class ActivityModal extends Component {
     </div>)
   }
 
-  /**
-   * Creates the top table with basic order information
-   * @returns {JSX.Element}
-   */
-  renderDescriptionTable(){
-    const order = this.props.orders.get(this.props.order);
-    const customer = this.props.customers.get(order.BID);
-    const destinationHover = <HoverBox
-      Base={<div>Destination:</div>}
-      Hover={<div>Kundens brugernavn, rigtige navn og <br/>
-        bestillerens profil, hvis tilgændelig.</div>}
-    />;
-    const destinationMessage = order.username ?
-                                `${customer.UserName} - ${customer.Realname} - ${order.username}` :
-                                `${customer.UserName} - ${customer.Realname}`;
-    const formattetOrderTime = `${order.deliver_datetime.substring(11,13)
-    }:${order.deliver_datetime.substring(14,16)} - ${order.deliver_datetime.substring(8,10)
-    }/${order.deliver_datetime.substring(5,7)}/${order.deliver_datetime.substring(0,4)} - Kørsel ${order.run}`;
 
-    const activityTableCellEditable = <Row>
-      <Col md={10} className="p-2">{Math.floor(order.amount)}</Col>
-      {this.state.usingCalculator ? "" :
-        <Col md={2} className="p-2">{<ClickableIcon
-                                      altText={"edit-order"}
-                                      src={"/static/images/calculator.svg"}
-                                      onClick={this.startCalculator.bind(this)}/>}
-        </Col>}
-    </Row>
+  renderButtonGroup() {
+    const orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
 
-    const activityHover = <HoverBox
-        Base={<div>Bestilt Aktivitet</div>}
-        Hover={<div>Den mængde af aktivit kunden ønsket ved denne ordre. <br/>
-        Ikke korrigeret for andre ordre eller eventuel overhead.</div>}/>
+    console.log(orders)
 
-    const activityTableCellEditing = <Col md="auto" >
-        <FormControl value={this.state.activityValue} onChange={changeState("activityValue", this)}/>
-        <ClickableIcon src={"/static/images/accept.svg"} onClick={this.acceptNewActivity}/>
-      </Col>
+    let minimum_status = 5
 
-    const activityTableCellFixed = <div>{Math.floor(order.amount)}</div>
-
-    const canEdit = (order.status == 1 || order.status == 2) && !this.state.isFreeing;
-    var activityTableCell;
-    if (!canEdit) {
-      activityTableCell = activityTableCellFixed;
-    } else if (this.state.editingActivity){
-      activityTableCell = activityTableCellEditing
-    } else {
-      activityTableCell = activityTableCellEditable
+    for(const order of orders){
+      minimum_status = Math.min(minimum_status, order[KEYWORD_ActivityOrder_STATUS])
     }
 
-    const totalActivityHover = <HoverBox
-      Base={<div>Total Aktivitet</div>}
-      Hover={<div>Mængde af aktivitet der skal produceres til ordren.</div>}
-    />;
+    const AcceptButton =  <MarginButton onClick={this.onClickAccept.bind(this)}>Accepter Ordre</MarginButton>;
+    const ConfirmButton = this.canFree() ? <MarginButton onClick={this.startFreeingOrder.bind(this)}>Godkend Ordre</MarginButton>
+      : <MarginButton disabled onClick={this.startFreeingOrder.bind(this)}>Godkend Ordre</MarginButton>;
 
-    const totalActivity = Math.floor(
-      order.total_amount * (1 + customer.overhead / 100));
+    const CancelFreeButton = <MarginButton onClick={this.cancelFreeing.bind(this)}>Rediger Ordre</MarginButton>
+    const PDFButton =        <MarginButton onClick={this.onClickToPDF.bind(this)}>Se føgleseddel</MarginButton>;
 
-    const hasAllocation = (order.status == 2) || (order.status == 3);
-    const allocationMessage = order.status == 2 ?
-                      "Allokeret aktivitet:"
-                    : "Frigivet aktivitet:";
-    var allocationTotal = 0;
-    for(const vid of this.state.selectedVials.values()){
-      const vial = this.props.vials.get(vid);
-      allocationTotal += vial.activity;
-    }
-
-    const AllocationRow = renderTableRow(
-      "5",
-      [allocationMessage, Math.floor(allocationTotal)]
-    )
-
-    const freedTime = order.frigivet_datetime != undefined ? `${order.frigivet_datetime.substring(11,13)
-    }:${order.frigivet_datetime.substring(14,16)} - ${order.frigivet_datetime.substring(8,10)
-    }/${order.frigivet_datetime.substring(5,7)}/${order.frigivet_datetime.substring(0,4)}` : null
-
-    const TableRows = [
-      renderTableRow("1", [destinationHover, destinationMessage]),
-      renderTableRow("2", ["Levering tidspunkt:", formattetOrderTime]),
-      renderTableRow("3", [activityHover, activityTableCell]),
-      renderTableRow("4", [totalActivityHover, totalActivity]),
-    ]
-
-    if (hasAllocation) TableRows.push(AllocationRow);
-    if (freedTime != null) TableRows.push(
-      renderTableRow("6", ["Frigivet tidspunkt:", freedTime])
+    return (<div>
+              {!this.state.usingCalculator && minimum_status == 1 ? AcceptButton : "" }
+              {!this.state.usingCalculator && minimum_status == 2 && !this.state.isFreeing ? ConfirmButton : ""}
+              {!this.state.usingCalculator && minimum_status == 2 && this.state.isFreeing ? CancelFreeButton : ""}
+              {minimum_status == 3 ? PDFButton : ""}
+              <CloseButton onClick={this.props[PROP_ON_CLOSE]}/>
+      </div>
     );
-    if (order.comment != undefined) TableRows.push(
-      renderTableRow("99", ["Kommentar:", order.comment])
-    )
-
-    return (<Table>
-              <tbody>
-                {TableRows}
-              </tbody>
-            </Table>);
   }
 
 
   render() {
-    const order = this.props.orders.get(this.props.order);
+    console.log(this.props, this.state)
     const colWidth = (this.state.usingCalculator || this.state.isFreeing) ? 6 : 12;
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID])
+    const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run);
+    const /**@type {Array<ActivityOrder}*/ orders = this.props[PROP_TIME_SLOT_MAPPING].get(timeSlot.id)
 
-    const deliver_datetime = new Date(order.deliver_datetime)
-    var sideElement = <div></div>;
+    let sideElement = <div></div>;
     if(this.state.usingCalculator){
       const initial_MBq = Number(order.amount);
-
       sideElement = (<Col md={6}>
         <Calculator
           initial_MBq={initial_MBq}
           cancel={this.cancelCalculator.bind(this)}
           commit={this.commitCalculator.bind(this)}
           defaultMBq={Number(300)}
-          isotopes={this.props.isotopes}
+          isotopes={this.props[JSON_ISOTOPE]}
           productionTime={deliver_datetime}
-          tracer={this.props.tracers.get(order.tracer)}
+          tracer={this.props[JSON_TRACER].get(production.tracer)}
         />
       </Col>)
     } else if (this.state.isFreeing){
+      const orderIDs = []
+
+      for(const order of orders){
+        orderIDs.push(order.id)
+      }
+
       sideElement = (<Col md={6}>
         <Authenticate
           authenticate={this.onFree.bind(this)}
           errorMessage={this.state.loginMessage}
           fit_in={false}
-          headerMessage={`Frigiv Ordre - ${order.oid}`}
+          headerMessage={`Frigiv Ordre - ${orderIDs.join(', ')}`}
           spinner={this.state.loginSpinner}
           buttonMessage={"Frigiv Ordre"}
         />
@@ -822,9 +909,9 @@ class ActivityModal extends Component {
       data-testid="test"
       show={true}
       size="lg"
-      onHide={this.props.onClose}
+      onHide={this.props[PROP_ON_CLOSE]}
       className={styles.mariLight}>
-      <Modal.Header>Ordre {order.oid}</Modal.Header>
+      <Modal.Header>HEADER</Modal.Header>
       <Modal.Body>
         <Row>
           <Col md={colWidth}>
@@ -840,7 +927,7 @@ class ActivityModal extends Component {
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        {this.renderButtonGroup()}
+        {this.renderButtonGroup() }
       </Modal.Footer>
     </Modal>)
   }

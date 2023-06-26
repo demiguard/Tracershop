@@ -2,16 +2,17 @@ import React, { Component } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
 import propTypes from "prop-types";
 import { Calculator } from "../injectable/calculator";
-import { ParseDanishNumber } from "../../lib/formatting";
+import { ParseDanishNumber, dateToDateString } from "../../lib/formatting";
 
 
 import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
-  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_CUSTOMER } from "../../lib/constants.js"
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_WEBSOCKET, JSON_TRACER, PROP_ACTIVE_TRACER, JSON_ISOTOPE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, DATABASE_CURRENT_USER, AUTH_USER_ID } from "../../lib/constants.js"
 
 import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
 import { ClickableIcon } from "../injectable/icons";
+import { KEYWORD_ActivityOrder_DELIVERY_DATE, KEYWORD_ActivityOrder_ORDERED_ACTIVITY, KEYWORD_ActivityOrder_ORDERED_BY, KEYWORD_ActivityOrder_ORDERED_TIME_SLOT, KEYWORD_ActivityOrder_STATUS } from "../../dataclasses/keywords";
 
 export { CreateOrderModal }
 
@@ -36,26 +37,20 @@ class CreateOrderModal extends Component {
     let DeliverTimeMapping = new Map();
 
     for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
-      DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);
-      if (DeliverTimeMapping.size){ //If it's empty pick a new one, since you can't order there
-        break;
-      }
+      DeliverTimeMapping = this.props[PROP_ORDER_MAPPING].get(customerID);
       if (activeCustomer === undefined){
         activeCustomer = customer;
       }
-    }
-
-    var run;
-    for(const [DTrun, _] of DeliverTimeMapping){
-      run = DTrun;
-      break;
+      if (DeliverTimeMapping){ //If it's empty pick a new one, since you can't order there
+        break;
+      }
     }
 
     this.state = {
       showCalculator : false,
       productions : DeliverTimeMapping,
       activeCustomerID : activeCustomer.id,
-      activeRun : run,
+      selectedTimeSlot : 0,
       amount : "",
       ErrorMessage : "",
     };
@@ -69,19 +64,15 @@ class CreateOrderModal extends Component {
   }
 
   changeCustomer(event){
-    const newCustomer = this.props.customers.get(Number(event.target.value));
-    const NewProductions = this.props.DeliverTimeMap.get(newCustomer.ID);
-    let run;
-    for(const [deliverTimeRun, _] of NewProductions){
-      run = deliverTimeRun;
-      break;
-    }
+    const newCustomer = this.props[JSON_CUSTOMER].get(Number(event.target.value));
+    const NewProductions = this.props[PROP_ORDER_MAPPING].get(newCustomer.id);
+    const ActiveProduction = 0;
 
     this.setState({
       ...this.state,
       activeCustomerID : newCustomer.ID,
       productions : NewProductions,
-      activeRun : run,
+      selectedTimeSlot : ActiveProduction,
       ErrorMessage : "",
     })
   }
@@ -89,34 +80,32 @@ class CreateOrderModal extends Component {
   changeRun(event){
     this.setState({
       ...this.state,
-      activeRun : Number(event.target.value)
+      selectedTimeSlot : Number(event.target.value)
     });
   }
 
   createOrder(){
     const amountNumber = ParseDanishNumber(this.state.amount);
-
     if(isNaN(amountNumber)){
       this.setState({
         ErrorMessage : "Aktiviteten er ikke et læstbart tal"
       });
       return;
     }
-    const customer = this.props.customers.get(Number(this.state.activeCustomerID));
-    const activeProduction = this.state.productions.get(this.state.activeRun);
-
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-    const skeleton = {};
-    skeleton[LEGACY_KEYWORD_BID] = customer.ID;
-    skeleton[LEGACY_KEYWORD_DELIVER_DATETIME] = activeProduction.deliverTime;
-    skeleton[LEGACY_KEYWORD_RUN] = this.state.activeRun;
-    skeleton[LEGACY_KEYWORD_AMOUNT] = amountNumber;
-    skeleton[LEGACY_KEYWORD_TRACER] = this.props.tracer;
+    dateToDateString
+    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
+    const skeleton = {}
+    const TimeSlot = this.state.productions[this.state.selectedTimeSlot]
+    skeleton[KEYWORD_ActivityOrder_ORDERED_ACTIVITY] = amountNumber
+    skeleton[KEYWORD_ActivityOrder_STATUS] = 1
+    skeleton[KEYWORD_ActivityOrder_DELIVERY_DATE] = dateToDateString(this.props[PROP_ACTIVE_DATE])
+    skeleton[KEYWORD_ActivityOrder_ORDERED_TIME_SLOT] = TimeSlot.id;
+    skeleton[KEYWORD_ActivityOrder_ORDERED_BY] = this.props[DATABASE_CURRENT_USER][AUTH_USER_ID]
 
     message[WEBSOCKET_DATA] = skeleton;
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
-    this.props.websocket.send(message);
-    this.props.onClose();
+    this.props[PROP_WEBSOCKET].send(message);
+    this.props[PROP_ON_CLOSE]();
   }
 
   showCalculator(){
@@ -132,7 +121,6 @@ class CreateOrderModal extends Component {
   }
 
   commitCalculator(activity){
-    //console.log(activity)
     this.setState({...this.state,
       showCalculator : false,
       amount : activity,
@@ -140,22 +128,25 @@ class CreateOrderModal extends Component {
   }
 
   render(){
-    const Tracer = this.props.tracers.get(this.props.tracer)
-    const activeProduction = this.state.productions.get(this.state.activeRun)
-    const TargetDateTime = new Date(activeProduction.deliverTime)
+    const Tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER])
+    const activeProduction = this.state.selectedTimeSlot;
+
 
     const options = [];
-    for(const [customerID, customer] of this.props.customers){
-      const DeliverTimeMapping = this.props.DeliverTimeMap.get(customerID);
-      if(DeliverTimeMapping.size > 0) options.push(
-        (<option key={customerID} value={customerID}>{customer.UserName}</option>)
-      );
+    for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
+      const DeliverTimeMapping = this.props[PROP_ORDER_MAPPING].get(customerID);
+      if(DeliverTimeMapping) {
+        options.push(
+          <option key={customerID} value={customerID}>{customer.short_name}</option>
+        );
+      }
     }
 
     const runs = [];
-    for(const [run, production] of this.state.productions){
+
+    for(const production of this.state.productions){
       runs.push(
-        (<option key={run} value={run}>{run} - {production.deliverTime.substr(11,5)}</option>)
+        (<option key={production.id} value={runs.length}>{production.delivery_time}</option>)
       )
     }
     // Verbosity is mostly for the reader sake, so don't say I didn't think about you
@@ -164,14 +155,14 @@ class CreateOrderModal extends Component {
     return (
       <Modal
         show={true}
-        onHide={this.props.onClose}
+        onHide={this.props[PROP_ON_CLOSE]}
         className={styles.mariLight}
       >
         <Modal.Header> Opret Order </Modal.Header>
         <Modal.Body>
           { this.state.showCalculator ?
           <Calculator
-            isotopes={this.props.isotopes}
+            isotopes={this.props[JSON_ISOTOPE]}
             tracer={Tracer}
             productionTime={TargetDateTime}
             defaultMBq={300}
@@ -197,7 +188,7 @@ class CreateOrderModal extends Component {
                 <select
                   aria-label={"run-select"}
                   onChange={this.changeRun.bind(this)}
-                  value={this.state.activeRun}
+                  value={this.state.selectedTimeSlot}
                   className="form-select"
                 >
                   {runs}
@@ -236,7 +227,7 @@ class CreateOrderModal extends Component {
             Hover={<div>Du kan ikke opret en ordre imens at du bruger lommeregneren</div>}
           ></HoverBox>
            : <Button onClick={this.createOrder.bind(this)}>Opret Ordre</Button>}
-          <Button onClick={this.props.onClose}>Luk</Button>
+          <Button onClick={this.props[PROP_ON_CLOSE]}>Luk</Button>
         </Modal.Footer>
       </Modal>
     );;

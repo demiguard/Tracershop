@@ -27,12 +27,18 @@ class TracershopModel(Model):
     except FieldDoesNotExist:
       raise KeyError("This is not valid Field")
 
+  def _canEdit(self, optional_user=None) -> bool:
+    """This method determines if the model can be edited or deleted"""
+    return True
+
+
   @classproperty
   def exclude(cls) -> List[str]:
     return []
 
   class Meta:
     abstract = True
+
 
   def assignDict(self, modelDict: Dict[str, Any]):
     """Takes a Dict and updates the model with the values in the dict.
@@ -48,8 +54,10 @@ class TracershopModel(Model):
     """
     for key, value in modelDict.items():
       field = self._meta.get_field(key) # Fails if key doesn't match a field!
-      if isinstance(field, ForeignKey):
-        value = field.remote_field.model.objects.get(pk=value)
+      if value is None:
+        self.__setattr__(key, value)
+      elif isinstance(field, ForeignKey):
+          value = field.remote_field.model.objects.get(pk=value)
       # Note that Big and Small IntegerField superclass IntegerField, so we cool
       # There might be a bug here with Integer Choices.
       elif isinstance(field, IntegerField):
@@ -63,12 +71,6 @@ class TracershopModel(Model):
         value = datetime.strptime(value, "%Y-%m-%d").date()
       # End of assignment
       self.__setattr__(key, value)
-
-  @classmethod
-  def canDelete(cls, modelID, user = None) -> bool:
-    """Checks if the user can delete a model"""
-    return True
-
 
 
 class Days(IntegerChoices):

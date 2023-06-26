@@ -59,10 +59,11 @@ JAVASCRIPT_VERSION = "1.0.1" # Remember to update this to catch bugs
 # Long list JSON key word used in Json messages
 # These should have great overlap with the constants in production/frontend/src/lib/constants.js
 
-AUTH_USERNAME         = "username"
-AUTH_PASSWORD         = "password"
-AUTH_DETAIL           = "detail"
+AUTH_USERNAME = "username"
+AUTH_PASSWORD = "password"
+AUTH_DETAIL = "detail"
 AUTH_IS_AUTHENTICATED = "isAuthenticated"
+AUTH_USER_ID = "user_id"
 
 # Errors string
 
@@ -208,6 +209,7 @@ WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder"
 WEBSOCKET_MESSAGE_SUCCESS      = "success"
 WEBSOCKET_MESSAGE_TYPE         = "messageType"
 WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState"
+WEBSOCKET_REFRESH              = "refresh"
 WEBSOCKET_SEND_EVENT           = "sendEvent"
 WEBSOCKET_SESSION_ID           = "sessionid"
 WEBSOCKET_EVENT_TYPE           = "type"

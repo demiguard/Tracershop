@@ -34,12 +34,13 @@ source_database = {
 connection = mysql.connect(**source_database)
 cursor = connection.cursor(dictionary=True) # type: ignore
 
-cursor.execute("select name, halflife from isotopes")
+cursor.execute("select name, halflife,id from isotopes")
 isotopes_raw = cursor.fetchall()
 
 defaultIsotope = None
 
 # Defined tables:
+isotope_map = {}
 
 for raw_isotope in isotopes_raw: # type: ignore
   name_split = raw_isotope['name'].split('-')
@@ -53,6 +54,8 @@ for raw_isotope in isotopes_raw: # type: ignore
   )
 
   isotope.save()
+
+  isotope_map[raw_isotope['id']] = isotope
 
   if defaultIsotope is None:
     defaultIsotope = isotope
@@ -70,7 +73,7 @@ fdg = None
 
 tracers = {}
 for raw_tracer in tracers_raw: #type: ignore
-
+  isotope = isotope_map[raw_tracer['isotope']]
   tracer = Tracer(
     isotope=isotope, #type: ignore
     shortname = raw_tracer['name'],
@@ -127,12 +130,14 @@ for raw_production in cursor.fetchall(): # type: ignore
 # Defined tables: isotopes, tracers, ActivityProduction
 
 cursor.execute("""SELECT
-    id, Username, Realname, tlf, kundenr, EMail, addr1, addr2, addr3, addr4
+    id, Username, Realname, tlf, kundenr, EMail, addr1, addr2, addr3, addr4, overhead
   FROM
     Users inner join UserRoles on Users.Id = UserRoles.Id_User
   WHERE UserRoles.Id_Role = 4""")
 customers = {}
 endpoints = {}
+
+overheads = {}
 
 for raw_customer in cursor.fetchall(): # type: ignore
   customer = Customer(
@@ -153,6 +158,7 @@ for raw_customer in cursor.fetchall(): # type: ignore
 
   customers[raw_customer['id']] = customer
   endpoints[raw_customer['id']] = endpoint
+  overheads[raw_customer['id']] = raw_customer['overhead']
 # Defined tables: isotopes, tracers, ActivityProduction, customers, endpoints
 
 legacy_production_members = {}
@@ -188,7 +194,22 @@ for raw_tracer_customer in cursor.fetchall(): # type:ignore
   except:
     continue
 
+for customer_id, overhead in overheads.items():
+  if overhead is None:
+    multiplier = 1
+  else:
+    multiplier = 1 + overhead / 100
 
+  customer = customers[customer_id]
+  tc = TracerCatalog(
+    tracer=fdg,
+    customer=customer,
+    overhead_multiplier=multiplier
+  )
+  try:
+    tc.save()
+  except:
+    pass
 
 def map_repeat(repeat):
   if repeat == 1:
@@ -226,9 +247,8 @@ for raw_deliveryTime in cursor.fetchall(): # type: ignore
 
   production = get_production(day, delivery_time)
   delivery_time_slot = ActivityDeliveryTimeSlot(
-    weekly_repeat = map_repeat(raw_deliveryTime['day']),
+    weekly_repeat = map_repeat(raw_deliveryTime['repeat']),
     destination = endpoint,
-    tracer = fdg,
     delivery_time = delivery_time,
     production_run = production,
   )

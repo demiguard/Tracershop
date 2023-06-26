@@ -39,6 +39,12 @@ export const USER_GROUPS = {
   SHOP_EXTERNAL : 6
 }
 
+export const WEEKLY_REPEAT_CHOICES = {
+  ALL : 0,
+  EVEN : 1,
+  ODD : 2,
+}
+
 /**
  * Enum describing options of an Injections order usage field
  * @enum {string}
@@ -55,6 +61,7 @@ export const AUTH_USERNAME         = "username";
 export const AUTH_PASSWORD         = "password";
 export const AUTH_DETAIL           = "detail";
 export const AUTH_IS_AUTHENTICATED = "isAuthenticated";
+export const AUTH_USER_ID = "user_id";
 
 // Error strings
 export const ERROR_INVALID_AUTH = "InvalidAuth"
@@ -237,6 +244,7 @@ export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
 export const WEBSOCKET_MESSAGE_SUCCESS      = "success";
 export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
+export const WEBSOCKET_REFRESH              = "refresh";
 export const WEBSOCKET_SEND_EVENT           = "sendEvent";
 export const WEBSOCKET_SESSION_ID           = "sessionid";
 export const WEBSOCKET_EVENT_TYPE           = "type";
@@ -280,11 +288,16 @@ export const PROP_WEBSOCKET = "websocket";
 export const PROP_USER = DATABASE_CURRENT_USER;
 export const PROP_SET_USER = "set_user";
 export const PROP_TRACERSHOP_SITE = "tracershop_site";
+export const PROP_ACTIVE_CUSTOMER = "active_customer";
+export const PROP_ACTIVE_DATE = "active_date";
 export const PROP_ACTIVE_TRACER = "active_tracer"
-export const PROP_ACTIVE_DATE = "active_date"
+export const PROP_ACTIVE_TIME_SLOTS = "active_timeSlots";
 export const PROP_MODAL_ORDER = "modal_order"
-export const PROP_ORDER_MAPPING = "order_mapping"
-export const PROP_ON_CLOSE = "on_close"
+export const PROP_ON_CLICK = 'on_click'
+export const PROP_TIME_SLOT_ID = 'timeSlotID'
+export const PROP_ORDER_MAPPING = 'order_mapping'
+export const PROP_ON_CLOSE = 'on_close'
+export const PROP_TIME_SLOT_MAPPING = 'timeSlotMapping'
 
 export const KEYWORD_ID = 'id'
 
@@ -292,3 +305,10 @@ export const CALENDER_PROP_DATE = "calender_date";
 export const CALENDER_PROP_GET_COLOR = "calender_get_color";
 export const CALENDER_PROP_ON_DAY_CLICK = "calender_on_day_click";
 export const CALENDER_PROP_ON_MONTH_CHANGE = "calender_on_month_change";
+
+export const WEEKLY_TIME_TABLE_PROP_ENTRIES = "time_table_entries"
+export const WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK = "time_table_entry_onclick"
+export const WEEKLY_TIME_TABLE_PROP_DAY_GETTER = "day_function";
+export const WEEKLY_TIME_TABLE_PROP_INNER_TEXT = "inner_text_function"
+export const WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR = "color_function";
+export const WEEKLY_TIME_TABLE_PROP_HOUR_GETTER = "hour_function";

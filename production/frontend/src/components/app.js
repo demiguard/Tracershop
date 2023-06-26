@@ -9,7 +9,7 @@ import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DE
         DATABASE_IS_AUTH, DATABASE_PRODUCTION, LEGACY_KEYWORD_USERGROUP, USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
         DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
         AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_CURRENT_USER,
-        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, LEGACY_KEYWORD_CUSTOMER_ID, LEGACY_KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSED_DATE, JSON_CLOSED_DATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER, WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, JSON_PRODUCTION
+        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, LEGACY_KEYWORD_CUSTOMER_ID, LEGACY_KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSED_DATE, JSON_CLOSED_DATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER, WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, JSON_PRODUCTION, AUTH_USER_ID
       } from "../lib/constants.js";
 import { User } from "../dataclasses/user.js";
 import { TracerShop } from "./sites/tracer_shop.js";
@@ -24,7 +24,7 @@ export default class App extends Component {
 
 
     if(user && !(user instanceof User)){
-      user = new User(user.username, user.user_group, user.customer);
+      user = new User(user.username, user.user_group, user.customer, user.id);
     } else {
       user = new User();
     }
@@ -41,7 +41,6 @@ export default class App extends Component {
     }
 
     state[DATABASE_CURRENT_USER] = user;
-    console.log(state);
 
     this.state = state;
     this.MasterSocket = new TracerWebSocket(
@@ -64,18 +63,12 @@ export default class App extends Component {
         user = new User(data[AUTH_USERNAME],
                         data[LEGACY_KEYWORD_USERGROUP],
                         data[LEGACY_KEYWORD_CUSTOMER],
+                        data[AUTH_USER_ID]
         )
       } else {
         user = new User();
       }
       this.set_user(user)
-    })
-  }
-
-  componentDidCatch(Error, errorInfo){
-    this.setState({...this.state,
-      site_error : Error,
-      site_error_info : errorInfo,
     })
   }
 
@@ -93,16 +86,34 @@ export default class App extends Component {
     return dbObject
   }
 
-  setError(errorObject){
-    this.setState({
-      ...this.state, ...errorObject,
-    })
+  deleteModels(key, ids){
+    const newState = {...this.state}
+    const newStateMap = new Map(newState[key])
+    if (ids instanceof Array){
+      for(const id of ids){
+        newStateMap.delete(id)
+      }
+    } else {
+      newStateMap.delete(ids)
+    }
+    newState[key] = newStateMap;
+    this.setState(newState)
+
   }
 
-  updateState(state){
+  /**
+   * Updates the global state, shared by all sites
+   * @param {Map<Number, Object>} state - The new state to add or updated
+   * @param {Boolean} refreshDatabase - if the old values stored should be discarded or not
+   */
+  updateState(state, refreshDatabase){
     const appState = {...this.state}
     for (const key of Object.keys(state)){
-      const modelMap = ParseDjangoModelJson(state[key], appState[key]);
+      let oldStateMap = appState[key];
+      if(refreshDatabase){
+        oldStateMap = null
+      }
+      const modelMap = ParseDjangoModelJson(state[key], oldStateMap);
       appState[key] = modelMap
       db.set(key, modelMap)
     }
@@ -112,7 +123,7 @@ export default class App extends Component {
 
   set_user(user) {
     if(!user instanceof User){
-      user = new User(user.username, user.user_group, user.customer);
+      user = new User(user.username, user.user_group, user.customer, user.id);
     }
     if(user.user_group == USER_GROUPS.ANON){
       db.delete(DATABASE_CURRENT_USER);
@@ -123,9 +134,8 @@ export default class App extends Component {
     const newState = {...this.state}
     newState[PROP_USER] = user;
 
-    this.setState(user);
-    this.MasterSocket.send(
-      this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE));
+    this.setState(newState);
+    this.MasterSocket.send(this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE));
   }
 
   componentDidMount() {

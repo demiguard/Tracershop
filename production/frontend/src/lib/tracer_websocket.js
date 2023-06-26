@@ -1,7 +1,7 @@
 import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS,
   WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_ORDER,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED } from "./constants.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE } from "./constants.js";
 import { MapDataName } from "./local_storage_driver.js";
 import { ParseJSONstr } from "./formatting.js";
 
@@ -28,48 +28,37 @@ class TracerWebSocket {
      * @param {*} messageEvent - Message that is received
      */
     this._ws.onmessage = function(messageEvent) {
-      const data = JSON.parse(messageEvent.data);
-      //console.log(data)
-      if (!this.validateMessage(data)){
-        if (data.hasOwnProperty(WEBSOCKET_MESSAGE_SUCCESS)) {
-          this.StateHolder.setError({
-            site_error : data[WEBSOCKET_MESSAGE_SUCCESS],
-            site_error_info : ""
-          });
-        } else {
-          this.StateHolder.setError({
-            site_error : ERROR_NO_MESSAGE_STATUS,
-            site_error_info : ""
-          });
-        }
-        return;
-      }
-      const pipe = this._PromiseMap.get(data[WEBSOCKET_MESSAGE_ID]);
+      const message = JSON.parse(messageEvent.data);
+      console.log(message)
+      const pipe = this._PromiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
       if(pipe != undefined){
-        pipe.port2.postMessage(data);
+        pipe.port2.postMessage(message);
       }
 
       /**This is the state updating messages send by the server */
-      switch(data[WEBSOCKET_MESSAGE_TYPE]) {
+      switch(message[WEBSOCKET_MESSAGE_TYPE]) {
         case WEBSOCKET_MESSAGE_UPDATE_STATE:
           /**Assumes message is on format:
-           * WEBSOCKET_DATA -
-           *  JSON_XXX : List of Objects
+           * WEBSOCKET_DATA - {
+           *   JSON_XXX : List of Objects
+           * }
            */
-          this.StateHolder.updateState(data[WEBSOCKET_DATA]);
+          const state = ParseJSONstr(message[WEBSOCKET_DATA])
+          this.StateHolder.updateState(state,message[WEBSOCKET_REFRESH]);
           break;
-        case WEBSOCKET_MESSAGE_DELETE_DATA_CLASS: {
-            const DataClass = data[WEBSOCKET_DATA];
-            const ID = data[WEBSOCKET_DATA_ID]
-            this.StateHolder.UpdateMap(
-              MapDataName(data[WEBSOCKET_DATATYPE]), [], ID, true, [DataClass[ID]])
+        case WEBSOCKET_MESSAGE_MODEL_DELETE:{
+          if (message[WEBSOCKET_DATA]){
+            this.StateHolder.deleteModels(message[WEBSOCKET_MESSAGE_TYPE], message[WEBSOCKET_DATA_ID])
+          }
         }
-        break;
-        case WEBSOCKET_MESSAGE_FREE_ORDER: {
-          if(data[AUTH_IS_AUTHENTICATED]){
-            this.updateState(data[WEBSOCKET_DATA])
+        break
+        case WEBSOCKET_MESSAGE_FREE_INJECTION:
+        case WEBSOCKET_MESSAGE_FREE_ACTIVITY: {
+          if(message[AUTH_IS_AUTHENTICATED]){
+            const state = ParseJSONstr(message[WEBSOCKET_DATA])
+            this.StateHolder.updateState(state, message[WEBSOCKET_REFRESH])
           }
         }
         break;
@@ -141,6 +130,27 @@ class TracerWebSocket {
     if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_TYPE)) return false;
     return true;
   }
+
+  sendEditModel(modelType, models){
+    const message = {}
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_EDIT
+    message[WEBSOCKET_DATA] = models
+    message[WEBSOCKET_DATATYPE] = modelType
+
+    return this.send(message);
+  }
+
+  sendCreateModel(modelType, models){
+    const message = {}
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_CREATE
+    message[WEBSOCKET_DATA] = models
+    message[WEBSOCKET_DATATYPE] = modelType
+
+    return this.send(message);
+  }
+
+  sendCreate
+
 }
 
 async function safeSend(message, websocket){

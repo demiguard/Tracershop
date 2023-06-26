@@ -81,13 +81,12 @@ export class Deadline {
 }
 
 export class ActivityDeliveryTimeSlot {
-  constructor(activity_delivery_time_slot_id, weekly_repeat, delivery_time, destination, production_run, tracer, ) {
+  constructor(activity_delivery_time_slot_id, weekly_repeat, delivery_time, destination, production_run, ) {
     this.activity_delivery_time_slot_id=activity_delivery_time_slot_id
     this.weekly_repeat=weekly_repeat
     this.delivery_time=delivery_time
     this.destination=destination
     this.production_run=production_run
-    this.tracer=tracer
   }
 }
 

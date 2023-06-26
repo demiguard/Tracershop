@@ -15,7 +15,8 @@ requiredMessageFields = {
   WEBSOCKET_MESSAGE_AUTH_LOGIN : [JSON_AUTH],
   WEBSOCKET_MESSAGE_FREE_INJECTION : [WEBSOCKET_DATA, JSON_AUTH],
   WEBSOCKET_MESSAGE_GET_STATE : [],
-  WEBSOCKET_MESSAGE_MODEL_DELETE : [WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE]
+  WEBSOCKET_MESSAGE_MODEL_DELETE : [WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE],
+  WEBSOCKET_MESSAGE_MODEL_EDIT : [WEBSOCKET_DATA, WEBSOCKET_DATATYPE],
 }
 
 requiredDataFields = {
@@ -119,8 +120,9 @@ def AuthMessage(user: User, message: Dict) -> bool:
       return True
     else:
       return False
+  return False # Unreachable code
 
-def validateMessage(message : Dict) -> str:
+def validateMessage(message: Dict) -> str:
   """Checks is a message contains the correct fields to be a valid message.
   Note a valid message is returned as falsy, while a truthy indicate an error.
 
@@ -143,6 +145,7 @@ def validateMessage(message : Dict) -> str:
 
   for field in requiredMessageFields.get(message[WEBSOCKET_MESSAGE_TYPE], []):
     if field not in message:
+      print(f"Missing {field} in f{message}")
       return ERROR_INVALID_MESSAGE
 
   if WEBSOCKET_DATA in message:

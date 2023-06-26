@@ -14,6 +14,11 @@ class ClickableIcon extends Component {
 
   render(){
     return <Button
+              style={{
+                padding : "0px",
+                justifyContent : 'center',
+                alignItems: 'center',
+              }}
               variant="variant-light"
               aria-label={this.props.label}
               onClick={this.props.onClick}

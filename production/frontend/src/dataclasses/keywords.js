@@ -65,7 +65,6 @@ export const KEYWORD_ActivityDeliveryTimeSlot_WEEKLY_REPEAT = "weekly_repeat";
 export const KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME = "delivery_time";
 export const KEYWORD_ActivityDeliveryTimeSlot_DESTINATION = "destination";
 export const KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN = "production_run";
-export const KEYWORD_ActivityDeliveryTimeSlot_TRACER = "tracer";
 
 // Model: DeliveryEndpoint
 export const KEYWORD_DeliveryEndpoint_TRACER_ENDPOINT_ID = "tracer_endpoint_id";

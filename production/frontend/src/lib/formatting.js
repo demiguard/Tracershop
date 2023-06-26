@@ -80,11 +80,13 @@ export function FormatDateStr(number) {
 }
 
 /**
- * @param {String} JSONString
+ * Converts a string to it related json encoded object
+ * This function is idempotent
+ * @param {String | Object} JSONString
  * @returns {object} Jsonformatted object
  */
 export function ParseJSONstr(JSONString){
-  var json = JSONString;
+  let json = JSONString;
   while (typeof(json) == "string"){
     json = JSON.parse(json);
   }
@@ -93,7 +95,7 @@ export function ParseJSONstr(JSONString){
 
 export function ParseDjangoModelJson(JSONString, originalMap){
   const json = ParseJSONstr(JSONString);
-  const ModelMap =  (originalMap instanceof Map ) ?  new Map(originalMap) : new Map;
+  const ModelMap =  (originalMap instanceof Map ) ?  new Map(originalMap) : new Map();
   // Use that it's a list of objects with information in the following form
   //{ model : string of model name on format module.model for instance api.database
   //  pk    : Something that is the primary key of the model instance
@@ -156,10 +158,58 @@ export function StringValidator(input, min_length, max_length){
 }
 
 /**
- * Determines if a 
+ * Determines if a string is a batch / lot number
  * @param {String} str A potential Batch number
  * @returns {boolean} - true if str is a batch number false if not
  */
 export function batchNumberValidator(str){
   return /[a-zA-Z]+-\d{6}-[1-9]\d*/g.test(str);
+}
+
+/**
+ * Converts a date object to a string describing the date
+ * date(2000,4,3) -> 2000-05-03
+ * @param {Date} date - date to be converted
+ * @returns {string}
+ */
+export function dateToDateString(date){
+  return `${date.getFullYear()}-${FormatDateStr(date.getMonth() + 1)}-${FormatDateStr(date.getDate())}`
+}
+
+/**
+ * 
+ * @param {Date | Number} day - date or number from 0-6
+ * @returns {String} the name of the day
+ */
+export function getDateName(day){
+  if (day instanceof Date){
+    day = (day.getDay() + 6) % 7;
+  }
+  if (day == 0){
+    return "Mandag"
+  }
+  if (day == 1){
+    return "Tirsdag"
+  }
+  if (day == 2){
+    return "Onsdag"
+  }
+  if (day == 3){
+    return "Torsdag"
+  }
+  if (day == 4){
+    return "Fredag"
+  }
+  if (day == 5){
+    return "Lørdag"
+  }
+  if (day == 6){
+    return "Søndag"
+  }
+
+  throw "Unknown Day"
+}
+
+export function nullParser(value){
+  return (value === null) ? "" : value;
 }

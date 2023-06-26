@@ -17,7 +17,7 @@ django.setup()
 
 from database.models import *
 
-
+[vial.delete() for vial in Vial.objects.all()]
 [lca.delete() for lca in LegacyActivityOrder.objects.all()]
 [ac.delete() for ac in ActivityOrder.objects.all()]
 [lio.delete() for lio in LegacyInjectionOrder.objects.all()]

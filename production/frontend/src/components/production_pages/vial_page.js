@@ -6,6 +6,7 @@ import { parseDate, parseDateToDanishDate, ParseJSONstr } from "../../lib/format
 import { addCharacter } from "../../lib/utils";
 import { changeState } from "../../lib/state_management";
 import propTypes from 'prop-types'
+import { Vial } from "../../dataclasses/dataclasses";
 
 
 
@@ -124,6 +125,11 @@ class VialPage extends Component {
     this.setState(newState);
   }
 
+  /**
+   * Renders a row representing the vial in the table
+   * @param {Vial} vial - The Vial to be rendered
+   * @returns {JSX} tr with the table row
+   */
   renderVial(vial){
     // Sadly I need some extra functionality so can't really use the table rendering function :(
     var customerName = "";
@@ -137,15 +143,15 @@ class VialPage extends Component {
     //const customerName = (customer) ? customer.UserName : `Ukendet med nummer ${vial.customer}`;
 
     return (
-      <tr key={vial.ID}>
-        <td onClick={() => {this.changeSearch(SearchOptions.ID)}}>      {vial.ID}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.CHARGE)}}>  {vial.charge}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.DATE)}}>    {parseDateToDanishDate(vial.filldate)}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.TIME)}}>    {vial.filltime}</td>
+      <tr key={vial.id}>
+        <td onClick={() => {this.changeSearch(SearchOptions.ID)}}>      {vial.id}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.CHARGE)}}>  {vial.lot_number}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.DATE)}}>    {parseDateToDanishDate(vial.fill_date)}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.TIME)}}>    {vial.fill_time}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>  {vial.volume}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>{vial.activity}</td>
         <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customerName}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.order_id}</td>
+        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.assigned_to}</td>
       </tr>
     );
   }

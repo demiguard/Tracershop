@@ -7,9 +7,9 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
 from datetime import datetime, date, timedelta
-from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type
+from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union
 import logging
-import json
+from functools import reduce
 
 # Django Packages
 from channels.db import database_sync_to_async
@@ -53,7 +53,7 @@ class DatabaseInterface():
     return self._serverConfig
 
   @property
-  def __modelGetters(self):
+  def __modelGetters(self) -> Dict[str, Callable]:
     return {
       JSON_ACTIVITY_ORDER : self.__timeUserSensitiveFilter(JSON_ACTIVITY_ORDER),
       JSON_CLOSED_DATE : self.__timeUserSensitiveFilter(JSON_CLOSED_DATE),
@@ -62,7 +62,13 @@ class DatabaseInterface():
     }
 
   @property
-  def __modelSerializer(self):
+  def __modelSerializer(self) -> Dict[str, Callable[[str, Dict[str, Any]], TracershopModel]]:
+    return {
+
+    }
+
+  @property
+  def __modelCanChangeFunctions(self) -> Dict[Type[TracershopModel], Callable[[TracershopModel], bool]]:
     return {
 
     }
@@ -116,11 +122,52 @@ class DatabaseInterface():
     return pdfPath
   """
 
+  def __defaultModelDeserializer(self, model_identifier: str, jsonModel: Dict[str, Any]) -> TracershopModel:
+    modelType = MODELS[model_identifier]
+    model = modelType.objects.get(pk=jsonModel['id'])
+    del jsonModel['id']
+    return model
+
+
   @database_sync_to_async
-  def editModel(self, model_identifier: str, model : Dict, modelID: Any):
-    instance: Model = getModel(model_identifier).objects.get(pk=modelID)
-    instance.assignDict(model)
-    instance.save()
+  def handleEditModels(self, model_identifier: str, models : Union[Dict, Iterable[Dict]]) -> Optional[List[TracershopModel]]:
+    """Edits model(s) and save them
+
+    If a model fails to be edited,
+
+    Args:
+        model_identifier (str): _description_
+        models (Union[Dict, Iterable[Dict]]): _description_
+
+    Returns:
+        Optional[List[TracershopModel]]: _description_
+    """
+    if isinstance(models, Dict):
+      updateModels = [self.__editModel(model_identifier, models)]
+    else:
+      updateModels = [self.__editModel(model_identifier, model) for model in models]
+    if None in updateModels:
+      return None
+
+    [model.save() for model in updateModels if model is not None] # if statement is just their to make the type checker happy
+    return updateModels # type: ignore # type checker is stupid
+
+  def __editModel(self, model_identifier: str, jsonModel : Dict) -> Optional[TracershopModel]:
+    if model_identifier in self.__modelSerializer:
+      model = self.__modelSerializer[model_identifier](model_identifier, jsonModel)
+    else:
+      model = self.__defaultModelDeserializer(model_identifier, jsonModel)
+    if not model._canEdit():
+      return None
+    try:
+      model.assignDict(jsonModel)
+    except Exception as e:
+      logger.error(e, exc_info=True)
+      logger.error(f"Could not assign {jsonModel} to {model}")
+      return None
+
+    return model
+
 
   @database_sync_to_async
   def getModel(self, model: Type[TracershopModel], identifier: Any, key = None) -> TracershopModel:
@@ -130,22 +177,39 @@ class DatabaseInterface():
       return model.objects.get(key=identifier)
 
   @database_sync_to_async
-  def deleteModel(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
-    """Deletes a model instance """
-
-    model = getModel(modelIdentifier).objects.get(pk=modelID)
-    canDelete = model.canDelete(modelID, user)
-    if canDelete:
-      model.delete()
+  def deleteModels(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
+    """Deletes one or more model instance """
+    modelType = getModel(modelIdentifier)
+    if isinstance(modelID, Iterable):
+      models = modelType.objects.filter(pk__in = [id_ for id_ in modelID])
+      canDelete = reduce(lambda x, y : x and y, [model._canEdit(user) for model in models], True)
+      if canDelete:
+        [model.delete() for model in models]
+    else:
+      model = modelType.objects.get(pk=modelID)
+      canDelete = model._canEdit(user)
+      if canDelete:
+        model.delete()
     return canDelete
 
-  @database_sync_to_async
-  def createModel(self, modelIdentifier: str, modelDict: Dict):
+
+  def __createModel(self, modelIdentifier: str, modelDict: Dict) -> TracershopModel:
     instance = getModel(modelIdentifier)()
     instance.assignDict(modelDict)
-    instance.save()
+    instance.save() # Sets primary key as side effect
 
     return instance
+
+  @database_sync_to_async
+  def handleCreateModels(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]]) -> QuerySet[TracershopModel]:
+    if isinstance(modelDicts, List):
+      models = [self.__createModel(modelIdentifier, modelDict) for modelDict in modelDicts]
+    else:
+      models = [self.__createModel(modelIdentifier, modelDicts)]
+
+    modelType = MODELS[modelIdentifier]
+    return modelType.objects.filter(pk__in=[model.pk for model in models])
+
 
   @database_sync_to_async
   def saveModel(self, model: TracershopModel) -> None:
@@ -156,24 +220,60 @@ class DatabaseInterface():
     model.objects.bulk_update(models, fields=tags)
 
   @database_sync_to_async
-  def releaseOrders(self, deliverTime: ActivityDeliveryTimeSlot, release_date: date, user: User):
-    """Releases an order"""
-    now = self.datetimeNow.now()
+  def releaseOrders(self,
+                    timeSlotID: int,
+                    orderIDs: List[int],
+                    vialIDs: List[int],
+                    user: User,
+                    now: datetime) -> Tuple[QuerySet[ActivityOrder],QuerySet[Vial]]:
+    """_summary_
 
-    order = ActivityOrder.objects.get(ordered_time_slot=deliverTime,
-                                         delivery_date=release_date)
-    order.status=OrderStatus.Released
-    order.freed_datetime=now
-    order.freed_by=user
-    order.save()
+    Args:
+        deliverTime (ActivityDeliveryTimeSlot): _description_
+        orders (_type_): _description_
+        vials (_type_): _description_
+        user (User): _description_
+        now (datetime): _description_
 
-    moved_orders = ActivityOrder.objects.filter(moved_to_time_slot=deliverTime,
-                                                delivery_date=order.delivery_date)
-    moved_orders.update(
-      status=OrderStatus.Released, freed_datetime=now, freed_by=user
-    )
+    Returns:
+        Tuple[QuerySet[ActivityOrder],QuerySet[Vial]]: _description_
+    """
+    ##### User check, can free
+    if user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+      raise Exception
 
-    return [order] + list(moved_orders)
+    timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
+    orders = ActivityOrder.objects.filter(pk__in=orderIDs)
+    vials = Vial.objects.filter(pk__in=vialIDs)
+
+    if len(vials) == 0:
+      raise Exception
+    if len(orders) == 0:
+      raise Exception
+    pivot_order = orders[0]
+
+    for order in orders:
+      if not order.status == OrderStatus.Accepted:
+        print(f"Order Status missmatch! {order.status}", order.status == OrderStatus.Accepted)
+        raise Exception
+      if not (order.moved_to_time_slot == timeSlot or order.ordered_time_slot == timeSlot):
+        raise Exception
+
+      order.status = OrderStatus.Released
+      order.freed_by = user
+      order.freed_datetime = now
+
+    for vial in vials:
+      if vial.assigned_to is not None:
+        raise Exception
+
+      vial.assigned_to = pivot_order
+    # Commit!
+    Vial.objects.bulk_update(vials, ['assigned_to'])
+    ActivityOrder.objects.bulk_update(orders, ['status', 'freed_by', 'freed_datetime'])
+
+    return orders, vials
+
 
 
   def __timeUserSensitiveFilter(self, model_identifier: str):
@@ -220,11 +320,15 @@ class DatabaseInterface():
     serialized_dict = {}
 
     for key, models in instances.items():
-      model = MODELS[key]
+      Model = MODELS[key]
+      if not isinstance(models, QuerySet):
+        primary_keys = [model.pk for model in models]
+        models = Model.objects.filter(pk__in=primary_keys)
+
       serialized_models = serialize('python', models)
       for serialized_model in serialized_models:
-        fields= serialized_model['fields']
-        for keyword in model.exclude: #type: ignore
+        fields = serialized_model['fields']
+        for keyword in Model.exclude: #type: ignore
           del fields[keyword]
       serialized_dict[key] = serialized_models
 
@@ -254,3 +358,7 @@ class DatabaseInterface():
         instances[modelKeyword] = model.objects.all()
     return instances
 
+  def __canChange(self, model: TracershopModel) -> bool:
+    if type(model) in self.__modelCanChangeFunctions:
+      return self.__modelCanChangeFunctions[type(model)](model)
+    return True

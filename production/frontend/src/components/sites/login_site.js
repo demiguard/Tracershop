@@ -5,7 +5,7 @@ import propTypes from "prop-types";
 import Cookies from "js-cookie";
 
 import Authenticate from "../injectable/authenticate";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_GREAT_STATE, WEBSOCKET_SESSION_ID } from "../../lib/constants";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER_ID, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_GREAT_STATE, WEBSOCKET_SESSION_ID } from "../../lib/constants";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
 import { User } from "../../dataclasses/user";
 
@@ -43,7 +43,8 @@ class LoginSite extends Component {
           this.props.set_user(new User(
             data[AUTH_USERNAME],
             data[LEGACY_KEYWORD_USERGROUP],
-            data[LEGACY_KEYWORD_CUSTOMER]
+            data[LEGACY_KEYWORD_CUSTOMER],
+            data[AUTH_USER_ID]
           ))
 
           Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite : 'strict'})

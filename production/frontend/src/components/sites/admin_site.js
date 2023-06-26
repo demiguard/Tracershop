@@ -41,7 +41,7 @@ class AdminSite extends Component {
         ActiveSite : event.target.text
       })
     }
-    return returnFunction.bind(this)
+    return returnFunction.bind(this);
   }
 
   render(){
@@ -77,10 +77,8 @@ class AdminSite extends Component {
       throw errorString;
     }
 
-    const props = {...this.props}
-    props["NavbarElements"] = NavbarAdmin
-
-    console.log(this.props)
+    const props = {...this.props};
+    props["NavbarElements"] = NavbarAdmin;
 
     return(<ActiveSite
       {...props}

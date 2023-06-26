@@ -10,9 +10,12 @@ import { changeState } from "../../lib/state_management";
 import { FormatTime, FormatDateStr } from "../../lib/formatting";
 import { addCharacter } from "../../lib/utils";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER } from "../../lib/constants";
+  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE } from "../../lib/constants";
 
 import styles from '../../css/Site.module.css'
+import { Select } from "../injectable/select";
+import { Customer, Tracer, TracerCatalog } from "../../dataclasses/dataclasses";
+
 
 export { CreateInjectionOrderModal }
 
@@ -27,11 +30,40 @@ class CreateInjectionOrderModal extends Component {
   constructor(props){
     super(props);
 
-    var customerID;
-    for(const [cid, _] of this.props.customers){customerID = cid; break;}
+    // First we create a associative hash map, over all customer that can order
+    // injection tracers
 
-    var tracerID;
-    for (const [tid, _] of this.props.tracers){tracerID = tid; break;}
+    this.tracerCatalog = new Map()
+
+    for(const [id, _tracerCatalogPage] of this.props[JSON_TRACER_MAPPING]){
+      const /**@type {TracerCatalog} */ tracerCatalogPage = _tracerCatalogPage;
+      const /**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(tracerCatalogPage.tracer)
+      if(!(tracer.tracer_type === TRACER_TYPE_DOSE)){
+        continue;
+      }
+      if (this.tracerCatalog.has(tracerCatalogPage.customer)){
+        const customerCatalog = this.tracerCatalog.get(tracerCatalogPage.customer);
+        customerCatalog.push(tracerCatalogPage.tracer);
+      } else {
+        const customerCatalog = [tracerCatalogPage.tracer];
+
+        this.tracerCatalog.set(tracerCatalogPage.customer, customerCatalog);
+      }
+    }
+
+
+    // Initialize select
+    let customerID;
+    let tracerID;
+    for(const [cid, customerCatalog] of this.tracerCatalog){
+      customerID = cid;
+      tracerID = customerCatalog[0]
+      break;}
+
+    for (const [tid, _] of this.props[JSON_TRACER]){
+      tracerID = tid;
+      break;
+    }
 
     this.state = {
       customer : customerID,
@@ -58,6 +90,7 @@ class CreateInjectionOrderModal extends Component {
         this.setState({...this.state, error : "Leverings tidspunktet er ikke et valid"});
         return;
       }
+
       const year = this.props.date.getFullYear();
       const month = FormatDateStr(this.props.date.getMonth() + 1);
       const date = FormatDateStr(this.props.date.getDate())
@@ -79,29 +112,29 @@ class CreateInjectionOrderModal extends Component {
   }
 
   render(){
-    const customerSelect = renderSelect(
-      this.props.customers.values(),
-      "ID",
-      "UserName",
-      changeState("customer", this).bind(this),
-      this.state.customers
-    );
-    const tracers_all = Array.from((this.props.tracers.values()));
-    const tracers = tracers_all.filter(tracer => {return tracer.tracer_type == 2});
-    const tracerSelect   = renderSelect(
-      tracers,
-      "id",
-      "name",
-      changeState("tracer", this).bind(this),
-      this.state.tracer
-    );
+    const customerOptions = []
+    for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){
+      const /**@type {Customer} */ customer = _customer;
+      customerOptions.push({
+        id : customerID,
+        name : customer.short_name
+      })
+    }
+
+    const tracerOptions = [];
+    for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
+      const /**@type {Tracer} */ tracer = _tracer;
+
+    }
+
+
     const UsageOptions = [{ value : 1, name  : "Human"}, { value : 2, name  : "Dyr"}, {value: 3, name : "Andet"}];
     const usageSelect = renderSelect(UsageOptions, "value", "name", changeState("use", this).bind(this), this.state.use);
 
     return(
     <Modal
       show={true}
-      onHide={this.props.onClose}
+      onHide={this.props[PROP_ON_CLOSE]}
       className={styles.mariLight}
     >
       <Modal.Header>
@@ -110,7 +143,12 @@ class CreateInjectionOrderModal extends Component {
       <ModalBody>
         <Row><Col>Kunde</Col> <Col>{customerSelect}</Col></Row>
         <Row><Col>Tracer</Col><Col>{tracerSelect}</Col></Row>
-        <Row><Col>Brug</Col><Col>{usageSelect}</Col></Row>
+        <Row>
+          <Col>Brug</Col>
+          <Col><Select
+
+          /></Col>
+        </Row>
         <Row>
           <Col>Injektioner</Col>
           <Col>
@@ -148,7 +186,7 @@ class CreateInjectionOrderModal extends Component {
            /></Row> : "" }
       </ModalBody>
       <Modal.Footer>
-        <Button onClick={this.props.onClose}>Annuller</Button>
+        <Button onClick={this.props[PROP_ON_CLOSE]}>Annuller</Button>
         <Button onClick={this.SubmitOrder().bind(this)}>Opret Ordre</Button>
       </Modal.Footer>
     </Modal>);

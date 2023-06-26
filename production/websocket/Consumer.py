@@ -22,6 +22,7 @@ from typing import Any, Dict, List, Callable, Coroutine
 from channels.db import database_sync_to_async
 from channels.auth import login, get_user, logout
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
+from channels_redis.core import RedisChannelLayer
 from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
@@ -58,6 +59,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
   channel_name = 'websocket'
   global_group = "Global"
 
+  groups: List
+  channel_layer: RedisChannelLayer
+
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
     super().__init__()
     self.db = db
@@ -92,6 +96,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_discard(group_name,self.channel_name)
 
   async def __broadcast(self, message: Dict):
+    if 'type' in message:
+      raise Exception
     message['type'] = "broadcastMessage" # This is needed to point it to the send place
     await self.channel_layer.group_send(self.global_group, message) #
 
@@ -101,7 +107,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     This function is called by __broadcast
 
-    Note that this function CANNOT have a leading underscore by channels
+    Note that this function CANNOT be named with leading underscore by channels
     """
     await self.send_json(message)
 
@@ -219,7 +225,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
       key = self.scope["session"].session_key
       userGroup = user.UserGroup
       customer = []
+      user_id = user.id
     else:
+      user_id = None
       isAuth = False
       username = ""
       userGroup = 0
@@ -231,6 +239,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       LEGACY_KEYWORD_USERGROUP : userGroup,
       LEGACY_KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
+      AUTH_USER_ID : user_id,
       WEBSOCKET_SESSION_ID : key,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -245,17 +254,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
       userGroup = user.UserGroup
       #queryCustomers = await database_sync_to_async(user.Customer.all)()
       customer = []
+      user_id = user.id
     else:
       isAuth = False
       username = ""
       userGroup = 0
       customer = []
+      user_id = None
 
     await self.send_json({
       AUTH_USERNAME : username,
       LEGACY_KEYWORD_USERGROUP : userGroup,
       LEGACY_KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
+      AUTH_USER_ID : user_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -271,7 +283,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   ##### END Auth methods
-  async def __broadcastState(self, message: Dict[str, Any], state: Dict[str, Any]):
+  async def __broadcastState(self, message: Dict[str, Any], state: Dict[str, Any], refresh = False,):
     """Sends an update message to the global group
 
     Args:
@@ -283,6 +295,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_REFRESH : refresh,
       WEBSOCKET_DATA : state,
     })
 
@@ -306,7 +319,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : state
+      WEBSOCKET_DATA : state,
+      WEBSOCKET_REFRESH : True,
     })
 
   ### Model modification
@@ -319,14 +333,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                     WEBSOCKET_DATA_ID
                                     WEBSOCKET_DATATYPE
     """
-    success = await self.db.deleteModel(
+    success = await self.db.deleteModels(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA_ID],
+      self.scope['user']
     )
     if success:
-      await self.channel_layer.group_send(self.global_group,{
+      await self.__broadcast({
         WEBSOCKET_DATA : True,
-        WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
+        WEBSOCKET_DATA_ID : [message[WEBSOCKET_DATA_ID]],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
@@ -349,13 +364,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATA
                                   WEBSOCKET_DATATYPE
     """
-    instance = await self.db.createModel(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
+    instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
     serialized_data = await self.db.serialize_dict({
-        message[WEBSOCKET_DATATYPE] : [instance]
+        message[WEBSOCKET_DATATYPE] : instances
       })
-    await self.__broadcastState(message, {
-      message[WEBSOCKET_DATATYPE] : serialized_data
-    })
+    await self.__broadcastState(message, serialized_data)
 
 
   async def HandleModelEdit(self, message: Dict) -> None:
@@ -366,16 +379,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
       message (Dict[str, Any]): message sent by the user
     """
-    updatedModel = await self.db.editModel(
+    updatedModels = await self.db.handleEditModels(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA],
-      message[WEBSOCKET_DATA_ID]
     )
-    if updatedModel is not None:
+    if updatedModels is not None:
       serialized_data = await self.db.serialize_dict({
-        message[WEBSOCKET_DATATYPE] : [updatedModel]
+        message[WEBSOCKET_DATATYPE] : updatedModels
       })
-      await self.__broadcastState(message, serialized_data)
+      await self.__broadcastState(message, serialized_data, False)
     else:
       await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -420,26 +432,24 @@ class Consumer(AsyncJsonWebsocketConsumer):
       return await self.__RejectFreeing(message)
 
     # Authentication successful update
-    deliverTime: ActivityDeliveryTimeSlot = await self.db.getModel(JSON_DELIVER_TIME, message[WEBSOCKET_DATA][LEGACY_KEYWORD_DELIVER_TIME_ID])
+    data = message[WEBSOCKET_DATA]
+    orders, vials = await self.db.releaseOrders(data[JSON_DELIVER_TIME],
+                                                data[JSON_ACTIVITY_ORDER],
+                                                data[JSON_VIAL],
+                                                self.scope['user'],
+                                                self.datetimeNow.now())
+    newState = await self.db.serialize_dict({
+      JSON_ACTIVITY_ORDER : orders,
+      JSON_VIAL : vials
+    })
 
-    orders = self.db.releaseOrders(deliverTime, self.scope['user'])
-    order = orders[0]
-
-    # Update Vials
-    vials: List[Vial] = [await self.db.getModel(JSON_VIAL, vialID) for vialID in message[WEBSOCKET_DATA][JSON_VIAL]]
-    for vial in vials:
-      vial.assigned_to = order
-    await self.db.saveModels(Vial, vials, ['assigned_to'])
-
-    self.channel_layer.group_send(self.global_group, {
+    await self.__broadcast({
       AUTH_IS_AUTHENTICATED : True,
-      WEBSOCKET_DATA : {
-        JSON_ACTIVITY_ORDER : serialize('json', orders),
-        JSON_VIAL : serialize('json', vials),
-      },
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : newState,
     })
 
 
@@ -531,8 +541,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.send_json({
       WEBSOCKET_DATA : data,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_REFRESH : True,
     })
 
 
