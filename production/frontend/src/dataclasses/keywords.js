@@ -65,6 +65,7 @@ export const KEYWORD_ActivityDeliveryTimeSlot_WEEKLY_REPEAT = "weekly_repeat";
 export const KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME = "delivery_time";
 export const KEYWORD_ActivityDeliveryTimeSlot_DESTINATION = "destination";
 export const KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN = "production_run";
+export const KEYWORD_ActivityDeliveryTimeSlot_EXPIRATION_DATE = "expiration_date";
 
 // Model: DeliveryEndpoint
 export const KEYWORD_DeliveryEndpoint_TRACER_ENDPOINT_ID = "tracer_endpoint_id";
@@ -142,6 +143,7 @@ export const KEYWORD_ActivityProduction_ACTIVITY_PRODUCTION_ID = "activity_produ
 export const KEYWORD_ActivityProduction_PRODUCTION_DAY = "production_day";
 export const KEYWORD_ActivityProduction_TRACER = "tracer";
 export const KEYWORD_ActivityProduction_PRODUCTION_TIME = "production_time";
+export const KEYWORD_ActivityProduction_EXPIRATION_DATE = "expiration_date";
 
 // Model: SecondaryEmail
 export const KEYWORD_SecondaryEmail_SECONDARY_EMAIL_ID = "secondary_email_id";

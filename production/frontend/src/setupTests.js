@@ -23,4 +23,8 @@ class LocalStorageMock {
     delete this.store[key];
   }
 }
-global.localStorage = new LocalStorageMock;
+try {
+  global.localStorage = new LocalStorageMock();
+} catch {
+  // I guess we are mocked anyways?
+}

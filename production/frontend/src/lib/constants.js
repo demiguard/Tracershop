@@ -254,7 +254,7 @@ export const WEBSOCKET_UPDATE_SERVERCONFIG  = "updateServerConfig";
 // BETTER MESSAGE CONSTANTS
 
 //export const WEBSOCKET_MESSAGE_SHOP_CREATE_ORDER = "shopCreateOrder"
-
+// Remember to add these to local_storage_driver -> types
 // Javascript unique constants
 export const DATABASE_ACTIVE_TRACER = "activeTracer";
 export const DATABASE_ACTIVITY_ORDER = JSON_ACTIVITY_ORDER;
@@ -274,9 +274,13 @@ export const DATABASE_TODAY = "today";
 export const DATABASE_TRACER = JSON_TRACER;
 export const DATABASE_TRACER_MAPPING = JSON_TRACER_MAPPING;
 export const DATABASE_SERVER_CONFIG = JSON_SERVER_CONFIG;
-export const DATABASE_SHOP_CUSTOMER = "shopCustomer";
 export const DATABASE_VIAL = JSON_VIAL;
 export const DATABASE_CURRENT_USER = "current_user"
+
+export const DATABASE_SHOP_CUSTOMER = "shopCustomer";
+export const DATABASE_SHOP_ACTIVE_ENDPOINT = "shop_active_endpoint"
+export const DATABASE_SHOP_ORDER_PAGE = "shop_order_page"
+
 
 export const ERROR_TYPE_HINT = "hint";
 export const ERROR_TYPE_WARNING = "warning";

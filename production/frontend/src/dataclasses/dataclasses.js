@@ -81,12 +81,13 @@ export class Deadline {
 }
 
 export class ActivityDeliveryTimeSlot {
-  constructor(activity_delivery_time_slot_id, weekly_repeat, delivery_time, destination, production_run, ) {
+  constructor(activity_delivery_time_slot_id, weekly_repeat, delivery_time, destination, production_run, expiration_date, ) {
     this.activity_delivery_time_slot_id=activity_delivery_time_slot_id
     this.weekly_repeat=weekly_repeat
     this.delivery_time=delivery_time
     this.destination=destination
     this.production_run=production_run
+    this.expiration_date=expiration_date
   }
 }
 
@@ -189,11 +190,12 @@ export class Procedure {
 }
 
 export class ActivityProduction {
-  constructor(activity_production_id, production_day, tracer, production_time, ) {
+  constructor(activity_production_id, production_day, tracer, production_time, expiration_date, ) {
     this.activity_production_id=activity_production_id
     this.production_day=production_day
     this.tracer=tracer
     this.production_time=production_time
+    this.expiration_date=expiration_date
   }
 }
 

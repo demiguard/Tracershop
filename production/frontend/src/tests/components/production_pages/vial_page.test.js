@@ -7,7 +7,7 @@ import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@
 import { jest } from '@jest/globals'
 
 import { VialPage } from "../../../components/production_pages/vial_page.js"
-import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { JSON_CUSTOMER, JSON_VIAL, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
 
 const onClose = jest.fn()
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -108,10 +108,13 @@ const vials = new Map([
 
 
 describe("Vial page tests suite", () => {
+  const props = {};
+  props[JSON_VIAL] = new Map();
+  props[JSON_CUSTOMER] = new Map();
+
   it("Standard Render Tests", async () => {
     render(<VialPage
-      customer={customers}
-      vial={vials}
+      {...props}
     />);
   });
 });

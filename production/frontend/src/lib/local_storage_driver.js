@@ -80,6 +80,8 @@ export const db = {
     adminPage : String, // DATABASE_ADMIN_PAGE
     // shop
     shopCustomer : Number, // DATABASE_SHOP_CUSTOMER
+    shop_active_endpoint : Number,
+    shop_order_page : String,
   },
 
   addType: function(key, typeClass){

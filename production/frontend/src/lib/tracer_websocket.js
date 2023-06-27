@@ -29,7 +29,6 @@ class TracerWebSocket {
      */
     this._ws.onmessage = function(messageEvent) {
       const message = JSON.parse(messageEvent.data);
-      console.log(message)
       const pipe = this._PromiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
@@ -49,9 +48,7 @@ class TracerWebSocket {
           this.StateHolder.updateState(state,message[WEBSOCKET_REFRESH]);
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE:{
-          if (message[WEBSOCKET_DATA]){
-            this.StateHolder.deleteModels(message[WEBSOCKET_MESSAGE_TYPE], message[WEBSOCKET_DATA_ID])
-          }
+            this.StateHolder.deleteModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID])
         }
         break
         case WEBSOCKET_MESSAGE_FREE_INJECTION:
@@ -118,18 +115,6 @@ class TracerWebSocket {
 
     return promise;
   }
-  /**
-   * This function checks if a message send by the server is valid or not.
-   * @param {Object} message - The message to be validated
-   * @returns {Boolean} - If the message is valid or not
-   */
-  validateMessage(message) {
-    if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_SUCCESS)) return false;
-    if(message[WEBSOCKET_MESSAGE_SUCCESS] != WEBSOCKET_MESSAGE_SUCCESS) return false;
-    if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_ID)) return false;
-    if(!message.hasOwnProperty(WEBSOCKET_MESSAGE_TYPE)) return false;
-    return true;
-  }
 
   sendEditModel(modelType, models){
     const message = {}
@@ -148,9 +133,6 @@ class TracerWebSocket {
 
     return this.send(message);
   }
-
-  sendCreate
-
 }
 
 async function safeSend(message, websocket){

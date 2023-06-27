@@ -1,11 +1,12 @@
 import React, { Component } from "react";
-import { Col, Container, Form, FormGroup, Row } from "react-bootstrap";
+import { Col, Container, Form, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 import { Calender, standardOrderMapping } from "../injectable/calender.js";
+import { Select } from '../injectable/select.js'
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { DATABASE_SHOP_CUSTOMER, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_RUN, JSON_TRACER, JSON_TRACER_MAPPING, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/constants.js";
-
+import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER, DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_ENDPOINT, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_RUN, JSON_TRACER, JSON_TRACER_MAPPING, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEEKLY_REPEAT_CHOICES } from "../../lib/constants.js";
+import { ActivityOrder, Customer, ActivityDeliveryTimeSlot, DeliveryEndpoint, ActivityProduction } from "../../dataclasses/dataclasses.js";
 
 export { ShopOrderPage }
 
@@ -19,12 +20,26 @@ class ShopOrderPage extends Component {
   constructor(props){
     super(props);
 
-    let customer = db.get(DATABASE_SHOP_CUSTOMER);
-    if(customer === undefined){
-      for(const [CID, _customer] of this.props[JSON_CUSTOMER]){
-        db.set(DATABASE_SHOP_CUSTOMER, CID)
-        customer = CID
+    let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
+    this.representingCustomer = []
+
+    if(activeCustomer === undefined){
+      for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){
+        activeCustomer = customerID
+        db.set(DATABASE_SHOP_CUSTOMER, customerID)
         break;
+      }
+    }
+
+    let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
+    this.customerEndpoints = []
+    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
+      const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
+      if(endpoint.owner === activeCustomer){
+        if(activeEndpoint === undefined){
+          activeEndpoint = endpointID
+          db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpoint)
+        }
       }
     }
 
@@ -34,13 +49,18 @@ class ShopOrderPage extends Component {
       db.set(DATABASE_TODAY, today)
     }
 
-  const View = Content["Manuel"] // Move this to database setting
+    let viewIdentifier = db.get(DATABASE_SHOP_ORDER_PAGE)
+    if (viewIdentifier === undefined){
+      viewIdentifier = "Manuel"
+    }
+    let View = Content[viewIdentifier];
 
     this.state = {
-      activeCustomer : customer,
+      activeCustomer : activeCustomer,
+      activeEndpoint : activeEndpoint,
       today : today,
-      View : View
-    }
+      View : View,
+    };
   }
 
   setActiveDate(NewDate) {
@@ -66,7 +86,6 @@ class ShopOrderPage extends Component {
   }
 
   render(){
-    return (<div></div>)
     let activeCustomer = this.props[JSON_CUSTOMER].get(Number(this.state.activeCustomer));
     if (activeCustomer == undefined){
       console.log("Undefined Customer not found")
@@ -76,32 +95,37 @@ class ShopOrderPage extends Component {
         break;
       }
     }
-    const customer = activeCustomer;
+    const /**@type { Customer } */ customer = activeCustomer;
 
-    const day = this.state.today.getDay(); // WELL WELL WELL, IT LOOKS LIKE THERE'S DISAGREEMENTS WITH THE BACKEND WHAT SUNDAY IS CALLED.
+    // WELL WELL WELL, IT LOOKS LIKE THERE'S DISAGREEMENTS WITH THE BACKEND WHAT SUNDAY IS CALLED.
+    // LETS FIX THAT
+    const day = (this.state.today.getDay() + 6) % 7;
 
     const oneJan = new Date(this.state.today.getFullYear(),0,1);
     const numberOfDays = Math.floor((this.state.today - oneJan) / (24 * 60 * 60 * 1000));
     const WeekNumber = Math.ceil(( this.state.today.getDay() + 1 + numberOfDays) / 7);
 
-    const RelevantDeliverTimes = Array.from(this.props[JSON_DELIVER_TIME].values()).filter((DT) => {
+    const RelevantDeliverTimes = Array.from(this.props[JSON_DELIVER_TIME].values()).filter((_DT) => {
+      const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _DT;
+      const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run)
       let WeeklyOrdering = true;
-      switch(DT.repeat){
-        case 2:
+      switch(timeSlot.weekly_repeat){
+        case WEEKLY_REPEAT_CHOICES.EVEN:
           WeeklyOrdering = WeekNumber % 2 == 0;
         break;
-        case 3:
+        case WEEKLY_REPEAT_CHOICES.ODD:
           WeeklyOrdering = WeekNumber % 2 == 1;
         break;
       }
 
-      return DT.day == day &&
-             DT.BID == customer.ID &&
-             WeeklyOrdering;
+      return production.production_day == day &&
+              this.customerEndpoints.includes(timeSlot.destination) &&
+              WeeklyOrdering;
     });
 
-    const RelevantOrders = Array.from(this.props[JSON_ACTIVITY_ORDER].values()).filter((order) => {
-      return order.BID == customer.ID;
+    const RelevantOrders = Array.from(this.props[JSON_ACTIVITY_ORDER].values()).filter((_order) => {
+      const /**@type {ActivityOrder} */ order = _order
+      return order.ordered_time_slot 
     });
 
     const RelevantTOrders = Array.from(this.props[JSON_INJECTION_ORDER].values()).filter((t_order) => {
@@ -115,17 +139,32 @@ class ShopOrderPage extends Component {
     /** Relevant Bookings  */
 
 
-    // Re-Maping the arrays with a map
-
-    const deliverTimes = new Map(RelevantDeliverTimes.map((DT) => [DT.DTID, DT]));
-    const orders = new Map(RelevantOrders.map((order) => [order.oid, order]));
-    const tOrders = new Map(RelevantTOrders.map((tOrder) => [tOrder.oid, tOrder]));
-    const tracerMapping = new Map(RelevantTracerMapping.map((TM) => [TM.ID, TM]))
 
     const customerOptions = [];
-    for(const [_CID, customer] of this.props[JSON_CUSTOMER]){ // Note new namespace for customer
-      customerOptions.push(<option key={customer.ID} value={customer.ID}>{customer.UserName}</option>)
+    for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){ // Note new namespace for customer
+      const /**@type {Customer} */ customer = _customer
+      customerOptions.push({id: customer, name : customer.short_name})
     } // End customer namespace
+
+    let CustomerSelect
+    if(customerOptions.length === 1){
+      CustomerSelect = <InputGroup>
+        <InputGroup.Text>Kunde:</InputGroup.Text>
+        <FormControl readOnly value={customerOptions[0].name}/>
+      </InputGroup>
+    } else {
+      CustomerSelect = <Select/>
+
+    }
+
+    const viewProps = {...this.props};
+
+    const calenderProps = {};
+
+    calenderProps[CALENDER_PROP_DATE] = this.state.today;
+    calenderProps[CALENDER_PROP_ON_DAY_CLICK] = this.setActiveDate.bind(this);
+    calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = this.setActiveMonth.bind(this);
+    calenderProps[CALENDER_PROP_GET_COLOR] = () => {return ""}
 
     return (
     <div>
@@ -134,22 +173,7 @@ class ShopOrderPage extends Component {
           <Row></Row>
           <Row>
             <this.state.View
-              orders={orders}
-              tOrders={tOrders}
-              deliverTimes={deliverTimes}
-              tracerMapping={tracerMapping}
-              activeCustomer={this.state.activeCustomer}
-              // State injection
-              date={this.state.today}
-              // Props injection
-              closeddates={this.props[JSON_CLOSED_DATE]}
-              customers={this.props[JSON_CUSTOMER]}
-              employee={this.props[JSON_EMPLOYEE]}
-              isotopes={this.props[JSON_ISOTOPE]}
-              runs={this.props[JSON_RUN]}
-              tracers={this.props[JSON_TRACER]}
-              user={this.props[PROP_USER]}
-              websocket={this.props[PROP_WEBSOCKET]}
+              {...viewProps}
               />
           </Row>
         </Col>
@@ -160,31 +184,12 @@ class ShopOrderPage extends Component {
             }}
           >
             <Row>
-              <div className="CustomerSelectArea">
-                <FormGroup className="input-group">
-                  <FormGroup className="input-group-prepend">
-                    <label className="input-group-text">Kunde:</label>
-                  </FormGroup>
-                  <Form.Select
-                    value={this.state.activeCustomer}
-                    onChange={this.setActiveCustomer(this)}
-                    >
-                    {customerOptions}
-                  </Form.Select>
-                </FormGroup>
-              </div>
+              <CustomerSelect></CustomerSelect>
             </Row>
             <Row>
-              <div>
-                {/*
                 <Calender
-                  date={this.state.today}
-                  getColor={standardOrderMapping(orders, tOrders, this.props[JSON_PRODUCTION], this.props[JSON_CLOSED_DATE])}
-                  onDayClick={this.setActiveDate.bind(this)}
-                  onMonthChange={this.setActiveMonth.bind(this)}
+                  {...calenderProps}
                 />
-                */}
-              </div>
             </Row>
           </Container>
         </Col>

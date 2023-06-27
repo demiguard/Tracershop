@@ -10,6 +10,7 @@ import userEvent from '@testing-library/user-event'
 import { jest } from '@jest/globals'
 
 import { Calender, standardOrderMapping, productionGetMonthlyOrders } from '../../../components/injectable/calender.js'
+import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE } from "../../../lib/constants.js";
 
 let container = null;
 let root = null
@@ -36,14 +37,19 @@ const getColor = jest.fn(() => {return ""});
 const onDayClick = jest.fn((str) => {return str});
 const onMonthChange = jest.fn((str) => {return str});
 
+const calender_props = {};
+calender_props[CALENDER_PROP_DATE] = date;
+calender_props[CALENDER_PROP_GET_COLOR] = getColor;
+calender_props[CALENDER_PROP_ON_DAY_CLICK] = onDayClick;
+calender_props[CALENDER_PROP_ON_MONTH_CHANGE] = onMonthChange
+
 
 describe("Calender render Tests", () => {
   it("Standard RenderTest", async () => {
+
+
     render(<Calender
-      date={date}
-      getColor={getColor}
-      onDayClick={onDayClick}
-      onMonthChange={onMonthChange}
+      {...calender_props}
     />);
 
     expect(await screen.getByText("June")).toBeVisible();
@@ -59,10 +65,7 @@ describe("Calender render Tests", () => {
 
   it("Click on 15 of june", async () => {
     render(<Calender
-      date={date}
-      getColor={getColor}
-      onDayClick={onDayClick}
-      onMonthChange={onMonthChange}
+      {...calender_props}
     />);
 
     await fireEvent(await screen.findByText("15"), new MouseEvent('click', {bubbles: true, cancelable: true}));
@@ -72,10 +75,7 @@ describe("Calender render Tests", () => {
 
   it("Increase Month", async () => {
     render(<Calender
-      date={date}
-      getColor={getColor}
-      onDayClick={onDayClick}
-      onMonthChange={onMonthChange}
+      {...calender_props}
     />);
 
     await fireEvent(await screen.findByAltText("Næste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
@@ -84,10 +84,7 @@ describe("Calender render Tests", () => {
 
   it("Decrease Month", async () => {
     render(<Calender
-      date={date}
-      getColor={getColor}
-      onDayClick={onDayClick}
-      onMonthChange={onMonthChange}
+      {...calender_props}
     />);
 
     await fireEvent(await screen.findByAltText("Sidste"), new MouseEvent('click', {bubbles: true, cancelable: true}));

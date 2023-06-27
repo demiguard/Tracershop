@@ -37,7 +37,7 @@ class CreateOrderModal extends Component {
     let DeliverTimeMapping = new Map();
 
     for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
-      DeliverTimeMapping = this.props[PROP_ORDER_MAPPING].get(customerID);
+      a = this.props[PROP_ORDER_MAPPING].get(customerID);
       if (activeCustomer === undefined){
         activeCustomer = customer;
       }
@@ -92,7 +92,7 @@ class CreateOrderModal extends Component {
       });
       return;
     }
-    dateToDateString
+
     const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
     const skeleton = {}
     const TimeSlot = this.state.productions[this.state.selectedTimeSlot]

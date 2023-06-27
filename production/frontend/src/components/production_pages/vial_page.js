@@ -158,23 +158,23 @@ class VialPage extends Component {
 
 
   render(){
-    const SortedVials = [...this.state.vials.values()].sort((vial1, vial2) => {
+    const SortedVials = [...this.props[JSON_VIAL].values()].sort((vial1, vial2) => {
       const invertedSearchFactor = (this.state.InvertedSearch) ? -1 : 1;
       switch (this.state.SearchPattern) {
         case SearchOptions.ID:
-          return invertedSearchFactor*(vial1.ID - vial2.ID);
+          return invertedSearchFactor*(vial1.id - vial2.id);
         case SearchOptions.CHARGE:
-          return invertedSearchFactor*((vial1.charge > vial2.charge) - (vial1.charge < vial2.charge));
+          return invertedSearchFactor*((vial1.lot_number > vial2.lot_number) - (vial1.lot_number < vial2.lot_number));
         case SearchOptions.DATE:
-          const date1 = new Date(vial1.filldate).valueOf();
-          const date2 = new Date(vial2.filldate).valueOf();
+          const date1 = new Date(vial1.fill_date).valueOf();
+          const date2 = new Date(vial2.fill_date).valueOf();
           return (
             isFinite(date1) && isFinite(date2) ?
             invertedSearchFactor*((date1>date2) - (date1<date2)) :
             NaN
         );
         case SearchOptions.TIME:
-          return invertedSearchFactor*((vial1.filltime > vial2.filltime) - (vial1.filltime < vial2.filltime));
+          return invertedSearchFactor*((vial1.fill_time > vial2.fill_time) - (vial1.fill_time < vial2.fill_time));
         case SearchOptions.VOLUME:
           return invertedSearchFactor*(vial1.volume - vial2.volume);
         case SearchOptions.ACTIVITY:
@@ -192,7 +192,7 @@ class VialPage extends Component {
     const filter_batch = new RegExp(this.state.filterBatch, 'g');
     for (const vial of SortedVials){
       if (this.state.filterCustomer) {
-        if (filter_batch.test(vial.charge) &&
+        if (filter_batch.test(vial.lot_number) &&
               this.state.filterCustomer == vial.customer)
                 RenderedVials.push(this.renderVial(vial));
       } else {
@@ -211,7 +211,6 @@ class VialPage extends Component {
 
     return(
     <Container>
-
       <Row>
         <Col>
           <FormControl
