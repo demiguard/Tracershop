@@ -6,6 +6,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALE
 import PropTypes from 'prop-types'
 import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "../../dataclasses/keywords";
 import { Deadline } from "../../dataclasses/dataclasses";
+import { calculateDeadline } from "../../lib/chronomancy";
 
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 
@@ -265,56 +266,4 @@ function productionGetMonthlyOrders(websocket){
     websocket.send(message);
   }
   return retFunc
-}
-
-
-// For deadline calculation we are gonna do a little trick
-// In javascript
-// new Date(2000, 0, 0) -> 31 dec 1999
-
-/**
- * Calculates a daily deadline from a deadline object and a date
- * @param {Deadline} deadline - the deadline is question, assured to be deadline_type === 0
- * @param {Date} date 
- * @returns {Date}
- */
-function calculateDailyDeadline(deadline, date){
-  const deadline_hour = Number(deadline.deadline_time.substring(0,2))
-  const deadline_min = Number(deadline.deadline_time.substring(3,5))
-
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, deadline_hour, deadline_min)
-}
-
-
-/**
- * Calculates a weekly deadline from a deadline object and a date
- * @param {Deadline} deadline - the deadline is question, assured to be deadline_type === 1
- * @param {Date} date 
- * @returns {Date}
- */
-function calculateWeeklyDeadline(deadline, date){
-  const deadline_hour = Number(deadline.deadline_time.substring(0,2))
-  const deadline_min = Number(deadline.deadline_time.substring(3,5))
-
-  let deadline_date = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1, deadline_hour, deadline_min)
-  while ((deadline_date.getDay() + 6) % 7 !== deadline.deadline_day){
-    deadline_date = new Date(deadline_date.getFullYear(), deadline_date.getMonth(), deadline_date.getDate() - 1, deadline_hour, deadline_min)
-  }
-
-  return deadline_date
-}
-
-
-/**
- * Calculates a daily deadline from a deadline object and a date
- * @param {Deadline} deadline - the deadline is question, assured to be deadline_type === 0
- * @param {Date} date 
- * @returns {Date}
- */
-function calculateDeadline(deadline, date){
-  if (DEADLINE_TYPES.DAILY === deadline.deadline_type)
-    return calculateDailyDeadline(deadline, date)
-  if (DEADLINE_TYPES.WEEKLY === deadline.deadline_type)
-    return calculateWeeklyDeadline(deadline, date)
-
 }

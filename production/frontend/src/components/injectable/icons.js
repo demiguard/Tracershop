@@ -10,21 +10,28 @@ class ClickableIcon extends Component {
     src: propTypes.string.isRequired,
     onClick : propTypes.func,
     label: propTypes.string,
+    className : propTypes.string
   }
 
   render(){
+    let className = 'statusIcon'
+    if (this.props.className) {
+      className = `statusIcon ${this.props.className}`
+    }
+
     return <Button
               style={{
                 padding : "0px",
                 justifyContent : 'center',
                 alignItems: 'center',
+                display: 'block',
               }}
               variant="variant-light"
               aria-label={this.props.label}
               onClick={this.props.onClick}
     >
       <Image
-        className='statusIcon'
+        className={className}
         src={this.props.src}
         alt={this.props.altText}
       />

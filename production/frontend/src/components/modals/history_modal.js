@@ -113,7 +113,7 @@ class HistoryModal extends Component {
             valueKey="val"
             nameKey="name"
             onChange={changeState("month", this)}
-            initialValue={this.state.month}/>
+            value={this.state.month}/>
         </Col>
         <Col>
           <FormControl aria-label="year-selector" value={this.state.year} onChange={changeState("year", this)}></FormControl>

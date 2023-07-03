@@ -19,7 +19,7 @@ import SiteStyles from "/src/css/Site.module.css"
 import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME, KEYWORD_ActivityDeliveryTimeSlot_DESTINATION, KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN, KEYWORD_ActivityOrder_COMMENT, KEYWORD_ActivityOrder_ORDERED_ACTIVITY, KEYWORD_ActivityOrder_ORDERED_BY, KEYWORD_ActivityOrder_ORDERED_TIME_SLOT, KEYWORD_ActivityOrder_STATUS, KEYWORD_Customer_SHORT_NAME, KEYWORD_DeliveryEndpoint_NAME, KEYWORD_DeliveryEndpoint_OWNER } from "../../dataclasses/keywords.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { renderComment } from "../../lib/rendering.js";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Tracer } from "../../dataclasses/dataclasses.js";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "../../dataclasses/dataclasses.js";
 
 /*
   For the dataclasses described see Tracershop/production/lib/ProductionDataClasses.py
@@ -54,9 +54,9 @@ function OrderRow(props){
 function RenderedTimeSlot(props){
   const [open, setOpen] = useState(false);
 
-  const timeSlot = props[JSON_DELIVER_TIME].get(props.timeSlotID);
-  const endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
-  const owner    = props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER]);
+  const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(props.timeSlotID);
+  const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
+  const /**@type {Customer} */ owner    = props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER]);
 
   let mbq = 0;
   let minimum_status = 3
@@ -71,21 +71,26 @@ function RenderedTimeSlot(props){
     />
     )
   }
+  
+  const openClassName = open ? SiteStyles.rotated : "";
 
   return (
     <Card>
       <Card.Header>
         <Row>
-          <Col><StatusIcon status={minimum_status}/></Col>
-          <Col>{endpoint[KEYWORD_DeliveryEndpoint_NAME]}</Col>
+          <Col xs={1}><StatusIcon
+                  status={minimum_status}
+                  onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
+          /></Col>
+          <Col>{owner.short_name} - {endpoint.name}</Col>
           <Col>{timeSlot[KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME]}</Col>
-          <Col> {mbq} MBq</Col>
-          <Col><ClickableIcon
-              src={"/static/images/pen.svg"}
-              onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
-            /></Col>
-          <Col>
+          <Col>Bestilt: {mbq} MBq</Col>
+          <Col style={{
+            justifyContent : 'right',
+            display : 'flex'
+          }}>
             <ClickableIcon
+            className={openClassName}
             src={"/static/images/next.svg"}
             onClick={() => {setOpen(!open)}}
             />
@@ -161,172 +166,6 @@ export class ActivityTable extends Component {
     return OrderMapping;
   }
 
-  /** This Function Moves an order from one Production run to another. It also updates dependant orders.
-   *
-   * @param {Number} newRun - New run that the order is being moved to.
-   * @param {Number} oid - ID of Order being moved
-   */
-  ChangeRun(newRun, oid) {
-    /** So this works for 2 production, however there's so much more fun when you have 3 productions
-     *
-     * Okay So here is a fun bug / I dunno what happens:
-     * Lets say we have 3 Deliver Times
-     * 2 gets mapped to 1 -> No problem, however 2 no longer have a master Order
-     * 3 gets mapped to 2 -> Big problem, Since there's no master order for DT 2, a new order is created, since there's no master order a new one is created
-     * 2 gets mapped to 2 -> Biggest problem, there's now three orders: a ghost order, 2, 3.
-     *
-     * Now This might not be a problem, there might be some wierd reason why Production might want this, however if Order 2 is moved back, then the orders should be merged
-     * Really this is something that might best be handled on the backend
-     * Also this is not a problem since for now there's only 2 productions per day, however This will be a problem someday!
-     */
-    const Order         = this.props[JSON_ACTIVITY_ORDER].get(oid);
-    const OrderDate     = new Date(Order.deliver_datetime);
-    const Customer      = this.props[JSON_CUSTOMER].get(Order.BID);
-    const Tracer        = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
-    const isotope       = this.props[JSON_ISOTOPE].get(Tracer.isotope);
-
-    // Find Master Order
-    const DeliverTimeMapping = this.customerTimeSlotMapping.get(Customer.ID);
-
-    if(!DeliverTimeMapping){
-      console.log(Customer);
-      console.log(Order);
-      throw "An Order doesn't have a deliverTime mapping for a customer";
-    }
-
-    const DeliverTimeObejct = DeliverTimeMapping.get(newRun);
-
-    if (!DeliverTimeObejct){
-      console.log(Customer);
-      console.log(Order);
-      throw "A user is trying to map to a delivertime that doesn't exists for that user!";
-    }
-
-    if(DeliverTimeObejct.MasterOrder == null){
-      if(DeliverTimeObejct.deliverTime == Order.deliver_datetime){
-        // This was an old master Order that is now being moved back
-        if(Order.COID === -1){
-          throw "You got some data corruption in your orders! Because this should already be a master Order";
-        }
-        let OldMasterOrder   = this.props[JSON_ACTIVITY_ORDER].get(Order.COID);
-        while (OldMasterOrder.COID !== -1){ // There might be a chain of orders
-          OldMasterOrder = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrder.COID);
-        }
-        const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
-        const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
-
-        const lessActivity = CalculateProduction(isotope.halflife, OldMinutes, Order.amount)
-        const lessActivityOverhead = CalculateProduction(isotope.halflife, OldMinutes, Order.amount_o)
-
-        OldMasterOrder.total_amount -= lessActivity;
-        OldMasterOrder.total_amount_o -= lessActivityOverhead;
-
-        Order.total_amount = Order.amount;
-        Order.total_amount_o = Order.amount_o;
-        Order.run = newRun;
-        Order.COID = -1;
-
-        const Orders = [Order, OldMasterOrder];
-
-        const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-        message[JSON_ACTIVITY_ORDER] = Orders;
-        this.props[PROP_WEBSOCKET].send(message);
-
-      } else {
-        // Create a ghost order
-        const GhostOrderDate = new Date(DeliverTimeObejct.deliverTime);
-        const GhostOrderMinutes = CountMinutes(GhostOrderDate, OrderDate);
-
-        const GhostOrderActivity = CalculateProduction(isotope.halflife, GhostOrderMinutes, Order.amount);
-        const GhostOrderActivityOverhead = CalculateProduction(isotope.halflife, GhostOrderMinutes, Order.amount_o);
-
-        const GhostOrderData = {
-          GhostOrderActivity : GhostOrderActivity,
-          GhostOrderActivityOverhead : GhostOrderActivityOverhead,
-          GhostOrderDeliverTime : DeliverTimeObejct.deliverTime,
-          GhostOrderRun : newRun,
-          Tracer : this.props[PROP_ACTIVE_TRACER],
-          MappedOrder : Order.oid, // Because the server needs to create the order
-          CustomerID : Order.BID
-        }
-
-        Order.run = newRun;
-        Order.total_amount = 0;
-        Order.total_amount_o = 0;
-        // Can't set COID since it's an ID for a new Order
-
-        const Orders = [Order];
-
-        if(Order.COID !== -1){
-          let OldMasterOrder   = this.props[JSON_ACTIVITY_ORDER].get(Order.COID);
-          while (OldMasterOrder.COID !== -1){
-            OldMasterOrder = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrder.COID);
-          }
-
-          const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
-          const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
-
-          const lessActivity = CalculateProduction(isotope.halflife, OldMinutes, Order.total_amount);
-          const lessActivityOverhead = CalculateProduction(isotope.halflife, OldMinutes, Order.total_amount_o);
-
-          OldMasterOrder.total_amount -= lessActivity;
-          OldMasterOrder.total_amount_o -= lessActivityOverhead;
-
-          Orders.push(OldMasterOrder);
-        }
-        const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-        message[JSON_ACTIVITY_ORDER] = Orders;
-        message[JSON_GHOST_ORDER] = GhostOrderData;
-        this.props[PROP_WEBSOCKET].send(message);
-      }
-
-    } else {
-      //This is updates the Master and Original Order
-      const OldMasterOrderID = Order.COID;
-      const MasterOrder = this.props[JSON_ACTIVITY_ORDER].get(DeliverTimeObejct.MasterOrder);
-      const MasterOrderDate = new Date(MasterOrder.deliver_datetime);
-
-      const Minutes = CountMinutes(MasterOrderDate, OrderDate);
-      console.log(MasterOrderDate, OrderDate, Minutes)
-      const AdditionalActivity = CalculateProduction(isotope.halflife, Minutes, Order.total_amount)
-      const AdditionalActivityOverhead = CalculateProduction(isotope.halflife, Minutes, Order.total_amount_o)
-
-      MasterOrder.total_amount   += AdditionalActivity;
-      MasterOrder.total_amount_o += AdditionalActivityOverhead;
-
-      Order.total_amount = 0;
-      Order.total_amount_o = 0;
-      Order.COID = MasterOrder.oid;
-      Order.run = newRun;
-
-      const Orders = [Order, MasterOrder];
-
-      if(OldMasterOrderID !== -1){
-        let OldMasterOrder   = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrderID);
-        while (OldMasterOrder.COID !== -1){
-          OldMasterOrder = this.props[JSON_ACTIVITY_ORDER].get(OldMasterOrder.COID);
-        }
-
-        const OldMasterOrderDate = new Date(OldMasterOrder.deliver_datetime);
-        const OldMinutes = CountMinutes(OldMasterOrderDate, OrderDate);
-
-        const lessActivity = CalculateProduction(isotope.halflife, OldMinutes, Order.amount_total);
-        const lessActivityOverhead = CalculateProduction(isotope.halflife, OldMinutes, Order.amount_total_o);
-
-        OldMasterOrder.total_amount -= lessActivity
-        OldMasterOrder.total_amount_o -= lessActivityOverhead
-
-        Orders.push(OldMasterOrder);
-      }
-
-
-      const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-      message[JSON_ACTIVITY_ORDER] = Orders;
-      this.props[PROP_WEBSOCKET].send(message);
-    }
-  }
-
-
   // Modal Functions
   /**
    * Changes internal state such that the modal for an order is no longer displayed
@@ -361,116 +200,7 @@ export class ActivityTable extends Component {
     })
   }
 
-
-
-
   // Renders
-  renderRunSelect(Order) {
-    const CustomerSpecificOrderMapping = this.customerTimeSlotMapping.get(Order.BID); //Date filtering is done under construction of Order mapping
-    if(!CustomerSpecificOrderMapping) return Order.run; // Most likely, OrderMapping have not been initialized
-    const OrderDT = new Date(Order.deliver_datetime);
-
-
-    const options = []
-    for(const [run, DeliverTime] of CustomerSpecificOrderMapping) {
-      const ProductionDT = new Date(DeliverTime.deliverTime);
-      if (OrderDT >= ProductionDT) {
-        options.push((<option key={run} value={run}>{run}</option>));
-      }
-    }
-    if (options.length > 1) {
-      //Daily philosophy: When you only have 1 choice you have no choice.
-      return (
-        <select
-        value={Order.run}
-        onChange={(event) => this.ChangeRun(Number(event.target.value), Order.oid)}
-        >
-        {options}
-      </select>
-    )
-    } else {
-      return Order.run;
-    }
-  }
-
-  renderRejectButton(Order){
-    if (Order.COID !== -1 || Order.status === 3) return ("");
-    return (
-        <Button variant="light">
-          <img className="statusIcon" src="/static/images/decline.svg"/>
-        </Button>
-    );
-  }
-
-  renderAcceptButtons(Order) {
-    if (Order.COID !== -1) return ("");
-    if (Order.status == 1) return (<Button variant="light" onClick={
-      () => {this.AcceptOrder(Order.oid).bind(this)}}>
-        <img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
-    if (Order.status == 2) return (<Button variant="light" onClick={
-      () => {this.activateOrderModal(Order.oid)}}>
-      <img className="statusIcon" src="/static/images/accept.svg"></img></Button>);
-    if (Order.status == 3) return ("");
-  }
-
-  renderRun(Order){
-    if (Order.status === 1) return ""
-    if (Order.status === 2) return this.renderRunSelect(Order)
-    if (Order.status === 3) return String(Order.run)
-  }
-
-  renderFinishedOrder(order) {
-    const OrderDT   = new Date(order.deliver_datetime)
-    const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
-
-    const FreeDT    = (order.frigivet_datetime) ? new Date(order.frigivet_datetime) : "-";
-    const FreeTime  = (FreeDT != "-") ? FormatDateStr(FreeDT.getHours()) + ":" + FormatDateStr(FreeDT.getMinutes()) : FreeDT
-
-    const Employee     = undefined; // this.props.employee.get(order.frigivet_af);
-    const EmployeeName = (Employee) ? Employee.Username : "Ny bruger";
-
-    const customer = this.props[JSON_CUSTOMER].get(order.BID)
-    const CustomerName = (customer !== undefined) ? customer.UserName : order.BID;
-    const TotalAmount  = (order.COID === -1) ? Math.floor(order.total_amount * (1 + customer.overhead / 100)) : "Flyttet til: " + order.COID;
-
-    return renderTableRow(order.oid, [
-      renderStatusImage(order.status, () => this.activateOrderModal(order.oid)),
-      order.oid,
-      CustomerName,
-      TotalAmount,
-      order.frigivet_amount,
-      FreeTime,
-      OrderTime,
-      EmployeeName
-    ])
-  }
-
-
-  renderPendingOrder(order) {
-    const timeSlot = this.props[JSON_DELIVER_TIME].get(order[KEYWORD_ActivityOrder_ORDERED_TIME_SLOT])
-    const endpoint = this.props[JSON_ENDPOINT].get(timeSlot[KEYWORD_ActivityDeliveryTimeSlot_DESTINATION])
-    const owner = this.props[JSON_CUSTOMER].get(endpoint.owner)
-
-    const OrderDT   = new Date(order.deliver_datetime)
-    const OrderTime = FormatDateStr(OrderDT.getHours()) + ":" + FormatDateStr(OrderDT.getMinutes())
-    const Run       = this.renderRun(order);
-
-    return renderTableRow(order.id, [
-      <StatusIcon
-        status={order.status}
-        onClick ={() => this.activateOrderModal(order.id)}/>,
-      order.id,
-      owner[KEYWORD_Customer_SHORT_NAME],
-      Math.floor(order[KEYWORD_ActivityOrder_ORDERED_ACTIVITY]),
-      0,
-      0,
-      OrderTime,
-      Run,
-      this.renderAcceptButtons(order),
-      this.renderRejectButton(order)]);
-
-  }
-
   renderTotal(Production) {
     let total = 0;
     let total_o = 0

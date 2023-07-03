@@ -40,3 +40,24 @@
   border-style: solid;
   border-color: var(--grey-1);
 }
+
+
+.rotating {
+  animation-name: rotation;
+  animation-duration: 0.25s;
+  animation-iteration-count: infinite;
+  animation-timing-function: linear;
+}
+
+.rotated {
+  transform: rotate(90deg);
+}
+
+@keyframes rotation {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(90deg);
+  }
+}

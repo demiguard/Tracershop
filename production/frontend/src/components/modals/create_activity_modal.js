@@ -37,7 +37,7 @@ class CreateOrderModal extends Component {
     let DeliverTimeMapping = new Map();
 
     for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
-      a = this.props[PROP_ORDER_MAPPING].get(customerID);
+      DeliverTimeMapping = this.props[PROP_ORDER_MAPPING].get(customerID);
       if (activeCustomer === undefined){
         activeCustomer = customer;
       }

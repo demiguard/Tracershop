@@ -116,7 +116,7 @@ export default class TracerPage extends Component {
               valueKey="id"
               nameKey="name"
               onChange={eventFunction}
-              initialValue={initialValue}/>
+              value={initialValue}/>
   }
 
   changeNewValue(key, event) {
@@ -172,7 +172,7 @@ export default class TracerPage extends Component {
         valueKey={"id"}
         nameKey={"name"}
         onChange={(event) => {this.updateTracer(tracer.id, "tracer_type", event.target.value)}}
-        initialValue={tracer.tracer_type}/>,
+        value={tracer.tracer_type}/>,
         catalog
     ]);
   }

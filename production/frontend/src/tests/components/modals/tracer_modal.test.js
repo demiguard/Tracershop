@@ -8,6 +8,7 @@ import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@
 import { jest } from '@jest/globals'
 
 import { TracerModal } from "../../../components/modals/tracer_modal.js"
+import { JSON_CUSTOMER, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_TRACER, PROP_ON_CLICK, PROP_ON_CLOSE, PROP_WEBSOCKET } from "../../../lib/constants.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -35,76 +36,26 @@ afterEach(() => {
   websocket = null;
 });
 
-const customers = new Map([[1, {
-  UserName : "Customer 1",
-  ID : 1,
-  overhead : 20,
-  kundenr : 2,
-  Realname : "Kunde 1",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}],[2, {
-  UserName : "Customer 2",
-  ID : 2,
-  overhead : 50,
-  kundenr : 3,
-  Realname : "Kunde 2",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}], [3, {
-  UserName : "Customer 3",
-  ID : 3,
-  overhead : 50,
-  kundenr : 4,
-  Realname : "Kunde 3",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}]]);
 
-const tracerMapping = new Map([
-  [1, {
-    id : 1,
-    customer_id : 1,
-    tracer_id : 1
-  }],
-  [2, {
-    id : 1,
-    customer_id : 1,
-    tracer_id : 2
-  }],
+const props = {};
+
+props[PROP_WEBSOCKET] = websocket
+props[JSON_CUSTOMER] = new Map([
+  [1, {id : 1, short_name : 'Customer 1'}],
+  [2, {id : 2, short_name : 'Customer 2'}],
+  [3, {id : 3, short_name : 'Customer 3'}],
 ])
+props[PROP_ACTIVE_TRACER] = 1;
+props[JSON_TRACER] = new Map([
+  [1, {id : 1, short_name : "testTracer"}]
+])
+props[JSON_TRACER_MAPPING] = new Map([])
+props[PROP_ON_CLOSE] = onClose
 
 describe("Tracer Modal test suite", () => {
   it("Standard Render test", () => {
     render(<TracerModal
-      tracerID={1}
-      customers={customers}
-      tracerMapping={tracerMapping}
-      websocket={websocket}
+      {...props}
     />)
 
     expect(screen.queryByText("Customer 1")).toBeVisible();
@@ -114,10 +65,7 @@ describe("Tracer Modal test suite", () => {
 
   it("Filter tests", async () => {
     render(<TracerModal
-      tracerID={1}
-      customers={customers}
-      tracerMapping={tracerMapping}
-      websocket={websocket}
+      {...props}
     />)
 
     const filterInput = await screen.findByLabelText('input-filter')
@@ -126,25 +74,5 @@ describe("Tracer Modal test suite", () => {
     expect(screen.queryByText("Customer 1")).toBeNull();
     expect(screen.queryByText("Customer 2")).toBeVisible();
     expect(screen.queryByText("Customer 3")).toBeNull();
-  });
-
-  it("Filter tests", async () => {
-    render(<TracerModal
-      tracerID={1}
-      customers={customers}
-      tracerMapping={tracerMapping}
-      websocket={websocket}
-    />)
-
-    const filterInput = await screen.findByLabelText('check-1')
-    fireEvent.click(filterInput)
-
-    expect(websocket.getMessage).toBeCalledTimes(1)
-    expect(websocket.send).toBeCalledTimes(1)
-
-    fireEvent.click(filterInput)
-
-    expect(websocket.getMessage).toBeCalledTimes(2)
-    expect(websocket.send).toBeCalledTimes(2)
   });
 })

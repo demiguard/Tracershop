@@ -2,13 +2,26 @@
 import React, { Component } from "react";
 import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
 
-import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER, INJECTION_USAGE, JSON_TRACER, JSON_CUSTOMER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, PROP_WEBSOCKET } from "../../lib/constants.js";
-import { FormatDateStr, ParseJSONstr } from "../../lib/formatting.js";
+import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER, INJECTION_USAGE, JSON_TRACER, JSON_CUSTOMER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, PROP_WEBSOCKET, JSON_ENDPOINT } from "../../lib/constants.js";
+import { FormatDateStr, ParseJSONstr, dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
 import { renderTableRow, renderComment } from '../../lib/rendering.js';
 import { compareDates } from "../../lib/utils.js";
 import { CreateInjectionOrderModal } from "../modals/create_injection_modal.js";
 import { InjectionModal } from "../modals/injection_modal.js";
 import { StatusIcon, ClickableIcon } from "../injectable/icons.js";
+import { InjectionOrder, Tracer, DeliveryEndpoint, Customer } from "../../dataclasses/dataclasses.js";
+
+
+const /**@Enum methods to sort the injection orders */ SortingMethods = {
+  STATUS : 0,
+  ORDER_ID : 1,
+  DESTINATION : 2,
+  TRACER : 3,
+  INJECTIONS : 4,
+  ORDERED_TIME : 5,
+  USAGE : 6,
+}
+
 
 const /** Contains the components of the different modals this page can display  @Enum */ Modals  = {
   NoModal : null,
@@ -20,12 +33,14 @@ const /** Contains the components of the different modals this page can display 
  */
 export class InjectionTable extends Component {
   constructor(props) {
-    super(props)
+    super(props);
 
     this.state = {
       modal : Modals.NoModal,
-      order : undefined
-    }
+      orderID : undefined,
+      sortingMethod : SortingMethods.ORDER_ID,
+      invertedSorting : false,
+    };
   }
 
   openCreateOrderModal(){
@@ -36,20 +51,14 @@ export class InjectionTable extends Component {
     this.setState({...this.state, modal : Modals.NoModal, order : undefined});
   }
 
-  /** This is the function called when the users presses the accept button
-   *
-   * @param {Object} Order - The order that was accepted
-   */
-  acceptOrder(Order){
-    if(Order.status == 1){
-      Order.status = 2;
-      const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_EDIT_STATE);
-      message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
-      message[WEBSOCKET_DATA] = Order;
-      this.props[PROP_WEBSOCKET].send(message);
-    }
-    else {
-      this.openOrderModal(Order)
+  setSortingMethod(newMethod){
+    return () => {
+      if(newMethod === this.state.sortingMethod){
+        this.setState({...this.state,  invertedSorting : !this.state.invertedSorting})
+        return
+      }
+
+      this.setState({...this.state, sortingMethod : newMethod, invertedSorting : false})
     }
   }
 
@@ -61,156 +70,115 @@ export class InjectionTable extends Component {
     this.setState({
       ...this.state,
       modal : Modals.InjectionStatus,
-      order : order,
+      orderID : order.id,
     })
   }
 
-  RejectOrder(Order){
-    console.log(Order);
-  }
-
+  /**
+   * 
+   * @param {InjectionOrder} order 
+   * @returns 
+   */
   renderIncompleteOrder(order) {
-    const OrderDT = new Date(order.deliver_datetime)
-    const TimeStr = FormatDateStr(OrderDT.getHours()) + ':' + FormatDateStr(OrderDT.getMinutes());
-
-    const Tracer = this.props[JSON_TRACER].get(order.tracer);
-    const TracerName = Tracer.name;
-    const customer = this.props[JSON_CUSTOMER].get(order.BID);
-
-    const customerName = customer.UserName;
-
+    const /**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(order.tracer);
+    const /**@type {DeliveryEndpoint} */ endpoint = this.props[JSON_ENDPOINT].get(order.endpoint)
+    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint.owner)
+    const TracerName = tracer.shortname;
 
     return renderTableRow(
-      order.oid,[
+      order.id,[
         <StatusIcon
           status={order.status}
-          onClick={() => this.openOrderModal(order).bind(this)}
+          onClick={() => this.openOrderModal(order)}
         />,
-        order.oid,
-        customerName,
+        order.id,
+        `${customer.short_name} - ${endpoint.name}`,
         TracerName,
-        order.n_injections,
-        TimeStr,
-        INJECTION_USAGE[String(order.anvendelse)],
+        order.injections,
+        order.delivery_time,
+        INJECTION_USAGE[String(order.tracer_usage)],
         renderComment(order.comment),
-        <ClickableIcon src={"/static/images/accept.svg"} onClick={() => this.acceptOrder(order)}/>,
-        <ClickableIcon src={"/static/images/decline.svg"} onClick={() => this.RejectOrder(order)}/>,
-      ]
-    )
-  }
-
-  renderCompleteOrder(order) {
-    const OrderDT = new Date(order.deliver_datetime)
-    const TimeStr = FormatDateStr(OrderDT.getHours()) + ':' + FormatDateStr(OrderDT.getMinutes());
-
-    const Free_datetime = new Date(order.frigivet_datetime);
-    const Free_time_str = FormatDateStr(Free_datetime.getHours()) + ':' + FormatDateStr(Free_datetime.getMinutes());
-    const Tracer = this.props[JSON_TRACER].get(order.tracer);
-    const TracerName = Tracer.name;
-    const customer = this.props[JSON_CUSTOMER].get(order.BID);
-
-    const customerName = customer.UserName;
-
-    const employee = undefined // this.props.employee.get(order.frigivet_af);
-    let employeeName;
-    if (employee == undefined){
-      employeeName = `Ukendt frigiver med ID ${order.frigivet_af}`;
-    } else {
-      employeeName = employee.Username;
-    }
-
-    console.log(this.props)
-
-    return renderTableRow(
-      order.oid,[
-        <StatusIcon status={order.status} onClick={() => this.openOrderModal(order)}/>,
-        order.oid,
-        customerName,
-        TracerName,
-        order.n_injections,
-        TimeStr,
-        INJECTION_USAGE[String(order.anvendelse)],
-        renderComment(order.comment),
-        Free_time_str,
-        employeeName
       ]
     )
   }
 
 
   render() {
+    const /**@type {Array<InjectionOrder>} */ orders = [];
+
+    for(const [_oid, _injectionOrder] of this.props[JSON_INJECTION_ORDER]){
+      const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
+      const orderDate = new Date(injectionOrder.delivery_date)
+      if (compareDates(this.props[PROP_ACTIVE_DATE], orderDate)){
+        orders.push(injectionOrder);
+      }
+    }
+
+    const sortingMethod = this.state.sortingMethod;
+    const invertedSorting = this.state.invertedSorting
+
+    orders.sort((a, b) => {
+      switch(sortingMethod){
+        case SortingMethods.STATUS:
+          return invertedSorting ? b.status - a.status : a.status - b.status
+        case SortingMethods.ORDER_ID:
+          return invertedSorting ? b.id - a.id : a.id - b.id
+        case SortingMethods.DESTINATION: {
+          const /**@type {DeliveryEndpoint} */ aEndpoint = this.props[JSON_ENDPOINT].get(a.endpoint);
+          const /**@type {Customer} */ aCustomer = this.props[JSON_CUSTOMER].get(aEndpoint.owner);
+          const /**@type {DeliveryEndpoint} */ bEndpoint = this.props[JSON_ENDPOINT].get(b.endpoint);
+          const /**@type {Customer} */ bCustomer = this.props[JSON_CUSTOMER].get(bEndpoint.owner);
+
+          if(aCustomer.id != bCustomer.id){
+            return invertedSorting ? bCustomer.id - aCustomer.id : aCustomer.id - bCustomer.id
+          } else {
+            return invertedSorting ? bEndpoint.id - aEndpoint.id : aEndpoint.id - bEndpoint.id
+          }
+        }
+        case SortingMethods.TRACER:
+          return invertedSorting ? b.tracer - a.tracer : a.tracer - b.tracer
+        case SortingMethods.INJECTIONS:
+          return invertedSorting ? b.injections - a.injections : a.injections - b.injections
+        case SortingMethods.USAGE:
+          return invertedSorting ? b.tracer_usage - a.tracer_usage : a.tracer_usage - b.tracer_usage
+      }
+    })
+
+
     const modalProps ={...this.props};
 
     modalProps[PROP_ON_CLOSE] = this.closeModal.bind(this);
-    modalProps[PROP_MODAL_ORDER] = this.state.order;
+    modalProps[PROP_MODAL_ORDER] = this.state.orderID;
 
-    const ordersIncomplete = [];
-    const ordersComplete = [];
-
-    for(const [_oid, t_order] of this.props[JSON_INJECTION_ORDER]){
-      const orderDate = new Date(t_order.deliver_datetime)
-      if (compareDates(this.props[PROP_ACTIVE_DATE], orderDate)){
-        if(t_order.status < 3){
-          ordersIncomplete.push(t_order);
-        } else if (t_order.status == 3){
-          ordersComplete.push(t_order);
-        }
-      }
-    }
     return (
       <Container>
         <Row>
-          <Col sm={10}>Produktion - {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}</Col>
+          <Col sm={10}>Produktion - {parseDateToDanishDate(dateToDateString(this.props[PROP_ACTIVE_DATE]))}</Col>
           <Col sm={2}>
             <Button onClick={this.openCreateOrderModal.bind(this)}>Opret ny ordre</Button>
           </Col>
         </Row>
-      { ordersIncomplete.length > 0 ?
+      { orders.length > 0 ?
         <Table>
           <thead>
             <tr>
-              <th>Status</th>
-              <th>Order ID</th>
-              <th>Kunde</th>
-              <th>Tracer</th>
-              <th>Injektioner</th>
-              <th>Bestilt Til</th>
-              <th>Anvendelse</th>
+              <th onClick={this.setSortingMethod(SortingMethods.STATUS).bind(this)}>Status</th>
+              <th onClick={this.setSortingMethod(SortingMethods.ORDER_ID).bind(this)}>Order ID</th>
+              <th onClick={this.setSortingMethod(SortingMethods.DESTINATION).bind(this)}>Destination</th>
+              <th onClick={this.setSortingMethod(SortingMethods.TRACER).bind(this)}>Tracer</th>
+              <th onClick={this.setSortingMethod(SortingMethods.INJECTIONS).bind(this)}>Injektioner</th>
+              <th onClick={this.setSortingMethod(SortingMethods.ORDERED_TIME).bind(this)}>Bestilt Til</th>
+              <th onClick={this.setSortingMethod(SortingMethods.USAGE).bind(this)}>Anvendelse</th>
               <th>Kommentar</th>
-              <th>Accept</th>
-              <th>Afvis</th>
             </tr>
           </thead>
           <tbody>
-            {ordersIncomplete.map(this.renderIncompleteOrder.bind(this))}
+            {orders.map(this.renderIncompleteOrder.bind(this))}
           </tbody>
-        </Table> : ""
-      } {ordersComplete.length > 0 ?
-        <Table>
-        <thead>
-          <tr>
-            <th>Status</th>
-            <th>Order ID</th>
-            <th>Kunde</th>
-            <th>Tracer</th>
-            <th>Injektioner</th>
-            <th>Bestilt Til</th>
-            <th>Anvendelse</th>
-            <th>Kommentar</th>
-            <th>Frigivet</th>
-            <th>Frigivet af</th>
-          </tr>
-        </thead>
-        <tbody>
-          {ordersComplete.map(this.renderCompleteOrder.bind(this))}
-        </tbody>
-      </Table> : ""
-      }
-      { ordersComplete.length == 0 && ordersIncomplete.length == 0 ?
-        <div>
-          <p>Der er ingen Special ordre af vise til {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}</p>
-        </div> : null
-
+        </Table> :
+          <div>
+            <p>Der er ingen Special ordre af vise til {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}</p>
+          </div>
       }
 
       {this.state.modal != Modals.NoModal ?

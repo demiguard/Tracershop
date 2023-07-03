@@ -20,7 +20,7 @@ requiredMessageFields = {
 }
 
 requiredDataFields = {
-  WEBSOCKET_MESSAGE_FREE_INJECTION : [(LEGACY_KEYWORD_OID, int), (LEGACY_KEYWORD_BATCHNR, str)]
+  WEBSOCKET_MESSAGE_FREE_INJECTION : [(WEBSOCKET_DATA_ID, int), ('lot_number', str)]
 }
 
 

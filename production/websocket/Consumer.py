@@ -286,6 +286,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def __broadcastState(self, message: Dict[str, Any], state: Dict[str, Any], refresh = False,):
     """Sends an update message to the global group
 
+    Remember to serialize the new state
+
     Args:
       message (Dict[str, Any]): The original message send by the user
       state (Dict[str, Any]): A serilized new state where each keyword is a JSON_XXX
@@ -482,27 +484,26 @@ class Consumer(AsyncJsonWebsocketConsumer):
       return await self.__RejectFreeing(message)
 
     # Step 2
-    order: InjectionOrder = await self.db.getModel(JSON_INJECTION_ORDER, message[WEBSOCKET_DATA][LEGACY_KEYWORD_OID])
-    order.lot_number = message[WEBSOCKET_DATA][LEGACY_KEYWORD_BATCHNR]
+    order: InjectionOrder = await self.db.getModel(InjectionOrder, message[WEBSOCKET_DATA][WEBSOCKET_DATA_ID])
+    order.lot_number = message[WEBSOCKET_DATA]['lot_number']
     order.freed_datetime = self.datetimeNow.now()
     order.freed_by = self.scope['user']
     order.status = OrderStatus.Released
     await self.db.saveModel(order)
 
     # Step 3 Boardcast it
-    new_state = await self.db.serialize_dict({
+    newState = await self.db.serialize_dict({
         JSON_INJECTION_ORDER : [order],
       })
 
-
-    self.channel_layer.group_send(self.global_group, { # type: ignore
-      AUTH_IS_AUTHENTICATED : True,
-      WEBSOCKET_DATA : new_state,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ORDER,
-    })
-
+    await self.__broadcast({
+        AUTH_IS_AUTHENTICATED : True,
+        WEBSOCKET_REFRESH : False,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_DATA : newState,
+      })
 
   async def HandleMoveOrders(self, message : Dict):
     """Moves an order to another time slot
@@ -570,8 +571,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     tracer = await self.db.getModel(JSON_TRACER,
                                     message[WEBSOCKET_DATA][JSON_TRACER],
                                     self.scope['user'])
-
-
     if await orders.canOrder(now, tracer):
       bookings, booking_orders = await orders.orderBookings(tracer, message[WEBSOCKET_DATA][JSON_BOOKING])
     else:
@@ -589,6 +588,28 @@ class Consumer(AsyncJsonWebsocketConsumer):
       order_type : booking_orders,
     })
 
+  async def HandleCreateActivityOrder(self, message: Dict[str, Any]):
+    user = self.scope['user']
+    newOrderDict = message[WEBSOCKET_DATA]
+    newOrderDict['status'] = 1
+    newOrderDict['ordered_by'] = user.id
+
+    instances = await self.db.handleCreateModels(JSON_ACTIVITY_ORDER, newOrderDict)
+    serializedInstanced = await self.db.serialize_dict({JSON_ACTIVITY_ORDER : instances})
+    await self.__broadcastState(message, serializedInstanced)
+
+
+  async def HandleCreateInjectionOrder(self, message: Dict[str, Any]):
+    user = self.scope['user']
+    newOrderDict = message[WEBSOCKET_DATA]
+
+    newOrderDict['status'] = 1
+    newOrderDict['ordered_by'] = user.id
+
+    instances = await self.db.handleCreateModels(JSON_INJECTION_ORDER, newOrderDict)
+    serializedInstanced = await self.db.serialize_dict({JSON_INJECTION_ORDER : instances})
+    await self.__broadcastState(message, serializedInstanced)
+
 
 
   Handlers = {
@@ -602,6 +623,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_GET_STATE : HandleGetState,
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetTimeSensitiveData,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
+    WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER : HandleCreateActivityOrder,
+    WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER : HandleCreateInjectionOrder,
     WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrderTimeSlot,
     WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
   }

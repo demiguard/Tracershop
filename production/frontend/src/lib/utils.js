@@ -67,3 +67,7 @@ export function removeIndex(arr, index){
   if (index < 0) return arr;
   return arr.slice(0,index).concat(arr.slice(index + 1 , arr.length));
 }
+
+export function getId(obj){
+  return obj.id
+}

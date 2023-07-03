@@ -1,9 +1,10 @@
 import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS,
   WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_ORDER,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE } from "./constants.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER } from "./constants.js";
 import { MapDataName } from "./local_storage_driver.js";
 import { ParseJSONstr } from "./formatting.js";
+import { ActivityOrder, InjectionOrder } from "../dataclasses/dataclasses.js";
 
 export { safeSend, TracerWebSocket }
 
@@ -131,6 +132,29 @@ class TracerWebSocket {
     message[WEBSOCKET_DATA] = models
     message[WEBSOCKET_DATATYPE] = modelType
 
+    return this.send(message);
+  }
+
+  /**
+   * sends a message to the backend for create a new Activity Order
+   * @param {ActivityOrder} newOrder
+   */
+  sendCreateActivityOrder(newOrder){
+    const message = {};
+    message[WEBSOCKET_DATA] = newOrder
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER;
+    return this.send(message);
+  }
+
+  /**
+   * sends a message to the backend for create a new Injection Order
+   * @param {InjectionOrder} newOrder - order to be created
+   * @returns {Promise}
+   */
+  sendCreateInjectionOrder(newOrder){
+    const message = {};
+    message[WEBSOCKET_DATA] = newOrder
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER;
     return this.send(message);
   }
 }

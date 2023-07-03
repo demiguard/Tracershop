@@ -32,7 +32,8 @@ class ShopSite extends Component {
 
 
   render(){
-    const props = propsExtraction(this.props);
+    const siteProps = {...this.props}
+
     return(
       <div>
         <Navbar
@@ -42,9 +43,7 @@ class ShopSite extends Component {
           NavbarElements={this.props.NavbarElements}
           setActivePage={this.setActivePage.bind(this)}
         />
-        <this.state.ActivePage
-          {...props}
-        />
+        <this.state.ActivePage {...siteProps}/>
       </div>
     )
   }

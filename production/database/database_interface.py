@@ -316,7 +316,16 @@ class DatabaseInterface():
     }
 
   @database_sync_to_async
-  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]):
+  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> str:
+    """Transforms some models to a string representation of those models.
+    It removes any fields that should not be broadcast such a passwords
+
+    Args:
+        instances (Dict[str, Iterable[TracershopModel]]): _description_
+
+    Returns:
+        _type_: _description_
+    """
     serialized_dict = {}
 
     for key, models in instances.items():

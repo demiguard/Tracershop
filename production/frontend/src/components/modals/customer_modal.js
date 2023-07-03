@@ -414,7 +414,7 @@ class CustomerModal extends Component {
           nameKey='name'
           valueKey='id'
           onChange={changeState('activeEndpoint', this)}
-          initialValue={this.state.activeEndpoint}
+          value={this.state.activeEndpoint}
         ></Select>
       </MarginInputGroup>
       <MarginInputGroup>
@@ -423,7 +423,7 @@ class CustomerModal extends Component {
           options={activityTracersOptions}
           nameKey="name"
           valueKey="id"
-          initialValue={this.state.activeTracer}
+          value={this.state.activeTracer}
           onChange={changeState('activeTracer', this)}
         />
       </MarginInputGroup>
@@ -535,7 +535,7 @@ class CustomerModal extends Component {
           nameKey={"name"}
           valueKey ={"id"}
           onChange={this.changeTempObject('tempTimeSlot', 'weekly_repeat', 'timeSlotDirty').bind(this)}
-          initialValue={this.state.tempTimeSlot.weekly_repeat}
+          value={this.state.tempTimeSlot.weekly_repeat}
         />
       </MarginInputGroup>
       <MarginInputGroup>
@@ -545,7 +545,7 @@ class CustomerModal extends Component {
           nameKey={"name"}
           valueKey ={"id"}
           onChange={this.changeTempObject('tempTimeSlot', 'production_run', 'timeSlotDirty').bind(this)}
-          initialValue={this.state.tempTimeSlot.production_run}
+          value={this.state.tempTimeSlot.production_run}
         />
       </MarginInputGroup>
     </Col>)

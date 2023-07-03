@@ -2,9 +2,19 @@
  *
  */
 
-/** Checks 
+/** Checks if the input string is on a date format, if it is, converts to a standardized format of
+ * YYYY-MM-DD
  *
- * @param {string} inputStr 
+ * Valid Formats are:
+ * * YYYY-MM-DD
+ * * YYYY/MM/DD
+ * * DD/MM/YYYY
+ * * DD-MM-YYYY
+ *
+ * Throws an error if not on format, I.E DON'T USE THIS FUNCTION FOR unchecked data
+ *
+ * @throws "Date not on known format, Date: "+inputStr if on format
+ * @param {string} inputStr - a String on the valid format
  * @returns {string}
  */
 export function parseDate(inputStr){
@@ -35,7 +45,7 @@ export function ParseDanishNumber(numberString){
 
 
 export function parseDateToDanishDate(dateString){
-  /* This funciton takes a date string on the format YYYY-MM-DD and formats it to DD-MM-YYYY
+  /* This function takes a date string on the format YYYY-MM-DD and formats it to DD-MM-YYYY
    * The Primary function should be to convert input dates to display dates.
    * This Date format is the one used by the site and throws an Error if it's not sites format
    * This is kinda a warning to don't use this function for user input parsing

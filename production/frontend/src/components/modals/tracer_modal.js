@@ -6,8 +6,7 @@ import { JSON_CUSTOMER, JSON_TRACER, JSON_TRACER_MAPPING, LEGACY_KEYWORD_CUSTOME
   PROP_ON_CLOSE,
   PROP_WEBSOCKET,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, 
-  WEBSOCKET_MESSAGE_MODEL_CREATE,
+  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,  WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE} from "../../lib/constants";
 import { renderTableRow } from "../../lib/rendering";
 import { changeState } from "../../lib/state_management";
@@ -26,6 +25,7 @@ propType[JSON_CUSTOMER] = propTypes.objectOf(Map).isRequired;
 propType[JSON_TRACER_MAPPING] = propTypes.objectOf(Map).isRequired;
 propType[PROP_ACTIVE_TRACER] = propTypes.number.isRequired;
 propType[PROP_ON_CLOSE] = propTypes.func.isRequired;
+propType[JSON_TRACER] = propTypes.objectOf(Map).isRequired;
 
 class TracerModal extends Component {
   static propTypes = propType
