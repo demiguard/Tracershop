@@ -1,194 +1,246 @@
 
-import React, {Component,} from "react";
-import { Button, Col, Form, FormControl, Modal, ModalBody, Row, Table } from "react-bootstrap";
+import React, {Component, useState,} from "react";
+import { Button, Col, Form, FormControl, InputGroup, Modal, ModalBody, Row, Table } from "react-bootstrap";
 
 import propTypes  from "prop-types";
 
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box";
-import { renderSelect } from "../../lib/rendering";
-import { changeState } from "../../lib/state_management";
-import { FormatTime, FormatDateStr } from "../../lib/formatting";
+import { FormatTime, FormatDateStr, parseDate, dateToDateString, ParseDanishNumber } from "../../lib/formatting";
 import { addCharacter } from "../../lib/utils";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE } from "../../lib/constants";
+  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, PROP_WEBSOCKET, JSON_ENDPOINT } from "../../lib/constants";
 
 import styles from '../../css/Site.module.css'
 import { Select } from "../injectable/select";
-import { Customer, Tracer, TracerCatalog } from "../../dataclasses/dataclasses";
+import { TracershopInputGroup } from '../injectable/tracershop_input_group'
+import { Customer, InjectionOrder, Tracer, TracerCatalog, DeliveryEndpoint } from "../../dataclasses/dataclasses";
+import { event } from "jquery";
+import { CloseButton } from "../injectable/buttons";
 
 
 export { CreateInjectionOrderModal }
 
-class CreateInjectionOrderModal extends Component {
-  static propTypes = {
-    date : propTypes.instanceOf(Date),
-    customers : propTypes.instanceOf(Map).isRequired,
-    tracers : propTypes.instanceOf(Map).isRequired,
-    onClose : propTypes.func.isRequired
-    //websocket : propTypes.instanceOf(TracerWebSocket).isRequired
-  }
-  constructor(props){
-    super(props);
+function CreateInjectionOrderModal(props){
+  const /**@type {Map<Number, Array<Number>>} */ tracerCatalog = new Map()
 
-    // First we create a associative hash map, over all customer that can order
-    // injection tracers
-
-    this.tracerCatalog = new Map()
-
-    for(const [id, _tracerCatalogPage] of this.props[JSON_TRACER_MAPPING]){
-      const /**@type {TracerCatalog} */ tracerCatalogPage = _tracerCatalogPage;
-      const /**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(tracerCatalogPage.tracer)
+  for(const [id, _tracerCatalogPage] of props[JSON_TRACER_MAPPING]){
+    const /**@type {TracerCatalog} */ tracerCatalogPage = _tracerCatalogPage;
+      const /**@type {Tracer} */ tracer = props[JSON_TRACER].get(tracerCatalogPage.tracer)
       if(!(tracer.tracer_type === TRACER_TYPE_DOSE)){
         continue;
       }
-      if (this.tracerCatalog.has(tracerCatalogPage.customer)){
-        const customerCatalog = this.tracerCatalog.get(tracerCatalogPage.customer);
+      if (tracerCatalog.has(tracerCatalogPage.customer)){
+        const customerCatalog = tracerCatalog.get(tracerCatalogPage.customer);
         customerCatalog.push(tracerCatalogPage.tracer);
       } else {
         const customerCatalog = [tracerCatalogPage.tracer];
 
-        this.tracerCatalog.set(tracerCatalogPage.customer, customerCatalog);
+        tracerCatalog.set(tracerCatalogPage.customer, customerCatalog);
       }
     }
 
-
-    // Initialize select
-    let customerID;
-    let tracerID;
-    for(const [cid, customerCatalog] of this.tracerCatalog){
-      customerID = cid;
-      tracerID = customerCatalog[0]
-      break;}
-
-    for (const [tid, _] of this.props[JSON_TRACER]){
-      tracerID = tid;
-      break;
-    }
-
-    this.state = {
-      customer : customerID,
-      tracer   : tracerID,
-      use : 1,
-      injections : "",
-      deliverTime : "",
-      comment : "",
-      error : "",
-    }
+  // Initialize select
+  let customerInit;
+  let tracerInit;
+  for(const [cid, customerCatalog] of tracerCatalog){
+    customerInit = cid;
+    tracerInit = customerCatalog[0]
+    break;
   }
 
-  SubmitOrder(){
-    return (_event) => {
-      //Validation
-      const injections = Number(this.state.injections);
-      if(isNaN(injections)){
-        this.setState({...this.state, error : "Injektionerne er ikke et tal"});
-        return;
-      }
+  const /**@type {Array<DeliveryEndpoint} */ endpoints = [...props[JSON_ENDPOINT].values()].filter(
+    (endpoint) => {
+      return endpoint.owner === customerInit;
+    });
 
-      const deliverTime = FormatTime(this.state.deliverTime);
-      if(deliverTime === null){
-        this.setState({...this.state, error : "Leverings tidspunktet er ikke et valid"});
-        return;
-      }
+  const [customerID, setCustomer] = useState(customerInit);
+  const [endpointID, setEndpoint] = useState(endpoints[0].id)
+  const [tracerID, setTracer] = useState(tracerInit);
+  const [usage, setUsage] = useState(1);
+  const [injections, setInjections] = useState("");
+  const [deliverTime, setDeliveryTime] = useState("")
+  const [comment, setComment] = useState("")
+  const [error, setError] = useState("")
 
-      const year = this.props.date.getFullYear();
-      const month = FormatDateStr(this.props.date.getMonth() + 1);
-      const date = FormatDateStr(this.props.date.getDate())
-      const deliver_datetime = `${year}-${month}-${date}T${deliverTime}`
+  console.log(endpointID)
 
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-      const data_object = {};
-      data_object[LEGACY_KEYWORD_BID] = Number(this.state.customer);
-      data_object[LEGACY_KEYWORD_TRACER] = Number(this.state.tracer);
-      data_object[LEGACY_KEYWORD_DELIVER_DATETIME] = deliver_datetime;
-      data_object[LEGACY_KEYWORD_INJECTIONS] = injections;
-      data_object[LEGACY_KEYWORD_USAGE] = Number(this.state.use);
-      data_object[LEGACY_KEYWORD_COMMENT] = this.state.comment;
-      message[WEBSOCKET_DATA] = data_object;
-      message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
-      this.props.websocket.send(message);
-      this.props.onClose();
+  // eventFunctions
+  function SubmitOrder(_event){
+    //Validation
+    const injectionsNumber = ParseDanishNumber(injections);
+    if(!injections){
+      setError("Der er ikke indtastet hvor mange injektioner der skal bestilles")
+      return
     }
+
+    if(isNaN(injectionsNumber)){
+      setError("Injektionerne er ikke et tal");
+      return;
+    }
+
+    if(injectionsNumber <= 0){
+      setError("Der skal bestilles et positivt mængde af injectioner")
+      return;
+    }
+
+    if(injectionsNumber != Math.floor(injectionsNumber)){
+      setError("Der kan kun bestilles et helt antal injektioners")
+      return
+    }
+
+    const formattedDeliverTime = FormatTime(deliverTime);
+    if(formattedDeliverTime === null){
+      setError("Leverings tidspunktet er ikke et valid");
+      return;
+    }
+
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
+    const data_object = new InjectionOrder(
+      undefined, // id
+      formattedDeliverTime, // deliver_time
+      dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
+      injectionsNumber, // injections
+      1, // Status
+      usage,
+      comment,
+      undefined,
+      endpointID,
+      tracerID,
+      null,
+      null,
+      null,
+    );
+    message[WEBSOCKET_DATA] = [data_object];
+    message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
+    props[PROP_WEBSOCKET].send(message);
+    props[PROP_ON_CLOSE]()
   }
 
-  render(){
-    const customerOptions = []
-    for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){
-      const /**@type {Customer} */ customer = _customer;
-      customerOptions.push({
-        id : customerID,
-        name : customer.short_name
-      })
+  const customerOptions = [...props[JSON_CUSTOMER].values()].map(
+      (_customer) => {
+        const /**@type {Customer} */ customer = _customer;
+        return {
+          id : customer.id,
+          name : customer.short_name
+        };
+      }
+    )
+
+  const EndpointOptions = endpoints.map(
+    (endpoint) => {return {
+        id : endpoint.id,
+        name : endpoint.name,
+      }
     }
+  )
 
-    const tracerOptions = [];
-    for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
-      const /**@type {Tracer} */ tracer = _tracer;
+  const endpoint = props[JSON_ENDPOINT].get(endpointID)
 
-    }
+  let endpointForm = (<FormControl aria-label="endpoint-form" value={endpoint.name} readOnly/>)
+  if (1 < EndpointOptions.length){
+    endpointForm = <Select
+      aria-label="endpoint-form"
+      options={EndpointOptions}
+      valueKey="id"
+      nameKey="name"
+      onChange={(event) => {setEndpoint(event.target.value)}}
+      value={endpointID}
+    ></Select>
+  }
 
 
-    const UsageOptions = [{ value : 1, name  : "Human"}, { value : 2, name  : "Dyr"}, {value: 3, name : "Andet"}];
-    const usageSelect = renderSelect(UsageOptions, "value", "name", changeState("use", this).bind(this), this.state.use);
+  const tracerOptions = [...props[JSON_TRACER].values()].map(
+    (_tracer) => {
+      const /**@type {Tracer} */ tracer = _tracer
+      return {
+          id : tracer.id,
+          name : tracer.shortname,
+        }
+      }
+    )
 
-    return(
+
+  const UsageOptions = [ // TODO: Remove magic
+    {value: 1, name: "Human"},
+    {value: 2, name: "Dyr"},
+    {value: 3, name: "Andet"},
+  ];
+
+  return(
     <Modal
       show={true}
-      onHide={this.props[PROP_ON_CLOSE]}
+      onHide={props[PROP_ON_CLOSE]}
       className={styles.mariLight}
     >
       <Modal.Header>
         Opret ny injektion ordre
       </Modal.Header>
       <ModalBody>
-        <Row><Col>Kunde</Col> <Col>{customerSelect}</Col></Row>
-        <Row><Col>Tracer</Col><Col>{tracerSelect}</Col></Row>
         <Row>
-          <Col>Brug</Col>
-          <Col><Select
+          <TracershopInputGroup label="Kunde">
+            <Select
+                aria-label="customer-select"
+                options={customerOptions}
+                valueKey="id"
+                nameKey="name"
+                onChange={(event) => {setCustomer(Number(event.target.value))}}
+                value={customerID}
+              />
+          </TracershopInputGroup>
+          <TracershopInputGroup label="Leveringssted">
+            {endpointForm}
+          </TracershopInputGroup>
+          <TracershopInputGroup label="Tracer">
+            <Select
+                aria-label="tracer-select"
+                options={tracerOptions}
+                valueKey="id"
+                nameKey="name"
+                onChange={(event) => {setTracer(Number(event.target.value))}}
+                value={tracerID}
 
-          /></Col>
-        </Row>
-        <Row>
-          <Col>Injektioner</Col>
-          <Col>
-            <Form.Control
-              aria-label="injection-input"
-              value={this.state.injections}
-              onChange={changeState("injections", this).bind(this)}
+              />
+          </TracershopInputGroup>
+          <TracershopInputGroup label={"Brug"}>
+            <Select
+              aria-label="usage-select"
+              options={UsageOptions}
+              nameKey="name"
+              valueKey="value" // wtf naming
+              onChange={(event) => {setUsage(Number(event.target.value))}}
+              value={usage}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col>Leverings tid</Col>
-          <Col>
+          </TracershopInputGroup>
+          <TracershopInputGroup label={"Injektioner"}>
             <Form.Control
-              aria-label="delivery-input"
-              value={this.state.deliverTime}
-              onKeyDown={addCharacter(':', "deliverTime", [2,5], this).bind(this)}
-              onChange={changeState("deliverTime", this).bind(this)}
+                aria-label="injection-input"
+                value={injections}
+                onChange={(event) => {setInjections(event.target.value)}}
+              />
+          </TracershopInputGroup>
+          <TracershopInputGroup label={"Leverings tid"}>
+            <Form.Control
+              aria-label="delivery-time-input"
+              value={deliverTime}
+              onChange={(event) => {setDeliveryTime(event.target.value)}}
             />
-          </Col>
-        </Row>
-        <Row>
-          <Col>Kommentar</Col>
-          <Col>
+          </TracershopInputGroup>
+          <TracershopInputGroup label="Kommentar">
             <Form.Control
               aria-label="comment-input"
-              value={this.state.comment}
-              onChange={changeState("comment", this).bind(this)}
+              value={comment}
+              onChange={(event) => {setComment(event.target.value)}}
             />
-          </Col>
+          </TracershopInputGroup>
         </Row>
-        { this.state.error != "" ? <Row><AlertBox
+        { error != "" ? <Row><AlertBox
           level={ERROR_LEVELS.error}
-          message={this.state.error}
+          message={error}
            /></Row> : "" }
       </ModalBody>
       <Modal.Footer>
-        <Button onClick={this.props[PROP_ON_CLOSE]}>Annuller</Button>
-        <Button onClick={this.SubmitOrder().bind(this)}>Opret Ordre</Button>
+        <CloseButton onClick={props[PROP_ON_CLOSE]}></CloseButton>
+        <Button onClick={SubmitOrder}>Opret Ordre</Button>
       </Modal.Footer>
     </Modal>);
-  }
 }

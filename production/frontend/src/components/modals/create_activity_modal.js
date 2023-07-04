@@ -1,43 +1,28 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
-import propTypes from "prop-types";
 import { Calculator } from "../injectable/calculator";
 import { ParseDanishNumber, dateToDateString } from "../../lib/formatting";
-
-
 import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_WEBSOCKET, JSON_TRACER, PROP_ACTIVE_TRACER, JSON_ISOTOPE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, DATABASE_CURRENT_USER, AUTH_USER_ID } from "../../lib/constants.js"
+
+import { Customer } from "../../dataclasses/dataclasses";
+
 
 import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
 import { ClickableIcon } from "../injectable/icons";
+import { Select } from "../injectable/select"
 import { KEYWORD_ActivityOrder_DELIVERY_DATE, KEYWORD_ActivityOrder_ORDERED_ACTIVITY, KEYWORD_ActivityOrder_ORDERED_BY, KEYWORD_ActivityOrder_ORDERED_TIME_SLOT, KEYWORD_ActivityOrder_STATUS } from "../../dataclasses/keywords";
+import { TracerShopInputGroup } from '../injectable/tracershop_input_group'
 
-export { CreateOrderModal }
 
-class CreateOrderModal extends Component {
-  /**
-   * 
-  static propTypes = {
-    customers : propTypes.instanceOf(Map),
-    DeliverTimeMap : propTypes.instanceOf(Map),
-    isotopes : propTypes.instanceOf(Map),
-    tracer : propTypes.number,
-    onClose : propTypes.func,
-    tracers : propTypes.instanceOf(Map),
-    //websocket : propTypes.instanceOf(TracerWebSocket) //This is needed but javascript is a fucked language...
-  }
-  */
-
-  constructor(props){
-    super(props);
-
+export function CreateOrderModal(props) {
     let activeCustomer = undefined;
     let DeliverTimeMapping = new Map();
 
-    for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
-      DeliverTimeMapping = this.props[PROP_ORDER_MAPPING].get(customerID);
+    for(const [customerID, customer] of props[JSON_CUSTOMER]){
+      DeliverTimeMapping = props[PROP_ORDER_MAPPING].get(customerID);
       if (activeCustomer === undefined){
         activeCustomer = customer;
       }
@@ -46,163 +31,118 @@ class CreateOrderModal extends Component {
       }
     }
 
-    this.state = {
-      showCalculator : false,
-      productions : DeliverTimeMapping,
-      activeCustomerID : activeCustomer.id,
-      selectedTimeSlot : 0,
-      amount : "",
-      ErrorMessage : "",
-    };
-  }
+  const [amount, setAmount] = useState("");
+  const [customerID, setCustomer] = useState(activeCustomer.id)
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [timeSlotID, setTimeSlotID] = useState(0)
 
-  changeAmount(event){
-    this.setState({
-      amount : event.target.value,
-      ErrorMessage : "",
-    });
-  }
-
-  changeCustomer(event){
-    const newCustomer = this.props[JSON_CUSTOMER].get(Number(event.target.value));
-    const NewProductions = this.props[PROP_ORDER_MAPPING].get(newCustomer.id);
-    const ActiveProduction = 0;
-
-    this.setState({
-      ...this.state,
-      activeCustomerID : newCustomer.ID,
-      productions : NewProductions,
-      selectedTimeSlot : ActiveProduction,
-      ErrorMessage : "",
-    })
-  }
-
-  changeRun(event){
-    this.setState({
-      ...this.state,
-      selectedTimeSlot : Number(event.target.value)
-    });
-  }
-
-  createOrder(){
-    const amountNumber = ParseDanishNumber(this.state.amount);
+  function createOrder(_event){
+    const amountNumber = ParseDanishNumber(amount);
     if(isNaN(amountNumber)){
-      this.setState({
+      setState({
         ErrorMessage : "Aktiviteten er ikke et læstbart tal"
       });
       return;
     }
 
-    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
     const skeleton = {}
-    const TimeSlot = this.state.productions[this.state.selectedTimeSlot]
+    const TimeSlot = productions[state.selectedTimeSlot]
     skeleton[KEYWORD_ActivityOrder_ORDERED_ACTIVITY] = amountNumber
     skeleton[KEYWORD_ActivityOrder_STATUS] = 1
-    skeleton[KEYWORD_ActivityOrder_DELIVERY_DATE] = dateToDateString(this.props[PROP_ACTIVE_DATE])
+    skeleton[KEYWORD_ActivityOrder_DELIVERY_DATE] = dateToDateString(props[PROP_ACTIVE_DATE])
     skeleton[KEYWORD_ActivityOrder_ORDERED_TIME_SLOT] = TimeSlot.id;
-    skeleton[KEYWORD_ActivityOrder_ORDERED_BY] = this.props[DATABASE_CURRENT_USER][AUTH_USER_ID]
+    skeleton[KEYWORD_ActivityOrder_ORDERED_BY] = props[DATABASE_CURRENT_USER][AUTH_USER_ID]
 
     message[WEBSOCKET_DATA] = skeleton;
     message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
-    this.props[PROP_WEBSOCKET].send(message);
-    this.props[PROP_ON_CLOSE]();
+    props[PROP_WEBSOCKET].send(message);
+    props[PROP_ON_CLOSE]();
   }
 
-  showCalculator(){
-    this.setState({...this.state,
-      showCalculator : true
-    })
+  function commitCalculator(activity){
+    setShowCalculator(false);
+    setAmount(activity);
   }
 
-  hideCalculator(){
-    this.setState({...this.state,
-      showCalculator : false
-    })
-  }
+  const Tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
+  const activeProduction = state.selectedTimeSlot;
 
-  commitCalculator(activity){
-    this.setState({...this.state,
-      showCalculator : false,
-      amount : activity,
-    });
-  }
-
-  render(){
-    const Tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER])
-    const activeProduction = this.state.selectedTimeSlot;
-
-
-    const options = [];
-    for(const [customerID, customer] of this.props[JSON_CUSTOMER]){
-      const DeliverTimeMapping = this.props[PROP_ORDER_MAPPING].get(customerID);
-      if(DeliverTimeMapping) {
-        options.push(
-          <option key={customerID} value={customerID}>{customer.short_name}</option>
-        );
+  const customerOptions = [...props[JSON_CUSTOMER].values()].map(
+    (_customer) => {
+      const /**@type {Customer} */ customer = _customer
+      return {
+        id : customer.id,
+        name : customer.short_name,
       }
     }
+  );
 
-    const runs = [];
+    const ActivityTimeSlots = [];
 
-    for(const production of this.state.productions){
-      runs.push(
-        (<option key={production.id} value={runs.length}>{production.delivery_time}</option>)
-      )
-    }
-    // Verbosity is mostly for the reader sake, so don't say I didn't think about you
-    const Err = this.state.ErrorMessage.length == 0 ? false : true;
+  for(const production of state.productions){
+    ActivityTimeSlots.push(
+      (<option key={production.id} value={ActivityTimeSlots.length}>{production.delivery_time}</option>)
+    )
+  }
+  // Verbosity is mostly for the reader sake, so don't say I didn't think about you
+  const Err = state.ErrorMessage.length == 0 ? false : true;
 
-    return (
+  return (
       <Modal
         show={true}
-        onHide={this.props[PROP_ON_CLOSE]}
+        onHide={props[PROP_ON_CLOSE]}
         className={styles.mariLight}
       >
         <Modal.Header> Opret Order </Modal.Header>
         <Modal.Body>
-          { this.state.showCalculator ?
+          { showCalculator ?
           <Calculator
-            isotopes={this.props[JSON_ISOTOPE]}
+            isotopes={props[JSON_ISOTOPE]}
             tracer={Tracer}
             productionTime={TargetDateTime}
             defaultMBq={300}
-            cancel={this.hideCalculator.bind(this)}
-            commit={this.commitCalculator.bind(this)}
+            cancel={() => {setShowCalculator(false)}}
+            commit={commitCalculator}
           /> :
-            <Container>
+          <Container>
             <Row className={styles.Margin15tb}>
-              <InputGroup>
-              <InputGroup.Text>Kunde</InputGroup.Text>
-              <select
-                onChange={this.changeCustomer.bind(this)}
-                value={this.state.activeCustomerID}
-                aria-label={"customer-select"}
-                className="form-select">
-                {options}
-              </select>
-              </InputGroup>
-            </Row>
-            <Row className={styles.Margin15tb}>
-              <InputGroup>
-                <InputGroup.Text>Kørsel</InputGroup.Text>
-                <select
-                  aria-label={"run-select"}
-                  onChange={this.changeRun.bind(this)}
-                  value={this.state.selectedTimeSlot}
-                  className="form-select"
-                >
-                  {runs}
-                </select>
-              </InputGroup>
+              <TracerShopInputGroup label="Kunde">
+                <Select
+                  options={customerOptions}
+                  valueKey="id"
+                  name="name"
+                  onChange={(event) => {
+                    setCustomer(Number(event.target.value))
+                  }}
+                  value={customerID}
+                  aria-label={"customer-select"}
+                />
+              </TracerShopInputGroup>
+              <TracerShopInputGroup label="Leverings Sted">
+
+              </TracerShopInputGroup>
+              <TracerShopInputGroup label="Kørsel">
+                <Select
+                  options={ActivityTimeSlots}
+                  valueKey = "id"
+                  nameKey = "name"
+                  value={timeSlotID}
+                  onChange={(event) => {setTimeSlotID(Number(event.target.value))}}
+                />
+              </TracerShopInputGroup>
+              <TracerShopInputGroup label="Aktivitet">
+              <FormControl
+                  aria-label={"activity-input"}
+                  onChange={(event) => {setAmount(event.target.value)}}
+                  value={this.state.amount}
+                />
+              </TracerShopInputGroup>
             </Row>
             <Row className={styles.Margin15tb}>
               <InputGroup>
                 <InputGroup.Text>Aktivitet</InputGroup.Text>
-                <FormControl
-                  aria-label={"activity-input"}
-                  onChange={this.changeAmount.bind(this)}
-                  value={this.state.amount}
-                />
+                
                 <InputGroup.Text>MBq</InputGroup.Text>
                 <InputGroup.Text>
                   {<ClickableIcon
@@ -214,7 +154,7 @@ class CreateOrderModal extends Component {
             </Row>
             {Err ? <Row>
               <Container>
-                {this.state.ErrorMessage}
+                {state.ErrorMessage}
               </Container>
             </Row> : null }
           </Container>
@@ -222,14 +162,13 @@ class CreateOrderModal extends Component {
 
         </Modal.Body>
         <Modal.Footer>
-          {this.state.showCalculator ? <HoverBox
+          {state.showCalculator ? <HoverBox
             Base={<Button disabled={true}>Opret Ordre</Button>}
             Hover={<div>Du kan ikke opret en ordre imens at du bruger lommeregneren</div>}
           ></HoverBox>
-           : <Button onClick={this.createOrder.bind(this)}>Opret Ordre</Button>}
-          <Button onClick={this.props[PROP_ON_CLOSE]}>Luk</Button>
+           : <Button onClick={createOrder}>Opret Ordre</Button>}
+          <Button onClick={props[PROP_ON_CLOSE]}>Luk</Button>
         </Modal.Footer>
       </Modal>
-    );;
-  }
+    )
 }

@@ -108,7 +108,7 @@ class HistoryModal extends Component {
       <Row>
         <Col>
           <Select
-            label={"month-selector"}
+            aria-label={"month-selector"}
             options={Months}
             valueKey="val"
             nameKey="name"

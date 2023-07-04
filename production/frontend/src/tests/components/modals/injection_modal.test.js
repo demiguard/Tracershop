@@ -10,7 +10,8 @@ import { jest } from '@jest/globals'
 
 import { InjectionModal } from "../../../components/modals/injection_modal.js"
 
-import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { PROP_MODAL_ORDER, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { AppState } from "../../helpers.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -20,11 +21,18 @@ let container = null;
 
 const onClose = jest.fn();
 
+const modalProps = {...AppState}
+
+modalProps[PROP_MODAL_ORDER] = 1
+modalProps[PROP_ON_CLOSE] = onClose
+
+
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
+  modalProps[PROP_WEBSOCKET] = websocket
 });
 
 
@@ -35,141 +43,39 @@ afterEach(() => {
   if(container != null) container.remove();
   container = null;
   websocket = null;
+  modalProps[PROP_WEBSOCKET] = null
 });
 
-const order_status_1 = {
-  BID: 1,
-  n_injections : 2,
-
-  status : 1,
-  batchnr : "",
-  anvendelse : 1,
-  deliver_datetime : "2023-11-22 08:00:00",
-  tracer : 2,
-  username : "BAMD0001",
-}
-
-const order_status_2= {
-  BID: 1,
-  n_injections : 2,
-  comment : "Test Comment",
-  status : 2,
-  batchnr : "",
-  anvendelse : 1,
-  deliver_datetime : "2023-11-22 08:00:00",
-  tracer : 2,
-  username : "BAMD0001",
-}
-const order_status_3 = {
-  BID: 1,
-  n_injections : 2,
-
-  status : 3,
-  batchnr : "test-111111-1",
-  anvendelse : 1,
-  deliver_datetime : "2023-11-22 08:00:00",
-  tracer : 2,
-}
-
-const customers = new Map([[1, {
-  UserName : "Customer 1",
-  ID : 1,
-  overhead : 20,
-  kundenr : 2,
-  Realname : "Kunde 1",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}],[2, {
-  UserName : "Customer 2",
-  ID : 2,
-  overhead : 50,
-  kundenr : 3,
-  Realname : "Kunde 2",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}]]);
-
-const isotopes = new Map([[1, {
-  ID : 1,
-  name : "TestIsotope",
-  halflife: 6543,
-}]]);
-
-const tracers = new Map([[1,{
-  id : 1,
-  name : "Tracer",
-  isotope : 1,
-  n_injections : -1,
-  order_block : -1,
-  in_use : true,
-  tracer_type : 1,
-  longName : "Test Tracer",
-}],[2, {
-  id: 2,
-  name: "Tracer_2",
-  isotope: 1,
-  n_injections: -1,
-  order_block: -1,
-  in_use: true,
-  tracer_type: 1,
-  longName: "Test Tracer 2",
-}]]);
 
 describe("Injection modal test suite", () =>{
   it("Standard Render test status 1", async () => {
+
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_1}
-      onClose={onClose}
-      websocket={websocket}
+      {...modalProps}
     />)
     expect(await screen.findByRole('button', {name : "Accepter Ordre"})).toBeVisible();
     expect(await screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
     expect(await screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
     expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
   });
+
   it("Accept Order", async () => {
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_1}
-      onClose={onClose}
-      websocket={websocket}
+      {...modalProps}
     />)
     fireEvent.click(await screen.findByRole('button', {name : "Accepter Ordre"}));
 
-    expect(websocket.send).toBeCalled()
     expect(websocket.getMessage).toBeCalled()
+    expect(websocket.send).toBeCalled()
   });
 
   it("Standard Render test status 2", async () => {
+    modalProps[PROP_MODAL_ORDER] = 2
+
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_2}
-      onClose={onClose}
-      websocket={websocket}
+      {...modalProps}
     />)
+
     expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
     expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
     expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
@@ -177,13 +83,10 @@ describe("Injection modal test suite", () =>{
   });
 
   it("Start freeing empty Order", async () => {
+    modalProps[PROP_MODAL_ORDER] = 2
+
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_2}
-      onClose={onClose}
-      websocket={websocket}
+      {...modalProps}
     />)
 
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
@@ -194,18 +97,15 @@ describe("Injection modal test suite", () =>{
 
   it("Edit Freeing Order", async () => {
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_2}
-      onClose={onClose}
-      websocket={websocket}
+      {...modalProps}
     />)
 
-    fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
+    const input = await screen.findByLabelText("batchnr-input")
+    fireEvent.change(input, {target : {value : "test-111111-1"}});
+
+    expect(input.value).toBe("test-111111-1");
 
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
-
     fireEvent.click(screen.queryByRole('button', {name : "Rediger Ordre"}));
     expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
     expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
@@ -224,13 +124,12 @@ describe("Injection modal test suite", () =>{
       })
     }
 
+    const newProps = {...modalProps}
+    newProps[PROP_WEBSOCKET] = ResolvingWebsocket
+    newProps[PROP_MODAL_ORDER] = 2
+
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_2}
-      onClose={onClose}
-      websocket={ResolvingWebsocket}
+      {...newProps}
     />);
 
     fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
@@ -255,13 +154,12 @@ describe("Injection modal test suite", () =>{
       })
     }
 
+    const newProps = {...modalProps}
+    newProps[PROP_WEBSOCKET] = ResolvingWebsocket;
+    newProps[PROP_MODAL_ORDER] = 2;
+
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_2}
-      onClose={onClose}
-      websocket={ResolvingWebsocket}
+      {...newProps}
     />);
 
     fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
@@ -273,14 +171,14 @@ describe("Injection modal test suite", () =>{
   });
 
   it("Standard Render test status 3", async () => {
+    const newProps = {...modalProps}
+    newProps[PROP_MODAL_ORDER] = 3
+
     render(<InjectionModal
-      customers={customers}
-      isotopes={isotopes}
-      tracers={tracers}
-      order={order_status_3}
-      onClose={onClose}
-      websocket={websocket}
+      {...newProps}
     />)
+
+
     expect( screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
     expect( screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
     expect( screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();

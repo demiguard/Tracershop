@@ -7,7 +7,9 @@ import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@
 import { jest } from '@jest/globals'
 
 import { CreateInjectionOrderModal } from "../../../components/modals/create_injection_modal.js"
-import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+
+import {AppState} from '../../helpers.js'
 
 const onClose = jest.fn()
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -15,13 +17,17 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
 let container = null;
-
+let props = null;
 
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
+  props = {...AppState}
+  props[PROP_WEBSOCKET] = websocket
+  props[PROP_ACTIVE_DATE] = new Date(2020,3,5);
+  props[PROP_ON_CLOSE] = onClose
 });
 
 
@@ -34,86 +40,137 @@ afterEach(() => {
   websocket = null;
 });
 
-const customers = new Map([[1, {
-  UserName : "Customer 1",
-  ID : 1,
-  overhead : 20,
-  kundenr : 2,
-  Realname : "Kunde 1",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}],[2, {
-  UserName : "Customer 2",
-  ID : 2,
-  overhead : 50,
-  kundenr : 3,
-  Realname : "Kunde 2",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}], [3, {
-  UserName : "Customer 3",
-  ID : 3,
-  overhead : 50,
-  kundenr : 4,
-  Realname : "Kunde 3",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-}]]);
-
-const tracers = new Map([[1,{
-  id : 1,
-  name : "Tracer",
-  isotope : 1,
-  n_injections : -1,
-  order_block : -1,
-  in_use : true,
-  tracer_type : 1,
-  longName : "Test Tracer",
-}],[2, {
-  id: 2,
-  name: "Tracer_2",
-  isotope: 1,
-  n_injections: -1,
-  order_block: -1,
-  in_use: true,
-  tracer_type: 2,
-  longName: "Test Tracer 2",
-}], [3, {
-  id: 3,
-  name: "Tracer_3",
-  isotope: 1,
-  n_injections: -1,
-  order_block: -1,
-  in_use: true,
-  tracer_type: 2,
-  longName: "Test Tracer 3",
-}]]);
-
-
 describe("Create injection Order", () => {
-  it("Standard Render Test", async () => {})
+  it("Standard Render Test", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />)
+
+    expect(await screen.findByLabelText("customer-select")).toBeVisible();
+    expect(await screen.findByLabelText("endpoint-form")).toBeVisible();
+    expect(await screen.findByLabelText("tracer-select")).toBeVisible();
+    expect(await screen.findByLabelText("usage-select")).toBeVisible();
+    expect(await screen.findByLabelText("injection-input")).toBeVisible();
+    expect(await screen.findByLabelText("delivery-time-input")).toBeVisible();
+    expect(await screen.findByLabelText("comment-input")).toBeVisible();
+    // Buttons
+    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible()
+    expect(await screen.findByRole('button', {name : "Opret Ordre"})).toBeVisible()
+  });
+
+  it("Missing Injections!", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+  const createOrderButton = await screen.findByRole('button',
+                                                    {name : "Opret Ordre"});
+  createOrderButton.click()
+
+  expect(await screen.findByText(
+    "Der er ikke indtastet hvor mange injektioner der skal bestilles")).toBeVisible
+  })
+
+  it("Error - Bannans Injections", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+    const injectionInput = await screen.findByLabelText("injection-input");
+    fireEvent.change(injectionInput, {target : {value : "a"}});
+
+    const createOrderButton = await screen.findByRole('button',
+                                                      {name : "Opret Ordre"});
+
+    createOrderButton.click()
+
+    expect(await screen.findByText("Injektionerne er ikke et tal"))
+  });
+
+  it("Error - Negative Injections", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+    const injectionInput = await screen.findByLabelText("injection-input");
+    fireEvent.change(injectionInput, {target : {value : "-3"}});
+
+    const createOrderButton = await screen.findByRole('button',
+                                                      {name : "Opret Ordre"});
+
+    createOrderButton.click()
+
+    expect(await screen.findByText("Der skal bestilles et positivt mængde af injectioner"))
+  });
+
+  it("Error - half a Injections", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+    const injectionInput = await screen.findByLabelText("injection-input");
+    fireEvent.change(injectionInput, {target : {value : "2.5"}});
+
+    const createOrderButton = await screen.findByRole('button',
+                                                      {name : "Opret Ordre"});
+
+    createOrderButton.click()
+
+    expect(await screen.findByText("Der kan kun bestilles et helt antal injektioners"))
+  });
+
+
+  it("Error - half a Injections + plus danish numbers", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+    const injectionInput = await screen.findByLabelText("injection-input");
+    fireEvent.change(injectionInput, {target : {value : "2,5"}});
+
+    const createOrderButton = await screen.findByRole('button',
+                                                      {name : "Opret Ordre"});
+
+    createOrderButton.click()
+
+    expect(await screen.findByText("Der kan kun bestilles et helt antal injektioners"))
+  });
+
+
+  it("Error - Missing Delivery Time", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+    const injectionInput = await screen.findByLabelText("injection-input");
+    fireEvent.change(injectionInput, {target : {value : "4"}});
+
+    const createOrderButton = await screen.findByRole('button',
+                                                      {name : "Opret Ordre"});
+
+    createOrderButton.click()
+
+    expect(await screen.findByText("Leverings tidspunktet er ikke et valid"))
+  });
+
+  it("Success order", async () => {
+    render(<CreateInjectionOrderModal
+      {...props}
+    />);
+
+    const injectionInput = await screen.findByLabelText("injection-input");
+    fireEvent.change(injectionInput, {target : {value : "4"}});
+
+    const deliveryTimeInput = await screen.findByLabelText("delivery-time-input");
+    fireEvent.change(deliveryTimeInput, {target : {value : "11:33:55"}});
+
+    const createOrderButton = await screen.findByRole('button',
+                                                      {name : "Opret Ordre"});
+
+    createOrderButton.click();
+
+    expect(websocket.getMessage).toBeCalled()
+    expect(websocket.send).toBeCalled()
+    expect(onClose).toBeCalled()
+  });
 });

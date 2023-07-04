@@ -837,9 +837,6 @@ class ActivityModal extends Component {
 
   renderButtonGroup() {
     const orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
-
-    console.log(orders)
-
     let minimum_status = 5
 
     for(const order of orders){
@@ -865,7 +862,6 @@ class ActivityModal extends Component {
 
 
   render() {
-    console.log(this.props, this.state)
     const colWidth = (this.state.usingCalculator || this.state.isFreeing) ? 6 : 12;
     const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID])
     const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run);
