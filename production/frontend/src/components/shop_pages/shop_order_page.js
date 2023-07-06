@@ -9,7 +9,7 @@ import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK
 import { ActivityOrder, Customer, ActivityDeliveryTimeSlot, DeliveryEndpoint, ActivityProduction, Tracer, ServerConfiguration, Deadline } from "../../dataclasses/dataclasses.js";
 import { changeState } from "../../lib/state_management.js";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
-import { calculateDeadline, getDay, getToday } from "../../lib/chronomancy.js";
+import { _calculateDeadline, getDay, getToday } from "../../lib/chronomancy.js";
 import { dateToDateString } from "../../lib/formatting.js";
 import { getId } from "../../lib/utils.js";
 
@@ -195,8 +195,8 @@ class ShopOrderPage extends Component {
     const /**@type {Deadline} */ injectionDeadline = this.props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
     const today = getToday()
 
-    const activityDeadlineDate = calculateDeadline(activityDeadline, this.state.today)
-    const injectionDeadlineDate = calculateDeadline(injectionDeadline, this.state.today)
+    const activityDeadlineDate = _calculateDeadline(activityDeadline, this.state.today)
+    const injectionDeadlineDate = _calculateDeadline(injectionDeadline, this.state.today)
 
     const ActivityDeadlineExpired = activityDeadlineDate < today;
     const InjectionDeadlineExpired = injectionDeadlineDate < today;
@@ -268,8 +268,8 @@ class ShopOrderPage extends Component {
       let dateStatusActivity = 0;
       let dateStatusInjection = 0
 
-      const activityDeadlineDate = calculateDeadline(activityDeadline, date)
-      const injectionDeadlineDate = calculateDeadline(injectionDeadline, date)
+      const activityDeadlineDate = _calculateDeadline(activityDeadline, date)
+      const injectionDeadlineDate = _calculateDeadline(injectionDeadline, date)
 
       if(activityDeadlineDate < today){
         dateStatusActivity = 5

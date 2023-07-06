@@ -12,6 +12,7 @@ import styles from '../../css/Calculator.module.css'
 import SiteStyles from '../../css/Site.module.css'
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { ClickableIcon } from "./icons";
+import { Isotope } from "../../dataclasses/dataclasses";
 
 export { Calculator }
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.
@@ -173,7 +174,7 @@ class Calculator extends Component {
 
   commit(event) {
     var activity = 0.0;
-    const isotope = this.props.isotopes.get(this.props.tracer.isotope);
+    const /**@type {Isotope} */ isotope = this.props.isotopes.get(this.props.tracer.isotope);
     for(const entry of this.state.entries){
       const hour = Number(entry.time.substring(0,2));
       const min  = Number(entry.time.substring(3,5));
@@ -185,7 +186,7 @@ class Calculator extends Component {
         min
       )
       const timeDelta = CountMinutes(this.props.productionTime, entryDate);
-      activity += CalculateProduction(isotope.halflife, timeDelta, entry.activity)
+      activity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
     }
 
     activity = (activity < 0) ? 0 : activity;
@@ -227,7 +228,7 @@ class Calculator extends Component {
         min
       )
       const timeDelta = CountMinutes(this.props.productionTime, entryDate);
-      totalActivity += CalculateProduction(isotope.halflife, timeDelta, entry.activity)
+      totalActivity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
     }
 
     totalActivity = Math.floor(totalActivity);
@@ -261,10 +262,10 @@ class Calculator extends Component {
       </Row>
       <hr/>
       <Row className={styles.CalculatorInfo}>
-        <p>Tracer - {this.props.tracer.name}</p>
+        <p>Tracer - {this.props.tracer.shortname}</p>
         <p>Produktions tidpunkt - {ProductionTimeString}</p>
-        <p>Halvering tid - {isotope.halflife} s</p>
-        <p>Aktivitet som bliver Tilføjet: {totalActivity}</p>
+        <p>Halvering tid - {isotope.halflife_seconds} s</p>
+        <p>Aktivitet som bliver Tilføjet: {totalActivity} MBq</p>
       </Row>
       <Row className="calculatorTables">
         <Table>

@@ -12,7 +12,7 @@ import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { compareDates as compareDates } from "../../lib/utils.js";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING, PROP_WEBSOCKET, WEBSOCKET_DATA,
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_MODEL_CREATE,  WEBSOCKET_MESSAGE_MODEL_EDIT} from "../../lib/constants.js";
 import { batchNumberValidator, dateToDateString, FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
@@ -57,7 +57,8 @@ class ActivityModal extends Component {
 
   constructor(props){
     super(props);
-    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
+
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
     const state = {...initial_state}
     this.minimum_status = 5
 
@@ -76,6 +77,7 @@ class ActivityModal extends Component {
       }
     }
 
+    console.log(props, orders)
     this.state = state;
   }
 
@@ -483,7 +485,7 @@ class ActivityModal extends Component {
   startFreeingOrder(){
     // ***** warnings *****
     const today = new Date();
-    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
     let date_mismatch = false;
 
     for(const order of orders){
@@ -515,7 +517,7 @@ class ActivityModal extends Component {
   }
 
   onClickAccept(){
-    const orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
+    const orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
     const modified_orders = []
     for(const order of orders){
       if (order.status == 1){
@@ -537,7 +539,7 @@ class ActivityModal extends Component {
    * @param {*} password - Inputted Password of the user
    */
   async onFree(username, password){
-    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
     const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
     const orderIDs = []
@@ -589,7 +591,7 @@ class ActivityModal extends Component {
    */
   renderDescriptionTable(){
     const /**@type {ActivityDeliveryTimeSlot} */ timeSlot  = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID]);
-    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
     const /**@type {DeliveryEndpoint } */ endpoint = this.props[JSON_ENDPOINT].get(timeSlot.destination)
     const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER])
 
@@ -703,7 +705,7 @@ class ActivityModal extends Component {
   renderVialTable(){
     const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID]);
     const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run)
-    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_TIME_SLOT_MAPPING].get(timeSlot.id);
+    const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(timeSlot.id);
     const orderIDs = []
     for (const order of orders){
       orderIDs.push(order.id)
@@ -836,7 +838,7 @@ class ActivityModal extends Component {
 
 
   renderButtonGroup() {
-    const orders = this.props[PROP_TIME_SLOT_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
+    const orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID])
     let minimum_status = 5
 
     for(const order of orders){
@@ -865,7 +867,7 @@ class ActivityModal extends Component {
     const colWidth = (this.state.usingCalculator || this.state.isFreeing) ? 6 : 12;
     const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = this.props[JSON_DELIVER_TIME].get(this.props[PROP_TIME_SLOT_ID])
     const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run);
-    const /**@type {Array<ActivityOrder}*/ orders = this.props[PROP_TIME_SLOT_MAPPING].get(timeSlot.id)
+    const /**@type {Array<ActivityOrder}*/ orders = this.props[PROP_ORDER_MAPPING].get(timeSlot.id)
 
     let sideElement = <div></div>;
     if(this.state.usingCalculator){
@@ -923,7 +925,7 @@ class ActivityModal extends Component {
         </Row>
       </Modal.Body>
       <Modal.Footer>
-        {this.renderButtonGroup() }
+        {this.renderButtonGroup()}
       </Modal.Footer>
     </Modal>)
   }

@@ -371,3 +371,27 @@ class DatabaseInterface():
     if type(model) in self.__modelCanChangeFunctions:
       return self.__modelCanChangeFunctions[type(model)](model)
     return True
+
+
+  @database_sync_to_async
+  def moveOrders(self, orderIDs: List[int], destinationID: int):
+    orders = ActivityOrder.objects.filter(pk__in=orderIDs)
+    destination = ActivityDeliveryTimeSlot.objects.get(pk=destinationID)
+
+    for order in orders:
+      if order.ordered_time_slot != destination:
+        order.moved_to_time_slot = destination
+      else:
+        order.moved_to_time_slot = None
+
+    ActivityOrder.objects.bulk_update(orders, ['moved_to_time_slot'])
+
+    return orders
+
+  @database_sync_to_async
+  def restoreDestinations(self, orderIDs: List[int]):
+    orders = ActivityOrder.objects.filter(pk__in=orderIDs)
+    for order in orders:
+      order.moved_to_time_slot = None
+    ActivityOrder.objects.bulk_update(orders, ['moved_to_time_slot'])
+    return orders

@@ -2,8 +2,8 @@
 import React, { Component, useState } from "react";
 import { Row, Col, Table, Tab, Button, Container, Card, Collapse } from 'react-bootstrap'
 import { renderStatusImage, renderTableRow } from "../../lib/rendering.js";
-import { compareDates } from "../../lib/utils.js";
-import { FormatDateStr, dateToDateString } from "../../lib/formatting.js";
+import { compareDates, getId } from "../../lib/utils.js";
+import { FormatDateStr, dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
 import { CountMinutes, CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
@@ -13,79 +13,113 @@ import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_CHARGE, LEGACY_KEYWORD_FILLTIME,
   LEGACY_KEYWORD_FILLDATE, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_ACTIVITY, LEGACY_KEYWORD_VOLUME,
-  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_MODAL_ORDER, PROP_ORDER_MAPPING, PROP_ON_CLOSE, JSON_PRODUCTION, JSON_ENDPOINT, JSON_ORDERS, PROP_ON_CLICK, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING} from "../../lib/constants.js";
+  WEBSOCKET_MESSAGE_EDIT_STATE, LEGACY_KEYWORD_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_MODAL_ORDER, PROP_ORDER_MAPPING, PROP_ON_CLOSE, JSON_PRODUCTION, JSON_ENDPOINT, JSON_ORDERS, PROP_ON_CLICK, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING, PROP_ACTIVE_PRODUCTION, PROP_ASSOCIATED_TIME_SLOTS, PROP_ASSOCIATED_ORDERS, JSON_TRACER_MAPPING, PROP_OVERHEAD_MAP, WEBSOCKET_MESSAGE_RESTORE_ORDERS} from "../../lib/constants.js";
 
 import SiteStyles from "/src/css/Site.module.css"
-import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME, KEYWORD_ActivityDeliveryTimeSlot_DESTINATION, KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN, KEYWORD_ActivityOrder_COMMENT, KEYWORD_ActivityOrder_ORDERED_ACTIVITY, KEYWORD_ActivityOrder_ORDERED_BY, KEYWORD_ActivityOrder_ORDERED_TIME_SLOT, KEYWORD_ActivityOrder_STATUS, KEYWORD_Customer_SHORT_NAME, KEYWORD_DeliveryEndpoint_NAME, KEYWORD_DeliveryEndpoint_OWNER } from "../../dataclasses/keywords.js";
+import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME,  KEYWORD_ActivityOrder_ORDERED_ACTIVITY, KEYWORD_DeliveryEndpoint_OWNER } from "../../dataclasses/keywords.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { renderComment } from "../../lib/rendering.js";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "../../dataclasses/dataclasses.js";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalog } from "../../dataclasses/dataclasses.js";
+import { compareTimeStamp, getDay } from "../../lib/chronomancy.js";
+import { ArrayMap } from "../../lib/array_map.js";
 
-/*
-  For the dataclasses described see Tracershop/production/lib/ProductionDataClasses.py
-  The Dataclasses have been converted to native javascript Objects. Note these dataclasses doesn't exists
-  in the javascript frame work at time of writing this doc.
+const Modals = {
+  createModal : CreateOrderModal,
+  activityModal : ActivityModal,
+}
 
-  The props for this is the following:
-            customer : Map <CustomerDataClass.ID, CustomerDataClass>
-            date : Date Object - The day that the table is displaying
-            deliverTimes : Map <DeliverTimeDataClass.DTID, DeliverTimeDataClass>
-            employees : Map<EmployeeDataClass.OldTracerBaseID, EmployeeDataClass>
-            isotopes :  Map<IsotopeDataClass.ID, IsotopeDataClass>
-            orders : Map<ActivityOrderDataClass.oid, ActivityOrderDataClass>
-            runs : Map<RunsDataClass.PTID, RunsDataClass>
-            tracer : Number - An id to enter in the map tracers
-            tracers : Map<TracerDataClass.id, TracerDataClass>
-            t_orders : Map<InjectionOrderDataClass.oid, InjectionOrderDataClass>
-            vials : Map<VialDataClass.ID, VialDataClass>
-            username : Username of log in user, should be passed to Modal, for verification
-            websocket : Active and connected Websocket Object from TracerWebsocket
-*/
-
-function OrderRow(props){
+/**
+ * Row inside of a RenderedTimeSlot
+ * @param {{
+ * order : ActivityOrder
+ * }} param0 
+ * @returns {JSX }
+ */
+function OrderRow({order}){
   return (<Row>
-    <Col><StatusIcon status={props.order[KEYWORD_ActivityOrder_STATUS]}/></Col>
-    <Col>Order ID: {props.order.id}</Col>
-    <Col>{props.order[KEYWORD_ActivityOrder_ORDERED_ACTIVITY]} MBq</Col>
-    <Col>{props.order[KEYWORD_ActivityOrder_COMMENT] ? renderComment(props.order[KEYWORD_ActivityOrder_COMMENT]) : ""}</Col>
+    <Col><StatusIcon status={order.status}/></Col>
+    <Col>Order ID: {order.id}</Col>
+    <Col>{order.ordered_activity} MBq</Col>
+    <Col>{order.comment ? renderComment(order.comment) : ""}</Col>
   </Row>)
 }
 
+/**
+ * This is similiar to the shop side TimeSlotCard, however the functionality is quite different
+ * Creates a number of OrderRow inside of the card.
+ * @param {*} props
+ * @returns
+ */
 function RenderedTimeSlot(props){
   const [open, setOpen] = useState(false);
+  const orderIds = props[JSON_ACTIVITY_ORDER].map(getId)
+  const targetID = props[PROP_ASSOCIATED_TIME_SLOTS][0].id
+
+  function moveOrders(targetID){
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+    const destination = props[PROP_ASSOCIATED_TIME_SLOTS][0].id;
+    message[JSON_DELIVER_TIME] = destination;
+    message[JSON_ACTIVITY_ORDER] = orderIds
+    props[PROP_WEBSOCKET].send(message);
+  }
+
+  function restoreOrders(){
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_RESTORE_ORDERS);
+    message[JSON_ACTIVITY_ORDER] = orderIds
+    props[PROP_WEBSOCKET].send(message);
+  }
+
 
   const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(props.timeSlotID);
   const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
   const /**@type {Customer} */ owner    = props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER]);
 
+  const canMove = targetID !== props.timeSlotID;
   let mbq = 0;
   let minimum_status = 3
   const OrderData = [];
+  let moved = false;
 
   for(const order of props[JSON_ACTIVITY_ORDER]){
+    if (order.moved_to_time_slot != null){
+      moved = true;
+    }
     mbq += order[KEYWORD_ActivityOrder_ORDERED_ACTIVITY]
     minimum_status = Math.min(minimum_status, order.status);
     OrderData.push(<OrderRow
       key={order.id}
       order={order}
-    />
-    )
+    />);
   }
-  
   const openClassName = open ? SiteStyles.rotated : "";
+  let headerIcon = <StatusIcon
+                      status={minimum_status}
+                      onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
+                    />
+  if(moved){
+    headerIcon = <ClickableIcon
+                    src="/static/images/move_top.svg"
+                    onClick={restoreOrders}
+                  />;
+  }
 
   return (
-    <Card>
+    <Card key={props.timeSlotID}>
       <Card.Header>
         <Row>
-          <Col xs={1}><StatusIcon
-                  status={minimum_status}
-                  onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
-          /></Col>
+          <Col xs={1}>
+            {headerIcon}
+          </Col>
           <Col>{owner.short_name} - {endpoint.name}</Col>
-          <Col>{timeSlot[KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME]}</Col>
+          <Col>{timeSlot.delivery_time}</Col>
           <Col>Bestilt: {mbq} MBq</Col>
-          <Col style={{
+          <Col xs={1}>
+            {canMove && !moved ? <ClickableIcon
+                          src="/static/images/move_top.svg"
+                          onClick={() => {moveOrders(targetID)}}
+                        /> : null}
+          </Col>
+          <Col xs={1} style={{
             justifyContent : 'right',
             display : 'flex'
           }}>
@@ -97,206 +131,205 @@ function RenderedTimeSlot(props){
           </Col>
         </Row>
       </Card.Header>
-
       <Collapse in={open}>
         <Card.Body>
           {OrderData}
         </Card.Body>
       </Collapse>
-    </Card>)
+    </Card>);
+}
 
+function ProductionRow(props){
+  const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(props[PROP_ACTIVE_PRODUCTION])
+  const /**@type {Tracer} */tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER]);
+  const /**@type {Isotope} */ isotope = props[JSON_ISOTOPE].get(tracer.isotope);
+
+  let total = 0;
+  let total_o = 0
+
+  const /**@type {Array<Number>} */ associatedTimeSlots = props[PROP_ASSOCIATED_TIME_SLOTS].get(production.id)
+  for(const _order of props[PROP_ASSOCIATED_ORDERS]){
+    const /**@type {ActivityOrder} */ order = _order
+    let timeSlotID = order.ordered_time_slot
+    if(order.moved_to_time_slot){
+      timeSlotID = order.moved_to_time_slot
+    }
+    if(!(associatedTimeSlots.includes(timeSlotID))){
+      continue;
+    }
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
+    const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
+    const /**@type {Customer} */ customer = props[JSON_CUSTOMER].get(endpoint.owner)
+    const overhead = props[PROP_OVERHEAD_MAP].get(customer.id);
+    const timeDifference = compareTimeStamp(timeSlot.delivery_time, production.production_time);
+    let amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
+
+    total += amount;
+    total_o += amount * overhead;
+  }
+
+  return (
+  <Row key={production.id}>
+    Kørsel {production.production_time} : {Math.floor(total)} MBq / Overhead : {Math.floor(total_o)} MBq
+  </Row>);
 }
 
 
 
-export class ActivityTable extends Component {
-  constructor(props) {
-    super(props);
+/**
+ *
+ * @param {{
+ * }} props 
+ * @returns 
+ */
+export function ActivityTable (props) {
+  const activeDay = getDay(props[PROP_ACTIVE_DATE])
+  const delivery_date = dateToDateString(props[PROP_ACTIVE_DATE])
+  const danishDateString = parseDateToDanishDate(delivery_date)
+  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ timeSlotMapping = new Map()
 
-    this.customerTimeSlotMapping = this.createCustomerTimeSlotMapping();
-
-    this.state = {
-      showModal : false,
-      timeSlotID : null,
-      ModalCustomer : null,
-      Modal: null
+  for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
+    const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
+    if(timeSlotMapping.has(endpoint.owner)){
+      const endpointMap = timeSlotMapping.get(endpoint.owner)
+      endpointMap.set(endpointID, [])
+    } else {
+      const endpointMap = new Map()
+      endpointMap.set(endpointID, [])
+      timeSlotMapping.set(endpointID, endpointMap)
     }
   }
 
-  componentDidUpdate(prevProps) {
-    if(this.props[PROP_ACTIVE_DATE] !== prevProps[PROP_ACTIVE_DATE] ||
-       this.props[JSON_ACTIVITY_ORDER] !== prevProps[JSON_ACTIVITY_ORDER] ||
-       this.props[JSON_CUSTOMER] !== prevProps[JSON_CUSTOMER] ||
-       this.props[JSON_DELIVER_TIME] !== prevProps[JSON_DELIVER_TIME]
-      ){
-      this.customerTimeSlotMapping = this.createCustomerTimeSlotMapping();
+  const /**@type {Array<Number>} */ relevantProductions = [...props[JSON_PRODUCTION].values()].filter((production) => {
+    return production.production_day === activeDay && production.tracer === props[PROP_ACTIVE_TRACER]
+  }).map(getId)
 
+  const /**@type {ArrayMap<Number, Number>} */ contributingTimeSlots = new ArrayMap()
+
+  for(const [activityDeliveryTimeSlotId,_activityDeliveryTimeSlot] of props[JSON_DELIVER_TIME]){
+    // You can't turn this into a map because of the sorting ruins parallelism
+    const /**@type {ActivityDeliveryTimeSlot} */ activityDeliveryTimeSlot = _activityDeliveryTimeSlot
+    const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(activityDeliveryTimeSlot.production_run)
+    if(!relevantProductions.includes(activityDeliveryTimeSlot.production_run)){
+      continue;
     }
-  }
 
-  GetProductionDateTimeString(ProductionTime) {
-    return String(this.props[PROP_ACTIVE_DATE].getFullYear()) + '-' +
-      FormatDateStr(this.props[PROP_ACTIVE_DATE].getMonth() + 1) + '-' +
-      FormatDateStr(this.props[PROP_ACTIVE_DATE].getDate()) + "T" +
-      ProductionTime;
-  }
+    contributingTimeSlots.set(activityDeliveryTimeSlot.production_run, activityDeliveryTimeSlotId)
 
-  createCustomerTimeSlotMapping(){
-    const OrderMapping = new Map()
+    // Destination is an endpoint ID
+    const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(activityDeliveryTimeSlot.destination);
+    const destinationMapping = timeSlotMapping.get(endpoint.owner)
 
-    for(const [activityDeliveryTimeSlotId,activityDeliveryTimeSlot] of this.props[JSON_DELIVER_TIME]){
-      const production = this.props[JSON_PRODUCTION].get(activityDeliveryTimeSlot[KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN])
-      if(production === undefined || production.production_day !== ((this.props[PROP_ACTIVE_DATE].getDay() + 6) % 7)){
-        continue
-      }
-      const endpoint = this.props[JSON_ENDPOINT].get(activityDeliveryTimeSlot[KEYWORD_ActivityDeliveryTimeSlot_DESTINATION])
-      const owner = this.props[JSON_CUSTOMER].get(endpoint.owner);
-      if(owner === undefined){
-        console.log("STUFF IS WRONG") // THIS SHOULDN*T HAPPEN
-      }
-      if(OrderMapping.has(owner.id)){
-        OrderMapping.get(owner.id).push(activityDeliveryTimeSlot);
-        OrderMapping.get(owner.id).sort((a,b) => {
-          return (a < b) ? 1 : -1;
-        });
-      } else {
-        OrderMapping.set(owner.id, [activityDeliveryTimeSlot])
-      }
+    if(destinationMapping === undefined){
+      // Log error
+      console.log("Error")
+      continue;
     }
-    return OrderMapping;
-  }
 
-  // Modal Functions
-  /**
-   * Changes internal state such that the modal for an order is no longer displayed
-   */
-  closeModal(){
-    console.log("close modal");
-    this.setState({...this.state,
-      showModal : false,
-      ModalOrder : null,
-      Modal : null,
-      timeSlotID: null,
+    destinationMapping.get(endpoint.id).push(activityDeliveryTimeSlot);
+    destinationMapping.get(endpoint.id).sort((a,b) => {
+      return (a.delivery_time < b.delivery_time) ? -1 : 1;
     });
   }
 
-  /**
-   * Changes the internal state such that the modal for a timeSlot is displayed
-   * @param {Number} - timeSlotID - ID of the timeSlot, that user will operate on.
-   *    */
-  activateOrderModal(timeSlotID){
-    const newState = {...this.state};
-    newState.showModal = true;
-    newState.Modal = ActivityModal,
-    newState[PROP_TIME_SLOT_ID] = timeSlotID;
-    this.setState(newState);
-  }
+  const [modalIdentifier, setModalIdentifier] = useState(null);
+  const [timeSlotID, setTimeSlotID] = useState(null);
 
-  activateCreateModal(){
-    this.setState({
-      ...this.state,
-      Modal : CreateOrderModal,
-      showModal : true,
-    })
-  }
+  const overheadMap = new Map()
 
-  // Renders
-  renderTotal(Production) {
-    let total = 0;
-    let total_o = 0
-    const tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
-    const isotope = this.props[JSON_ISOTOPE].get(tracer.isotope);
-
-
-    return (
-    <Row key={Production.id}>
-      Kørsel {Production.production_time} : {Math.floor(total)} MBq / Overhead : {Math.floor(total_o)} MBq
-    </Row>);
-  }
-
-  render() {
-    console.log(this.props)
-    const FinishedOrders = [];
-    const pendingOrders = [];
-    const /**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER]);
-
-    // This Object is newer than the state version
-    // Yeah so this is really anonying here is why
-    // So There might be a solution to make it variable that's not state, since it technically isn't a state,
-    // But an object that's dependant on props
-    //this.OrderMapping = this.createCustomerTimeSlotMapping();
-    const /**@type {Array<ActivityOrder>} */ all_orders = [...this.props[JSON_ACTIVITY_ORDER].values()]
-    const todays_orders = all_orders.filter((order) => {
-      const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = this.props[JSON_DELIVER_TIME].get(order.ordered_time_slot);
-      const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run)
-
-      return order.delivery_date === dateToDateString(this.props[PROP_ACTIVE_DATE]) &&
-        production.tracer == this.props[PROP_ACTIVE_TRACER]
-    })
-
-    const TimeSlotMapping = new Map()
-    for(const order of todays_orders){
-      if (TimeSlotMapping.has(order[KEYWORD_ActivityOrder_ORDERED_TIME_SLOT])){
-        TimeSlotMapping.get(order[KEYWORD_ActivityOrder_ORDERED_TIME_SLOT]).push(order)
-      } else {
-        TimeSlotMapping.set(order[KEYWORD_ActivityOrder_ORDERED_TIME_SLOT], [order])
-      }
+  for(const [_, _tracerCatalogPage] of props[JSON_TRACER_MAPPING]){
+    const /**@type {TracerCatalog} */ tracerCatalogPage = _tracerCatalogPage;
+    if(tracerCatalogPage.tracer != props[PROP_ACTIVE_TRACER]){
+      continue
     }
+    overheadMap.set(tracerCatalogPage.customer, tracerCatalogPage.overhead_multiplier)
+  }
 
-    const renderedTimeSlots = []
-    for(const [timeSlotID, orders] of TimeSlotMapping){
-      const RenderedTimeSlotProps = {};
-      RenderedTimeSlotProps[JSON_ENDPOINT] = this.props[JSON_ENDPOINT];
-      RenderedTimeSlotProps[JSON_CUSTOMER] = this.props[JSON_CUSTOMER];
-      RenderedTimeSlotProps[JSON_DELIVER_TIME] = this.props[JSON_DELIVER_TIME];
+
+  // Order Filtering
+  const /**@type {Array<ActivityOrder>} */ all_orders = [...props[JSON_ACTIVITY_ORDER].values()]
+  const todays_orders = all_orders.filter((order) => {
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(order.ordered_time_slot);
+    const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(timeSlot.production_run)
+
+    return order.delivery_date === delivery_date && production.tracer == props[PROP_ACTIVE_TRACER]
+  });
+
+  const /**@type {Map<Number, Array<ActivityOrder>>} */ OrderMapping = new Map();
+  for(const order of todays_orders){
+    if (OrderMapping.has(order.ordered_time_slot)){
+      OrderMapping.get(order.ordered_time_slot).push(order)
+    } else {
+      OrderMapping.set(order.ordered_time_slot, [order])
+    }
+  }
+
+  const renderedTimeSlots = Array.from(OrderMapping).map(
+    ([timeSlotID, orders]) => {
+      const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
+      const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
+      const /**@type {Array<ActivityDeliveryTimeSlot>} */ timeSlots = timeSlotMapping.get(endpoint.owner).get(endpoint.id)
+
+      const RenderedTimeSlotProps = {...props};
+      RenderedTimeSlotProps[PROP_ASSOCIATED_TIME_SLOTS] = timeSlots;
       RenderedTimeSlotProps[JSON_ACTIVITY_ORDER] = orders;
-      RenderedTimeSlotProps[PROP_ON_CLICK] = this.activateOrderModal.bind(this);
+      RenderedTimeSlotProps[PROP_ON_CLICK] = () => {
+        setModalIdentifier("activityModal")
+        setTimeSlotID(timeSlotID)
+      }
 
       RenderedTimeSlotProps['timeSlotID'] = timeSlotID;
       RenderedTimeSlotProps['key'] = timeSlotID;
 
-      const element = <RenderedTimeSlot
-        {...RenderedTimeSlotProps}
-      />
-      renderedTimeSlots.push(element)
-    }
+      return <RenderedTimeSlot {...RenderedTimeSlotProps}/>
+    })
 
 
-    const RenderedRuns = [];
-    for (const [PTID, production] of this.props[JSON_PRODUCTION]) {
-      if (production.production_day === (this.props[PROP_ACTIVE_DATE].getDay() + 6) % 7){
-        RenderedRuns.push(this.renderTotal(production));
-      }
-    }
+  const RenderedRuns = relevantProductions.map((productionID) => {
+    const productionProps = {...props}
 
-    const modalProps = {...this.props}
-    modalProps[PROP_ORDER_MAPPING] = this.customerTimeSlotMapping
-    modalProps[PROP_ON_CLOSE] = this.closeModal.bind(this)
-    modalProps[PROP_TIME_SLOT_ID] = this.state[PROP_TIME_SLOT_ID]
-    modalProps[PROP_TIME_SLOT_MAPPING] = TimeSlotMapping
+    productionProps[PROP_OVERHEAD_MAP] = overheadMap;
+    productionProps[PROP_ASSOCIATED_ORDERS] = todays_orders;
+    productionProps[PROP_ASSOCIATED_TIME_SLOTS] = contributingTimeSlots;
+    productionProps[PROP_ACTIVE_PRODUCTION] = productionID;
 
-    return (<div>
+
+    return (<ProductionRow {...productionProps}/>)
+  })
+
+  const modalProps = {...props}
+  modalProps[PROP_ORDER_MAPPING] = timeSlotMapping
+  modalProps[PROP_ON_CLOSE] = () => {
+    setModalIdentifier(null)
+    setTimeSlotID(null)
+  }
+  modalProps[PROP_TIME_SLOT_ID] = timeSlotID
+  modalProps[PROP_TIME_SLOT_MAPPING] = timeSlotMapping;
+  modalProps[PROP_ORDER_MAPPING] = OrderMapping
+
+  let Modal = null
+  if(Modals[modalIdentifier]){
+    const ModalType = Modals[modalIdentifier]
+    Modal = <ModalType {...modalProps} />
+  }
+
+  return (
+    <div>
       <Container>
         <Row>
           <Col sm={10}>
-            <Row>Produktioner - {this.props[PROP_ACTIVE_DATE].getDate()}/{this.props[PROP_ACTIVE_DATE].getMonth() + 1}/{this.props[PROP_ACTIVE_DATE].getFullYear()}:</Row>
+            <Row>Produktioner - {danishDateString}:</Row>
             {RenderedRuns}
           </Col>
           <Col sm={2}>
-            <Button name="createOrder" onClick={this.activateCreateModal.bind(this)}>Opret ny ordre</Button>
+            <Button name="createOrder" onClick={() => {setModalIdentifier("createModal")}}>Opret ny ordre</Button>
           </Col>
         </Row>
       </Container>
       <Container>
         {renderedTimeSlots}
       </Container>
-
-    { this.state.showModal ?
-      <this.state.Modal
-        {...modalProps}
-      />
-    : null }
+      { modalIdentifier != null ? Modal : null }
     </div>
-    );
-  }
+  );
 }

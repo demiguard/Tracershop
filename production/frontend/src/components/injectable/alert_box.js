@@ -47,7 +47,7 @@ const ERROR_LEVELS = {
 class AlertBox extends Component {
   static propTypes = {
     level : propTypes.oneOf(warning_levels),
-    message    : propTypes.oneOfType([propTypes.string, propTypes.element])
+    message : propTypes.oneOfType([propTypes.string, propTypes.element])
   }
 
   static defaultProps = {
@@ -57,9 +57,13 @@ class AlertBox extends Component {
 
   render(){
     return (
-      <Row className={stylings[this.props.level] + " justify-content-start"}>
+      <Row
+        style={{
+          padding : '0px'
+        }}
+        className={stylings[this.props.level] + " justify-content-start"}>
         <Col md={{span : 2}} className={"justify-content-start text-center " + headerStylings[this.props.level]}>{Warning_names[this.props.level]}</Col>
-        <Col md={{span : 9, offset: 1}} className="p-2 justify-content-start">{this.props.message}</Col>
+        <Col md={{span : 10}} className="p-2 justify-content-start">{this.props.message}</Col>
       </Row>
     );
   }

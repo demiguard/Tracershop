@@ -6,7 +6,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALE
 import PropTypes from 'prop-types'
 import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "../../dataclasses/keywords";
 import { Deadline } from "../../dataclasses/dataclasses";
-import { calculateDeadline } from "../../lib/chronomancy";
+import { _calculateDeadline } from "../../lib/chronomancy";
 
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 
@@ -242,13 +242,13 @@ export function getColorProduction(
 
     const today = new Date()
     if(activity_deadline){
-      const deadline_date = calculateDeadline(activity_deadline, date);
+      const deadline_date = _calculateDeadline(activity_deadline, date);
       if (deadline_date < today) {
         activity_color_id = 5;
       }
     }
     if(injection_deadline){
-      const deadline_date = calculateDeadline(injection_deadline, date);
+      const deadline_date = _calculateDeadline(injection_deadline, date);
       if (deadline_date < today) {
         injection_color_id = 5;
       }

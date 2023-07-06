@@ -5,7 +5,7 @@
 
 import { Deadline } from "../dataclasses/dataclasses";
 import { DEADLINE_TYPES } from "./constants";
-import { FormatDateStr, FormatTime } from "./formatting";
+import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
 
 
 
@@ -18,7 +18,7 @@ export function getToday(){
 }
 
 export function getTimeStamp(timeStamp){
-  if(timeStamp instanceof String){
+  if(typeof timeStamp == "string"){
     timeStamp = FormatTime(timeStamp)
     return {
       hour   : Number(timeStamp.substring(0, 2)),
@@ -33,13 +33,34 @@ export function getTimeStamp(timeStamp){
       second : timeStamp.getSeconds(),
     }
   }
+
+  if (timeStamp.hasOwnProperty('hour')
+   && timeStamp.hasOwnProperty('minute')
+   && timeStamp.hasOwnProperty('second')){
+    return timeStamp
+  }
+
+  console.log(timeStamp)
   throw "Unknown timestamp format"
 }
+
+export function compareTimeStamp(timeStamp_1, timeStamp_2){
+  timeStamp_1 = getTimeStamp(timeStamp_1);
+  timeStamp_2 = getTimeStamp(timeStamp_2);
+
+  return {
+    hour : timeStamp_1.hour - timeStamp_2.hour,
+    minute : timeStamp_1.minute - timeStamp_2.minute,
+    second : timeStamp_1.second - timeStamp_2.second,
+  }
+}
+
+
 
 /**
  * So javascript has the american interpretation of days, something to be fixed
  * Post haste
- * @param {Date} date - 
+ * @param {Date} date -
  * @returns {Number} 0 - Monday, 1 - Tuesday, ...
  */
 export function getDay(date){
@@ -70,7 +91,7 @@ function calculateDailyDeadline(deadline, date){
  * @param {Date} date 
  * @returns {Date}
  */
-function calculateWeeklyDeadline(deadline, date){
+function _calculateWeeklyDeadline(deadline, date){
   const deadline_hour = Number(deadline.deadline_time.substring(0,2))
   const deadline_min = Number(deadline.deadline_time.substring(3,5))
 
@@ -92,7 +113,7 @@ function calculateWeeklyDeadline(deadline, date){
  * @param {undefined | Date} date - reference date for the deadline, defaults to today
  * @returns {Date}
  */
-export function calculateDeadline(deadline, date){
+export function _calculateDeadline(deadline, date){
   if(date === undefined){
     date = getToday();
   }
@@ -100,10 +121,16 @@ export function calculateDeadline(deadline, date){
   if (DEADLINE_TYPES.DAILY === deadline.deadline_type)
     return calculateDailyDeadline(deadline, date)
   if (DEADLINE_TYPES.WEEKLY === deadline.deadline_type)
-    return calculateWeeklyDeadline(deadline, date)
+    return _calculateWeeklyDeadline(deadline, date)
 }
 
 export function getTimeString(date){
   const timeStamp = getTimeStamp(new Date(date));
   return `${FormatDateStr(timeStamp.hour)}:${FormatDateStr(timeStamp.minute)}:${FormatDateStr(timeStamp.second)}`
+}
+
+export function combineDateAndTimeStamp(date, timeStamp){
+  const dateString = dateToDateString(date);
+
+  return new Date(`${dateString}T${timeStamp}`)
 }

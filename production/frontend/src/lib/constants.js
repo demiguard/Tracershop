@@ -252,6 +252,7 @@ export const WEBSOCKET_MESSAGE_MODEL_EDIT   = "editModel";
 export const WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER = "createActivityOrder";
 export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createActivityOrder";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS  = "moveOrder";
+export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
 export const WEBSOCKET_MESSAGE_SUCCESS      = "success";
 export const WEBSOCKET_MESSAGE_TYPE         = "messageType";
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
@@ -306,17 +307,20 @@ export const PROP_TRACERSHOP_SITE = "tracershop_site";
 export const PROP_ACTIVE_CUSTOMER = "active_customer";
 export const PROP_ACTIVE_DATE = "active_date";
 export const PROP_ACTIVE_ENDPOINT = "active_endpoint";
-export const PROP_ACTIVE_TRACER = "active_tracer"
+export const PROP_ACTIVE_PRODUCTION = "active_production";
+export const PROP_ACTIVE_TRACER = "active_tracer";
 export const PROP_ACTIVE_TIME_SLOTS = "active_timeSlots";
 export const PROP_MODAL_ORDER = "modal_order"
-export const PROP_ON_CLICK = 'on_click'
-export const PROP_TIME_SLOT_ID = 'timeSlotID'
-export const PROP_ORDER_MAPPING = 'order_mapping'
-export const PROP_ON_CLOSE = 'on_close'
-export const PROP_TIME_SLOT_MAPPING = 'timeSlotMapping'
-export const PROP_EXPIRED_ACTIVITY_DEADLINE = 'activityDeadlineExpired'
-export const PROP_EXPIRED_INJECTION_DEADLINE = 'injectionDeadlineExpired'
-
+export const PROP_ON_CLICK = 'on_click';
+export const PROP_TIME_SLOT_ID = 'timeSlotID';
+export const PROP_ORDER_MAPPING = 'order_mapping';
+export const PROP_ON_CLOSE = 'on_close';
+export const PROP_TIME_SLOT_MAPPING = 'timeSlotMapping';
+export const PROP_EXPIRED_ACTIVITY_DEADLINE = 'activityDeadlineExpired';
+export const PROP_EXPIRED_INJECTION_DEADLINE = 'injectionDeadlineExpired';
+export const PROP_ASSOCIATED_TIME_SLOTS = "associated_time_slots";
+export const PROP_ASSOCIATED_ORDERS = "associated_orders";
+export const PROP_OVERHEAD_MAP = "overhead_map";
 
 export const KEYWORD_ID = 'id'
 
