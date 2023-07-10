@@ -514,16 +514,25 @@ class Consumer(AsyncJsonWebsocketConsumer):
           JSON_ACTIVITY_ORDER
           JSON_DELIVERTIME
     """
-    order: ActivityOrder = await  self.db.getModel(JSON_ACTIVITY_ORDER, message[WEBSOCKET_DATA][JSON_ACTIVITY_ORDER])
-    delivertime: ActivityDeliveryTimeSlot = await self.db.getModel(JSON_DELIVER_TIME, message[WEBSOCKET_DATA][JSON_DELIVER_TIME])
-
-    if order.ordered_time_slot == delivertime:
-      order.moved_to_time_slot = None
-    else:
-      order.moved_to_time_slot = delivertime
-
+    orders = await self.db.moveOrders(message[JSON_ACTIVITY_ORDER], message[JSON_DELIVER_TIME])
     data = await self.db.serialize_dict({
-      JSON_ACTIVITY_ORDER : [order]
+      JSON_ACTIVITY_ORDER : orders,
+    })
+
+    await self.__broadcastState(message, data)
+
+  async def HandleRestoreOrders(self, message : Dict):
+    """Restore an order to it's original time slot
+
+    Args:
+      message (Dict[str, Any]): message send by the user with extra fields:
+        WEBSOCKET_DATA
+          JSON_ACTIVITY_ORDER
+          JSON_DELIVERTIME
+    """
+    orders = await self.db.restoreDestinations(message[JSON_ACTIVITY_ORDER])
+    data = await self.db.serialize_dict({
+      JSON_ACTIVITY_ORDER : orders,
     })
 
     await self.__broadcastState(message, data)
@@ -623,6 +632,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_GET_STATE : HandleGetState,
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetTimeSensitiveData,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
+    WEBSOCKET_MESSAGE_RESTORE_ORDERS : HandleRestoreOrders,
     WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER : HandleCreateActivityOrder,
     WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER : HandleCreateInjectionOrder,
     WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrderTimeSlot,

@@ -3,8 +3,9 @@
 
 from django.db import models
 from database.TracerShopModels.baseModels import TracershopModel, Days
-from database.TracerShopModels.networkModels import Database
+from database.TracerShopModels.networkModels import Database, DicomEndpoint
 
+from django.db.models import IntegerChoices, BigAutoField, SmallIntegerField, TimeField, AutoField, ForeignKey, GenericIPAddressField, PositiveIntegerField, CharField, EmailField, SET_NULL
 
 
 class DeadlineTypes(models.IntegerChoices):
@@ -48,6 +49,9 @@ class ServerConfiguration(TracershopModel):
                                                 default=None,
                                                 null=True,
                                                 related_name="global_injection_deadline")
+  ping_service_ae_tile = models.CharField(max_length=16, default="RHKFATBUK561")
+  ris_dicom_endpoint = models.ForeignKey(DicomEndpoint, on_delete=SET_NULL, default=None, null=True)
+
 
   @classmethod
   def get(cls):

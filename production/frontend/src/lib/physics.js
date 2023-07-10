@@ -22,3 +22,11 @@ function CalculateProduction(halflife, minutes, MBQ) {
 
   return MBQ / Math.pow(1/2,  minutes / hf_in_min)
 }
+
+function deliveredActivity(
+  orders,
+  timeSlots,
+  overhead,
+){
+  
+}

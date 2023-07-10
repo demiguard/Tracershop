@@ -23,3 +23,7 @@ export function toggleState(stateKeyWord, This){
   }
   return returnFunction.bind(This);
 }
+
+export function setEvent(stateFunction){
+  return (event) => {stateFunction(event.target.value)}
+}

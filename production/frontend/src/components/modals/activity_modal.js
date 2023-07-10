@@ -1,10 +1,10 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import propTypes from 'prop-types'
 import { Button, ButtonGroup, Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
-import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction } from "../../dataclasses/dataclasses.js";
+import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction, Tracer, Isotope } from "../../dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 import styles from '../../css/Site.module.css'
-import { renderTableRow } from "../../lib/rendering.js";
+import { renderComment, renderTableRow } from "../../lib/rendering.js";
 import { changeState, toggleState } from "../../lib/state_management.js";
 import { Calculator } from "../injectable/calculator.js";
 import Authenticate from "../injectable/authenticate.js";
@@ -12,11 +12,15 @@ import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { compareDates as compareDates } from "../../lib/utils.js";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_DATA,
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, ERROR_BACKGROUND_COLOR, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_MODEL_CREATE,  WEBSOCKET_MESSAGE_MODEL_EDIT} from "../../lib/constants.js";
-import { batchNumberValidator, dateToDateString, FormatTime, ParseDanishNumber } from "../../lib/formatting.js";
+import { batchNumberValidator, dateToDateString, FormatTime, ParseDanishNumber, parseDateToDanishDate } from "../../lib/formatting.js";
 import { KEYWORD_ActivityDeliveryTimeSlot_DESTINATION, KEYWORD_ActivityOrder_STATUS, KEYWORD_DeliveryEndpoint_OWNER, KEYWORD_Vial_ACTIVITY, KEYWORD_Vial_FILL_TIME, KEYWORD_Vial_LOT_NUMBER, KEYWORD_Vial_VOLUME } from "../../dataclasses/keywords.js";
+import { compareTimeStamp } from "../../lib/chronomancy.js";
+import { CalculateProduction } from "../../lib/physics.js";
+import { TracerWebSocket } from "../../lib/tracer_websocket.js";
+import { Hover } from "react-hover";
 
 export { ActivityModal }
 
@@ -40,6 +44,69 @@ const initial_state = {
   }
 }
 
+/**
+ * 
+ * @param {{
+ *  order : ActivityOrder,
+ *  websocket : TracerWebSocket,
+ *  timeSlots : Map<Number, ActivityDeliveryTimeSlot>
+ *  timeSlotId : Number
+ * }} props
+ * @retuns {Element}
+ */
+function OrderRow({order, websocket, timeSlots, timeSlotId}){
+  const timeSlot = timeSlots.get(timeSlotId);
+  const [activity, setActivity] = useState(order.ordered_activity);
+  const [editing, setEditing] = useState(false);
+  const [error, setError] = useState(false);
+  const canEdit = order.status == 1 || order.status == 2;
+  const displayStyle = error ? {backgroundColor : ERROR_BACKGROUND_COLOR} : {}
+
+  function acceptEdit (){
+    const activityNumber = Number(activity)
+    if(isNaN(activity) || activity <= 0){
+      setError(true);
+      return;
+    }
+    order.ordered_activity = activityNumber;
+
+    websocket.sendEditModel(JSON_ACTIVITY_ORDER, [order]);
+    setEditing(false);
+    setError(false);
+  }
+
+  let activityDisplay = canEdit ?  <HoverBox
+    Base={<p>{`${activity} MBq`}</p>}
+    Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
+    /> : `${activity} MBq`;
+
+    if(editing){
+      activityDisplay = <FormControl style={displayStyle} value={activity} onChange={(event) => {
+        setActivity(event.target.value)
+    }}/>
+  }
+
+
+  let iconFunction= canEdit ? () => {setEditing(true)} : () => {}
+  let icon = <StatusIcon status={order.status}  onClick={iconFunction}/>
+  if (order.moved_to_time_slot){
+    icon = <ClickableIcon src="/static/images/move_top.svg" onClick={iconFunction}/>
+  }
+  if(editing){
+    icon = <ClickableIcon src="static/images/accept.svg" onClick={acceptEdit}/>
+  }
+
+  return (
+    <Row>
+      <Col>Order ID:{order.id}</Col>
+      <Col>{activityDisplay}</Col>
+      <Col xs={2}>{renderComment(order.comment)}</Col>
+      <Col xs={2} style={{
+        justifyContent : "right", display : "flex"
+      }}>{icon}</Col>
+    </Row>
+  )
+}
 
 
 class ActivityModal extends Component {
@@ -529,7 +596,7 @@ class ActivityModal extends Component {
       return;
     }
 
-    this.props[PROP_WEBSOCKET].sendEditState(JSON_ACTIVITY_ORDER, modified_orders)
+    this.props[PROP_WEBSOCKET].sendEditModel(JSON_ACTIVITY_ORDER, modified_orders)
   }
 
 
@@ -594,27 +661,47 @@ class ActivityModal extends Component {
     const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(this.props[PROP_TIME_SLOT_ID]);
     const /**@type {DeliveryEndpoint } */ endpoint = this.props[JSON_ENDPOINT].get(timeSlot.destination)
     const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER])
-
+    const /**@type {Number} */ overhead = this.props[PROP_OVERHEAD_MAP].get(customer.id);
+    const /**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER])
+    const /**@type {Isotope} */ isotope = this.props[JSON_ISOTOPE].get(tracer.isotope)
 
     let minimum_status = 5;
-    let ordered_activity = 0;
+    let activity = 0;
     let freed_time = null
     let commentString = "";
     let orderIDs = []
 
     for(const order of orders) {
-      ordered_activity += order.ordered_activity
+      if(order.moved_to_time_slot === null){
+        activity += order.ordered_activity * overhead;
+      } else {
+        const /**@type {ActivityDeliveryTimeSlot} */ originalTimeSlot = this.props[JSON_DELIVER_TIME].get(order.ordered_time_slot);
+        const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, timeSlot.delivery_time);
+        activity += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity) * overhead;
+      }
+
       minimum_status = Math.min(minimum_status, order.status)
+
       if (order.comment){
         commentString += `Orderer ${order.id} - ${order.comment}\n`;
       }
-      if (freed_time == null && order.freed_datetime){
+      if (freed_time === null && order.freed_datetime){
         freed_time = order.freed_datetime;
       }
-      orderIDs.push(<Row key={order.id}>
-        <Col>{order.id}: { order.ordered_activity } MBq</Col>
-        <Col><StatusIcon status={order.status}/></Col>
-      </Row>)
+
+      let rowIcon = <StatusIcon status={order.status}/>
+      if (order.moved_to_time_slot){
+        rowIcon = <ClickableIcon src="/static/images/move_top.svg"/>
+      }
+
+      orderIDs.push(
+        <OrderRow
+          key={order.id}
+          order={order}
+          timeSlotId={this.props[PROP_TIME_SLOT_ID]}
+          timeSlots={this.props[JSON_DELIVER_TIME]}
+          websocket={this.props[PROP_WEBSOCKET]}
+        />)
     }
 
     const destinationHover = <HoverBox
@@ -623,16 +710,10 @@ class ActivityModal extends Component {
         bestillerens profil, hvis tilgændelig.</div>}
     />;
     const destinationMessage = `${customer.long_name} - ${endpoint.name}`
-    const formattetOrderTime = `${timeSlot.delivery_time}`
+    const formattedOrderTime = `${timeSlot.delivery_time}`
 
     const activityTableCellEditable = <Row>
-      <Col md={10} className="p-2">{Math.floor(ordered_activity)}</Col>
-      {this.state.usingCalculator ? "" :
-        <Col md={2} className="p-2">{<ClickableIcon
-                                      altText={"edit-order"}
-                                      src={"/static/images/calculator.svg"}
-                                      onClick={this.startCalculator.bind(this)}/>}
-        </Col>}
+      <Col md={10} className="p-2">{Math.floor(activity)}</Col>
     </Row>
 
     const activityHover = <HoverBox
@@ -645,7 +726,7 @@ class ActivityModal extends Component {
         <ClickableIcon src={"/static/images/accept.svg"} onClick={this.acceptNewActivity}/>
       </Col>
 
-    const activityTableCellFixed = <div>{Math.floor(ordered_activity)}</div>
+    const activityTableCellFixed = <div>{Math.floor(activity)}</div>
 
     const canEdit = (minimum_status == 1 || minimum_status == 2) && !this.state.isFreeing;
     let activityTableCell;
@@ -662,7 +743,6 @@ class ActivityModal extends Component {
       Hover={<div>Mængde af aktivitet der skal produceres til ordren.</div>}
     />;
 
-    const totalActivity = ordered_activity;
 
     const hasAllocation = minimum_status == 2 || minimum_status == 3;
     const allocationMessage = minimum_status == 2 ?
@@ -670,35 +750,39 @@ class ActivityModal extends Component {
                     : "Frigivet aktivitet:";
     var allocationTotal = 0;
     for(const vid of this.state.selectedVials.values()){
-      const vial = this.props[JSON_VIAL].get(vid);
+      const /**@type {Vial} */ vial = this.props[JSON_VIAL].get(vid);
       allocationTotal += vial.activity;
     }
 
-    const AllocationRow = renderTableRow(
-      "5",
-      [allocationMessage, Math.floor(allocationTotal)]
-    )
 
-    const TableRows = [
-      renderTableRow("1", [destinationHover, destinationMessage]),
-      renderTableRow("2", ["Levering tidspunkt:", formattetOrderTime]),
-      renderTableRow("3", ["Ordre: ", <div>{orderIDs}</div>]),
-      renderTableRow("4", [activityHover, activityTableCell]),
-    ]
-
-    if (hasAllocation) TableRows.push(AllocationRow);
-    if (freed_time != null) TableRows.push(
-      renderTableRow("6", ["Frigivet tidspunkt:", freed_time])
-    );
-    if (commentString != "") TableRows.push(
-      renderTableRow("99", ["Kommentar:", commentString])
-    )
-
-    return (<Table>
-              <tbody>
-                {TableRows}
-              </tbody>
-            </Table>);
+    return (
+    <Row>
+      <Row>
+        <Col xs={2}>{destinationHover}</Col>
+        <Col>{destinationMessage}</Col>
+      </Row>
+      <hr/>
+      <Row>
+        <Col xs={2}>Levering tidspunkt:</Col>
+        <Col>{timeSlot.delivery_time}</Col>
+      </Row>
+      <hr/>
+      <Row>
+        <Col xs={2}>{orderIDs.length == 1 ? "Order" : "Ordre" }</Col>
+        <Col>{orderIDs}</Col>
+      </Row>
+      <hr/>
+      <Row>
+        <Col xs={2}>{totalActivityHover}</Col>
+        <Col>{Math.floor(activity)} MBq</Col>
+      </Row>
+      <hr/>
+      <Row>
+        <Col xs={2}>{allocationMessage}</Col>
+        <Col>{allocationTotal} MBq</Col>
+      </Row>
+      <hr/>
+    </Row>)
   }
 
 
@@ -707,8 +791,10 @@ class ActivityModal extends Component {
     const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run)
     const /**@type {Array<ActivityOrder>} */ orders = this.props[PROP_ORDER_MAPPING].get(timeSlot.id);
     const orderIDs = []
+    let minimum_status = 5
     for (const order of orders){
       orderIDs.push(order.id)
+      minimum_status = Math.min(minimum_status, order.status)
     }
     const today = new Date(this.props[PROP_ACTIVE_DATE]);
     const tableVials = [];
@@ -717,9 +803,6 @@ class ActivityModal extends Component {
       const /**@type {Number} */ vialID = _vialID
       const /**@type {Vial}*/ vial = _vial
       const vial_date = new Date(vial.fill_date)
-      if (vial.tracer != null && vial.tracer != production.tracer){
-        continue;
-      }
       if (!compareDates(today, vial_date)){
         continue;
       }
@@ -732,15 +815,15 @@ class ActivityModal extends Component {
       const editing = this.state.editingVials.has(vialID);
       const freeing = this.state.isFreeing;
 
-
       let editButton;
       let useButton;
 
-      if (freeing){
+      if (freeing || minimum_status === 3){
         editButton = <div/>
         useButton = <Form.Check // If select you can unselect it
           id={`vial-usage-${vial.id}`}
           disabled
+          checked={selected}
         />
       }
       else if(editing){
@@ -767,7 +850,7 @@ class ActivityModal extends Component {
         useButton = <Form.Check  // Select TVeVial(VialID)).bind(this)}
           aria-label={`vial-usage-${vial.ID}`}
           onChange={this.toggleVial(vialID).bind(this)}
-          checked
+          checked={selected}
         />
       }
 
@@ -909,7 +992,7 @@ class ActivityModal extends Component {
       size="lg"
       onHide={this.props[PROP_ON_CLOSE]}
       className={styles.mariLight}>
-      <Modal.Header>HEADER</Modal.Header>
+      <Modal.Header>Ordre - {parseDateToDanishDate(dateToDateString(this.props[PROP_ACTIVE_DATE]))} - {timeSlot.delivery_time} </Modal.Header>
       <Modal.Body>
         <Row>
           <Col md={colWidth}>

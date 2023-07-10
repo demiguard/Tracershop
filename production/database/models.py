@@ -1,5 +1,8 @@
 # Python Standard Library
-from typing import Dict, Tuple, Type
+from typing import Dict, Tuple, Type, TypeVar
+
+# Third Party Packages
+from django.core.exceptions import ObjectDoesNotExist
 
 # Packages Tracershop
 from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
@@ -42,17 +45,43 @@ MODELS: Dict[str, Type[TracershopModel]] = {
 }
 
 INVERTED_MODELS = {
-    model : key for key, model in MODELS.items()
+  model : key for key, model in MODELS.items()
 }
 
 TIME_SENSITIVE_FIELDS : Dict[str, str] = {
-    JSON_ACTIVITY_ORDER :  'delivery_date',
-    JSON_CLOSED_DATE : 'close_date',
-    JSON_INJECTION_ORDER : 'delivery_date',
-    JSON_VIAL : 'fill_date',
+  JSON_ACTIVITY_ORDER :  'delivery_date',
+  JSON_CLOSED_DATE : 'close_date',
+  JSON_INJECTION_ORDER : 'delivery_date',
+  JSON_VIAL : 'fill_date',
 }
 
 
-def getModel(identifier: str) -> Type[TracershopModel]:
-    return MODELS[identifier] # type ignore
+T = TypeVar('T', bound=TracershopModel)
+
+def getOrCreateModel(key, Model: Type[T], keyWord: str) -> T:
+  """Gets a model with a field, if it doesn't exists, creates a new instance.
+
+  Caller is responsible for saving, and filling fields, that may be required.
+
+  Args:
+    key (_type_): value of keyword of model, must be of type the field referenced by keyword
+    Model (Type[T]): The Type of the model to be created
+    keyWord (str): The filtering keyword, must be field in Model
+
+  Returns:
+    T: a Model instance,
+
+  Throws:
+    django.core.exceptions.MultipleInstances: - if multiple objects exists
+  """
+  keyDict = {keyWord : key}
+  try:
+    model = Model.objects.get(**keyDict)
+  except ObjectDoesNotExist:
+    model = Model(**keyDict)
+  return model
+
+
+def getModelType(identifier: str) -> Type[TracershopModel]:
+  return MODELS[identifier] # type ignore
 

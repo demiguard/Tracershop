@@ -101,9 +101,9 @@ export class OrderPage extends Component {
     calenderProps[CALENDER_PROP_DATE] = this.state.date;
     calenderProps[CALENDER_PROP_GET_COLOR] = getColorProduction(activity_deadline,
                                                                 injection_deadline,
-                                                                this.props[JSON_ACTIVITY_ORDER],
+                                                                [...this.props[JSON_ACTIVITY_ORDER].values()],
                                                                 this.props[JSON_CLOSED_DATE],
-                                                                this.props[JSON_INJECTION_ORDER],
+                                                                [...this.props[JSON_INJECTION_ORDER].values()],
                                                                 this.props[JSON_PRODUCTION])
     calenderProps[CALENDER_PROP_ON_DAY_CLICK] = this.setActiveDate.bind(this);
     calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = productionGetMonthlyOrders(this.props[PROP_WEBSOCKET]);

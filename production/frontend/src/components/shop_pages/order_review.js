@@ -136,21 +136,22 @@ export function OrderReview(props){
 
   
 
-  if(!props.injectionDeadlineExpired) {InjectionOrderCards.push(<InjectionOrderCard
-    key={-1}
-    injectionOrder={{
-      delivery_time : "",
-      delivery_date : dateString,
-      injections : "",
-      status : 0,
-      tracer_usage : 1,
-      comment : "",
-      ordered_by : null,
-      endpoint : props[PROP_ACTIVE_ENDPOINT],
-      tracer : availableInjectionTracers[0].id,
-    }}
-    injectionTracers = {availableInjectionTracers}
-    websocket={props[PROP_WEBSOCKET]}
+  if((!props.injectionDeadlineExpired) && (availableInjectionTracers.length)) {
+    InjectionOrderCards.push(<InjectionOrderCard
+                                key={-1}
+                                injectionOrder={{
+                                  delivery_time : "",
+                                  delivery_date : dateString,
+                                  injections : "",
+                                  status : 0,
+                                  tracer_usage : 1,
+                                  comment : "",
+                                  ordered_by : null,
+                                  endpoint : props[PROP_ACTIVE_ENDPOINT],
+                                  tracer : availableInjectionTracers[0].id,
+                                }}
+                                injectionTracers = {availableInjectionTracers}
+                                websocket={props[PROP_WEBSOCKET]}
   />)
   }
 

@@ -134,3 +134,13 @@ export function combineDateAndTimeStamp(date, timeStamp){
 
   return new Date(`${dateString}T${timeStamp}`)
 }
+
+export function getWeekNumber(date){
+  if(!(date instanceof Date)){
+    date = new Date(date);
+  }
+  const day = getDay(date)
+  const oneJan = new Date(date.getFullYear(),0,1);
+  const numberOfDays = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000));
+  return Math.ceil(( date.getDay() + 1 + numberOfDays) / 7);
+}

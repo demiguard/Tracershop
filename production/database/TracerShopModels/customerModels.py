@@ -80,9 +80,12 @@ class DeliveryEndpoint(TracershopModel):
 
 
 class Location(TracershopModel):
+  """This is a room, that can be booked too. A room can be owned by an endpoint
+  """
+  #Note A Location should be able to be created from location_code alone
   location_id = BigAutoField(primary_key=True)
   location_code = CharField(max_length=120)
-  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
   common_name = CharField(max_length=120, null=True, default=None)
 
 
@@ -94,7 +97,7 @@ class BookingStatus(IntegerChoices):
 
 class Booking(TracershopModel):
   booking_id = BigAutoField(primary_key=True)
-  status = SmallIntegerField(choices=BookingStatus.choices)
+  status = SmallIntegerField(choices=BookingStatus.choices, default=BookingStatus.Initial)
   location = ForeignKey(Location, on_delete=RESTRICT)
   procedure = ForeignKey(Procedure, on_delete=RESTRICT)
   accession_number = CharField(max_length=32)

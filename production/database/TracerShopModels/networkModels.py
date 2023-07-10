@@ -6,7 +6,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Standard Python Packages
 
 # Third Party Packages
-from django.db.models import BigAutoField, BooleanField, CharField, ForeignKey, SET_NULL, IntegerField, IntegerChoices, SmallIntegerField
+from django.db.models import BigAutoField, BooleanField, CharField, ForeignKey, SET_NULL, RESTRICT, IntegerField, IntegerChoices, SmallIntegerField
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
@@ -45,3 +45,11 @@ class Database(TracershopModel):
 
   def __str__(self):
     return self.databaseName
+
+class DicomEndpoint(TracershopModel):
+  dicom_endpoint_id = BigAutoField(primary_key=True)
+  address = ForeignKey(Address, on_delete=RESTRICT)
+  ae_title = CharField(max_length=16)
+
+  def __str__(self):
+    return f"{self.ae_title} - {self.address.ip}:{self.address.port}"

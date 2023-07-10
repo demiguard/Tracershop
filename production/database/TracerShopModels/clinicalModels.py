@@ -37,10 +37,10 @@ class Tracer(TracershopModel):
 class Procedure(TracershopModel):
   procedure_id = BigAutoField(primary_key=True)
   series_description = CharField(max_length=128)
-  tracer_units = FloatField()
+  tracer_units = FloatField(default=0.0)
   in_use = BooleanField(default=False)
-  delay_minutes = FloatField()
-  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+  delay_minutes = FloatField(default=0.0)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT, default=None, null=True)
 
 class ActivityProduction(TracershopModel):
   activity_production_id = BigAutoField(primary_key=True)

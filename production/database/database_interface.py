@@ -28,9 +28,9 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT
 from database.models import ServerConfiguration, Database, Address, User,\
-    UserGroups, getModel, TracershopModel, ActivityOrder, OrderStatus,\
+    UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
-    TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot
+    TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T
 from lib.ProductionJSON import ProductionJSONEncoder
 
 
@@ -170,7 +170,7 @@ class DatabaseInterface():
 
 
   @database_sync_to_async
-  def getModel(self, model: Type[TracershopModel], identifier: Any, key = None) -> TracershopModel:
+  def getModel(self, model: Type[T], identifier: Any, key: Optional[str]=None) -> T:
     if key is None:
       return model.objects.get(pk=identifier)
     else:
@@ -179,7 +179,7 @@ class DatabaseInterface():
   @database_sync_to_async
   def deleteModels(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
     """Deletes one or more model instance """
-    modelType = getModel(modelIdentifier)
+    modelType = getModelType(modelIdentifier)
     if isinstance(modelID, Iterable):
       models = modelType.objects.filter(pk__in = [id_ for id_ in modelID])
       canDelete = reduce(lambda x, y : x and y, [model._canEdit(user) for model in models], True)
@@ -194,7 +194,7 @@ class DatabaseInterface():
 
 
   def __createModel(self, modelIdentifier: str, modelDict: Dict) -> TracershopModel:
-    instance = getModel(modelIdentifier)()
+    instance = getModelType(modelIdentifier)()
     instance.assignDict(modelDict)
     instance.save() # Sets primary key as side effect
 

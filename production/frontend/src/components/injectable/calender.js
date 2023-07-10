@@ -1,12 +1,12 @@
 import React, { Component } from "react";
 import { compareDates } from "../../lib/utils";
 import { FormatDateStr } from '../../lib/formatting';
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, DEADLINE_TYPES } from "../../lib/constants";
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants";
 
 import PropTypes from 'prop-types'
 import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "../../dataclasses/keywords";
-import { Deadline } from "../../dataclasses/dataclasses";
-import { _calculateDeadline } from "../../lib/chronomancy";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Deadline, InjectionOrder } from "../../dataclasses/dataclasses";
+import { _calculateDeadline, getDay, getWeekNumber } from "../../lib/chronomancy";
 
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 
@@ -210,6 +210,23 @@ function standardOrderMapping(orders, tOrders, runs, closedDate) {
   return retFunc;
 }
 
+/**
+ * 
+ * @param {Array<ActivityOrder | InjectionOrder>} orders
+ */
+function createDateMap(orders){
+  const orderMap = new Map()
+
+  for(const order of orders){
+    if (orderMap.has(order.delivery_date)){
+      orderMap.set(order.delivery_date, Math.min(order.status, orderMap.get(order.delivery_date)))
+    } else {
+      orderMap.set(order.delivery_date, order.status)
+    }
+  }
+  return orderMap
+}
+
 export function getColorProduction(
   activity_deadline,
   injection_deadline,
@@ -223,9 +240,12 @@ export function getColorProduction(
   for(const [BDID, closed_date] of closed_dates){
     closedDateSet.add(closed_date[KEYWORD_ClosedDate_CLOSE_DATE]) // Change this to a keyword
   }
+  const dateActivityMapping = createDateMap(activity_orders)
+  const dateInjectionMapping = createDateMap(injection_orders)
 
-  const retFunc = (date_string) => {
-    const date = new Date(date_string);
+  const retFunc = (dateString) => {
+
+    const date = new Date(dateString);
     // Javascript have 0 sunday, 1 monday, ...
     // Javascript ALSO HAVE -1 % 7 = -1 instead of 6
     const day = (date.getDay() + 6) % 7;
@@ -253,11 +273,105 @@ export function getColorProduction(
         injection_color_id = 5;
       }
     }
+    if(dateActivityMapping.has(dateString)){
+      activity_color_id = dateActivityMapping.get(dateString);
+    }
+
+    if(dateInjectionMapping.has(dateString)){
+      injection_color_id = dateInjectionMapping.get(dateString);
+    }
 
     return "date-status" + injection_color_id + activity_color_id;
   }
   return retFunc
 }
+
+
+/**
+ * 
+ * @param {Deadline} activity_deadline 
+ * @param {Deadline} injection_deadline 
+ * @param {Array<ActivityOrder>} activity_orders 
+ * @param {*} closed_dates 
+ * @param {Array<InjectionOrder>} injection_orders 
+ * @param {Map<Number,ActivityProduction>} productions 
+ * @param {Array<ActivityDeliveryTimeSlot>} timeSlots 
+ * @returns 
+ */
+export function getColorShop(
+  activity_deadline,
+  injection_deadline,
+  // Maps
+  activity_orders,
+  closed_dates,
+  injection_orders,
+  productions,
+  timeSlots,
+) {
+  const closedDateSet = new Set();
+  for(const [BDID, closed_date] of closed_dates){
+    closedDateSet.add(closed_date[KEYWORD_ClosedDate_CLOSE_DATE]) // Change this to a keyword
+  }
+  const dateActivityMapping = createDateMap(activity_orders)
+  const dateInjectionMapping = createDateMap(injection_orders)
+
+  let /**@Number a 14 bit key, where a 1-bit indicate that they can order on this day. (even weekday / odd weekday) */ ordering_bitChain = 0
+  for(const timeSlot of timeSlots){
+    const production = productions.get(timeSlot.production_run);
+
+    if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
+      ordering_bitChain = ordering_bitChain | (1 << production.production_day);
+    }
+
+    if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
+      ordering_bitChain = ordering_bitChain | (1 << production.production_day + 7);
+    }
+  }
+  console.log(ordering_bitChain)
+
+  const retFunc = (dateString) => {
+    const date = new Date(dateString);
+    const oddWeekNumber = (getWeekNumber(date) % 2) == 1
+    const day = getDay(date);
+
+
+    let activity_color_id = 5;
+    let injection_color_id = 0;
+
+    if(ordering_bitChain & (1 << (day + Number(oddWeekNumber) * 7))){
+      activity_color_id = 0;
+    }
+
+    const today = new Date()
+    if(activity_deadline){
+      const deadline_date = _calculateDeadline(activity_deadline, date);
+      if (deadline_date < today) {
+        activity_color_id = 5;
+      }
+    }
+    if(injection_deadline){
+      const deadline_date = _calculateDeadline(injection_deadline, date);
+      if (deadline_date < today) {
+        injection_color_id = 5;
+      }
+    }
+    if(dateActivityMapping.has(dateString)){
+      activity_color_id = dateActivityMapping.get(dateString);
+    }
+
+    if(dateInjectionMapping.has(dateString)){
+      injection_color_id = dateInjectionMapping.get(dateString);
+    }
+
+    return "date-status" + injection_color_id + activity_color_id;
+  }
+  return retFunc
+}
+
+
+
+
+
 
 function productionGetMonthlyOrders(websocket){
   const retFunc = (NewMonth) => {

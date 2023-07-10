@@ -1,18 +1,17 @@
 import React, {Component } from "react";
 import { propsExtraction } from "../../lib/props_management";
 import Navbar from "../injectable/navbar";
-import { FutureBooking } from "../shop_pages/future_bookings.js";
-import { LocationSetup } from "../shop_pages/location_setup.js";
-import { ProcedureSetup } from "../shop_pages/procedure_setup.js";
+import { ShopSetup } from "../shop_pages/shop_setup.js";
 import { ShopOrderPage } from "../shop_pages/shop_order_page.js";
+import { UserSetup} from "../shop_pages/user_setup.js"
+
 
 export { ShopSite }
 
 const Pages = {
   Bestillinger : ShopOrderPage,
-  Bookinger : FutureBooking,
-  Location : LocationSetup,
-  Procedure : ProcedureSetup,
+  Opsætning : ShopSetup,
+  Bruger : UserSetup
 }
 
 

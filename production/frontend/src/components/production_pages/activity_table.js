@@ -32,12 +32,18 @@ const Modals = {
  * Row inside of a RenderedTimeSlot
  * @param {{
  * order : ActivityOrder
- * }} param0 
+ * }} param0
  * @returns {JSX }
  */
-function OrderRow({order}){
+function OrderRow({order, timeSlotID}){
+  let statusIcon = <StatusIcon status={order.status}/>
+
+  if (order.moved_to_time_slot != null){
+    statusIcon = <ClickableIcon src="/static/images/move_top.svg"/>
+  }
+
   return (<Row>
-    <Col><StatusIcon status={order.status}/></Col>
+    <Col>{statusIcon}</Col>
     <Col>Order ID: {order.id}</Col>
     <Col>{order.ordered_activity} MBq</Col>
     <Col>{order.comment ? renderComment(order.comment) : ""}</Col>
@@ -72,34 +78,54 @@ function RenderedTimeSlot(props){
 
   const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(props.timeSlotID);
   const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
-  const /**@type {Customer} */ owner    = props[JSON_CUSTOMER].get(endpoint[KEYWORD_DeliveryEndpoint_OWNER]);
+  const /**@type {Customer} */ owner = props[JSON_CUSTOMER].get(endpoint.owner);
+  const /**@type {Map<Number, Number>} */ overheadMap = props[PROP_OVERHEAD_MAP];
+  const /**@type {Tracer} */ tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
+  const /**@type {Isotope} */ isotope = props[JSON_ISOTOPE].get(tracer.isotope)
+  const overhead = overheadMap.get(owner.id)
 
-  const canMove = targetID !== props.timeSlotID;
-  let mbq = 0;
+
+  let orderedMBq = 0;
+  let deliveredMBq = 0
   let minimum_status = 3
   const OrderData = [];
-  let moved = false;
+  let moved = true;
 
-  for(const order of props[JSON_ACTIVITY_ORDER]){
-    if (order.moved_to_time_slot != null){
-      moved = true;
+  for(const _order of props[JSON_ACTIVITY_ORDER]){
+    const /**@type {ActivityOrder} */ order = _order
+    if (order.moved_to_time_slot == null){
+      moved = false;
     }
-    mbq += order[KEYWORD_ActivityOrder_ORDERED_ACTIVITY]
+    if(order.ordered_time_slot === props.timeSlotID){
+      orderedMBq += order.ordered_activity;
+      if (order.moved_to_time_slot === null) {
+        deliveredMBq += order.ordered_activity * overhead
+      }
+    }
+    if(order.moved_to_time_slot === props.timeSlotID){
+      const /**@type {ActivityDeliveryTimeSlot} */ originalTimeSlot =  props[JSON_DELIVER_TIME].get(order.ordered_time_slot);
+      const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, timeSlot.delivery_time);
+      deliveredMBq += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity)  * overhead
+    }
+
     minimum_status = Math.min(minimum_status, order.status);
     OrderData.push(<OrderRow
       key={order.id}
       order={order}
-    />);
-  }
+      timeSlotID={props.timeSlotID}
+      />);
+    }
+  const canMove = targetID !== props.timeSlotID && minimum_status < 3;
   const openClassName = open ? SiteStyles.rotated : "";
   let headerIcon = <StatusIcon
                       status={minimum_status}
                       onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
                     />
   if(moved){
+
     headerIcon = <ClickableIcon
                     src="/static/images/move_top.svg"
-                    onClick={restoreOrders}
+                    onClick={canMove ? restoreOrders : () => {}}
                   />;
   }
 
@@ -112,11 +138,12 @@ function RenderedTimeSlot(props){
           </Col>
           <Col>{owner.short_name} - {endpoint.name}</Col>
           <Col>{timeSlot.delivery_time}</Col>
-          <Col>Bestilt: {mbq} MBq</Col>
+          <Col>Bestilt: {Math.floor(orderedMBq)} MBq</Col>
+          <Col>Til Udlevering: {Math.floor(deliveredMBq)} MBq</Col>
           <Col xs={1}>
             {canMove && !moved ? <ClickableIcon
                           src="/static/images/move_top.svg"
-                          onClick={() => {moveOrders(targetID)}}
+                          onClick={ () => {moveOrders(targetID)}}
                         /> : null}
           </Col>
           <Col xs={1} style={{
@@ -176,11 +203,11 @@ function ProductionRow(props){
 
 
 
-/**
+/** This is the main row block of content
  *
  * @param {{
  * }} props 
- * @returns 
+ * @returns {Element}
  */
 export function ActivityTable (props) {
   const activeDay = getDay(props[PROP_ACTIVE_DATE])
@@ -255,12 +282,20 @@ export function ActivityTable (props) {
     return order.delivery_date === delivery_date && production.tracer == props[PROP_ACTIVE_TRACER]
   });
 
-  const /**@type {Map<Number, Array<ActivityOrder>>} */ OrderMapping = new Map();
+  const /**@type {ArrayMap<Number, ActivityOrder>} */ OrderMapping = new Map();
   for(const order of todays_orders){
     if (OrderMapping.has(order.ordered_time_slot)){
       OrderMapping.get(order.ordered_time_slot).push(order)
     } else {
       OrderMapping.set(order.ordered_time_slot, [order])
+    }
+
+    if(order.moved_to_time_slot != null){
+      if (OrderMapping.has(order.moved_to_time_slot)){
+        OrderMapping.get(order.moved_to_time_slot).push(order)
+      } else {
+        OrderMapping.set(order.moved_to_time_slot, [order])
+      }
     }
   }
 
@@ -271,6 +306,7 @@ export function ActivityTable (props) {
       const /**@type {Array<ActivityDeliveryTimeSlot>} */ timeSlots = timeSlotMapping.get(endpoint.owner).get(endpoint.id)
 
       const RenderedTimeSlotProps = {...props};
+      RenderedTimeSlotProps[PROP_OVERHEAD_MAP] = overheadMap;
       RenderedTimeSlotProps[PROP_ASSOCIATED_TIME_SLOTS] = timeSlots;
       RenderedTimeSlotProps[JSON_ACTIVITY_ORDER] = orders;
       RenderedTimeSlotProps[PROP_ON_CLICK] = () => {
@@ -279,9 +315,8 @@ export function ActivityTable (props) {
       }
 
       RenderedTimeSlotProps['timeSlotID'] = timeSlotID;
-      RenderedTimeSlotProps['key'] = timeSlotID;
 
-      return <RenderedTimeSlot {...RenderedTimeSlotProps}/>
+      return <RenderedTimeSlot key={timeSlotID} {...RenderedTimeSlotProps}/>
     })
 
 
@@ -294,7 +329,7 @@ export function ActivityTable (props) {
     productionProps[PROP_ACTIVE_PRODUCTION] = productionID;
 
 
-    return (<ProductionRow {...productionProps}/>)
+    return (<ProductionRow key={productionID} {...productionProps}/>)
   })
 
   const modalProps = {...props}
@@ -305,7 +340,8 @@ export function ActivityTable (props) {
   }
   modalProps[PROP_TIME_SLOT_ID] = timeSlotID
   modalProps[PROP_TIME_SLOT_MAPPING] = timeSlotMapping;
-  modalProps[PROP_ORDER_MAPPING] = OrderMapping
+  modalProps[PROP_ORDER_MAPPING] = OrderMapping;
+  modalProps[PROP_OVERHEAD_MAP] = overheadMap;
 
   let Modal = null
   if(Modals[modalIdentifier]){

@@ -1,16 +1,15 @@
 import React, { Component } from "react";
 import { Col, Container, Form, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
-import { Calender, standardOrderMapping } from "../injectable/calender.js";
+import { Calender, getColorShop, standardOrderMapping } from "../injectable/calender.js";
 import { Select } from '../injectable/select.js'
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
 import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER, DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DEADLINE, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_ENDPOINT, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_RUN, JSON_SERVER_CONFIG, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEEKLY_REPEAT_CHOICES } from "../../lib/constants.js";
-import { ActivityOrder, Customer, ActivityDeliveryTimeSlot, DeliveryEndpoint, ActivityProduction, Tracer, ServerConfiguration, Deadline } from "../../dataclasses/dataclasses.js";
+import { ActivityOrder, Customer, ActivityDeliveryTimeSlot, DeliveryEndpoint, ActivityProduction, Tracer, ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
 import { changeState } from "../../lib/state_management.js";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
-import { _calculateDeadline, getDay, getToday } from "../../lib/chronomancy.js";
-import { dateToDateString } from "../../lib/formatting.js";
+import { _calculateDeadline, getDay, getToday, getWeekNumber } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 
 export { ShopOrderPage }
@@ -210,51 +209,26 @@ class ShopOrderPage extends Component {
     siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] = ActivityDeadlineExpired
     siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = InjectionDeadlineExpired
 
-
-    let activeCustomer = this.props[JSON_CUSTOMER].get(Number(this.state.activeCustomer));
-    if (activeCustomer == undefined){
-      console.log("Undefined Customer not found")
-      for(const [ID, customer] of this.props[JSON_CUSTOMER]){
-        activeCustomer = customer;
-        db.set(DATABASE_SHOP_CUSTOMER, ID);
-        break;
-      }
-    }
-    const /**@type { Customer } */ customer = activeCustomer;
-
-    const day = getDay(this.state.today)
-    const oneJan = new Date(this.state.today.getFullYear(),0,1);
-    const numberOfDays = Math.floor((this.state.today - oneJan) / (24 * 60 * 60 * 1000));
-    const WeekNumber = Math.ceil(( this.state.today.getDay() + 1 + numberOfDays) / 7);
-
-    const RelevantDeliverTimes = [...this.props[JSON_DELIVER_TIME].values()].filter(
-      (_DT) => {
-        const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _DT;
-        const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run)
-        let WeeklyOrdering = true;
-        switch(timeSlot.weekly_repeat){
-          case WEEKLY_REPEAT_CHOICES.EVEN:
-            WeeklyOrdering = WeekNumber % 2 == 0;
-          break;
-          case WEEKLY_REPEAT_CHOICES.ODD:
-            WeeklyOrdering = WeekNumber % 2 == 1;
-          break;
-        }
-
-        return production.production_day == day &&
-              this.customerEndpoints.includes(timeSlot.destination) &&
-              WeeklyOrdering;
-    }).map(getId);
-
-    const /**@type {Array<ActivityOrder>} */ relevantActivityOrders = [...this.props[JSON_ACTIVITY_ORDER].values()].filter(
-      (_order) => {
-        const /**@type {ActivityOrder} */ order = _order;
-        return RelevantDeliverTimes.includes(order.ordered_time_slot)
-      }
+    const calenderTimeSlots = [...this.props[JSON_DELIVER_TIME].values()].filter(
+      (timeSlot) => {return timeSlot.destination === this.state.activeEndpoint}
     )
 
+    const calenderTimeSlotsIds = calenderTimeSlots.map(getId)
 
+    const calenderActivityOrders = [...this.props[JSON_ACTIVITY_ORDER].values()].filter(
+      (_activityOrder) => {
+        const /**@type {ActivityOrder} */ activityOrder = _activityOrder
+        return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
+      }
+    )
+    console.log([...this.props[JSON_ACTIVITY_ORDER].values()], calenderTimeSlotsIds)
 
+    const calenderInjectionOrders = [...this.props[JSON_INJECTION_ORDER].values()].filter(
+      (_injectionOrder) => {
+        const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
+        return injectionOrder.endpoint === this.state.activeEndpoint;
+      }
+    )
 
     /** Relevant Bookings  */
     const calenderProps = {};
@@ -262,26 +236,16 @@ class ShopOrderPage extends Component {
     calenderProps[CALENDER_PROP_DATE] = this.state.today;
     calenderProps[CALENDER_PROP_ON_DAY_CLICK] = this.setActiveDate.bind(this);
     calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = this.setActiveMonth.bind(this);
-    calenderProps[CALENDER_PROP_GET_COLOR] = (dateString) => {
-      const date = new Date(dateString);
+    calenderProps[CALENDER_PROP_GET_COLOR] = getColorShop(
+      activityDeadline,
+      injectionDeadline,
+      calenderActivityOrders,
+      this.props[JSON_CLOSED_DATE],
+      calenderInjectionOrders,
+      this.props[JSON_PRODUCTION],
+      calenderTimeSlots
+    )
 
-      let dateStatusActivity = 0;
-      let dateStatusInjection = 0
-
-      const activityDeadlineDate = _calculateDeadline(activityDeadline, date)
-      const injectionDeadlineDate = _calculateDeadline(injectionDeadline, date)
-
-      if(activityDeadlineDate < today){
-        dateStatusActivity = 5
-      }
-
-      if(injectionDeadlineDate < today){
-        dateStatusInjection = 5
-      }
-
-
-      return `date-status${dateStatusInjection}${dateStatusActivity}`
-    }
 
     return (
     <Container>
