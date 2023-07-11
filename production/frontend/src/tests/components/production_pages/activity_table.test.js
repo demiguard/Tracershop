@@ -10,28 +10,39 @@ import { createRoot } from "react-dom/client";
 import { WS } from "jest-websocket-mock";
 import { ActivityTable } from "../../../components/production_pages/activity_table.js"
 import { TracerWebSocket} from "../../../lib/tracer_websocket.js"
-import { TRACER_TYPE_ACTIVITY } from "../../../lib/constants.js";
+import { PROP_ACTIVE_DATE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY } from "../../../lib/constants.js";
+import { AppState } from "../../helpers.js";
+
+const module = jest.mock('../../../lib/tracer_websocket.js');
+const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 
-  let container = null;
-  let root = null
-  beforeEach(() => {
+
+let websocket = null;
+let container = null;
+let props = null;
+
+beforeEach(() => {
     container = document.createElement("div");
-    root = createRoot(container);
+    websocket = new tracer_websocket.TracerWebSocket()
+    props = {...AppState};
+    props[PROP_WEBSOCKET] = websocket;
+    props[PROP_ACTIVE_DATE] = new Date(2020,4,4,10,26,33);
 });
 
 afterEach(() => {
-  act(() => {
-    root.unmount()
-  })
-
   cleanup()
+  module.clearAllMocks()
 
-  container.remove();
+  if(container != null) container.remove();
   container = null;
-  root = null;
+  props=null
 });
 
 describe("Activity table", () => {
-  it("Nothing survived the rewrite", () => {})
+  it("standard Render test", () => {
+    render(<ActivityTable {...props} />)
+
+
+  })
 })

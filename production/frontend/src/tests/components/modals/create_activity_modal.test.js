@@ -7,8 +7,9 @@ import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@
 import { jest } from '@jest/globals'
 
 import { CreateOrderModal } from '../../../components/modals/create_activity_modal.js'
-import { JSON_CUSTOMER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_MODEL_CREATE } from "../../../lib/constants.js";
 import { AppState} from '../../helpers.js'
+import { act } from "react-dom/test-utils";
 
 
 const onClose = jest.fn()
@@ -29,10 +30,13 @@ beforeEach(() => {
   props[PROP_WEBSOCKET] = websocket
   props[PROP_ACTIVE_DATE] = new Date(2020,3,5);
   props[PROP_ON_CLOSE] = onClose
-  props[PROP_ORDER_MAPPING] = new Map([
-    [1, new Map([
 
+  props[PROP_TIME_SLOT_MAPPING] = new Map([
+    [1, new Map([
+      [1 , [AppState[JSON_DELIVER_TIME].get(1), AppState[JSON_DELIVER_TIME].get(2)]],
+      [2,  []],
     ])],
+    [2, new Map()]
   ]);
 });
 
@@ -54,5 +58,74 @@ describe("create activity modal", () => {
     render(<CreateOrderModal
       {...props}
     />, container);
+
+    expect(await screen.findByLabelText('customer-select')).toBeVisible();
+    expect(await screen.findByLabelText('endpoint-select')).toBeVisible();
+    expect(await screen.findByLabelText("time-slot-select")).toBeVisible();
+    expect(await screen.findByLabelText('activity-input')).toBeVisible();
+    expect(await screen.findByLabelText('customer-select')).toBeVisible();
   });
+
+  it("Change Endpoint, missing delivery times", async () => {
+    render(<CreateOrderModal
+      {...props}
+    />, container);
+
+    const endpointSelect =  await screen.findByLabelText('endpoint-select');
+
+    act(() => {
+      fireEvent.change(endpointSelect, {target: {value : 2}});
+    });
+
+    const customer = props[JSON_CUSTOMER].get(1)
+    const errorMessage = `Kunden ${customer.short_name} har ikke nogen leveringstidpunkter`
+
+    expect(await screen.findByText(errorMessage)).toBeVisible();
+
+  });
+
+  it("Change Delivery Time", async () => {
+    render(<CreateOrderModal
+      {...props}
+    />, container);
+
+    const timeSlotSelect = await screen.findByLabelText("time-slot-select");
+
+    const targetTimeSlot = props[JSON_DELIVER_TIME].get(2);
+    act(() => {
+      fireEvent.change(timeSlotSelect, {target: {value : targetTimeSlot.id}})
+    })
+
+    expect(await screen.findByText(targetTimeSlot.delivery_time)).toBeVisible();
+  });
+
+  it("Order Default", async () => {
+    render(<CreateOrderModal
+      {...props}
+    />, container);
+
+    const activityInput = await screen.findByLabelText('activity-input')
+    const orderButton = await screen.findByRole('button', {name : "Opret Ordre"})
+
+    act(() => {
+      fireEvent.change(activityInput, {target : { value : 300}})
+      fireEvent.click(orderButton);
+    });
+
+    expect(websocket.send).toBeCalled()
+    expect(websocket.getMessage).toHaveBeenCalledWith(WEBSOCKET_MESSAGE_MODEL_CREATE);
+  });
+
+  it.skip("Change to endpoint-less Customer", async () => {
+    render(<CreateOrderModal
+      {...props}
+    />, container);
+    const customerSelect = await screen.findByLabelText('customer-select');
+
+    act(() => {
+      fireEvent.change(customerSelect, {target : {value : 2}})
+    })
+  })
+
+
 });

@@ -10,6 +10,7 @@ import { CreateInjectionOrderModal } from "../../../components/modals/create_inj
 import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
 
 import {AppState} from '../../helpers.js'
+import { act } from "react-dom/test-utils";
 
 const onClose = jest.fn()
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -65,7 +66,9 @@ describe("Create injection Order", () => {
 
   const createOrderButton = await screen.findByRole('button',
                                                     {name : "Opret Ordre"});
-  createOrderButton.click()
+  act(() => {
+    createOrderButton.click()
+  })
 
   expect(await screen.findByText(
     "Der er ikke indtastet hvor mange injektioner der skal bestilles")).toBeVisible
@@ -81,8 +84,9 @@ describe("Create injection Order", () => {
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-
-    createOrderButton.click()
+    act(() =>{
+      createOrderButton.click()
+    })
 
     expect(await screen.findByText("Injektionerne er ikke et tal"))
   });
@@ -94,11 +98,12 @@ describe("Create injection Order", () => {
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "-3"}});
-
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
+    act(() => {
+      createOrderButton.click()
+    })
 
-    createOrderButton.click()
 
     expect(await screen.findByText("Der skal bestilles et positivt mængde af injectioner"))
   });
@@ -113,8 +118,9 @@ describe("Create injection Order", () => {
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-
-    createOrderButton.click()
+    act(() => {
+      createOrderButton.click()
+    })
 
     expect(await screen.findByText("Der kan kun bestilles et helt antal injektioners"))
   });
@@ -130,8 +136,9 @@ describe("Create injection Order", () => {
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-
-    createOrderButton.click()
+    act(() => {
+      createOrderButton.click()
+    })
 
     expect(await screen.findByText("Der kan kun bestilles et helt antal injektioners"))
   });
@@ -147,8 +154,9 @@ describe("Create injection Order", () => {
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-
-    createOrderButton.click()
+    act(() => {
+      createOrderButton.click()
+    })
 
     expect(await screen.findByText("Leverings tidspunktet er ikke et valid"))
   });
@@ -166,8 +174,9 @@ describe("Create injection Order", () => {
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-
-    createOrderButton.click();
+    act(() => {
+      createOrderButton.click();
+    })
 
     expect(websocket.getMessage).toBeCalled()
     expect(websocket.send).toBeCalled()

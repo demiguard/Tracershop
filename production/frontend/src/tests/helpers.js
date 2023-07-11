@@ -35,7 +35,7 @@ AppState[JSON_ACTIVITY_ORDER] = new Map([
         comment: null,
         ordered_time_slot: 1,
         moved_to_time_slot: null,
-        freed_datetime: "2020-05-04T",
+        freed_datetime: "2020-05-04T11:33:44",
         ordered_by: null,
         freed_by: null,
     }], [4, {
@@ -49,7 +49,18 @@ AppState[JSON_ACTIVITY_ORDER] = new Map([
         freed_datetime : null,
         ordered_by : null,
         freed_by : null,
-    }]
+    }], [5, {
+        id : 5,
+        ordered_activity : 12345,
+        delivery_date : "2020-05-11", // That's Monday
+        status : 2,
+        comment : "Test comment",
+        ordered_time_slot : 1,
+        moved_to_time_slot : null,
+        freed_datetime : null,
+        ordered_by : null,
+        freed_by : null,
+    }],
 ])
 
 AppState[JSON_CUSTOMER] = new Map([
@@ -80,6 +91,17 @@ AppState[JSON_CUSTOMER] = new Map([
         id : 3,
         short_name : "Customer_3",
         long_name : "Customer_long_name_3",
+        dispenser_id : 3,
+        billing_address : null,
+        billing_city : null,
+        billing_email : null,
+        billing_phone : null,
+        billing_zip_code : null,
+        active_directory_code : null,
+    }], [4 , {
+        id : 4,
+        short_name : "Customer_no_endpoint",
+        long_name : "Customer_long_name_no_endpoint",
         dispenser_id : 3,
         billing_address : null,
         billing_city : null,
@@ -130,7 +152,7 @@ AppState[JSON_DELIVER_TIME] = new Map([
         id : 3,
         weekly_repeat : 1,
         delivery_time : "09:15:00",
-        destination : 5,
+        destination : 3,
         production_run : 2, // Tracer 3, Monday, 06:00
         expiration_date : null,
     }],
@@ -393,6 +415,16 @@ AppState[JSON_VIAL] = new Map([
         lot_number : "test-200405-1",
         fill_time : "07:54:44",
         fill_date : "2020-04-28",
+        assigned_to : null,
+        owner : 1,
+    }], [4, {
+        id : 4,
+        tracer : 1,
+        activity : 13000,
+        volume : 13.37,
+        lot_number : "test-200405-1",
+        fill_time : "07:54:44",
+        fill_date : "2020-05-11",
         assigned_to : null,
         owner : 1,
     }]

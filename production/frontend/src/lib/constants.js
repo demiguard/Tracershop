@@ -335,3 +335,4 @@ export const WEEKLY_TIME_TABLE_PROP_DAY_GETTER = "day_function";
 export const WEEKLY_TIME_TABLE_PROP_INNER_TEXT = "inner_text_function"
 export const WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR = "color_function";
 export const WEEKLY_TIME_TABLE_PROP_HOUR_GETTER = "hour_function";
+export const WEEKLY_TIME_TABLE_PROP_LABEL_FUNC = "label_function"

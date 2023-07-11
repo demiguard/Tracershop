@@ -28,7 +28,7 @@ const commit = jest.fn((arg) => {return arg} )
 
 const Tracer = {
   isotope : 1,
-  name : "TestTracer"
+  short_name : "TestTracer"
 };
 
 const defaultMBq = 1337;
@@ -36,7 +36,7 @@ const halflife = 6543
 
 const isotopes = new Map([[1, {
   ID: 1,
-  halflife: halflife
+  halflife_seconds: halflife
 }]]);
 
 const productionTime = new Date(2012, 5, 12, 8, 15, 30);

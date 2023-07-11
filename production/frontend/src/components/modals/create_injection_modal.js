@@ -62,8 +62,6 @@ function CreateInjectionOrderModal(props){
   const [comment, setComment] = useState("")
   const [error, setError] = useState("")
 
-  console.log(endpointID)
-
   // eventFunctions
   function SubmitOrder(_event){
     //Validation

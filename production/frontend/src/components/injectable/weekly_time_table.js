@@ -26,7 +26,14 @@ function TopCell({children}){
     className={`${WeeklyTimeTableStyles.Cell} ${WeeklyTimeTableStyles.TopCell}`}>{children}</Row>);
 }
 
-function AbsoluteCell({children, onClick = () => {}, day, timeSlots = 0, color = 'lightblue' }){
+function AbsoluteCell({
+    children,
+    onClick = () => {},
+    day,
+    timeSlots = 0,
+    color = 'lightblue',
+    label = "",
+   }){
   return (<Row
     style={{
       padding : '0px',
@@ -35,6 +42,7 @@ function AbsoluteCell({children, onClick = () => {}, day, timeSlots = 0, color =
       left : `calc(25px + ${day + 1} * (12.5% - 3px))`,
       width: "calc(12.5% - 5px)",
     }}
+    aria-label={label}
     onClick={onClick}
     className={`${WeeklyTimeTableStyles.AbsoluteCell}`}>{children}</Row>)
 }
@@ -45,6 +53,7 @@ export function WeeklyTimeTable({day_function,
                                  inner_text_function = (entry) => {return <div></div>},
                                  time_table_entry_onclick = (entry) => {return () => {}},
                                  color_function = (_entry) => {return 'lightblue'},
+                                 label_function = (_entry) => {return ""},
                                  startingHour = 6,
                                  stoppingHour = 14}){
   const entries = [];
@@ -62,8 +71,11 @@ export function WeeklyTimeTable({day_function,
     const entry_hour = hour_function(entry)
     const entry_color = color_function(entry)
     const innerText = inner_text_function(entry)
+    const label = label_function(entry)
+
 
     entries.push(<AbsoluteCell
+                    label={label}
                     color={entry_color}
                     timeSlots={entry_hour - startingHour}
                     key={key}

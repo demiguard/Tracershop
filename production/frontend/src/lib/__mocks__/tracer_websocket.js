@@ -12,10 +12,20 @@ const mockSend = jest.fn((data) => {
   return new Promise((data) => {return data})
 });
 
+const mockCreateModel = jest.fn((data) => {
+  return new Promise((data) => {return data})
+});
+
+const mockEditModel = jest.fn((data) => {
+  return new Promise((data) => {return data})
+});
+
 tracer_websocket.TracerWebSocket.mockImplementation(() =>  {
   const object = Object.create(tracer_websocket.TracerWebSocket.prototype);
 
   return Object.assign(object, {
+    sendEditModel : mockEditModel,
+    sendCreateModel : mockCreateModel,
     send : mockSend,
     getMessage : mockGetMessage
   });

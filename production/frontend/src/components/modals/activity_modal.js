@@ -16,11 +16,11 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, ERROR_BACKGROUND_C
   WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_MODEL_CREATE,  WEBSOCKET_MESSAGE_MODEL_EDIT} from "../../lib/constants.js";
 import { batchNumberValidator, dateToDateString, FormatTime, ParseDanishNumber, parseDateToDanishDate } from "../../lib/formatting.js";
-import { KEYWORD_ActivityDeliveryTimeSlot_DESTINATION, KEYWORD_ActivityOrder_STATUS, KEYWORD_DeliveryEndpoint_OWNER, KEYWORD_Vial_ACTIVITY, KEYWORD_Vial_FILL_TIME, KEYWORD_Vial_LOT_NUMBER, KEYWORD_Vial_VOLUME } from "../../dataclasses/keywords.js";
+import { KEYWORD_ActivityOrder_STATUS, KEYWORD_DeliveryEndpoint_OWNER, KEYWORD_Vial_ACTIVITY, KEYWORD_Vial_FILL_TIME, KEYWORD_Vial_LOT_NUMBER, KEYWORD_Vial_VOLUME } from "../../dataclasses/keywords.js";
 import { compareTimeStamp } from "../../lib/chronomancy.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
-import { Hover } from "react-hover";
+
 
 export { ActivityModal }
 
@@ -144,7 +144,6 @@ class ActivityModal extends Component {
       }
     }
 
-    console.log(props, orders)
     this.state = state;
   }
 
@@ -843,12 +842,12 @@ class ActivityModal extends Component {
         } else {
           editButton = <ClickableIcon // Start editing
           src={"/static/images/pen.svg"}
-          altText={`edit-vial-${vialID}`}
+          label={`edit-vial-${vialID}`}
           onClick={this.startEditVial(vialID).bind(this)}
           />;
         }
         useButton = <Form.Check  // Select TVeVial(VialID)).bind(this)}
-          aria-label={`vial-usage-${vial.ID}`}
+          aria-label={`vial-usage-${vial.id}`}
           onChange={this.toggleVial(vialID).bind(this)}
           checked={selected}
         />
@@ -885,12 +884,12 @@ class ActivityModal extends Component {
     if(this.state.addingVial){
       tableVials.push(renderTableRow(-1,[
         "Ny",
-        <FormControl aria-label={`charge-new`} onChange={this.editAddingVial("lot_number").bind(this)} value={this.state.newVial.lot_number}/>,
-        <FormControl aria-label={`filltime-new`} onChange={this.editAddingVial("fill_time").bind(this)} value={this.state.newVial.fill_time}/>,
+        <FormControl aria-label={`lot_number-new`} onChange={this.editAddingVial("lot_number").bind(this)} value={this.state.newVial.lot_number}/>,
+        <FormControl aria-label={`fill_time-new`} onChange={this.editAddingVial("fill_time").bind(this)} value={this.state.newVial.fill_time}/>,
         <FormControl aria-label={`volume-new`} onChange={this.editAddingVial("volume").bind(this)} value={this.state.newVial.volume}/>,
         <FormControl aria-label={`activity-new`} onChange={this.editAddingVial("activity").bind(this)} value={this.state.newVial.activity}/>,
-        <ClickableIcon altText={"accept-new"} src={"/static/images/plus.svg"} onClick={this.commitNewVial.bind(this)}/>,
-        <ClickableIcon altText={"decline-new"} src={"/static/images/decline.svg"} onClick={this.stopAddingVial.bind(this)}/>
+        <ClickableIcon label={"accept-new"} src={"/static/images/plus.svg"} onClick={this.commitNewVial.bind(this)}/>,
+        <ClickableIcon label={"decline-new"} src={"/static/images/decline.svg"} onClick={this.stopAddingVial.bind(this)}/>
       ]));
     }
 
@@ -914,7 +913,7 @@ class ActivityModal extends Component {
       </Table>
       <div className="flex-row-reverse d-flex">
         {(this.state.addingVial || this.state.isFreeing) ? "" :
-          <div>{<ClickableIcon altText={"add-new-vial"} src={"/static/images/plus.svg"} onClick={this.startAddingVial.bind(this)}/>}</div>}
+          <div>{<ClickableIcon label="add-new-vial" src={"/static/images/plus.svg"} onClick={this.startAddingVial.bind(this)}/>}</div>}
       </div>
     </div>)
   }

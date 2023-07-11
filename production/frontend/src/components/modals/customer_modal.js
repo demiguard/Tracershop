@@ -1,7 +1,7 @@
 
 import React, { Component } from "react";
 import { Modal, Button, Table, Row, FormControl, Col, Form, Container, Card, InputGroup } from "react-bootstrap";
-import { DAYS, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_TIME_SLOTS, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_TIME_KEYWORD, } from "../../lib/constants.js";
+import { DAYS, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_TIME_SLOTS, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC, WEEKLY_TIME_TABLE_PROP_TIME_KEYWORD, } from "../../lib/constants.js";
 import { CloseButton } from "../injectable/buttons.js";
 import propTypes from "prop-types";
 import { Select } from "../injectable/select.js"
@@ -23,9 +23,9 @@ const RunOptions = [
 ];
 
 function MarginInputGroup({children}){
-  return <InputGroup style={{marginTop : "5px"}}>
+  return (<InputGroup style={{marginTop : "5px"}}>
     {children}
-  </InputGroup>
+  </InputGroup>)
 }
 
 
@@ -59,8 +59,6 @@ class CustomerModal extends Component {
     super(props);
 
     const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
-
-
     const endpointIDs = []
     for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint
@@ -71,7 +69,7 @@ class CustomerModal extends Component {
     }
 
     const activeEndpointID = endpointIDs[0]
-    const activeEndpoint = this.props[JSON_ENDPOINT].get(activeEndpointID);
+    let activeEndpoint = this.props[JSON_ENDPOINT].get(activeEndpointID);
     let activeTracer = undefined;
     for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
       const /**@type {Tracer} */ tracer = _tracer
@@ -100,8 +98,8 @@ class CustomerModal extends Component {
 }
 
   /**
-   * 
-   * @param {ActivityDeliveryTimeSlot} timeSlot 
+   * Gets how far to the left a time slot should be in the graph
+   * @param {ActivityDeliveryTimeSlot} timeSlot
    * @returns {Number}
    */
   weeklyTimeTableDayGetter(timeSlot) {
@@ -110,8 +108,8 @@ class CustomerModal extends Component {
   }
 
   /**
-   * 
-   * @param {ActivityDeliveryTimeSlot} timeSlot 
+   * Gets how far down the weekly time table an entry should be
+   * @param {ActivityDeliveryTimeSlot} timeSlot - The entry in question
    * @returns {Number}
    */
   weeklyTimeTableHourGetter(timeSlot) {
@@ -126,12 +124,15 @@ class CustomerModal extends Component {
    * @param {ActivityDeliveryTimeSlot} entry
    */
   weeklyTimeTableEntryOnClick(entry){
-    const returnFunction = () => {
-      this.setState({...this.state, activeTimeSlot : entry.id, tempTimeSlot : {...entry},  timeSlotDirty: false})
-    }
-
-    return returnFunction.bind(this)
+    return ((_event) => {
+      this.setState({...this.state,
+        activeTimeSlot : entry.id,
+        tempTimeSlot : {...entry},
+        timeSlotDirty: false
+      })
+    }).bind(this)
   }
+
 
   weeklyTimeTableInnerText(entry){
     return <div style={{
@@ -146,8 +147,8 @@ class CustomerModal extends Component {
   }
 
   /**
-   * 
-   * @param {*} entry 
+   * get the color of said entry
+   * @param {ActivityDeliveryTimeSlot} entry - 
    * @returns {string}
    */
   weeklyTimeTableEntryColor(entry){
@@ -166,6 +167,17 @@ class CustomerModal extends Component {
     }
     throw "Unknown weekly repeat"
   }
+
+  /**
+   * creates a label to be tagged to the cell, created by the entry
+   * @param {ActivityDeliveryTimeSlot} entry - entry in question
+   * @returns {String}
+   */
+  weeklyTimeTableLabelFunction(entry){
+    // This function exists to create targets for test to select for
+    return `time-slot-${entry.id}`
+  }
+
 
   changeTempObject(tempObjectKeyword, tempKeyword, dirtyKeyword){
     const event_function = (event) => {
@@ -288,6 +300,7 @@ class CustomerModal extends Component {
     timeSlot.destination = this.state.activeEndpoint
     timeSlot.delivery_time = FormatTime(this.state.tempTimeSlot.delivery_time);
     let promise;
+
     if(this.state.activeTimeSlot === undefined){
       promise = this.props[PROP_WEBSOCKET].sendCreateModel(JSON_DELIVER_TIME, [timeSlot])
     } else {
@@ -313,7 +326,10 @@ class CustomerModal extends Component {
         <Col><h4>Kunde</h4></Col>
         {this.state.customerDirty ?
           <Col style={{ justifyContent : "right", display: "flex"}}>
-            <ClickableIcon src={"static/images/accept.svg"} onClick={this.confirmCustomer.bind(this)}/>
+            <ClickableIcon
+              aria-label="customer-dirty"
+              src={"static/images/accept.svg"}
+              onClick={this.confirmCustomer.bind(this)}/>
           </Col> : ""}
       </Row>
       <MarginInputGroup>
@@ -483,6 +499,7 @@ class CustomerModal extends Component {
     weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] = this.weeklyTimeTableEntryOnClick.bind(this);
     weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] = this.weeklyTimeTableEntryColor.bind(this);
     weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_INNER_TEXT] = this.weeklyTimeTableInnerText.bind(this);
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] = this.weeklyTimeTableLabelFunction.bind(this);
 
     return(<WeeklyTimeTable {...weeklyTimeTableProps}/>);
   }
@@ -510,11 +527,13 @@ class CustomerModal extends Component {
         <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
         {this.state.timeSlotDirty ?
           <ClickableIcon
+            label="time-slot-edit"
             src={"static/images/accept.svg"}
             onClick={this.confirmTimeSlot.bind(this)}
           /> : ""}
         {this.state.activeTimeSlot != undefined ?
           <ClickableIcon
+            label="time-slot-create"
             src={"static/images/plus.svg"}
             onClick={this.initializeTimeSlotEndpoint.bind(this)}
           /> : ""}
@@ -524,6 +543,7 @@ class CustomerModal extends Component {
       <MarginInputGroup>
         <InputGroup.Text>Leveringstid</InputGroup.Text>
         <Form.Control
+          aria-label="time-slot-delivery-time"
           value={this.state.tempTimeSlot.delivery_time}
           onChange={this.changeTempObject('tempTimeSlot', 'delivery_time', 'timeSlotDirty').bind(this)}
         />
@@ -531,6 +551,7 @@ class CustomerModal extends Component {
       <MarginInputGroup>
         <InputGroup.Text>Ugenlig gentagelse</InputGroup.Text>
         <Select
+          aria-label="weekly-select"
           options={WeeklyRepeatOptions}
           nameKey={"name"}
           valueKey ={"id"}
@@ -546,6 +567,7 @@ class CustomerModal extends Component {
           valueKey ={"id"}
           onChange={this.changeTempObject('tempTimeSlot', 'production_run', 'timeSlotDirty').bind(this)}
           value={this.state.tempTimeSlot.production_run}
+          aria-label="production-select"
         />
       </MarginInputGroup>
     </Col>)
@@ -554,8 +576,6 @@ class CustomerModal extends Component {
 
 
   render() {
-    console.log(this.props, this.state)
-
     const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
 
     return (
