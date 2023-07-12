@@ -30,7 +30,8 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
 from database.models import ServerConfiguration, Database, Address, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
-    TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T
+    TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
+    UserAssignment
 from lib.ProductionJSON import ProductionJSONEncoder
 
 
@@ -395,3 +396,9 @@ class DatabaseInterface():
       order.moved_to_time_slot = None
     ActivityOrder.objects.bulk_update(orders, ['moved_to_time_slot'])
     return orders
+
+  @database_sync_to_async
+  def getRelatedCustomerIDs(self, user: User) -> List[int]:
+    userAssignments = UserAssignment.objects.filter(user=user)
+
+    return [userAssignment.customer.customer_id for userAssignment in userAssignments]

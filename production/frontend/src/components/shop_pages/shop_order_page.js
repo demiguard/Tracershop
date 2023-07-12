@@ -221,7 +221,6 @@ class ShopOrderPage extends Component {
         return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
       }
     )
-    console.log([...this.props[JSON_ACTIVITY_ORDER].values()], calenderTimeSlotsIds)
 
     const calenderInjectionOrders = [...this.props[JSON_INJECTION_ORDER].values()].filter(
       (_injectionOrder) => {

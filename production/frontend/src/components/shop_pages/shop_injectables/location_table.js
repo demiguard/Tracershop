@@ -3,7 +3,7 @@ import { FormControl, InputGroup, Table } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { setEvent } from "../../../lib/state_management";
 import { Select } from "../../injectable/select";
-import { JSON_ENDPOINT, JSON_LOCATION, PROP_WEBSOCKET } from "../../../lib/constants";
+import { JSON_CUSTOMER, JSON_ENDPOINT, JSON_LOCATION, PROP_WEBSOCKET } from "../../../lib/constants";
 import { Location } from "../../../dataclasses/dataclasses";
 import { nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
@@ -17,9 +17,11 @@ import { TracerWebSocket } from "../../../lib/tracer_websocket";
  * }} props
  * @returns {Element}
  */
-function LocationTableRow({location, websocket}){
-  const nulledCommonName = nullParser(location.common_name)
-  const [commonName, setCommonName] = useState(nulledCommonName)
+function LocationTableRow({location, websocket, endpointOptions}){
+  const nulledCommonName = nullParser(location.common_name);
+  const [commonName, setCommonName] = useState(nulledCommonName);
+  const nulledLocation = nullParser(location.endpoint);
+  const [endpoint, setEndpoint] = useState(nulledLocation);
 
   function updateCommonName(event){
     setCommonName(event.target.value)
@@ -32,6 +34,19 @@ function LocationTableRow({location, websocket}){
     }
   }
 
+  function updateEndpoint(event){
+    setEndpoint(event.target.value);
+    const newLocation = {...location};
+
+    if (event.target.value === ""){
+      newLocation.endpoint = null;
+    } else {
+      newLocation.endpoint = null;
+    }
+
+    websocket.sendEditModel(JSON_LOCATION, [newLocation]);
+  }
+
   return (
   <tr>
     <td>{location.location_code}</td>
@@ -41,7 +56,13 @@ function LocationTableRow({location, websocket}){
       </InputGroup>
     </td>
     <td>
-      <Select></Select>
+      <Select
+        options={endpointOptions}
+        nameKey="name"
+        valueKey="id"
+        value={endpoint}
+        onChange={updateEndpoint}
+      />
     </td>
   </tr>)
 }
@@ -56,38 +77,61 @@ export function LocationTable(props){
   }, {
     id : 2,
     name : "Kalde Navn"
-  }]
+  }];
 
   const endpointOptions = [...props[JSON_ENDPOINT].values()].map((endpoint) =>{
+    const customer = props[JSON_CUSTOMER].get(endpoint.owner);
+
     return {
       id : endpoint.id,
-      name : endpoint.name
-    }
+      name : `${customer.short_name} - ${endpoint.name}`
+    };
   })
 
+  endpointOptions.push({id : "", name : ""});
 
-  const locations = [...props[JSON_LOCATION].values()].map(
+
+  const /**@type {Array<Location>} */ locations = [...props[JSON_LOCATION].values()].filter((location) => {
+    if(filter === ""){
+      return true
+    }
+    const regex = new RegExp(filter, 'i');
+    if(filterType === 1){
+      return regex.test(location.location_code)
+
+    } else if (filterType === 2) {
+      const regex = new RegExp(filter, 'i');
+      return regex.test(location.common_name)
+    }
+
+    return false;
+  }).map(
     (location, i) => {
       return (<LocationTableRow
                 key={i}
                 location={location}
                 websocket={props[PROP_WEBSOCKET]}
                 endpointOptions={endpointOptions}
-              />)
-  })
+              />);
+  });
 
   return (
-    <div>
-      <TracershopInputGroup label="Filter">
-        <Select
-          options={filterOptions}
-          value={filterType}
-          nameKey="name"
-          valueKey="id"
-          onChange={setEvent(setFilterType)}
-        />
-        <FormControl value={filter} onChange={setEvent(setFilter)}/>
-      </TracershopInputGroup>
+    <div style={{
+      marginTop : "15px",
+      marginBottom : "15px",
+    }}>
+      <div>
+        <TracershopInputGroup label="Filter">
+          <Select
+            options={filterOptions}
+            value={filterType}
+            nameKey="name"
+            valueKey="id"
+            onChange={setEvent(setFilterType)}
+            />
+          <FormControl value={filter} onChange={setEvent(setFilter)}/>
+        </TracershopInputGroup>
+      </div>
 
       <Table>
         <thead>

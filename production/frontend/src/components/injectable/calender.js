@@ -327,7 +327,6 @@ export function getColorShop(
       ordering_bitChain = ordering_bitChain | (1 << production.production_day + 7);
     }
   }
-  console.log(ordering_bitChain)
 
   const retFunc = (dateString) => {
     const date = new Date(dateString);

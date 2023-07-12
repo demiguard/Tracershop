@@ -10,7 +10,7 @@ from typing import List
 
 # Third party Packages
 from django.db import models
-from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField
+from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField, RESTRICT
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
@@ -54,6 +54,3 @@ class SecondaryEmail(TracershopModel):
   secondary_email_id = BigAutoField(primary_key=True)
   email = EmailField()
   record_user = ForeignKey(User, on_delete=CASCADE)
-
-
-

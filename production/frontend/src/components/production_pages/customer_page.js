@@ -55,7 +55,9 @@ export default class CustomerPage extends Component {
           <Container>
             <Row className="justify-content-between">
               <Col xs={3}>{customer.short_name}</Col>
-              <Col xs={2}>
+              <Col xs={2} style={{
+                display : "flex"
+              }}>
                 <ClickableIcon src={'/static/images/setting.png'} onClick={this.ActivateModal(ID, Modals.CUSTOMER, this)}/>
                 <ClickableIcon src={'/static/images/bill.png'} onClick={this.ActivateModal(ID, Modals.HISTORY, this)}/>
               </Col>

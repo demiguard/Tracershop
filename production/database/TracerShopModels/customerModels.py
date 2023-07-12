@@ -46,7 +46,7 @@ class TracerCatalog(TracershopModel):
 
 
 class UserAssignment(TracershopModel):
-  user_assignment = BigAutoField(primary_key=True)
+  user_assignment_id = BigAutoField(primary_key=True)
   user = ForeignKey(User, on_delete=CASCADE)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
 

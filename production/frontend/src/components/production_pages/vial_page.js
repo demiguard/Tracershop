@@ -73,31 +73,6 @@ class VialPage extends Component {
       console.log("caught Error");
       return;
     }
-    /*
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_GET_DATA_CLASS)
-    message[WEBSOCKET_DATATYPE] = [JSON_VIAL]
-    message[WEBSOCKET_FILTER] = {
-      filterType : "Equality",
-      filter : {
-        filldate : parsedDate
-      }
-    }
-    this.props.websocket.send(message).then((response) => {
-      if(response[WEBSOCKET_MESSAGE_SUCCESS] == WEBSOCKET_MESSAGE_SUCCESS){
-        const vials = new Map();
-        for(const vialStr of data[JSON_VIAL]){
-          const vial = ParseJSONstr(vialStr);
-          vials.set(vial.ID, vial)
-        }
-
-        this.setState({...this.state,
-          vial : vials
-        })
-      } else {
-
-      }
-    })
-    */
   }
 
   /**
@@ -204,8 +179,8 @@ class VialPage extends Component {
     const CustomerOptions = [<option key="-1" value="null" >-----</option>]
     for(const [_, customer] of this.props[JSON_CUSTOMER]){
       CustomerOptions.push(
-        <option value={customer.kundenr} key={customer.kundenr}
-          >{customer.UserName}</option>
+        <option value={customer.id} key={customer.id}
+          >{customer.short_name}</option>
       )
     }
 

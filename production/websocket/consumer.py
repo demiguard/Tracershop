@@ -34,7 +34,7 @@ from constants import * # Import the many WEBSOCKET constants, TO DO change this
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
-      TracerTypes, DeliveryEndpoint, ActivityProduction, User
+      TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups
 from lib import orders
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
 from lib.ProductionJSON import encode, decode
@@ -58,16 +58,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
   """
   channel_name = 'websocket'
   global_group = "Global"
-
-  groups: List
   channel_layer: RedisChannelLayer
 
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
     super().__init__()
+
     self.db = db
     self.datetimeNow = datetimeNow
-    self.sessionStore = SessionStore()
-    decimal.getcontext().prec = 2
 
   ### --- JSON methods --- ###
   @classmethod
@@ -78,28 +75,54 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def decode_json(cls, content: str) -> Dict:
     return decode(content)
 
+  async def enterGroups(self, user: User):
+    if user.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+      await self.channel_layer.group_add('production', channel=self.channel_name)
+    if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
+      customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
+      for customerID in customerIDs:
+        await self.channel_layer.group_add(f'customer_{customerID}', channel=self.channel_name)
+
+
+  async def leaveGroups(self, user: User):
+    if user.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+      await self.channel_layer.group_discard('production', channel=self.channel_name)
+    if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
+      customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
+      for customerID in customerIDs:
+        await self.channel_layer.group_discard(f'customer_{customerID}', channel=self.channel_name)
+
   ### --- Websocket methods --- ####
   async def connect(self):
-    if self.groups is not None:
-      self.groups.append(self.global_group)
-    if self.channel_layer is not None:
-      await self.channel_layer.group_add(
-        self.global_group,
-        self.channel_name
-      )
-
+    """Method called when a user connect
+    """
+    user = await get_user(self.scope)
+    await self.enterGroups(user)
     await self.accept()
 
   async def disconnect(self, close_code):
-    if self.groups is not None and self.channel_layer is not None:
-      for group_name in self.groups:
-        await self.channel_layer.group_discard(group_name,self.channel_name)
+    user = await get_user(self.scope)
+    await self.leaveGroups(user)
 
   async def __broadcast(self, message: Dict):
+    """Boardcast only to produciton
+
+    Args:
+        message (Dict): _description_
+
+    Raises:
+        Exception: _description_
+    """
     if 'type' in message:
       raise Exception
     message['type'] = "broadcastMessage" # This is needed to point it to the send place
-    await self.channel_layer.group_send(self.global_group, message) #
+    await self.channel_layer.group_send('production', message) #
+
+
+  async def __broadcastCustomer(self, )
+
+
+
 
   async def broadcastMessage(self, message: Dict):
     """Send the event to each subscriber to the websocket.
@@ -219,12 +242,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
     user = await database_sync_to_async(authenticate)(username=username, password=password)
 
     if user:
+      relatedCustomers = []
+      if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser,]:
+        relatedCustomers = await self.db.getRelatedCustomerIDs(user)
+
       isAuth = True
       await login(self.scope, user)
       await sync_to_async(self.scope["session"].save)()
+      await self.enterGroups(user)
       key = self.scope["session"].session_key
       userGroup = user.UserGroup
-      customer = []
+      customer = relatedCustomers
       user_id = user.id
     else:
       user_id = None
@@ -250,6 +278,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     user = await get_user(self.scope)
     if isinstance(user, User):
       username = user.username
+      await self.enterGroups(user)
       isAuth = True
       userGroup = user.UserGroup
       #queryCustomers = await database_sync_to_async(user.Customer.all)()
@@ -274,6 +303,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   async def handleLogout(self, message):
+    user = await get_user(self.scope)
+    await self.leaveGroups(user)
     await logout(self.scope)
     await sync_to_async(self.scope['session'].save)()
     await self.send_json({
