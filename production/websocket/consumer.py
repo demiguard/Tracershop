@@ -16,7 +16,7 @@ from asgiref.sync import sync_to_async
 import decimal
 import logging
 from pprint import pprint
-from typing import Any, Dict, List, Callable, Coroutine
+from typing import Any, Dict, List, Callable, Coroutine, Optional
 
 # Django packages
 from channels.db import database_sync_to_async
@@ -24,6 +24,7 @@ from channels.auth import login, get_user, logout
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
 from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
 
@@ -56,8 +57,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
    Communication with all clients are needed because the client might cause updates that all clients are need to be aware of.
    Because of the low user count this is ok.
   """
-  channel_name = 'websocket'
-  global_group = "Global"
+  global_group = "global"
   channel_layer: RedisChannelLayer
 
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
@@ -75,16 +75,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def decode_json(cls, content: str) -> Dict:
     return decode(content)
 
-  async def enterGroups(self, user: User):
+  async def enterUserGroups(self, user: User):
+    if isinstance(user, AnonymousUser):
+      return
+
     if user.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
-      await self.channel_layer.group_add('production', channel=self.channel_name)
+      await self.channel_layer.group_add('production', self.channel_name)
     if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
       customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
       for customerID in customerIDs:
-        await self.channel_layer.group_add(f'customer_{customerID}', channel=self.channel_name)
+        await self.channel_layer.group_add(f'customer_{customerID}', self.channel_name)
 
 
-  async def leaveGroups(self, user: User):
+  async def leaveUserGroups(self, user: User):
+    if isinstance(user, AnonymousUser):
+      return
+
     if user.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_discard('production', channel=self.channel_name)
     if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
@@ -96,15 +102,26 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def connect(self):
     """Method called when a user connect
     """
+    await self.channel_layer.group_add(self.global_group, self.channel_name)
     user = await get_user(self.scope)
-    await self.enterGroups(user)
+    await self.enterUserGroups(user)
     await self.accept()
 
   async def disconnect(self, close_code):
     user = await get_user(self.scope)
-    await self.leaveGroups(user)
+    await self.leaveUserGroups(user)
+    await self.channel_layer.group_discard(self.global_group, self.channel_name)
 
-  async def __broadcast(self, message: Dict):
+
+  def __prepBoardcastMessage(self, message: Dict) -> None:
+    if 'type' not in message:
+      message['type'] = "broadcastMessage" # This is needed to point it to the send place
+
+    if WEBSOCKET_MESSAGE_SUCCESS not in message:
+      message[WEBSOCKET_MESSAGE_SUCCESS] = WEBSOCKET_MESSAGE_SUCCESS
+
+
+  async def __broadcastGlobal(self, message: Dict):
     """Boardcast only to produciton
 
     Args:
@@ -113,15 +130,33 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Raises:
         Exception: _description_
     """
-    if 'type' in message:
-      raise Exception
-    message['type'] = "broadcastMessage" # This is needed to point it to the send place
+    self.__prepBoardcastMessage(message)
+    await self.channel_layer.group_send(self.global_group, message) #
+
+
+  async def __broadcastProduction(self, message: Dict):
+    """Boardcast only to produciton
+
+    Args:
+        message (Dict): _description_
+
+    Raises:
+        Exception: _description_
+    """
+    self.__prepBoardcastMessage(message)
     await self.channel_layer.group_send('production', message) #
 
 
-  async def __broadcastCustomer(self, )
+  async def __broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
+    self.__prepBoardcastMessage(message)
+    if customerIDs is None:
+      await self.__broadcastGlobal(message)
+      return
 
 
+    await self.__broadcastProduction(message)
+    for customerID in customerIDs:
+      await self.channel_layer.group_send(f'customer_{customerID}', message)
 
 
   async def broadcastMessage(self, message: Dict):
@@ -249,7 +284,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       isAuth = True
       await login(self.scope, user)
       await sync_to_async(self.scope["session"].save)()
-      await self.enterGroups(user)
+      await self.enterUserGroups(user)
       key = self.scope["session"].session_key
       userGroup = user.UserGroup
       customer = relatedCustomers
@@ -278,7 +313,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     user = await get_user(self.scope)
     if isinstance(user, User):
       username = user.username
-      await self.enterGroups(user)
+      await self.enterUserGroups(user)
       isAuth = True
       userGroup = user.UserGroup
       #queryCustomers = await database_sync_to_async(user.Customer.all)()
@@ -304,7 +339,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   async def handleLogout(self, message):
     user = await get_user(self.scope)
-    await self.leaveGroups(user)
+    await self.leaveUserGroups(user)
     await logout(self.scope)
     await sync_to_async(self.scope['session'].save)()
     await self.send_json({
@@ -312,27 +347,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     })
-
-  ##### END Auth methods
-  async def __broadcastState(self, message: Dict[str, Any], state: Dict[str, Any], refresh = False,):
-    """Sends an update message to the global group
-
-    Remember to serialize the new state
-
-    Args:
-      message (Dict[str, Any]): The original message send by the user
-      state (Dict[str, Any]): A serilized new state where each keyword is a JSON_XXX
-                              And the Value is a list of that type of objects.
-    """
-    await self.__broadcast({
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_REFRESH : refresh,
-      WEBSOCKET_DATA : state,
-    })
-
-
 
   ### GET STATE
   async def HandleGetState(self, message: Dict):
@@ -371,8 +385,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message[WEBSOCKET_DATA_ID],
       self.scope['user']
     )
+
     if success:
-      await self.__broadcast({
+      await self.__broadcastGlobal({
         WEBSOCKET_DATA : True,
         WEBSOCKET_DATA_ID : [message[WEBSOCKET_DATA_ID]],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
@@ -398,10 +413,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATATYPE
     """
     instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
+    customerIDs = await self.db.getCustomerIDs(instances)
     serialized_data = await self.db.serialize_dict({
         message[WEBSOCKET_DATATYPE] : instances
       })
-    await self.__broadcastState(message, serialized_data)
+    await self.__broadcastCustomer({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : serialized_data,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+      WEBSOCKET_REFRESH : False,
+    }, customerIDs)
 
 
   async def HandleModelEdit(self, message: Dict) -> None:
@@ -417,10 +439,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message[WEBSOCKET_DATA],
     )
     if updatedModels is not None:
+      customerIDs = await self.db.getCustomerIDs(updatedModels)
+
       serialized_data = await self.db.serialize_dict({
         message[WEBSOCKET_DATATYPE] : updatedModels
       })
-      await self.__broadcastState(message, serialized_data, False)
+      await self.__broadcastCustomer({
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_DATA : serialized_data,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+        WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+        WEBSOCKET_REFRESH : False
+      }, customerIDs)
     else:
       await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -464,6 +494,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if not Auth[AUTH_USERNAME] == self.scope['user'].username:
       return await self.__RejectFreeing(message)
 
+    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME], password=Auth[AUTH_PASSWORD])
+    if not user:
+      return await self.__RejectFreeing(message)
+
     # Authentication successful update
     data = message[WEBSOCKET_DATA]
     orders, vials = await self.db.releaseOrders(data[JSON_DELIVER_TIME],
@@ -471,19 +505,21 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                                 data[JSON_VIAL],
                                                 self.scope['user'],
                                                 self.datetimeNow.now())
+    customerIDs = await self.db.getCustomerIDs(orders)
+
     newState = await self.db.serialize_dict({
       JSON_ACTIVITY_ORDER : orders,
       JSON_VIAL : vials
     })
 
-    await self.__broadcast({
+    await self.__broadcastCustomer({
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : newState,
-    })
+    }, customerIDs)
 
 
   async def HandleFreeInjectionOrder(self, message : Dict) -> None:
@@ -525,16 +561,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # Step 3 Boardcast it
     newState = await self.db.serialize_dict({
         JSON_INJECTION_ORDER : [order],
-      })
+    })
 
-    await self.__broadcast({
+    await self.__broadcastProduction({
         AUTH_IS_AUTHENTICATED : True,
         WEBSOCKET_REFRESH : False,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_DATA : newState,
-      })
+    })
 
   async def HandleMoveOrders(self, message : Dict):
     """Moves an order to another time slot
@@ -546,11 +582,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
           JSON_DELIVERTIME
     """
     orders = await self.db.moveOrders(message[JSON_ACTIVITY_ORDER], message[JSON_DELIVER_TIME])
-    data = await self.db.serialize_dict({
-      JSON_ACTIVITY_ORDER : orders,
-    })
+    customerIDs = await self.db.getCustomerIDs(orders)
+    data = await self.db.serialize_dict({JSON_ACTIVITY_ORDER : orders,})
 
-    await self.__broadcastState(message, data)
+    await self.__broadcastCustomer({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_DATA : data,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    }, customerIDs)
 
   async def HandleRestoreOrders(self, message : Dict):
     """Restore an order to it's original time slot
@@ -562,11 +603,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
           JSON_DELIVERTIME
     """
     orders = await self.db.restoreDestinations(message[JSON_ACTIVITY_ORDER])
+    customerIDs = await self.db.getCustomerIDs(orders)
     data = await self.db.serialize_dict({
       JSON_ACTIVITY_ORDER : orders,
     })
 
-    await self.__broadcastState(message, data)
+    await self.__broadcastCustomer({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_DATA : data,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    }, customerIDs)
 
   async def HandleGetTimeSensitiveData(self, message: Dict[str, Any]):
     """Gets the orders around a point in time
@@ -577,7 +625,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
     data = await self.db.serialize_dict(
-      await self.db.getTimeSensitiveData(client_date, self.scope['user']))
+      await self.db.getTimeSensitiveData(client_date, self.scope['user'])
+    )
 
     await self.send_json({
       WEBSOCKET_DATA : data,
@@ -635,8 +684,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newOrderDict['ordered_by'] = user.id
 
     instances = await self.db.handleCreateModels(JSON_ACTIVITY_ORDER, newOrderDict)
-    serializedInstanced = await self.db.serialize_dict({JSON_ACTIVITY_ORDER : instances})
-    await self.__broadcastState(message, serializedInstanced)
+    customerIDs = await self.db.getCustomerIDs(instances)
+    data = await self.db.serialize_dict({JSON_ACTIVITY_ORDER : instances})
+    returnMessage = {
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_DATA : data,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    }
+
+    await self.__broadcastCustomer(returnMessage, customerIDs)
 
 
   async def HandleCreateInjectionOrder(self, message: Dict[str, Any]):
@@ -647,8 +705,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newOrderDict['ordered_by'] = user.id
 
     instances = await self.db.handleCreateModels(JSON_INJECTION_ORDER, newOrderDict)
-    serializedInstanced = await self.db.serialize_dict({JSON_INJECTION_ORDER : instances})
-    await self.__broadcastState(message, serializedInstanced)
+    customerIDs = await self.db.getCustomerIDs([instances])
+    data = await self.db.serialize_dict({JSON_INJECTION_ORDER : instances})
+    await self.__broadcastCustomer({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_DATA : data,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    }, customerIDs)
 
 
 

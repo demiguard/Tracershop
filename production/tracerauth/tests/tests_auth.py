@@ -109,8 +109,8 @@ class authTestCase(TransactionTestCase):
       WEBSOCKET_MESSAGE_ID : self.message_id,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
       WEBSOCKET_DATA : {
-        LEGACY_KEYWORD_BATCHNR : "messageBatchNumber",
-        LEGACY_KEYWORD_OID     : 6631
+        'lot_number' : "messageBatchNumber",
+        WEBSOCKET_DATA_ID : 6631
       },
       JSON_AUTH : {
         AUTH_USERNAME : TEST_ADMIN_USERNAME,

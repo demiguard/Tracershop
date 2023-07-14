@@ -178,7 +178,6 @@ class InjectionOrder(TracershopModel):
   ordered_by = ForeignKey(User, on_delete=SET_NULL, null=True, default=None, related_name="injection_ordered_by")
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
-  #
   lot_number = CharField(max_length=32, null=True, default=None)
   freed_datetime = DateTimeField(null=True, default=None)
   freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by")

@@ -31,7 +31,7 @@ from database.models import ServerConfiguration, Database, Address, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
-    UserAssignment
+    DeliveryEndpoint, UserAssignment
 from lib.ProductionJSON import ProductionJSONEncoder
 
 
@@ -73,55 +73,6 @@ class DatabaseInterface():
     return {
 
     }
-
-
-  @database_sync_to_async
-  def getServerConfiguration(self) -> ServerConfiguration:
-    """Get the server configuration
-
-    Here because it needs an async counterpart
-
-    Returns:
-        ServerConfiguration: the server configuration Instance
-    """
-    return ServerConfiguration.get()
-
-
-  ##### ----- Functions related to freeing Orders ----- #####
-  """_summary_
-
-    Returns:
-        _type_: _description_
-  @database_sync_to_async
-  def createPDF(
-    self,
-    Orders: ActivityOrderDataClass,
-    Vials: List[VialDataClass],
-    CoidOrder = None,
-    VialOrders = None,
-  ):
-    Order = Orders[0]
-    customer = self.SQL.getElement(Order.BID, CustomerDataClass)
-    Tracer = self.SQL.getElement(Order.tracer, TracerDataClass)
-    Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)
-    pdfPath = pdfGeneration.getPdfFilePath(customer, Order)
-    pdfGeneration.DrawActivityOrder(pdfPath, customer, Order, Vials, Isotope, Tracer, COID_ORDER=CoidOrder, VialOrders=VialOrders)
-    return pdfPath
-
-  @database_sync_to_async
-  def createInjectionPDF(
-      self,
-      InjectionOrder : InjectionOrderDataClass,
-    ):
-    customer = self.SQL.getElement(InjectionOrder.BID, CustomerDataClass)
-    Tracer = self.SQL.getElement(InjectionOrder.tracer, TracerDataClass)
-    Isotope = self.SQL.getElement(Tracer.isotope, IsotopeDataClass)
-
-    pdfPath = pdfGeneration.getPdfFilePath(customer, InjectionOrder)
-    pdfGeneration.DrawInjectionOrder(pdfPath, customer, InjectionOrder, Isotope, Tracer)
-
-    return pdfPath
-  """
 
   def __defaultModelDeserializer(self, model_identifier: str, jsonModel: Dict[str, Any]) -> TracershopModel:
     modelType = MODELS[model_identifier]
@@ -194,8 +145,8 @@ class DatabaseInterface():
     return canDelete
 
 
-  def __createModel(self, modelIdentifier: str, modelDict: Dict) -> TracershopModel:
-    instance = getModelType(modelIdentifier)()
+  def __createModel(self, model: Type[T], modelDict: Dict) -> T:
+    instance = model()
     instance.assignDict(modelDict)
     instance.save() # Sets primary key as side effect
 
@@ -203,10 +154,11 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def handleCreateModels(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]]) -> QuerySet[TracershopModel]:
+    modelType = getModelType(modelIdentifier)
     if isinstance(modelDicts, List):
-      models = [self.__createModel(modelIdentifier, modelDict) for modelDict in modelDicts]
+      models = [self.__createModel(modelType, modelDict) for modelDict in modelDicts]
     else:
-      models = [self.__createModel(modelIdentifier, modelDicts)]
+      models = [self.__createModel(modelType, modelDicts)]
 
     modelType = MODELS[modelIdentifier]
     return modelType.objects.filter(pk__in=[model.pk for model in models])
@@ -286,11 +238,7 @@ class DatabaseInterface():
       query = self.__timeSensitiveFilter(query, centralDate, timeField)
       query = self.__userFilter(query, user)
       return query
-
-
     return filterFunction
-
-
 
   def __timeSensitiveFilter(self,
                           query: QuerySet[TracershopModel],
@@ -303,8 +251,6 @@ class DatabaseInterface():
     filter = { f"{timefield}__range" : [startDate, endDate] }
 
     return query.filter(**filter)
-
-
 
   def __userFilter(self, query: QuerySet[TracershopModel], user: User):
     return query
@@ -402,3 +348,58 @@ class DatabaseInterface():
     userAssignments = UserAssignment.objects.filter(user=user)
 
     return [userAssignment.customer.customer_id for userAssignment in userAssignments]
+
+  @database_sync_to_async
+  def getCustomerIDs(self, models: Iterable[TracershopModel]) -> Optional[List[int]]:
+    customerIDs = set()
+    timeSlotsIDs = set()
+    endpointIDs = set()
+    for instance in models:
+      if isinstance(instance, ClosedDate):
+        return None
+      if isinstance(instance, ActivityOrder):
+        timeSlot = instance.ordered_time_slot # Database Access
+        timeSlotID = timeSlot.activity_delivery_time_slot_id
+        if timeSlotID in timeSlotsIDs:
+          continue
+        else:
+          timeSlotsIDs.add(timeSlotID)
+
+        endpoint = timeSlot.destination # Database Access
+        endpointID = endpoint.tracer_endpoint_id
+        if endpointID in endpointIDs:
+          continue
+        else:
+          endpointIDs.add(endpointID)
+
+        owner = endpoint.owner # Database Access
+        customerIDs.add(owner.customer_id)
+      if isinstance(instance, InjectionOrder):
+        endpoint = instance.endpoint # Database Access
+        endpointID = endpoint.tracer_endpoint_id
+        if endpointID in endpointIDs:
+          continue
+        else:
+          endpointIDs.add(endpointID)
+
+        owner = endpoint.owner # Database Access
+        customerIDs.add(owner.customer_id)
+      if isinstance(instance, ActivityDeliveryTimeSlot):
+        endpoint = instance.destination # Database Access
+        endpointID = endpoint.tracer_endpoint_id
+        if endpointID in endpointIDs:
+          continue
+        else:
+          endpointIDs.add(endpointID)
+
+        owner = endpoint.owner # Database Access
+        customerIDs.add(owner.customer_id)
+      if isinstance(instance, DeliveryEndpoint):
+        owner = endpoint.owner # Database Access
+        customerIDs.add(owner.customer_id)
+      if isinstance(instance, UserAssignment):
+        customerIDs.add(instance.customer.customer_id)
+
+    return [customerID for customerID in customerIDs]
+
+
