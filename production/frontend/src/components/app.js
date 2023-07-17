@@ -81,7 +81,7 @@ export default class App extends Component {
   }
 
   getDatabaseObject(databaseField){
-    var dbObject = db.get(databaseField)
+    const dbObject = db.get(databaseField)
     if (!dbObject) return undefined
     return dbObject
   }
@@ -104,7 +104,7 @@ export default class App extends Component {
   /**
    * Updates the global state, shared by all sites
    * @param {Map<Number, Object>} state - The new state to add or updated
-   * @param {Boolean} refreshDatabase - if the old values stored should be discarded or not
+   * @param {Boolean} refreshDatabase - True, discard the old database - False, keep the old database
    */
   updateState(state, refreshDatabase){
     const appState = {...this.state}
