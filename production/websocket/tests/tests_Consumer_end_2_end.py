@@ -38,7 +38,7 @@ from core.side_effect_injection import DateTimeNow
 from constants import *
 from database.database_interface import DatabaseInterface
 from database.models import Address, ClosedDate, Database, ServerConfiguration, User, UserGroups, MODELS
-from websocket.Consumer import Consumer
+from websocket.consumer import Consumer
 
 # Asgi Loading
 django_asgi_app = get_asgi_application()
