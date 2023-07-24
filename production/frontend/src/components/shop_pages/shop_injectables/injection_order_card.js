@@ -20,7 +20,7 @@ import { getTimeString } from "../../../lib/chronomancy";
 *  injectionOrder : InjectionOrder
 *  injectionTracers : Array<Tracer>
 *  websocket : TracerWebSocket
-*  expiredDeadline : Boolean
+*  validDeadline : Boolean
 * }} props 
 * @returns Element
 */
@@ -28,7 +28,7 @@ export function InjectionOrderCard({
  injectionOrder,
  injectionTracers,
  websocket,
- expiredDeadline,
+ validDeadline,
 }) {
  // State
  const [tracer, setTracer] = useState(injectionOrder.tracer);
@@ -114,7 +114,7 @@ export function InjectionOrderCard({
                  && nullParser(injectionOrder.delivery_time) === deliveryTime
                  && injectionOrder.tracer_usage === usage)
 
- const canEdit = injectionOrder.status <= 1 && !expiredDeadline;
+ const canEdit = injectionOrder.status <= 1 && !validDeadline;
 
  let statusIcon = ""
  if(0 < injectionOrder.status){

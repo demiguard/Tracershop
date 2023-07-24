@@ -9,14 +9,14 @@ import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK
 import { ActivityOrder, Customer, ActivityDeliveryTimeSlot, DeliveryEndpoint, ActivityProduction, Tracer, ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
 import { changeState } from "../../lib/state_management.js";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
-import { _calculateDeadline, getDay, getToday, getWeekNumber } from "../../lib/chronomancy.js";
+import { calculateDeadline, evalBitChain, expiredDeadline, getBitChain, getDay, getToday, getWeekNumber } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 
 export { ShopOrderPage }
 
 const Content = {
   Manuel : OrderReview,
-  Automatisk : FutureBooking
+  Automatisk : FutureBooking,
 };
 
 
@@ -103,6 +103,15 @@ class ShopOrderPage extends Component {
     return retfunc
   }
 
+  setView(){
+    const retFunc = (event) => {
+      const newView = event.target.value;
+      db.set(DATABASE_SHOP_ORDER_PAGE, newView);
+      this.setState({...this.state, view : newView});
+    }
+    return retFunc
+  }
+
   setActiveEndpoint(){
     const retFunc = (event) => {
       const newEndpointID = Number(event.target.value);
@@ -112,7 +121,7 @@ class ShopOrderPage extends Component {
     return retFunc
   }
 
-  renderSelects(){
+  renderCustomerSelects(){
     const customerOptions = [];
     for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){ // Note new namespace for customer
       const /**@type {Customer} */ customer = _customer
@@ -179,7 +188,7 @@ class ShopOrderPage extends Component {
           options={SiteOptions}
           nameKey={"name"}
           valueKey={"id"}
-          onChange={changeState('view', this)}
+          onChange={this.setView().bind(this)}
           value={this.state.view}
         />
       </TracershopInputGroup>
@@ -192,13 +201,19 @@ class ShopOrderPage extends Component {
     const /**@type {ServerConfiguration} */ serverConfig = this.props[JSON_SERVER_CONFIG].get(1);
     const /**@type {Deadline} */ activityDeadline = this.props[JSON_DEADLINE].get(serverConfig.global_activity_deadline);
     const /**@type {Deadline} */ injectionDeadline = this.props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
-    const today = getToday()
 
-    const activityDeadlineDate = _calculateDeadline(activityDeadline, this.state.today)
-    const injectionDeadlineDate = _calculateDeadline(injectionDeadline, this.state.today)
+    const activityDeadlineExpired = expiredDeadline(activityDeadline, this.state.today)
+    const injectionDeadlineExpired = expiredDeadline(injectionDeadline, this.state.today);
 
-    const ActivityDeadlineExpired = activityDeadlineDate < today;
-    const InjectionDeadlineExpired = injectionDeadlineDate < today;
+    const timeSlots = [...this.props[JSON_DELIVER_TIME].values()].filter(
+      (_timeSlot) => {
+        const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
+        return timeSlot.destination === this.state.activeEndpoint;
+      });
+
+    const bitChain = getBitChain(timeSlots, this.props[JSON_PRODUCTION]);
+    const ActivityDeadline = activityDeadlineExpired && evalBitChain(bitChain, this.state.today);
+    const InjectionDeadline = injectionDeadlineExpired;
 
     const Site = Content[this.state.view]
     const siteProps = {...this.props}
@@ -206,28 +221,26 @@ class ShopOrderPage extends Component {
     siteProps[PROP_ACTIVE_DATE] = this.state.today;
     siteProps[PROP_ACTIVE_CUSTOMER] = this.state.activeCustomer;
     siteProps[PROP_ACTIVE_ENDPOINT] = this.state.activeEndpoint;
-    siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] = ActivityDeadlineExpired
-    siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = InjectionDeadlineExpired
+    siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] =  Boolean(ActivityDeadline);
+    siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = Boolean(InjectionDeadline);
 
     const calenderTimeSlots = [...this.props[JSON_DELIVER_TIME].values()].filter(
       (timeSlot) => {return timeSlot.destination === this.state.activeEndpoint}
     )
 
-    const calenderTimeSlotsIds = calenderTimeSlots.map(getId)
+    const calenderTimeSlotsIds = calenderTimeSlots.map(getId);
 
     const calenderActivityOrders = [...this.props[JSON_ACTIVITY_ORDER].values()].filter(
       (_activityOrder) => {
         const /**@type {ActivityOrder} */ activityOrder = _activityOrder
         return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
-      }
-    )
+      });
 
     const calenderInjectionOrders = [...this.props[JSON_INJECTION_ORDER].values()].filter(
       (_injectionOrder) => {
         const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
         return injectionOrder.endpoint === this.state.activeEndpoint;
-      }
-    )
+      });
 
     /** Relevant Bookings  */
     const calenderProps = {};
@@ -243,8 +256,7 @@ class ShopOrderPage extends Component {
       calenderInjectionOrders,
       this.props[JSON_PRODUCTION],
       calenderTimeSlots
-    )
-
+    );
 
     return (
     <Container>
@@ -256,7 +268,7 @@ class ShopOrderPage extends Component {
         <Col sm={3}>
           <Row>
             <Container>
-              {this.renderSelects()}
+              {this.renderCustomerSelects()}
             </Container>
           </Row>
           <Row>

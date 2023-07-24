@@ -16,7 +16,8 @@ from production.config import debug_file_log, SQL_file_log, error_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-
+import ldap
+from django_auth_ldap.config import LDAPSearch, LDAPSearchUnion
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
@@ -27,7 +28,7 @@ SECRET_KEY = KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.189.163', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk"]
+ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.167.172', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk"]
 
 
 # Application definition
@@ -59,8 +60,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'production.urls'
-
-
 
 TEMPLATES = [
     {
@@ -124,6 +123,18 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 AUTH_USER_MODEL = "database.User"
+
+# LDAP KEY WORDS
+AUTH_LDAP_SERVER_URI = "ldap://regionh.top.local"
+AUTH_LDAP_GLOBAL_OPTIONS = {
+    ldap.OPT_X_TLS_CACERTFILE : "", #type: ignore
+    ldap.OPT_X_TLS_REQUIRE_CERT : ldap.OPT_X_TLS_NEVER, #type: ignore
+    ldap.OPT_X_TLS_NEWCTX : 0, #type: ignore
+}
+
+# AUTH LOGIN
+AUTH_LDAP_BIND_DN = ""
+AUTH_LDAP_BIND_PASSWORD = ""
 
 AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
 

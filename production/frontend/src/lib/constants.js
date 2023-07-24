@@ -55,6 +55,12 @@ export const INJECTION_USAGE = {
   "3" : "Andet",
 }
 
+export const INJECTION_USAGE_ENUM = {
+  human : 1,
+  animal : 2,
+  other : 3,
+}
+
 
 export const ERROR_BACKGROUND_COLOR = "#FF4422";
 export const cssCenter = {
@@ -122,8 +128,13 @@ export const JSON_MESSAGE_ASSIGNMENT = "messageAssignment";
 export const JSON_ENDPOINT = "deliveryEndpoint";
 export const JSON_LOCATION = "location";
 export const JSON_BOOKING = "booking";
+export const JSON_DICOM_ENDPOINT = "dicom_endpoint";
+export const JSON_LEGACY_PRODUCTION_MEMBER = "legacy_production_member";
+export const JSON_LEGACY_INJECTION_ORDER = "legacy_injection_order";
+export const JSON_LEGACY_ACTIVITY_ORDER = "legacy_activity_order";
 
 
+// These keyword gets allocated in database
 export const JSON_KEYWORDS = [
   JSON_ADDRESS,
   JSON_ACTIVITY_ORDER,
@@ -148,9 +159,13 @@ export const JSON_KEYWORDS = [
   JSON_USER,
   JSON_USER_ASSIGNMENT,
   JSON_VIAL,
+  JSON_DICOM_ENDPOINT,
+  JSON_LEGACY_PRODUCTION_MEMBER,
+  JSON_LEGACY_INJECTION_ORDER,
+  JSON_LEGACY_ACTIVITY_ORDER,
 ]
 
-//Keywords - Refers to a keyword with in a data class
+//Keywords - Refers to a keyword with in a legacy data class
 export const LEGACY_KEYWORD_ACTIVITY = "activity";
 export const LEGACY_KEYWORD_ADDRESS_1 = "addr1";
 export const LEGACY_KEYWORD_ADDRESS_2 = "addr2";

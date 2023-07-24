@@ -1,7 +1,7 @@
 import React, {Component} from "react"
 import { propsExtraction } from "../../lib/props_management.js"
 import { ControlPanel } from "../admin_pages/control_panel.js"
-import Navbar from "../injectable/navbar.js"
+import Navbar, { TracershopNavbar } from "../injectable/navbar.js"
 import { ImitationPage } from "../admin_pages/imitation.js"
 
 
@@ -34,7 +34,7 @@ class ConfigSite extends Component {
 
     return(
       <div>
-        <Navbar
+        <TracershopNavbar
           ActiveKey={this.state.ActivePage}
           Names={Object.keys(Pages)}
           setActivePage={this.setActivePage.bind(this)}

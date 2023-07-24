@@ -10,7 +10,9 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
     JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
-    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_DEADLINE
+    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_DEADLINE, JSON_DICOM_ENDPOINT,\
+    JSON_LEGACY_PRODUCTION_MEMBER, JSON_LEGACY_INJECTION_ORDER,\
+    JSON_LEGACY_ACTIVITY_ORDER
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -27,9 +29,13 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_DATABASE : Database,
   JSON_DEADLINE : Deadline,
   JSON_DELIVER_TIME : ActivityDeliveryTimeSlot,
+  JSON_DICOM_ENDPOINT : DicomEndpoint,
   JSON_ENDPOINT : DeliveryEndpoint,
   JSON_INJECTION_ORDER : InjectionOrder,
   JSON_ISOTOPE : Isotope,
+  #JSON_LEGACY_ACTIVITY_ORDER : LegacyActivityOrder, # We shouldn't need these in frontend
+  #JSON_LEGACY_INJECTION_ORDER : LegacyInjectionOrder, # We shouldn't need these in frontend
+  JSON_LEGACY_PRODUCTION_MEMBER : LegacyProductionMember,
   JSON_LOCATION : Location,
   JSON_MESSAGE : Message,
   JSON_MESSAGE_ASSIGNMENT : MessageAssignment,
@@ -53,6 +59,7 @@ TIME_SENSITIVE_FIELDS : Dict[str, str] = {
   JSON_CLOSED_DATE : 'close_date',
   JSON_INJECTION_ORDER : 'delivery_date',
   JSON_VIAL : 'fill_date',
+
 }
 
 

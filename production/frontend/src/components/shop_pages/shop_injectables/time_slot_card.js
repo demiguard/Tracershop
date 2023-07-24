@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint } from "../../../dataclasses/dataclasses";
-import { ParseDanishNumber, nullParser } from "../../../lib/formatting";
+import { ParseDanishNumber, dateToDateString, nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { JSON_ACTIVITY_ORDER, cssCenter } from "../../../lib/constants";
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
@@ -158,7 +158,7 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
 * }} props - Input props
 * @returns {Element}
 */
-export function TimeSlotCard({timeSlot, activityOrders, websocket, date, timeSlots, overhead, expiredDeadline}){
+export function TimeSlotCard({timeSlot, activityOrders, websocket, date, timeSlots, overhead, expiredDeadline: validDeadline}){
  // State
  const [collapsed, setCollapsed] = useState(false)
  // Filter out irrelevant orders
@@ -198,7 +198,7 @@ export function TimeSlotCard({timeSlot, activityOrders, websocket, date, timeSlo
    header = <StatusIcon status={minimumStatus}/>
  }
 
- if(!expiredDeadline){
+ if(validDeadline){
   orderRows.push(<ActivityOrderRow
     key={-1}
     order={{

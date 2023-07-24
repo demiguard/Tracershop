@@ -41,7 +41,7 @@ function LocationTableRow({location, websocket, endpointOptions}){
     if (event.target.value === ""){
       newLocation.endpoint = null;
     } else {
-      newLocation.endpoint = null;
+      newLocation.endpoint = event.target.value;
     }
 
     websocket.sendEditModel(JSON_LOCATION, [newLocation]);
@@ -105,6 +105,8 @@ export function LocationTable(props){
     }
 
     return false;
+  }).sort((loc_1, loc_2) => {
+    return loc_2.location_code < loc_1.location_code
   }).map(
     (location, i) => {
       return (<LocationTableRow

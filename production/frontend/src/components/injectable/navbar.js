@@ -50,12 +50,46 @@ export default class Navbar extends Component {
     }
 
     return (
-     <BSNavbar className={styles.navbarMargin}>
+      <BSNavbar className={styles.navbarMargin}>
         <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
         {Elements}
-     </BSNavbar>
-   );
- }
+      </BSNavbar>
+    );
+  }
+}
+
+export function TracershopNavbar({
+  ActiveKey,
+  logout,
+  isAuthenticated,
+  Names,
+  NavbarElements,
+  setActivePage,
+}){
+
+  const Elements = (NavbarElements) ? NavbarElements : [];
+  for(const identifier of Object.keys(Names)) {
+      Elements.push(<Button
+        className={styles.NavbarElement}
+        variant={NavBarButtonType}
+        key={identifier}
+        onClick={() => setActivePage(identifier)}
+      >{identifier === ActiveKey ? <div>{Names[identifier]}</div> : <div>{Names[identifier]}</div>}</Button>);
+    }
+
+
+  if (isAuthenticated){
+    Elements.push((<Button
+      className={styles.NavbarElement}
+      key="logout"
+      onClick={logout}
+      variant={NavBarButtonType}>Log ud</Button>));
+  }
+
+  return (<BSNavbar className={styles.navbarMargin}>
+    <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
+    {Elements}
+  </BSNavbar>)
 }
 
 

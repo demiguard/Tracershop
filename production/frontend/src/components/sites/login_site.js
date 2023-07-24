@@ -1,5 +1,5 @@
 import React, {Component} from "react";
-import Navbar from "../injectable/navbar";
+import Navbar, { TracershopNavbar } from "../injectable/navbar";
 import { Container } from "react-bootstrap";
 import propTypes from "prop-types";
 import Cookies from "js-cookie";
@@ -67,7 +67,7 @@ class LoginSite extends Component {
 
   render() {
     return (<div>
-      <Navbar
+      <TracershopNavbar
         Names={[]}
         setActivePage={() => {}}
         isAuthenticated={false}

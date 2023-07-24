@@ -194,7 +194,9 @@ export default class TracerPage extends Component {
 
     return (
     <Container>
-      Tracer Filter: <FormControl value={this.state.filter} onChange={changeState("filter", this).bind(this)}/>
+      <FormControl 
+        placeholder="Tracer Filter: "
+        value={this.state.filter} onChange={changeState("filter", this).bind(this)}/>
       <Table>
         <thead>
           <tr>

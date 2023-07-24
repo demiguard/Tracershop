@@ -1,6 +1,6 @@
 import React, {Component } from "react";
 import { propsExtraction } from "../../lib/props_management";
-import Navbar from "../injectable/navbar";
+import Navbar, { TracershopNavbar } from "../injectable/navbar";
 import { ShopSetup } from "../shop_pages/shop_setup.js";
 import { ShopOrderPage } from "../shop_pages/shop_order_page.js";
 import { UserSetup} from "../shop_pages/user_setup.js"
@@ -35,7 +35,7 @@ class ShopSite extends Component {
 
     return(
       <div>
-        <Navbar
+        <TracershopNavbar
           Names={Object.keys(Pages)}
           logout={this.props.logout}
           isAuthenticated={true}

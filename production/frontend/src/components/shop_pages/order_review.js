@@ -1,5 +1,5 @@
 import React, { Component, useState } from "react";
-import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY } from "../../lib/constants";
+import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, INJECTION_USAGE_ENUM, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer, TracerCatalog } from "../../dataclasses/dataclasses";
 import { Card, Collapse, Container, Form, Row, Col, Button, FormControl, InputGroup } from "react-bootstrap";
 import { getId } from "../../lib/utils";
@@ -13,14 +13,11 @@ import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay, getToday } from "../../lib/chronomancy";
 
-
-
-
 /**
  * This object is the manual ordering and review for activity based orders
  * @param {{
  *    activityDeadlineExpired : Boolean,
- *    injectionDeadlineExpired : Boolean
+ *    injectionDeadlineValid : Boolean
  * }} props 
  * @returns Element
  */
@@ -78,7 +75,7 @@ export function OrderReview(props){
 
   function setTracer(tracer){
     return (e) => {
-      setActiveTracer(tracer.id)
+      setActiveTracer(tracer.id);
     }
   }
 
@@ -130,13 +127,11 @@ export function OrderReview(props){
       injectionOrder={injectionOrder}
       injectionTracers = {availableInjectionTracers}
       websocket={props[PROP_WEBSOCKET]}
-      expiredDeadline={props.injectionDeadlineExpired}
+      validDeadline={props.injectionDeadlineValid}
     />);
   })
 
-  
-
-  if((!props.injectionDeadlineExpired) && (availableInjectionTracers.length)) {
+  if((props.injectionDeadlineValid) && (availableInjectionTracers.length)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
                                 injectionOrder={{
@@ -144,7 +139,7 @@ export function OrderReview(props){
                                   delivery_date : dateString,
                                   injections : "",
                                   status : 0,
-                                  tracer_usage : 1,
+                                  tracer_usage : INJECTION_USAGE_ENUM.human,
                                   comment : "",
                                   ordered_by : null,
                                   endpoint : props[PROP_ACTIVE_ENDPOINT],

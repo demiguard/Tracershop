@@ -13,7 +13,9 @@ from pprint import pprint
 import mysql.connector as mysql
 
 # Tracershop Production Packages
-from database.models import Address, Database, User, UserGroups
+from database.models import Address, Database, User, UserGroups, Isotope,\
+    Tracer, ActivityDeliveryTimeSlot, ActivityProduction, Customer,\
+    DeadlineTypes,DeliveryEndpoint, TracerTypes
 #from database.production_database.SQLController import SQL
 #from database.production_database.SQLExecuter import Fetching, ExecuteQuery
 
@@ -24,22 +26,7 @@ TEST_PRODUCTION_USERNAME = "test_production"
 TEST_PRODUCTION_PASSWORD = "test_production_password"
 
 
-def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
-  add = Address(
-    ip="127.0.0.1",
-    port="3306",
-    description="Test legacy Database"
-  ).save()
-  Database(
-    databaseName=testDatabaseName,
-    username=DatabaseConfig["USER"],
-    password=DatabaseConfig["PASSWORD"],
-    address=Address.objects.all()[0],
-    testinDatabase=True,
-    legacy_database=True
-    ).save()
-
-
+def InitializeTestDatabase():
   test_admin = User(id=1, username=TEST_ADMIN_USERNAME, UserGroup=UserGroups.Admin, OldTracerBaseID=1337)
   test_admin.set_password(TEST_ADMIN_PASSWORD)
   test_admin.save()
@@ -49,241 +36,69 @@ def InitializeDjangoDatabase(DatabaseConfig, testDatabaseName):
   test_production.save()
 
 
-def CreateTestDatabase(DatabaseConfig):
-  """
-    This function creates a test legacy database
+  isotope = Isotope(
+      atomic_number=92,
+      atomic_mass=235,
+      halflife_seconds=1337, # it's more but doesn't matter,
+      atomic_letter='U'
+    )
+  isotope.save()
 
-    Returns:
-      databaseName
-  """
-
-  databaseName = "test_tracershop"
-
-  db_config = {
-    'user'     : DatabaseConfig["USER"],
-    "password" : DatabaseConfig["PASSWORD"],
-    "host"     : DatabaseConfig["HOST"],
-    "port"     : DatabaseConfig["PORT"]
-  }
-
-  conn = mysql.connect(**db_config)
-  cur = conn.cursor()
-
-  cur.execute(f"""DROP DATABASE IF EXISTS {databaseName}""")
-
-  cur.execute(f"""
-    CREATE DATABASE {databaseName}
-  """)
-
-  cur.execute(f"""
-    use {databaseName}
-  """)
-
-  cur.execute("""
-  CREATE TABLE Roles (
-    Id INT NOT NULL AUTO_INCREMENT,
-    Rolename CHAR(20) NOT NULL,
-    REALM CHAR(10),
-    PRIMARY KEY (Id)
+  tracer_activity = Tracer(
+      isotope=isotope,
+      shortname = "tracer",
+      clinical_name="",
+      tracer_type=TracerTypes.ActivityBased,
+      vial_tag=""
   )
-  """)
+  tracer_activity.save()
 
-  cur.execute("""
-    INSERT INTO Roles(Id, Rolename, Realm) VALUES
-    (1, \"Manager\", \"*\"),
-    (4, \"Kunde\", \"*\"),
-    (5, \"Transport\", \"*\"),
-    (6, \"Produktion\", \"*\"),
-    (7, \"Statistik\", \"*\")
-  """)
-
-  cur.execute("""
-  CREATE TABLE TracerCustomer(
-    tracer_id INT,
-    customer_id INT,
-    ID INT AUTO_INCREMENT PRIMARY KEY
+  tracer_injection = Tracer(
+      isotope=isotope,
+      shortname = "tracer",
+      clinical_name="",
+      tracer_type=TracerTypes.InjectionBased,
+      vial_tag=""
   )
-  """)
+  tracer_injection.save()
 
-  cur.execute("""
-  CREATE TABLE IF NOT EXISTS tracer_types(
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    description VARCHAR(300) DEFAULT ""
-  )""")
-
-  cur.execute("""
-  INSERT INTO tracer_types(
-    description
-  ) VALUES ("Activity Tracer"), ("Dose Tracer");
-  """)
-
-
-  cur.execute("""
-    CREATE TABLE Tracers(
-    id INT NOT NULL AUTO_INCREMENT,
-    name VARCHAR(60),
-    isotope INT,
-    in_use BOOL NOT NULL DEFAULT FALSE,
-    n_injections INT DEFAULT -1,
-    order_block INT,
-    tracer_type INT REFERENCES tracer_types(id)
-      ON UPDATE CASCADE
-      ON DELETE SET NULL,
-    longName VARCHAR(256),
-    PRIMARY KEY (id)
-  )""")
-
-  cur.execute("""
-    CREATE TABLE UserRoles(
-      Id_User INT,
-      Id_Role INT,
-      PRIMARY KEY (Id_User, Id_Role)
+  production = ActivityProduction(
+      tracer=tracer_activity,
+      production_day = 0,
+      production_time = "07:00:00",
     )
-  """)
+  production.save()
 
-  cur.execute("""
-    CREATE TABLE Users(
-      Id INT AUTO_INCREMENT NOT NULL,
-      PRIMARY KEY (Id),
-      Username CHAR(60) NOT NULL,
-      Realname CHAR(50),
-      EMail CHAR(60),
-      EMail2 CHAR(60),
-      EMail3 CHAR(60),
-      EMail4 CHAR(60),
-      overhead INT,
-      kundenr INT,
-      tlf INT,
-      contact VARCHAR(60),
-      addr1 VARCHAR(60),
-      addr2 VARCHAR(60),
-      addr3 VARCHAR(60),
-      addr4 VARCHAR(60),
-      shortname VARCHAR(30),
-      password VARCHAR(32)
+  customer = Customer(
+      customer_id = 78453,
+      short_name = "test",
+      long_name = "teeest"
     )
-  """)
+  customer.save()
 
-
-
-  cur.execute("""
-  CREATE TABLE orders(
-    BID INT,
-    OID INT PRIMARY KEY AUTO_INCREMENT,
-    order_time TIMESTAMP
-      NOT NULL
-      DEFAULT CURRENT_TIMESTAMP
-      ON UPDATE CURRENT_TIMESTAMP,
-    amount INT,
-    deliver_datetime DATETIME,
-    status TINYINT,
-    batchnr varchar(20),
-    run TINYINT,
-    COID INT,
-    total_amount INT,
-    frigivet_amount INT,
-    frigivet_datetime DATETIME,
-    amount_o INT UNSIGNED,
-    total_amount_o INT UNSIGNED,
-    frigivet_af INT,
-    tracer INT NOT NULL,
-    volume DECIMAL(6,2),
-    doser DECIMAL(6,1),
-    comment VARCHAR(8000),
-    userName VARCHAR(128)
+  endpoint = DeliveryEndpoint(
+      tracer_endpoint_id = 67,
+      owner = customer,
+      name="endpoint",
   )
-  """)
+  endpoint.save()
 
-  cur.execute("""
-    CREATE TABLE VAL(
-      customer VARCHAR(20),
-      charge VARCHAR(20),
-      deposPos TINYINT(4),
-      filldate DATE,
-      filltime TIME,
-      volume DECIMAL(7,2),
-      gros DECIMAL(7,2),
-      tare DECIMAL(7,2),
-      net  DECIMAL(7,2),
-      product VARCHAR(20),
-      ID INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-      activity DECIMAL(9,2),
-      order_id int DEFAULT NULL REFERENCES orders(oid) ON UPDATE CASCADE ON DELETE RESTRICT
-    )
-  """)
+  timeSlot_1 = ActivityDeliveryTimeSlot(
+      activity_delivery_time_slot_id = 7,
+      weekly_repeat = 0,
+      delivery_time = "08:00:00",
+      destination=endpoint,
+      production_run=production
+  )
+  timeSlot_1.save()
 
-  cur.execute("""
-    CREATE TABLE productionTimes(
-      day TINYINT,
-      ptime TIME,
-      run TINYINT,
-      max INT,
-      PTID INT UNSIGNED PRIMARY KEY AUTO_INCREMENT
-    )
-  """)
+  timeSlot_2 = ActivityDeliveryTimeSlot(
+      activity_delivery_time_slot_id = 8,
+      weekly_repeat = 0,
+      delivery_time = "11:30:00",
+      destination=endpoint,
+      production_run=production
+  )
+  timeSlot_2.save()
 
-  cur.execute("""
-    CREATE TABLE isotopes(
-      name VARCHAR(60),
-      halflife INT,
-      id INT PRIMARY KEY AUTO_INCREMENT
-    )
-  """)
-
-  cur.execute("""
-    CREATE TABLE blockDeliverDate(
-      BDID INT PRIMARY KEY AUTO_INCREMENT,
-      ddate DATE
-    )
-  """)
-
-  cur.execute("""
-  CREATE TABLE deliverTimes(
-    BID INT,
-    day TINYINT,
-    repeat_t TINYINT,
-    dtime TIME,
-    max INT,
-    DTID INT UNSIGNED PRIMARY KEY AUTO_INCREMENT,
-    run TINYINT
-    )
-  """)
-
-  cur.execute("""
-    CREATE TABLE t_orders(
-      BID INT,
-      OID INT PRIMARY KEY AUTO_INCREMENT,
-      order_time TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-      deliver_datetime DATETIME,
-      status TINYINT,
-      batchnr VARCHAR(20),
-      run TINYINT,
-      COID INT,
-      frigivet_datetime datetime,
-      frigivet_af INT,
-      tracer INT,
-      n_injections TINYINT,
-      anvendelse VARCHAR(10),
-      comment VARCHAR(8000),
-      userName VARCHAR(128)
-    )
-  """)
-
-  conn.close()
-  return databaseName
-
-def DestroyTestDatabase(DatabaseConfig):
-  db_config = {
-    'user' : DatabaseConfig["USER"],
-    "password" : DatabaseConfig["PASSWORD"],
-    "host"     : DatabaseConfig["HOST"],
-    "port"     : DatabaseConfig["PORT"]
-  }
-
-  conn = mysql.connect(**db_config)
-  cur = conn.cursor()
-  cur.execute("""
-    DROP DATABASE test_tracershop
-  """)
-
-  conn.close()
+  return (isotope, tracer_activity, tracer_injection, production, customer, endpoint, timeSlot_1, timeSlot_2, test_admin, test_production)

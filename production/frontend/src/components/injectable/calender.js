@@ -6,7 +6,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALE
 import PropTypes from 'prop-types'
 import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "../../dataclasses/keywords";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Deadline, InjectionOrder } from "../../dataclasses/dataclasses";
-import { _calculateDeadline, getDay, getWeekNumber } from "../../lib/chronomancy";
+import { calculateDeadline, evalBitChain, getBitChain, getDay, getWeekNumber } from "../../lib/chronomancy";
 
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 
@@ -262,13 +262,13 @@ export function getColorProduction(
 
     const today = new Date()
     if(activity_deadline){
-      const deadline_date = _calculateDeadline(activity_deadline, date);
+      const deadline_date = calculateDeadline(activity_deadline, date);
       if (deadline_date < today) {
         activity_color_id = 5;
       }
     }
     if(injection_deadline){
-      const deadline_date = _calculateDeadline(injection_deadline, date);
+      const deadline_date = calculateDeadline(injection_deadline, date);
       if (deadline_date < today) {
         injection_color_id = 5;
       }
@@ -315,41 +315,27 @@ export function getColorShop(
   const dateActivityMapping = createDateMap(activity_orders)
   const dateInjectionMapping = createDateMap(injection_orders)
 
-  let /**@Number a 14 bit key, where a 1-bit indicate that they can order on this day. (even weekday / odd weekday) */ ordering_bitChain = 0
-  for(const timeSlot of timeSlots){
-    const production = productions.get(timeSlot.production_run);
-
-    if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
-      ordering_bitChain = ordering_bitChain | (1 << production.production_day);
-    }
-
-    if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
-      ordering_bitChain = ordering_bitChain | (1 << production.production_day + 7);
-    }
-  }
+  let /**@Number a 14 bit key, where a 1-bit indicate that they can order on this day. (even weekday / odd weekday) */ ordering_bitChain = getBitChain(timeSlots, productions)
 
   const retFunc = (dateString) => {
     const date = new Date(dateString);
-    const oddWeekNumber = (getWeekNumber(date) % 2) == 1
-    const day = getDay(date);
-
 
     let activity_color_id = 5;
     let injection_color_id = 0;
 
-    if(ordering_bitChain & (1 << (day + Number(oddWeekNumber) * 7))){
+    if(evalBitChain(ordering_bitChain, date)){
       activity_color_id = 0;
     }
 
     const today = new Date()
     if(activity_deadline){
-      const deadline_date = _calculateDeadline(activity_deadline, date);
+      const deadline_date = calculateDeadline(activity_deadline, date);
       if (deadline_date < today) {
         activity_color_id = 5;
       }
     }
     if(injection_deadline){
-      const deadline_date = _calculateDeadline(injection_deadline, date);
+      const deadline_date = calculateDeadline(injection_deadline, date);
       if (deadline_date < today) {
         injection_color_id = 5;
       }
@@ -366,11 +352,6 @@ export function getColorShop(
   }
   return retFunc
 }
-
-
-
-
-
 
 function productionGetMonthlyOrders(websocket){
   const retFunc = (NewMonth) => {

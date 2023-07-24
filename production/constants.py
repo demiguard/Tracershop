@@ -113,6 +113,10 @@ JSON_MESSAGE_ASSIGNMENT = "messageAssignment"
 JSON_ENDPOINT = "deliveryEndpoint"
 JSON_LOCATION = "location"
 JSON_BOOKING = "booking"
+JSON_DICOM_ENDPOINT = "dicom_endpoint"
+JSON_LEGACY_PRODUCTION_MEMBER = "legacy_production_member"
+JSON_LEGACY_INJECTION_ORDER = "legacy_injection_order"
+JSON_LEGACY_ACTIVITY_ORDER = "legacy_activity_order"
 
 #Keywords
 LEGACY_KEYWORD_ACTIVITY = "activity"

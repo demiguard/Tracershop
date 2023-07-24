@@ -1,67 +1,47 @@
-import React, {Component } from "react";
+import React, { useState } from "react";
 import { Container } from "react-bootstrap";
-import { propsExtraction } from "../../lib/props_management.js";
-import Navbar from "../injectable/navbar.js";
-import { CloseDaysPage } from "../production_pages/close_days_page.js";
-import CustomerPage from "../production_pages/customer_page.js";
+import Navbar, { TracershopNavbar } from "../injectable/navbar.js";
 import { OrderPage } from "../production_pages/order_page.js";
-import TracerPage from "../production_pages/tracer_page.js";
 import { VialPage } from "../production_pages/vial_page.js";
-import styles from "/src/css/Navbar.module.css"
 
-
-export { ProductionSite }
-
-
+import { SetupShop } from "../production_pages/setup_shop.js";
 
 const Pages = {
-  Ordre : OrderPage,
-  Kunder : CustomerPage,
-  Tracers : TracerPage,
-  Lukkedage : CloseDaysPage,
-  Hætteglas : VialPage,
+  ordre : OrderPage,
+  vial : VialPage,
+  setup : SetupShop,
 };
 
-class ProductionSite extends Component{
-  constructor(props){
-    super(props);
-    let firstKey;
-    for(const key of Object.keys(Pages)){
-      firstKey = key;
-      break;
-    }
+const SiteName = {
+  ordre : "Ordre",
+  vial : "Hætteglas",
+  setup : "Opsætning"
+}
 
-    const state = {
-      ActivePage : firstKey
-    }
 
-    this.state = state;
-
+export function ProductionSite(props) {
+  let firstKey;
+  for(const key of Object.keys(Pages)){
+    firstKey = key;
+    break;
   }
 
-  setActivePage(NewPageName) {
-    const NewState = {...this.state, ActivePage : NewPageName};
-    this.setState(NewState);
-  }
+  const [activePage, setActivePage] = useState(firstKey);
+  const UserPage = Pages[activePage];
 
-  render(){
-    const UserPage = Pages[this.state.ActivePage];
-    return (
+  return (
       <div>
-        <Navbar
-          ActiveKey={this.state.ActivePage}
-          Names={Object.keys(Pages)}
-          setActivePage={this.setActivePage.bind(this)}
-          logout={this.props.logout}
+        <TracershopNavbar
+          ActiveKey={activePage}
+          Names={SiteName}
+          setActivePage={setActivePage}
+          logout={props.logout}
           isAuthenticated={true}
-          NavbarElements={this.props.NavbarElements}
+          NavbarElements={props.NavbarElements}
         />
         <Container>
-          <UserPage
-            {...this.props}
-            />
-          </Container>
+          <UserPage {...props}/>
+        </Container>
       </div>
-    )
-  }
+  );
 }

@@ -27,6 +27,7 @@ from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, 
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
+from django.db.models import QuerySet
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
@@ -113,7 +114,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.channel_layer.group_discard(self.global_group, self.channel_name)
 
 
-  def __prepBoardcastMessage(self, message: Dict) -> None:
+  def __prepBroadcastMessage(self, message: Dict) -> None:
     if 'type' not in message:
       message['type'] = "broadcastMessage" # This is needed to point it to the send place
 
@@ -130,7 +131,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Raises:
         Exception: _description_
     """
-    self.__prepBoardcastMessage(message)
+    self.__prepBroadcastMessage(message)
     await self.channel_layer.group_send(self.global_group, message) #
 
 
@@ -143,12 +144,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Raises:
         Exception: _description_
     """
-    self.__prepBoardcastMessage(message)
+    self.__prepBroadcastMessage(message)
     await self.channel_layer.group_send('production', message) #
 
 
   async def __broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
-    self.__prepBoardcastMessage(message)
+    self.__prepBroadcastMessage(message)
     if customerIDs is None:
       await self.__broadcastGlobal(message)
       return
@@ -222,8 +223,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
       #await self.HandleUnknownError(E, message)
 
   ### Error handling ###
-  async def HandleUnknownError(self, exception : Exception, FailingMessage : dict):
-    """This Function is triggered when an unhandled exception is happens server side.
+  async def HandleUnknownError(self,
+                               exception : Exception,
+                               FailingMessage : dict):
+    """
+    This Function is triggered when an unhandled exception is happens server side.
     It sends an Error message back to the client informing it,
     that server was unable to process the request, due to some unknown bug.
     The intent of this function is better displays bugs to the user, so that they can be fixed.
@@ -274,11 +278,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
     auth = message[JSON_AUTH]
     username = auth[AUTH_USERNAME]
     password = auth[AUTH_PASSWORD]
-    user = await database_sync_to_async(authenticate)(username=username, password=password)
+    user = await database_sync_to_async(authenticate)(username=username,
+                                                      password=password)
 
     if user:
       relatedCustomers = []
-      if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser,]:
+      if user.UserGroup in [UserGroups.ShopAdmin,
+                            UserGroups.ShopExternal,
+                            UserGroups.ShopUser,]:
         relatedCustomers = await self.db.getRelatedCustomerIDs(user)
 
       isAuth = True
@@ -412,7 +419,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATA
                                   WEBSOCKET_DATATYPE
     """
-    instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA])
+    instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
+                                                 message[WEBSOCKET_DATA])
     customerIDs = await self.db.getCustomerIDs(instances)
     serialized_data = await self.db.serialize_dict({
         message[WEBSOCKET_DATATYPE] : instances
@@ -637,46 +645,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
 
-  async def handleBookingOrders(self, message: Dict[str, Any]):
-    """handles a request to place an order based on bookings
-    Only handle a single tracer
-
-    if successful boardcast new orders to all users
-
-    Args:
-      message (Dict[str, Any]):
-        WEBSOCKET_DATA:
-          JSON_TRACER - int mapped to the tracer
-          JSON_BOOKING - List[int] - List of IDs of bookings
-    """
-    # This function does the following things
-    # 1. Check if user can order and is not exceeding any deadlines
-    # 2. Accumulating the activity / injections of tracer over endpoint / delivery times
-    #       Note here there's a difference because activity orders are places at time slots
-    #       While injection orders are simply placed
-
-
-    now = self.datetimeNow.now()
-    tracer = await self.db.getModel(JSON_TRACER,
-                                    message[WEBSOCKET_DATA][JSON_TRACER],
-                                    self.scope['user'])
-    if await orders.canOrder(now, tracer):
-      bookings, booking_orders = await orders.orderBookings(tracer, message[WEBSOCKET_DATA][JSON_BOOKING])
-    else:
-      return
-
-    if tracer.tracer_type == TracerTypes.ActivityBased:
-      order_type = JSON_ACTIVITY_ORDER
-    elif tracer.tracer_type == TracerTypes.InjectionBased:
-      order_type = JSON_INJECTION_ORDER
-    else:
-      raise Exception
-
-    await self.__broadcastState(message,{
-      JSON_BOOKING : bookings,
-      order_type : booking_orders,
-    })
-
   async def HandleCreateActivityOrder(self, message: Dict[str, Any]):
     user = self.scope['user']
     newOrderDict = message[WEBSOCKET_DATA]
@@ -716,6 +684,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
     }, customerIDs)
 
 
+  async def HandleMassOrder(self, message: Dict[str, Any]):
+    orders = await self.db.massOrder(message[WEBSOCKET_DATA])
+    ActivityCustomerIDs = await self.db.getCustomerIDs(orders[JSON_ACTIVITY_ORDER])
+    InjectionCustomerIDs = await self.db.getCustomerIDs(orders[JSON_INJECTION_ORDER])
+
+    customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
+    customerIDs = [customerID for customerID in customerIDset]
+
+    data =  await self.db.serialize_dict(orders)
+    await self.__broadcastCustomer({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_DATA : data,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    }, customerIDs)
 
   Handlers = {
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
@@ -733,4 +717,5 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER : HandleCreateInjectionOrder,
     WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrderTimeSlot,
     WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
+    WEBSOCKET_MESSAGE_MASS_ORDER : HandleMassOrder
   }

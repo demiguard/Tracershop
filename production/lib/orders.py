@@ -24,7 +24,7 @@ def __createInjectionOrdersToBookings(tracer: Tracer,
     booking.status = BookingStatus.Ordered
     procedure = booking.procedure
     endpoint = booking.location.endpoint
-    orders.push(InjectionOrder(
+    orders.append(InjectionOrder(
       delivery_time=booking.start_time,
       delivery_date=booking.start_date,
       status=OrderStatus.Ordered,

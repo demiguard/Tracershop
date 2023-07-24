@@ -7,16 +7,18 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
 from datetime import datetime, date, timedelta
-from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union
+from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union, MutableSet
 import logging
 from functools import reduce
+from math import floor
 
 # Django Packages
 from channels.db import database_sync_to_async
+from django.apps import apps
+from django.core.serializers import serialize
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import Model, ForeignKey, IntegerField
 from django.db.models.query import QuerySet
-from django.core.serializers import serialize
-from django.apps import apps
 
 
 # Tracershop Production Packages
@@ -26,14 +28,17 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
     JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
-    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT
+    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_LEGACY_ACTIVITY_ORDER,\
+    JSON_LEGACY_INJECTION_ORDER
 from database.models import ServerConfiguration, Database, Address, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
-    DeliveryEndpoint, UserAssignment
+    DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
+    TracerUsage, ActivityProduction
 from lib.ProductionJSON import ProductionJSONEncoder
-
+from lib.calenderHelper import combine_date_time, subtract_times
+from lib.physics import tracerDecayFactor
 
 logger = logging.getLogger('DebugLogger')
 
@@ -241,9 +246,9 @@ class DatabaseInterface():
     return filterFunction
 
   def __timeSensitiveFilter(self,
-                          query: QuerySet[TracershopModel],
-                          centralDate: datetime,
-                          timefield: str):
+                            query: QuerySet[TracershopModel],
+                            centralDate: datetime,
+                            timefield: str):
 
     startDate = centralDate - timedelta(days=self.serverConfig.DateRange)
     endDate = centralDate + timedelta(days=self.serverConfig.DateRange)
@@ -347,59 +352,172 @@ class DatabaseInterface():
   def getRelatedCustomerIDs(self, user: User) -> List[int]:
     userAssignments = UserAssignment.objects.filter(user=user)
 
-    return [userAssignment.customer.customer_id for userAssignment in userAssignments]
+    return [userAssignment.customer.customer_id
+              for userAssignment in userAssignments]
 
   @database_sync_to_async
-  def getCustomerIDs(self, models: Iterable[TracershopModel]) -> Optional[List[int]]:
+  def getCustomerIDs(self, models: Iterable[T]) -> Optional[List[int]]:
     customerIDs = set()
-    timeSlotsIDs = set()
     endpointIDs = set()
+    timeSlotsIDs = set()
+
+    # Helper Handler Functions, each of them should handle an instance type
+    # And add to the customerIDs, which is then converted to the related
+    # Customer IDs
+
+    def __UserAssignmentHandler(instance: UserAssignment):
+      customerIDs.add(instance.customer.customer_id)
+
+    def __EndpointHandler(instance: DeliveryEndpoint,):
+      owner = instance.owner # Database Access
+      customerIDs.add(owner.customer_id)
+
+    def __ActivityOrder(instance: ActivityOrder):
+      timeSlot = instance.ordered_time_slot # Database Access
+      timeSlotID = timeSlot.activity_delivery_time_slot_id
+      if timeSlotID in timeSlotsIDs:
+        return
+      else:
+        timeSlotsIDs.add(timeSlotID)
+
+      endpoint = timeSlot.destination # Database Access
+      endpointID = endpoint.tracer_endpoint_id
+      if endpointID in endpointIDs:
+        return
+      else:
+        endpointIDs.add(endpointID)
+
+      owner = endpoint.owner # Database Access
+      customerIDs.add(owner.customer_id)
+
+    def __InjectionOrderHandler(instance: InjectionOrder):
+      endpoint = instance.endpoint # Database Access
+      endpointID = endpoint.tracer_endpoint_id
+      if endpointID in endpointIDs:
+        return
+      else:
+        endpointIDs.add(endpointID)
+
+      owner = endpoint.owner # Database Access
+      customerIDs.add(owner.customer_id)
+
+    def __ActivityDeliveryTimeSlotHandler(instance: ActivityDeliveryTimeSlot):
+      endpoint = instance.destination # Database Access
+      endpointID = endpoint.tracer_endpoint_id
+      if endpointID in endpointIDs:
+        return
+      else:
+        endpointIDs.add(endpointID)
+
+      owner = endpoint.owner # Database Access
+      customerIDs.add(owner.customer_id)
+
+    modelHandlers: Dict[Type[TracershopModel], Callable] = { # No clue how to type hint Callable :(
+      ActivityDeliveryTimeSlot : __ActivityDeliveryTimeSlotHandler,
+      ActivityOrder : __ActivityOrder,
+      UserAssignment : __UserAssignmentHandler,
+      DeliveryEndpoint : __EndpointHandler,
+      InjectionOrder : __InjectionOrderHandler,
+    }
+
     for instance in models:
-      if isinstance(instance, ClosedDate):
+      handler = modelHandlers.get(instance.__class__, None)
+      if handler is None:
         return None
-      if isinstance(instance, ActivityOrder):
-        timeSlot = instance.ordered_time_slot # Database Access
-        timeSlotID = timeSlot.activity_delivery_time_slot_id
-        if timeSlotID in timeSlotsIDs:
-          continue
-        else:
-          timeSlotsIDs.add(timeSlotID)
-
-        endpoint = timeSlot.destination # Database Access
-        endpointID = endpoint.tracer_endpoint_id
-        if endpointID in endpointIDs:
-          continue
-        else:
-          endpointIDs.add(endpointID)
-
-        owner = endpoint.owner # Database Access
-        customerIDs.add(owner.customer_id)
-      if isinstance(instance, InjectionOrder):
-        endpoint = instance.endpoint # Database Access
-        endpointID = endpoint.tracer_endpoint_id
-        if endpointID in endpointIDs:
-          continue
-        else:
-          endpointIDs.add(endpointID)
-
-        owner = endpoint.owner # Database Access
-        customerIDs.add(owner.customer_id)
-      if isinstance(instance, ActivityDeliveryTimeSlot):
-        endpoint = instance.destination # Database Access
-        endpointID = endpoint.tracer_endpoint_id
-        if endpointID in endpointIDs:
-          continue
-        else:
-          endpointIDs.add(endpointID)
-
-        owner = endpoint.owner # Database Access
-        customerIDs.add(owner.customer_id)
-      if isinstance(instance, DeliveryEndpoint):
-        owner = endpoint.owner # Database Access
-        customerIDs.add(owner.customer_id)
-      if isinstance(instance, UserAssignment):
-        customerIDs.add(instance.customer.customer_id)
+      else:
+        handler(instance)
 
     return [customerID for customerID in customerIDs]
+
+  @database_sync_to_async
+  def massOrder(self, bookings: Dict[str, bool], user: User):
+    timeSlotsBookings: Dict[ActivityDeliveryTimeSlot, float] = {}
+    injectionBookings: List[InjectionOrder] = []
+    activityBookings: List[ActivityOrder] = []
+    bookingUpdated: List[Booking] = []
+
+    bookingDate = date(1970, 1 ,1)
+
+    for accessionNumber, ordering in bookings.items():
+      try:
+        booking = Booking.objects.get(accession_number=accessionNumber)
+      except ObjectDoesNotExist:
+        logger.error(f"Booking for accession Number {accessionNumber} have no matching backend copy")
+        continue
+      bookingDate = booking.start_date
+
+      procedure = booking.procedure
+      tracer = booking.procedure.tracer
+      endpoint = booking.location.endpoint
+
+      if tracer is None or endpoint is None:
+        logger.error(f"Booking for Accession number {accessionNumber} is missing either tracer: {tracer} or endpoint: {endpoint}")
+        continue
+
+      if not ordering:
+        booking.status = BookingStatus.Rejected
+        bookingUpdated.append(booking)
+
+      # Muh Turnery Operation
+      if tracer.tracer_type == TracerTypes.InjectionBased:
+        injectionBookings.append(InjectionOrder(
+          delivery_time=booking.start_time,
+          delivery_date=booking.start_date,
+          injections=procedure.tracer_units,
+          status=1,
+          tracer_usage=TracerUsage.human,
+          comment="",
+          ordered_by=user,
+          endpoint=endpoint,
+          tracer=tracer
+        ))
+
+        booking.status = BookingStatus.Ordered
+      else:
+        day=booking.start_date.weekday()
+        productions=ActivityProduction.objects.filter(
+          production_day=day,
+        )
+        booking_time = combine_date_time(booking.start_date, booking.start_time)\
+          + timedelta(minutes=procedure.delay_minutes)
+        timeSlots = ActivityDeliveryTimeSlot.objects.filter(
+          destination=endpoint,
+          production_run__in=productions,
+          delivery_time__lte=booking_time.time()
+        ).order_by('delivery_time').reverse()
+
+        timeSlot = timeSlots[0]
+        timeDelta = subtract_times(booking_time.time(), timeSlot.delivery_time)
+
+        activity = procedure.tracer_units / tracerDecayFactor(tracer, timeDelta.seconds)
+
+        if timeSlot not in timeSlotsBookings:
+          timeSlotsBookings[timeSlot] = 0
+        timeSlotsBookings[timeSlot] += activity
+
+        booking.status = BookingStatus.Ordered
+      bookingUpdated.append(booking)
+
+    for timeSlot, activity in timeSlotsBookings.items():
+      activityBookings.append(
+        ActivityOrder(
+          ordered_activity=floor(activity),
+          delivery_date=bookingDate,
+          status=OrderStatus.Accepted,
+          comment="",
+          ordered_time_slot=timeSlot,
+          ordered_by=user
+        )
+      )
+
+    activityOrders = ActivityOrder.objects.bulk_create(activityBookings)
+    injectionsOrders = InjectionOrder.objects.bulk_create(injectionBookings)
+
+    Booking.objects.bulk_update(bookingUpdated, ['status'])
+
+    return {
+      JSON_ACTIVITY_ORDER : activityOrders,
+      JSON_INJECTION_ORDER : injectionsOrders
+    }
 
 

@@ -23,7 +23,7 @@ class AdminSite extends Component {
   constructor(props){
     super(props)
 
-    var ActiveSite = db.get(DATABASE_ADMIN_PAGE);
+    let ActiveSite = db.get(DATABASE_ADMIN_PAGE);
     if (ActiveSite === undefined || ActiveSite === null){
       ActiveSite = "Production";
       db.set(DATABASE_ADMIN_PAGE, ActiveSite);
@@ -58,16 +58,14 @@ class AdminSite extends Component {
     }
 
 
-    const NavbarAdmin = [
-      (
+    const NavbarAdmin = [(
       <NavDropdown
         className={styles.NavbarElement + " btn-outline-primary " + SiteStyles.pad0tb}
         title={this.state.ActiveSite}
         key="SiteSelector"
       >
         {RenderedSites}
-      </NavDropdown>)
-    ];
+      </NavDropdown>)];
 
 
     const ActiveSite = sites[this.state.ActiveSite];

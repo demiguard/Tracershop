@@ -38,11 +38,14 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from core.side_effect_injection import DateTimeNow
 from constants import *
 from database.database_interface import DatabaseInterface
-
 from database.models import Address, ClosedDate, Database, ServerConfiguration,\
     User, UserGroups, MODELS, ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
     Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder
 from websocket.consumer import Consumer
+
+# Testing library
+from tests.helpers import InitializeTestDatabase
+
 
 # Asgi Loading
 django_asgi_app = get_asgi_application()
@@ -674,7 +677,7 @@ class ConsumerTestCase(TransactionTestCase):
         "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
     }
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
+    with override_settings(CHANNEL_LAYERS=channel_layers_setting):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 

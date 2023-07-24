@@ -1,16 +1,18 @@
 import React, { useState } from "react";
 import { Container, FormCheck, FormControl, Row, Table } from "react-bootstrap";
-import { JSON_PROCEDURE, JSON_TRACER } from "../../../lib/constants";
+import { JSON_PROCEDURE, JSON_TRACER, PROP_WEBSOCKET } from "../../../lib/constants";
 import { Procedure } from "../../../dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { Select } from "../../injectable/select";
 import { nullParser } from "../../../lib/formatting";
+import { TracerWebSocket } from "../../../lib/tracer_websocket";
 
 /**
  * 
  * @param {{
  *  procedure : Procedure
  *  tracers : Array<Object>
+ *  websocket : TracerWebSocket
  * }} param0 
  * @returns 
  */
@@ -27,20 +29,50 @@ function ProcedureRow({procedure, tracers, websocket}){
     if(tracerID === ""){
       tracerID = null;
     }
-    
+    const newProcedure = {...procedure, tracer : tracerID}
 
+    websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
   }
 
   function setUnits(event){
+    _setUnits(event.target.value)
 
+    const newUnits = Number(event.target.value);
+    // Guards
+    if(isNaN(newUnits)){
+      return;
+    }
+
+    if(newUnits < 0){
+      return;
+    }
+
+    const newProcedure = {...procedure, tracer_units : newUnits}
+
+    websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
   }
 
   function setDelay(event) {
+    _setDelay(event.target.value);
+    const newDelay = Number(event.target.value);
+    // Guards
+    if(isNaN(newDelay)){
+      return;
+    }
 
+
+
+    const newProcedure = {...procedure, delay_minutes : newDelay}
+
+    websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
   }
 
   function setUsage(event) {
+    const newUsage = !usage
+    _setUsage(newUsage)
+    const newProcedure = {...procedure, in_use : newUsage}
 
+    websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
   }
 
 
@@ -136,13 +168,17 @@ export function ProcedureTable(props){
         key={i}
         procedure={procedure}
         tracers={tracers}
+        websocket={props[PROP_WEBSOCKET]}
       />)
     }
   )
 
   return (
-  <div>
-    <Row>
+  <div style={{
+    marginTop : "15px",
+    marginBottom : "15px",
+  }}>
+    <div>
       <TracershopInputGroup label="Filter">
         <Select
           options={filterOptions}
@@ -155,7 +191,7 @@ export function ProcedureTable(props){
           />
           {filterForm}
       </TracershopInputGroup>
-    </Row>
+    </div>
     <Table>
       <thead>
         <tr>

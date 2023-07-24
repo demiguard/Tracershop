@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models import CharField
 
-from database.models import User, TracershopModel, Address, Database
+from database.models import User, TracershopModel, Address, Database, DicomEndpoint
 
 # Create your tests here.
 class ModelTestCases(TestCase):
@@ -42,3 +42,18 @@ class ModelTestCases(TestCase):
 
   def test_abstractSubscription(self):
     self.assertRaises(TypeError,TracershopModel)
+
+  def test_dicomEndpointName(self):
+    add_desc = Address(ip='127.0.0.1', port=12345)
+    dicomEndpoint = DicomEndpoint(address=add_desc, ae_title="TEST1TITLE")
+
+    self.assertEqual(str(dicomEndpoint),
+                     "TEST1TITLE - 127.0.0.1:12345")
+
+  def test_username(self):
+    user = User(
+      username="google"
+    )
+
+    self.assertEqual(user, "google")
+
