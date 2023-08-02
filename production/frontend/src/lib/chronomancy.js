@@ -3,7 +3,7 @@
  * It also partly exists to offload formatting
 */
 
-import { Deadline } from "../dataclasses/dataclasses";
+import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
 import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
 
@@ -174,13 +174,24 @@ export function evalBitChain(bitChain, date){
  *
  * @param {Deadline} deadline - The deadline in question
  * @param {Date} orderDate - The day that you want to order
+ * @param {Map<Number, ClosedDate> | undefined} closedDates
  * @param {Date | undefined} now - 
  * @returns {Boolean}
  */
-export function expiredDeadline(deadline, orderDate, now){
+export function expiredDeadline(deadline, orderDate, closedDates,  now){
   if (now === undefined){
     now = getToday();
   }
+  if (closedDates !== undefined){
+    const dateString = dateToDateString(orderDate)
+
+    for(const closedDate of closedDates.values()){
+      if (closedDate.close_date === dateString){
+        return false
+      }
+    }
+  }
+
 
   const deadlineDate = calculateDeadline(deadline, orderDate);
 

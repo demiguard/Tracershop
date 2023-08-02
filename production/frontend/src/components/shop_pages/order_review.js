@@ -1,7 +1,7 @@
 import React, { Component, useState } from "react";
-import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, INJECTION_USAGE_ENUM, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
+import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, INJECTION_USAGE_ENUM, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer, TracerCatalog } from "../../dataclasses/dataclasses";
-import { Card, Collapse, Container, Form, Row, Col, Button, FormControl, InputGroup } from "react-bootstrap";
+import { Card, Collapse, Container, Form, Row, Col, Button, FormControl, InputGroup, Modal } from "react-bootstrap";
 import { getId } from "../../lib/utils";
 import { FormatDateStr, FormatTime, ParseDanishNumber, dateToDateString, nullParser } from "../../lib/formatting";
 import { Select } from "../injectable/select.js"
@@ -12,13 +12,14 @@ import { TracerWebSocket } from "../../lib/tracer_websocket";
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay, getToday } from "../../lib/chronomancy";
+import { CalculatorModal } from "../modals/calculator_modal";
 
 /**
  * This object is the manual ordering and review for activity based orders
  * @param {{
  *    activityDeadlineExpired : Boolean,
  *    injectionDeadlineValid : Boolean
- * }} props 
+ * }} props
  * @returns Element
  */
 export function OrderReview(props){
@@ -40,7 +41,9 @@ export function OrderReview(props){
     }
   }
 
+  // State Definitions
   const [activeTracer, setActiveTracer] = useState(availableActivityTracers[0].id);
+
   const day = getDay(props[PROP_ACTIVE_DATE]);
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE]);
 
@@ -92,7 +95,6 @@ export function OrderReview(props){
     >
       {underline ? <u>{tracer.shortname}</u> : tracer.shortname}
     </Button>)
-
   })
 
   const overhead = overheadMap.get(activeTracer);
@@ -101,13 +103,15 @@ export function OrderReview(props){
     const timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
     return(<TimeSlotCard
       key={timeSlotID}
+      activeTracer={props[JSON_TRACER].get(activeTracer)}
       timeSlot={timeSlot}
       timeSlots={props[JSON_DELIVER_TIME]}
       date={props[PROP_ACTIVE_DATE]}
+      isotopes={props[JSON_ISOTOPE]}
       activityOrders={relevantActivityOrders}
       websocket={props[PROP_WEBSOCKET]}
       overhead={overhead}
-      expiredDeadline={props.activityDeadlineExpired}
+      validDeadline={props[PROP_EXPIRED_ACTIVITY_DEADLINE]}
       />)
     })
 
@@ -120,7 +124,6 @@ export function OrderReview(props){
         return matchingDay && matchingEndpoint;
   })
 
-
   const InjectionOrderCards = relevantInjectionOrders.map((injectionOrder) => {
     return (<InjectionOrderCard
       key={injectionOrder.id}
@@ -131,7 +134,7 @@ export function OrderReview(props){
     />);
   })
 
-  if((props.injectionDeadlineValid) && (availableInjectionTracers.length)) {
+  if((props[PROP_EXPIRED_INJECTION_DEADLINE]) && (availableInjectionTracers.length)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
                                 injectionOrder={{
@@ -147,8 +150,11 @@ export function OrderReview(props){
                                 }}
                                 injectionTracers = {availableInjectionTracers}
                                 websocket={props[PROP_WEBSOCKET]}
-  />)
+  />);
   }
+
+
+
 
   return (
   <Row>

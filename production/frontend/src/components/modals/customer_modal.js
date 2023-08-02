@@ -571,7 +571,6 @@ class CustomerModal extends Component {
         />
       </MarginInputGroup>
     </Col>)
-
   }
 
 

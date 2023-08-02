@@ -2,44 +2,52 @@ import React, { Component } from 'react'
 import {Image, Button} from 'react-bootstrap'
 import propTypes from 'prop-types'
 
-export { ClickableIcon, StatusIcon }
+export function ClickableIcon ({
+    altText,
+    src,
+    onClick,
+    label,
+    className ,
+    style,
+    variant,
+  }){
 
-class ClickableIcon extends Component {
-  static propTypes = {
-    altText: propTypes.string,
-    src: propTypes.string.isRequired,
-    onClick : propTypes.func,
-    label: propTypes.string,
-    className : propTypes.string
+
+  if(style === undefined){
+    style = {
+      padding : "0px",
+      justifyContent : 'center',
+      alignItems: 'center',
+      display: 'block',
+    }
   }
 
-  render(){
-    let className = 'statusIcon'
-    if (this.props.className) {
-      className = `statusIcon ${this.props.className}`
-    }
+  if(variant === undefined){
+    variant = "variant-light"
+  }
+
+
+  if (className) {
+    className = `statusIcon ${className}`;
+  } else {
+    className = "statusIcon";
+  }
 
     return <Button
-              style={{
-                padding : "0px",
-                justifyContent : 'center',
-                alignItems: 'center',
-                display: 'block',
-              }}
-              variant="variant-light"
-              aria-label={this.props.label}
-              onClick={this.props.onClick}
+              style={style}
+              variant={variant}
+              aria-label={label}
+              onClick={onClick}
     >
       <Image
         className={className}
-        src={this.props.src}
-        alt={this.props.altText}
+        src={src}
+        alt={altText}
       />
     </Button>
-  }
 }
 
-class StatusIcon extends Component {
+export class StatusIcon extends Component {
   static propTypes = {
     altText: propTypes.string,
     onClick : propTypes.func,

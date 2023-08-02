@@ -29,13 +29,13 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_LEGACY_ACTIVITY_ORDER,\
-    JSON_LEGACY_INJECTION_ORDER
+    JSON_LEGACY_INJECTION_ORDER, AUTH_USERNAME, AUTH_PASSWORD
 from database.models import ServerConfiguration, Database, Address, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
-    TracerUsage, ActivityProduction
+    TracerUsage, ActivityProduction, Customer
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -519,5 +519,28 @@ class DatabaseInterface():
       JSON_ACTIVITY_ORDER : activityOrders,
       JSON_INJECTION_ORDER : injectionsOrders
     }
+
+  @database_sync_to_async
+  def createExternalUser(self, userSkeleton: Dict[str, Any]):
+    """Create
+
+    Args:
+        userSkeleton (Dict[str, Any]): _description_
+    """
+    newExternalUser = User(username=userSkeleton[AUTH_USERNAME],
+                           UserGroup=UserGroups.ShopExternal)
+
+    newExternalUser.set_password(userSkeleton[AUTH_PASSWORD])
+    newExternalUser.save()
+
+    if JSON_CUSTOMER in userSkeleton:
+      customer = Customer.objects.get(pk=userSkeleton[JSON_CUSTOMER])
+
+      newUserAssignment = UserAssignment(user=newExternalUser, customer=customer)
+      newUserAssignment.save()
+    else:
+      newUserAssignment = None
+
+    return newExternalUser, newUserAssignment
 
 

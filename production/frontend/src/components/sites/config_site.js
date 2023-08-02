@@ -8,8 +8,13 @@ import { ImitationPage } from "../admin_pages/imitation.js"
 export { ConfigSite }
 
 const Pages = {
-  Kontrolpanel : ControlPanel, // Danish for key since keys are displayed.
-  Bruger_Imitation : ImitationPage
+  controlPanel : ControlPanel, // Danish for key since keys are displayed.
+  imitation : ImitationPage,
+}
+
+const PageNames = {
+  controlPanel : "Kontrol Panel",
+  imitation : "Bruger Imitation"
 }
 
 class ConfigSite extends Component {
@@ -17,7 +22,7 @@ class ConfigSite extends Component {
     super(props)
 
     this.state = {
-      ActivePage : "Kontrolpanel"
+      ActivePage : "controlPanel"
 
     }
   }
@@ -30,20 +35,18 @@ class ConfigSite extends Component {
   render(){
     const ActiveSite = Pages[this.state.ActivePage];
 
-    const props = propsExtraction(this.props);
-
     return(
       <div>
         <TracershopNavbar
           ActiveKey={this.state.ActivePage}
-          Names={Object.keys(Pages)}
+          Names={PageNames}
           setActivePage={this.setActivePage.bind(this)}
           logout={this.props.logout}
           isAuthenticated={true}
           NavbarElements={this.props.NavbarElements}
         />
         <ActiveSite
-          {...props}
+          {...this.props}
         />
       </div>
     )

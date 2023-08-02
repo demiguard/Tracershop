@@ -1,50 +1,76 @@
-import React, { Component } from 'react'
+import React, { Component, useState } from 'react'
 import propTypes, { element } from 'prop-types'
 import styles from "../../css/Site.module.css"
 import { Container } from 'react-bootstrap'
-import ReactHover, { Hover, Trigger } from 'react-hover'
-
-
 
 export { HoverBox }
 /**
  * Box that is displayed in a Hover
  */
 
-class HoverBox extends Component {
-  static propTypes = {
-    Base : propTypes.element.isRequired,
-    Hover : propTypes.element.isRequired,
-    shiftX : propTypes.number,
-    shiftY : propTypes.number,
-    followCursor : propTypes.bool,
+
+function Hover(props){
+  const { setVisibility, hoverState } = props;
+
+  return(
+    <div
+      className={styles.HoverBox}
+      onMouseOver={() => setVisibility(true)}
+      onMouseOut={() => setVisibility(false)}
+      style={hoverState}
+    >
+      {props.children}
+    </div>
+  )
+}
+
+function Trigger(props){
+  const { setVisibility } = props
+  // css import?
+  return(
+    <Container
+      onMouseOver={() => setVisibility(true)}
+      onMouseOut={() => setVisibility(false)}
+      onTouchStart={() => setVisibility(true)}
+      onTouchEnd={() => setVisibility(false)}
+    >
+      {props.children}
+    </Container>
+  )
+}
+
+function HoverBox (props){
+  const styleProps = props.styles !== undefined ? {...props.styles} : {}
+  const [hoverState, updateHoverComponentStyle] = useState({
+    display: 'none',
+    position: 'absolute',
+    zIndex : 999,
+    ...styleProps
+  })
+
+  function setVisibility (flag) {
+    let updatedStyles = null
+    if (flag) {
+      updatedStyles = { ...hoverState, display: 'block' }
+    } else {
+      updatedStyles = { ...hoverState, display: 'none' }
+    }
+    updateHoverComponentStyle(updatedStyles)
   }
 
-
-  static defaultProps = {
-    shiftX : 30,
-    shiftY : 0,
-    followCursor : false,
-  }
-
-  render(){
-    const TriggerOptions = {
-      followCursor: this.props.followCursor,
-      shiftX: this.props.shiftX,
-      shiftY: this.props.shiftY
-    };
-
-    return (
-    <ReactHover options={TriggerOptions}>
-      <Trigger type="trigger" styles={{width : '100%'}}>
-        <div>{this.props.Base}</div>
+  return (
+    <div>
+      <Trigger
+        setVisibility={setVisibility}
+      >
+        {props.Base}
       </Trigger>
-      <Hover type="Hover">
-        <Container className={styles.HoverBox}>
-          {this.props.Hover}
-        </Container>
+      <Hover
+        hoverState={hoverState}
+        setVisibility={setVisibility}
+      >
+        {props.Hover}
       </Hover>
-    </ReactHover>
-  );
-  }
+    </div>
+  )
 }

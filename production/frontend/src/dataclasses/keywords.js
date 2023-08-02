@@ -67,6 +67,11 @@ export const KEYWORD_ActivityDeliveryTimeSlot_DESTINATION = "destination";
 export const KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN = "production_run";
 export const KEYWORD_ActivityDeliveryTimeSlot_EXPIRATION_DATE = "expiration_date";
 
+// Model: DicomEndpoint
+export const KEYWORD_DicomEndpoint_DICOM_ENDPOINT_ID = "dicom_endpoint_id";
+export const KEYWORD_DicomEndpoint_ADDRESS = "address";
+export const KEYWORD_DicomEndpoint_AE_TITLE = "ae_title";
+
 // Model: DeliveryEndpoint
 export const KEYWORD_DeliveryEndpoint_TRACER_ENDPOINT_ID = "tracer_endpoint_id";
 export const KEYWORD_DeliveryEndpoint_ADDRESS = "address";
@@ -97,6 +102,10 @@ export const KEYWORD_Isotope_ATOMIC_NUMBER = "atomic_number";
 export const KEYWORD_Isotope_ATOMIC_MASS = "atomic_mass";
 export const KEYWORD_Isotope_HALFLIFE_SECONDS = "halflife_seconds";
 export const KEYWORD_Isotope_ATOMIC_LETTER = "atomic_letter";
+
+// Model: LegacyProductionMember
+export const KEYWORD_LegacyProductionMember_LEGACY_USER_ID = "legacy_user_id";
+export const KEYWORD_LegacyProductionMember_LEGACY_PRODUCTION_USERNAME = "legacy_production_username";
 
 // Model: Location
 export const KEYWORD_Location_LOCATION_ID = "location_id";
@@ -159,6 +168,8 @@ export const KEYWORD_ServerConfiguration_ADMINPHONENUMBER = "AdminPhoneNumber";
 export const KEYWORD_ServerConfiguration_ADMINEMAIL = "AdminEmail";
 export const KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE = "global_activity_deadline";
 export const KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE = "global_injection_deadline";
+export const KEYWORD_ServerConfiguration_PING_SERVICE_AE_TILE = "ping_service_ae_tile";
+export const KEYWORD_ServerConfiguration_RIS_DICOM_ENDPOINT = "ris_dicom_endpoint";
 
 // Model: User
 export const KEYWORD_User_LAST_LOGIN = "last_login";
@@ -166,10 +177,11 @@ export const KEYWORD_User_ID = "id";
 export const KEYWORD_User_USERNAME = "username";
 export const KEYWORD_User_PASSWORD = "password";
 export const KEYWORD_User_USERGROUP = "UserGroup";
+export const KEYWORD_User_ACTIVE = "active";
 export const KEYWORD_User_OLDTRACERBASEID = "OldTracerBaseID";
 
 // Model: UserAssignment
-export const KEYWORD_UserAssignment_USER_ASSIGNMENT = "user_assignment";
+export const KEYWORD_UserAssignment_USER_ASSIGNMENT_ID = "user_assignment_id";
 export const KEYWORD_UserAssignment_USER = "user";
 export const KEYWORD_UserAssignment_CUSTOMER = "customer";
 

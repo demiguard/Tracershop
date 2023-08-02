@@ -91,6 +91,14 @@ export class ActivityDeliveryTimeSlot {
   }
 }
 
+export class DicomEndpoint {
+  constructor(dicom_endpoint_id, address, ae_title, ) {
+    this.dicom_endpoint_id=dicom_endpoint_id
+    this.address=address
+    this.ae_title=ae_title
+  }
+}
+
 export class DeliveryEndpoint {
   constructor(tracer_endpoint_id, address, city, zip_code, phone, name, owner, ) {
     this.tracer_endpoint_id=tracer_endpoint_id
@@ -128,6 +136,13 @@ export class Isotope {
     this.atomic_mass=atomic_mass
     this.halflife_seconds=halflife_seconds
     this.atomic_letter=atomic_letter
+  }
+}
+
+export class LegacyProductionMember {
+  constructor(legacy_user_id, legacy_production_username, ) {
+    this.legacy_user_id=legacy_user_id
+    this.legacy_production_username=legacy_production_username
   }
 }
 
@@ -208,7 +223,7 @@ export class SecondaryEmail {
 }
 
 export class ServerConfiguration {
-  constructor(ID, ExternalDatabase, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ) {
+  constructor(ID, ExternalDatabase, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, ) {
     this.ID=ID
     this.ExternalDatabase=ExternalDatabase
     this.SMTPServer=SMTPServer
@@ -217,22 +232,25 @@ export class ServerConfiguration {
     this.AdminEmail=AdminEmail
     this.global_activity_deadline=global_activity_deadline
     this.global_injection_deadline=global_injection_deadline
+    this.ping_service_ae_tile=ping_service_ae_tile
+    this.ris_dicom_endpoint=ris_dicom_endpoint
   }
 }
 
 export class User {
-  constructor(last_login, id, username, UserGroup, OldTracerBaseID, ) {
+  constructor(last_login, id, username, UserGroup, active, OldTracerBaseID, ) {
     this.last_login=last_login
     this.id=id
     this.username=username
     this.UserGroup=UserGroup
+    this.active=active
     this.OldTracerBaseID=OldTracerBaseID
   }
 }
 
 export class UserAssignment {
-  constructor(user_assignment, user, customer, ) {
-    this.user_assignment=user_assignment
+  constructor(user_assignment_id, user, customer, ) {
+    this.user_assignment_id=user_assignment_id
     this.user=user
     this.customer=customer
   }
@@ -261,9 +279,11 @@ export const MODELS = {
   database : Database,
   deadline : Deadline,
   deliverTimes : ActivityDeliveryTimeSlot,
+  dicom_endpoint : DicomEndpoint,
   deliveryEndpoint : DeliveryEndpoint,
   t_orders : InjectionOrder,
   isotopes : Isotope,
+  legacy_production_member : LegacyProductionMember,
   location : Location,
   message : Message,
   messageAssignment : MessageAssignment,

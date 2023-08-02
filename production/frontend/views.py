@@ -20,12 +20,6 @@ def indexView(request, *args, **kwargs):
   return render(request, "frontend/index.html")
 
 def pdfView(request, customer:str, year: int, month : int, ID):
-  if request.user.UserGroup not in [
-      UserGroups.Admin,
-      UserGroups.ProductionAdmin,
-      UserGroups.ProductionUser]:
-    raise PermissionDenied
-
   if month < 10:
     month_text = f"0{month}"
   else:

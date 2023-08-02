@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
 import { renderTableRow } from "../../lib/rendering.js";
 import { changeState } from "../../lib/state_management.js";
@@ -8,36 +8,33 @@ import { JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_RUN, JSON_TRACER, PROP_ACTIVE_CU
 import { ClickableIcon } from "../injectable/icons.js"
 import { Customer } from "../../dataclasses/dataclasses.js";
 
-export { CustomerPage }
-
 const Modals = {
   CUSTOMER : CustomerModal,
   HISTORY  : HistoryModal,
 }
 
-export default class CustomerPage extends Component {
-  constructor(props) {
-    super(props);
+export function CustomerPage (props) {
+  const [state, _setState] = useState({
+    filter : "",
+    Modal : null,
+    activeCustomer : null,
+  })
 
-    this.state = {
-      filter : "",
-      Modal : null,
-      activeCustomer : null,
-    }
+  function setState(newState){
+    _setState({...state, ...newState})
   }
 
-  closeModal() {
-    this.setState({
-      ...this.state,
+
+  function closeModal() {
+    setState({
       Modal : null,
       activeCustomer : null
     });
   }
 
-  ActivateModal(key, Modal, This) {
+  function ActivateModal(key, Modal) {
     const retFunc = () => {
-      This.setState({
-        ...This.state,
+      setState({
         Modal : Modal,
         activeCustomer : key,
       });
@@ -45,10 +42,9 @@ export default class CustomerPage extends Component {
     return retFunc
   }
 
-  render() {
-    const /**@type {Array<Element>} */ customerRows = [];
-    const FilterRegEx = new RegExp(this.state.filter,'g')
-    for (const [ID, _customer] of this.props[JSON_CUSTOMER]) {
+  const /**@type {Array<Element>} */ customerRows = [];
+  const FilterRegEx = new RegExp(state.filter,'g')
+    for (const [ID, _customer] of props[JSON_CUSTOMER]) {
       const /**@type {Customer} */ customer = _customer
       if (FilterRegEx.test(customer.short_name)) {
         customerRows.push(renderTableRow(ID,[
@@ -58,28 +54,27 @@ export default class CustomerPage extends Component {
               <Col xs={2} style={{
                 display : "flex"
               }}>
-                <ClickableIcon src={'/static/images/setting.png'} onClick={this.ActivateModal(ID, Modals.CUSTOMER, this)}/>
-                <ClickableIcon src={'/static/images/bill.png'} onClick={this.ActivateModal(ID, Modals.HISTORY, this)}/>
+                <ClickableIcon src={'/static/images/setting.png'} onClick={ActivateModal(ID, Modals.CUSTOMER)}/>
+                <ClickableIcon src={'/static/images/bill.png'} onClick={ActivateModal(ID, Modals.HISTORY)}/>
               </Col>
-
             </Row>
           </Container>
         ]));
       }
     }
 
-    const Modal = (this.state.Modal) ? this.state.Modal : ""
+    const Modal = (state.Modal) ? state.Modal : ""
 
-    const modelProps = {...this.props};
-    modelProps[PROP_ACTIVE_CUSTOMER] = this.state.activeCustomer;
-    modelProps[PROP_ON_CLOSE] = this.closeModal.bind(this);
+    const modelProps = {...props};
+    modelProps[PROP_ACTIVE_CUSTOMER] = state.activeCustomer;
+    modelProps[PROP_ON_CLOSE] = closeModal;
 
     return (
     <Container>
       <Row>
         <FormControl
-          onChange={changeState('filter', this).bind(this)}
-          value={this.state.filter}
+          onChange={(event) => {setState({filter : event.target.value})}}
+          value={state.filter}
           placeholder="Kunde Filter"
         />
       </Row>
@@ -95,9 +90,7 @@ export default class CustomerPage extends Component {
           </tbody>
         </Table>
       </Row>
-      {this.state.Modal ? <Modal {...modelProps} /> : null}
-      </Container>
-    );
-  }
+        {state.Modal ? <Modal {...modelProps} /> : null}
+    </Container>);
 }
 

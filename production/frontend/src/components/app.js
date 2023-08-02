@@ -91,10 +91,10 @@ export default class App extends Component {
     const newStateMap = new Map(newState[key])
     if (ids instanceof Array){
       for(const id of ids){
-        newStateMap.delete(id)
+        newStateMap.delete(id);
       }
     } else {
-      newStateMap.delete(ids)
+      newStateMap.delete(ids);
     }
     newState[key] = newStateMap;
     this.setState(newState)

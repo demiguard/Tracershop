@@ -5,7 +5,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALE
 
 import PropTypes from 'prop-types'
 import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "../../dataclasses/keywords";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Deadline, InjectionOrder } from "../../dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, ClosedDate, Deadline, InjectionOrder } from "../../dataclasses/dataclasses";
 import { calculateDeadline, evalBitChain, getBitChain, getDay, getWeekNumber } from "../../lib/chronomancy";
 
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
@@ -244,6 +244,9 @@ export function getColorProduction(
   const dateInjectionMapping = createDateMap(injection_orders)
 
   const retFunc = (dateString) => {
+    if(closedDateSet.has(dateString)){
+      return "date-status55";
+    }
 
     const date = new Date(dateString);
     // Javascript have 0 sunday, 1 monday, ...
@@ -309,8 +312,9 @@ export function getColorShop(
   timeSlots,
 ) {
   const closedDateSet = new Set();
-  for(const [BDID, closed_date] of closed_dates){
-    closedDateSet.add(closed_date[KEYWORD_ClosedDate_CLOSE_DATE]) // Change this to a keyword
+  for(const [BDID, _closed_date] of closed_dates){
+    const /**@type {ClosedDate} */ closed_date = _closed_date
+    closedDateSet.add(closed_date.close_date) // Change this to a keyword
   }
   const dateActivityMapping = createDateMap(activity_orders)
   const dateInjectionMapping = createDateMap(injection_orders)
@@ -319,6 +323,10 @@ export function getColorShop(
 
   const retFunc = (dateString) => {
     const date = new Date(dateString);
+
+    if(closedDateSet.has(dateString)){
+      return "date-status55";
+    }
 
     let activity_color_id = 5;
     let injection_color_id = 0;

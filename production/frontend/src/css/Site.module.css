@@ -35,10 +35,11 @@
   max-width: 350px;
   background-color: #FFFFFF;
   padding: 5px;
-
+  z-index: 999;
   border: 1px;
   border-style: solid;
   border-color: var(--grey-1);
+
 }
 
 

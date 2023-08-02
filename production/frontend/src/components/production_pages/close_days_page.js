@@ -1,61 +1,41 @@
-import { ajax } from "jquery";
-import React, { Component } from "react";
-import { JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
-import { Calender, standardOrderMapping, productionGetMonthlyOrders } from "../injectable/calender";
+/** This is the page, where a production admin can create a closed day */
+import React, { useState } from "react";
+import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
+import { Calender, productionGetMonthlyOrders } from "../injectable/calender";
 
-import { FormatDateStr } from "../../lib/formatting.js";
+import { FormatDateStr, dateToDateString } from "../../lib/formatting.js";
+import { ClosedDate } from "../../dataclasses/dataclasses";
 
-export class CloseDaysPage extends Component {
-  constructor(props){
-    super(props);
+export function CloseDaysPage (props) {
+  const [today, setToday] = useState(new Date())
+  const closedDateMap = new Map();
 
-    this.state = {
-      today : new Date()
-    }
-
+  for(const [BDID, _closedDate] of props[JSON_CLOSED_DATE]){
+    const /**@type {ClosedDate} */ closedDate = _closedDate;
+    closedDateMap.set(closedDate.close_date, closedDate.id);
   }
 
-  changeCloseDay (DateObject, Calender) {
-    const closedDateSet = new Set();
-    for(const [BDID, cdate] of this.props[JSON_CLOSED_DATE]){
-      closedDateSet.add(cdate.ddate)
-    }
-    const dateStr = `${DateObject.getFullYear()}-${FormatDateStr(DateObject.getMonth() + 1)}-${FormatDateStr(FormatDateStr(DateObject.getDate()))}`
-    if (closedDateSet.has(dateStr)){
-      // Yeah my data structures REALLY are working against me here
-      let data;
-      for(const [_BDID, closeDate] of this.props[JSON_CLOSED_DATE]){
-        if (closeDate.ddate == dateStr){
-          data = closeDate;
-          break;
-        }
-      }
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_DELETE_DATA_CLASS);
-      message[WEBSOCKET_DATATYPE] = JSON_CLOSED_DATE;
-      message[WEBSOCKET_DATA] = data;
-      this.props.websocket.send(message);
+  function changeCloseDay (dateObject, Calender) {
+    const dateStr = dateToDateString(dateObject)
+    if (closedDateMap.has(dateStr)){
+      const closedDateID = closedDateMap.get(dateStr);
+      props[PROP_WEBSOCKET].sendDeleteModel(JSON_CLOSED_DATE, [closedDateID])
     } else { // Delete it
-      const data = {}
-      data[LEGACY_KEYWORD_DDATE] = dateStr
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_CREATE_DATA_CLASS);
-      message[WEBSOCKET_DATA] = data;
-      message[WEBSOCKET_DATATYPE] = JSON_CLOSED_DATE;
-      this.props.websocket.send(message);
+      const newClosedDate = new ClosedDate(undefined, dateStr);
+      props[PROP_WEBSOCKET].sendCreateModel(JSON_CLOSED_DATE,newClosedDate)
     }
   }
+  const calenderProps = {}
+  calenderProps[CALENDER_PROP_DATE] = today;
+  calenderProps[CALENDER_PROP_GET_COLOR] = (dateString) => {
+    return (closedDateMap.has(dateString)) ? "date-status55" : "date-status00";
+  };
+  calenderProps[CALENDER_PROP_ON_DAY_CLICK] = changeCloseDay;
+  calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = productionGetMonthlyOrders(props[PROP_WEBSOCKET])
 
-
-  render() {
-    return(
-    <div>
-      {/*
-      <Calender
-        date={this.state.today}
-        onDayClick={this.changeCloseDay.bind(this)}
-        onMonthChange={productionGetMonthlyOrders(this.props[PROP_WEBSOCKET])}
-        getColor={standardOrderMapping(this.props[JSON_ACTIVITY_ORDER], this.props[JSON_INJECTION_ORDER], this.props[JSON_PRODUCTION], this.props[JSON_CLOSED_DATE])}
-      />
-      */}
-    </div>);
-  }
+  return(
+  <div>
+    <Calender {...calenderProps}/>
+  </div>
+  );
 }

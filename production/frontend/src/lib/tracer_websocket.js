@@ -1,7 +1,7 @@
 import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS,
   WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_ORDER,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER } from "./constants.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER } from "./constants.js";
 import { MapDataName } from "./local_storage_driver.js";
 import { ParseJSONstr } from "./formatting.js";
 import { ActivityOrder, InjectionOrder } from "../dataclasses/dataclasses.js";
@@ -48,7 +48,8 @@ class TracerWebSocket {
           const state = ParseJSONstr(message[WEBSOCKET_DATA])
           this.StateHolder.updateState(state,message[WEBSOCKET_REFRESH]);
           break;
-        case WEBSOCKET_MESSAGE_MODEL_DELETE:{
+        case WEBSOCKET_MESSAGE_MODEL_DELETE: {
+            console.log(message);
             this.StateHolder.deleteModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID])
         }
         break
@@ -127,12 +128,31 @@ class TracerWebSocket {
   }
 
   sendCreateModel(modelType, models){
-    const message = {}
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_CREATE
-    message[WEBSOCKET_DATA] = models
-    message[WEBSOCKET_DATATYPE] = modelType
+    const message = {};
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_CREATE;
+    message[WEBSOCKET_DATA] = models;
+    message[WEBSOCKET_DATATYPE] = modelType;
 
     return this.send(message);
+  }
+
+  sendDeleteModel(modelType, models){
+    let ids;
+
+    if (models instanceof Array){
+      ids = models.map((model) => {return (typeof model === 'number') ? model : model.id});
+    } else if (typeof models === 'number') {
+      ids = [models];
+    } else {
+      ids = [models.id];
+    }
+
+    const message = {}
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_DELETE;
+    message[WEBSOCKET_DATA_ID] = ids;
+    message[WEBSOCKET_DATATYPE] = modelType;
+
+    this.send(message);
   }
 
   /**
@@ -156,6 +176,21 @@ class TracerWebSocket {
     message[WEBSOCKET_DATA] = newOrder
     message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER;
     return this.send(message);
+  }
+
+  sendChangePassword(userID, newPassword){
+    const message = {};
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD;
+    message[WEBSOCKET_DATA_ID] = userID;
+    message[AUTH_PASSWORD] = newPassword;
+    return this.send(message)
+  }
+
+  sendCreateExternalUser(userSkeleton){
+    const message = {}
+    message[WEBSOCKET_DATA] = userSkeleton
+    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER
+    return this.send(message)
   }
 }
 

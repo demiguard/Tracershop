@@ -30,6 +30,7 @@ from channels.sessions import SessionMiddlewareStack
 from channels.testing import WebsocketCommunicator
 from django.core import serializers
 from django.core.asgi import get_asgi_application
+from django.core.exceptions import ObjectDoesNotExist
 from django.urls import re_path
 from django.test import TestCase, TransactionTestCase, override_settings
 
@@ -1007,3 +1008,86 @@ class ConsumerTestCase(TransactionTestCase):
       })
       message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
+
+  async def test_deleteSingleModel(self):
+    customer_1 = Customer(
+      customer_id = 78453,
+      short_name = "test",
+      long_name = "teeest"
+    )
+    await database_sync_to_async(customer_1.save)()
+
+    customer_2 = Customer(
+      customer_id = 78454,
+      short_name = "test",
+      long_name = "teeest"
+    )
+    await database_sync_to_async(customer_2.save)()
+
+    channel_layers_setting = {
+      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
+    }
+
+    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
+      comm_admin = WebsocketCommunicator(app,"ws/")
+      _conn, _subprotocal = await comm_admin.connect()
+
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
+
+      await comm_admin.send_json_to({
+        WEBSOCKET_DATA_ID : 78454,
+        WEBSOCKET_DATATYPE : JSON_CUSTOMER,
+        WEBSOCKET_MESSAGE_ID : 69230481,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      })
+      message = await comm_admin.receive_json_from()
+      await comm_admin.disconnect()
+    # Assert Model is gone
+    with self.assertRaises(ObjectDoesNotExist):
+      await database_sync_to_async(Customer.objects.get)(pk=78454)
+
+
+  async def test_deleteMultipleModels(self):
+    customer_1 = Customer(
+      customer_id = 78453,
+      short_name = "test",
+      long_name = "teeest"
+    )
+    await database_sync_to_async(customer_1.save)()
+
+    customer_2 = Customer(
+      customer_id = 78454,
+      short_name = "test",
+      long_name = "teeest"
+    )
+    await database_sync_to_async(customer_2.save)()
+
+    channel_layers_setting = {
+      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
+    }
+
+    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
+      comm_admin = WebsocketCommunicator(app,"ws/")
+      _conn, _subprotocal = await comm_admin.connect()
+
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
+
+      await comm_admin.send_json_to({
+        WEBSOCKET_DATA_ID : [78453,78454],
+        WEBSOCKET_DATATYPE : JSON_CUSTOMER,
+        WEBSOCKET_MESSAGE_ID : 69230481,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      })
+      message = await comm_admin.receive_json_from()
+      await comm_admin.disconnect()
+
+    # Assert Model is gone
+    with self.assertRaises(ObjectDoesNotExist):
+      await database_sync_to_async(Customer.objects.get)(pk=78453)
+
+    with self.assertRaises(ObjectDoesNotExist):
+      await database_sync_to_async(Customer.objects.get)(pk=78454)

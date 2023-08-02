@@ -3,5 +3,5 @@ from .views import indexView, pdfView
 
 urlpatterns = [
   path('', indexView),
-  path('pdfs/<str:customer>/<int:year>/<int:month>/<int:ID>', pdfView),
+  #path('pdfs/<str:customer>/<int:year>/<int:month>/<int:ID>', pdfView),
 ]

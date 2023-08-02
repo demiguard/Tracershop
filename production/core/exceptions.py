@@ -21,3 +21,6 @@ class DatabaseCouldNotConnect(Exception):
 
 class DatabaseInvalidQueriesConfiguration(Exception):
   pass
+
+class IllegalActionAttempted(Exception):
+  pass

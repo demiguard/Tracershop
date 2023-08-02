@@ -15,6 +15,8 @@ __author__ = "Christoffer Vilstrup Jensen"
 from asgiref.sync import sync_to_async
 import decimal
 import logging
+import traceback
+import os
 from pprint import pprint
 from typing import Any, Dict, List, Callable, Coroutine, Optional
 
@@ -27,11 +29,13 @@ from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, 
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
+from django.core.exceptions import ObjectDoesNotExist
+from django.conf import settings
 from django.db.models import QuerySet
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import SQLInjectionException
+from core.exceptions import SQLInjectionException, IllegalActionAttempted
 from constants import * # Import the many WEBSOCKET constants, TO DO change this
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
@@ -214,13 +218,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
       else:
         await handler(self, message)
-    except SQLInjectionException as E:
-      user = self.scope['user']
-      error_logger.error(f"SQL injection detected by user: {user.username}")
-      # Log Some stuff
     except Exception as E: # pragma: no cover
-      raise E # Very broad catch here, to prevent a hanging message on the client side
-      #await self.HandleUnknownError(E, message)
+      await self.HandleUnknownError(E, message)
+      # Very broad catch here, to prevent a hanging message on the client side
 
   ### Error handling ###
   async def HandleUnknownError(self,
@@ -238,8 +238,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
         exception (Exception): _description_
         FailingMessage : dict
     """
-    # Error_logger.error(f"Message {FailingMessage} Failed with Exception {exception} ")
+    error_logger.error(f"Message {FailingMessage} Failed with Exception {exception} ")
+    exceptionTraceback = traceback.format_exc()
+    error_logger.error("Traceback:")
+    error_logger.error(exceptionTraceback)
     # If a test case reaches here It should be a known error and either handled or thrown back to the websocket
+    if settings.DEBUG:
+      print(exceptionTraceback)
+
     await self.send_json({ #pragma: no cover
        WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
        WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
@@ -384,19 +390,21 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
       message (Dict[str, Any]): Dictionary containing the information to delete
                                 A model. Specify the tags:
-                                    WEBSOCKET_DATA_ID
-                                    WEBSOCKET_DATATYPE
+                                    WEBSOCKET_DATA_ID - int / List[int]
+                                    WEBSOCKET_DATATYPE - JSON_XXX
     """
+    user = await get_user(self.scope)
+
     success = await self.db.deleteModels(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA_ID],
-      self.scope['user']
+      user
     )
 
     if success:
       await self.__broadcastGlobal({
         WEBSOCKET_DATA : True,
-        WEBSOCKET_DATA_ID : [message[WEBSOCKET_DATA_ID]],
+        WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
@@ -646,7 +654,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def HandleCreateActivityOrder(self, message: Dict[str, Any]):
-    user = self.scope['user']
+    user = await get_user(self.scope)
     newOrderDict = message[WEBSOCKET_DATA]
     newOrderDict['status'] = 1
     newOrderDict['ordered_by'] = user.id
@@ -666,7 +674,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def HandleCreateInjectionOrder(self, message: Dict[str, Any]):
-    user = self.scope['user']
+    user = await get_user(self.scope['user'])
     newOrderDict = message[WEBSOCKET_DATA]
 
     newOrderDict['status'] = 1
@@ -685,6 +693,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def HandleMassOrder(self, message: Dict[str, Any]):
+    """Handler function for the WEBSOCKET_MESSAGE_MASS_ORDER messages.
+    The message types indicates a user wishes to place a number of orders
+    such that some bookings will have sufficient tracer.
+
+    Bookings have related procedures which knows what tracer and amount is
+    needed.
+
+    Args:
+        message (Dict[str, Any]): message send by the user. Has the
+                                  WEBSOCKET_DATA with a dict value on the format
+                                  { $AccessionNumber : Boolean }
+                                  Each $AccessionNumber may be related to a
+                                  booking object, if not it's ignored.
+                                  The Boolean describes if the over is accepted
+                                  or rejected.
+    """
     orders = await self.db.massOrder(message[WEBSOCKET_DATA])
     ActivityCustomerIDs = await self.db.getCustomerIDs(orders[JSON_ACTIVITY_ORDER])
     InjectionCustomerIDs = await self.db.getCustomerIDs(orders[JSON_INJECTION_ORDER])
@@ -700,6 +724,61 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
     }, customerIDs)
+
+  async def HandleChangeExternalPassword(self, message: Dict[str, Any]):
+    user: User = await get_user(self.scope)
+    # Message Extraction
+    externalUserID = message[WEBSOCKET_DATA_ID]
+    externalNewPassword = message[AUTH_PASSWORD]
+
+    if user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionAdmin]:
+      error_logger.error(f"User: {user.username} attempted to change password of {externalUserID}")
+      return
+
+    @database_sync_to_async # This is just to get a sync environment.
+    def __changePassword():
+      externalUser = User.objects.get(pk=externalUserID)
+      if externalUser.UserGroup != UserGroups.ShopExternal:
+        raise IllegalActionAttempted
+      externalUser.set_password(externalNewPassword)
+      externalUser.save()
+
+    try:
+      await __changePassword()
+    except ObjectDoesNotExist:
+      await self.send_json({
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_OBJECT_DOES_NOT_EXISTS,
+      })
+    except IllegalActionAttempted:
+      return
+    # Success return message
+    await self.send_json({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+    })
+
+  async def HandleCreateExternalUser(self, message):
+    user: User = await get_user(self.scope)
+    if user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionUser]:
+      raise IllegalActionAttempted
+    newUser, newUserAssignment = await self.db.createExternalUser(message[WEBSOCKET_DATA])
+
+    if newUserAssignment is not None:
+      data = await self.db.serialize_dict({JSON_USER : [newUser], JSON_USER_ASSIGNMENT : [newUserAssignment]})
+    else:
+      data = await self.db.serialize_dict({JSON_USER : [newUser]})
+
+    await self.__broadcastProduction({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_DATA : data,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    })
+
 
   Handlers = {
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
@@ -717,5 +796,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER : HandleCreateInjectionOrder,
     WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrderTimeSlot,
     WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
-    WEBSOCKET_MESSAGE_MASS_ORDER : HandleMassOrder
+    WEBSOCKET_MESSAGE_MASS_ORDER : HandleMassOrder,
+    WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : HandleChangeExternalPassword,
+    WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : HandleCreateExternalUser,
   }

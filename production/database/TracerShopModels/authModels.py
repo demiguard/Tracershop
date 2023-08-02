@@ -10,7 +10,7 @@ from typing import List
 
 # Third party Packages
 from django.db import models
-from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField, RESTRICT
+from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField, RESTRICT, BooleanField
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
@@ -33,7 +33,7 @@ class User(AbstractBaseUser, TracershopModel):
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=120)
   UserGroup = SmallIntegerField(choices=UserGroups.choices)
-
+  active = BooleanField(default=True)
   # This number overlaps with Users.id field of the old database.
   # Note for user in this database and not in the other database,
   # this field is an auto incremented with an offset of 10000.

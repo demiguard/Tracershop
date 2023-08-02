@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import { Col, Container, Form, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 import { Calender, getColorShop, standardOrderMapping } from "../injectable/calender.js";
 import { Select } from '../injectable/select.js'
@@ -11,8 +11,9 @@ import { changeState } from "../../lib/state_management.js";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
 import { calculateDeadline, evalBitChain, expiredDeadline, getBitChain, getDay, getToday, getWeekNumber } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
+import { CustomerSelect } from "../injectable/derived_injectables/customer_select.js";
+import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
 
-export { ShopOrderPage }
 
 const Content = {
   Manuel : OrderReview,
@@ -20,15 +21,12 @@ const Content = {
 };
 
 
-class ShopOrderPage extends Component {
-  constructor(props){
-    super(props);
-
+export function ShopOrderPage (props){
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
-    this.representingCustomer = []
+    const representingCustomer = []
 
     if(activeCustomer === null){
-      for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){
+      for(const [customerID, _customer] of props[JSON_CUSTOMER]){
         activeCustomer = customerID
         db.set(DATABASE_SHOP_CUSTOMER, customerID)
         break;
@@ -36,8 +34,8 @@ class ShopOrderPage extends Component {
     }
 
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
-    this.customerEndpoints = []
-    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
+    const customerEndpoints = []
+    for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
       if(endpoint.owner === activeCustomer){
         if(activeEndpoint === null){
@@ -60,224 +58,168 @@ class ShopOrderPage extends Component {
     }
 
 
-    this.state = {
-      activeCustomer : activeCustomer,
-      activeEndpoint : activeEndpoint,
-      today : today,
-      view : viewIdentifier,
-    };
+  const [state, _setState] = useState({
+    activeCustomer : activeCustomer,
+    activeEndpoint : activeEndpoint,
+    today : today,
+    view : viewIdentifier,
+  });
+
+  function setState(newState){
+    _setState({...state, ...newState})
   }
 
-  setActiveDate(NewDate) {
+  function setActiveDate(NewDate) {
     db.set("today", NewDate);
-    this.setState({...this.state, today : NewDate})
+    setState({today : NewDate})
   }
 
-  setActiveMonth(NewMonth) {
-    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
+  function setActiveMonth(NewMonth) {
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
-    this.props[PROP_WEBSOCKET].send(message);
+    props[PROP_WEBSOCKET].send(message);
   }
 
-  setActiveCustomer(This){
-    const retfunc = (event) => {
-      const NewCustomerID = Number(event.target.value);
+  function setActiveCustomer(event){
+    const NewCustomerID = Number(event.target.value);
 
-      db.set(DATABASE_SHOP_CUSTOMER, NewCustomerID);
+    db.set(DATABASE_SHOP_CUSTOMER, NewCustomerID);
 
-      const endpoints = [...this.props[JSON_ENDPOINT].values()].filter(
-        (_endpoint) => {
-          const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
-          return endpoint.owner === NewCustomerID;
-      })
+    const endpoints = [...props[JSON_ENDPOINT].values()].filter(
+      (_endpoint) => {
+        const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
+        return endpoint.owner === NewCustomerID;
+    })
 
-      const endpointID = endpoints[0].id
-      db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, endpointID);
+    const endpointID = endpoints[0].id
+    db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, endpointID);
 
-      This.setState({
-        ...This.state,
-        activeCustomer : NewCustomerID,
-        activeEndpoint : endpointID,
-      });
-    }
-    return retfunc
+    setState({
+      activeCustomer : NewCustomerID,
+      activeEndpoint : endpointID,
+    });
   }
 
-  setView(){
-    const retFunc = (event) => {
-      const newView = event.target.value;
-      db.set(DATABASE_SHOP_ORDER_PAGE, newView);
-      this.setState({...this.state, view : newView});
-    }
-    return retFunc
+  function setView(event){
+    const newView = event.target.value;
+    db.set(DATABASE_SHOP_ORDER_PAGE, newView);
+    setState({view : newView});
   }
 
-  setActiveEndpoint(){
-    const retFunc = (event) => {
-      const newEndpointID = Number(event.target.value);
-      db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, newEndpointID);
-      this.setState({...this.state, activeEndpoint : newEndpointID})
-    }
-    return retFunc
+  function setActiveEndpoint(event){
+    const newEndpointID = Number(event.target.value);
+    db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, newEndpointID);
+    setState({activeEndpoint : newEndpointID})
   }
 
-  renderCustomerSelects(){
-    const customerOptions = [];
-    for(const [customerID, _customer] of this.props[JSON_CUSTOMER]){ // Note new namespace for customer
-      const /**@type {Customer} */ customer = _customer
-      customerOptions.push({id: customerID, name : customer.short_name})
-    }
-    let CustomerSelect
-    if(customerOptions.length === 1){
-      CustomerSelect = (<FormControl readOnly value={customerOptions[0].name}/>)
-    } else {
-      CustomerSelect = (
-      <Select
-        options={customerOptions}
-        nameKey={'name'}
-        valueKey={'id'}
-        onChange={this.setActiveCustomer(this).bind(this)}
-        value={this.state.activeCustomer}
-      />)
-    }
-    const endpointOptions = []
-    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
-      const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
-      if(endpoint.owner === this.state.activeCustomer){
-        endpointOptions.push({
-          id: endpointID, name : endpoint.name
-        });
-      }
-    }
-    let EndpointSelect
-    if(endpointOptions.length === 1){
-      EndpointSelect = (<FormControl readOnly value={endpointOptions[0].name}/>)
-    } else {
-      EndpointSelect =(<Select
-        options={endpointOptions}
-        nameKey={'name'}
-        valueKey={'id'}
-        onChange={changeState('activeEndpoint', this)}
-        value={this.state.activeEndpoint}
-      />)
-    }
+  const /**@type {ServerConfiguration} */ serverConfig = props[JSON_SERVER_CONFIG].get(1);
+  const /**@type {Deadline} */ activityDeadline = props[JSON_DEADLINE].get(serverConfig.global_activity_deadline);
+  const /**@type {Deadline} */ injectionDeadline = props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
 
-    let TracerOptions = []
+  const activityDeadlineExpired = expiredDeadline(activityDeadline, state.today, props[JSON_CLOSED_DATE])
+  const injectionDeadlineExpired = expiredDeadline(injectionDeadline, state.today, props[JSON_CLOSED_DATE]);
 
-    let SiteOptions = [
-      {id : "Manuel", name : "Ordre oversigt"},
-      {id : "Automatisk", name : "Bookinger"}
-    ]
+  const timeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
+    (_timeSlot) => {
+      const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
+      return timeSlot.destination === state.activeEndpoint;
+    });
 
-    return (
-    <Container>
-      <TracershopInputGroup
-        label="Kunde:"
-      >
-        {CustomerSelect}
-      </TracershopInputGroup>
-      <TracershopInputGroup
-        label="Leverings Sted:"
-      >
-        {EndpointSelect}
-      </TracershopInputGroup>
-      <TracershopInputGroup
-        label="Side"
-      >
-        <Select
-          options={SiteOptions}
-          nameKey={"name"}
-          valueKey={"id"}
-          onChange={this.setView().bind(this)}
-          value={this.state.view}
-        />
-      </TracershopInputGroup>
+  const bitChain = getBitChain(timeSlots, props[JSON_PRODUCTION]);
+  const ActivityDeadline = activityDeadlineExpired && evalBitChain(bitChain, state.today);
+  const InjectionDeadline = injectionDeadlineExpired;
 
-    </Container>)
-  }
+  const validEndpoints = [...props[JSON_ENDPOINT].values()].filter(
+      (endpoint) => {return endpoint.owner === state.activeCustomer}
+  )
 
+  const SiteOptions = [
+    {id : "Manuel", name : "Ordre oversigt"},
+    {id : "Automatisk", name : "Bookinger"}
+  ]
 
-  render(){
-    const /**@type {ServerConfiguration} */ serverConfig = this.props[JSON_SERVER_CONFIG].get(1);
-    const /**@type {Deadline} */ activityDeadline = this.props[JSON_DEADLINE].get(serverConfig.global_activity_deadline);
-    const /**@type {Deadline} */ injectionDeadline = this.props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
+  const Site = Content[state.view]
+  const siteProps = {...props}
 
-    const activityDeadlineExpired = expiredDeadline(activityDeadline, this.state.today)
-    const injectionDeadlineExpired = expiredDeadline(injectionDeadline, this.state.today);
+  siteProps[PROP_ACTIVE_DATE] = state.today;
+  siteProps[PROP_ACTIVE_CUSTOMER] = state.activeCustomer;
+  siteProps[PROP_ACTIVE_ENDPOINT] = state.activeEndpoint;
+  siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] =  Boolean(ActivityDeadline);
+  siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = Boolean(InjectionDeadline);
 
-    const timeSlots = [...this.props[JSON_DELIVER_TIME].values()].filter(
-      (_timeSlot) => {
-        const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
-        return timeSlot.destination === this.state.activeEndpoint;
-      });
+  const calenderTimeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
+    (timeSlot) => {return timeSlot.destination === state.activeEndpoint}
+  )
 
-    const bitChain = getBitChain(timeSlots, this.props[JSON_PRODUCTION]);
-    const ActivityDeadline = activityDeadlineExpired && evalBitChain(bitChain, this.state.today);
-    const InjectionDeadline = injectionDeadlineExpired;
+  const calenderTimeSlotsIds = calenderTimeSlots.map(getId);
 
-    const Site = Content[this.state.view]
-    const siteProps = {...this.props}
+  const calenderActivityOrders = [...props[JSON_ACTIVITY_ORDER].values()].filter(
+    (_activityOrder) => {
+      const /**@type {ActivityOrder} */ activityOrder = _activityOrder
+      return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
+    });
 
-    siteProps[PROP_ACTIVE_DATE] = this.state.today;
-    siteProps[PROP_ACTIVE_CUSTOMER] = this.state.activeCustomer;
-    siteProps[PROP_ACTIVE_ENDPOINT] = this.state.activeEndpoint;
-    siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] =  Boolean(ActivityDeadline);
-    siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = Boolean(InjectionDeadline);
+  const calenderInjectionOrders = [...props[JSON_INJECTION_ORDER].values()].filter(
+    (_injectionOrder) => {
+      const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
+      return injectionOrder.endpoint === state.activeEndpoint;
+    });
 
-    const calenderTimeSlots = [...this.props[JSON_DELIVER_TIME].values()].filter(
-      (timeSlot) => {return timeSlot.destination === this.state.activeEndpoint}
-    )
+  /** Relevant Bookings  */
+  const calenderProps = {};
 
-    const calenderTimeSlotsIds = calenderTimeSlots.map(getId);
+  calenderProps[CALENDER_PROP_DATE] = state.today;
+  calenderProps[CALENDER_PROP_ON_DAY_CLICK] = setActiveDate;
+  calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = setActiveMonth;
+  calenderProps[CALENDER_PROP_GET_COLOR] = getColorShop(
+    activityDeadline,
+    injectionDeadline,
+    calenderActivityOrders,
+    props[JSON_CLOSED_DATE],
+    calenderInjectionOrders,
+    props[JSON_PRODUCTION],
+    calenderTimeSlots
+  );
 
-    const calenderActivityOrders = [...this.props[JSON_ACTIVITY_ORDER].values()].filter(
-      (_activityOrder) => {
-        const /**@type {ActivityOrder} */ activityOrder = _activityOrder
-        return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
-      });
-
-    const calenderInjectionOrders = [...this.props[JSON_INJECTION_ORDER].values()].filter(
-      (_injectionOrder) => {
-        const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
-        return injectionOrder.endpoint === this.state.activeEndpoint;
-      });
-
-    /** Relevant Bookings  */
-    const calenderProps = {};
-
-    calenderProps[CALENDER_PROP_DATE] = this.state.today;
-    calenderProps[CALENDER_PROP_ON_DAY_CLICK] = this.setActiveDate.bind(this);
-    calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = this.setActiveMonth.bind(this);
-    calenderProps[CALENDER_PROP_GET_COLOR] = getColorShop(
-      activityDeadline,
-      injectionDeadline,
-      calenderActivityOrders,
-      this.props[JSON_CLOSED_DATE],
-      calenderInjectionOrders,
-      this.props[JSON_PRODUCTION],
-      calenderTimeSlots
-    );
-
-    return (
-    <Container>
-      <Row>
-        <Col sm={8}>
-          <Site {...siteProps} />
-        </Col>
-        <Col sm={1}/>
-        <Col sm={3}>
-          <Row>
-            <Container>
-              {this.renderCustomerSelects()}
-            </Container>
-          </Row>
-          <Row>
-              <div><Calender {...calenderProps}/></div>
-          </Row>
-        </Col>
-      </Row>
-    </Container>);
-  }
+  return (
+  <Container>
+    <Row>
+      <Col sm={8}>
+        <Site {...siteProps} />
+      </Col>
+      <Col sm={1}/>
+      <Col sm={3}>
+        <Row>
+          <Container>
+            <TracershopInputGroup label="Kunde:">
+              <CustomerSelect
+                customer={props[JSON_CUSTOMER]}
+                value={state.activeCustomer}
+                onChange={setActiveCustomer}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Leverings Sted:">
+              <EndpointSelect
+                deliveryEndpoint={validEndpoints}
+                value={state.activeEndpoint}
+                onChange={setActiveEndpoint}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Side">
+              <Select
+                options={SiteOptions}
+                nameKey={"name"}
+                valueKey={"id"}
+                onChange={setView}
+                value={state.view}
+              />
+            </TracershopInputGroup>
+          </Container>
+        </Row>
+        <Row>
+            <div><Calender {...calenderProps}/></div>
+        </Row>
+      </Col>
+    </Row>
+  </Container>);
 }
-
-

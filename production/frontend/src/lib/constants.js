@@ -245,6 +245,8 @@ export const WEBSOCKET_MESSAGE_ANSWER       = "answer";
 export const WEBSOCKET_MESSAGE_AUTH_LOGIN   = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT  = "logout";
 export const WEBSOCKET_MESSAGE_AUTH_WHOAMI  = "whoami";
+export const WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword";
+export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser"
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO         = "echo";
@@ -336,6 +338,8 @@ export const PROP_EXPIRED_INJECTION_DEADLINE = 'injectionDeadlineExpired';
 export const PROP_ASSOCIATED_TIME_SLOTS = "associated_time_slots";
 export const PROP_ASSOCIATED_ORDERS = "associated_orders";
 export const PROP_OVERHEAD_MAP = "overhead_map";
+export const PROP_RELATED_CUSTOMER = "relatedCustomer";
+export const PROP_COMMIT = "commit";
 
 export const KEYWORD_ID = 'id'
 
