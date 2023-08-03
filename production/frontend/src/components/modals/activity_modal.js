@@ -757,27 +757,27 @@ class ActivityModal extends Component {
     return (
     <Row>
       <Row>
-        <Col xs={2}>{destinationHover}</Col>
+        <Col>{destinationHover}</Col>
         <Col>{destinationMessage}</Col>
       </Row>
       <hr/>
       <Row>
-        <Col xs={2}>Levering tidspunkt:</Col>
+        <Col>Levering tidspunkt:</Col>
         <Col>{timeSlot.delivery_time}</Col>
       </Row>
       <hr/>
       <Row>
-        <Col xs={2}>{orderIDs.length == 1 ? "Order" : "Ordre" }</Col>
+        <Col>{orderIDs.length == 1 ? "Order" : "Ordre" }</Col>
         <Col>{orderIDs}</Col>
       </Row>
       <hr/>
       <Row>
-        <Col xs={2}>{totalActivityHover}</Col>
+        <Col>{totalActivityHover}</Col>
         <Col>{Math.floor(activity)} MBq</Col>
       </Row>
       <hr/>
       <Row>
-        <Col xs={2}>{allocationMessage}</Col>
+        <Col>{allocationMessage}</Col>
         <Col>{allocationTotal} MBq</Col>
       </Row>
       <hr/>

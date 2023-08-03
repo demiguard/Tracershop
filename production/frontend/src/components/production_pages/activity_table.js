@@ -9,7 +9,7 @@ import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
 
 import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, JSON_CUSTOMER, JSON_VIAL,
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, cssCenter,
   JSON_TRACER, WEBSOCKET_MESSAGE_MOVE_ORDERS, JSON_GHOST_ORDER, JSON_RUN, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_CHARGE, LEGACY_KEYWORD_FILLTIME,
   LEGACY_KEYWORD_FILLDATE, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_ACTIVITY, LEGACY_KEYWORD_VOLUME,
@@ -19,7 +19,7 @@ import SiteStyles from "/src/css/Site.module.css"
 import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME,  KEYWORD_ActivityOrder_ORDERED_ACTIVITY, KEYWORD_DeliveryEndpoint_OWNER } from "../../dataclasses/keywords.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { renderComment } from "../../lib/rendering.js";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalog } from "../../dataclasses/dataclasses.js";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalog, Vial } from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay } from "../../lib/chronomancy.js";
 import { ArrayMap } from "../../lib/array_map.js";
 
@@ -82,12 +82,14 @@ function RenderedTimeSlot(props){
   const /**@type {Map<Number, Number>} */ overheadMap = props[PROP_OVERHEAD_MAP];
   const /**@type {Tracer} */ tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
   const /**@type {Isotope} */ isotope = props[JSON_ISOTOPE].get(tracer.isotope)
+  const /**@type {Map<Number, Vials>} */ vials = props[JSON_VIAL];
   const overhead = overheadMap.get(owner.id)
 
 
   let orderedMBq = 0;
-  let deliveredMBq = 0
-  let minimum_status = 3
+  let deliveredMBq = 0;
+  let freedMbq = 0;
+  let minimum_status = 3;
   const OrderData = [];
   let moved = true;
 
@@ -109,6 +111,16 @@ function RenderedTimeSlot(props){
     }
 
     minimum_status = Math.min(minimum_status, order.status);
+
+    if(minimum_status === 3){
+      for(const [vialID, _vial] of props[JSON_VIAL]){
+        const /**@type {Vial} */ vial = _vial
+        if (vial.assigned_to === order.id){
+          
+        }
+      }
+    }
+
     OrderData.push(<OrderRow
       key={order.id}
       order={order}
@@ -122,30 +134,55 @@ function RenderedTimeSlot(props){
                       onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
                     />
   if(moved){
-
     headerIcon = <ClickableIcon
                     src="/static/images/move_top.svg"
                     onClick={canMove ? restoreOrders : () => {}}
                   />;
   }
 
+  // Yes I know turnery are thing. But I think this is more readable
+  // Fucking fight me
+  let thirdColumnInterior;
+  if (minimum_status === 3){
+    thirdColumnInterior = `Udleveret: ${Math.floor(orderedMBq)} MBq`
+  } else {
+    thirdColumnInterior = `Bestilt: ${Math.floor(orderedMBq)} MBq`
+  }
+
+  let fourthColumn;
+  if (minimum_status === 3){
+    fourthColumn = `Frigivet kl: ${"11:11:11"}`;
+  } else {
+    fourthColumn = `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`
+  }
+
+  let fifthColumnInterior = null;
+  if (canMove && !moved){
+    fifthColumnInterior = <Col xs={1} style={cssCenter}>
+                    <ClickableIcon
+                                  src="/static/images/move_top.svg"
+                                  onClick={ () => {moveOrders(targetID)}}
+                    />
+                  </Col>
+  } else if (!moved && minimum_status === 3) {
+    fifthColumnInterior = <ClickableIcon
+                    src="/static/images/delivery.svg"
+                    onClick={()=>{}}
+                  />
+  }
+
   return (
     <Card key={props.timeSlotID}>
       <Card.Header>
         <Row>
-          <Col xs={1}>
+          <Col xs={1} style={cssCenter}>
             {headerIcon}
           </Col>
-          <Col>{owner.short_name} - {endpoint.name}</Col>
-          <Col>{timeSlot.delivery_time}</Col>
-          <Col>Bestilt: {Math.floor(orderedMBq)} MBq</Col>
-          <Col>Til Udlevering: {Math.floor(deliveredMBq)} MBq</Col>
-          <Col xs={1}>
-            {canMove && !moved ? <ClickableIcon
-                          src="/static/images/move_top.svg"
-                          onClick={ () => {moveOrders(targetID)}}
-                        /> : null}
-          </Col>
+          <Col style={cssCenter}>{owner.short_name} - {endpoint.name}</Col>
+          <Col style={cssCenter}>{timeSlot.delivery_time}</Col>
+          <Col style={cssCenter}>{thirdColumnInterior}</Col>
+          <Col style={cssCenter}>{fourthColumn}</Col>
+          <Col style={cssCenter}>{fifthColumnInterior}</Col>
           <Col xs={1} style={{
             justifyContent : 'right',
             display : 'flex'

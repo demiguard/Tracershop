@@ -266,10 +266,10 @@ export function TimeSlotCard({
     /> : ""}
   <Card.Header>
     <Row>
-      <Col xs={1}>{header}</Col>
+      <Col xs={1} style={cssCenter}>{header}</Col>
       <Col xs={2} style={cssCenter}>{timeSlot.delivery_time}</Col>
       <Col xs={3} style={cssCenter}>Bestilt: {timeSlotActivity} MBq</Col>
-      <Col xs={3} style={cssCenter}>Til Udlevering: {deliveryActivity}</Col>
+      <Col xs={3} style={cssCenter}>Til Udlevering: {Math.floor(deliveryActivity)}</Col>
       <Col>{validDeadline ? <ClickableIcon
                         style={{
                           display : "inline-block",
