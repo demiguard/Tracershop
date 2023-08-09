@@ -74,7 +74,7 @@ export function getDay(date){
 /**
  * Calculates a daily deadline from a deadline object and a date
  * @param {Deadline} deadline - the deadline is question, assured to be deadline_type === 0
- * @param {Date} date 
+ * @param {Date} date
  * @returns {Date}
  */
 function calculateDailyDeadline(deadline, date){

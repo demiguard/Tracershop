@@ -23,6 +23,7 @@ from django.db.models.query import QuerySet
 
 # Tracershop Production Packages
 from core.side_effect_injection import DateTimeNow
+from core.exceptions import IllegalActionAttempted
 from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
     JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVER_TIME, \
     JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
@@ -522,10 +523,14 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def createExternalUser(self, userSkeleton: Dict[str, Any]):
-    """Create
+    """Create an external user
 
     Args:
-        userSkeleton (Dict[str, Any]): _description_
+        userSkeleton (Dict[str, Any]): Message containing:
+          * AUTH_USERNAME - string - the username of the new user
+          * AUTH_PASSWORD - string - the password of the new user
+          * JSON_CUSTOMER - Optional int - if defined, the customer the user
+                                           represents.
     """
     newExternalUser = User(username=userSkeleton[AUTH_USERNAME],
                            UserGroup=UserGroups.ShopExternal)
@@ -542,5 +547,22 @@ class DatabaseInterface():
       newUserAssignment = None
 
     return newExternalUser, newUserAssignment
+
+  @database_sync_to_async # This is just to get a sync environment.
+  def changeExternalPassword(externalUserID, externalNewPassword):
+    """changes the password of a user
+
+    Args:
+        externalUserID (int): The 
+        externalNewPassword (string): _description_
+
+    Raises:
+        IllegalActionAttempted: _description_
+    """
+    externalUser = User.objects.get(pk=externalUserID)
+    if externalUser.UserGroup != UserGroups.ShopExternal:
+      raise IllegalActionAttempted
+    externalUser.set_password(externalNewPassword)
+    externalUser.save()
 
 

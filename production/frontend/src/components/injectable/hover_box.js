@@ -1,7 +1,11 @@
-import React, { Component, useState } from 'react'
-import propTypes, { element } from 'prop-types'
+/** This mostly cannibalizes the code from
+ * {@link https://github.com/cht8687/react-hover} into something that i like a
+ * bit better, namely a single prop, with two properties.
+ */
+
+import React, { useState } from 'react'
 import styles from "../../css/Site.module.css"
-import { Container } from 'react-bootstrap'
+
 
 export { HoverBox }
 /**
@@ -28,14 +32,14 @@ function Trigger(props){
   const { setVisibility } = props
   // css import?
   return(
-    <Container
+    <div
       onMouseOver={() => setVisibility(true)}
       onMouseOut={() => setVisibility(false)}
       onTouchStart={() => setVisibility(true)}
       onTouchEnd={() => setVisibility(false)}
     >
       {props.children}
-    </Container>
+    </div>
   )
 }
 

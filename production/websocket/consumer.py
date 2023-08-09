@@ -199,6 +199,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       if error != "":
         if WEBSOCKET_MESSAGE_ID in message:
           logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
+          if WEBSOCKET_MESSAGE_TYPE in message:
+            logger.error(f"It had message type: {message[WEBSOCKET_MESSAGE_TYPE]}")
         else:
           logger.error(f"A message without message ID was send, it's not valid by the error: {error}")
         await self.HandleKnownError(message, error)
@@ -393,12 +395,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                     WEBSOCKET_DATA_ID - int / List[int]
                                     WEBSOCKET_DATATYPE - JSON_XXX
     """
-    user = await get_user(self.scope)
-
     success = await self.db.deleteModels(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA_ID],
-      user
+      await get_user(self.scope)
     )
 
     if success:
@@ -431,8 +431,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                                  message[WEBSOCKET_DATA])
     customerIDs = await self.db.getCustomerIDs(instances)
     serialized_data = await self.db.serialize_dict({
-        message[WEBSOCKET_DATATYPE] : instances
-      })
+      message[WEBSOCKET_DATATYPE] : instances
+    })
     await self.__broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : serialized_data,
@@ -735,16 +735,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
       error_logger.error(f"User: {user.username} attempted to change password of {externalUserID}")
       return
 
-    @database_sync_to_async # This is just to get a sync environment.
-    def __changePassword():
-      externalUser = User.objects.get(pk=externalUserID)
-      if externalUser.UserGroup != UserGroups.ShopExternal:
-        raise IllegalActionAttempted
-      externalUser.set_password(externalNewPassword)
-      externalUser.save()
-
     try:
-      await __changePassword()
+      await self.db.changeExternalPassword(externalUserID, externalNewPassword)
     except ObjectDoesNotExist:
       await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],

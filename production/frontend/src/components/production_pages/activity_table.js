@@ -57,25 +57,7 @@ function OrderRow({order, timeSlotID}){
  * @returns
  */
 function RenderedTimeSlot(props){
-  const [open, setOpen] = useState(false);
-  const orderIds = props[JSON_ACTIVITY_ORDER].map(getId)
-  const targetID = props[PROP_ASSOCIATED_TIME_SLOTS][0].id
-
-  function moveOrders(targetID){
-    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-    const destination = props[PROP_ASSOCIATED_TIME_SLOTS][0].id;
-    message[JSON_DELIVER_TIME] = destination;
-    message[JSON_ACTIVITY_ORDER] = orderIds
-    props[PROP_WEBSOCKET].send(message);
-  }
-
-  function restoreOrders(){
-    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_RESTORE_ORDERS);
-    message[JSON_ACTIVITY_ORDER] = orderIds
-    props[PROP_WEBSOCKET].send(message);
-  }
-
-
+  // Prop extraction
   const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(props.timeSlotID);
   const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
   const /**@type {Customer} */ owner = props[JSON_CUSTOMER].get(endpoint.owner);
@@ -85,17 +67,23 @@ function RenderedTimeSlot(props){
   const /**@type {Map<Number, Vials>} */ vials = props[JSON_VIAL];
   const overhead = overheadMap.get(owner.id)
 
+  const orderIds = props[JSON_ACTIVITY_ORDER].map(getId)
+  const [firstAvailableTimeSlot, firstTimeSlotOrders] = props[PROP_ASSOCIATED_TIME_SLOTS]
+  const firstAvailableTimeSlotID = firstAvailableTimeSlot.id
 
   let orderedMBq = 0;
   let deliveredMBq = 0;
   let freedMbq = 0;
-  let minimum_status = 3;
+  let minimumStatus = 3;
+  let minimumStatusFirstTimeSlot
   const OrderData = [];
   let moved = true;
 
   for(const _order of props[JSON_ACTIVITY_ORDER]){
     const /**@type {ActivityOrder} */ order = _order
-    if (order.moved_to_time_slot == null){
+    const originalTimeSlot = order.ordered_time_slot === props.timeSlotID && order.moved_to_time_slot === null
+    || order.moved_to_time_slot === props.timeSlotID
+    if (originalTimeSlot){
       moved = false;
     }
     if(order.ordered_time_slot === props.timeSlotID){
@@ -110,27 +98,50 @@ function RenderedTimeSlot(props){
       deliveredMBq += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity)  * overhead
     }
 
-    minimum_status = Math.min(minimum_status, order.status);
+    minimumStatus = Math.min(minimumStatus, order.status);
 
-    if(minimum_status === 3){
+    if(minimumStatus === 3){
       for(const [vialID, _vial] of props[JSON_VIAL]){
         const /**@type {Vial} */ vial = _vial
         if (vial.assigned_to === order.id){
-          
+          freedMbq += vial.activity
         }
       }
     }
-
-    OrderData.push(<OrderRow
-      key={order.id}
-      order={order}
-      timeSlotID={props.timeSlotID}
-      />);
+    if((originalTimeSlot)){
+      OrderData.push(<OrderRow
+        key={order.id}
+        order={order}
+        timeSlotID={props.timeSlotID}
+        />);
+      }
     }
-  const canMove = targetID !== props.timeSlotID && minimum_status < 3;
+  const canMove = firstAvailableTimeSlotID !== props.timeSlotID && minimumStatus < 3;
+
+
+  // State
+  const [open, setOpen] = useState(false);
+
+  // Functions
+  function moveOrders(){
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+
+    message[JSON_DELIVER_TIME] = firstAvailableTimeSlotID;
+    message[JSON_ACTIVITY_ORDER] = orderIds
+    props[PROP_WEBSOCKET].send(message);
+  }
+
+  function restoreOrders(){
+    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_RESTORE_ORDERS);
+    message[JSON_ACTIVITY_ORDER] = orderIds
+    props[PROP_WEBSOCKET].send(message);
+  }
+
+  
+  // Sub-components
   const openClassName = open ? SiteStyles.rotated : "";
   let headerIcon = <StatusIcon
-                      status={minimum_status}
+                      status={minimumStatus}
                       onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
                     />
   if(moved){
@@ -143,28 +154,26 @@ function RenderedTimeSlot(props){
   // Yes I know turnery are thing. But I think this is more readable
   // Fucking fight me
   let thirdColumnInterior;
-  if (minimum_status === 3){
-    thirdColumnInterior = `Udleveret: ${Math.floor(orderedMBq)} MBq`
+  if (minimumStatus === 3){
+    thirdColumnInterior = `Udleveret: ${Math.floor(freedMbq)} MBq`
   } else {
     thirdColumnInterior = `Bestilt: ${Math.floor(orderedMBq)} MBq`
   }
 
-  let fourthColumn;
-  if (minimum_status === 3){
-    fourthColumn = `Frigivet kl: ${"11:11:11"}`;
+  let fourthColumnInterior;
+  if (minimumStatus === 3){
+    fourthColumnInterior = `Frigivet kl: ${"11:11:11"}`;
   } else {
-    fourthColumn = `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`
+    fourthColumnInterior = `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`
   }
 
   let fifthColumnInterior = null;
   if (canMove && !moved){
-    fifthColumnInterior = <Col xs={1} style={cssCenter}>
-                    <ClickableIcon
+    fifthColumnInterior = <ClickableIcon
                                   src="/static/images/move_top.svg"
-                                  onClick={ () => {moveOrders(targetID)}}
+                                  onClick={moveOrders}
                     />
-                  </Col>
-  } else if (!moved && minimum_status === 3) {
+  } else if (!moved && minimumStatus === 3) {
     fifthColumnInterior = <ClickableIcon
                     src="/static/images/delivery.svg"
                     onClick={()=>{}}
@@ -181,7 +190,7 @@ function RenderedTimeSlot(props){
           <Col style={cssCenter}>{owner.short_name} - {endpoint.name}</Col>
           <Col style={cssCenter}>{timeSlot.delivery_time}</Col>
           <Col style={cssCenter}>{thirdColumnInterior}</Col>
-          <Col style={cssCenter}>{fourthColumn}</Col>
+          <Col style={cssCenter}>{fourthColumnInterior}</Col>
           <Col style={cssCenter}>{fifthColumnInterior}</Col>
           <Col xs={1} style={{
             justifyContent : 'right',
@@ -250,6 +259,11 @@ export function ActivityTable (props) {
   const activeDay = getDay(props[PROP_ACTIVE_DATE])
   const delivery_date = dateToDateString(props[PROP_ACTIVE_DATE])
   const danishDateString = parseDateToDanishDate(delivery_date)
+
+  const /**@type {Array<Number>} */ relevantProductions = [...props[JSON_PRODUCTION].values()].filter((production) => {
+    return production.production_day === activeDay && production.tracer === props[PROP_ACTIVE_TRACER]
+  }).map(getId)
+
   const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ timeSlotMapping = new Map()
 
   for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
@@ -264,9 +278,6 @@ export function ActivityTable (props) {
     }
   }
 
-  const /**@type {Array<Number>} */ relevantProductions = [...props[JSON_PRODUCTION].values()].filter((production) => {
-    return production.production_day === activeDay && production.tracer === props[PROP_ACTIVE_TRACER]
-  }).map(getId)
 
   const /**@type {ArrayMap<Number, Number>} */ contributingTimeSlots = new ArrayMap()
 
@@ -336,7 +347,22 @@ export function ActivityTable (props) {
     }
   }
 
-  const renderedTimeSlots = Array.from(OrderMapping).map(
+  const renderedTimeSlots = Array.from(OrderMapping).sort(([timeSlotID_a, orders_a], [timeSlotID_b, orders_b]) => {
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot_a = props[JSON_DELIVER_TIME].get(timeSlotID_a);
+    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot_b = props[JSON_DELIVER_TIME].get(timeSlotID_b);
+
+    const /**@type {DeliveryEndpoint} */ endpoint_a = props[JSON_ENDPOINT].get(timeSlot_a.destination);
+    const /**@type {DeliveryEndpoint} */ endpoint_b = props[JSON_ENDPOINT].get(timeSlot_b.destination);
+
+    if(endpoint_a.owner != endpoint_b.owner){
+      return endpoint_a.owner - endpoint_b.owner
+    }
+    if(timeSlot_a.destination != timeSlot_b.destination){
+      return timeSlot_a.destination - timeSlot_b.destination
+    }
+
+    return  timeSlot_b.delivery_time < timeSlot_a.delivery_time ? 1 : -1;
+  }).map(
     ([timeSlotID, orders]) => {
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
       const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);

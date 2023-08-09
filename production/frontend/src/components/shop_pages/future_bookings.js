@@ -2,7 +2,7 @@ import React, { Component, useState } from "react";
 import { FormatDateStr, dateToDateString } from "../../lib/formatting";
 import { JSON_BOOKING, JSON_LOCATION, JSON_PROCEDURE, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, } from "../../lib/constants";
 import { Booking, Procedure, Tracer, Location } from "../../dataclasses/dataclasses";
-import { bookingTracerMapping, TracerCatalogForCustomer } from "../../lib/data_structures";
+import { createBookingTracerMapping, createTracerCatalogForCustomer } from "../../lib/data_structures";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { ClickableIcon } from "../injectable/icons";
 import SiteStyles from "/src/css/Site.module.css"
@@ -194,7 +194,7 @@ function TracerCard({tracer,
 
 export function FutureBooking (props) {
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE])
-  const [activityTracers, InjectionTracers,overheadMap] = TracerCatalogForCustomer(props[JSON_TRACER_MAPPING],
+  const [activityTracers, InjectionTracers,overheadMap] = createTracerCatalogForCustomer(props[JSON_TRACER_MAPPING],
                                                                                    props[JSON_TRACER],
                                                                                    props[PROP_ACTIVE_CUSTOMER])
 
@@ -210,7 +210,7 @@ export function FutureBooking (props) {
     }
   )
 
-  const bookingMapping = bookingTracerMapping(bookings,
+  const bookingMapping = createBookingTracerMapping(bookings,
                                               props[JSON_PROCEDURE]);
 
   const bookingCards = [...bookingMapping].map(
