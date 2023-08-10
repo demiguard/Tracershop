@@ -3,7 +3,7 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { Booking, Procedure, TracerCatalog } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Procedure, TracerCatalog } from "../dataclasses/dataclasses"
 import { TRACER_TYPE_ACTIVITY } from "./constants";
 
 
@@ -74,6 +74,17 @@ export function createBookingTracerMapping(bookings,procedures){
   return bookingTracerMap
 }
 
+/**
+ * Creates a mapping over the related activity delivery time slots.
+ * The data structure does two things:
+ * 1. Filter out time slots of the wrong day and tracer
+ * 2. Group TimeSlots together so a time slot can figure out if and what time
+ *    slot it should move to.
+ * @param {Map<Number, DeliveryEndpoint>} endpoints 
+ * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
+ * @param {Array<ActivityProduction>} relevantProductions 
+ * @returns {Map<Number, Map<Number, ActivityDeliveryTimeSlot>}
+ */
 export function createTimeSlotMapping(
   endpoints,
   timeSlots,
@@ -92,14 +103,13 @@ export function createTimeSlotMapping(
     }
   }
 
-  for(const timeSlot of timeSlots){
-    // You can't turn this into a map because of the sorting ruins parallelism
+  for(const timeSlot of timeSlots.values()){
     if(!relevantProductions.includes(timeSlot.production_run)){
       continue;
     }
 
     // Destination is an endpoint ID
-    const /**@type {DeliveryEndpoint} */ endpoint = endpoints.get(timeSlot.destination);
+    const endpoint = endpoints.get(timeSlot.destination);
     const destinationMapping = timeSlotMapping.get(endpoint.owner)
 
     if(destinationMapping === undefined){
@@ -115,4 +125,32 @@ export function createTimeSlotMapping(
   }
 
   return timeSlotMapping
+}
+
+
+/**
+ * Creates a mapping over what time slots should be render and with what orders
+ * If a time slot is missing from the map, that means it should not be rendered.
+ * @param {Array<ActivityOrder>} orders 
+ * @returns {Map<Number, Array<ActivityOrder>}
+ */
+export function createOrderMapping(orders){
+  const OrderMapping = new Map()
+  for(const order of orders){
+    if (OrderMapping.has(order.ordered_time_slot)){
+      OrderMapping.get(order.ordered_time_slot).push(order)
+    } else {
+      OrderMapping.set(order.ordered_time_slot, [order])
+    }
+
+    if(order.moved_to_time_slot != null){
+      if (OrderMapping.has(order.moved_to_time_slot)){
+        OrderMapping.get(order.moved_to_time_slot).push(order)
+      } else {
+        OrderMapping.set(order.moved_to_time_slot, [order])
+      }
+    }
+  }
+
+  return OrderMapping
 }

@@ -15,7 +15,7 @@ const sites = {
   users : ProductionUserSetup
 }
 
-const siteNames = {
+export const siteNames = {
   customer : "Levering og Kunder",
   tracer : "Tracer",
   closeDates : "Lukke dage",

@@ -37,7 +37,7 @@ class Calender extends Component {
      // This is because when you change the month in the calender,
      // you should cause other changes
     this.state = {
-      activeMonth : this.props[CALENDER_PROP_DATE],
+      activeMonth : props[CALENDER_PROP_DATE],
     }
   }
 
@@ -110,7 +110,10 @@ class Calender extends Component {
     }
 
     return (
-      <div className={StatusClass}  onClick={() => this.props[CALENDER_PROP_ON_DAY_CLICK](DateObject)}> {DateObject.getDate()}</div>
+      <div
+        aria-label={`calender-day-${DateObject.getDate()}`}
+        className={StatusClass}
+        onClick={() => this.props[CALENDER_PROP_ON_DAY_CLICK](DateObject)}> {DateObject.getDate()}</div>
     );
   }
 
@@ -143,13 +146,20 @@ class Calender extends Component {
     <div className="calender">
       <div className="calender-header flex-row d-flex justify-content-around">
         <div onClick={() => this.changeMonth(-1)}>
-          <img className="tableButton" id="DecrementMonth" alt="Sidste" src="/static/images/prev.svg"/>
+          <img
+            aria-label="prev-month"
+            className="tableButton"
+            id="DecrementMonth"
+            alt="Sidste"
+            src="/static/images/prev.svg"/>
         </div>
         <div>
           {this.state.activeMonth.toLocaleString('default', {month:"long"})}
         </div>
         <div onClick={() => this.changeMonth(1)}>
-          <img className="tableButton" id="IncreaseMonth" alt="Næste" src="/static/images/next.svg"/>
+          <img 
+            aria-label="next-month"
+            className="tableButton" id="IncreaseMonth" alt="Næste" src="/static/images/next.svg"/>
         </div>
       </div>
         <div className="calender-dates d-flex">

@@ -10,12 +10,12 @@ export function CloseDaysPage (props) {
   const [today, setToday] = useState(new Date())
   const closedDateMap = new Map();
 
-  for(const [BDID, _closedDate] of props[JSON_CLOSED_DATE]){
+  for(const [_BDID, _closedDate] of props[JSON_CLOSED_DATE]){
     const /**@type {ClosedDate} */ closedDate = _closedDate;
     closedDateMap.set(closedDate.close_date, closedDate.id);
   }
 
-  function changeCloseDay (dateObject, Calender) {
+  function changeCloseDay (dateObject) {
     const dateStr = dateToDateString(dateObject)
     if (closedDateMap.has(dateStr)){
       const closedDateID = closedDateMap.get(dateStr);

@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 
 import { CreateOrderModal } from '../../../components/modals/create_activity_modal.js'
 import { JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_MODEL_CREATE } from "../../../lib/constants.js";
-import { AppState} from '../../helpers.js'
+import { AppState} from '../../app_state.js'
 import { act } from "react-dom/test-utils";
 
 

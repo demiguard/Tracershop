@@ -1,17 +1,17 @@
-import React, { Component, useEffect, useState } from "react";
-import propTypes from 'prop-types'
+import React, { useEffect, useState } from "react";
+
 import { Button, ButtonGroup, Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction, Tracer, Isotope } from "../../dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 import styles from '../../css/Site.module.css'
-import { renderComment, renderTableRow } from "../../lib/rendering.js";
-import { changeState, toggleState } from "../../lib/state_management.js";
-import { Calculator } from "../injectable/calculator.js";
+import { renderComment } from "../../lib/rendering.js";
+
+
 import Authenticate from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
-import { compareDates as compareDates } from "../../lib/utils.js";
+
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, ERROR_BACKGROUND_COLOR, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_USER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_MODEL_CREATE,  WEBSOCKET_MESSAGE_MODEL_EDIT} from "../../lib/constants.js";
@@ -21,26 +21,6 @@ import { compareTimeStamp, getTimeString } from "../../lib/chronomancy.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { addTimeColons, concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-
-const initial_state = {
-  selectedVials : new Set(),
-  editingVials : new Map(),
-  isFreeing : false,
-  editingActivity : false,
-  usingCalculator : false,
-  activityValue : 0,
-  loginMessage : "",
-  loginSpinner : false,
-  errorLevel : null,
-  errorMessage : "",
-  addingVial: false,
-  newVial : {
-    lot_number : "",
-    fill_time : "",
-    volume : "",
-    activity : "",
-  }
-}
 
 /**
  * A time slot may multiple orders and each of these objects refers to an order
@@ -162,15 +142,23 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
   }, [vial])
 
   const lotNumberContent = editing ? <FormControl value={editingVial.lot_number}
+    aria-label={`lot_number-${vial.id}`}
     onChange={(event) => {setDisplayVial({lot_number : event.target.value})}}/> : vial.lot_number;
   const productionTimeContent = editing ? <FormControl value={editingVial.fill_time}
+    aria-label={`fill_time-${vial.id}`}
     onChange={(event) => {setDisplayVial({fill_time : addTimeColons(event, editingVial.fill_time)})}}/> : vial.fill_time;
-  const volumeContent = editing ? <FormControl value={editingVial.volume}
+  const volumeContent = editing ? <FormControl
+    aria-label={`volume-${vial.id}`}
+    value={editingVial.volume}
     onChange={(event) => {setDisplayVial({volume : event.target.value})}}/> : vial.volume;
   const activityContent = editing ? <FormControl value={editingVial.activity}
+    aria-label={`activity-${vial.id}`}
     onChange={(event) => {setDisplayVial({activity : event.target.value})}}/> : vial.activity;
 
-  const canEditIcon = selected ? <div></div> : <ClickableIcon src="/static/images/pen.svg" onClick={() => {
+  const canEditIcon = selected ? <div></div> : <ClickableIcon
+    src="/static/images/pen.svg"
+    label={`edit-vial-${vial.id}`}
+    onClick={() => {
     setEditing(true);
   }}/>
 
@@ -180,7 +168,10 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
 
   let commitContent = editing ? <ClickableIcon src="/static/images/decline.svg"
     onClick={() => {setEditing(false)}}
-  /> : <Form.Check onChange={onSelect}  checked={selected}/>;
+  /> : <Form.Check
+          aria-label={`vial-usage-${vial.id}`}
+          onChange={onSelect}
+          checked={selected}/>;
 
   if (vial.assigned_to){
     commitContent = ""
@@ -235,6 +226,7 @@ function NewVialRow({stopAddingVial, setError, websocket}){
       <td>Ny</td>
       <td>
         <FormControl
+          aria-label="lot_number-new"
           value={lot_number}
           onChange={(event) => {
             setLotNumber(event.target.value)
@@ -242,6 +234,7 @@ function NewVialRow({stopAddingVial, setError, websocket}){
       </td>
       <td>
         <FormControl
+          aria-label="fill_time-new"
           value={fill_time}
           onChange={(event) => {
             setFillTime(addTimeColons(event, fill_time));
@@ -249,6 +242,7 @@ function NewVialRow({stopAddingVial, setError, websocket}){
       </td>
       <td>
         <FormControl
+          aria-label="volume-new"
           value={volume}
           onChange={(event) => {
             setVolume(event.target.value)
@@ -256,6 +250,7 @@ function NewVialRow({stopAddingVial, setError, websocket}){
       </td>
       <td>
         <FormControl
+          aria-label="activity-new"
           value={activity}
           onChange={(event) => {
             setActivity(event.target.value)
@@ -264,11 +259,13 @@ function NewVialRow({stopAddingVial, setError, websocket}){
       <td>
         <ClickableIcon
           src="static/images/accept.svg"
+          label="accept-new"
           onClick={addNewVial}
         />
       </td>
       <td>
         <ClickableIcon
+          label="decline-new"
           src="static/images/decline.svg"
           onClick={stopAddingVial}
         />
@@ -289,6 +286,7 @@ export function ActivityModal(props){
   const /**@type {Isotope} */ isotope = props[JSON_ISOTOPE].get(tracer.isotope)
 
   // Value extraction
+  const dateString = dateToDateString(props[PROP_ACTIVE_DATE])
   let minimum_status = 5;
   let activity = 0;
   let freed_activity = 0;
@@ -338,6 +336,9 @@ export function ActivityModal(props){
   const vials = [...props[JSON_VIAL].values()].filter(
     (_vial) => {
       const /**@type {Vial} */ vial = _vial
+      if(vial.fill_date !== dateString){
+        return false;
+      }
       if(minimum_status === 3){
         freed_activity += vial.activity;
         return orderIDs.includes(vial.assigned_to)

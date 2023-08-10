@@ -54,8 +54,13 @@ export function CustomerPage (props) {
               <Col xs={2} style={{
                 display : "flex"
               }}>
-                <ClickableIcon src={'/static/images/setting.png'} onClick={ActivateModal(ID, Modals.CUSTOMER)}/>
-                <ClickableIcon src={'/static/images/bill.png'} onClick={ActivateModal(ID, Modals.HISTORY)}/>
+                <ClickableIcon
+                  label={`settings-${customer.id}`}
+                  src={'/static/images/setting.png'}
+                  onClick={ActivateModal(ID, Modals.CUSTOMER)}/>
+                <ClickableIcon
+                  src={'/static/images/bill.png'}
+                  onClick={ActivateModal(ID, Modals.HISTORY)}/>
               </Col>
             </Row>
           </Container>
@@ -73,6 +78,7 @@ export function CustomerPage (props) {
     <Container>
       <Row>
         <FormControl
+          aria-label="customer-filter"
           onChange={(event) => {setState({filter : event.target.value})}}
           value={state.filter}
           placeholder="Kunde Filter"

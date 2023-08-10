@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { CreateInjectionOrderModal } from "../../../components/modals/create_injection_modal.js"
 import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
 
-import {AppState} from '../../helpers.js'
+import {AppState} from '../../app_state.js'
 import { act } from "react-dom/test-utils";
 
 const onClose = jest.fn()

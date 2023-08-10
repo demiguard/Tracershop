@@ -22,6 +22,8 @@ import { renderComment } from "../../lib/rendering.js";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalog, Vial } from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay } from "../../lib/chronomancy.js";
 import { ArrayMap } from "../../lib/array_map.js";
+import { createOrderMapping, createTimeSlotMapping } from "../../lib/data_structures.js";
+import { sortOrderMapping } from "../../lib/sorting.js";
 
 const Modals = {
   createModal : CreateOrderModal,
@@ -68,14 +70,13 @@ function RenderedTimeSlot(props){
   const overhead = overheadMap.get(owner.id)
 
   const orderIds = props[JSON_ACTIVITY_ORDER].map(getId)
-  const [firstAvailableTimeSlot, firstTimeSlotOrders] = props[PROP_ASSOCIATED_TIME_SLOTS]
+  const firstAvailableTimeSlot = props[PROP_ASSOCIATED_TIME_SLOTS][0]
   const firstAvailableTimeSlotID = firstAvailableTimeSlot.id
 
   let orderedMBq = 0;
   let deliveredMBq = 0;
   let freedMbq = 0;
   let minimumStatus = 3;
-  let minimumStatusFirstTimeSlot
   const OrderData = [];
   let moved = true;
 
@@ -101,7 +102,7 @@ function RenderedTimeSlot(props){
     minimumStatus = Math.min(minimumStatus, order.status);
 
     if(minimumStatus === 3){
-      for(const [vialID, _vial] of props[JSON_VIAL]){
+      for(const [_vialID, _vial] of props[JSON_VIAL]){
         const /**@type {Vial} */ vial = _vial
         if (vial.assigned_to === order.id){
           freedMbq += vial.activity
@@ -137,16 +138,17 @@ function RenderedTimeSlot(props){
     props[PROP_WEBSOCKET].send(message);
   }
 
-  
   // Sub-components
   const openClassName = open ? SiteStyles.rotated : "";
   let headerIcon = <StatusIcon
+                      label={`time-slot-icon-${props.timeSlotID}`}
                       status={minimumStatus}
                       onClick={() => props[PROP_ON_CLICK](props['timeSlotID'])}
                     />
   if(moved){
     headerIcon = <ClickableIcon
                     src="/static/images/move_top.svg"
+                    label={`time-slot-icon-${props.timeSlotID}`}
                     onClick={canMove ? restoreOrders : () => {}}
                   />;
   }
@@ -212,6 +214,12 @@ function RenderedTimeSlot(props){
     </Card>);
 }
 
+/**
+ * Row over the actual table,with the goal of informing the user of how much
+ * tracer needs to be produced
+ * @param {*} props 
+ * @returns 
+ */
 function ProductionRow(props){
   const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(props[PROP_ACTIVE_PRODUCTION])
   const /**@type {Tracer} */tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER]);
@@ -242,7 +250,7 @@ function ProductionRow(props){
   }
 
   return (
-  <Row key={production.id}>
+  <Row>
     Kørsel {production.production_time} : {Math.floor(total)} MBq / Overhead : {Math.floor(total_o)} MBq
   </Row>);
 }
@@ -264,47 +272,21 @@ export function ActivityTable (props) {
     return production.production_day === activeDay && production.tracer === props[PROP_ACTIVE_TRACER]
   }).map(getId)
 
-  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ timeSlotMapping = new Map()
-
-  for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
-    const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
-    if(timeSlotMapping.has(endpoint.owner)){
-      const endpointMap = timeSlotMapping.get(endpoint.owner)
-      endpointMap.set(endpointID, [])
-    } else {
-      const endpointMap = new Map()
-      endpointMap.set(endpointID, [])
-      timeSlotMapping.set(endpointID, endpointMap)
-    }
-  }
-
+  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ timeSlotMapping = createTimeSlotMapping(
+    props[JSON_ENDPOINT],
+    props[JSON_DELIVER_TIME],
+    relevantProductions,
+  )
 
   const /**@type {ArrayMap<Number, Number>} */ contributingTimeSlots = new ArrayMap()
 
   for(const [activityDeliveryTimeSlotId,_activityDeliveryTimeSlot] of props[JSON_DELIVER_TIME]){
     // You can't turn this into a map because of the sorting ruins parallelism
     const /**@type {ActivityDeliveryTimeSlot} */ activityDeliveryTimeSlot = _activityDeliveryTimeSlot
-    const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(activityDeliveryTimeSlot.production_run)
     if(!relevantProductions.includes(activityDeliveryTimeSlot.production_run)){
       continue;
     }
-
     contributingTimeSlots.set(activityDeliveryTimeSlot.production_run, activityDeliveryTimeSlotId)
-
-    // Destination is an endpoint ID
-    const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(activityDeliveryTimeSlot.destination);
-    const destinationMapping = timeSlotMapping.get(endpoint.owner)
-
-    if(destinationMapping === undefined){
-      // Log error
-      console.log("Error")
-      continue;
-    }
-
-    destinationMapping.get(endpoint.id).push(activityDeliveryTimeSlot);
-    destinationMapping.get(endpoint.id).sort((a,b) => {
-      return (a.delivery_time < b.delivery_time) ? -1 : 1;
-    });
   }
 
   const [modalIdentifier, setModalIdentifier] = useState(null);
@@ -330,40 +312,13 @@ export function ActivityTable (props) {
     return order.delivery_date === delivery_date && production.tracer == props[PROP_ACTIVE_TRACER]
   });
 
-  const /**@type {ArrayMap<Number, ActivityOrder>} */ OrderMapping = new Map();
-  for(const order of todays_orders){
-    if (OrderMapping.has(order.ordered_time_slot)){
-      OrderMapping.get(order.ordered_time_slot).push(order)
-    } else {
-      OrderMapping.set(order.ordered_time_slot, [order])
-    }
+  const OrderMapping = createOrderMapping(todays_orders)
 
-    if(order.moved_to_time_slot != null){
-      if (OrderMapping.has(order.moved_to_time_slot)){
-        OrderMapping.get(order.moved_to_time_slot).push(order)
-      } else {
-        OrderMapping.set(order.moved_to_time_slot, [order])
-      }
-    }
-  }
+  console.log(timeSlotMapping, relevantProductions)
 
-  const renderedTimeSlots = Array.from(OrderMapping).sort(([timeSlotID_a, orders_a], [timeSlotID_b, orders_b]) => {
-    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot_a = props[JSON_DELIVER_TIME].get(timeSlotID_a);
-    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot_b = props[JSON_DELIVER_TIME].get(timeSlotID_b);
-
-    const /**@type {DeliveryEndpoint} */ endpoint_a = props[JSON_ENDPOINT].get(timeSlot_a.destination);
-    const /**@type {DeliveryEndpoint} */ endpoint_b = props[JSON_ENDPOINT].get(timeSlot_b.destination);
-
-    if(endpoint_a.owner != endpoint_b.owner){
-      return endpoint_a.owner - endpoint_b.owner
-    }
-    if(timeSlot_a.destination != timeSlot_b.destination){
-      return timeSlot_a.destination - timeSlot_b.destination
-    }
-
-    return  timeSlot_b.delivery_time < timeSlot_a.delivery_time ? 1 : -1;
-  }).map(
-    ([timeSlotID, orders]) => {
+  const renderedTimeSlots = Array.from(OrderMapping).sort(
+    sortOrderMapping(props[JSON_DELIVER_TIME], props[JSON_ENDPOINT])
+    ).map(([timeSlotID, orders]) => {
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
       const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination);
       const /**@type {Array<ActivityDeliveryTimeSlot>} */ timeSlots = timeSlotMapping.get(endpoint.owner).get(endpoint.id)
@@ -383,7 +338,7 @@ export function ActivityTable (props) {
     })
 
 
-  const RenderedRuns = relevantProductions.map((productionID) => {
+  const productionRows = relevantProductions.map((productionID) => {
     const productionProps = {...props}
 
     productionProps[PROP_OVERHEAD_MAP] = overheadMap;
@@ -411,6 +366,8 @@ export function ActivityTable (props) {
     const ModalType = Modals[modalIdentifier]
     Modal = <ModalType {...modalProps} />
   }
+  
+
 
   return (
     <div>
@@ -418,10 +375,12 @@ export function ActivityTable (props) {
         <Row>
           <Col sm={10}>
             <Row>Produktioner - {danishDateString}:</Row>
-            {RenderedRuns}
+            {productionRows}
           </Col>
           <Col sm={2}>
-            <Button name="createOrder" onClick={() => {setModalIdentifier("createModal")}}>Opret ny ordre</Button>
+            <Button 
+              name="create-order"
+              onClick={() => {setModalIdentifier("createModal")}}>Opret ny ordre</Button>
           </Col>
         </Row>
       </Container>

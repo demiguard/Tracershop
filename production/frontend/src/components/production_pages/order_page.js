@@ -26,7 +26,11 @@ export class OrderPage extends Component {
 
     let activeTracer = db.get("activeTracer");
     if(!activeTracer) {
-      activeTracer = -1;
+      const tracers = [...this.props[JSON_TRACER].values()].filter(
+        (tracer) => {return tracer.tracer_type === TRACER_TYPE_ACTIVITY}
+        ).sort((a, b) => {return b.id - a.id})
+
+      activeTracer = tracers.length ? tracers[0].id : -1;
       db.set("activeTracer", activeTracer);
     }
 
@@ -42,12 +46,6 @@ export class OrderPage extends Component {
   setActiveDate(NewDate) {
     db.set("today", NewDate);
     this.setState({...this.state, date : NewDate})
-  }
-
-  setActiveMonth(NewMonth) {
-    const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
-    message[WEBSOCKET_DATE] = NewMonth;
-    this.props[PROP_WEBSOCKET].send(message);
   }
 
   // ##### End Calender Functions ##### //

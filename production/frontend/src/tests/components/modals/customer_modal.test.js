@@ -7,7 +7,7 @@ import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState } from '../../helpers.js';
+import { AppState } from '../../app_state.js';
 import { CustomerModal } from '../../../components/modals/customer_modal.js'
 import { JSON_DELIVER_TIME, PROP_ACTIVE_CUSTOMER, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
 

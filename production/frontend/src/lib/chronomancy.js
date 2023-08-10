@@ -40,7 +40,6 @@ export function getTimeStamp(timeStamp){
     return timeStamp
   }
 
-  console.log(timeStamp)
   throw "Unknown timestamp format"
 }
 

@@ -11,7 +11,7 @@ import { jest } from '@jest/globals'
 import { InjectionModal } from "../../../components/modals/injection_modal.js"
 
 import { PROP_MODAL_ORDER, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
-import { AppState } from "../../helpers.js";
+import { AppState } from "../../app_state.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
