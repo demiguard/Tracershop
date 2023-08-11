@@ -11,7 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-from production.SECRET_KEY import KEY
+from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME, LDAP_PASSWORD
 from production.config import debug_file_log, SQL_file_log, error_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
@@ -126,20 +126,31 @@ AUTH_USER_MODEL = "database.User"
 
 # LDAP KEY WORDS
 AUTH_LDAP_SERVER_URI = "ldap://regionh.top.local"
+AUTH_LDAP_START_TLS  = True
+
 AUTH_LDAP_GLOBAL_OPTIONS = {
-    ldap.OPT_X_TLS_CACERTFILE : "", #type: ignore
+    ldap.OPT_X_TLS_CACERTFILE : LDAP_CERT_PATH, #type: ignore
     ldap.OPT_X_TLS_REQUIRE_CERT : ldap.OPT_X_TLS_NEVER, #type: ignore
     ldap.OPT_X_TLS_NEWCTX : 0, #type: ignore
 }
 
 # AUTH LOGIN
-AUTH_LDAP_BIND_DN = ""
-AUTH_LDAP_BIND_PASSWORD = ""
+AUTH_LDAP_BIND_DN = LDAP_USERNAME
+AUTH_LDAP_BIND_PASSWORD = LDAP_PASSWORD
 
 AUTHENTICATION_BACKENDS = [
     'django_auth_ldap.backend.LDAPBackend',
     'tracerauth.backend.TracershopAuthenticationBackend'
 ]
+
+AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(
+    LDAPSearch("OU=Region Hovedstaden,dc=regionh,dc=top,dc=local", ldap.SCOPE_SUBTREE, "(cn=%(user)s)")
+)
+
+AUTH_LDAP_CONNECTION_OPTIONS = {
+    ldap.OPT_DEBUG_LEVEL: 1, # 0 to 255
+    ldap.OPT_REFERRALS: 0, # For Active Directory
+}
 
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
