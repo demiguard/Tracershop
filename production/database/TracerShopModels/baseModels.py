@@ -74,6 +74,9 @@ class TracershopModel(Model):
 
 
 class Days(IntegerChoices):
+  """Enum describing the days. Note these overlap with datetime module,
+  so they can't be changed without break a fuck ton of code.
+  """
   Monday = 0
   Thursday = 1
   Wednesday = 2

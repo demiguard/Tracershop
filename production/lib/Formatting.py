@@ -5,6 +5,8 @@ import re
 from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_JS, SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
 from datetime import date, time, datetime
 
+from database import models
+
 def FormatDateTimeJStoSQL(datetimestr : str) -> str:
   if re.match(DATETIME_REGULAR_EXPRESSION_JS, datetimestr):
     return datetimestr.replace("T", " ")
@@ -70,3 +72,11 @@ def ParseSQLField(SQL_Field : str) -> str:
   else:
     ID = SQL_Field
   return ID
+
+def mapTracerUsage(tracerUsage: models.TracerUsage):
+  if tracerUsage == models.TracerUsage.human:
+    return "humant"
+  if tracerUsage == models.TracerUsage.animal:
+    return "dyr"
+  if tracerUsage == models.TracerUsage.other:
+    return "Andet"

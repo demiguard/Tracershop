@@ -9,12 +9,13 @@ Most of the functionality is found in:
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard library
-import os
+from datetime import date
 from pathlib import Path
-from typing import Optional, Tuple, List
+from typing import Iterable, Optional, Tuple, List, Sequence
 
 # Django packages
 from django.conf import settings
+from django.db.models import QuerySet
 
 # Third party packages
 from reportlab.pdfgen import canvas
@@ -31,16 +32,14 @@ try:
   pdfmetrics.registerFont(TTFont('Mari_Poster', 'pdfData/Mari_Poster.ttf'))
   fonts = True
 except:
-  fonts = False
+  fonts = False # pragma: no cover
 
 
 # Tracershop Production packages
-from lib.decorators import typeCheckFunc
-
+from lib.Formatting import dateConverter, timeConverter, mapTracerUsage
+from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial
 
 ##### Constant declarations #####
-
-
 #A pdf page is (595.27 , 841.89)
 
 #Lines are on the format (x1, y1, x2, y2)
@@ -50,7 +49,7 @@ BOTTOM_LINE = (50, 791, 545, 791)
 if fonts:
   defaultFont = "Mari_Light"
 else:
-  defaultFont = "helvetica"
+  defaultFont = "helvetica" # pragma no cover
 defaultFontSize = 13
 
 start_x_cursor = 58
@@ -78,15 +77,20 @@ class MailTemplate(canvas.Canvas):
 
     self.drawInlineImage("pdfData/petlogo_small.png",  417, 750 , width= 128, height=32)
 
-  def ApplyCustomer(self, x_cursor:int, y_cursor:int, Customer):
+  def ApplyEndpoint(self, x_cursor:int, y_cursor:int, endpoint: DeliveryEndpoint):
     self.setStrokeColorRGB(0.5,0.5,1.0)
     self.setFont(self._font, self._font_size)
+
+    customer = endpoint.owner
 
     y_top = y_cursor
 
     y_cursor -= 15 # Move the Cursor Down
 
-    Customer_identification_lines = [Customer.Realname, Customer.contact,str(Customer.tlf), Customer.email]
+    Customer_identification_lines = [customer.long_name,
+                                     customer.billing_address,
+                                     str(customer.billing_phone),
+                                     customer.billing_email]
     max_text_length = 0
 
 
@@ -117,75 +121,45 @@ class MailTemplate(canvas.Canvas):
       self,
       x_cursor: int,
       y_cursor: int,
-      Order ,
-      Isotope,
-      Tracer ,
-      COID_ORDER= None,
-      VialOrders= None
+      order_date: date,
+      productions: Sequence[ActivityProduction],
+      orders: Iterable[ActivityOrder],
     ):
 
-    #Helper Funcions
-    def ExtractOrderData(Order):
-      freeDateTimestr = "Fejl i database"
-      if Order.frigivet_datetime != None:
-        freeDateTimestr = Order.frigivet_datetime.strftime("%H:%M")
-
-      return  [
-        str(Order.oid),
-        str(Order.amount),
-        str(Order.frigivet_amount),
-        str(Order.deliver_datetime.strftime("%H:%M")),
-        str(freeDateTimestr)
-      ]
-
-    #End helper function
-
     self.setFont(self._font, self._font_size)
-    self.setStrokeColorRGB(0.0,0.0,0.0)
+    self.setStrokeColorRGB(0,0,0)
 
-    #Text
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives {Tracer.longName} - {Isotope.name} injektion til humant brug.")
+    pivotProduction = productions[0]
+    tracer = pivotProduction.tracer
+
+    self.drawString(x_cursor, y_cursor, f"Dato: {dateConverter(order_date, '%d/%m/%Y')}")
     y_cursor -= self._line_width
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives {tracer.clinical_name} - {tracer.isotope.atomic_letter}-{tracer.isotope.atomic_mass} til humant brug.")
+    y_cursor -= 2 * self._line_width
 
-    freedDate = Order.frigivet_datetime.strftime("%d/%m/%Y")
-
-    if COID_ORDER:
-      self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet den {freedDate}, Orderen indeholder også Sporestof til Orderen {COID_ORDER.oid}.")
-    else:
-      self.drawString(x_cursor, y_cursor, f"Orderen {Order.oid} er Frigivet den {freedDate}.")
-    y_cursor -= self._line_width *2
-
-
-    # Table
     HeaderText = [
       "Order ID",
       "Bestilt",
-      "Udleveret",
       "Ønsket kl:",
       "Frigivet kl:",
     ]
 
-    OrderData = ExtractOrderData(Order)
+    orderData = [[
+      str(order.activity_order_id),
+      f"{order.ordered_activity} MBq",
+      str(order.ordered_time_slot.delivery_time),
+      str(order.freed_datetime.strftime("%H:%M:%S")) # type: ignore You have a database violation if this happens and should just throw anyways...
+    ] for order in orders]
 
-    lines = [HeaderText, OrderData]
+    table_content = [HeaderText] + orderData
 
-    if COID_ORDER:
-      CoidData = ExtractOrderData(COID_ORDER)
-      lines.append(CoidData)
-
-    if VialOrders != None:
-      for VialOrder in VialOrders:
-        VialData = ExtractOrderData(VialOrder)
-        lines.append(VialData)
-
-
-    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, lines)
-    y_cursor -= 5
+    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, table_content)
+    y_cursor -= 25
 
     return y_cursor
 
-  @typeCheckFunc
-  def applyVials(self, x_cursor:int, y_cursor : int, Vials):
+
+  def applyVials(self, x_cursor:int, y_cursor : int, vials: Iterable[Vial]):
     """[summary]
 
     Args:
@@ -195,34 +169,30 @@ class MailTemplate(canvas.Canvas):
     Returns:
         int - end position of the y cursor
     """
-    def ExtractVial(Vial):
-      return [
-        str(Vial.charge),
-        Vial.filltime.strftime("%H:%M"),
-        str(int(Vial.activity)) + " MBq",
-        str(Vial.volume) + " ml"
-      ]
-
-    #self.drawString(x_cursor, y_cursor, "Til ovenstående order tilhører føglende vials:")
-
-    #y_cursor -= self.__line_width * 2
-
-    lines = [
-      [ "Batch nummer",
-        "Kalibrering",
-        "Aktivitet",
-        "volume"
-      ]
+    tableHeader = [
+      "Batch nummer",
+      "Kalibrering",
+      "Aktivitet",
+      "Volume"
     ]
-    for Vial in Vials:
-      lines.append(ExtractVial(Vial))
 
-    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, lines)
+    tableData = [
+      [str(vial.lot_number),
+       timeConverter(vial.fill_time),
+       str(round(vial.activity)),
+       str(round(vial.volume, 2))
+       ] for vial in vials
+    ]
+
+    tableContent = [tableHeader] + tableData
+
+
+    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, tableContent)
 
     return y_cursor
 
 
-  def drawBox(self, t4: Tuple[int,int,int,int]):
+  def _drawBox(self, t4: Tuple[int,int,int,int]):
     """Overloaded function of draw box.
 
     Args:
@@ -327,15 +297,20 @@ class MailTemplate(canvas.Canvas):
       self,
       x_cursor : int,
       y_cursor : int,
-      IODC,
-      Isotope ,
-      Tracer) -> int:
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {IODC.oid} - {Tracer.longName} - {Isotope.name} Injektion til {IODC.anvendelse}")
+      injectionOrder : InjectionOrder,
+      ) -> int:
+
+    tracer = injectionOrder.tracer
+    isotope = tracer.isotope
+
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.injection_order_id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(injectionOrder.tracer_usage)} brug.")
     y_cursor -= self._line_width
 
-    freedDatetime = IODC.frigivet_datetime.strftime("%d/%m/%Y %H:%M")
+    if injectionOrder.freed_datetime is None:
+      raise Exception # pragma: no cover
+    freedDatetime = injectionOrder.freed_datetime.strftime("%d/%m/%Y %H:%M")
 
-    self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {IODC.n_injections} injektioner med batch nummer: {IODC.batchnr}")
+    self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 
 
     y_cursor -= self._line_width * 2
@@ -376,25 +351,23 @@ class MailTemplate(canvas.Canvas):
 
 
 def DrawActivityOrder(
-    filename:str,
-    customer ,
-    Order ,
-    vials,
-    Isotope,
-    Tracer,
-    COID_ORDER = None,
-    VialOrders = None
-  ):
+    filename: str,
+    order_date: date,
+    endpoint: DeliveryEndpoint,
+    productions : Sequence[ActivityProduction],
+    orders: Iterable[ActivityOrder] ,
+    vials: Iterable[Vial],
+  ) -> None:
   template = MailTemplate(filename)
   x_cursor = start_x_cursor
   y_cursor = start_y_cursor
 
-  y_cursor = template.ApplyCustomer(x_cursor, y_cursor, customer)
+  y_cursor = template.ApplyEndpoint(x_cursor, y_cursor, endpoint)
 
   x_cursor += 10
   y_cursor -= 20
 
-  y_cursor = template.ApplyOrderActivity(x_cursor, y_cursor, Order, Isotope, Tracer, COID_ORDER=COID_ORDER, VialOrders=VialOrders)
+  y_cursor = template.ApplyOrderActivity(x_cursor, y_cursor, order_date, productions, orders)
   y_cursor -= 10
 
 
@@ -402,51 +375,25 @@ def DrawActivityOrder(
   y_cursor -= 10
   y_cursor = template.ApplySender(x_cursor, y_cursor)
 
-
   template.save()
 
 def DrawInjectionOrder(
-    filename: Path,
-    Customer,
-    IODC,
-    Isotope,
-    Tracer
+    filename: str,
+    injectionOrder : InjectionOrder,
   ):
   template = MailTemplate(filename)
   x_cursor = start_x_cursor
   y_cursor = start_y_cursor
 
-  y_cursor = template.ApplyCustomer(x_cursor, y_cursor, Customer)
+  endpoint = injectionOrder.endpoint
+
+  y_cursor = template.ApplyEndpoint(x_cursor, y_cursor, endpoint)
 
   x_cursor += 10
   y_cursor -= 20
 
-  y_cursor = template.ApplyInjectionOrder(x_cursor, y_cursor, IODC, Isotope, Tracer)
+  y_cursor = template.ApplyInjectionOrder(x_cursor, y_cursor, injectionOrder)
 
   y_cursor = template.ApplySender(x_cursor, y_cursor)
 
   template.save()
-
-
-def getPdfFilePath(customer, Order):
-  year = Order.deliver_datetime.strftime("%Y")
-  month = Order.deliver_datetime.strftime("%m")
-
-  pdfsPath  = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs")
-  customerPath = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/")
-  yearlyPath = Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}")
-  monthlyPath =Path(f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}/{month}")
-
-  if not pdfsPath.exists():
-    pdfsPath.mkdir() #pragma: no cover
-
-  if not customerPath.exists():
-    customerPath.mkdir() #pragma: no cover
-
-  if not yearlyPath.exists():
-    yearlyPath.mkdir() #pragma: no cover
-
-  if not monthlyPath.exists():
-    monthlyPath.mkdir() #pragma: no cover
-
-  return f"{settings.BASE_DIR}/frontend/static/frontend/pdfs/{customer.UserName}/{year}/{month}/{Order.oid}.pdf"
