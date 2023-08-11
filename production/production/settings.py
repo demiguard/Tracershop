@@ -136,7 +136,10 @@ AUTH_LDAP_GLOBAL_OPTIONS = {
 AUTH_LDAP_BIND_DN = ""
 AUTH_LDAP_BIND_PASSWORD = ""
 
-AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
+AUTHENTICATION_BACKENDS = [
+    'django_auth_ldap.backend.LDAPBackend',
+    'tracerauth.backend.TracershopAuthenticationBackend'
+]
 
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
