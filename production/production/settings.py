@@ -144,12 +144,12 @@ AUTHENTICATION_BACKENDS = [
 ]
 
 AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(
-    LDAPSearch("OU=Region Hovedstaden,dc=regionh,dc=top,dc=local", ldap.SCOPE_SUBTREE, "(cn=%(user)s)")
+    LDAPSearch("OU=Region Hovedstaden,dc=regionh,dc=top,dc=local", ldap.SCOPE_SUBTREE, "(cn=%(user)s)") # type: ignore
 )
 
 AUTH_LDAP_CONNECTION_OPTIONS = {
-    ldap.OPT_DEBUG_LEVEL: 1, # 0 to 255
-    ldap.OPT_REFERRALS: 0, # For Active Directory
+    ldap.OPT_DEBUG_LEVEL: 1, # 0 to 255 # type: ignore I fucking hate dynamically set attributes
+    ldap.OPT_REFERRALS: 0, # For Active Directory # type: ignore # I see NO upside in that
 }
 
 CSRF_COOKIE_SAMESITE = 'Strict'

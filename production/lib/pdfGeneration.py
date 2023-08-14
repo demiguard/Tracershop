@@ -37,7 +37,7 @@ except:
 
 # Tracershop Production packages
 from lib.Formatting import dateConverter, timeConverter, mapTracerUsage
-from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial
+from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
 ##### Constant declarations #####
 #A pdf page is (595.27 , 841.89)
@@ -303,7 +303,7 @@ class MailTemplate(canvas.Canvas):
     tracer = injectionOrder.tracer
     isotope = tracer.isotope
 
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.injection_order_id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(injectionOrder.tracer_usage)} brug.")
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.injection_order_id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
     y_cursor -= self._line_width
 
     if injectionOrder.freed_datetime is None:

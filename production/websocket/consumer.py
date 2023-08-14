@@ -45,7 +45,7 @@ from lib import orders
 from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
 from lib.ProductionJSON import encode, decode
 from tracerauth import auth
-
+from tracerauth.tracerLdap import checkUserGroupMembership
 
 logger = logging.getLogger('DebugLogger')
 error_logger = logging.getLogger("ErrorLogger")
@@ -286,10 +286,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
     auth = message[JSON_AUTH]
     username = auth[AUTH_USERNAME]
     password = auth[AUTH_PASSWORD]
-    user = await database_sync_to_async(authenticate)(username=username,
+    user: User = await database_sync_to_async(authenticate)(username=username,
                                                       password=password)
-
     if user:
+      if user.UserGroup == UserGroups.Anon:
+        newUserGroup = checkUserGroupMembership(user.username)
+        if newUserGroup != UserGroups.Anon:
+          user.UserGroup = newUserGroup
+          await database_sync_to_async(user.save)()
+
       relatedCustomers = []
       if user.UserGroup in [UserGroups.ShopAdmin,
                             UserGroups.ShopExternal,
