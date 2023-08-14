@@ -32,7 +32,7 @@ class User(AbstractBaseUser, TracershopModel):
   id = BigAutoField(primary_key=True)
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=120)
-  UserGroup = SmallIntegerField(choices=UserGroups.choices)
+  UserGroup = SmallIntegerField(choices=UserGroups.choices, default= UserGroups.Anon)
   active = BooleanField(default=True)
   # This number overlaps with Users.id field of the old database.
   # Note for user in this database and not in the other database,
