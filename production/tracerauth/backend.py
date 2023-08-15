@@ -7,7 +7,7 @@ from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
 
 # Tracershop Production Packages
-from database.models import User, UserGroups
+from database.models import User
 
 
 def validString(string: str) -> bool:

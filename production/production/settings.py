@@ -149,7 +149,7 @@ AUTH_LDAP_USER_SEARCH = LDAPSearchUnion(
 
 AUTH_LDAP_CONNECTION_OPTIONS = {
     ldap.OPT_DEBUG_LEVEL: 1, # 0 to 255 # type: ignore I fucking hate dynamically set attributes
-    ldap.OPT_REFERRALS: 0, # For Active Directory # type: ignore # I see NO upside in that
+    ldap.OPT_REFERRALS: 0, # For Active Directory # type: ignore # I see NO upside
 }
 
 CSRF_COOKIE_SAMESITE = 'Strict'

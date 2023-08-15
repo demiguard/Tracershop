@@ -7,21 +7,40 @@ from datetime import date
 from pathlib import Path
 
 # Third party Packages
+from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.http import FileResponse, HttpResponseNotFound
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
+from django_auth_ldap.backend import LDAPBackend
 
 # Tracershop Production
 from lib import pdfGeneration
-from database.models import ActivityOrder, ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint, OrderStatus, Vial
+from database.models import ActivityOrder, ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups
+from tracerauth.backend import TracershopAuthenticationBackend
 
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
+  if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
+    try:
+      user = User.objects.get(username=request.headers['X-Tracer-User'])
+      if user.UserGroup != request.headers['X-Tracer-Role']:
+        user.UserGroup = UserGroups(request.headers['X-Tracer-Role'])
+        user.save()
+    except ObjectDoesNotExist:
+      user = User.objects.create(username=request.headers['X-Tracer-User'],
+                          UserGroup=UserGroups(request.headers['X-Tracer-Role']))
+    if user.UserGroup == UserGroups.ShopExternal:
+      backend = "tracerauth.backend.TracershopAuthenticationBackend"
+    else:
+      backend = "django_auth_ldap.backend.LDAPBackend"
+
+    login(request, user, backend=backend)
+
   return render(request, "frontend/index.html")
 
-def pdfView(request, 
+def pdfView(request,
             endpointID:int,
             tracerID: int,
             year: int,
@@ -39,8 +58,6 @@ def pdfView(request,
   except ObjectDoesNotExist:
     # Maybe add some logging
     return HttpResponseNotFound(request)
-
-
 
   productions = ActivityProduction.objects.filter(tracer__pk=tracerID,
                                                   production_day=order_date.weekday())
@@ -74,8 +91,7 @@ def pdfView(request,
     filename,
     order_date,
     endpoint,
-    productions,
-    timeSlots,
+    [production for production in productions],
     orders,
     vials,
   )

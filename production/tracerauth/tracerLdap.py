@@ -45,5 +45,3 @@ def checkUserGroupMembership(username: str) -> UserGroups:
             return ldapTracershopGroups[ldapTracershopGroupsName]
   return UserGroups.Anon
 
-
-
