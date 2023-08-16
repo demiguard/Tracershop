@@ -12,7 +12,7 @@ from django.db.models import Model, DateField, BigAutoField, CharField, EmailFie
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.authModels import User
-from database.TracerShopModels.clinicalModels import ActivityProduction, Procedure, Tracer
+from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
 
 
 class ClosedDate(TracershopModel):
@@ -88,6 +88,19 @@ class Location(TracershopModel):
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
   common_name = CharField(max_length=120, null=True, default=None)
 
+class ProcedureIdentifier(TracershopModel):
+  procedure_identifier_id = BigAutoField(primary_key=True)
+  string = CharField(max_length=128)
+
+
+class Procedure(TracershopModel):
+  procedure_id = BigAutoField(primary_key=True)
+  series_description = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT, default=None, null=True)
+  tracer_units = FloatField(default=0.0)
+  delay_minutes = FloatField(default=0.0)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT, default=None, null=True)
+  owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, default=None, null=True)
+
 
 class BookingStatus(IntegerChoices):
   Initial = 0
@@ -99,7 +112,7 @@ class Booking(TracershopModel):
   booking_id = BigAutoField(primary_key=True)
   status = SmallIntegerField(choices=BookingStatus.choices, default=BookingStatus.Initial)
   location = ForeignKey(Location, on_delete=RESTRICT)
-  procedure = ForeignKey(Procedure, on_delete=RESTRICT)
+  procedure = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
   accession_number = CharField(max_length=32)
   start_time = TimeField()
   start_date = DateField()

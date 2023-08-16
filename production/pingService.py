@@ -22,7 +22,7 @@ from pynetdicom import AE, Association
 from pynetdicom.sop_class import ModalityWorklistInformationFind #type: ignore
 
 # Tracershop packages
-from database.models import ServerConfiguration, Booking, Location, Procedure, TracershopModel, getOrCreateModel
+from database.models import ServerConfiguration, Booking, Location, Procedure, ProcedureIdentifier, TracershopModel, getOrCreateModel
 
 
 
@@ -118,7 +118,7 @@ while(True):
 
     scheduledProcedureDescription = dataset.ScheduledProcedureStepSequence[0]
 
-    booking.procedure = getOrCreateModel(scheduledProcedureDescription.ScheduledProcedureStepDescription, Procedure, 'series_description')
+    booking.procedure = getOrCreateModel(scheduledProcedureDescription.ScheduledProcedureStepDescription, ProcedureIdentifier, 'string')
     booking.procedure.save()
     booking.location = getOrCreateModel(scheduledProcedureDescription.ScheduledProcedureStepLocation, Location, 'location_code')
     booking.location.save()
@@ -127,7 +127,7 @@ while(True):
     booking.start_time = unformattedTime[:2] + ":" + unformattedTime[2:4] + ":" + unformattedTime[4:]
     unformattedDate = scheduledProcedureDescription.ScheduledProcedureStepStartDate
     booking.start_date = unformattedDate[:4] + "-" + unformattedDate[4:6] + "-" + unformattedDate[6:]
-    booking.save() # There's no bulk create or update in django
+    booking.save() # There's no bulk create or update in django # there is? Might fuck up
 
   logger.info(f"Updated bookings - Active bookings: {len(bookings)}")
 

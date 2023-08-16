@@ -23,7 +23,7 @@ from database.models import *
 
 ##### Script definitions #####
 source_database = {
-  'database' : "TS_test",
+  'database' : "TracerShop",
   'user' : "tracershop",
   'password' : "fdg4sale",
   'host' : "127.0.0.1",
@@ -64,7 +64,7 @@ for raw_isotope in isotopes_raw: # type: ignore
 
 
 cursor.execute("""SELECT
-    id, name, isotope, n_injections, order_block, tracer_type, longName
+    id, name, isotope, n_injections, order_block, tracer_type
   FROM
     Tracers""")
 tracers_raw = cursor.fetchall()
@@ -77,7 +77,7 @@ for raw_tracer in tracers_raw: #type: ignore
   tracer = Tracer(
     isotope=isotope, #type: ignore
     shortname = raw_tracer['name'],
-    clinical_name = raw_tracer['longName'],
+    clinical_name = "",
     vial_tag = "",
     tracer_type = TracerTypes.InjectionBased,
   )
@@ -247,7 +247,7 @@ for raw_deliveryTime in cursor.fetchall(): # type: ignore
 
   production = get_production(day, delivery_time)
   delivery_time_slot = ActivityDeliveryTimeSlot(
-    weekly_repeat = map_repeat(raw_deliveryTime['repeat']),
+    weekly_repeat = map_repeat(raw_deliveryTime['repeat_t']),
     destination = endpoint,
     delivery_time = delivery_time,
     production_run = production,
