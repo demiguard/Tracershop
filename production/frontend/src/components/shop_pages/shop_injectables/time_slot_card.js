@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
-import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint, Isotope } from "../../../dataclasses/dataclasses";
+import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope } from "../../../dataclasses/dataclasses";
 import { ParseDanishNumber, dateToDateString, nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { JSON_ACTIVITY_ORDER, JSON_ISOTOPE, JSON_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssCenter } from "../../../lib/constants";
@@ -10,7 +10,7 @@ import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 
 import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
-import { combineDateAndTimeStamp } from "../../../lib/chronomancy";
+import { combineDateAndTimeStamp, getTimeString } from "../../../lib/chronomancy";
 
 /**
  * This component is a row in the card of the activity timeSlot
@@ -28,8 +28,17 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
  const [activity, setActivity] = useState(order.ordered_activity)
  const [comment, setComment] = useState(nullParser(order.comment))
  const [errorActivity, setErrorActivity] = useState("")
+
+ useEffect(() => {
+    setActivity(order.ordered_activity)
+    setComment(order.comment)
+
+    return () => {}
+ }, [order])
  // Functions
  function createOrder() {
+    
+
    const orderedActivity = ParseDanishNumber(activity);
    if(isNaN(orderedActivity)){
      setErrorActivity("Aktiviten kan ikke læses som et tal")
@@ -159,6 +168,7 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
 *  timeSlots : Map<Number, ActivityProduction>
 *  validDeadline : Boolean
 *  Isotopes : Map<Number, Isotope>
+*  vials : Map<Number, Vial>
 * }} props - Input props
 * @returns {Element}
 */
@@ -171,11 +181,22 @@ export function TimeSlotCard({
   date,
   timeSlots,
   overhead,
-  validDeadline
+  validDeadline,
+  vials
 }){
   // State
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
+  const [newOrder, _setNewOrderActivity] = useState({
+    status : "",
+    ordered_activity : "",
+    comment : "",
+    moved_to_time_slot : "",
+  }); // This is a new object because otherwise react rendering engine fucks up
+
+  function setNewOrderActivity(newActivity){
+    _setNewOrderActivity({...newOrder, ordered_activity : Math.floor(newActivity)});
+  }
   // Filter out irrelevant orders
   const /**@type {Array<ActivityOrder>} */ orderedActivityOrders = activityOrders.filter((_order) => {
     const /**@type {ActivityOrder} */ order = _order
@@ -204,8 +225,8 @@ export function TimeSlotCard({
 
   let header = <div></div>
   let timeSlotActivity = 0
+  let minimumStatus = 5;
   if(orderedActivityOrders.length){
-    let minimumStatus = 5;
     for(const order of orderedActivityOrders){
       timeSlotActivity += order.ordered_activity
       minimumStatus = Math.min(minimumStatus, order.status);
@@ -216,12 +237,7 @@ export function TimeSlotCard({
   if(validDeadline){
     orderRows.push(<ActivityOrderRow
       key={-1}
-      order={{
-        status : 0,
-        ordered_activity : "",
-        comment : "",
-        moved_to_time_slot : null,
-      }}
+      order={newOrder}
       date={date}
       timeSlot={timeSlot}
       timeSlots={timeSlots}
@@ -230,10 +246,18 @@ export function TimeSlotCard({
   }
 
   const CollapseImageClassName = collapsed ? SiteStyles.rotated : ""
-  let deliveryActivity = 0
+  const orderIds = [];
+  let deliveryActivity = 0;
+  let freedActivity = 0;
+  let freedTime = ""
   const DeliveryHour = Number(timeSlot.delivery_time.substring(0,2))
   const DeliveryMinute = Number(timeSlot.delivery_time.substring(3,5))
   for(const order of deliverableActivityOrders){
+    if(freedTime === "" && order.status === 3){
+      freedTime = getTimeString(order.freed_datetime)
+    }
+    orderIds.push(order.id);
+
     if(order.moved_to_time_slot === null){
       deliveryActivity += overhead * order.ordered_activity
     } else {
@@ -245,6 +269,47 @@ export function TimeSlotCard({
     }
   }
 
+  for(const vial of vials.values()){
+    if(orderIds.includes(vial.assigned_to)){
+      freedActivity += vial.activity;
+    }
+  }
+
+  //  Card Content
+  let thirdColumnContent = "";
+  let fourthColumnContent = "";
+  let fifthColumnContent = "";
+
+  if(minimumStatus == 3){
+    thirdColumnContent = `Udleveret ${freedActivity} MBq`;
+    fourthColumnContent = `Frigivet kl ${freedTime}`;
+    fifthColumnContent = <ClickableIcon src="static/images/delivery.svg"
+      onClick={() => {
+        window.location.replace(
+          `/`
+        )
+      }}
+    />
+  } else {
+    thirdColumnContent = `Bestilt: ${timeSlotActivity} MBq`
+    fourthColumnContent = `Til Udlevering: ${Math.floor(deliveryActivity)} MBq`
+    if(validDeadline){
+      fifthColumnContent = <ClickableIcon
+                        style={{
+                          display : "inline-block",
+                          marginLeft : "15px",
+                          marginRight : "15px",
+                        }}
+                        className={SiteStyles.Margin15lr}
+                        key={-1}
+                        onClick={() => {setShowCalculator(!showCalculator)}}
+                        src="static/images/calculator.svg"/>
+    } else {
+      fifthColumnContent = ""
+    }
+
+  }
+
 
   const calculatorProps = {}
   calculatorProps[PROP_ACTIVE_DATE] = combineDateAndTimeStamp(date,
@@ -253,9 +318,10 @@ export function TimeSlotCard({
   calculatorProps[PROP_ON_CLOSE] = () => {setShowCalculator(false);}
   calculatorProps[PROP_ACTIVE_TRACER] = activeTracer;
   calculatorProps[PROP_COMMIT] = (activity) => {
-
+    setNewOrderActivity(String(activity))
   }
   calculatorProps.initial_MBq = 300
+
 
   return (
   <Card style={{
@@ -268,19 +334,9 @@ export function TimeSlotCard({
     <Row>
       <Col xs={1} style={cssCenter}>{header}</Col>
       <Col xs={2} style={cssCenter}>{timeSlot.delivery_time}</Col>
-      <Col xs={3} style={cssCenter}>Bestilt: {timeSlotActivity} MBq</Col>
-      <Col xs={3} style={cssCenter}>Til Udlevering: {Math.floor(deliveryActivity)}</Col>
-      <Col>{validDeadline ? <ClickableIcon
-                        style={{
-                          display : "inline-block",
-                          marginLeft : "15px",
-                          marginRight : "15px",
-                        }}
-                        className={SiteStyles.Margin15lr}
-                        key={-1}
-                        onClick={() => {setShowCalculator(!showCalculator)}}
-                        src="static/images/calculator.svg"/> : ""}
-        </Col>
+      <Col xs={3} style={cssCenter}>{thirdColumnContent}</Col>
+      <Col xs={3} style={cssCenter}>{fourthColumnContent}</Col>
+      <Col style={cssCenter}> {fifthColumnContent}</Col>
         <Col style={{
          justifyContent : 'right',
          display : 'flex',

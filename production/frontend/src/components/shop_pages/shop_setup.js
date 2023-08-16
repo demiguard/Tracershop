@@ -34,6 +34,8 @@ export function ShopSetup (props){
     }
   })
 
+  const setupTableProps = {...props}
+  
 
   return (<Container>
     <div style={{

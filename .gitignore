@@ -38,3 +38,7 @@ config.py
 *.glsdefs
 *.ist
 *.drawio
+*.exe
+Release/
+Debug/
+ipch/

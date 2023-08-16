@@ -31,6 +31,7 @@ def indexView(request, *args, **kwargs):
     except ObjectDoesNotExist:
       user = User.objects.create(username=request.headers['X-Tracer-User'],
                           UserGroup=UserGroups(request.headers['X-Tracer-Role']))
+
     if user.UserGroup == UserGroups.ShopExternal:
       backend = "tracerauth.backend.TracershopAuthenticationBackend"
     else:
