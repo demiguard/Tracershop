@@ -7,7 +7,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 
 # Third Party Packages
-from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT , CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL
+from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT , CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, BooleanField
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel, Days
@@ -19,6 +19,7 @@ class Isotope(TracershopModel):
   atomic_mass = SmallIntegerField()
   halflife_seconds = FloatField()
   atomic_letter = CharField(max_length=3)
+  metastable = BooleanField(default=False)
 
 class TracerTypes(IntegerChoices):
   ActivityBased = 1

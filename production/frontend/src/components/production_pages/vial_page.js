@@ -107,15 +107,13 @@ class VialPage extends Component {
    */
   renderVial(vial){
     // Sadly I need some extra functionality so can't really use the table rendering function :(
-    var customerName = "";
+    var customerName = `Ukendet med nummer ${vial.owner}`;;
     for(const [_, customer] of this.props[JSON_CUSTOMER]){
-      if (customer.kundenr == vial.customer){
-        customerName = customer.UserName;
+      if (customer.dispenser_id == vial.owner){
+        customerName = customer.short_name;
         break;
       }
     }
-    if(!customerName) customerName = `Ukendet med nummer ${vial.customer}`;
-    //const customerName = (customer) ? customer.UserName : `Ukendet med nummer ${vial.customer}`;
 
     return (
       <tr key={vial.id}>

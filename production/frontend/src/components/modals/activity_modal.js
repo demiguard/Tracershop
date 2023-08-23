@@ -21,6 +21,7 @@ import { compareTimeStamp, getTimeString } from "../../lib/chronomancy.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { addTimeColons, concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
+import { getPDFUrls } from "../../lib/utils.js";
 
 /**
  * A time slot may multiple orders and each of these objects refers to an order
@@ -119,7 +120,6 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
                 && concatErrors(errors, timeValid, formattedFillTime)
                 && concatErrors(errors, volumeValid, formattedVolume)
                 && concatErrors(errors, activityValid, formattedActivity);
-    console.log(errors, formattedActivity)
 
 
     if(valid){
@@ -290,7 +290,7 @@ export function ActivityModal(props){
   let minimum_status = 5;
   let activity = 0;
   let freed_activity = 0;
-  let freed_time = null;
+  let freedTime = null;
   let freed_by = null;
   let commentString = "";
   const orderRows = []
@@ -307,11 +307,11 @@ export function ActivityModal(props){
 
     activity += Math.floor(order.ordered_activity) * overhead;
 
-    if (freed_time === null && order.freed_datetime){
+    if (freedTime === null && order.freed_datetime){
       const timestamp = getTimeString(order.freed_datetime)
       const dateString = parseDateToDanishDate(dateToDateString(new Date(order.freed_datetime)))
 
-      freed_time = `${timestamp} - ${dateString}`
+      freedTime = `${timestamp} - ${dateString}`
     }
 
     if (freed_by === null && order.freed_by){
@@ -383,7 +383,7 @@ export function ActivityModal(props){
   }
 
   function onClickToPDF() {
-
+    window.location = getPDFUrls(endpoint, tracer, props[PROP_ACTIVE_DATE])
   }
 
   function onFree(username, password){
@@ -581,7 +581,7 @@ export function ActivityModal(props){
               <div>
                 <Row>
                   <Col>Frigivet tidpunktet</Col>
-                  <Col>{freed_time}</Col>
+                  <Col>{freedTime}</Col>
                 </Row>
                 <hr/>
               </div> : null

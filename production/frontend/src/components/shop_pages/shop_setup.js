@@ -4,9 +4,8 @@ import { Button, Container, Row } from "react-bootstrap";
 import { ProcedureTable } from "./shop_injectables/procedure_table";
 import { MarginButton } from "../injectable/buttons";
 import { Select } from "../injectable/select";
-import { JSON_ENDPOINT } from "../../lib/constants";
+import { JSON_ENDPOINT, PROP_ACTIVE_ENDPOINT } from "../../lib/constants";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group";
-
 
 const SetupTables = {
   Lokationer : LocationTable,
@@ -14,28 +13,31 @@ const SetupTables = {
 }
 
 export function ShopSetup (props){
-  const [SetupTableIdentifier, setSetupTableIdentifier] =  useState('Lokationer')
+  const endpointOptions = [...props[JSON_ENDPOINT].values()].map((endpoint) => {
+    return {
+      id : endpoint.id,
+      name : endpoint.name,
+    };
+  })
+
+  const [SetupTableIdentifier, setSetupTableIdentifier] = useState('Lokationer')
+  const [activeEndpoint, _setActiveEndpoint] = useState(endpointOptions[0].id)
+
+  function setActiveEndpoint(event) {
+    _setActiveEndpoint(event.target.value)
+  }
 
   const buttons = [...Object.keys(SetupTables)].map(
     (key, i) => <MarginButton
                             key={i}
-                            value={key} 
+                            value={key}
                             onClick={() => {setSetupTableIdentifier(key)}}
                           >{key}</MarginButton>
   )
 
   const SetupTable = SetupTables[SetupTableIdentifier]
-
-  const endpointOptions = [...props[JSON_ENDPOINT].values()].map((endpoint) => {
-
-    return {
-      id : endpoint.id,
-      name : endpoint.name,
-    }
-  })
-
-  const setupTableProps = {...props}
-  
+  const setupTableProps = {...props};
+  setupTableProps[PROP_ACTIVE_ENDPOINT] = activeEndpoint;
 
   return (<Container>
     <div style={{
@@ -50,9 +52,11 @@ export function ShopSetup (props){
           options={endpointOptions}
           valueKey="id"
           nameKey="name"
+          value={activeEndpoint}
+          onChange={setActiveEndpoint}
         />
       </TracershopInputGroup>
     </div>
-    <Row><SetupTable {...props} /></Row>
+    <Row><SetupTable {...setupTableProps} /></Row>
   </Container>);
 }

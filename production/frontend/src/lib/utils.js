@@ -1,5 +1,7 @@
 /** This module is for library functions which doesn't belong in other  */
 
+import { DeliveryEndpoint, Tracer } from "../dataclasses/dataclasses";
+
 /**
  *
  * @param {Date} d1 - Date 1
@@ -52,4 +54,15 @@ export function removeIndex(arr, index){
 
 export function getId(obj){
   return obj.id
+}
+
+/**
+ * 
+ * @param {DeliveryEndpoint} endpoint 
+ * @param {Tracer} tracer 
+ * @param {Date} date 
+ */
+export function getPDFUrls(endpoint, tracer, date){
+  return `pdfs/${endpoint.id}/${tracer.id}/${
+    date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`;
 }

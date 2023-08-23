@@ -11,6 +11,7 @@ import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp, getTimeString } from "../../../lib/chronomancy";
+import { getPDFUrls } from "../../../lib/utils";
 
 /**
  * This component is a row in the card of the activity timeSlot
@@ -37,8 +38,6 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
  }, [order])
  // Functions
  function createOrder() {
-    
-
    const orderedActivity = ParseDanishNumber(activity);
    if(isNaN(orderedActivity)){
      setErrorActivity("Aktiviten kan ikke læses som et tal")
@@ -162,6 +161,7 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
 *  timeSlot : ActivityProduction,
 *  activeTracer : Tracer
 *  date : Date
+*  endpoint : DeliveryEndpoint
 *  overhead : Number
 *  activityOrders: Array<ActivityOrder>,
 *  websocket : TracerWebSocket,
@@ -173,6 +173,7 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
 * @returns {Element}
 */
 export function TimeSlotCard({
+  endpoint,
   timeSlot,
   isotopes,
   activityOrders,
@@ -285,9 +286,7 @@ export function TimeSlotCard({
     fourthColumnContent = `Frigivet kl ${freedTime}`;
     fifthColumnContent = <ClickableIcon src="static/images/delivery.svg"
       onClick={() => {
-        window.location.replace(
-          `/`
-        )
+        window.location = getPDFUrls(endpoint, activeTracer, date);
       }}
     />
   } else {

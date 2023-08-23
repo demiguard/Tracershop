@@ -113,11 +113,19 @@ export function ShopOrderPage (props){
   }
 
   const /**@type {ServerConfiguration} */ serverConfig = props[JSON_SERVER_CONFIG].get(1);
-  const /**@type {Deadline} */ activityDeadline = props[JSON_DEADLINE].get(serverConfig.global_activity_deadline);
-  const /**@type {Deadline} */ injectionDeadline = props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
+  const /**@type {Deadline | undefined} */ activityDeadline = props[JSON_DEADLINE].get(serverConfig.global_activity_deadline);
+  const /**@type {Deadline | undefined} */ injectionDeadline = props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
 
-  const activityDeadlineExpired = expiredDeadline(activityDeadline, state.today, props[JSON_CLOSED_DATE])
-  const injectionDeadlineExpired = expiredDeadline(injectionDeadline, state.today, props[JSON_CLOSED_DATE]);
+  const activityDeadlineExpired = activityDeadline ?
+                                    expiredDeadline(activityDeadline,
+                                                    state.today,
+                                                    props[JSON_CLOSED_DATE])
+                                    : false;
+  const injectionDeadlineExpired = injectionDeadline ?
+                                    expiredDeadline(injectionDeadline,
+                                                    state.today,
+                                                    props[JSON_CLOSED_DATE])
+                                    : false;
 
   const timeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
     (_timeSlot) => {

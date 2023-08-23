@@ -1,5 +1,5 @@
 from enum import Enum, unique
-
+from datetime import date
 ##### Python Specific constants #####
 # These constants are note shared with the frontend
 
@@ -26,13 +26,13 @@ TIME_FORMAT = "%H:%M:%S"
 DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
 JSON_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}"
 
-TIME_REGULAR_EXPRESSION = "(2[0-3]|[01]?[0-9]):([0-5][0-9]):([0-5][0-9])"
-DATE_REGULAR_EXPRESSION = "\d{4}-(1[0-2]|0[1-9])-(0[1-9]|[12][0-9]|3[01])"
+TIME_REGULAR_EXPRESSION = r"(2[0-3]|[01]?[0-9]):([0-5][0-9]):([0-5][0-9])"
+DATE_REGULAR_EXPRESSION = r"\d{4}-(1[0-2]|0[1-9])-(0[1-9]|[12][0-9]|3[01])"
 
 DATETIME_REGULAR_EXPRESSION = f"{DATE_REGULAR_EXPRESSION} {TIME_REGULAR_EXPRESSION}"
 DATETIME_REGULAR_EXPRESSION_JS = f"{DATE_REGULAR_EXPRESSION}T{TIME_REGULAR_EXPRESSION}"
 
-SQL_TABLE_REGULAR_EXPRESSION = "^[A-z0-9]+(\.[A-z0-9]+)?$"
+SQL_TABLE_REGULAR_EXPRESSION = r"^[A-z0-9]+(\.[A-z0-9]+)?$"
 
 ##### Test specific Constants #####
 # These keywords are only used in tests
@@ -52,6 +52,9 @@ LEGACY_TABLES = {
   "t_orders",
   "tracer_types"
 }
+
+LEGACY_ENTRIES = date(2023, 8, 22)
+
 
 JAVASCRIPT_VERSION = "1.0.1" # Remember to update this to catch bugs
 
@@ -106,6 +109,7 @@ JSON_SERVER_CONFIG = "server_config"
 JSON_VIAL = "vial"
 JSON_SECONDARY_EMAIL = "secondaryEmail"
 JSON_PROCEDURE = "procedure"
+JSON_PROCEDURE_IDENTIFIER = "procedure_identifier"
 JSON_USER = "user"
 JSON_USER_ASSIGNMENT = "userAssignment"
 JSON_MESSAGE = "message"

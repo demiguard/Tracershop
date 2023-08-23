@@ -5,6 +5,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 from datetime import date
 from pathlib import Path
+import os.path
 
 # Third party Packages
 from django.contrib.auth import login
@@ -71,22 +72,24 @@ def pdfView(request,
     return HttpResponseNotFound(request)
 
   orders = ActivityOrder.objects.filter(status=OrderStatus.Released,
-                                        ordered_time_slot__in=timeSlots)
+                                        ordered_time_slot__in=timeSlots,
+                                        delivery_date=order_date,)
   if len(orders) == 0:
     return HttpResponseNotFound(request)
 
   vials = Vial.objects.filter(assigned_to__in=orders)
-  if len(vials) == 0:
-    # Here there should REEEEEALLY be some logs, since there's a database corruption
-    return HttpResponseNotFound(request)
-
 
   if month < 10:
     month_text = f"0{month}"
   else:
     month_text = str(month)
 
-  filename = f"frontend/static/frontend/pdfs/{endpointID}/{year}/{month_text}/{day}.pdf"
+  filename = f"frontend/static/frontend/pdfs/{endpointID}/{tracerID}/{year}/{month_text}/{day}.pdf"
+  pathFilename = Path(filename)
+
+  dirPath = Path(os.path.dirname(pathFilename))
+  if not dirPath.exists():
+    dirPath.mkdir(parents=True, exist_ok=True)
 
   pdfGeneration.DrawActivityOrder(
     filename,
@@ -94,7 +97,7 @@ def pdfView(request,
     endpoint,
     [production for production in productions],
     orders,
-    vials,
+    [vial for vial in vials],
   )
 
   return FileResponse(open(filename, 'rb'))

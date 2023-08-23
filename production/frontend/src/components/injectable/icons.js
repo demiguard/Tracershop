@@ -59,8 +59,9 @@ export class StatusIcon extends Component {
     if (status == 1) {return "/static/images/clipboard1.svg";}
     if (status == 2) {return "/static/images/clipboard2.svg";}
     if (status == 3) {return "/static/images/clipboard3.svg";}
+    if (status == 4) {return "/static/images/clipboard0.svg";}
     if (status == 0) {return "/static/images/clipboard0.svg";}
-    throw "Unknown status"
+    throw `Unknown status: ${status}`
   }
 
   render(){

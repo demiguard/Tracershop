@@ -16,7 +16,7 @@ from math import floor
 from channels.db import database_sync_to_async
 from django.apps import apps
 from django.core.serializers import serialize
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Model, ForeignKey, IntegerField
 from django.db.models.query import QuerySet
 
@@ -36,7 +36,7 @@ from database.models import ServerConfiguration, Database, Address, User,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
-    TracerUsage, ActivityProduction, Customer
+    TracerUsage, ActivityProduction, Customer, Procedure
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -446,10 +446,20 @@ class DatabaseInterface():
         logger.error(f"Booking for accession Number {accessionNumber} have no matching backend copy")
         continue
       bookingDate = booking.start_date
-
-      procedure = booking.procedure
-      tracer = booking.procedure.tracer
       endpoint = booking.location.endpoint
+      procedureIdentifier = booking.procedure
+
+      try:
+        procedure = Procedure.objects.get(series_description=booking.procedure,
+                                          owner=endpoint)
+      except ObjectDoesNotExist:
+        logger.error(f"Could not find a matching procedure for DeliveryEndpoint: {endpoint} and series description: {booking.procedure}")
+        continue
+      except MultipleObjectsReturned:
+        logger.critical(f"Database corruption! Multiple Procedures are associated with DeliveryEndpoint: {endpoint} and series description: {booking.procedure}")
+        continue
+
+      tracer = procedure.tracer
 
       if tracer is None or endpoint is None:
         logger.error(f"Booking for Accession number {accessionNumber} is missing either tracer: {tracer} or endpoint: {endpoint}")

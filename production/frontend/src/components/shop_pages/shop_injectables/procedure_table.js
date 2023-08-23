@@ -1,27 +1,34 @@
 import React, { useState } from "react";
 import { Container, FormCheck, FormControl, Row, Table } from "react-bootstrap";
-import { JSON_PROCEDURE, JSON_TRACER, PROP_WEBSOCKET } from "../../../lib/constants";
-import { Procedure } from "../../../dataclasses/dataclasses";
+import { JSON_ENDPOINT, JSON_PROCEDURE, JSON_PROCEDURE_IDENTIFIER, JSON_TRACER, PROP_ACTIVE_ENDPOINT, PROP_WEBSOCKET } from "../../../lib/constants";
+import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "../../../dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { Select } from "../../injectable/select";
 import { nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
+import { getProcedure } from "../../../lib/data_structures";
 
 /**
- * 
+ *
  * @param {{
- *  procedure : Procedure
- *  tracers : Array<Object>
+ *  endpoint : DeliveryEndpoint
+ *  procedures : Map<Number, Procedure>
+ *  procedureIdentifier : ProcedureIdentifier
+ *  tracers : Array<Object> - Mapped Tracer objects into display objects with name / id
  *  websocket : TracerWebSocket
- * }} param0 
- * @returns 
+ * }} props
+ * @returns {Element}
  */
-function ProcedureRow({procedure, tracers, websocket}){
+function ProcedureRow({endpoint, procedures, procedureIdentifier, tracers, websocket}){
+  // Prop extractions
+  const procedure = getProcedure(procedures, procedureIdentifier, endpoint)
+
+  // State Declaration
   const nullTracer = nullParser(procedure.tracer)
   const [tracer, _setTracer] = useState(nullTracer);
   const [units, _setUnits] = useState(procedure.tracer_units);
   const [delay, _setDelay] = useState(procedure.delay_minutes);
-  const [usage, _setUsage] = useState(Boolean(procedure.in_use));
+  const [usage, _setUsage] = useState(procedure.id !== undefined);
 
   function setTracer(event) {
     _setTracer(event.target.value);
@@ -72,13 +79,13 @@ function ProcedureRow({procedure, tracers, websocket}){
     _setUsage(newUsage)
     const newProcedure = {...procedure, in_use : newUsage}
 
-    websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
+    //websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
   }
 
 
   return (
     <tr>
-      <td>{procedure.series_description}</td>
+      <td>{procedureIdentifier.string}</td>
       <td>
         <Select
           options={tracers}
@@ -105,8 +112,9 @@ function ProcedureRow({procedure, tracers, websocket}){
 }
 
 export function ProcedureTable(props){
-  const [filter, setFilter] = useState("")
-  const [filterType, setFilterType] = useState(1)
+  const endpoint = props[JSON_ENDPOINT].get(props[PROP_ACTIVE_ENDPOINT]);
+  const [filter, setFilter] = useState("");
+  const [filterType, setFilterType] = useState(1);
 
   const filterOptions = [{
     id : 1,
@@ -145,29 +153,31 @@ export function ProcedureTable(props){
     name : "",
   })
 
-  const productionRows = [...props[JSON_PROCEDURE].values()].filter(
+  const productionRows = [...props[JSON_PROCEDURE_IDENTIFIER].values()].filter(
     (_procedure) => {
-      const /**@type {Procedure} */ procedure = _procedure
+      const /**@type {ProcedureIdentifier} */ procedureIdentifier = _procedure
       const regex = new RegExp(filter, 'i');
       if(filter === "" && filterType !== 3){
         return true;
       }
 
       if(filterType === 1){
-        return regex.test(procedure.series_description);
+        return regex.test(procedureIdentifier.string);
       } else if (filterType === 2) {
-        const tracer = props[JSON_TRACER].get(procedure.tracer);
+        const tracer = props[JSON_TRACER].get(procedureIdentifier.tracer);
         return regex.test(tracer.shortname);
       } else if (filterType === 3) {
-        return procedure.in_use;
+        return procedureIdentifier.in_use;
       }
     }).map(
-    (procedure, i) => {
+    (procedureIdentifier, i) => {
       return (
       <ProcedureRow
         key={i}
-        procedure={procedure}
+        endpoint={endpoint}
+        procedureIdentifier={procedureIdentifier}
         tracers={tracers}
+        procedures={props[JSON_PROCEDURE]}
         websocket={props[PROP_WEBSOCKET]}
       />)
     }

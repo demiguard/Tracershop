@@ -7,7 +7,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 
 # Third Party Packages
-from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField
+from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
@@ -18,6 +18,11 @@ from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
 class ClosedDate(TracershopModel):
   close_date_id = BigAutoField(primary_key=True)
   close_date = DateField()
+
+  class Meta:
+    indexes = [
+      Index(fields=['close_date'])
+    ]
 
 
 class Customer(TracershopModel):
@@ -101,6 +106,9 @@ class Procedure(TracershopModel):
   tracer = ForeignKey(Tracer, on_delete=RESTRICT, default=None, null=True)
   owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, default=None, null=True)
 
+  class Meta:
+    unique_together = ('series_description', 'owner')
+
 
 class BookingStatus(IntegerChoices):
   Initial = 0
@@ -174,6 +182,10 @@ class ActivityOrder(TracershopModel):
     related_name="activity_freed_by"
   )
 
+  class Meta:
+    indexes = [
+      Index(fields=['delivery_date'])
+    ]
 
 class TracerUsage(IntegerChoices):
   human = 0
@@ -195,6 +207,11 @@ class InjectionOrder(TracershopModel):
   freed_datetime = DateTimeField(null=True, default=None)
   freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by")
 
+  class Meta:
+    indexes = [
+      Index(fields=['delivery_date'])
+    ]
+
 
 class Vial(TracershopModel):
   vial_id = BigAutoField(primary_key=True)
@@ -206,6 +223,11 @@ class Vial(TracershopModel):
   fill_date = DateField()
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
+
+  class Meta:
+    indexes = [
+      Index(fields=['fill_date'])
+    ]
 
 class LegacyProductionMember(TracershopModel):
   legacy_user_id = IntegerField(primary_key=True)

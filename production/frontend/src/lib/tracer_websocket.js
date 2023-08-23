@@ -46,7 +46,7 @@ class TracerWebSocket {
            * }
            */
           const state = ParseJSONstr(message[WEBSOCKET_DATA])
-          this.StateHolder.updateState(state,message[WEBSOCKET_REFRESH]);
+          this.StateHolder.updateState(state, message[WEBSOCKET_REFRESH]);
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
             console.log(message);

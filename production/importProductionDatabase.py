@@ -44,13 +44,13 @@ isotope_map = {}
 
 for raw_isotope in isotopes_raw: # type: ignore
   name_split = raw_isotope['name'].split('-')
-  atomicNumber = int(name_split[1].replace('m',''))
+  atomicMass = int(name_split[1].replace('m',''))
 
   isotope = Isotope(
-    atomic_number = atomicNumber,
+    atomic_mass = atomicMass,
     atomic_letter = name_split[0],
     halflife_seconds=raw_isotope['halflife'],
-    atomic_mass=1
+    atomic_number=1
   )
 
   isotope.save()
@@ -105,7 +105,6 @@ def map_day(day):
   if day == 5:
     return Days.Saturday
 
-  print(f"day: {day}")
   return Days.Sunday
 
 
@@ -190,6 +189,7 @@ for raw_tracer_customer in cursor.fetchall(): # type:ignore
     customer = customer
   )
   try:
+    pass
     tc.save() # THERE ARE FUCKING DUPLICATES IN THE DATABASE
   except:
     continue
@@ -208,6 +208,7 @@ for customer_id, overhead in overheads.items():
   )
   try:
     tc.save()
+    pass
   except:
     pass
 
@@ -239,7 +240,7 @@ cursor.execute("""SELECT
 for raw_deliveryTime in cursor.fetchall(): # type: ignore
   endpoint = endpoints.get(raw_deliveryTime['BID'])
   if endpoint is None:
-    print(f"Skipping BID {raw_deliveryTime['BID']}")
+    pprint(f"Skipping BID {raw_deliveryTime['BID']}")
     continue
   day = map_day(raw_deliveryTime['day'] - 1)
 
@@ -354,12 +355,13 @@ for raw_order in cursor.fetchall(): #type:ignore
     continue
 
   if raw_order['run'] - 1 < len(time_slots):
-    activity_delivery_time_slot = daily_slots[day][raw_order['run'] - 1]
+    activity_delivery_time_slot = time_slots[raw_order['run'] - 1]
   else:
     activity_delivery_time_slot = time_slots[0] # This a known problem
 
   try:
     if raw_order['COID'] != -1:
+      activity_delivery_time_slot = daily_slots[day][1]
       moved_time_slot = daily_slots[day][0]
     else:
       moved_time_slot = None

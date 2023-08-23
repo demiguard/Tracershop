@@ -102,6 +102,7 @@ export const KEYWORD_Isotope_ATOMIC_NUMBER = "atomic_number";
 export const KEYWORD_Isotope_ATOMIC_MASS = "atomic_mass";
 export const KEYWORD_Isotope_HALFLIFE_SECONDS = "halflife_seconds";
 export const KEYWORD_Isotope_ATOMIC_LETTER = "atomic_letter";
+export const KEYWORD_Isotope_METASTABLE = "metastable";
 
 // Model: LegacyProductionMember
 export const KEYWORD_LegacyProductionMember_LEGACY_USER_ID = "legacy_user_id";
@@ -143,9 +144,13 @@ export const KEYWORD_TracerCatalog_OVERHEAD_MULTIPLIER = "overhead_multiplier";
 export const KEYWORD_Procedure_PROCEDURE_ID = "procedure_id";
 export const KEYWORD_Procedure_SERIES_DESCRIPTION = "series_description";
 export const KEYWORD_Procedure_TRACER_UNITS = "tracer_units";
-export const KEYWORD_Procedure_IN_USE = "in_use";
 export const KEYWORD_Procedure_DELAY_MINUTES = "delay_minutes";
 export const KEYWORD_Procedure_TRACER = "tracer";
+export const KEYWORD_Procedure_OWNER = "owner";
+
+// Model: ProcedureIdentifier
+export const KEYWORD_ProcedureIdentifier_PROCEDURE_IDENTIFIER_ID = "procedure_identifier_id";
+export const KEYWORD_ProcedureIdentifier_STRING = "string";
 
 // Model: ActivityProduction
 export const KEYWORD_ActivityProduction_ACTIVITY_PRODUCTION_ID = "activity_production_id";

@@ -126,30 +126,6 @@ export function ParseEmail(input){
 export function isNotNaN(number){
   return !isNaN(number);
 }
-/** Checks if a string is a valid port number
- * If string is not valid then value is nulls
- *
- * @param {string} input - User input from field
- * @returns {Object} - Object with attribute valid : bool and value : int
- */
-export function PortValidator(input){
-  const num = Number(input);
-  const valid = /^[0-9]+$/.test(input) && num <= 49151 && num > 0; // Yeah I'm lazy to write the full regex
-  const value = (valid) ? num : null;
-  return {
-    valid : valid,
-    value : value
-  }
-}
-
-export function IPValidator(input){
-  const valid = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(input);
-  const value = (valid) ? input : null;
-  return {
-    valid : valid,
-    value : value,
-  };
-}
 
 /**
  * 

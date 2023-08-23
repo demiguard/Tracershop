@@ -130,12 +130,13 @@ export class InjectionOrder {
 }
 
 export class Isotope {
-  constructor(isotope_id, atomic_number, atomic_mass, halflife_seconds, atomic_letter, ) {
+  constructor(isotope_id, atomic_number, atomic_mass, halflife_seconds, atomic_letter, metastable, ) {
     this.isotope_id=isotope_id
     this.atomic_number=atomic_number
     this.atomic_mass=atomic_mass
     this.halflife_seconds=halflife_seconds
     this.atomic_letter=atomic_letter
+    this.metastable=metastable
   }
 }
 
@@ -194,13 +195,20 @@ export class TracerCatalog {
 }
 
 export class Procedure {
-  constructor(procedure_id, series_description, tracer_units, in_use, delay_minutes, tracer, ) {
+  constructor(procedure_id, series_description, tracer_units, delay_minutes, tracer, owner, ) {
     this.procedure_id=procedure_id
     this.series_description=series_description
     this.tracer_units=tracer_units
-    this.in_use=in_use
     this.delay_minutes=delay_minutes
     this.tracer=tracer
+    this.owner=owner
+  }
+}
+
+export class ProcedureIdentifier {
+  constructor(procedure_identifier_id, string, ) {
+    this.procedure_identifier_id=procedure_identifier_id
+    this.string=string
   }
 }
 
@@ -290,6 +298,7 @@ export const MODELS = {
   tracer : Tracer,
   tracer_mapping : TracerCatalog,
   procedure : Procedure,
+  procedure_identifier : ProcedureIdentifier,
   production : ActivityProduction,
   secondaryEmail : SecondaryEmail,
   server_config : ServerConfiguration,

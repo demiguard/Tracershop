@@ -85,6 +85,9 @@ export class InjectionTable extends Component {
     const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint.owner)
     const TracerName = tracer.shortname;
 
+
+
+
     return renderTableRow(
       order.id,[
         <StatusIcon
@@ -96,7 +99,7 @@ export class InjectionTable extends Component {
         TracerName,
         order.injections,
         order.delivery_time,
-        INJECTION_USAGE[String(order.tracer_usage)],
+        INJECTION_USAGE[order.tracer_usage],
         renderComment(order.comment),
       ]
     )

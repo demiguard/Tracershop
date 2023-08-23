@@ -3,7 +3,7 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Procedure, TracerCatalog } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Procedure, ProcedureIdentifier, TracerCatalog } from "../dataclasses/dataclasses"
 import { TRACER_TYPE_ACTIVITY } from "./constants";
 
 
@@ -153,4 +153,25 @@ export function createOrderMapping(orders){
   }
 
   return OrderMapping
+}
+
+
+/**
+ * gets a procedure, if it doesn't exists create a dummy object
+ * @param {Map<Number, Procedure>} procedures 
+ * @param {ProcedureIdentifier} identifier 
+ * @param {DeliveryEndpoint} endpoint 
+ */
+export function getProcedure(procedures, identifier, endpoint){
+  // So here is where the idea of how procedures are represented in tracershop
+  // A procedure is a combination of a string and a place. That way two places
+  // can have two different configurations of the same study.
+  // The downside is that it creates a fragmented view of a procedure.
+  for(const mapProcedure of procedures.values()){
+    if(mapProcedure.owner === endpoint.id
+      && mapProcedure.series_description === identifier.id) {
+        return mapProcedure;
+      }
+    }
+  return new Procedure(undefined, identifier.id, "", "", "", endpoint.id);
 }

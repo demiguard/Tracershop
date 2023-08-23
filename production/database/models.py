@@ -12,7 +12,7 @@ from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_DEADLINE, JSON_DICOM_ENDPOINT,\
     JSON_LEGACY_PRODUCTION_MEMBER, JSON_LEGACY_INJECTION_ORDER,\
-    JSON_LEGACY_ACTIVITY_ORDER
+    JSON_LEGACY_ACTIVITY_ORDER, JSON_PROCEDURE_IDENTIFIER
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -42,6 +42,7 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_TRACER : Tracer,
   JSON_TRACER_MAPPING : TracerCatalog,
   JSON_PROCEDURE : Procedure,
+  JSON_PROCEDURE_IDENTIFIER : ProcedureIdentifier,
   JSON_PRODUCTION : ActivityProduction,
   JSON_SECONDARY_EMAIL : SecondaryEmail,
   JSON_SERVER_CONFIG : ServerConfiguration,

@@ -16,6 +16,7 @@ from typing import Iterable, Optional, Tuple, List, Sequence
 # Django packages
 from django.conf import settings
 from django.db.models import QuerySet
+from django.utils import timezone
 
 # Third party packages
 from reportlab.pdfgen import canvas
@@ -36,12 +37,11 @@ except:
 
 
 # Tracershop Production packages
+from constants import LEGACY_ENTRIES
 from lib.Formatting import dateConverter, timeConverter, mapTracerUsage
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
 ##### Constant declarations #####
-#A pdf page is (595.27 , 841.89)
-
 #Lines are on the format (x1, y1, x2, y2)
 TOP_LINE    = (50,50, 545, 50)
 BOTTOM_LINE = (50, 791, 545, 791)
@@ -60,7 +60,7 @@ def order_pair(i,j):
 
 
 class MailTemplate(canvas.Canvas):
-  _line_width = 18 # How large is a text line
+  _line_height = 18 # How large is a text line
   _font       = defaultFont
   _font_size  = defaultFontSize
   _Length_per_character = 6.5
@@ -77,7 +77,7 @@ class MailTemplate(canvas.Canvas):
 
     self.drawInlineImage("pdfData/petlogo_small.png",  417, 750 , width= 128, height=32)
 
-  def ApplyEndpoint(self, x_cursor:int, y_cursor:int, endpoint: DeliveryEndpoint):
+  def ApplyEndpoint(self, x_cursor:int, y_cursor:int, endpoint: DeliveryEndpoint) -> int:
     self.setStrokeColorRGB(0.5,0.5,1.0)
     self.setFont(self._font, self._font_size)
 
@@ -95,8 +95,10 @@ class MailTemplate(canvas.Canvas):
 
 
     for line in Customer_identification_lines:
+      if line is None:
+        line = ''
       self.drawString(x_cursor, y_cursor, line)
-      y_cursor -= self._line_width
+      y_cursor -= self._line_height
       max_text_length = max(max_text_length, len(line))
 
     Y_bot =  y_cursor + 10
@@ -124,7 +126,7 @@ class MailTemplate(canvas.Canvas):
       order_date: date,
       productions: Sequence[ActivityProduction],
       orders: Iterable[ActivityOrder],
-    ):
+    ) -> int:
 
     self.setFont(self._font, self._font_size)
     self.setStrokeColorRGB(0,0,0)
@@ -133,9 +135,9 @@ class MailTemplate(canvas.Canvas):
     tracer = pivotProduction.tracer
 
     self.drawString(x_cursor, y_cursor, f"Dato: {dateConverter(order_date, '%d/%m/%Y')}")
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
     self.drawString(x_cursor, y_cursor, f"Hermed frigives {tracer.clinical_name} - {tracer.isotope.atomic_letter}-{tracer.isotope.atomic_mass} til humant brug.")
-    y_cursor -= 2 * self._line_width
+    y_cursor -= 2 * self._line_height
 
     HeaderText = [
       "Order ID",
@@ -144,12 +146,21 @@ class MailTemplate(canvas.Canvas):
       "Frigivet kl:",
     ]
 
+    releaseTimes = []
+
+    for order in orders:
+      if order.freed_datetime is None:
+        releaseTimes.append('')
+      else:
+        timezone_aware = timezone.make_naive(order.freed_datetime)
+        releaseTimes.append(timezone_aware.strftime("%H:%M:%S"))
+
     orderData = [[
       str(order.activity_order_id),
       f"{order.ordered_activity} MBq",
       str(order.ordered_time_slot.delivery_time),
-      str(order.freed_datetime.strftime("%H:%M:%S")) # type: ignore You have a database violation if this happens and should just throw anyways...
-    ] for order in orders]
+      releaseTime
+    ] for (order, releaseTime) in zip(orders, releaseTimes)]
 
     table_content = [HeaderText] + orderData
 
@@ -159,7 +170,7 @@ class MailTemplate(canvas.Canvas):
     return y_cursor
 
 
-  def applyVials(self, x_cursor:int, y_cursor : int, vials: Iterable[Vial]):
+  def applyVials(self, x_cursor:int, y_cursor : int, vials: Sequence[Vial]):
     """[summary]
 
     Args:
@@ -186,8 +197,11 @@ class MailTemplate(canvas.Canvas):
 
     tableContent = [tableHeader] + tableData
 
-
-    y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, tableContent)
+    if len(vials):
+      y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, tableContent)
+    else:
+      self.drawString(x_cursor, y_cursor, "Der er ingen vials")
+      y_cursor -= self._line_height
 
     return y_cursor
 
@@ -267,7 +281,7 @@ class MailTemplate(canvas.Canvas):
       self.drawString(x, line_y + 2 , text)
       x += line_length / len(Texts)
       if separator_lines and i != len(Texts) -1:
-        self.line(x - 5, line_y + self._line_width, x - 5, line_y )
+        self.line(x - 5, line_y + self._line_height, x - 5, line_y )
 
   def drawTable(self, x_cursor: int, y_cursor: int, table_width: int, textLines: List[List[str]]):
     """[summary]
@@ -286,10 +300,10 @@ class MailTemplate(canvas.Canvas):
           x_cursor,
           y_cursor,
           x_cursor + table_width,
-          y_cursor + self._line_width
+          y_cursor + self._line_height
         )
       self.drawTableTextLine(x_cursor, y_cursor, table_width, TableTextLine)
-      y_cursor -= self._line_width
+      y_cursor -= self._line_height
 
     return y_cursor
 
@@ -304,7 +318,7 @@ class MailTemplate(canvas.Canvas):
     isotope = tracer.isotope
 
     self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.injection_order_id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
 
     if injectionOrder.freed_datetime is None:
       raise Exception # pragma: no cover
@@ -313,7 +327,7 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 
 
-    y_cursor -= self._line_width * 2
+    y_cursor -= self._line_height * 2
 
     return y_cursor
 
@@ -322,30 +336,30 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"Venlig Hilsen")
 
     x_cursor += 15
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
 
     self.drawString(x_cursor, y_cursor, "Nic Gillings")
 
-    y_cursor -= self._line_width * 8.2
+    y_cursor -= self._line_height * 8.2
 
     self.drawInlineImage("pdfData/sig.png", x_cursor + 30, y_cursor, 128, 109, preserveAspectRatio=True)
 
-    y_cursor -= self._line_width * 2
+    y_cursor -= self._line_height * 2
 
     self.drawString(x_cursor, y_cursor, f"PET & Cyklotronenheden UK 3982")
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
 
     self.drawString(x_cursor, y_cursor, f"Rigshospitalet")
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
 
     self.drawString(x_cursor, y_cursor, f"Blegdamsvej 9")
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
 
     self.drawString(x_cursor, y_cursor, f"2100 København Ø")
-    y_cursor -= self._line_width * 2
+    y_cursor -= self._line_height * 2
 
     self.drawString(x_cursor, y_cursor, f"Tlf: +45 35453949")
-    y_cursor -= self._line_width
+    y_cursor -= self._line_height
 
     return y_cursor
 
@@ -356,8 +370,11 @@ def DrawActivityOrder(
     endpoint: DeliveryEndpoint,
     productions : Sequence[ActivityProduction],
     orders: Iterable[ActivityOrder] ,
-    vials: Iterable[Vial],
+    vials: Sequence[Vial],
   ) -> None:
+
+
+
   template = MailTemplate(filename)
   x_cursor = start_x_cursor
   y_cursor = start_y_cursor
@@ -370,8 +387,13 @@ def DrawActivityOrder(
   y_cursor = template.ApplyOrderActivity(x_cursor, y_cursor, order_date, productions, orders)
   y_cursor -= 10
 
+  if LEGACY_ENTRIES < order_date and len(vials) == 0:
+    y_cursor = template.applyVials(x_cursor, y_cursor, vials)
+  else:
+    template.drawString(x_cursor, y_cursor, 'Orderen er lavet i det gamle system.\
+ Derfor er orderen ufuldstændig.')
+    y_cursor -= template._line_height * 2
 
-  y_cursor = template.applyVials(x_cursor, y_cursor, vials)
   y_cursor -= 10
   y_cursor = template.ApplySender(x_cursor, y_cursor)
 

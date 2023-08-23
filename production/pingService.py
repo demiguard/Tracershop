@@ -59,7 +59,7 @@ def getQueryDataset(serverConfig: ServerConfiguration):
   ds = Dataset()
   ds.PatientName = "*"
   item = Dataset()
-  item.ScheduledStationAETitle = serverConfig.ping_service_ae_tile #Move this to DB
+  item.ScheduledStationAETitle = serverConfig.ping_service_ae_tile
   #item.ScheduledProcedureStepStartDate = datetime.strftime(datetime.today()+timedelta(days=1), '%Y%m%d')+'-'
   item.ScheduledProcedureStepLocation = ''
   ds.ScheduledProcedureStepSequence = [item]

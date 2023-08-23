@@ -50,24 +50,30 @@ export const WEEKLY_REPEAT_CHOICES = {
  * @enum {string}
  */
 export const INJECTION_USAGE = {
-  "1" : "Human",
-  "2" : "Dyr",
-  "3" : "Andet",
+  0 : "Human",
+  1 : "Dyr",
+  2 : "Andet",
 }
 
 export const INJECTION_USAGE_ENUM = {
-  human : 1,
-  animal : 2,
-  other : 3,
+  human : 0,
+  animal : 1,
+  other : 2,
 }
 
 
-export const ERROR_BACKGROUND_COLOR = "#FF4422";
+export const ERROR_BACKGROUND_COLOR = "#FF3333";
+export const ERROR_MARGIN_COLOR = "#FF0000";
 export const cssCenter = {
   display : "block",
   margin: 'auto',
   alignItems: 'center',
   textAlign: 'center'
+}
+
+export const cssError = {
+  background : ERROR_BACKGROUND_COLOR,
+  marginColor : ERROR_MARGIN_COLOR,
 }
 
 
@@ -114,6 +120,7 @@ export const JSON_INJECTION_ORDER = "t_orders";
 export const JSON_ISOTOPE = "isotopes";
 export const JSON_ORDERS  = "orders";
 export const JSON_PRODUCTION = "production";
+export const JSON_PROCEDURE_IDENTIFIER = "procedure_identifier";
 export const JSON_RUN = "run";
 export const JSON_TRACER = "tracer";
 export const JSON_TRACER_MAPPING = "tracer_mapping";
@@ -153,6 +160,7 @@ export const JSON_KEYWORDS = [
   JSON_TRACER,
   JSON_TRACER_MAPPING,
   JSON_PROCEDURE,
+  JSON_PROCEDURE_IDENTIFIER,
   JSON_PRODUCTION,
   JSON_SECONDARY_EMAIL,
   JSON_SERVER_CONFIG,

@@ -2,7 +2,7 @@
 import React, { Component, useState } from "react";
 import { Row, Col, Table, Tab, Button, Container, Card, Collapse } from 'react-bootstrap'
 import { renderStatusImage, renderTableRow } from "../../lib/rendering.js";
-import { compareDates, getId } from "../../lib/utils.js";
+import { compareDates, getId, getPDFUrls } from "../../lib/utils.js";
 import { FormatDateStr, dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
 import { CountMinutes, CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
@@ -20,7 +20,7 @@ import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME,  KEYWORD_ActivityOrder_
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { renderComment } from "../../lib/rendering.js";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalog, Vial } from "../../dataclasses/dataclasses.js";
-import { compareTimeStamp, getDay } from "../../lib/chronomancy.js";
+import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.js";
 import { ArrayMap } from "../../lib/array_map.js";
 import { createOrderMapping, createTimeSlotMapping } from "../../lib/data_structures.js";
 import { sortOrderMapping } from "../../lib/sorting.js";
@@ -76,9 +76,12 @@ function RenderedTimeSlot(props){
   let orderedMBq = 0;
   let deliveredMBq = 0;
   let freedMbq = 0;
+  let freedTime = ""
   let minimumStatus = 3;
   const OrderData = [];
   let moved = true;
+
+  console.log(props[JSON_ACTIVITY_ORDER]);
 
   for(const _order of props[JSON_ACTIVITY_ORDER]){
     const /**@type {ActivityOrder} */ order = _order
@@ -108,8 +111,16 @@ function RenderedTimeSlot(props){
           freedMbq += vial.activity
         }
       }
+
+      if (order.freed_datetime && freedTime === "") {
+        const timestamp = getTimeString(order.freed_datetime)
+        const dateString = parseDateToDanishDate(dateToDateString(new Date  (order.freed_datetime)))
+
+        freedTime = `${timestamp}`
+      }
     }
-    if((originalTimeSlot)){
+
+    if(originalTimeSlot){
       OrderData.push(<OrderRow
         key={order.id}
         order={order}
@@ -164,7 +175,7 @@ function RenderedTimeSlot(props){
 
   let fourthColumnInterior;
   if (minimumStatus === 3){
-    fourthColumnInterior = `Frigivet kl: ${"11:11:11"}`;
+    fourthColumnInterior = `Frigivet kl: ${freedTime}`;
   } else {
     fourthColumnInterior = `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`
   }
@@ -178,7 +189,9 @@ function RenderedTimeSlot(props){
   } else if (!moved && minimumStatus === 3) {
     fifthColumnInterior = <ClickableIcon
                     src="/static/images/delivery.svg"
-                    onClick={()=>{}}
+                    onClick={()=>{
+                      window.location = getPDFUrls(endpoint, tracer, props[PROP_ACTIVE_DATE])
+                    }}
                   />
   }
 
@@ -314,8 +327,6 @@ export function ActivityTable (props) {
 
   const OrderMapping = createOrderMapping(todays_orders)
 
-  console.log(timeSlotMapping, relevantProductions)
-
   const renderedTimeSlots = Array.from(OrderMapping).sort(
     sortOrderMapping(props[JSON_DELIVER_TIME], props[JSON_ENDPOINT])
     ).map(([timeSlotID, orders]) => {
@@ -366,7 +377,6 @@ export function ActivityTable (props) {
     const ModalType = Modals[modalIdentifier]
     Modal = <ModalType {...modalProps} />
   }
-  
 
 
   return (
@@ -378,7 +388,7 @@ export function ActivityTable (props) {
             {productionRows}
           </Col>
           <Col sm={2}>
-            <Button 
+            <Button
               name="create-order"
               onClick={() => {setModalIdentifier("createModal")}}>Opret ny ordre</Button>
           </Col>

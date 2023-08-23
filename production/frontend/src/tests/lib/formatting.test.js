@@ -292,7 +292,7 @@ describe("PortValidator Tests", () => {
   });
 });
 
-
+/* Move this into user 
 describe("Ip Validator Tests", () =>{
   it("Valid Ip standard", () => {
     const ip = "255.255.255.255";
@@ -337,6 +337,7 @@ describe("Ip Validator Tests", () =>{
     expect(res.value).toEqual(null);
   });
 });
+*/
 
 describe("StringValidator Tests", () => {
   it("Ok string", () => {

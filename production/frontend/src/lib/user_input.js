@@ -64,6 +64,54 @@ export function parseBatchNumberInput(input, header=""){
   return [true, input]
 }
 
+export function parseIPInput(input, header=""){
+  const valid = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(input);
+  if(!valid){
+    return [false, `${header} er ikke formatteret som en IP addresse`];
+  }
+  return [true, input];
+}
+
+/** Checks if a string is a valid port number
+ *
+ *
+ * @param {string} input - User input from field
+ * @returns {Object} - Object with attribute valid : bool and value : int
+ */
+export function parsePortInput(input, header=""){
+  const numberPort = Number(input);
+  if(isNaN(numberPort)){
+    return [false, `${header} er ikke tal.`]
+  }
+  if(numberPort <0){
+    return [false, `${header} skal være postivt tal mindre end 49151.`]
+  }
+
+  if(49151 < numberPort){
+    return [false, `${header} må ikke være en dynamisk port.`]
+  }
+
+  const valid = /^[0-9]+$/.test(input) && numberPort <= 49151 && numberPort > 0; // Yeah I'm lazy to write the full regex
+  if(!valid){
+    return [false, `${header} er ikke en port`]
+  }
+
+  return [true, numberPort]
+}
+
+export function parseAETitleInput(input, header=""){
+  if(input === ""){
+    return [false, `${header} må ikke være tom.`];
+  }
+  if(16 < input.length){
+    return [false, `${header} kan ikke være længere end 16 karaktere.`];
+  }
+  if (!/^[a-zA-Z0-9\._! #$%&'*+/=? ^_`{|}~-]+$/.test(input));
+
+  return [true, input]
+}
+
+
 /**
  * 
  * @param {Array<String>} errorList - Container for the error messages

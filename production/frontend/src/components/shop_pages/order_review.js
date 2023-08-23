@@ -1,5 +1,5 @@
 import React, { Component, useState } from "react";
-import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, INJECTION_USAGE_ENUM, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
+import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, INJECTION_USAGE_ENUM, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer, TracerCatalog } from "../../dataclasses/dataclasses";
 import { Card, Collapse, Container, Form, Row, Col, Button, FormControl, InputGroup, Modal } from "react-bootstrap";
 import { getId } from "../../lib/utils";
@@ -23,6 +23,8 @@ import { CalculatorModal } from "../modals/calculator_modal";
  * @returns Element
  */
 export function OrderReview(props){
+  const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(props[PROP_ACTIVE_ENDPOINT])
+
   const /**@type {Map<Number, Number} */ overheadMap = new Map();
   const /**@type {Array<Tracer>} */ availableActivityTracers = [];
   const /**@type {Array<Tracer>} */ availableInjectionTracers = [];
@@ -61,7 +63,7 @@ export function OrderReview(props){
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot
 
       const cond1 = availableProductions.includes(timeSlot.production_run)
-      const cond2 = timeSlot.destination === props[PROP_ACTIVE_ENDPOINT]
+      const cond2 = timeSlot.destination === endpoint.id
 
 
       return cond1 && cond2;
@@ -102,6 +104,7 @@ export function OrderReview(props){
   const timeSlotsCards = availableTimeSlots.map((timeSlotID) => {
     const timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
     return(<TimeSlotCard
+      endpoint={endpoint}
       key={timeSlotID}
       activeTracer={props[JSON_TRACER].get(activeTracer)}
       timeSlot={timeSlot}
