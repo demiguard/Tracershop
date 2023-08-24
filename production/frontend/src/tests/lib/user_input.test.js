@@ -283,6 +283,14 @@ describe("concatError tests", () => {
     expect(errorList.length).toBe(1);
     expect(errorList[0]).toBe("En fejl");
   })
+
+  it("concat errors valid false", () => {
+    const errorList = []
+    const valid = concatErrors(errorList, false, "En fejl");
+    expect(valid).toBe(false);
+    expect(errorList.length).toBe(1);
+    expect(errorList[0]).toBe("En fejl");
+  })
 });
 
 describe("addTimeColons Tests", () => {

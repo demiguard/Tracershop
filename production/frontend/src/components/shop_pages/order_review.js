@@ -44,6 +44,7 @@ export function OrderReview(props){
   }
 
   // State Definitions
+  // TODO: Make fail case if there's no availableActivityTracers!
   const [activeTracer, setActiveTracer] = useState(availableActivityTracers[0].id);
 
   const day = getDay(props[PROP_ACTIVE_DATE]);

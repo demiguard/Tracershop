@@ -34,7 +34,6 @@ export function ShopOrderPage (props){
     }
 
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
-    const customerEndpoints = []
     for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
       if(endpoint.owner === activeCustomer){
@@ -46,7 +45,7 @@ export function ShopOrderPage (props){
     }
 
     let today = db.get(DATABASE_TODAY);
-    if(today === null || today === undefined){
+    if(today === null){
       today = new Date();
       db.set(DATABASE_TODAY, today)
     }
@@ -70,7 +69,7 @@ export function ShopOrderPage (props){
   }
 
   function setActiveDate(NewDate) {
-    db.set("today", NewDate);
+    db.set(DATABASE_TODAY, NewDate);
     setState({today : NewDate})
   }
 
@@ -201,6 +200,7 @@ export function ShopOrderPage (props){
           <Container>
             <TracershopInputGroup label="Kunde:">
               <CustomerSelect
+                aria-label="customer-select"
                 customer={props[JSON_CUSTOMER]}
                 value={state.activeCustomer}
                 onChange={setActiveCustomer}
@@ -208,6 +208,7 @@ export function ShopOrderPage (props){
             </TracershopInputGroup>
             <TracershopInputGroup label="Leverings Sted:">
               <EndpointSelect
+              aria-label="endpoint-select"
                 deliveryEndpoint={validEndpoints}
                 value={state.activeEndpoint}
                 onChange={setActiveEndpoint}
@@ -215,6 +216,7 @@ export function ShopOrderPage (props){
             </TracershopInputGroup>
             <TracershopInputGroup label="Side">
               <Select
+                aria-label="site-select"
                 options={SiteOptions}
                 nameKey={"name"}
                 valueKey={"id"}

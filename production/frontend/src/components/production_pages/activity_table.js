@@ -81,8 +81,6 @@ function RenderedTimeSlot(props){
   const OrderData = [];
   let moved = true;
 
-  console.log(props[JSON_ACTIVITY_ORDER]);
-
   for(const _order of props[JSON_ACTIVITY_ORDER]){
     const /**@type {ActivityOrder} */ order = _order
     const originalTimeSlot = order.ordered_time_slot === props.timeSlotID && order.moved_to_time_slot === null
@@ -212,6 +210,7 @@ function RenderedTimeSlot(props){
             display : 'flex'
           }}>
             <ClickableIcon
+            label={`open-time-slot-${props.timeSlotID}`}
             className={openClassName}
             src={"/static/images/next.svg"}
             onClick={() => {setOpen(!open)}}

@@ -10,8 +10,7 @@ export const customers = new Map([
       billing_phone : null,
       billing_zip_code : null,
       active_directory_code : null, // Drop this keyword?
-  }],
-  [2, {
+  }], [2, {
       id : 2,
       short_name : "Customer_2",
       long_name : "Customer_long_name_2",

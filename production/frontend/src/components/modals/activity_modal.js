@@ -43,8 +43,9 @@ function OrderRow({order, websocket, timeSlots, timeSlotId}){
   const displayStyle = error ? {backgroundColor : ERROR_BACKGROUND_COLOR} : {}
 
   function acceptEdit (){
-    const activityNumber = Number(activity)
-    if(isNaN(activity) || activity <= 0){
+
+    const [valid, activityNumber] = parseDanishPositiveNumberInput(activity);
+    if(!valid){
       setError(true);
       return;
     }
@@ -61,19 +62,35 @@ function OrderRow({order, websocket, timeSlots, timeSlotId}){
     /> : `${activity} MBq`;
 
     if(editing){
-      activityDisplay = <FormControl style={displayStyle} value={activity} onChange={(event) => {
-        setActivity(event.target.value)
-    }}/>
+      activityDisplay = <FormControl 
+                          aria-label={`edit-form-order-activity-${order.id}`}
+                          style={displayStyle}
+                          value={activity}
+                          onChange={(event) => {
+                            setActivity(event.target.value)
+                          }}
+                        />
   }
 
 
   let iconFunction= canEdit ? () => {setEditing(true)} : () => {}
-  let icon = <StatusIcon status={order.status}  onClick={iconFunction}/>
+  let icon = <StatusIcon 
+              label={`edit-order-activity-${order.id}`}
+              status={order.status}  
+              onClick={iconFunction}
+            />
   if (order.moved_to_time_slot){
-    icon = <ClickableIcon src="/static/images/move_top.svg" onClick={iconFunction}/>
+    icon = <ClickableIcon 
+              label={`edit-order-activity-${order.id}`}
+              src="/static/images/move_top.svg" 
+              onClick={iconFunction}
+            />
   }
   if(editing){
-    icon = <ClickableIcon src="static/images/accept.svg" onClick={acceptEdit}/>
+    icon = <ClickableIcon 
+              label={`edit-accept-order-activity-${order.id}`}
+              src="static/images/accept.svg" 
+              onClick={acceptEdit}/>
   }
 
   return (
@@ -116,13 +133,13 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
     const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(editingVial.activity, "Aktiviten");
 
     const errors = []
-    const valid = concatErrors(errors, batchValid, formattedLotNumber)
-                && concatErrors(errors, timeValid, formattedFillTime)
-                && concatErrors(errors, volumeValid, formattedVolume)
-                && concatErrors(errors, activityValid, formattedActivity);
+    // You need this other wise you have short circuiting
+    const valid_batch = concatErrors(errors, batchValid, formattedLotNumber)
+    const valid_time  = concatErrors(errors, timeValid, formattedFillTime)
+    const valid_volume = concatErrors(errors, volumeValid, formattedVolume)
+    const valid_activity = concatErrors(errors, activityValid, formattedActivity);
 
-
-    if(valid){
+    if(valid_batch && valid_time && valid_volume && valid_activity){
       websocket.sendEditModel(JSON_VIAL, [{
         ...vial,
         lot_number : formattedLotNumber,
@@ -163,12 +180,15 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
   }}/>
 
   const editingContent = editing ? <ClickableIcon src="/static/images/accept.svg"
+    label={`vial-edit-accept-${vial.id}`}
     onClick={updateVial}
   /> : canEditIcon;
 
-  let commitContent = editing ? <ClickableIcon src="/static/images/decline.svg"
-    onClick={() => {setEditing(false)}}
-  /> : <Form.Check
+  let commitContent = editing ? <ClickableIcon
+                                  label={`vial-edit-decline-${vial.id}`}
+                                  src="/static/images/decline.svg"
+                                  onClick={() => {setEditing(false)}}
+                                /> : <Form.Check
           aria-label={`vial-usage-${vial.id}`}
           onChange={onSelect}
           checked={selected}/>;
@@ -525,7 +545,7 @@ export function ActivityModal(props){
 
   return (
     <Modal
-    data-testid="test"
+    data-testid="activity_modal"
       show={true}
       size="lg"
       onHide={props[PROP_ON_CLOSE]}
@@ -563,7 +583,7 @@ export function ActivityModal(props){
               <div>
                 <Row>
                   <Col>Allokeret aktivitet:</Col>
-                  <Col>{Math.floor(allocationTotal)} MBq</Col>
+                  <Col data-testid="allocation-col" >{Math.floor(allocationTotal)} MBq</Col>
                 </Row>
                 <hr/>
               </div> : null

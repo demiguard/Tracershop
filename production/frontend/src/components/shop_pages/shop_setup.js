@@ -29,6 +29,7 @@ export function ShopSetup (props){
 
   const buttons = [...Object.keys(SetupTables)].map(
     (key, i) => <MarginButton
+                            aria-label={`setup-${key}`}
                             key={i}
                             value={key}
                             onClick={() => {setSetupTableIdentifier(key)}}
@@ -39,16 +40,16 @@ export function ShopSetup (props){
   const setupTableProps = {...props};
   setupTableProps[PROP_ACTIVE_ENDPOINT] = activeEndpoint;
 
+  //  TODO: No idea why i'm not using Endpoint select?
   return (<Container>
     <div style={{
       display : "flex",
     }}>
       {buttons}
-      <TracershopInputGroup label="Kunde:">
+      <TracershopInputGroup label="Levering sted:">
         <Select
-          style={{
-            width : "100px",
-          }}
+          aria-label="endpoint-select"
+          style={{ width : "100px",}}
           options={endpointOptions}
           valueKey="id"
           nameKey="name"

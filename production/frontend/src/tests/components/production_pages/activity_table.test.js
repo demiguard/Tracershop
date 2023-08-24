@@ -13,11 +13,13 @@ import { ActivityTable } from "../../../components/production_pages/activity_tab
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET,  } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 
+
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 jest.mock('../../../components/modals/create_activity_modal', () =>
   ({CreateOrderModal : () => <div>CreateModalMocked</div>}))
+
 
 let websocket = null;
 let container = null;
@@ -61,4 +63,31 @@ describe("Activity table", () => {
 
     expect(await screen.findByText("CreateModalMocked")).toBeVisible()
   })
+
+  it("Open time slot row", async () => {
+    render(<ActivityTable {...props} />)
+
+    await act(async () => {
+      const button = await screen.findByLabelText('open-time-slot-1');
+      button.click()
+    });
+  });
+
+  it("Open Order modal", async () => {
+    render(<ActivityTable {...props} />)
+
+    await act(async () => {
+      const button = await screen.findByLabelText("time-slot-icon-1")
+      button.click()
+    })
+
+    expect(await screen.findByTestId("activity_modal")).toBeVisible();
+
+    await act(async () => {
+      const button = await screen.findByRole('button', {name : "Luk"})
+      button.click()
+    });
+    expect(screen.queryByTestId("activity_modal")).toBeNull();
+  });
+
 })
