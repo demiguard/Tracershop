@@ -26,7 +26,7 @@ export function parseDanishNumberInput (input, header="") {
 
 
 export function parseDanishPositiveNumberInput(input, header=""){
-  const [valid, inputNumber] = parseDanishNumberInput(input);
+  const [valid, inputNumber] = parseDanishNumberInput(input, header);
 
   if(!valid){
     return [valid, inputNumber];
@@ -80,20 +80,19 @@ export function parseIPInput(input, header=""){
  */
 export function parsePortInput(input, header=""){
   const numberPort = Number(input);
-  if(isNaN(numberPort)){
-    return [false, `${header} er ikke tal.`]
+  if(isNaN(numberPort) || !/^\d+$/.test(input)){
+    return [false, `${header} er ikke et helt positivt tal.`]
   }
-  if(numberPort <0){
+  if(numberPort <= 0){
     return [false, `${header} skal være postivt tal mindre end 49151.`]
+  }
+
+  if(65535 < numberPort){
+    return [false, `${header} skal være en normal port (<49151).`]
   }
 
   if(49151 < numberPort){
     return [false, `${header} må ikke være en dynamisk port.`]
-  }
-
-  const valid = /^[0-9]+$/.test(input) && numberPort <= 49151 && numberPort > 0; // Yeah I'm lazy to write the full regex
-  if(!valid){
-    return [false, `${header} er ikke en port`]
   }
 
   return [true, numberPort]
@@ -101,12 +100,11 @@ export function parsePortInput(input, header=""){
 
 export function parseAETitleInput(input, header=""){
   if(input === ""){
-    return [false, `${header} må ikke være tom.`];
+    return [false, `${header} er ikke tasted ind`];
   }
   if(16 < input.length){
     return [false, `${header} kan ikke være længere end 16 karaktere.`];
   }
-  if (!/^[a-zA-Z0-9\._! #$%&'*+/=? ^_`{|}~-]+$/.test(input));
 
   return [true, input]
 }
