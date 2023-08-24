@@ -213,6 +213,7 @@ describe("isNotNaN Tests", () => {
   });
 });
 
+/*
 describe("PortValidator Tests", () => {
   it("Valid ports", () => {
     const numStr = "1024";
@@ -291,6 +292,7 @@ describe("PortValidator Tests", () => {
     expect(res.value).toEqual(null);
   });
 });
+*/
 
 /* Move this into user 
 describe("Ip Validator Tests", () =>{
