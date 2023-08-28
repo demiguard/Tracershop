@@ -123,17 +123,3 @@ export function concatErrors(errorList, valid, errorMessage){
   }
   return valid
 }
-
-/**
- * Attempt 3 making this
- * @param {Event} event 
- * @param {String} currentInput 
- * @returns {String}
- */
-export function addTimeColons(event, currentInput){
-  if(event.target.value.length > currentInput.length
-    && [2,5].includes(event.target.value.length)){
-      return event.target.value + ":"
-  }
-  return event.target.value;
-}

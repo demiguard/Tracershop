@@ -1,6 +1,6 @@
 # Python standard Library
 from datetime import datetime, date, time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 # Third Party
 from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
@@ -8,6 +8,9 @@ from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
 from django.core.exceptions import FieldDoesNotExist
 
 # Tracershop Modules
+from database.TracerShopModels import authModels
+from tracerauth.audit_logging import CreateModelAuditEntry, DeleteModelAuditEntry, EditModelAuditEntry
+from tracerauth.types import AuthActions
 from lib.utils import classproperty
 
 
@@ -27,10 +30,14 @@ class TracershopModel(Model):
     except FieldDoesNotExist:
       raise KeyError("This is not valid Field")
 
-  def _canEdit(self, optional_user=None) -> bool:
-    """This method determines if the model can be edited or deleted"""
-    return True
+  def canEdit(self, user: Optional['authModels.User'] = None) -> AuthActions:
+    return AuthActions.ACCEPT
 
+  def canCreate(self, user: Optional['authModels.User'] = None) -> AuthActions:
+    return AuthActions.ACCEPT
+
+  def canDelete(self, user: Optional['authModels.User'] = None) -> AuthActions:
+    return AuthActions.ACCEPT
 
   @classproperty
   def exclude(cls) -> List[str]:
@@ -52,6 +59,7 @@ class TracershopModel(Model):
     Args:
       modelDict (Dict[str, Any]): The dict containing any amount of data
     """
+
     for key, value in modelDict.items():
       field = self._meta.get_field(key) # Fails if key doesn't match a field!
       if value is None:
@@ -71,6 +79,36 @@ class TracershopModel(Model):
         value = datetime.strptime(value, "%Y-%m-%d").date()
       # End of assignment
       self.__setattr__(key, value)
+
+  def save(self, user: Optional['authModels.User'] = None) -> bool:
+    # Something important to note is that if you have query set and that updates
+    # Then .save is not called, in other words it's possible to change the
+    # database without logging.
+    # Now this is a know problem and at some point in time, i'm gonna look for
+    # the solution
+    # https://stackoverflow.com/questions/30449960/django-save-vs-update-to-update-the-database
+    creating = bool(self.pk)
+
+    if not creating:
+      action = self.canEdit(user)
+      CreateModelAuditEntry.log(user, self, action)
+    else:
+      action = self.canCreate(user)
+      EditModelAuditEntry.log(user, self, action)
+
+    if action.should_act:
+      super().save()
+      return True
+    return False
+
+  def delete(self, user: Optional['authModels.User'] = None):
+    action = self.canDelete(user)
+    DeleteModelAuditEntry.log(user, self, action)
+
+    if action.should_act:
+      super().delete()
+      return True
+    return False
 
 
 class Days(IntegerChoices):

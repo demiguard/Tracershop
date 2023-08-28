@@ -50,7 +50,6 @@ export function OrderReview(props){
   const day = getDay(props[PROP_ACTIVE_DATE]);
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE]);
 
-
   const availableProductions = [...props[JSON_PRODUCTION].values()].filter(
     (_production) => {
       const /**@type {ActivityProduction} */ production = _production
@@ -66,18 +65,23 @@ export function OrderReview(props){
       const cond1 = availableProductions.includes(timeSlot.production_run)
       const cond2 = timeSlot.destination === endpoint.id
 
-
       return cond1 && cond2;
     }).map(getId)
 
+  const dateConstraint = dateToDateString(props[PROP_ACTIVE_DATE]);
   const relevantActivityOrders = [...props[JSON_ACTIVITY_ORDER].values()].filter(
     (_activityOrder) => {
       const /**@type {ActivityOrder} */ activityOrder = _activityOrder
-      const dateConstraint = dateToDateString(props[PROP_ACTIVE_DATE])
       const timeSlotConstraint = availableTimeSlots.includes(activityOrder.ordered_time_slot);
+      return timeSlotConstraint && dateConstraint === activityOrder.delivery_date;
+  });
 
-      return dateConstraint === activityOrder.delivery_date && timeSlotConstraint;
-  })
+  console.log(relevantActivityOrders,
+    availableTimeSlots.map(
+    (id) => props[JSON_DELIVER_TIME].get(id)),
+    availableTimeSlots.map(
+    (id) => {let dt = props[JSON_DELIVER_TIME].get(id)
+                   return props[JSON_PRODUCTION].get(dt.production_run)}))
 
   function setTracer(tracer){
     return (e) => {
@@ -115,18 +119,17 @@ export function OrderReview(props){
       activityOrders={relevantActivityOrders}
       websocket={props[PROP_WEBSOCKET]}
       overhead={overhead}
-      validDeadline={props[PROP_EXPIRED_ACTIVITY_DEADLINE]}
+      validDeadline={!props[PROP_EXPIRED_ACTIVITY_DEADLINE]}
       vials={props[JSON_VIAL]}
       />)
     })
 
   const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...props[JSON_INJECTION_ORDER].values()].filter(
-      (_injectionOrder) => {
-        const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
-        const matchingDay = injectionOrder.delivery_date === dateString;
-        const matchingEndpoint = injectionOrder.endpoint === props[PROP_ACTIVE_ENDPOINT];
-
-        return matchingDay && matchingEndpoint;
+    (_injectionOrder) => {
+      const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
+      const matchingDay = injectionOrder.delivery_date === dateString;
+      const matchingEndpoint = injectionOrder.endpoint === props[PROP_ACTIVE_ENDPOINT];
+      return matchingDay && matchingEndpoint;
   })
 
   const InjectionOrderCards = relevantInjectionOrders.map((injectionOrder) => {
@@ -139,7 +142,7 @@ export function OrderReview(props){
     />);
   })
 
-  if((props[PROP_EXPIRED_INJECTION_DEADLINE]) && (availableInjectionTracers.length)) {
+  if(!(props[PROP_EXPIRED_INJECTION_DEADLINE]) && (availableInjectionTracers.length)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
                                 injectionOrder={{
@@ -157,9 +160,6 @@ export function OrderReview(props){
                                 websocket={props[PROP_WEBSOCKET]}
   />);
   }
-
-
-
 
   return (
   <Row>

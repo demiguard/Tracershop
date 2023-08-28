@@ -195,6 +195,10 @@ export function TimeSlotCard({
     moved_to_time_slot : "",
   }); // This is a new object because otherwise react rendering engine fucks up
 
+
+  console.log(activityOrders)
+
+
   function setNewOrderActivity(newActivity){
     _setNewOrderActivity({...newOrder, ordered_activity : Math.floor(newActivity)});
   }

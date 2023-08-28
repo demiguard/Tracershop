@@ -13,6 +13,7 @@ import { TracershopInputGroup } from '../injectable/tracershop_input_group'
 import { Customer, InjectionOrder, Tracer, TracerCatalog, DeliveryEndpoint } from "../../dataclasses/dataclasses";
 import { event } from "jquery";
 import { CloseButton } from "../injectable/buttons";
+import { TimeInput } from "../injectable/time_form";
 
 
 export { CreateInjectionOrderModal }
@@ -50,7 +51,7 @@ function CreateInjectionOrderModal(props){
       return endpoint.owner === customerInit;
     });
 
-  const [customerID, setCustomer] = useState(customerInit);
+  const [customerID, _setCustomer] = useState(customerInit);
   const [endpointID, setEndpoint] = useState(endpoints[0].id)
   const [tracerID, setTracer] = useState(tracerInit);
   const [usage, setUsage] = useState(1);
@@ -60,6 +61,11 @@ function CreateInjectionOrderModal(props){
   const [error, setError] = useState("")
 
   // eventFunctions
+  function setCustomer(event){
+    
+  }
+
+
   function SubmitOrder(_event){
     //Validation
     const injectionsNumber = ParseDanishNumber(injections);
@@ -178,7 +184,7 @@ function CreateInjectionOrderModal(props){
                 options={customerOptions}
                 valueKey="id"
                 nameKey="name"
-                onChange={(event) => {setCustomer(Number(event.target.value))}}
+                onChange={(event) => {_setCustomer(Number(event.target.value))}}
                 value={customerID}
               />
           </TracershopInputGroup>
@@ -214,10 +220,10 @@ function CreateInjectionOrderModal(props){
               />
           </TracershopInputGroup>
           <TracershopInputGroup label={"Leverings tid"}>
-            <Form.Control
+            <TimeInput
               aria-label="delivery-time-input"
               value={deliverTime}
-              onChange={(event) => {setDeliveryTime(event.target.value)}}
+              stateFunction={setDeliveryTime}
             />
           </TracershopInputGroup>
           <TracershopInputGroup label="Kommentar">
@@ -228,10 +234,10 @@ function CreateInjectionOrderModal(props){
             />
           </TracershopInputGroup>
         </Row>
-        { error != "" ? <Row><AlertBox
+        { error != "" ? <AlertBox
           level={ERROR_LEVELS.error}
           message={error}
-           /></Row> : "" }
+           /> : "" }
       </ModalBody>
       <Modal.Footer>
         <CloseButton onClick={props[PROP_ON_CLOSE]}></CloseButton>

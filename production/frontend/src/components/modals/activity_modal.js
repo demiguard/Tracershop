@@ -20,8 +20,9 @@ import { KEYWORD_ActivityOrder_STATUS, KEYWORD_DeliveryEndpoint_OWNER, KEYWORD_V
 import { compareTimeStamp, getTimeString } from "../../lib/chronomancy.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
-import { addTimeColons, concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
+import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
 import { getPDFUrls } from "../../lib/utils.js";
+import { TimeInput } from "../injectable/time_form.js";
 
 /**
  * A time slot may multiple orders and each of these objects refers to an order
@@ -126,6 +127,12 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
     })
   }
 
+  function setFillTime(newFillTime){
+    setDisplayVial({
+      fill_time : newFillTime
+    })
+  }
+
   function updateVial() {
     const [batchValid, formattedLotNumber] = parseBatchNumberInput(editingVial.lot_number, "Batch nr.");
     const [timeValid, formattedFillTime] = parseTimeInput(editingVial.fill_time, "Produktions tidspunk");
@@ -161,9 +168,11 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
   const lotNumberContent = editing ? <FormControl value={editingVial.lot_number}
     aria-label={`lot_number-${vial.id}`}
     onChange={(event) => {setDisplayVial({lot_number : event.target.value})}}/> : vial.lot_number;
-  const productionTimeContent = editing ? <FormControl value={editingVial.fill_time}
+  const productionTimeContent = editing ? <TimeInput
+    value={editingVial.fill_time}
     aria-label={`fill_time-${vial.id}`}
-    onChange={(event) => {setDisplayVial({fill_time : addTimeColons(event, editingVial.fill_time)})}}/> : vial.fill_time;
+    stateFunction={setFillTime}
+    /> : vial.fill_time;
   const volumeContent = editing ? <FormControl
     aria-label={`volume-${vial.id}`}
     value={editingVial.volume}
@@ -253,12 +262,11 @@ function NewVialRow({stopAddingVial, setError, websocket}){
           }}/>
       </td>
       <td>
-        <FormControl
+        <TimeInput
           aria-label="fill_time-new"
+          stateFunction={setFillTime}
           value={fill_time}
-          onChange={(event) => {
-            setFillTime(addTimeColons(event, fill_time));
-          }}/>
+          />
       </td>
       <td>
         <FormControl

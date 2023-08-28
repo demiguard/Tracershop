@@ -110,10 +110,11 @@ export function ShopOrderPage (props){
     db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, newEndpointID);
     setState({activeEndpoint : newEndpointID})
   }
-
+  // End of function declarations
   const /**@type {ServerConfiguration} */ serverConfig = props[JSON_SERVER_CONFIG].get(1);
   const /**@type {Deadline | undefined} */ activityDeadline = props[JSON_DEADLINE].get(serverConfig.global_activity_deadline);
   const /**@type {Deadline | undefined} */ injectionDeadline = props[JSON_DEADLINE].get(serverConfig.global_injection_deadline);
+
 
   const activityDeadlineExpired = activityDeadline ?
                                     expiredDeadline(activityDeadline,
@@ -125,7 +126,6 @@ export function ShopOrderPage (props){
                                                     state.today,
                                                     props[JSON_CLOSED_DATE])
                                     : false;
-
   const timeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
     (_timeSlot) => {
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
@@ -151,8 +151,8 @@ export function ShopOrderPage (props){
   siteProps[PROP_ACTIVE_DATE] = state.today;
   siteProps[PROP_ACTIVE_CUSTOMER] = state.activeCustomer;
   siteProps[PROP_ACTIVE_ENDPOINT] = state.activeEndpoint;
-  siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] =  Boolean(ActivityDeadline);
-  siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = Boolean(InjectionDeadline);
+  siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] =  Boolean(activityDeadlineExpired);
+  siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = Boolean(injectionDeadlineExpired);
 
   const calenderTimeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
     (timeSlot) => {return timeSlot.destination === state.activeEndpoint}

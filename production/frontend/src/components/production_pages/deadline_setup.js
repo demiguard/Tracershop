@@ -1,9 +1,12 @@
 import React, { useState } from "react";
-import { Col, Container, FormControl, Row } from "react-bootstrap";
-import { DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT } from "../../lib/constants";
-import { Deadline, ServerConfiguration } from "../../dataclasses/dataclasses";
+import { Button, Col, Container, FormControl, Row } from "react-bootstrap";
+import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../lib/constants";
+import { Deadline, ServerConfiguration, Tracer } from "../../dataclasses/dataclasses";
 import { Select } from "../injectable/select";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
+import { setEvent } from "../../lib/state_management";
+import { parseTimeInput } from "../../lib/user_input";
+import { TimeInput } from "../injectable/time_form";
 
 
 /**
@@ -15,8 +18,83 @@ const GlobalDeadlineValuesOptions = {
   GLOBAL_INJECTION_DEADLINE : 3,
 }
 
+const globalOptions = [
+  {id : GlobalDeadlineValuesOptions.NO_OPTION, name: "-----"},
+  {id : GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE, name: "Aktivitet Deadline"},
+  {id : GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE, name: "Injektion Deadline"},
+]
+
+const DEADLINE_TYPE_OPTIONS = [{
+  id : DEADLINE_TYPES.DAILY,
+  name : "Daglig Deadline",
+},{
+  id : DEADLINE_TYPES.WEEKLY,
+  name : "Ugenlig Deadline",
+}]
+
+const correctDays = DAYS_OBJECTS.map(
+  (obj) =>  {return {id : obj.day - 1, name: obj.name}}
+) // I Dunno why it's wrong, and TODO: FIX THE CONSTANT
+
+
 /**
  * 
+ * @param {{websocket : TracerWebSocket}} param0 
+ * @returns 
+ */
+function NewDeadlineRow({websocket}){
+  const [deadlineType, setDeadlineType] = useState(DEADLINE_TYPES.DAILY);
+  const [deadlineTime, setDeadlineTime] = useState("");
+  const [day, setDay] = useState(DAYS.MONDAY);
+  const [error, setError] = useState(false);
+
+  function createDeadline(){
+    const [validTime, timeOutput] = parseTimeInput(deadlineTime);
+
+    if (validTime){
+      setError(false);
+      websocket.sendCreateModel(JSON_DEADLINE, [
+        new Deadline(undefined, deadlineType, timeOutput, day)
+      ]);
+    } else {
+      setError(true);
+    }
+  }
+
+  return (<Row>
+    <Col>
+      <Select
+        options={DEADLINE_TYPE_OPTIONS}
+        nameKey="name"
+        valueKey="id"
+        value={deadlineType}
+        onChange={setEvent(setDeadlineType)}
+      />
+    </Col>
+    <Col>
+      <TimeInput
+        style={error ? cssError : {}}
+        stateFunction={setDeadlineTime}
+        value={deadlineTime}
+      />
+    </Col>
+    <Col style={cssCenter}>
+      {Number(deadlineType) === DEADLINE_TYPES.WEEKLY ? <Select
+          options={correctDays}
+          nameKey="name"
+          valueKey="id"
+          value={day}
+          onChange={setEvent(setDay)}
+        /> : "-----"}
+    </Col>
+    <Col>
+        <Button onClick={createDeadline}>Opret Deadline</Button>
+    </Col>
+  </Row>)
+}
+
+/**
+ *
  * @param {{
  *  deadline : Deadline,
  *  setGlobalDeadline : Function,
@@ -35,9 +113,7 @@ function DeadlineRow({deadline,
   const [deadlineType, _setDeadlineType] = useState(deadline.deadline_type)
   const [time, _setTime] = useState(deadline.deadline_time)
   const [day, _setDay] = useState(deadline.deadline_day)
-  const correctDays = DAYS_OBJECTS.map(
-    (obj) =>  {return {id : obj.day - 1, name: obj.name}}
-  ) // I Dunno why it's wrong, and TODO: FIX THE CONSTANT
+
   // State Setters
   function setDeadlineType(event){
     _setDeadlineType(Number(event.target.value));
@@ -51,11 +127,14 @@ function DeadlineRow({deadline,
     websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_day : day})
   }
 
-  const globalOptions = [
-    {id : GlobalDeadlineValuesOptions.NO_OPTION, name: "-----"},
-    {id : GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE, name: "Aktivitet Deadline"},
-    {id : GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE, name: "Injektion Deadline"},
-  ]
+  function setTime(inputValue){
+    _setTime(inputValue)
+
+    const [valid, time] = parseTimeInput(inputValue)
+    if (valid){
+      websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_time : time})
+    }
+  }
 
   let globalValue = GlobalDeadlineValuesOptions.NO_OPTION;
   if (deadline.id === activityDeadline){
@@ -71,13 +150,7 @@ function DeadlineRow({deadline,
   }}>
     <Col>
       <Select
-        options={[{
-          id : DEADLINE_TYPES.DAILY,
-          name : "Daglig Deadline",
-        },{
-          id : DEADLINE_TYPES.WEEKLY,
-          name : "Ugenlig Deadline",
-        }]}
+        options={DEADLINE_TYPE_OPTIONS}
         nameKey="name"
         valueKey="id"
         onChange={setDeadlineType}
@@ -85,9 +158,9 @@ function DeadlineRow({deadline,
       />
     </Col>
     <Col>
-      <FormControl value={time} onChange={(event) => {_setTime(event.target.value)}}/>
+      <TimeInput value={time} stateFunction={setTime}/>
     </Col>
-    <Col>
+    <Col style={cssCenter}>
         { deadlineType === DEADLINE_TYPES.WEEKLY ? <Select
           options={correctDays}
           nameKey="name"
@@ -156,6 +229,13 @@ export function DeadlineSetup(props){
                 websocket={props[PROP_WEBSOCKET]}
              />
     }
+  )
+
+  Deadlines.push(
+    <NewDeadlineRow
+      key={-1}
+      websocket={props[PROP_WEBSOCKET]}
+    />
   )
 
   return <Container>

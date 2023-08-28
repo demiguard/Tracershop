@@ -24,13 +24,8 @@ from django.db.models.query import QuerySet
 # Tracershop Production Packages
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
-from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
-    JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVER_TIME, \
-    JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
-    JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
-    JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
-    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_LEGACY_ACTIVITY_ORDER,\
-    JSON_LEGACY_INJECTION_ORDER, AUTH_USERNAME, AUTH_PASSWORD
+from constants import JSON_VIAL, JSON_INJECTION_ORDER, JSON_CUSTOMER,\
+    JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD
 from database.models import ServerConfiguration, Database, Address, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
@@ -88,7 +83,10 @@ class DatabaseInterface():
 
 
   @database_sync_to_async
-  def handleEditModels(self, model_identifier: str, models : Union[Dict, Iterable[Dict]]) -> Optional[List[TracershopModel]]:
+  def handleEditModels(self, 
+                       model_identifier: str, 
+                       models : Union[Dict, Iterable[Dict]], 
+                       user: User) -> Optional[List[TracershopModel]]:
     """Edits model(s) and save them
 
     If a model fails to be edited,
@@ -101,21 +99,21 @@ class DatabaseInterface():
         Optional[List[TracershopModel]]: _description_
     """
     if isinstance(models, Dict):
-      updateModels = [self.__editModel(model_identifier, models)]
+      updateModels = [self.__editModel(model_identifier, models, user)]
     else:
-      updateModels = [self.__editModel(model_identifier, model) for model in models]
+      updateModels = [self.__editModel(model_identifier, model, user) for model in models]
     if None in updateModels:
       return None
 
-    [model.save() for model in updateModels if model is not None] # if statement is just their to make the type checker happy
+    [model.save(user) for model in updateModels if model is not None] # if statement is just their to make the type checker happy
     return updateModels # type: ignore # type checker is stupid
 
-  def __editModel(self, model_identifier: str, jsonModel : Dict) -> Optional[TracershopModel]:
+  def __editModel(self, model_identifier: str, jsonModel : Dict, user: User) -> Optional[TracershopModel]:
     if model_identifier in self.__modelSerializer:
       model = self.__modelSerializer[model_identifier](model_identifier, jsonModel)
     else:
       model = self.__defaultModelDeserializer(model_identifier, jsonModel)
-    if not model._canEdit():
+    if not model.canEdit(user):
       return None
     try:
       model.assignDict(jsonModel)
@@ -140,39 +138,40 @@ class DatabaseInterface():
     modelType = getModelType(modelIdentifier)
     if isinstance(modelID, Iterable):
       models = modelType.objects.filter(pk__in = [id_ for id_ in modelID])
-      canDelete = reduce(lambda x, y : x and y, [model._canEdit(user) for model in models], True)
+      canDelete = reduce(lambda x, y : x and y, [model.canDelete(user) for model in models], True)
       if canDelete:
         [model.delete() for model in models]
     else:
       model = modelType.objects.get(pk=modelID)
-      canDelete = model._canEdit(user)
+      canDelete = model.canEdit(user)
+
       if canDelete:
         model.delete()
-    return canDelete
+    return bool(canDelete)
 
 
-  def __createModel(self, model: Type[T], modelDict: Dict) -> T:
+  def __createModel(self, model: Type[T], modelDict: Dict, user: User) -> T:
     instance = model()
     instance.assignDict(modelDict)
-    instance.save() # Sets primary key as side effect
+    instance.save(user) # Sets primary key as side effect && and logs if needed
 
     return instance
 
   @database_sync_to_async
-  def handleCreateModels(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]]) -> QuerySet[TracershopModel]:
+  def handleCreateModels(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]], user: User) -> QuerySet[TracershopModel]:
     modelType = getModelType(modelIdentifier)
     if isinstance(modelDicts, List):
-      models = [self.__createModel(modelType, modelDict) for modelDict in modelDicts]
+      models = [self.__createModel(modelType, modelDict, user) for modelDict in modelDicts]
     else:
-      models = [self.__createModel(modelType, modelDicts)]
+      models = [self.__createModel(modelType, modelDicts, user)]
 
     modelType = MODELS[modelIdentifier]
     return modelType.objects.filter(pk__in=[model.pk for model in models])
 
 
   @database_sync_to_async
-  def saveModel(self, model: TracershopModel) -> None:
-    model.save()
+  def saveModel(self, model: TracershopModel, user) -> None:
+    model.save(user)
 
   @database_sync_to_async
   def saveModels(self,model: Type[TracershopModel], models: List[TracershopModel], tags: List[str]):

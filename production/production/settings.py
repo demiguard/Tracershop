@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME, LDAP_PASSWORD
-from production.config import debug_file_log, SQL_file_log, error_file_log
+from production.config import debug_file_log, SQL_file_log, error_file_log, audit_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -191,11 +191,11 @@ LOGGING = {
             'format': '[{server_time}] {message}',
             'style': '{',
         },
-        'SQL' : {
-            '()': 'django.utils.log.ServerFormatter',
-            'format' : '{asctime}\n{message}',
-            'style' : '{'
-        },
+        'audit.formatter' : {
+            '()' : 'logging.Formatter',
+            'style' : '{',
+            'format' : '[{asctime}] {message}'
+        }
     },
     'handlers': {
         'console': {
@@ -219,18 +219,17 @@ LOGGING = {
             'filename' : debug_file_log,
             'formatter' : 'django.server'
         },
-        'SQLHandler' : {
-            'level' : 'DEBUG',
-            'class' : 'logging.FileHandler', # Should be changed to rotating file handler
-            'filename' : SQL_file_log,
-            'formatter' : 'SQL'
-        },
         'ErrorHandler' : {
             'level' : 'ERROR',
             'class' : 'logging.FileHandler', # Should be changed to rotating file handler
             'filename' : error_file_log,
             'formatter' : 'django.server'
-
+        },
+        'audit_log' : {
+            'level' : "INFO",
+            'class' : 'logging.FileHandler',
+            'filename' : audit_file_log,
+            'formatter' : 'audit.formatter'
         }
     },
     'loggers': {
@@ -247,13 +246,13 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'SQLLogger' : {
-            'handlers' : ['SQLHandler', 'console'],
-            'level' : 'INFO'
-        },
         'ErrorLogger' : {
             'handlers': ['ErrorHandler'],
             'level' : 'ERROR'
+        },
+        'audit' : {
+            'handlers' : ['console', ],
+            'level' : "INFO",
         }
     }
 }

@@ -9,13 +9,12 @@ __author__ = "Christoffer Vilstrup Jensen"
 from typing import List
 
 # Third party Packages
-from django.db import models
 from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField, RESTRICT, BooleanField
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
-from lib.utils import classproperty
 
+from lib.utils import classproperty
 from django.contrib.auth.models import AbstractBaseUser
 
 

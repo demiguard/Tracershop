@@ -1,4 +1,4 @@
-import { addTimeColons, concatErrors, parseAETitleInput, parseBatchNumberInput, parseDanishNumberInput, parseDanishPositiveNumberInput, parseIPInput, parsePortInput, parseTimeInput } from "../../lib/user_input";
+import { concatErrors, parseAETitleInput, parseBatchNumberInput, parseDanishNumberInput, parseDanishPositiveNumberInput, parseIPInput, parsePortInput, parseTimeInput } from "../../lib/user_input";
 
 describe("parseDanishNumber Tests", () => {
   it("missing input", () => {
@@ -293,11 +293,3 @@ describe("concatError tests", () => {
   })
 });
 
-describe("addTimeColons Tests", () => {
-  it("inputs", () => {
-    expect(addTimeColons({target : {value : "11"}}, "1")).toBe("11:")
-    expect(addTimeColons({target : {value : "11"}}, "11:")).toBe("11")
-    expect(addTimeColons({target : {value : "11:11"}}, "11:1")).toBe("11:11:")
-    expect(addTimeColons({target : {value : "11:11"}}, "11:11:")).toBe("11:11")
-  })
-})

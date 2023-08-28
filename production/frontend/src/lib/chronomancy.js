@@ -17,6 +17,15 @@ export function getToday(){
   return new Date()
 }
 
+/**
+ * @idempotence
+ * @param {string | Date | {hour : Number, minute : Number, second : Number}} timeStamp
+ * @returns {{
+ *  hour : Number,
+ *  minute : Number,
+ *  second : Number,
+ * }}
+ */
 export function getTimeStamp(timeStamp){
   if(typeof timeStamp == "string"){
     timeStamp = FormatTime(timeStamp)
@@ -128,10 +137,17 @@ export function getTimeString(date){
   return `${FormatDateStr(timeStamp.hour)}:${FormatDateStr(timeStamp.minute)}:${FormatDateStr(timeStamp.second)}`
 }
 
-export function combineDateAndTimeStamp(date, timeStamp){
+/**
+ * 
+ * @param {Date} date
+ * @param {string} timestamp
+ * @returns {Date}
+ */
+export function combineDateAndTimeStamp(date, timestampBlueprint){
   const dateString = dateToDateString(date);
+  const timestamp = getTimeStamp(timestampBlueprint)
 
-  return new Date(`${dateString}T${timeStamp}`)
+    return new Date(`${dateString}T${timestamp.hour}:${timestamp.minute}:${timestamp.second}`)
 }
 
 export function getWeekNumber(date){
@@ -173,9 +189,10 @@ export function evalBitChain(bitChain, date){
  *
  * @param {Deadline} deadline - The deadline in question
  * @param {Date} orderDate - The day that you want to order
- * @param {Map<Number, ClosedDate> | undefined} closedDates
- * @param {Date | undefined} now - 
- * @returns {Boolean}
+ * @param {Map<Number, ClosedDate> | undefined} closedDates - Extra ordinaries days
+ * @param {Date | undefined} now -
+ * @returns {Boolean} - Returns True if the deadline is expired,
+ * so you can't do the the thing or false if you can do the thing
  */
 export function expiredDeadline(deadline, orderDate, closedDates,  now){
   if (now === undefined){
@@ -183,16 +200,14 @@ export function expiredDeadline(deadline, orderDate, closedDates,  now){
   }
   if (closedDates !== undefined){
     const dateString = dateToDateString(orderDate)
-
     for(const closedDate of closedDates.values()){
       if (closedDate.close_date === dateString){
-        return false
+        return true;
       }
     }
   }
 
-
   const deadlineDate = calculateDeadline(deadline, orderDate);
 
-  return now < deadlineDate
+  return deadlineDate < now
 }
