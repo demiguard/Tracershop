@@ -40,10 +40,10 @@ export function CustomerSelect(props){
   delete newProps.emptyCustomer;
 
   if(customerOptions.length === 0){
-    <FormControl readOnly/>
+    <FormControl {...newProps} readOnly/>
   }
   if(customerOptions.length === 1){
-    return <FormControl readOnly value={customerOptions[0].name}/>
+    return <FormControl {...newProps} readOnly value={customerOptions[0].name}/>
   }
 
   return <Select

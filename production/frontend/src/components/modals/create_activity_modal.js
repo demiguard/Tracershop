@@ -16,7 +16,8 @@ import { Select } from "../injectable/select"
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box"
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
 import { combineDateAndTimeStamp } from "../../lib/chronomancy";
-
+import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
+import { parseDanishPositiveNumberInput } from "../../lib/user_input";
 
 export function CreateOrderModal(props) {
   const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ TimeSlotMapping = props[PROP_TIME_SLOT_MAPPING]
@@ -34,10 +35,12 @@ export function CreateOrderModal(props) {
     break;
   }
 
+  const [activeCustomer, setActiveCustomer] = useState(customerInit);
+  const [activeEndpoint, setActiveEndpoint] = useState(endpointInit);
+  const [activeTimeSlot, setActiveTimeSlot] = useState(timeSlotIdInit);
+
   const [state, _setState] = useState({
     amount : "",
-    customerID : customerInit,
-    endpointID : endpointInit,
     error : {
       missingEndpoint : "",
       missingTimeSlot : "",
@@ -51,24 +54,11 @@ export function CreateOrderModal(props) {
     _setState({...state, ...newState})
   }
 
-
   function createOrder(_event){
-    const amountNumber = ParseDanishNumber(state.amount);
-    if(isNaN(amountNumber)){
-      setState({
-        error : {...state.error,
-                invalidOrder : "Aktiviteten er ikke et tal!",
-        }
-      });
-      return;
-    }
+    const [valid, amountNumber] = parseDanishPositiveNumberInput(state.amount, "Aktiviteten")
 
-    if(amountNumber <= 0){
-      setState({
-        error : {...state.error,
-                invalidOrder : "Aktiviteten er skal være positiv!",
-        }
-      });
+    if(!valid){
+      setState({error : {...state.error, invalidOrder : amountNumber}});
       return;
     }
 
@@ -78,7 +68,7 @@ export function CreateOrderModal(props) {
                                        dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
                                        1, // status
                                        "", // comment
-                                       state.timeSlotID, // ordered_time_Slot
+                                       activeTimeSlot, // ordered_time_Slot
                                        null, // moved_to_time_slot
                                        null, // ordered_by, set by backend
                                        null, // freed_by
@@ -90,69 +80,6 @@ export function CreateOrderModal(props) {
     props[PROP_ON_CLOSE]();
   }
 
-  function changeCustomer(event){
-    const newCustomerID = Number(event.target.value)
-    let endpointMap = TimeSlotMapping.get(newCustomerID)
-    if(endpointMap === undefined){
-      const customer = props[JSON_CUSTOMER].get(newCustomerID)
-      const newError = {...state.error}
-      newError.missingEndpoint = `Kunden ${customer.short_name} har ikke nogen leveringsteder`
-      setState({error : newError, customerID : newCustomerID})
-      return
-    }
-
-    let endpointInit, timeSlotIdInit
-    for(const [endpointID, timeSlots] of endpointMap){
-      endpointInit = endpointID
-
-      if (endpointID === undefined){
-        const customer = props[JSON_CUSTOMER].get(newCustomerID)
-        const newError = {...state.error}
-        newError.missingEndpoint = `Kunden ${customer.short_name} har ikke nogen leveringsteder`
-        setState({error : newError, customerID : newCustomerID})
-        return
-      }
-
-      if (timeSlots.length === 0){
-        const customer = props[JSON_CUSTOMER].get(newCustomerID)
-        const newError = {...state.error}
-        newError.missingTimeSlot = `Kunden ${customer.short_name} har ikke nogen leveringstidpunkter`
-        setState({error : newError, endpointID : endpointID,  customerID : newCustomerID})
-        return
-      }
-
-      timeSlotIdInit = timeSlots[0].id
-      break;
-    }
-
-    setState({
-      customerID : newCustomerID,
-      endpointID : endpointInit,
-      error : {
-        ...state.error,
-        missingEndpoint : "",
-        missingTimeSlot : ""
-      },
-      timeSlotID : timeSlotIdInit,
-    })
-  }
-
-  function changeEndpoint(event){
-    const newEndpointID = Number(event.target.value);
-    const newEndpoint = props[JSON_ENDPOINT].get(newEndpointID);
-    const endpointMap = TimeSlotMapping.get(newEndpoint.owner);
-    const timeSlots = endpointMap.get(newEndpointID);
-
-    if (timeSlots.length === 0){
-      const customer = props[JSON_CUSTOMER].get(state.customerID)
-      const newError = {...state.error}
-      newError.missingTimeSlot = `Kunden ${customer.short_name} har ikke nogen leveringstidpunkter`
-      setState({error : newError, endpointID : newEndpointID})
-      return
-    }
-
-    setState({endpointID : newEndpointID})
-  }
 
   function hasError() {
     return state.error.invalidOrder != "" || state.error.missingEndpoint != "" || state.error.missingTimeSlot != "";
@@ -187,107 +114,6 @@ export function CreateOrderModal(props) {
 
   const Tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
 
-  const customerOptions = [...TimeSlotMapping.keys()].filter(
-    (customerID) => {
-      const condition_1 = props[JSON_CUSTOMER].has(customerID)
-
-      return condition_1
-    }
-  ).map(
-    (customerID) => {
-      const /**@type {Customer} */ customer = props[JSON_CUSTOMER].get(customerID);
-      return {
-        id : customer.id,
-        name : customer.short_name,
-      }
-    }
-  );
-
-  let endpointForm
-  const endpointMap = TimeSlotMapping.get(state.customerID);
-
-  if(endpointMap === undefined){
-    const customer = props[JSON_CUSTOMER].get(state.customerID);
-    setState({
-      error : {...state.error,
-        missingEndpoint : `Kunden ${customer.short_name} har ingen levering steder.`,
-      }
-    });
-  } else {
-      const endpointOptions = [...endpointMap.keys()].map(
-        (endpointID) => {
-        const endpoint = props[JSON_ENDPOINT].get(endpointID)
-        return {
-          id : endpoint.id,
-          name : endpoint.name,
-        }
-      })
-
-      if (1 == endpointOptions.length){
-        endpointForm = <FormControl
-                          value={endpointOptions[0].name}
-                          aria-label={"endpoint-select"}
-                          readOnly/>
-    }
-    else if (1 < endpointOptions.length){
-      endpointForm = <Select
-        options={endpointOptions}
-        nameKey="name"
-        valueKey="id"
-        onChange={changeEndpoint}
-        value={state.endpointID}
-        aria-label={"endpoint-select"}
-      />
-    } else {
-      const customer = props[JSON_CUSTOMER].get(state.customerID)
-      setState({
-        error : {...state.error,
-          missingEndpoint : `Kunden ${customer.short_name} har ingen levering steder.`,
-        }
-      })
-    }
-  }
-
-  let activityTimeSlotForm
-
-  const ActivityTimeSlots = endpointMap.get(state.endpointID);
-  // If statement for setting form
-  if(state.error.missingTimeSlot == "" && ActivityTimeSlots != undefined){
-    const ActivityOptions = ActivityTimeSlots.map(
-      (activityDeliveryTimeSlot) => { return {
-        id : activityDeliveryTimeSlot.id,
-        name : activityDeliveryTimeSlot.delivery_time
-    }})
-    if (ActivityOptions.length == 1){
-      activityTimeSlotForm = <FormControl readOnly value={ActivityOptions[0].name}></FormControl>
-    } else if(1 < ActivityOptions.length){
-      activityTimeSlotForm = <Select
-                                aria-label="time-slot-select"
-                                options={ActivityOptions}
-                                valueKey="id"
-                                nameKey="name"
-                                value={state.timeSlotID}
-                                onChange={
-                                  (event) => {setState({
-                                    timeSlotID : Number(event.target.value)
-                                    })
-                                    }
-                                  }
-                             />
-    }
-  } else {
-    activityTimeSlotForm = <div/>
-  }
-
-  const /**@type {ActivityDeliveryTimeSlot} */ currentTimeSlot = props[JSON_DELIVER_TIME].get(state.timeSlotID);
-  // This date doesn't matter since showing the calculator should be impossible
-  let deliveryDateTime = new Date()
-  if(currentTimeSlot){
-    deliveryDateTime = combineDateAndTimeStamp(props[PROP_ACTIVE_DATE], currentTimeSlot.delivery_time)
-  }
-
-  const canShowActivityInput = currentTimeSlot !== undefined
-
   return (
       <Modal
         show={true}
@@ -307,24 +133,20 @@ export function CreateOrderModal(props) {
           /> :
           <Container>
             <Row className={styles.Margin15tb}>
-              <TracershopInputGroup label="Kunde">
-                <Select
-                  options={customerOptions}
-                  valueKey="id"
-                  nameKey="name"
-                  onChange={changeCustomer}
-                  value={state.customerID}
-                  aria-label={"customer-select"}
-                />
-              </TracershopInputGroup>
-              <TracershopInputGroup label="Leverings Sted">
-                {endpointForm}
-              </TracershopInputGroup>
-              <TracershopInputGroup label="Kørsel">
-                {activityTimeSlotForm}
-              </TracershopInputGroup>
-
-              { canShowActivityInput ?
+              <DestinationSelect
+                ariaLabelCustomer="customer-select"
+                ariaLabelEndpoint="endpoint-select"
+                ariaLabelTimeSlot="time-slot-select"
+                activeCustomer={activeCustomer}
+                activeEndpoint={activeEndpoint}
+                activeTimeSlot={activeTimeSlot}
+                customer={props[JSON_CUSTOMER]}
+                endpoints={props[JSON_ENDPOINT]}
+                timeSlots={props[JSON_DELIVER_TIME]}
+                setCustomer={setActiveCustomer}
+                setEndpoint={setActiveEndpoint}
+                setTimeSlot={setActiveTimeSlot}
+              />
               <TracershopInputGroup label="Aktivitet">
                 <FormControl
                   aria-label={"activity-input"}
@@ -340,8 +162,7 @@ export function CreateOrderModal(props) {
                     onClick={(_event) => {setState({showCalculator : true})}}
                   />
                 </InputGroup.Text>
-              </TracershopInputGroup> : ""
-              }
+              </TracershopInputGroup>
             </Row>
 
             { hasError() ?

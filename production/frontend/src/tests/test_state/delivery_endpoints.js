@@ -28,11 +28,11 @@ export const deliveryEndpoints = new Map([
       name : "endpoint_1_c3",
       owner : 3,
   }], [5, {
-    id : 5,
-    address : "Does Exists Street 6",
-    city : "Imagine stand",
-    zip_code : "9999",
-    name : "endpoint_2_c3",
-    owner : 3,
-}],
+      id : 5,
+      address : "Does Exists Street 6",
+      city : "Imagine stand",
+      zip_code : "9999",
+      name : "endpoint_2_c3",
+      owner : 3,
+    }],
 ])

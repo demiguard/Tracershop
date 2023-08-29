@@ -44,10 +44,10 @@ export function EndpointSelect(props){
   delete newProps[JSON_CUSTOMER];
 
   if(endpointOptions.length === 0){
-    <FormControl readOnly/>
+    <FormControl {...newProps} readOnly/>
   }
   if(endpointOptions.length === 1){
-    return <FormControl readOnly value={endpointOptions[0].name}/>
+    return <FormControl {...newProps} readOnly value={endpointOptions[0].name}/>
   }
 
   return <Select

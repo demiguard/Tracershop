@@ -1,0 +1,124 @@
+/**This is a select, that is used for customers and endpoints together.
+ * The Main problem about this select is that there's cascading effects.
+ * So if a customer changes, then the endpoint changes and if the endpoint
+ * changes then the timeSlots should change as well
+ */
+
+import React from 'react'
+
+import { Customer, DeliveryEndpoint, Tracer, ActivityDeliveryTimeSlot } from "../../../dataclasses/dataclasses";
+import { JSON_DELIVER_TIME } from "../../../lib/constants";
+import { getId } from "../../../lib/utils";
+import { TracershopInputGroup } from "../tracershop_input_group";
+import { CustomerSelect } from "./customer_select";
+import { EndpointSelect } from "./endpoint_select";
+import { TimeSlotSelect } from "./timeslot_select";
+import { getRelatedTimeSlots } from '../../../lib/filters';
+
+/**
+ * 
+ * @param {{
+ * aria-label-customer : String | undefined,
+ * aria-label-endpoint : String | undefined,
+ * aria-label-timeSlot : String | undefined,
+ * activeCustomer : Number,
+ * activeEndpoint : Number,
+ * activeTimeSlot : Number | undefined,
+ * customer : Map<Number, Customer>,
+ * endpoints : Map<Number, DeliveryEndpoint>,
+ * timeSlots : Map<Number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot> | undefined,
+ * setCustomer : Callable,
+ * setEndpoint : Callable,
+ * setTimeSlot : Callable,
+ * }} param0
+ * @returns {Element}
+ */
+export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlot,
+                                   ariaLabelCustomer, ariaLabelEndpoint, ariaLabelTimeSlot,
+                                   customer, endpoints, timeSlots,
+                                   setCustomer, setEndpoint, setTimeSlot }){
+  const filteredEndpoints = [...endpoints.values()].filter(
+    (endpoint) => {return customer.has(endpoint.owner);}
+  );
+  const withTimeSlots = setTimeSlot !== undefined
+                        && timeSlots !== undefined
+                        && activeTimeSlot !== undefined;
+
+
+  function setTimeSlotToNewEndpoint(rawEndpointID){
+    console.log(rawEndpointID)
+    if(withTimeSlots){
+      const newEndpointID = (rawEndpointID !== "") ? Number(rawEndpointID) : "";
+      const newTimeSlots = getRelatedTimeSlots(timeSlots, newEndpointID);
+      if(newTimeSlots.length === 0){
+        setTimeSlot("");
+      } else {
+        setTimeSlot(newTimeSlots[0].id)
+      }
+    }
+  }
+
+  function setEndpointToNewCustomer(rawCustomerID){
+    const newEndpoints = [...endpoints.values()].filter(
+      (endpoint) => {
+        return rawCustomerID === endpoint.owner
+      }
+    )
+
+    let newEndpointID = (0 === newEndpoints.length) ? "" : newEndpoints[0].id;
+    setEndpoint(newEndpointID);
+    setTimeSlotToNewEndpoint(newEndpointID)
+  }
+
+  function onChangeCustomer(event){
+    const newCustomerID = (event.target.value === "") ? "" : Number(event.target.value);
+    setCustomer(newCustomerID);
+    setEndpointToNewCustomer(newCustomerID)
+  }
+
+  function onChangeEndpoint(event){
+    const newEndpointID = (event.target.value === "") ? "" : Number(event.target.value);
+    setEndpoint(newEndpointID);
+    setTimeSlotToNewEndpoint(newEndpointID);
+  }
+
+  let thirdColumn = "";
+  if(withTimeSlots){
+    function onChangeTimeSlot(event){
+      const timeSlotID = (event.target.value === "") ? "" : Number(event.target.value)
+      setTimeSlot(timeSlotID);
+    }
+
+    const filteredTimeSlots = getRelatedTimeSlots(timeSlots, activeEndpoint);
+
+    thirdColumn = <TracershopInputGroup>
+      <TimeSlotSelect
+        aria-label={ariaLabelTimeSlot}
+        deliverTimes={filteredTimeSlots}
+        value={activeEndpoint}
+        onChange={onChangeTimeSlot}
+      />
+    </TracershopInputGroup>
+  }
+
+  return (<div>
+    <TracershopInputGroup label="Kunde">
+      <CustomerSelect
+        aria-label={ariaLabelCustomer}
+        value={activeCustomer}
+        customer={customer}
+        onChange={onChangeCustomer}
+      />
+    </TracershopInputGroup>
+    <TracershopInputGroup label="Destination">
+      <EndpointSelect
+        aria-label={ariaLabelEndpoint}
+        customer={customer}
+        deliveryEndpoint={filteredEndpoints}
+        value={activeEndpoint}
+        onChange={onChangeEndpoint}
+      />
+    </TracershopInputGroup>
+    {thirdColumn}
+  </div>)
+}
