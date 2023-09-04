@@ -46,7 +46,7 @@ export function OrderReview(props){
   // State Definitions
   let activeTracerInit = -1
   if (0 < availableActivityTracers.length){
-    activeTracerInit = availableActivityTracers.id
+    activeTracerInit = availableActivityTracers[0].id
   }
 
   const [activeTracer, setActiveTracer] = useState(activeTracerInit);
@@ -165,7 +165,9 @@ export function OrderReview(props){
       <Col>{tracerButtons}</Col>
     </Row>
     <Row>
-      {timeSlotsCards}
+      {activeTracer !== -1 ? timeSlotsCards : <h3>
+        Der ikke valgt en aktivitets tracer, klik på en af dem for at bestille den.
+      </h3>}
     </Row>
     { InjectionOrderCards.length ?
       <Row style={{margin : '15px'}}><h3>Injection Ordre</h3></Row> : ""}

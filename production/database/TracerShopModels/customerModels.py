@@ -30,14 +30,13 @@ class Customer(TracershopModel):
   customer_id = BigAutoField(primary_key=True)
   short_name = CharField(max_length=32)
   long_name = CharField(max_length=128, null=True, default=None)
-  dispenser_id = SmallIntegerField(null=True, default=None)
+  dispenser_id = SmallIntegerField(null=True, default=None, unique=True)
   billing_address = CharField(max_length=128, null=True, default=None)
   billing_city = CharField(max_length=128, null=True, default=None)
   billing_email = EmailField(max_length=128, null=True, default=None)
   billing_phone = CharField(max_length=32, null=True, default=None)
   billing_zip_code = CharField(max_length=8, null=True, default=None)
   active_directory_code = CharField(max_length=128, null=True, default=None)
-
 
 class TracerCatalog(TracershopModel):
   tracer_catalog_id = BigAutoField(primary_key=True)

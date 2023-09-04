@@ -36,7 +36,7 @@ from django.db.models import QuerySet
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import SQLInjectionException, IllegalActionAttempted
-from constants import * # Import the many WEBSOCKET constants, TO DO change this
+from constants import * # type: ignore  # Import the many WEBSOCKET constants, TO DO change this
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
