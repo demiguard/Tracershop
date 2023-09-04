@@ -80,7 +80,7 @@ class TracershopModel(Model):
       # End of assignment
       self.__setattr__(key, value)
 
-  def save(self, user: Optional['authModels.User'] = None) -> bool:
+  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool:
     # Something important to note is that if you have query set and that updates
     # Then .save is not called, in other words it's possible to change the
     # database without logging.
@@ -97,16 +97,16 @@ class TracershopModel(Model):
       EditModelAuditEntry.log(user, self, action)
 
     if action.should_act:
-      super().save()
+      super().save(*args, **kwargs)
       return True
     return False
 
-  def delete(self, user: Optional['authModels.User'] = None):
+  def delete(self, user: Optional['authModels.User'] = None, *args, **kwargs):
     action = self.canDelete(user)
     DeleteModelAuditEntry.log(user, self, action)
 
     if action.should_act:
-      super().delete()
+      super().delete(*args, **kwargs)
       return True
     return False
 

@@ -40,3 +40,9 @@ class ActivityProduction(TracershopModel):
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
   expiration_date = DateField(null=True, default=None)
+
+  def __str__(self) -> str:
+    return f"Production of {self.tracer.shortname} - {Days(self.production_day).name} - {self.production_time}"
+
+  def __repr__(self) -> str:
+    return str(self)

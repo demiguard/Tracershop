@@ -10,7 +10,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
 
 # Tracershop Packages
-from database.TracerShopModels.baseModels import TracershopModel
+from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
 from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
 
@@ -141,8 +141,10 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   expiration_date = DateField(null=True, default=None)
 
   def __str__(self) -> str:
-    return f"ActivityDeliveryTimeSlot at {self.production_run.production_day} - {self.delivery_time} to {self.destination.owner.short_name}"
+    return f"ActivityDeliveryTimeSlot at {Days(self.production_run.production_day).name} - {self.delivery_time} to {self.destination.owner.short_name}"
 
+  def __repr__(self) -> str:
+    return str(self)
 
 class OrderStatus(IntegerChoices):
   Ordered = 1

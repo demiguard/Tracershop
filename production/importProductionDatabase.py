@@ -19,7 +19,7 @@ django.setup()
 
 from django.utils import timezone
 
-from database.models import *
+from database.models import * # type: ignore
 
 
 
@@ -113,6 +113,7 @@ def get_isotopes(cursor: CursorBase) -> Dict[int, Isotope]:
       halflife_seconds=raw_isotope['halflife'],
       atomic_number=1
     )
+    isotope.save()
 
     isotope_map[raw_isotope['id']] = isotope
 
@@ -144,6 +145,8 @@ def get_tracers(cursor: CursorBase, isotope_map) -> Tuple[Dict[int, Tracer], Tra
     if tracer.shortname == "FDG":
       fdg = tracer
       tracer.tracer_type = TracerTypes.ActivityBased
+
+    tracer.save()
     tracers[raw_tracer['id']] = tracer
   return tracers, fdg # type: ignore
 
@@ -152,18 +155,21 @@ def get_productions(cursor:CursorBase, fdg: Tracer) -> Dict[Days, List[ActivityP
 
   cursor.execute("SELECT day, ptime from productionTimes ORDER BY ptime")
   for raw_production in cursor.fetchall(): # type: ignore
-    day = map_day(raw_production['day']-1)
+    day = Days(raw_production['day']-1)
 
     production = ActivityProduction(
       tracer = fdg,
       production_day = day,
       production_time = str(raw_production['ptime'])
     )
+    production.save()
 
     if day in productions:
       productions[day].append(production)
     else:
       productions[day] = [production]
+
+  pprint(productions)
   return productions
 
 def get_customers(cursor: CursorBase) -> Tuple[Dict[int, Customer], Dict[int, DeliveryEndpoint], Dict[int, float]]:
@@ -184,12 +190,14 @@ def get_customers(cursor: CursorBase) -> Tuple[Dict[int, Customer], Dict[int, De
       billing_address = raw_customer['addr1'],
       billing_city = raw_customer['addr2'],
     )
+    customer.save()
 
     endpoint = DeliveryEndpoint(
       owner = customer,
       address = raw_customer['addr1'],
       name = raw_customer['Username'],
     )
+    endpoint.save()
 
     customers[raw_customer['id']] = customer
     endpoints[raw_customer['id']] = endpoint
@@ -209,6 +217,7 @@ def get_legacy_production(cursor: CursorBase) -> Dict[int, LegacyProductionMembe
       legacy_user_id = raw_production_member['Id'],
       legacy_production_username = raw_production_member['Username']
     )
+    lpm.save()
     legacy_production_members[raw_production_member['Id']] = lpm
   return legacy_production_members
 
@@ -234,6 +243,10 @@ def get_tracer_customer(cursor: CursorBase,
     if (tracer.tracer_id, customer.customer_id) not in tracer_customer:
       tracer_customer[(tracer.tracer_id, customer.customer_id)] = tc
 
+    try:
+      tc.save()
+    except:
+      pass
 
   for customer_id, overhead in overheads.items():
     if overhead is None:
@@ -249,6 +262,10 @@ def get_tracer_customer(cursor: CursorBase,
     )
 
     tracer_customer[(fdg.tracer_id, customer.customer_id)] = tc
+    try:
+      tc.save()
+    except:
+      pass
 
   return tracer_customer
 
@@ -267,7 +284,7 @@ def get_activity_delivery_time_slots(cursor: CursorBase,
     if endpoint is None:
       pprint(f"Skipping BID {raw_deliveryTime['BID']}")
       continue
-    day = map_day(raw_deliveryTime['day'] - 1)
+    day = Days(raw_deliveryTime['day'] - 1)
 
     delivery_time = str(raw_deliveryTime['dtime'])
 
@@ -278,6 +295,7 @@ def get_activity_delivery_time_slots(cursor: CursorBase,
       delivery_time = delivery_time,
       production_run = production,
     )
+    delivery_time_slot.save()
 
     if raw_deliveryTime['BID'] in delivery_time_slots:
       daily_slots = delivery_time_slots[raw_deliveryTime['BID']]
@@ -289,6 +307,7 @@ def get_activity_delivery_time_slots(cursor: CursorBase,
     else:
       daily_slots[day] = [delivery_time_slot]
 
+  pprint(delivery_time_slots)
   return delivery_time_slots
 
 def get_injections_orders(cursor: CursorBase,
@@ -332,11 +351,13 @@ def get_injections_orders(cursor: CursorBase,
       freed_datetime = freed_datetime,
       freed_by=None,
     )
+    injection_order.save()
 
     injectionOrders[raw_t_order['oid']] = injection_order
 
     if injection_order.lot_number != raw_t_order['batchnr']:
-      print("DATA CORRUPTION!")
+      print("DATA CORRUPTION! - Injection Order")
+      print(raw_t_order)
 
     if raw_t_order['status'] == 3:
       lio = LegacyInjectionOrder(
@@ -344,6 +365,7 @@ def get_injections_orders(cursor: CursorBase,
         legacy_freed_id = legacy_production_members.get(raw_t_order['BID']),
         new_order_id = injection_order
       )
+      lio.save()
       legacyInjectionOrders[raw_t_order['oid']] = lio
 
   return injectionOrders, legacyInjectionOrders
@@ -363,7 +385,7 @@ def get_activityOrders(cursor: CursorBase,
     delivery_datetime:datetime.datetime = raw_order['deliver_datetime']
     delivery_datetime.replace(tzinfo=tz)
 
-    day = map_day(delivery_datetime.weekday())
+    day = Days(delivery_datetime.weekday())
     daily_slots = delivery_time_slots[raw_order['BID']]
     if day in daily_slots:
       time_slots = daily_slots[day]
@@ -384,16 +406,28 @@ def get_activityOrders(cursor: CursorBase,
         moved_time_slot = None
     except:
       moved_time_slot = None
-    freed_datetime = None
     if raw_order['status'] == 3:
       try:
         freed_datetime = raw_order['frigivet_datetime']
         freed_datetime = freed_datetime.replace(tzinfo=tz)
       except:
+        freed_datetime = None
         pass
+    else:
+      freed_datetime = None
 
-    if activity_delivery_time_slot.production_run.production_day != delivery_datetime.weekday():
-      print("DATA CORRUPTION!")
+    if Days(activity_delivery_time_slot.production_run.production_day) != Days(delivery_datetime.weekday()):
+      print("DATA CORRUPTION! - Activity Order - Date does not match!")
+      pprint(raw_order)
+      pprint(delivery_datetime)
+      pprint(day)
+      pprint(daily_slots)
+      pprint(time_slots)
+      pprint(activity_delivery_time_slot)
+      pprint(activity_delivery_time_slot.production_run)
+      pprint(activity_delivery_time_slot.production_run.production_day)
+      pprint(moved_time_slot)
+      exit(1)
 
     ao = ActivityOrder(
       ordered_activity = raw_order['amount'],
@@ -403,9 +437,10 @@ def get_activityOrders(cursor: CursorBase,
       ordered_time_slot = activity_delivery_time_slot,
       moved_to_time_slot= moved_time_slot,
       freed_datetime = freed_datetime,
-      ordered_By=None,
+      ordered_by=None,
       freed_by=None,
     )
+    ao.save()
 
     if raw_order['status'] == 3 and raw_order['frigivet_af'] is not None:
       if raw_order['frigivet_af'] not in legacy_production_members:
@@ -419,6 +454,8 @@ def get_activityOrders(cursor: CursorBase,
         legacy_freed_amount = raw_order['frigivet_amount'],
         legacy_lot_number = raw_order['batchnr']
       )
+      legacyActivityOrders[raw_order['OID']] = lao
+      lao.save()
 
   return activityOrders, legacyActivityOrders
 
@@ -443,7 +480,12 @@ def get_vials(cursor: CursorBase):
       fill_time = str(raw_vial['filltime']),
       fill_date = str(raw_vial['filldate'])
     )
-    vials[raw_vial['ID']]
+    try:
+      vial.save()
+    except:
+      print("Skipping Vial")
+      continue
+    vials[raw_vial['ID']] = vial
   return vials
 
 def bulk_create(model: Type[T], models: Iterable[T]):
@@ -460,31 +502,31 @@ def save_models(model_map: Dict[Any, T]):
 def save_list_models(model_map: Dict[Any, List[T]]):
   [[model.save() for model in model_list] for model_list in model_map.values()]
 
-if __name__ != '__main__':
+if __name__ == '__main__':
   connection = mysql.connect(**source_database)
   cursor: CursorBase = connection.cursor(dictionary=True) # type: ignore
   isotope_map = get_isotopes(cursor)
-  bulk_create(Isotope, isotope_map.values())
+  #save_models(isotope_map)
   tracer_map, fdg = get_tracers(cursor, isotope_map)
-  bulk_create(Tracer, tracer_map.values())
+  #save_models(isotope_map)
   production_map = get_productions(cursor, fdg)
-  bulk_create_list(ActivityProduction, production_map.values())
+  #save_list_models(production_map)
 
   customer_map, endpoint_map, overhead = get_customers(cursor)
-  bulk_create(Customer, customer_map.values())
-  bulk_create(DeliveryEndpoint, endpoint_map.values())
+  #save_models(customer_map)
+  #save_models(endpoint_map)
 
   legacy_production_members = get_legacy_production(cursor)
-  bulk_create(LegacyProductionMember, legacy_activity_order_map.values())
+  #bulk_create(LegacyProductionMember, legacy_production_members.values())
   tracer_customer = get_tracer_customer(cursor, tracer_map, customer_map,overhead, fdg)
-  save_models(tracer_customer)
+  #save_models(tracer_customer)
   activityDeliveryTimeSlots = get_activity_delivery_time_slots(cursor, endpoint_map, production_map)
 
   injection_orders_map, legacy_injection_order = get_injections_orders(cursor, legacy_production_members, tracer_map, endpoint_map)
-  save_models(injection_orders_map)
-  save_models(legacy_injection_order)
+  #save_models(injection_orders_map)
+  #save_models(legacy_injection_order)
 
   activity_order_map, legacy_activity_order_map = get_activityOrders(cursor, activityDeliveryTimeSlots, legacy_production_members)
 
   vials = get_vials(cursor)
-  save_models(vials)
+  #save_models(vials)
