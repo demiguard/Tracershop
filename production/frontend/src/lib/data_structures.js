@@ -5,6 +5,7 @@
 
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Procedure, ProcedureIdentifier, TracerCatalog } from "../dataclasses/dataclasses"
 import { TRACER_TYPE_ACTIVITY } from "./constants";
+import { applyFilter, timeSlotOwnerFilter } from "./filters";
 
 
 /**
@@ -174,4 +175,14 @@ export function getProcedure(procedures, identifier, endpoint){
       }
     }
   return new Procedure(undefined, identifier.id, "", "", "", endpoint.id);
+}
+
+/**
+ * Filters out ActivityDeliveryTimeSlots not owned by EndpointID
+ * @param {Array<ActivityDeliveryTimeSlot>| Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
+ * @param {Number} endpointID - Number corresponding to the ID of the Endpoint
+ * @returns {Array<ActivityDeliveryTimeSlot>}
+ */
+export function getRelatedTimeSlots(timeSlots, endpointID) {
+  return applyFilter(timeSlots, timeSlotOwnerFilter(endpointID))
 }

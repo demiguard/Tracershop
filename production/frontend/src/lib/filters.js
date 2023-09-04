@@ -8,12 +8,21 @@ export function dayTracerFilter(day, tracerID){
   }
 }
 
-export function endpointFilter(endpointID){
+export function timeSlotOwnerFilter(endpointID){
   return (timeSlot) => timeSlot.destination === endpointID;
 }
 
-export function getRelatedTimeSlots(timeSlots, endpointID) {
-  return (timeSlots instanceof Map) ?
-    [...timeSlots.values()].filter(endpointFilter(endpointID)) :
-    timeSlots.filter(endpointFilter(endpointID));
+/** Function used 
+ * 
+ * @param {Number} CustomerID 
+ * @returns 
+ */
+export function endpointOwnerFilter(CustomerID){
+  return (endpoint) => endpoint.owner === CustomerID
+}
+
+export function applyFilter(collection, filterFunction) {
+  return (collection instanceof Map) ?
+    [...collection.values()].filter(filterFunction) :
+    collection.filter(filterFunction);
 }

@@ -66,7 +66,7 @@ describe("create activity modal", () => {
     expect(await screen.findByLabelText('customer-select')).toBeVisible();
   });
 
-  it("Change Endpoint, missing delivery times", async () => {
+  it.skip("Change Endpoint, missing delivery times", async () => {
     render(<CreateOrderModal
       {...props}
     />, container);

@@ -13,7 +13,7 @@ import { TracershopInputGroup } from "../tracershop_input_group";
 import { CustomerSelect } from "./customer_select";
 import { EndpointSelect } from "./endpoint_select";
 import { TimeSlotSelect } from "./timeslot_select";
-import { getRelatedTimeSlots } from '../../../lib/filters';
+import { getRelatedTimeSlots } from '../../../lib/data_structures';
 
 /**
  * 
@@ -46,7 +46,6 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
 
 
   function setTimeSlotToNewEndpoint(rawEndpointID){
-    console.log(rawEndpointID)
     if(withTimeSlots){
       const newEndpointID = (rawEndpointID !== "") ? Number(rawEndpointID) : "";
       const newTimeSlots = getRelatedTimeSlots(timeSlots, newEndpointID);
@@ -62,8 +61,7 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     const newEndpoints = [...endpoints.values()].filter(
       (endpoint) => {
         return rawCustomerID === endpoint.owner
-      }
-    )
+      })
 
     let newEndpointID = (0 === newEndpoints.length) ? "" : newEndpoints[0].id;
     setEndpoint(newEndpointID);
