@@ -11,9 +11,12 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME, LDAP_PASSWORD
-from production.config import debug_file_log, SQL_file_log, error_file_log, audit_file_log
-
+from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME,\
+      LDAP_PASSWORD
+from production.config import debug_file_log, SQL_file_log, error_file_log,\
+      audit_file_log, pingService_file_log
+from constants import DEBUG_LOGGER, ERROR_LOGGER, AUDIT_LOGGER,\
+      PING_SERVICE_LOGGER
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import ldap
@@ -195,11 +198,11 @@ LOGGING = {
             '()' : 'logging.Formatter',
             'style' : '{',
             'format' : '[{asctime}] {message}'
-        }
+        },
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
@@ -230,14 +233,22 @@ LOGGING = {
             'class' : 'logging.FileHandler',
             'filename' : audit_file_log,
             'formatter' : 'audit.formatter'
-        }
+        },
+        'pingServiceHandler' : {
+            'level' : 'INFO',
+            'class' : 'logging.handlers.TimedRotatingFileHandler',
+            'filename' : pingService_file_log,
+            'when' : 'D',
+            'backupCount' : '4',
+            'formatter' : 'django.server'
+        },
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'mail_admins'],
             'level': 'INFO',
         },
-        'DebugLogger' : {
+        DEBUG_LOGGER : {
             'handlers':  ['myHandler', 'console'],
             'level': 'DEBUG'
         },
@@ -246,14 +257,19 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'ErrorLogger' : {
+        ERROR_LOGGER : {
             'handlers': ['ErrorHandler'],
             'level' : 'ERROR'
         },
-        'audit' : {
-            'handlers' : ['console', ],
+        AUDIT_LOGGER : {
+            'handlers' : ['console', 'audit_log'],
             'level' : "INFO",
-        }
+        },
+        PING_SERVICE_LOGGER : {
+            'level' : "INFO",
+            'handlers' : ['pingServiceHandler'],
+        },
+
     }
 }
 

@@ -9,10 +9,12 @@ from typing import List, Optional, Tuple
 # Third party packages
 
 # Tracershop modules
+from constants import AUDIT_LOGGER
 from database import models
 from tracerauth.types import AuthActions
 
-logger = logging.getLogger('audit')
+
+logger = logging.getLogger(AUDIT_LOGGER)
 
 def _get_max_length(tuples: List[Tuple])-> Tuple:
   init_tuple = tuples[0]

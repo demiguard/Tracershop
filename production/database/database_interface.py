@@ -24,11 +24,11 @@ from django.db.models.query import QuerySet
 # Tracershop Production Packages
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
-from constants import JSON_VIAL, JSON_INJECTION_ORDER, JSON_CUSTOMER,\
+from shared_constants import JSON_VIAL, JSON_INJECTION_ORDER, JSON_CUSTOMER,\
     JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD
-from database.models import ServerConfiguration, Database, Address, User,\
+from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
-    InjectionOrder, Vial, ClosedDate, MODELS, INVERTED_MODELS,\
+    InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
     TracerUsage, ActivityProduction, Customer, Procedure
@@ -83,9 +83,9 @@ class DatabaseInterface():
 
 
   @database_sync_to_async
-  def handleEditModels(self, 
-                       model_identifier: str, 
-                       models : Union[Dict, Iterable[Dict]], 
+  def handleEditModels(self,
+                       model_identifier: str,
+                       models : Union[Dict, Iterable[Dict]],
                        user: User) -> Optional[List[TracershopModel]]:
     """Edits model(s) and save them
 

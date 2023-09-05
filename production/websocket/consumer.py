@@ -25,7 +25,7 @@ from channels.db import database_sync_to_async
 from channels.auth import login, get_user, logout
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
-from django.contrib.auth import authenticate, BACKEND_SESSION_KEY, SESSION_KEY, HASH_SESSION_KEY
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
 from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
@@ -35,20 +35,38 @@ from django.db.models import QuerySet
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import SQLInjectionException, IllegalActionAttempted
-from constants import * # type: ignore  # Import the many WEBSOCKET constants, TO DO change this
+from core.exceptions import IllegalActionAttempted
+from constants import DEBUG_LOGGER, ERROR_LOGGER, JSON_DATETIME_FORMAT
+from shared_constants import AUTH_PASSWORD, AUTH_USER_ID, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
+    ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
+    ERROR_UNKNOWN_FAILURE,\
+    JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_VIAL,\
+    JSON_USER, JSON_USER_ASSIGNMENT,\
+    LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP,\
+    WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_DATE,\
+    WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, \
+    WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,\
+    WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,\
+    WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,\
+    WEBSOCKET_MESSAGE_ECHO, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION,\
+    WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_GET_STATE,\
+    WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MASS_ORDER,\
+    WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,\
+    WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_OBJECT_DOES_NOT_EXISTS,\
+    WEBSOCKET_MESSAGE_RESTORE_ORDERS,\
+    WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE, \
+    WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
       TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups
-from lib import orders
-from lib.Formatting import FormatDateTimeJStoSQL, ParseSQLField, toDateTime, toDate
+from lib.Formatting import toDateTime
 from lib.ProductionJSON import encode, decode
 from tracerauth import auth
 from tracerauth.tracerLdap import checkUserGroupMembership
 
-logger = logging.getLogger('DebugLogger')
-error_logger = logging.getLogger("ErrorLogger")
+logger = logging.getLogger(DEBUG_LOGGER)
+error_logger = logging.getLogger(ERROR_LOGGER)
 
 class Consumer(AsyncJsonWebsocketConsumer):
   """This is the websocket that communicates with all clients.
