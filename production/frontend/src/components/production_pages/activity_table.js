@@ -1,10 +1,9 @@
 
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
 import { Row, Col, Table, Tab, Button, Container, Card, Collapse } from 'react-bootstrap'
-import { renderStatusImage, renderTableRow } from "../../lib/rendering.js";
-import { compareDates, getId, getPDFUrls } from "../../lib/utils.js";
-import { FormatDateStr, dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
-import { CountMinutes, CalculateProduction } from "../../lib/physics.js";
+import { getId, getPDFUrls } from "../../lib/utils.js";
+import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
+import { CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
 

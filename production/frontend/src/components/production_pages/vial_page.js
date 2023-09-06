@@ -1,16 +1,17 @@
-import { ajax } from "jquery";
-import React, {Component,} from "react";
+
+import React, {Component, useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
-import { JSON_CUSTOMER, JSON_VIAL, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_SUCCESS } from "../../lib/constants";
+import { JSON_CUSTOMER, JSON_VIAL, PROP_WEBSOCKET, WEBSOCKET_DATATYPE, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_SUCCESS } from "../../lib/constants";
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "../../lib/formatting";
 import { addCharacter } from "../../lib/utils";
-import { changeState } from "../../lib/state_management";
+import { changeState, setStateToEvent } from "../../lib/state_management";
 import propTypes from 'prop-types'
-import { Vial } from "../../dataclasses/dataclasses";
+import { Tracer, Vial } from "../../dataclasses/dataclasses";
+import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
+import { TracershopInputGroup } from "../injectable/tracershop_input_group";
+import { DateInput } from "../injectable/date_input";
+import { TracerWebSocket } from "../../lib/tracer_websocket";
 
-
-
-export {VialPage}
 
 /**
  * Enum for different sorting options for vial table
@@ -28,112 +29,91 @@ const SearchOptions = {
   ORDER : 7,
 }
 
+/**
+ * 
+ * @param {{
+ *   customers : Map<Number, Customer>
+ *   vial : Vial
+ * }} param0 
+ * @returns 
+ */
+function VialRow({
+  customers,
+  vial,
+}){
+  const customer = customers.get(vial.owner)
+  const customerName = customer === undefined ?
+                          "Ukendt ejer" :
+                          customer.short_name;
 
-class VialPage extends Component {
-  static propTypes = {
-    customers : propTypes.objectOf(Map),
-    vials : propTypes.objectOf(Map)
-  }
-  constructor(props){
-    super(props)
-    this.state = {
-      filterCustomer   : "",
-      filterBatch      : "",
-      filterSearchDate : "",
+  return <tr>
+    <td>{vial.id}</td>
+    <td>{vial.lot_number}</td>
+    <td>{parseDateToDanishDate(vial.fill_date)}</td>
+    <td>{vial.fill_time}</td>
+    <td>{vial.volume}</td>
+    <td>{vial.activity}</td>
+    <td>{customerName}</td>
+    <td>{vial.assigned_to}</td>
+  </tr>
+}
 
-      SearchPattern  : SearchOptions.DATE,
-      InvertedSearch : true,
-
-      vials : new Map(this.props[JSON_VIAL]), // The duplication here is to allow the user to search for some day
-    }
-  }
-
-  keyDateSearch(event){
-    if (event.key === "Enter"){
-      this.dateSearch();
-    }
-  }
-
-  /**
-   * This function handles search button, being pressed
-   * Functionality is sending a request to the backend and updating Vials on response.
-   */
-  dateSearch(){
-    if(!this.state.filterSearchDate){
-      this.setState({...this.state, vials : new Map(this.props.vials)});
-      return;
-    }
-    console.log("This function needs fixing!")
-
-    var parsedDate;
-    try {
-      parsedDate = parseDate(this.state.filterSearchDate);
-    } catch {
-      //TODO Error handling
-      console.log("caught Error");
-      return;
-    }
-  }
+export function VialPage(props){
+  // State
+  const [lotNumber, setLotNumber] = useState("");
+  const [customerID, setCustomer] = useState("");
+  const [vialDay, setVialDay] = useState("");
+  const [searchOption, setSearchOption] = useState(SearchOptions.DATE);
+  const [searchInverted, setSearchInverted] = useState(false);
 
   /**
-   * This function
-   * @param {string} NewSelect
-   * @returns {void}
+   * 
+   * @param {SearchOptions} searchOption 
+   * @returns 
    */
-  changeSelectState(NewSelect){
-    const newState = {...this.state};
-    if (NewSelect === "null") {
-      newState.filterCustomer = "";
-    } else {
-      newState.filterCustomer = Number(NewSelect);
-    }
-    this.setState(newState)
-  }
-
-  changeSearch(newSearchPattern){
-    const newState = {...this.state}
-    if (this.state.SearchPattern == newSearchPattern) {
-      newState.InvertedSearch = !newState.InvertedSearch;
-    } else {
-      newState.SearchPattern = newSearchPattern;
-    }
-    this.setState(newState);
-  }
-
-  /**
-   * Renders a row representing the vial in the table
-   * @param {Vial} vial - The Vial to be rendered
-   * @returns {JSX} tr with the table row
-   */
-  renderVial(vial){
-    // Sadly I need some extra functionality so can't really use the table rendering function :(
-    var customerName = `Ukendet med nummer ${vial.owner}`;;
-    for(const [_, customer] of this.props[JSON_CUSTOMER]){
-      if (customer.dispenser_id == vial.owner){
-        customerName = customer.short_name;
-        break;
+  function changeSearch(newSearchOption){
+    return (_) => {
+      if(searchOption == newSearchOption){
+        setSearchInverted(!searchInverted);
+      } else {
+        setSearchOption(newSearchOption);
       }
     }
-
-    return (
-      <tr key={vial.id}>
-        <td onClick={() => {this.changeSearch(SearchOptions.ID)}}>      {vial.id}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.CHARGE)}}>  {vial.lot_number}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.DATE)}}>    {parseDateToDanishDate(vial.fill_date)}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.TIME)}}>    {vial.fill_time}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>  {vial.volume}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>{vial.activity}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>   {customerName}</td>
-        <td onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>   {vial.assigned_to}</td>
-      </tr>
-    );
   }
 
+  function fetchVials(_){
+    try {
+      const date = parseDate(vialDay)
+      if(!isNaN(date)) { // YEAH THIS WORK WITH DATES
+        // I ASSUME IT*S BECAUSE JAVASCRIPT TREATS DAYS AS OBJECT AS AN INT SINCE 1970
+        const /**@type {TracerWebSocket} */ websocket = props[PROP_WEBSOCKET];
+        const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS)
+        message[WEBSOCKET_DATE] = date;
+        websocket.send(message)
+      }
+    } catch {
+      return
+    }
+  }
 
-  render(){
-    const SortedVials = [...this.props[JSON_VIAL].values()].sort((vial1, vial2) => {
-      const invertedSearchFactor = (this.state.InvertedSearch) ? -1 : 1;
-      switch (this.state.SearchPattern) {
+  const VialRows = [...props[JSON_VIAL].values()].filter(
+    (vial) => {
+      if(lotNumber !== "") {
+        const regex = RegExp(lotNumber, 'g')
+        if (!regex.test(vial.lot_number)){
+          return false;
+        }
+      }
+      if(customerID !== "") {
+        const customerNumber = Number(customerID);
+        if (customerNumber !== vial.owner){
+          return false;
+        }
+      }
+      return true;
+    }).sort((vial1, vial2) => {
+      const invertedSearchFactor = (searchInverted) ? -1 : 1;
+      switch (searchOption) {
         case SearchOptions.ID:
           return invertedSearchFactor*(vial1.id - vial2.id);
         case SearchOptions.CHARGE:
@@ -157,74 +137,67 @@ class VialPage extends Component {
         case SearchOptions.ORDER:
           return invertedSearchFactor*(vial1.order_map - vial2.order_map)
         default:
-          throw "Unknown Searchpattern:" + this.state.SearchPattern
+          /*istanbul ignore next */
+          throw "Unknown Search Option:" + searchOption
       }
-    });
+    }).map(
+    (vial) => <VialRow
+      key={vial.id}
+      customers={props[JSON_CUSTOMER]}
+      vial={vial}
+  />);
 
-    const RenderedVials = [];
-    const filter_batch = new RegExp(this.state.filterBatch, 'g');
-    for (const vial of SortedVials){
-      if (this.state.filterCustomer) {
-        if (filter_batch.test(vial.lot_number) &&
-              this.state.filterCustomer == vial.customer)
-                RenderedVials.push(this.renderVial(vial));
-      } else {
-        if (filter_batch.test(vial.charge))
-          RenderedVials.push(this.renderVial(vial));
-      }
-    }
-
-    const CustomerOptions = [<option key="-1" value="null" >-----</option>]
-    for(const [_, customer] of this.props[JSON_CUSTOMER]){
-      CustomerOptions.push(
-        <option value={customer.id} key={customer.id}
-          >{customer.short_name}</option>
-      )
-    }
-
-    return(
+  return (
     <Container>
       <Row>
         <Col>
-          <FormControl
-            value={this.state.filterBatch}
-            onChange={changeState("filterBatch", this).bind(this)}
-            placeholder="batch nummer"
+          <TracershopInputGroup label="Lot nummer Filter">
+            <FormControl
+              value={lotNumber}
+              onChange={setStateToEvent(setLotNumber)}
+              placeholder="lot nummer"
+            />
+          </TracershopInputGroup>
+        </Col>
+        <Col>
+          <TracershopInputGroup label="Kunde Filter">
+            <CustomerSelect
+              value={customerID}
+              customer={props[JSON_CUSTOMER]}
+              emptyCustomer
+              onChange={setStateToEvent(setCustomer)}
+            />
+          </TracershopInputGroup>
+        </Col>
+        <Col>
+        <TracershopInputGroup label="Dato">
+          <DateInput
+            value={vialDay}
+            placeholder="DD/MM/YYYY"
+            stateFunction={setVialDay}
           />
+          </TracershopInputGroup>
         </Col>
         <Col>
-          <Form.Select onChange={(event) => {this.changeSelectState(event.target.value)}}>
-            {CustomerOptions}
-          </Form.Select>
-        </Col>
-        <Col>
-          <FormControl
-            onKeyDown={addCharacter('/', "filterSearchDate", [2,5], this).bind(this)}
-            value={this.state.filterSearchDate} onChange={changeState("filterSearchDate", this).bind(this)}
-            placeholder="Dato"
-          />
-        </Col>
-        <Col>
-          <Button  onClick={this.dateSearch.bind(this)}>Søg</Button>
+          <Button  onClick={fetchVials}>Søg</Button>
         </Col>
       </Row>
       <Table>
         <thead>
           <tr>
-            <th onClick={() => {this.changeSearch(SearchOptions.ID)}}>ID</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.CHARGE)}}>Batch nummer</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.DATE)}}>Dato</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.TIME)}}>Tappe tidspunkt</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.VOLUME)}}>Volume</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.ACTIVITY)}}>Aktivitet</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.OWNER)}}>Ejer</th>
-            <th onClick={() => {this.changeSearch(SearchOptions.ORDER)}}>Ordre</th>
+            <th onClick={changeSearch(SearchOptions.ID)}>ID</th>
+            <th onClick={changeSearch(SearchOptions.CHARGE)}>Batch nummer</th>
+            <th onClick={changeSearch(SearchOptions.DATE)}>Dato</th>
+            <th onClick={changeSearch(SearchOptions.TIME)}>Tappe tidspunkt</th>
+            <th onClick={changeSearch(SearchOptions.VOLUME)}>Volume</th>
+            <th onClick={changeSearch(SearchOptions.ACTIVITY)}>Aktivitet</th>
+            <th onClick={changeSearch(SearchOptions.OWNER)}>Ejer</th>
+            <th onClick={changeSearch(SearchOptions.ORDER)}>Ordre</th>
           </tr>
         </thead>
         <tbody>
-          {RenderedVials}
+          {VialRows}
         </tbody>
       </Table>
     </Container>);
-  }
 }

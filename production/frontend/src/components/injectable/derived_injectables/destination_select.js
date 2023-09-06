@@ -16,11 +16,11 @@ import { TimeSlotSelect } from "./timeslot_select";
 import { getRelatedTimeSlots } from '../../../lib/data_structures';
 
 /**
- * 
+ *
  * @param {{
- * aria-label-customer : String | undefined,
- * aria-label-endpoint : String | undefined,
- * aria-label-timeSlot : String | undefined,
+ * ariaLabelCustomer : String | undefined,
+ * ariaLabelEndpoint : String | undefined,
+ * ariaLabelTimeSlot : String | undefined,
  * activeCustomer : Number,
  * activeEndpoint : Number,
  * activeTimeSlot : Number | undefined,
@@ -29,7 +29,7 @@ import { getRelatedTimeSlots } from '../../../lib/data_structures';
  * timeSlots : Map<Number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot> | undefined,
  * setCustomer : Callable,
  * setEndpoint : Callable,
- * setTimeSlot : Callable,
+ * setTimeSlot : Callable | undefined,
  * }} param0
  * @returns {Element}
  */
@@ -38,12 +38,10 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
                                    customer, endpoints, timeSlots,
                                    setCustomer, setEndpoint, setTimeSlot }){
   const filteredEndpoints = [...endpoints.values()].filter(
-    (endpoint) => {return customer.has(endpoint.owner);}
+    (endpoint) => {return activeCustomer == endpoint.owner;}
   );
   const withTimeSlots = setTimeSlot !== undefined
                         && timeSlots !== undefined
-                        && activeTimeSlot !== undefined;
-
 
   function setTimeSlotToNewEndpoint(rawEndpointID){
     if(withTimeSlots){
@@ -89,11 +87,11 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
 
     const filteredTimeSlots = getRelatedTimeSlots(timeSlots, activeEndpoint);
 
-    thirdColumn = <TracershopInputGroup>
+    thirdColumn = <TracershopInputGroup label="Leverings tid">
       <TimeSlotSelect
         aria-label={ariaLabelTimeSlot}
         deliverTimes={filteredTimeSlots}
-        value={activeEndpoint}
+        value={activeTimeSlot}
         onChange={onChangeTimeSlot}
       />
     </TracershopInputGroup>

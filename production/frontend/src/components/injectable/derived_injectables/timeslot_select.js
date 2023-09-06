@@ -2,13 +2,12 @@
 
 import React from "react";
 import { Select } from "../select";
-import { JSON_DELIVER_TIME, JSON_PRODUCTION, JSON_TRACER } from "../../../lib/constants";
+import { JSON_DELIVER_TIME, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_DATE } from "../../../lib/constants";
 import { ActivityDeliveryTimeSlot, ActivityProduction, Tracer } from '../../../dataclasses/dataclasses'
 
 export function TimeSlotSelect(props){
   const newSelectProps = {...props};
 
-  
 
   const with_tracer = props[JSON_TRACER] !== undefined
                       && props[JSON_PRODUCTION] !== undefined;
@@ -44,6 +43,7 @@ export function TimeSlotSelect(props){
   delete newSelectProps[JSON_DELIVER_TIME];
   delete newSelectProps[JSON_PRODUCTION];
   delete newSelectProps[JSON_TRACER];
+  delete newSelectProps[PROP_ACTIVE_DATE]
 
   return <Select
     options={timeSlotOptions}

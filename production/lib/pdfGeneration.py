@@ -87,10 +87,19 @@ class MailTemplate(canvas.Canvas):
 
     y_cursor -= 15 # Move the Cursor Down
 
+    phone = ""
+    email = ""
+
+    if customer.billing_phone is not None:
+      phone = customer.billing_phone
+
+    if customer.billing_email is not None:
+      email = customer.billing_email
+
     Customer_identification_lines = [customer.long_name,
                                      customer.billing_address,
-                                     str(customer.billing_phone),
-                                     customer.billing_email]
+                                     phone,
+                                     email]
     max_text_length = 0
 
 
@@ -387,12 +396,12 @@ def DrawActivityOrder(
   y_cursor = template.ApplyOrderActivity(x_cursor, y_cursor, order_date, productions, orders)
   y_cursor -= 10
 
-  if LEGACY_ENTRIES < order_date and len(vials) == 0:
-    y_cursor = template.applyVials(x_cursor, y_cursor, vials)
-  else:
+  if LEGACY_ENTRIES < order_date :
     template.drawString(x_cursor, y_cursor, 'Orderen er lavet i det gamle system.\
- Derfor er orderen ufuldstændig.')
+ Derfor kan orderen være ufuldstændig.')
     y_cursor -= template._line_height * 2
+  if len(vials) != 0:
+    y_cursor = template.applyVials(x_cursor, y_cursor, vials)
 
   y_cursor -= 10
   y_cursor = template.ApplySender(x_cursor, y_cursor)

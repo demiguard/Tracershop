@@ -1,5 +1,5 @@
 
-import React, { Component } from "react";
+import React, { useState } from "react";
 import { Modal, Button, Table, Row, FormControl, Col, Form, Container, Card, InputGroup } from "react-bootstrap";
 import { DAYS, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_TIME_SLOTS, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC, WEEKLY_TIME_TABLE_PROP_TIME_KEYWORD, } from "../../lib/constants.js";
 import { CloseButton } from "../injectable/buttons.js";
@@ -14,6 +14,7 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoin
 import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME, KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN } from "../../dataclasses/keywords.js";
 import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "../../lib/formatting.js";
 import { changeState } from "../../lib/state_management.js";
+import { TimeInput } from "../injectable/time_form.js";
 
 
 const RunOptions = [
@@ -28,8 +29,6 @@ function MarginInputGroup({children}){
   </InputGroup>)
 }
 
-
-export { CustomerModal }
 
 const cleanTimeSlot = {
   weekly_repeat : 0,
@@ -49,18 +48,10 @@ const timeSlotErrorContainer = {
   delivery_time_error : false,
 }
 
-
-const propType = {}
-
-class CustomerModal extends Component {
-  static propTypes = propType
-
-  constructor(props) {
-    super(props);
-
-    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
+export function CustomerModal(props) {
+    const /**@type {Customer} */ customer = props[JSON_CUSTOMER].get(props[PROP_ACTIVE_CUSTOMER])
     const endpointIDs = []
-    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
+    for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint
 
       if(endpoint.owner == customer.id){
@@ -69,9 +60,9 @@ class CustomerModal extends Component {
     }
 
     const activeEndpointID = endpointIDs[0]
-    let activeEndpoint = this.props[JSON_ENDPOINT].get(activeEndpointID);
+    let activeEndpoint = props[JSON_ENDPOINT].get(activeEndpointID);
     let activeTracer = undefined;
-    for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
+    for(const [tracerID, _tracer] of props[JSON_TRACER]){
       const /**@type {Tracer} */ tracer = _tracer
       if(tracer.tracer_type == TRACER_TYPE_ACTIVITY){
         activeTracer = tracerID;
@@ -83,7 +74,7 @@ class CustomerModal extends Component {
       activeEndpoint = {...cleanEndpoint}
     }
 
-    this.state = {
+    const [state, _setState] = useState({
       errors : {},
       customerDirty : false,
       endpointDirty : false,
@@ -94,16 +85,19 @@ class CustomerModal extends Component {
       tempCustomer : {...customer},
       tempEndpoint : {...activeEndpoint},
       tempTimeSlot : {...cleanTimeSlot}
+  })
+
+  function setState(newState){
+    _setState({...state, ...newState})
   }
-}
 
   /**
    * Gets how far to the left a time slot should be in the graph
    * @param {ActivityDeliveryTimeSlot} timeSlot
    * @returns {Number}
    */
-  weeklyTimeTableDayGetter(timeSlot) {
-    const /**@type {ActivityProduction} */ production = this.props[JSON_PRODUCTION].get(timeSlot.production_run);
+  function weeklyTimeTableDayGetter(timeSlot) {
+    const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(timeSlot.production_run);
     return production.production_day;
   }
 
@@ -112,7 +106,7 @@ class CustomerModal extends Component {
    * @param {ActivityDeliveryTimeSlot} timeSlot - The entry in question
    * @returns {Number}
    */
-  weeklyTimeTableHourGetter(timeSlot) {
+  function weeklyTimeTableHourGetter(timeSlot) {
     const hour = Number(timeSlot.delivery_time.substring(0,2));
     const minutes = Number(timeSlot.delivery_time.substring(3,5));
     return hour + minutes / 60
@@ -123,18 +117,18 @@ class CustomerModal extends Component {
    * timeslot (entry)
    * @param {ActivityDeliveryTimeSlot} entry
    */
-  weeklyTimeTableEntryOnClick(entry){
-    return ((_event) => {
-      this.setState({...this.state,
+  function weeklyTimeTableEntryOnClick(entry){
+    return (_event) => {
+      setState({
         activeTimeSlot : entry.id,
         tempTimeSlot : {...entry},
         timeSlotDirty: false
       })
-    }).bind(this)
+    }
   }
 
 
-  weeklyTimeTableInnerText(entry){
+  function weeklyTimeTableInnerText(entry){
     return <div style={{
       display: 'block',
       marginLeft: 'auto',
@@ -151,8 +145,8 @@ class CustomerModal extends Component {
    * @param {ActivityDeliveryTimeSlot} entry - 
    * @returns {string}
    */
-  weeklyTimeTableEntryColor(entry){
-    if(entry.id == this.state.activeTimeSlot){
+  function weeklyTimeTableEntryColor(entry){
+    if(entry.id == state.activeTimeSlot){
       return 'orange';
     }
 
@@ -173,22 +167,22 @@ class CustomerModal extends Component {
    * @param {ActivityDeliveryTimeSlot} entry - entry in question
    * @returns {String}
    */
-  weeklyTimeTableLabelFunction(entry){
+  function weeklyTimeTableLabelFunction(entry){
     // This function exists to create targets for test to select for
     return `time-slot-${entry.id}`
   }
 
 
-  changeTempObject(tempObjectKeyword, tempKeyword, dirtyKeyword){
+  function changeTempObject(tempObjectKeyword, tempKeyword, dirtyKeyword){
     const event_function = (event) => {
-      const newState = {...this.state};
-      const newTempObject = {...this.state[tempObjectKeyword]}
+      const newState = {...state};
+      const newTempObject = state[tempObjectKeyword]
       newTempObject[tempKeyword] = event.target.value;
       newState[tempObjectKeyword] = newTempObject;
       newState[dirtyKeyword] = true;
-      this.setState(newState)
+      setState(newState)
     }
-    return event_function.bind(this)
+    return event_function
   }
 
   /**
@@ -196,13 +190,13 @@ class CustomerModal extends Component {
    * @param {ActivityDeliveryTimeSlot} timeSlot - timeslot in question
    * @returns {bool} - True if timeSlot is valid, false otherwise.
    */
-  validateTimeSlot(timeSlot){
+  function validateTimeSlot(timeSlot){
     const delivery_time = FormatTime(timeSlot.delivery_time)
     if(delivery_time === null){
       return false;
     }
 
-    if(!this.state.activeEndpoint){ // database indexes are 1 index therefore always return true on valid endpotin
+    if(!state.activeEndpoint){ // database indexes are 1 index therefore always return true on valid endpotin
       return false
     }
 
@@ -214,8 +208,8 @@ class CustomerModal extends Component {
    *
    * Should update state for a new endpoint to be filled
    */
-  initializeEndpoint(){
-    this.setState({
+  function initializeEndpoint(){
+    setState({
       activeEndpoint : undefined,
       endpointDirty : false,
       tempEndpoint : {...cleanEndpoint},
@@ -226,8 +220,8 @@ class CustomerModal extends Component {
    *
    * Should update state for a new endpoint to be filled
    */
-  initializeTimeSlotEndpoint(){
-    this.setState({
+  function initializeTimeSlotEndpoint(){
+    setState({
       activeTimeSlot : undefined,
       tempTimeSlot : {...cleanTimeSlot},
       timeSlotDirty : false,
@@ -239,11 +233,11 @@ class CustomerModal extends Component {
    *
    * Should update the customer
    */
-  confirmCustomer(){
-    const customer = {...this.state.tempCustomer}
+  function confirmCustomer(){
+    const customer = {...state.tempCustomer}
 
-    const promise = this.props[PROP_WEBSOCKET].sendEditModel(JSON_CUSTOMER, [customer]).then(() => {
-      this.setState({...this.state, customerDirty : false})
+    props[PROP_WEBSOCKET].sendEditModel(JSON_CUSTOMER, [customer]).then(() => {
+      setState({customerDirty : false})
     })
   }
 
@@ -253,18 +247,17 @@ class CustomerModal extends Component {
    *
    * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
    */
-  confirmEndpoint(){
+  function confirmEndpoint(){
     // This is the object that will be send to the server
-    const endpoint = {...this.state.tempEndpoint};
-    endpoint.owner = this.props[PROP_ACTIVE_CUSTOMER];
+    const endpoint = {...state.tempEndpoint};
+    endpoint.owner = props[PROP_ACTIVE_CUSTOMER];
     let promise;
-    if(this.state.activeEndpoint === undefined){
-      promise = this.props[PROP_WEBSOCKET].sendCreateModel(JSON_ENDPOINT, [endpoint])
+    if(state.activeEndpoint === undefined){
+      promise = props[PROP_WEBSOCKET].sendCreateModel(JSON_ENDPOINT, [endpoint])
     } else {
-      promise = this.props[PROP_WEBSOCKET].sendEditModel(JSON_ENDPOINT, [endpoint])
+      promise = props[PROP_WEBSOCKET].sendEditModel(JSON_ENDPOINT, [endpoint])
     }
     promise.then((response) => {
-      console.log(response)
       const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][JSON_ENDPOINT])
 
       let endpointID, endpoint;
@@ -274,8 +267,7 @@ class CustomerModal extends Component {
         break;
       }
 
-      this.setState({
-        ...this.state,
+      setState({
         endpointDirty : false,
         tempEndpoint: {...endpoint},
         activeEndpoint : endpointID,
@@ -289,137 +281,137 @@ class CustomerModal extends Component {
    *
    * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
    */
-  confirmTimeSlot(){
-    if(!this.validateTimeSlot(this.state.tempTimeSlot)){
+  function confirmTimeSlot(){
+    if(!validateTimeSlot(state.tempTimeSlot)){
       // validateTimeSlot is responsible for updating state, such that errors
       // are displayed
       return;
     }
     // This is the object that will be send to the server
-    const timeSlot = {...this.state.tempTimeSlot};
-    timeSlot.destination = this.state.activeEndpoint
-    timeSlot.delivery_time = FormatTime(this.state.tempTimeSlot.delivery_time);
+    const timeSlot = {...state.tempTimeSlot};
+    timeSlot.destination = state.activeEndpoint
+    timeSlot.delivery_time = FormatTime(state.tempTimeSlot.delivery_time);
     let promise;
 
-    if(this.state.activeTimeSlot === undefined){
-      promise = this.props[PROP_WEBSOCKET].sendCreateModel(JSON_DELIVER_TIME, [timeSlot])
+    if(state.activeTimeSlot === undefined){
+      promise = props[PROP_WEBSOCKET].sendCreateModel(JSON_DELIVER_TIME, [timeSlot])
     } else {
-      promise = this.props[PROP_WEBSOCKET].sendEditModel(JSON_DELIVER_TIME, [timeSlot])
+      promise = props[PROP_WEBSOCKET].sendEditModel(JSON_DELIVER_TIME, [timeSlot])
     }
     promise.then((_data) => {
-      this.setState({...this.state, timeSlotDirty : false, tempTimeSlot : {...cleanTimeSlot} })
+      setState({timeSlotDirty : false, tempTimeSlot : {...cleanTimeSlot} })
     })
   }
 
 
-  renderCustomerConfiguration(){
+  function renderCustomerConfiguration(){
     //const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
-    const tempCustomerShortName = nullParser(this.state.tempCustomer.short_name);
-    const tempCustomerLongName = nullParser(this.state.tempCustomer.long_name);
-    const tempCustomerBillingAddress = nullParser(this.state.tempCustomer.billing_address);
-    const tempCustomerBillingCity = nullParser(this.state.tempCustomer.billing_city);
-    const tempCustomerBillingZipCode = nullParser(this.state.tempCustomer.zip_code);
-    const tempCustomerBillingBillingEmail = nullParser(this.state.tempCustomer.billing_email);
+    const tempCustomerShortName = nullParser(state.tempCustomer.short_name);
+    const tempCustomerLongName = nullParser(state.tempCustomer.long_name);
+    const tempCustomerBillingAddress = nullParser(state.tempCustomer.billing_address);
+    const tempCustomerBillingCity = nullParser(state.tempCustomer.billing_city);
+    const tempCustomerBillingZipCode = nullParser(state.tempCustomer.zip_code);
+    const tempCustomerBillingBillingEmail = nullParser(state.tempCustomer.billing_email);
 
     return (<Col>
       <Row>
         <Col><h4>Kunde</h4></Col>
-        {this.state.customerDirty ?
+        {state.customerDirty ?
           <Col style={{ justifyContent : "right", display: "flex"}}>
             <ClickableIcon
               aria-label="customer-dirty"
               src={"static/images/accept.svg"}
-              onClick={this.confirmCustomer.bind(this)}/>
+              onClick={confirmCustomer}/>
           </Col> : ""}
       </Row>
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
         <Form.Control
           value={tempCustomerShortName}
-          onChange={this.changeTempObject('tempCustomer', 'short_name', 'customerDirty').bind(this)}
+          onChange={changeTempObject('tempCustomer', 'short_name', 'customerDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Kunde Navn</InputGroup.Text>
         <Form.Control
           value={tempCustomerLongName}
-          onChange={this.changeTempObject('tempCustomer', 'long_name', 'customerDirty').bind(this)}
+          onChange={changeTempObject('tempCustomer', 'long_name', 'customerDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings Addresse</InputGroup.Text>
         <Form.Control
           value={tempCustomerBillingAddress}
-          onChange={this.changeTempObject('tempCustomer', 'billing_address', 'customerDirty').bind(this)}
+          onChange={changeTempObject('tempCustomer', 'billing_address', 'customerDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings By</InputGroup.Text>
         <Form.Control
           value={tempCustomerBillingCity}
-          onChange={this.changeTempObject('tempCustomer', 'billing_city', 'customerDirty').bind(this)}
+          onChange={changeTempObject('tempCustomer', 'billing_city', 'customerDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
         <Form.Control
           value={tempCustomerBillingZipCode}
-          onChange={this.changeTempObject('tempCustomer', 'billing_zip_code', 'customerDirty').bind(this)}
+          onChange={changeTempObject('tempCustomer', 'billing_zip_code', 'customerDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings Email</InputGroup.Text>
         <Form.Control
           value={tempCustomerBillingBillingEmail}
-          onChange={this.changeTempObject('tempCustomer', 'billing_email', 'customerDirty').bind(this)}
+          onChange={changeTempObject('tempCustomer', 'billing_email', 'customerDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Dispenser id</InputGroup.Text>
         <Form.Control
-          value={this.state.tempCustomer.dispenser_id}
-          onChange={this.changeTempObject('tempCustomer', 'dispenser_id', 'customerDirty').bind(this)}
+          value={state.tempCustomer.dispenser_id}
+          onChange={changeTempObject('tempCustomer', 'dispenser_id', 'customerDirty')}
         />
       </MarginInputGroup>
     </Col>)
   }
 
-  renderActiveEndpoint(){
-    const /**@type {DeliveryEndpoint} */ endpoint = this.props[JSON_ENDPOINT].get(this.state.activeEndpoint)
+  function renderActiveEndpoint(){
+    const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(state.activeEndpoint)
 
     const endpointOptions = [];
-    for(const [endpointID, _endpoint] of this.props[JSON_ENDPOINT]){
+    for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
-      if(endpoint.owner === this.props[PROP_ACTIVE_CUSTOMER]){
+      if(endpoint.owner === props[PROP_ACTIVE_CUSTOMER]){
         endpointOptions.push({id : endpointID, name : endpoint.name})
       }
     }
     const activityTracersOptions = [];
-    for(const [tracerID, _tracer] of this.props[JSON_TRACER]){
+    for(const [tracerID, _tracer] of props[JSON_TRACER]){
       const /**@type {Tracer} */ tracer = _tracer
       if(tracer.tracer_type == TRACER_TYPE_ACTIVITY){
         activityTracersOptions.push({id : tracerID, name : tracer.shortname});
       }
     }
 
-    const tempEndpointName = nullParser(this.state.tempEndpoint.name);
-    const tempEndpointAddress = nullParser(this.state.tempEndpoint.address);
-    const tempEndpointCity = nullParser(this.state.tempEndpoint.city);
-    const tempEndpointZipCode = nullParser(this.state.tempEndpoint.zip_code);
-    const tempEndpointPhone = nullParser(this.state.tempEndpoint.phone);
+    const tempEndpointName = nullParser(state.tempEndpoint.name);
+    const tempEndpointAddress = nullParser(state.tempEndpoint.address);
+    const tempEndpointCity = nullParser(state.tempEndpoint.city);
+    const tempEndpointZipCode = nullParser(state.tempEndpoint.zip_code);
+    const tempEndpointPhone = nullParser(state.tempEndpoint.phone);
 
     return(<Col>
       <Row>
         <Col><h4>LeveringsSted</h4></Col>
         <Col style={{display: "flex", justifyContent: "right"}}>
-          {this.state.endpointDirty ? <ClickableIcon
+          {state.endpointDirty ? <ClickableIcon
                                         src={"static/images/accept.svg"}
-                                        onClick={this.confirmEndpoint.bind(this)}
+                                        onClick={confirmEndpoint}
                                         /> : ""}
-          {this.state.activeEndpoint != undefined
+          {state.activeEndpoint != undefined
             ? <ClickableIcon
                 src={"static/images/plus.svg"}
-                onClick={this.initializeEndpoint.bind(this)}
+                onClick={initializeEndpoint}
               /> : ""}
         </Col>
       </Row>
@@ -429,8 +421,8 @@ class CustomerModal extends Component {
           options={endpointOptions}
           nameKey='name'
           valueKey='id'
-          onChange={changeState('activeEndpoint', this)}
-          value={this.state.activeEndpoint}
+          onChange={() => {}}
+          value={state.activeEndpoint}
         ></Select>
       </MarginInputGroup>
       <MarginInputGroup>
@@ -439,52 +431,52 @@ class CustomerModal extends Component {
           options={activityTracersOptions}
           nameKey="name"
           valueKey="id"
-          value={this.state.activeTracer}
-          onChange={changeState('activeTracer', this)}
+          value={state.activeTracer}
+          onChange={() => {}}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
         <Form.Control
           value={tempEndpointName}
-          onChange={this.changeTempObject('tempEndpoint', 'name', 'endpointDirty').bind(this)}
+          onChange={changeTempObject('tempEndpoint', 'name', 'endpointDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings Addresse</InputGroup.Text>
         <Form.Control
           value={tempEndpointAddress}
-          onChange={this.changeTempObject('tempEndpoint', 'address', 'endpointDirty').bind(this)}
+          onChange={changeTempObject('tempEndpoint', 'address', 'endpointDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings By</InputGroup.Text>
         <Form.Control
           value={tempEndpointCity}
-          onChange={this.changeTempObject('tempEndpoint', 'city', 'endpointDirty').bind(this)}
+          onChange={changeTempObject('tempEndpoint', 'city', 'endpointDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
         <Form.Control
-          onChange={this.changeTempObject('tempEndpoint', 'zip_code', 'endpointDirty').bind(this)}
+          onChange={changeTempObject('tempEndpoint', 'zip_code', 'endpointDirty')}
           value={tempEndpointZipCode}></Form.Control>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
         <Form.Control
-          onChange={this.changeTempObject('tempEndpoint', 'phone', 'endpointDirty').bind(this)}
+          onChange={changeTempObject('tempEndpoint', 'phone', 'endpointDirty')}
           value={tempEndpointPhone}
         />
       </MarginInputGroup>
     </Col>)
   }
 
-  renderDeliveryTimeTable(){
+  function renderDeliveryTimeTable(){
     const timeSlots = []
-    const /**@type {DeliveryEndpoint} */ endpoint = (this.state.activeEndpoint != undefined) ? this.props[JSON_ENDPOINT].get(this.state.activeEndpoint) : this.state.tempEndpoint;
+    const /**@type {DeliveryEndpoint} */ endpoint = (state.activeEndpoint != undefined) ? props[JSON_ENDPOINT].get(state.activeEndpoint) : state.tempEndpoint;
 
-    for(const [timeSlotID, _timeSlot] of this.props[JSON_DELIVER_TIME]){
+    for(const [timeSlotID, _timeSlot] of props[JSON_DELIVER_TIME]){
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
       // Note that if it's a new endpoint, then id is undefined
       if(timeSlot.destination == endpoint.id){
@@ -494,18 +486,18 @@ class CustomerModal extends Component {
 
     const weeklyTimeTableProps = {};
     weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRIES] = timeSlots;
-    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_DAY_GETTER] = this.weeklyTimeTableDayGetter.bind(this);
-    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] = this.weeklyTimeTableHourGetter.bind(this); // Bind is redundant
-    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] = this.weeklyTimeTableEntryOnClick.bind(this);
-    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] = this.weeklyTimeTableEntryColor.bind(this);
-    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_INNER_TEXT] = this.weeklyTimeTableInnerText.bind(this);
-    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] = this.weeklyTimeTableLabelFunction.bind(this);
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_DAY_GETTER] = weeklyTimeTableDayGetter;
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] = weeklyTimeTableHourGetter;
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] = weeklyTimeTableEntryOnClick;
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] = weeklyTimeTableEntryColor;
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_INNER_TEXT] = weeklyTimeTableInnerText;
+    weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] = weeklyTimeTableLabelFunction;
 
     return(<WeeklyTimeTable {...weeklyTimeTableProps}/>);
   }
 
-  renderActiveTimeSlot(){
-    const timeSlot = this.props[JSON_DELIVER_TIME].get(this.state.activeTimeSlot)
+  function renderActiveTimeSlot(){
+    const timeSlot = props[JSON_DELIVER_TIME].get(state.activeTimeSlot)
 
     const WeeklyRepeatOptions = [
       { id : 0, name : "Alle Uger"},
@@ -514,7 +506,7 @@ class CustomerModal extends Component {
     ]
 
     const productionOptions = [];
-    for(const [productionID, _production] of this.props[JSON_PRODUCTION]){
+    for(const [productionID, _production] of props[JSON_PRODUCTION]){
       const /**@type {ActivityProduction} */ production = _production;
       productionOptions.push({
         id : productionID, name : `${getDateName(production.production_day)} - ${production.production_time}`
@@ -525,27 +517,27 @@ class CustomerModal extends Component {
       <Row>
         <Col><h4>Leveringstidspunkt</h4></Col>
         <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
-        {this.state.timeSlotDirty ?
+        {state.timeSlotDirty ?
           <ClickableIcon
             label="time-slot-edit"
             src={"static/images/accept.svg"}
-            onClick={this.confirmTimeSlot.bind(this)}
+            onClick={confirmTimeSlot}
           /> : ""}
-        {this.state.activeTimeSlot != undefined ?
+        {state.activeTimeSlot != undefined ?
           <ClickableIcon
             label="time-slot-create"
             src={"static/images/plus.svg"}
-            onClick={this.initializeTimeSlotEndpoint.bind(this)}
+            onClick={initializeTimeSlotEndpoint}
           /> : ""}
         </Col>
 
       </Row>
       <MarginInputGroup>
         <InputGroup.Text>Leveringstid</InputGroup.Text>
-        <Form.Control
+        <TimeInput
           aria-label="time-slot-delivery-time"
-          value={this.state.tempTimeSlot.delivery_time}
-          onChange={this.changeTempObject('tempTimeSlot', 'delivery_time', 'timeSlotDirty').bind(this)}
+          value={state.tempTimeSlot.delivery_time}
+          stateFunction={changeTempObject('tempTimeSlot', 'delivery_time', 'timeSlotDirty')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
@@ -555,8 +547,8 @@ class CustomerModal extends Component {
           options={WeeklyRepeatOptions}
           nameKey={"name"}
           valueKey ={"id"}
-          onChange={this.changeTempObject('tempTimeSlot', 'weekly_repeat', 'timeSlotDirty').bind(this)}
-          value={this.state.tempTimeSlot.weekly_repeat}
+          onChange={changeTempObject('tempTimeSlot', 'weekly_repeat', 'timeSlotDirty')}
+          value={state.tempTimeSlot.weekly_repeat}
         />
       </MarginInputGroup>
       <MarginInputGroup>
@@ -565,8 +557,8 @@ class CustomerModal extends Component {
           options={productionOptions}
           nameKey={"name"}
           valueKey ={"id"}
-          onChange={this.changeTempObject('tempTimeSlot', 'production_run', 'timeSlotDirty').bind(this)}
-          value={this.state.tempTimeSlot.production_run}
+          onChange={changeTempObject('tempTimeSlot', 'production_run', 'timeSlotDirty')}
+          value={state.tempTimeSlot.production_run}
           aria-label="production-select"
         />
       </MarginInputGroup>
@@ -574,34 +566,32 @@ class CustomerModal extends Component {
   }
 
 
-  render() {
-    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
 
-    return (
-      <Modal
-        show={true}
-        size="xl"
-        onHide ={this.props[PROP_ON_CLOSE]}
-        className = {styles.mariLight}
-      >
-        <Modal.Header>
-          <Modal.Title>Kunde Konfigurering - {customer.short_name} </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Container>
-            <Row>
-              {this.renderCustomerConfiguration()}
-              {this.renderActiveEndpoint()}
-              {this.renderActiveTimeSlot()}
-            </Row>
-            <br></br>
-            <Row>{this.renderDeliveryTimeTable()}</Row>
-          </Container>
-        </Modal.Body>
-        <Modal.Footer>
-          <CloseButton onClick={this.props[PROP_ON_CLOSE]}/>
-        </Modal.Footer>
-      </Modal>
-    );
-  }
+  return (
+    <Modal
+      show={true}
+      size="xl"
+      onHide ={props[PROP_ON_CLOSE]}
+      className = {styles.mariLight}
+    >
+      <Modal.Header>
+        <Modal.Title>Kunde Konfigurering - {customer.short_name} </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Container>
+          <Row>
+            {renderCustomerConfiguration()}
+            {renderActiveEndpoint()}
+            {renderActiveTimeSlot()}
+          </Row>
+          <br></br>
+          <Row>{renderDeliveryTimeTable()}</Row>
+        </Container>
+      </Modal.Body>
+      <Modal.Footer>
+        <CloseButton onClick={props[PROP_ON_CLOSE]}/>
+      </Modal.Footer>
+    </Modal>
+  );
 }
+

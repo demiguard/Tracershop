@@ -4,7 +4,7 @@ import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, 
 import { Deadline, ServerConfiguration, Tracer } from "../../dataclasses/dataclasses";
 import { Select } from "../injectable/select";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
-import { setEvent } from "../../lib/state_management";
+import { setStateToEvent } from "../../lib/state_management";
 import { parseTimeInput } from "../../lib/user_input";
 import { TimeInput } from "../injectable/time_form";
 
@@ -68,7 +68,7 @@ function NewDeadlineRow({websocket}){
         nameKey="name"
         valueKey="id"
         value={deadlineType}
-        onChange={setEvent(setDeadlineType)}
+        onChange={setStateToEvent(setDeadlineType)}
       />
     </Col>
     <Col>
@@ -84,7 +84,7 @@ function NewDeadlineRow({websocket}){
           nameKey="name"
           valueKey="id"
           value={day}
-          onChange={setEvent(setDay)}
+          onChange={setStateToEvent(setDay)}
         /> : "-----"}
     </Col>
     <Col>

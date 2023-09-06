@@ -21,7 +21,7 @@ import { compareTimeStamp, getTimeString } from "../../lib/chronomancy.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-import { getPDFUrls } from "../../lib/utils.js";
+import { compareDates, getPDFUrls } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/time_form.js";
 
 /**
@@ -219,7 +219,7 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
   );
 }
 
-function NewVialRow({stopAddingVial, setError, websocket}){
+function NewVialRow({stopAddingVial, setError, websocket, active_date, customer}){
   const [lot_number, setLotNumber] = useState("");
   const [fill_time, setFillTime] = useState("");
   const [volume, setVolume] = useState("");
@@ -239,6 +239,8 @@ function NewVialRow({stopAddingVial, setError, websocket}){
 
     if(valid){
       websocket.sendCreateModel(JSON_VIAL, [{
+        owner : customer.id,
+        fill_date : active_date,
         lot_number : formattedLotNumber,
         fill_time : formattedFillTime,
         volume : formattedVolume,
@@ -391,6 +393,19 @@ export function ActivityModal(props){
     _setState({...state, ...newState})
   }
 
+  function startFreeing(){
+    if(compareDates(props[PROP_ACTIVE_DATE], new Date())){
+      setState({ freeing : true})
+    } else {
+      setState({
+        freeing : true,
+        errorLevel : ERROR_LEVELS.hint,
+        errorMessage : <div>Ordren som er i gang med at blive frigivet er ikke til i dag!</div>
+      })
+    }
+
+  }
+
   // Derived state Values
   const canFree = state.selectedVials.size > 0 && !(state.addingVial)
 
@@ -484,7 +499,7 @@ export function ActivityModal(props){
   // Buttons
   const AcceptButton =  <MarginButton onClick={onClickAccept}>Accepter Ordre</MarginButton>;
   const ConfirmButton = canFree ?
-    <MarginButton onClick={() => {setState({freeing : true})}}>
+    <MarginButton onClick={startFreeing}>
       Godkend Ordre
     </MarginButton> : <MarginButton disabled>Godkend Ordre</MarginButton>;
 
@@ -541,6 +556,7 @@ export function ActivityModal(props){
   if(state.addingVial){
     vialRows.push(
       <NewVialRow
+        active_date={dateString}
         key={-1}
         stopAddingVial={stopAddingVial}
         setError={setError}

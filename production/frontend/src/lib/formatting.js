@@ -196,6 +196,13 @@ export function getDateName(day){
   throw "Unknown Day"
 }
 
+/**
+ * This function is exists because react doesn't like null,
+ * So now I have to deal with the abstraction that the absense of a value is ""
+ * Rather than null.
+ * @param {Any} value - Any value to be checked if it's null
+ * @returns {Any} - EXCEPT NULL of cause
+ */
 export function nullParser(value){
   return (value === null) ? "" : value;
 }

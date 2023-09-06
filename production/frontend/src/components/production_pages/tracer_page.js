@@ -32,9 +32,10 @@ export default class TracerPage extends Component {
     this.isotopeOptions = []
     for(const _isotope of this.props[JSON_ISOTOPE].values()){
       const /**@type {Isotope} */ isotope = _isotope
+
       this.isotopeOptions.push({
         id : isotope.id,
-        name : `${isotope.atomic_letter}-${isotope.atomic_number}`
+        name : `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`
       })
     }
 

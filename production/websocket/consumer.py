@@ -62,6 +62,7 @@ from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups
 from lib.Formatting import toDateTime
 from lib.ProductionJSON import encode, decode
+from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
 from tracerauth.tracerLdap import checkUserGroupMembership
 
@@ -550,6 +551,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                                 data[JSON_VIAL],
                                                 user,
                                                 self.datetimeNow.now())
+    logFreeActivityOrders(user, orders, vials)
     customerIDs = await self.db.getCustomerIDs(orders)
 
     newState = await self.db.serialize_dict({
@@ -602,6 +604,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     order.freed_by = self.scope['user']
     order.status = OrderStatus.Released
     await self.db.saveModel(order)
+    # Log the change to db
+    logFreeInjectionOrder(user, order)
 
     # Step 3 Boardcast it
     newState = await self.db.serialize_dict({

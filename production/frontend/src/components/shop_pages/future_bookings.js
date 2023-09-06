@@ -113,7 +113,9 @@ function TracerCard({tracer,
       return booking_2.start_time < booking_1.start_time;
     }).map(
       (booking, i) => {
-        const procedure = procedures.get(booking.procedure);
+        const procedure = (procedures !== undefined) ?
+                              procedures.get(booking.procedure)
+                            : { series_description : "Hello world" };
         const location = locations.get(booking.location);
         const checked = state[booking.accession_number];
         const locationName = (location.common_name) ? location.common_name : location.location_code;
@@ -201,11 +203,11 @@ export function FutureBooking (props) {
   const /**@type {Array<Booking>} */ bookings = [...props[JSON_BOOKING].values()].filter(
     (_booking) => {
       const /**@type {Booking} */ booking = _booking;
-      const /**@type {Procedure}*/ procedure = props[JSON_PROCEDURE].get(booking.procedure)
+      const /**@type {Procedure}*/ procedure = props[JSON_PROCEDURE].get(booking.procedure) !== undefined ? props[JSON_PROCEDURE].get(booking.procedure) : { in_use : true }
       const /**@type {Location}*/ location = props[JSON_LOCATION].get(booking.location)
       // Add Endpoint filter
       return booking.start_date === dateString &&
-              procedure.in_use &&
+              //procedure.in_use &&
               location.endpoint === props[PROP_ACTIVE_ENDPOINT];
     }
   )
