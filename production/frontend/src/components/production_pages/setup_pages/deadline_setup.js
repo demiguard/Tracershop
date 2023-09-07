@@ -1,12 +1,12 @@
 import React, { useState } from "react";
 import { Button, Col, Container, FormControl, Row } from "react-bootstrap";
-import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../lib/constants";
-import { Deadline, ServerConfiguration, Tracer } from "../../dataclasses/dataclasses";
-import { Select } from "../injectable/select";
-import { TracerWebSocket } from "../../lib/tracer_websocket";
-import { setStateToEvent } from "../../lib/state_management";
-import { parseTimeInput } from "../../lib/user_input";
-import { TimeInput } from "../injectable/time_form";
+import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../../lib/constants";
+import { Deadline, ServerConfiguration, Tracer } from "../../../dataclasses/dataclasses";
+import { Select } from "../../injectable/select";
+import { TracerWebSocket } from "../../../lib/tracer_websocket";
+import { setStateToEvent } from "../../../lib/state_management";
+import { parseTimeInput } from "../../../lib/user_input";
+import { TimeInput } from "../../injectable/time_form";
 
 
 /**

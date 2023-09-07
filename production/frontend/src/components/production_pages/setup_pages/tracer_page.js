@@ -1,17 +1,17 @@
 import React, { Component } from "react";
 import { Container, Table, FormControl, Form } from "react-bootstrap";
 
-import { TracerModal } from "../modals/tracer_modal.js";
-import { BooleanMapping } from "../../lib/utils.js";
-import { renderTableRow } from "../../lib/rendering.js";
-import { changeState } from "../../lib/state_management.js";
-import { renderClickableIcon, renderSelect } from "../../lib/rendering.js";
+import { TracerModal } from "../../modals/tracer_modal.js";
+import { BooleanMapping } from "../../../lib/utils.js";
+import { renderTableRow } from "../../../lib/rendering.js";
+import { changeState } from "../../../lib/state_management.js";
+import { renderClickableIcon, renderSelect } from "../../../lib/rendering.js";
 import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY,
-  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_TRACER_MAPPING, JSON_CUSTOMER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, WEBSOCKET_MESSAGE_MODEL_EDIT } from "../../lib/constants.js";
-import { Isotope, Tracer } from "../../dataclasses/dataclasses.js";
-import { ClickableIcon } from "../injectable/icons.js";
-import { Select } from "../injectable/select.js";
-import { HoverBox } from "../injectable/hover_box.js";
+  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_TRACER_MAPPING, JSON_CUSTOMER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, WEBSOCKET_MESSAGE_MODEL_EDIT } from "../../../lib/constants.js";
+import { Isotope, Tracer } from "../../../dataclasses/dataclasses.js";
+import { ClickableIcon } from "../../injectable/icons.js";
+import { Select } from "../../injectable/select.js";
+import { HoverBox } from "../../injectable/hover_box.js";
 import { Hover } from "react-hover";
 
 export {TracerPage}

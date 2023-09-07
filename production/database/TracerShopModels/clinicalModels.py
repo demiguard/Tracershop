@@ -33,6 +33,7 @@ class Tracer(TracershopModel):
   tracer_type = SmallIntegerField(choices=TracerTypes.choices)
   default_price_per_unit = FloatField(null=True, default=None)
   vial_tag = CharField(max_length=32)
+  archived = BooleanField(default=False)
 
 class ActivityProduction(TracershopModel):
   activity_production_id = BigAutoField(primary_key=True)

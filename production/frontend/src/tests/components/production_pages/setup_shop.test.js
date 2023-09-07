@@ -9,7 +9,7 @@ import { render, screen, cleanup } from "@testing-library/react"
 
 import { PROP_WEBSOCKET } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
-import { SetupShop, siteNames } from "../../../components/production_pages/setup_shop.js";
+import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js/index.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

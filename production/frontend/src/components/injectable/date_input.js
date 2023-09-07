@@ -16,8 +16,9 @@ function addDateSlashes(event, currentInput){
   const lastChar = input.charAt(input.length - 1);
 
   if(input.length > currentInput.length
-    && [3,6].includes(input.length)){
-      return currentInput + ":" + lastChar;
+    && [3,6].includes(input.length
+    && lastChar !== "/")){
+      return currentInput + "/" + lastChar;
   }
   return input;
 }

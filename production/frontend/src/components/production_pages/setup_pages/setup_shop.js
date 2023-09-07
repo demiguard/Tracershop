@@ -4,15 +4,17 @@ import {CustomerPage} from "./customer_page";
 import TracerPage from "./tracer_page";
 import { CloseDaysPage } from "./close_days_page";
 import { DeadlineSetup } from "./deadline_setup";
-import { MarginButton } from "../injectable/buttons";
+import { MarginButton } from "../../injectable/buttons";
 import { ProductionUserSetup } from "./production_user_setup";
+import { IsotopeSetupPage } from "./isotope_setup_page";
 
 const sites = {
   customer : CustomerPage,
   tracer : TracerPage,
   closeDates : CloseDaysPage,
   deadline : DeadlineSetup,
-  users : ProductionUserSetup
+  users : ProductionUserSetup,
+  isotope : IsotopeSetupPage,
 }
 
 export const siteNames = {
@@ -21,6 +23,7 @@ export const siteNames = {
   closeDates : "Lukke dage",
   deadline : "Deadlines",
   users : "Bruger",
+  isotope : "Isotoper",
 }
 
 
