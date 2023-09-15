@@ -41,6 +41,16 @@ class User(AbstractBaseUser, TracershopModel):
 
   USERNAME_FIELD = 'username'
 
+  @property
+  def is_production_admin(self) -> bool:
+    return self.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin]
+
+  @property
+  def is_shop_admin(self) -> bool:
+    return self.UserGroup in [UserGroups.Admin, UserGroups.ShopAdmin]
+
+
+
   @classproperty
   def exclude(cls) -> List[str]:
     return ['password']

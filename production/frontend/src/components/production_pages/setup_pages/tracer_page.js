@@ -1,248 +1,312 @@
-import React, { Component } from "react";
-import { Container, Table, FormControl, Form } from "react-bootstrap";
+import React, { Component, useState } from "react";
+import { Container, Table, FormControl, Form, Row, Card, Collapse , Col} from "react-bootstrap";
 
 import { TracerModal } from "../../modals/tracer_modal.js";
-import { BooleanMapping } from "../../../lib/utils.js";
-import { renderTableRow } from "../../../lib/rendering.js";
-import { changeState } from "../../../lib/state_management.js";
-import { renderClickableIcon, renderSelect } from "../../../lib/rendering.js";
+import { setStateToEvent } from "../../../lib/state_management.js";
 import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY,
-  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_TRACER_MAPPING, JSON_CUSTOMER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, WEBSOCKET_MESSAGE_MODEL_EDIT } from "../../../lib/constants.js";
-import { Isotope, Tracer } from "../../../dataclasses/dataclasses.js";
+  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_TRACER_MAPPING,
+  JSON_CUSTOMER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
+  WEBSOCKET_MESSAGE_MODEL_EDIT, TracerTypeOptions, cssAlignRight} from "../../../lib/constants.js";
+import { Isotope, Tracer, TracerCatalog } from "../../../dataclasses/dataclasses.js";
 import { ClickableIcon } from "../../injectable/icons.js";
 import { Select } from "../../injectable/select.js";
 import { HoverBox } from "../../injectable/hover_box.js";
-import { Hover } from "react-hover";
-
-export {TracerPage}
-
-export default class TracerPage extends Component {
-  constructor(props){
-    super(props)
+import { TracerWebSocket } from "../../../lib/tracer_websocket.js";
+import { OpenCloseButton } from "../../injectable/open_close_button.js";
+import { toOptions } from "../../../lib/utils.js";
 
 
-    this.TracerTypeOptions = [{
-      id : TRACER_TYPE_ACTIVITY,
-      name : "Aktivitet"
-    },{
-      id : TRACER_TYPE_DOSE,
-      name : "Injektioner"
-    }]
+export function TracerPage(props){
+  const [modalTracerID, setModalTracerID] = useState(-1)
+  const [openArchive, setOpenArchive] = useState(false);
+  const [tracerFilter, setTracerFilter] = useState("");
+  const isotopeOptions = toOptions(props[JSON_ISOTOPE],
+                                   (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
 
-    this.isotopeOptions = []
-    for(const _isotope of this.props[JSON_ISOTOPE].values()){
-      const /**@type {Isotope} */ isotope = _isotope
-
-      this.isotopeOptions.push({
-        id : isotope.id,
-        name : `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`
-      })
-    }
-
-
-    this.state = {
-      filter : "",
-      tracerID : null,
-      showModal : false,
-
-      tracers : new Map(this.props[JSON_TRACER]),
-
-      newTracerName : "",
-      newClinicalName : "",
-      newIsotope    : 1,
-      newInjections : 0,
-      newOrderBlock : 0
-
-    }
+  const activeTracers = new Set();
+  for(const catalogPage of props[JSON_TRACER_MAPPING].values()){
+    activeTracers.add(catalogPage.tracer);
   }
 
-  /** This checks if the tracer is maintains the data constains
-   *
-   * @param {Tracer} tracer - TracerDataclass object
-   *
-   */
-  validateTracer(tracer){
-    // Yes you could one line this, but its unreadable and not as maintainable, FIGHT ME
-    if (tracer.shortname === 0) return false;
-
-    tracer.isotope = Number(tracer.isotope);
-    if (isNaN(tracer.isotope)) return false;
-
-    return true;
+  function closeModal(){
+    setModalTracerID(-1);
   }
 
-
-  showTracerModal(tracerID){
-    const newState = {...this.state,
-      showModal : true,
-      tracerID : tracerID
-    };
-    this.setState(newState);
-  }
-
-  closeModal(){
-    this.setState({...this.state, showModal : false });
-  }
-
-  updateFilter(event){
-    this.setState({...this.state, filter: event.target.value});
-  }
-
-  updateTracer(tracerID, tracerKey, value){
-    // make an edit locally then send it to the server
-    const Tracer = this.state.tracers.get(tracerID);
-    Tracer[tracerKey] = value; // this might be a string value
-
-    const Tracers = new Map(this.state.tracers);
-    Tracers.set(tracerID, {...Tracer});
-    this.setState({...this.state, tracers : Tracers});
-
-    if(this.validateTracer(Tracer)){
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_EDIT);
-      message[WEBSOCKET_DATA] = Tracer;
-      message[WEBSOCKET_DATATYPE] = JSON_TRACER;
-      this.props.websocket.send(message);
-    }
-  }
-
-  NewIsotopeChange(){
-    return function(event){
-      this.changeNewValue("newIsotope", event);
-    }.bind(this)
-  }
-
-  renderIsotopeSelect(initialValue, eventFunction) {
-    return <Select
-              options={this.isotopeOptions}
-              valueKey="id"
-              nameKey="name"
-              onChange={eventFunction}
-              value={initialValue}/>
-  }
-
-  changeNewValue(key, event) {
-    const newState = {...this.state}
-    if (key == "newInjections" || key =="newIsotope" || key == "newOrderBlock"){
-      const NumKey = Number(event.target.value);
-      if (!isNaN(NumKey)){
-        newState[key] = NumKey;
-      }
-    } else {
-      newState[key] = event.target.value;
-    }
-    this.setState(newState);
-  }
-
-  renderNewTracer() {
-    return(
-    <tr key={-1}>
-      <td><FormControl value={this.state.newTracerName} onChange={(event)=> this.changeNewValue("newTracerName", event)}/></td>
-      <td>{this.renderIsotopeSelect(this.state.newIsotope, this.NewIsotopeChange())}</td>
-      <td></td>
-      <td><img src="/static/images/accept.svg" className="statusIcon" onClick={()=>this.createNewTracer()}/></td>
-    </tr>);
+  function openModal(tracer){
+    return () => {setModalTracerID(tracer.id)}
   }
 
   /**
-   * Render a Tracer Row
-   * @param {Tracer} tracer tracer to be rendered
+   * Row for a tracer that is archived
+   * Note these are here to benefit from closure
+   * @param {{
+  *   tracer : Tracer,
+  *   websocket : TracerWebSocket
+  * }} param0 - props
+  * @returns {Element}
+  */
+  function ArchiveTracerRow({tracer, websocket}){
+    function restoreTracer(){
+      websocket.sendEditModel(JSON_TRACER, [{...tracer, archived : false,}]);
+    }
+
+    return (<tr>
+      <td>{tracer.shortname}</td>
+      <td style={cssAlignRight}>
+        <ClickableIcon src="static/images/archive_up.svg" onClick={restoreTracer}/>
+      </td>
+    </tr>)
+  }
+
+  /**
+   * Row for a tracer that is active in use
+   * Note these are here to benefit from closure
+   * @param {{
+   *   tracer : Tracer,
+   *   tracerCatalog : Map<Number, TracerCatalog>
+   *   websocket : TracerWebSocket
+   * }} param0 - props
    * @returns {Element}
    */
-  renderTracer(tracer) {
-    const checked = tracer.in_use > 0;
+  function ActiveTracerRow({tracer,  websocket}){
+    const [tracerClinicalName, setTracerClinicalName] = useState(tracer.clinical_name);
+    const [tracerIsotope, setTracerIsotope] = useState(tracer.isotope);
+    const [tracerType, setTracerType] = useState(tracer.tracer_type);
+
+    let archiveAble = !activeTracers.has(tracer.id);
+    const changed = tracerClinicalName !== tracer.clinical_name
+                    || Number(tracerIsotope) !== tracer.isotope
+                    || Number(tracerType) !== tracer.tracer_type;
 
 
-    let catalog = <div/>;
-
-    if(tracer.tracer_type == TRACER_TYPE_DOSE){
-      catalog = <ClickableIcon
-        src={"/static/images/setting.png"}
-        onClick={() => {this.showTracerModal(tracer.id)}
-      }/>
+    function AcceptEdits(){
+      websocket.sendEditModel(JSON_TRACER, [{...tracer,
+        clinical_name : tracerClinicalName,
+        isotope : Number(tracerIsotope),
+        tracer_type : Number(tracerType),
+      }])
     }
 
-    return renderTableRow(tracer.id,[
-      <FormControl value={tracer.shortname} onChange={(event) =>
-        {this.updateTracer(tracer.id, "shortname", event.target.value)}}/>,
-      <FormControl value={tracer.clinical_name} onChange={(event) =>
-        {this.updateTracer(tracer.id, "clinical_name", event.target.value)}}/>,
-      this.renderIsotopeSelect(tracer.isotope, (event) =>
-        {this.updateTracer(tracer.id, "isotope", event.target.value)}),
-      <Select
-        options={this.TracerTypeOptions}
-        valueKey={"id"}
-        nameKey={"name"}
-        onChange={(event) => {this.updateTracer(tracer.id, "tracer_type", event.target.value)}}
-        value={tracer.tracer_type}/>,
-        catalog
-    ]);
+    function ArchiveTracer(){
+      websocket.sendEditModel(JSON_TRACER, [{...tracer, archived : true}])
+    }
+
+    return (<tr>
+      <td>{tracer.shortname}</td>
+      <td>
+        <FormControl
+          aria-label={`set-clinical-name-${tracer.id}`}
+          value={tracerClinicalName}
+          onChange={setStateToEvent(setTracerClinicalName)}
+        />
+      </td>
+      <td>
+        <Select
+          aria-label={`set-isotope-${tracer.id}`}
+          options={isotopeOptions}
+          valueKey="value"
+          nameKey="name"
+          onChange={setStateToEvent(setTracerIsotope)}
+          value={tracerIsotope}
+        />
+      </td>
+      <td>
+        <Select
+          options={TracerTypeOptions}
+          valueKey="id"
+          nameKey="name"
+          value={tracerType}
+          onChange={setStateToEvent(setTracerType)}
+        />
+      </td>
+      <td>
+        <Row>
+        { tracer.tracer_type == TRACER_TYPE_DOSE ?
+            <Col><HoverBox
+            Base={<ClickableIcon
+              src="/static/images/setting.png"
+              onClick={openModal(tracer)}
+              />}
+              Hover={<div>Klik her for at konfigurer hvilke kunner kan bestille den injektion tracer</div>}
+              /></Col>
+          : "" }
+        { archiveAble ?
+          <Col><HoverBox
+          Base={<ClickableIcon
+            src="/static/images/archive_down.svg"
+            onClick={ArchiveTracer}
+            />}
+            Hover={<div>Klik her for arkiver Traceren</div>}
+            /></Col> : ""  }
+        { changed ?
+          <Col>
+            <HoverBox
+              Base={<ClickableIcon
+                  src="/static/images/save.svg"
+                  onClick={AcceptEdits}
+                />}
+              Hover={<div>
+                Klik her for at gemme ændringer
+              </div>}
+            />
+          </Col> : ""}
+        </Row>
+      </td>
+    </tr>)
   }
 
-  render() {
-    const Tracers = []
-    const filter = new RegExp(this.state.filter, 'g');
-    for (const [_tracerID, _tracer] of this.state.tracers) {
-      const /**@type {Tracer} */ tracer = _tracer
-      if (filter.test(tracer.shortname)) Tracers.push(this.renderTracer(tracer));
+  function newTracerRow({websocket}){
+    const [shortname, setShortname] = useState("");
+    const [clinicalName, setClinicalName] = useState("");
+    const [isotope, setIsotope] = useState();
+    const [tracerType, setTracerType] = useState(TRACER_TYPE_DOSE);
+
+    return (<tr>
+      <td>
+        <FormControl
+          value={shortname}
+          onChange={setStateToEvent(setShortname)}
+          aria-label="new-tracer-shortname"
+        />
+      </td>
+      <td>
+      <FormControl
+          value={clinicalName}
+          onChange={setStateToEvent(setClinicalName)}
+          aria-label="new-tracer-clinical-name"
+        />
+      </td>
+      <td>
+        <Select
+          aria-label={`new-isotope-select`}
+          options={isotopeOptions}
+          valueKey="value"
+          nameKey="name"
+          onChange={setStateToEvent(setIsotope)}
+          value={isotope}
+        />
+      </td>
+      <td>
+        <Select
+          options={TracerTypeOptions}
+          valueKey="id"
+          nameKey="name"
+          value={tracerType}
+          onChange={setStateToEvent(setTracerType)}
+        />
+      </td>
+    </tr>)
+  }
+
+  const ActiveTracerRows = [];
+  const ArchiveTracerRows = [];
+  const filter = new RegExp(tracerFilter, 'g');
+  for(const tracer of props[JSON_TRACER].values()){
+    if(filter.test(tracer.shortname)){
+      if (tracer.archived){
+        ArchiveTracerRows.push(
+          <ArchiveTracerRow
+            key={tracer.id}
+            tracer={tracer}
+            websocket={props[PROP_WEBSOCKET]}
+          />);
+      } else {
+        ActiveTracerRows.push(
+          <ActiveTracerRow
+            key={tracer.id}
+            tracer={tracer}
+            websocket={props[PROP_WEBSOCKET]}
+          />);
+      }
     }
-    Tracers.push(this.renderNewTracer());
-
-    const tracerModalProps = {...this.props}
-
-    tracerModalProps[PROP_ACTIVE_TRACER] = this.state.tracerID
-    tracerModalProps[PROP_ON_CLOSE] = this.closeModal.bind(this)
+  }
 
 
-    return (
-    <Container>
-      <FormControl 
-        placeholder="Tracer Filter: "
-        value={this.state.filter} onChange={changeState("filter", this).bind(this)}/>
+  const tracerModalProps = {...props}
+  tracerModalProps[PROP_ACTIVE_TRACER] = modalTracerID;
+  tracerModalProps[PROP_ON_CLOSE] = closeModal
+
+
+  return (<Container>
+    <Row>
+      <FormControl
+        value={tracerFilter}
+        onChange={setStateToEvent(setTracerFilter)}
+      />
+    </Row>
+    <Row>
       <Table>
         <thead>
-          <tr>
-            <th>
-              <HoverBox
-                Base={<div>Tracer</div>}
-                Hover={<div>Dette er et kort navn brugt i daglig tale til at beskrive traceren.</div>}
-              />
-            </th>
-            <th>
-              <HoverBox
-                Base={<div>Clinisk Navn</div>}
-                Hover={<div>Dette er fulde navn på tracer, som bruges på føglesedlen.</div>}
-              />
-            </th>
-            <th>
-              <HoverBox
-                Base={<div>Isotop</div>}
-                Hover={<div>Dette er den radioaktive isotop, som benyttes i traceren</div>}
-              />
-            </th>
-            <th>
-              <HoverBox
-                Base={<div>Tracer type</div>}
-                Hover={<div>Bestemer om traceren bestilles som Aktivitet eller Injektioner tracer</div>}
-              />
-              </th>
-
-            <th>
-              <HoverBox
-                Base={<div>Injektion Catalog</div>}
-                Hover={<div>Her Konfigures hvilke kunder der kan bestille injektion tracer, Aktivitets Tracer bestillings tider konfigureres under kunder.</div>}
-              />
-              </th>
-          </tr>
+        <tr>
+          <th>
+            <HoverBox
+              Base={<div>Tracer</div>}
+              Hover={<div>Dette er et kort navn brugt i daglig tale til at beskrive traceren.</div>}
+            />
+          </th>
+          <th>
+            <HoverBox
+              Base={<div>Clinisk Navn</div>}
+              Hover={<div>Dette er fulde navn på tracer, som bruges på føglesedlen.</div>}
+            />
+          </th>
+          <th>
+            <HoverBox
+              Base={<div>Isotop</div>}
+              Hover={<div>Dette er den radioaktive isotop, som benyttes i traceren</div>}
+            />
+          </th>
+          <th>
+            <HoverBox
+              Base={<div>Tracer type</div>}
+              Hover={<div>Bestemer om traceren bestilles som Aktivitet eller Injektioner tracer</div>}
+            />
+          </th>
+          <th>
+            <HoverBox
+              Base={<div>Handlinger</div>}
+              Hover={<div>Her findes knapper til forskellige handlinger</div>}
+            />
+          </th>
+        </tr>
         </thead>
         <tbody>
-          {Tracers}
+          {ActiveTracerRows}
         </tbody>
       </Table>
-      { this.state.showModal ?
-      <TracerModal
-        {...tracerModalProps}
-      /> : ""
-    }
-    </Container>);
-  }
+    </Row>
+    {
+      ArchiveTracerRows.length > 0 ?
+      <Card>
+        <Card.Header>
+          <Row>
+            <Col>Tracer arkiv</Col>
+            <Col style={cssAlignRight}>
+              <OpenCloseButton
+                label="open-tracer-archive"
+                open={openArchive}
+                setOpen={setOpenArchive}
+              />
+            </Col>
+          </Row>
+        </Card.Header>
+        <Collapse in={openArchive}>
+          <Table>
+            <thead>
+              <tr>
+                <th>Tracer</th>
+                <th>Genskab</th>
+              </tr>
+            </thead>
+            <tbody>
+              {ArchiveTracerRows}
+            </tbody>
+          </Table>
+        </Collapse>
+      </Card>
+      : ""}
+    { modalTracerID !== -1 ? <TracerModal
+      {...tracerModalProps}
+    /> : ""}
+  </Container>)
 }

@@ -4,10 +4,14 @@ import aiorun
 import asyncio
 import hl7
 from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
-
+import traceback
 import logging
 
-logging.basicConfig(filename='hl7.log', encoding='utf-8', level=logging.DEBUG)
+logging.basicConfig(
+    format="%(asctime)s (%(funcName)s,%(lineno)d) - %(levelname)s - %(message)s",
+    filename='hl7.log',
+    encoding='utf-8',
+    level=logging.DEBUG)
 
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):
     """This will be called every time a socket connects
@@ -49,6 +53,7 @@ async def main():
         pass
     except Exception:
         logging.info("Error occurred in main")
+        traceback.format_exc()
 
 
 aiorun.run(main(), stop_on_unhandled_errors=True)

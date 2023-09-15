@@ -67,7 +67,7 @@ class CreateModelAuditEntry(AuditLogModelEntry):
       messages_lines.append(f"System is creating an instance of {model.__class__.__name__}")
 
     for field_name, new_value in log_fields:
-      messages_lines.append(f"{field_name:{max_field_name_length}}: {new_value:{max_new_value_length}}")
+      messages_lines.append(f"  {field_name:{max_field_name_length}}: {new_value}")
 
     return "\n".join(messages_lines)
 
@@ -99,7 +99,7 @@ class DeleteModelAuditEntry(AuditLogModelEntry):
       messages_lines.append(f"System is delete an instance of {model.__class__.__name__}")
 
     for field_name, original_value in log_fields:
-      messages_lines.append(f"{field_name:{max_field_name_length}}: {original_value:{max_original_value_length}}")
+      messages_lines.append(f"  {field_name:{max_field_name_length}}: {original_value:{max_original_value_length}}")
 
     return "\n".join(messages_lines)
 
@@ -140,7 +140,7 @@ class EditModelAuditEntry(AuditLogModelEntry):
     else:
       messages_lines.append(f"System is editing an instance of {model.__class__.__name__}")
     for field_name, original_value, new_value in log_fields:
-      messages_lines.append(f"{field_name:{max_field_name_length}}: {original_value:{max_original_value_length}} --> {new_value:{max_new_value_length}}")
+      messages_lines.append(f"  {field_name:{max_field_name_length}}: {original_value:{max_original_value_length}} --> {new_value:{max_new_value_length}}")
 
     return "\n".join(messages_lines)
 

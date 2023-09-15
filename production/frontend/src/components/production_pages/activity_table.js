@@ -23,6 +23,7 @@ import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.j
 import { ArrayMap } from "../../lib/array_map.js";
 import { createOrderMapping, createTimeSlotMapping } from "../../lib/data_structures.js";
 import { sortOrderMapping } from "../../lib/sorting.js";
+import { OpenCloseButton } from "../injectable/open_close_button.js";
 
 const Modals = {
   createModal : CreateOrderModal,
@@ -208,11 +209,10 @@ function RenderedTimeSlot(props){
             justifyContent : 'right',
             display : 'flex'
           }}>
-            <ClickableIcon
-            label={`open-time-slot-${props.timeSlotID}`}
-            className={openClassName}
-            src={"/static/images/next.svg"}
-            onClick={() => {setOpen(!open)}}
+            <OpenCloseButton
+              label={`open-time-slot-${props.timeSlotID}`}
+              open={open}
+              setOpen={setOpen}
             />
           </Col>
         </Row>

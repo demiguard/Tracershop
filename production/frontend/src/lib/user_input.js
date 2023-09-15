@@ -1,8 +1,11 @@
-/**This module is parsing user input, this is to find errors  in their input.
- * errors as values are amazing
+/**This module is parsing user input, this is to find errors in their input
+ * and type conversion of the value.
+ * Errors as values are amazing
+ * Also this could be turned into some monads, if I was feeling particular fancy
  */
 
 import { FormatTime, ParseDanishNumber, batchNumberValidator } from "./formatting"
+
 
 /**
  * Parses a string, which should contain a danish number. If it doesn't, returns false, 
@@ -11,7 +14,7 @@ import { FormatTime, ParseDanishNumber, batchNumberValidator } from "./formattin
  * @returns
  */
 export function parseDanishNumberInput (input, header="") {
-  const inputNumber = ParseDanishNumber(input)
+  const inputNumber = ParseDanishNumber(input);
 
   if(input === ""){ // Because Number("") == 0 for some javascript reason...
     return [false, `${header} er ikke tasted ind`];
@@ -122,4 +125,23 @@ export function concatErrors(errorList, valid, errorMessage){
     errorList.push(errorMessage)
   }
   return valid
+}
+
+/**
+ *
+ * @param {*} input 
+ * @param {*} header 
+ * @returns 
+ */
+export function parseDateInput(input, header=""){
+  try {
+    const dateString = parseDate(input);
+    const date = new Date(dateString);
+    if(isNaN(date)){
+      return [false, `${header} er ikke en valid dato`]
+    }
+    return [true, date];
+  } catch (error) {
+    return [false, `${header} er ikke på dato format`]
+  }
 }

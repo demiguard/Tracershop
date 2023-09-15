@@ -2,6 +2,15 @@ export const JAVASCRIPT_VERSION = "1.0.1";
 
 export const TRACER_TYPE_ACTIVITY = 1;
 export const TRACER_TYPE_DOSE = 2;
+
+export const TracerTypeOptions = [{
+  id : TRACER_TYPE_ACTIVITY,
+  name : "Aktivitet"
+},{
+  id : TRACER_TYPE_DOSE,
+  name : "Injektioner"
+}]
+
 export const DAYS_PER_WEEK = 7;
 // Note that to correct day from date.getDay -> (date.getDate() + 6) % 7
 export const DAYS = { // So in the modern part of the world, aka the ones that use metric units, the first day of the week is Monday
@@ -45,6 +54,8 @@ export const WEEKLY_REPEAT_CHOICES = {
   ODD : 2,
 }
 
+
+
 /**
  * Enum describing options of an Injections order usage field
  * @enum {string}
@@ -70,6 +81,11 @@ export const cssCenter = {
   alignItems: 'center',
   textAlign: 'center'
 }
+
+export const cssAlignRight = {
+          justifyContent : 'right',
+          display : 'flex'
+        };
 
 export const cssError = {
   background : ERROR_BACKGROUND_COLOR,
@@ -121,6 +137,7 @@ export const JSON_ISOTOPE = "isotopes";
 export const JSON_ORDERS  = "orders";
 export const JSON_PRODUCTION = "production";
 export const JSON_PROCEDURE_IDENTIFIER = "procedure_identifier";
+export const JSON_RELEASE_RIGHT = "release_right";
 export const JSON_RUN = "run";
 export const JSON_TRACER = "tracer";
 export const JSON_TRACER_MAPPING = "tracer_mapping";
@@ -162,6 +179,7 @@ export const JSON_KEYWORDS = [
   JSON_PROCEDURE,
   JSON_PROCEDURE_IDENTIFIER,
   JSON_PRODUCTION,
+  JSON_RELEASE_RIGHT,
   JSON_SECONDARY_EMAIL,
   JSON_SERVER_CONFIG,
   JSON_USER,

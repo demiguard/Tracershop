@@ -104,6 +104,12 @@ export const KEYWORD_Isotope_HALFLIFE_SECONDS = "halflife_seconds";
 export const KEYWORD_Isotope_ATOMIC_LETTER = "atomic_letter";
 export const KEYWORD_Isotope_METASTABLE = "metastable";
 
+// Model: ReleaseRight
+export const KEYWORD_ReleaseRight_RELEASE_RIGHT_ID = "release_right_id";
+export const KEYWORD_ReleaseRight_EXPIRY_DATE = "expiry_date";
+export const KEYWORD_ReleaseRight_RELEASER = "releaser";
+export const KEYWORD_ReleaseRight_PRODUCT = "product";
+
 // Model: LegacyProductionMember
 export const KEYWORD_LegacyProductionMember_LEGACY_USER_ID = "legacy_user_id";
 export const KEYWORD_LegacyProductionMember_LEGACY_PRODUCTION_USERNAME = "legacy_production_username";
@@ -132,6 +138,7 @@ export const KEYWORD_Tracer_ISOTOPE = "isotope";
 export const KEYWORD_Tracer_TRACER_TYPE = "tracer_type";
 export const KEYWORD_Tracer_DEFAULT_PRICE_PER_UNIT = "default_price_per_unit";
 export const KEYWORD_Tracer_VIAL_TAG = "vial_tag";
+export const KEYWORD_Tracer_ARCHIVED = "archived";
 
 // Model: TracerCatalog
 export const KEYWORD_TracerCatalog_TRACER_CATALOG_ID = "tracer_catalog_id";

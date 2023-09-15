@@ -140,6 +140,15 @@ export class Isotope {
   }
 }
 
+export class ReleaseRight {
+  constructor(release_right_id, expiry_date, releaser, product, ) {
+    this.release_right_id=release_right_id
+    this.expiry_date=expiry_date
+    this.releaser=releaser
+    this.product=product
+  }
+}
+
 export class LegacyProductionMember {
   constructor(legacy_user_id, legacy_production_username, ) {
     this.legacy_user_id=legacy_user_id
@@ -173,7 +182,7 @@ export class MessageAssignment {
 }
 
 export class Tracer {
-  constructor(tracer_id, shortname, clinical_name, isotope, tracer_type, default_price_per_unit, vial_tag, ) {
+  constructor(tracer_id, shortname, clinical_name, isotope, tracer_type, default_price_per_unit, vial_tag, archived, ) {
     this.tracer_id=tracer_id
     this.shortname=shortname
     this.clinical_name=clinical_name
@@ -181,6 +190,7 @@ export class Tracer {
     this.tracer_type=tracer_type
     this.default_price_per_unit=default_price_per_unit
     this.vial_tag=vial_tag
+    this.archived=archived
   }
 }
 
@@ -291,6 +301,7 @@ export const MODELS = {
   deliveryEndpoint : DeliveryEndpoint,
   t_orders : InjectionOrder,
   isotopes : Isotope,
+  release_right : ReleaseRight,
   legacy_production_member : LegacyProductionMember,
   location : Location,
   message : Message,

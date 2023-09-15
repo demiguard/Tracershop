@@ -8,9 +8,6 @@ import { FormControl } from "react-bootstrap"
  * @param {String} currentInput 
  * @returns {String}
  */
-
-
-
 function addTimeColons(event, currentInput){
   const input = event.target.value;
   const lastChar = input.charAt(input.length - 1);
@@ -18,9 +15,7 @@ function addTimeColons(event, currentInput){
   if(input.length > currentInput.length
     && [3,6].includes(input.length)
     && lastChar !== ":" ){
-      {
         return currentInput + ":" + lastChar;
-      }
   }
   return input;
 }
