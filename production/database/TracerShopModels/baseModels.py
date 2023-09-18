@@ -76,6 +76,7 @@ class TracershopModel(Model):
       elif isinstance(field, DateTimeField):
         value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
       elif isinstance(field, DateField):
+        value = value[:10]
         value = datetime.strptime(value, "%Y-%m-%d").date()
       # End of assignment
       self.__setattr__(key, value)

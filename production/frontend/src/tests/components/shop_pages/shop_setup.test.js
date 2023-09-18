@@ -8,7 +8,9 @@ import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ShopSetup } from '../../../components/shop_pages/shop_setup'
-import { DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_ENDPOINT, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../../lib/constants.js";
+import { DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_ENDPOINT, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
+  PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP,
+  PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

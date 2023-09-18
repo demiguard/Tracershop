@@ -6,7 +6,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { CustomerPage } from "../../../components/production_pages/setup_pages/customer_page.js/index.js"
+import { CustomerPage } from "../../../components/production_pages/setup_pages/customer_page.js"
 import { JSON_CUSTOMER, PROP_ACTIVE_DATE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 import { act } from "react-dom/test-utils";

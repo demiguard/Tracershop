@@ -10,8 +10,7 @@ import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE,  } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 
-import { CloseDaysPage } from "../../../components/production_pages/setup_pages/close_days_page.js/index.js";
-import { DeadlineSetup } from "../../../components/production_pages/setup_pages/deadline_setup.js/index.js";
+import { DeadlineSetup } from "../../../components/production_pages/setup_pages/deadline_setup.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

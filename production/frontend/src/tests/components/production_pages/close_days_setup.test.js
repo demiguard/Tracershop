@@ -10,7 +10,7 @@ import { render, screen, cleanup } from "@testing-library/react"
 import { PROP_WEBSOCKET  } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 
-import { CloseDaysPage } from "../../../components/production_pages/setup_pages/close_days_page.js/index.js";
+import { CloseDaysPage } from "../../../components/production_pages/setup_pages/close_days_page.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

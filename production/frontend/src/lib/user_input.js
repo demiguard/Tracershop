@@ -4,7 +4,7 @@
  * Also this could be turned into some monads, if I was feeling particular fancy
  */
 
-import { FormatTime, ParseDanishNumber, batchNumberValidator } from "./formatting"
+import { FormatTime, ParseDanishNumber, batchNumberValidator, parseDate } from "./formatting"
 
 
 /**
@@ -134,14 +134,14 @@ export function concatErrors(errorList, valid, errorMessage){
  * @returns 
  */
 export function parseDateInput(input, header=""){
-  try {
-    const dateString = parseDate(input);
-    const date = new Date(dateString);
-    if(isNaN(date)){
-      return [false, `${header} er ikke en valid dato`]
-    }
-    return [true, date];
-  } catch (error) {
+  const dateString = parseDate(input);
+  if (dateString === null){
     return [false, `${header} er ikke på dato format`]
   }
+
+  const date = new Date(dateString);
+  if(isNaN(date)){
+    return [false, `${header} er ikke en valid dato`]
+  }
+  return [true, date];
 }

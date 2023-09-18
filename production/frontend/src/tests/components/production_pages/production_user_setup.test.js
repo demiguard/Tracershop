@@ -8,7 +8,7 @@ import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/
 import { PROP_ACTIVE_DATE, PROP_WEBSOCKET } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 
-import { ProductionUserSetup } from "../../../components/production_pages/setup_pages/production_user_setup.js/index.js"
+import { ProductionUserSetup } from "../../../components/production_pages/setup_pages/production_user_setup.js"
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

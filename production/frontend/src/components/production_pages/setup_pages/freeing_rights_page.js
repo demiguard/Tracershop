@@ -59,7 +59,7 @@ export function FreeingRightsPage(props){
       formattedExpiryDate = null
     } else {
       const [valid, formattedDate] = parseDateInput(expiryDate, "Udløbsdatoen");
-      console.log(valid, formattedDate)
+
       if(valid) {
         formattedExpiryDate = formattedDate;
       } else {
@@ -71,7 +71,7 @@ export function FreeingRightsPage(props){
     setExpiryDateError("");
     props[PROP_WEBSOCKET].sendCreateModel(JSON_RELEASE_RIGHT, [new ReleaseRight(
       undefined, formattedExpiryDate, activeUserID, activeTracerID
-    )]);
+    )]).then(() => {setOpen(true);});
   }
 
 

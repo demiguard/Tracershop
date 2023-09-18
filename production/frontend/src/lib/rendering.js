@@ -1,6 +1,5 @@
 import React, {} from "react";
 import { Button, Form, Image } from "react-bootstrap";
-import ReactHover, { Trigger, Hover  } from "react-hover";
 import { HoverBox } from "../components/injectable/hover_box.js";
 import { ClickableIcon } from "../components/injectable/icons.js";
 import { FormatDateStr } from "./formatting.js";
