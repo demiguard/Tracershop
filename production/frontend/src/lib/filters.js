@@ -21,8 +21,28 @@ export function endpointOwnerFilter(CustomerID){
   return (endpoint) => endpoint.owner === CustomerID
 }
 
+
+/**
+ * 
+ * @param {String} dateString 
+ * @returns {CallableFunction}
+ */
+export function bookingFilter(dateString, locations, activeEndpoint){
+  /**
+  * @param {Booking} booking 
+  * @returns {Boolean}
+  */
+  const returnFunction = (booking) =>{
+    const location = locations.get(booking.location);
+    booking.start_date === dateString && location.owner === activeEndpoint;
+  }
+
+  return returnFunction;
+}
+
 export function applyFilter(collection, filterFunction) {
   return (collection instanceof Map) ?
     [...collection.values()].filter(filterFunction) :
     collection.filter(filterFunction);
 }
+

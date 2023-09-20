@@ -7,6 +7,7 @@ import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { setStateToEvent } from "../../../lib/state_management";
 import { parseTimeInput } from "../../../lib/user_input";
 import { TimeInput } from "../../injectable/time_form";
+import { ErrorInput } from "../../injectable/error_input";
 
 
 /**
@@ -46,18 +47,18 @@ function NewDeadlineRow({websocket}){
   const [deadlineType, setDeadlineType] = useState(DEADLINE_TYPES.DAILY);
   const [deadlineTime, setDeadlineTime] = useState("");
   const [day, setDay] = useState(DAYS.MONDAY);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
   function createDeadline(){
     const [validTime, timeOutput] = parseTimeInput(deadlineTime);
 
     if (validTime){
-      setError(false);
+      setError("");
       websocket.sendCreateModel(JSON_DEADLINE, [
         new Deadline(undefined, deadlineType, timeOutput, day)
       ]);
     } else {
-      setError(true);
+      setError(timeOutput);
     }
   }
 
@@ -72,11 +73,12 @@ function NewDeadlineRow({websocket}){
       />
     </Col>
     <Col>
-      <TimeInput
-        style={error ? cssError : {}}
-        stateFunction={setDeadlineTime}
-        value={deadlineTime}
-      />
+      <ErrorInput error={error}>
+        <TimeInput
+          stateFunction={setDeadlineTime}
+          value={deadlineTime}
+        />
+      </ErrorInput>
     </Col>
     <Col style={cssCenter}>
       {Number(deadlineType) === DEADLINE_TYPES.WEEKLY ? <Select

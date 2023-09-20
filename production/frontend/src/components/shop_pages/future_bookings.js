@@ -2,13 +2,14 @@ import React, { Component, useState } from "react";
 import { FormatDateStr, dateToDateString } from "../../lib/formatting";
 import { JSON_BOOKING, JSON_LOCATION, JSON_PROCEDURE, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, } from "../../lib/constants";
 import { Booking, Procedure, Tracer, Location } from "../../dataclasses/dataclasses";
-import { createBookingTracerMapping, createTracerCatalogForCustomer } from "../../lib/data_structures";
+import { ProcedureLocationIndex, createBookingTracerMapping, createTracerCatalogForCustomer } from "../../lib/data_structures";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { ClickableIcon } from "../injectable/icons";
 import SiteStyles from "/src/css/Site.module.css"
 import { MarginButton } from "../injectable/buttons";
 import { getTimeStamp } from "../../lib/chronomancy";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
+import { bookingFilter } from "../../lib/filters";
 
 /**
  * 
@@ -196,22 +197,20 @@ function TracerCard({tracer,
 
 export function FutureBooking (props) {
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE])
-  const [activityTracers, InjectionTracers,overheadMap] = createTracerCatalogForCustomer(props[JSON_TRACER_MAPPING],
-                                                                                   props[JSON_TRACER],
-                                                                                   props[PROP_ACTIVE_CUSTOMER])
+  const [activityTracers, InjectionTracers, overheadMap] = createTracerCatalogForCustomer(props[JSON_TRACER_MAPPING],
+                                                                                          props[JSON_TRACER],
+                                                                                          props[PROP_ACTIVE_CUSTOMER])
 
-  const /**@type {Array<Booking>} */ bookings = [...props[JSON_BOOKING].values()].filter(
-    (_booking) => {
-      const /**@type {Booking} */ booking = _booking;
-      const /**@type {Procedure}*/ procedure = props[JSON_PROCEDURE].get(booking.procedure) !== undefined ? props[JSON_PROCEDURE].get(booking.procedure) : { in_use : true }
-      const /**@type {Location}*/ location = props[JSON_LOCATION].get(booking.location)
-      // Add Endpoint filter
-      return booking.start_date === dateString &&
-              //procedure.in_use &&
-              location.endpoint === props[PROP_ACTIVE_ENDPOINT];
-    }
-  )
+  const procedureLocationIndex = new ProcedureLocationIndex(props[JSON_PROCEDURE],
+                                                            props[JSON_LOCATION]);
 
+
+
+  const bookings = [...props[JSON_BOOKING].values()].filter(bookingFilter(
+    dateString, procedureLocationIndex
+  ))
+
+  /*
   const bookingMapping = createBookingTracerMapping(bookings,
                                               props[JSON_PROCEDURE]);
 
@@ -238,10 +237,11 @@ export function FutureBooking (props) {
       />;
     }
   )
+    */
 
   return(
     <div>
-      {bookingCards}
+
     </div>);
 }
 

@@ -3,9 +3,11 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Procedure, ProcedureIdentifier, TracerCatalog } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalog } from "../dataclasses/dataclasses"
+import { ArrayMap } from "./array_map";
 import { TRACER_TYPE_ACTIVITY } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
+import { TupleMap } from "./tuple_map";
 
 
 /**
@@ -185,4 +187,56 @@ export function getProcedure(procedures, identifier, endpoint){
  */
 export function getRelatedTimeSlots(timeSlots, endpointID) {
   return applyFilter(timeSlots, timeSlotOwnerFilter(endpointID))
+}
+
+
+export class ProcedureLocationIndex {
+  /** @type {Map<Number, Map<Number, Procedure>}*/ _dataStructure
+
+/**
+ * @param {Map<Number,Procedure>} procedures 
+ * @param {Map<Number, Location>} Locations 
+ */
+  constructor(procedures, Locations){
+    this._dataStructure = Map();
+    const locationHelper = new ArrayMap();
+
+    for(const location of Locations.values()){
+      locationHelper.set(location.endpoint, location.id);
+    }
+
+    for(const procedure of procedures.values()){
+      const map = new Map()
+      this._dataStructure.set(procedure.series_description, map);
+      const locationIDs = locationHelper.get(procedure.owner);
+      for(const locationID of locationIDs){
+        map.set(locationID, procedure);
+      }
+    }
+  }
+
+  /**
+   * Retrieves the associated procedure to a booking.
+   * @param {Booking} booking - Booking
+   * @return {Procedure | undefined}
+   */
+  getProcedure(booking){
+    if(!this._dataStructure.has(booking.procedure)){
+      return undefined
+    }
+
+    const subMap = this._dataStructure.get(booking.procedure);
+    return subMap.get(booking.location);
+  }
+}
+
+export class TracerBookingMapping {
+  _map
+  constructor(tracers, bookings, procedureLocationIndex){
+    this._map = new Map();
+
+    for(const booking of bookings){
+      
+    }
+  }
 }

@@ -6,10 +6,10 @@
  * @template V
  */
 export class ArrayMap {
-  _map
+  /**@type {Map<K, Array<V>>} */ _map
 
   constructor(inputList){
-    /**@type {Map<K, Array<V>>} */this._map = new Map()
+    this._map = new Map()
 
     if (inputList !== undefined) for(const [key,value] of inputList){
       this.set(key, value)

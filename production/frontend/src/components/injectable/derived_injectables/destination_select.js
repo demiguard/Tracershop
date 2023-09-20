@@ -7,8 +7,6 @@
 import React from 'react'
 
 import { Customer, DeliveryEndpoint, Tracer, ActivityDeliveryTimeSlot } from "../../../dataclasses/dataclasses";
-import { JSON_DELIVER_TIME } from "../../../lib/constants";
-import { getId } from "../../../lib/utils";
 import { TracershopInputGroup } from "../tracershop_input_group";
 import { CustomerSelect } from "./customer_select";
 import { EndpointSelect } from "./endpoint_select";
