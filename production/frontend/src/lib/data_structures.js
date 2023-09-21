@@ -7,7 +7,6 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, D
 import { ArrayMap } from "./array_map";
 import { TRACER_TYPE_ACTIVITY } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
-import { TupleMap } from "./tuple_map";
 
 
 /**
@@ -231,12 +230,30 @@ export class ProcedureLocationIndex {
 }
 
 export class TracerBookingMapping {
-  _map
-  constructor(tracers, bookings, procedureLocationIndex){
-    this._map = new Map();
+  /** @type {ArrayMap<Number | undefined, Booking>} */ _map
+
+  /**
+   * 
+   * @param {Iterable<Booking>} bookings 
+   * @param {ProcedureLocationIndex} procedureLocationIndex
+   */
+  constructor(bookings, procedureLocationIndex){
+    this._map = new ArrayMap();
 
     for(const booking of bookings){
-      
+      const procedure = procedureLocationIndex.getProcedure(booking);
+      if (procedure === undefined){
+        continue;
+      }
+
+      this._map.set(procedure.tracer, booking);
     }
   }
+
+  *[Symbol.Iterator](){
+    for(const [tracer, bookings] of this._map){
+      yield [tracer, bookings]
+    }
+  }
+
 }

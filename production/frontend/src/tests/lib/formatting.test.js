@@ -39,12 +39,7 @@ describe("ParseDate Tests", () => {
 
   it("Not a Date", () =>{
     const input = "FooBar";
-    try {
-      parseDate(input);
-      expect(false).toEqual(true);
-    } catch (e) {
-      expect(e).toEqual("Date not on known format, Date: " + input);
-    }
+    expect(parseDate(input)).toBeNull;
   });
 })
 

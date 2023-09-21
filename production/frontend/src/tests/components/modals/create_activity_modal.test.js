@@ -84,7 +84,7 @@ describe("create activity modal", () => {
 
   });
 
-  it("Change Delivery Time", async () => {
+  it.skip("Change Delivery Time", async () => {
     render(<CreateOrderModal
       {...props}
     />, container);

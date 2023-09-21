@@ -16,8 +16,6 @@ from asgiref.sync import sync_to_async
 import decimal
 import logging
 import traceback
-import os
-from pprint import pprint
 from typing import Any, Dict, List, Callable, Coroutine, Optional
 
 # Django packages
@@ -672,9 +670,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message (Dict[str, Any]): request to get the orders, contains extra fields:
                                   WEBSOCKET_DATE - Central date
     """
+    user = get_user(self.scope)
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
     data = await self.db.serialize_dict(
-      await self.db.getTimeSensitiveData(client_date, self.scope['user'])
+      await self.db.getTimeSensitiveData(client_date, user)
     )
 
     await self.send_json({
@@ -707,7 +706,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def HandleCreateInjectionOrder(self, message: Dict[str, Any]):
-    user = await get_user(self.scope['user'])
+    user = await get_user(self.scope)
     newOrderDict = message[WEBSOCKET_DATA]
 
     newOrderDict['status'] = 1
@@ -742,7 +741,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   The Boolean describes if the over is accepted
                                   or rejected.
     """
-    orders = await self.db.massOrder(message[WEBSOCKET_DATA])
+    user = get_user(self.scope)
+    orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
     ActivityCustomerIDs = await self.db.getCustomerIDs(orders[JSON_ACTIVITY_ORDER])
     InjectionCustomerIDs = await self.db.getCustomerIDs(orders[JSON_INJECTION_ORDER])
 

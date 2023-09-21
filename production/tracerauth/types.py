@@ -4,7 +4,6 @@
 
 # Python standard Library
 from enum import Enum
-from typing_extensions import Literal
 
 # Third party Libraries / modules
 

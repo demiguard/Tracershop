@@ -1,7 +1,7 @@
-import React, { Component, useState } from "react";
-import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
+import React, { useState } from "react";
+import { Modal, Button, FormControl, InputGroup, Row, Container } from "react-bootstrap";
 import { Calculator } from "../injectable/calculator";
-import { ParseDanishNumber, dateToDateString } from "../../lib/formatting";
+import { dateToDateString } from "../../lib/formatting";
 import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, PROP_ON_CLOSE, PROP_WEBSOCKET, JSON_TRACER, PROP_ACTIVE_TRACER, JSON_ISOTOPE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, DATABASE_CURRENT_USER, AUTH_USER_ID, PROP_TIME_SLOT_MAPPING, JSON_ENDPOINT, JSON_DELIVER_TIME, JSON_PRODUCTION } from "../../lib/constants.js"
 
@@ -43,7 +43,6 @@ export function CreateOrderModal(props) {
   const [activeTimeSlot, _setActiveTimeSlot] = useState(timeSlotIdInit);
 
   function setActiveTimeSlot(value){
-    console.log(value)
     _setActiveTimeSlot(value)
   }
 

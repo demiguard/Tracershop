@@ -58,7 +58,7 @@ describe("Shop Setup test suite",() => {
     render(<ShopSetup {...props}/>)
     expect(await screen.findByLabelText('setup-Lokationer')).toBeVisible()
     expect(await screen.findByLabelText('setup-Procedure')).toBeVisible()
-    expect(await screen.findByLabelText('endpoint-select')).toBeVisible()
+
   })
 
   it("Switch to production", async () => {
@@ -69,15 +69,4 @@ describe("Shop Setup test suite",() => {
     })
     expect(await screen.findByText("ProcedureTableMock")).toBeVisible()
   });
-
-  it("Switch endpoint", async () => {
-    render(<ShopSetup {...props}/>)
-    await act(async () => {
-      const endpointSelect = await screen.findByLabelText('endpoint-select')
-      fireEvent.change(endpointSelect, {target : {value : 2}});
-    })
-    const activeEndpoint = props[JSON_ENDPOINT].get(2);
-    expect(await screen.findByText(activeEndpoint.name)).toBeVisible()
-  });
-
 });

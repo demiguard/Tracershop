@@ -19,9 +19,10 @@ export function NoAssociatedUser(props){
       </Container>);
   }
 
-  return (<Container>
-  <h3>Du er logged ind men din konto er ikke forbundet til en kunde konto.
-    Du skal kontakte tracershop superbruger for at få din konto forbundet.
-  </h3>
+  return (
+  <Container>
+    <h3>Du er logged ind men din konto er ikke forbundet til en kunde konto.
+      Du skal kontakte din lokale tracershop superbruger for at få din konto forbundet.
+    </h3>
   </Container>);
 }

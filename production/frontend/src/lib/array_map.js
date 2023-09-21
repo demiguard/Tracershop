@@ -33,14 +33,9 @@ export class ArrayMap {
     }
   }
 
-  [Symbol.iterator]() {
-    return {
-      next: () => {
-        for(const [key,value] of this._map){
-          return { value: [key, value], done: false}
-      }
-      return {done : true}
+  *[Symbol.iterator]() {
+    for(const [key,value] of this._map){
+      yield [key, value]
     }
-  }
   }
 }

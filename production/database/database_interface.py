@@ -22,6 +22,7 @@ from django.db.models.query import QuerySet
 
 
 # Tracershop Production Packages
+from constants import ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from shared_constants import JSON_VIAL, JSON_INJECTION_ORDER, JSON_CUSTOMER,\
@@ -31,12 +32,13 @@ from database.models import ServerConfiguration, User,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
-    TracerUsage, ActivityProduction, Customer, Procedure
+    TracerUsage, ActivityProduction, Customer, Procedure, Days
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
 
-logger = logging.getLogger('DebugLogger')
+logger = logging.getLogger(DEBUG_LOGGER)
+error_logger = logging.getLogger(ERROR_LOGGER)
 
 
 
@@ -134,7 +136,17 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def deleteModels(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
-    """Deletes one or more model instance """
+    """Deletes one or more model instance, if one or more models cannot be
+    deleted, then no models are deleted and this function returns false
+    returns true if successfully deleted all models
+
+    """
+
+    # So a performance hic up here is that canDelete must be called on all
+    # objects with this notation, secondly delete also calls canDelete again
+    # This means this operation "Might" have 3 database quires per object
+    # 2 from canDelete, and 1 form the actually deletion
+
     modelType = getModelType(modelIdentifier)
     if isinstance(modelID, Iterable):
       models = modelType.objects.filter(pk__in = [id_ for id_ in modelID])
@@ -174,7 +186,10 @@ class DatabaseInterface():
     model.save(user)
 
   @database_sync_to_async
-  def saveModels(self,model: Type[TracershopModel], models: List[TracershopModel], tags: List[str]):
+  def saveModels(self,
+                 model: Type[TracershopModel],
+                 models: List[TracershopModel],
+                 tags: List[str]):
     model.objects.bulk_update(models, fields=tags)
 
   @database_sync_to_async
@@ -184,12 +199,12 @@ class DatabaseInterface():
                     vialIDs: List[int],
                     user: User,
                     now: datetime) -> Tuple[QuerySet[ActivityOrder],QuerySet[Vial]]:
-    """_summary_
+    """Releases
 
     Args:
         deliverTime (ActivityDeliveryTimeSlot): _description_
-        orders (_type_): _description_
-        vials (_type_): _description_
+        orderIDs (List[int]): _description_
+        vialIDs (List[int]): _description_
         user (User): _description_
         now (datetime): _description_
 
@@ -319,12 +334,6 @@ class DatabaseInterface():
         instances[modelKeyword] = model.objects.all()
     return instances
 
-  def __canChange(self, model: TracershopModel) -> bool:
-    if type(model) in self.__modelCanChangeFunctions:
-      return self.__modelCanChangeFunctions[type(model)](model)
-    return True
-
-
   @database_sync_to_async
   def moveOrders(self, orderIDs: List[int], destinationID: int):
     orders = ActivityOrder.objects.filter(pk__in=orderIDs)
@@ -444,31 +453,36 @@ class DatabaseInterface():
       except ObjectDoesNotExist:
         logger.error(f"Booking for accession Number {accessionNumber} have no matching backend copy")
         continue
+
       bookingDate = booking.start_date
       endpoint = booking.location.endpoint
       procedureIdentifier = booking.procedure
 
+      if endpoint is None:
+        error_logger.error(f"Booking {booking} is being ordered, but its location: {booking.location} has no associated endpoint!")
+
       try:
-        procedure = Procedure.objects.get(series_description=booking.procedure,
+        procedure = Procedure.objects.get(series_description=procedureIdentifier,
                                           owner=endpoint)
       except ObjectDoesNotExist:
-        logger.error(f"Could not find a matching procedure for DeliveryEndpoint: {endpoint} and series description: {booking.procedure}")
+        error_logger.error(f"Could not find a matching procedure for DeliveryEndpoint: {endpoint} and series description: {procedureIdentifier}")
         continue
       except MultipleObjectsReturned:
-        logger.critical(f"Database corruption! Multiple Procedures are associated with DeliveryEndpoint: {endpoint} and series description: {booking.procedure}")
+        # There's a unique_together that prevents this line from being relevant
+        error_logger.critical(f"Database corruption! Multiple Procedures are associated with DeliveryEndpoint: {endpoint} and series description: {procedureIdentifier}")
         continue
 
       tracer = procedure.tracer
 
-      if tracer is None or endpoint is None:
-        logger.error(f"Booking for Accession number {accessionNumber} is missing either tracer: {tracer} or endpoint: {endpoint}")
+      if tracer is None:
+        error_logger.error(f"Booking for Accession number {accessionNumber} is missing either tracer: {tracer}")
         continue
 
       if not ordering:
         booking.status = BookingStatus.Rejected
         bookingUpdated.append(booking)
 
-      # Muh Turnery Operation
+      # Muh Turnery Operation, mate that would NOT fit in a turnery
       if tracer.tracer_type == TracerTypes.InjectionBased:
         injectionBookings.append(InjectionOrder(
           delivery_time=booking.start_time,
@@ -496,6 +510,9 @@ class DatabaseInterface():
           delivery_time__lte=booking_time.time()
         ).order_by('delivery_time').reverse()
 
+        if len(timeSlots) == 0:
+          error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_date}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day)}")
+          continue
         timeSlot = timeSlots[0]
         timeDelta = subtract_times(booking_time.time(), timeSlot.delivery_time)
 
@@ -506,7 +523,9 @@ class DatabaseInterface():
         timeSlotsBookings[timeSlot] += activity
 
         booking.status = BookingStatus.Ordered
+
       bookingUpdated.append(booking)
+    # End of booking iteration
 
     for timeSlot, activity in timeSlotsBookings.items():
       activityBookings.append(
