@@ -39,7 +39,9 @@ afterEach(() => {
 });
 
 describe("Future Bookings Test Suite", () => {
-  it("")
+  it("Standard render test", () => {
+    
+  } )
 
 
 })
