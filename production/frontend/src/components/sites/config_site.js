@@ -1,5 +1,4 @@
 import React, {Component} from "react"
-import { propsExtraction } from "../../lib/props_management.js"
 import { ControlPanel } from "../admin_pages/control_panel.js"
 import Navbar, { TracershopNavbar } from "../injectable/navbar.js"
 import { ImitationPage } from "../admin_pages/imitation.js"

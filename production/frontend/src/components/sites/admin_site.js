@@ -2,7 +2,6 @@ import React, {Component } from "react";
 import { NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "../../lib/constants.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { propsExtraction } from "../../lib/props_management.js";
 import { ConfigSite } from "./config_site.js";
 import { ProductionSite } from "./production_site.js";
 import { ShopSite } from "./shop_site.js";

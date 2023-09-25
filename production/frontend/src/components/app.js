@@ -1,18 +1,16 @@
 import React, { Component } from "react";
 import { db } from "../lib/local_storage_driver.js";
 import { TracerWebSocket } from "../lib/tracer_websocket.js";
-import { ParseDjangoModelJson, ParseJSONstr } from "../lib/formatting.js";
-import {JSON_ADDRESS, JSON_CUSTOMER, JSON_ACTIVITY_ORDER, JSON_DATABASE, JSON_DELIVER_TIME,
-        JSON_EMPLOYEE, JSON_ISOTOPE, JSON_RUN, JSON_SERVER_CONFIG, JSON_TRACER,
-        JSON_INJECTION_ORDER, JSON_VIAL, WEBSOCKET_MESSAGE_GREAT_STATE, DATABASE_ACTIVITY_ORDER, DATABASE_ADDRESS, DATABASE_CUSTOMER, DATABASE_DATABASE,
-        DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE,
-        DATABASE_IS_AUTH, DATABASE_PRODUCTION, LEGACY_KEYWORD_USERGROUP, USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN,
-        DATABASE_TRACER, DATABASE_SERVER_CONFIG, DATABASE_VIAL, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-        AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, WEBSOCKET_SESSION_ID, DATABASE_CURRENT_USER,
-        DATABASE_TRACER_MAPPING, JSON_TRACER_MAPPING, LEGACY_KEYWORD_CUSTOMER_ID, LEGACY_KEYWORD_TRACER_ID, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_INSUFFICIENT_PERMISSIONS, DATABASE_CLOSED_DATE, JSON_CLOSED_DATE, PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER, WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, JSON_PRODUCTION, AUTH_USER_ID
-      } from "../lib/constants.js";
-import { User } from "../dataclasses/user.js";
+import { ParseDjangoModelJson } from "../lib/formatting.js";
+import { LEGACY_KEYWORD_USERGROUP, USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+  WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+  AUTH_IS_AUTHENTICATED, AUTH_USERNAME, LEGACY_KEYWORD_CUSTOMER, DATABASE_CURRENT_USER,
+  PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER,
+  WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, AUTH_USER_ID, WEBSOCKET_SESSION_ID
+} from "../lib/constants.js";
+import { User } from "../dataclasses/dataclasses.js";
 import { TracerShop } from "./sites/tracer_shop.js";
+import Cookies from "js-cookie";
 
 export { App }
 
@@ -52,6 +50,7 @@ export default class App extends Component {
     const message = this.MasterSocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGOUT);
     this.MasterSocket.send(message).then((data) => {
       this.set_user(new User());
+      Cookies.remove('sessionid');
     })
   }
 
@@ -60,15 +59,18 @@ export default class App extends Component {
     this.MasterSocket.send(message).then((data) => {
       let user;
       if (data[AUTH_IS_AUTHENTICATED]){
-        user = new User(data[AUTH_USERNAME],
-                        data[LEGACY_KEYWORD_USERGROUP],
-                        data[LEGACY_KEYWORD_CUSTOMER],
-                        data[AUTH_USER_ID]
-        )
+        user = new User(undefined,
+                        data[AUTH_USER_ID],
+                        data[AUTH_USERNAME],
+                        data[LEGACY_KEYWORD_USERGROUP])
       } else {
         user = new User();
       }
       this.set_user(user)
+      if(data[WEBSOCKET_SESSION_ID]) {
+        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID])
+      }
+
     })
   }
 
@@ -123,9 +125,12 @@ export default class App extends Component {
 
   set_user(user) {
     if(!user instanceof User){
-      user = new User(user.username, user.user_group, user.customer, user.id);
+      user = new User(
+        undefined,
+        user.id,
+        user.username, user.user_group);
     }
-    if(user.user_group == USER_GROUPS.ANON){
+    if(user.UserGroup == USER_GROUPS.ANON){
       db.delete(DATABASE_CURRENT_USER);
     } else {
       db.set(DATABASE_CURRENT_USER, user);
@@ -154,7 +159,7 @@ export default class App extends Component {
   render() {
     const props = this.createPropsWithStateDatabase();
     // And also some none database props
-    props[DATABASE_CURRENT_USER] = this.state[DATABASE_CURRENT_USER]
+    props[PROP_USER] = this.state[DATABASE_CURRENT_USER]
     props[PROP_NAVBAR_ELEMENTS] = [];
     props[PROP_LOGOUT] = this.logout.bind(this);
     props[PROP_SET_USER] = this.set_user.bind(this);

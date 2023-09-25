@@ -7,9 +7,12 @@ import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { AppState } from "../../app_state.js";
+import { FutureBooking } from "../../../components/shop_pages/future_bookings.js";
+import { PROP_ACTIVE_DATE, PROP_WEBSOCKET } from "../../../lib/constants.js";
 
-
+let container = null;
 let websocket = null;
+let props = null;
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -26,6 +29,7 @@ beforeEach(() => {
   websocket = new tracer_websocket.TracerWebSocket();
   props = {...AppState}
   props[PROP_WEBSOCKET] = websocket
+  props[PROP_ACTIVE_DATE] = now
 });
 
 afterEach(() => {
@@ -40,7 +44,7 @@ afterEach(() => {
 
 describe("Future Bookings Test Suite", () => {
   it("Standard render test", () => {
-    
+    render(<FutureBooking {...props}/>)
   } )
 
 

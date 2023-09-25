@@ -197,7 +197,7 @@ export class ProcedureLocationIndex {
  * @param {Map<Number, Location>} Locations 
  */
   constructor(procedures, Locations){
-    this._dataStructure = Map();
+    this._dataStructure = new Map();
     const locationHelper = new ArrayMap();
 
     for(const location of Locations.values()){
@@ -250,10 +250,9 @@ export class TracerBookingMapping {
     }
   }
 
-  *[Symbol.Iterator](){
+  *[Symbol.iterator](){
     for(const [tracer, bookings] of this._map){
       yield [tracer, bookings]
     }
   }
-
 }

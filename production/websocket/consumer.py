@@ -356,7 +356,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
       #queryCustomers = await database_sync_to_async(user.Customer.all)()
       customer = []
       user_id = user.id
+      key = self.scope["session"].session_key
     else:
+      key = None
       isAuth = False
       username = ""
       userGroup = 0
@@ -364,6 +366,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       user_id = None
 
     await self.send_json({
+      WEBSOCKET_SESSION_ID : key,
       AUTH_USERNAME : username,
       LEGACY_KEYWORD_USERGROUP : userGroup,
       LEGACY_KEYWORD_CUSTOMER : customer,
