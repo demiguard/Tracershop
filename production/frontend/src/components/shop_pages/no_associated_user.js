@@ -3,7 +3,7 @@
  * relevant people.
  */
 
-import React, { useState } from "react";
+import React from "react";
 import { Container } from "react-bootstrap";
 import { PROP_USER, USER_GROUPS } from "../../lib/constants";
 import { User } from "../../dataclasses/dataclasses";
@@ -11,17 +11,18 @@ import { User } from "../../dataclasses/dataclasses";
 export function NoAssociatedUser(props){
   const /**@type {User} */ user = props[PROP_USER]
 
-  if(user.user_group === USER_GROUPS.SHOP_EXTERNAL){
+  if(user.UserGroup === USER_GROUPS.SHOP_EXTERNAL){
     return (
       <Container>
-        <h3>Du er logged ind men din konto er ikke forbundet til en kunde konto.</h3>
+        <h3 aria-label="no-assoc-external-user-error">Du er logged ind men din konto er ikke forbundet til en kunde konto.</h3>
         <h3>Du skal kontakte kemien for at få din konto forbundet.</h3>
       </Container>);
   }
 
   return (
   <Container>
-    <h3>Du er logged ind men din konto er ikke forbundet til en kunde konto.
+    <h3 aria-label="no-assoc-internal-user-error">
+      Du er logged ind men din konto er ikke forbundet til en kunde konto.
       Du skal kontakte din lokale tracershop superbruger for at få din konto forbundet.
     </h3>
   </Container>);

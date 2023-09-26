@@ -32,12 +32,15 @@ export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
   {name : "Søndag", day : 7},
 ]
 
+/**
+ * @enum
+ */
 export const DEADLINE_TYPES = {
   DAILY : 0,
   WEEKLY : 1,
 }
 
-
+/**@enum */
 export const USER_GROUPS = {
   ANON : 0,
   ADMIN : 1,
@@ -48,6 +51,7 @@ export const USER_GROUPS = {
   SHOP_EXTERNAL : 6
 }
 
+/**@enum */
 export const WEEKLY_REPEAT_CHOICES = {
   ALL : 0,
   EVEN : 1,

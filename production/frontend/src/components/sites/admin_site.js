@@ -1,4 +1,4 @@
-import React, {Component } from "react";
+import React, { useState } from "react";
 import { NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "../../lib/constants.js";
 import { db } from "../../lib/local_storage_driver.js";
@@ -9,76 +9,67 @@ import { ShopSite } from "./shop_site.js";
 import styles from "/src/css/Navbar.module.css"
 import SiteStyles from "/src/css/Site.module.css"
 
-export { AdminSite }
+/**
+ * @enum
+ */
+const SITES = {
+  admin : ConfigSite,
+  production : ProductionSite,
+  shop : ShopSite
+}
 
-const sites = {
-  Admin : ConfigSite,
-  Production : ProductionSite,
-  Shop : ShopSite
+/**
+ * @enum
+ */
+const SITE_NAMES = {
+  admin : "Admin",
+  production : "Produktion",
+  shop : "Kunde"
 }
 
 
-class AdminSite extends Component {
-  constructor(props){
-    super(props)
+export function AdminSite(props) {
+  let /**@type {string} */ activeSiteInit = db.get(DATABASE_ADMIN_PAGE);
+  if (activeSiteInit === undefined || activeSiteInit === null){
+    activeSiteInit = "production";
+    db.set(DATABASE_ADMIN_PAGE, activeSiteInit);
+  }
 
-    let ActiveSite = db.get(DATABASE_ADMIN_PAGE);
-    if (ActiveSite === undefined || ActiveSite === null){
-      ActiveSite = "Production";
-      db.set(DATABASE_ADMIN_PAGE, ActiveSite);
-    }
+  const [activeSite, setActiveSite] = useState(activeSiteInit)
 
-    this.state = {
-      ActiveSite : ActiveSite
+  function changeSite(identifier){
+    return () => {
+      db.set(DATABASE_ADMIN_PAGE, identifier);
+       setActiveSite(identifier)
     }
   }
 
-  changeSite(){
-    const returnFunction = (event) => {
-      db.set(DATABASE_ADMIN_PAGE, event.target.text);
-      this.setState({...this.state,
-        ActiveSite : event.target.text
-      })
-    }
-    return returnFunction.bind(this);
-  }
-
-  render(){
-    const RenderedSites = [];
-    for (const siteKey of Object.keys(sites)){
-      RenderedSites.push(
-        <NavDropdown.Item
-          key={siteKey}
-          onClick={this.changeSite().bind(this)}
-        >
-          {siteKey}
-        </NavDropdown.Item>
-      )
-    }
-
-
-    const NavbarAdmin = [(
-      <NavDropdown
-        className={styles.NavbarElement + " btn-outline-primary " + SiteStyles.pad0tb}
-        title={this.state.ActiveSite}
-        key="SiteSelector"
+  const RenderedSites = [];
+  for (const siteKey of Object.keys(SITES)){
+    RenderedSites.push(
+      <NavDropdown.Item
+        aria-label={`navbar-admin-${siteKey}`}
+        key={siteKey}
+        onClick={changeSite(siteKey)}
       >
-        {RenderedSites}
-      </NavDropdown>)];
-
-
-    const ActiveSite = sites[this.state.ActiveSite];
-
-    if (ActiveSite == undefined) {
-      const errorString = "Unknown attempted to render admin site: " + this.state.ActiveSite
-      throw errorString;
+        {SITE_NAMES[siteKey]}
+      </NavDropdown.Item>)
     }
 
-    const props = {...this.props};
-    props["NavbarElements"] = NavbarAdmin;
+  const NavbarAdmin = [(
+    <NavDropdown
+      aria-label="site-selector"
+      className={styles.NavbarElement + " btn-outline-primary " + SiteStyles.pad0tb}
+      title={SITE_NAMES[activeSite]}
+      key="SiteSelector"
+    >
+      {RenderedSites}
+    </NavDropdown>)];
+  const ActiveSite = SITES[activeSite];
+  const siteProps = {...props}
+  siteProps["NavbarElements"] = NavbarAdmin;
 
-    return(<ActiveSite
-      {...props}
-    />);
-  }
+  return(<ActiveSite
+    {...siteProps}
+  />);
 }

@@ -29,8 +29,9 @@ export function ShopSite (props) {
   const siteProps = {...props};
   const /**@type {User} */ user = props[PROP_USER]
 
+
   let relatedCustomer
-  if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
+  if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.UserGroup)){
     relatedCustomer = [...props[JSON_USER_ASSIGNMENT].values()].filter((_userAssignment) => {
       const /**@type {UserAssignment} */ userAssignment = _userAssignment
       return userAssignment.user === user.id
@@ -58,7 +59,7 @@ export function ShopSite (props) {
   }
 
   let availablePages
-  if([USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
+  if([USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.UserGroup)){
     availablePages = UserPages
   } else {
     availablePages = AdminPages
@@ -69,7 +70,7 @@ export function ShopSite (props) {
   return(<div>
     <TracershopNavbar
           ActiveKey={siteIdentifier}
-          Names={AdminPages}
+          Names={availablePages}
           logout={props.logout}
           isAuthenticated={true}
           NavbarElements={props.NavbarElements}

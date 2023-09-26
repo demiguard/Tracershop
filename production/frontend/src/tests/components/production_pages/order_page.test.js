@@ -91,7 +91,6 @@ describe("Order Page tests", () => {
     await act(async () =>{
        const image = await screen.findByLabelText('next-month')
        image.click()
-       console.log(image)
     })
 
     const expected_message = {}
@@ -105,5 +104,4 @@ describe("Order Page tests", () => {
     render(<OrderPage {...props}/>)
     expect(await screen.findByText('InjectionTableMocked')).toBeVisible()
   });
-
 });

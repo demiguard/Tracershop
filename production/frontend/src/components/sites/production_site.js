@@ -20,7 +20,8 @@ const AdminPages = {
 }
 
 const UserPages = {
-  orders: "Ordre"
+  orders: "Ordre",
+  vial : "Hætteglas"
 }
 
 export function ProductionSite(props) {
@@ -29,7 +30,7 @@ export function ProductionSite(props) {
 
   const /**@type {User} */ user = props[PROP_USER]
   let availablePages;
-  if([USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.ADMIN].includes(user.user_group)){
+  if([USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.ADMIN].includes(user.UserGroup)){
     availablePages = AdminPages;
   } else {
     availablePages = UserPages;

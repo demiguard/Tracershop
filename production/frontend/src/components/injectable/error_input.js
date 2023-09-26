@@ -13,8 +13,7 @@ export function ErrorInput({error, children}){
     React.Children.only(children); // Where my error as return values? Heard about booleans?
     children = [children];
   } catch {
-    console.log("Return value caught!")
-    // Nothing to do here
+    /* istanbul ignore next */
   }
 
   const newComps = React.Children.map(children,(child) =>

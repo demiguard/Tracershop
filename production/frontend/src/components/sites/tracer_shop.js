@@ -27,11 +27,12 @@ export function TracerShop(props) {
     * @returns {Component}
   */
   function get_site_from_user(user) {
-    if (user.UserGroup == USER_GROUPS.ADMIN){
-      return SITES.admin_site
-    }
     if(user.UserGroup == USER_GROUPS.ANON || user.UserGroup === undefined){
       return SITES.log_in_site
+    }
+
+    if (user.UserGroup == USER_GROUPS.ADMIN){
+      return SITES.admin_site
     }
     if([USER_GROUPS.PRODUCTION_ADMIN,
         USER_GROUPS.PRODUCTION_USER,].includes(user.UserGroup)){
@@ -41,7 +42,8 @@ export function TracerShop(props) {
         USER_GROUPS.SHOP_USER,
         USER_GROUPS.SHOP_EXTERNAL].includes(user.UserGroup)){
           return SITES.shop_site
-        }
+    }
+    /* istanbul ignore next */
     throw "Unknown User group: " + user.UserGroup;
   }
 
@@ -52,6 +54,7 @@ export function TracerShop(props) {
   return <ErrorBoundary FallbackComponent={ErrorPage}>
     <Site {...props}/>
   </ErrorBoundary>
+}
   /*
   render() {
     if (this.state.site_error){
@@ -82,4 +85,3 @@ export function TracerShop(props) {
     }
   }
   */
-}

@@ -6,7 +6,7 @@ import React from "react";
 import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
-import Navbar from "../../../components/injectable/navbar";
+import { TracershopNavbar } from "../../../components/injectable/navbar";
 import { jest } from '@jest/globals'
 
 let container = null;
@@ -32,34 +32,38 @@ afterEach(() => {
 const setActivePage = jest.fn(arg => arg);
 const logout = jest.fn();
 
+const NAMES = {
+  id_1 : "A name",
+  id_2 : "Another Name",
+  id_3 : "Final name"
+}
+
 
 describe("Navbar Render Test", () => {
   it("Navbar Rendering Test, no Navbar Elements not authed", async () => {
     const names = ["A_name","Another_Name", "Final_name"]
 
-    render(<Navbar
+    render(<TracershopNavbar
       logout={logout}
-      Names={names}
+      Names={NAMES}
       setActivePage={setActivePage}
       isAuthenticated={false}
     />);
 
-    expect(await screen.findByText(names[0])).toBeVisible();
-    expect(await screen.findByText(names[1])).toBeVisible();
-    expect(await screen.findByText(names[2])).toBeVisible();
-    expect(await screen.queryByText('logout')).toBeNull();
+    for(const identifier of Object.keys(NAMES)){
+      expect(await screen.findByText(NAMES[identifier])).toBeVisible()
+    }
+    expect(screen.queryByText('logout')).toBeNull();
   });
 
   it("Navbar Rendering Test, Navbar Elements", async () => {
-    const names = ["A_name","Another_Name", "Final_name"]
-
     const injectName = "Injected"
 
-    render(<Navbar
-      ActiveKey={names[0]}
+    render(<TracershopNavbar
+      ActiveKey={NAMES[0]}
       logout={logout}
-      Names={names}
-      NavbarElements={[<div key={999}>{injectName}</div>]}
+      Names={NAMES}
+      NavbarElements={[<div key={999}>{injectName}</div>]} // this should be a button 
       setActivePage={setActivePage}
       isAuthenticated={false}
     />);
@@ -68,33 +72,34 @@ describe("Navbar Render Test", () => {
   });
 
   it("Navbar click Name test", async () => {
-    const names = ["A_name","Another_Name", "Final_name"]
-
-    render(<Navbar
+    render(<TracershopNavbar
       logout={logout}
-      Names={names}
+      Names={NAMES}
       NavbarElements={[]}
       setActivePage={setActivePage}
       isAuthenticated={false}
     />);
 
-    await fireEvent(await screen.findByText(names[0]), new MouseEvent('click', {bubbles: true, cancelable:  true}))
+    await act(async () => {
+      fireEvent(await screen.findByText(NAMES.id_1), new MouseEvent('click', {bubbles: true, cancelable: true}))
+    })
 
-    expect(setActivePage).toHaveBeenCalledWith(names[0])
+    expect(setActivePage).toHaveBeenCalledWith('id_1')
   });
 
   it("Navbar click logout", async () => {
-    const names = ["A_name","Another_Name", "Final_name"]
-
-    render(<Navbar
+    render(<TracershopNavbar
       logout={logout}
-      Names={names}
+      Names={NAMES}
       NavbarElements={[]}
       setActivePage={setActivePage}
       isAuthenticated={true}
     />);
 
-    await fireEvent(await screen.findByText('Log ud'), new MouseEvent('click', {bubbles: true, cancelable:  true}))
+    await act(async () => {
+      fireEvent(await screen.findByText('Log ud'),
+                new MouseEvent('click', {bubbles: true, cancelable:  true}))
+    })
     expect(logout).toHaveBeenCalled()
   });
 });
