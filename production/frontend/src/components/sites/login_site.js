@@ -5,9 +5,10 @@ import propTypes from "prop-types";
 import Cookies from "js-cookie";
 
 import Authenticate from "../injectable/authenticate";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER_ID, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP, PROP_SET_USER, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_MESSAGE_GREAT_STATE, WEBSOCKET_SESSION_ID } from "../../lib/constants";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP, PROP_SET_USER, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_MESSAGE_GREAT_STATE, WEBSOCKET_SESSION_ID, JSON_USER } from "../../lib/constants";
 
 import { User } from "../../dataclasses/dataclasses";
+import { deserialize_single } from "../../lib/serialization";
 
 const DEFAULT_STATE = {
   loginError : "",
@@ -38,13 +39,8 @@ export function LoginSite(props) {
     message[JSON_AUTH] = auth;
     props[PROP_WEBSOCKET].send(message).then((data) => {
       if (data[AUTH_IS_AUTHENTICATED]){
-        props[PROP_SET_USER](new User(
-          undefined,
-          data[PROP_USER].id,
-          data[PROP_USER].username,
-          data[PROP_USER].user_group,
-          data[PROP_USER].active
-        ));
+        const user = deserialize_single(data[AUTH_USER])
+        props[PROP_SET_USER](user);
         Cookies.set('sessionid',
                     data[WEBSOCKET_SESSION_ID],
                     {sameSite : 'strict'});

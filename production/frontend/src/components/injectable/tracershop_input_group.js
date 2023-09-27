@@ -6,10 +6,14 @@ export function TracershopInputGroup(props) {
   const label = props.label
 
   const newProps = {...props};
+  /* istanbul ignore next */
+  if(props.value === null || props.value === undefined){
+    /* istanbul ignore next */
+    newProps.value = ""
+  }
 
   delete newProps.children
   delete newProps.label
-
 
   return (
   <InputGroup

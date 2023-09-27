@@ -108,7 +108,7 @@ class ConsumerTestCase(TransactionTestCase):
 
   def setUp(self):
     pass
-    self.user = User(username=TEST_ADMIN_USERNAME, UserGroup=UserGroups.Admin)
+    self.user = User(username=TEST_ADMIN_USERNAME, user_group=UserGroups.Admin)
     self.user.set_password(TEST_ADMIN_PASSWORD)
     self.user.save()
 

@@ -43,7 +43,7 @@ export function FreeingRightsPage(props){
   const [expiryDateError, setExpiryDateError] = useState("");
   const [sortingMethod, setSortingMethod] = useState(SORTING_METHODS.USER);
   const userOptions = toOptions([...props[JSON_USER].values()].filter(
-    (user) => [USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.PRODUCTION_USER].includes(user.UserGroup)
+    (user) => [USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.PRODUCTION_USER].includes(user.user_group)
     ), 'username', 'id')
     const initialUser = (userOptions.length) ? userOptions[0].value : -1;
   const [activeUserID, setActiveUserID] = useState(initialUser);

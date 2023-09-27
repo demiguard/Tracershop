@@ -15,7 +15,7 @@ import SiteStyles from "/src/css/Site.module.css"
 const SITES = {
   admin : ConfigSite,
   production : ProductionSite,
-  shop : ShopSite
+  shop : ShopSite,
 }
 
 /**
@@ -66,10 +66,17 @@ export function AdminSite(props) {
       {RenderedSites}
     </NavDropdown>)];
   const ActiveSite = SITES[activeSite];
+
+  if(ActiveSite === undefined){
+    /* istanbul ignore next */
+    throw `Undefined site ${activeSite} attempt to rendered`;
+  }
+
   const siteProps = {...props}
   siteProps["NavbarElements"] = NavbarAdmin;
 
-  return(<ActiveSite
+  return(
+  <ActiveSite
     {...siteProps}
   />);
 }

@@ -49,7 +49,6 @@ class TracerWebSocket {
           this.StateHolder.updateState(state, message[WEBSOCKET_REFRESH]);
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-            console.log(message);
             this.StateHolder.deleteModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID])
         }
         break

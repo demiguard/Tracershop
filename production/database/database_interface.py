@@ -212,7 +212,7 @@ class DatabaseInterface():
         Tuple[QuerySet[ActivityOrder],QuerySet[Vial]]: _description_
     """
     ##### User check, can free
-    if user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+    if user.user_group not in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       raise Exception
 
     timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
@@ -311,7 +311,7 @@ class DatabaseInterface():
     return self.json_encoder.encode(serialized_dict)
 
   def getModels(self, user: User) -> List[Type[TracershopModel]]:
-    if user.UserGroup == UserGroups.Admin:
+    if user.user_group == UserGroups.Admin:
       return [model
               for model in apps.get_app_config('database').get_models()
                 # This line is here to ensure models are the correct type
@@ -361,7 +361,7 @@ class DatabaseInterface():
   def getRelatedCustomerIDs(self, user: User) -> List[int]:
     userAssignments = UserAssignment.objects.filter(user=user)
 
-    return [userAssignment.customer.customer_id
+    return [userAssignment.customer.id
               for userAssignment in userAssignments]
 
   @database_sync_to_async
@@ -375,51 +375,51 @@ class DatabaseInterface():
     # Customer IDs
 
     def __UserAssignmentHandler(instance: UserAssignment):
-      customerIDs.add(instance.customer.customer_id)
+      customerIDs.add(instance.customer.id)
 
     def __EndpointHandler(instance: DeliveryEndpoint,):
       owner = instance.owner # Database Access
-      customerIDs.add(owner.customer_id)
+      customerIDs.add(owner.id)
 
     def __ActivityOrder(instance: ActivityOrder):
       timeSlot = instance.ordered_time_slot # Database Access
-      timeSlotID = timeSlot.activity_delivery_time_slot_id
+      timeSlotID = timeSlot.id
       if timeSlotID in timeSlotsIDs:
         return
       else:
         timeSlotsIDs.add(timeSlotID)
 
       endpoint = timeSlot.destination # Database Access
-      endpointID = endpoint.tracer_endpoint_id
+      endpointID = endpoint.id
       if endpointID in endpointIDs:
         return
       else:
         endpointIDs.add(endpointID)
 
       owner = endpoint.owner # Database Access
-      customerIDs.add(owner.customer_id)
+      customerIDs.add(owner.id)
 
     def __InjectionOrderHandler(instance: InjectionOrder):
       endpoint = instance.endpoint # Database Access
-      endpointID = endpoint.tracer_endpoint_id
+      endpointID = endpoint.id
       if endpointID in endpointIDs:
         return
       else:
         endpointIDs.add(endpointID)
 
       owner = endpoint.owner # Database Access
-      customerIDs.add(owner.customer_id)
+      customerIDs.add(owner.id)
 
     def __ActivityDeliveryTimeSlotHandler(instance: ActivityDeliveryTimeSlot):
       endpoint = instance.destination # Database Access
-      endpointID = endpoint.tracer_endpoint_id
+      endpointID = endpoint.id
       if endpointID in endpointIDs:
         return
       else:
         endpointIDs.add(endpointID)
 
       owner = endpoint.owner # Database Access
-      customerIDs.add(owner.customer_id)
+      customerIDs.add(owner.id)
 
     modelHandlers: Dict[Type[TracershopModel], Callable] = { # No clue how to type hint Callable :(
       ActivityDeliveryTimeSlot : __ActivityDeliveryTimeSlotHandler,
@@ -561,7 +561,7 @@ class DatabaseInterface():
                                            represents.
     """
     newExternalUser = User(username=userSkeleton[AUTH_USERNAME],
-                           UserGroup=UserGroups.ShopExternal)
+                           user_group=UserGroups.ShopExternal)
 
     newExternalUser.set_password(userSkeleton[AUTH_PASSWORD])
     newExternalUser.save()
@@ -588,7 +588,7 @@ class DatabaseInterface():
         IllegalActionAttempted: _description_
     """
     externalUser = User.objects.get(pk=externalUserID)
-    if externalUser.UserGroup != UserGroups.ShopExternal:
+    if externalUser.user_group != UserGroups.ShopExternal:
       raise IllegalActionAttempted
     externalUser.set_password(externalNewPassword)
     externalUser.save()

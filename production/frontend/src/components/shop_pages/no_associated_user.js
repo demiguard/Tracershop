@@ -11,7 +11,7 @@ import { User } from "../../dataclasses/dataclasses";
 export function NoAssociatedUser(props){
   const /**@type {User} */ user = props[PROP_USER]
 
-  if(user.UserGroup === USER_GROUPS.SHOP_EXTERNAL){
+  if(user.user_group === USER_GROUPS.SHOP_EXTERNAL){
     return (
       <Container>
         <h3 aria-label="no-assoc-external-user-error">Du er logged ind men din konto er ikke forbundet til en kunde konto.</h3>

@@ -25,7 +25,6 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_BOOKING : Booking,
   JSON_CLOSED_DATE : ClosedDate,
   JSON_CUSTOMER : Customer,
-  JSON_DATABASE : Database,
   JSON_DEADLINE : Deadline,
   JSON_DELIVER_TIME : ActivityDeliveryTimeSlot,
   JSON_DICOM_ENDPOINT : DicomEndpoint,

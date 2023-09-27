@@ -31,7 +31,7 @@ export function ShopSite (props) {
 
 
   let relatedCustomer
-  if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.UserGroup)){
+  if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
     relatedCustomer = [...props[JSON_USER_ASSIGNMENT].values()].filter((_userAssignment) => {
       const /**@type {UserAssignment} */ userAssignment = _userAssignment
       return userAssignment.user === user.id
@@ -59,7 +59,7 @@ export function ShopSite (props) {
   }
 
   let availablePages
-  if([USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.UserGroup)){
+  if([USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
     availablePages = UserPages
   } else {
     availablePages = AdminPages

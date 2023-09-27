@@ -2,15 +2,16 @@ import React, { Component } from "react";
 import { db } from "../lib/local_storage_driver.js";
 import { TracerWebSocket } from "../lib/tracer_websocket.js";
 import { ParseDjangoModelJson } from "../lib/formatting.js";
-import { LEGACY_KEYWORD_USERGROUP, USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+import { USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGOUT,
   WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-  AUTH_IS_AUTHENTICATED, AUTH_USERNAME, LEGACY_KEYWORD_CUSTOMER, DATABASE_CURRENT_USER,
+  AUTH_IS_AUTHENTICATED, AUTH_USERNAME, DATABASE_CURRENT_USER,
   PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER,
-  WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, AUTH_USER_ID, WEBSOCKET_SESSION_ID
+  WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, AUTH_USER, WEBSOCKET_SESSION_ID
 } from "../lib/constants.js";
 import { User } from "../dataclasses/dataclasses.js";
 import { TracerShop } from "./sites/tracer_shop.js";
 import Cookies from "js-cookie";
+import { deserialize_single } from "../lib/serialization.js";
 
 export { App }
 
@@ -59,10 +60,7 @@ export default class App extends Component {
     this.MasterSocket.send(message).then((data) => {
       let user;
       if (data[AUTH_IS_AUTHENTICATED]){
-        user = new User(undefined,
-                        data[AUTH_USER_ID],
-                        data[AUTH_USERNAME],
-                        data[LEGACY_KEYWORD_USERGROUP])
+        user = deserialize_single(data[AUTH_USER])
       } else {
         user = new User();
       }
@@ -123,14 +121,13 @@ export default class App extends Component {
   }
 
 
-  set_user(user) {
+  set_user(user_init) {
+    let user = user_init
     if(!user instanceof User){
-      user = new User(
-        undefined,
-        user.id,
-        user.username, user.user_group);
+      user = new User()
+      Object.assign(user, user_init);
     }
-    if(user.UserGroup == USER_GROUPS.ANON){
+    if(user.user_group == USER_GROUPS.ANON){
       db.delete(DATABASE_CURRENT_USER);
     } else {
       db.set(DATABASE_CURRENT_USER, user);

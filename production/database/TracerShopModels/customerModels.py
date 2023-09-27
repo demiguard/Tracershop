@@ -16,7 +16,7 @@ from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
 
 
 class ClosedDate(TracershopModel):
-  close_date_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   close_date = DateField()
 
   class Meta:
@@ -27,7 +27,7 @@ class ClosedDate(TracershopModel):
 
 class Customer(TracershopModel):
   """This represents the organization that is ordering tracers in tracershop"""
-  customer_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   short_name = CharField(max_length=32)
   long_name = CharField(max_length=128, null=True, default=None)
   dispenser_id = SmallIntegerField(null=True, default=None, unique=True)
@@ -39,7 +39,7 @@ class Customer(TracershopModel):
   active_directory_code = CharField(max_length=128, null=True, default=None)
 
 class TracerCatalog(TracershopModel):
-  tracer_catalog_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   max_injections = SmallIntegerField(default=0)
@@ -50,7 +50,7 @@ class TracerCatalog(TracershopModel):
 
 
 class UserAssignment(TracershopModel):
-  user_assignment_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   user = ForeignKey(User, on_delete=CASCADE)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
 
@@ -59,13 +59,13 @@ class UserAssignment(TracershopModel):
 
 
 class Message(TracershopModel):
-  message_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   message = TextField(max_length=8000)
   expiration = DateField(null=True, default=None)
 
 
 class MessageAssignment(TracershopModel):
-  message_assignment_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   message_id = ForeignKey(Message, on_delete=CASCADE)
   customer_id = ForeignKey(Customer, on_delete=RESTRICT)
 
@@ -74,7 +74,7 @@ class MessageAssignment(TracershopModel):
 
 
 class DeliveryEndpoint(TracershopModel):
-  tracer_endpoint_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   address = CharField(max_length=128, null=True, default=None)
   city = CharField(max_length=128, null=True, default=None)
   zip_code = CharField(max_length=8, null=True, default=None)
@@ -87,18 +87,18 @@ class Location(TracershopModel):
   """This is a room, that can be booked too. A room can be owned by an endpoint
   """
   #Note A Location should be able to be created from location_code alone
-  location_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   location_code = CharField(max_length=120)
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
   common_name = CharField(max_length=120, null=True, default=None)
 
 class ProcedureIdentifier(TracershopModel):
-  procedure_identifier_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   string = CharField(max_length=128)
 
 
 class Procedure(TracershopModel):
-  procedure_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   series_description = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT, default=None, null=True)
   tracer_units = FloatField(default=0.0)
   delay_minutes = FloatField(default=0.0)
@@ -116,7 +116,7 @@ class BookingStatus(IntegerChoices):
   Released = 3
 
 class Booking(TracershopModel):
-  booking_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   status = SmallIntegerField(choices=BookingStatus.choices, default=BookingStatus.Initial)
   location = ForeignKey(Location, on_delete=RESTRICT)
   procedure = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
@@ -132,7 +132,7 @@ class WeeklyRepeat(IntegerChoices):
 
 
 class ActivityDeliveryTimeSlot(TracershopModel):
-  activity_delivery_time_slot_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   weekly_repeat = SmallIntegerField(choices=WeeklyRepeat.choices)
   delivery_time = TimeField()
   destination = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
@@ -152,7 +152,7 @@ class OrderStatus(IntegerChoices):
   Rejected = 4
 
 class ActivityOrder(TracershopModel):
-  activity_order_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   ordered_activity = FloatField()
   delivery_date = DateField()
   status = SmallIntegerField(choices=OrderStatus.choices)
@@ -194,7 +194,7 @@ class TracerUsage(IntegerChoices):
   other = 2
 
 class InjectionOrder(TracershopModel):
-  injection_order_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   delivery_time = TimeField()
   delivery_date = DateField()
   injections = PositiveSmallIntegerField()
@@ -215,7 +215,7 @@ class InjectionOrder(TracershopModel):
 
 
 class Vial(TracershopModel):
-  vial_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT, null=True)
   activity = FloatField()
   volume = FloatField()
@@ -231,16 +231,16 @@ class Vial(TracershopModel):
     ]
 
 class LegacyProductionMember(TracershopModel):
-  legacy_user_id = IntegerField(primary_key=True)
+  id = IntegerField(primary_key=True)
   legacy_production_username = CharField(max_length=50)
 
 class LegacyInjectionOrder(TracershopModel):
-  legacy_order_id = IntegerField(primary_key=True)
+  id = IntegerField(primary_key=True)
   new_order_id = ForeignKey(InjectionOrder, on_delete=RESTRICT)
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
 
 class LegacyActivityOrder(TracershopModel):
-  legacy_order_id = IntegerField(primary_key=True)
+  id = IntegerField(primary_key=True)
   new_order_id = ForeignKey(ActivityOrder, on_delete=RESTRICT)
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
   legacy_freed_amount = FloatField(null=True, default=None)

@@ -10,7 +10,7 @@ AUTH_USERNAME = "username"
 AUTH_PASSWORD = "password"
 AUTH_DETAIL = "detail"
 AUTH_IS_AUTHENTICATED = "isAuthenticated"
-AUTH_USER_ID = "user_id"
+AUTH_USER = "auth_user"
 
 # Errors string
 

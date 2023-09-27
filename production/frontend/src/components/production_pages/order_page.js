@@ -92,6 +92,7 @@ export class OrderPage extends Component {
 
     const serverConfig = this.props[JSON_SERVER_CONFIG].get(1)
 
+    // TODO: THERE A BUG HERE, SERVER CONFIG MAY NOT BE DEFINED!
     const activity_deadline = this.props[JSON_DEADLINE].get(serverConfig[KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE]);
     const injection_deadline = this.props[JSON_DEADLINE].get(serverConfig[KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE]);
 

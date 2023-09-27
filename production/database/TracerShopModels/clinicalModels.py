@@ -17,7 +17,7 @@ from database.TracerShopModels import authModels
 from tracerauth.types import AuthActions
 
 class Isotope(TracershopModel):
-  isotope_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   atomic_number = SmallIntegerField()
   atomic_mass = SmallIntegerField()
   halflife_seconds = FloatField()
@@ -35,7 +35,7 @@ class TracerTypes(IntegerChoices):
   InjectionBased = 2
 
 class Tracer(TracershopModel):
-  tracer_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   shortname = CharField(max_length=32)
   clinical_name = CharField(max_length=256)
   isotope = ForeignKey(Isotope, on_delete=RESTRICT)
@@ -49,7 +49,7 @@ class Tracer(TracershopModel):
 
 
 class ActivityProduction(TracershopModel):
-  activity_production_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   production_day = SmallIntegerField(choices=Days.choices)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
@@ -62,7 +62,7 @@ class ActivityProduction(TracershopModel):
     return str(self)
 
 class ReleaseRight(TracershopModel):
-  release_right_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   expiry_date = DateField(null=True, default=None)
   releaser = ForeignKey(User, on_delete=RESTRICT)
   product = ForeignKey(Tracer, on_delete=RESTRICT)
@@ -74,7 +74,7 @@ class ReleaseRight(TracershopModel):
     if not user.is_production_admin:
       return AuthActions.REJECT_LOG
 
-    if user.UserGroup == UserGroups.ProductionAdmin \
+    if user.user_group == UserGroups.ProductionAdmin \
         and self.releaser.pk == user.pk:
       return AuthActions.REJECT_LOG
 
@@ -87,7 +87,7 @@ class ReleaseRight(TracershopModel):
     if not user.is_production_admin:
       return AuthActions.REJECT_LOG
 
-    if user.UserGroup == UserGroups.ProductionAdmin and self.releaser.pk == user.pk:
+    if user.user_group == UserGroups.ProductionAdmin and self.releaser.pk == user.pk:
       return AuthActions.REJECT_LOG
 
     return AuthActions.ACCEPT_LOG

@@ -62,12 +62,14 @@ describe("Login shop test suite", () => {
     const getMessageMock = jest.fn((kw) => ({messageType : kw}))
     const sendMock = jest.fn( () => Promise.resolve({
           isAuthenticated : true,
-          current_user : {
-            id : 1,
-            username : "username",
-            user_group : USER_GROUPS.ADMIN,
-            active : true,
-          }
+          auth_user : JSON.stringify({ user : [{
+            pk : 1,
+            fields : {
+              username : "username",
+              user_group : USER_GROUPS.ADMIN,
+              active : true,
+            }
+          }]})
         })); // There just so many parentheses...
     const mockSetUser = jest.fn(() => {})
 
@@ -100,7 +102,7 @@ describe("Login shop test suite", () => {
     expect(mockSetUser).toBeCalledWith(expect.objectContaining({
       id : 1,
       username : "username",
-      UserGroup : USER_GROUPS.ADMIN,
+      user_group : USER_GROUPS.ADMIN,
       active : true,
     }));
   });

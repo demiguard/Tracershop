@@ -2,8 +2,8 @@
 /**Contains a mapping of the database and their fields. */
 
 export class Address {
-  constructor(ID, ip, port, description, ) {
-    this.ID=ID
+  constructor(id, ip, port, description, ) {
+    this.id=id
     this.ip=ip
     this.port=port
     this.description=description
@@ -11,8 +11,8 @@ export class Address {
 }
 
 export class ActivityOrder {
-  constructor(activity_order_id, ordered_activity, delivery_date, status, comment, ordered_time_slot, moved_to_time_slot, freed_datetime, ordered_by, freed_by, ) {
-    this.activity_order_id=activity_order_id
+  constructor(id, ordered_activity, delivery_date, status, comment, ordered_time_slot, moved_to_time_slot, freed_datetime, ordered_by, freed_by, ) {
+    this.id=id
     this.ordered_activity=ordered_activity
     this.delivery_date=delivery_date
     this.status=status
@@ -26,8 +26,8 @@ export class ActivityOrder {
 }
 
 export class Booking {
-  constructor(booking_id, status, location, procedure, accession_number, start_time, start_date, ) {
-    this.booking_id=booking_id
+  constructor(id, status, location, procedure, accession_number, start_time, start_date, ) {
+    this.id=id
     this.status=status
     this.location=location
     this.procedure=procedure
@@ -38,15 +38,15 @@ export class Booking {
 }
 
 export class ClosedDate {
-  constructor(close_date_id, close_date, ) {
-    this.close_date_id=close_date_id
+  constructor(id, close_date, ) {
+    this.id=id
     this.close_date=close_date
   }
 }
 
 export class Customer {
-  constructor(customer_id, short_name, long_name, dispenser_id, billing_address, billing_city, billing_email, billing_phone, billing_zip_code, active_directory_code, ) {
-    this.customer_id=customer_id
+  constructor(id, short_name, long_name, dispenser_id, billing_address, billing_city, billing_email, billing_phone, billing_zip_code, active_directory_code, ) {
+    this.id=id
     this.short_name=short_name
     this.long_name=long_name
     this.dispenser_id=dispenser_id
@@ -59,21 +59,9 @@ export class Customer {
   }
 }
 
-export class Database {
-  constructor(databaseName, username, password, legacy_database, address, testinDatabase, databaseType, ) {
-    this.databaseName=databaseName
-    this.username=username
-    this.password=password
-    this.legacy_database=legacy_database
-    this.address=address
-    this.testinDatabase=testinDatabase
-    this.databaseType=databaseType
-  }
-}
-
 export class Deadline {
-  constructor(deadline_id, deadline_type, deadline_time, deadline_day, ) {
-    this.deadline_id=deadline_id
+  constructor(id, deadline_type, deadline_time, deadline_day, ) {
+    this.id=id
     this.deadline_type=deadline_type
     this.deadline_time=deadline_time
     this.deadline_day=deadline_day
@@ -81,8 +69,8 @@ export class Deadline {
 }
 
 export class ActivityDeliveryTimeSlot {
-  constructor(activity_delivery_time_slot_id, weekly_repeat, delivery_time, destination, production_run, expiration_date, ) {
-    this.activity_delivery_time_slot_id=activity_delivery_time_slot_id
+  constructor(id, weekly_repeat, delivery_time, destination, production_run, expiration_date, ) {
+    this.id=id
     this.weekly_repeat=weekly_repeat
     this.delivery_time=delivery_time
     this.destination=destination
@@ -92,16 +80,16 @@ export class ActivityDeliveryTimeSlot {
 }
 
 export class DicomEndpoint {
-  constructor(dicom_endpoint_id, address, ae_title, ) {
-    this.dicom_endpoint_id=dicom_endpoint_id
+  constructor(id, address, ae_title, ) {
+    this.id=id
     this.address=address
     this.ae_title=ae_title
   }
 }
 
 export class DeliveryEndpoint {
-  constructor(tracer_endpoint_id, address, city, zip_code, phone, name, owner, ) {
-    this.tracer_endpoint_id=tracer_endpoint_id
+  constructor(id, address, city, zip_code, phone, name, owner, ) {
+    this.id=id
     this.address=address
     this.city=city
     this.zip_code=zip_code
@@ -112,8 +100,8 @@ export class DeliveryEndpoint {
 }
 
 export class InjectionOrder {
-  constructor(injection_order_id, delivery_time, delivery_date, injections, status, tracer_usage, comment, ordered_by, endpoint, tracer, lot_number, freed_datetime, freed_by, ) {
-    this.injection_order_id=injection_order_id
+  constructor(id, delivery_time, delivery_date, injections, status, tracer_usage, comment, ordered_by, endpoint, tracer, lot_number, freed_datetime, freed_by, ) {
+    this.id=id
     this.delivery_time=delivery_time
     this.delivery_date=delivery_date
     this.injections=injections
@@ -130,8 +118,8 @@ export class InjectionOrder {
 }
 
 export class Isotope {
-  constructor(isotope_id, atomic_number, atomic_mass, halflife_seconds, atomic_letter, metastable, ) {
-    this.isotope_id=isotope_id
+  constructor(id, atomic_number, atomic_mass, halflife_seconds, atomic_letter, metastable, ) {
+    this.id=id
     this.atomic_number=atomic_number
     this.atomic_mass=atomic_mass
     this.halflife_seconds=halflife_seconds
@@ -141,8 +129,8 @@ export class Isotope {
 }
 
 export class ReleaseRight {
-  constructor(release_right_id, expiry_date, releaser, product, ) {
-    this.release_right_id=release_right_id
+  constructor(id, expiry_date, releaser, product, ) {
+    this.id=id
     this.expiry_date=expiry_date
     this.releaser=releaser
     this.product=product
@@ -150,15 +138,15 @@ export class ReleaseRight {
 }
 
 export class LegacyProductionMember {
-  constructor(legacy_user_id, legacy_production_username, ) {
-    this.legacy_user_id=legacy_user_id
+  constructor(id, legacy_production_username, ) {
+    this.id=id
     this.legacy_production_username=legacy_production_username
   }
 }
 
 export class Location {
-  constructor(location_id, location_code, endpoint, common_name, ) {
-    this.location_id=location_id
+  constructor(id, location_code, endpoint, common_name, ) {
+    this.id=id
     this.location_code=location_code
     this.endpoint=endpoint
     this.common_name=common_name
@@ -166,24 +154,24 @@ export class Location {
 }
 
 export class Message {
-  constructor(message_id, message, expiration, ) {
-    this.message_id=message_id
+  constructor(id, message, expiration, ) {
+    this.id=id
     this.message=message
     this.expiration=expiration
   }
 }
 
 export class MessageAssignment {
-  constructor(message_assignment_id, message_id, customer_id, ) {
-    this.message_assignment_id=message_assignment_id
+  constructor(id, message_id, customer_id, ) {
+    this.id=id
     this.message_id=message_id
     this.customer_id=customer_id
   }
 }
 
 export class Tracer {
-  constructor(tracer_id, shortname, clinical_name, isotope, tracer_type, default_price_per_unit, vial_tag, archived, ) {
-    this.tracer_id=tracer_id
+  constructor(id, shortname, clinical_name, isotope, tracer_type, default_price_per_unit, vial_tag, archived, ) {
+    this.id=id
     this.shortname=shortname
     this.clinical_name=clinical_name
     this.isotope=isotope
@@ -195,8 +183,8 @@ export class Tracer {
 }
 
 export class TracerCatalog {
-  constructor(tracer_catalog_id, customer, tracer, max_injections, overhead_multiplier, ) {
-    this.tracer_catalog_id=tracer_catalog_id
+  constructor(id, customer, tracer, max_injections, overhead_multiplier, ) {
+    this.id=id
     this.customer=customer
     this.tracer=tracer
     this.max_injections=max_injections
@@ -205,8 +193,8 @@ export class TracerCatalog {
 }
 
 export class Procedure {
-  constructor(procedure_id, series_description, tracer_units, delay_minutes, tracer, owner, ) {
-    this.procedure_id=procedure_id
+  constructor(id, series_description, tracer_units, delay_minutes, tracer, owner, ) {
+    this.id=id
     this.series_description=series_description
     this.tracer_units=tracer_units
     this.delay_minutes=delay_minutes
@@ -216,15 +204,15 @@ export class Procedure {
 }
 
 export class ProcedureIdentifier {
-  constructor(procedure_identifier_id, string, ) {
-    this.procedure_identifier_id=procedure_identifier_id
+  constructor(id, string, ) {
+    this.id=id
     this.string=string
   }
 }
 
 export class ActivityProduction {
-  constructor(activity_production_id, production_day, tracer, production_time, expiration_date, ) {
-    this.activity_production_id=activity_production_id
+  constructor(id, production_day, tracer, production_time, expiration_date, ) {
+    this.id=id
     this.production_day=production_day
     this.tracer=tracer
     this.production_time=production_time
@@ -233,17 +221,16 @@ export class ActivityProduction {
 }
 
 export class SecondaryEmail {
-  constructor(secondary_email_id, email, record_user, ) {
-    this.secondary_email_id=secondary_email_id
+  constructor(id, email, record_user, ) {
+    this.id=id
     this.email=email
     this.record_user=record_user
   }
 }
 
 export class ServerConfiguration {
-  constructor(ID, ExternalDatabase, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, ) {
-    this.ID=ID
-    this.ExternalDatabase=ExternalDatabase
+  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, ) {
+    this.id=id
     this.SMTPServer=SMTPServer
     this.DateRange=DateRange
     this.AdminPhoneNumber=AdminPhoneNumber
@@ -256,27 +243,26 @@ export class ServerConfiguration {
 }
 
 export class User {
-  constructor(last_login, id, username, UserGroup, active, OldTracerBaseID, ) {
+  constructor(last_login, id, username, user_group, active, ) {
     this.last_login=last_login
     this.id=id
     this.username=username
-    this.UserGroup=UserGroup
+    this.user_group=user_group
     this.active=active
-    this.OldTracerBaseID=OldTracerBaseID
   }
 }
 
 export class UserAssignment {
-  constructor(user_assignment_id, user, customer, ) {
-    this.user_assignment_id=user_assignment_id
+  constructor(id, user, customer, ) {
+    this.id=id
     this.user=user
     this.customer=customer
   }
 }
 
 export class Vial {
-  constructor(vial_id, tracer, activity, volume, lot_number, fill_time, fill_date, assigned_to, owner, ) {
-    this.vial_id=vial_id
+  constructor(id, tracer, activity, volume, lot_number, fill_time, fill_date, assigned_to, owner, ) {
+    this.id=id
     this.tracer=tracer
     this.activity=activity
     this.volume=volume
@@ -294,7 +280,6 @@ export const MODELS = {
   booking : Booking,
   closeddate : ClosedDate,
   customer : Customer,
-  database : Database,
   deadline : Deadline,
   deliverTimes : ActivityDeliveryTimeSlot,
   dicom_endpoint : DicomEndpoint,

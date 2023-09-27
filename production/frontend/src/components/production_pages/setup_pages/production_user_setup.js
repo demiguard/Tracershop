@@ -237,7 +237,7 @@ export function ProductionUserSetup(props){
   const ExternalUsersRows = [...props[JSON_USER].values()].filter(
     (_user) => {
       const /**@type {User} */ user = _user
-      return user.UserGroup === USER_GROUPS.SHOP_EXTERNAL
+      return user.user_group === USER_GROUPS.SHOP_EXTERNAL
     }
   ).map((user, i) => {
     return(

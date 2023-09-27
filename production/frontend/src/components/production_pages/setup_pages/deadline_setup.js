@@ -119,14 +119,21 @@ function DeadlineRow({deadline,
   const [time, _setTime] = useState(deadline.deadline_time)
   const [day, _setDay] = useState(deadline.deadline_day)
 
+
   // State Setters
   function setDeadlineType(event){
     const newDeadlineType = Number(event.target.value);
-
-    _setDeadlineType(newDeadlineType);
     if (deadlineType === newDeadlineType){
       return;
     }
+
+    if(newDeadlineType === DEADLINE_TYPES.DAILY){
+      _setDay(null);
+    } else if(newDeadlineType === DEADLINE_TYPES.WEEKLY){
+      _setDay(1);
+    }
+
+    _setDeadlineType(newDeadlineType);
 
     websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_type : Number(event.target.value)})
   }

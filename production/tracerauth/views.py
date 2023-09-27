@@ -22,7 +22,7 @@ class ExternalLoginView(View):
                                         password=request.GET['password'])
     if user is None:
       return HttpResponse(status=403)
-    if user.UserGroup != UserGroups.ShopExternal:
+    if user.user_group != UserGroups.ShopExternal:
       return HttpResponse(status=403)
 
     return HttpResponse(status=200)

@@ -1,13 +1,13 @@
 """Server receiving HL7 messages"""
-
-
+import dataclasses
+from datetime import date, time, datetime
 import aiorun
 import asyncio
 import hl7
 from hl7 import Message
 import traceback
 from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
-
+from typing import Tuple
 
 import logging
 
@@ -18,18 +18,76 @@ logging.basicConfig(
     format="%(asctime)s (%(funcName)s,%(lineno)d) - %(levelname)s - %(message)s"
 )
 
+database = {}
 
+
+@dataclasses.dataclass
+class Location:
+    location: str
+
+@dataclasses.dataclass
+class ProcedureIdentifier:
+    code : str
+    study_description : str
+
+@dataclasses.dataclass
+class Booking:
+    location : Location
+    procedure_identifier : ProcedureIdentifier
+    start_time : time
+    start_date : date
+
+
+def in_(message, key):
+    try:
+        message[key]
+        return True
+    except KeyError:
+        return False
+
+def get_location(message: Message):
+    pass
+
+def get_procedure_identifier(message: Message):
+    pass
 
 def get_message_type(hl7_message: Message) -> str:
     MESSAGE_TYPE_HEADER_OFFSET = 9
     return hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][0][0] + hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][1][0]
 
+def get_booking_time(message: Message) -> Tuple[date, time]:
+    
+
+
 async def handleMessage(hl7_message: Message):
     message_type = get_message_type(hl7_message)
 
     if message_type != 'ORMO01':
-      logging.info("Received a message that do not belong to this service!")
-      return
+        logging.info("Received a message that do not belong to this service!")
+        return
+
+    if not in_(hl7_message, 'ORC') or not in_(hl7_message,'OBR'):
+        logging.info("Received an ORMO01 message that do not belong to this service!")
+        logging.info("Reminder that whoever designed the HL7 standard is stupid")
+        return
+
+    for ORC_message_segment, OBR_message_segment in zip(hl7_message['ORC'], hl7_message['OBR']):
+        # This is the name given by the stanard. It is really part of the
+        # message type. But for some god forsaken reason, did we decide to have
+        # 10 different Message types to the same code
+        order_control = ORC_message_segment[1]
+
+        if order_control == 'XO' and ORC_message_segment[5] == 'Appointed':
+            # booking
+            pass
+
+            location = get_location(hl7_message)
+            procedure_identifier = get_procedure_identifier(hl7_message)
+
+        if order_control == 'DC':
+            # Delete
+            pass
+
 
 
 
@@ -74,7 +132,7 @@ async def main():
     except asyncio.CancelledError:
         # Cancelled errors are expected
         pass
-    except Exception as E:
+    except Exception:
         logging.error("Error occurred in main")
         logging.error(traceback.format_exc())
 

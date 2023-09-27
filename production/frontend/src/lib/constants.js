@@ -102,7 +102,7 @@ export const AUTH_USERNAME         = "username";
 export const AUTH_PASSWORD         = "password";
 export const AUTH_DETAIL           = "detail";
 export const AUTH_IS_AUTHENTICATED = "isAuthenticated";
-export const AUTH_USER_ID = "user_id";
+export const AUTH_USER = "auth_user";
 
 // Error strings
 export const ERROR_INVALID_AUTH = "InvalidAuth"

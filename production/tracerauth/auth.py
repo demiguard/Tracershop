@@ -84,9 +84,9 @@ def AuthMessage(user: User, message: Dict) -> bool:
     return True
   if isinstance(user, AnonymousUser):
     return False
-  if user.UserGroup == UserGroups.Admin:
+  if user.user_group == UserGroups.Admin:
     return True
-  if user.UserGroup == UserGroups.ProductionAdmin:
+  if user.user_group == UserGroups.ProductionAdmin:
     if messageType in [
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_MESSAGE_FREE_ACTIVITY,
@@ -101,7 +101,7 @@ def AuthMessage(user: User, message: Dict) -> bool:
     else:
       return False
 
-  if user.UserGroup == UserGroups.ProductionUser:
+  if user.user_group == UserGroups.ProductionUser:
     if messageType in [
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_MESSAGE_FREE_ACTIVITY,
@@ -116,19 +116,19 @@ def AuthMessage(user: User, message: Dict) -> bool:
     else:
       return False
 
-  if user.UserGroup == UserGroups.ShopAdmin:
+  if user.user_group == UserGroups.ShopAdmin:
     if messageType in []:
       return True
     else:
       return False
 
-  if user.UserGroup == UserGroups.ShopUser:
+  if user.user_group == UserGroups.ShopUser:
     if messageType in []:
       return True
     else:
       return False
 
-  if user.UserGroup == UserGroups.ShopExternal:
+  if user.user_group == UserGroups.ShopExternal:
     if messageType in []:
       return True
     else:

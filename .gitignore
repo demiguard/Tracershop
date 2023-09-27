@@ -42,3 +42,6 @@ config.py
 Release/
 Debug/
 ipch/
+hl7_messsages/
+
+*.hl7

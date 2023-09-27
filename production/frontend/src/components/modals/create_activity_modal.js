@@ -27,7 +27,6 @@ export function CreateOrderModal(props) {
   let timeSlotIdInit = ""
   for(const [customerID, endpointMap] of TimeSlotMapping){
     customerInit = customerID
-    console.log(endpointMap)
     for(const [endpointID, timeSlotOptions] of endpointMap){
       if(timeSlotOptions.length){
         endpointInit = endpointID

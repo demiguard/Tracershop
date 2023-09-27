@@ -30,7 +30,7 @@ export function ProductionSite(props) {
 
   const /**@type {User} */ user = props[PROP_USER]
   let availablePages;
-  if([USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.ADMIN].includes(user.UserGroup)){
+  if([USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.ADMIN].includes(user.user_group)){
     availablePages = AdminPages;
   } else {
     availablePages = UserPages;

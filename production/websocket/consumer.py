@@ -35,7 +35,7 @@ from django.db.models import QuerySet
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from constants import DEBUG_LOGGER, ERROR_LOGGER, JSON_DATETIME_FORMAT
-from shared_constants import AUTH_PASSWORD, AUTH_USER_ID, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
+from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
     ERROR_UNKNOWN_FAILURE,\
     JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_VIAL,\
@@ -101,9 +101,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, AnonymousUser):
       return
 
-    if user.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+    if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_add('production', self.channel_name)
-    if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
+    if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
       customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
       for customerID in customerIDs:
         await self.channel_layer.group_add(f'customer_{customerID}', self.channel_name)
@@ -113,9 +113,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, AnonymousUser):
       return
 
-    if user.UserGroup in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+    if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_discard('production', channel=self.channel_name)
-    if user.UserGroup in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
+    if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
       customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
       for customerID in customerIDs:
         await self.channel_layer.group_discard(f'customer_{customerID}', channel=self.channel_name)
@@ -306,40 +306,27 @@ class Consumer(AsyncJsonWebsocketConsumer):
     user: User = await database_sync_to_async(authenticate)(username=username,
                                                       password=password)
     if user:
-      if user.UserGroup == UserGroups.Anon:
+      if user.user_group == UserGroups.Anon:
         newUserGroup = checkUserGroupMembership(user.username)
         if newUserGroup != UserGroups.Anon:
-          user.UserGroup = newUserGroup
+          user.user_group = newUserGroup
           await database_sync_to_async(user.save)()
-
-      relatedCustomers = []
-      if user.UserGroup in [UserGroups.ShopAdmin,
-                            UserGroups.ShopExternal,
-                            UserGroups.ShopUser,]:
-        relatedCustomers = await self.db.getRelatedCustomerIDs(user)
 
       isAuth = True
       await login(self.scope, user)
       await sync_to_async(self.scope["session"].save)()
       await self.enterUserGroups(user)
       key = self.scope["session"].session_key
-      userGroup = user.UserGroup
-      customer = relatedCustomers
-      user_id = user.id
+      user = await self.db.serialize_dict({JSON_USER : [user]})
+      print(user)
     else:
-      user_id = None
       isAuth = False
-      username = ""
-      userGroup = 0
+      user = {}
       key = ""
-      customer = []
 
     await self.send_json({
-      AUTH_USERNAME : username,
-      LEGACY_KEYWORD_USERGROUP : userGroup,
-      LEGACY_KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
-      AUTH_USER_ID : user_id,
+      AUTH_USER : user,
       WEBSOCKET_SESSION_ID : key,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -349,29 +336,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def handleWhoAmI(self, message):
     user = await get_user(self.scope)
     if isinstance(user, User):
-      username = user.username
       await self.enterUserGroups(user)
       isAuth = True
-      userGroup = user.UserGroup
-      #queryCustomers = await database_sync_to_async(user.Customer.all)()
-      customer = []
-      user_id = user.id
+      user = await self.db.serialize_dict({JSON_USER : [user]})
       key = self.scope["session"].session_key
     else:
-      key = None
       isAuth = False
-      username = ""
-      userGroup = 0
-      customer = []
-      user_id = None
+      user = {}
+      key = ""
 
     await self.send_json({
       WEBSOCKET_SESSION_ID : key,
-      AUTH_USERNAME : username,
-      LEGACY_KEYWORD_USERGROUP : userGroup,
-      LEGACY_KEYWORD_CUSTOMER : customer,
       AUTH_IS_AUTHENTICATED : isAuth,
-      AUTH_USER_ID : user_id,
+      AUTH_USER : user,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -767,7 +744,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     externalUserID = message[WEBSOCKET_DATA_ID]
     externalNewPassword = message[AUTH_PASSWORD]
 
-    if user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionAdmin]:
+    if user.user_group not in [UserGroups.Admin, UserGroups.ProductionAdmin]:
       error_logger.error(f"User: {user.username} attempted to change password of {externalUserID}")
       return
 
@@ -790,7 +767,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   async def HandleCreateExternalUser(self, message):
     user: User = await get_user(self.scope)
-    if user.UserGroup not in [UserGroups.Admin, UserGroups.ProductionUser]:
+    if user.user_group not in [UserGroups.Admin, UserGroups.ProductionUser]:
       raise IllegalActionAttempted
     newUser, newUserAssignment = await self.db.createExternalUser(message[WEBSOCKET_DATA])
 

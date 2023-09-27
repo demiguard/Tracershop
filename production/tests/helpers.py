@@ -27,11 +27,11 @@ TEST_PRODUCTION_PASSWORD = "test_production_password"
 
 
 def InitializeTestDatabase():
-  test_admin = User(id=1, username=TEST_ADMIN_USERNAME, UserGroup=UserGroups.Admin, OldTracerBaseID=1337)
+  test_admin = User(id=1, username=TEST_ADMIN_USERNAME, user_group=UserGroups.Admin, OldTracerBaseID=1337)
   test_admin.set_password(TEST_ADMIN_PASSWORD)
   test_admin.save()
 
-  test_production = User(id=2, username=TEST_PRODUCTION_USERNAME, UserGroup=UserGroups.ProductionAdmin, OldTracerBaseID=420)
+  test_production = User(id=2, username=TEST_PRODUCTION_USERNAME, user_group=UserGroups.ProductionAdmin, OldTracerBaseID=420)
   test_production.set_password(TEST_PRODUCTION_PASSWORD)
   test_production.save()
 
