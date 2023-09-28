@@ -1,10 +1,10 @@
 /** This is the page, where a production admin can create a closed day */
 import React, { useState } from "react";
-import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../lib/constants";
-import { Calender, productionGetMonthlyOrders } from "../injectable/calender";
+import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_INJECTION_ORDER, JSON_PRODUCTION, JSON_RUN, LEGACY_KEYWORD_DDATE, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS } from "../../../lib/constants";
+import { Calender, productionGetMonthlyOrders } from "../../injectable/calender";
 
-import { FormatDateStr, dateToDateString } from "../../lib/formatting.js";
-import { ClosedDate } from "../../dataclasses/dataclasses";
+import { FormatDateStr, dateToDateString } from "../../../lib/formatting.js";
+import { ClosedDate } from "../../../dataclasses/dataclasses";
 
 export function CloseDaysPage (props) {
   const [today, setToday] = useState(new Date())

@@ -5,14 +5,13 @@ from typing import Dict, Tuple, Type, TypeVar
 from django.core.exceptions import ObjectDoesNotExist
 
 # Packages Tracershop
-from constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
+from shared_constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
     JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVER_TIME, \
     JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
     JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
     JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
     JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_DEADLINE, JSON_DICOM_ENDPOINT,\
-    JSON_LEGACY_PRODUCTION_MEMBER, JSON_LEGACY_INJECTION_ORDER,\
-    JSON_LEGACY_ACTIVITY_ORDER, JSON_PROCEDURE_IDENTIFIER
+    JSON_LEGACY_PRODUCTION_MEMBER, JSON_PROCEDURE_IDENTIFIER, JSON_RELEASE_RIGHT
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -26,13 +25,13 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_BOOKING : Booking,
   JSON_CLOSED_DATE : ClosedDate,
   JSON_CUSTOMER : Customer,
-  JSON_DATABASE : Database,
   JSON_DEADLINE : Deadline,
   JSON_DELIVER_TIME : ActivityDeliveryTimeSlot,
   JSON_DICOM_ENDPOINT : DicomEndpoint,
   JSON_ENDPOINT : DeliveryEndpoint,
   JSON_INJECTION_ORDER : InjectionOrder,
   JSON_ISOTOPE : Isotope,
+  JSON_RELEASE_RIGHT : ReleaseRight,
   #JSON_LEGACY_ACTIVITY_ORDER : LegacyActivityOrder, # We shouldn't need these in frontend
   #JSON_LEGACY_INJECTION_ORDER : LegacyInjectionOrder, # We shouldn't need these in frontend
   JSON_LEGACY_PRODUCTION_MEMBER : LegacyProductionMember,

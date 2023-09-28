@@ -47,8 +47,8 @@ describe("Create injection Order", () => {
       {...props}
     />)
 
-    expect(await screen.findByLabelText("customer-select")).toBeVisible();
-    expect(await screen.findByLabelText("endpoint-form")).toBeVisible();
+    expect(await screen.findByLabelText("select-customer")).toBeVisible();
+    expect(await screen.findByLabelText("select-endpoint")).toBeVisible();
     expect(await screen.findByLabelText("tracer-select")).toBeVisible();
     expect(await screen.findByLabelText("usage-select")).toBeVisible();
     expect(await screen.findByLabelText("injection-input")).toBeVisible();

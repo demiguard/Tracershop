@@ -1,9 +1,9 @@
-import React, { Component, useState } from "react";
-import { Modal, Button, Form, FormControl, InputGroup, Row, Container } from "react-bootstrap";
+import React, { useState } from "react";
+import { Modal, Button, FormControl, InputGroup, Row, Container } from "react-bootstrap";
 import { Calculator } from "../injectable/calculator";
-import { ParseDanishNumber, dateToDateString } from "../../lib/formatting";
+import { dateToDateString } from "../../lib/formatting";
 import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
-  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, PROP_ON_CLOSE, PROP_WEBSOCKET, JSON_TRACER, PROP_ACTIVE_TRACER, JSON_ISOTOPE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, DATABASE_CURRENT_USER, AUTH_USER_ID, PROP_TIME_SLOT_MAPPING, JSON_ENDPOINT, JSON_DELIVER_TIME } from "../../lib/constants.js"
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, PROP_ON_CLOSE, PROP_WEBSOCKET, JSON_TRACER, PROP_ACTIVE_TRACER, JSON_ISOTOPE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, DATABASE_CURRENT_USER, AUTH_USER_ID, PROP_TIME_SLOT_MAPPING, JSON_ENDPOINT, JSON_DELIVER_TIME, JSON_PRODUCTION } from "../../lib/constants.js"
 
 import { ActivityDeliveryTimeSlot, ActivityOrder, Customer } from "../../dataclasses/dataclasses";
 
@@ -15,14 +15,16 @@ import { ClickableIcon } from "../injectable/icons";
 import { Select } from "../injectable/select"
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box"
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
-import { combineDateAndTimeStamp } from "../../lib/chronomancy";
+import { combineDateAndTimeStamp, getDay } from "../../lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { parseDanishPositiveNumberInput } from "../../lib/user_input";
 
 export function CreateOrderModal(props) {
   const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ TimeSlotMapping = props[PROP_TIME_SLOT_MAPPING]
 
-  let endpointInit, customerInit, timeSlotIdInit
+  let endpointInit = ""
+  let customerInit = ""
+  let timeSlotIdInit = ""
   for(const [customerID, endpointMap] of TimeSlotMapping){
     customerInit = customerID
     for(const [endpointID, timeSlotOptions] of endpointMap){
@@ -37,7 +39,13 @@ export function CreateOrderModal(props) {
 
   const [activeCustomer, setActiveCustomer] = useState(customerInit);
   const [activeEndpoint, setActiveEndpoint] = useState(endpointInit);
-  const [activeTimeSlot, setActiveTimeSlot] = useState(timeSlotIdInit);
+  const [activeTimeSlot, _setActiveTimeSlot] = useState(timeSlotIdInit);
+
+  function setActiveTimeSlot(value){
+    _setActiveTimeSlot(value)
+  }
+
+
 
   const [state, _setState] = useState({
     amount : "",
@@ -112,6 +120,14 @@ export function CreateOrderModal(props) {
     })
   }
 
+  const day = getDay(props[PROP_ACTIVE_DATE]);
+  const filteredTimeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
+    (timeSlot) => {
+      const production = props[JSON_PRODUCTION].get(timeSlot.production_run)
+      return production.production_day == day;
+    }
+  )
+
   const Tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
 
   return (
@@ -142,7 +158,7 @@ export function CreateOrderModal(props) {
                 activeTimeSlot={activeTimeSlot}
                 customer={props[JSON_CUSTOMER]}
                 endpoints={props[JSON_ENDPOINT]}
-                timeSlots={props[JSON_DELIVER_TIME]}
+                timeSlots={filteredTimeSlots}
                 setCustomer={setActiveCustomer}
                 setEndpoint={setActiveEndpoint}
                 setTimeSlot={setActiveTimeSlot}

@@ -31,15 +31,21 @@ class User(AbstractBaseUser, TracershopModel):
   id = BigAutoField(primary_key=True)
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=120)
-  UserGroup = SmallIntegerField(choices=UserGroups.choices, default= UserGroups.Anon)
+  user_group = SmallIntegerField(choices=UserGroups.choices, default= UserGroups.Anon)
   active = BooleanField(default=True)
-  # This number overlaps with Users.id field of the old database.
-  # Note for user in this database and not in the other database,
-  # this field is an auto incremented with an offset of 10000.
-  # However it should be ensured with appilcation level code, Sorry.
-  OldTracerBaseID = SmallIntegerField(unique=True, null=True, default=None)
+
 
   USERNAME_FIELD = 'username'
+
+  @property
+  def is_production_admin(self) -> bool:
+    return self.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin]
+
+  @property
+  def is_shop_admin(self) -> bool:
+    return self.user_group in [UserGroups.Admin, UserGroups.ShopAdmin]
+
+
 
   @classproperty
   def exclude(cls) -> List[str]:
@@ -50,6 +56,6 @@ class User(AbstractBaseUser, TracershopModel):
 
 
 class SecondaryEmail(TracershopModel):
-  secondary_email_id = BigAutoField(primary_key=True)
+  id = BigAutoField(primary_key=True)
   email = EmailField()
   record_user = ForeignKey(User, on_delete=CASCADE)

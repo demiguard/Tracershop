@@ -18,12 +18,26 @@
  * @returns {string}
  */
 export function parseDate(inputStr){
-  if (/^\d{4}-\d{2}-\d{2}$/g.test(inputStr)) return inputStr;
-  if (/^\d{4}\/\d{2}\/\d{2}$/g.test(inputStr)) return inputStr.substring(0,4)+ "-" + inputStr.substring(5,7) + "-" + inputStr.substring(8,10);
-  if (/^\d{2}\/\d{2}\/\d{4}$/g.test(inputStr)) return inputStr.substring(6,10) + "-" + inputStr.substring(3,5) + "-" + inputStr.substring(0,2);
-  if (/^\d{2}-\d{2}-\d{4}$/g.test(inputStr)) return inputStr.substring(6,10) + "-" + inputStr.substring(3,5) + "-" + inputStr.substring(0,2);
+  inputStr = inputStr.trim();
+
+  if (/\d{4}-\d{2}-\d{2}/g.test(inputStr)) {
+    return inputStr;
+  }
+
+  if (/\d{4}\/\d{2}\/\d{2}/g.test(inputStr)) {
+    return inputStr.substring(0,4)+ "-" + inputStr.substring(5,7) + "-" + inputStr.substring(8,10);
+  }
+
+  if (/\d{2}\/\d{2}\/\d{4}/g.test(inputStr)) {
+    return inputStr.substring(6,10) + "-" + inputStr.substring(3,5) + "-" + inputStr.substring(0,2);
+  }
+
+  if (/\d{2}-\d{2}-\d{4}/g.test(inputStr)) {
+    return inputStr.substring(6,10) + "-" + inputStr.substring(3,5) + "-" + inputStr.substring(0,2);
+  }
+
   //Todo add more formats
-  throw "Date not on known format, Date: "+inputStr
+  return null
 }
 
 /**
@@ -196,6 +210,13 @@ export function getDateName(day){
   throw "Unknown Day"
 }
 
+/**
+ * This function is exists because react doesn't like null,
+ * So now I have to deal with the abstraction that the absense of a value is ""
+ * Rather than null.
+ * @param {Any} value - Any value to be checked if it's null
+ * @returns {Any} - EXCEPT NULL of cause
+ */
 export function nullParser(value){
   return (value === null) ? "" : value;
 }

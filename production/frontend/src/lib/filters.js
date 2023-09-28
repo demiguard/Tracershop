@@ -8,12 +8,41 @@ export function dayTracerFilter(day, tracerID){
   }
 }
 
-export function endpointFilter(endpointID){
+export function timeSlotOwnerFilter(endpointID){
   return (timeSlot) => timeSlot.destination === endpointID;
 }
 
-export function getRelatedTimeSlots(timeSlots, endpointID) {
-  return (timeSlots instanceof Map) ?
-    [...timeSlots.values()].filter(endpointFilter(endpointID)) :
-    timeSlots.filter(endpointFilter(endpointID));
+/** Function used 
+ * 
+ * @param {Number} CustomerID 
+ * @returns 
+ */
+export function endpointOwnerFilter(CustomerID){
+  return (endpoint) => endpoint.owner === CustomerID
 }
+
+
+/**
+ * 
+ * @param {String} dateString 
+ * @returns {CallableFunction}
+ */
+export function bookingFilter(dateString, locations, activeEndpoint){
+  /**
+  * @param {Booking} booking 
+  * @returns {Boolean}
+  */
+  const returnFunction = (booking) =>{
+    const location = locations.get(booking.location);
+    booking.start_date === dateString && location.owner === activeEndpoint;
+  }
+
+  return returnFunction;
+}
+
+export function applyFilter(collection, filterFunction) {
+  return (collection instanceof Map) ?
+    [...collection.values()].filter(filterFunction) :
+    collection.filter(filterFunction);
+}
+

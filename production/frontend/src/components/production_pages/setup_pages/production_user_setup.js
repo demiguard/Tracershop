@@ -3,14 +3,14 @@
   */
 import React, { useEffect, useState } from "react";
 import { Card, Col, Container, Form, FormControl, InputGroup, Row } from "react-bootstrap";
-import { AUTH_PASSWORD, AUTH_USERNAME, JSON_CUSTOMER, JSON_USER, JSON_USER_ASSIGNMENT, PROP_WEBSOCKET, USER_GROUPS, WEBSOCKET_MESSAGE_SUCCESS, cssCenter } from "../../lib/constants";
-import { Customer, User, UserAssignment } from "../../dataclasses/dataclasses";
-import { TracershopInputGroup } from "../injectable/tracershop_input_group";
-import { TracerWebSocket } from "../../lib/tracer_websocket"
-import { ClickableIcon } from "../injectable/icons";
-import { makePassword } from "../../lib/formatting";
-import { HoverBox } from "../injectable/hover_box";
-import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
+import { AUTH_PASSWORD, AUTH_USERNAME, JSON_CUSTOMER, JSON_USER, JSON_USER_ASSIGNMENT, PROP_WEBSOCKET, USER_GROUPS, WEBSOCKET_MESSAGE_SUCCESS, cssCenter } from "../../../lib/constants";
+import { Customer, User, UserAssignment } from "../../../dataclasses/dataclasses";
+import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
+import { TracerWebSocket } from "../../../lib/tracer_websocket"
+import { ClickableIcon } from "../../injectable/icons";
+import { makePassword } from "../../../lib/formatting";
+import { HoverBox } from "../../injectable/hover_box";
+import { CustomerSelect } from "../../injectable/derived_injectables/customer_select";
 
 const /**@type {String} Css size of the icon for clicking an action button */ AcceptIconWidth = "52px"
 
@@ -237,7 +237,7 @@ export function ProductionUserSetup(props){
   const ExternalUsersRows = [...props[JSON_USER].values()].filter(
     (_user) => {
       const /**@type {User} */ user = _user
-      return user.UserGroup === USER_GROUPS.SHOP_EXTERNAL
+      return user.user_group === USER_GROUPS.SHOP_EXTERNAL
     }
   ).map((user, i) => {
     return(

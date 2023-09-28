@@ -23,6 +23,10 @@ describe("ParseDate Tests", () => {
     const input = "30/11/2011"
     expect(parseDate(input)).toEqual(target_date_1);
   });
+  it("Valid Dateformat DD/MM/YYYY", () => {
+    const input = "15/10/2023"
+    expect(parseDate(input)).toEqual("2023-10-15");
+  });
   /*
   it("American format MM/DD/YYYY", () =>{
     const input = "11/30/2011";
@@ -35,12 +39,7 @@ describe("ParseDate Tests", () => {
 
   it("Not a Date", () =>{
     const input = "FooBar";
-    try {
-      parseDate(input);
-      expect(false).toEqual(true);
-    } catch (e) {
-      expect(e).toEqual("Date not on known format, Date: " + input);
-    }
+    expect(parseDate(input)).toBeNull;
   });
 })
 

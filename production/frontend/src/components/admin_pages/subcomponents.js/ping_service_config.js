@@ -7,6 +7,7 @@ import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { ClickableIcon } from "../../injectable/icons";
 import { parseAETitleInput, parseIPInput, parsePortInput } from "../../../lib/user_input";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
+import { ParseJSONstr } from "../../../lib/formatting";
 
 export function PingServiceConfig(props){
   const /**@type { ServerConfiguration} */ server_config = props[JSON_SERVER_CONFIG].get(1);
@@ -68,17 +69,19 @@ export function PingServiceConfig(props){
                                              state.address_port,
                                              "Address for ping service")]).then(
       (message) => {
+        console.log(message)
         let dicom_endpoint;
         const state = ParseJSONstr(message[WEBSOCKET_DATA])
         const models = state[JSON_ADDRESS]
         for(const model of models){
-          let dicom_endpoint = new DicomEndpoint(undefined,
-                                                 model.pk,
-                                                 state.ae_title);
+          dicom_endpoint = new DicomEndpoint(undefined,
+                                             model.pk,
+                                             state.ae_title);
           break;
         }
         websocket.sendCreateModel(JSON_DICOM_ENDPOINT, [dicom_endpoint]).then(
           (message) => {
+            console.log(message)
             let newEndpointID;
             const state = ParseJSONstr(message[WEBSOCKET_DATA]);
             const models = state[JSON_DICOM_ENDPOINT];
@@ -103,10 +106,7 @@ export function PingServiceConfig(props){
         ae_title : state.ae_title,
       }])
     }
-
   }
-
-  console.log(state)
 
   return (
   <Row>

@@ -1,18 +1,19 @@
 import React, { useState } from "react";
 import { Button, Col, Container, FormControl, Row } from "react-bootstrap";
-import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../lib/constants";
-import { Deadline, ServerConfiguration, Tracer } from "../../dataclasses/dataclasses";
-import { Select } from "../injectable/select";
-import { TracerWebSocket } from "../../lib/tracer_websocket";
-import { setEvent } from "../../lib/state_management";
-import { parseTimeInput } from "../../lib/user_input";
-import { TimeInput } from "../injectable/time_form";
+import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../../lib/constants";
+import { Deadline, ServerConfiguration, Tracer } from "../../../dataclasses/dataclasses";
+import { Select } from "../../injectable/select";
+import { TracerWebSocket } from "../../../lib/tracer_websocket";
+import { setStateToEvent } from "../../../lib/state_management";
+import { parseTimeInput } from "../../../lib/user_input";
+import { TimeInput } from "../../injectable/time_form";
+import { ErrorInput } from "../../injectable/error_input";
 
 
 /**
  * @enum
  */
-const GlobalDeadlineValuesOptions = {
+export const GlobalDeadlineValuesOptions = {
   NO_OPTION : 1,
   GLOBAL_ACTIVITY_DEADLINE : 2,
   GLOBAL_INJECTION_DEADLINE : 3,
@@ -46,45 +47,49 @@ function NewDeadlineRow({websocket}){
   const [deadlineType, setDeadlineType] = useState(DEADLINE_TYPES.DAILY);
   const [deadlineTime, setDeadlineTime] = useState("");
   const [day, setDay] = useState(DAYS.MONDAY);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState("");
 
   function createDeadline(){
-    const [validTime, timeOutput] = parseTimeInput(deadlineTime);
+    const [validTime, timeOutput] = parseTimeInput(deadlineTime, "Deadline tidspunktet");
 
     if (validTime){
-      setError(false);
+      setError("");
       websocket.sendCreateModel(JSON_DEADLINE, [
-        new Deadline(undefined, deadlineType, timeOutput, day)
+        new Deadline(undefined, Number(deadlineType), timeOutput, day)
       ]);
     } else {
-      setError(true);
+      setError(timeOutput);
     }
   }
 
   return (<Row>
     <Col>
       <Select
+        aria-label="type-new"
         options={DEADLINE_TYPE_OPTIONS}
         nameKey="name"
         valueKey="id"
         value={deadlineType}
-        onChange={setEvent(setDeadlineType)}
+        onChange={setStateToEvent(setDeadlineType)}
       />
     </Col>
     <Col>
-      <TimeInput
-        style={error ? cssError : {}}
-        stateFunction={setDeadlineTime}
-        value={deadlineTime}
-      />
+      <ErrorInput error={error}>
+        <TimeInput
+          aria-label="time-new"
+          stateFunction={setDeadlineTime}
+          value={deadlineTime}
+        />
+      </ErrorInput>
     </Col>
     <Col style={cssCenter}>
       {Number(deadlineType) === DEADLINE_TYPES.WEEKLY ? <Select
+          aria-label="days-new"
           options={correctDays}
           nameKey="name"
           valueKey="id"
           value={day}
-          onChange={setEvent(setDay)}
+          onChange={setStateToEvent(setDay)}
         /> : "-----"}
     </Col>
     <Col>
@@ -114,17 +119,33 @@ function DeadlineRow({deadline,
   const [time, _setTime] = useState(deadline.deadline_time)
   const [day, _setDay] = useState(deadline.deadline_day)
 
+
   // State Setters
   function setDeadlineType(event){
-    _setDeadlineType(Number(event.target.value));
+    const newDeadlineType = Number(event.target.value);
+    if (deadlineType === newDeadlineType){
+      return;
+    }
+
+    if(newDeadlineType === DEADLINE_TYPES.DAILY){
+      _setDay(null);
+    } else if(newDeadlineType === DEADLINE_TYPES.WEEKLY){
+      _setDay(1);
+    }
+
+    _setDeadlineType(newDeadlineType);
+
     websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_type : Number(event.target.value)})
   }
 
   function setDay(event) {
-    const day = Number(event.target.value)
-    _setDay(day)
+    const newDay = Number(event.target.value)
+    if (day === newDay){
+      return;
+    }
+    _setDay(newDay)
 
-    websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_day : day})
+    websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_day : newDay})
   }
 
   function setTime(inputValue){
@@ -150,6 +171,7 @@ function DeadlineRow({deadline,
   }}>
     <Col>
       <Select
+        aria-label={`type-${deadline.id}`}
         options={DEADLINE_TYPE_OPTIONS}
         nameKey="name"
         valueKey="id"
@@ -158,10 +180,14 @@ function DeadlineRow({deadline,
       />
     </Col>
     <Col>
-      <TimeInput value={time} stateFunction={setTime}/>
+      <TimeInput
+        value={time}
+        aria-label={`time-${deadline.id}`}
+        stateFunction={setTime}/>
     </Col>
     <Col style={cssCenter}>
         { deadlineType === DEADLINE_TYPES.WEEKLY ? <Select
+          aria-label={`days-${deadline.id}`}
           options={correctDays}
           nameKey="name"
           valueKey="id"
@@ -172,12 +198,14 @@ function DeadlineRow({deadline,
     <Col>
       { globalValue === GlobalDeadlineValuesOptions.NO_OPTION ?
       <Select
+        aria-label={`global-${deadline.id}`}
         options={globalOptions}
         nameKey="name"
         valueKey="id"
         value={globalValue}
         onChange={setGlobalDeadline(deadline)}
       /> : <Select
+        aria-label={`global-${deadline.id}`}
         options={globalOptions}
         nameKey="name"
         valueKey="id"
@@ -185,7 +213,6 @@ function DeadlineRow({deadline,
         onChange={setGlobalDeadline(deadline)}
         disabled
       />
-
     }
     </Col>
   </Row>

@@ -7,20 +7,18 @@
 import React from 'react'
 
 import { Customer, DeliveryEndpoint, Tracer, ActivityDeliveryTimeSlot } from "../../../dataclasses/dataclasses";
-import { JSON_DELIVER_TIME } from "../../../lib/constants";
-import { getId } from "../../../lib/utils";
 import { TracershopInputGroup } from "../tracershop_input_group";
 import { CustomerSelect } from "./customer_select";
 import { EndpointSelect } from "./endpoint_select";
 import { TimeSlotSelect } from "./timeslot_select";
-import { getRelatedTimeSlots } from '../../../lib/filters';
+import { getRelatedTimeSlots } from '../../../lib/data_structures';
 
 /**
- * 
+ *
  * @param {{
- * aria-label-customer : String | undefined,
- * aria-label-endpoint : String | undefined,
- * aria-label-timeSlot : String | undefined,
+ * ariaLabelCustomer : String | undefined,
+ * ariaLabelEndpoint : String | undefined,
+ * ariaLabelTimeSlot : String | undefined,
  * activeCustomer : Number,
  * activeEndpoint : Number,
  * activeTimeSlot : Number | undefined,
@@ -29,7 +27,7 @@ import { getRelatedTimeSlots } from '../../../lib/filters';
  * timeSlots : Map<Number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot> | undefined,
  * setCustomer : Callable,
  * setEndpoint : Callable,
- * setTimeSlot : Callable,
+ * setTimeSlot : Callable | undefined,
  * }} param0
  * @returns {Element}
  */
@@ -38,15 +36,12 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
                                    customer, endpoints, timeSlots,
                                    setCustomer, setEndpoint, setTimeSlot }){
   const filteredEndpoints = [...endpoints.values()].filter(
-    (endpoint) => {return customer.has(endpoint.owner);}
+    (endpoint) => {return activeCustomer == endpoint.owner;}
   );
   const withTimeSlots = setTimeSlot !== undefined
                         && timeSlots !== undefined
-                        && activeTimeSlot !== undefined;
-
 
   function setTimeSlotToNewEndpoint(rawEndpointID){
-    console.log(rawEndpointID)
     if(withTimeSlots){
       const newEndpointID = (rawEndpointID !== "") ? Number(rawEndpointID) : "";
       const newTimeSlots = getRelatedTimeSlots(timeSlots, newEndpointID);
@@ -62,8 +57,7 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     const newEndpoints = [...endpoints.values()].filter(
       (endpoint) => {
         return rawCustomerID === endpoint.owner
-      }
-    )
+      })
 
     let newEndpointID = (0 === newEndpoints.length) ? "" : newEndpoints[0].id;
     setEndpoint(newEndpointID);
@@ -91,11 +85,11 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
 
     const filteredTimeSlots = getRelatedTimeSlots(timeSlots, activeEndpoint);
 
-    thirdColumn = <TracershopInputGroup>
+    thirdColumn = <TracershopInputGroup label="Leverings tid">
       <TimeSlotSelect
         aria-label={ariaLabelTimeSlot}
         deliverTimes={filteredTimeSlots}
-        value={activeEndpoint}
+        value={activeTimeSlot}
         onChange={onChangeTimeSlot}
       />
     </TracershopInputGroup>

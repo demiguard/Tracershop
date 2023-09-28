@@ -24,6 +24,12 @@ export function toggleState(stateKeyWord, This){
   return returnFunction.bind(This);
 }
 
-export function setEvent(stateFunction){
+/**
+ * shorthand for (event) => {stateFunction(event.target.value)}
+ * Note this will always be a string, so you have do some magic on the other end
+ * @param {CallableFunction} stateFunction - the setState function related to variable
+ * @returns {CallableFunction}
+ */
+export function setStateToEvent(stateFunction){
   return (event) => {stateFunction(event.target.value)}
 }

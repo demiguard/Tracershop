@@ -1,18 +1,22 @@
 import React, { useState } from "react";
 import { Container, Row } from "react-bootstrap";
 import {CustomerPage} from "./customer_page";
-import TracerPage from "./tracer_page";
+import { TracerPage } from "./tracer_page";
 import { CloseDaysPage } from "./close_days_page";
 import { DeadlineSetup } from "./deadline_setup";
-import { MarginButton } from "../injectable/buttons";
+import { MarginButton } from "../../injectable/buttons";
 import { ProductionUserSetup } from "./production_user_setup";
+import { IsotopeSetupPage } from "./isotope_setup_page";
+import { FreeingRightsPage } from "./freeing_rights_page";
 
 const sites = {
-  customer : CustomerPage,
-  tracer : TracerPage,
+  customer   : CustomerPage,
+  tracer     : TracerPage,
   closeDates : CloseDaysPage,
-  deadline : DeadlineSetup,
-  users : ProductionUserSetup
+  deadline   : DeadlineSetup,
+  users      : ProductionUserSetup,
+  isotope    : IsotopeSetupPage,
+  freed      : FreeingRightsPage,
 }
 
 export const siteNames = {
@@ -20,7 +24,9 @@ export const siteNames = {
   tracer : "Tracer",
   closeDates : "Lukke dage",
   deadline : "Deadlines",
-  users : "Bruger",
+  users : "Externe Kunder",
+  isotope : "Isotoper",
+  freed : "Frigivelse rettigheder"
 }
 
 

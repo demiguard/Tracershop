@@ -9,20 +9,20 @@ import { render, screen, cleanup } from "@testing-library/react"
 
 import { PROP_WEBSOCKET } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
-import { SetupShop, siteNames } from "../../../components/production_pages/setup_shop.js";
+import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
-jest.mock('../../../components/production_pages/customer_page', () =>
+jest.mock('../../../components/production_pages/setup_pages/customer_page', () =>
   ({CustomerPage : () => <div>CustomerPageMocked</div>}))
-jest.mock('../../../components/production_pages/close_days_page', () =>
+jest.mock('../../../components/production_pages/setup_pages/close_days_page', () =>
   ({CloseDaysPage : () => <div>CloseDaysPageMocked</div>}))
-jest.mock('../../../components/production_pages/deadline_setup', () =>
+jest.mock('../../../components/production_pages/setup_pages/deadline_setup', () =>
   ({DeadlineSetup : () => <div>DeadlineSetupMocked</div>}))
-jest.mock('../../../components/production_pages/tracer_page', () =>
+jest.mock('../../../components/production_pages/setup_pages/tracer_page', () =>
   ({TracerPage : () => <div>TracerPageMocked</div>}))
-jest.mock('../../../components/production_pages/production_user_setup', () =>
+jest.mock('../../../components/production_pages/setup_pages/production_user_setup', () =>
   ({ProductionUserSetup : () => <div>ProductionUserSetupMocked</div>}))
 
 

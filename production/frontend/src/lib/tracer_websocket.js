@@ -49,7 +49,6 @@ class TracerWebSocket {
           this.StateHolder.updateState(state, message[WEBSOCKET_REFRESH]);
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-            console.log(message);
             this.StateHolder.deleteModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID])
         }
         break
@@ -91,7 +90,16 @@ class TracerWebSocket {
     return message;
   }
 
+  /**
+   * 
+   * @param {Object} data 
+   * @returns 
+   */
   send(data){
+    // Note that this function is just a wrapper around
+
+
+    // Message ID is the method, that allows us to asynchronous resolve the correct Promise
     let messageID;
     if (!data.hasOwnProperty(WEBSOCKET_MESSAGE_ID)){
         var TestID =  Math.floor(Math.random() * 2147483647);
@@ -105,6 +113,8 @@ class TracerWebSocket {
       data[WEBSOCKET_JAVASCRIPT_VERSION] = JAVASCRIPT_VERSION
     }
 
+    // Note that this function actually does the sending
+    // The promises is just to call an async function.
     new Promise(() => safeSend(data, this._ws));
 
     const promise = new Promise(async function (resolve) {

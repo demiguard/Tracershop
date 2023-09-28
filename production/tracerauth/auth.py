@@ -8,7 +8,20 @@ from django.apps import apps
 from django.contrib.auth.models import AnonymousUser
 
 # Tracershop App
-from constants import *
+from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
+  ERROR_INSUFFICIENT_DATA, ERROR_INVALID_JAVASCRIPT_VERSION,\
+  ERROR_NO_MESSAGE_TYPE, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_JAVASCRIPT_VERSION,\
+  ERROR_NO_MESSAGE_ID, WEBSOCKET_JAVASCRIPT_VERSION, ERROR_INVALID_MESSAGE,\
+  ERROR_INVALID_AUTH, JSON_AUTH, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_ID,\
+  WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_FREE_INJECTION,\
+  WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_DATATYPE,\
+  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,\
+  WEBSOCKET_MESSAGE_TYPE,\
+  WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_ECHO,\
+  WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_FREE_ACTIVITY,\
+  WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_UPDATE_SERVERCONFIG,\
+  WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,\
+  WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
 from database.models import User, UserGroups, TracershopModel, Tracer, INVERTED_MODELS, MODELS
 
 requiredMessageFields = {
@@ -71,9 +84,9 @@ def AuthMessage(user: User, message: Dict) -> bool:
     return True
   if isinstance(user, AnonymousUser):
     return False
-  if user.UserGroup == UserGroups.Admin:
+  if user.user_group == UserGroups.Admin:
     return True
-  if user.UserGroup == UserGroups.ProductionAdmin:
+  if user.user_group == UserGroups.ProductionAdmin:
     if messageType in [
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_MESSAGE_FREE_ACTIVITY,
@@ -88,7 +101,7 @@ def AuthMessage(user: User, message: Dict) -> bool:
     else:
       return False
 
-  if user.UserGroup == UserGroups.ProductionUser:
+  if user.user_group == UserGroups.ProductionUser:
     if messageType in [
         WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
         WEBSOCKET_MESSAGE_FREE_ACTIVITY,
@@ -103,19 +116,19 @@ def AuthMessage(user: User, message: Dict) -> bool:
     else:
       return False
 
-  if user.UserGroup == UserGroups.ShopAdmin:
+  if user.user_group == UserGroups.ShopAdmin:
     if messageType in []:
       return True
     else:
       return False
 
-  if user.UserGroup == UserGroups.ShopUser:
+  if user.user_group == UserGroups.ShopUser:
     if messageType in []:
       return True
     else:
       return False
 
-  if user.UserGroup == UserGroups.ShopExternal:
+  if user.user_group == UserGroups.ShopExternal:
     if messageType in []:
       return True
     else:

@@ -44,8 +44,12 @@ export function OrderReview(props){
   }
 
   // State Definitions
-  // TODO: Make fail case if there's no availableActivityTracers!
-  const [activeTracer, setActiveTracer] = useState(availableActivityTracers[0].id);
+  let activeTracerInit = -1
+  if (0 < availableActivityTracers.length){
+    activeTracerInit = availableActivityTracers[0].id
+  }
+
+  const [activeTracer, setActiveTracer] = useState(activeTracerInit);
 
   const day = getDay(props[PROP_ACTIVE_DATE]);
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE]);
@@ -76,13 +80,6 @@ export function OrderReview(props){
       return timeSlotConstraint && dateConstraint === activityOrder.delivery_date;
   });
 
-  console.log(relevantActivityOrders,
-    availableTimeSlots.map(
-    (id) => props[JSON_DELIVER_TIME].get(id)),
-    availableTimeSlots.map(
-    (id) => {let dt = props[JSON_DELIVER_TIME].get(id)
-                   return props[JSON_PRODUCTION].get(dt.production_run)}))
-
   function setTracer(tracer){
     return (e) => {
       setActiveTracer(tracer.id);
@@ -106,6 +103,7 @@ export function OrderReview(props){
 
   const overhead = overheadMap.get(activeTracer);
 
+  // If activeTracer is -1, then availableTimeSlot should be [], hence no bugs
   const timeSlotsCards = availableTimeSlots.map((timeSlotID) => {
     const timeSlot = props[JSON_DELIVER_TIME].get(timeSlotID);
     return(<TimeSlotCard
@@ -167,7 +165,9 @@ export function OrderReview(props){
       <Col>{tracerButtons}</Col>
     </Row>
     <Row>
-      {timeSlotsCards}
+      {activeTracer !== -1 ? timeSlotsCards : <h3>
+        Der ikke valgt en aktivitets tracer, klik på en af dem for at bestille den.
+      </h3>}
     </Row>
     { InjectionOrderCards.length ?
       <Row style={{margin : '15px'}}><h3>Injection Ordre</h3></Row> : ""}

@@ -20,7 +20,7 @@ class ViewTestCase(TestCase):
 
   @classmethod
   def setupTestData(cls) -> None:
-    cls.user = User.objects.create(username='testuser', UserGroup=UserGroups.ShopUser)
+    cls.user = User.objects.create(username='testuser', user_group=UserGroups.ShopUser)
     cls.user.set_password("password")
 
   def test_indexView(self):

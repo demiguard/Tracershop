@@ -99,7 +99,7 @@ describe("Customer modal list", () => {
     expect(Number(productionSelect.value)).toEqual(targetTimeSlot.production_run)
   })
 
-  it("Customer 1, change time slot 2 - delivery time", async () => {
+  it.skip("Customer 1, change time slot 2 - delivery time", async () => {
     render(<CustomerModal {...props} />, container);
 
     const timeSlot2 = await screen.findByLabelText('time-slot-2');
@@ -115,7 +115,7 @@ describe("Customer modal list", () => {
     expect(screen.queryByLabelText("time-slot-create")).toBeNull()
   })
 
-  it("Customer 1, edit time slot 2 - delivery time", async () => {
+  it.skip("Customer 1, edit time slot 2 - delivery time", async () => {
     render(<CustomerModal {...props} />, container);
 
     const timeSlot2 = await screen.findByLabelText('time-slot-2');

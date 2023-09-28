@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FormControl, InputGroup, Table } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
-import { setEvent } from "../../../lib/state_management";
+import { setStateToEvent } from "../../../lib/state_management";
 import { Select } from "../../injectable/select";
 import { JSON_CUSTOMER, JSON_ENDPOINT, JSON_LOCATION, PROP_WEBSOCKET } from "../../../lib/constants";
 import { Location } from "../../../dataclasses/dataclasses";
@@ -129,9 +129,9 @@ export function LocationTable(props){
             value={filterType}
             nameKey="name"
             valueKey="id"
-            onChange={setEvent(setFilterType)}
+            onChange={setStateToEvent(setFilterType)}
             />
-          <FormControl value={filter} onChange={setEvent(setFilter)}/>
+          <FormControl value={filter} onChange={setStateToEvent(setFilter)}/>
         </TracershopInputGroup>
       </div>
 

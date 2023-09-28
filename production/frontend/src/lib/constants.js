@@ -2,6 +2,15 @@ export const JAVASCRIPT_VERSION = "1.0.1";
 
 export const TRACER_TYPE_ACTIVITY = 1;
 export const TRACER_TYPE_DOSE = 2;
+
+export const TracerTypeOptions = [{
+  id : TRACER_TYPE_ACTIVITY,
+  name : "Aktivitet"
+},{
+  id : TRACER_TYPE_DOSE,
+  name : "Injektioner"
+}]
+
 export const DAYS_PER_WEEK = 7;
 // Note that to correct day from date.getDay -> (date.getDate() + 6) % 7
 export const DAYS = { // So in the modern part of the world, aka the ones that use metric units, the first day of the week is Monday
@@ -23,12 +32,15 @@ export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
   {name : "Søndag", day : 7},
 ]
 
+/**
+ * @enum
+ */
 export const DEADLINE_TYPES = {
   DAILY : 0,
   WEEKLY : 1,
 }
 
-
+/**@enum */
 export const USER_GROUPS = {
   ANON : 0,
   ADMIN : 1,
@@ -39,11 +51,14 @@ export const USER_GROUPS = {
   SHOP_EXTERNAL : 6
 }
 
+/**@enum */
 export const WEEKLY_REPEAT_CHOICES = {
   ALL : 0,
   EVEN : 1,
   ODD : 2,
 }
+
+
 
 /**
  * Enum describing options of an Injections order usage field
@@ -71,6 +86,11 @@ export const cssCenter = {
   textAlign: 'center'
 }
 
+export const cssAlignRight = {
+          justifyContent : 'right',
+          display : 'flex'
+        };
+
 export const cssError = {
   background : ERROR_BACKGROUND_COLOR,
   marginColor : ERROR_MARGIN_COLOR,
@@ -82,7 +102,7 @@ export const AUTH_USERNAME         = "username";
 export const AUTH_PASSWORD         = "password";
 export const AUTH_DETAIL           = "detail";
 export const AUTH_IS_AUTHENTICATED = "isAuthenticated";
-export const AUTH_USER_ID = "user_id";
+export const AUTH_USER = "auth_user";
 
 // Error strings
 export const ERROR_INVALID_AUTH = "InvalidAuth"
@@ -121,6 +141,7 @@ export const JSON_ISOTOPE = "isotopes";
 export const JSON_ORDERS  = "orders";
 export const JSON_PRODUCTION = "production";
 export const JSON_PROCEDURE_IDENTIFIER = "procedure_identifier";
+export const JSON_RELEASE_RIGHT = "release_right";
 export const JSON_RUN = "run";
 export const JSON_TRACER = "tracer";
 export const JSON_TRACER_MAPPING = "tracer_mapping";
@@ -162,6 +183,7 @@ export const JSON_KEYWORDS = [
   JSON_PROCEDURE,
   JSON_PROCEDURE_IDENTIFIER,
   JSON_PRODUCTION,
+  JSON_RELEASE_RIGHT,
   JSON_SECONDARY_EMAIL,
   JSON_SERVER_CONFIG,
   JSON_USER,

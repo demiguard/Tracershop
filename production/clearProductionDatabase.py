@@ -17,16 +17,16 @@ django.setup()
 
 from database.models import *
 
-[vial.delete() for vial in Vial.objects.all()]
-[lca.delete() for lca in LegacyActivityOrder.objects.all()]
-[ac.delete() for ac in ActivityOrder.objects.all()]
-[lio.delete() for lio in LegacyInjectionOrder.objects.all()]
-[injectionOrder.delete() for injectionOrder in InjectionOrder.objects.all()]
-[activityDeliveryTimeSlot.delete() for activityDeliveryTimeSlot in ActivityDeliveryTimeSlot.objects.all()]
-[legacyProductionMember.delete() for legacyProductionMember in LegacyProductionMember.objects.all()]
-[tracerCatalog.delete() for tracerCatalog in TracerCatalog.objects.all()]
-[deliveryEndpoint.delete() for deliveryEndpoint in DeliveryEndpoint.objects.all() ]
-[customer.delete() for customer in Customer.objects.all()]
-[activityProduction.delete() for activityProduction in ActivityProduction.objects.all()]
-[tracer.delete() for tracer in Tracer.objects.all()]
-[isotope.delete() for isotope in Isotope.objects.all()]
+Vial.objects.all().delete()
+LegacyActivityOrder.objects.all().delete()
+ActivityOrder.objects.all().delete()
+LegacyInjectionOrder.objects.all().delete()
+InjectionOrder.objects.all().delete()
+ActivityDeliveryTimeSlot.objects.all().delete()
+LegacyProductionMember.objects.all().delete()
+TracerCatalog.objects.all().delete()
+DeliveryEndpoint.objects.all().delete()
+Customer.objects.all().delete()
+ActivityProduction.objects.all().delete()
+Tracer.objects.all().delete()
+Isotope.objects.all().delete()

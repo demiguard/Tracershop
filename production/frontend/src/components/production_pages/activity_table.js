@@ -1,10 +1,9 @@
 
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
 import { Row, Col, Table, Tab, Button, Container, Card, Collapse } from 'react-bootstrap'
-import { renderStatusImage, renderTableRow } from "../../lib/rendering.js";
-import { compareDates, getId, getPDFUrls } from "../../lib/utils.js";
-import { FormatDateStr, dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
-import { CountMinutes, CalculateProduction } from "../../lib/physics.js";
+import { getId, getPDFUrls } from "../../lib/utils.js";
+import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
+import { CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
 
@@ -24,6 +23,7 @@ import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.j
 import { ArrayMap } from "../../lib/array_map.js";
 import { createOrderMapping, createTimeSlotMapping } from "../../lib/data_structures.js";
 import { sortOrderMapping } from "../../lib/sorting.js";
+import { OpenCloseButton } from "../injectable/open_close_button.js";
 
 const Modals = {
   createModal : CreateOrderModal,
@@ -209,11 +209,10 @@ function RenderedTimeSlot(props){
             justifyContent : 'right',
             display : 'flex'
           }}>
-            <ClickableIcon
-            label={`open-time-slot-${props.timeSlotID}`}
-            className={openClassName}
-            src={"/static/images/next.svg"}
-            onClick={() => {setOpen(!open)}}
+            <OpenCloseButton
+              label={`open-time-slot-${props.timeSlotID}`}
+              open={open}
+              setOpen={setOpen}
             />
           </Col>
         </Row>

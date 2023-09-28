@@ -4,7 +4,7 @@ import Navbar, { TracershopNavbar } from "../injectable/navbar.js";
 import { OrderPage } from "../production_pages/order_page.js";
 import { VialPage } from "../production_pages/vial_page.js";
 
-import { SetupShop } from "../production_pages/setup_shop.js";
+import { SetupShop } from "../production_pages/setup_pages/setup_shop.js"
 import { PROP_USER, USER_GROUPS } from "../../lib/constants.js";
 
 const Pages = {
@@ -20,7 +20,8 @@ const AdminPages = {
 }
 
 const UserPages = {
-  orders: "Ordre"
+  orders: "Ordre",
+  vial : "Hætteglas"
 }
 
 export function ProductionSite(props) {

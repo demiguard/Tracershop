@@ -52,7 +52,7 @@ class authTestCase(TransactionTestCase):
 
 
   def test_AuthMessage_admin(self):
-    admin = User(username="admin", UserGroup=UserGroups.Admin, OldTracerBaseID=1)
+    admin = User(username="admin", user_group=UserGroups.Admin, OldTracerBaseID=1)
     responses = LMAP(lambda message : AuthMessage(admin, message), self.messages)
     self.assertListEqual(responses, [True] * len(responses))
 
@@ -61,30 +61,30 @@ class authTestCase(TransactionTestCase):
 
 
   def test_AuthMessage_ProductionAdmin(self):
-    ProductionAdmin = User(username="ProductionAdmin", UserGroup=UserGroups.ProductionAdmin, OldTracerBaseID=2)
+    ProductionAdmin = User(username="ProductionAdmin", user_group=UserGroups.ProductionAdmin, OldTracerBaseID=2)
     responses = LMAP(lambda message : AuthMessage(ProductionAdmin, message), self.messages)
     self.assertListEqual(responses, [True] * len(responses))
 
 
   def test_AuthMessage_ProductionUser(self):
-    ProductionUser = User(username="ProductionUser", UserGroup=UserGroups.ProductionUser, OldTracerBaseID=3)
+    ProductionUser = User(username="ProductionUser", user_group=UserGroups.ProductionUser, OldTracerBaseID=3)
     responses = LMAP(lambda message : AuthMessage(ProductionUser, message), self.messages)
     self.assertListEqual(responses, [True] * len(responses))
 
 
   def test_AuthMessage_ShopAdmin(self):
-    ShopAdmin = User(username="ShopAdmin", UserGroup=UserGroups.ShopAdmin, OldTracerBaseID=4)
+    ShopAdmin = User(username="ShopAdmin", user_group=UserGroups.ShopAdmin, OldTracerBaseID=4)
     responses = LMAP(lambda message : AuthMessage(ShopAdmin, message), self.messages)
     self.assertListEqual(responses, [True] * 4 + [False] * 7)
 
 
   def test_AuthMessage_ShopUser(self):
-    ShopUser = User(username="ShopUser", UserGroup=UserGroups.ShopUser, OldTracerBaseID=5)
+    ShopUser = User(username="ShopUser", user_group=UserGroups.ShopUser, OldTracerBaseID=5)
     responses = LMAP(lambda message : AuthMessage(ShopUser, message), self.messages)
     self.assertListEqual(responses, [True] * 4 + [False] * 7)
 
   def test_AuthMessage_ShopExternal(self):
-    ShopExternal = User(username="ShopExternal", UserGroup=UserGroups.ShopExternal, OldTracerBaseID=6)
+    ShopExternal = User(username="ShopExternal", user_group=UserGroups.ShopExternal, OldTracerBaseID=6)
     responses = LMAP(lambda message : AuthMessage(ShopExternal, message), self.messages)
     self.assertListEqual(responses, [True] * 4 + [False] * 7)
 

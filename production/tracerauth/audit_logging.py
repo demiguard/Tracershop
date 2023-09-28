@@ -4,15 +4,17 @@ direct call to the audit logger."""
 # Python Standard library
 from abc import ABC, abstractmethod
 import logging
-from typing import List, Optional, Tuple
+from typing import List, Iterable, Optional, Tuple
 
 # Third party packages
 
 # Tracershop modules
+from constants import AUDIT_LOGGER
 from database import models
 from tracerauth.types import AuthActions
 
-logger = logging.getLogger('audit')
+
+logger = logging.getLogger(AUDIT_LOGGER)
 
 def _get_max_length(tuples: List[Tuple])-> Tuple:
   init_tuple = tuples[0]
@@ -25,7 +27,7 @@ def _get_max_length(tuples: List[Tuple])-> Tuple:
   return tuple(max_len for max_len in max_lengths)
 
 
-class AuditLogEntry(ABC):
+class AuditLogModelEntry(ABC):
   @classmethod
   @abstractmethod
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
@@ -46,7 +48,7 @@ class AuditLogEntry(ABC):
       logger.info(message)
 
 
-class CreateModelAuditEntry(AuditLogEntry):
+class CreateModelAuditEntry(AuditLogModelEntry):
   @classmethod
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
     log_fields = []
@@ -65,7 +67,7 @@ class CreateModelAuditEntry(AuditLogEntry):
       messages_lines.append(f"System is creating an instance of {model.__class__.__name__}")
 
     for field_name, new_value in log_fields:
-      messages_lines.append(f"{field_name:{max_field_name_length}}: {new_value:{max_new_value_length}}")
+      messages_lines.append(f"  {field_name:{max_field_name_length}}: {new_value}")
 
     return "\n".join(messages_lines)
 
@@ -77,7 +79,7 @@ class CreateModelAuditEntry(AuditLogEntry):
     return f"User: {user.username} attempted create an instance of {model.__class__.__name__} but was denied permission."
 
 
-class DeleteModelAuditEntry(AuditLogEntry):
+class DeleteModelAuditEntry(AuditLogModelEntry):
   @classmethod
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
     log_fields = []
@@ -97,7 +99,7 @@ class DeleteModelAuditEntry(AuditLogEntry):
       messages_lines.append(f"System is delete an instance of {model.__class__.__name__}")
 
     for field_name, original_value in log_fields:
-      messages_lines.append(f"{field_name:{max_field_name_length}}: {original_value:{max_original_value_length}}")
+      messages_lines.append(f"  {field_name:{max_field_name_length}}: {original_value:{max_original_value_length}}")
 
     return "\n".join(messages_lines)
 
@@ -109,7 +111,7 @@ class DeleteModelAuditEntry(AuditLogEntry):
     return f"User: {user.username} attempted to delete an instance of {model.__class__.__name__} with id {model.pk} but was denied permission."
 
 
-class EditModelAuditEntry(AuditLogEntry):
+class EditModelAuditEntry(AuditLogModelEntry):
   @classmethod
   def _get_accept_message(cls, user: Optional['models.User'],
                            model: 'models.TracershopModel') -> str:
@@ -138,7 +140,7 @@ class EditModelAuditEntry(AuditLogEntry):
     else:
       messages_lines.append(f"System is editing an instance of {model.__class__.__name__}")
     for field_name, original_value, new_value in log_fields:
-      messages_lines.append(f"{field_name:{max_field_name_length}}: {original_value:{max_original_value_length}} --> {new_value:{max_new_value_length}}")
+      messages_lines.append(f"  {field_name:{max_field_name_length}}: {original_value:{max_original_value_length}} --> {new_value:{max_new_value_length}}")
 
     return "\n".join(messages_lines)
 
@@ -150,3 +152,21 @@ class EditModelAuditEntry(AuditLogEntry):
 
     return f"User: {user.username} attempted to edit an instance of {model.__class__.__name__}  with id {model.pk} but was denied permission."
 
+def logFreeActivityOrders(user: 'models.User',
+                    orders: Iterable['models.ActivityOrder'],
+                    vials: Iterable['models.Vial']):
+  message = f"\nUser: {user.username} is releasing the following activity orders:\n"
+
+  for order in orders:
+    message += f"  Order: {order.activity_order_id}\n"
+
+  message += "The following vials are released with the orders:\n"
+  for vial in vials:
+    message += f"  Vial: {vial.vial_id} - {vial.lot_number}\n"
+
+  logger.info(message)
+
+def logFreeInjectionOrder(user: 'models.User', order: 'models.InjectionOrder'):
+  message = f"\nUser: {user.username} is releasing the following injection order:\n"
+  message += f"  Injection order lot number: {order.lot_number}\n"
+  logger.info(message)

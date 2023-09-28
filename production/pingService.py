@@ -23,13 +23,12 @@ from pynetdicom.sop_class import ModalityWorklistInformationFind #type: ignore
 
 # Tracershop packages
 from database.models import ServerConfiguration, Booking, Location, Procedure, ProcedureIdentifier, TracershopModel, getOrCreateModel
-
+from constants import PING_SERVICE_LOGGER
 
 
 import logging
 
-logger = logging.getLogger('pingServiceLogger')
-logger.setLevel(logging.DEBUG)
+logger = logging.getLogger(PING_SERVICE_LOGGER)
 
 serverConfig = ServerConfiguration.get()
 
@@ -65,8 +64,6 @@ def getQueryDataset(serverConfig: ServerConfiguration):
   ds.ScheduledProcedureStepSequence = [item]
   return ds
 
-
-
 #### Script
 
 waiting = False
@@ -99,16 +96,14 @@ while(True):
     if assoc is not None: # error is logged in enter statement
       queryDataset = getQueryDataset(serverConfig)
       response = assoc.send_c_find(queryDataset, ModalityWorklistInformationFind)
-
       for (status, dataset) in response:
-        print(status, dataset)
         if status.Status in (0xFF00, 0xFF01) and isinstance(dataset, Dataset):
           active_bookings.add(dataset.RequestedProcedureID)
           datasets.append(dataset)
 
 
   old_bookings = Booking.objects.exclude(accession_number__in=active_bookings)
-  logger.debug(f"Deleting old bookings:{old_bookings}")
+  logger.info(f"Deleting {len(old_bookings)} old bookings.")
   old_bookings.delete()
 
   bookings = []

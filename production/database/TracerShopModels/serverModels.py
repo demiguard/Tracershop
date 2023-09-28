@@ -3,7 +3,7 @@
 
 from django.db import models
 from database.TracerShopModels.baseModels import TracershopModel, Days
-from database.TracerShopModels.networkModels import Database, DicomEndpoint
+from database.TracerShopModels.networkModels import DicomEndpoint
 
 from django.db.models import IntegerChoices, BigAutoField, SmallIntegerField, TimeField, AutoField, ForeignKey, GenericIPAddressField, PositiveIntegerField, CharField, EmailField, SET_NULL
 
@@ -14,7 +14,7 @@ class DeadlineTypes(models.IntegerChoices):
 
 
 class Deadline(TracershopModel):
-  deadline_id = models.BigAutoField(primary_key=True)
+  id = models.BigAutoField(primary_key=True)
   deadline_type = models.SmallIntegerField(choices=DeadlineTypes.choices)
   deadline_time = models.TimeField(null=True, default=None)
   deadline_day = models.SmallIntegerField(choices=Days.choices, null=True, default=True)
@@ -32,9 +32,8 @@ class ServerConfiguration(TracershopModel):
       - AdminPhoneNumber: CharField ~ Field for displaying phone number to admin
       - AdminEmail: EmailField ~Field to display email to admin
   """
-  ID = models.AutoField(primary_key=True)
+  id = models.AutoField(primary_key=True)
 
-  ExternalDatabase = models.ForeignKey(Database, on_delete=models.SET_NULL, null=True)
   SMTPServer = models.GenericIPAddressField(default="10.140.209.2")
   DateRange = models.PositiveIntegerField(default=32)
   AdminPhoneNumber = models.CharField(max_length=32, default="35454147")

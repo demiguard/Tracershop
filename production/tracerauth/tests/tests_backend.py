@@ -16,7 +16,7 @@ class TracerAuthBackendTestCase(TransactionTestCase):
     self.basicUserName = "basicUser"
     self.basicPassword = "basicPassword"
 
-    self.basicUser = User(username=self.basicUserName, UserGroup=UserGroups.ShopUser, OldTracerBaseID=321)
+    self.basicUser = User(username=self.basicUserName, user_group=UserGroups.ShopUser, OldTracerBaseID=321)
     self.basicUser.set_password(self.basicPassword)
     self.basicUser.save()
     self.backend = TracershopAuthenticationBackend()

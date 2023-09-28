@@ -1,0 +1,16 @@
+ALTER TABLE database_deliveryendpoint AUTO_INCREMENT = 1;
+ALTER TABLE database_customer AUTO_INCREMENT = 1;
+ALTER TABLE database_activityproduction AUTO_INCREMENT = 1;
+ALTER TABLE database_isotope AUTO_INCREMENT = 1;
+ALTER TABLE database_legacyproductionmember AUTO_INCREMENT = 1;
+ALTER TABLE database_activitydeliverytimeslot AUTO_INCREMENT = 1;
+ALTER TABLE database_activityorder AUTO_INCREMENT = 1;
+ALTER TABLE database_injectionorder AUTO_INCREMENT = 1;
+ALTER TABLE database_legacyinjectionorder AUTO_INCREMENT = 1;
+ALTER TABLE database_legacyactivityorder AUTO_INCREMENT = 1;
+ALTER TABLE database_vial AUTO_INCREMENT = 1;
+ALTER TABLE database_tracercatalog AUTO_INCREMENT = 1;
+ALTER TABLE database_injectionorder AUTO_INCREMENT = 1;
+ALTER TABLE database_isotope AUTO_INCREMENT = 1;
+ALTER TABLE database_tracer AUTO_INCREMENT = 1;
+ALTER TABLE database_vial AUTO_INCREMENT = 1;

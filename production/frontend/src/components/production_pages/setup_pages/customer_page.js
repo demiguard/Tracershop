@@ -1,12 +1,12 @@
 import React, { Component, useState } from "react";
 import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
-import { renderTableRow } from "../../lib/rendering.js";
-import { changeState } from "../../lib/state_management.js";
-import { HistoryModal } from "../modals/history_modal.js";
-import { CustomerModal } from "../modals/customer_modal.js";
-import { JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_RUN, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_WEBSOCKET } from "../../lib/constants.js";
-import { ClickableIcon } from "../injectable/icons.js"
-import { Customer } from "../../dataclasses/dataclasses.js";
+import { renderTableRow } from "../../../lib/rendering.js";
+import { changeState } from "../../../lib/state_management.js";
+import { HistoryModal } from "../../modals/history_modal.js";
+import { CustomerModal } from "../../modals/customer_modal.js";
+import { JSON_CUSTOMER, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
+import { ClickableIcon } from "../../injectable/icons.js"
+import { Customer } from "../../../dataclasses/dataclasses.js";
 
 const Modals = {
   CUSTOMER : CustomerModal,
@@ -58,9 +58,6 @@ export function CustomerPage (props) {
                   label={`settings-${customer.id}`}
                   src={'/static/images/setting.png'}
                   onClick={ActivateModal(ID, Modals.CUSTOMER)}/>
-                <ClickableIcon
-                  src={'/static/images/bill.png'}
-                  onClick={ActivateModal(ID, Modals.HISTORY)}/>
               </Col>
             </Row>
           </Container>

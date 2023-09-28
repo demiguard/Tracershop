@@ -11,14 +11,13 @@ import styles from '../../css/Site.module.css'
 import { Select } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
 import { Customer, InjectionOrder, Tracer, TracerCatalog, DeliveryEndpoint } from "../../dataclasses/dataclasses";
-import { event } from "jquery";
 import { CloseButton } from "../injectable/buttons";
 import { TimeInput } from "../injectable/time_form";
+import { setStateToEvent } from "../../lib/state_management";
+import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 
 
-export { CreateInjectionOrderModal }
-
-function CreateInjectionOrderModal(props){
+export function CreateInjectionOrderModal(props){
   const /**@type {Map<Number, Array<Number>>} */ tracerCatalog = new Map()
 
   for(const [id, _tracerCatalogPage] of props[JSON_TRACER_MAPPING]){
@@ -51,7 +50,7 @@ function CreateInjectionOrderModal(props){
       return endpoint.owner === customerInit;
     });
 
-  const [customerID, _setCustomer] = useState(customerInit);
+  const [customerID, setCustomer] = useState(customerInit);
   const [endpointID, setEndpoint] = useState(endpoints[0].id)
   const [tracerID, setTracer] = useState(tracerInit);
   const [usage, setUsage] = useState(1);
@@ -59,11 +58,6 @@ function CreateInjectionOrderModal(props){
   const [deliverTime, setDeliveryTime] = useState("")
   const [comment, setComment] = useState("")
   const [error, setError] = useState("")
-
-  // eventFunctions
-  function setCustomer(event){
-    
-  }
 
 
   function SubmitOrder(_event){
@@ -117,39 +111,6 @@ function CreateInjectionOrderModal(props){
     props[PROP_ON_CLOSE]()
   }
 
-  const customerOptions = [...props[JSON_CUSTOMER].values()].map(
-      (_customer) => {
-        const /**@type {Customer} */ customer = _customer;
-        return {
-          id : customer.id,
-          name : customer.short_name
-        };
-      }
-    )
-
-  const EndpointOptions = endpoints.map(
-    (endpoint) => {return {
-        id : endpoint.id,
-        name : endpoint.name,
-      }
-    }
-  )
-
-  const endpoint = props[JSON_ENDPOINT].get(endpointID)
-
-  let endpointForm = (<FormControl aria-label="endpoint-form" value={endpoint.name} readOnly/>)
-  if (1 < EndpointOptions.length){
-    endpointForm = <Select
-      aria-label="endpoint-form"
-      options={EndpointOptions}
-      valueKey="id"
-      nameKey="name"
-      onChange={(event) => {setEndpoint(event.target.value)}}
-      value={endpointID}
-    ></Select>
-  }
-
-
   const tracerOptions = [...props[JSON_TRACER].values()].map(
     (_tracer) => {
       const /**@type {Tracer} */ tracer = _tracer
@@ -157,9 +118,7 @@ function CreateInjectionOrderModal(props){
           id : tracer.id,
           name : tracer.shortname,
         }
-      }
-    )
-
+      });
 
   const UsageOptions = [ // TODO: Remove magic
     {value: 1, name: "Human"},
@@ -178,26 +137,23 @@ function CreateInjectionOrderModal(props){
       </Modal.Header>
       <ModalBody>
         <Row>
-          <TracershopInputGroup label="Kunde">
-            <Select
-                aria-label="customer-select"
-                options={customerOptions}
-                valueKey="id"
-                nameKey="name"
-                onChange={(event) => {_setCustomer(Number(event.target.value))}}
-                value={customerID}
-              />
-          </TracershopInputGroup>
-          <TracershopInputGroup label="Leveringssted">
-            {endpointForm}
-          </TracershopInputGroup>
+          <DestinationSelect
+            ariaLabelCustomer="select-customer"
+            ariaLabelEndpoint="select-endpoint"
+            activeCustomer={customerID}
+            activeEndpoint={endpointID}
+            customer={props[JSON_CUSTOMER]}
+            endpoints={props[JSON_ENDPOINT]}
+            setCustomer={setCustomer}
+            setEndpoint={setEndpoint}
+          />
           <TracershopInputGroup label="Tracer">
             <Select
                 aria-label="tracer-select"
                 options={tracerOptions}
                 valueKey="id"
                 nameKey="name"
-                onChange={(event) => {setTracer(Number(event.target.value))}}
+                onChange={setStateToEvent(setTracer)}
                 value={tracerID}
 
               />
@@ -208,7 +164,7 @@ function CreateInjectionOrderModal(props){
               options={UsageOptions}
               nameKey="name"
               valueKey="value" // wtf naming
-              onChange={(event) => {setUsage(Number(event.target.value))}}
+              onChange={setStateToEvent(setUsage)}
               value={usage}
             />
           </TracershopInputGroup>
@@ -216,7 +172,7 @@ function CreateInjectionOrderModal(props){
             <Form.Control
                 aria-label="injection-input"
                 value={injections}
-                onChange={(event) => {setInjections(event.target.value)}}
+                onChange={setStateToEvent(setInjections)}
               />
           </TracershopInputGroup>
           <TracershopInputGroup label={"Leverings tid"}>
@@ -230,7 +186,7 @@ function CreateInjectionOrderModal(props){
             <Form.Control
               aria-label="comment-input"
               value={comment}
-              onChange={(event) => {setComment(event.target.value)}}
+              onChange={setStateToEvent(setComment)}
             />
           </TracershopInputGroup>
         </Row>

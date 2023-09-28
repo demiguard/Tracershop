@@ -26,14 +26,14 @@ def indexView(request, *args, **kwargs):
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
     try:
       user = User.objects.get(username=request.headers['X-Tracer-User'])
-      if user.UserGroup != request.headers['X-Tracer-Role']:
-        user.UserGroup = UserGroups(request.headers['X-Tracer-Role'])
+      if user.user_group != request.headers['X-Tracer-Role']:
+        user.user_group = UserGroups(request.headers['X-Tracer-Role'])
         user.save()
     except ObjectDoesNotExist:
       user = User.objects.create(username=request.headers['X-Tracer-User'],
-                          UserGroup=UserGroups(request.headers['X-Tracer-Role']))
+                          user_group=UserGroups(request.headers['X-Tracer-Role']))
 
-    if user.UserGroup == UserGroups.ShopExternal:
+    if user.user_group == UserGroups.ShopExternal:
       backend = "tracerauth.backend.TracershopAuthenticationBackend"
     else:
       backend = "django_auth_ldap.backend.LDAPBackend"
