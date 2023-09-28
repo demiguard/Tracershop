@@ -66,23 +66,6 @@ describe("create activity modal", () => {
     expect(await screen.findByLabelText('customer-select')).toBeVisible();
   });
 
-  it.skip("Change Endpoint, missing delivery times", async () => {
-    render(<CreateOrderModal
-      {...props}
-    />, container);
-
-    const endpointSelect =  await screen.findByLabelText('endpoint-select');
-
-    act(() => {
-      fireEvent.change(endpointSelect, {target: {value : 2}});
-    });
-
-    const customer = props[JSON_CUSTOMER].get(1)
-    const errorMessage = `Kunden ${customer.short_name} har ikke nogen leveringstidpunkter`
-
-    expect(await screen.findByText(errorMessage)).toBeVisible();
-
-  });
 
   it.skip("Change Delivery Time", async () => {
     render(<CreateOrderModal
@@ -90,7 +73,6 @@ describe("create activity modal", () => {
     />, container);
 
     const timeSlotSelect = await screen.findByLabelText("time-slot-select");
-
     const targetTimeSlot = props[JSON_DELIVER_TIME].get(2);
     act(() => {
       fireEvent.change(timeSlotSelect, {target: {value : targetTimeSlot.id}})

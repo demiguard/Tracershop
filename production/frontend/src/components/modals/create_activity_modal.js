@@ -39,13 +39,7 @@ export function CreateOrderModal(props) {
 
   const [activeCustomer, setActiveCustomer] = useState(customerInit);
   const [activeEndpoint, setActiveEndpoint] = useState(endpointInit);
-  const [activeTimeSlot, _setActiveTimeSlot] = useState(timeSlotIdInit);
-
-  function setActiveTimeSlot(value){
-    _setActiveTimeSlot(value)
-  }
-
-
+  const [activeTimeSlot, setActiveTimeSlot] = useState(timeSlotIdInit);
 
   const [state, _setState] = useState({
     amount : "",
