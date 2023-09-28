@@ -7,12 +7,15 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 
 # Third Party Packages
+from typing import Optional
 from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.authModels import User
 from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
+from production.database.TracerShopModels import authModels
+from production.tracerauth.types import AuthActions
 
 
 class ClosedDate(TracershopModel):
@@ -182,6 +185,28 @@ class ActivityOrder(TracershopModel):
     related_name="activity_freed_by"
   )
 
+
+  def canEdit(self, user: Optional[User] = None) -> AuthActions:
+    if user is None:
+      return AuthActions.REJECT
+
+    database_self = self.__class__.objects.get(pk=self.pk)
+    if database_self.status == OrderStatus.Ordered:
+      return AuthActions.ACCEPT
+
+    if database_self.status == OrderStatus.Accepted and user.is_production_member:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.REJECT
+
+  def canDelete(self, user: Optional[User]= None) -> AuthActions:
+    self.refresh_from_db()
+    if user is None:
+      return AuthActions.REJECT
+
+    if self.status == OrderStatus.Released and not user.is_server_admin:
+      return AuthActions.REJECT_LOG
+
   class Meta:
     indexes = [
       Index(fields=['delivery_date'])
@@ -212,6 +237,19 @@ class InjectionOrder(TracershopModel):
       Index(fields=['delivery_date'])
     ]
 
+  def canEdit(self, user: Optional[User] = None) -> AuthActions:
+    database_self = self.__class__.objects.get(pk=self.pk)
+    if user is None:
+      return AuthActions.REJECT
+
+    if database_self.status == OrderStatus.Ordered:
+      return AuthActions.ACCEPT
+
+    if database_self.status == OrderStatus.Accepted and user.is_production_member:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.REJECT
+
 
 class Vial(TracershopModel):
   vial_id = BigAutoField(primary_key=True)
@@ -223,6 +261,18 @@ class Vial(TracershopModel):
   fill_date = DateField()
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
+
+  def canDelete(self, user: User | None = None) -> AuthActions:
+    if user is not None and user.is_production_member:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.REJECT
+
+  def canEdit(self, user: Optional[User] = None) -> AuthActions:
+    if user is not None and user.is_production_member:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.REJECT
 
   class Meta:
     indexes = [

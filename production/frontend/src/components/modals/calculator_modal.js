@@ -8,7 +8,6 @@ import { JSON_ISOTOPE, PROP_ACTIVE_DATE, PROP_ACTIVE_TIME_SLOTS, PROP_ACTIVE_TRA
 import { CloseButton } from "../injectable/buttons";
 import { Calculator } from "../injectable/calculator";
 
-
 export function CalculatorModal(props){
   return (<Modal
     show={true}
@@ -23,8 +22,6 @@ export function CalculatorModal(props){
         commit={props[PROP_COMMIT]}
       />
     </Modal.Body>
-  </Modal>)
-
-
-}
+  </Modal>);
+  }
 
