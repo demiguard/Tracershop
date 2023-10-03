@@ -12,7 +12,6 @@ import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
 import { TracerWebSocket } from "../../lib/tracer_websocket";
 import { ClickableIcon } from "../injectable/icons";
-import { Select } from "../injectable/select"
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box"
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
 import { combineDateAndTimeStamp, getDay } from "../../lib/chronomancy";

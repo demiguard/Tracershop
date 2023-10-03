@@ -16,6 +16,7 @@ import propTypes from "prop-types";
 import styles from '../../css/Site.module.css';
 import { Customer, TracerCatalog } from "../../dataclasses/dataclasses";
 import { KEYWORD_TracerCatalog_CUSTOMER, KEYWORD_TracerCatalog_TRACER } from "../../dataclasses/keywords";
+import { CloseButton } from "../injectable/buttons";
 
 export { TracerModal }
 
@@ -142,9 +143,9 @@ class TracerModal extends Component {
           {this.renderBody()}
         </Modal.Body>
         <Modal.Footer>
-          <Button
-            onClick={this.props[PROP_ON_CLOSE]}
-          >Færdig</Button>
+        <CloseButton
+          onClick={this.props[PROP_ON_CLOSE]}
+        />
         </Modal.Footer>
       </Modal>
     );

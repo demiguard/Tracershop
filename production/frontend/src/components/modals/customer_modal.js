@@ -4,7 +4,7 @@ import { Modal, Button, Table, Row, FormControl, Col, Form, Container, Card, Inp
 import { DAYS, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_TIME_SLOTS, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC, WEEKLY_TIME_TABLE_PROP_TIME_KEYWORD, } from "../../lib/constants.js";
 import { CloseButton } from "../injectable/buttons.js";
 import propTypes from "prop-types";
-import { Select } from "../injectable/select.js"
+import { Select, toOptions } from "../injectable/select.js"
 import { ClickableIcon } from "../injectable/icons.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js"
 import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
@@ -15,6 +15,7 @@ import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME, KEYWORD_ActivityDeliver
 import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "../../lib/formatting.js";
 import { changeState } from "../../lib/state_management.js";
 import { TimeInput } from "../injectable/time_form.js";
+import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
 
 
 const RunOptions = [
@@ -377,22 +378,9 @@ export function CustomerModal(props) {
   }
 
   function renderActiveEndpoint(){
-    const /**@type {DeliveryEndpoint} */ endpoint = props[JSON_ENDPOINT].get(state.activeEndpoint)
-
-    const endpointOptions = [];
-    for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
-      const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
-      if(endpoint.owner === props[PROP_ACTIVE_CUSTOMER]){
-        endpointOptions.push({id : endpointID, name : endpoint.name})
-      }
-    }
-    const activityTracersOptions = [];
-    for(const [tracerID, _tracer] of props[JSON_TRACER]){
-      const /**@type {Tracer} */ tracer = _tracer
-      if(tracer.tracer_type == TRACER_TYPE_ACTIVITY){
-        activityTracersOptions.push({id : tracerID, name : tracer.shortname});
-      }
-    }
+    const activityTracersOptions = toOptions(
+      props[JSON_TRACER], 'shortname', 'id'
+    );
 
     const tempEndpointName = nullParser(state.tempEndpoint.name);
     const tempEndpointAddress = nullParser(state.tempEndpoint.address);
@@ -417,20 +405,16 @@ export function CustomerModal(props) {
       </Row>
       <MarginInputGroup>
         <InputGroup.Text>Leveringssteder</InputGroup.Text>
-        <Select
-          options={endpointOptions}
-          nameKey='name'
-          valueKey='id'
+        <EndpointSelect
+          options={props[JSON_ENDPOINT]}
           onChange={() => {}}
           value={state.activeEndpoint}
-        ></Select>
+        ></EndpointSelect>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Aktivitets Tracer</InputGroup.Text>
         <Select
           options={activityTracersOptions}
-          nameKey="name"
-          valueKey="id"
           value={state.activeTracer}
           onChange={() => {}}
         />
@@ -499,19 +483,20 @@ export function CustomerModal(props) {
   function renderActiveTimeSlot(){
     const timeSlot = props[JSON_DELIVER_TIME].get(state.activeTimeSlot)
 
-    const WeeklyRepeatOptions = [
+    const WeeklyRepeatOptions = toOptions([
       { id : 0, name : "Alle Uger"},
       { id : 1, name : "Lige Uger"},
       { id : 2, name : "Ulige Uger"},
-    ]
+    ],'name', 'id')
 
-    const productionOptions = [];
-    for(const [productionID, _production] of props[JSON_PRODUCTION]){
-      const /**@type {ActivityProduction} */ production = _production;
-      productionOptions.push({
-        id : productionID, name : `${getDateName(production.production_day)} - ${production.production_time}`
-      })
+    function productionNaming(production){
+      `${getDateName(production.production_day)} - ${production.production_time}`
     }
+
+    const productionOptions = toOptions(
+      props[JSON_PRODUCTION].values(), productionNaming, 'id'
+    )
+
 
     return (<Col>
       <Row>
@@ -545,8 +530,6 @@ export function CustomerModal(props) {
         <Select
           aria-label="weekly-select"
           options={WeeklyRepeatOptions}
-          nameKey={"name"}
-          valueKey ={"id"}
           onChange={changeTempObject('tempTimeSlot', 'weekly_repeat', 'timeSlotDirty')}
           value={state.tempTimeSlot.weekly_repeat}
         />
@@ -555,8 +538,6 @@ export function CustomerModal(props) {
         <InputGroup.Text>Levering fra Production</InputGroup.Text>
         <Select
           options={productionOptions}
-          nameKey={"name"}
-          valueKey ={"id"}
           onChange={changeTempObject('tempTimeSlot', 'production_run', 'timeSlotDirty')}
           value={state.tempTimeSlot.production_run}
           aria-label="production-select"

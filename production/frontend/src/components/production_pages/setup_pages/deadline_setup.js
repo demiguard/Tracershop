@@ -2,12 +2,13 @@ import React, { useState } from "react";
 import { Button, Col, Container, FormControl, Row } from "react-bootstrap";
 import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../../lib/constants";
 import { Deadline, ServerConfiguration, Tracer } from "../../../dataclasses/dataclasses";
-import { Select } from "../../injectable/select";
+import { Select, toOptions } from "../../injectable/select";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { setStateToEvent } from "../../../lib/state_management";
 import { parseTimeInput } from "../../../lib/user_input";
 import { TimeInput } from "../../injectable/time_form";
 import { ErrorInput } from "../../injectable/error_input";
+import { DaysSelect } from "../../injectable/derived_injectables/days_select";
 
 
 /**
@@ -19,24 +20,19 @@ export const GlobalDeadlineValuesOptions = {
   GLOBAL_INJECTION_DEADLINE : 3,
 }
 
-const globalOptions = [
+const globalOptions = toOptions([
   {id : GlobalDeadlineValuesOptions.NO_OPTION, name: "-----"},
   {id : GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE, name: "Aktivitet Deadline"},
   {id : GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE, name: "Injektion Deadline"},
-]
+])
 
-const DEADLINE_TYPE_OPTIONS = [{
+const DEADLINE_TYPE_OPTIONS = toOptions([{
   id : DEADLINE_TYPES.DAILY,
   name : "Daglig Deadline",
 },{
   id : DEADLINE_TYPES.WEEKLY,
   name : "Ugenlig Deadline",
-}]
-
-const correctDays = DAYS_OBJECTS.map(
-  (obj) =>  {return {id : obj.day - 1, name: obj.name}}
-) // I Dunno why it's wrong, and TODO: FIX THE CONSTANT
-
+}])
 
 /**
  * 
@@ -67,8 +63,6 @@ function NewDeadlineRow({websocket}){
       <Select
         aria-label="type-new"
         options={DEADLINE_TYPE_OPTIONS}
-        nameKey="name"
-        valueKey="id"
         value={deadlineType}
         onChange={setStateToEvent(setDeadlineType)}
       />
@@ -83,11 +77,8 @@ function NewDeadlineRow({websocket}){
       </ErrorInput>
     </Col>
     <Col style={cssCenter}>
-      {Number(deadlineType) === DEADLINE_TYPES.WEEKLY ? <Select
+      {Number(deadlineType) === DEADLINE_TYPES.WEEKLY ? <DaysSelect
           aria-label="days-new"
-          options={correctDays}
-          nameKey="name"
-          valueKey="id"
           value={day}
           onChange={setStateToEvent(setDay)}
         /> : "-----"}
@@ -173,8 +164,6 @@ function DeadlineRow({deadline,
       <Select
         aria-label={`type-${deadline.id}`}
         options={DEADLINE_TYPE_OPTIONS}
-        nameKey="name"
-        valueKey="id"
         onChange={setDeadlineType}
         value={deadlineType}
       />
@@ -186,11 +175,8 @@ function DeadlineRow({deadline,
         stateFunction={setTime}/>
     </Col>
     <Col style={cssCenter}>
-        { deadlineType === DEADLINE_TYPES.WEEKLY ? <Select
+        { deadlineType === DEADLINE_TYPES.WEEKLY ? <DaysSelect
           aria-label={`days-${deadline.id}`}
-          options={correctDays}
-          nameKey="name"
-          valueKey="id"
           value={day}
           onChange={setDay}
         /> : "-----"}
@@ -200,15 +186,11 @@ function DeadlineRow({deadline,
       <Select
         aria-label={`global-${deadline.id}`}
         options={globalOptions}
-        nameKey="name"
-        valueKey="id"
         value={globalValue}
         onChange={setGlobalDeadline(deadline)}
       /> : <Select
         aria-label={`global-${deadline.id}`}
         options={globalOptions}
-        nameKey="name"
-        valueKey="id"
         value={globalValue}
         onChange={setGlobalDeadline(deadline)}
         disabled

@@ -3,7 +3,7 @@ import { FormatTime, ParseDanishNumber, nullParser } from "../../../lib/formatti
 import { InjectionOrder, Tracer } from "../../../dataclasses/dataclasses";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
-import { Select } from "../../injectable/select";
+import { Select, toOptionsFromEnum } from "../../injectable/select";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, JSON_INJECTION_ORDER, cssCenter } from "../../../lib/constants";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
@@ -25,10 +25,10 @@ import { getTimeString } from "../../../lib/chronomancy";
 * @returns Element
 */
 export function InjectionOrderCard({
- injectionOrder,
- injectionTracers,
- websocket,
- validDeadline,
+  injectionOrder,
+  injectionTracers,
+  websocket,
+  validDeadline,
 }) {
  // State
  const [tracer, setTracer] = useState(injectionOrder.tracer);
@@ -191,13 +191,8 @@ export function InjectionOrderCard({
  }
 
 
- const usageOptions = [...Object.entries(INJECTION_USAGE)].map(
-   ([id, name]) => {
-     return {
-       id : Number(id),
-       name : name,
-     }
-   });
+ const usageOptions = toOptionsFromEnum(INJECTION_USAGE)
+
 
   let usageSelect = <Select
     options={usageOptions}

@@ -2,6 +2,8 @@
  * In general they should be used in Array.filter calls.
  */
 
+import { Tracer } from "../dataclasses/dataclasses";
+
 export function dayTracerFilter(day, tracerID){
   return (production) => {
     return production.production_day === day && production.tracer === tracerID
@@ -19,6 +21,10 @@ export function timeSlotOwnerFilter(endpointID){
  */
 export function endpointOwnerFilter(CustomerID){
   return (endpoint) => endpoint.owner === CustomerID
+}
+
+export function tracerTypeFilter(tracerType){
+  return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType
 }
 
 

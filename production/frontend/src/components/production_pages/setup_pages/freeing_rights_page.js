@@ -2,9 +2,8 @@ import React, {useState} from 'react';
 import { Card, FormControl, Row, Col, Collapse, Container, Table } from 'react-bootstrap';
 import { JSON_RELEASE_RIGHT, JSON_TRACER, JSON_USER, PROP_WEBSOCKET, USER_GROUPS, cssAlignRight, cssError } from '../../../lib/constants';
 import { OpenCloseButton } from '../../injectable/open_close_button';
-import { Select } from '../../injectable/select';
+import { Select, toOptions } from '../../injectable/select';
 import { setStateToEvent } from '../../../lib/state_management';
-import { toOptions } from '../../../lib/utils';
 import { DateInput } from '../../injectable/date_input';
 import { ReleaseRight, Tracer, User } from '../../../dataclasses/dataclasses';
 import { ClickableIcon } from '../../injectable/icons';
@@ -167,8 +166,6 @@ export function FreeingRightsPage(props){
         <Select
           aria-label="new-user-select"
           options={userOptions}
-          nameKey="name"
-          valueKey="value"
           value={activeUserID}
           onChange={setStateToEvent(setActiveUserID)}
         />
@@ -177,8 +174,6 @@ export function FreeingRightsPage(props){
       <Select
           aria-label="new-tracer-select"
           options={tracerOptions}
-          nameKey="name"
-          valueKey="value"
           value={activeTracerID}
           onChange={setStateToEvent(setActiveTracerID)}
         />

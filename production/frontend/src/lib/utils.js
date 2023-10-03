@@ -67,31 +67,3 @@ export function getPDFUrls(endpoint, tracer, date){
     date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`;
 }
 
-
-export class Option {
-  constructor(value, name){
-    this.name = name;
-    this.value = value;
-  }
-}
-
-export function toOptions(iterable, nameKey, valueKey = 'id'){
-  function toOption(entry){
-    const name = (typeof nameKey === 'function') ?
-                        nameKey(entry)
-                      : entry[nameKey]
-    return new Option(entry[valueKey], name)
-  }
-
-
-  const options = [];
-  if (iterable instanceof Map) {
-    for(const entry of iterable.values()){
-      options.push(toOption(entry));
-    };
-  return options
-  } else if (iterable instanceof Array) {
-    return iterable.map(toOption);
-  }
-  return []
-}

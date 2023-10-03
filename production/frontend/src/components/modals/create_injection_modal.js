@@ -3,18 +3,19 @@ import React, { useState } from "react";
 import { Button, Col, Form, FormControl, InputGroup, Modal, ModalBody, Row, Table } from "react-bootstrap";
 
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box";
-import { FormatTime, FormatDateStr, parseDate, dateToDateString, ParseDanishNumber } from "../../lib/formatting";
+import { FormatTime, FormatDateStr, parseDate, dateToDateString, ParseDanishNumber, Capitalize } from "../../lib/formatting";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, PROP_WEBSOCKET, JSON_ENDPOINT } from "../../lib/constants";
+  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, PROP_WEBSOCKET, JSON_ENDPOINT, INJECTION_USAGE } from "../../lib/constants";
 
 import styles from '../../css/Site.module.css'
-import { Select } from "../injectable/select";
+import { Select, toOptions, toOptionsFromEnum } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
 import { Customer, InjectionOrder, Tracer, TracerCatalog, DeliveryEndpoint } from "../../dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
 import { TimeInput } from "../injectable/time_form";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
+import { UsageSelect } from "../injectable/derived_injectables/usage_select";
 
 
 export function CreateInjectionOrderModal(props){
@@ -111,20 +112,7 @@ export function CreateInjectionOrderModal(props){
     props[PROP_ON_CLOSE]()
   }
 
-  const tracerOptions = [...props[JSON_TRACER].values()].map(
-    (_tracer) => {
-      const /**@type {Tracer} */ tracer = _tracer
-      return {
-          id : tracer.id,
-          name : tracer.shortname,
-        }
-      });
-
-  const UsageOptions = [ // TODO: Remove magic
-    {value: 1, name: "Human"},
-    {value: 2, name: "Dyr"},
-    {value: 3, name: "Andet"},
-  ];
+  const tracerOptions = toOptions(props[JSON_TRACER].values(), 'shortname', 'id')
 
   return(
     <Modal
@@ -151,19 +139,14 @@ export function CreateInjectionOrderModal(props){
             <Select
                 aria-label="tracer-select"
                 options={tracerOptions}
-                valueKey="id"
-                nameKey="name"
                 onChange={setStateToEvent(setTracer)}
                 value={tracerID}
 
               />
           </TracershopInputGroup>
           <TracershopInputGroup label={"Brug"}>
-            <Select
+            <UsageSelect
               aria-label="usage-select"
-              options={UsageOptions}
-              nameKey="name"
-              valueKey="value" // wtf naming
               onChange={setStateToEvent(setUsage)}
               value={usage}
             />
@@ -196,7 +179,7 @@ export function CreateInjectionOrderModal(props){
            /> : "" }
       </ModalBody>
       <Modal.Footer>
-        <CloseButton onClick={props[PROP_ON_CLOSE]}></CloseButton>
+        <CloseButton onClick={props[PROP_ON_CLOSE]}/>
         <Button onClick={SubmitOrder}>Opret Ordre</Button>
       </Modal.Footer>
     </Modal>);

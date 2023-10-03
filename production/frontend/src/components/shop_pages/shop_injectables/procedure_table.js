@@ -90,8 +90,6 @@ function ProcedureRow({endpoint, procedures, procedureIdentifier, tracers, webso
       <td>
         <Select
           options={tracers}
-          valueKey="id"
-          nameKey="name"
           value={tracer}
           onChange={setTracer}
         />

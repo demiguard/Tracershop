@@ -1,7 +1,7 @@
 import React, { Component, useState } from "react";
 import { Col, Container, Form, FormControl, FormGroup, InputGroup, Row } from "react-bootstrap";
 import { Calender, getColorShop, standardOrderMapping } from "../injectable/calender.js";
-import { Select } from '../injectable/select.js'
+import { Select, toOptions } from '../injectable/select.js'
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
@@ -116,10 +116,10 @@ export function ShopOrderPage (props){
 
   const bitChain = getBitChain(timeSlots, props[JSON_PRODUCTION]);
 
-  const SiteOptions = [
+  const SiteOptions = toOptions([
     {id : "Manuel", name : "Ordre oversigt"},
     {id : "Automatisk", name : "Bookinger"}
-  ]
+  ])
 
   const Site = Content[state.view]
   const siteProps = {...props}
@@ -188,8 +188,6 @@ export function ShopOrderPage (props){
               <Select
                 aria-label="site-select"
                 options={SiteOptions}
-                nameKey={"name"}
-                valueKey={"id"}
                 onChange={setView}
                 value={state.view}
               />

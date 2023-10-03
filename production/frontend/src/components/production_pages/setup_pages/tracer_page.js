@@ -3,17 +3,15 @@ import { Container, Table, FormControl, Form, Row, Card, Collapse , Col} from "r
 
 import { TracerModal } from "../../modals/tracer_modal.js";
 import { setStateToEvent } from "../../../lib/state_management.js";
-import { JSON_TRACER,WEBSOCKET_MESSAGE_EDIT_STATE, TRACER_TYPE_ACTIVITY,
-  TRACER_TYPE_DOSE, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_TRACER_MAPPING,
-  JSON_CUSTOMER, PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
-  WEBSOCKET_MESSAGE_MODEL_EDIT, TracerTypeOptions, cssAlignRight} from "../../../lib/constants.js";
-import { Isotope, Tracer, TracerCatalog } from "../../../dataclasses/dataclasses.js";
+import { JSON_TRACER, JSON_TRACER_MAPPING,
+  PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
+  TracerTypeOptions, cssAlignRight, TRACER_TYPE} from "../../../lib/constants.js";
+import { Tracer, TracerCatalog } from "../../../dataclasses/dataclasses.js";
 import { ClickableIcon } from "../../injectable/icons.js";
-import { Select } from "../../injectable/select.js";
+import { Select,  toOptions } from "../../injectable/select.js";
 import { HoverBox } from "../../injectable/hover_box.js";
 import { TracerWebSocket } from "../../../lib/tracer_websocket.js";
 import { OpenCloseButton } from "../../injectable/open_close_button.js";
-import { toOptions } from "../../../lib/utils.js";
 
 
 export function TracerPage(props){
@@ -53,7 +51,11 @@ export function TracerPage(props){
     return (<tr>
       <td>{tracer.shortname}</td>
       <td style={cssAlignRight}>
-        <ClickableIcon src="static/images/archive_up.svg" onClick={restoreTracer}/>
+        <ClickableIcon
+          label={`restore-${tracer.id}`}
+          src="static/images/archive_up.svg"
+          onClick={restoreTracer}
+        />
       </td>
     </tr>)
   }
@@ -104,26 +106,24 @@ export function TracerPage(props){
         <Select
           aria-label={`set-isotope-${tracer.id}`}
           options={isotopeOptions}
-          valueKey="value"
-          nameKey="name"
           onChange={setStateToEvent(setTracerIsotope)}
           value={tracerIsotope}
         />
       </td>
       <td>
         <Select
-          options={TracerTypeOptions}
-          valueKey="id"
-          nameKey="name"
+          aria-label={`set-type-${tracer.id}`}
+          options={toOptions(TracerTypeOptions)}
           value={tracerType}
           onChange={setStateToEvent(setTracerType)}
         />
       </td>
       <td>
         <Row>
-        { tracer.tracer_type == TRACER_TYPE_DOSE ?
+        { tracer.tracer_type === TRACER_TYPE.DOSE ?
             <Col><HoverBox
             Base={<ClickableIcon
+              label={`open-modal-${tracer.id}`}
               src="/static/images/setting.png"
               onClick={openModal(tracer)}
               />}
@@ -133,6 +133,7 @@ export function TracerPage(props){
         { archiveAble ?
           <Col><HoverBox
           Base={<ClickableIcon
+            label={`archive-${tracer.id}`}
             src="/static/images/archive_down.svg"
             onClick={ArchiveTracer}
             />}
@@ -142,6 +143,7 @@ export function TracerPage(props){
           <Col>
             <HoverBox
               Base={<ClickableIcon
+                  label={`save-tracer-${tracer.id}`}
                   src="/static/images/save.svg"
                   onClick={AcceptEdits}
                 />}
@@ -159,7 +161,7 @@ export function TracerPage(props){
     const [shortname, setShortname] = useState("");
     const [clinicalName, setClinicalName] = useState("");
     const [isotope, setIsotope] = useState();
-    const [tracerType, setTracerType] = useState(TRACER_TYPE_DOSE);
+    const [tracerType, setTracerType] = useState(TRACER_TYPE.DOSE);
 
     return (<tr>
       <td>

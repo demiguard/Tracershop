@@ -12,6 +12,7 @@ import { CustomerSelect } from "./customer_select";
 import { EndpointSelect } from "./endpoint_select";
 import { TimeSlotSelect } from "./timeslot_select";
 import { getRelatedTimeSlots } from '../../../lib/data_structures';
+import propType from 'prop-types'
 
 /**
  *
@@ -33,7 +34,7 @@ import { getRelatedTimeSlots } from '../../../lib/data_structures';
  */
 export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlot,
                                    ariaLabelCustomer, ariaLabelEndpoint, ariaLabelTimeSlot,
-                                   customer, endpoints, timeSlots,
+                                   customers, endpoints, timeSlots,
                                    setCustomer, setEndpoint, setTimeSlot }){
   const filteredEndpoints = [...endpoints.values()].filter(
     (endpoint) => {return activeCustomer == endpoint.owner;}
@@ -100,14 +101,14 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
       <CustomerSelect
         aria-label={ariaLabelCustomer}
         value={activeCustomer}
-        customer={customer}
+        customers={customers}
         onChange={onChangeCustomer}
       />
     </TracershopInputGroup>
     <TracershopInputGroup label="Destination">
       <EndpointSelect
         aria-label={ariaLabelEndpoint}
-        customer={customer}
+        customer={customers}
         deliveryEndpoint={filteredEndpoints}
         value={activeEndpoint}
         onChange={onChangeEndpoint}
@@ -115,4 +116,19 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     </TracershopInputGroup>
     {thirdColumn}
   </div>)
+}
+
+DestinationSelect.propType = {
+  ariaLabelCustomer : propType.string,
+  ariaLabelEndpoint :  propType.string,
+  ariaLabelTimeSlot :  propType.string,
+  activeCustomer :  propType.number.isRequired,
+  activeEndpoint : propType.number.isRequired,
+  activeTimeSlot : propType.number,
+  customers : propType.instanceOf(Map).isRequired,
+  endpoints : propType.instanceOf(Map).isRequired,
+  timeSlots : propType.oneOfType([Map, propType.arrayOf(ActivityDeliveryTimeSlot)]),
+  setCustomer : propType.func.isRequired,
+  setEndpoint : propType.func.isRequired,
+  setTimeSlot : propType.func,
 }

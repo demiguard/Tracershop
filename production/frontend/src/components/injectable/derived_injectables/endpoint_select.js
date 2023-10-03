@@ -1,5 +1,5 @@
 import React from "react";
-import { Select } from "../select";
+import { Select, toOptions, Option } from "../select";
 import { FormControl } from "react-bootstrap";
 import { Customer, DeliveryEndpoint } from "../../../dataclasses/dataclasses";
 import { JSON_CUSTOMER, JSON_ENDPOINT } from "../../../lib/constants";
@@ -9,39 +9,33 @@ import { JSON_CUSTOMER, JSON_ENDPOINT } from "../../../lib/constants";
  * @param {*} param0 
  */
 export function EndpointSelect(props){
-  function toOption(endpoint){
+  function namingEndpoint(endpoint){
     if (props[JSON_CUSTOMER] instanceof Map){
-      const/**@type {Customer} */ customer = props[JSON_CUSTOMER].get(endpoint.owner)
-      return {
-        id : endpoint.id,
-        name : `${customer.short_name} - ${endpoint.name}`,
-      }
+      const/**@type {Customer} */ customer = props[JSON_CUSTOMER].get(endpoint.owner);
+      return `${customer.short_name} - ${endpoint.name}`;
     }
+    return  endpoint.name
 
-    return {
-      id : endpoint.id,
-      name : endpoint.name,
-    }
   }
+
+
 
   let /**@type {}  */ endpointOptions = []  // this is a turnary but readability
   if (props[JSON_ENDPOINT] instanceof Map){
-    endpointOptions =  [...props[JSON_ENDPOINT].values()].map(toOption);
+    endpointOptions = toOptions(props[JSON_ENDPOINT].values(), namingEndpoint, "id")
   } else if (props[JSON_ENDPOINT] instanceof Array) {
-    endpointOptions = props[JSON_ENDPOINT].map(toOption);
+    endpointOptions = toOptions(props[JSON_ENDPOINT], namingEndpoint, "id");
   }
 
   if(props.emptyEndpoint){ // doesn't need to be defined
-    endpointOptions.push({
-      id : "",
-      name :"------------"
-    })
+    endpointOptions.push(new Option("", "------------"))
   }
 
   const newProps = {...props};
   delete newProps[JSON_ENDPOINT];
-  delete newProps.emptyEndpoint;
   delete newProps[JSON_CUSTOMER];
+  delete newProps.emptyEndpoint;
+  newProps['options'] = endpointOptions
 
   if(endpointOptions.length === 0){
     <FormControl {...newProps} readOnly/>
@@ -50,10 +44,5 @@ export function EndpointSelect(props){
     return <FormControl {...newProps} readOnly value={endpointOptions[0].name}/>
   }
 
-  return <Select
-    options={endpointOptions}
-    nameKey="name"
-    valueKey="id"
-    {...newProps}
-  />
+  return <Select {...newProps}/>
 }

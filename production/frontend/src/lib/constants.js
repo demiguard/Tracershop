@@ -3,16 +3,27 @@ export const JAVASCRIPT_VERSION = "1.0.1";
 export const TRACER_TYPE_ACTIVITY = 1;
 export const TRACER_TYPE_DOSE = 2;
 
+/** The order type that is made when tracer is ordered.
+ * @enum
+ */
+export const TRACER_TYPE = {
+  ACTIVITY : 1,
+  DOSE : 2,
+}
+
 export const TracerTypeOptions = [{
-  id : TRACER_TYPE_ACTIVITY,
+  id : TRACER_TYPE.ACTIVITY,
   name : "Aktivitet"
 },{
-  id : TRACER_TYPE_DOSE,
+  id : TRACER_TYPE.DOSE,
   name : "Injektioner"
 }]
 
 export const DAYS_PER_WEEK = 7;
 // Note that to correct day from date.getDay -> (date.getDate() + 6) % 7
+/**
+ * @enum
+ */
 export const DAYS = { // So in the modern part of the world, aka the ones that use metric units, the first day of the week is Monday
   MONDAY : 0,
   TUESDAY : 1,
@@ -23,13 +34,13 @@ export const DAYS = { // So in the modern part of the world, aka the ones that u
   SUNDAY : 6,
 }
 export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
-  {name : "Mandag", day : 1}, // YES IT'S FUCKING WRONG
-  {name : "Tirsdag", day : 2},
-  {name : "Onsdag", day : 3},
-  {name : "Torsdag", day : 4},
-  {name : "Fredag", day : 5},
-  {name : "Lørdag", day : 6},
-  {name : "Søndag", day : 7},
+  {name : "Mandag", day : 0}, // YES IT'S FUCKING WRONG
+  {name : "Tirsdag", day : 1},
+  {name : "Onsdag", day : 2},
+  {name : "Torsdag", day : 3},
+  {name : "Fredag", day : 4},
+  {name : "Lørdag", day : 5},
+  {name : "Søndag", day : 6},
 ]
 
 /**
@@ -64,13 +75,13 @@ export const WEEKLY_REPEAT_CHOICES = {
  * Enum describing options of an Injections order usage field
  * @enum {string}
  */
-export const INJECTION_USAGE = {
+export const INJECTION_USAGE_NAMES = {
   0 : "Human",
   1 : "Dyr",
   2 : "Andet",
 }
 
-export const INJECTION_USAGE_ENUM = {
+export const INJECTION_USAGE = {
   human : 0,
   animal : 1,
   other : 2,

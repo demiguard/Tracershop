@@ -63,7 +63,7 @@ function StateHolder({
     activeCustomer={customer}
     activeEndpoint={endpoint}
     activeTimeSlot={timeSlot}
-    customer={customers}
+    customers={customers}
     endpoints={endpoints}
     timeSlots={timeSlots}
     setCustomer={setCustomer}
@@ -83,13 +83,13 @@ describe("DestinationSelect", () => {
       mockSetTimeSlot={mockSetTimeSlot}
     />)
 
-    expect(await screen.findByLabelText(customerLabel)).toBeVisible();
-    expect(await screen.findByLabelText(endpointLabel)).toBeVisible();
-    expect(await screen.findByLabelText(timeSlotLabel)).toBeVisible();
+    expect(screen.getByLabelText(customerLabel)).toBeVisible();
+    expect(screen.getByLabelText(endpointLabel)).toBeVisible();
+    expect(screen.getByLabelText(timeSlotLabel)).toBeVisible();
 
-    expect(await screen.findByText(customers.get(1).short_name))
-    expect(await screen.findByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(1).name}`))
-    expect(await screen.findByText(activityDeliveryTimeSlots.get(1).delivery_time))
+    expect(screen.getByText(customers.get(1).short_name))
+    expect(screen.getByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(1).name}`))
+    expect(screen.getByText(activityDeliveryTimeSlots.get(1).delivery_time))
   });
 
   it("Change TimeSlot", async () => {

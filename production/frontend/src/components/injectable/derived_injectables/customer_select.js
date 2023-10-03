@@ -1,58 +1,46 @@
 import React from "react";
 import { JSON_CUSTOMER } from "../../../lib/constants";
-import { Select } from "../select";
+import { Select, toOptions, Option } from "../select";
 import { FormControl } from "react-bootstrap";
+import PropTypes from 'prop-types'
+import { Customer } from "../../../dataclasses/dataclasses";
+
+const propTypes = PropTypes // WELL I COULDN*T RENAME IN THE IMPORT
 
 /**
  * 
  * @param {*} param0 
  */
 export function CustomerSelect(props){
-
-  /**
-   * Maps the customer to an option container accepted by the Select Component
-   * @param {Customer} customer - customer to be transformed
-   * @returns {{ id : Number, name : String}}
-   */
-  function toOption(customer){
-    return {
-      id : customer.id,
-      name : customer.short_name,
-    }
-  }
-
-  let /**@type {Array<Object>}  */ customerOptions = []  // this is a turnary but, i think this easier to read
-  if (props.customer instanceof Map){
-    customerOptions =  [...props.customer.values()].map(toOption);
-  } else if (props.customer instanceof Array) {
-    customerOptions = props.customer.map(toOption);
+  let /**@type {Array<Customer>}  */ customerOptions = []  // this is a turnary but, i think this easier to read
+  if (props.customers instanceof Map){
+    customerOptions = toOptions(props.customers, 'short_name', 'id')
+  } else if (props.customers instanceof Array) {
+    customerOptions = toOptions(props.customers, 'short_name', 'id');
   }
 
   if(props.emptyCustomer){ // doesn't need to be defined
-    customerOptions.push({
-      id : "",
-      name :"------------"
-    })
+    customerOptions.push(new Option("","------------"))
   }
 
   const newProps = {...props};
-  delete newProps.customer;
+  delete newProps.customers;
   delete newProps.emptyCustomer;
+  newProps.options = customerOptions
 
   if(customerOptions.length === 0){
-    <FormControl {...newProps} readOnly/>
+    return <FormControl {...newProps} readOnly/>
   }
   if(customerOptions.length === 1){
     return <FormControl {...newProps} readOnly value={customerOptions[0].name}/>
   }
 
   return <Select
-    options={customerOptions}
-    nameKey="name"
-    valueKey="id"
     {...newProps}
   />
+}
 
-
-
+CustomerSelect.propTypes = {
+  customers : PropTypes.oneOfType([PropTypes.arrayOf(Customer), PropTypes.instanceOf(Map)]),
+  customerEmpty : PropTypes.oneOf([undefined, propTypes.bool])
 }

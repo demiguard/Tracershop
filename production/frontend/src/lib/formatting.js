@@ -107,7 +107,7 @@ export function FormatDateStr(number) {
  * Converts a string to it related json encoded object
  * This function is idempotent
  * @param {String | Object} JSONString
- * @returns {object} Jsonformatted object
+ * @returns {object} JSON formatted object
  */
 export function ParseJSONstr(JSONString){
   let json = JSONString;
@@ -231,4 +231,13 @@ export function makePassword(len){
       counter += 1;
     }
     return result;
+}
+
+/**
+ * 
+ * @param {String} str 
+ * @returns {String}
+ */
+export function Capitalize(str){
+  return str[0].toLocaleUpperCase() + str.slice(1).toLocaleLowerCase();
 }
