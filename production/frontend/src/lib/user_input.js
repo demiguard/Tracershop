@@ -28,6 +28,8 @@ export function parseDanishNumberInput (input, header="") {
 }
 
 
+
+
 export function parseDanishPositiveNumberInput(input, header=""){
   const [valid, inputNumber] = parseDanishNumberInput(input, header);
 
@@ -41,6 +43,20 @@ export function parseDanishPositiveNumberInput(input, header=""){
 
   return [true, inputNumber]
 }
+
+export function ParseWholePositiveNumber(input, header="") {
+  const [valid, number] = parseDanishPositiveNumberInput(input, header);
+  if(!valid){
+    return [valid, number];
+  }
+
+  if (number !== Math.floor(number)){
+    return [false, `${header} er ikke et helt tal`];
+  }
+
+  return [true, number]
+}
+
 
 export function parseTimeInput(input, header=""){
   if(input === ""){

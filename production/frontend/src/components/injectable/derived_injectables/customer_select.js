@@ -41,6 +41,6 @@ export function CustomerSelect(props){
 }
 
 CustomerSelect.propTypes = {
-  customers : PropTypes.oneOfType([PropTypes.arrayOf(Customer), PropTypes.instanceOf(Map)]),
+  customers : PropTypes.oneOfType([PropTypes.arrayOf(Customer), PropTypes.instanceOf(Map)]).isRequired,
   customerEmpty : PropTypes.oneOf([undefined, propTypes.bool])
 }

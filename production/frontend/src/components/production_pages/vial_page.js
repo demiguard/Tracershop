@@ -163,7 +163,7 @@ export function VialPage(props){
           <TracershopInputGroup label="Kunde Filter">
             <CustomerSelect
               value={customerID}
-              customer={props[JSON_CUSTOMER]}
+              customers={props[JSON_CUSTOMER]}
               emptyCustomer
               onChange={setStateToEvent(setCustomer)}
             />

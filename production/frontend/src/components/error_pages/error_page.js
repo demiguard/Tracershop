@@ -1,5 +1,5 @@
 import React, { } from "react";
-import { Container } from "react-bootstrap";
+import { Container, Row } from "react-bootstrap";
 import styles from "/src/css/Errors.module.css"
 
 
@@ -8,18 +8,21 @@ export function  ErrorPage (props) {
   console.log(props)
   let errorMessage = ""
   let errorStack = []
+  let lines = []
 
   if (props.error !== undefined
     && props.error.stack !== undefined
     && props.error.message !== undefined
     ){
-    errorMessage = props.error.message
+    errorMessage = props.error.message;
 
-    const stack = props.error.stack
-    console.log(stack)
-
+    const /**@type {String} */ stack = props.error.stack
+    //console.log(stack)
+    lines = stack.split('\n').filter(
+      (line) => line.includes('tracershop_frontend/./src/')
+    ).map((line, i) => <p key={i}>{line}</p>);
   } else {
-
+    console.log("OOH NOES, THE ERROR HANDLER HAD AN ERROR");
   }
 
   return(<Container
@@ -32,6 +35,6 @@ export function  ErrorPage (props) {
     <h1>Teknisk infomation</h1>
     <p>Error: {errorMessage}</p>
     <hr></hr>
-
+    {lines}
   </Container>);
 }

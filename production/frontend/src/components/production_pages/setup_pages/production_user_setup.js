@@ -60,7 +60,7 @@ function NewUserRow({customers, websocket}){
         <TracershopInputGroup label="Kunde">
           <CustomerSelect
             value={newCustomer}
-            customer={customers}
+            customers={customers}
             emptyCustomer
             onChange={(event) => {
               setNewCustomer(event.target.value)
@@ -110,18 +110,6 @@ function NewUserRow({customers, websocket}){
  * }} props
  */
 function UserRow({user, customers, userMapping, websocket}) {
-  const customerOptions = [...customers.values()].map((customer) => {
-    return {
-      id : customer.id,
-      name : customer.short_name
-    }
-  })
-
-  customerOptions.push({
-    id : "",
-    name : "---------------",
-  })
-
   const [userAssignmentID, targetCustomer] = userMapping.has(user.id) ? userMapping.get(user.id)[0] : [null, ""]
   // State
   const [relatedCustomer, _setRelatedCustomer] = useState(targetCustomer);
@@ -181,7 +169,7 @@ function UserRow({user, customers, userMapping, websocket}) {
             <CustomerSelect
               value={relatedCustomer}
               onChange={(event) => {setRelatedCustomer(event.target.value)}}
-              customer={customers}
+              customers={customers}
               emptyCustomer
             />
           </TracershopInputGroup>
@@ -213,8 +201,6 @@ function UserRow({user, customers, userMapping, websocket}) {
                 }
               </InputGroup.Text>
             </TracershopInputGroup>
-          
-          
           </Col>
         </Row>
       </Card.Header>

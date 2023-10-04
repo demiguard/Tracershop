@@ -5,7 +5,7 @@
 
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalog } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
-import { TRACER_TYPE_ACTIVITY } from "./constants";
+import { TRACER_TYPE } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
 
 
@@ -33,7 +33,7 @@ export function createTracerCatalogForCustomer(TracerCatalogPages, Tracers, Cust
       continue;
     }
     const /**@type {Tracer} */ tracer = Tracers.get(page.tracer);
-    if(tracer.tracer_type === TRACER_TYPE_ACTIVITY){
+    if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
       overheadMap.set(page.tracer, page.overhead_multiplier);
       tracerCatalogActivity.push(tracer);
     } else {
@@ -44,36 +44,26 @@ export function createTracerCatalogForCustomer(TracerCatalogPages, Tracers, Cust
   return [tracerCatalogActivity, tracerCatalogInjections, overheadMap]
 }
 
-/** Data structure that sorts out booking into a mapping, where the key is the
- * tracer ID that is used in each of bookings
- * @param {Array<Booking>} bookings - The bookings to be mapped
- * @param {Map<Number, Procedure>} procedures - The procedures that bookings are using
- * @returns {Map<Number,Array<Booking>>}
- * 
- * @example Sample use in React Component
- const bookingTracerMap = bookingTracerMapping([...props[JSON_BOOKING].values()],
-                                               props[JSON_PROCEDURES])
- */
-export function createBookingTracerMapping(bookings,procedures){
-  // Call structure is with a booking array and not a Map,
-  // because you normally wanna filter some bookings out before calling this
-  const bookingTracerMap = new Map() // this is gonna be an array map
-
-  for(const booking of bookings){
-    const procedure = procedures.get(booking.procedure)
-    let tracerKey = null;
-    if (procedure.tracer){
-      tracerKey = procedure.tracer // Null / undefined is a valid value here!
-    }
-
-    if (bookingTracerMap.has(tracerKey)){
-      bookingTracerMap.get(tracerKey).push(booking)
-    } else {
-      bookingTracerMap.set(tracerKey, [booking])
+export class TracerCatalog {
+  constructor(tracerCatalogPages, tracers, customerID){
+    this._customerID = customerID;
+    this._tracerCatalogActivity = [];
+    this._tracerCatalogInjections = [];
+    this._overheadMap = new Map();
+    for(const [pageID, _tracerCatalogPage] of tracerCatalogPages){
+      const /**@type {TracerCatalog} */ page = _tracerCatalogPage;
+      if(page.customer != customerID){
+        continue;
+      }
+      const /**@type {Tracer} */ tracer = tracers.get(page.tracer);
+      if(tracer.tracer_type === TRACER_TYPE_ACTIVITY){
+        overheadMap.set(page.tracer, page.overhead_multiplier);
+        tracerCatalogActivity.push(tracer);
+      } else {
+        tracerCatalogInjections.push(tracer);
+      }
     }
   }
-
-  return bookingTracerMap
 }
 
 /**

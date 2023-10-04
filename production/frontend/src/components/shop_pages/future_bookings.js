@@ -2,7 +2,7 @@ import React, { Component, useState } from "react";
 import { FormatDateStr, dateToDateString } from "../../lib/formatting";
 import { JSON_BOOKING, JSON_LOCATION, JSON_PROCEDURE, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, } from "../../lib/constants";
 import { Booking, Procedure, Tracer, Location } from "../../dataclasses/dataclasses";
-import { ProcedureLocationIndex, TracerBookingMapping, createBookingTracerMapping, createTracerCatalogForCustomer } from "../../lib/data_structures";
+import { ProcedureLocationIndex, TracerBookingMapping } from "../../lib/data_structures";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { ClickableIcon } from "../injectable/icons";
 import SiteStyles from "/src/css/Site.module.css"

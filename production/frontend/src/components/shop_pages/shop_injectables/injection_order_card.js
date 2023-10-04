@@ -3,11 +3,13 @@ import { FormatTime, ParseDanishNumber, nullParser } from "../../../lib/formatti
 import { InjectionOrder, Tracer } from "../../../dataclasses/dataclasses";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
-import { Select, toOptionsFromEnum } from "../../injectable/select";
+import { Select, toOptions } from "../../injectable/select";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, JSON_INJECTION_ORDER, cssCenter } from "../../../lib/constants";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { getTimeString } from "../../../lib/chronomancy";
+import { UsageSelect } from "../../injectable/derived_injectables/usage_select";
+import { ParseWholePositiveNumber, parseTimeInput } from "../../../lib/user_input";
 
 /**
  * This is a card containing all the information on an injection order
@@ -53,31 +55,25 @@ export function InjectionOrderCard({
  }
 
  function validateState(){
-   const numberInjections = ParseDanishNumber(injections);
-   if(isNaN(numberInjections)){
-     setErrorInjections("Antal injectioner er ikke et tal.");
-   }
-   if(numberInjections <= 0){
-     setErrorInjections("Der skal bestilles et positivt antal injektioner.");
-   }
+   const [validInjections, numInjections] = ParseWholePositiveNumber(injections, "Injektioner");
+   const [validTimeInput, timeInput] = parseTimeInput(deliveryTime, "Leverings Tiden");
 
-   if(numberInjections != Math.floor(numberInjections)){
-     setErrorInjections("Du kan ikke bestille fraktioner af injektioner.");
-
+   if(!validInjections){
+     setErrorInjections(numInjections);
    }
 
-   const formattedDeliveryTime = FormatTime(deliveryTime);
-   if(formattedDeliveryTime === null){
-     setErrorDeliveryTime("Tiden er ikke formateret korrekt.");
+   if(!validTimeInput){
+    setErrorDeliveryTime(timeInput)
    }
 
-   return errorInjections === "" && errorDeliveryTime === "";
+   return validInjections && validTimeInput;
  }
 
  function createInjectionOrder(){
    if(!validateState()){
      return
    }
+   // Whoo double calculations - It's a smell, but boy it's insignificant
    const numberInjections = ParseDanishNumber(injections)
    const delivery_time = FormatTime(deliveryTime)
    const newOrder = {...injectionOrder,
@@ -95,7 +91,7 @@ export function InjectionOrderCard({
    if(!validateState()){
      return;
    }
-
+   // Whoo double calculations - It's a smell, but boy it's insignificant
    const numberInjections = ParseDanishNumber(injections);
    const delivery_time = FormatTime(deliveryTime);
    const newOrder = {...injectionOrder,
@@ -126,17 +122,9 @@ export function InjectionOrderCard({
    statusInfo = `ID: ${injectionOrder.id}`
  }
 
- const tracerOptions = injectionTracers.map((tracer) => {
-   return {
-     id : tracer.id,
-     name : tracer.shortname
-   }
- });
-
+ const tracerOptions = toOptions(injectionTracers, 'shortname')
  let tracerSelect = <Select
                        options={tracerOptions}
-                       nameKey={'name'}
-                       valueKey={'id'}
                        disabled
                        onChange={(event) => {setTracer(Number(event.target.value))}}
                        value={tracer}
@@ -145,8 +133,6 @@ export function InjectionOrderCard({
  if(canEdit){
    tracerSelect = <Select
      options={tracerOptions}
-     nameKey={'name'}
-     valueKey={'id'}
      onChange={(event) => {setTracer(Number(event.target.value))} /** This is ok because */}
      value={tracer}
    />;
@@ -190,23 +176,13 @@ export function InjectionOrderCard({
    }
  }
 
-
- const usageOptions = toOptionsFromEnum(INJECTION_USAGE)
-
-
-  let usageSelect = <Select
-    options={usageOptions}
-    nameKey={'name'}
-    valueKey={'id'}
+ let usageSelect = <UsageSelect
     onChange={(event) => {setUsage(Number(event.target.value))}}
     value={usage}
     disabled
   />
   if(canEdit){
-    usageSelect = <Select
-      options={usageOptions}
-      nameKey={'name'}
-      valueKey={'id'}
+    usageSelect = <UsageSelect
       onChange={(event) => {setUsage(Number(event.target.value))}}
       value={usage}
     />
