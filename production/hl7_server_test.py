@@ -4,7 +4,7 @@ from datetime import date, time, datetime
 import aiorun
 import asyncio
 import hl7
-from hl7 import Message
+from hl7 import Message, Segment
 import traceback
 from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
 from typing import Tuple
@@ -18,7 +18,11 @@ logging.basicConfig(
     format="%(asctime)s (%(funcName)s,%(lineno)d) - %(levelname)s - %(message)s"
 )
 
-database = {}
+database = {
+    'locations' : {},
+    'procedureIdentifiers' : {},
+    'Bookings' : {}
+}
 
 
 @dataclasses.dataclass
@@ -36,6 +40,8 @@ class Booking:
     procedure_identifier : ProcedureIdentifier
     start_time : time
     start_date : date
+    accession_number : str
+    study_uid : str
 
 
 def in_(message, key):
@@ -45,22 +51,51 @@ def in_(message, key):
     except KeyError:
         return False
 
-def get_location(message: Message):
-    pass
 
-def get_procedure_identifier(message: Message):
-    pass
+async def get_or_create_location(location_str: str) -> Location:
+    if location_str not in database['locations']:
+        database['locations'][location_str] = Location(location_str)
 
-def get_message_type(hl7_message: Message) -> str:
+    return database['locations'][location_str]
+
+async def get_or_create_procedureIdentifier(code, description):
+    if code not in database['procedureIdentifiers']:
+        database['procedureIdentifiers'][code] = ProcedureIdentifier(code, description)
+    return database['procedureIdentifiers'][code]
+
+async def create_booking(location, procedure_identifier, start_time, start_date, accession_number, study_uid):
+    booking = Booking(location, procedure_identifier, start_time, start_date, accession_number, study_uid)
+    database['Bookings'][study_uid] = booking
+
+async def delete_booking(study_uid):
+    del database['Bookings'][study_uid]
+
+def extract_location(ORB_message_segment: Segment):
+    return ORB_message_segment[21][0]
+
+def extract_procedure_identifier(OBR_message_segment: Segment):
+    study_code, description = OBR_message_segment[4][0]
+
+    return study_code[0], description[0]
+
+def extract_message_type(hl7_message: Message) -> str:
     MESSAGE_TYPE_HEADER_OFFSET = 9
     return hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][0][0] + hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][1][0]
 
-def get_booking_time(message: Message) -> Tuple[date, time]:
-    
+def extract_booking_time(ORC_message_segment: Segment) -> Tuple[date, time]:
+    # Yeah this is pure magic number I'll try and some non-magic...
+    booking_datetime = datetime.strptime(ORC_message_segment[7][0][3][0], "%Y%m%d%H%M%S")
 
+    return booking_datetime.date(), booking_datetime.time()
+
+def extract_accession_number(ORC_message_segment: Segment):
+    return ORC_message_segment[20][0]
+
+def extract_study_uid(ZDS_segment: Segment):
+    return ZDS_segment[1][0]
 
 async def handleMessage(hl7_message: Message):
-    message_type = get_message_type(hl7_message)
+    message_type = extract_message_type(hl7_message)
 
     if message_type != 'ORMO01':
         logging.info("Received a message that do not belong to this service!")
@@ -71,26 +106,27 @@ async def handleMessage(hl7_message: Message):
         logging.info("Reminder that whoever designed the HL7 standard is stupid")
         return
 
-    for ORC_message_segment, OBR_message_segment in zip(hl7_message['ORC'], hl7_message['OBR']):
+    for ORC_message_segment, OBR_message_segment, ZDS_message_segment in zip(hl7_message['ORC'], hl7_message['OBR'], hl7_message['ZDS']):
         # This is the name given by the stanard. It is really part of the
         # message type. But for some god forsaken reason, did we decide to have
         # 10 different Message types to the same code
-        order_control = ORC_message_segment[1]
+        if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] == 'Appointed':
+            location_str = extract_location(OBR_message_segment)
+            location = await get_or_create_location(location_str)
 
-        if order_control == 'XO' and ORC_message_segment[5] == 'Appointed':
-            # booking
-            pass
+            study_code, study_description = extract_procedure_identifier(OBR_message_segment)
+            procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
+            accession_number = extract_accession_number(ORC_message_segment)
+            start_date, start_time = extract_booking_time(ORC_message_segment)
+            study_uid = extract_study_uid(ZDS_message_segment)
+            await create_booking(location, procedure_identifier, start_time, start_date, accession_number, study_uid)
+            logging.info(f"Added booking with uid: {study_uid}")
 
-            location = get_location(hl7_message)
-            procedure_identifier = get_procedure_identifier(hl7_message)
-
-        if order_control == 'DC':
+        if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] == 'Ended':
             # Delete
-            pass
-
-
-
-
+            study_uid = extract_study_uid(ZDS_message_segment)
+            await delete_booking(study_uid)
+            logging.info(f"deleted booking with uid: {study_uid}")
 
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):
     """This will be called every time a socket connects
@@ -109,9 +145,7 @@ async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7Strea
             hl7_writer.writemessage(hl7_message.create_ack())
             await hl7_writer.drain()
     except asyncio.IncompleteReadError:
-        logging.info("Incomplete Read Error was triggered!")
-        logging.info(traceback.format_exc())
-        # Oops, something went wrong, if the writer is not
+        # This expection is triggered at the end of a message
         # closed or closing, close it.
         if not hl7_writer.is_closing():
             hl7_writer.close()
