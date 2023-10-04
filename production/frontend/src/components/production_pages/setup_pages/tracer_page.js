@@ -182,8 +182,6 @@ export function TracerPage(props){
         <Select
           aria-label={`new-isotope-select`}
           options={isotopeOptions}
-          valueKey="value"
-          nameKey="name"
           onChange={setStateToEvent(setIsotope)}
           value={isotope}
         />
@@ -191,8 +189,6 @@ export function TracerPage(props){
       <td>
         <Select
           options={TracerTypeOptions}
-          valueKey="id"
-          nameKey="name"
           value={tracerType}
           onChange={setStateToEvent(setTracerType)}
         />

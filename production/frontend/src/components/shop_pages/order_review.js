@@ -1,5 +1,5 @@
 import React, { Component, useState } from "react";
-import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, INJECTION_USAGE_ENUM, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
+import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, JSON_ACTIVITY_ORDER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_TRACER_MAPPING, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, TRACER_TYPE_DOSE } from "../../lib/constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer, TracerCatalog } from "../../dataclasses/dataclasses";
 import { Card, Collapse, Container, Form, Row, Col, Button, FormControl, InputGroup, Modal } from "react-bootstrap";
 import { getId } from "../../lib/utils";
@@ -148,7 +148,7 @@ export function OrderReview(props){
                                   delivery_date : dateString,
                                   injections : "",
                                   status : 0,
-                                  tracer_usage : INJECTION_USAGE_ENUM.human,
+                                  tracer_usage : INJECTION_USAGE.human,
                                   comment : "",
                                   ordered_by : null,
                                   endpoint : props[PROP_ACTIVE_ENDPOINT],

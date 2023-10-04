@@ -14,8 +14,8 @@ from django.db.models import Model, DateField, BigAutoField, CharField, EmailFie
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
 from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
-from production.database.TracerShopModels import authModels
-from production.tracerauth.types import AuthActions
+from database.TracerShopModels import authModels
+from tracerauth.types import AuthActions
 
 
 class ClosedDate(TracershopModel):

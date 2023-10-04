@@ -9,9 +9,6 @@ import { nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
 
-
-
-
 export function LocationTable(props){
   const [filter, setFilter] = useState("")
   const [filterType, setFilterType] = useState(1)
@@ -104,7 +101,6 @@ export function LocationTable(props){
                 key={i}
                 location={location}
                 websocket={props[PROP_WEBSOCKET]}
-                endpointOptions={endpointOptions}
               />);
   });
 

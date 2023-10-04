@@ -179,7 +179,7 @@ export function ShopOrderPage (props){
               ariaLabelEndpoint="endpoint-select"
               activeCustomer={activeCustomer}
               activeEndpoint={activeEndpoint}
-              customer={props[JSON_CUSTOMER]}
+              customers={props[JSON_CUSTOMER]}
               endpoints={props[JSON_ENDPOINT]}
               setCustomer={setActiveCustomer}
               setEndpoint={setActiveEndpoint}
