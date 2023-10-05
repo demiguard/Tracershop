@@ -39,7 +39,7 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   JSON_MESSAGE : Message,
   JSON_MESSAGE_ASSIGNMENT : MessageAssignment,
   JSON_TRACER : Tracer,
-  JSON_TRACER_MAPPING : TracerCatalog,
+  JSON_TRACER_MAPPING : TracerCatalogPage,
   JSON_PROCEDURE : Procedure,
   JSON_PROCEDURE_IDENTIFIER : ProcedureIdentifier,
   JSON_PRODUCTION : ActivityProduction,

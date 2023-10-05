@@ -10,46 +10,21 @@ import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DA
 import styles from '../../css/Site.module.css'
 import { Select, toOptions, toOptionsFromEnum } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
-import { Customer, InjectionOrder, Tracer, TracerCatalog, DeliveryEndpoint } from "../../dataclasses/dataclasses";
+import { Customer, InjectionOrder, Tracer, DeliveryEndpoint } from "../../dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
 import { TimeInput } from "../injectable/time_form";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { UsageSelect } from "../injectable/derived_injectables/usage_select";
+import { TracerCatalog } from "../../lib/data_structures";
+import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "../../lib/initialization";
 
 
 export function CreateInjectionOrderModal(props){
-  const /**@type {Map<Number, Array<Number>>} */ tracerCatalog = new Map()
-
-  for(const [id, _tracerCatalogPage] of props[JSON_TRACER_MAPPING]){
-    const /**@type {TracerCatalog} */ tracerCatalogPage = _tracerCatalogPage;
-      const /**@type {Tracer} */ tracer = props[JSON_TRACER].get(tracerCatalogPage.tracer)
-      if(!(tracer.tracer_type === TRACER_TYPE_DOSE)){
-        continue;
-      }
-      if (tracerCatalog.has(tracerCatalogPage.customer)){
-        const customerCatalog = tracerCatalog.get(tracerCatalogPage.customer);
-        customerCatalog.push(tracerCatalogPage.tracer);
-      } else {
-        const customerCatalog = [tracerCatalogPage.tracer];
-
-        tracerCatalog.set(tracerCatalogPage.customer, customerCatalog);
-      }
-    }
-
   // Initialize select
-  let customerInit;
-  let tracerInit;
-  for(const [cid, customerCatalog] of tracerCatalog){
-    customerInit = cid;
-    tracerInit = customerCatalog[0]
-    break;
-  }
-
-  const /**@type {Array<DeliveryEndpoint} */ endpoints = [...props[JSON_ENDPOINT].values()].filter(
-    (endpoint) => {
-      return endpoint.owner === customerInit;
-    });
+  let initialization = initialize_customer_endpoint_tracer_from_tracerCatalog(
+    props[JSON_ENDPOINT], props[JSON_TRACER_MAPPING]
+  )
 
   const [customerID, setCustomer] = useState(customerInit);
   const [endpointID, setEndpoint] = useState(endpoints[0].id)
@@ -60,6 +35,12 @@ export function CreateInjectionOrderModal(props){
   const [comment, setComment] = useState("")
   const [error, setError] = useState("")
 
+
+  const /**@type {Map<Number, Array<Number>>} */ tracerCatalog = new TracerCatalog(
+    props[JSON_TRACER_MAPPING],
+    props[JSON_TRACER],
+    customerID
+  )
 
   function SubmitOrder(_event){
     //Validation
@@ -89,6 +70,8 @@ export function CreateInjectionOrderModal(props){
       setError("Leverings tidspunktet er ikke et valid");
       return;
     }
+
+
 
     const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
     const data_object = new InjectionOrder(

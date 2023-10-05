@@ -41,7 +41,7 @@ class Customer(TracershopModel):
   billing_zip_code = CharField(max_length=8, null=True, default=None)
   active_directory_code = CharField(max_length=128, null=True, default=None)
 
-class TracerCatalog(TracershopModel):
+class TracerCatalogPage(TracershopModel):
   id = BigAutoField(primary_key=True)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)

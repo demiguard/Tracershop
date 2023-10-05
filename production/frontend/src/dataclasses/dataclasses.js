@@ -182,7 +182,7 @@ export class Tracer {
   }
 }
 
-export class TracerCatalog {
+export class TracerCatalogPage {
   constructor(id, customer, tracer, max_injections, overhead_multiplier, ) {
     this.id=id
     this.customer=customer
@@ -292,7 +292,7 @@ export const MODELS = {
   message : Message,
   messageAssignment : MessageAssignment,
   tracer : Tracer,
-  tracer_mapping : TracerCatalog,
+  tracer_mapping : TracerCatalogPage,
   procedure : Procedure,
   procedure_identifier : ProcedureIdentifier,
   production : ActivityProduction,

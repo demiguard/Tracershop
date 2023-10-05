@@ -131,12 +131,12 @@ export const KEYWORD_Tracer_DEFAULT_PRICE_PER_UNIT = "default_price_per_unit";
 export const KEYWORD_Tracer_VIAL_TAG = "vial_tag";
 export const KEYWORD_Tracer_ARCHIVED = "archived";
 
-// Model: TracerCatalog
-export const KEYWORD_TracerCatalog_ID = "id";
-export const KEYWORD_TracerCatalog_CUSTOMER = "customer";
-export const KEYWORD_TracerCatalog_TRACER = "tracer";
-export const KEYWORD_TracerCatalog_MAX_INJECTIONS = "max_injections";
-export const KEYWORD_TracerCatalog_OVERHEAD_MULTIPLIER = "overhead_multiplier";
+// Model: TracerCatalogPage
+export const KEYWORD_TracerCatalogPage_ID = "id";
+export const KEYWORD_TracerCatalogPage_CUSTOMER = "customer";
+export const KEYWORD_TracerCatalogPage_TRACER = "tracer";
+export const KEYWORD_TracerCatalogPage_MAX_INJECTIONS = "max_injections";
+export const KEYWORD_TracerCatalogPage_OVERHEAD_MULTIPLIER = "overhead_multiplier";
 
 // Model: Procedure
 export const KEYWORD_Procedure_ID = "id";

@@ -3,66 +3,55 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalog } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
 import { TRACER_TYPE } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
 
-
 /**
- * Creates a list of activity tracers that the customer can order 
- * The main idea is that these should be run once of each customer
- * @param {Map<Number, TracerCatalog>} TracerCatalogPages 
- * @param {Map<Number, Tracer>} Tracers 
- * @param {Number} CustomerID 
- * @returns {[Array<Tracer>, Array<Tracer>, Map<Number, Number>]}
- * @example Sample use in a React Component
- * const [activityTracers, InjectionTracers,overheadMap] = TracerCatalog(props[JSON_TRACER_MAPPING],
-                                                                         props[JSON_TRACER],
-                                                                         props[PROP_ACTIVE_CUSTOMER])
-
+ * Data structure containing information about which tracers a customer have access to
+ * Each instance is unique to a customer.
  */
-export function createTracerCatalogForCustomer(TracerCatalogPages, Tracers, CustomerID){
-  const tracerCatalogActivity = new Array();
-  const tracerCatalogInjections = new Array();
-  const overheadMap = new Map
-
-  for(const [pageID, _tracerCatalogPage] of TracerCatalogPages){
-    const /**@type {TracerCatalog} */ page = _tracerCatalogPage;
-    if(page.customer != CustomerID){
-      continue;
-    }
-    const /**@type {Tracer} */ tracer = Tracers.get(page.tracer);
-    if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
-      overheadMap.set(page.tracer, page.overhead_multiplier);
-      tracerCatalogActivity.push(tracer);
-    } else {
-      tracerCatalogInjections.push(tracer);
-    }
-  }
-
-  return [tracerCatalogActivity, tracerCatalogInjections, overheadMap]
-}
-
 export class TracerCatalog {
+  /**
+   * 
+   * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages 
+   * @param {Map<Number, Tracer>} tracers 
+   * @param {Number} customerID 
+   */
   constructor(tracerCatalogPages, tracers, customerID){
     this._customerID = customerID;
     this._tracerCatalogActivity = [];
     this._tracerCatalogInjections = [];
     this._overheadMap = new Map();
-    for(const [pageID, _tracerCatalogPage] of tracerCatalogPages){
-      const /**@type {TracerCatalog} */ page = _tracerCatalogPage;
-      if(page.customer != customerID){
+    for(const tracerCatalogPage of tracerCatalogPages.values()){
+      if(tracerCatalogPage.customer !== customerID){
         continue;
       }
-      const /**@type {Tracer} */ tracer = tracers.get(page.tracer);
-      if(tracer.tracer_type === TRACER_TYPE_ACTIVITY){
-        overheadMap.set(page.tracer, page.overhead_multiplier);
-        tracerCatalogActivity.push(tracer);
-      } else {
-        tracerCatalogInjections.push(tracer);
+      const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
+      if(tracer === undefined){
+        continue;
+      }
+
+      if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
+        this._overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
+        this._tracerCatalogActivity.push(tracer);
+      } else if (tracer.tracer === TRACER_TYPE.DOSE) {
+        this._tracerCatalogInjections.push(tracer);
       }
     }
+  }
+
+  getActivityCatalog(){
+    return this._tracerCatalogActivity;
+  }
+
+  getInjectionCatalog(){
+    return this._tracerCatalogInjections;
+  }
+
+  getOverheadForTracer(tracerID){
+    return this._overheadMap.get(tracerID)
   }
 }
 
