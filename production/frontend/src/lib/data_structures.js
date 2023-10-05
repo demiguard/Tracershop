@@ -36,7 +36,7 @@ export class TracerCatalog {
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
         this._overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
         this._tracerCatalogActivity.push(tracer);
-      } else if (tracer.tracer === TRACER_TYPE.DOSE) {
+      } else if (tracer.tracer_type === TRACER_TYPE.DOSE) {
         this._tracerCatalogInjections.push(tracer);
       }
     }

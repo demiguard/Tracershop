@@ -5,7 +5,7 @@ import { Button, Col, Form, FormControl, InputGroup, Modal, ModalBody, Row, Tabl
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box";
 import { FormatTime, FormatDateStr, parseDate, dateToDateString, ParseDanishNumber, Capitalize } from "../../lib/formatting";
 import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, PROP_WEBSOCKET, JSON_ENDPOINT, INJECTION_USAGE } from "../../lib/constants";
+  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, PROP_WEBSOCKET, JSON_ENDPOINT, INJECTION_USAGE, PROP_USER } from "../../lib/constants";
 
 import styles from '../../css/Site.module.css'
 import { Select, toOptions, toOptionsFromEnum } from "../injectable/select";
@@ -18,6 +18,9 @@ import { DestinationSelect } from "../injectable/derived_injectables/destination
 import { UsageSelect } from "../injectable/derived_injectables/usage_select";
 import { TracerCatalog } from "../../lib/data_structures";
 import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "../../lib/initialization";
+import { parseTimeInput, parseWholePositiveNumber } from "../../lib/user_input";
+import { TracerWebSocket } from "../../lib/tracer_websocket";
+import { ErrorInput } from "../injectable/error_input";
 
 
 export function CreateInjectionOrderModal(props){
@@ -25,77 +28,58 @@ export function CreateInjectionOrderModal(props){
   let initialization = initialize_customer_endpoint_tracer_from_tracerCatalog(
     props[JSON_ENDPOINT], props[JSON_TRACER_MAPPING]
   )
+  const /**@type {TracerWebSocket} */ websocket = props[PROP_WEBSOCKET];
 
-  const [customerID, setCustomer] = useState(customerInit);
-  const [endpointID, setEndpoint] = useState(endpoints[0].id)
-  const [tracerID, setTracer] = useState(tracerInit);
+  const [customerID, setCustomer] = useState(initialization.customer);
+  const [endpointID, setEndpoint] = useState(initialization.endpoint)
+  const [tracerID, setTracer] = useState(initialization.tracer);
   const [usage, setUsage] = useState(1);
   const [injections, setInjections] = useState("");
   const [deliverTime, setDeliveryTime] = useState("")
   const [comment, setComment] = useState("")
-  const [error, setError] = useState("")
+  const [errorInjection, setErrorInjection] = useState("")
+  const [errorDeliveryTime, setErrorDeliveryTime] = useState("");
 
 
-  const /**@type {Map<Number, Array<Number>>} */ tracerCatalog = new TracerCatalog(
+  const tracerCatalog = new TracerCatalog(
     props[JSON_TRACER_MAPPING],
     props[JSON_TRACER],
     customerID
-  )
+  );
 
   function SubmitOrder(_event){
     //Validation
-    const injectionsNumber = ParseDanishNumber(injections);
-    if(!injections){
-      setError("Der er ikke indtastet hvor mange injektioner der skal bestilles")
-      return
+    const [validInjections, numberInjections] = parseWholePositiveNumber(injections, "Injektioner")
+    const [validDeliveryTime, formattedDeliveryTime] = parseTimeInput(deliverTime, "Leverings tid")
+
+    if(!validInjections){
+      setErrorInjection(numberInjections)
     }
-
-    if(isNaN(injectionsNumber)){
-      setError("Injektionerne er ikke et tal");
-      return;
+    if(!validDeliveryTime){
+      setErrorDeliveryTime(formattedDeliveryTime)
     }
-
-    if(injectionsNumber <= 0){
-      setError("Der skal bestilles et positivt mængde af injectioner")
-      return;
+    if(validDeliveryTime && validInjections){
+      websocket.sendCreateModel(JSON_INJECTION_ORDER, new InjectionOrder(
+        undefined, // id
+        formattedDeliveryTime, // deliver_time
+        dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
+        numberInjections, // injections
+        1, // Status
+        usage, // tracer_usage
+        comment, // Comment
+        props[PROP_USER].id, // Ordered By
+        endpointID, // Delivery ID
+        tracerID, // Tracer ID
+        null, // lot_number
+        null, // freed_datetime
+        null, // Freed_by
+      ))
+      props[PROP_ON_CLOSE]()
     }
-
-    if(injectionsNumber != Math.floor(injectionsNumber)){
-      setError("Der kan kun bestilles et helt antal injektioners")
-      return
-    }
-
-    const formattedDeliverTime = FormatTime(deliverTime);
-    if(formattedDeliverTime === null){
-      setError("Leverings tidspunktet er ikke et valid");
-      return;
-    }
-
-
-
-    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
-    const data_object = new InjectionOrder(
-      undefined, // id
-      formattedDeliverTime, // deliver_time
-      dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
-      injectionsNumber, // injections
-      1, // Status
-      usage,
-      comment,
-      undefined,
-      endpointID,
-      tracerID,
-      null,
-      null,
-      null,
-    );
-    message[WEBSOCKET_DATA] = [data_object];
-    message[WEBSOCKET_DATATYPE] = JSON_INJECTION_ORDER;
-    props[PROP_WEBSOCKET].send(message);
-    props[PROP_ON_CLOSE]()
   }
 
-  const tracerOptions = toOptions(props[JSON_TRACER].values(), 'shortname', 'id')
+  const tracerOptions = toOptions(tracerCatalog.getInjectionCatalog(),
+                                  'shortname', 'id')
 
   return(
     <Modal
@@ -113,7 +97,7 @@ export function CreateInjectionOrderModal(props){
             ariaLabelEndpoint="select-endpoint"
             activeCustomer={customerID}
             activeEndpoint={endpointID}
-            customer={props[JSON_CUSTOMER]}
+            customers={props[JSON_CUSTOMER]}
             endpoints={props[JSON_ENDPOINT]}
             setCustomer={setCustomer}
             setEndpoint={setEndpoint}
@@ -135,18 +119,22 @@ export function CreateInjectionOrderModal(props){
             />
           </TracershopInputGroup>
           <TracershopInputGroup label={"Injektioner"}>
-            <Form.Control
+            <ErrorInput error={errorInjection}>
+              <Form.Control
                 aria-label="injection-input"
                 value={injections}
                 onChange={setStateToEvent(setInjections)}
               />
+            </ErrorInput>
           </TracershopInputGroup>
           <TracershopInputGroup label={"Leverings tid"}>
-            <TimeInput
-              aria-label="delivery-time-input"
-              value={deliverTime}
-              stateFunction={setDeliveryTime}
-            />
+            <ErrorInput error={errorDeliveryTime}>
+              <TimeInput
+                aria-label="delivery-time-input"
+                value={deliverTime}
+                stateFunction={setDeliveryTime}
+              />
+            </ErrorInput>
           </TracershopInputGroup>
           <TracershopInputGroup label="Kommentar">
             <Form.Control
@@ -156,10 +144,6 @@ export function CreateInjectionOrderModal(props){
             />
           </TracershopInputGroup>
         </Row>
-        { error != "" ? <AlertBox
-          level={ERROR_LEVELS.error}
-          message={error}
-           /> : "" }
       </ModalBody>
       <Modal.Footer>
         <CloseButton onClick={props[PROP_ON_CLOSE]}/>

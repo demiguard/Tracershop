@@ -67,3 +67,15 @@ export function getPDFUrls(endpoint, tracer, date){
     date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`;
 }
 
+/**
+ * Function for creating a maybe monad from a number
+ * @param {*} maybeNumber 
+ * @returns 
+ */
+export function numberfy(maybeNumber){
+  if (maybeNumber === "" || maybeNumber === null){
+    return ""
+  }
+
+  return Number(maybeNumber)
+}

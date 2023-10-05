@@ -1,6 +1,7 @@
 /** This module exists to provide consistent initialization of various fields */
 
 import { DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses";
+import { numberfy } from "./utils";
 
 /**
  * 
@@ -14,8 +15,8 @@ import { DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses"
 export function initialize_customer_endpoint(
   customers, endpoints
 ){
-  let customerInit = "";
-  let endpointInit = "";
+  let /**@type {String | Number} */ customerInit = "";
+  let /**@type {String | Number} */ endpointInit = "";
 
   for(const customer of customers.values()){
     customerInit = customer.id;
@@ -28,6 +29,9 @@ export function initialize_customer_endpoint(
       break;
     }
   }
+
+  customerInit = numberfy(customerInit)
+  endpointInit = numberfy(endpointInit)
 
   return {
     customer : customerInit,
@@ -46,9 +50,9 @@ export function initialize_customer_endpoint(
 export function initialize_customer_endpoint_tracer_from_tracerCatalog(
   endpoints, tracerCatalogPages,
 ){
-  let customerInit = "";
-  let endpointInit = "";
-  let tracerInit = "";
+  let /**@type {Number | String} */ customerInit = "";
+  let /**@type {Number | String} */ endpointInit = "";
+  let /**@type {Number | String} */ tracerInit = "";
 
   for(const tracerCatalogPage of tracerCatalogPages.values()){
     customerInit = tracerCatalogPage.customer;
@@ -61,6 +65,10 @@ export function initialize_customer_endpoint_tracer_from_tracerCatalog(
       break;
     }
   }
+
+  customerInit = numberfy(customerInit)
+  endpointInit = numberfy(endpointInit)
+  tracerInit = numberfy(tracerInit)
 
   return {
     customer : customerInit,

@@ -44,7 +44,7 @@ export function parseDanishPositiveNumberInput(input, header=""){
   return [true, inputNumber]
 }
 
-export function ParseWholePositiveNumber(input, header="") {
+export function parseWholePositiveNumber(input, header="") {
   const [valid, number] = parseDanishPositiveNumberInput(input, header);
   if(!valid){
     return [valid, number];
