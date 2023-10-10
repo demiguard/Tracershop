@@ -276,15 +276,15 @@ export class Vial {
 
 export const MODELS = {
   address : Address,
-  orders : ActivityOrder,
+  activity_orders : ActivityOrder,
   booking : Booking,
-  closeddate : ClosedDate,
+  closed_date : ClosedDate,
   customer : Customer,
   deadline : Deadline,
-  deliverTimes : ActivityDeliveryTimeSlot,
+  deliver_times : ActivityDeliveryTimeSlot,
   dicom_endpoint : DicomEndpoint,
   deliveryEndpoint : DeliveryEndpoint,
-  t_orders : InjectionOrder,
+  injection_orders : InjectionOrder,
   isotopes : Isotope,
   release_right : ReleaseRight,
   legacy_production_member : LegacyProductionMember,
@@ -303,3 +303,62 @@ export const MODELS = {
   vial : Vial,
 }
 
+export class TracershopState {
+  /** @type { User } */ logged_in_user
+  /** @type { Map<Number, Address>} */ address
+  /** @type { Map<Number, ActivityOrder>} */ activity_orders
+  /** @type { Map<Number, Booking>} */ booking
+  /** @type { Map<Number, ClosedDate>} */ closed_date
+  /** @type { Map<Number, Customer>} */ customer
+  /** @type { Map<Number, Deadline>} */ deadline
+  /** @type { Map<Number, ActivityDeliveryTimeSlot>} */ deliver_times
+  /** @type { Map<Number, DicomEndpoint>} */ dicom_endpoint
+  /** @type { Map<Number, DeliveryEndpoint>} */ deliveryEndpoint
+  /** @type { Map<Number, InjectionOrder>} */ injection_orders
+  /** @type { Map<Number, Isotope>} */ isotopes
+  /** @type { Map<Number, ReleaseRight>} */ release_right
+  /** @type { Map<Number, LegacyProductionMember>} */ legacy_production_member
+  /** @type { Map<Number, Location>} */ location
+  /** @type { Map<Number, Message>} */ message
+  /** @type { Map<Number, MessageAssignment>} */ messageAssignment
+  /** @type { Map<Number, Tracer>} */ tracer
+  /** @type { Map<Number, TracerCatalogPage>} */ tracer_mapping
+  /** @type { Map<Number, Procedure>} */ procedure
+  /** @type { Map<Number, ProcedureIdentifier>} */ procedure_identifier
+  /** @type { Map<Number, ActivityProduction>} */ production
+  /** @type { Map<Number, SecondaryEmail>} */ secondaryEmail
+  /** @type { Map<Number, ServerConfiguration>} */ server_config
+  /** @type { Map<Number, User>} */ user
+  /** @type { Map<Number, UserAssignment>} */ userAssignment
+  /** @type { Map<Number, Vial>} */ vial
+
+  constructor(logged_in_user, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, deliveryEndpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, messageAssignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondaryEmail, server_config, user, userAssignment, vial, ){
+    this.logged_in_user=logged_in_user
+    this.address = address
+    this.activity_orders = activity_orders
+    this.booking = booking
+    this.closed_date = closed_date
+    this.customer = customer
+    this.deadline = deadline
+    this.deliver_times = deliver_times
+    this.dicom_endpoint = dicom_endpoint
+    this.deliveryEndpoint = deliveryEndpoint
+    this.injection_orders = injection_orders
+    this.isotopes = isotopes
+    this.release_right = release_right
+    this.legacy_production_member = legacy_production_member
+    this.location = location
+    this.message = message
+    this.messageAssignment = messageAssignment
+    this.tracer = tracer
+    this.tracer_mapping = tracer_mapping
+    this.procedure = procedure
+    this.procedure_identifier = procedure_identifier
+    this.production = production
+    this.secondaryEmail = secondaryEmail
+    this.server_config = server_config
+    this.user = user
+    this.userAssignment = userAssignment
+    this.vial = vial
+  }
+}

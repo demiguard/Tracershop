@@ -17,15 +17,14 @@ export function TracershopInputGroup(props) {
 
   return (
   <InputGroup
-
-  style={{
-    marginTop : '5px',
-    marginBottom : '5px',
-  }}
-  {...newProps}
-  >
-    <InputGroup.Text>{label}</InputGroup.Text>
-    {children}
-  </InputGroup>)
-
+    style={{
+      marginTop : '5px',
+      marginBottom : '5px',
+    }}
+    {...newProps}
+    >
+      <InputGroup.Text>{label}</InputGroup.Text>
+      {children}
+    </InputGroup>
+  );
 }

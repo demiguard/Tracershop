@@ -65,4 +65,4 @@ class ApiEditOrder(LoginRequiredMixin, View):
       })
 
     SQL.deleteFDGOrder(ID)
-    return constants.SUCCESSFUL_JSON_RESPONSE
+    return constants.SUCCESSFUL_DATA_RESPONSE

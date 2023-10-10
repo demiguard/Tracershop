@@ -1,61 +1,58 @@
-import React, {Component,} from "react";
-import { Button, Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
+import React, {Component, useState} from "react";
 
-import { JSON_CUSTOMER, JSON_TRACER, JSON_TRACER_MAPPING, LEGACY_KEYWORD_CUSTOMER_ID, LEGACY_KEYWORD_ID, LEGACY_KEYWORD_TRACER_ID,
-  PROP_ACTIVE_TRACER,
-  PROP_ON_CLOSE,
-  PROP_WEBSOCKET,
-  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,  WEBSOCKET_MESSAGE_MODEL_CREATE,
-  WEBSOCKET_MESSAGE_MODEL_DELETE} from "../../lib/constants";
-import { renderTableRow } from "../../lib/rendering";
-import { changeState } from "../../lib/state_management";
+import { Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
+
+import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants";
+
+import {DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING, WEBSOCKET_DATA,
+  WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
+  WEBSOCKET_MESSAGE_MODEL_DELETE
+} from "~/lib/shared_constants";
+
+import { renderTableRow } from "~/lib/rendering";
+import { setStateToEvent } from "~/lib/state_management";
 
 import propTypes from "prop-types";
 
-import styles from '../../css/Site.module.css';
-import { Customer, TracerCatalog } from "../../dataclasses/dataclasses";
-import { KEYWORD_TracerCatalog_CUSTOMER, KEYWORD_TracerCatalog_TRACER } from "../../dataclasses/keywords";
+import styles from '~/css/Site.module.css';
+import { Tracer, Customer, TracerCatalogPage } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
+import { useWebsocket } from "../tracer_shop_context";
 
-export { TracerModal }
 
+export function TracerModal (props) {
+  const websocket = useWebsocket();
+  const [filter, setFilter] = useState("");
+  const/**@type {Tracer} */ tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER])
+    // This is a map so the id can be found later, if a TracerCatalog needs to be deleted
+    const TracerMapping = new Map();
 
-const propType = {}
-propType[JSON_CUSTOMER] = propTypes.objectOf(Map).isRequired;
-propType[JSON_TRACER_MAPPING] = propTypes.objectOf(Map).isRequired;
-propType[PROP_ACTIVE_TRACER] = propTypes.number.isRequired;
-propType[PROP_ON_CLOSE] = propTypes.func.isRequired;
-propType[JSON_TRACER] = propTypes.objectOf(Map).isRequired;
+    for(const [ID, _TracerCatalog ] of props[DATA_TRACER_MAPPING]){
+      const /**@type {TracerCatalogPage} */ tracerCatalog = _TracerCatalog
 
-class TracerModal extends Component {
-  static propTypes = propType
-  constructor(props) {
-    super(props);
-    this.state = {
-      filter : ""
+      if(tracerCatalog.tracer == props[PROP_ACTIVE_TRACER]){
+        TracerMapping.set(tracerCatalog.customer, tracerCatalog.id)
+      }
     }
-  }
 
-
-  updateTracerCustomer(event, CustomerID){
+  function updateTracerCustomer(event, CustomerID){
     if(event.target.checked){
-      const message = this.props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
+      const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
       const data = {};
-      data[KEYWORD_TracerCatalog_CUSTOMER] = CustomerID;
-      data[KEYWORD_TracerCatalog_TRACER] = this.props[PROP_ACTIVE_TRACER];
+      data.customer = CustomerID;
+      data.tracer = props[PROP_ACTIVE_TRACER];
 
       message[WEBSOCKET_DATA] = data
-      message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING
+      message[WEBSOCKET_DATATYPE] = DATA_TRACER_MAPPING
 
-      this.props[PROP_WEBSOCKET].send(message);
+      websocket.send(message);
     } else {
-      const tracerCatalogID = this.TracerMapping.get(CustomerID);
-      const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_DELETE);
+      const tracerCatalogID = TracerMapping.get(CustomerID);
+      const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_DELETE);
       message[WEBSOCKET_DATA_ID] = tracerCatalogID
-      message[WEBSOCKET_DATATYPE] = JSON_TRACER_MAPPING;
+      message[WEBSOCKET_DATATYPE] = DATA_TRACER_MAPPING;
 
-      this.props[PROP_WEBSOCKET].send(message);
+      websocket.send(message);
     }
   }
 
@@ -64,90 +61,72 @@ class TracerModal extends Component {
    * @param {Customer} customer - customer to be rendered
    * @returns {Element}
    */
-  renderCustomerRow(customer){
-    const allowedToOrder = this.TracerMapping.has(customer.id)
+  function CustomerRow(customer){
+    const allowedToOrder = TracerMapping.has(customer.id)
     return renderTableRow(customer.id, [
       customer.short_name, <Form.Check
         aria-label={`check-${customer.id}`}
         defaultChecked={allowedToOrder}
         type="checkbox"
         className="mb-2"
-        onClick={(event) => this.updateTracerCustomer(event, customer.id)}
+        onClick={(event) => updateTracerCustomer(event, customer.id)}
       />
     ]);
   }
 
-  renderBody(){
     const customerRows = [];
-    const filter = new RegExp(this.state.filter,"g");
-    for(const [_customer_id, _customer] of this.props[JSON_CUSTOMER]){
+    const filterRegExp = new RegExp(filter,"g");
+    for(const [_customer_id, _customer] of props[DATA_CUSTOMER]){
       const /**@type {Customer} */ customer = _customer
-      if(filter.test(customer.short_name)) {
-        customerRows.push(this.renderCustomerRow(customer));
+      if(filterRegExp.test(customer.short_name)) {
+        customerRows.push(CustomerRow(customer));
       }
     }
-
-
-    return (
-    <Container>
-      <Row>
-      Filter: <FormControl
-        aria-label="input-filter"
-        value={this.state.filterText}
-        onChange={changeState("filter", this).bind(this)}/>
-      </Row>
-      <Row>
-        <Table>
-          <thead>
-            <tr>
-              <th>Kunde</th>
-              <th>Kan bestille</th>
-            </tr>
-          </thead>
-          <tbody>
-            {customerRows}
-          </tbody>
-        </Table>
-      </Row>
-    </Container>);
-  }
-
-
-  render() {
-
-    const/**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(this.props[PROP_ACTIVE_TRACER])
-    // This is a map so the id can be found later, if a TracerCatalog needs to be deleted
-    const TracerMapping = new Map();
-
-    for(const [ID, _TracerCatalog ] of this.props[JSON_TRACER_MAPPING]){
-      const /**@type {TracerCatalog} */ tracerCatalog = _TracerCatalog
-
-      if(tracerCatalog.tracer == this.props[PROP_ACTIVE_TRACER]){
-        TracerMapping.set(tracerCatalog.customer, tracerCatalog.id)
-      }
-    }
-
-    this.TracerMapping = TracerMapping // Derived Property
 
     return (
       <Modal
         show={true}
         size="lg"
-        onHide={this.props[PROP_ON_CLOSE]}
+        onHide={props[PROP_ON_CLOSE]}
         className={styles.mariLight}
       >
         <Modal.Header>
           <Modal.Title>Tracer Catalog for {tracer.short_name}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          {this.renderBody()}
-        </Modal.Body>
-        <Modal.Footer>
-        <CloseButton
-          onClick={this.props[PROP_ON_CLOSE]}
-        />
+        <Container>
+          <Row>
+          Filter: <FormControl
+            aria-label="input-filter"
+            value={filter}
+            onChange={setStateToEvent(setFilter)}/>
+          </Row>
+          <Row>
+          <Table>
+            <thead>
+              <tr>
+                <th>Kunde</th>
+                <th>Kan bestille</th>
+              </tr>
+            </thead>
+            <tbody>
+              {customerRows}
+            </tbody>
+          </Table>
+        </Row>
+      </Container>
+      </Modal.Body>
+      <Modal.Footer>
+        <CloseButton onClick={props[PROP_ON_CLOSE]} />
         </Modal.Footer>
       </Modal>
     );
-  }
+}
+
+TracerModal.propTypes = {
+  [DATA_CUSTOMER] : propTypes.objectOf(Map).isRequired,
+  [DATA_TRACER_MAPPING] : propTypes.objectOf(Map).isRequired,
+  [PROP_ACTIVE_TRACER] : propTypes.number.isRequired,
+  [PROP_ON_CLOSE] : propTypes.func.isRequired,
+  [DATA_TRACER] : propTypes.objectOf(Map).isRequired,
 }

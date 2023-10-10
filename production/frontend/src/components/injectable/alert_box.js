@@ -1,11 +1,9 @@
-import React, { Component } from "react";
-import { Container, Col, Row } from "react-bootstrap";
+import React from "react";
+import { Col, Row } from "react-bootstrap";
 import propTypes from 'prop-types'
 
 import ErrorStyles from "../../css/Errors.module.css"
-import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_WARNING } from "../../lib/constants.js";
-
-export { ERROR_LEVELS, AlertBox }
+import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_WARNING } from "~/lib/constants.js";
 
 const warning_levels = [
   ERROR_TYPE_HINT,
@@ -34,7 +32,7 @@ const headerStylings = {
 /**
  * @enum
  */
-const ERROR_LEVELS = {
+export const ERROR_LEVELS = {
   hint : ERROR_TYPE_HINT,
   warning : ERROR_TYPE_WARNING,
   error : ERROR_TYPE_ERROR
@@ -44,27 +42,25 @@ const ERROR_LEVELS = {
 /** Stateless Box displaying an important message
  *
  */
-class AlertBox extends Component {
-  static propTypes = {
-    level : propTypes.oneOf(warning_levels),
-    message : propTypes.oneOfType([propTypes.string, propTypes.element])
-  }
-
-  static defaultProps = {
-    level : ERROR_TYPE_ERROR,
-    message : ""
-  }
-
-  render(){
+export function AlertBox ({message, level}) {
     return (
       <Row
         style={{
           padding : '0px'
         }}
-        className={stylings[this.props.level] + " justify-content-start"}>
-        <Col md={{span : 2}} className={"justify-content-start text-center " + headerStylings[this.props.level]}>{Warning_names[this.props.level]}</Col>
-        <Col md={{span : 10}} className="p-2 justify-content-start">{this.props.message}</Col>
+        className={stylings[level] + " justify-content-start"}>
+        <Col md={{span : 2}} className={"justify-content-start text-center " + headerStylings[level]}>{Warning_names[level]}</Col>
+        <Col md={{span : 10}} className="p-2 justify-content-start">{message}</Col>
       </Row>
     );
-  }
+}
+
+AlertBox.propTypes = {
+  level : propTypes.oneOf(warning_levels),
+  message : propTypes.oneOfType([propTypes.string, propTypes.element])
+}
+
+AlertBox.defaultProps = {
+  level : ERROR_TYPE_ERROR,
+  message : ""
 }

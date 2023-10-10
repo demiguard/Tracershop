@@ -90,7 +90,7 @@ class RESTAPI(View):
     instance = Serializer.Deserialize(activeModel, requestData)
     instance.save()
 
-    return constants.SUCCESSFUL_JSON_RESPONSE
+    return constants.SUCCESSFUL_DATA_RESPONSE
 
   def put(self, request, model):
     """
@@ -143,7 +143,7 @@ class RESTAPI(View):
       instance = Serializer.DeserializeInstance(instance, Update) #This is the same object but for the sake your sanity there's an assignment
       instance.save()
 
-    return constants.SUCCESSFUL_JSON_RESPONSE
+    return constants.SUCCESSFUL_DATA_RESPONSE
 
   def delete(self, request, model):
     raise NotImplemented

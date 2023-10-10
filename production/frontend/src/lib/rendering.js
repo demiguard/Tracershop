@@ -7,22 +7,6 @@ import { FormatDateStr } from "./formatting.js";
 import { noop } from "./utils.js";
 
 /**
- * @deprecated
- * @param {*} status 
- * @param {*} func 
- * @returns 
- */
-export function renderStatusImage(status, func) {
-  const onclickFunc = (func === undefined) ? noop : func
-  if (status === 1) return <ClickableIcon src={"/static/images/clipboard1.svg"} onClick={onclickFunc}/>;
-  if (status === 2) return <ClickableIcon src={"/static/images/clipboard2.svg"} onClick={onclickFunc}/>;
-  if (status === 3) return <ClickableIcon src={"/static/images/clipboard3.svg"} onClick={onclickFunc}/>;
-  if (status === 0) return <ClickableIcon src={"/static/images/clipboard0.svg"} onClick={onclickFunc}/>;
-
-  throw `Status ${status} not supproted!`;
-}
-
-/**
   * This function is for building Tables, it creates a single row.
   * It has a variable amount of entries allowing to be used for creation of all Tables.
   *
@@ -60,31 +44,6 @@ export function renderDateTime(dateString){
   const year     = String(dateObject.getFullYear());
 
   return `${hours}:${minutes} ${day}/${month}/${year}`;
-}
-
-/**
- * @deprecated
- * @param {*} Options
- * @param {*} valueKey
- * @param {*} nameKey
- * @param {*} OnChange
- * @param {*} initialValue
- * @returns
- */
-export function renderSelect(Options, valueKey, nameKey, OnChange, initialValue){
-  const Rendered = [];
-
-  for(const Option of Options){
-    const value = Option[valueKey];
-    const name = Option[nameKey];
-    Rendered.push(<option value={value} key={value}>{name}</option>);
-  }
-
-  return(
-    <Form.Select value={initialValue} onChange={OnChange}>
-      {Rendered}
-    </Form.Select>
-  );
 }
 
 /**

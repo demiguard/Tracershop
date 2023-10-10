@@ -6,9 +6,11 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { TracerPage } from "../../../components/production_pages/setup_pages/tracer_page"
-import { JSON_CUSTOMER, JSON_TRACER, JSON_VIAL, PROP_WEBSOCKET, TRACER_TYPE, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { TRACER_TYPE } from "~/lib/constants.js";
+import { DATA_TRACER } from "~/lib/shared_constants";
 import { AppState } from "../../app_state.js"
 import { act } from "react-dom/test-utils";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context";
 
 
 const onClose = jest.fn()
@@ -25,7 +27,7 @@ beforeEach(() => {
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
   props = {...AppState}
-  props[PROP_WEBSOCKET] = websocket
+
 });
 
 
@@ -40,9 +42,11 @@ afterEach(() => {
 
 describe("Tracer setup Page test suite", () => {
   it("Standard Render Test", () => {
-    render(<TracerPage {...props} />)
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerPage {...props} />
+    </WebsocketContextProvider>);
 
-    for(const tracer of props[JSON_TRACER].values()){
+    for(const tracer of props[DATA_TRACER].values()){
       expect(screen.getByText(tracer.shortname)).toBeVisible()
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY || tracer.archived){
         expect(screen.queryByLabelText(`open-modal-${tracer.id}`)).toBeNull()
@@ -53,19 +57,23 @@ describe("Tracer setup Page test suite", () => {
   });
 
   it("Restore Tracer", async () => {
-    render(<TracerPage {...props} />)
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerPage {...props} />
+    </WebsocketContextProvider>);
 
     const restoreIcon = screen.getByLabelText('restore-5')
     await act(async () => {
       fireEvent.click(restoreIcon);
     })
 
-    expect(websocket.sendEditModel).toBeCalledWith(JSON_TRACER,
+    expect(websocket.sendEditModel).toBeCalledWith(DATA_TRACER,
                                                    [expect.objectContaining({id : 5, archived : false})])
   })
 
   it("Change clinical name", async () =>{
-    render(<TracerPage {...props} />)
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerPage {...props} />
+    </WebsocketContextProvider>);
 
     const clinicalNameInput = screen.getByLabelText('set-clinical-name-1')
     await act(async () => {
@@ -77,19 +85,21 @@ describe("Tracer setup Page test suite", () => {
       fireEvent.click(saveIcon)
     });
 
-    expect(websocket.sendEditModel).toBeCalledWith(JSON_TRACER,
+    expect(websocket.sendEditModel).toBeCalledWith(DATA_TRACER,
       [expect.objectContaining({id : 1, clinical_name : "New Name"})])
   })
 
   it("Open and close modal", async () => {
-    render(<TracerPage {...props} />)
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerPage {...props} />
+    </WebsocketContextProvider>);
 
     const openModal = screen.getByLabelText(`open-modal-2`)
 
     await act(async () => {
       fireEvent.click(openModal)
     });
-    //expect(screen.getByText(`Tracer Catalog for ${props[JSON_TRACER].get(2).shortname}`)).toBeVisible()
+    //expect(screen.getByText(`Tracer Catalog for ${props[DATA_TRACER].get(2).shortname}`)).toBeVisible()
     const closeModal = screen.getByRole('button', {name : 'Luk'})
 
     await act(async () => {

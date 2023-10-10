@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { User } from "../../dataclasses/user";
-import { PROP_LOGOUT, PROP_SET_USER, PROP_USER, PROP_WEBSOCKET, USER_GROUPS, PROP_TRACERSHOP_SITE } from "../../lib/constants";
+import { PROP_LOGOUT, PROP_SET_USER, PROP_USER, USER_GROUPS, PROP_TRACERSHOP_SITE } from "../../lib/constants";
 import { ImitatedTracerWebsocket } from "../../lib/imitated_tracer_websocket";
 import { Container, FormControl, InputGroup, Row } from "react-bootstrap";
 import { Select } from "../injectable/select";

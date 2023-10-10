@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { Button, Col, Container, FormControl, Row } from "react-bootstrap";
-import { DAYS, DAYS_OBJECTS, DEADLINE_TYPES, JSON_DEADLINE, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MODEL_EDIT, cssCenter, cssError } from "../../../lib/constants";
-import { Deadline, ServerConfiguration, Tracer } from "../../../dataclasses/dataclasses";
+import { Button, Col, Container, Row } from "react-bootstrap";
+
+import { DAYS, DEADLINE_TYPES, cssCenter, cssError } from "../../../lib/constants";
+import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants";
+import { Deadline, ServerConfiguration } from "../../../dataclasses/dataclasses";
 import { Select, toOptions } from "../../injectable/select";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { setStateToEvent } from "../../../lib/state_management";
@@ -9,6 +11,7 @@ import { parseTimeInput } from "../../../lib/user_input";
 import { TimeInput } from "../../injectable/time_form";
 import { ErrorInput } from "../../injectable/error_input";
 import { DaysSelect } from "../../injectable/derived_injectables/days_select";
+import { useWebsocket } from "~/components/tracer_shop_context";
 
 
 /**
@@ -50,7 +53,7 @@ function NewDeadlineRow({websocket}){
 
     if (validTime){
       setError("");
-      websocket.sendCreateModel(JSON_DEADLINE, [
+      websocket.sendCreateModel(DATA_DEADLINE, [
         new Deadline(undefined, Number(deadlineType), timeOutput, day)
       ]);
     } else {
@@ -126,7 +129,7 @@ function DeadlineRow({deadline,
 
     _setDeadlineType(newDeadlineType);
 
-    websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_type : Number(event.target.value)})
+    websocket.sendEditModel(DATA_DEADLINE, {...deadline, deadline_type : Number(event.target.value)})
   }
 
   function setDay(event) {
@@ -136,7 +139,7 @@ function DeadlineRow({deadline,
     }
     _setDay(newDay)
 
-    websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_day : newDay})
+    websocket.sendEditModel(DATA_DEADLINE, {...deadline, deadline_day : newDay})
   }
 
   function setTime(inputValue){
@@ -144,7 +147,7 @@ function DeadlineRow({deadline,
 
     const [valid, time] = parseTimeInput(inputValue)
     if (valid){
-      websocket.sendEditModel(JSON_DEADLINE, {...deadline, deadline_time : time})
+      websocket.sendEditModel(DATA_DEADLINE, {...deadline, deadline_time : time})
     }
   }
 
@@ -202,7 +205,8 @@ function DeadlineRow({deadline,
 
 
 export function DeadlineSetup(props){
-  const /**@type {ServerConfiguration} */ serverConfig = props[JSON_SERVER_CONFIG].get(1);
+  const websocket = useWebsocket();
+  const /**@type {ServerConfiguration} */ serverConfig = props[DATA_SERVER_CONFIG].get(1);
 
   const [globalActivityDeadline, setGlobalActivityDeadline] = useState(serverConfig.global_activity_deadline);
   const [globalInjectionDeadline, setGlobalInjectionDeadline] = useState(serverConfig.global_injection_deadline);
@@ -215,11 +219,11 @@ export function DeadlineSetup(props){
         } break;
         case GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE: {
           setGlobalActivityDeadline(deadline.id)
-          props[PROP_WEBSOCKET].sendEditModel(JSON_SERVER_CONFIG, {...serverConfig, global_activity_deadline : deadline.id})
+          websocket.sendEditModel(DATA_SERVER_CONFIG, {...serverConfig, global_activity_deadline : deadline.id})
         } break;
         case GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE: {
           setGlobalInjectionDeadline(deadline.id)
-          props[PROP_WEBSOCKET].sendEditModel(JSON_SERVER_CONFIG, {...serverConfig, global_injection_deadline : deadline.id})
+          websocket.sendEditModel(DATA_SERVER_CONFIG, {...serverConfig, global_injection_deadline : deadline.id})
         } break;
       }
     }
@@ -227,7 +231,7 @@ export function DeadlineSetup(props){
   }
 
 
-  const Deadlines = [...props[JSON_DEADLINE].values()].map(
+  const Deadlines = [...props[DATA_DEADLINE].values()].map(
     (deadline, i) => {
       return <DeadlineRow
                 deadline={deadline}
@@ -235,7 +239,7 @@ export function DeadlineSetup(props){
                 key={i}
                 activityDeadline={globalActivityDeadline}
                 injectionDeadline={globalInjectionDeadline}
-                websocket={props[PROP_WEBSOCKET]}
+                websocket={websocket}
              />
     }
   )
@@ -243,7 +247,7 @@ export function DeadlineSetup(props){
   Deadlines.push(
     <NewDeadlineRow
       key={-1}
-      websocket={props[PROP_WEBSOCKET]}
+      websocket={websocket}
     />
   )
 

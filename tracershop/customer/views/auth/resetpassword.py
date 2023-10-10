@@ -4,7 +4,7 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 
 from customer.lib.Formatting import ParseJSONRequest
 from customer.models import ResetPassword, User
-from customer.constants import SUCCESSFUL_JSON_RESPONSE
+from customer.constants import SUCCESSFUL_DATA_RESPONSE
 
 import datetime
 
@@ -53,6 +53,6 @@ class ResetPasswordView(TemplateView):
 
     ResetPasswordRequest.delete()
 
-    return SUCCESSFUL_JSON_RESPONSE
+    return SUCCESSFUL_DATA_RESPONSE
 
 

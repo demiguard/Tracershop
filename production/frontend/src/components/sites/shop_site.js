@@ -3,7 +3,8 @@ import Navbar, { TracershopNavbar } from "../injectable/navbar";
 import { ShopSetup } from "../shop_pages/shop_setup.js";
 import { ShopOrderPage } from "../shop_pages/shop_order_page.js";
 import { UserSetup} from "../shop_pages/user_setup.js"
-import { JSON_CUSTOMER, JSON_USER_ASSIGNMENT, PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constants";
+import { PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constants";
+import {DATA_CUSTOMER, DATA_USER_ASSIGNMENT } from "../../lib/shared_constants";
 import { User, UserAssignment } from "../../dataclasses/dataclasses";
 import { NoAssociatedUser } from "../shop_pages/no_associated_user";
 
@@ -32,7 +33,7 @@ export function ShopSite (props) {
 
   let relatedCustomer
   if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
-    relatedCustomer = [...props[JSON_USER_ASSIGNMENT].values()].filter((_userAssignment) => {
+    relatedCustomer = [...props[DATA_USER_ASSIGNMENT].values()].filter((_userAssignment) => {
       const /**@type {UserAssignment} */ userAssignment = _userAssignment
       return userAssignment.user === user.id
     }).map((userAssignment) => {return userAssignment.customer})
@@ -55,7 +56,7 @@ export function ShopSite (props) {
         </div>)
     }
   } else {
-    relatedCustomer = [...props[JSON_CUSTOMER].values()].map((customer)=> {return customer.id})
+    relatedCustomer = [...props[DATA_CUSTOMER].values()].map((customer)=> {return customer.id})
   }
 
   let availablePages

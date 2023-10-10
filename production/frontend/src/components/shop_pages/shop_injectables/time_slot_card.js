@@ -3,7 +3,8 @@ import React, { useEffect, useState } from "react";
 import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope } from "../../../dataclasses/dataclasses";
 import { ParseDanishNumber, dateToDateString, nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
-import { JSON_ACTIVITY_ORDER, JSON_ISOTOPE, JSON_TRACER, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssCenter } from "../../../lib/constants";
+import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssCenter } from "../../../lib/constants";
+import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants"
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
@@ -83,7 +84,7 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
    newOrder.ordered_activity = newActivity;
    newOrder.comment = comment;
 
-   websocket.sendEditModel(JSON_ACTIVITY_ORDER, newOrder);
+   websocket.sendEditModel(DATA_ACTIVITY_ORDER, newOrder);
  }
 
  const ordered = order.status > 0
@@ -313,7 +314,7 @@ export function TimeSlotCard({
   const calculatorProps = {}
   calculatorProps[PROP_ACTIVE_DATE] = combineDateAndTimeStamp(date,
                                                               timeSlot.delivery_time)
-  calculatorProps[JSON_ISOTOPE] = isotopes;
+  calculatorProps[DATA_ISOTOPE] = isotopes;
   calculatorProps[PROP_ON_CLOSE] = () => {setShowCalculator(false);}
   calculatorProps[PROP_ACTIVE_TRACER] = activeTracer;
   calculatorProps[PROP_COMMIT] = (activity) => {

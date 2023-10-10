@@ -3,16 +3,16 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { TracerModal } from "../../../components/modals/tracer_modal.js"
-import { JSON_CUSTOMER, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_TRACER, PROP_ON_CLICK, PROP_ON_CLOSE, PROP_WEBSOCKET } from "../../../lib/constants.js";
+import { TracerModal } from "~/components/modals/tracer_modal.js"
+import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants.js";
+import { DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING } from "~/lib/shared_constants.js"
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
-
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('~/lib/tracer_websocket.js');
+const tracer_websocket = require("~/lib/tracer_websocket.js");
 
 const onClose = jest.fn();
 
@@ -24,7 +24,7 @@ beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop" }
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
+  websocket = tracer_websocket.TracerWebSocket;
 });
 
 afterEach(() => {
@@ -39,24 +39,23 @@ afterEach(() => {
 
 const props = {};
 
-props[PROP_WEBSOCKET] = websocket
-props[JSON_CUSTOMER] = new Map([
+props[DATA_CUSTOMER] = new Map([
   [1, {id : 1, short_name : 'Customer 1'}],
   [2, {id : 2, short_name : 'Customer 2'}],
   [3, {id : 3, short_name : 'Customer 3'}],
 ])
 props[PROP_ACTIVE_TRACER] = 1;
-props[JSON_TRACER] = new Map([
+props[DATA_TRACER] = new Map([
   [1, {id : 1, short_name : "testTracer"}]
 ])
-props[JSON_TRACER_MAPPING] = new Map([])
+props[DATA_TRACER_MAPPING] = new Map([])
 props[PROP_ON_CLOSE] = onClose
 
 describe("Tracer Modal test suite", () => {
   it("Standard Render test", () => {
-    render(<TracerModal
-      {...props}
-    />)
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerModal {...props}/>
+    </WebsocketContextProvider>);
 
     expect(screen.queryByText("Customer 1")).toBeVisible();
     expect(screen.queryByText("Customer 2")).toBeVisible();
@@ -64,9 +63,9 @@ describe("Tracer Modal test suite", () => {
   });
 
   it("Filter tests", async () => {
-    render(<TracerModal
-      {...props}
-    />)
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerModal {...props}/>
+    </WebsocketContextProvider>);
 
     const filterInput = await screen.findByLabelText('input-filter')
     fireEvent.change(filterInput, {target : {value : "2" }})

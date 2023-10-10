@@ -7,9 +7,9 @@ import { act, scryRenderedComponentsWithType } from "react-dom/test-utils";
 import { render, screen, cleanup } from "@testing-library/react"
 
 
-import { PROP_WEBSOCKET } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -39,7 +39,6 @@ beforeEach(() => {
     container = document.createElement("div");
     websocket = new tracer_websocket.TracerWebSocket()
     props = {...AppState};
-    props[PROP_WEBSOCKET] = websocket;
 });
 
 afterEach(() => {
@@ -55,22 +54,26 @@ afterEach(() => {
 
 describe("Setup Shop page test", () => {
   it("Standard Render test", async () => {
-    render(<SetupShop {...props} />)
+    render(<WebsocketContextProvider value={websocket}>
+      <SetupShop {...props} />
+    </WebsocketContextProvider>)
+
 
     for(const siteName of Object.values(siteNames)){
-      expect(await screen.findByRole('button', {name : siteName})).toBeVisible()
+      expect(await screen.findByRole('button', {name : siteName})).toBeVisible();
     }
   })
 
   it("Switch to deadlines", async () => {
-    render(<SetupShop {...props} />)
+    render(<WebsocketContextProvider value={websocket}>
+      <SetupShop {...props} />
+    </WebsocketContextProvider>);
 
     await act(async () => {
       const button = await screen.findByRole('button', {name : 'Deadlines'});
-      button.click()
+      button.click();
     })
 
-    expect(await screen.findByText('DeadlineSetupMocked')).toBeVisible()
-  })
-
-})
+    expect(await screen.findByText('DeadlineSetupMocked')).toBeVisible();
+  });
+});

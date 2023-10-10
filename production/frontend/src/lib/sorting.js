@@ -1,9 +1,6 @@
-/**These functions should do some nontrivial sorting
- * In general they should be used in Array.sort calls.
- * Note they should use currying so that you have 
- * Array.sort(func(curryData))
- * 
- */
+/**These functions should define orders between custom dataclasses
+ * Also Remember Currying and Closure
+*/
 
 import { ActivityDeliveryTimeSlot, DeliveryEndpoint } from "../dataclasses/dataclasses";
 
@@ -14,14 +11,12 @@ import { ActivityDeliveryTimeSlot, DeliveryEndpoint } from "../dataclasses/datac
  * 1. By Customer
  * 2. By Endpoint
  * 3. Sorted by delivery time, earlier time is first
- * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
  * @param {Map<Number, DeliveryEndpoint>} endpoints 
- * @returns {Number}
+ * @returns {CallableFunction}
  */
-export function sortOrderMapping(timeSlots, endpoints){
-  return ([timeSlotID_a, _orders_a], [timeSlotID_b, _orders_b]) => {
-    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot_a = timeSlots.get(timeSlotID_a);
-    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot_b = timeSlots.get(timeSlotID_b);
+export function sortTimeSlots(endpoints){
+  return (/** @type {ActivityDeliveryTimeSlot} */ timeSlot_a,
+          /** @type {ActivityDeliveryTimeSlot} */ timeSlot_b) => {
 
     const /**@type {DeliveryEndpoint} */ endpoint_a = endpoints.get(timeSlot_a.destination);
     const /**@type {DeliveryEndpoint} */ endpoint_b = endpoints.get(timeSlot_b.destination);

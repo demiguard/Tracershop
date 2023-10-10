@@ -34,12 +34,12 @@ from django.db.models import QuerySet
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
-from constants import DEBUG_LOGGER, ERROR_LOGGER, JSON_DATETIME_FORMAT
+from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
     ERROR_UNKNOWN_FAILURE,\
-    JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_DELIVER_TIME, JSON_INJECTION_ORDER, JSON_VIAL,\
-    JSON_USER, JSON_USER_ASSIGNMENT,\
+    DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_DELIVER_TIME, DATA_INJECTION_ORDER, DATA_VIAL,\
+    DATA_USER, DATA_USER_ASSIGNMENT,\
     LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP,\
     WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_DATE,\
     WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, \
@@ -296,11 +296,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     Args:
       message (Dict[str, Any]): message send by the user with extra fields:
-                                  JSON_AUTH
+                                  DATA_AUTH
                                     AUTH_USERNAME
                                     AUTH_PASSWORD
     """
-    auth = message[JSON_AUTH]
+    auth = message[DATA_AUTH]
     username = auth[AUTH_USERNAME]
     password = auth[AUTH_PASSWORD]
     user: User = await database_sync_to_async(authenticate)(username=username,
@@ -317,7 +317,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await sync_to_async(self.scope["session"].save)()
       await self.enterUserGroups(user)
       key = self.scope["session"].session_key
-      user = await self.db.serialize_dict({JSON_USER : [user]})
+      user = await self.db.serialize_dict({DATA_USER : [user]})
       print(user)
     else:
       isAuth = False
@@ -338,7 +338,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, User):
       await self.enterUserGroups(user)
       isAuth = True
-      user = await self.db.serialize_dict({JSON_USER : [user]})
+      user = await self.db.serialize_dict({DATA_USER : [user]})
       key = self.scope["session"].session_key
     else:
       isAuth = False
@@ -395,7 +395,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message (Dict[str, Any]): Dictionary containing the information to delete
                                 A model. Specify the tags:
                                     WEBSOCKET_DATA_ID - int / List[int]
-                                    WEBSOCKET_DATATYPE - JSON_XXX
+                                    WEBSOCKET_DATATYPE - DATA_XXX
     """
     success = await self.db.deleteModels(
       message[WEBSOCKET_DATATYPE],
@@ -498,8 +498,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         message (Dict): Message send by the user with the fields
           WEBSOCKET_DATA - Dict with:
             KEYWORD_DELIVER_TIME_ID - ID of activity order time slot to be freed
-            JSON_VIAL - A list of Vial ID that's being freed with this order
-          JSON_AUTH - Dict with:
+            DATA_VIAL - A list of Vial ID that's being freed with this order
+          DATA_AUTH - Dict with:
             AUTH_USERNAME : username
             AUTH_PASSWORD : password for username
 
@@ -511,7 +511,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # 4. Broadcast to users
 
     # Turn this into a function
-    Auth = message[JSON_AUTH]
+    Auth = message[DATA_AUTH]
     user: User = await get_user(self.scope)
 
     # Quick check if user and auth user matches before any database connection start working
@@ -524,17 +524,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     # Authentication successful update
     data = message[WEBSOCKET_DATA]
-    orders, vials = await self.db.releaseOrders(data[JSON_DELIVER_TIME],
-                                                data[JSON_ACTIVITY_ORDER],
-                                                data[JSON_VIAL],
+    orders, vials = await self.db.releaseOrders(data[DATA_DELIVER_TIME],
+                                                data[DATA_ACTIVITY_ORDER],
+                                                data[DATA_VIAL],
                                                 user,
                                                 self.datetimeNow.now())
     logFreeActivityOrders(user, orders, vials)
     customerIDs = await self.db.getCustomerIDs(orders)
 
     newState = await self.db.serialize_dict({
-      JSON_ACTIVITY_ORDER : orders,
-      JSON_VIAL : vials
+      DATA_ACTIVITY_ORDER : orders,
+      DATA_VIAL : vials
     })
 
     await self.__broadcastCustomer({
@@ -555,7 +555,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
           WEBSOCKET_DATA - Dict with:
             KEYWORD_OID - ID of injection order to freed
             KEYWORD_BATCHNR - batch number of material.
-          JSON_AUTH - Dict with:
+          DATA_AUTH - Dict with:
             AUTH_USERNAME : username
             AUTH_PASSWORD : password for username
     """
@@ -565,7 +565,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # 3. Broadcast to users
 
     # Step 1: Determine the user credentials are valid
-    Auth = message[JSON_AUTH]
+    Auth = message[DATA_AUTH]
 
     # Quick check if user and auth user matches before any database connection start working
     if not Auth[AUTH_USERNAME] == self.scope['user'].username:
@@ -587,7 +587,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     # Step 3 Boardcast it
     newState = await self.db.serialize_dict({
-        JSON_INJECTION_ORDER : [order],
+        DATA_INJECTION_ORDER : [order],
     })
 
     await self.__broadcastProduction({
@@ -605,12 +605,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
       message (Dict[str, Any]): message send by the user with extra fields:
         WEBSOCKET_DATA
-          JSON_ACTIVITY_ORDER
-          JSON_DELIVERTIME
+          DATA_ACTIVITY_ORDER
+          DATA_DELIVERTIME
     """
-    orders = await self.db.moveOrders(message[JSON_ACTIVITY_ORDER], message[JSON_DELIVER_TIME])
+    orders = await self.db.moveOrders(message[DATA_ACTIVITY_ORDER], message[DATA_DELIVER_TIME])
     customerIDs = await self.db.getCustomerIDs(orders)
-    data = await self.db.serialize_dict({JSON_ACTIVITY_ORDER : orders,})
+    data = await self.db.serialize_dict({DATA_ACTIVITY_ORDER : orders,})
 
     await self.__broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -626,13 +626,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
       message (Dict[str, Any]): message send by the user with extra fields:
         WEBSOCKET_DATA
-          JSON_ACTIVITY_ORDER
-          JSON_DELIVERTIME
+          DATA_ACTIVITY_ORDER
+          DATA_DELIVERTIME
     """
-    orders = await self.db.restoreDestinations(message[JSON_ACTIVITY_ORDER])
+    orders = await self.db.restoreDestinations(message[DATA_ACTIVITY_ORDER])
     customerIDs = await self.db.getCustomerIDs(orders)
     data = await self.db.serialize_dict({
-      JSON_ACTIVITY_ORDER : orders,
+      DATA_ACTIVITY_ORDER : orders,
     })
 
     await self.__broadcastCustomer({
@@ -651,7 +651,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATE - Central date
     """
     user = get_user(self.scope)
-    client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=JSON_DATETIME_FORMAT)
+    client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=DATA_DATETIME_FORMAT)
     data = await self.db.serialize_dict(
       await self.db.getTimeSensitiveData(client_date, user)
     )
@@ -671,9 +671,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newOrderDict['status'] = 1
     newOrderDict['ordered_by'] = user.id
 
-    instances = await self.db.handleCreateModels(JSON_ACTIVITY_ORDER, newOrderDict, user)
+    instances = await self.db.handleCreateModels(DATA_ACTIVITY_ORDER, newOrderDict, user)
     customerIDs = await self.db.getCustomerIDs(instances)
-    data = await self.db.serialize_dict({JSON_ACTIVITY_ORDER : instances})
+    data = await self.db.serialize_dict({DATA_ACTIVITY_ORDER : instances})
     returnMessage = {
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -692,9 +692,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newOrderDict['status'] = 1
     newOrderDict['ordered_by'] = user.id
 
-    instances = await self.db.handleCreateModels(JSON_INJECTION_ORDER, newOrderDict, user)
+    instances = await self.db.handleCreateModels(DATA_INJECTION_ORDER, newOrderDict, user)
     customerIDs = await self.db.getCustomerIDs([instances])
-    data = await self.db.serialize_dict({JSON_INJECTION_ORDER : instances})
+    data = await self.db.serialize_dict({DATA_INJECTION_ORDER : instances})
     await self.__broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -723,8 +723,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     user = get_user(self.scope)
     orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
-    ActivityCustomerIDs = await self.db.getCustomerIDs(orders[JSON_ACTIVITY_ORDER])
-    InjectionCustomerIDs = await self.db.getCustomerIDs(orders[JSON_INJECTION_ORDER])
+    ActivityCustomerIDs = await self.db.getCustomerIDs(orders[DATA_ACTIVITY_ORDER])
+    InjectionCustomerIDs = await self.db.getCustomerIDs(orders[DATA_INJECTION_ORDER])
 
     customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
     customerIDs = [customerID for customerID in customerIDset]
@@ -772,9 +772,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newUser, newUserAssignment = await self.db.createExternalUser(message[WEBSOCKET_DATA])
 
     if newUserAssignment is not None:
-      data = await self.db.serialize_dict({JSON_USER : [newUser], JSON_USER_ASSIGNMENT : [newUserAssignment]})
+      data = await self.db.serialize_dict({DATA_USER : [newUser], DATA_USER_ASSIGNMENT : [newUserAssignment]})
     else:
-      data = await self.db.serialize_dict({JSON_USER : [newUser]})
+      data = await self.db.serialize_dict({DATA_USER : [newUser]})
 
     await self.__broadcastProduction({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],

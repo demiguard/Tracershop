@@ -25,8 +25,8 @@ from django.db.models.query import QuerySet
 from constants import ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
-from shared_constants import JSON_VIAL, JSON_INJECTION_ORDER, JSON_CUSTOMER,\
-    JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD
+from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
+    DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
@@ -46,8 +46,8 @@ class DatabaseInterface():
   """This class is the interface for the production database. This includes
   both the Django database and the Production database
   """
-  def __init__(self, json_encoder:ProductionJSONEncoder = ProductionJSONEncoder()):
-    self.json_encoder = json_encoder
+  def __init__(self, DATA_encoder:ProductionJSONEncoder = ProductionJSONEncoder()):
+    self.DATA_encoder = DATA_encoder
 
 
   @property
@@ -59,10 +59,10 @@ class DatabaseInterface():
   @property
   def __modelGetters(self) -> Dict[str, Callable]:
     return {
-      JSON_ACTIVITY_ORDER : self.__timeUserSensitiveFilter(JSON_ACTIVITY_ORDER),
-      JSON_CLOSED_DATE : self.__timeUserSensitiveFilter(JSON_CLOSED_DATE),
-      JSON_INJECTION_ORDER : self.__timeUserSensitiveFilter(JSON_INJECTION_ORDER),
-      JSON_VIAL : self.__timeUserSensitiveFilter(JSON_VIAL),
+      DATA_ACTIVITY_ORDER : self.__timeUserSensitiveFilter(DATA_ACTIVITY_ORDER),
+      DATA_CLOSED_DATE : self.__timeUserSensitiveFilter(DATA_CLOSED_DATE),
+      DATA_INJECTION_ORDER : self.__timeUserSensitiveFilter(DATA_INJECTION_ORDER),
+      DATA_VIAL : self.__timeUserSensitiveFilter(DATA_VIAL),
     }
 
   @property
@@ -308,7 +308,7 @@ class DatabaseInterface():
           del fields[keyword]
       serialized_dict[key] = serialized_models
 
-    return self.json_encoder.encode(serialized_dict)
+    return self.DATA_encoder.encode(serialized_dict)
 
   def getModels(self, user: User) -> List[Type[TracershopModel]]:
     if user.user_group == UserGroups.Admin:
@@ -545,8 +545,8 @@ class DatabaseInterface():
     Booking.objects.bulk_update(bookingUpdated, ['status'])
 
     return {
-      JSON_ACTIVITY_ORDER : activityOrders,
-      JSON_INJECTION_ORDER : injectionsOrders
+      DATA_ACTIVITY_ORDER : activityOrders,
+      DATA_INJECTION_ORDER : injectionsOrders
     }
 
   @database_sync_to_async
@@ -557,7 +557,7 @@ class DatabaseInterface():
         userSkeleton (Dict[str, Any]): Message containing:
           * AUTH_USERNAME - string - the username of the new user
           * AUTH_PASSWORD - string - the password of the new user
-          * JSON_CUSTOMER - Optional int - if defined, the customer the user
+          * DATA_CUSTOMER - Optional int - if defined, the customer the user
                                            represents.
     """
     newExternalUser = User(username=userSkeleton[AUTH_USERNAME],
@@ -566,8 +566,8 @@ class DatabaseInterface():
     newExternalUser.set_password(userSkeleton[AUTH_PASSWORD])
     newExternalUser.save()
 
-    if JSON_CUSTOMER in userSkeleton:
-      customer = Customer.objects.get(pk=userSkeleton[JSON_CUSTOMER])
+    if DATA_CUSTOMER in userSkeleton:
+      customer = Customer.objects.get(pk=userSkeleton[DATA_CUSTOMER])
 
       newUserAssignment = UserAssignment(user=newExternalUser, customer=customer)
       newUserAssignment.save()

@@ -7,10 +7,10 @@ import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { AppState } from "../../app_state.js";
-import { db } from "../../../lib/local_storage_driver.js";
 import { TracerShop } from "../../../components/sites/tracer_shop.js"
-import { PROP_USER, PROP_WEBSOCKET } from "../../../lib/constants.js";
+import { PROP_USER } from "../../../lib/constants.js";
 import { ANON, users } from "../../test_state/users.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -31,7 +31,6 @@ beforeEach(() => {
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
   props = {...AppState}
-  props[PROP_WEBSOCKET] = websocket;
   props[PROP_USER] = ANON;
 });
 
@@ -48,53 +47,57 @@ afterEach(() => {
 
 describe("Tracer shop test suite", () => {
   it("standard test", () => {
-    render(<TracerShop
-      {...props}
-    />);
+    render(
+    <WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>
+    );
   })
 
   it("standard test Site admin", () => {
     props[PROP_USER] = users.get(1);
-    render(<TracerShop
-      {...props}
-    />);
+    render(
+    <WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>);
   })
 
   it("standard test Production Admin", () => {
     props[PROP_USER] = users.get(2);
 
-    render(<TracerShop
-      {...props}
-    />);
+    render(
+    <WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>);
   })
 
   it("standard test Production user", () => {
     props[PROP_USER] = users.get(3);
 
-    render(<TracerShop
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>);
   })
 
   it("standard test Shop Admin", () => {
     props[PROP_USER] = users.get(4);
-    render(<TracerShop
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>);
   })
 
   it("standard test shop user", () => {
     props[PROP_USER] = users.get(5);
-    render(<TracerShop
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>);
   })
 
   it("standard test shop external", () => {
     props[PROP_USER] = users.get(6);
-    render(<TracerShop
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <TracerShop {...props} />
+    </WebsocketContextProvider>);
   })
 
 })

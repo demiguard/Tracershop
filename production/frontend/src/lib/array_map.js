@@ -33,6 +33,18 @@ export class ArrayMap {
     }
   }
 
+  keys(){
+    return this._map.keys()
+  }
+
+  sortEntries(key, compareFunction){
+    const value = this.get(key);
+    if (value !== undefined){
+      return value.sort(compareFunction)
+    }
+    return undefined;
+  }
+
   *[Symbol.iterator]() {
     for(const [key,value] of this._map){
       yield [key, value]

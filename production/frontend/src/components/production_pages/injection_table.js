@@ -1,15 +1,16 @@
 
 import React, { Component } from "react";
-import { Row, Col, Table, Tab, Button, Container, Modal } from 'react-bootstrap';
+import { Row, Col, Table, Button, Container } from 'react-bootstrap';
 
-import { WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_DATATYPE, WEBSOCKET_DATA, JSON_INJECTION_ORDER, INJECTION_USAGE, JSON_TRACER, JSON_CUSTOMER, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, PROP_WEBSOCKET, JSON_ENDPOINT } from "../../lib/constants.js";
-import { FormatDateStr, ParseJSONstr, dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
-import { renderTableRow, renderComment } from '../../lib/rendering.js';
+import { INJECTION_USAGE,  PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER } from "../../lib/constants.js";
+import { DATA_TRACER, DATA_CUSTOMER, DATA_INJECTION_ORDER, DATA_ENDPOINT } from "~/lib/shared_constants.js";
+import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting.js";
+import { renderTableRow, renderComment } from '~/lib/rendering.js';
 import { compareDates } from "../../lib/utils.js";
 import { CreateInjectionOrderModal } from "../modals/create_injection_modal.js";
 import { InjectionModal } from "../modals/injection_modal.js";
-import { StatusIcon, ClickableIcon } from "../injectable/icons.js";
-import { InjectionOrder, Tracer, DeliveryEndpoint, Customer } from "../../dataclasses/dataclasses.js";
+import { StatusIcon } from "../injectable/icons.js";
+import { InjectionOrder, Tracer, DeliveryEndpoint, Customer } from "~/dataclasses/dataclasses.js";
 
 
 const /**@Enum methods to sort the injection orders */ SortingMethods = {
@@ -80,9 +81,9 @@ export class InjectionTable extends Component {
    * @returns 
    */
   renderIncompleteOrder(order) {
-    const /**@type {Tracer} */ tracer = this.props[JSON_TRACER].get(order.tracer);
-    const /**@type {DeliveryEndpoint} */ endpoint = this.props[JSON_ENDPOINT].get(order.endpoint)
-    const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(endpoint.owner)
+    const /**@type {Tracer} */ tracer = this.props[DATA_TRACER].get(order.tracer);
+    const /**@type {DeliveryEndpoint} */ endpoint = this.props[DATA_ENDPOINT].get(order.endpoint)
+    const /**@type {Customer} */ customer = this.props[DATA_CUSTOMER].get(endpoint.owner)
     const TracerName = tracer.shortname;
 
 
@@ -109,7 +110,7 @@ export class InjectionTable extends Component {
   render() {
     const /**@type {Array<InjectionOrder>} */ orders = [];
 
-    for(const [_oid, _injectionOrder] of this.props[JSON_INJECTION_ORDER]){
+    for(const [_oid, _injectionOrder] of this.props[DATA_INJECTION_ORDER]){
       const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
       const orderDate = new Date(injectionOrder.delivery_date)
       if (compareDates(this.props[PROP_ACTIVE_DATE], orderDate)){
@@ -127,10 +128,10 @@ export class InjectionTable extends Component {
         case SortingMethods.ORDER_ID:
           return invertedSorting ? b.id - a.id : a.id - b.id
         case SortingMethods.DESTINATION: {
-          const /**@type {DeliveryEndpoint} */ aEndpoint = this.props[JSON_ENDPOINT].get(a.endpoint);
-          const /**@type {Customer} */ aCustomer = this.props[JSON_CUSTOMER].get(aEndpoint.owner);
-          const /**@type {DeliveryEndpoint} */ bEndpoint = this.props[JSON_ENDPOINT].get(b.endpoint);
-          const /**@type {Customer} */ bCustomer = this.props[JSON_CUSTOMER].get(bEndpoint.owner);
+          const /**@type {DeliveryEndpoint} */ aEndpoint = this.props[DATA_ENDPOINT].get(a.endpoint);
+          const /**@type {Customer} */ aCustomer = this.props[DATA_CUSTOMER].get(aEndpoint.owner);
+          const /**@type {DeliveryEndpoint} */ bEndpoint = this.props[DATA_ENDPOINT].get(b.endpoint);
+          const /**@type {Customer} */ bCustomer = this.props[DATA_CUSTOMER].get(bEndpoint.owner);
 
           if(aCustomer.id != bCustomer.id){
             return invertedSorting ? bCustomer.id - aCustomer.id : aCustomer.id - bCustomer.id

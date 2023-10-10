@@ -77,7 +77,7 @@ class ConsumerTestCase(TransactionTestCase):
   SQL = DatabaseInterface()
 
   loginAdminMessage = {
-      JSON_AUTH : {
+      DATA_AUTH : {
         AUTH_USERNAME : TEST_ADMIN_USERNAME,
         AUTH_PASSWORD : TEST_ADMIN_PASSWORD
       },
@@ -89,8 +89,8 @@ class ConsumerTestCase(TransactionTestCase):
   InjectionOrderStatus2OID = 6631
 
   async def _sendReceive(self, comm: WebsocketCommunicator, message: Dict[str, Any]):
-    await comm.send_json_to(message)
-    return await comm.receive_json_from()
+    await comm.send_DATA_to(message)
+    return await comm.receive_DATA_from()
 
   async def _loginAdminSendRecieve(self, message : Dict):
     channel_layers_setting = {
@@ -208,7 +208,7 @@ class ConsumerTestCase(TransactionTestCase):
       _conn, subprotocol = await comm.connect()
 
       response = await self._sendReceive(comm, {
-        JSON_AUTH : {
+        DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : "Not_ADMIN_password"
         },
@@ -319,7 +319,7 @@ class ConsumerTestCase(TransactionTestCase):
 
 
   async def test_ModelCreate_ClosedDate(self):
-    keyword = JSON_CLOSED_DATE
+    keyword = DATA_CLOSED_DATE
     Model = MODELS[keyword]
 
     channel_layers_setting = {
@@ -331,10 +331,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm.connect()
 
-      await comm.send_json_to(self.loginAdminMessage)
-      _login_response = await comm.receive_json_from()
+      await comm.send_DATA_to(self.loginAdminMessage)
+      _login_response = await comm.receive_DATA_from()
 
-      await comm.send_json_to({
+      await comm.send_DATA_to({
         WEBSOCKET_MESSAGE_ID : self.message_id,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
@@ -344,7 +344,7 @@ class ConsumerTestCase(TransactionTestCase):
         }
       })
 
-      response = await comm.receive_json_from()
+      response = await comm.receive_DATA_from()
       await comm.disconnect()
 
 
@@ -414,10 +414,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
+      await comm_admin.send_DATA_to({
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
         WEBSOCKET_MESSAGE_ID : 6823494122,
@@ -430,7 +430,7 @@ class ConsumerTestCase(TransactionTestCase):
 
         }
       })
-      admin_message = await comm_admin.receive_json_from()
+      admin_message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
     # Assert
 
@@ -475,10 +475,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
+      await comm_admin.send_DATA_to({
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,
         WEBSOCKET_MESSAGE_ID : 6823494122,
@@ -492,7 +492,7 @@ class ConsumerTestCase(TransactionTestCase):
           'tracer' : 3
         }
       })
-      admin_message = await comm_admin.receive_json_from()
+      admin_message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
     # Assert
 
@@ -579,18 +579,18 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
-        JSON_ACTIVITY_ORDER : [36],
-        JSON_DELIVER_TIME : 7,
+      await comm_admin.send_DATA_to({
+        DATA_ACTIVITY_ORDER : [36],
+        DATA_DELIVER_TIME : 7,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
 
-      returnMessage = await comm_admin.receive_json_from()
+      returnMessage = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
 
     await database_sync_to_async(order.refresh_from_db)()
@@ -682,16 +682,16 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
-        JSON_ACTIVITY_ORDER : [36],
+      await comm_admin.send_DATA_to({
+        DATA_ACTIVITY_ORDER : [36],
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RESTORE_ORDERS,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
 
       await comm_admin.disconnect()
 
@@ -776,24 +776,24 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
-        JSON_AUTH : {
+      await comm_admin.send_DATA_to({
+        DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
         },
         WEBSOCKET_DATA : {
-          JSON_VIAL : [15934],
-          JSON_DELIVER_TIME : 7,
-          JSON_ACTIVITY_ORDER : [36],
+          DATA_VIAL : [15934],
+          DATA_DELIVER_TIME : 7,
+          DATA_ACTIVITY_ORDER : [36],
         },
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
 
   async def test_freeActivityOrder_rejected(self):
@@ -874,24 +874,24 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
-        JSON_AUTH : {
+      await comm_admin.send_DATA_to({
+        DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : "NOT ADMIN PASSWORD",
         },
         WEBSOCKET_DATA : {
-          JSON_VIAL : [15934],
-          JSON_DELIVER_TIME : 7,
-          JSON_ACTIVITY_ORDER : [36],
+          DATA_VIAL : [15934],
+          DATA_DELIVER_TIME : 7,
+          DATA_ACTIVITY_ORDER : [36],
         },
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
 
     self.assertFalse(message[AUTH_IS_AUTHENTICATED])
@@ -962,11 +962,11 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
-        JSON_AUTH : {
+      await comm_admin.send_DATA_to({
+        DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
         },
@@ -978,7 +978,7 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
 
   async def test_freeInjectionOrder_rejected(self):
@@ -990,11 +990,11 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
-        JSON_AUTH : {
+      await comm_admin.send_DATA_to({
+        DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : "NOT ADMIN PASSWORD",
         },
@@ -1006,7 +1006,7 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
 
   async def test_deleteSingleModel(self):
@@ -1032,17 +1032,17 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
+      await comm_admin.send_DATA_to({
         WEBSOCKET_DATA_ID : 78454,
-        WEBSOCKET_DATATYPE : JSON_CUSTOMER,
+        WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
     # Assert Model is gone
     with self.assertRaises(ObjectDoesNotExist):
@@ -1072,17 +1072,17 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      await comm_admin.send_DATA_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_DATA_from()
 
-      await comm_admin.send_json_to({
+      await comm_admin.send_DATA_to({
         WEBSOCKET_DATA_ID : [78453,78454],
-        WEBSOCKET_DATATYPE : JSON_CUSTOMER,
+        WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_json_from()
+      message = await comm_admin.receive_DATA_from()
       await comm_admin.disconnect()
 
     # Assert Model is gone

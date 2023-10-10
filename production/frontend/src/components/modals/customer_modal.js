@@ -1,28 +1,26 @@
 
 import React, { useState } from "react";
-import { Modal, Button, Table, Row, FormControl, Col, Form, Container, Card, InputGroup } from "react-bootstrap";
-import { DAYS, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_PRODUCTION, JSON_TRACER, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_TIME_SLOTS, PROP_ON_CLOSE, PROP_WEBSOCKET, TRACER_TYPE_ACTIVITY, WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC, WEEKLY_TIME_TABLE_PROP_TIME_KEYWORD, } from "../../lib/constants.js";
-import { CloseButton } from "../injectable/buttons.js";
+import { Modal, Row, FormControl, Col, Form, Container, Card, InputGroup } from "react-bootstrap";
 import propTypes from "prop-types";
+
+import { DAYS, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, TRACER_TYPE,
+  WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES,
+  WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
+   WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants.js";
+import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_PRODUCTION, DATA_TRACER,
+  WEBSOCKET_DATA } from "~/lib/shared_constants.js"
+import { CloseButton } from "../injectable/buttons.js";
 import { Select, toOptions } from "../injectable/select.js"
 import { ClickableIcon } from "../injectable/icons.js";
-import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js"
+
 import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 
-import styles from '../../css/Site.module.css'
-import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "../../dataclasses/dataclasses.js";
-import { KEYWORD_ActivityDeliveryTimeSlot_DELIVERY_TIME, KEYWORD_ActivityDeliveryTimeSlot_PRODUCTION_RUN } from "../../dataclasses/keywords.js";
-import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "../../lib/formatting.js";
-import { changeState } from "../../lib/state_management.js";
+import styles from '~/css/Site.module.css'
+import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "~/dataclasses/dataclasses.js";
+import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
 import { TimeInput } from "../injectable/time_form.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
-
-
-const RunOptions = [
-  {name : "Hver uge", val : 1},
-  {name : "Lige uger", val : 2},
-  {name : "Ulige uger", val : 3}
-];
+import { useWebsocket } from "../tracer_shop_context.js";
 
 function MarginInputGroup({children}){
   return (<InputGroup style={{marginTop : "5px"}}>
@@ -50,9 +48,11 @@ const timeSlotErrorContainer = {
 }
 
 export function CustomerModal(props) {
-    const /**@type {Customer} */ customer = props[JSON_CUSTOMER].get(props[PROP_ACTIVE_CUSTOMER])
+  const websocket = useWebsocket();
+
+    const /**@type {Customer} */ customer = props[DATA_CUSTOMER].get(props[PROP_ACTIVE_CUSTOMER])
     const endpointIDs = []
-    for(const [endpointID, _endpoint] of props[JSON_ENDPOINT]){
+    for(const [endpointID, _endpoint] of props[DATA_ENDPOINT]){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint
 
       if(endpoint.owner == customer.id){
@@ -61,11 +61,11 @@ export function CustomerModal(props) {
     }
 
     const activeEndpointID = endpointIDs[0]
-    let activeEndpoint = props[JSON_ENDPOINT].get(activeEndpointID);
+    let activeEndpoint = props[DATA_ENDPOINT].get(activeEndpointID);
     let activeTracer = undefined;
-    for(const [tracerID, _tracer] of props[JSON_TRACER]){
+    for(const [tracerID, _tracer] of props[DATA_TRACER]){
       const /**@type {Tracer} */ tracer = _tracer
-      if(tracer.tracer_type == TRACER_TYPE_ACTIVITY){
+      if(tracer.tracer_type == TRACER_TYPE.ACTIVITY){
         activeTracer = tracerID;
         break;
       }
@@ -98,7 +98,7 @@ export function CustomerModal(props) {
    * @returns {Number}
    */
   function weeklyTimeTableDayGetter(timeSlot) {
-    const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(timeSlot.production_run);
+    const /**@type {ActivityProduction} */ production = props[DATA_PRODUCTION].get(timeSlot.production_run);
     return production.production_day;
   }
 
@@ -237,7 +237,7 @@ export function CustomerModal(props) {
   function confirmCustomer(){
     const customer = {...state.tempCustomer}
 
-    props[PROP_WEBSOCKET].sendEditModel(JSON_CUSTOMER, [customer]).then(() => {
+    websocket.sendEditModel(DATA_CUSTOMER, [customer]).then(() => {
       setState({customerDirty : false})
     })
   }
@@ -254,12 +254,12 @@ export function CustomerModal(props) {
     endpoint.owner = props[PROP_ACTIVE_CUSTOMER];
     let promise;
     if(state.activeEndpoint === undefined){
-      promise = props[PROP_WEBSOCKET].sendCreateModel(JSON_ENDPOINT, [endpoint])
+      promise = websocket.sendCreateModel(DATA_ENDPOINT, [endpoint])
     } else {
-      promise = props[PROP_WEBSOCKET].sendEditModel(JSON_ENDPOINT, [endpoint])
+      promise = websocket.sendEditModel(DATA_ENDPOINT, [endpoint])
     }
     promise.then((response) => {
-      const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][JSON_ENDPOINT])
+      const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT])
 
       let endpointID, endpoint;
       for(const [_endpointID, _endpoint] of map){ // it's only one iteration long
@@ -295,9 +295,9 @@ export function CustomerModal(props) {
     let promise;
 
     if(state.activeTimeSlot === undefined){
-      promise = props[PROP_WEBSOCKET].sendCreateModel(JSON_DELIVER_TIME, [timeSlot])
+      promise = websocket.sendCreateModel(DATA_DELIVER_TIME, [timeSlot])
     } else {
-      promise = props[PROP_WEBSOCKET].sendEditModel(JSON_DELIVER_TIME, [timeSlot])
+      promise = websocket.sendEditModel(DATA_DELIVER_TIME, [timeSlot])
     }
     promise.then((_data) => {
       setState({timeSlotDirty : false, tempTimeSlot : {...cleanTimeSlot} })
@@ -306,7 +306,7 @@ export function CustomerModal(props) {
 
 
   function renderCustomerConfiguration(){
-    //const /**@type {Customer} */ customer = this.props[JSON_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
+    //const /**@type {Customer} */ customer = this.props[DATA_CUSTOMER].get(this.props[PROP_ACTIVE_CUSTOMER])
     const tempCustomerShortName = nullParser(state.tempCustomer.short_name);
     const tempCustomerLongName = nullParser(state.tempCustomer.long_name);
     const tempCustomerBillingAddress = nullParser(state.tempCustomer.billing_address);
@@ -379,7 +379,7 @@ export function CustomerModal(props) {
 
   function renderActiveEndpoint(){
     const activityTracersOptions = toOptions(
-      props[JSON_TRACER], 'shortname', 'id'
+      props[DATA_TRACER], 'shortname', 'id'
     );
 
     const tempEndpointName = nullParser(state.tempEndpoint.name);
@@ -406,7 +406,7 @@ export function CustomerModal(props) {
       <MarginInputGroup>
         <InputGroup.Text>Leveringssteder</InputGroup.Text>
         <EndpointSelect
-          options={props[JSON_ENDPOINT]}
+          options={props[DATA_ENDPOINT]}
           onChange={() => {}}
           value={state.activeEndpoint}
         ></EndpointSelect>
@@ -458,9 +458,9 @@ export function CustomerModal(props) {
 
   function renderDeliveryTimeTable(){
     const timeSlots = []
-    const /**@type {DeliveryEndpoint} */ endpoint = (state.activeEndpoint != undefined) ? props[JSON_ENDPOINT].get(state.activeEndpoint) : state.tempEndpoint;
+    const /**@type {DeliveryEndpoint} */ endpoint = (state.activeEndpoint != undefined) ? props[DATA_ENDPOINT].get(state.activeEndpoint) : state.tempEndpoint;
 
-    for(const [timeSlotID, _timeSlot] of props[JSON_DELIVER_TIME]){
+    for(const [timeSlotID, _timeSlot] of props[DATA_DELIVER_TIME]){
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
       // Note that if it's a new endpoint, then id is undefined
       if(timeSlot.destination == endpoint.id){
@@ -481,7 +481,7 @@ export function CustomerModal(props) {
   }
 
   function renderActiveTimeSlot(){
-    const timeSlot = props[JSON_DELIVER_TIME].get(state.activeTimeSlot)
+    const timeSlot = props[DATA_DELIVER_TIME].get(state.activeTimeSlot)
 
     const WeeklyRepeatOptions = toOptions([
       { id : 0, name : "Alle Uger"},
@@ -494,7 +494,7 @@ export function CustomerModal(props) {
     }
 
     const productionOptions = toOptions(
-      props[JSON_PRODUCTION].values(), productionNaming, 'id'
+      props[DATA_PRODUCTION].values(), productionNaming, 'id'
     )
 
 

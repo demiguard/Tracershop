@@ -18,7 +18,7 @@ from lib import ProductionJSON as PJSON
 # Very lackluster testing :(
 
 class ProductionJSONResponseTestCase(TestCase):
-  json_kw_1 = "kw_1"
+  DATA_kw_1 = "kw_1"
 
   def setUp(self):
     pass

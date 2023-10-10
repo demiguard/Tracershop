@@ -1,15 +1,18 @@
-import React, {useState} from 'react';
-import { Card, FormControl, Row, Col, Collapse, Container, Table } from 'react-bootstrap';
-import { JSON_RELEASE_RIGHT, JSON_TRACER, JSON_USER, PROP_WEBSOCKET, USER_GROUPS, cssAlignRight, cssError } from '../../../lib/constants';
+import React, { useState } from 'react';
+import { Card, Row, Col, Collapse, Container, Table } from 'react-bootstrap';
+import { USER_GROUPS, cssAlignRight, cssError } from '~/lib/constants';
+import { DATA_RELEASE_RIGHT, DATA_TRACER, DATA_USER } from '~/lib/shared_constants';
+
 import { OpenCloseButton } from '../../injectable/open_close_button';
 import { Select, toOptions } from '../../injectable/select';
-import { setStateToEvent } from '../../../lib/state_management';
+import { setStateToEvent } from '~/lib/state_management';
 import { DateInput } from '../../injectable/date_input';
-import { ReleaseRight, Tracer, User } from '../../../dataclasses/dataclasses';
+import { ReleaseRight, Tracer, User } from '~/dataclasses/dataclasses';
 import { ClickableIcon } from '../../injectable/icons';
 import { TracerWebSocket } from '../../../lib/tracer_websocket';
-import { parseDateInput } from '../../../lib/user_input';
+import { parseDateInput } from '~/lib/user_input';
 import { HoverBox } from '../../injectable/hover_box';
+import { useWebsocket } from '~/components/tracer_shop_context';
 
 const SORTING_METHODS = {
   USER : 1,
@@ -37,16 +40,18 @@ function sortingFunction(method){
 }
 
 export function FreeingRightsPage(props){
+  const websocket = useWebsocket()
+
   const [open, setOpen] = useState(false);
   const [expiryDate, setExpiryDate] = useState("");
   const [expiryDateError, setExpiryDateError] = useState("");
   const [sortingMethod, setSortingMethod] = useState(SORTING_METHODS.USER);
-  const userOptions = toOptions([...props[JSON_USER].values()].filter(
+  const userOptions = toOptions([...props[DATA_USER].values()].filter(
     (user) => [USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.PRODUCTION_USER].includes(user.user_group)
     ), 'username', 'id')
     const initialUser = (userOptions.length) ? userOptions[0].value : -1;
   const [activeUserID, setActiveUserID] = useState(initialUser);
-  const tracerOptions = toOptions([...props[JSON_TRACER].values()].filter(
+  const tracerOptions = toOptions([...props[DATA_TRACER].values()].filter(
       (tracer) => !tracer.archived
   ), 'shortname', 'id');
   const initial_tracer = (tracerOptions.length) ? tracerOptions[0].value : -1;
@@ -68,7 +73,7 @@ export function FreeingRightsPage(props){
     }
 
     setExpiryDateError("");
-    props[PROP_WEBSOCKET].sendCreateModel(JSON_RELEASE_RIGHT, [new ReleaseRight(
+    websocket.sendCreateModel(DATA_RELEASE_RIGHT, [new ReleaseRight(
       undefined, formattedExpiryDate, activeUserID, activeTracerID
     )]).then(() => {setOpen(true);});
   }
@@ -84,10 +89,10 @@ export function FreeingRightsPage(props){
    * @returns 
    */
   function ReleaseRightTableRow({releaseRight, websocket}){
-    const /**@type {User} */ user = props[JSON_USER].get(releaseRight.releaser)
-    const /**@type {Tracer} */ tracer = props[JSON_TRACER].get(releaseRight.product)
+    const /**@type {User} */ user = props[DATA_USER].get(releaseRight.releaser)
+    const /**@type {Tracer} */ tracer = props[DATA_TRACER].get(releaseRight.product)
     function deleteReleaseRight(){
-      websocket.sendDeleteModel(JSON_RELEASE_RIGHT, releaseRight)
+      websocket.sendDeleteModel(DATA_RELEASE_RIGHT, releaseRight)
     }
 
     let expiryDate = "Aldrig"
@@ -121,11 +126,11 @@ export function FreeingRightsPage(props){
             stateFunction={setExpiryDate}
           />
 
-  const releaseRights = [...props[JSON_RELEASE_RIGHT].values()].sort(
+  const releaseRights = [...props[DATA_RELEASE_RIGHT].values()].sort(
     sortingFunction(sortingMethod)).map(releaseRight => <ReleaseRightTableRow
       key={releaseRight.id}
       releaseRight={releaseRight}
-      websocket={props[PROP_WEBSOCKET]}
+      websocket={websocket}
     />)
 
   return (

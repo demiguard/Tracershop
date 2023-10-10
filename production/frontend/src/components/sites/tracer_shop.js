@@ -9,7 +9,7 @@ import { ProductionSite } from "./production_site";
 import { ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_UNHANDLED_USER_GROUP, PROP_USER, USER_GROUPS, PROP_TRACERSHOP_SITE } from "../../lib/constants";
 import { ErrorPage } from "../error_pages/error_page";
 import InvalidVersionPage from "../error_pages/invalid_version_page";
-import { User } from "../../dataclasses/dataclasses";
+import { User } from "~/dataclasses/dataclasses";
 import { ErrorBoundary } from "react-error-boundary";
 
 const SITES = {

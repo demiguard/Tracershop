@@ -1,34 +1,38 @@
 
 import React, { useState } from "react";
-import { Button, Col, Form, FormControl, InputGroup, Modal, ModalBody, Row, Table } from "react-bootstrap";
+import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
 
-import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box";
-import { FormatTime, FormatDateStr, parseDate, dateToDateString, ParseDanishNumber, Capitalize } from "../../lib/formatting";
-import { WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, JSON_INJECTION_ORDER, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,JSON_CUSTOMER,
-  JSON_TRACER, JSON_DELIVER_TIME, LEGACY_KEYWORD_INJECTIONS, LEGACY_KEYWORD_USAGE, LEGACY_KEYWORD_COMMENT, LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_TRACER, PROP_ON_CLOSE, JSON_TRACER_MAPPING, TRACER_TYPE_DOSE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, PROP_WEBSOCKET, JSON_ENDPOINT, INJECTION_USAGE, PROP_USER } from "../../lib/constants";
-
-import styles from '../../css/Site.module.css'
-import { Select, toOptions, toOptionsFromEnum } from "../injectable/select";
+import { dateToDateString } from "~/lib/formatting";
+import { PROP_ON_CLOSE, PROP_ACTIVE_DATE, PROP_USER } from "~/lib/constants";
+import { DATA_TRACER_MAPPING, DATA_CUSTOMER, DATA_TRACER, DATA_INJECTION_ORDER, DATA_ENDPOINT } from "~/lib/shared_constants"
+import styles from '~/css/Site.module.css'
+import { Select, toOptions } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
-import { Customer, InjectionOrder, Tracer, DeliveryEndpoint } from "../../dataclasses/dataclasses";
+import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
 import { TimeInput } from "../injectable/time_form";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { UsageSelect } from "../injectable/derived_injectables/usage_select";
-import { TracerCatalog } from "../../lib/data_structures";
-import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "../../lib/initialization";
-import { parseTimeInput, parseWholePositiveNumber } from "../../lib/user_input";
-import { TracerWebSocket } from "../../lib/tracer_websocket";
+import { TracerCatalog } from "~/lib/data_structures";
+import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
+import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
+import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { ErrorInput } from "../injectable/error_input";
+import { useWebsocket } from "../tracer_shop_context";
 
 
 export function CreateInjectionOrderModal(props){
   // Initialize select
   let initialization = initialize_customer_endpoint_tracer_from_tracerCatalog(
-    props[JSON_ENDPOINT], props[JSON_TRACER_MAPPING]
+    props[DATA_ENDPOINT], props[DATA_TRACER_MAPPING]
   )
-  const /**@type {TracerWebSocket} */ websocket = props[PROP_WEBSOCKET];
+
+  const tracerCatalog = new TracerCatalog(
+    props[DATA_TRACER_MAPPING],
+    props[DATA_TRACER],
+  );
+  const websocket = useWebsocket();
 
   const [customerID, setCustomer] = useState(initialization.customer);
   const [endpointID, setEndpoint] = useState(initialization.endpoint)
@@ -39,13 +43,6 @@ export function CreateInjectionOrderModal(props){
   const [comment, setComment] = useState("")
   const [errorInjection, setErrorInjection] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("");
-
-
-  const tracerCatalog = new TracerCatalog(
-    props[JSON_TRACER_MAPPING],
-    props[JSON_TRACER],
-    customerID
-  );
 
   function SubmitOrder(_event){
     //Validation
@@ -59,7 +56,7 @@ export function CreateInjectionOrderModal(props){
       setErrorDeliveryTime(formattedDeliveryTime)
     }
     if(validDeliveryTime && validInjections){
-      websocket.sendCreateModel(JSON_INJECTION_ORDER, new InjectionOrder(
+      websocket.sendCreateInjectionOrder(new InjectionOrder(
         undefined, // id
         formattedDeliveryTime, // deliver_time
         dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
@@ -78,7 +75,7 @@ export function CreateInjectionOrderModal(props){
     }
   }
 
-  const tracerOptions = toOptions(tracerCatalog.getInjectionCatalog(),
+  const tracerOptions = toOptions(tracerCatalog.getInjectionCatalog(customerID),
                                   'shortname', 'id')
 
   return(
@@ -97,8 +94,8 @@ export function CreateInjectionOrderModal(props){
             ariaLabelEndpoint="select-endpoint"
             activeCustomer={customerID}
             activeEndpoint={endpointID}
-            customers={props[JSON_CUSTOMER]}
-            endpoints={props[JSON_ENDPOINT]}
+            customers={props[DATA_CUSTOMER]}
+            endpoints={props[DATA_ENDPOINT]}
             setCustomer={setCustomer}
             setEndpoint={setEndpoint}
           />

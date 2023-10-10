@@ -10,7 +10,7 @@ from customer.lib.Formatting import ParseJSONRequest
 from customer.models import User, ResetPassword
 from customer.lib import tracershopSMTP
 from customer.lib.SQL import SQLController as SQL
-from customer.constants import SUCCESSFUL_JSON_RESPONSE
+from customer.constants import SUCCESSFUL_DATA_RESPONSE
 
 class APICreateNewPasswordResetRequest(View):
   name = "APICreateNewPasswordResetRequest"
@@ -41,5 +41,5 @@ class APICreateNewPasswordResetRequest(View):
 
     tracershopSMTP.SendResetPasswordEmail(UserInQuestion, PWrequest)
 
-    return SUCCESSFUL_JSON_RESPONSE
+    return SUCCESSFUL_DATA_RESPONSE
 

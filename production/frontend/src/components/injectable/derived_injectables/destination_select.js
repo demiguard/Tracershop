@@ -85,11 +85,12 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     }
 
     const filteredTimeSlots = getRelatedTimeSlots(timeSlots, activeEndpoint);
+    console.log(filteredTimeSlots, timeSlots, activeEndpoint)
 
     thirdColumn = <TracershopInputGroup label="Leverings tid">
       <TimeSlotSelect
         aria-label={ariaLabelTimeSlot}
-        deliverTimes={filteredTimeSlots}
+        deliver_times={filteredTimeSlots}
         value={activeTimeSlot}
         onChange={onChangeTimeSlot}
       />

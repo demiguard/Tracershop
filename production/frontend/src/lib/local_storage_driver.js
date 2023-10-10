@@ -1,9 +1,4 @@
-import {
-  DATABASE_ACTIVITY_ORDER, DATABASE_CLOSED_DATE, DATABASE_CUSTOMER, DATABASE_DELIVER_TIME, DATABASE_EMPLOYEE,
-  DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE, DATABASE_PRODUCTION, DATABASE_TRACER, DATABASE_VIAL, JSON_ACTIVITY_ORDER,
-  JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, 
-  JSON_KEYWORDS, 
-  JSON_RUN, JSON_TRACER, JSON_VIAL } from "./constants";
+import { MODELS } from "../dataclasses/dataclasses";
 
 // Stealing code from https://stackoverflow.com/questions/2010892/how-to-store-objects-in-html5-localstorage
 export const db = {
@@ -77,7 +72,7 @@ export const db = {
     server_config : Object, //DATABASE_SERVER_CONFIG
     current_user : Object, //DATABASE_USER
     // Admin
-    adminPage : String, // DATABASE_ADMIN_PAGE
+    admin_page : String, // DATABASE_ADMIN_PAGE
     // shop
     shopCustomer : Number, // DATABASE_SHOP_CUSTOMER
     shop_active_endpoint : Number,
@@ -89,29 +84,9 @@ export const db = {
   }
 }
 // GOD JAVASCRIPT IS STUPID
-for (const keyword of JSON_KEYWORDS) {
+for (const keyword of Object.keys(MODELS)) {
   db.types[keyword] = Map;
 }
 
-/**
- * Maps the JSON keywords to their Database variants
- * @param {String} JSONName - JSON_XXX constant found in constants.js
- * @returns {String} - LocalStorage Keyword
- * @throws "Unknown JSON name" on unknown input
- */
-export function MapDataName(JSONName){
-  // A more elegant solution would be to create a object with all the keys HOWEVER,
-  // Because javascript is a fucking STUPID language, you cannot initialize an object with variables or constants
-  if (JSONName == JSON_ACTIVITY_ORDER) {return DATABASE_ACTIVITY_ORDER};
-  if (JSONName == JSON_CUSTOMER) {return DATABASE_CUSTOMER;}
-  if (JSONName == JSON_DELIVER_TIME){return DATABASE_DELIVER_TIME;}
-  if (JSONName == JSON_EMPLOYEE){return DATABASE_EMPLOYEE;}
-  if (JSONName == JSON_INJECTION_ORDER){return DATABASE_INJECTION_ORDER;}
-  if (JSONName == JSON_ISOTOPE){return DATABASE_ISOTOPE;}
-  if (JSONName == JSON_RUN){return DATABASE_PRODUCTION;}
-  if (JSONName == JSON_TRACER){return DATABASE_TRACER;}
-  if (JSONName == JSON_VIAL){return DATABASE_VIAL;}
-  if (JSONName == JSON_CLOSED_DATE) {return DATABASE_CLOSED_DATE;}
 
-  throw `Unknown JSON Name ${JSONName}`;
-}
+

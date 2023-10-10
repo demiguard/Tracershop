@@ -2,39 +2,40 @@
  * @jest-environment jsdom
  */
 
-import React from "react";
+import React, {useContext} from "react";
 import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { AppState } from "../../app_state.js";
 import { FutureBooking } from "../../../components/shop_pages/future_bookings.js";
-import { PROP_ACTIVE_DATE, PROP_WEBSOCKET } from "../../../lib/constants.js";
+import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+
+
+import { TracerWebSocket } from "../../../lib/tracer_websocket.js";
+jest.mock('../../../lib/tracer_websocket.js');
 
 let container = null;
 let websocket = null;
 let props = null;
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
-
-
 const now = new Date(2020,4, 4, 10, 36, 44);
 
-beforeEach(() => {
+beforeEach(async () => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
+  websocket = new TracerWebSocket();
+
+
   props = {...AppState}
-  props[PROP_WEBSOCKET] = websocket
   props[PROP_ACTIVE_DATE] = now
 });
 
 afterEach(() => {
   cleanup();
-  module.clearAllMocks()
   window.localStorage.clear()
   if(container != null) container.remove();
   container = null;
@@ -44,8 +45,10 @@ afterEach(() => {
 
 describe("Future Bookings Test Suite", () => {
   it("Standard render test", () => {
-    render(<FutureBooking {...props}/>)
-  } )
+    render(<WebsocketContextProvider value={websocket}>
+      <FutureBooking {...props}/>
+    </WebsocketContextProvider>);
+  })
 
 
 })

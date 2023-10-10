@@ -5,13 +5,14 @@
 import React from "react";
 import { act } from "react-dom/test-utils";
 import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
-import { PROP_ACTIVE_DATE, PROP_WEBSOCKET } from "../../../lib/constants.js";
-import { AppState } from "../../app_state.js";
 
-import { ProductionUserSetup } from "../../../components/production_pages/setup_pages/production_user_setup.js"
+import { AppState } from "~/tests/app_state.js";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+import { ProductionUserSetup } from "~/components/production_pages/setup_pages/production_user_setup.js"
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+
+const module = jest.mock('~/lib/tracer_websocket.js');
+const tracer_websocket = require("~/lib/tracer_websocket.js");
 
 let websocket = null;
 let container = null;
@@ -24,9 +25,8 @@ beforeAll(() => {
 
 beforeEach(() => {
     container = document.createElement("div");
-    websocket = new tracer_websocket.TracerWebSocket()
+    websocket = tracer_websocket.TracerWebSocket
     props = {...AppState};
-    props[PROP_WEBSOCKET] = websocket;
 });
 
 afterEach(() => {
@@ -41,7 +41,9 @@ afterEach(() => {
 
 describe("Production User Setup tests", () => {
   it("Standard Render tests", () => {
-    render(<ProductionUserSetup {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+        <ProductionUserSetup {...props}/>
+    </WebsocketContextProvider>);
   })
 })
 

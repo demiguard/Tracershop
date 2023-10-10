@@ -1,1 +1,0 @@
-"""This takes the shared constants and creates a js file with export constants. Shared constants are keywords used in json objects by the websocket"""

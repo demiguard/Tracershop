@@ -6,27 +6,29 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { CreateInjectionOrderModal } from "../../../components/modals/create_injection_modal.js"
-import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
+import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
+import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
 
-import {AppState} from '../../app_state.js'
+import {AppState} from '~/tests/app_state.js'
 import { act } from "react-dom/test-utils";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { users } from "~/tests/test_state/users";
 
 const onClose = jest.fn()
+
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
-let container = null;
 let props = null;
 
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
-  container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
+
+  websocket = tracer_websocket.TracerWebSocket;
   props = {...AppState}
-  props[PROP_WEBSOCKET] = websocket
+  props[PROP_USER] = users.get(1);
   props[PROP_ACTIVE_DATE] = new Date(2020,3,5);
   props[PROP_ON_CLOSE] = onClose
 });
@@ -34,137 +36,125 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup();
-  module.clearAllMocks()
-
-  if(container != null) container.remove();
-  container = null;
+  module.clearAllMocks();
+  props = null;
   websocket = null;
 });
 
 describe("Create injection Order", () => {
   it("Standard Render Test", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />)
+    render(
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+      </WebsocketContextProvider>);
 
-    expect(await screen.findByLabelText("select-customer")).toBeVisible();
-    expect(await screen.findByLabelText("select-endpoint")).toBeVisible();
-    expect(await screen.findByLabelText("tracer-select")).toBeVisible();
-    expect(await screen.findByLabelText("usage-select")).toBeVisible();
-    expect(await screen.findByLabelText("injection-input")).toBeVisible();
-    expect(await screen.findByLabelText("delivery-time-input")).toBeVisible();
-    expect(await screen.findByLabelText("comment-input")).toBeVisible();
+    expect(screen.getByLabelText("select-customer")).toBeVisible();
+    expect(screen.getByLabelText("select-endpoint")).toBeVisible();
+    expect(screen.getByLabelText("tracer-select")).toBeVisible();
+    expect(screen.getByLabelText("usage-select")).toBeVisible();
+    expect(screen.getByLabelText("injection-input")).toBeVisible();
+    expect(screen.getByLabelText("delivery-time-input")).toBeVisible();
+    expect(screen.getByLabelText("comment-input")).toBeVisible();
     // Buttons
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible()
-    expect(await screen.findByRole('button', {name : "Opret Ordre"})).toBeVisible()
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible()
+    expect(screen.getByRole('button', {name : "Opret Ordre"})).toBeVisible()
   });
 
   it("Missing Injections!", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
   const createOrderButton = await screen.findByRole('button',
                                                     {name : "Opret Ordre"});
-  act(() => {
-    createOrderButton.click()
-  })
+  act(() => {createOrderButton.click()});
 
   expect(await screen.findByText(
-    "Der er ikke indtastet hvor mange injektioner der skal bestilles")).toBeVisible
-  })
+    "Injektioner er ikke tasted ind"))
+  });
 
   it("Error - Bannans Injections", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "a"}});
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-    act(() =>{
-      createOrderButton.click()
-    })
+    act(() =>{createOrderButton.click()});
 
-    expect(await screen.findByText("Injektionerne er ikke et tal"))
+    expect(screen.getByText("Injektioner er ikke et tal"))
   });
 
   it("Error - Negative Injections", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "-3"}});
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-    act(() => {
-      createOrderButton.click()
-    })
+    act(() => {createOrderButton.click()});
 
 
-    expect(await screen.findByText("Der skal bestilles et positivt mængde af injectioner"))
+    expect(screen.getByText("Injektioner kan ikke være negativ"))
   });
 
   it("Error - half a Injections", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "2.5"}});
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-    act(() => {
-      createOrderButton.click()
-    })
+    act(() => {createOrderButton.click();});
 
-    expect(await screen.findByText("Der kan kun bestilles et helt antal injektioners"))
+    expect(screen.getByText("Injektioner er ikke et helt tal"));
   });
 
 
   it("Error - half a Injections + plus danish numbers", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "2,5"}});
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-    act(() => {
-      createOrderButton.click()
-    })
+    act(() => {createOrderButton.click();});
 
-    expect(await screen.findByText("Der kan kun bestilles et helt antal injektioners"))
+    expect(await screen.findByText("Injektioner er ikke et helt tal"))
   });
 
 
   it("Error - Missing Delivery Time", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "4"}});
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-    act(() => {
-      createOrderButton.click()
-    })
+    act(() => { createOrderButton.click(); });
 
-    expect(await screen.findByText("Leverings tidspunktet er ikke et valid"))
+    expect(await screen.findByText("Leverings tid er ikke tasted ind"))
   });
 
   it("Success order", async () => {
-    render(<CreateInjectionOrderModal
-      {...props}
-    />);
+    console.log(websocket)
+    render(<WebsocketContextProvider value={websocket}>
+      <CreateInjectionOrderModal {...props} />
+    </WebsocketContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "4"}});
@@ -178,8 +168,8 @@ describe("Create injection Order", () => {
       createOrderButton.click();
     })
 
-    expect(websocket.getMessage).toBeCalled()
-    expect(websocket.send).toBeCalled()
+    expect(websocket.sendCreateInjectionOrder).toBeCalled()
+
     expect(onClose).toBeCalled()
   });
 });

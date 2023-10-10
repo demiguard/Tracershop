@@ -7,10 +7,11 @@ import { act, scryRenderedComponentsWithType } from "react-dom/test-utils";
 import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
 
 
-import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_WEBSOCKET, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE,  } from "../../../lib/constants.js";
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE,  } from "~/lib/shared_constants.js";
 import { AppState } from "../../app_state.js";
 import { OrderPage } from "../../../components/production_pages/order_page.js";
 import { db } from "../../../lib/local_storage_driver.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -32,9 +33,8 @@ beforeAll(() => {
 
 beforeEach(() => {
     container = document.createElement("div");
-    websocket = new tracer_websocket.TracerWebSocket()
+    websocket = tracer_websocket.TracerWebSocket
     props = {...AppState};
-    props[PROP_WEBSOCKET] = websocket;
 });
 
 afterEach(() => {
@@ -49,7 +49,9 @@ afterEach(() => {
 
 describe("Order Page tests", () => {
   it("Standard Render test", async () => {
-    render(<OrderPage {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <OrderPage {...props}/>
+    </WebsocketContextProvider>);
 
     expect(await screen.findByRole('button', {name : 'test_tracer_1'})).toBeVisible()
     expect(await screen.findByRole('button', {name : 'test_tracer_3'})).toBeVisible()
@@ -59,7 +61,10 @@ describe("Order Page tests", () => {
   });
 
   it("Change to injection Table", async () => {
-    render(<OrderPage {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <OrderPage {...props}/>
+    </WebsocketContextProvider>);
+
     await act(async () =>{
        const button = await screen.findByRole('button', {name : 'Special'})
        button.click()
@@ -69,7 +74,10 @@ describe("Order Page tests", () => {
   })
 
   it("Change to injection Table", async () => {
-    render(<OrderPage {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <OrderPage {...props}/>
+    </WebsocketContextProvider>);
+
     await act(async () =>{
        const button = await screen.findByRole('button', {name : 'test_tracer_3'})
        button.click()
@@ -79,7 +87,10 @@ describe("Order Page tests", () => {
   })
 
   it("Change day", async () => {
-    render(<OrderPage {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <OrderPage {...props}/>
+    </WebsocketContextProvider>);
+
     await act(async () =>{
        const div = await screen.findByLabelText('calender-day-13')
        div.click()
@@ -87,7 +98,10 @@ describe("Order Page tests", () => {
   })
 
   it("Change month", async () => {
-    render(<OrderPage {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <OrderPage {...props}/>
+    </WebsocketContextProvider>);
+
     await act(async () =>{
        const image = await screen.findByLabelText('next-month')
        image.click()
@@ -101,7 +115,10 @@ describe("Order Page tests", () => {
 
   it("Load saved db data", async () => {
     db.set("activeTracer", -1)
-    render(<OrderPage {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <OrderPage {...props}/>
+    </WebsocketContextProvider>);
+
     expect(await screen.findByText('InjectionTableMocked')).toBeVisible()
   });
 });

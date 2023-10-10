@@ -63,12 +63,12 @@ class ApiEditTOrder(LoginRequiredMixin, View):
     )
     
 
-    return constants.SUCCESSFUL_JSON_RESPONSE
+    return constants.SUCCESSFUL_DATA_RESPONSE
 
   def delete(self, request):
     JsonData = ParseJSONRequest(request)
     ID = typeCorrectDataDelete(JsonData)
     SQL.deleteTOrder(ID)
-    return constants.SUCCESSFUL_JSON_RESPONSE
+    return constants.SUCCESSFUL_DATA_RESPONSE
 
 

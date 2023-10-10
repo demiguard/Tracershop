@@ -112,7 +112,7 @@ class authTestCase(TransactionTestCase):
         'lot_number' : "messageBatchNumber",
         WEBSOCKET_DATA_ID : 6631
       },
-      JSON_AUTH : {
+      DATA_AUTH : {
         AUTH_USERNAME : TEST_ADMIN_USERNAME,
         AUTH_PASSWORD : TEST_ADMIN_PASSWORD
       }

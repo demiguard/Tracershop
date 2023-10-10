@@ -1,4 +1,4 @@
-import { JSON_ACTIVITY_ORDER, JSON_BOOKING, JSON_CLOSED_DATE, JSON_CUSTOMER, JSON_DEADLINE, JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_ENDPOINT, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_LOCATION, JSON_PROCEDURE, JSON_PROCEDURE_IDENTIFIER, JSON_PRODUCTION, JSON_SERVER_CONFIG, JSON_TRACER, JSON_TRACER_MAPPING, JSON_USER, JSON_USER_ASSIGNMENT, JSON_VIAL } from "../lib/constants"
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_CLOSED_DATE, DATA_CUSTOMER, DATA_DEADLINE, DATA_DELIVER_TIME, DATA_EMPLOYEE, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_LOCATION, DATA_PROCEDURE, DATA_PROCEDURE_IDENTIFIER, DATA_PRODUCTION, DATA_SERVER_CONFIG, DATA_TRACER, DATA_TRACER_MAPPING, DATA_USER, DATA_USER_ASSIGNMENT, DATA_VIAL } from "../lib/shared_constants"
 import { activityDeliveryTimeSlots } from "./test_state/activity_delivery_time_slots"
 import { activity_orders } from "./test_state/activity_orders"
 import { bookings } from "./test_state/bookings"
@@ -22,22 +22,22 @@ import { vials } from "./test_state/vials"
 
 export const AppState = {}
 
-AppState[JSON_ACTIVITY_ORDER] = activity_orders
-AppState[JSON_BOOKING] = bookings
-AppState[JSON_CUSTOMER] = customers
-AppState[JSON_DEADLINE] = deadlines
-AppState[JSON_DELIVER_TIME] = activityDeliveryTimeSlots
-AppState[JSON_ENDPOINT] = deliveryEndpoints
-AppState[JSON_LOCATION] = locations
-AppState[JSON_INJECTION_ORDER] = injection_orders
-AppState[JSON_ISOTOPE] = isotopes
-AppState[JSON_PRODUCTION] = productions
-AppState[JSON_PROCEDURE] = procedures
-AppState[JSON_PROCEDURE_IDENTIFIER] = procedureIdentifiers
-AppState[JSON_SERVER_CONFIG] =serverConfig
-AppState[JSON_TRACER] = tracers
-AppState[JSON_TRACER_MAPPING] = tracer_mapping
-AppState[JSON_VIAL] = vials
-AppState[JSON_CLOSED_DATE] = closed_dates;
-AppState[JSON_USER] = users
-AppState[JSON_USER_ASSIGNMENT] = user_assignments;
+AppState[DATA_ACTIVITY_ORDER] = activity_orders
+AppState[DATA_BOOKING] = bookings
+AppState[DATA_CUSTOMER] = customers
+AppState[DATA_DEADLINE] = deadlines
+AppState[DATA_DELIVER_TIME] = activityDeliveryTimeSlots
+AppState[DATA_ENDPOINT] = deliveryEndpoints
+AppState[DATA_LOCATION] = locations
+AppState[DATA_INJECTION_ORDER] = injection_orders
+AppState[DATA_ISOTOPE] = isotopes
+AppState[DATA_PRODUCTION] = productions
+AppState[DATA_PROCEDURE] = procedures
+AppState[DATA_PROCEDURE_IDENTIFIER] = procedureIdentifiers
+AppState[DATA_SERVER_CONFIG] =serverConfig
+AppState[DATA_TRACER] = tracers
+AppState[DATA_TRACER_MAPPING] = tracer_mapping
+AppState[DATA_VIAL] = vials
+AppState[DATA_CLOSED_DATE] = closed_dates;
+AppState[DATA_USER] = users
+AppState[DATA_USER_ASSIGNMENT] = user_assignments;

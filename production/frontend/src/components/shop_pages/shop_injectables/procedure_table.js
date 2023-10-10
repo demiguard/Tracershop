@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import { Container, FormCheck, FormControl, Row, Table } from "react-bootstrap";
-import { JSON_CUSTOMER, JSON_ENDPOINT, JSON_PROCEDURE, JSON_PROCEDURE_IDENTIFIER, JSON_TRACER, PROP_ACTIVE_ENDPOINT, PROP_WEBSOCKET } from "../../../lib/constants";
-import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "../../../dataclasses/dataclasses";
+import { PROP_ACTIVE_ENDPOINT } from "~/lib/constants";
+import { DATA_CUSTOMER, DATA_ENDPOINT, DATA_PROCEDURE, DATA_PROCEDURE_IDENTIFIER, DATA_TRACER } from "~/lib/shared_constants"
+import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { Select } from "../../injectable/select";
-import { nullParser } from "../../../lib/formatting";
-import { getProcedure } from "../../../lib/data_structures";
+import { nullParser } from "~/lib/formatting";
+import { getProcedure } from "~/lib/data_structures";
 import { DestinationSelect } from "../../injectable/derived_injectables/destination_select";
 
 
@@ -42,7 +43,7 @@ export function ProcedureTable(props){
       }
       const newProcedure = {...procedure, tracer : tracerID}
 
-      websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
+      websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
     }
 
     function setUnits(event){
@@ -60,7 +61,7 @@ export function ProcedureTable(props){
 
       const newProcedure = {...procedure, tracer_units : newUnits}
 
-      websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
+      websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
     }
 
     function setDelay(event) {
@@ -72,7 +73,7 @@ export function ProcedureTable(props){
       }
       const newProcedure = {...procedure, delay_minutes : newDelay}
 
-      websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
+      websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
     }
 
     function setUsage(event) {
@@ -80,7 +81,7 @@ export function ProcedureTable(props){
       _setUsage(newUsage)
       const newProcedure = {...procedure, in_use : newUsage}
 
-      //websocket.sendEditModel(JSON_PROCEDURE, [newProcedure])
+      //websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
     }
 
 
@@ -122,8 +123,8 @@ export function ProcedureTable(props){
         ariaLabelEndpoint="select-endpoint"
         activeCustomer={activeCustomer}
         activeEndpoint={activeEndpoint}
-        customers={props[JSON_CUSTOMER]}
-        endpoints={props[JSON_ENDPOINT]}
+        customers={props[DATA_CUSTOMER]}
+        endpoints={props[DATA_ENDPOINT]}
         setCustomer={setActiveCustomer}
         setEndpoint={setActiveEndpoint}
       />

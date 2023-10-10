@@ -1,6 +1,7 @@
 import React, {useState} from 'react';
-import { Col, Container, FormCheck, FormControl, InputGroup, Row, Table } from 'react-bootstrap';
-import { JSON_ISOTOPE, PROP_WEBSOCKET, cssCenter } from '../../../lib/constants';
+import { Container, FormCheck, FormControl, InputGroup, Table } from 'react-bootstrap';
+
+import { DATA_ISOTOPE } from '~/lib/shared_constants';
 import { TracershopInputGroup } from '../../injectable/tracershop_input_group';
 import { setStateToEvent } from '../../../lib/state_management';
 import { ClickableIcon } from '../../injectable/icons';
@@ -8,6 +9,7 @@ import { parseDanishPositiveNumberInput } from '../../../lib/user_input';
 import { Isotope } from '../../../dataclasses/dataclasses';
 import { TracerWebSocket } from '../../../lib/tracer_websocket';
 import { ErrorInput } from '../../injectable/error_input';
+import { useWebsocket } from '~/components/tracer_shop_context';
 
 function NewIsotopeRow({websocket}){
   const [atomicLetter, setAtomicLetter] = useState("");
@@ -31,7 +33,7 @@ function NewIsotopeRow({websocket}){
     const [validHalflife, parsedHalflife] = parseDanishPositiveNumberInput(halflifeSeconds, "Halveringstiden");
 
     if (validAtomicNumber && validAtomicMass && validHalflife){
-      websocket.sendCreateModel(JSON_ISOTOPE,{
+      websocket.sendCreateModel(DATA_ISOTOPE,{
         atomic_letter : atomicLetter,
         atomic_number : parsedAtomicNumber,
         atomic_mass : parsedAtomicMass,
@@ -141,7 +143,7 @@ function IsotopeRow({isotope, websocket}){
     const [validHalflife, parsedHalflife] = parseDanishPositiveNumberInput(halflifeSeconds, "Halveringstiden");
 
     if (validAtomicNumber && validAtomicMass && validHalflife){
-      websocket.sendEditModel(JSON_ISOTOPE, {...isotope,
+      websocket.sendEditModel(DATA_ISOTOPE, {...isotope,
         atomic_letter : atomicLetter,
         atomic_number : parsedAtomicNumber,
         atomic_mass : parsedAtomicMass,
@@ -219,11 +221,12 @@ function IsotopeRow({isotope, websocket}){
 
 
 export function IsotopeSetupPage(props) {
-  const isotopeRows = [...props[JSON_ISOTOPE].values()].map(
+  const websocket = useWebsocket()
+  const isotopeRows = [...props[DATA_ISOTOPE].values()].map(
     (isotope) => <IsotopeRow
     key={isotope.id}
     isotope={isotope}
-    websocket={props[PROP_WEBSOCKET]}
+    websocket={websocket}
   />);
 
   return (<Container>
@@ -240,7 +243,9 @@ export function IsotopeSetupPage(props) {
       </thead>
       <tbody>
         {isotopeRows}
-        <NewIsotopeRow/>
+        <NewIsotopeRow
+          websocket={websocket}
+        />
       </tbody>
     </Table>
   </Container>)

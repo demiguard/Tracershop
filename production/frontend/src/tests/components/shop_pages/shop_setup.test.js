@@ -8,10 +8,8 @@ import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ShopSetup } from '../../../components/shop_pages/shop_setup'
-import { DATABASE_TODAY, JSON_ACTIVITY_ORDER, JSON_ENDPOINT, JSON_VIAL, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_ENDPOINT, PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP,
-  PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -38,7 +36,7 @@ beforeEach(() => {
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
   props = {...AppState}
-  props[PROP_WEBSOCKET] = websocket
+
 });
 
 
@@ -55,18 +53,23 @@ afterEach(() => {
 describe("Shop Setup test suite",() => {
   it("Standard render test", async () => {
 
-    render(<ShopSetup {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <ShopSetup {...props}/>
+    </WebsocketContextProvider>);
     expect(await screen.findByLabelText('setup-Lokationer')).toBeVisible()
     expect(await screen.findByLabelText('setup-Procedure')).toBeVisible()
 
   })
 
   it("Switch to production", async () => {
-    render(<ShopSetup {...props}/>)
+    render(<WebsocketContextProvider value={websocket}>
+      <ShopSetup {...props}/>
+    </WebsocketContextProvider>);
+
     await act(async () => {
-      const switchButton = await screen.findByLabelText('setup-Procedure')
+      const switchButton = await screen.findByLabelText('setup-Procedure');
       switchButton.click();
     })
-    expect(await screen.findByText("ProcedureTableMock")).toBeVisible()
+    expect(await screen.findByText("ProcedureTableMock")).toBeVisible();
   });
 });

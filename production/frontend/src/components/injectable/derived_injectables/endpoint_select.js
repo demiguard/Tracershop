@@ -1,8 +1,9 @@
 import React from "react";
-import { Select, toOptions, Option } from "../select";
 import { FormControl } from "react-bootstrap";
-import { Customer, DeliveryEndpoint } from "../../../dataclasses/dataclasses";
-import { JSON_CUSTOMER, JSON_ENDPOINT } from "../../../lib/constants";
+
+import { Select, toOptions, Option } from "../select";
+import { Customer } from "~/dataclasses/dataclasses";
+import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants";
 
 /**
  * Provides a select for endpoints. 
@@ -10,8 +11,8 @@ import { JSON_CUSTOMER, JSON_ENDPOINT } from "../../../lib/constants";
  */
 export function EndpointSelect(props){
   function namingEndpoint(endpoint){
-    if (props[JSON_CUSTOMER] instanceof Map){
-      const/**@type {Customer} */ customer = props[JSON_CUSTOMER].get(endpoint.owner);
+    if (props[DATA_CUSTOMER] instanceof Map){
+      const/**@type {Customer} */ customer = props[DATA_CUSTOMER].get(endpoint.owner);
       return `${customer.short_name} - ${endpoint.name}`;
     }
     return  endpoint.name
@@ -21,10 +22,10 @@ export function EndpointSelect(props){
 
 
   let /**@type {}  */ endpointOptions = []  // this is a turnary but readability
-  if (props[JSON_ENDPOINT] instanceof Map){
-    endpointOptions = toOptions(props[JSON_ENDPOINT].values(), namingEndpoint, "id")
-  } else if (props[JSON_ENDPOINT] instanceof Array) {
-    endpointOptions = toOptions(props[JSON_ENDPOINT], namingEndpoint, "id");
+  if (props[DATA_ENDPOINT] instanceof Map){
+    endpointOptions = toOptions(props[DATA_ENDPOINT].values(), namingEndpoint, "id")
+  } else if (props[DATA_ENDPOINT] instanceof Array) {
+    endpointOptions = toOptions(props[DATA_ENDPOINT], namingEndpoint, "id");
   }
 
   if(props.emptyEndpoint){ // doesn't need to be defined
@@ -32,8 +33,8 @@ export function EndpointSelect(props){
   }
 
   const newProps = {...props};
-  delete newProps[JSON_ENDPOINT];
-  delete newProps[JSON_CUSTOMER];
+  delete newProps[DATA_ENDPOINT];
+  delete newProps[DATA_CUSTOMER];
   delete newProps.emptyEndpoint;
   newProps['options'] = endpointOptions
 

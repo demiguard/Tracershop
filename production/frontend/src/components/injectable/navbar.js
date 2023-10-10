@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 import { Navbar, Nav, Container, Button  } from "react-bootstrap";
-import styles from "../../css/Navbar.module.css"
+import styles from "~/css/Navbar.module.css"
 
 
 const NavBarButtonType = "outline-primary";

@@ -1,25 +1,27 @@
 import React, { useState } from "react";
 import { Modal, Button, FormControl, InputGroup, Row, Container } from "react-bootstrap";
+
 import { Calculator } from "../injectable/calculator";
-import { dateToDateString } from "../../lib/formatting";
-import { LEGACY_KEYWORD_BID, LEGACY_KEYWORD_DELIVER_DATETIME, LEGACY_KEYWORD_RUN, LEGACY_KEYWORD_AMOUNT, LEGACY_KEYWORD_TRACER,
-  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, JSON_ACTIVITY_ORDER, JSON_CUSTOMER, PROP_ON_CLOSE, PROP_WEBSOCKET, JSON_TRACER, PROP_ACTIVE_TRACER, JSON_ISOTOPE, WEBSOCKET_MESSAGE_MODEL_CREATE, PROP_ACTIVE_DATE, DATABASE_CURRENT_USER, AUTH_USER_ID, PROP_TIME_SLOT_MAPPING, JSON_ENDPOINT, JSON_DELIVER_TIME, JSON_PRODUCTION } from "../../lib/constants.js"
+import { dateToDateString } from "~/lib/formatting";
+import { PROP_ON_CLOSE, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE,
+  PROP_TIME_SLOT_MAPPING } from "~/lib/constants.js"
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, Customer } from "../../dataclasses/dataclasses";
-
-
+import { DATA_CUSTOMER, DATA_TRACER, DATA_ISOTOPE, DATA_ENDPOINT, DATA_DELIVER_TIME, DATA_PRODUCTION
+} from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder } from "~/dataclasses/dataclasses";
 import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
-import { TracerWebSocket } from "../../lib/tracer_websocket";
 import { ClickableIcon } from "../injectable/icons";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box"
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
-import { combineDateAndTimeStamp, getDay } from "../../lib/chronomancy";
+import { getDay } from "~/lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
-import { parseDanishPositiveNumberInput } from "../../lib/user_input";
+import { parseDanishPositiveNumberInput } from "~/lib/user_input";
+import { useWebsocket } from "../tracer_shop_context";
 
 export function CreateOrderModal(props) {
-  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ TimeSlotMapping = props[PROP_TIME_SLOT_MAPPING]
+  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ TimeSlotMapping = props[PROP_TIME_SLOT_MAPPING];
+  const websocket = useWebsocket();
 
   let endpointInit = ""
   let customerInit = ""
@@ -63,21 +65,17 @@ export function CreateOrderModal(props) {
       return;
     }
 
-    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
-    const skeleton = new ActivityOrder(undefined, // order_id
-                                       amountNumber, // ordered_activity
-                                       dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
-                                       1, // status
-                                       "", // comment
-                                       activeTimeSlot, // ordered_time_Slot
-                                       null, // moved_to_time_slot
-                                       null, // ordered_by, set by backend
-                                       null, // freed_by
-    );
-
-    message[WEBSOCKET_DATA] = skeleton;
-    message[WEBSOCKET_DATATYPE] = JSON_ACTIVITY_ORDER;
-    props[PROP_WEBSOCKET].send(message);
+    websocket.sendCreateActivityOrder(
+      new ActivityOrder(undefined, // order_id
+                        amountNumber, // ordered_activity
+                        dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
+                        1, // status
+                        "", // comment
+                        activeTimeSlot, // ordered_time_Slot
+                        null, // moved_to_time_slot
+                        null, // ordered_by, set by backend
+                        null, // freed_by
+      ))
     props[PROP_ON_CLOSE]();
   }
 
@@ -114,14 +112,14 @@ export function CreateOrderModal(props) {
   }
 
   const day = getDay(props[PROP_ACTIVE_DATE]);
-  const filteredTimeSlots = [...props[JSON_DELIVER_TIME].values()].filter(
+  const filteredTimeSlots = [...props[DATA_DELIVER_TIME].values()].filter(
     (timeSlot) => {
-      const production = props[JSON_PRODUCTION].get(timeSlot.production_run)
+      const production = props[DATA_PRODUCTION].get(timeSlot.production_run)
       return production.production_day == day;
     }
   )
 
-  const Tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
+  const Tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER])
 
   return (
       <Modal
@@ -133,7 +131,7 @@ export function CreateOrderModal(props) {
         <Modal.Body>
           { state.showCalculator ?
           <Calculator
-            isotopes={props[JSON_ISOTOPE]}
+            isotopes={props[DATA_ISOTOPE]}
             tracer={Tracer}
             productionTime={deliveryDateTime}
             defaultMBq={300}
@@ -149,8 +147,8 @@ export function CreateOrderModal(props) {
                 activeCustomer={activeCustomer}
                 activeEndpoint={activeEndpoint}
                 activeTimeSlot={activeTimeSlot}
-                customer={props[JSON_CUSTOMER]}
-                endpoints={props[JSON_ENDPOINT]}
+                customers={props[DATA_CUSTOMER]}
+                endpoints={props[DATA_ENDPOINT]}
                 timeSlots={filteredTimeSlots}
                 setCustomer={setActiveCustomer}
                 setEndpoint={setActiveEndpoint}

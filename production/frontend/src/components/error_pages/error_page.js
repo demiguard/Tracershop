@@ -10,17 +10,15 @@ export function  ErrorPage (props) {
   let errorStack = []
   let lines = []
 
-  if (props.error !== undefined
-    && props.error.stack !== undefined
-    && props.error.message !== undefined
-    ){
+  if (props.error !== undefined){
     errorMessage = props.error.message;
-
-    const /**@type {String} */ stack = props.error.stack
-    //console.log(stack)
-    lines = stack.split('\n').filter(
-      (line) => line.includes('tracershop_frontend/./src/')
-    ).map((line, i) => <p key={i}>{line}</p>);
+    if (props.error.stack !== undefined && props.error.message !== undefined){
+      const /**@type {String} */ stack = props.error.stack
+      //console.log(stack)
+      lines = stack.split('\n').filter(
+        (line) => line.includes('tracershop_frontend/./src/')
+        ).map((line, i) => <p key={i}>{line}</p>);
+    }
   } else {
     console.log("OOH NOES, THE ERROR HANDLER HAD AN ERROR");
   }

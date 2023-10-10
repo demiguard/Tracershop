@@ -2,7 +2,7 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { Tracer } from "../dataclasses/dataclasses";
+import { Location, Tracer } from "../dataclasses/dataclasses";
 
 export function dayTracerFilter(day, tracerID){
   return (production) => {
@@ -29,8 +29,10 @@ export function tracerTypeFilter(tracerType){
 
 
 /**
- * 
+ * Filters booking to a date,
  * @param {String} dateString 
+ * @param {Map<Number, Location>} locations
+ * @param {Number} activeEndpoint
  * @returns {CallableFunction}
  */
 export function bookingFilter(dateString, locations, activeEndpoint){
@@ -46,6 +48,16 @@ export function bookingFilter(dateString, locations, activeEndpoint){
   return returnFunction;
 }
 
+export function productionDayTracerFilter(day, tracerID){
+  return (production) => production.production_day === day && production.tracer === tracerID
+}
+
+/**
+ * Applies a filter to a collection
+ * @param {Array | Map} collection 
+ * @param {CallableFunction} filterFunction 
+ * @returns {Array}
+ */
 export function applyFilter(collection, filterFunction) {
   return (collection instanceof Map) ?
     [...collection.values()].filter(filterFunction) :

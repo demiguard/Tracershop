@@ -1,16 +1,19 @@
 import React, {useState} from "react";
 import {Row, Col, FormControl} from "react-bootstrap"
 
-import { JSON_ADDRESS, JSON_DICOM_ENDPOINT, JSON_SERVER_CONFIG, PROP_WEBSOCKET, WEBSOCKET_DATA, cssCenter, cssError } from "../../../lib/constants";
+import { cssCenter, cssError } from "~/lib/constants";
+import { DATA_ADDRESS, DATA_DICOM_ENDPOINT, DATA_SERVER_CONFIG, WEBSOCKET_DATA } from "~/lib/shared_constants"
 import { Address, DicomEndpoint, ServerConfiguration } from "../../../dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { ClickableIcon } from "../../injectable/icons";
 import { parseAETitleInput, parseIPInput, parsePortInput } from "../../../lib/user_input";
-import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { ParseJSONstr } from "../../../lib/formatting";
+import { useWebsocket } from "~/components/tracer_shop_context";
 
 export function PingServiceConfig(props){
-  const /**@type { ServerConfiguration} */ server_config = props[JSON_SERVER_CONFIG].get(1);
+  const websocket = useWebsocket()
+
+  const /**@type { ServerConfiguration} */ server_config = props[DATA_SERVER_CONFIG].get(1);
 
   let /**@type {Address} */ ris_dicom_endpoint_address;
   let /**@type {DicomEndpoint} */ ris_dicom_endpoint;
@@ -19,8 +22,8 @@ export function PingServiceConfig(props){
     ris_dicom_endpoint = new DicomEndpoint(undefined, undefined, "");
     ris_dicom_endpoint_address = new Address(undefined, "", "", "Address for ping service")
   } else {
-    ris_dicom_endpoint = props[JSON_DICOM_ENDPOINT].get(server_config.ris_dicom_endpoint)
-    ris_dicom_endpoint_address = props[JSON_ADDRESS].get(ris_dicom_endpoint.address)
+    ris_dicom_endpoint = props[DATA_DICOM_ENDPOINT].get(server_config.ris_dicom_endpoint)
+    ris_dicom_endpoint_address = props[DATA_ADDRESS].get(ris_dicom_endpoint.address)
   }
 
   const [state, _setState] = useState({
@@ -59,11 +62,10 @@ export function PingServiceConfig(props){
       return;
     }
 
-    const /**@type {TracerWebSocket} */ websocket = props[PROP_WEBSOCKET]
     if(ris_dicom_endpoint.id === undefined){
       // The Then chain is just creating the dependencies in the database
       // Address -> DicomEndpoint -> ServerConfig
-      websocket.sendCreateModel(JSON_ADDRESS,
+      websocket.sendCreateModel(DATA_ADDRESS,
                                 [new Address(undefined,
                                              state.address_ip,
                                              state.address_port,
@@ -72,36 +74,36 @@ export function PingServiceConfig(props){
         console.log(message)
         let dicom_endpoint;
         const state = ParseJSONstr(message[WEBSOCKET_DATA])
-        const models = state[JSON_ADDRESS]
+        const models = state[DATA_ADDRESS]
         for(const model of models){
           dicom_endpoint = new DicomEndpoint(undefined,
                                              model.pk,
                                              state.ae_title);
           break;
         }
-        websocket.sendCreateModel(JSON_DICOM_ENDPOINT, [dicom_endpoint]).then(
+        websocket.sendCreateModel(DATA_DICOM_ENDPOINT, [dicom_endpoint]).then(
           (message) => {
             console.log(message)
             let newEndpointID;
             const state = ParseJSONstr(message[WEBSOCKET_DATA]);
-            const models = state[JSON_DICOM_ENDPOINT];
+            const models = state[DATA_DICOM_ENDPOINT];
             for(const model of models){
               newEndpointID = model.pk;
               break;
             }
-            websocket.sendEditModel(JSON_SERVER_CONFIG, [{
+            websocket.sendEditModel(DATA_SERVER_CONFIG, [{
               ...server_config,
               ris_dicom_endpoint : newEndpointID
             }]); // THE CHAIN IS DEAD, LONG LIVE THE SYNC CODE
         });
       })
     } else {
-      websocket.sendEditModel(JSON_ADDRESS, [{
+      websocket.sendEditModel(DATA_ADDRESS, [{
         ...ris_dicom_endpoint_address,
         ip : state.address_ip,
         port : port
       }])
-      websocket.sendEditModel(JSON_DICOM_ENDPOINT, [{
+      websocket.sendEditModel(DATA_DICOM_ENDPOINT, [{
         ...ris_dicom_endpoint,
         ae_title : state.ae_title,
       }])

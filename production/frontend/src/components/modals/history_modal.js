@@ -1,14 +1,14 @@
 import React, { Component } from "react";
-import { Button, Form, FormControl, Modal, Spinner, Row, Col} from "react-bootstrap";
+import { Button, FormControl, Modal, Spinner, Row, Col} from "react-bootstrap";
 import { CSVLink } from "react-csv";
 import { CloseButton } from "../injectable/buttons.js"
-import { WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_HISTORY } from "../../lib/constants";
-import { FormatDateStr } from "../../lib/formatting";
-import { changeState } from "../../lib/state_management";
+import { WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_HISTORY } from "~/lib/shared_constants";
+import { FormatDateStr } from "~/lib/formatting";
+import { changeState } from "~/lib/state_management";
 import propTypes from "prop-types";
 import { Select } from "../injectable/select.js";
 
-import styles from '../../css/Site.module.css';
+import styles from '~/css/Site.module.css';
 
 export { HistoryModal }
 

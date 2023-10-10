@@ -3,15 +3,14 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { createRoot } from "react-dom/client";
-import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { InjectionModal } from "../../../components/modals/injection_modal.js"
 
-import { PROP_MODAL_ORDER, PROP_ON_CLOSE, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_EDIT_STATE } from "../../../lib/constants.js";
-import { AppState } from "../../app_state.js";
+import { InjectionModal } from "~/components/modals/injection_modal.js"
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { PROP_MODAL_ORDER, PROP_ON_CLOSE } from "~/lib/constants.js";
+import { AppState } from "~/tests/app_state.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -31,8 +30,7 @@ beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
-  modalProps[PROP_WEBSOCKET] = websocket
+  websocket = tracer_websocket.TracerWebSocket;
 });
 
 
@@ -43,26 +41,28 @@ afterEach(() => {
   if(container != null) container.remove();
   container = null;
   websocket = null;
-  modalProps[PROP_WEBSOCKET] = null
+
 });
 
 
 describe("Injection modal test suite", () =>{
   it("Standard Render test status 1", async () => {
 
-    render(<InjectionModal
-      {...modalProps}
-    />)
+    render(<WebsocketContextProvider value={websocket}>
+      <InjectionModal {...modalProps} />
+    </WebsocketContextProvider>);
+
     expect(await screen.findByRole('button', {name : "Accepter Ordre"})).toBeVisible();
-    expect(await screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
-    expect(await screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
     expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
   });
 
   it("Accept Order", async () => {
-    render(<InjectionModal
-      {...modalProps}
-    />)
+    render(<WebsocketContextProvider>
+      <InjectionModal {...modalProps} />
+    </WebsocketContextProvider>);
+
     fireEvent.click(await screen.findByRole('button', {name : "Accepter Ordre"}));
 
     expect(websocket.getMessage).toBeCalled()
@@ -72,9 +72,9 @@ describe("Injection modal test suite", () =>{
   it("Standard Render test status 2", async () => {
     modalProps[PROP_MODAL_ORDER] = 2
 
-    render(<InjectionModal
-      {...modalProps}
-    />)
+    render(<WebsocketContextProvider value={websocket}>
+      <InjectionModal {...modalProps} />
+    </WebsocketContextProvider>);
 
     expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
     expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
@@ -85,9 +85,9 @@ describe("Injection modal test suite", () =>{
   it("Start freeing empty Order", async () => {
     modalProps[PROP_MODAL_ORDER] = 2
 
-    render(<InjectionModal
-      {...modalProps}
-    />)
+    render(<WebsocketContextProvider>
+      <InjectionModal {...modalProps} />
+    </WebsocketContextProvider>);
 
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
     expect(await screen.findByText("Batch nummeret er ikke i det korrekte format")).toBeVisible();
@@ -96,9 +96,9 @@ describe("Injection modal test suite", () =>{
   });
 
   it("Edit Freeing Order", async () => {
-    render(<InjectionModal
-      {...modalProps}
-    />)
+    render(<WebsocketContextProvider value={websocket}>
+      <InjectionModal {...modalProps} />
+    </WebsocketContextProvider>);
 
     const input = await screen.findByLabelText("batchnr-input")
     fireEvent.change(input, {target : {value : "test-111111-1"}});
@@ -125,12 +125,12 @@ describe("Injection modal test suite", () =>{
     }
 
     const newProps = {...modalProps}
-    newProps[PROP_WEBSOCKET] = ResolvingWebsocket
+    websocket = ResolvingWebsocket
     newProps[PROP_MODAL_ORDER] = 2
 
-    render(<InjectionModal
-      {...newProps}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <InjectionModal {...newProps} />
+    </WebsocketContextProvider>);
 
     fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
 
@@ -155,12 +155,12 @@ describe("Injection modal test suite", () =>{
     }
 
     const newProps = {...modalProps}
-    newProps[PROP_WEBSOCKET] = ResolvingWebsocket;
+    websocket = ResolvingWebsocket;
     newProps[PROP_MODAL_ORDER] = 2;
 
-    render(<InjectionModal
-      {...newProps}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <InjectionModal {...newProps} />
+    </WebsocketContextProvider>);
 
     fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
 

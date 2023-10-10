@@ -1,12 +1,16 @@
 import React, { Component } from "react";
-import { compareDates } from "../../lib/utils";
-import { FormatDateStr } from '../../lib/formatting';
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, DAYS, DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants";
+
+import { compareDates } from "~/lib/utils";
+import { FormatDateStr } from '~/lib/formatting';
+import { DAYS, DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR,
+  CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE } from "~/lib/constants";
+
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "~/lib/shared_constants"
 
 import PropTypes from 'prop-types'
-import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "../../dataclasses/keywords";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, ClosedDate, Deadline, InjectionOrder } from "../../dataclasses/dataclasses";
-import { calculateDeadline, evalBitChain, getBitChain, getDay, getWeekNumber } from "../../lib/chronomancy";
+import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "~/dataclasses/keywords";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, ClosedDate, Deadline, InjectionOrder } from "~/dataclasses/dataclasses";
+import { calculateDeadline, evalBitChain, getBitChain } from "~/lib/chronomancy";
 
 export {Calender, standardOrderMapping, productionGetMonthlyOrders }
 

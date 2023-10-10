@@ -1,28 +1,31 @@
-import React, { Component, useState } from "react";
-import { Container, Table, FormControl, Form, Row, Card, Collapse , Col} from "react-bootstrap";
+import React, { useState } from "react";
+import { Container, Table, FormControl, Row, Card, Collapse , Col} from "react-bootstrap";
 
 import { TracerModal } from "../../modals/tracer_modal.js";
-import { setStateToEvent } from "../../../lib/state_management.js";
-import { JSON_TRACER, JSON_TRACER_MAPPING,
-  PROP_WEBSOCKET, JSON_ISOTOPE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
-  TracerTypeOptions, cssAlignRight, TRACER_TYPE} from "../../../lib/constants.js";
-import { Tracer, TracerCatalog } from "../../../dataclasses/dataclasses.js";
+import { setStateToEvent } from "~/lib/state_management.js";
+import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
+  TracerTypeOptions, cssAlignRight, TRACER_TYPE} from "~/lib/constants.js";
+
+import { DATA_ISOTOPE, DATA_TRACER, DATA_TRACER_MAPPING } from "~/lib/shared_constants.js"
+import { Tracer, TracerCatalog } from "~/dataclasses/dataclasses.js";
 import { ClickableIcon } from "../../injectable/icons.js";
 import { Select,  toOptions } from "../../injectable/select.js";
 import { HoverBox } from "../../injectable/hover_box.js";
-import { TracerWebSocket } from "../../../lib/tracer_websocket.js";
+import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { OpenCloseButton } from "../../injectable/open_close_button.js";
+import { useWebsocket } from "~/components/tracer_shop_context.js";
 
 
 export function TracerPage(props){
+  const websocket = useWebsocket();
   const [modalTracerID, setModalTracerID] = useState(-1)
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
-  const isotopeOptions = toOptions(props[JSON_ISOTOPE],
+  const isotopeOptions = toOptions(props[DATA_ISOTOPE],
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
 
   const activeTracers = new Set();
-  for(const catalogPage of props[JSON_TRACER_MAPPING].values()){
+  for(const catalogPage of props[DATA_TRACER_MAPPING].values()){
     activeTracers.add(catalogPage.tracer);
   }
 
@@ -45,7 +48,7 @@ export function TracerPage(props){
   */
   function ArchiveTracerRow({tracer, websocket}){
     function restoreTracer(){
-      websocket.sendEditModel(JSON_TRACER, [{...tracer, archived : false,}]);
+      websocket.sendEditModel(DATA_TRACER, [{...tracer, archived : false,}]);
     }
 
     return (<tr>
@@ -82,7 +85,7 @@ export function TracerPage(props){
 
 
     function AcceptEdits(){
-      websocket.sendEditModel(JSON_TRACER, [{...tracer,
+      websocket.sendEditModel(DATA_TRACER, [{...tracer,
         clinical_name : tracerClinicalName,
         isotope : Number(tracerIsotope),
         tracer_type : Number(tracerType),
@@ -90,7 +93,7 @@ export function TracerPage(props){
     }
 
     function ArchiveTracer(){
-      websocket.sendEditModel(JSON_TRACER, [{...tracer, archived : true}])
+      websocket.sendEditModel(DATA_TRACER, [{...tracer, archived : true}])
     }
 
     return (<tr>
@@ -199,21 +202,21 @@ export function TracerPage(props){
   const ActiveTracerRows = [];
   const ArchiveTracerRows = [];
   const filter = new RegExp(tracerFilter, 'g');
-  for(const tracer of props[JSON_TRACER].values()){
+  for(const tracer of props[DATA_TRACER].values()){
     if(filter.test(tracer.shortname)){
       if (tracer.archived){
         ArchiveTracerRows.push(
           <ArchiveTracerRow
             key={tracer.id}
             tracer={tracer}
-            websocket={props[PROP_WEBSOCKET]}
+            websocket={websocket}
           />);
       } else {
         ActiveTracerRows.push(
           <ActiveTracerRow
             key={tracer.id}
             tracer={tracer}
-            websocket={props[PROP_WEBSOCKET]}
+            websocket={websocket}
           />);
       }
     }

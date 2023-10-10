@@ -8,7 +8,7 @@ from datetime import datetime, date
 from logging import getLogger
 from typing import Any, Optional, Tuple
 
-from customer.constants import SUCCESSFUL_JSON_RESPONSE
+from customer.constants import SUCCESSFUL_DATA_RESPONSE
 from customer.models import Tracer, Booking, Procedure
 from customer.lib import orders, calenderHelper, Formatting
 from customer.lib.SQL import SQLController as SQL
@@ -115,5 +115,5 @@ class ApiMassAddOrder(LoginRequiredMixin, View):
             username                            # username
           )
 
-    return SUCCESSFUL_JSON_RESPONSE
+    return SUCCESSFUL_DATA_RESPONSE
 

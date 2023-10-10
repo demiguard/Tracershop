@@ -1,15 +1,16 @@
 import React, { useState } from "react";
-import { FormatTime, ParseDanishNumber, nullParser } from "../../../lib/formatting";
-import { InjectionOrder, Tracer } from "../../../dataclasses/dataclasses";
-import { TracerWebSocket } from "../../../lib/tracer_websocket";
+import { FormatTime, ParseDanishNumber, nullParser } from "~/lib/formatting";
+import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
+import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { Select, toOptions } from "../../injectable/select";
 import { Card, Col, Form, Row } from "react-bootstrap";
-import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, JSON_INJECTION_ORDER, cssCenter } from "../../../lib/constants";
+import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, cssCenter } from "~/lib/constants";
+import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { getTimeString } from "../../../lib/chronomancy";
 import { UsageSelect } from "../../injectable/derived_injectables/usage_select";
-import { ParseWholePositiveNumber, parseTimeInput } from "../../../lib/user_input";
+import { parseTimeInput } from "~/lib/user_input";
 
 /**
  * This is a card containing all the information on an injection order
@@ -101,7 +102,7 @@ export function InjectionOrderCard({
      tracer_usage : usage,
    };
 
-   websocket.sendEditModel(JSON_INJECTION_ORDER, [newOrder]);
+   websocket.sendEditModel(DATA_INJECTION_ORDER, [newOrder]);
    resetErrors();
  }
 

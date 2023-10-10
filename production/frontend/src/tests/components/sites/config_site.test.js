@@ -9,8 +9,9 @@ import { jest } from '@jest/globals'
 import { AppState } from "../../app_state.js";
 import { db } from "../../../lib/local_storage_driver.js";
 import { ConfigSite } from "../../../components/sites/config_site.js"
-import { PROP_USER, PROP_WEBSOCKET } from "../../../lib/constants.js";
+import { PROP_USER } from "../../../lib/constants.js";
 import { ANON } from "../../test_state/users.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -33,7 +34,7 @@ beforeEach(() => {
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
   props = {...AppState};
-  props[PROP_WEBSOCKET] = websocket;
+
   props[PROP_USER] = ANON;
 });
 
@@ -50,8 +51,8 @@ afterEach(() => {
 
 describe("Congig Site test suite", () => {
   it("standard test", () => {
-    render(<ConfigSite
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <ConfigSite {...props}/>
+    </WebsocketContextProvider>);
   })
 })

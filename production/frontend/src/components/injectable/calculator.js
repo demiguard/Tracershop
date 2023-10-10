@@ -1,4 +1,4 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
 
 import propTypes from 'prop-types'
@@ -9,12 +9,20 @@ import { renderTableRow } from "../../lib/rendering";
 import { removeIndex } from "../../lib/utils";
 
 import styles from '../../css/Calculator.module.css'
-import SiteStyles from '../../css/Site.module.css'
+
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { ClickableIcon } from "./icons";
 import { Isotope } from "../../dataclasses/dataclasses";
 
-export { Calculator }
+
+// Error Messages
+export const ErrorInvalidTimeFormat = "Tidspunktet er ikke læseligt af systemet"
+export const ErrorTimeAfterProduction = "Tidspunktet er før produktions tidspunktet"
+export const ErrorActivityInvalidNumber = "Aktiviten er ikke et tal"
+export const ErrorActivityZero = "Der kan ikke bestilles et nul mændge af aktivitet"
+export const ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge af aktivitet"
+
+
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.
  * Given a desired amount at a given time.
  *
@@ -26,51 +34,35 @@ export { Calculator }
  *  productionTime - Date The time the radioactive material is produced.
  *  tracer - Object Active Tracer for the material in question
  */
-class Calculator extends Component {
-  static propTypes = {
-    cancel : propTypes.func.isRequired,
-    commit : propTypes.func.isRequired,
-    defaultMBq : propTypes.number,
-    isotopes : propTypes.instanceOf(Map).isRequired,
-    productionTime : propTypes.instanceOf(Date).isRequired,
-    tracer : propTypes.instanceOf(Object).isRequired,
-    initial_MBq : propTypes.number,
-  }
-
-  static defaultProps = {
-    defaultMBq : 300,
-    initial_MBq : 0,
-  }
-
-  static stateTypes
-
-  constructor(props){
-    super(props);
+export function Calculator ({
+  initial_MBq, productionTime, defaultMBq, isotopes, cancel, tracer, commit
+}) {
+  const entries = [];
 
 
-    const entries = [];
 
-    if(this.props.initial_MBq !== undefined && this.props.initial_MBq > 0){
-      const hour = FormatDateStr(this.props.productionTime.getHours());
-      const minutes = FormatDateStr(this.props.productionTime.getMinutes());
+
+    if(initial_MBq !== undefined && initial_MBq > 0){
+      const hour = FormatDateStr(productionTime.getHours());
+      const minutes = FormatDateStr(productionTime.getMinutes());
       entries.push({
         time : `${hour}:${minutes}:00`,
-        activity : this.props.initial_MBq
+        activity : initial_MBq
       });
     }
 
-    this.state = {
+    const [state, setState] = useState({
       errorMessage : "",
       entries : entries,
       newEntry : {
         time : "", // Will be on the format HH:MM:SS, Note that the seconds will be ignore and not displayed.
-        activity : this.props.defaultMBq,
+        activity : defaultMBq,
 
       },
-    };
-  }
+    });
 
-  _addColon(timeStr){
+
+  function _addColon(timeStr){
     if(timeStr.length == 2){
       return timeStr + ":"
     } else {
@@ -78,156 +70,147 @@ class Calculator extends Component {
     }
   }
 
-  InputEnterPress(event){
+  function InputEnterPress(event){
     if (event.key == "Enter"){
-      this.addEntry()
+      addEntry()
     }
   }
 
-  changeNewEntry(key){
+  function changeNewEntry(key){
     const ReturnFunction = (event) => {
       const newNewEntry = { // Look it's a new newEntry, I didn't make up this naming conventions.
         // Ooh wait. I open for feedback.
-        time : this.state.newEntry.time,
-        activity : this.state.newEntry.activity
+        time : state.newEntry.time,
+        activity : state.newEntry.activity
       };
 
-      const value = (key == "time" && event.target.value.length > newNewEntry.time.length) ? this._addColon(event.target.value) : event.target.value
+      const value = (key == "time" && event.target.value.length > newNewEntry.time.length) ? _addColon(event.target.value) : event.target.value
 
       newNewEntry[key] = value;
       const newState = {
-        ...this.state,
+        ...state,
         newEntry : newNewEntry
       };
-      this.setState(newState);
+      setState(newState);
     }
-    return ReturnFunction.bind(this)
+    return ReturnFunction
   }
 
-  // Error Messages
-  static ErrorInvalidTimeFormat = "Tidspunktet er ikke læseligt af systemet"
-  static ErrorTimeAfterProduction = "Tidspunktet er før produktions tidspunktet"
-  static ErrorActivityInvalidNumber = "Aktiviten er ikke et tal"
-  static ErrorActivityZero = "Der kan ikke bestilles et nul mændge af aktivitet"
-  static ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge af aktivitet"
-
-  addEntry(){
-    const formattedTime = FormatTime(this.state.newEntry.time);
+  function addEntry(){
+    const formattedTime = FormatTime(state.newEntry.time);
     if(formattedTime === null){
-      this.setState({...this.state, errorMessage : Calculator.ErrorInvalidTimeFormat });
+      setState({...state, errorMessage : ErrorInvalidTimeFormat });
       return;
     }
     const hour = Number(formattedTime.substring(0,2));
     const min  = Number(formattedTime.substring(3,5));
     const entryDate = new Date(
-      this.props.productionTime.getFullYear(),
-      this.props.productionTime.getMonth(),
-      this.props.productionTime.getDate(),
+      productionTime.getFullYear(),
+      productionTime.getMonth(),
+      productionTime.getDate(),
       hour,
       min
     )
-    if (entryDate < this.props.productionTime){
-      this.setState({...this.state, errorMessage : Calculator.ErrorTimeAfterProduction});
+    if (entryDate < productionTime){
+      setState({...state, errorMessage : ErrorTimeAfterProduction});
       return;
     }
 
-    const activity = ParseDanishNumber(this.state.newEntry.activity)
+    const activity = ParseDanishNumber(state.newEntry.activity)
     if(isNaN(activity)){
-      this.setState({...this.state, errorMessage : Calculator.ErrorActivityInvalidNumber});
+      setState({...state, errorMessage : ErrorActivityInvalidNumber});
       return;
     }
     if(activity == 0){
-      this.setState({...this.state, errorMessage : Calculator.ErrorActivityZero});
+      setState({...state, errorMessage : ErrorActivityZero});
       return;
     }
     if(activity < 0){
-      this.setState({...this.state, errorMessage : Calculator.ErrorActivityNegative});
+      setState({...state, errorMessage : ErrorActivityNegative});
       return;
     }
 
-    const newEntries = [...this.state.entries]; // not to be confused with the newEntry
+    const newEntries = [...state.entries]; // not to be confused with the newEntry
     newEntries.push({
       time : formattedTime,
       activity : activity
     });
 
     const newState = {
-      ...this.state,
+      ...state,
       errorMessage: "",
       entries : newEntries,
       newEntry : {
         time : "",
-        activity : this.props.defaultMBq,
+        activity : defaultMBq,
       }};
-    this.setState(newState);
+    setState(newState);
   }
 
-  removeEntry(index){
+  function removeEntry(index){
     const retFunc = (_event) => {
-      const newEntries = removeIndex(this.state.entries, index);
-      this.setState({...this.state,
+      const newEntries = removeIndex(state.entries, index);
+      setState({...state,
         entries : newEntries
       });
     }
-    return retFunc.bind(this);
+    return retFunc;
   }
 
-  commit(event) {
+  function commit_activity() {
     var activity = 0.0;
-    const /**@type {Isotope} */ isotope = this.props.isotopes.get(this.props.tracer.isotope);
-    for(const entry of this.state.entries){
+    const /**@type {Isotope} */ isotope = isotopes.get(tracer.isotope);
+    for(const entry of state.entries){
       const hour = Number(entry.time.substring(0,2));
       const min  = Number(entry.time.substring(3,5));
       const entryDate = new Date(
-        this.props.productionTime.getFullYear(),
-        this.props.productionTime.getMonth(),
-        this.props.productionTime.getDate(),
+        productionTime.getFullYear(),
+        productionTime.getMonth(),
+        productionTime.getDate(),
         hour,
         min
       )
-      const timeDelta = CountMinutes(this.props.productionTime, entryDate);
+      const timeDelta = CountMinutes(productionTime, entryDate);
       activity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
     }
 
     activity = (activity < 0) ? 0 : activity;
 
-    this.props.commit(activity);
+    commit(activity);
   }
-
-  render(){
-    const isotope = this.props.isotopes.get(this.props.tracer.isotope);
-    const ProductionTimeString = `${FormatDateStr(this.props.productionTime.getHours())}:${FormatDateStr(this.props.productionTime.getMinutes())}`;
+  const isotope = isotopes.get(tracer.isotope);
+  const ProductionTimeString = `${FormatDateStr(productionTime.getHours())}:${FormatDateStr(productionTime.getMinutes())}`;
 
 
     const EntryTableRows = [];
     var totalActivity = 0.0;
 
-    for(const entryIdx in this.state.entries){
-      const entry = this.state.entries[entryIdx]
+    for(const entryIdx in state.entries){
+      const entry = state.entries[entryIdx];
       EntryTableRows.push(renderTableRow(entryIdx,[
 
-        this.state.entries[entryIdx].time.substring(0,5),
-        this.state.entries[entryIdx].activity,
+        state.entries[entryIdx].time.substring(0,5),
+        state.entries[entryIdx].activity,
         <ClickableIcon
           src={"/static/images/decline.svg"}
-          onClick={this.removeEntry(entryIdx).bind(this)}
+          onClick={removeEntry(entryIdx)}
           label={"delete-"+entryIdx.toString()}
         />
       ]));
     }
 
-    for(const entry of this.state.entries){ // This list is what? 3 short, we can iterate over it twice
+    for(const entry of state.entries){ // This list is what? 3 short, we can iterate over it twice
       // Yes as a programer that gives a big deal about effectivity, this is not a death sentense
       const hour = Number(entry.time.substring(0,2));
       const min  = Number(entry.time.substring(3,5));
       const entryDate = new Date(
-        this.props.productionTime.getFullYear(),
-        this.props.productionTime.getMonth(),
-        this.props.productionTime.getDate(),
+        productionTime.getFullYear(),
+        productionTime.getMonth(),
+        productionTime.getDate(),
         hour,
         min
       )
-      const timeDelta = CountMinutes(this.props.productionTime, entryDate);
+      const timeDelta = CountMinutes(productionTime, entryDate);
       totalActivity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
     }
 
@@ -237,19 +220,19 @@ class Calculator extends Component {
       "-1", [
         <FormControl
           aria-label="time-new"
-          value={this.state.newEntry.time}
-          onChange={this.changeNewEntry("time")}
-          onKeyDown={this.InputEnterPress.bind(this)}
+          value={state.newEntry.time}
+          onChange={changeNewEntry("time")}
+          onKeyDown={InputEnterPress}
         />,
         <FormControl
           aria-label="activity-new"
-          value={this.state.newEntry.activity}
-          onChange={this.changeNewEntry("activity")}
-          onKeyDown={this.InputEnterPress.bind(this)}
+          value={state.newEntry.activity}
+          onChange={changeNewEntry("activity")}
+          onKeyDown={InputEnterPress}
         />,
         <ClickableIcon
           src={"/static/images/plus.svg"}
-          onClick={this.addEntry.bind(this)}
+          onClick={addEntry}
           altText={"Tilføj"}
         />
       ]
@@ -262,7 +245,7 @@ class Calculator extends Component {
       </Row>
       <hr/>
       <Row className={styles.CalculatorInfo}>
-        <p>Tracer - {this.props.tracer.shortname}</p>
+        <p>Tracer - {tracer.shortname}</p>
         <p>Produktions tidpunkt - {ProductionTimeString}</p>
         <p>Halvering tid - {isotope.halflife_seconds} s</p>
         <p>Aktivitet som bliver Tilføjet: {totalActivity} MBq</p>
@@ -281,19 +264,33 @@ class Calculator extends Component {
           </tbody>
         </Table>
       </Row>
-      {this.state.errorMessage ? <AlertBox
-          message={this.state.errorMessage}
+      {state.errorMessage ? <AlertBox
+          message={state.errorMessage}
           level={ERROR_LEVELS.error}
       /> : null}
       <Row>
         <Col>
-          <Button className={styles.CalculatorButton} onClick={this.commit.bind(this)}>Udregn</Button>
+          <Button className={styles.CalculatorButton} onClick={commit_activity}>Udregn</Button>
         </Col>
         <Col>
-          <Button className={styles.CalculatorButton} onClick={this.props.cancel}>Tilbage</Button>
+          <Button className={styles.CalculatorButton} onClick={cancel}>Tilbage</Button>
         </Col>
       </Row>
-    </div>)
-  }
+    </div>);
 }
 
+
+Calculator.propTypes = {
+  cancel : propTypes.func.isRequired,
+  commit : propTypes.func.isRequired,
+  defaultMBq : propTypes.number,
+  isotopes : propTypes.instanceOf(Map).isRequired,
+  productionTime : propTypes.instanceOf(Date).isRequired,
+  tracer : propTypes.instanceOf(Object).isRequired,
+  initial_MBq : propTypes.number,
+}
+
+Calculator.defaultProps = {
+  defaultMBq : 300,
+  initial_MBq : 0,
+}

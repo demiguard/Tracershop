@@ -3,11 +3,9 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { createRoot } from "react-dom/client";
 import { screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { Calculator } from "../../../components/injectable/calculator.js"
+import { Calculator, ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero, ErrorInvalidTimeFormat, ErrorTimeAfterProduction } from "../../../components/injectable/calculator.js"
 import { CalculateProduction } from "../../../lib/physics.js"
 
 let container = null;
@@ -17,8 +15,8 @@ beforeEach(() => {
 
 afterEach(() => {
   cleanup()
-
   if(container != null) container.remove();
+
 
   container = null;
 });
@@ -118,7 +116,7 @@ describe("Calculator Test", () =>{
     fireEvent.click(screen.getByAltText("Tilføj"))
 
     await waitFor(() =>
-      expect(screen.queryByText(Calculator.ErrorInvalidTimeFormat)).toBeVisible()
+      expect(screen.queryByText(ErrorInvalidTimeFormat)).toBeVisible()
     )
 
   });
@@ -137,7 +135,7 @@ describe("Calculator Test", () =>{
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
-    await waitFor(() => expect(screen.queryByText(Calculator.ErrorTimeAfterProduction)).toBeVisible());
+    await waitFor(() => expect(screen.queryByText(ErrorTimeAfterProduction)).toBeVisible());
   });
 
   it("Add Entry - Empty Activity", async () => {
@@ -155,7 +153,7 @@ describe("Calculator Test", () =>{
     fireEvent.change(ActivityInput, {target : {value : ""}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
-    await waitFor(() => expect(screen.queryByText(Calculator.ErrorActivityZero)).toBeVisible())
+    await waitFor(() => expect(screen.queryByText(ErrorActivityZero)).toBeVisible())
   });
 
   it("Add Entry - NaN Activity", async () => {
@@ -173,7 +171,7 @@ describe("Calculator Test", () =>{
     fireEvent.change(ActivityInput, {target : {value : "helloworld"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
-    await waitFor(() => expect(screen.queryByText(Calculator.ErrorActivityInvalidNumber)).toBeVisible())
+    await waitFor(() => expect(screen.queryByText(ErrorActivityInvalidNumber)).toBeVisible())
   });
 
   it("Add Entry - 0 Activity", async () => {
@@ -191,7 +189,7 @@ describe("Calculator Test", () =>{
     fireEvent.change(ActivityInput, {target : {value : "0"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
-    await waitFor(() => expect(screen.queryByText(Calculator.ErrorActivityZero)).toBeVisible())
+    await waitFor(() => expect(screen.queryByText(ErrorActivityZero)).toBeVisible())
 
   });
 
@@ -211,7 +209,7 @@ describe("Calculator Test", () =>{
     fireEvent.click(screen.getByAltText("Tilføj"))
 
     await waitFor(() =>
-      expect(screen.queryByText(Calculator.ErrorActivityNegative)).toBeVisible()
+      expect(screen.queryByText(ErrorActivityNegative)).toBeVisible()
     )
   });
 
@@ -225,16 +223,16 @@ describe("Calculator Test", () =>{
       tracer={Tracer}
     />);
 
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = screen.getByLabelText("time-new")
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = screen.getByLabelText("activity-new")
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
-    fireEvent.click(await screen.findByLabelText("delete-0"));
+    fireEvent.click(screen.getByLabelText("delete-0"));
 
-    expect(await screen.queryByText("09:15:00")).toBeNull()
-    expect(await screen.queryByText("10000")).toBeNull()
-    expect(await screen.queryByLabelText("delete-0")).toBeNull();
+    expect(screen.queryByText("09:15:00")).toBeNull()
+    expect(screen.queryByText("10000")).toBeNull()
+    expect(screen.queryByLabelText("delete-0")).toBeNull();
   });
 
   it("Commit Test", async () => {

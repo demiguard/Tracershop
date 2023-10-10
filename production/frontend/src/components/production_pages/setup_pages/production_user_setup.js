@@ -1,16 +1,19 @@
 /** This component is used by production admins to allocate external shop users
  * to their customers
   */
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Card, Col, Container, Form, FormControl, InputGroup, Row } from "react-bootstrap";
-import { AUTH_PASSWORD, AUTH_USERNAME, JSON_CUSTOMER, JSON_USER, JSON_USER_ASSIGNMENT, PROP_WEBSOCKET, USER_GROUPS, WEBSOCKET_MESSAGE_SUCCESS, cssCenter } from "../../../lib/constants";
-import { Customer, User, UserAssignment } from "../../../dataclasses/dataclasses";
+import {  USER_GROUPS, cssCenter } from "~/lib/constants";
+import { AUTH_PASSWORD, AUTH_USERNAME, DATA_CUSTOMER,
+  DATA_USER, DATA_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_SUCCESS } from "~/lib/shared_constants"
+import { Customer, User, UserAssignment } from "~/dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
-import { TracerWebSocket } from "../../../lib/tracer_websocket"
+import { TracerWebSocket } from "~/lib/tracer_websocket"
 import { ClickableIcon } from "../../injectable/icons";
-import { makePassword } from "../../../lib/formatting";
+import { makePassword } from "~/lib/formatting";
 import { HoverBox } from "../../injectable/hover_box";
 import { CustomerSelect } from "../../injectable/derived_injectables/customer_select";
+import { useWebsocket } from "~/components/tracer_shop_context";
 
 const /**@type {String} Css size of the icon for clicking an action button */ AcceptIconWidth = "52px"
 
@@ -34,7 +37,7 @@ function NewUserRow({customers, websocket}){
     userSkeleton[AUTH_USERNAME] = newUserName;
     userSkeleton[AUTH_PASSWORD] = newPassword;
     if (newCustomer != ""){
-      userSkeleton[JSON_CUSTOMER] = Number(newCustomer);
+      userSkeleton[DATA_CUSTOMER] = Number(newCustomer);
     }
     websocket.sendCreateExternalUser(userSkeleton).then(
       () => {
@@ -123,10 +126,10 @@ function UserRow({user, customers, userMapping, websocket}) {
 
     if(relatedCustomer !== ""){
       // Delete the old one
-      websocket.sendDeleteModel(JSON_USER_ASSIGNMENT, oldCustomerIDNumber);
+      websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, oldCustomerIDNumber);
     }
     if(newCustomerID !== ""){
-      websocket.sendCreateModel(JSON_USER_ASSIGNMENT, new UserAssignment(undefined, user.id, newCustomerIDNumber))
+      websocket.sendCreateModel(DATA_USER_ASSIGNMENT, new UserAssignment(undefined, user.id, newCustomerIDNumber))
     }
   }
 
@@ -208,10 +211,11 @@ function UserRow({user, customers, userMapping, websocket}) {
 }
 
 export function ProductionUserSetup(props){
+  const websocket = useWebsocket();
   const [userFilter, setUserFilter] = useState('');
 
   const userMapping = new Map() // Again an Array Map
-  for(const _userAssignment of props[JSON_USER_ASSIGNMENT].values()){
+  for(const _userAssignment of props[DATA_USER_ASSIGNMENT].values()){
     const /**@type {UserAssignment} */ userAssignment = _userAssignment;
     if(userMapping.has(userAssignment.user)){
       userMapping.get(userAssignment.user).push([userAssignment.id, userAssignment.customer]);
@@ -220,7 +224,7 @@ export function ProductionUserSetup(props){
     }
   }
 
-  const ExternalUsersRows = [...props[JSON_USER].values()].filter(
+  const ExternalUsersRows = [...props[DATA_USER].values()].filter(
     (_user) => {
       const /**@type {User} */ user = _user
       return user.user_group === USER_GROUPS.SHOP_EXTERNAL
@@ -230,17 +234,17 @@ export function ProductionUserSetup(props){
     <UserRow
       key={i}
       user={user}
-      customers={props[JSON_CUSTOMER]}
+      customers={props[DATA_CUSTOMER]}
       userMapping={userMapping}
-      websocket={props[PROP_WEBSOCKET]}
+      websocket={websocket}
     />)
   })
 
 
   ExternalUsersRows.push(<NewUserRow
     key={-1}
-    customers={props[JSON_CUSTOMER]}
-    websocket={props[PROP_WEBSOCKET]}
+    customers={props[DATA_CUSTOMER]}
+    websocket={websocket}
   />)
 
   return (

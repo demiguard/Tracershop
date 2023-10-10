@@ -26,7 +26,7 @@ export function toOptions(iterable, nameKey='name', valueKey = 'id'){
   } else if (iterable instanceof Array) {
     return iterable.map(toOption);
   } else {
-    for( const entry of iterable){
+    for(const entry of iterable){
       options.push(toOption(entry))
     }
     return options

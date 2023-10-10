@@ -1,16 +1,18 @@
 
 import React, {Component, useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
-import { JSON_CUSTOMER, JSON_VIAL, PROP_WEBSOCKET, WEBSOCKET_DATATYPE, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_SUCCESS } from "../../lib/constants";
+import { DATA_CUSTOMER, DATA_VIAL, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS} from "~/lib/shared_constants"
 import { parseDate, parseDateToDanishDate, ParseJSONstr } from "../../lib/formatting";
-import { addCharacter } from "../../lib/utils";
-import { changeState, setStateToEvent } from "../../lib/state_management";
+
+import { setStateToEvent } from "../../lib/state_management";
+
 import propTypes from 'prop-types'
-import { Tracer, Vial } from "../../dataclasses/dataclasses";
+
+import { Vial } from "../../dataclasses/dataclasses";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group";
 import { DateInput } from "../injectable/date_input";
-import { TracerWebSocket } from "../../lib/tracer_websocket";
+import { useWebsocket } from "../tracer_shop_context";
 
 
 /**
@@ -43,9 +45,9 @@ function VialRow({
 }){
   const customer = customers.get(vial.owner)
   const customerName = customer === undefined ?
-                          "Ukendt ejer" :
-                          customer.short_name;
-
+  "Ukendt ejer" :
+  customer.short_name;
+  
   return <tr>
     <td>{vial.id}</td>
     <td>{vial.lot_number}</td>
@@ -60,6 +62,7 @@ function VialRow({
 
 export function VialPage(props){
   // State
+  const websocket = useWebsocket();
   const [lotNumber, setLotNumber] = useState("");
   const [customerID, setCustomer] = useState("");
   const [vialDay, setVialDay] = useState("");
@@ -86,7 +89,6 @@ export function VialPage(props){
       const date = parseDate(vialDay)
       if(!isNaN(date)) { // YEAH THIS WORK WITH DATES
         // I ASSUME IT*S BECAUSE JAVASCRIPT TREATS DAYS AS OBJECT AS AN INT SINCE 1970
-        const /**@type {TracerWebSocket} */ websocket = props[PROP_WEBSOCKET];
         const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS)
         message[WEBSOCKET_DATE] = date;
         websocket.send(message)
@@ -96,7 +98,7 @@ export function VialPage(props){
     }
   }
 
-  const VialRows = [...props[JSON_VIAL].values()].filter(
+  const VialRows = [...props[DATA_VIAL].values()].filter(
     (vial) => {
       if(lotNumber !== "") {
         const regex = RegExp(lotNumber, 'g')
@@ -143,7 +145,7 @@ export function VialPage(props){
     }).map(
     (vial) => <VialRow
       key={vial.id}
-      customers={props[JSON_CUSTOMER]}
+      customers={props[DATA_CUSTOMER]}
       vial={vial}
   />);
 
@@ -163,7 +165,7 @@ export function VialPage(props){
           <TracershopInputGroup label="Kunde Filter">
             <CustomerSelect
               value={customerID}
-              customers={props[JSON_CUSTOMER]}
+              customers={props[DATA_CUSTOMER]}
               emptyCustomer
               onChange={setStateToEvent(setCustomer)}
             />

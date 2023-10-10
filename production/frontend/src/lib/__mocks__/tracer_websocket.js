@@ -1,34 +1,18 @@
 import { jest } from '@jest/globals'
+import { WEBSOCKET_MESSAGE_TYPE } from '../shared_constants';
+
+const tracer_websocket = jest.createMockFromModule('../tracer_websocket.js');
 
 
-const tracer_websocket = jest.createMockFromModule('../tracer_websocket.js')
+const TracerWebSocket = jest.fn();
+TracerWebSocket.getMessage = jest.fn((kw) => {return {[WEBSOCKET_MESSAGE_TYPE] : kw}});
+TracerWebSocket.send = jest.fn();
+TracerWebSocket.sendEditModel = jest.fn();
+TracerWebSocket.sendCreateModel = jest.fn();
+TracerWebSocket.sendDeleteModel = jest.fn();
+TracerWebSocket.sendCreateActivityOrder = jest.fn();
+TracerWebSocket.sendCreateInjectionOrder = jest.fn();
+TracerWebSocket.sendChangePassword = jest.fn();
+TracerWebSocket.sendCreateExternalUser = jest.fn();
 
-const mockGetMessage = jest.fn((kw) => {
-  return {
-    messageType : kw
-  }
-})
-const mockSend = jest.fn((data) => {
-  return new Promise((data) => {return data})
-});
-
-const mockCreateModel = jest.fn((data) => {
-  return new Promise((data) => {return data})
-});
-
-const mockEditModel = jest.fn((data) => {
-  return new Promise((data) => {return data})
-});
-
-tracer_websocket.TracerWebSocket.mockImplementation(() =>  {
-  const object = Object.create(tracer_websocket.TracerWebSocket.prototype);
-
-  return Object.assign(object, {
-    sendEditModel : mockEditModel,
-    sendCreateModel : mockCreateModel,
-    send : mockSend,
-    getMessage : mockGetMessage
-  });
-})
-
-module.exports = tracer_websocket
+module.exports = { TracerWebSocket }

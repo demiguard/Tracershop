@@ -1,12 +1,13 @@
-import React, { Component, useState } from "react";
+import React, { useState } from "react";
 import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
 import { renderTableRow } from "../../../lib/rendering.js";
-import { changeState } from "../../../lib/state_management.js";
+
 import { HistoryModal } from "../../modals/history_modal.js";
 import { CustomerModal } from "../../modals/customer_modal.js";
-import { JSON_CUSTOMER, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
+import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
+import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
 import { ClickableIcon } from "../../injectable/icons.js"
-import { Customer } from "../../../dataclasses/dataclasses.js";
+import { Customer } from "~/dataclasses/dataclasses.js";
 
 const Modals = {
   CUSTOMER : CustomerModal,
@@ -44,7 +45,7 @@ export function CustomerPage (props) {
 
   const /**@type {Array<Element>} */ customerRows = [];
   const FilterRegEx = new RegExp(state.filter,'g')
-    for (const [ID, _customer] of props[JSON_CUSTOMER]) {
+    for (const [ID, _customer] of props[DATA_CUSTOMER]) {
       const /**@type {Customer} */ customer = _customer
       if (FilterRegEx.test(customer.short_name)) {
         customerRows.push(renderTableRow(ID,[

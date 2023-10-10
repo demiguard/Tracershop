@@ -1,28 +1,31 @@
 import React, { useEffect, useState } from "react";
+import { Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 
-import { Button, ButtonGroup, Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
-import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction, Tracer, Isotope } from "../../dataclasses/dataclasses.js";
+import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction, Tracer, Isotope } from "~/dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
-import styles from '../../css/Site.module.css'
-import { renderComment } from "../../lib/rendering.js";
-
+import styles from '~/css/Site.module.css'
+import { renderComment } from "~/lib/rendering.js";
 
 import Authenticate from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, ERROR_BACKGROUND_COLOR, JSON_ACTIVITY_ORDER, JSON_AUTH, JSON_CUSTOMER, JSON_DELIVER_TIME, JSON_ENDPOINT, JSON_ISOTOPE, JSON_PRODUCTION, JSON_TRACER, JSON_USER, JSON_VIAL, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_WEBSOCKET, WEBSOCKET_DATA,
-  WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_EDIT_STATE,
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_MODEL_CREATE,  WEBSOCKET_MESSAGE_MODEL_EDIT} from "../../lib/constants.js";
-import { batchNumberValidator, dateToDateString, FormatTime, ParseDanishNumber, parseDate, parseDateToDanishDate } from "../../lib/formatting.js";
-import { KEYWORD_ActivityOrder_STATUS, KEYWORD_DeliveryEndpoint_OWNER, KEYWORD_Vial_ACTIVITY, KEYWORD_Vial_FILL_TIME, KEYWORD_Vial_LOT_NUMBER, KEYWORD_Vial_VOLUME } from "../../dataclasses/keywords.js";
-import { compareTimeStamp, getTimeString } from "../../lib/chronomancy.js";
-import { CalculateProduction } from "../../lib/physics.js";
+import { ERROR_BACKGROUND_COLOR,
+  PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID} from "~/lib/constants.js";
+
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
+  DATA_AUTH, DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_ISOTOPE,
+  DATA_PRODUCTION, DATA_TRACER, DATA_USER, DATA_VIAL, WEBSOCKET_DATA,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "~/lib/shared_constants.js"
+import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting.js";
+import { getTimeString } from "~/lib/chronomancy.js";
+
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
 import { compareDates, getPDFUrls } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/time_form.js";
+import { useWebsocket } from "../tracer_shop_context.js";
 
 /**
  * A time slot may multiple orders and each of these objects refers to an order
@@ -52,7 +55,7 @@ function OrderRow({order, websocket, timeSlots, timeSlotId}){
     }
     order.ordered_activity = activityNumber;
 
-    websocket.sendEditModel(JSON_ACTIVITY_ORDER, [order]);
+    websocket.sendEditModel(DATA_ACTIVITY_ORDER, [order]);
     setEditing(false);
     setError(false);
   }
@@ -63,7 +66,7 @@ function OrderRow({order, websocket, timeSlots, timeSlotId}){
     /> : `${activity} MBq`;
 
     if(editing){
-      activityDisplay = <FormControl 
+      activityDisplay = <FormControl
                           aria-label={`edit-form-order-activity-${order.id}`}
                           style={displayStyle}
                           value={activity}
@@ -75,22 +78,22 @@ function OrderRow({order, websocket, timeSlots, timeSlotId}){
 
 
   let iconFunction= canEdit ? () => {setEditing(true)} : () => {}
-  let icon = <StatusIcon 
+  let icon = <StatusIcon
               label={`edit-order-activity-${order.id}`}
-              status={order.status}  
+              status={order.status}
               onClick={iconFunction}
             />
   if (order.moved_to_time_slot){
-    icon = <ClickableIcon 
+    icon = <ClickableIcon
               label={`edit-order-activity-${order.id}`}
-              src="/static/images/move_top.svg" 
+              src="/static/images/move_top.svg"
               onClick={iconFunction}
             />
   }
   if(editing){
-    icon = <ClickableIcon 
+    icon = <ClickableIcon
               label={`edit-accept-order-activity-${order.id}`}
-              src="static/images/accept.svg" 
+              src="static/images/accept.svg"
               onClick={acceptEdit}/>
   }
 
@@ -147,7 +150,7 @@ function VialRow({vial, onSelect, selected, websocket, setError}){
     const valid_activity = concatErrors(errors, activityValid, formattedActivity);
 
     if(valid_batch && valid_time && valid_volume && valid_activity){
-      websocket.sendEditModel(JSON_VIAL, [{
+      websocket.sendEditModel(DATA_VIAL, [{
         ...vial,
         lot_number : formattedLotNumber,
         fill_time : formattedFillTime,
@@ -238,7 +241,7 @@ function NewVialRow({stopAddingVial, setError, websocket, active_date, customer}
                 && concatErrors(errors, activityValid, formattedActivity);
 
     if(valid){
-      websocket.sendCreateModel(JSON_VIAL, [{
+      websocket.sendCreateModel(DATA_VIAL, [{
         owner : customer.id,
         fill_date : active_date,
         lot_number : formattedLotNumber,
@@ -306,14 +309,15 @@ function NewVialRow({stopAddingVial, setError, websocket, active_date, customer}
 
 export function ActivityModal(props){
   // Prop extraction
-  const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[JSON_DELIVER_TIME].get(props[PROP_TIME_SLOT_ID])
-  const /**@type {ActivityProduction} */ production = props[JSON_PRODUCTION].get(timeSlot.production_run);
+  const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[DATA_DELIVER_TIME].get(props[PROP_TIME_SLOT_ID])
+  const /**@type {ActivityProduction} */ production = props[DATA_PRODUCTION].get(timeSlot.production_run);
   const /**@type {Array<ActivityOrder>}*/ orders = props[PROP_ORDER_MAPPING].get(timeSlot.id)
-  const /**@type {DeliveryEndpoint } */ endpoint = props[JSON_ENDPOINT].get(timeSlot.destination)
-  const /**@type {Customer} */ customer = props[JSON_CUSTOMER].get(endpoint.owner)
-  const /**@type {Number} */ overhead = props[PROP_OVERHEAD_MAP].get(customer.id);
-  const /**@type {Tracer} */ tracer = props[JSON_TRACER].get(props[PROP_ACTIVE_TRACER])
-  const /**@type {Isotope} */ isotope = props[JSON_ISOTOPE].get(tracer.isotope)
+  const /**@type {DeliveryEndpoint } */ endpoint = props[DATA_ENDPOINT].get(timeSlot.destination)
+  const /**@type {Customer} */ customer = props[DATA_CUSTOMER].get(endpoint.owner)
+  const /**@type {Number} */ overhead = 1 // TODO : FIX
+  const /**@type {Tracer} */ tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER])
+  const /**@type {Isotope} */ isotope = props[DATA_ISOTOPE].get(tracer.isotope)
+  const websocket = useWebsocket()
 
   // Value extraction
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE])
@@ -345,7 +349,7 @@ export function ActivityModal(props){
     }
 
     if (freed_by === null && order.freed_by){
-      const freeingUser = props[JSON_USER].get(order.freed_by);
+      const freeingUser = props[DATA_USER].get(order.freed_by);
       freed_by = freeingUser.username.toUpperCase();
     }
 
@@ -358,12 +362,12 @@ export function ActivityModal(props){
         key={order.id}
         order={order}
         timeSlotId={props[PROP_TIME_SLOT_ID]}
-        timeSlots={props[JSON_DELIVER_TIME]}
-        websocket={props[PROP_WEBSOCKET]}
+        timeSlots={props[DATA_DELIVER_TIME]}
+        websocket={websocket}
     />);
   }
 
-  const vials = [...props[JSON_VIAL].values()].filter(
+  const vials = [...props[DATA_VIAL].values()].filter(
     (_vial) => {
       const /**@type {Vial} */ vial = _vial
       if(vial.fill_date !== dateString){
@@ -422,7 +426,7 @@ export function ActivityModal(props){
         order.status = 2
       }
     }
-    props[PROP_WEBSOCKET].sendEditModel(JSON_ACTIVITY_ORDER, orders)
+    websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders)
   }
 
   function onClickToPDF() {
@@ -430,17 +434,17 @@ export function ActivityModal(props){
   }
 
   function onFree(username, password){
-    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
+    const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
-    data[JSON_DELIVER_TIME] = props[PROP_TIME_SLOT_ID]
-    data[JSON_ACTIVITY_ORDER] = orderIDs
-    data[JSON_VIAL] = [...state.selectedVials];
+    data[DATA_DELIVER_TIME] = props[PROP_TIME_SLOT_ID]
+    data[DATA_ACTIVITY_ORDER] = orderIDs
+    data[DATA_VIAL] = [...state.selectedVials];
     message[WEBSOCKET_DATA] = data;
     const auth = {};
     auth[AUTH_USERNAME] = username;
     auth[AUTH_PASSWORD] = password;
-    message[JSON_AUTH] = auth;
-    props[PROP_WEBSOCKET].send(message).then((data) =>{
+    message[DATA_AUTH] = auth;
+    websocket.send(message).then((data) =>{
       if (data[AUTH_IS_AUTHENTICATED]){
         setState({
           freeing : false,
@@ -536,7 +540,7 @@ export function ActivityModal(props){
 
   let allocationTotal = 0;
   for(const vid of state.selectedVials.values()){
-    const /**@type {Vial} */ vial = props[JSON_VIAL].get(vid);
+    const /**@type {Vial} */ vial = props[DATA_VIAL].get(vid);
     allocationTotal += vial.activity;
   }
 
@@ -546,7 +550,7 @@ export function ActivityModal(props){
     return <VialRow
       key={vial.id}
       vial={vial}
-      websocket={props[PROP_WEBSOCKET]}
+      websocket={websocket}
       selected={selected}
       onSelect={selectVial(vial)}
       setError={setError}
@@ -560,7 +564,7 @@ export function ActivityModal(props){
         key={-1}
         stopAddingVial={stopAddingVial}
         setError={setError}
-        websocket={props[PROP_WEBSOCKET]}
+        websocket={websocket}
         tracer={tracer}
         customer={customer}
       />

@@ -7,10 +7,11 @@ import { act } from "react-dom/test-utils";
 import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
 
 
-import { PROP_ACTIVE_DATE, PROP_WEBSOCKET } from "../../../lib/constants.js";
+import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { AppState } from "../../app_state.js";
 
 import { InjectionTable } from "../../../components/production_pages/injection_table.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -30,7 +31,6 @@ beforeEach(() => {
     container = document.createElement("div");
     websocket = new tracer_websocket.TracerWebSocket()
     props = {...AppState};
-    props[PROP_WEBSOCKET] = websocket;
     props[PROP_ACTIVE_DATE] = new Date(2020,4,4,10,36,44);
 });
 
@@ -47,7 +47,8 @@ afterEach(() => {
 
 describe("Deadline Setup tests", () => {
   it("Standard render test", () => {
-    render(<InjectionTable {...props}/>)
-
+    render( <WebsocketContextProvider value={websocket}>
+      <InjectionTable {...props}/>
+    </WebsocketContextProvider>);
   });
 })

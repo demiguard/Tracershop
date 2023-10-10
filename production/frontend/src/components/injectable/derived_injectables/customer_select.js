@@ -1,5 +1,5 @@
 import React from "react";
-import { JSON_CUSTOMER } from "../../../lib/constants";
+import { DATA_CUSTOMER } from "../../../lib/constants";
 import { Select, toOptions, Option } from "../select";
 import { FormControl } from "react-bootstrap";
 import PropTypes from 'prop-types'

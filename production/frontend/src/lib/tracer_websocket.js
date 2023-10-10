@@ -1,18 +1,21 @@
-import { WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_SUCCESS,
-  WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_ORDER,
+import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, ERROR_NO_MESSAGE_STATUS, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER } from "./constants.js";
-import { MapDataName } from "./local_storage_driver.js";
-import { ParseJSONstr } from "./formatting.js";
-import { ActivityOrder, InjectionOrder } from "../dataclasses/dataclasses.js";
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH,
+  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
+  WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+  AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER } from "~/lib/shared_constants.js";
+
+  import { ParseJSONstr } from "~/lib/formatting.js";
+import { ActivityOrder, InjectionOrder } from "~/dataclasses/dataclasses.js";
+import { DeleteState, UpdateState } from "~/components/tracer_shop_context";
 
 export { safeSend, TracerWebSocket }
 
 class TracerWebSocket {
-  constructor(Websocket, parent){
+  constructor(Websocket, dispatch){
     this._PromiseMap = new Map();
     this._ws = Websocket;
-    this.StateHolder = parent;
 
     /** This function is called, when a message is received through the websocket from the server.
      *  This function handles all the different messages.
@@ -42,21 +45,23 @@ class TracerWebSocket {
         case WEBSOCKET_MESSAGE_UPDATE_STATE:
           /**Assumes message is on format:
            * WEBSOCKET_DATA - {
-           *   JSON_XXX : List of Objects
+           *   DATA_XXX : List of Objects
            * }
            */
           const state = ParseJSONstr(message[WEBSOCKET_DATA])
-          this.StateHolder.updateState(state, message[WEBSOCKET_REFRESH]);
+          dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
+
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-            this.StateHolder.deleteModels(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID])
+          dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
         }
-        break
+        break;
         case WEBSOCKET_MESSAGE_FREE_INJECTION:
-        case WEBSOCKET_MESSAGE_FREE_ACTIVITY: {
+        case WEBSOCKET_MESSAGE_FREE_ACTIVITY:
+        {
           if(message[AUTH_IS_AUTHENTICATED]){
-            const state = ParseJSONstr(message[WEBSOCKET_DATA])
-            this.StateHolder.updateState(state, message[WEBSOCKET_REFRESH])
+            const state = ParseJSONstr(message[WEBSOCKET_DATA]);
+            dispatch(state, message[WEBSOCKET_REFRESH]);
           }
         }
         break;
@@ -138,10 +143,12 @@ class TracerWebSocket {
   }
 
   sendCreateModel(modelType, models){
-    const message = {};
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_CREATE;
-    message[WEBSOCKET_DATA] = models;
-    message[WEBSOCKET_DATATYPE] = modelType;
+    const message = {
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_CREATE,
+      [WEBSOCKET_DATA] : models,
+      [WEBSOCKET_DATATYPE] : modelType,
+
+    };
 
     return this.send(message);
   }
@@ -157,10 +164,11 @@ class TracerWebSocket {
       ids = [models.id];
     }
 
-    const message = {}
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_DELETE;
-    message[WEBSOCKET_DATA_ID] = ids;
-    message[WEBSOCKET_DATATYPE] = modelType;
+    const message = {
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      [WEBSOCKET_DATA_ID] : ids,
+      [WEBSOCKET_DATATYPE] : modelType,
+    };
 
     this.send(message);
   }
@@ -170,9 +178,10 @@ class TracerWebSocket {
    * @param {ActivityOrder} newOrder
    */
   sendCreateActivityOrder(newOrder){
-    const message = {};
-    message[WEBSOCKET_DATA] = newOrder
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER;
+    const message = {
+      [WEBSOCKET_DATA] : newOrder,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
+    };
     return this.send(message);
   }
 
@@ -182,24 +191,28 @@ class TracerWebSocket {
    * @returns {Promise}
    */
   sendCreateInjectionOrder(newOrder){
-    const message = {};
-    message[WEBSOCKET_DATA] = newOrder
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER;
+    const message = {
+      [WEBSOCKET_DATA] : newOrder,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,
+    };
+
     return this.send(message);
   }
 
   sendChangePassword(userID, newPassword){
-    const message = {};
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD;
-    message[WEBSOCKET_DATA_ID] = userID;
-    message[AUTH_PASSWORD] = newPassword;
+    const message = {
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+      [WEBSOCKET_DATA_ID] : userID,
+      [AUTH_PASSWORD] : newPassword,
+    };
     return this.send(message)
   }
 
   sendCreateExternalUser(userSkeleton){
-    const message = {}
-    message[WEBSOCKET_DATA] = userSkeleton
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER
+    const message = {
+      [WEBSOCKET_DATA] : userSkeleton,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
+    };
     return this.send(message)
   }
 }

@@ -45,7 +45,7 @@ export function initialize_customer_endpoint(
  * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages 
  * @returns 
  * 
- * @example initialize_customer_endpoint_tracer_from_tracerCatalog(props[JSON_ENDPOINT], props[JSON_TRACER_MAPPING])
+ * @example initialize_customer_endpoint_tracer_from_tracerCatalog(props[DATA_ENDPOINT], props[DATA_TRACER_MAPPING])
  */
 export function initialize_customer_endpoint_tracer_from_tracerCatalog(
   endpoints, tracerCatalogPages,

@@ -83,10 +83,11 @@ object or Negative halflife or activity}}
 \section*{Introduction}
 
 This document describes the electronic web shop, Tracershop, used for ordering
-and release of radioactive tracers for clinical procedures and radiochemistry
-produced at Rigshospitalet's Cyclotron unit. Since radioactive tracers are
-medicinal products, Tracershop must fulfil documentation requirements stated by
-GMP Volume 4 annex 11, which this document describes.\\
+and release of radioactive tracers for clinical and pre-clinical procedures
+produced at Rigshospitalet's Cyclotron and radiochemistry unit. Since
+radioactive tracers are medicinal products, Tracershop must fulfil
+documentation requirements stated by GMP Volume 4 annex 11, which this document
+describes.\\
 Rigshospitalet delivers radioactive PET tracers to hospitals and scientific
 institutions around Copenhagen. It would not be possible to perform PET scans
 without these tracers. Therefore Tracershop should be considered a important
@@ -100,8 +101,9 @@ Since annex 11 is dated, \gls*{ema} has released a concept paper on annex 11\foo
 \url{https://www.ema.europa.eu/en/documents/regulatory-procedural-guideline/concept-paper-revision-annex-11-guidelines-good-manufacturing-practice-medicinal-products_en.pdf}}
 containing various comments on the guidelines presented in annex 11.
 These comments have also been considered when applicable. \\
-The document have been review with Jacob Madsen and Helle Østergren Bak as
-Process owners, and Christoffer Vilstrup Jensen as developer.
+The document have been review with Jacob Madsen as Production chief and Helle
+Østergren Bak as Quality Assurance, and Christoffer Vilstrup Jensen as
+developer.
 
 \subsection*{User Requirements}
 
@@ -338,8 +340,8 @@ All users in Tracershop are personal and have a role determining their
 rights. A user can only have a single role.
 These roles are divided into a Shop- or Production category. Shop users are
 representatives for a customer organization, that uses products from Tracershop.
-Production users are members of Rigshospitalet Cyclotron unit and releases
-tracers in tracershop.
+Production users are members of Rigshospitalet Cyclotron and Radiochemistry
+unit and releases tracers in tracershop.
 
 If a user is a staff member of the Capital region they acquire their role by
 contacting the local active directory manager (CBAS administrators), requesting
@@ -367,8 +369,8 @@ All the roles are as follows:
   \item Production - User - The user can view and accept orders from all
   customers. They can release tracer of authorized types.
   \item Production - Admin - Everything the production user can. Grant release
-  rights to other production users, create new tracers, allow tracers to ordered
-  by customers, and manage external user.
+  rights to other production users, create new tracers, allow tracers to be
+  ordered by customers, and manage external users.
   \item Site Admin - The equivalent of a root user. The user can mimic all the
   functionality of other roles. The user isn't intended to use tracershop only
   to support it.
@@ -381,7 +383,7 @@ shop internal users the right to represent this customer.
 
 \subsection*{Logging}
 Annex 11 is very light on it's requirement of logging, therefore we refer to the
-comments in the concept paper. (ref?)
+comments in the concept paper. \footnote{\url{https://www.ema.europa.eu/en/documents/regulatory-procedural-guideline/concept-paper-revision-annex-11-guidelines-good-manufacturing-practice-medicinal-products_en.pdf}}
 The raw logs are only accessible by system administrators. Each log entry has a
 time stamp, and a record of the user which invoked the user statement.
 Anonymous users cannot trigger log actions, because they are filtered away by
@@ -392,7 +394,7 @@ The new tracershop contains the following logs:
   The log is permanent (not rotating), and is backed up at the same level as the
   server. The following actions are log in the audit trail:
   \begin{itemize}
-    \item The system automatically assign or reassigns: the Shop Admin, Production Admin, or
+    \item The system automatically assign or reassigns: the Shop Superuser, Production Admin, or
     Site Admin user group to a user.
     \item A production user / admin manually adds a vial, data of the vial is
     logged.
@@ -612,6 +614,7 @@ validation of Tracershop.
 \end{itemize}
 
 
+
 \section*{Conclusion}
 
 The new system contains substantial upgrades to user experience, IT security,
@@ -622,13 +625,4 @@ and functionality. It fulfil the requirements stated by GMP Volume 4 Annex 11
 
 \printglossary[type=main,style=long,nonumberlist]
 
-\clearpage
-
-\section*{Appendix}
-
-\begin{figure}[ht]
-  \begin{center}
-    \includegraphics[width=\textwidth]{figures/risk_analyse.png}
-  \end{center}
-\end{figure}
 \end{document}

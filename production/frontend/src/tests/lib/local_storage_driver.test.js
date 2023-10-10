@@ -1,9 +1,7 @@
 
-import { DATABASE_ACTIVITY_ORDER, DATABASE_CLOSED_DATE, DATABASE_CUSTOMER, DATABASE_DELIVER_TIME,
-    DATABASE_EMPLOYEE, DATABASE_INJECTION_ORDER, DATABASE_ISOTOPE, DATABASE_PRODUCTION, DATABASE_TRACER,
-    DATABASE_VIAL, JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_CUSTOMER,
-    JSON_DELIVER_TIME, JSON_EMPLOYEE, JSON_INJECTION_ORDER, JSON_ISOTOPE, JSON_RUN, JSON_TRACER, JSON_VIAL
-  } from "../../lib/constants.js";
+import { DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, DATA_CUSTOMER,
+    DATA_DELIVER_TIME, DATA_EMPLOYEE, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_RUN, DATA_TRACER, DATA_VIAL
+  } from "../../lib/shared_constants.js";
 import { db, MapDataName } from "../../lib/local_storage_driver.js"
 
 test("Save and Read string", () => {
@@ -362,22 +360,3 @@ test("Get and Set of unknown Keys", () => {
   }
 });
 
-test("MapDatabaseName test", () => {
-  expect(MapDataName(JSON_ACTIVITY_ORDER)).toEqual(DATABASE_ACTIVITY_ORDER);
-  expect(MapDataName(JSON_CUSTOMER)).toEqual(DATABASE_CUSTOMER);
-  expect(MapDataName(JSON_DELIVER_TIME)).toEqual(DATABASE_DELIVER_TIME);
-  expect(MapDataName(JSON_EMPLOYEE)).toEqual(DATABASE_EMPLOYEE);
-  expect(MapDataName(JSON_INJECTION_ORDER)).toEqual(DATABASE_INJECTION_ORDER);
-  expect(MapDataName(JSON_ISOTOPE)).toEqual(DATABASE_ISOTOPE);
-  expect(MapDataName(JSON_RUN)).toEqual(DATABASE_PRODUCTION);
-  expect(MapDataName(JSON_TRACER)).toEqual(DATABASE_TRACER);
-  expect(MapDataName(JSON_VIAL)).toEqual(DATABASE_VIAL);
-  expect(MapDataName(JSON_CLOSED_DATE)).toEqual(DATABASE_CLOSED_DATE);
-  const input = "Nonsense";
-  try{
-    MapDataName(input);
-    expect(true).toBe(false)
-  } catch (e) {
-    expect(e).toEqual(`Unknown JSON Name ${input}`);
-  }
-})

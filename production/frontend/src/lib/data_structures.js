@@ -3,109 +3,199 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
 import { TRACER_TYPE } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
+import { sortTimeSlots } from "./sorting";
+import { numberfy } from "./utils";
+
+
+export class CustomerCatalog {
+  /**@type {Array<Tracer>} */ tracerCatalogActivity
+  /**@type {Array<Tracer>} */ tracerCatalogInjections
+  /**@type {Map<Number, Number>} */ overheadMap
+
+  constructor() {
+    this.tracerCatalogActivity = [];
+    this.tracerCatalogInjections = [];
+    this.overheadMap = new Map();
+  }
+}
+
 
 /**
  * Data structure containing information about which tracers a customer have access to
  * Each instance is unique to a customer.
  */
 export class TracerCatalog {
+  /**@type {Map<Number, CustomerCatalog } */ _customerCatalogs
+
   /**
-   * 
-   * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages 
-   * @param {Map<Number, Tracer>} tracers 
-   * @param {Number} customerID 
+   * Data structure containing information about which tracers a customer have access to
+   * Each instance is unique to a customer.
+   * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages
+   * The Collection of mappings of customer to tracer, where an entry implies the customer is allowed to order
+   * @param {Map<Number, Tracer>} tracers The Collection of all tracers
    */
-  constructor(tracerCatalogPages, tracers, customerID){
-    this._customerID = customerID;
-    this._tracerCatalogActivity = [];
-    this._tracerCatalogInjections = [];
-    this._overheadMap = new Map();
+  constructor(tracerCatalogPages, tracers){
+    this._customerCatalogs = new Map()
+
     for(const tracerCatalogPage of tracerCatalogPages.values()){
-      if(tracerCatalogPage.customer !== customerID){
-        continue;
+      if(!this._customerCatalogs.has(tracerCatalogPage.customer)){
+        this._customerCatalogs.set(tracerCatalogPage.customer, new CustomerCatalog())
       }
+
+      const customer_catalog = this._customerCatalogs.get(tracerCatalogPage.customer)
+
       const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
       if(tracer === undefined){
-        continue;
+        throw "Database intregrety violated!"
       }
 
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
-        this._overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
-        this._tracerCatalogActivity.push(tracer);
+        customer_catalog.overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
+        customer_catalog.tracerCatalogActivity.push(tracer);
       } else if (tracer.tracer_type === TRACER_TYPE.DOSE) {
-        this._tracerCatalogInjections.push(tracer);
+        customer_catalog.tracerCatalogInjections.push(tracer);
       }
     }
   }
 
-  getActivityCatalog(){
-    return this._tracerCatalogActivity;
+  /**
+   * Gets the entire catalog for a customer
+   * @param {Number} customerID - the ID of the customer in question
+   * @returns {CustomerCatalog}
+   */
+  getCatalog(customerID){
+    const index = numberfy(customerID)
+
+    const customer_catalog = this._customerCatalogs.get(index);
+    if (customer_catalog !== undefined){
+      return customer_catalog
+    }
+    throw "Undefined customer referenced";
   }
 
-  getInjectionCatalog(){
-    return this._tracerCatalogInjections;
+  getActivityCatalog(customerID){
+    const index = numberfy(customerID)
+    const customer_catalog = this._customerCatalogs.get(index);
+    if (customer_catalog !== undefined){
+      return customer_catalog.tracerCatalogActivity;
+    }
+    throw "Undefined customer referenced";
   }
 
-  getOverheadForTracer(tracerID){
-    return this._overheadMap.get(tracerID)
+  /**
+   * Gets the injections tracers a customer can order
+   * @param {Number} customerID 
+   * @returns {Array<Tracer>}
+   */
+  getInjectionCatalog(customerID){
+    const index = numberfy(customerID)
+    const customer_catalog = this._customerCatalogs.get(index);
+    if (customer_catalog !== undefined){
+      return customer_catalog.tracerCatalogInjections;
+    }
+    throw "Undefined customer referenced";
+  }
+
+  getOverheadForTracer(customerID, tracerID){
+    const customer_index = numberfy(customerID)
+    const tracer_index = numberfy(tracerID)
+    const customer_catalog = this._customerCatalogs.get(customer_index);
+    if (customer_catalog !== undefined){
+      return customer_catalog.overheadMap.get(tracer_index);
+    }
+    throw "Undefined customer referenced"
   }
 }
 
-/**
- * Creates a mapping over the related activity delivery time slots.
- * The data structure does two things:
- * 1. Filter out time slots of the wrong day and tracer
- * 2. Group TimeSlots together so a time slot can figure out if and what time
- *    slot it should move to.
- * @param {Map<Number, DeliveryEndpoint>} endpoints 
- * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
- * @param {Array<ActivityProduction>} relevantProductions 
- * @returns {Map<Number, Map<Number, ActivityDeliveryTimeSlot>}
- */
-export function createTimeSlotMapping(
-  endpoints,
-  timeSlots,
-  relevantProductions,
-){
-  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ timeSlotMapping = new Map()
 
-  for(const endpoint of endpoints.values()){
-    if(timeSlotMapping.has(endpoint.owner)){
-      const endpointMap = timeSlotMapping.get(endpoint.owner)
-      endpointMap.set(endpoint.id, [])
-    } else {
-      const endpointMap = new Map()
-      endpointMap.set(endpoint.id, [])
-      timeSlotMapping.set(endpoint.id, endpointMap)
+export class TimeSlotMapping {
+  /**@type {Map<Number, ArrayMap<Number, ActivityDeliveryTimeSlot>} */ _timeSlotMapping
+
+  /**
+  * Creates a mapping over the related activity delivery time slots.
+  * The data structure does two things:
+  * 1. Filter out time slots of the wrong day and tracer
+  * 2. Group TimeSlots together so a time slot can figure out if and what time
+  *    slot it should move to.
+  * @param {Map<Number, DeliveryEndpoint>} endpoints
+  * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
+  * @param {Array<Number>} relevantProductions 
+   */
+  constructor(endpoints, timeSlots, relevantProductions) {
+    /* The underlying datastructure 
+      Customer_1 --> Endpoint_1 -> [time_slot_1, time_slot_2] // Sorted by time
+    */
+    this._timeSlotMapping = new Map();
+    this._endpoints = endpoints
+
+
+    for(const endpoint of endpoints.values()){
+      if(!this._timeSlotMapping.has(endpoint.owner)){
+        this._timeSlotMapping.set(endpoint.id, new ArrayMap())
+      }
+    }
+
+    for(const timeSlot of timeSlots.values()){
+      if(!relevantProductions.includes(timeSlot.production_run)){
+        continue;
+      }
+
+      // Destination is an endpoint ID
+      const endpoint = endpoints.get(timeSlot.destination);
+      const destinationMapping = this._timeSlotMapping.get(endpoint.owner)
+
+      if(destinationMapping === undefined){
+        // Log error
+        console.log("Error, A timeslot have destination mapping")
+        continue;
+      }
+
+      destinationMapping.set(endpoint.id, timeSlot);
+      destinationMapping.sortEntries(endpoint.id, (a,b) => {
+        return (a.delivery_time < b.delivery_time) ? -1 : 1;
+      });
     }
   }
 
-  for(const timeSlot of timeSlots.values()){
-    if(!relevantProductions.includes(timeSlot.production_run)){
-      continue;
+  /**
+   * 
+   * @param {ActivityDeliveryTimeSlot} timeSlot 
+   */
+  getFirstTimeSlot(timeSlot){
+    const endpoint = this._endpoints.get(timeSlot.destination);
+    const destinationMap = this._timeSlotMapping.get(endpoint.owner)
+    return destinationMap.get(endpoint.id)[0];
+  }
+}
+
+
+
+export class ProductionTimeSlotOwnerShip {
+  /**@type {ArrayMap<Number, ActivityDeliveryTimeSlot>} underlying data structure */ _productionMapping
+
+  /**
+   * 
+   * @param {Array<Number>} relevantProductions 
+   * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
+   */
+  constructor(relevantProductions, timeSlots){
+    this._productionMapping = new ArrayMap()
+    for(const activityDeliveryTimeSlot of timeSlots.values()){
+      // You can't turn this into a map because of the sorting ruins parallelism
+      if(!relevantProductions.includes(activityDeliveryTimeSlot.production_run)){
+        continue;
+      }
+      this._productionMapping.set(activityDeliveryTimeSlot.production_run, activityDeliveryTimeSlot);
     }
-
-    // Destination is an endpoint ID
-    const endpoint = endpoints.get(timeSlot.destination);
-    const destinationMapping = timeSlotMapping.get(endpoint.owner)
-
-    if(destinationMapping === undefined){
-      // Log error
-      console.log("Error")
-      continue;
-    }
-
-    destinationMapping.get(endpoint.id).push(timeSlot);
-    destinationMapping.get(endpoint.id).sort((a,b) => {
-      return (a.delivery_time < b.delivery_time) ? -1 : 1;
-    });
   }
 
-  return timeSlotMapping
+  getTimeSlots(productionID){
+    return this._productionMapping.get(productionID);
+  }
 }
 
 
@@ -113,27 +203,44 @@ export function createTimeSlotMapping(
  * Creates a mapping over what time slots should be render and with what orders
  * If a time slot is missing from the map, that means it should not be rendered.
  * @param {Array<ActivityOrder>} orders 
+ * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
+ * @param {Map<Number, DeliveryEndpoint>}
  * @returns {Map<Number, Array<ActivityOrder>}
  */
-export function createOrderMapping(orders){
-  const OrderMapping = new Map()
-  for(const order of orders){
-    if (OrderMapping.has(order.ordered_time_slot)){
-      OrderMapping.get(order.ordered_time_slot).push(order)
-    } else {
-      OrderMapping.set(order.ordered_time_slot, [order])
-    }
+export class OrderMapping{
+  /**@type {ArrayMap<Number, ActivityOrder>} */ _orderMapping
+  /**@type {Map<Number, ActivityDeliveryTimeSlot>} */ _timeSlots
+  /**@type {Map<Number, DeliveryEndpoint>} */ _endpoints
 
-    if(order.moved_to_time_slot != null){
-      if (OrderMapping.has(order.moved_to_time_slot)){
-        OrderMapping.get(order.moved_to_time_slot).push(order)
-      } else {
-        OrderMapping.set(order.moved_to_time_slot, [order])
+  constructor(orders, timeSlots, endpoints){
+    this._orderMapping = new ArrayMap();
+    this._timeSlots = timeSlots;
+    this._endpoints = endpoints;
+
+    for(const order of orders){
+      this._orderMapping.set(order.ordered_time_slot, order);
+
+      if(order.moved_to_time_slot != null){
+        this._orderMapping.set(order.moved_to_time_slot,order);
       }
     }
   }
 
-  return OrderMapping
+  getOrders(timeSlotID){
+    return this._orderMapping.get(timeSlotID);
+  }
+
+  *[Symbol.iterator](){
+    const timeSlots = [];
+    for(const timeSlotID of this._orderMapping.keys()){
+      timeSlots.push(this._timeSlots.get(timeSlotID));
+    }
+
+    timeSlots.sort(sortTimeSlots(this._endpoints));
+    for(const timeSlot of timeSlots){
+      yield timeSlot
+    }
+  }
 }
 
 

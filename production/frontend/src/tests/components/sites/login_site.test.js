@@ -7,12 +7,13 @@ import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { AppState } from "../../app_state.js";
-import { db } from "../../../lib/local_storage_driver.js";
 
-import { PROP_SET_USER, PROP_USER, PROP_WEBSOCKET, USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../../lib/constants.js";
-import { LoginSite } from "../../../components/sites/login_site.js";
-import { User } from "../../../dataclasses/dataclasses.js";
+import { PROP_SET_USER, PROP_USER, USER_GROUPS  } from "~/lib/constants.js";
+import { WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"
+import { LoginSite } from "~/components/sites/login_site.js";
+
 import { ANON } from "../../test_state/users.js";
+import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -33,7 +34,6 @@ beforeEach(() => {
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
   props = {...AppState}
-  props[PROP_WEBSOCKET] = websocket
   props[PROP_USER] = ANON;
 });
 
@@ -50,10 +50,9 @@ afterEach(() => {
 
 describe("Login shop test suite", () => {
   it("standard test", async () => {
-    render(<LoginSite
-      {...props}
-    />);
-
+    render(<WebsocketContextProvider value={websocket}>
+      <LoginSite {...props}/>
+    </WebsocketContextProvider>);
     expect(await screen.findByLabelText('username')).toBeVisible();
     expect(await screen.findByLabelText('password')).toBeVisible();
   });
@@ -73,15 +72,15 @@ describe("Login shop test suite", () => {
         })); // There just so many parentheses...
     const mockSetUser = jest.fn(() => {})
 
-    props[PROP_WEBSOCKET] = {
+    websocket = {
       getMessage : getMessageMock,
       send : sendMock
     }
     props[PROP_SET_USER] = mockSetUser
 
-    render(<LoginSite
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <LoginSite {...props}/>
+    </WebsocketContextProvider>);
 
     act(() => {
       const usernameInput = screen.getByLabelText('username');
@@ -115,15 +114,15 @@ describe("Login shop test suite", () => {
         })); // There just so many parentheses...
     const mockSetUser = jest.fn(() => {})
 
-    props[PROP_WEBSOCKET] = {
+    websocket = {
       getMessage : getMessageMock,
       send : sendMock
     }
     props[PROP_SET_USER] = mockSetUser
 
-    render(<LoginSite
-      {...props}
-    />);
+    render(<WebsocketContextProvider value={websocket}>
+      <LoginSite {...props}/>
+    </WebsocketContextProvider>);
 
     act(() => {
       const usernameInput = screen.getByLabelText('username');

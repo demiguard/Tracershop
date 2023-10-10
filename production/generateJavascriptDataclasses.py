@@ -22,7 +22,7 @@ with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
 
 
   for model in MODELS.values():
-    out.write(f"export class {model.__name__} {curly_brace_left}\n")
+    out.write(f"export class {model.__name__} {{\n")
     out.write("  constructor(")
     for field in model._meta.fields:
       if field.name in model.exclude:
@@ -39,7 +39,23 @@ with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
   out.write("export const MODELS = {\n")
   for key, model in MODELS.items():
     out.write(  f"  {key} : {model.__name__},\n")
-  out.write("}\n\n")
+  out.write("}\n")
+
+  out.write("\nexport class TracershopState {\n")
+  out.write(f"  /** @type {{ User }} */ logged_in_user\n")
+
+  for key, model in MODELS.items():
+    out.write(f"  /** @type {{ Map<Number, {model.__name__}>}} */ {key}\n")
+
+  out.write("\n  constructor(logged_in_user, ")
+  for key, model in MODELS.items():
+    out.write(f"{key}, ")
+  out.write("){\n    this.logged_in_user=logged_in_user\n")
+  for key, model in MODELS.items():
+    out.write(f"    this.{key} = {key}\n")
+  out.write("  }\n")
+
+  out.write("}\n")
 
 with open('frontend/src/dataclasses/keywords.js', 'w') as out:
   out.write("/**Automatically generated file by generate JavascriptDataClasses.py */\n")

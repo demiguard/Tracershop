@@ -3,15 +3,17 @@ import { FormControl, InputGroup, Table } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { setStateToEvent } from "../../../lib/state_management";
 import { Option, Select, toOptions } from "../../injectable/select";
-import { JSON_CUSTOMER, JSON_ENDPOINT, JSON_LOCATION, PROP_WEBSOCKET } from "../../../lib/constants";
-import { Location } from "../../../dataclasses/dataclasses";
-import { nullParser } from "../../../lib/formatting";
+import { DATA_CUSTOMER, DATA_ENDPOINT, DATA_LOCATION } from "~/lib/shared_constants"
+import { Location } from "~/dataclasses/dataclasses";
+import { nullParser } from "~/lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
+import { useWebsocket } from "~/components/tracer_shop_context";
 
 export function LocationTable(props){
-  const [filter, setFilter] = useState("")
-  const [filterType, setFilterType] = useState(1)
+  const websocket = useWebsocket();
+  const [filter, setFilter] = useState("");
+  const [filterType, setFilterType] = useState(1);
 
   const filterOptions = toOptions([{
     id : 1,
@@ -42,7 +44,7 @@ export function LocationTable(props){
       newLocation.common_name = event.target.value
 
       if(newLocation.common_name.length <= 120){
-        websocket.sendEditModel(JSON_LOCATION, [newLocation])
+        websocket.sendEditModel(DATA_LOCATION, [newLocation])
       }
     }
 
@@ -56,7 +58,7 @@ export function LocationTable(props){
         newLocation.endpoint = event.target.value;
       }
 
-      websocket.sendEditModel(JSON_LOCATION, [newLocation]);
+      websocket.sendEditModel(DATA_LOCATION, [newLocation]);
     }
 
     return (
@@ -69,8 +71,8 @@ export function LocationTable(props){
       </td>
       <td>
         <EndpointSelect
-          customer={props[JSON_CUSTOMER]}
-          deliveryEndpoint={props[JSON_ENDPOINT]}
+          customer={props[DATA_CUSTOMER]}
+          deliveryEndpoint={props[DATA_ENDPOINT]}
           emptyEndpoint
           value={endpoint}
           onChange={updateEndpoint}
@@ -80,7 +82,7 @@ export function LocationTable(props){
   }
 
 
-  const /**@type {Array<Location>} */ locations = [...props[JSON_LOCATION].values()].filter((location) => {
+  const /**@type {Array<Location>} */ locations = [...props[DATA_LOCATION].values()].filter((location) => {
     if(filter === ""){
       return true
     }
@@ -100,7 +102,7 @@ export function LocationTable(props){
       return (<LocationTableRow
                 key={i}
                 location={location}
-                websocket={props[PROP_WEBSOCKET]}
+                websocket={websocket}
               />);
   });
 

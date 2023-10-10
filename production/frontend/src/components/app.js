@@ -2,16 +2,18 @@ import React, { Component } from "react";
 import { db } from "../lib/local_storage_driver.js";
 import { TracerWebSocket } from "../lib/tracer_websocket.js";
 import { ParseDjangoModelJson } from "../lib/formatting.js";
-import { USER_GROUPS, WEBSOCKET_MESSAGE_AUTH_LOGOUT,
-  WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-  AUTH_IS_AUTHENTICATED, AUTH_USERNAME, DATABASE_CURRENT_USER,
-  PROP_USER, PROP_WEBSOCKET, PROP_NAVBAR_ELEMENTS, PROP_LOGOUT, PROP_SET_USER,
-  WEBSOCKET_MESSAGE_GET_STATE, JSON_KEYWORDS, AUTH_USER, WEBSOCKET_SESSION_ID
-} from "../lib/constants.js";
-import { User } from "../dataclasses/dataclasses.js";
+import { USER_GROUPS, PROP_USER, PROP_NAVBAR_ELEMENTS,
+  PROP_LOGOUT, PROP_SET_USER, DATABASE_CURRENT_USER } from "~/lib/constants.js";
+
+import { WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+  WEBSOCKET_MESSAGE_GET_STATE, AUTH_USER, WEBSOCKET_SESSION_ID,
+  AUTH_IS_AUTHENTICATED } from "~/lib/shared_constants.js";
+
+import { MODELS, User } from "../dataclasses/dataclasses.js";
 import { TracerShop } from "./sites/tracer_shop.js";
 import Cookies from "js-cookie";
 import { deserialize_single } from "../lib/serialization.js";
+import { TracerShopContext } from "./tracer_shop_context.js";
 
 export { App }
 
@@ -23,7 +25,7 @@ export default class App extends Component {
 
 
     if(user && !(user instanceof User)){
-      user = new User(user.username, user.user_group, user.customer, user.id);
+      user = new User(user, user.id ,user.username, user.user_group, user.active);
     } else {
       user = new User();
     }
@@ -35,7 +37,7 @@ export default class App extends Component {
       spinner : false,
     };
     // Updating State with Keywords
-    for(const keyword of JSON_KEYWORDS){
+    for(const keyword of Object.keys(MODELS)){
       state[keyword] = this.getDatabaseMap(keyword)
     }
 
@@ -66,7 +68,7 @@ export default class App extends Component {
       }
       this.set_user(user)
       if(data[WEBSOCKET_SESSION_ID]) {
-        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID])
+        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {secure : true, sameSite:'strict'})
       }
 
     })
@@ -146,7 +148,7 @@ export default class App extends Component {
 
   createPropsWithStateDatabase() {
     const props = {}
-    for (const keyword of JSON_KEYWORDS){
+    for (const keyword of Object.keys(MODELS)){
       props[keyword] = this.state[keyword]
     }
 
@@ -160,10 +162,10 @@ export default class App extends Component {
     props[PROP_NAVBAR_ELEMENTS] = [];
     props[PROP_LOGOUT] = this.logout.bind(this);
     props[PROP_SET_USER] = this.set_user.bind(this);
-    props[PROP_WEBSOCKET] = this.MasterSocket;
 
-    return (<TracerShop
-      {...props}
-      />);
+    return (
+    <TracerShopContext>
+      <TracerShop {...props}/>);
+    </TracerShopContext>);
     }
   }

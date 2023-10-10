@@ -1,15 +1,18 @@
 import React, { Component, useState } from "react";
-import { FormatDateStr, dateToDateString } from "../../lib/formatting";
-import { JSON_BOOKING, JSON_LOCATION, JSON_PROCEDURE, JSON_TRACER, JSON_TRACER_MAPPING, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_WEBSOCKET, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, } from "../../lib/constants";
-import { Booking, Procedure, Tracer, Location } from "../../dataclasses/dataclasses";
-import { ProcedureLocationIndex, TracerBookingMapping } from "../../lib/data_structures";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
-import { ClickableIcon } from "../injectable/icons";
-import SiteStyles from "/src/css/Site.module.css"
-import { MarginButton } from "../injectable/buttons";
-import { getTimeStamp } from "../../lib/chronomancy";
-import { TracerWebSocket } from "../../lib/tracer_websocket";
-import { bookingFilter } from "../../lib/filters";
+import { FormatDateStr, dateToDateString } from "~/lib/formatting";
+import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE } from "../../lib/constants";
+import { DATA_BOOKING, DATA_LOCATION, DATA_PROCEDURE, DATA_TRACER,
+  WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER } from "~/lib/shared_constants";
+import { Booking, Procedure, Tracer, Location } from "~/dataclasses/dataclasses";
+import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
+import { ClickableIcon } from "~/components/injectable/icons";
+import SiteStyles from "~/css/Site.module.css"
+import { MarginButton } from "~/components/injectable/buttons";
+import { getTimeStamp } from "~/lib/chronomancy";
+import { TracerWebSocket } from "~/lib/tracer_websocket";
+import { bookingFilter } from "~/lib/filters";
+import { useWebsocket } from "../tracer_shop_context";
 
 /**
  * 
@@ -194,14 +197,15 @@ function TracerCard({tracer,
 
 
 export function FutureBooking (props) {
-  console.log(props[JSON_PROCEDURE], props[JSON_LOCATION] )
+  console.log(props[DATA_PROCEDURE], props[DATA_LOCATION])
+  const websocket = useWebsocket();
   const dateString = dateToDateString(props[PROP_ACTIVE_DATE]);
-  const procedureLocationIndex = new ProcedureLocationIndex(props[JSON_PROCEDURE],
-                                                            props[JSON_LOCATION] );
+  const procedureLocationIndex = new ProcedureLocationIndex(props[DATA_PROCEDURE],
+                                                            props[DATA_LOCATION] );
 
 
-  const bookings = [...props[JSON_BOOKING].values()].filter(bookingFilter(
-    dateString, props[JSON_LOCATION], props[PROP_ACTIVE_ENDPOINT]
+  const bookings = [...props[DATA_BOOKING].values()].filter(bookingFilter(
+    dateString, props[DATA_LOCATION], props[PROP_ACTIVE_ENDPOINT]
   ))
 
   const bookingMapping = new TracerBookingMapping(bookings, procedureLocationIndex);
@@ -209,12 +213,12 @@ export function FutureBooking (props) {
   let index = 0;
   for (const [tracerID, BookingArray] of bookingMapping) {
     index++; // I know, you could start with 0, but this just taste
-    const tracer=props[JSON_TRACER].get(tracerID);
+    const tracer=props[DATA_TRACER].get(tracerID);
     if(tracer === undefined){
       bookingCards.push(<ProcedureCard
         key={index}
         bookings={BookingArray}
-        procedures={props[JSON_PROCEDURE]}
+        procedures={props[DATA_PROCEDURE]}
       />);
     }
     bookingCards.push(
@@ -222,9 +226,9 @@ export function FutureBooking (props) {
         key={index}
         tracer={tracer}
         bookings={BookingArray}
-        procedures={props[JSON_PROCEDURE]}
-        locations={props[JSON_LOCATION]}
-        websocket={props[PROP_WEBSOCKET]}
+        procedures={props[DATA_PROCEDURE]}
+        locations={props[DATA_LOCATION]}
+        websocket={websocket}
         activityDeadlineExpired={props[PROP_EXPIRED_ACTIVITY_DEADLINE]}
         injectionDeadlineExpired={props[PROP_EXPIRED_INJECTION_DEADLINE]}
       />);

@@ -1,14 +1,15 @@
 import React, { useState} from "react";
-import { TracershopNavbar } from "../injectable/navbar";
 import { Container } from "react-bootstrap";
 import propTypes from "prop-types";
 import Cookies from "js-cookie";
 
+import { TracershopNavbar } from "../injectable/navbar";
 import Authenticate from "../injectable/authenticate";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, JSON_AUTH, LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP, PROP_SET_USER, PROP_USER, PROP_WEBSOCKET, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_MESSAGE_GREAT_STATE, WEBSOCKET_SESSION_ID, JSON_USER } from "../../lib/constants";
+import { PROP_SET_USER } from "~/lib/constants";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, DATA_AUTH, WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/shared_constants"
 
-import { User } from "../../dataclasses/dataclasses";
-import { deserialize_single } from "../../lib/serialization";
+import { deserialize_single } from "~/lib/serialization";
+import { useWebsocket } from "../tracer_shop_context";
 
 const DEFAULT_STATE = {
   loginError : "",
@@ -26,27 +27,28 @@ const ERROR_STATE = {
 }
 
 export function LoginSite(props) {
+  const websocket = useWebsocket()
   const [state, setState] = useState(DEFAULT_STATE);
 
   // Authentication Methods
   function login(username, password){
     setState(SPINNER_STATE);
 
-    const message = props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_AUTH_LOGIN);
+    const message = websocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGIN);
     const auth = {}
     auth[AUTH_USERNAME] = username
     auth[AUTH_PASSWORD] = password
-    message[JSON_AUTH] = auth;
-    props[PROP_WEBSOCKET].send(message).then((data) => {
+    message[DATA_AUTH] = auth;
+    websocket.send(message).then((data) => {
       if (data[AUTH_IS_AUTHENTICATED]){
         const user = deserialize_single(data[AUTH_USER])
         props[PROP_SET_USER](user);
         Cookies.set('sessionid',
                     data[WEBSOCKET_SESSION_ID],
-                    {sameSite : 'strict'});
+                    {sameSite : 'strict', secure : true});
         setState(DEFAULT_STATE);
-        props[PROP_WEBSOCKET].send(
-        props[PROP_WEBSOCKET].getMessage(WEBSOCKET_MESSAGE_GET_STATE)
+        websocket.send(
+          websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE)
       );
       } else {
         setState(ERROR_STATE);

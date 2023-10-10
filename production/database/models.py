@@ -5,13 +5,13 @@ from typing import Dict, Tuple, Type, TypeVar
 from django.core.exceptions import ObjectDoesNotExist
 
 # Packages Tracershop
-from shared_constants import JSON_TRACER,JSON_BOOKING,  JSON_TRACER_MAPPING, JSON_VIAL,\
-    JSON_PRODUCTION, JSON_ISOTOPE, JSON_INJECTION_ORDER,  JSON_DELIVER_TIME, \
-    JSON_ADDRESS, JSON_CUSTOMER, JSON_DATABASE, JSON_SERVER_CONFIG,\
-    JSON_ACTIVITY_ORDER, JSON_CLOSED_DATE, JSON_LOCATION, JSON_ENDPOINT,\
-    JSON_SECONDARY_EMAIL, JSON_PROCEDURE, JSON_USER, JSON_USER_ASSIGNMENT,\
-    JSON_MESSAGE, JSON_MESSAGE_ASSIGNMENT, JSON_DEADLINE, JSON_DICOM_ENDPOINT,\
-    JSON_LEGACY_PRODUCTION_MEMBER, JSON_PROCEDURE_IDENTIFIER, JSON_RELEASE_RIGHT
+from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DATA_VIAL,\
+    DATA_PRODUCTION, DATA_ISOTOPE, DATA_INJECTION_ORDER,  DATA_DELIVER_TIME, \
+    DATA_ADDRESS, DATA_CUSTOMER, DATA_DATABASE, DATA_SERVER_CONFIG,\
+    DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, DATA_LOCATION, DATA_ENDPOINT,\
+    DATA_SECONDARY_EMAIL, DATA_PROCEDURE, DATA_USER, DATA_USER_ASSIGNMENT,\
+    DATA_MESSAGE, DATA_MESSAGE_ASSIGNMENT, DATA_DEADLINE, DATA_DICOM_ENDPOINT,\
+    DATA_LEGACY_PRODUCTION_MEMBER, DATA_PROCEDURE_IDENTIFIER, DATA_RELEASE_RIGHT
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -20,34 +20,34 @@ from database.TracerShopModels.networkModels import *
 from database.TracerShopModels.serverModels import *
 
 MODELS: Dict[str, Type[TracershopModel]] = {
-  JSON_ADDRESS : Address,
-  JSON_ACTIVITY_ORDER : ActivityOrder,
-  JSON_BOOKING : Booking,
-  JSON_CLOSED_DATE : ClosedDate,
-  JSON_CUSTOMER : Customer,
-  JSON_DEADLINE : Deadline,
-  JSON_DELIVER_TIME : ActivityDeliveryTimeSlot,
-  JSON_DICOM_ENDPOINT : DicomEndpoint,
-  JSON_ENDPOINT : DeliveryEndpoint,
-  JSON_INJECTION_ORDER : InjectionOrder,
-  JSON_ISOTOPE : Isotope,
-  JSON_RELEASE_RIGHT : ReleaseRight,
-  #JSON_LEGACY_ACTIVITY_ORDER : LegacyActivityOrder, # We shouldn't need these in frontend
-  #JSON_LEGACY_INJECTION_ORDER : LegacyInjectionOrder, # We shouldn't need these in frontend
-  JSON_LEGACY_PRODUCTION_MEMBER : LegacyProductionMember,
-  JSON_LOCATION : Location,
-  JSON_MESSAGE : Message,
-  JSON_MESSAGE_ASSIGNMENT : MessageAssignment,
-  JSON_TRACER : Tracer,
-  JSON_TRACER_MAPPING : TracerCatalogPage,
-  JSON_PROCEDURE : Procedure,
-  JSON_PROCEDURE_IDENTIFIER : ProcedureIdentifier,
-  JSON_PRODUCTION : ActivityProduction,
-  JSON_SECONDARY_EMAIL : SecondaryEmail,
-  JSON_SERVER_CONFIG : ServerConfiguration,
-  JSON_USER : User,
-  JSON_USER_ASSIGNMENT : UserAssignment,
-  JSON_VIAL : Vial,
+  DATA_ADDRESS : Address,
+  DATA_ACTIVITY_ORDER : ActivityOrder,
+  DATA_BOOKING : Booking,
+  DATA_CLOSED_DATE : ClosedDate,
+  DATA_CUSTOMER : Customer,
+  DATA_DEADLINE : Deadline,
+  DATA_DELIVER_TIME : ActivityDeliveryTimeSlot,
+  DATA_DICOM_ENDPOINT : DicomEndpoint,
+  DATA_ENDPOINT : DeliveryEndpoint,
+  DATA_INJECTION_ORDER : InjectionOrder,
+  DATA_ISOTOPE : Isotope,
+  DATA_RELEASE_RIGHT : ReleaseRight,
+  #DATA_LEGACY_ACTIVITY_ORDER : LegacyActivityOrder, # We shouldn't need these in frontend
+  #DATA_LEGACY_INJECTION_ORDER : LegacyInjectionOrder, # We shouldn't need these in frontend
+  DATA_LEGACY_PRODUCTION_MEMBER : LegacyProductionMember,
+  DATA_LOCATION : Location,
+  DATA_MESSAGE : Message,
+  DATA_MESSAGE_ASSIGNMENT : MessageAssignment,
+  DATA_TRACER : Tracer,
+  DATA_TRACER_MAPPING : TracerCatalogPage,
+  DATA_PROCEDURE : Procedure,
+  DATA_PROCEDURE_IDENTIFIER : ProcedureIdentifier,
+  DATA_PRODUCTION : ActivityProduction,
+  DATA_SECONDARY_EMAIL : SecondaryEmail,
+  DATA_SERVER_CONFIG : ServerConfiguration,
+  DATA_USER : User,
+  DATA_USER_ASSIGNMENT : UserAssignment,
+  DATA_VIAL : Vial,
 }
 
 INVERTED_MODELS = {
@@ -55,10 +55,10 @@ INVERTED_MODELS = {
 }
 
 TIME_SENSITIVE_FIELDS : Dict[str, str] = {
-  JSON_ACTIVITY_ORDER :  'delivery_date',
-  JSON_CLOSED_DATE : 'close_date',
-  JSON_INJECTION_ORDER : 'delivery_date',
-  JSON_VIAL : 'fill_date',
+  DATA_ACTIVITY_ORDER :  'delivery_date',
+  DATA_CLOSED_DATE : 'close_date',
+  DATA_INJECTION_ORDER : 'delivery_date',
+  DATA_VIAL : 'fill_date',
 
 }
 
