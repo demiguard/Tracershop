@@ -283,23 +283,23 @@ export const MODELS = {
   deadline : Deadline,
   deliver_times : ActivityDeliveryTimeSlot,
   dicom_endpoint : DicomEndpoint,
-  deliveryEndpoint : DeliveryEndpoint,
+  delivery_endpoint : DeliveryEndpoint,
   injection_orders : InjectionOrder,
   isotopes : Isotope,
   release_right : ReleaseRight,
   legacy_production_member : LegacyProductionMember,
   location : Location,
   message : Message,
-  messageAssignment : MessageAssignment,
+  message_assignment : MessageAssignment,
   tracer : Tracer,
   tracer_mapping : TracerCatalogPage,
   procedure : Procedure,
   procedure_identifier : ProcedureIdentifier,
   production : ActivityProduction,
-  secondaryEmail : SecondaryEmail,
+  secondary_email : SecondaryEmail,
   server_config : ServerConfiguration,
   user : User,
-  userAssignment : UserAssignment,
+  user_assignment : UserAssignment,
   vial : Vial,
 }
 
@@ -313,52 +313,156 @@ export class TracershopState {
   /** @type { Map<Number, Deadline>} */ deadline
   /** @type { Map<Number, ActivityDeliveryTimeSlot>} */ deliver_times
   /** @type { Map<Number, DicomEndpoint>} */ dicom_endpoint
-  /** @type { Map<Number, DeliveryEndpoint>} */ deliveryEndpoint
+  /** @type { Map<Number, DeliveryEndpoint>} */ delivery_endpoint
   /** @type { Map<Number, InjectionOrder>} */ injection_orders
   /** @type { Map<Number, Isotope>} */ isotopes
   /** @type { Map<Number, ReleaseRight>} */ release_right
   /** @type { Map<Number, LegacyProductionMember>} */ legacy_production_member
   /** @type { Map<Number, Location>} */ location
   /** @type { Map<Number, Message>} */ message
-  /** @type { Map<Number, MessageAssignment>} */ messageAssignment
+  /** @type { Map<Number, MessageAssignment>} */ message_assignment
   /** @type { Map<Number, Tracer>} */ tracer
   /** @type { Map<Number, TracerCatalogPage>} */ tracer_mapping
   /** @type { Map<Number, Procedure>} */ procedure
   /** @type { Map<Number, ProcedureIdentifier>} */ procedure_identifier
   /** @type { Map<Number, ActivityProduction>} */ production
-  /** @type { Map<Number, SecondaryEmail>} */ secondaryEmail
+  /** @type { Map<Number, SecondaryEmail>} */ secondary_email
   /** @type { Map<Number, ServerConfiguration>} */ server_config
   /** @type { Map<Number, User>} */ user
-  /** @type { Map<Number, UserAssignment>} */ userAssignment
+  /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, deliveryEndpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, messageAssignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondaryEmail, server_config, user, userAssignment, vial, ){
+  constructor(logged_in_user, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
-    this.address = address
-    this.activity_orders = activity_orders
-    this.booking = booking
-    this.closed_date = closed_date
-    this.customer = customer
-    this.deadline = deadline
-    this.deliver_times = deliver_times
-    this.dicom_endpoint = dicom_endpoint
-    this.deliveryEndpoint = deliveryEndpoint
-    this.injection_orders = injection_orders
-    this.isotopes = isotopes
-    this.release_right = release_right
-    this.legacy_production_member = legacy_production_member
-    this.location = location
-    this.message = message
-    this.messageAssignment = messageAssignment
-    this.tracer = tracer
-    this.tracer_mapping = tracer_mapping
-    this.procedure = procedure
-    this.procedure_identifier = procedure_identifier
-    this.production = production
-    this.secondaryEmail = secondaryEmail
-    this.server_config = server_config
-    this.user = user
-    this.userAssignment = userAssignment
-    this.vial = vial
+    if(address !== undefined){
+      this.address = address
+    } else {
+      this.address = new Map()
+    }
+    if(activity_orders !== undefined){
+      this.activity_orders = activity_orders
+    } else {
+      this.activity_orders = new Map()
+    }
+    if(booking !== undefined){
+      this.booking = booking
+    } else {
+      this.booking = new Map()
+    }
+    if(closed_date !== undefined){
+      this.closed_date = closed_date
+    } else {
+      this.closed_date = new Map()
+    }
+    if(customer !== undefined){
+      this.customer = customer
+    } else {
+      this.customer = new Map()
+    }
+    if(deadline !== undefined){
+      this.deadline = deadline
+    } else {
+      this.deadline = new Map()
+    }
+    if(deliver_times !== undefined){
+      this.deliver_times = deliver_times
+    } else {
+      this.deliver_times = new Map()
+    }
+    if(dicom_endpoint !== undefined){
+      this.dicom_endpoint = dicom_endpoint
+    } else {
+      this.dicom_endpoint = new Map()
+    }
+    if(delivery_endpoint !== undefined){
+      this.delivery_endpoint = delivery_endpoint
+    } else {
+      this.delivery_endpoint = new Map()
+    }
+    if(injection_orders !== undefined){
+      this.injection_orders = injection_orders
+    } else {
+      this.injection_orders = new Map()
+    }
+    if(isotopes !== undefined){
+      this.isotopes = isotopes
+    } else {
+      this.isotopes = new Map()
+    }
+    if(release_right !== undefined){
+      this.release_right = release_right
+    } else {
+      this.release_right = new Map()
+    }
+    if(legacy_production_member !== undefined){
+      this.legacy_production_member = legacy_production_member
+    } else {
+      this.legacy_production_member = new Map()
+    }
+    if(location !== undefined){
+      this.location = location
+    } else {
+      this.location = new Map()
+    }
+    if(message !== undefined){
+      this.message = message
+    } else {
+      this.message = new Map()
+    }
+    if(message_assignment !== undefined){
+      this.message_assignment = message_assignment
+    } else {
+      this.message_assignment = new Map()
+    }
+    if(tracer !== undefined){
+      this.tracer = tracer
+    } else {
+      this.tracer = new Map()
+    }
+    if(tracer_mapping !== undefined){
+      this.tracer_mapping = tracer_mapping
+    } else {
+      this.tracer_mapping = new Map()
+    }
+    if(procedure !== undefined){
+      this.procedure = procedure
+    } else {
+      this.procedure = new Map()
+    }
+    if(procedure_identifier !== undefined){
+      this.procedure_identifier = procedure_identifier
+    } else {
+      this.procedure_identifier = new Map()
+    }
+    if(production !== undefined){
+      this.production = production
+    } else {
+      this.production = new Map()
+    }
+    if(secondary_email !== undefined){
+      this.secondary_email = secondary_email
+    } else {
+      this.secondary_email = new Map()
+    }
+    if(server_config !== undefined){
+      this.server_config = server_config
+    } else {
+      this.server_config = new Map()
+    }
+    if(user !== undefined){
+      this.user = user
+    } else {
+      this.user = new Map()
+    }
+    if(user_assignment !== undefined){
+      this.user_assignment = user_assignment
+    } else {
+      this.user_assignment = new Map()
+    }
+    if(vial !== undefined){
+      this.vial = vial
+    } else {
+      this.vial = new Map()
+    }
   }
 }

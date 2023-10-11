@@ -6,11 +6,15 @@ import { LoginSite } from "./login_site";
 import { AdminSite } from "./admin_site";
 import { ShopSite } from "./shop_site";
 import { ProductionSite } from "./production_site";
-import { ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_JAVASCRIPT_VERSION, ERROR_UNHANDLED_USER_GROUP, PROP_USER, USER_GROUPS, PROP_TRACERSHOP_SITE } from "../../lib/constants";
+import { DATABASE_CURRENT_USER, PROP_LOGOUT, PROP_USER, USER_GROUPS} from "~/lib/constants";
 import { ErrorPage } from "../error_pages/error_page";
-import InvalidVersionPage from "../error_pages/invalid_version_page";
 import { User } from "~/dataclasses/dataclasses";
 import { ErrorBoundary } from "react-error-boundary";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { WEBSOCKET_MESSAGE_AUTH_LOGOUT } from "~/lib/shared_constants";
+import { UpdateCurrentUser } from "~/lib/websocket_actions";
+import Cookies from "js-cookie";
+import { db } from "~/lib/local_storage_driver";
 
 const SITES = {
   log_in_site : LoginSite,
@@ -20,12 +24,26 @@ const SITES = {
 }
 
 
-export function TracerShop(props) {
+export function TracerShop() {
   /**
     * Extracts which site the sure should be showed based on User group
     * @param {User} user - User to figure out which site to return
     * @returns {Component}
   */
+  const tracershopState = useTracershopState()
+  const dispatch = useTracershopDispatch()
+  const websocket = useWebsocket()
+
+  function logout(){
+    websocket.send(websocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGOUT)).then(
+      () => {
+        dispatch(new UpdateCurrentUser(new User()));
+        Cookies.remove('sessionid')
+        db.set(DATABASE_CURRENT_USER, new User());
+      }
+    )
+  }
+
   function get_site_from_user(user) {
     if(user.user_group == USER_GROUPS.ANON || user.user_group === undefined){
       return SITES.log_in_site
@@ -47,10 +65,10 @@ export function TracerShop(props) {
     throw "Unknown User group: " + user.user_group;
   }
 
-  const Site = get_site_from_user(props[PROP_USER]);
+  const Site = get_site_from_user(tracershopState.logged_in_user);
 
   return (
   <ErrorBoundary FallbackComponent={ErrorPage}>
-    <Site {...props}/>
+    <Site logout={logout}/>
   </ErrorBoundary>);
 }

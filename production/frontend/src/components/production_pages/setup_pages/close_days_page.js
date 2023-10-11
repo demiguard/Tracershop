@@ -7,25 +7,27 @@ import { Calender, productionGetMonthlyOrders } from "../../injectable/calender"
 
 import { dateToDateString } from "~/lib/formatting.js";
 import { ClosedDate } from "~/dataclasses/dataclasses";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
-export function CloseDaysPage (props) {
+export function CloseDaysPage () {
   const closedDateMap = new Map();
-  const websocket = useWebsocket()
+  const websocket = useWebsocket();
+  const tracerShopState = useTracershopState();
 
-  for(const [_BDID, _closedDate] of props[DATA_CLOSED_DATE]){
+  for(const [_BDID, _closedDate] of tracerShopState.closed_date){
     const /**@type {ClosedDate} */ closedDate = _closedDate;
     closedDateMap.set(closedDate.close_date, closedDate.id);
   }
 
   function changeCloseDay (dateObject) {
+    console.log(dateObject)
     const dateStr = dateToDateString(dateObject)
     if (closedDateMap.has(dateStr)){
       const closedDateID = closedDateMap.get(dateStr);
       websocket.sendDeleteModel(DATA_CLOSED_DATE, [closedDateID])
     } else { // Delete it
       const newClosedDate = new ClosedDate(undefined, dateStr);
-      websocket.sendCreateModel(DATA_CLOSED_DATE,newClosedDate)
+      websocket.sendCreateModel(DATA_CLOSED_DATE, newClosedDate)
     }
   }
   const calenderProps = {}

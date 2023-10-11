@@ -5,11 +5,13 @@ import Cookies from "js-cookie";
 
 import { TracershopNavbar } from "../injectable/navbar";
 import Authenticate from "../injectable/authenticate";
-import { PROP_SET_USER } from "~/lib/constants";
+import { DATABASE_CURRENT_USER, PROP_SET_USER } from "~/lib/constants";
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, DATA_AUTH, WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/shared_constants"
 
 import { deserialize_single } from "~/lib/serialization";
-import { useWebsocket } from "../tracer_shop_context";
+import { useWebsocket, useTracershopDispatch } from "../tracer_shop_context";
+import { UpdateCurrentUser } from "~/lib/websocket_actions";
+import { db } from "~/lib/local_storage_driver";
 
 const DEFAULT_STATE = {
   loginError : "",
@@ -28,6 +30,7 @@ const ERROR_STATE = {
 
 export function LoginSite(props) {
   const websocket = useWebsocket()
+  const dispatch = useTracershopDispatch()
   const [state, setState] = useState(DEFAULT_STATE);
 
   // Authentication Methods
@@ -42,10 +45,11 @@ export function LoginSite(props) {
     websocket.send(message).then((data) => {
       if (data[AUTH_IS_AUTHENTICATED]){
         const user = deserialize_single(data[AUTH_USER])
-        props[PROP_SET_USER](user);
+        db.set(DATABASE_CURRENT_USER, user);
+        dispatch(new UpdateCurrentUser(user));
         Cookies.set('sessionid',
                     data[WEBSOCKET_SESSION_ID],
-                    {sameSite : 'strict', secure : true});
+                    {sameSite : 'strict'});
         setState(DEFAULT_STATE);
         websocket.send(
           websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE)

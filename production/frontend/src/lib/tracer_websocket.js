@@ -1,21 +1,36 @@
+import React from "react";
+import Cookies from "js-cookie";
+
 import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
   WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
   WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
-  AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER } from "~/lib/shared_constants.js";
+  AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants.js";
 
-  import { ParseJSONstr } from "~/lib/formatting.js";
-import { ActivityOrder, InjectionOrder } from "~/dataclasses/dataclasses.js";
-import { DeleteState, UpdateState } from "~/components/tracer_shop_context";
+import { ParseJSONstr } from "~/lib/formatting.js";
+import { ActivityOrder, InjectionOrder, User } from "~/dataclasses/dataclasses.js";
+import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction } from '~/lib/websocket_actions';
+import { deserialize_single } from "./serialization";
+import { DATABASE_CURRENT_USER } from "./constants";
+import { db } from "./local_storage_driver";
 
-export { safeSend, TracerWebSocket }
+export class TracerWebSocket {
+  /**@type {WebSocket} */ _ws
+  /**@type {React.Dispatch<React.ReducerAction>} */ _dispatch
 
-class TracerWebSocket {
-  constructor(Websocket, dispatch){
+  /**
+   * 
+   * @param {WebSocket} Websocket 
+   * @param {React.Dispatch<React.ReducerAction>} dispatch 
+   */
+  constructor(websocket, dispatch){
+    console.log("Creating websocket")
     this._PromiseMap = new Map();
-    this._ws = Websocket;
+    this._ws = websocket;
+    this._dispatch = dispatch
+
 
     /** This function is called, when a message is received through the websocket from the server.
      *  This function handles all the different messages.
@@ -49,11 +64,11 @@ class TracerWebSocket {
            * }
            */
           const state = ParseJSONstr(message[WEBSOCKET_DATA])
-          dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
-
+            this.dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-          dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
+            this.dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
+
         }
         break;
         case WEBSOCKET_MESSAGE_FREE_INJECTION:
@@ -61,7 +76,8 @@ class TracerWebSocket {
         {
           if(message[AUTH_IS_AUTHENTICATED]){
             const state = ParseJSONstr(message[WEBSOCKET_DATA]);
-            dispatch(state, message[WEBSOCKET_REFRESH]);
+
+            this.dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
           }
         }
         break;
@@ -77,8 +93,32 @@ class TracerWebSocket {
 
     this._ws.onerror = function(err) {
       console.error("Socket encounter error: ", err.message);
-      ws.close();
+      this._ws.close();
     }
+
+  if(true){
+    this._ws.onopen = function (){
+      const message = this.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI);
+      this.send(message).then((data) => {
+        let user;
+        if (data[AUTH_IS_AUTHENTICATED]){
+          user = deserialize_single(data[AUTH_USER])
+        } else {
+          user = new User();
+        }
+        db.set(DATABASE_CURRENT_USER, user)
+        this.dispatch(new UpdateCurrentUser(user));
+        this.send(this.getMessage(WEBSOCKET_MESSAGE_GET_STATE))
+
+      if(data[WEBSOCKET_SESSION_ID]) {
+        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite:'strict'})
+      }
+
+      });
+    }
+
+    this._ws.onopen = this._ws.onopen.bind(this)
+  }
     this._ws.onmessage = this._ws.onmessage.bind(this)
     this._ws.onclose = this._ws.onclose.bind(this)
     this._ws.onerror = this._ws.onerror.bind(this)
@@ -215,9 +255,21 @@ class TracerWebSocket {
     };
     return this.send(message)
   }
+
+  /**
+   * Dispatches safely to the consumer
+   * @param {ReducerAction} action 
+   */
+  dispatch(action){
+    if(this._dispatch !== undefined){
+      this._dispatch(action)
+    } else {
+      console.log("Missed dispatch")
+    }
+  }
 }
 
-async function safeSend(message, websocket){
+export async function safeSend(message, websocket){
   var iter = 0;
   var readyState = websocket.readyState;
   while(iter < 10 && readyState === 0){

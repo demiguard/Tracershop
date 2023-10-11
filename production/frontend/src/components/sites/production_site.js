@@ -6,6 +6,7 @@ import { VialPage } from "../production_pages/vial_page.js";
 
 import { SetupShop } from "../production_pages/setup_pages/setup_shop.js"
 import { PROP_USER, USER_GROUPS } from "../../lib/constants.js";
+import { useTracershopState } from "../tracer_shop_context.js";
 
 const Pages = {
   orders : OrderPage,
@@ -24,11 +25,12 @@ const UserPages = {
   vial : "Hætteglas"
 }
 
-export function ProductionSite(props) {
+export function ProductionSite({ logout, NavbarElements }) {
+  const state = useTracershopState()
   const [activePage, setActivePage] = useState("orders");
   const ActivePage = Pages[activePage];
 
-  const /**@type {User} */ user = props[PROP_USER]
+  const user = state.logged_in_user;
   let availablePages;
   if([USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.ADMIN].includes(user.user_group)){
     availablePages = AdminPages;
@@ -42,12 +44,12 @@ export function ProductionSite(props) {
           ActiveKey={activePage}
           Names={availablePages}
           setActivePage={setActivePage}
-          logout={props.logout}
+          logout={logout}
           isAuthenticated={true}
-          NavbarElements={props.NavbarElements}
+          NavbarElements={NavbarElements}
         />
         <Container>
-          <ActivePage {...props}/>
+          <ActivePage/>
         </Container>
       </div>
   );

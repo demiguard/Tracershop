@@ -6,15 +6,16 @@ import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js
 import { CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
+import propTypes from 'prop-types'
+
 
 import { cssCenter, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
   PROP_TRACER_CATALOG
 } from "../../lib/constants.js";
 
-import {DATA_CUSTOMER, DATA_VIAL, DATA_TRACER_MAPPING, WEBSOCKET_MESSAGE_RESTORE_ORDERS,
+import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
   WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME,
-  DATA_ISOTOPE, DATA_PRODUCTION, DATA_ENDPOINT, DATA_TRACER
 } from "~/lib/shared_constants.js"
 
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
@@ -24,8 +25,7 @@ import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.j
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMapping } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
 import { applyFilter, productionDayTracerFilter } from "../../lib/filters.js";
-import { TracerWebSocket } from "../../lib/tracer_websocket.js";
-import { useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 
 const Modals = {
   createModal : CreateOrderModal,
@@ -52,62 +52,67 @@ function getTimeSlotOwner(timeSlot, endpoints, customers){
 /** This is the main row block of content
  *
  * @param {{
+ *  active_tracer : Number,
+ *  active_date : Date
  * }} props 
  * @returns {Element}
  */
-export function ActivityTable (props) {
-  const /**@type {Tracer} */ tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER]);
-  const /**@type {Isotope} */ isotope = props[DATA_ISOTOPE].get(tracer.isotope);
-  const activeDay = getDay(props[PROP_ACTIVE_DATE])
-  const delivery_date = dateToDateString(props[PROP_ACTIVE_DATE])
+export function ActivityTable ({active_tracer, active_date}) {
+  const state = useTracershopState();
+
+  const tracer = state.tracer.get(active_tracer);
+  const isotope = state.isotopes.get(tracer.isotope);
+  const activeDay = getDay(active_date)
+  const delivery_date = dateToDateString(active_date)
   const danishDateString = parseDateToDanishDate(delivery_date);
-  const /**@type {TracerWebSocket} */ websocket = useWebsocket()
+  const websocket = useWebsocket()
 
   const /**@type {Array<Number>} */ relevantProductions = applyFilter(
-    props[DATA_PRODUCTION],
-    productionDayTracerFilter(activeDay, props[PROP_ACTIVE_TRACER])
+    state.production,
+    productionDayTracerFilter(activeDay, active_tracer)
   ).map(getId)
 
   const timeSlotMapping = new TimeSlotMapping(
-    props[DATA_ENDPOINT],
-    props[DATA_DELIVER_TIME],
+    state.delivery_endpoint,
+    state.deliver_times,
     relevantProductions,
   )
 
   const productionTimeSlotOwnerShip = new ProductionTimeSlotOwnerShip(
     relevantProductions,
-    props[DATA_DELIVER_TIME]
+    state.deliver_times
   )
 
   const tracerCatalog = new TracerCatalog(
-    props[DATA_TRACER_MAPPING],
-    props[DATA_TRACER]
+    state.tracer_mapping,
+    state.tracer
   )
 
   const [modalIdentifier, setModalIdentifier] = useState(null);
   const [timeSlotID, setTimeSlotID] = useState(null);
 
-
-
   // Order Filtering
-  const /**@type {Array<ActivityOrder>} */ all_orders = [...props[DATA_ACTIVITY_ORDER].values()]
+  const /**@type {Array<ActivityOrder>} */ all_orders = [...state.activity_orders.values()]
   const todays_orders = all_orders.filter((order) => {
-    const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[DATA_DELIVER_TIME].get(order.ordered_time_slot);
-    const /**@type {ActivityProduction} */ production = props[DATA_PRODUCTION].get(timeSlot.production_run)
+    const timeSlot = state.deliver_times.get(order.ordered_time_slot);
+    if (timeSlot === undefined){
+      console.log(state, order)
+    }
+    const production = state.production.get(timeSlot.production_run);
 
-    return order.delivery_date === delivery_date && production.tracer == props[PROP_ACTIVE_TRACER]
+    return order.delivery_date === delivery_date && production.tracer == active_tracer;
   });
 
   const orderMapping = new OrderMapping(todays_orders,
-                                        props[DATA_DELIVER_TIME],
-                                        props[DATA_ENDPOINT])
+                                        state.deliver_times,
+                                        state.delivery_endpoint)
 
   /**
   * Row inside of a RenderedTimeSlot
   * @param {{
-  * order : ActivityOrder
+  *   order : ActivityOrder
   * }} props
-  * @returns {JSX }
+  * @returns { Element }
   */
   function OrderRow({order}){
     let statusIcon = <StatusIcon status={order.status}/>
@@ -133,8 +138,8 @@ export function ActivityTable (props) {
   * @returns
   */
   function RenderedTimeSlot({timeSlot}){
-    const /**@type {DeliveryEndpoint} */ endpoint = props[DATA_ENDPOINT].get(timeSlot.destination)
-    const owner = getTimeSlotOwner(timeSlot, props[DATA_ENDPOINT], props[DATA_CUSTOMER])
+    const endpoint = state.delivery_endpoint.get(timeSlot.destination)
+    const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
     const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id)
     // Prop extraction
     const orders = orderMapping.getOrders(timeSlot.id)
@@ -163,7 +168,7 @@ export function ActivityTable (props) {
         }
       }
       if(order.moved_to_time_slot === timeSlot.id){
-        const /**@type {ActivityDeliveryTimeSlot} */ originalTimeSlot =  props[DATA_DELIVER_TIME].get(order.ordered_time_slot);
+        const /**@type {ActivityDeliveryTimeSlot} */ originalTimeSlot =  state.deliver_times.get(order.ordered_time_slot);
         const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, timeSlot.delivery_time);
         deliveredMBq += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity)  * overhead
       }
@@ -171,8 +176,7 @@ export function ActivityTable (props) {
       minimumStatus = Math.min(minimumStatus, order.status);
 
       if(minimumStatus === 3){
-        for(const [_vialID, _vial] of props[DATA_VIAL]){
-          const /**@type {Vial} */ vial = _vial
+        for(const vial of state.vial.values()){
           if (vial.assigned_to === order.id){
             freedMbq += vial.activity
           }
@@ -305,7 +309,7 @@ export function ActivityTable (props) {
  * @returns 
  */
 function ProductionRow({active_production}){
-  const /**@type {ActivityProduction} */ production = props[DATA_PRODUCTION].get(active_production)
+  const /**@type {ActivityProduction} */ production = state.production.get(active_production)
 
   let activity_ordered = 0;
   let activity_overhead = 0
@@ -315,7 +319,7 @@ function ProductionRow({active_production}){
 
   if (associatedTimeSlots !== undefined) {
     for(const timeSlot of associatedTimeSlots){
-      const customer = getTimeSlotOwner(timeSlot, props[DATA_ENDPOINT], props[DATA_CUSTOMER])
+      const customer = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
       const overhead = tracerCatalog.getOverheadForTracer(customer.id, tracer.id)
       const orders = orderMapping.getOrders(timeSlot.id)
       if(orders !== undefined) for (const order of orders){
@@ -346,26 +350,27 @@ function ProductionRow({active_production}){
     return (<ProductionRow key={productionID} active_production={productionID}/>)
   })
 
-
   const renderedTimeSlots = [];
   for (const timeSlot of orderMapping){
       renderedTimeSlots.push(<RenderedTimeSlot
                 key={timeSlot.id}
                 timeSlot = {timeSlot}
-             />)
+             />);
   }
 
-
-  const modalProps = {...props}
-  modalProps[PROP_ORDER_MAPPING] = timeSlotMapping
-  modalProps[PROP_ON_CLOSE] = () => {
-    setModalIdentifier(null)
-    setTimeSlotID(null)
+  const modalProps = {
+    [PROP_ACTIVE_TRACER] : active_tracer,
+    [PROP_ACTIVE_DATE] : active_date,
+    [PROP_ORDER_MAPPING] : timeSlotMapping,
+    [PROP_ON_CLOSE] : () => {
+      setModalIdentifier(null)
+      setTimeSlotID(null)
+    },
+    [PROP_TIME_SLOT_ID] : timeSlotID,
+    [PROP_TIME_SLOT_MAPPING] : timeSlotMapping,
+    [PROP_ORDER_MAPPING] : orderMapping,
+    [PROP_TRACER_CATALOG] : tracerCatalog,
   }
-  modalProps[PROP_TIME_SLOT_ID] = timeSlotID
-  modalProps[PROP_TIME_SLOT_MAPPING] = timeSlotMapping;
-  modalProps[PROP_ORDER_MAPPING] = orderMapping;
-  modalProps[PROP_TRACER_CATALOG] = tracerCatalog;
 
   let Modal = null
   if(Modals[modalIdentifier]){
@@ -394,4 +399,9 @@ function ProductionRow({active_production}){
       { modalIdentifier != null ? Modal : null }
     </div>
   );
+}
+
+ActivityTable.propType = {
+  [PROP_ACTIVE_TRACER] : propTypes.number.isRequired,
+  [PROP_ACTIVE_DATE] : propTypes.objectOf(Date),
 }

@@ -20,7 +20,7 @@ export const DATA_DATABASE = "database";
 export const DATA_DEADLINE = "deadline";
 export const DATA_DELIVER_TIME = "deliver_times";
 export const DATA_DICOM_ENDPOINT = "dicom_endpoint";
-export const DATA_ENDPOINT = "deliveryEndpoint";
+export const DATA_ENDPOINT = "delivery_endpoint";
 export const DATA_INJECTION_ORDER = "injection_orders";
 export const DATA_ISOTOPE = "isotopes";
 export const DATA_LEGACY_ACTIVITY_ORDER = "legacy_activity_order";
@@ -28,19 +28,19 @@ export const DATA_LEGACY_INJECTION_ORDER = "legacy_injection_order";
 export const DATA_LEGACY_PRODUCTION_MEMBER = "legacy_production_member";
 export const DATA_LOCATION = "location";
 export const DATA_MESSAGE = "message";
-export const DATA_MESSAGE_ASSIGNMENT = "messageAssignment";
+export const DATA_MESSAGE_ASSIGNMENT = "message_assignment";
 export const DATA_ORDERS = "orders";
 export const DATA_PROCEDURE = "procedure";
 export const DATA_PROCEDURE_IDENTIFIER = "procedure_identifier";
 export const DATA_PRODUCTION = "production";
 export const DATA_RELEASE_RIGHT = "release_right";
 export const DATA_RUN = "run";
-export const DATA_SECONDARY_EMAIL = "secondaryEmail";
+export const DATA_SECONDARY_EMAIL = "secondary_email";
 export const DATA_SERVER_CONFIG = "server_config";
 export const DATA_TRACER = "tracer";
 export const DATA_TRACER_MAPPING = "tracer_mapping";
 export const DATA_USER = "user";
-export const DATA_USER_ASSIGNMENT = "userAssignment";
+export const DATA_USER_ASSIGNMENT = "user_assignment";
 export const DATA_VIAL = "vial";
 
 export const ERROR_INSUFFICIENT_DATA = "InsufficientData";
@@ -97,6 +97,28 @@ export const WEBSOCKET_MESSAGE_ORDER_INJECTION = "OrderInjection";
 export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
 export const WEBSOCKET_MESSAGE_SUCCESS = "success";
 export const WEBSOCKET_MESSAGE_TYPE = "messageType";
+export const WEBSOCKET_MESSAGE_TYPES = [
+  "login",
+  "logout",
+  "whoami",
+  "createActivityOrder",
+  "createInjectionOrder",
+  "echo",
+  "getOrders",
+  "getState",
+  "freeActivity",
+  "freeInjection",
+  "createModel",
+  "deleteModel",
+  "editModel",
+  "massOrder",
+  "OrderActivity",
+  "OrderInjection",
+  "moveOrder",
+  "restoreOrders",
+  "changeExternalPassword",
+  "createExternalUser",
+]
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_OBJECT_DOES_NOT_EXISTS = "objectDoesNotExists";
 export const WEBSOCKET_REFRESH = "refresh";

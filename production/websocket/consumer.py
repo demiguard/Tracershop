@@ -13,8 +13,8 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from asgiref.sync import sync_to_async
-import decimal
 import logging
+from pprint import pformat
 import traceback
 from typing import Any, Dict, List, Callable, Coroutine, Optional
 
@@ -40,7 +40,6 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     ERROR_UNKNOWN_FAILURE,\
     DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_DELIVER_TIME, DATA_INJECTION_ORDER, DATA_VIAL,\
     DATA_USER, DATA_USER_ASSIGNMENT,\
-    LEGACY_KEYWORD_CUSTOMER, LEGACY_KEYWORD_USERGROUP,\
     WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_DATE,\
     WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, \
     WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,\
@@ -124,15 +123,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def connect(self):
     """Method called when a user connect
     """
+
     await self.channel_layer.group_add(self.global_group, self.channel_name)
     user = await get_user(self.scope)
     await self.enterUserGroups(user)
     await self.accept()
+    logger.debug(f"{user} connected!")
 
   async def disconnect(self, close_code):
     user = await get_user(self.scope)
     await self.leaveUserGroups(user)
     await self.channel_layer.group_discard(self.global_group, self.channel_name)
+    logger.debug(f"{user} disconnected!")
 
 
   def __prepBroadcastMessage(self, message: Dict) -> None:
@@ -157,7 +159,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def __broadcastProduction(self, message: Dict):
-    """Boardcast only to produciton
+    """Broadcast only to production
 
     Args:
         message (Dict): _description_
@@ -174,7 +176,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if customerIDs is None:
       await self.__broadcastGlobal(message)
       return
-
 
     await self.__broadcastProduction(message)
     for customerID in customerIDs:
@@ -212,7 +213,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     try:
       error = auth.validateMessage(message)
-
       if error != "":
         if WEBSOCKET_MESSAGE_ID in message:
           logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
@@ -225,6 +225,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
       user = await get_user(self.scope)
       if not auth.AuthMessage(user, message):
+        logger.info(f"Insufficient Rights for {user}!")
         await self.HandleKnownError(message, ERROR_INSUFFICIENT_PERMISSIONS)
         return
 
@@ -338,17 +339,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, User):
       await self.enterUserGroups(user)
       isAuth = True
-      user = await self.db.serialize_dict({DATA_USER : [user]})
+      user_serialized = await self.db.serialize_dict({DATA_USER : [user]})
       key = self.scope["session"].session_key
     else:
       isAuth = False
-      user = {}
+      user_serialized = {}
       key = ""
+
+    logger.info(f"Who Am i: {user}")
 
     await self.send_json({
       WEBSOCKET_SESSION_ID : key,
       AUTH_IS_AUTHENTICATED : isAuth,
-      AUTH_USER : user,
+      AUTH_USER : user_serialized,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -429,6 +432,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATA
                                   WEBSOCKET_DATATYPE
     """
+    logger.debug(f"Message: {pformat(message)}")
     user = await get_user(self.scope)
     instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
                                                  message[WEBSOCKET_DATA],
@@ -437,6 +441,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     serialized_data = await self.db.serialize_dict({
       message[WEBSOCKET_DATATYPE] : instances
     })
+    print(user,  instances, customerIDs, serialized_data)
     await self.__broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : serialized_data,
@@ -785,7 +790,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
 
-  Handlers = {
+  Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT : handleLogout,
     WEBSOCKET_MESSAGE_AUTH_WHOAMI : handleWhoAmI,
