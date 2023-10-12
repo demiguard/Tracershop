@@ -7,6 +7,7 @@ import { PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constan
 import {DATA_CUSTOMER, DATA_USER_ASSIGNMENT } from "../../lib/shared_constants";
 import { User, UserAssignment } from "../../dataclasses/dataclasses";
 import { NoAssociatedUser } from "../shop_pages/no_associated_user";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 
 const Pages = {
   orders : ShopOrderPage,
@@ -24,17 +25,15 @@ const UserPages = {
   orders : "Bestillinger"
 }
 
-export function ShopSite (props) {
+export function ShopSite ({logout, NavbarElements}) {
+  const state = useTracershopState();
   const [siteIdentifier, setSiteIdentifier] = useState("orders");
   const Site = Pages[siteIdentifier];
-  const siteProps = {...props};
-  const /**@type {User} */ user = props[PROP_USER]
 
-
+  const /**@type {User} */ user = state.logged_in_user;
   let relatedCustomer
   if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
-    relatedCustomer = [...props[DATA_USER_ASSIGNMENT].values()].filter((_userAssignment) => {
-      const /**@type {UserAssignment} */ userAssignment = _userAssignment
+    relatedCustomer = [...state.user_assignment.values()].filter((userAssignment) => {
       return userAssignment.user === user.id
     }).map((userAssignment) => {return userAssignment.customer})
 
@@ -45,18 +44,16 @@ export function ShopSite (props) {
           <TracershopNavbar
             ActiveKey={null}
             Names={{}}
-            logout={props.logout}
+            logout={logout}
             isAuthenticated={true}
             NavbarElements={[]}
             setActivePage={() => {}}
           />
-          <NoAssociatedUser
-            {...props}
-          />
-        </div>)
+          <NoAssociatedUser />
+        </div>);
     }
-  } else {
-    relatedCustomer = [...props[DATA_CUSTOMER].values()].map((customer)=> {return customer.id})
+  } else if (user.user_group === USER_GROUPS.ADMIN) {
+    relatedCustomer = [...state.customer.values()].map((customer) => {return customer.id});
   }
 
   let availablePages
@@ -66,17 +63,16 @@ export function ShopSite (props) {
     availablePages = AdminPages
   }
 
-  siteProps[PROP_RELATED_CUSTOMER] = relatedCustomer;
 
   return(<div>
     <TracershopNavbar
           ActiveKey={siteIdentifier}
           Names={availablePages}
-          logout={props.logout}
+          logout={logout}
           isAuthenticated={true}
-          NavbarElements={props.NavbarElements}
+          NavbarElements={NavbarElements}
           setActivePage={setSiteIdentifier}
     />
-    <Site {...siteProps}/>
+    <Site relatedCustomer={relatedCustomer} />
   </div>);
 }

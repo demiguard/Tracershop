@@ -8,14 +8,14 @@ import { act } from "react-dom/test-utils";
 import { jest } from '@jest/globals'
 
 import { CreateOrderModal } from '~/components/modals/create_activity_modal.js'
-import { PROP_ACTIVE_DATE, PROP_ON_CLOSE , PROP_TIME_SLOT_MAPPING
+import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE , PROP_TIME_SLOT_MAPPING
   } from "~/lib/constants.js";
 import { DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MODEL_CREATE } from "~/lib/shared_constants"
 
-import { AppState } from '~/tests/app_state.js'
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
-import { TracerWebSocket } from "~/lib/tracer_websocket";
-jest.mock("../../../lib/tracer_websocket")
+import { AppState, testState } from '~/tests/app_state.js'
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+const module = jest.mock('../../../lib/tracer_websocket.js');
+const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 const onClose = jest.fn()
 
@@ -29,23 +29,25 @@ beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
-  websocket = new TracerWebSocket();
-  props = {...AppState}
-  props[PROP_ACTIVE_DATE] = new Date(2020,3,5);
-  props[PROP_ON_CLOSE] = onClose
-
-  props[PROP_TIME_SLOT_MAPPING] = new Map([
-    [1, new Map([
-      [1 , [AppState[DATA_DELIVER_TIME].get(1), AppState[DATA_DELIVER_TIME].get(2)]],
-      [2,  []],
-    ])],
-    [2, new Map()]
-  ]);
+  websocket = tracer_websocket.TracerWebSocket;
+  props = {
+    [PROP_ACTIVE_TRACER] : 1,
+    [PROP_ACTIVE_DATE] : new Date(2020,3,5),
+    [PROP_ON_CLOSE] : onClose,
+    [PROP_TIME_SLOT_MAPPING] : new Map([
+      [1, new Map([
+        [1 , [testState.deliver_times.get(1), testState.deliver_times.get(2)]],
+        [2,  []],
+      ])],
+      [2, new Map()]
+    ])
+  }
 });
 
 
 afterEach(() => {
   cleanup();
+  module.clearAllMocks()
 
   if(container != null) container.remove();
   container = null;
@@ -58,9 +60,12 @@ afterEach(() => {
 describe("create activity modal", () => {
   it("standard render test", async () => {
 
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+             <WebsocketContextProvider value={websocket}>
+               <CreateOrderModal {...props} />
+             </WebsocketContextProvider>
+           </StateContextProvider>);
+
 
     expect(await screen.findByLabelText('customer-select')).toBeVisible();
     expect(await screen.findByLabelText('endpoint-select')).toBeVisible();
@@ -70,24 +75,28 @@ describe("create activity modal", () => {
   });
 
 
-  it.skip("Change Delivery Time", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateOrderModal {...props} />
-    </WebsocketContextProvider>);
+  it.skip("Change Delivery Time", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateOrderModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
-    const timeSlotSelect = await screen.findByLabelText("time-slot-select");
-    const targetTimeSlot = props[DATA_DELIVER_TIME].get(2);
+    const timeSlotSelect = screen.getByLabelText("time-slot-select");
+    const targetTimeSlot = testState.deliver_times.get(2);
     act(() => {
       fireEvent.change(timeSlotSelect, {target: {value : targetTimeSlot.id}})
     })
 
-    expect(await screen.findByText(targetTimeSlot.delivery_time)).toBeVisible();
+    expect(screen.getByText(targetTimeSlot.delivery_time)).toBeVisible();
   });
 
-  it.skip("Order Default", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateOrderModal {...props} />
-    </WebsocketContextProvider>);
+  it("Order Default", async () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateOrderModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     const activityInput = await screen.findByLabelText('activity-input')
     const orderButton = await screen.findByRole('button', {name : "Opret Ordre"})
@@ -97,14 +106,17 @@ describe("create activity modal", () => {
       fireEvent.click(orderButton);
     });
 
-    expect(websocket.send).toBeCalled()
-    expect(websocket.getMessage).toHaveBeenCalledWith(WEBSOCKET_MESSAGE_MODEL_CREATE);
+    expect(websocket.sendCreateActivityOrder).toBeCalled();
   });
 
-  it.skip("Change to endpoint-less Customer", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateOrderModal {...props} />
-    </WebsocketContextProvider>);
+  it("Change to endpoint-less Customer", async () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateOrderModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+
     const customerSelect = await screen.findByLabelText('customer-select');
 
     act(() => {

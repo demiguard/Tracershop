@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { Calender, getColorShop } from "../injectable/calender.js";
 import { Select, toOptions } from '../injectable/select.js'
@@ -10,16 +10,14 @@ import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK
   DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
 } from "../../lib/constants.js";
-import {DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, DATA_CUSTOMER, DATA_DEADLINE,
-  DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_PRODUCTION,
-  DATA_SERVER_CONFIG, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS} from "../../lib/shared_constants.js"
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/shared_constants.js"
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
   ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
 import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
-import { useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -27,33 +25,41 @@ const Content = {
 };
 
 
-export function ShopOrderPage (props){
-  const websocket = useWebsocket();
-  let activeCustomerInit = db.get(DATABASE_SHOP_CUSTOMER);
+/**
+ * 
+ * @param {*} initRef 
+ * @param {*} state 
+ */
+function initialize(initRef, state){
+  let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
 
-    if(activeCustomerInit === null){
-      for(const [customerID, _customer] of props[DATA_CUSTOMER]){
-        activeCustomerInit = customerID
+    if(activeCustomer === null){
+      for(const [customerID, _customer] of state.customer){
+        activeCustomer = customerID
         db.set(DATABASE_SHOP_CUSTOMER, customerID)
         break;
       }
     }
 
-    let activeEndpointInit = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
-    for(const [endpointID, _endpoint] of props[DATA_ENDPOINT]){
+    let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
+    for(const [endpointID, _endpoint] of state.delivery_endpoint){
       const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
-      if(endpoint.owner === activeCustomerInit){
-        if(activeEndpointInit === null){
-          activeEndpointInit = endpointID
-          db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpointInit)
+      if(endpoint.owner === activeCustomer){
+        if(activeEndpoint === null){
+          activeEndpoint = endpointID
+          db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpoint)
         }
       }
     }
 
-    let today = db.get(DATABASE_TODAY);
-    if(today === null){
+    let /**@type {Date} */ today = db.get(DATABASE_TODAY);
+
+    if(today === null || today === undefined){
       today = new Date();
       db.set(DATABASE_TODAY, today);
+    } if (typeof(today) === 'string'){
+      console.log(today.substring(1, today.length - 1))
+      today = new Date(today.substring(1, today.length - 1));
     }
 
     let viewIdentifier = db.get(DATABASE_SHOP_ORDER_PAGE);
@@ -62,22 +68,42 @@ export function ShopOrderPage (props){
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
 
-  const [activeCustomer, _setActiveCustomer] = useState(activeCustomerInit);
-  const [activeEndpoint, _setActiveEndpoint] = useState(activeEndpointInit);
+    initRef.current = {
+      activeCustomer : activeCustomer,
+      activeEndpoint : activeEndpoint,
+      today : today,
+      viewIdentifier : viewIdentifier,
+    };
+}
 
 
-  const [state, _setState] = useState({
-    today : today,
-    view : viewIdentifier,
-  });
+export function ShopOrderPage ({}){
+  const state = useTracershopState();
+  const websocket = useWebsocket();
 
-  function setState(newState){
-    _setState({...state, ...newState});
+  let init = useRef({
+    activeCustomer : null,
+    activeEndpoint : null,
+    today : null,
+    viewIdentifier : null,
+  })
+
+  if (init.current.activeCustomer === null
+    || init.current.activeEndpoint === null
+    || init.current.today === null
+    || init.current.viewIdentifier === null
+  ){
+    initialize(init, state);
   }
+
+  const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
+  const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeCustomer);
+  const [today, setToday] = useState(init.current.today);
+  const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
 
   function setActiveDate(NewDate) {
     db.set(DATABASE_TODAY, NewDate);
-    setState({today : NewDate});
+    setToday(NewDate);
   }
 
   function setActiveMonth(NewMonth) {
@@ -89,7 +115,7 @@ export function ShopOrderPage (props){
   function setView(event){
     const newView = event.target.value;
     db.set(DATABASE_SHOP_ORDER_PAGE, newView);
-    setState({view : newView});
+    setViewIdentifier(newView);
   }
 
   function setActiveCustomer(newCustomer){
@@ -102,78 +128,81 @@ export function ShopOrderPage (props){
   }
 
   // End of function declarations
-  const /**@type {ServerConfiguration | undefined} */ serverConfig = props[DATA_SERVER_CONFIG].get(1);
-  const /**@type {Deadline | undefined} */ activityDeadline = props[DATA_DEADLINE].get(serverConfig.global_activity_deadline);
-  const /**@type {Deadline | undefined} */ injectionDeadline = props[DATA_DEADLINE].get(serverConfig.global_injection_deadline);
-
+  const /**@type {ServerConfiguration | undefined} */ serverConfig = state.server_config.get(1);
+  const /**@type {Deadline | undefined} */ activityDeadline = (serverConfig !== undefined) ?
+                                                                  state.deadline.get(serverConfig.global_activity_deadline)
+                                                                  : undefined;
+  const /**@type {Deadline | undefined} */ injectionDeadline = (serverConfig !== undefined) ?
+                                                                   state.deadline.get(serverConfig.global_injection_deadline)
+                                                                   : undefined;
 
   const activityDeadlineExpired = activityDeadline ?
                                     expiredDeadline(activityDeadline,
-                                                    state.today,
-                                                    props[DATA_CLOSED_DATE])
+                                                    today,
+                                                    state.closed_date)
                                     : false;
   const injectionDeadlineExpired = injectionDeadline ?
                                     expiredDeadline(injectionDeadline,
-                                                    state.today,
-                                                    props[DATA_CLOSED_DATE])
+                                                    today,
+                                                    state.closed_date)
                                     : false;
-  const timeSlots = [...props[DATA_DELIVER_TIME].values()].filter(
+  const timeSlots = [...state.deliver_times.values()].filter(
     (_timeSlot) => {
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
       return timeSlot.destination === activeEndpoint;
     });
 
-  const bitChain = getBitChain(timeSlots, props[DATA_PRODUCTION]);
+  // Why is this unused?
+  const bitChain = getBitChain(timeSlots, state.production);
 
   const SiteOptions = toOptions([
     {id : "Manuel", name : "Ordre oversigt"},
     {id : "Automatisk", name : "Bookinger"}
   ])
 
-  const Site = Content[state.view]
-  const siteProps = {...props}
+  const Site = Content[viewIdentifier]
+  const siteProps = {
+    [PROP_ACTIVE_DATE] : today,
+    [PROP_ACTIVE_CUSTOMER] : activeCustomer,
+    [PROP_ACTIVE_ENDPOINT] : activeEndpoint,
+    [PROP_EXPIRED_ACTIVITY_DEADLINE] :  Boolean(activityDeadlineExpired),
+    [PROP_EXPIRED_INJECTION_DEADLINE] : Boolean(injectionDeadlineExpired),
+  }
 
-  siteProps[PROP_ACTIVE_DATE] = state.today;
-  siteProps[PROP_ACTIVE_CUSTOMER] = activeCustomer;
-  siteProps[PROP_ACTIVE_ENDPOINT] = activeEndpoint;
-  siteProps[PROP_EXPIRED_ACTIVITY_DEADLINE] =  Boolean(activityDeadlineExpired);
-  siteProps[PROP_EXPIRED_INJECTION_DEADLINE] = Boolean(injectionDeadlineExpired);
-
-  const calenderTimeSlots = [...props[DATA_DELIVER_TIME].values()].filter(
+  const calenderTimeSlots = [...state.deliver_times.values()].filter(
     (timeSlot) => {return timeSlot.destination === activeEndpoint}
   )
 
   const calenderTimeSlotsIds = calenderTimeSlots.map(getId);
-
-  const calenderActivityOrders = [...props[DATA_ACTIVITY_ORDER].values()].filter(
+  const calenderActivityOrders = [...state.activity_orders.values()].filter(
     (_activityOrder) => {
       const /**@type {ActivityOrder} */ activityOrder = _activityOrder
       return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
     });
 
-  const calenderInjectionOrders = [...props[DATA_INJECTION_ORDER].values()].filter(
+  const calenderInjectionOrders = [...state.injection_orders.values()].filter(
     (_injectionOrder) => {
       const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
       return injectionOrder.endpoint === activeEndpoint;
     });
 
   /** Relevant Bookings  */
-  const calenderProps = {};
+  const calenderProps = {
+    [CALENDER_PROP_DATE] : today,
+    [CALENDER_PROP_ON_DAY_CLICK] : setActiveDate,
+    [CALENDER_PROP_ON_MONTH_CHANGE] : setActiveMonth,
+    [CALENDER_PROP_GET_COLOR] : getColorShop(
+      activityDeadline,
+      injectionDeadline,
+      calenderActivityOrders,
+      state.closed_date,
+      calenderInjectionOrders,
+      state.production,
+      calenderTimeSlots
+      ),
+    };
 
-  calenderProps[CALENDER_PROP_DATE] = state.today;
-  calenderProps[CALENDER_PROP_ON_DAY_CLICK] = setActiveDate;
-  calenderProps[CALENDER_PROP_ON_MONTH_CHANGE] = setActiveMonth;
-  calenderProps[CALENDER_PROP_GET_COLOR] = getColorShop(
-    activityDeadline,
-    injectionDeadline,
-    calenderActivityOrders,
-    props[DATA_CLOSED_DATE],
-    calenderInjectionOrders,
-    props[DATA_PRODUCTION],
-    calenderTimeSlots
-  );
-
-  return (
+      return (
   <Container>
     <Row>
       <Col sm={8}>
@@ -188,8 +217,8 @@ export function ShopOrderPage (props){
               ariaLabelEndpoint="endpoint-select"
               activeCustomer={activeCustomer}
               activeEndpoint={activeEndpoint}
-              customers={props[DATA_CUSTOMER]}
-              endpoints={props[DATA_ENDPOINT]}
+              customers={state.customer /* This is a bug it should be filtered! */}
+              endpoints={state.delivery_endpoint}
               setCustomer={setActiveCustomer}
               setEndpoint={setActiveEndpoint}
             />

@@ -1,0 +1,1 @@
+export const release_rights = new Map();

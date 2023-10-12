@@ -13,7 +13,7 @@ import { WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"
 import { LoginSite } from "~/components/sites/login_site.js";
 
 import { ANON } from "../../test_state/users.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { DispatchContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -22,6 +22,7 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 let websocket = null;
 let container = null;
 let props = null;
+const dispatch = jest.fn()
 
 const now = new Date(2020,4, 4, 10, 36, 44)
 
@@ -50,7 +51,8 @@ afterEach(() => {
 
 describe("Login shop test suite", () => {
   it("standard test", async () => {
-    render(<WebsocketContextProvider value={websocket}>
+    render(
+    <WebsocketContextProvider value={websocket}>
       <LoginSite {...props}/>
     </WebsocketContextProvider>);
     expect(await screen.findByLabelText('username')).toBeVisible();
@@ -70,17 +72,19 @@ describe("Login shop test suite", () => {
             }
           }]})
         })); // There just so many parentheses...
-    const mockSetUser = jest.fn(() => {})
 
     websocket = {
       getMessage : getMessageMock,
       send : sendMock
     }
-    props[PROP_SET_USER] = mockSetUser
 
-    render(<WebsocketContextProvider value={websocket}>
-      <LoginSite {...props}/>
-    </WebsocketContextProvider>);
+    render(
+    <DispatchContextProvider value={dispatch}>
+      <WebsocketContextProvider value={websocket}>
+        <LoginSite {...props}/>
+      </WebsocketContextProvider>
+    </DispatchContextProvider>);
+
 
     act(() => {
       const usernameInput = screen.getByLabelText('username');
@@ -98,12 +102,12 @@ describe("Login shop test suite", () => {
 
     expect(getMessageMock).toBeCalledWith(WEBSOCKET_MESSAGE_AUTH_LOGIN);
     expect(sendMock).toBeCalled();
-    expect(mockSetUser).toBeCalledWith(expect.objectContaining({
+    expect(dispatch).toBeCalledWith(expect.objectContaining({ newUser : {
       id : 1,
       username : "username",
       user_group : USER_GROUPS.ADMIN,
       active : true,
-    }));
+    }}));
   });
 
   it("Login test failed", async () => {

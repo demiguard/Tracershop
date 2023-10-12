@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Modal, Button, FormControl, InputGroup, Row, Container } from "react-bootstrap";
 
 import { Calculator } from "../injectable/calculator";
@@ -17,58 +17,65 @@ import { TracershopInputGroup } from '../injectable/tracershop_input_group'
 import { getDay } from "~/lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
-import { useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { setStateToEvent } from "~/lib/state_management";
 
-export function CreateOrderModal(props) {
-  const /**@type {Map<Number, Map<Number, Array<ActivityDeliveryTimeSlot>>>} */ TimeSlotMapping = props[PROP_TIME_SLOT_MAPPING];
+export function CreateOrderModal({active_date, active_tracer, on_close, timeSlotMapping}) {
+  const state = useTracershopState();
   const websocket = useWebsocket();
+  const init = useRef({
+    active_customer : null,
+    active_endpoint : null,
+    active_timeSlot : null,
+  });
 
-  let endpointInit = ""
-  let customerInit = ""
-  let timeSlotIdInit = ""
-  for(const [customerID, endpointMap] of TimeSlotMapping){
-    customerInit = customerID
-    for(const [endpointID, timeSlotOptions] of endpointMap){
-      if(timeSlotOptions.length){
-        endpointInit = endpointID
-        timeSlotIdInit = timeSlotOptions[0].id
-        break
+  if(init.current.active_customer === null
+     || init.current.active_endpoint === null
+     || init.current.active_timeSlot === null){
+
+      let endpointInit = ""
+      let customerInit = ""
+      let timeSlotIdInit = ""
+      for(const [customerID, endpointMap] of timeSlotMapping){
+        customerInit = customerID;
+        for(const [endpointID, timeSlotOptions] of endpointMap){
+          if(timeSlotOptions.length){
+            endpointInit = endpointID
+            timeSlotIdInit = timeSlotOptions[0].id
+            break
+          }
+        }
+        break;
+      }
+      init.current = {
+        active_customer : endpointInit,
+        active_endpoint : customerInit,
+        active_timeSlot : timeSlotIdInit,
       }
     }
-    break;
-  }
 
-  const [activeCustomer, setActiveCustomer] = useState(customerInit);
-  const [activeEndpoint, setActiveEndpoint] = useState(endpointInit);
-  const [activeTimeSlot, setActiveTimeSlot] = useState(timeSlotIdInit);
 
-  const [state, _setState] = useState({
-    amount : "",
-    error : {
-      missingEndpoint : "",
-      missingTimeSlot : "",
-      invalidOrder : "",
-    },
-    showCalculator : false,
-    timeSlotID : timeSlotIdInit,
-  })
+  const [activeCustomer, setActiveCustomer] = useState(init.current.active_customer);
+  const [activeEndpoint, setActiveEndpoint] = useState(init.current.active_endpoint);
+  const [activeTimeSlot, setActiveTimeSlot] = useState(init.current.active_timeSlot);
 
-  function setState(newState){
-    _setState({...state, ...newState})
-  }
+  const [amount, setAmount] = useState("");
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [error, setError] = useState("");
+
 
   function createOrder(_event){
-    const [valid, amountNumber] = parseDanishPositiveNumberInput(state.amount, "Aktiviteten")
+    const [valid, amountNumber] = parseDanishPositiveNumberInput(amount, "Aktiviteten")
 
     if(!valid){
-      setState({error : {...state.error, invalidOrder : amountNumber}});
+      setError(amountNumber);
       return;
     }
 
     websocket.sendCreateActivityOrder(
       new ActivityOrder(undefined, // order_id
                         amountNumber, // ordered_activity
-                        dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
+                        dateToDateString(active_date), // delivery_Date
                         1, // status
                         "", // comment
                         activeTimeSlot, // ordered_time_Slot
@@ -76,66 +83,40 @@ export function CreateOrderModal(props) {
                         null, // ordered_by, set by backend
                         null, // freed_by
       ))
-    props[PROP_ON_CLOSE]();
-  }
-
-
-  function hasError() {
-    return state.error.invalidOrder != "" || state.error.missingEndpoint != "" || state.error.missingTimeSlot != "";
-  }
-
-  function getErrorMessage(){
-    const errors = [...Object.values(state.error)].map((errorMessage, i) => {
-      if(!errorMessage){
-        return <div key={i}/>
-      }
-      return <p key={i}>{errorMessage}</p>
-    })
-    return (<div>{errors}</div>)
-  }
-
-  function getErrorLevel(){
-    if(!(state.error.invalidOrder)){
-      return ERROR_LEVELS.error
-    }
-    if(!(state.error.missingEndpoint && state.error.missingTimeSlot)){
-      return ERROR_LEVELS.warning
-    }
-    return ""
+    on_close();
   }
 
   function commitCalculator(activity){
-    setState({
-      showCalculator : false,
-      amount : activity
-    })
+    setAmount(activity);
+    setShowCalculator(false);
+
   }
 
-  const day = getDay(props[PROP_ACTIVE_DATE]);
-  const filteredTimeSlots = [...props[DATA_DELIVER_TIME].values()].filter(
+  const day = getDay(active_date);
+  const filteredTimeSlots = [...state.deliver_times.values()].filter(
     (timeSlot) => {
-      const production = props[DATA_PRODUCTION].get(timeSlot.production_run)
+      const production = state.production.get(timeSlot.production_run)
       return production.production_day == day;
     }
   )
 
-  const Tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER])
+  const Tracer = state.tracer.get(active_tracer)
 
   return (
       <Modal
         show={true}
-        onHide={props[PROP_ON_CLOSE]}
+        onHide={on_close}
         className={styles.mariLight}
       >
         <Modal.Header> Opret Order </Modal.Header>
         <Modal.Body>
-          { state.showCalculator ?
+          { showCalculator ?
           <Calculator
-            isotopes={props[DATA_ISOTOPE]}
+            isotopes={state.isotopes}
             tracer={Tracer}
             productionTime={deliveryDateTime}
             defaultMBq={300}
-            cancel={() => {setState({showCalculator: false})}}
+            cancel={() => {setShowCalculator(false);}}
             commit={commitCalculator}
           /> :
           <Container>
@@ -147,8 +128,8 @@ export function CreateOrderModal(props) {
                 activeCustomer={activeCustomer}
                 activeEndpoint={activeEndpoint}
                 activeTimeSlot={activeTimeSlot}
-                customers={props[DATA_CUSTOMER]}
-                endpoints={props[DATA_ENDPOINT]}
+                customers={state.customer}
+                endpoints={state.delivery_endpoint}
                 timeSlots={filteredTimeSlots}
                 setCustomer={setActiveCustomer}
                 setEndpoint={setActiveEndpoint}
@@ -157,7 +138,7 @@ export function CreateOrderModal(props) {
               <TracershopInputGroup label="Aktivitet">
                 <FormControl
                   aria-label={"activity-input"}
-                  onChange={(event) => {setState({amount : event.target.value})}}
+                  onChange={setStateToEvent(setAmount)}
                   value={state.amount}
                 />
                 <InputGroup.Text>
@@ -172,11 +153,11 @@ export function CreateOrderModal(props) {
               </TracershopInputGroup>
             </Row>
 
-            { hasError() ?
+            { error !== "" ?
             <Row>
               <AlertBox
-                message={getErrorMessage()}
-                level={getErrorLevel()}
+                message={<div>error</div>}
+                level={ERROR_LEVELS.error}
               >
               </AlertBox>
             </Row> : null }
@@ -185,12 +166,12 @@ export function CreateOrderModal(props) {
 
         </Modal.Body>
         <Modal.Footer>
-          {state.showCalculator ? <HoverBox
+          {showCalculator ? <HoverBox
             Base={<Button disabled={true}>Opret Ordre</Button>}
             Hover={<div>Du kan ikke opret en ordre imens at du bruger lommeregneren</div>}
           ></HoverBox>
            : <Button onClick={createOrder}>Opret Ordre</Button>}
-          <Button onClick={props[PROP_ON_CLOSE]}>Luk</Button>
+          <Button onClick={on_close}>Luk</Button>
         </Modal.Footer>
       </Modal>
     )

@@ -6,16 +6,18 @@ import React from "react";
 import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState } from "~/tests/app_state.js";
+import { AppState, testState } from "~/tests/app_state.js";
 
 import { PROP_USER } from "~/lib/constants.js";
 import { ProductionSite } from "~/components/sites/production_site.js";
 import { users } from "~/tests/test_state/users.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { TracershopState } from "~/dataclasses/dataclasses.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
+const logout = jest.fn();
 
 let websocket = null;
 let container = null;
@@ -48,9 +50,13 @@ afterEach(() => {
 
 describe("Production site test suite", () => {
   it("standard test - Admin", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <ProductionSite {...props} />
-    </WebsocketContextProvider>);
+
+    render(<StateContextProvider value={testState}>
+            <WebsocketContextProvider value={websocket}>
+              <ProductionSite logout={logout} NavbarElements={[]} />
+            </WebsocketContextProvider>
+          </StateContextProvider>);
+
 
     expect(await screen.findByLabelText('navbar-orders')).toBeVisible();
     expect(await screen.findByLabelText('navbar-vial')).toBeVisible();
@@ -58,10 +64,16 @@ describe("Production site test suite", () => {
   });
 
   it("standard test - user", async () => {
-    props[PROP_USER] = users.get(3);
-    render(<WebsocketContextProvider value={websocket}>
-      <ProductionSite {...props} />
-    </WebsocketContextProvider>);
+
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(3),
+    })
+    render(<StateContextProvider value={newState}>
+             <WebsocketContextProvider value={websocket}>
+               <ProductionSite logout={logout} NavbarElements={[]} />
+             </WebsocketContextProvider>
+           </StateContextProvider>);
 
     expect(await screen.findByLabelText('navbar-orders')).toBeVisible();
     expect(await screen.findByLabelText('navbar-vial')).toBeVisible();

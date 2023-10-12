@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "../../lib/constants.js";
 import { db } from "../../lib/local_storage_driver.js";
@@ -28,14 +28,21 @@ const SITE_NAMES = {
 }
 
 
-export function AdminSite(props) {
-  let /**@type {string} */ activeSiteInit = db.get(DATABASE_ADMIN_PAGE);
-  if (activeSiteInit === undefined || activeSiteInit === null){
-    activeSiteInit = "production";
-    db.set(DATABASE_ADMIN_PAGE, activeSiteInit);
+export function AdminSite({logout}) {
+  const init = useRef({
+    activeSite : null
+  });
+
+  if(init.current.activeSite === null){
+    let /**@type {string} */ activeSite = db.get(DATABASE_ADMIN_PAGE);
+    if (activeSite === undefined || activeSite === null){
+      activeSite = "production";
+      db.set(DATABASE_ADMIN_PAGE, activeSite);
+    }
+    init.current.activeSite = activeSite
   }
 
-  const [activeSite, setActiveSite] = useState(activeSiteInit)
+  const [activeSite, setActiveSite] = useState(init.current.activeSite);
 
   function changeSite(identifier){
     return () => {
@@ -72,11 +79,9 @@ export function AdminSite(props) {
     throw `Undefined site ${activeSite} attempt to rendered`;
   }
 
-  const siteProps = {...props}
-  siteProps["NavbarElements"] = NavbarAdmin;
-
   return(
   <ActiveSite
-    {...siteProps}
+    logout={logout}
+    NavbarElements={NavbarAdmin}
   />);
 }

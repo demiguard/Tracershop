@@ -5,11 +5,12 @@
 
 import React from "react";
 import { Container } from "react-bootstrap";
-import { PROP_USER, USER_GROUPS } from "../../lib/constants";
-import { User } from "../../dataclasses/dataclasses";
+import { USER_GROUPS } from "../../lib/constants";
+import { useTracershopState } from "../tracer_shop_context";
 
 export function NoAssociatedUser(props){
-  const /**@type {User} */ user = props[PROP_USER]
+  const state = useTracershopState()
+  const user = state.logged_in_user;
 
   if(user.user_group === USER_GROUPS.SHOP_EXTERNAL){
     return (

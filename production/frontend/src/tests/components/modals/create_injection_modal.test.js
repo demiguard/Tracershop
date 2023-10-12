@@ -3,15 +3,15 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
 import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
 
-import {AppState} from '~/tests/app_state.js'
+import {AppState, testState} from '~/tests/app_state.js'
 import { act } from "react-dom/test-utils";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { users } from "~/tests/test_state/users";
 
 const onClose = jest.fn()
@@ -27,10 +27,10 @@ beforeEach(() => {
   window.location = { href : "tracershop"}
 
   websocket = tracer_websocket.TracerWebSocket;
-  props = {...AppState}
-  props[PROP_USER] = users.get(1);
-  props[PROP_ACTIVE_DATE] = new Date(2020,3,5);
-  props[PROP_ON_CLOSE] = onClose
+  props = {
+    [PROP_ACTIVE_DATE] : new Date(2020,3,5),
+    [PROP_ON_CLOSE] : onClose,
+  };
 });
 
 
@@ -43,10 +43,11 @@ afterEach(() => {
 
 describe("Create injection Order", () => {
   it("Standard Render Test", async () => {
-    render(
-      <WebsocketContextProvider value={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+             <WebsocketContextProvider value={websocket}>
+               <CreateInjectionOrderModal {...props} />
+             </WebsocketContextProvider>
+           </StateContextProvider>);
 
     expect(screen.getByLabelText("select-customer")).toBeVisible();
     expect(screen.getByLabelText("select-endpoint")).toBeVisible();
@@ -61,9 +62,11 @@ describe("Create injection Order", () => {
   });
 
   it("Missing Injections!", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+             <WebsocketContextProvider value={websocket}>
+               <CreateInjectionOrderModal {...props} />
+            </WebsocketContextProvider>
+          </StateContextProvider>);
 
   const createOrderButton = await screen.findByRole('button',
                                                     {name : "Opret Ordre"});
@@ -74,9 +77,11 @@ describe("Create injection Order", () => {
   });
 
   it("Error - Bannans Injections", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+     </WebsocketContextProvider>
+   </StateContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "a"}});
@@ -89,9 +94,11 @@ describe("Create injection Order", () => {
   });
 
   it("Error - Negative Injections", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+     </WebsocketContextProvider>
+   </StateContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "-3"}});
@@ -104,9 +111,11 @@ describe("Create injection Order", () => {
   });
 
   it("Error - half a Injections", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+     </WebsocketContextProvider>
+   </StateContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "2.5"}});
@@ -120,9 +129,11 @@ describe("Create injection Order", () => {
 
 
   it("Error - half a Injections + plus danish numbers", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+     </WebsocketContextProvider>
+   </StateContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "2,5"}});
@@ -136,9 +147,11 @@ describe("Create injection Order", () => {
 
 
   it("Error - Missing Delivery Time", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+     </WebsocketContextProvider>
+   </StateContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "4"}});
@@ -151,10 +164,11 @@ describe("Create injection Order", () => {
   });
 
   it("Success order", async () => {
-    console.log(websocket)
-    render(<WebsocketContextProvider value={websocket}>
-      <CreateInjectionOrderModal {...props} />
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CreateInjectionOrderModal {...props} />
+     </WebsocketContextProvider>
+   </StateContextProvider>);
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "4"}});
@@ -164,9 +178,7 @@ describe("Create injection Order", () => {
 
     const createOrderButton = await screen.findByRole('button',
                                                       {name : "Opret Ordre"});
-    act(() => {
-      createOrderButton.click();
-    })
+    act(() => {createOrderButton.click();})
 
     expect(websocket.sendCreateInjectionOrder).toBeCalled()
 

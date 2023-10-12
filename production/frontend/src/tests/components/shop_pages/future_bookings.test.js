@@ -6,10 +6,10 @@ import React, {useContext} from "react";
 import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
-import { AppState } from "../../app_state.js";
+import { AppState, testState } from "../../app_state.js";
 import { FutureBooking } from "../../../components/shop_pages/future_bookings.js";
 import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 
 import { TracerWebSocket } from "../../../lib/tracer_websocket.js";
@@ -45,10 +45,11 @@ afterEach(() => {
 
 describe("Future Bookings Test Suite", () => {
   it("Standard render test", () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <FutureBooking {...props}/>
-    </WebsocketContextProvider>);
-  })
 
-
-})
+    render(<StateContextProvider value={testState}>
+            <WebsocketContextProvider value={websocket}>
+              <FutureBooking {...props}/>
+            </WebsocketContextProvider>
+          </StateContextProvider>);
+  });
+});

@@ -13,19 +13,20 @@ import { Select,  toOptions } from "../../injectable/select.js";
 import { HoverBox } from "../../injectable/hover_box.js";
 import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { OpenCloseButton } from "../../injectable/open_close_button.js";
-import { useWebsocket } from "~/components/tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
 
 
-export function TracerPage(props){
+export function TracerPage(){
+  const state = useTracershopState();
   const websocket = useWebsocket();
   const [modalTracerID, setModalTracerID] = useState(-1)
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
-  const isotopeOptions = toOptions(props[DATA_ISOTOPE],
+  const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
 
   const activeTracers = new Set();
-  for(const catalogPage of props[DATA_TRACER_MAPPING].values()){
+  for(const catalogPage of state.tracer_mapping.values()){
     activeTracers.add(catalogPage.tracer);
   }
 
@@ -41,12 +42,11 @@ export function TracerPage(props){
    * Row for a tracer that is archived
    * Note these are here to benefit from closure
    * @param {{
-  *   tracer : Tracer,
-  *   websocket : TracerWebSocket
+  *   tracer : Tracer
   * }} param0 - props
   * @returns {Element}
   */
-  function ArchiveTracerRow({tracer, websocket}){
+  function ArchiveTracerRow({tracer}){
     function restoreTracer(){
       websocket.sendEditModel(DATA_TRACER, [{...tracer, archived : false,}]);
     }
@@ -73,12 +73,12 @@ export function TracerPage(props){
    * }} param0 - props
    * @returns {Element}
    */
-  function ActiveTracerRow({tracer,  websocket}){
+  function ActiveTracerRow({tracer}){
     const [tracerClinicalName, setTracerClinicalName] = useState(tracer.clinical_name);
     const [tracerIsotope, setTracerIsotope] = useState(tracer.isotope);
     const [tracerType, setTracerType] = useState(tracer.tracer_type);
 
-    let archiveAble = !activeTracers.has(tracer.id);
+    const archiveAble = !activeTracers.has(tracer.id);
     const changed = tracerClinicalName !== tracer.clinical_name
                     || Number(tracerIsotope) !== tracer.isotope
                     || Number(tracerType) !== tracer.tracer_type;
@@ -160,7 +160,7 @@ export function TracerPage(props){
     </tr>)
   }
 
-  function newTracerRow({websocket}){
+  function newTracerRow({}){
     const [shortname, setShortname] = useState("");
     const [clinicalName, setClinicalName] = useState("");
     const [isotope, setIsotope] = useState();
@@ -202,30 +202,29 @@ export function TracerPage(props){
   const ActiveTracerRows = [];
   const ArchiveTracerRows = [];
   const filter = new RegExp(tracerFilter, 'g');
-  for(const tracer of props[DATA_TRACER].values()){
+  for(const tracer of state.tracer.values()){
     if(filter.test(tracer.shortname)){
       if (tracer.archived){
         ArchiveTracerRows.push(
           <ArchiveTracerRow
             key={tracer.id}
             tracer={tracer}
-            websocket={websocket}
           />);
       } else {
         ActiveTracerRows.push(
           <ActiveTracerRow
             key={tracer.id}
             tracer={tracer}
-            websocket={websocket}
           />);
       }
     }
   }
 
 
-  const tracerModalProps = {...props}
-  tracerModalProps[PROP_ACTIVE_TRACER] = modalTracerID;
-  tracerModalProps[PROP_ON_CLOSE] = closeModal
+  const tracerModalProps = {
+    [PROP_ACTIVE_TRACER] : modalTracerID,
+    [PROP_ON_CLOSE] : closeModal,
+  }
 
 
   return (<Container>

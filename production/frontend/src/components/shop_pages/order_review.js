@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Collapse, Container, Form, Row, Col, Button, FormControl, InputGroup, Modal } from "react-bootstrap";
+import { Row, Col, Button } from "react-bootstrap";
 
 import { INJECTION_USAGE, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT,
   PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
@@ -7,19 +7,21 @@ import { INJECTION_USAGE, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_EN
 import { DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, DATA_ENDPOINT,
   DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_PRODUCTION, DATA_TRACER, DATA_TRACER_MAPPING,
   DATA_VIAL } from "~/lib/shared_constants"
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer, TracerCatalog } from "~/dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
 import { getId } from "../../lib/utils";
 import { FormatDateStr, FormatTime, ParseDanishNumber, dateToDateString, nullParser } from "~/lib/formatting";
-import { Select } from "../injectable/select.js"
+
 import SiteStyles from '~/css/Site.module.css'
-import { ClickableIcon, StatusIcon } from "../injectable/icons";
-import { TracershopInputGroup } from "../injectable/tracershop_input_group";
-import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay, getToday } from "~/lib/chronomancy";
 import { CalculatorModal } from "../modals/calculator_modal";
-import { useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { TracerCatalog } from "~/lib/data_structures";
+
+function initialize(initRef, ){
+
+}
 
 /**
  * This object is the manual ordering and review for activity based orders
@@ -29,26 +31,21 @@ import { useWebsocket } from "../tracer_shop_context";
  * }} props
  * @returns Element
  */
-export function OrderReview(props){
-  const /**@type {DeliveryEndpoint} */ endpoint = props[DATA_ENDPOINT].get(props[PROP_ACTIVE_ENDPOINT])
+export function OrderReview({active_endpoint, active_customer, active_date,
+  injectionDeadlineValid, activityDeadlineExpired,
+}){
+  const state = useTracershopState()
   const websocket = useWebsocket();
-  const /**@type {Map<Number, Number} */ overheadMap = new Map();
-  const /**@type {Array<Tracer>} */ availableActivityTracers = [];
-  const /**@type {Array<Tracer>} */ availableInjectionTracers = [];
 
-  for(const [pageID, _tracerCatalogPage] of props[DATA_TRACER_MAPPING]){
-    const /**@type {TracerCatalog} */ page = _tracerCatalogPage;
-    if(page.customer != props[PROP_ACTIVE_CUSTOMER]){
-      continue;
-    }
-    const /**@type {Tracer} */ tracer = props[DATA_TRACER].get(page.tracer);
-    if(tracer.tracer_type === TRACER_TYPE_ACTIVITY){
-      overheadMap.set(page.tracer, page.overhead_multiplier);
-      availableActivityTracers.push(tracer);
-    } else {
-      availableInjectionTracers.push(tracer);
-    }
-  }
+  const tracerCatalog = new TracerCatalog(
+    state.tracer_mapping, state.tracer
+  )
+
+  const /**@type {DeliveryEndpoint} */ endpoint = state.delivery_endpoint.get(active_endpoint)
+
+  const /**@type {Array<Tracer>} */ availableActivityTracers = tracerCatalog.getActivityCatalog(active_customer);
+  const /**@type {Array<Tracer>} */ availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_customer);
+
 
   // State Definitions
   let activeTracerInit = -1
@@ -58,10 +55,10 @@ export function OrderReview(props){
 
   const [activeTracer, setActiveTracer] = useState(activeTracerInit);
 
-  const day = getDay(props[PROP_ACTIVE_DATE]);
-  const dateString = dateToDateString(props[PROP_ACTIVE_DATE]);
+  const day = getDay(active_date);
+  const activeDateString = dateToDateString(active_date);
 
-  const availableProductions = [...props[DATA_PRODUCTION].values()].filter(
+  const availableProductions = [...state.production.values()].filter(
     (_production) => {
       const /**@type {ActivityProduction} */ production = _production
 
@@ -69,7 +66,7 @@ export function OrderReview(props){
   }).map(getId)
 
 
-  const availableTimeSlots = [...props[DATA_DELIVER_TIME].values()].filter(
+  const availableTimeSlots = [...state.deliver_times.values()].filter(
     (_timeSlot) => {
       const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot
 
@@ -79,16 +76,15 @@ export function OrderReview(props){
       return cond1 && cond2;
     }).map(getId)
 
-  const dateConstraint = dateToDateString(props[PROP_ACTIVE_DATE]);
-  const relevantActivityOrders = [...props[DATA_ACTIVITY_ORDER].values()].filter(
+  const relevantActivityOrders = [...state.activity_orders.values()].filter(
     (_activityOrder) => {
       const /**@type {ActivityOrder} */ activityOrder = _activityOrder
       const timeSlotConstraint = availableTimeSlots.includes(activityOrder.ordered_time_slot);
-      return timeSlotConstraint && dateConstraint === activityOrder.delivery_date;
+      return timeSlotConstraint && activeDateString === activityOrder.delivery_date;
   });
 
   function setTracer(tracer){
-    return (e) => {
+    return () => {
       setActiveTracer(tracer.id);
     }
   }
@@ -108,32 +104,32 @@ export function OrderReview(props){
     </Button>)
   })
 
-  const overhead = overheadMap.get(activeTracer);
+  const overhead = tracerCatalog.getOverheadForTracer(active_customer, activeTracer)
 
   // If activeTracer is -1, then availableTimeSlot should be [], hence no bugs
   const timeSlotsCards = availableTimeSlots.map((timeSlotID) => {
-    const timeSlot = props[DATA_DELIVER_TIME].get(timeSlotID);
+    const timeSlot = state.deliver_times.get(timeSlotID);
     return(<TimeSlotCard
       endpoint={endpoint}
       key={timeSlotID}
-      activeTracer={props[DATA_TRACER].get(activeTracer)}
+      activeTracer={state.tracer.get(activeTracer)}
       timeSlot={timeSlot}
-      timeSlots={props[DATA_DELIVER_TIME]}
-      date={props[PROP_ACTIVE_DATE]}
-      isotopes={props[DATA_ISOTOPE]}
+      timeSlots={state.deliver_times}
+      date={active_date}
+      isotopes={state.isotopes}
       activityOrders={relevantActivityOrders}
       websocket={websocket}
       overhead={overhead}
-      validDeadline={!props[PROP_EXPIRED_ACTIVITY_DEADLINE]}
-      vials={props[DATA_VIAL]}
+      validDeadline={!activityDeadlineExpired}
+      vials={state.vial}
       />)
     })
 
-  const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...props[DATA_INJECTION_ORDER].values()].filter(
+  const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
     (_injectionOrder) => {
       const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
-      const matchingDay = injectionOrder.delivery_date === dateString;
-      const matchingEndpoint = injectionOrder.endpoint === props[PROP_ACTIVE_ENDPOINT];
+      const matchingDay = injectionOrder.delivery_date === activeDateString;
+      const matchingEndpoint = injectionOrder.endpoint === active_endpoint;
       return matchingDay && matchingEndpoint;
   })
 
@@ -143,22 +139,22 @@ export function OrderReview(props){
       injectionOrder={injectionOrder}
       injectionTracers = {availableInjectionTracers}
       websocket={websocket}
-      validDeadline={props.injectionDeadlineValid}
+      validDeadline={injectionDeadlineValid}
     />);
   })
 
-  if(!(props[PROP_EXPIRED_INJECTION_DEADLINE]) && (availableInjectionTracers.length)) {
+  if(!(injectionDeadlineValid) && (availableInjectionTracers.length)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
                                 injectionOrder={{
                                   delivery_time : "",
-                                  delivery_date : dateString,
+                                  delivery_date : activeDateString,
                                   injections : "",
                                   status : 0,
                                   tracer_usage : INJECTION_USAGE.human,
                                   comment : "",
                                   ordered_by : null,
-                                  endpoint : props[PROP_ACTIVE_ENDPOINT],
+                                  endpoint : active_endpoint,
                                   tracer : availableInjectionTracers[0].id,
                                 }}
                                 injectionTracers = {availableInjectionTracers}

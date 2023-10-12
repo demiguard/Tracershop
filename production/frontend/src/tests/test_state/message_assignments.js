@@ -1,0 +1,1 @@
+export const message_assignments = new Map()

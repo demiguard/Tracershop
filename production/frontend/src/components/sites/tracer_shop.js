@@ -44,7 +44,13 @@ export function TracerShop() {
     )
   }
 
+  /**
+   * 
+   * @param {User} user 
+   * @returns {Element}
+   */
   function get_site_from_user(user) {
+
     if(user.user_group == USER_GROUPS.ANON || user.user_group === undefined){
       return SITES.log_in_site
     }
@@ -69,6 +75,6 @@ export function TracerShop() {
 
   return (
   <ErrorBoundary FallbackComponent={ErrorPage}>
-    <Site logout={logout}/>
+    <Site logout={logout} NavbarElements={[]}/>
   </ErrorBoundary>);
 }

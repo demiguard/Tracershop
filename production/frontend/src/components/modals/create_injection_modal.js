@@ -3,8 +3,7 @@ import React, { useState } from "react";
 import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
 
 import { dateToDateString } from "~/lib/formatting";
-import { PROP_ON_CLOSE, PROP_ACTIVE_DATE, PROP_USER } from "~/lib/constants";
-import { DATA_TRACER_MAPPING, DATA_CUSTOMER, DATA_TRACER, DATA_INJECTION_ORDER, DATA_ENDPOINT } from "~/lib/shared_constants"
+import { PROP_ON_CLOSE, PROP_ACTIVE_DATE } from "~/lib/constants";
 import styles from '~/css/Site.module.css'
 import { Select, toOptions } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/tracershop_input_group'
@@ -17,22 +16,24 @@ import { UsageSelect } from "../injectable/derived_injectables/usage_select";
 import { TracerCatalog } from "~/lib/data_structures";
 import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
-import { TracerWebSocket } from "~/lib/tracer_websocket";
+
 import { ErrorInput } from "../injectable/error_input";
-import { useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import propTypes from "prop-types";
 
 
-export function CreateInjectionOrderModal(props){
+export function CreateInjectionOrderModal({active_date, on_close}){
+  const state = useTracershopState();
+  const websocket = useWebsocket();
   // Initialize select
   let initialization = initialize_customer_endpoint_tracer_from_tracerCatalog(
-    props[DATA_ENDPOINT], props[DATA_TRACER_MAPPING]
+    state.delivery_endpoint, state.tracer_mapping
   )
 
   const tracerCatalog = new TracerCatalog(
-    props[DATA_TRACER_MAPPING],
-    props[DATA_TRACER],
+    state.tracer_mapping,
+    state.tracer,
   );
-  const websocket = useWebsocket();
 
   const [customerID, setCustomer] = useState(initialization.customer);
   const [endpointID, setEndpoint] = useState(initialization.endpoint)
@@ -59,19 +60,19 @@ export function CreateInjectionOrderModal(props){
       websocket.sendCreateInjectionOrder(new InjectionOrder(
         undefined, // id
         formattedDeliveryTime, // deliver_time
-        dateToDateString(props[PROP_ACTIVE_DATE]), // delivery_Date
+        dateToDateString(active_date), // delivery_Date
         numberInjections, // injections
         1, // Status
         usage, // tracer_usage
         comment, // Comment
-        props[PROP_USER].id, // Ordered By
+        state.logged_in_user.id, // Ordered By
         endpointID, // Delivery ID
         tracerID, // Tracer ID
         null, // lot_number
         null, // freed_datetime
         null, // Freed_by
       ))
-      props[PROP_ON_CLOSE]()
+      on_close()
     }
   }
 
@@ -81,7 +82,7 @@ export function CreateInjectionOrderModal(props){
   return(
     <Modal
       show={true}
-      onHide={props[PROP_ON_CLOSE]}
+      onHide={on_close}
       className={styles.mariLight}
     >
       <Modal.Header>
@@ -94,8 +95,8 @@ export function CreateInjectionOrderModal(props){
             ariaLabelEndpoint="select-endpoint"
             activeCustomer={customerID}
             activeEndpoint={endpointID}
-            customers={props[DATA_CUSTOMER]}
-            endpoints={props[DATA_ENDPOINT]}
+            customers={state.customer}
+            endpoints={state.delivery_endpoint}
             setCustomer={setCustomer}
             setEndpoint={setEndpoint}
           />
@@ -143,8 +144,13 @@ export function CreateInjectionOrderModal(props){
         </Row>
       </ModalBody>
       <Modal.Footer>
-        <CloseButton onClick={props[PROP_ON_CLOSE]}/>
+        <CloseButton onClick={on_close}/>
         <Button onClick={SubmitOrder}>Opret Ordre</Button>
       </Modal.Footer>
     </Modal>);
+}
+
+CreateInjectionOrderModal.propTypes = {
+  [PROP_ON_CLOSE] : propTypes.func.isRequired,
+  [PROP_ACTIVE_DATE] : propTypes.objectOf(Date),
 }

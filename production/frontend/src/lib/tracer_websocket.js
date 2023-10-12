@@ -26,7 +26,6 @@ export class TracerWebSocket {
    * @param {React.Dispatch<React.ReducerAction>} dispatch 
    */
   constructor(websocket, dispatch){
-    console.log("Creating websocket")
     this._PromiseMap = new Map();
     this._ws = websocket;
     this._dispatch = dispatch

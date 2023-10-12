@@ -1,8 +1,9 @@
 import React from "react";
+import propTypes from 'prop-types'
 import { FormControl } from "react-bootstrap";
 
 import { Select, toOptions, Option } from "../select";
-import { Customer } from "~/dataclasses/dataclasses";
+import { Customer, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants";
 
 /**
@@ -46,4 +47,10 @@ export function EndpointSelect(props){
   }
 
   return <Select {...newProps}/>
+}
+
+EndpointSelect.propTypes = {
+  emptyEndpoint : propTypes.bool,
+  [DATA_CUSTOMER] : propTypes.objectOf(Map),
+  [DATA_ENDPOINT] : propTypes.oneOfType([propTypes.objectOf(Map), propTypes.array]),
 }

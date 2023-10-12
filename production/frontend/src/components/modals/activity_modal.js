@@ -25,302 +25,320 @@ import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
 import { compareDates, getPDFUrls } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/time_form.js";
-import { useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { TracerCatalog } from "~/lib/data_structures.js";
+
 
 /**
- * A time slot may multiple orders and each of these objects refers to an order
- * connected by a common time slot.
+ * 
  * @param {{
- *  order : ActivityOrder,
- *  websocket : TracerWebSocket,
- *  timeSlots : Map<Number, ActivityDeliveryTimeSlot>
- *  timeSlotId : Number
- * }} props
- * @returns {Element}
+ *  tracer_catalog : TracerCatalog
+ * }} param0 
+ * @returns 
  */
-function OrderRow({order, websocket, timeSlots, timeSlotId}){
-  const timeSlot = timeSlots.get(timeSlotId);
-  const [activity, setActivity] = useState(order.ordered_activity);
-  const [editing, setEditing] = useState(false);
-  const [error, setError] = useState(false);
-  const canEdit = order.status == 1 || order.status == 2;
-  const displayStyle = error ? {backgroundColor : ERROR_BACKGROUND_COLOR} : {}
-
-  function acceptEdit (){
-
-    const [valid, activityNumber] = parseDanishPositiveNumberInput(activity);
-    if(!valid){
-      setError(true);
-      return;
-    }
-    order.ordered_activity = activityNumber;
-
-    websocket.sendEditModel(DATA_ACTIVITY_ORDER, [order]);
-    setEditing(false);
-    setError(false);
-  }
-
-  let activityDisplay = canEdit ?  <HoverBox
-    Base={<p>{`${activity} MBq`}</p>}
-    Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
-    /> : `${activity} MBq`;
-
-    if(editing){
-      activityDisplay = <FormControl
-                          aria-label={`edit-form-order-activity-${order.id}`}
-                          style={displayStyle}
-                          value={activity}
-                          onChange={(event) => {
-                            setActivity(event.target.value)
-                          }}
-                        />
-  }
-
-
-  let iconFunction= canEdit ? () => {setEditing(true)} : () => {}
-  let icon = <StatusIcon
-              label={`edit-order-activity-${order.id}`}
-              status={order.status}
-              onClick={iconFunction}
-            />
-  if (order.moved_to_time_slot){
-    icon = <ClickableIcon
-              label={`edit-order-activity-${order.id}`}
-              src="/static/images/move_top.svg"
-              onClick={iconFunction}
-            />
-  }
-  if(editing){
-    icon = <ClickableIcon
-              label={`edit-accept-order-activity-${order.id}`}
-              src="static/images/accept.svg"
-              onClick={acceptEdit}/>
-  }
-
-  return (
-    <Row>
-      <Col>Order ID:{order.id}</Col>
-      <Col>{activityDisplay}</Col>
-      <Col xs={2}>{renderComment(order.comment)}</Col>
-      <Col xs={2} style={{
-        justifyContent : "right", display : "flex"
-      }}>{icon}</Col>
-    </Row>
-  )
-}
-
-/**
- * A row in the vial table
- * @param {{
- * vial : Vial,
- * onSelect : CallableFunction,
- * selected : Boolean,
- * websocket : TracerWebSocket,
- * }} props for component
- * @returns
- */
-function VialRow({vial, onSelect, selected, websocket, setError}){
-  const [editing, setEditing] = useState(false);
-  const [editingVial, _setDisplayVial] = useState({...vial});
-
-  function setDisplayVial(newVial){
-    _setDisplayVial({
-      ...editingVial,
-      ...newVial,
-    })
-  }
-
-  function setFillTime(newFillTime){
-    setDisplayVial({
-      fill_time : newFillTime
-    })
-  }
-
-  function updateVial() {
-    const [batchValid, formattedLotNumber] = parseBatchNumberInput(editingVial.lot_number, "Batch nr.");
-    const [timeValid, formattedFillTime] = parseTimeInput(editingVial.fill_time, "Produktions tidspunk");
-    const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(editingVial.volume, "Volume");
-    const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(editingVial.activity, "Aktiviten");
-
-    const errors = []
-    // You need this other wise you have short circuiting
-    const valid_batch = concatErrors(errors, batchValid, formattedLotNumber)
-    const valid_time  = concatErrors(errors, timeValid, formattedFillTime)
-    const valid_volume = concatErrors(errors, volumeValid, formattedVolume)
-    const valid_activity = concatErrors(errors, activityValid, formattedActivity);
-
-    if(valid_batch && valid_time && valid_volume && valid_activity){
-      websocket.sendEditModel(DATA_VIAL, [{
-        ...vial,
-        lot_number : formattedLotNumber,
-        fill_time : formattedFillTime,
-        volume : formattedVolume,
-        activity : formattedActivity
-      }])
-      setEditing(false)
-    } else {
-      setError(ERROR_LEVELS.error, errors)
-    }
-  }
-
-  useEffect(() => {
-    setDisplayVial(vial)
-    return () => {}
-  }, [vial])
-
-  const lotNumberContent = editing ? <FormControl value={editingVial.lot_number}
-    aria-label={`lot_number-${vial.id}`}
-    onChange={(event) => {setDisplayVial({lot_number : event.target.value})}}/> : vial.lot_number;
-  const productionTimeContent = editing ? <TimeInput
-    value={editingVial.fill_time}
-    aria-label={`fill_time-${vial.id}`}
-    stateFunction={setFillTime}
-    /> : vial.fill_time;
-  const volumeContent = editing ? <FormControl
-    aria-label={`volume-${vial.id}`}
-    value={editingVial.volume}
-    onChange={(event) => {setDisplayVial({volume : event.target.value})}}/> : vial.volume;
-  const activityContent = editing ? <FormControl value={editingVial.activity}
-    aria-label={`activity-${vial.id}`}
-    onChange={(event) => {setDisplayVial({activity : event.target.value})}}/> : vial.activity;
-
-  const canEditIcon = selected ? <div></div> : <ClickableIcon
-    src="/static/images/pen.svg"
-    label={`edit-vial-${vial.id}`}
-    onClick={() => {
-    setEditing(true);
-  }}/>
-
-  const editingContent = editing ? <ClickableIcon src="/static/images/accept.svg"
-    label={`vial-edit-accept-${vial.id}`}
-    onClick={updateVial}
-  /> : canEditIcon;
-
-  let commitContent = editing ? <ClickableIcon
-                                  label={`vial-edit-decline-${vial.id}`}
-                                  src="/static/images/decline.svg"
-                                  onClick={() => {setEditing(false)}}
-                                /> : <Form.Check
-          aria-label={`vial-usage-${vial.id}`}
-          onChange={onSelect}
-          checked={selected}/>;
-
-  if (vial.assigned_to){
-    commitContent = ""
-  }
-
-  return (
-    <tr>
-      <td>{vial.id}</td>
-      <td>{lotNumberContent}</td>
-      <td>{productionTimeContent}</td>
-      <td>{volumeContent}</td>
-      <td>{activityContent}</td>
-      <td>{editingContent}</td>
-      <td>{commitContent}</td>
-    </tr>
-  );
-}
-
-function NewVialRow({stopAddingVial, setError, websocket, active_date, customer}){
-  const [lot_number, setLotNumber] = useState("");
-  const [fill_time, setFillTime] = useState("");
-  const [volume, setVolume] = useState("");
-  const [activity, setActivity] = useState("");
-
-  function addNewVial(){
-    const errors = []
-    const [batchValid, formattedLotNumber] = parseBatchNumberInput(lot_number, 'Batch nr.');
-    const [timeValid, formattedFillTime] = parseTimeInput(fill_time, "Produktions tidspunk");
-    const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(volume, "Volume");
-    const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(activity, "Activitet");
-
-    const valid = concatErrors(errors, batchValid, formattedLotNumber)
-                && concatErrors(errors, timeValid, formattedFillTime)
-                && concatErrors(errors, volumeValid, formattedVolume)
-                && concatErrors(errors, activityValid, formattedActivity);
-
-    if(valid){
-      websocket.sendCreateModel(DATA_VIAL, [{
-        owner : customer.id,
-        fill_date : active_date,
-        lot_number : formattedLotNumber,
-        fill_time : formattedFillTime,
-        volume : formattedVolume,
-        activity : formattedActivity
-      }])
-      stopAddingVial()
-    } else {
-      setError(errors);
-    }
-  }
-
-  return (
-    <tr>
-      <td>Ny</td>
-      <td>
-        <FormControl
-          aria-label="lot_number-new"
-          value={lot_number}
-          onChange={(event) => {
-            setLotNumber(event.target.value)
-          }}/>
-      </td>
-      <td>
-        <TimeInput
-          aria-label="fill_time-new"
-          stateFunction={setFillTime}
-          value={fill_time}
-          />
-      </td>
-      <td>
-        <FormControl
-          aria-label="volume-new"
-          value={volume}
-          onChange={(event) => {
-            setVolume(event.target.value)
-          }}/>
-      </td>
-      <td>
-        <FormControl
-          aria-label="activity-new"
-          value={activity}
-          onChange={(event) => {
-            setActivity(event.target.value)
-          }}/>
-      </td>
-      <td>
-        <ClickableIcon
-          src="static/images/accept.svg"
-          label="accept-new"
-          onClick={addNewVial}
-        />
-      </td>
-      <td>
-        <ClickableIcon
-          label="decline-new"
-          src="static/images/decline.svg"
-          onClick={stopAddingVial}
-        />
-      </td>
-    </tr>
-  );
-}
-
-export function ActivityModal(props){
-  // Prop extraction
-  const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = props[DATA_DELIVER_TIME].get(props[PROP_TIME_SLOT_ID])
-  const /**@type {ActivityProduction} */ production = props[DATA_PRODUCTION].get(timeSlot.production_run);
-  const /**@type {Array<ActivityOrder>}*/ orders = props[PROP_ORDER_MAPPING].get(timeSlot.id)
-  const /**@type {DeliveryEndpoint } */ endpoint = props[DATA_ENDPOINT].get(timeSlot.destination)
-  const /**@type {Customer} */ customer = props[DATA_CUSTOMER].get(endpoint.owner)
-  const /**@type {Number} */ overhead = 1 // TODO : FIX
-  const /**@type {Tracer} */ tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER])
-  const /**@type {Isotope} */ isotope = props[DATA_ISOTOPE].get(tracer.isotope)
+export function ActivityModal({
+  active_date, active_tracer, order_mapping, on_close, timeSlotID, timeSlotMapping, tracer_catalog
+}){
+  // State extraction
+  const state = useTracershopState();
   const websocket = useWebsocket()
+  const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = state.deliver_times.get(timeSlotID)
+  const /**@type {ActivityProduction} */ production = state.production.get(timeSlot.production_run);
+  const /**@type {Array<ActivityOrder>}*/ orders = order_mapping.get(timeSlot.id)
+  const /**@type {DeliveryEndpoint} */ endpoint = state.delivery_endpoint.get(timeSlot.destination)
+  const /**@type {Customer} */ customer = state.customer.get(endpoint.owner)
+  const /**@type {Number} */ overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer)
+  const /**@type {Tracer} */ tracer = state.tracer.get(active_tracer)
+  const /**@type {Isotope} */ isotope = state.isotopes.get(tracer.isotope)
+  
+   /**
+  * A time slot may multiple orders and each of these objects refers to an order
+  * connected by a common time slot.
+  * @param {{
+  *  order : ActivityOrder,
+  *  websocket : TracerWebSocket,
+  *  timeSlots : Map<Number, ActivityDeliveryTimeSlot>
+  *  timeSlotId : Number
+  * }} props
+  * @returns {Element}
+  */
+  function OrderRow({order}){
+    const [activity, setActivity] = useState(order.ordered_activity);
+    const [editing, setEditing] = useState(false);
+    const [error, setError] = useState(false);
+    const canEdit = order.status == 1 || order.status == 2;
+    const displayStyle = error ? {backgroundColor : ERROR_BACKGROUND_COLOR} : {}
+
+    function acceptEdit (){
+      const [valid, activityNumber] = parseDanishPositiveNumberInput(activity);
+      if(!valid){
+        setError(true);
+        return;
+      }
+      order.ordered_activity = activityNumber;
+
+      websocket.sendEditModel(DATA_ACTIVITY_ORDER, [order]);
+      setEditing(false);
+      setError(false);
+    }
+
+    let activityDisplay = canEdit ?
+                            <HoverBox
+                              Base={<p>{`${activity} MBq`}</p>}
+                              Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
+                              />
+                            : `${activity} MBq`;
+
+      if(editing){
+        activityDisplay = <FormControl
+                            aria-label={`edit-form-order-activity-${order.id}`}
+                            style={displayStyle}
+                            value={activity}
+                            onChange={(event) => {
+                              setActivity(event.target.value)
+                            }}
+                          />
+    }
+
+    let iconFunction= canEdit ? () => {setEditing(true)} : () => {}
+    let icon = <StatusIcon
+                label={`edit-order-activity-${order.id}`}
+                status={order.status}
+                onClick={iconFunction}
+              />
+    if (order.moved_to_time_slot){
+      icon = <ClickableIcon
+                label={`edit-order-activity-${order.id}`}
+                src="/static/images/move_top.svg"
+                onClick={iconFunction}
+              />
+    }
+    if(editing){
+      icon = <ClickableIcon
+                label={`edit-accept-order-activity-${order.id}`}
+                src="static/images/accept.svg"
+                onClick={acceptEdit}/>
+    }
+
+    return (
+      <Row>
+        <Col>Order ID:{order.id}</Col>
+        <Col>{activityDisplay}</Col>
+        <Col xs={2}>{renderComment(order.comment)}</Col>
+        <Col xs={2} style={{
+          justifyContent : "right", display : "flex"
+        }}>{icon}</Col>
+      </Row>
+    )
+  }
+
+  /**
+   * A row in the vial table
+   * @param {{
+   * vial : Vial,
+   * onSelect : CallableFunction,
+   * selected : Boolean,
+   * websocket : TracerWebSocket,
+   * }} props for component
+   * @returns
+   */
+  function VialRow({vial, onSelect, selected, websocket, setError}){
+    const [editing, setEditing] = useState(false);
+    const [editingVial, _setDisplayVial] = useState({...vial});
+
+    function setDisplayVial(newVial){
+      _setDisplayVial({
+        ...editingVial,
+        ...newVial,
+      })
+    }
+
+    function setFillTime(newFillTime){
+      setDisplayVial({
+        fill_time : newFillTime
+      })
+    }
+
+    function updateVial() {
+      const [batchValid, formattedLotNumber] = parseBatchNumberInput(editingVial.lot_number, "Batch nr.");
+      const [timeValid, formattedFillTime] = parseTimeInput(editingVial.fill_time, "Produktions tidspunk");
+      const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(editingVial.volume, "Volume");
+      const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(editingVial.activity, "Aktiviten");
+
+      const errors = []
+      // You need this other wise you have short circuiting
+      const valid_batch = concatErrors(errors, batchValid, formattedLotNumber)
+      const valid_time  = concatErrors(errors, timeValid, formattedFillTime)
+      const valid_volume = concatErrors(errors, volumeValid, formattedVolume)
+      const valid_activity = concatErrors(errors, activityValid, formattedActivity);
+
+      if(valid_batch && valid_time && valid_volume && valid_activity){
+        websocket.sendEditModel(DATA_VIAL, [{
+          ...vial,
+          lot_number : formattedLotNumber,
+          fill_time : formattedFillTime,
+          volume : formattedVolume,
+          activity : formattedActivity
+        }])
+        setEditing(false)
+      } else {
+        setError(ERROR_LEVELS.error, errors)
+      }
+    }
+
+    useEffect(() => {
+      setDisplayVial(vial)
+      return () => {}
+    }, [vial])
+
+    const lotNumberContent = editing ?
+                              <FormControl value={editingVial.lot_number}
+                                aria-label={`lot_number-${vial.id}`}
+                                onChange={(event) => {setDisplayVial({lot_number : event.target.value})}}
+                              />
+                            : vial.lot_number;
+
+    const productionTimeContent = editing ?
+                                    <TimeInput
+                                      value={editingVial.fill_time}
+                                      aria-label={`fill_time-${vial.id}`}
+                                      stateFunction={setFillTime}
+                                    />
+                                  : vial.fill_time;
+    const volumeContent = editing ? <FormControl
+      aria-label={`volume-${vial.id}`}
+      value={editingVial.volume}
+      onChange={(event) => {setDisplayVial({volume : event.target.value})}}/> : vial.volume;
+    const activityContent = editing ? <FormControl value={editingVial.activity}
+      aria-label={`activity-${vial.id}`}
+      onChange={(event) => {setDisplayVial({activity : event.target.value})}}/> : vial.activity;
+
+    const canEditIcon = selected ? <div></div> : <ClickableIcon
+      src="/static/images/pen.svg"
+      label={`edit-vial-${vial.id}`}
+      onClick={() => {
+      setEditing(true);
+    }}/>
+
+    const editingContent = editing ? <ClickableIcon src="/static/images/accept.svg"
+      label={`vial-edit-accept-${vial.id}`}
+      onClick={updateVial}
+    /> : canEditIcon;
+
+    let commitContent = editing ? <ClickableIcon
+                                    label={`vial-edit-decline-${vial.id}`}
+                                    src="/static/images/decline.svg"
+                                    onClick={() => {setEditing(false)}}
+                                  /> : <Form.Check
+            aria-label={`vial-usage-${vial.id}`}
+            onChange={onSelect}
+            checked={selected}/>;
+  
+    if (vial.assigned_to){
+      commitContent = ""
+    }
+  
+    return (
+      <tr>
+        <td>{vial.id}</td>
+        <td>{lotNumberContent}</td>
+        <td>{productionTimeContent}</td>
+        <td>{volumeContent}</td>
+        <td>{activityContent}</td>
+        <td>{editingContent}</td>
+        <td>{commitContent}</td>
+      </tr>
+    );
+  }
+  
+  function NewVialRow({stopAddingVial, setError, websocket, active_date, customer}){
+    const [lot_number, setLotNumber] = useState("");
+    const [fill_time, setFillTime] = useState("");
+    const [volume, setVolume] = useState("");
+    const [activity, setActivity] = useState("");
+  
+    function addNewVial(){
+      const errors = []
+      const [batchValid, formattedLotNumber] = parseBatchNumberInput(lot_number, 'Batch nr.');
+      const [timeValid, formattedFillTime] = parseTimeInput(fill_time, "Produktions tidspunk");
+      const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(volume, "Volume");
+      const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(activity, "Activitet");
+  
+      const valid = concatErrors(errors, batchValid, formattedLotNumber)
+                  && concatErrors(errors, timeValid, formattedFillTime)
+                  && concatErrors(errors, volumeValid, formattedVolume)
+                  && concatErrors(errors, activityValid, formattedActivity);
+  
+      if(valid){
+        websocket.sendCreateModel(DATA_VIAL, [{
+          owner : customer.id,
+          fill_date : active_date,
+          lot_number : formattedLotNumber,
+          fill_time : formattedFillTime,
+          volume : formattedVolume,
+          activity : formattedActivity
+        }])
+        stopAddingVial()
+      } else {
+        setError(errors);
+      }
+    }
+
+    return (
+      <tr>
+        <td>Ny</td>
+        <td>
+          <FormControl
+            aria-label="lot_number-new"
+            value={lot_number}
+            onChange={(event) => {
+              setLotNumber(event.target.value)
+            }}/>
+        </td>
+        <td>
+          <TimeInput
+            aria-label="fill_time-new"
+            stateFunction={setFillTime}
+            value={fill_time}
+            />
+        </td>
+        <td>
+          <FormControl
+            aria-label="volume-new"
+            value={volume}
+            onChange={(event) => {
+              setVolume(event.target.value)
+            }}/>
+        </td>
+        <td>
+          <FormControl
+            aria-label="activity-new"
+            value={activity}
+            onChange={(event) => {
+              setActivity(event.target.value)
+            }}/>
+        </td>
+        <td>
+          <ClickableIcon
+            src="static/images/accept.svg"
+            label="accept-new"
+            onClick={addNewVial}
+          />
+        </td>
+        <td>
+          <ClickableIcon
+            label="decline-new"
+            src="static/images/decline.svg"
+            onClick={stopAddingVial}
+          />
+        </td>
+      </tr>
+    );
+  }
+
 
   // Value extraction
-  const dateString = dateToDateString(props[PROP_ACTIVE_DATE])
+  const dateString = dateToDateString(active_date)
   let minimum_status = 5;
   let activity = 0;
   let freed_activity = 0;
@@ -383,7 +401,7 @@ export function ActivityModal(props){
   )
 
   // STATE DEFINITION
-  const [state, _setState] = useState({
+  const [state_, _setState] = useState({
     editingVials : new Map(),
     errorLevel : null,
     errorMessage : <div></div>,

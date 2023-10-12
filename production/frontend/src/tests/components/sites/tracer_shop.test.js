@@ -6,15 +6,17 @@ import React from "react";
 import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState } from "../../app_state.js";
+import { AppState, testState } from "../../app_state.js";
 import { TracerShop } from "../../../components/sites/tracer_shop.js"
 import { PROP_USER } from "../../../lib/constants.js";
 import { ANON, users } from "../../test_state/users.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { TracershopState } from "~/dataclasses/dataclasses.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
+const dispatchMock = jest.fn();
 
 let websocket = null;
 let container = null;
@@ -30,8 +32,7 @@ beforeEach(() => {
   window.location = { href : "tracershop"}
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
-  props = {...AppState}
-  props[PROP_USER] = ANON;
+
 });
 
 
@@ -46,58 +47,117 @@ afterEach(() => {
 });
 
 describe("Tracer shop test suite", () => {
-  it("standard test", () => {
-    render(
-    <WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>
-    );
+  it("Standard Render test ANON", () => {
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : ANON,
+    })
+
+
+
+    render(<StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
   })
 
   it("standard test Site admin", () => {
-    props[PROP_USER] = users.get(1);
-    render(
-    <WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>);
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(1),
+    })
+
+
+
+    render(<StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
   })
 
   it("standard test Production Admin", () => {
-    props[PROP_USER] = users.get(2);
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(2),
+    })
 
-    render(
-    <WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>);
+
+    render(<StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
   })
 
   it("standard test Production user", () => {
-    props[PROP_USER] = users.get(3);
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(3),
+    })
 
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>);
+
+    render(<StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
   })
 
   it("standard test Shop Admin", () => {
-    props[PROP_USER] = users.get(4);
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>);
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(4),
+    })
+
+
+    render(<StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
   })
 
   it("standard test shop user", () => {
-    props[PROP_USER] = users.get(5);
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>);
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(5),
+    })
+
+    render(<StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
   })
 
   it("standard test shop external", () => {
-    props[PROP_USER] = users.get(6);
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerShop {...props} />
-    </WebsocketContextProvider>);
-  })
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(6),
+    })
 
+
+    render(
+    <StateContextProvider value={newState}>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerShop />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
+    </StateContextProvider>);
+  })
 })

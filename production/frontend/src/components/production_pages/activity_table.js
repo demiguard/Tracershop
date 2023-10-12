@@ -315,7 +315,6 @@ function ProductionRow({active_production}){
   let activity_overhead = 0
 
   const /**@type {Array<Number> | undefined} */ associatedTimeSlots = productionTimeSlotOwnerShip.getTimeSlots(active_production);
-  console.log(associatedTimeSlots)
 
   if (associatedTimeSlots !== undefined) {
     for(const timeSlot of associatedTimeSlots){

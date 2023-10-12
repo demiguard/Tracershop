@@ -12,7 +12,7 @@ import { MarginButton } from "~/components/injectable/buttons";
 import { getTimeStamp } from "~/lib/chronomancy";
 import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { bookingFilter } from "~/lib/filters";
-import { useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 
 /**
  * 
@@ -196,16 +196,17 @@ function TracerCard({tracer,
 }
 
 
-export function FutureBooking (props) {
-  console.log(props[DATA_PROCEDURE], props[DATA_LOCATION])
+export function FutureBooking ({active_date, active_endpoint,
+  activityDeadlineExpired, injectionDeadlineExpired}) {
+  const state = useTracershopState();
   const websocket = useWebsocket();
-  const dateString = dateToDateString(props[PROP_ACTIVE_DATE]);
-  const procedureLocationIndex = new ProcedureLocationIndex(props[DATA_PROCEDURE],
-                                                            props[DATA_LOCATION] );
+  const dateString = dateToDateString(active_date);
+  const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
+                                                            state.location);
 
 
-  const bookings = [...props[DATA_BOOKING].values()].filter(bookingFilter(
-    dateString, props[DATA_LOCATION], props[PROP_ACTIVE_ENDPOINT]
+  const bookings = [...state.booking.values()].filter(bookingFilter(
+    dateString, state.location, active_endpoint
   ))
 
   const bookingMapping = new TracerBookingMapping(bookings, procedureLocationIndex);
@@ -218,7 +219,7 @@ export function FutureBooking (props) {
       bookingCards.push(<ProcedureCard
         key={index}
         bookings={BookingArray}
-        procedures={props[DATA_PROCEDURE]}
+        procedures={state.procedure}
       />);
     }
     bookingCards.push(
@@ -226,11 +227,11 @@ export function FutureBooking (props) {
         key={index}
         tracer={tracer}
         bookings={BookingArray}
-        procedures={props[DATA_PROCEDURE]}
-        locations={props[DATA_LOCATION]}
+        procedures={state.procedure}
+        locations={state.locations}
         websocket={websocket}
-        activityDeadlineExpired={props[PROP_EXPIRED_ACTIVITY_DEADLINE]}
-        injectionDeadlineExpired={props[PROP_EXPIRED_INJECTION_DEADLINE]}
+        activityDeadlineExpired={activityDeadlineExpired}
+        injectionDeadlineExpired={injectionDeadlineExpired}
       />);
   }
 

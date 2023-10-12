@@ -17,20 +17,21 @@ import propTypes from "prop-types";
 import styles from '~/css/Site.module.css';
 import { Tracer, Customer, TracerCatalogPage } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
-import { useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 
 
-export function TracerModal (props) {
+export function TracerModal ({active_tracer, on_close}) {
+  const state = useTracershopState();
   const websocket = useWebsocket();
   const [filter, setFilter] = useState("");
-  const/**@type {Tracer} */ tracer = props[DATA_TRACER].get(props[PROP_ACTIVE_TRACER])
+  const/**@type {Tracer} */ tracer = state.tracer.get(active_tracer)
     // This is a map so the id can be found later, if a TracerCatalog needs to be deleted
     const TracerMapping = new Map();
 
-    for(const [ID, _TracerCatalog ] of props[DATA_TRACER_MAPPING]){
+    for(const _TracerCatalog of state.tracer_mapping.values()){
       const /**@type {TracerCatalogPage} */ tracerCatalog = _TracerCatalog
 
-      if(tracerCatalog.tracer == props[PROP_ACTIVE_TRACER]){
+      if(tracerCatalog.tracer == active_tracer){
         TracerMapping.set(tracerCatalog.customer, tracerCatalog.id)
       }
     }
@@ -40,7 +41,7 @@ export function TracerModal (props) {
       const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
       const data = {};
       data.customer = CustomerID;
-      data.tracer = props[PROP_ACTIVE_TRACER];
+      data.tracer = active_tracer;
 
       message[WEBSOCKET_DATA] = data
       message[WEBSOCKET_DATATYPE] = DATA_TRACER_MAPPING
@@ -76,8 +77,8 @@ export function TracerModal (props) {
 
     const customerRows = [];
     const filterRegExp = new RegExp(filter,"g");
-    for(const [_customer_id, _customer] of props[DATA_CUSTOMER]){
-      const /**@type {Customer} */ customer = _customer
+    for(const customer of state.customer.values()){
+
       if(filterRegExp.test(customer.short_name)) {
         customerRows.push(CustomerRow(customer));
       }
@@ -87,7 +88,7 @@ export function TracerModal (props) {
       <Modal
         show={true}
         size="lg"
-        onHide={props[PROP_ON_CLOSE]}
+        onHide={on_close}
         className={styles.mariLight}
       >
         <Modal.Header>
@@ -117,16 +118,13 @@ export function TracerModal (props) {
       </Container>
       </Modal.Body>
       <Modal.Footer>
-        <CloseButton onClick={props[PROP_ON_CLOSE]} />
+        <CloseButton onClick={on_close} />
         </Modal.Footer>
       </Modal>
     );
 }
 
 TracerModal.propTypes = {
-  [DATA_CUSTOMER] : propTypes.objectOf(Map).isRequired,
-  [DATA_TRACER_MAPPING] : propTypes.objectOf(Map).isRequired,
   [PROP_ACTIVE_TRACER] : propTypes.number.isRequired,
   [PROP_ON_CLOSE] : propTypes.func.isRequired,
-  [DATA_TRACER] : propTypes.objectOf(Map).isRequired,
 }

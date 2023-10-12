@@ -30,34 +30,42 @@ export const db = {
       throw `Type of ${key} unknown!`;
     }
 
-    var value = localStorage.getItem(key);
+    let value = localStorage.getItem(key);
 
     if (value == null) return null; // Item wasn't found
 
-    if (Type === Date){
-      const Datestr = JSON.parse(value)
-      value = new Date(Datestr);
-    } else if(Type === Array || Type === Object){
-      value = JSON.parse(value);
-    } else if( Type === Number || Type === String){
-      value = Type(value);
-    } else if (Type === Boolean) { // special case is needed since Boolean("false") -> true
-      if (value === "true") return true;
-      return false;
-    } else if (Type === Map) {
-      const TempObject = JSON.parse(value);
-      value = new Map();
-      for(const [key, val] of Object.entries(TempObject)){
-        const MaybeNumberKey = Number(key);
-        if (isNaN(MaybeNumberKey)){
-          value.set(key, val)
-        } else {
-          value.set(MaybeNumberKey, val);
+    switch(true){
+      case Type === Date: {
+        const DateStr = JSON.parse(value)
+        return new Date(DateStr);
+      }
+      case Type === Array || Type === Object:
+        return JSON.parse(value);
+
+      case Type === Number || Type === String:
+        return Type(value);
+      case (Type === Boolean):
+        if (value === "true") {
+          return true;
         }
+        return false;
+      case (Type === Map): {
+        const TempObject = JSON.parse(value);
+        value = new Map();
+        for(const [key, val] of Object.entries(TempObject)){
+          const MaybeNumberKey = Number(key);
+          if (isNaN(MaybeNumberKey)){
+            value.set(key, val)
+          } else {
+            value.set(MaybeNumberKey, val);
+          }
+        }
+        return value
       }
     }
 
     return value;
+
   },
   delete(key) {
     localStorage.removeItem(key)

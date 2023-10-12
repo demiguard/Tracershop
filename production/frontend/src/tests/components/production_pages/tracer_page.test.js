@@ -8,25 +8,23 @@ import { jest } from '@jest/globals'
 import { TracerPage } from "../../../components/production_pages/setup_pages/tracer_page"
 import { TRACER_TYPE } from "~/lib/constants.js";
 import { DATA_TRACER } from "~/lib/shared_constants";
-import { AppState } from "../../app_state.js"
+import { testState } from "../../app_state.js"
 import { act } from "react-dom/test-utils";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context";
 
 
-const onClose = jest.fn()
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
 let container = null;
-let props = null;
 
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
-  props = {...AppState}
+  websocket = tracer_websocket.TracerWebSocket;
+
 
 });
 
@@ -42,11 +40,14 @@ afterEach(() => {
 
 describe("Tracer setup Page test suite", () => {
   it("Standard Render Test", () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerPage {...props} />
-    </WebsocketContextProvider>);
+    render(
+    <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <TracerPage />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
-    for(const tracer of props[DATA_TRACER].values()){
+    for(const tracer of testState.tracer.values()){
       expect(screen.getByText(tracer.shortname)).toBeVisible()
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY || tracer.archived){
         expect(screen.queryByLabelText(`open-modal-${tracer.id}`)).toBeNull()
@@ -57,9 +58,12 @@ describe("Tracer setup Page test suite", () => {
   });
 
   it("Restore Tracer", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerPage {...props} />
-    </WebsocketContextProvider>);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerPage />
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const restoreIcon = screen.getByLabelText('restore-5')
     await act(async () => {
@@ -71,9 +75,12 @@ describe("Tracer setup Page test suite", () => {
   })
 
   it("Change clinical name", async () =>{
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerPage {...props} />
-    </WebsocketContextProvider>);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerPage />
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const clinicalNameInput = screen.getByLabelText('set-clinical-name-1')
     await act(async () => {
@@ -90,9 +97,12 @@ describe("Tracer setup Page test suite", () => {
   })
 
   it("Open and close modal", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <TracerPage {...props} />
-    </WebsocketContextProvider>);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <TracerPage />
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const openModal = screen.getByLabelText(`open-modal-2`)
 
