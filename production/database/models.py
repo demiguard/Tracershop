@@ -81,6 +81,11 @@ def getOrCreateModel(key, Model: Type[T], keyWord: str) -> T:
   Throws:
     django.core.exceptions.MultipleInstances: - if multiple objects exists
   """
+
+  # I just want to explain the difference between this and  get_or_create from django
+  # So this allow to you dynammicly get or create models without knowing the model
+  # until runtime.
+
   keyDict = {keyWord : key}
   try:
     model = Model.objects.get(**keyDict)

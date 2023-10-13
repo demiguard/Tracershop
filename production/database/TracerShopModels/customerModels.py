@@ -8,7 +8,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Third Party Packages
 from typing import Optional
-from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
+from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel, Days
@@ -91,13 +91,14 @@ class Location(TracershopModel):
   """
   #Note A Location should be able to be created from location_code alone
   id = BigAutoField(primary_key=True)
-  location_code = CharField(max_length=120)
+  location_code = CharField(max_length=120, unique=True)
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
   common_name = CharField(max_length=120, null=True, default=None)
 
 class ProcedureIdentifier(TracershopModel):
   id = BigAutoField(primary_key=True)
-  string = CharField(max_length=128)
+  code = CharField(max_length=128, blank=True, unique=True, null=True, default=None)
+  description = CharField(max_length=255, blank=True, unique=True, null=True, default=None)
 
 
 class Procedure(TracershopModel):
@@ -126,6 +127,13 @@ class Booking(TracershopModel):
   accession_number = CharField(max_length=32)
   start_time = TimeField()
   start_date = DateField()
+  study_uid = CharField(max_length=255, unique=True, blank=True, null=True, default=None)
+
+  class Meta:
+    indexes = [
+      Index(fields=['study_uid']),
+      Index(fields=['start_date', 'start_time'])
+    ]
 
 
 class WeeklyRepeat(IntegerChoices):
@@ -185,7 +193,6 @@ class ActivityOrder(TracershopModel):
     default=None,
     related_name="activity_freed_by"
   )
-
 
   def canEdit(self, user: Optional[User] = None) -> AuthActions:
     if user is None:
