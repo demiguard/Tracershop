@@ -270,7 +270,7 @@ class Vial(TracershopModel):
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
 
-  def canDelete(self, user: User | None = None) -> AuthActions:
+  def canDelete(self, user: Optional[User] = None) -> AuthActions:
     if user is not None and user.is_production_member:
       return AuthActions.ACCEPT_LOG
 
