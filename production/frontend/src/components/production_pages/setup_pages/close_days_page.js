@@ -20,7 +20,6 @@ export function CloseDaysPage () {
   }
 
   function changeCloseDay (dateObject) {
-    console.log(dateObject)
     const dateStr = dateToDateString(dateObject)
     if (closedDateMap.has(dateStr)){
       const closedDateID = closedDateMap.get(dateStr);

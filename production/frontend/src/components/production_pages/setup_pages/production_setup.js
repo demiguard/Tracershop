@@ -4,13 +4,13 @@ import { ActivityProduction } from "../../../dataclasses/dataclasses";
 import { WeeklyTimeTable } from "../../injectable/weekly_time_table";
 import { DAYS, DATA_PRODUCTION, DATA_TRACER, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC } from "../../../lib/constants";
 import { tracerTypeFilter } from "../../../lib/filters";
-import { TracerWebSocket } from "../../../lib/tracer_websocket";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
-export function ProductionSetup(props){
-  const /**@type {TracerWebSocket} */ websocket = useWebsocket()
-  const /**@type {Array<ActivityProduction>} */ productions = [...props[DATA_PRODUCTION].values()]
-  const activityTracers = [...props[DATA_TRACER].values()].filter(
+export function ProductionSetup(){
+  const state = useTracershopState();
+  const websocket = useWebsocket()
+  const productions = [...state.production.values()]
+  const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
   )
   const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id
@@ -19,26 +19,22 @@ export function ProductionSetup(props){
                                   new ActivityProduction(-1, DAYS.MONDAY, tracerInit, "", "", "")
                                 : {...productions[0]}
 
-  const [state, _setState] = useState({
-    tempProduction : tempProductionInit,
-  });
+  const [tempProduction, _setTempProduction] = useState(tempProductionInit);
 
-  function setState(newState) {
-    _setState({...state, ...newState})
+  function setTempProduction(newTempProduction) {
+    _setTempProduction({...tempProduction, ...newTempProduction})
   }
 
   function setNewProduction(){
-    setState({
-      tempProduction : new ActivityProduction(-1, DAYS.MONDAY, tracerInit, "", "", "")
-    })
+    setTempProduction(new ActivityProduction(-1, DAYS.MONDAY, tracerInit, "", "", ""));
   }
 
   function commitChanges(){
-    if( state.tempProduction.id === -1){
-      const newProduction = {...state.tempProduction, id : undefined};
+    if( tempProduction.id === -1){
+      const newProduction = {...tempProduction, id : undefined};
       websocket.sendCreateModel(DATA_PRODUCTION, [newProduction])
     } else {
-      websocket.sendEditModel(DATA_PRODUCTION, [state.tempProduction])
+      websocket.sendEditModel(DATA_PRODUCTION, [tempProduction])
     }
   }
 
@@ -101,16 +97,15 @@ export function ProductionSetup(props){
     return `activity-production-${activityProduction.id}`;
   }
 
-
-
-  const weeklyTimeTableProps = {};
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRIES] = productions;
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_DAY_GETTER] = weeklyTimeTableDayGetter;
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] = weeklyTimeTableHourGetter;
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] = weeklyTimeTableEntryOnClick;
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] = weeklyTimeTableEntryColor;
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_INNER_TEXT] = weeklyTimeTableInnerText;
-  weeklyTimeTableProps[WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] = weeklyTimeTableLabelFunction;
+  const weeklyTimeTableProps = {
+    [WEEKLY_TIME_TABLE_PROP_ENTRIES] : productions,
+    [WEEKLY_TIME_TABLE_PROP_DAY_GETTER] : weeklyTimeTableDayGetter,
+    [WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] : weeklyTimeTableHourGetter,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] : weeklyTimeTableEntryOnClick,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] : weeklyTimeTableEntryColor,
+    [WEEKLY_TIME_TABLE_PROP_INNER_TEXT] : weeklyTimeTableInnerText,
+    [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
+  };
 
 
   return (<Container>

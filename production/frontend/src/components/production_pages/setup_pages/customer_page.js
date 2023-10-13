@@ -5,80 +5,71 @@ import { renderTableRow } from "../../../lib/rendering.js";
 import { HistoryModal } from "../../modals/history_modal.js";
 import { CustomerModal } from "../../modals/customer_modal.js";
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
-import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
 import { ClickableIcon } from "../../injectable/icons.js"
-import { Customer } from "~/dataclasses/dataclasses.js";
+import { setStateToEvent } from "~/lib/state_management.js";
+import { useTracershopState } from "~/components/tracer_shop_context.js";
 
 const Modals = {
   CUSTOMER : CustomerModal,
   HISTORY  : HistoryModal,
 }
 
-export function CustomerPage (props) {
-  const [state, _setState] = useState({
-    filter : "",
-    Modal : null,
-    activeCustomer : null,
-  })
-
-  function setState(newState){
-    _setState({...state, ...newState})
-  }
+export function CustomerPage () {
+  const state = useTracershopState();
+  const [filter, setFilter] = useState("");
+  const [modalIdentifier, setModalIdentifier] = useState("");
+  const [active_customer, setActiveCustomer] = useState("");
 
 
   function closeModal() {
-    setState({
-      Modal : null,
-      activeCustomer : null
-    });
+    setModalIdentifier("");
+    setActiveCustomer("");
   }
 
-  function ActivateModal(key, Modal) {
+  function ActivateModal(key, modalIdentifier) {
     const retFunc = () => {
-      setState({
-        Modal : Modal,
-        activeCustomer : key,
-      });
+      setModalIdentifier(modalIdentifier);
+      setActiveCustomer(key);
     }
-    return retFunc
+    return retFunc;
   }
 
   const /**@type {Array<Element>} */ customerRows = [];
-  const FilterRegEx = new RegExp(state.filter,'g')
-    for (const [ID, _customer] of props[DATA_CUSTOMER]) {
-      const /**@type {Customer} */ customer = _customer
-      if (FilterRegEx.test(customer.short_name)) {
-        customerRows.push(renderTableRow(ID,[
-          <Container>
-            <Row className="justify-content-between">
-              <Col xs={3}>{customer.short_name}</Col>
-              <Col xs={2} style={{
-                display : "flex"
-              }}>
-                <ClickableIcon
-                  label={`settings-${customer.id}`}
-                  src={'/static/images/setting.png'}
-                  onClick={ActivateModal(ID, Modals.CUSTOMER)}/>
-              </Col>
-            </Row>
-          </Container>
-        ]));
-      }
+  const FilterRegEx = new RegExp(filter,'g')
+  for (const customer of state.customer.values()) {
+    if (FilterRegEx.test(customer.short_name)) {
+      customerRows.push(renderTableRow(customer.id,[
+        <Container>
+          <Row className="justify-content-between">
+            <Col xs={3}>{customer.short_name}</Col>
+            <Col xs={2} style={{
+              display : "flex"
+            }}>
+              <ClickableIcon
+                label={`settings-${customer.id}`}
+                src={'/static/images/setting.png'}
+                onClick={ActivateModal(customer.id, "CUSTOMER")}
+              />
+            </Col>
+          </Row>
+        </Container>
+      ]));
     }
+  }
 
-    const Modal = (state.Modal) ? state.Modal : ""
+  const Modal = (modalIdentifier !== "") ? Modals[modalIdentifier] : ""
+  const modalProps = {
+    [PROP_ACTIVE_CUSTOMER] : active_customer,
+    [PROP_ON_CLOSE] : closeModal,
+  };
 
-    const modelProps = {...props};
-    modelProps[PROP_ACTIVE_CUSTOMER] = state.activeCustomer;
-    modelProps[PROP_ON_CLOSE] = closeModal;
-
-    return (
+  return (
     <Container>
       <Row>
         <FormControl
           aria-label="customer-filter"
-          onChange={(event) => {setState({filter : event.target.value})}}
-          value={state.filter}
+          onChange={setStateToEvent(setFilter)}
+          value={filter}
           placeholder="Kunde Filter"
         />
       </Row>
@@ -94,7 +85,6 @@ export function CustomerPage (props) {
           </tbody>
         </Table>
       </Row>
-        {state.Modal ? <Modal {...modelProps} /> : null}
+        {Modal !== "" ? <Modal {...modalProps}/> : "" }
     </Container>);
 }
-

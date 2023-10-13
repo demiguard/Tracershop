@@ -74,7 +74,6 @@ def create_booking(location, procedure_identifier, start_time, start_date, acces
     return booking
 
 
-
 @database_sync_to_async
 def delete_booking(study_uid):
     try:
@@ -122,7 +121,7 @@ async def handleMessage(hl7_message: Message):
         return
 
     for ORC_message_segment, OBR_message_segment, ZDS_message_segment in zip(hl7_message['ORC'], hl7_message['OBR'], hl7_message['ZDS']):
-        # This is the name given by the stanard. It is really part of the
+        # This is the name given by the standard. It is really part of the
         # message type. But for some god forsaken reason, did we decide to have
         # 10 different Message types to the same code
         if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] == 'Appointed':

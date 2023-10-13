@@ -30,7 +30,7 @@ export const siteNames = {
 }
 
 
-export function SetupShop(props){
+export function SetupShop(){
   const [siteIdentifier, setSiteIdentifier] = useState('customer')
 
   const Buttons = [...Object.keys(sites)].map(
@@ -48,7 +48,7 @@ export function SetupShop(props){
       marginBottom : '15px',
       marginTop : '15px',
     }}><div>{Buttons}</div></Row>
-    <Site {...props}/>
+    <Site/>
   </Container>
   )
 }

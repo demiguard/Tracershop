@@ -200,7 +200,7 @@ export class ProductionTimeSlotOwnerShip {
 
 
 /**
- * Creates a mapping over what time slots should be render and with what orders
+ * Creates a mapping over time slots with which orders should be rendered under the time slot
  * If a time slot is missing from the map, that means it should not be rendered.
  * @param {Array<ActivityOrder>} orders 
  * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
@@ -226,6 +226,11 @@ export class OrderMapping{
     }
   }
 
+  /**
+   * 
+   * @param {Number} timeSlotID 
+   * @returns {Array<ActivityOrder>}
+   */
   getOrders(timeSlotID){
     return this._orderMapping.get(timeSlotID);
   }

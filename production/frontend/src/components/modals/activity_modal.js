@@ -26,13 +26,14 @@ import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, pa
 import { compareDates, getPDFUrls } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/time_form.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
-import { TracerCatalog } from "~/lib/data_structures.js";
+import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
 
 
 /**
  * 
  * @param {{
  *  tracer_catalog : TracerCatalog
+ *  order_mapping : OrderMapping,
  * }} param0 
  * @returns 
  */
@@ -42,9 +43,9 @@ export function ActivityModal({
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket()
-  const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = state.deliver_times.get(timeSlotID)
+  const timeSlot = state.deliver_times.get(timeSlotID)
   const /**@type {ActivityProduction} */ production = state.production.get(timeSlot.production_run);
-  const /**@type {Array<ActivityOrder>}*/ orders = order_mapping.get(timeSlot.id)
+  const /**@type {Array<ActivityOrder> | undefined}*/ orders = order_mapping.getOrders(timeSlot.id)
   const /**@type {DeliveryEndpoint} */ endpoint = state.delivery_endpoint.get(timeSlot.destination)
   const /**@type {Customer} */ customer = state.customer.get(endpoint.owner)
   const /**@type {Number} */ overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer)
@@ -367,7 +368,7 @@ export function ActivityModal({
     }
 
     if (freed_by === null && order.freed_by){
-      const freeingUser = props[DATA_USER].get(order.freed_by);
+      const freeingUser = state.user.get(order.freed_by);
       freed_by = freeingUser.username.toUpperCase();
     }
 
@@ -376,16 +377,10 @@ export function ActivityModal({
       rowIcon = <ClickableIcon src="/static/images/move_top.svg"/>
     }
     orderRows.push(
-      <OrderRow
-        key={order.id}
-        order={order}
-        timeSlotId={props[PROP_TIME_SLOT_ID]}
-        timeSlots={props[DATA_DELIVER_TIME]}
-        websocket={websocket}
-    />);
+      <OrderRow key={order.id} order={order}/>);
   }
 
-  const vials = [...props[DATA_VIAL].values()].filter(
+  const vials = [...state.vial.values()].filter(
     (_vial) => {
       const /**@type {Vial} */ vial = _vial
       if(vial.fill_date !== dateString){
@@ -401,22 +396,19 @@ export function ActivityModal({
   )
 
   // STATE DEFINITION
-  const [state_, _setState] = useState({
-    editingVials : new Map(),
-    errorLevel : null,
-    errorMessage : <div></div>,
-    freeing : false,
-    loginMessage : "",
-    selectedVials : new Set(),
-    addingVial : false
-  })
+  const [error, setError] = useState("");
+  const [errorLevel, setErrorLevel] = useState("");
+  const [freeing, setFreeing] = useState(false);
+  const [addingVial, setAddingVial] = useState(false);
+  const [selectedVials, setSelectedVials] = useState(new Set());
+  const [loginMessage, setLoginMessage] = useState("");
 
   function setState(newState){
     _setState({...state, ...newState})
   }
 
   function startFreeing(){
-    if(compareDates(props[PROP_ACTIVE_DATE], new Date())){
+    if(compareDates(active_date, new Date())){
       setState({ freeing : true})
     } else {
       setState({
@@ -433,7 +425,7 @@ export function ActivityModal({
 
   // Functions
   function onClickAccept(){
-    const /**@type {Array<ActivityOrder>} */ orders = props[PROP_ORDER_MAPPING].get(props[PROP_TIME_SLOT_ID]);
+    const /**@type {Array<ActivityOrder>} */ orders = order_mapping.getOrders(timeSlotID);
     {Math.floor(freed_activity)}
     if(orders.length == 0){
       return;
@@ -448,15 +440,15 @@ export function ActivityModal({
   }
 
   function onClickToPDF() {
-    window.location = getPDFUrls(endpoint, tracer, props[PROP_ACTIVE_DATE])
+    window.location = getPDFUrls(endpoint, tracer, active_date)
   }
 
   function onFree(username, password){
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
-    data[DATA_DELIVER_TIME] = props[PROP_TIME_SLOT_ID]
+    data[DATA_DELIVER_TIME] = timeSlotID
     data[DATA_ACTIVITY_ORDER] = orderIDs
-    data[DATA_VIAL] = [...state.selectedVials];
+    data[DATA_VIAL] = [...state_.selectedVials];
     message[WEBSOCKET_DATA] = data;
     const auth = {};
     auth[AUTH_USERNAME] = username;
@@ -530,14 +522,14 @@ export function ActivityModal({
 
   let sideElement = <div></div>;
 
-  if (state.freeing){
+  if (freeing){
     sideElement = (<Col md={6}>
       <Authenticate
         authenticate={onFree}
-        errorMessage={state.loginMessage}
+        errorMessage={loginMessage}
         fit_in={false}
         headerMessage={`Frigiv Ordre - ${orderIDs.join(', ')}`}
-        spinner={state.loginSpinner}
+        spinner={loginSpinner}
         buttonMessage={"Frigiv Ordre"}
       />
     </Col>)
@@ -558,7 +550,7 @@ export function ActivityModal({
 
   let allocationTotal = 0;
   for(const vid of state.selectedVials.values()){
-    const /**@type {Vial} */ vial = props[DATA_VIAL].get(vid);
+    const vial = state.vial.get(vid);
     allocationTotal += vial.activity;
   }
 
@@ -594,16 +586,16 @@ export function ActivityModal({
     data-testid="activity_modal"
       show={true}
       size="lg"
-      onHide={props[PROP_ON_CLOSE]}
+      onHide={on_close}
       className={styles.mariLight}>
     <Modal.Header>
       <h3>
-        Ordre - {parseDateToDanishDate(dateToDateString(props[PROP_ACTIVE_DATE]))} - {timeSlot.delivery_time}
+        Ordre - {parseDateToDanishDate(dateToDateString(active_date))} - {timeSlot.delivery_time}
       </h3>
     </Modal.Header>
     <Modal.Body>
         <Row>
-          <Col md={(state.usingCalculator || state.freeing) ? 6 : 12}>
+          <Col md={(freeing) ? 6 : 12}>
           <Row>
             <Row>
               <Col>{destinationHover}</Col>
@@ -666,9 +658,9 @@ export function ActivityModal({
         </Col>
           {sideElement}
         </Row>
-        {state.errorLevel != null ? <AlertBox
-          level={state.errorLevel}
-          message={state.errorMessage}/> : ""}
+        {errorLevel != "" ? <AlertBox
+          level={errorLevel}
+          message={errorMessage}/> : ""}
         <Row>
           <div>
             <Table>
@@ -688,7 +680,7 @@ export function ActivityModal({
             </tbody>
           </Table>
           <div className="flex-row-reverse d-flex">
-            {(state.addingVial || state.freeing) ? "" :
+            {(addingVial || freeing) ? "" :
               <div>
                 <ClickableIcon
                   label="add-new-vial"
@@ -702,10 +694,10 @@ export function ActivityModal({
     <Modal.Footer>
       <div>
         {minimum_status == 1 ? AcceptButton : "" }
-        {minimum_status == 2 && !state.freeing ? ConfirmButton : ""}
-        {minimum_status == 2 && state.freeing ? CancelFreeButton : ""}
+        {minimum_status == 2 && !freeing ? ConfirmButton : ""}
+        {minimum_status == 2 && freeing ? CancelFreeButton : ""}
         {minimum_status == 3 ? PDFButton : ""}
-        <CloseButton onClick={props[PROP_ON_CLOSE]}/>
+        <CloseButton onClick={on_close}/>
       </div>
     </Modal.Footer>
     </Modal>

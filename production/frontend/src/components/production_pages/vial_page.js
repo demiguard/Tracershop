@@ -12,7 +12,7 @@ import { Vial } from "../../dataclasses/dataclasses";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group";
 import { DateInput } from "../injectable/date_input";
-import { useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 
 
 /**
@@ -31,43 +31,45 @@ const SearchOptions = {
   ORDER : 7,
 }
 
-/**
- * 
- * @param {{
- *   customers : Map<Number, Customer>
- *   vial : Vial
- * }} param0 
- * @returns 
- */
-function VialRow({
-  customers,
-  vial,
-}){
-  const customer = customers.get(vial.owner)
-  const customerName = customer === undefined ?
-  "Ukendt ejer" :
-  customer.short_name;
-  
-  return <tr>
-    <td>{vial.id}</td>
-    <td>{vial.lot_number}</td>
-    <td>{parseDateToDanishDate(vial.fill_date)}</td>
-    <td>{vial.fill_time}</td>
-    <td>{vial.volume}</td>
-    <td>{vial.activity}</td>
-    <td>{customerName}</td>
-    <td>{vial.assigned_to}</td>
-  </tr>
-}
 
-export function VialPage(props){
-  // State
+export function VialPage(){
+  const state = useTracershopState()
   const websocket = useWebsocket();
+  // State
   const [lotNumber, setLotNumber] = useState("");
   const [customerID, setCustomer] = useState("");
   const [vialDay, setVialDay] = useState("");
   const [searchOption, setSearchOption] = useState(SearchOptions.DATE);
   const [searchInverted, setSearchInverted] = useState(false);
+
+  /**
+   * 
+  * @param {{
+  *   customers : Map<Number, Customer>
+    *   vial : Vial
+    * }} param0
+  * @returns {Element.JSX}
+  */
+ function VialRow({
+   vial,
+ }){
+   const customer = state.customer.get(vial.owner)
+   const customerName = customer === undefined ?
+                            "Ukendt ejer"
+                            : customer.short_name;
+
+   return <tr>
+     <td>{vial.id}</td>
+     <td>{vial.lot_number}</td>
+     <td>{parseDateToDanishDate(vial.fill_date)}</td>
+     <td>{vial.fill_time}</td>
+     <td>{vial.volume}</td>
+     <td>{vial.activity}</td>
+     <td>{customerName}</td>
+     <td>{vial.assigned_to}</td>
+   </tr>
+}
+
 
   /**
    * 
@@ -98,7 +100,7 @@ export function VialPage(props){
     }
   }
 
-  const VialRows = [...props[DATA_VIAL].values()].filter(
+  const VialRows = [...state.vial.values()].filter(
     (vial) => {
       if(lotNumber !== "") {
         const regex = RegExp(lotNumber, 'g')
@@ -143,11 +145,7 @@ export function VialPage(props){
           throw "Unknown Search Option:" + searchOption
       }
     }).map(
-    (vial) => <VialRow
-      key={vial.id}
-      customers={props[DATA_CUSTOMER]}
-      vial={vial}
-  />);
+    (vial) => <VialRow key={vial.id} vial={vial}/>);
 
   return (
     <Container>
@@ -165,7 +163,7 @@ export function VialPage(props){
           <TracershopInputGroup label="Kunde Filter">
             <CustomerSelect
               value={customerID}
-              customers={props[DATA_CUSTOMER]}
+              customers={state.customer}
               emptyCustomer
               onChange={setStateToEvent(setCustomer)}
             />

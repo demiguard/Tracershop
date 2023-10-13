@@ -20,7 +20,7 @@ import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
 
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { renderComment } from "../../lib/rendering.js";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint, Isotope, Tracer, Vial } from "../../dataclasses/dataclasses.js";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint } from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.js";
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMapping } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
