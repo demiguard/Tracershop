@@ -1,16 +1,13 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useState, useRef } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import { Calender, getColorShop } from "../injectable/calender.js";
 import { Select, toOptions } from '../injectable/select.js'
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK,
-  CALENDER_PROP_ON_MONTH_CHANGE, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
+import { DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
 } from "../../lib/constants.js";
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "../../lib/shared_constants.js"
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
   ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
@@ -18,6 +15,7 @@ import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -106,12 +104,6 @@ export function ShopOrderPage ({}){
     setToday(NewDate);
   }
 
-  function setActiveMonth(NewMonth) {
-    const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
-    message[WEBSOCKET_DATE] = NewMonth;
-    websocket.send(message);
-  }
-
   function setView(event){
     const newView = event.target.value;
     db.set(DATABASE_SHOP_ORDER_PAGE, newView);
@@ -152,9 +144,6 @@ export function ShopOrderPage ({}){
       return timeSlot.destination === activeEndpoint;
     });
 
-  // Why is this unused?
-  const bitChain = getBitChain(timeSlots, state.production);
-
   const SiteOptions = toOptions([
     {id : "Manuel", name : "Ordre oversigt"},
     {id : "Automatisk", name : "Bookinger"}
@@ -185,22 +174,6 @@ export function ShopOrderPage ({}){
       const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
       return injectionOrder.endpoint === activeEndpoint;
     });
-
-  /** Relevant Bookings  */
-  const calenderProps = {
-    [CALENDER_PROP_DATE] : today,
-    [CALENDER_PROP_ON_DAY_CLICK] : setActiveDate,
-    [CALENDER_PROP_ON_MONTH_CHANGE] : setActiveMonth,
-    [CALENDER_PROP_GET_COLOR] : getColorShop(
-      activityDeadline,
-      injectionDeadline,
-      calenderActivityOrders,
-      state.closed_date,
-      calenderInjectionOrders,
-      state.production,
-      calenderTimeSlots
-      ),
-    };
 
       return (
   <Container>
@@ -233,7 +206,13 @@ export function ShopOrderPage ({}){
           </Container>
         </Row>
         <Row>
-            <div><Calender {...calenderProps}/></div>
+            <div><ShopCalender
+              active_date={today}
+              on_day_click={setActiveDate}
+              injection_orders={calenderInjectionOrders}
+              activity_orders={calenderActivityOrders}
+              time_slots={calenderTimeSlots}
+            /></div>
         </Row>
       </Col>
     </Row>

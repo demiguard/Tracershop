@@ -16,6 +16,7 @@ import { Calender, getColorProduction, productionGetMonthlyOrders } from "../inj
 import SiteStyles from '~/css/Site.module.css'
 import { KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE, KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE } from "~/dataclasses/keywords.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { ProductionCalender } from "../injectable/derived_injectables/production_calender.js";
 
 const Tables = {
   activity : ActivityTable,
@@ -98,26 +99,7 @@ export function OrderPage() {
       [PROP_ACTIVE_TRACER] : activeTracer,
       [PROP_ACTIVE_DATE] : activeDate
     }
-    // State Keywords
-    const serverConfig = state.server_config.get(1);
-    const activity_deadline = (serverConfig !== undefined) ?
-                                state[DATA_DEADLINE].get(serverConfig[KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE])
-                              : undefined
-    const injection_deadline = (serverConfig !== undefined) ?
-                                  state[DATA_DEADLINE].get(serverConfig[KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE])
-                              : undefined
 
-    const calenderProps = {
-      [CALENDER_PROP_DATE] : activeDate,
-      [CALENDER_PROP_GET_COLOR] : getColorProduction(activity_deadline,
-                                                     injection_deadline,
-                                                     [...state.activity_orders.values()],
-                                                     state.closed_date,
-                                                     [...state.injection_orders.values()],
-                                                     state.production),
-      [CALENDER_PROP_ON_DAY_CLICK] : setActiveDate,
-      [CALENDER_PROP_ON_MONTH_CHANGE] : productionGetMonthlyOrders(websocket),
-    };
 
     return (
       <Container>
@@ -129,13 +111,15 @@ export function OrderPage() {
         <Row>
           <Col sm={8}>
             <OrderTable
-
               {...newProps}
             />
           </Col>
           <Col sm={1}></Col>
           <Col sm={3}>
-            <Calender {...calenderProps}/>
+            <ProductionCalender
+              active_date={activeDate}
+              on_day_click={setActiveDate}
+            />
           </Col>
         </Row>
       </Container>

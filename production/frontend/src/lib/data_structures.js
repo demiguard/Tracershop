@@ -5,7 +5,8 @@
 
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
-import { TRACER_TYPE } from "./constants";
+import { getDay, getWeekNumber } from "./chronomancy";
+import { TRACER_TYPE, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
 import { sortTimeSlots } from "./sorting";
 import { numberfy } from "./utils";
@@ -347,3 +348,122 @@ export class TracerBookingMapping {
     }
   }
 }
+
+
+/**
+ * An interface for a bit chain. I.E an encoded int with an evaluate function
+ */
+export class BitChain {
+  constructor(){
+    this._chain = 0;
+  }
+
+  /**
+   * Function that evau
+   * @returns {Boolean} 
+   */
+  eval(){
+    throw "Virtual Function"
+  }
+}
+
+export class TimeSlotBitChain extends BitChain {
+  /**@type {Number} */ _chain
+
+  /**
+   * A data structure for evaluating if you can order at a date determined by
+   * time slots.
+   * @param {Array<ActivityDeliveryTimeSlot>} timeSlots - Time Slots determining
+   * the bit chains
+   * @param {Map<Number, ActivityProduction>} production - All productions as
+   * time slot refer to a production.
+   */
+  constructor(timeSlots, productions){
+    super();
+    this._chain = 0;
+
+    for(const timeSlot of timeSlots){
+      const production = productions.get(timeSlot.production_run);
+
+      if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
+        this._chain = this._chain | (1 << production.production_day);
+      }
+
+      if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
+        this._chain = this._chain | (1 << production.production_day + 7);
+      }
+    }
+  }
+
+  eval(date){
+    const oddWeekNumber = (getWeekNumber(date) % 2) == 1
+    const day = getDay(date);
+
+    return this._chain & (1 << (day + Number(oddWeekNumber) * 7))
+  }
+}
+
+
+export class ProductionBitChain extends BitChain {
+  /**@type {Number} */ _chain
+
+  /**
+   *
+   * @param {Map<Number, ActivityProduction>} productions 
+   */
+  constructor(productions){
+    super()
+    this._chain = 0;
+
+    for(const production of productions.values()){
+      this._chain = this._chain | (1 << production.production_day);
+    }
+  }
+
+  eval(date){
+    const day = getDay(date);
+
+    return this._chain & (1 << day)
+  }
+}
+
+/**
+ * 
+ * @param {Map<Number,ActivityOrder | InjectionOrder>} orders
+ */
+export class OrderDateMapping {
+  /**@type {Map<String, Number>} */_orderMap
+
+  constructor(orders) {
+    this._orderMap = new Map();
+
+    console.log(orders)
+
+    for(const order of orders){
+      if (this._orderMap.has(order.delivery_date)){
+        this._orderMap.set(order.delivery_date, Math.min(order.status, this._orderMap.get(order.delivery_date)))
+      } else {
+        this._orderMap.set(order.delivery_date, order.status)
+      }
+    }
+  }
+
+  /**
+   *
+   * @param {String} date_string 
+   * @returns 
+   */
+  get_status_for_date(date_string){
+    return this._orderMap.get(date_string);
+  }
+
+  /**
+   * Check if the order mapping has 
+   * @param {String} date_string 
+   * @returns 
+   */
+  has_status_for_date(date_string){
+    return this._orderMap.has(date_string)
+  }
+}
+

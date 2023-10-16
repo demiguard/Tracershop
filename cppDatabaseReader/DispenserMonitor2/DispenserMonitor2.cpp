@@ -73,7 +73,7 @@ int _tmain(int argc, _TCHAR* argv[]) {
 	} catch (std::exception &e) {
 		std::wcout << e.what() << std::endl;
 	}
-	
+
 	std::wcout << "Press any key to exit.";
 	std::wcin.get();
 

@@ -1,7 +1,25 @@
 export const JAVASCRIPT_VERSION = "1.0.1";
 
-export const TRACER_TYPE_ACTIVITY = 1;
-export const TRACER_TYPE_DOSE = 2;
+
+
+export const COLORS = {
+  primaryColor: "#009ce8",
+  secondaryColor1: "#4db9ef",
+  secondaryColor2: "#99d7f6",
+  secondaryColor3: "#ccebfa",
+  tertiaryColor1: "#397c7a",
+  tertiaryColor2: "#699",
+  tertiaryColor3: "#88d0c8",
+  grey1: "#333",
+  grey2: "#565656",
+  grey3: "#858585",
+  grey4: "#d6d6d6",
+  red1:"#F55",
+  red2:"#FBB",
+  green1: "#5F5",
+  yellow1: "#FF5",
+}
+
 
 /** The order type that is made when tracer is ordered.
  * @enum
@@ -67,6 +85,17 @@ export const WEEKLY_REPEAT_CHOICES = {
   ALL : 0,
   EVEN : 1,
   ODD : 2,
+}
+
+
+/** @enum */
+export const ORDER_STATUS = {
+  AVAILABLE : 0,
+  ORDERED : 1,
+  ACCEPTED : 2,
+  RELEASED : 3,
+  CANCELLED : 4,
+  UNAVAILABLE : 5,
 }
 
 

@@ -8,12 +8,13 @@ import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
 import { ClickableIcon } from "../../injectable/icons";
 import { parseAETitleInput, parseIPInput, parsePortInput } from "../../../lib/user_input";
 import { ParseJSONstr } from "../../../lib/formatting";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
 export function PingServiceConfig(props){
+  const state = useTracershopState();
   const websocket = useWebsocket()
 
-  const /**@type { ServerConfiguration} */ server_config = props[DATA_SERVER_CONFIG].get(1);
+  const /**@type { ServerConfiguration} */ server_config = state.server_config.get(1);
 
   let /**@type {Address} */ ris_dicom_endpoint_address;
   let /**@type {DicomEndpoint} */ ris_dicom_endpoint;
@@ -22,11 +23,11 @@ export function PingServiceConfig(props){
     ris_dicom_endpoint = new DicomEndpoint(undefined, undefined, "");
     ris_dicom_endpoint_address = new Address(undefined, "", "", "Address for ping service")
   } else {
-    ris_dicom_endpoint = props[DATA_DICOM_ENDPOINT].get(server_config.ris_dicom_endpoint)
-    ris_dicom_endpoint_address = props[DATA_ADDRESS].get(ris_dicom_endpoint.address)
+    ris_dicom_endpoint = state.dicom_endpoint.get(server_config.ris_dicom_endpoint)
+    ris_dicom_endpoint_address = state.address.get(ris_dicom_endpoint.address)
   }
 
-  const [state, _setState] = useState({
+  const [state_, _setState] = useState({
     address_ip : ris_dicom_endpoint_address.ip,
     address_port : ris_dicom_endpoint_address.port,
     ae_title : ris_dicom_endpoint.ae_title,
@@ -36,25 +37,25 @@ export function PingServiceConfig(props){
   });
 
   function setIP(event){
-    _setState({...state, address_ip : event.target.value, error_ip : false});
+    _setState({...state_, address_ip : event.target.value, error_ip : false});
   }
 
   function setPort(event){
-    _setState({...state, address_port : event.target.value, error_port : false});
+    _setState({...state_, address_port : event.target.value, error_port : false});
   }
 
   function setAETitle(event) {
-    _setState({...state, ae_title : event.target.value, error_ae_title : false});
+    _setState({...state_, ae_title : event.target.value, error_ae_title : false});
   }
 
   function confirmServiceConfig(_event) {
     // This function is mostly defined by the fact that you don't know if the models exists
-    const [validIP, _ipErrorMessage] = parseIPInput(state.address_ip);
-    const [validPort, port] = parsePortInput(state.address_port);
-    const [validAETitle, _aeTitleErrorMessage] = parseAETitleInput(state.ae_title);
+    const [validIP, _ipErrorMessage] = parseIPInput(state_.address_ip);
+    const [validPort, port] = parsePortInput(state_.address_port);
+    const [validAETitle, _aeTitleErrorMessage] = parseAETitleInput(state_.ae_title);
 
     if (!validIP || !validPort || !validAETitle){
-      _setState({...state,
+      _setState({...state_,
         error_ip : !validIP,
         error_port : !validPort,
         error_ae_title : !validAETitle,
@@ -67,8 +68,8 @@ export function PingServiceConfig(props){
       // Address -> DicomEndpoint -> ServerConfig
       websocket.sendCreateModel(DATA_ADDRESS,
                                 [new Address(undefined,
-                                             state.address_ip,
-                                             state.address_port,
+                                             state_.address_ip,
+                                             state_.address_port,
                                              "Address for ping service")]).then(
       (message) => {
         console.log(message)
@@ -100,12 +101,12 @@ export function PingServiceConfig(props){
     } else {
       websocket.sendEditModel(DATA_ADDRESS, [{
         ...ris_dicom_endpoint_address,
-        ip : state.address_ip,
+        ip : state_.address_ip,
         port : port
       }])
       websocket.sendEditModel(DATA_DICOM_ENDPOINT, [{
         ...ris_dicom_endpoint,
-        ae_title : state.ae_title,
+        ae_title : state_.ae_title,
       }])
     }
   }
@@ -116,8 +117,8 @@ export function PingServiceConfig(props){
     <Col>
       <TracershopInputGroup label="IP">
         <FormControl
-          style={(state.error_ip) ? cssError : {}}
-          value={state.address_ip}
+          style={(state_.error_ip) ? cssError : {}}
+          value={state_.address_ip}
           onChange={setIP}
         />
       </TracershopInputGroup>
@@ -125,16 +126,16 @@ export function PingServiceConfig(props){
     <Col>
       <TracershopInputGroup label="Port">
         <FormControl
-          style={(state.error_port) ? cssError : {}}
-          value={state.address_port}
+          style={(state_.error_port) ? cssError : {}}
+          value={state_.address_port}
           onChange={setPort}
         />
       </TracershopInputGroup></Col>
     <Col>
     <TracershopInputGroup label="AE title">
         <FormControl
-          style={(state.error_ae_title) ? cssError : {}}
-          value={state.ae_title}
+          style={(state_.error_ae_title) ? cssError : {}}
+          value={state_.ae_title}
           onChange={setAETitle}
         />
       </TracershopInputGroup>

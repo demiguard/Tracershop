@@ -218,8 +218,6 @@ export function ActivityTable ({active_tracer, active_date}) {
      websocket.send(message);
    }
 
-   
-
    // Sub-components
    let headerIcon = <StatusIcon
                        label={`time-slot-icon-${timeSlot.id}`}

@@ -154,34 +154,10 @@ export function getWeekNumber(date){
   if(!(date instanceof Date)){
     date = new Date(date);
   }
-  const day = getDay(date)
+
   const oneJan = new Date(date.getFullYear(),0,1);
   const numberOfDays = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000));
   return Math.ceil(( date.getDay() + 1 + numberOfDays) / 7);
-}
-
-export function getBitChain(timeSlots, productions){
-  let bitChain = 0;
-
-  for(const timeSlot of timeSlots){
-    const production = productions.get(timeSlot.production_run);
-
-    if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
-      bitChain = bitChain | (1 << production.production_day);
-    }
-
-    if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
-      bitChain = bitChain | (1 << production.production_day + 7);
-    }
-  }
-  return bitChain;
-}
-
-export function evalBitChain(bitChain, date){
-  const oddWeekNumber = (getWeekNumber(date) % 2) == 1
-  const day = getDay(date);
-
-  return bitChain & (1 << (day + Number(oddWeekNumber) * 7))
 }
 
 
@@ -198,6 +174,11 @@ export function expiredDeadline(deadline, orderDate, closedDates,  now){
   if (now === undefined){
     now = getToday();
   }
+
+  if(deadline === undefined){
+    return false;
+  }
+
   if (closedDates !== undefined){
     const dateString = dateToDateString(orderDate)
     for(const closedDate of closedDates.values()){
@@ -209,5 +190,5 @@ export function expiredDeadline(deadline, orderDate, closedDates,  now){
 
   const deadlineDate = calculateDeadline(deadline, orderDate);
 
-  return deadlineDate < now
+  return deadlineDate < now;
 }

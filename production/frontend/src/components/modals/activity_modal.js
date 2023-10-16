@@ -51,7 +51,14 @@ export function ActivityModal({
   const /**@type {Number} */ overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer)
   const /**@type {Tracer} */ tracer = state.tracer.get(active_tracer)
   const /**@type {Isotope} */ isotope = state.isotopes.get(tracer.isotope)
-  
+
+  const [errorMessage, setErrorMessage] = useState("");
+  const [errorLevel, setErrorLevel] = useState("");
+  const [freeing, setFreeing] = useState(false);
+  const [addingVial, setAddingVial] = useState(false);
+  const [selectedVials, setSelectedVials] = useState(new Set());
+  const [loginMessage, setLoginMessage] = useState("");
+
    /**
   * A time slot may multiple orders and each of these objects refers to an order
   * connected by a common time slot.
@@ -107,6 +114,7 @@ export function ActivityModal({
                 status={order.status}
                 onClick={iconFunction}
               />
+
     if (order.moved_to_time_slot){
       icon = <ClickableIcon
                 label={`edit-order-activity-${order.id}`}
@@ -143,7 +151,7 @@ export function ActivityModal({
    * }} props for component
    * @returns
    */
-  function VialRow({vial, onSelect, selected, websocket, setError}){
+  function VialRow({vial, onSelect, selected, setError}){
     const [editing, setEditing] = useState(false);
     const [editingVial, _setDisplayVial] = useState({...vial});
 
@@ -238,7 +246,7 @@ export function ActivityModal({
     if (vial.assigned_to){
       commitContent = ""
     }
-  
+
     return (
       <tr>
         <td>{vial.id}</td>
@@ -251,25 +259,25 @@ export function ActivityModal({
       </tr>
     );
   }
-  
-  function NewVialRow({stopAddingVial, setError, websocket, active_date, customer}){
+
+  function NewVialRow({stopAddingVial, setError}){
     const [lot_number, setLotNumber] = useState("");
     const [fill_time, setFillTime] = useState("");
     const [volume, setVolume] = useState("");
     const [activity, setActivity] = useState("");
-  
+
     function addNewVial(){
       const errors = []
       const [batchValid, formattedLotNumber] = parseBatchNumberInput(lot_number, 'Batch nr.');
       const [timeValid, formattedFillTime] = parseTimeInput(fill_time, "Produktions tidspunk");
       const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(volume, "Volume");
       const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(activity, "Activitet");
-  
+
       const valid = concatErrors(errors, batchValid, formattedLotNumber)
                   && concatErrors(errors, timeValid, formattedFillTime)
                   && concatErrors(errors, volumeValid, formattedVolume)
                   && concatErrors(errors, activityValid, formattedActivity);
-  
+
       if(valid){
         websocket.sendCreateModel(DATA_VIAL, [{
           owner : customer.id,
@@ -281,7 +289,7 @@ export function ActivityModal({
         }])
         stopAddingVial()
       } else {
-        setError(errors);
+        setError(ERROR_LEVELS.error, errors);
       }
     }
 
@@ -395,38 +403,21 @@ export function ActivityModal({
     }
   )
 
-  // STATE DEFINITION
-  const [error, setError] = useState("");
-  const [errorLevel, setErrorLevel] = useState("");
-  const [freeing, setFreeing] = useState(false);
-  const [addingVial, setAddingVial] = useState(false);
-  const [selectedVials, setSelectedVials] = useState(new Set());
-  const [loginMessage, setLoginMessage] = useState("");
-
-  function setState(newState){
-    _setState({...state, ...newState})
-  }
 
   function startFreeing(){
     if(compareDates(active_date, new Date())){
-      setState({ freeing : true})
+      setFreeing(true);
     } else {
-      setState({
-        freeing : true,
-        errorLevel : ERROR_LEVELS.hint,
-        errorMessage : <div>Ordren som er i gang med at blive frigivet er ikke til i dag!</div>
-      })
+      setFreeing(true);
+      setError(ERROR_LEVELS.hint,
+              "Ordren som er i gang med at blive frigivet er ikke til i dag!");
     }
-
   }
-
-  // Derived state Values
-  const canFree = state.selectedVials.size > 0 && !(state.addingVial)
 
   // Functions
   function onClickAccept(){
-    const /**@type {Array<ActivityOrder>} */ orders = order_mapping.getOrders(timeSlotID);
-    {Math.floor(freed_activity)}
+    const orders = order_mapping.getOrders(timeSlotID);
+
     if(orders.length == 0){
       return;
     }
@@ -448,7 +439,7 @@ export function ActivityModal({
     const data = {};
     data[DATA_DELIVER_TIME] = timeSlotID
     data[DATA_ACTIVITY_ORDER] = orderIDs
-    data[DATA_VIAL] = [...state_.selectedVials];
+    data[DATA_VIAL] = [...selectedVials];
     message[WEBSOCKET_DATA] = data;
     const auth = {};
     auth[AUTH_USERNAME] = username;
@@ -456,55 +447,40 @@ export function ActivityModal({
     message[DATA_AUTH] = auth;
     websocket.send(message).then((data) =>{
       if (data[AUTH_IS_AUTHENTICATED]){
-        setState({
-          freeing : false,
-          errorMessage : <div></div>,
-          errorLevel : null,
-        });
+        setFreeing(false);
+        setError(null, "")
+
       } else {
-        setState({
-          errorMessage : <div>Forkert login</div>,
-          errorLevel : ERROR_LEVELS.error,
-        });
+        setError(ERROR_LEVELS.error,  "Forkert login");
       }
     });
   }
 
   function stopAddingVial(){
-    setState({addingVial : false})
+    setAddingVial(false);
   }
 
-  function setError(level, errors){
-    const errorHTML = errors.map((errorString, i) => {
-      return <p key={i}>{errorString}</p>
-    })
-
-    setState({
-      errorLevel : level,
-      errorMessage : <div>{errorHTML}</div>
-    })
+  function setError(level, error){
+    setErrorLevel(level)
+    setErrorMessage(<div>{error}</div>);
   }
 
   /**
    * @param {Vial} vial */
   function selectVial(vial){
-    if(state.freeing || minimum_status === 3){
+    if(freeing || minimum_status === 3){
       return;
     }
 
     return () => {
-      if(state.selectedVials.has(vial.id)){
-        const newSelectedVials = new Set(state.selectedVials);
+      if(selectedVials.has(vial.id)){
+        const newSelectedVials = new Set(selectedVials);
         newSelectedVials.delete(vial.id)
-        setState({
-          selectedVials : newSelectedVials
-        })
+        setSelectedVials(newSelectedVials);
       } else {
-        const newSelectedVials = new Set(state.selectedVials);
+        const newSelectedVials = new Set(selectedVials);
         newSelectedVials.add(vial.id)
-        setState({
-          selectedVials : newSelectedVials
-        });
+        setSelectedVials(newSelectedVials);
       }
     }
   }
@@ -512,12 +488,12 @@ export function ActivityModal({
   // Sub elements
   // Buttons
   const AcceptButton =  <MarginButton onClick={onClickAccept}>Accepter Ordre</MarginButton>;
-  const ConfirmButton = canFree ?
-    <MarginButton onClick={startFreeing}>
-      Godkend Ordre
-    </MarginButton> : <MarginButton disabled>Godkend Ordre</MarginButton>;
 
-  const CancelFreeButton = <MarginButton onClick={() => {setState({freeing : true})}}>Rediger Ordre</MarginButton>
+  const canFree = selectedVials.size > 0 && !(addingVial);
+  const ConfirmButton = canFree ?
+                          <MarginButton onClick={startFreeing}> Godkend Ordre </MarginButton>
+                        : <MarginButton disabled>Godkend Ordre</MarginButton>;
+  const CancelFreeButton = <MarginButton onClick={() => {setFreeing(false)}}>Rediger Ordre</MarginButton>
   const PDFButton = <MarginButton onClick={onClickToPDF}>Se føgleseddel</MarginButton>;
 
   let sideElement = <div></div>;
@@ -541,7 +517,6 @@ export function ActivityModal({
       bestillerens profil, hvis tilgændelig.</div>}
   />;
   const destinationMessage = `${customer.long_name} - ${endpoint.name}`
-  const formattedOrderTime = `${timeSlot.delivery_time}`
 
   const totalActivityHover = <HoverBox
     Base={<div>Total Aktivitet</div>}
@@ -549,34 +524,29 @@ export function ActivityModal({
   />;
 
   let allocationTotal = 0;
-  for(const vid of state.selectedVials.values()){
+  for(const vid of selectedVials.values()){
     const vial = state.vial.get(vid);
     allocationTotal += vial.activity;
   }
 
   const vialRows = vials.map((_vial, i) => {
     const /**@type {Vial} */ vial = _vial;
-    const selected = minimum_status === 3 ? true : state.selectedVials.has(vial.id);
+    const selected = minimum_status === 3 ? true : selectedVials.has(vial.id);
     return <VialRow
       key={vial.id}
       vial={vial}
-      websocket={websocket}
       selected={selected}
       onSelect={selectVial(vial)}
       setError={setError}
     />
   })
 
-  if(state.addingVial){
+  if(addingVial){
     vialRows.push(
       <NewVialRow
-        active_date={dateString}
         key={-1}
         stopAddingVial={stopAddingVial}
         setError={setError}
-        websocket={websocket}
-        tracer={tracer}
-        customer={customer}
       />
     )
   }
@@ -660,7 +630,8 @@ export function ActivityModal({
         </Row>
         {errorLevel != "" ? <AlertBox
           level={errorLevel}
-          message={errorMessage}/> : ""}
+          message={errorMessage}
+        /> : ""}
         <Row>
           <div>
             <Table>
