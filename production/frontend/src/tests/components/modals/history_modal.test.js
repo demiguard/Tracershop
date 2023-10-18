@@ -8,6 +8,9 @@ import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@
 import { jest } from '@jest/globals'
 
 import { HistoryModal } from "../../../components/modals/history_modal.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { testState } from "~/tests/app_state.js";
+import { WEBSOCKET_DATA } from "~/lib/shared_constants.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -23,7 +26,7 @@ beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop" }
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
+  websocket = tracer_websocket.TracerWebSocket;
 });
 
 afterEach(() => {
@@ -35,71 +38,34 @@ afterEach(() => {
   websocket = null;
 });
 
-const customer = {
-  UserName : "Customer 1",
-  ID : 1,
-  overhead : 20,
-  kundenr : 2,
-  Realname : "Kunde 1",
-  email : "",
-  email2 : "",
-  email3 : "",
-  email4 : "",
-  contact : "",
-  tlf : "",
-  addr1 : "",
-  addr2 : "",
-  addr3 : "",
-  addr4 : "",
-};
-
-const tracers = new Map([[1,{
-  id : 1,
-  name : "Tracer",
-  isotope : 1,
-  n_injections : -1,
-  order_block : -1,
-  in_use : true,
-  tracer_type : 1,
-  longName : "Test Tracer",
-}],[2, {
-  id: 2,
-  name: "Tracer_2",
-  isotope: 1,
-  n_injections: -1,
-  order_block: -1,
-  in_use: true,
-  tracer_type: 2,
-  longName: "Test Tracer 2",
-}], [3, {
-  id: 3,
-  name: "Tracer_3",
-  isotope: 1,
-  n_injections: -1,
-  order_block: -1,
-  in_use: true,
-  tracer_type: 2,
-  longName: "Test Tracer 3",
-}]]);
-
 
 describe("History modal test suite", () =>{
   it("Standard Render test", () => {
-    render(<HistoryModal
-    activeCustomer={customer}
-    onClose={onClose}
-    tracers={tracers}
-    websocket={websocket}
-    />);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <HistoryModal
+          active_customer={1}
+          on_close={onClose}
+        />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
   });
 
   it("Get History button press, Loading", async () => {
-    render(<HistoryModal
-      activeCustomer={customer}
-      tracers={tracers}
-      websocket={websocket}
-      onClose={onClose}
-    />);
+    const ResolvingWebsocket = {
+      getMessage : jest.fn((input) => {return {
+        WEBSOCKET_MESSAGE_TYPE : input
+      }}),
+      send : jest.fn((message) => {return new Promise(async function(resolve) {})})
+    }
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={ResolvingWebsocket}>
+        <HistoryModal
+          active_customer={1}
+          on_close={onClose}
+        />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     fireEvent.click(await screen.findByRole('button', {name : "Hent historik"}));
 
@@ -113,18 +79,21 @@ describe("History modal test suite", () =>{
       }}),
       send : jest.fn((message) => {
         return new Promise(async function(resolve) {resolve({
-          data : {
+          [WEBSOCKET_DATA] : {
             "1" : []
           }
         })});
       })
     }
-    render(<HistoryModal
-      activeCustomer={customer}
-      tracers={tracers}
-      websocket={ResolvingWebsocket}
-      onClose={onClose}
-    />);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={ResolvingWebsocket}>
+        <HistoryModal
+          active_customer={1}
+          on_close={onClose}
+        />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
     await act(async () => { // The extra Act is needed because the modal depends on the websocket response.
       // Therefore an extra update is triggered which this act catches.
       const getHistoryButton = await screen.findByRole('button', {name : "Hent historik"});
@@ -147,12 +116,15 @@ describe("History modal test suite", () =>{
         })});
       })
     }
-    render(<HistoryModal
-      activeCustomer={customer}
-      tracers={tracers}
-      websocket={ResolvingWebsocket}
-      onClose={onClose}
-    />);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={ResolvingWebsocket}>
+        <HistoryModal
+          active_customer={1}
+          on_close={onClose}
+        />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
     await act(async () => {
       const getHistoryButton = await screen.findByRole('button', {name : "Hent historik"});
       fireEvent.click(getHistoryButton);
@@ -184,12 +156,15 @@ describe("History modal test suite", () =>{
         })});
       })
     }
-    render(<HistoryModal
-      activeCustomer={customer}
-      tracers={tracers}
-      websocket={ResolvingWebsocket}
-      onClose={onClose}
-    />);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={ResolvingWebsocket}>
+        <HistoryModal
+          active_customer={1}
+          on_close={onClose}
+        />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
     await act(async () => { // The extra Act is needed because the modal depends on the websocket response.
       // Therefore an extra update is triggered which this act catches.
       const getHistoryButton = await screen.findByRole('button', {name : "Hent historik"});

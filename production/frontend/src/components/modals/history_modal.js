@@ -1,34 +1,42 @@
-import React, { Component } from "react";
+import React, { Component, useState } from "react";
 import { Button, FormControl, Modal, Spinner, Row, Col} from "react-bootstrap";
 import { CSVLink } from "react-csv";
 import { CloseButton } from "../injectable/buttons.js"
 import { WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_HISTORY } from "~/lib/shared_constants";
 import { FormatDateStr } from "~/lib/formatting";
-import { changeState } from "~/lib/state_management";
+import { changeState, setStateToEvent } from "~/lib/state_management";
 import propTypes from "prop-types";
-import { Select } from "../injectable/select.js";
+import { Select, toOptions } from "../injectable/select.js";
 
 import styles from '~/css/Site.module.css';
+import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "~/lib/constants.js";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 
-export { HistoryModal }
+const Months = toOptions([
+  {name : "Januar", id : 1},
+  {name : "Februar", id : 2},
+  {name : "Marts", id : 3},
+  {name : "April", id : 4},
+  {name : "Maj", id : 5},
+  {name : "Juni", id : 6},
+  {name : "Juli", id : 7},
+  {name : "August", id : 8},
+  {name : "September", id : 9},
+  {name : "Oktober", id : 10},
+  {name : "November", id : 11},
+  {name : "December", id : 12},
+]);
 
-const Months = [
-  {name : "Januar", val : 1},
-  {name : "Februar", val : 2},
-  {name : "Marts", val : 3},
-  {name : "April", val : 4},
-  {name : "Maj", val : 5},
-  {name : "Juni", val : 6},
-  {name : "Juli", val : 7},
-  {name : "August", val : 8},
-  {name : "September", val : 9},
-  {name : "Oktober", val : 10},
-  {name : "November", val : 11},
-  {name : "December", val : 12},
-]
+/**
+ * @enum
+ */
+const LOADING_STATES = {
+  GET_MONTH : 1,
+  LOADING  : 2,
+  DOWNLOAD : 3,
+}
 
-class HistoryModal extends Component {
-  /** Modal for user to get order history / reciepts of a user.
+/** Modal for user to get order history / reciepts of a user.
    *    The modal have 3 states
    *      - Get Month / Year (Initial)
    *      - Loading Data
@@ -42,89 +50,74 @@ class HistoryModal extends Component {
    *    - ActiveCustomer - Object, Customer
    *    - websocket - TracerWebsocket, Websocket to do communication over
    */
-  static propTypes = {
-    onClose : propTypes.func.isRequired,
-    tracers : propTypes.objectOf(Map).isRequired,
-    activeCustomer : propTypes.object.isRequired,
-    //websocket
-  }
+export function HistoryModal({active_customer, on_close}) {
+  const websocket = useWebsocket();
+  const state = useTracershopState()
+  const customer = state.customer.get(active_customer)
+  const [loadingState, setLoadingState] = useState(LOADING_STATES.GET_MONTH)
+  const today = new Date();
+  const [year, setYear] = useState(today.getFullYear());
+  const [month, setMonth] = useState(today.getMonth() + 1); // Note there is a hidden -1
+  // this is because javascript consider january the 0'th month.
+  const [history, setHistory] = useState([]);
 
-  constructor(props){
-    super(props);
 
-    const today = new Date();
+  function getHistory(){
+    // Error Handling
 
-    this.state = {
-      month : today.getMonth() + 1, // Note this uses a non-zero indexed month format
-      year  : today.getFullYear(),
-      state : "GET_MONTH",
-      history : [],
-    }
-  }
-
-  states = {
-    GET_MONTH : this.renderGetMonth,
-    LOADING  : this.renderLoading,
-    DOWNLOAD : this.renderDownload
-  }
-
-  getHistory(){
-    this.setState({...this.state, state : "LOADING"})
-    const message = this.props.websocket.getMessage(WEBSOCKET_MESSAGE_GET_HISTORY);
-    message[WEBSOCKET_DATE] = `${this.state.year}-${FormatDateStr(this.state.month)}-01`;
-    message[WEBSOCKET_DATA] = this.props.activeCustomer.ID;
-    this.props.websocket.send(message).then(((response) => {
+    // Action
+    setLoadingState(LOADING_STATES.LOADING);
+    const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_HISTORY);
+    message[WEBSOCKET_DATE] = `${year}-${FormatDateStr(month)}-01`;
+    message[WEBSOCKET_DATA] = active_customer;
+    websocket.send(message).then((response) => {
       const history = response[WEBSOCKET_DATA]
       const data = [];
-
       for (const TracerIDstr of Object.keys(history)){
-        const Tracer = this.props.tracers.get(Number(TracerIDstr));
+        const tracer = state.tracer.get(Number(TracerIDstr));
         for(const OrderList of history[TracerIDstr]){
           data.push([
-              this.props.activeCustomer.UserName,
-              Tracer.name,
-            ].concat(OrderList))
+            customer.short_name,
+            tracer.shortname,
+          ].concat(OrderList))
         }
       }
-
-      this.setState({
-        state : "DOWNLOAD",
-        history : data,
-      })
-    }));
+      setHistory(data);
+      setLoadingState(LOADING_STATES.DOWNLOAD);
+    });
   }
 
-  resetModal(){
-    this.setState({
-      ...this.state,
-      state : "GET_MONTH",
-      history : [],
-    })
+  function resetModal(){
+    setHistory([]);
+    setLoadingState(LOADING_STATES.GET_MONTH);
   }
 
   // States:
-  renderGetMonth(){
+  function GetMonthModalBody(){
     return (
       <Row>
         <Col>
           <Select
             aria-label={"month-selector"}
             options={Months}
-            valueKey="val"
-            nameKey="name"
-            onChange={changeState("month", this)}
-            value={this.state.month}/>
+
+            onChange={setStateToEvent(setMonth)}
+            value={month}/>
         </Col>
         <Col>
-          <FormControl aria-label="year-selector" value={this.state.year} onChange={changeState("year", this)}></FormControl>
+          <FormControl
+            aria-label="year-selector"
+            value={year}
+            onChange={setStateToEvent(setYear)}
+          />
         </Col>
         <Col>
-          <Button onClick={this.getHistory.bind(this)}>Hent historik</Button>
+          <Button onClick={getHistory}>Hent historik</Button>
         </Col>
     </Row>);
   }
 
-  renderLoading(){
+  function LoadingModalBody(){
     return (
     <div className="text-center">
       <Spinner animation="border">
@@ -133,37 +126,51 @@ class HistoryModal extends Component {
     </div>);
   }
 
-  renderDownload() {
-    const noOrderStr = `Der er ingen ordre i ${this.state.month}/${this.state.year}`
+  function DownloadModalBody() {
+    const noOrderStr = `Der er ingen ordre i ${month}/${year}`
 
-    const Download = this.state.history.length ? <p><CSVLink data={this.state.history}><Button>Download</Button></CSVLink></p> :
+    const Download = history.length ? <p><CSVLink data={history}><Button>Download</Button></CSVLink></p> :
      <p>{noOrderStr}</p>;
 
     return (<div>
       {Download}
-      <Button onClick={this.resetModal.bind(this)}>Ny Historik</Button>
-    </div>);
-  }
+      <Button onClick={resetModal}>Ny Historik</Button>
+      </div>);
+    }
 
+    const HistoricModalBody = (() => {
+      switch (loadingState) {
+        case LOADING_STATES.GET_MONTH:
+          return GetMonthModalBody
+        case LOADING_STATES.LOADING:
+          return LoadingModalBody
+        case LOADING_STATES.DOWNLOAD:
+          return DownloadModalBody
+        default:
+          throw "undefined loading state!";
+      }
+    })()
 
-  render(){
-    const stateRenderingFunction = this.states[this.state.state].bind(this);
 
     return (
       <Modal
-        onHide={this.props.onClose}
+        onHide={on_close}
         show={true}
         className = {styles.mariLight}
       >
         <Modal.Header>
-          Bestilling historik for {this.props.activeCustomer.UserName}
+          Bestilling historik for {customer.short_name}
         </Modal.Header>
         <Modal.Body>
-          {stateRenderingFunction()}
+          <HistoricModalBody/>
         </Modal.Body>
         <Modal.Footer>
-          <CloseButton onClick={this.props.onClose}/>
+          <CloseButton onClick={on_close}/>
         </Modal.Footer>
       </Modal>);
-  }
+}
+
+HistoryModal.propTypes = {
+  [PROP_ON_CLOSE] : propTypes.func.isRequired,
+  [PROP_ACTIVE_CUSTOMER] : propTypes.number.isRequired,
 }

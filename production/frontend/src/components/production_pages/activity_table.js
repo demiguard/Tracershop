@@ -24,11 +24,11 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, 
 import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.js";
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMapping } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
-import { applyFilter, productionDayTracerFilter } from "../../lib/filters.js";
+import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 
 const Modals = {
-  createModal : CreateOrderModal,
+  create_modal : CreateOrderModal,
   activityModal : ActivityModal,
 }
 
@@ -88,12 +88,18 @@ export function ActivityTable ({active_tracer, active_date}) {
     state.tracer
   )
 
-  const [modalIdentifier, setModalIdentifier] = useState(null);
+  const [modalIdentifier, _setModalIdentifier] = useState(null);
   const [timeSlotID, setTimeSlotID] = useState(null);
 
   // Order Filtering
   const /**@type {Array<ActivityOrder>} */ all_orders = [...state.activity_orders.values()]
-  const todays_orders = all_orders.filter((order) => {
+  const todays_orders = applyFilter(state.activity_orders,
+                                    dailyActivityOrderFilter(state.deliver_times,
+                                                        state.production,
+                                                        delivery_date,
+                                                        active_tracer))
+  
+  all_orders.filter((order) => {
     const timeSlot = state.deliver_times.get(order.ordered_time_slot);
     if (timeSlot === undefined){
       console.log(state, order)
@@ -106,6 +112,11 @@ export function ActivityTable ({active_tracer, active_date}) {
   const orderMapping = new OrderMapping(todays_orders,
                                         state.deliver_times,
                                         state.delivery_endpoint)
+
+  function setModalIdentifier(value){
+    console.log(`setModalIdentifier called with ${value}`)
+    _setModalIdentifier(value)
+  }
 
   /**
   * Row inside of a RenderedTimeSlot
@@ -373,6 +384,7 @@ function ProductionRow({active_production}){
   if(Modals[modalIdentifier]){
     const ModalType = Modals[modalIdentifier]
     Modal = <ModalType {...modalProps} />
+    console.log(`Rendering ${Modal}`);
   }
 
   return (
@@ -386,7 +398,7 @@ function ProductionRow({active_production}){
           <Col sm={2}>
             <Button
               name="create-order"
-              onClick={() => {setModalIdentifier("createModal")}}>Opret ny ordre</Button>
+              onClick={() => {setModalIdentifier("create_modal")}}>Opret ny ordre</Button>
           </Col>
         </Row>
       </Container>

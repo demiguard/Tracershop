@@ -122,13 +122,15 @@ export class TimeSlotMapping {
   * 1. Filter out time slots of the wrong day and tracer
   * 2. Group TimeSlots together so a time slot can figure out if and what time
   *    slot it should move to.
-  * @param {Map<Number, DeliveryEndpoint>} endpoints
+  * @param {Map<Number, DeliveryEndpoint>} endpoints - This should be all
   * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
   * @param {Array<Number>} relevantProductions 
    */
   constructor(endpoints, timeSlots, relevantProductions) {
     /* The underlying datastructure 
       Customer_1 --> Endpoint_1 -> [time_slot_1, time_slot_2] // Sorted by time
+                 --> Endpoint_2 -> [time_slot_3, time_slot_4]
+      Customer_2 ...
     */
     this._timeSlotMapping = new Map();
     this._endpoints = endpoints
@@ -136,7 +138,7 @@ export class TimeSlotMapping {
 
     for(const endpoint of endpoints.values()){
       if(!this._timeSlotMapping.has(endpoint.owner)){
-        this._timeSlotMapping.set(endpoint.id, new ArrayMap())
+        this._timeSlotMapping.set(endpoint.owner, new ArrayMap())
       }
     }
 
@@ -151,7 +153,8 @@ export class TimeSlotMapping {
 
       if(destinationMapping === undefined){
         // Log error
-        console.log("Error, A timeslot have destination mapping")
+        console.log(`Error, A timeslot ${timeSlot.id} have no delivery endpoint mapping`)
+        console.log(endpoints);
         continue;
       }
 
@@ -161,6 +164,12 @@ export class TimeSlotMapping {
       });
     }
   }
+
+    *[Symbol.iterator](){
+      for(const timeSlotMap of this._timeSlotMapping){
+        yield timeSlotMap;
+      }
+    }
 
   /**
    * 
@@ -436,8 +445,6 @@ export class OrderDateMapping {
 
   constructor(orders) {
     this._orderMap = new Map();
-
-    console.log(orders)
 
     for(const order of orders){
       if (this._orderMap.has(order.delivery_date)){

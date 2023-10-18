@@ -62,25 +62,29 @@ export function TracerModal ({active_tracer, on_close}) {
    * @param {Customer} customer - customer to be rendered
    * @returns {Element}
    */
-  function CustomerRow(customer){
+  function CustomerRow({customer}){
     const allowedToOrder = TracerMapping.has(customer.id)
-    return renderTableRow(customer.id, [
-      customer.short_name, <Form.Check
+    return (<tr>
+      <td>{customer.short_name}</td>
+      <td>
+      <Form.Check
         aria-label={`check-${customer.id}`}
         defaultChecked={allowedToOrder}
         type="checkbox"
         className="mb-2"
         onClick={(event) => updateTracerCustomer(event, customer.id)}
       />
-    ]);
+      </td>
+    </tr>);
   }
 
     const customerRows = [];
     const filterRegExp = new RegExp(filter,"g");
+    let i = 1;
     for(const customer of state.customer.values()){
-
-      if(filterRegExp.test(customer.short_name)) {
-        customerRows.push(CustomerRow(customer));
+      if(filterRegExp.test(customer.short_name) || filter === "") {
+        customerRows.push(<CustomerRow customer={customer} key={i}/>);
+        i++;
       }
     }
 

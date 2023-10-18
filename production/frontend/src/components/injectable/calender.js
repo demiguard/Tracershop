@@ -1,16 +1,14 @@
 import React, { useState } from "react";
 
 import { compareDates } from "~/lib/utils";
-import { FormatDateStr } from '~/lib/formatting';
+
 import { DAYS, DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR,
-  CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, ORDER_STATUS, COLORS } from "~/lib/constants";
+  CALENDER_PROP_ON_DAY_CLICK, ORDER_STATUS, COLORS } from "~/lib/constants";
 
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "~/lib/shared_constants"
 
 import PropTypes from 'prop-types'
-import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "~/dataclasses/keywords";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, ClosedDate, Deadline, InjectionOrder } from "~/dataclasses/dataclasses";
-import { calculateDeadline, evalBitChain, getBitChain } from "~/lib/chronomancy";
+
 import { useWebsocket } from "../tracer_shop_context";
 
 export const STATUS_COLORS = {
@@ -22,9 +20,6 @@ export const STATUS_COLORS = {
 }
 
 
-
-
-const CLOSED_DATE_COLOR = "date-status55";
 
 /** This is a calender, where stuff can be injected on date click and on month change
  *  Alot of functions are in injected into this Component.
@@ -45,9 +40,11 @@ const CALENDER_PROP_TYPES = {
 export function Calender({calender_date,
                           calender_get_color,
                           calender_on_day_click,
+
                         }) {
+
   const websocket = useWebsocket();
-  const [activeMonth, setActiveMonth] = useState(calender_date)
+  const [activeMonth, setActiveMonth] = useState(calender_date);
 
   /** This function is called when the user changes the current month
    *
@@ -57,7 +54,7 @@ export function Calender({calender_date,
     const year  = activeMonth.getFullYear();
     const month = activeMonth.getMonth() + changeBy;
 
-    const NewMonth = new Date(year, month, 1);
+    const NewMonth = new Date(year, month, 1, 12);
 
     setActiveMonth(NewMonth)
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
@@ -144,13 +141,14 @@ export function Calender({calender_date,
 
   function Week({startingDate}) {
     return(
-      <div className="d-flex weekrow" key={startingDate}>
-        <Day date={startingDate + 1} key={startingDate + 1}/>
-        <Day date={startingDate + 2} key={startingDate + 2}/>
-        <Day date={startingDate + 3} key={startingDate + 3}/>
-        <Day date={startingDate + 4} key={startingDate + 4}/>
-        <Day date={startingDate + 5} key={startingDate + 5}/>
-        <Day date={startingDate + 6} key={startingDate + 6}/>
+      <div className="d-flex weekrow">
+        <Day date={startingDate}/>
+        <Day date={startingDate + 1}/>
+        <Day date={startingDate + 2}/>
+        <Day date={startingDate + 3}/>
+        <Day date={startingDate + 4}/>
+        <Day date={startingDate + 5}/>
+        <Day date={startingDate + 6}/>
       </div>
     );
   }

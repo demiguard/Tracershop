@@ -3,12 +3,9 @@ import { Modal, Button, FormControl, InputGroup, Row, Container } from "react-bo
 
 import { Calculator } from "../injectable/calculator";
 import { dateToDateString } from "~/lib/formatting";
-import { PROP_ON_CLOSE, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE,
-  PROP_TIME_SLOT_MAPPING } from "~/lib/constants.js"
 
-import { DATA_CUSTOMER, DATA_TRACER, DATA_ISOTOPE, DATA_ENDPOINT, DATA_DELIVER_TIME, DATA_PRODUCTION
-} from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder } from "~/dataclasses/dataclasses";
+
+import { ActivityOrder } from "~/dataclasses/dataclasses";
 import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
 import { ClickableIcon } from "../injectable/icons";

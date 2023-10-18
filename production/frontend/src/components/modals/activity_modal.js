@@ -38,19 +38,17 @@ import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
  * @returns 
  */
 export function ActivityModal({
-  active_date, active_tracer, order_mapping, on_close, timeSlotID, timeSlotMapping, tracer_catalog
+  active_date, active_tracer, order_mapping, on_close, timeSlotID, tracer_catalog
 }){
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket()
   const timeSlot = state.deliver_times.get(timeSlotID)
-  const /**@type {ActivityProduction} */ production = state.production.get(timeSlot.production_run);
   const /**@type {Array<ActivityOrder> | undefined}*/ orders = order_mapping.getOrders(timeSlot.id)
   const /**@type {DeliveryEndpoint} */ endpoint = state.delivery_endpoint.get(timeSlot.destination)
   const /**@type {Customer} */ customer = state.customer.get(endpoint.owner)
   const /**@type {Number} */ overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer)
   const /**@type {Tracer} */ tracer = state.tracer.get(active_tracer)
-  const /**@type {Isotope} */ isotope = state.isotopes.get(tracer.isotope)
 
   const [errorMessage, setErrorMessage] = useState("");
   const [errorLevel, setErrorLevel] = useState("");
@@ -58,6 +56,7 @@ export function ActivityModal({
   const [addingVial, setAddingVial] = useState(false);
   const [selectedVials, setSelectedVials] = useState(new Set());
   const [loginMessage, setLoginMessage] = useState("");
+  const [loginSpinner, setLoginSpinner] = useState(false);
 
    /**
   * A time slot may multiple orders and each of these objects refers to an order
@@ -74,6 +73,7 @@ export function ActivityModal({
     const [activity, setActivity] = useState(order.ordered_activity);
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
+
     const canEdit = order.status == 1 || order.status == 2;
     const displayStyle = error ? {backgroundColor : ERROR_BACKGROUND_COLOR} : {}
 
@@ -191,10 +191,11 @@ export function ActivityModal({
         }])
         setEditing(false)
       } else {
-        setError(ERROR_LEVELS.error, errors)
+        setError(ERROR_LEVELS.error, errors.map((err, i) => <p key={i}>{err}</p>))
       }
     }
 
+    // Refresh the vial
     useEffect(() => {
       setDisplayVial(vial)
       return () => {}
@@ -289,7 +290,7 @@ export function ActivityModal({
         }])
         stopAddingVial()
       } else {
-        setError(ERROR_LEVELS.error, errors);
+        setError(ERROR_LEVELS.error, errors.map((err, i) => <p key={i}>{err}</p> ));
       }
     }
 
@@ -435,6 +436,7 @@ export function ActivityModal({
   }
 
   function onFree(username, password){
+    setLoginSpinner(true);
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
     data[DATA_DELIVER_TIME] = timeSlotID
@@ -446,6 +448,7 @@ export function ActivityModal({
     auth[AUTH_PASSWORD] = password;
     message[DATA_AUTH] = auth;
     websocket.send(message).then((data) =>{
+      setLoginSpinner(false);
       if (data[AUTH_IS_AUTHENTICATED]){
         setFreeing(false);
         setError(null, "")
@@ -656,7 +659,7 @@ export function ActivityModal({
                 <ClickableIcon
                   label="add-new-vial"
                   src="/static/images/plus.svg"
-                  onClick={() => {setState({addingVial : true})}}/>
+                  onClick={() => {setAddingVial(true)}}/>
               </div>}
             </div>
           </div>

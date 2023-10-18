@@ -14,6 +14,7 @@ import { DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MODEL_CREATE } from "~/lib/shared_
 
 import { AppState, testState } from '~/tests/app_state.js'
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { TimeSlotMapping } from "~/lib/data_structures.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
@@ -34,14 +35,10 @@ beforeEach(() => {
     [PROP_ACTIVE_TRACER] : 1,
     [PROP_ACTIVE_DATE] : new Date(2020,3,5),
     [PROP_ON_CLOSE] : onClose,
-    [PROP_TIME_SLOT_MAPPING] : new Map([
-      [1, new Map([
-        [1 , [testState.deliver_times.get(1), testState.deliver_times.get(2)]],
-        [2,  []],
-      ])],
-      [2, new Map()]
-    ])
-  }
+    [PROP_TIME_SLOT_MAPPING] : new TimeSlotMapping(
+      testState.delivery_endpoint, testState.deliver_times, [1,2]
+    )
+  };
 });
 
 

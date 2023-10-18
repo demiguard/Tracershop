@@ -9,9 +9,9 @@ import { jest } from '@jest/globals'
 import { CustomerPage } from "../../../components/production_pages/setup_pages/customer_page.js"
 import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
-import { AppState } from "../../app_state.js";
+import { AppState, testState } from "../../app_state.js";
 import { act } from "react-dom/test-utils";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 
 const onClose = jest.fn()
@@ -40,19 +40,23 @@ afterEach(() => {
 
 describe("Customer page tests suite", () => {
   it("Standard Render Tests", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-              <CustomerPage {...props} />
-          </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
-    for(const customer of AppState[DATA_CUSTOMER].values()){
+    for(const customer of testState.customer.values()){
       expect(await screen.findByText(customer.short_name)).toBeVisible();
     }
   });
 
   it("Filter users", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-        <CustomerPage {...props} />
-      </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const form = await screen.findByLabelText('customer-filter')
@@ -63,9 +67,11 @@ describe("Customer page tests suite", () => {
     expect(await screen.findByText("Customer_3")).toBeVisible();
   });
   it("Open & close setting", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-        <CustomerPage {...props} />
-      </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const settingsIcon = await screen.findByLabelText('settings-3')

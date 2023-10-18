@@ -24,9 +24,11 @@ const Content = {
 
 
 /**
- * 
- * @param {*} initRef 
- * @param {*} state 
+ * Initialize the Shop order page
+ * This should function should only run once when the component is rendering
+ * the first time synchronously
+ * @param {*} initRef
+ * @param {*} state
  */
 function initialize(initRef, state){
   let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
@@ -77,7 +79,6 @@ function initialize(initRef, state){
 
 export function ShopOrderPage ({}){
   const state = useTracershopState();
-  const websocket = useWebsocket();
 
   let init = useRef({
     activeCustomer : null,

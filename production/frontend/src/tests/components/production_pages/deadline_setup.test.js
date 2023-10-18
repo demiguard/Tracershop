@@ -9,17 +9,16 @@ import { fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 import { DEADLINE_TYPES  } from "~/lib/constants.js";
 import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants.js";
-import { AppState } from "../../app_state.js";
+import { AppState, testState } from "../../app_state.js";
 
 import { DeadlineSetup, GlobalDeadlineValuesOptions } from "~/components/production_pages/setup_pages/deadline_setup.js";
 import userEvent from "@testing-library/user-event";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 
 let websocket = null;
-let props = null;
 
 beforeAll(() => {
   jest.useFakeTimers('modern')
@@ -28,29 +27,33 @@ beforeAll(() => {
 
 beforeEach(() => {
     websocket = tracer_websocket.TracerWebSocket
-    props = {...AppState};
+
 });
 
 afterEach(() => {
   cleanup()
   module.clearAllMocks()
   window.localStorage.clear();
-  props=null;
 });
 
 
 describe("Deadline Setup tests", () => {
   it("Standard render test", () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
 
   });
 
   it("Change deadline Type", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       const input = await screen.findByLabelText('type-1')
       fireEvent.change(input, {target : {value : "1"}})
@@ -66,9 +69,11 @@ describe("Deadline Setup tests", () => {
   })
 
   it("Change deadline Type to same value", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       const input = await screen.findByLabelText('type-1')
       fireEvent.change(input, {target : {value : "0"}})
@@ -78,9 +83,11 @@ describe("Deadline Setup tests", () => {
   })
 
   it("Change deadline time", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const input = await screen.findByLabelText('time-1')
@@ -113,9 +120,11 @@ describe("Deadline Setup tests", () => {
 
 
   it("Change deadline not a time ", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const input = await screen.findByLabelText('time-1')
@@ -128,9 +137,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change deadline time", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const input = await screen.findByLabelText('days-2')
@@ -146,9 +157,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change day to same value", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       const input = await screen.findByLabelText('days-2')
       fireEvent.change(input, {target : {value : "3"}})
@@ -158,9 +171,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change Deadline to Global", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       const input = await screen.findByLabelText('global-3')
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.NO_OPTION}`}})
@@ -170,9 +185,11 @@ describe("Deadline Setup tests", () => {
   })
 
   it("Change Deadline to Global Activity deadline", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       const input = await screen.findByLabelText('global-3')
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE}`}})
@@ -184,10 +201,12 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change Deadline to Global Injection deadline", async () => {
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
     await act(async () => {
       const input = await screen.findByLabelText('global-3')
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE}`}})
@@ -199,9 +218,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("create new deadline success", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const inputTime = await screen.findByLabelText('time-new')
@@ -216,9 +237,11 @@ describe("Deadline Setup tests", () => {
   })
 
   it("create new weekly deadline success", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const inputTime = await screen.findByLabelText('time-new')
@@ -236,11 +259,11 @@ describe("Deadline Setup tests", () => {
 
 
   it("create new deadline failure", async () => {
-    //websocket = jest.fn()
-    //websocket.sendEditModel = jest.fn()
-    render(<WebsocketContextProvider value={websocket}>
-      <DeadlineSetup {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState} >
+      <WebsocketContextProvider value={websocket}>
+        <DeadlineSetup/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     await act(async () => {
       const inputTime = await screen.findByLabelText('time-new')

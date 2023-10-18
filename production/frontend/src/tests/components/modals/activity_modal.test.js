@@ -9,12 +9,14 @@ import { jest } from '@jest/globals'
 
 import { ActivityModal } from '~/components/modals/activity_modal.js'
 import {  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID
+  PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
 } from "~/lib/constants.js";
 import { DATA_ACTIVITY_ORDER, DATA_VIAL } from "~/lib/shared_constants.js"
 
-import { AppState } from "../../app_state.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { AppState, testState } from "../../app_state.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
+import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const websocket_module = require("../../../lib/tracer_websocket.js");
@@ -23,9 +25,12 @@ let websocket = null;
 let container = null;
 let props = null;
 
-const ORDER_MAPPING = new Map([
-  [1, [AppState[DATA_ACTIVITY_ORDER].get(1)]]
-])
+
+const todays_orders = applyFilter(testState.activity_orders,
+                                  dailyActivityOrderFilter(testState.deliver_times,
+                                                      testState.production,
+                                                      "2020-05-04",
+                                                      1))
 
 
 beforeEach(() => {
@@ -35,17 +40,15 @@ beforeEach(() => {
 
   websocket = websocket_module.TracerWebSocket;
 
-  props = {...AppState}
-  props[PROP_ACTIVE_CUSTOMER] = 1
-  props[PROP_ORDER_MAPPING] = ORDER_MAPPING
-  props[PROP_TIME_SLOT_ID] = 1
-  props[PROP_ACTIVE_DATE] = new Date(2020,4,4,10,33,26)
-  props[PROP_OVERHEAD_MAP] = new Map([
-    [1, 1.25],
-    [2, 1.5],
-    [3, 2],
-  ])
-  props[PROP_ACTIVE_TRACER] = 1
+  props = {
+    [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
+    [PROP_ACTIVE_TRACER] : 1,
+    [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
+                                            testState.deliver_times,
+                                            testState.delivery_endpoint),
+    [PROP_TIME_SLOT_ID] : 1,
+    [PROP_TRACER_CATALOG] : new TracerCatalog(testState.tracer_mapping, testState.tracer),
+  }
 });
 
 
@@ -64,9 +67,11 @@ afterEach(() => {
 describe("Activity Modal Test", () => {
   it("Standard Render Test status 1", async () => {
     render(
-    <WebsocketContextProvider value={websocket}>
-      <ActivityModal {...props}/>
-    </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     expect(await screen.findByRole('button', {name : "Accepter Ordre"}))
     expect(await screen.findByLabelText('vial-usage-1')).toBeVisible();
@@ -75,15 +80,22 @@ describe("Activity Modal Test", () => {
   });
 
   it("Standard Render Test status 2", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                  testState.deliver_times,
+                                                 testState.delivery_endpoint)
 
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull()
     expect(screen.queryByLabelText('vial-usage-1')).toBeNull();
@@ -95,9 +107,11 @@ describe("Activity Modal Test", () => {
 
   it("Click - Accept Order", async () => {
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const acceptButton = await screen.findByRole('button', {name : "Accepter Ordre"});
 
@@ -105,21 +119,28 @@ describe("Activity Modal Test", () => {
       acceptButton.click()
     })
 
-    //expect(websocket.sendEditModel).toBeCalled();
+    expect(websocket.sendEditModel).toBeCalled();
   });
 
   it("Use a vial", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
 
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
-    const vial = props[DATA_VIAL].get(4)
+    const vial = testState.vial.get(4)
     const vialUsage = screen.queryByLabelText('vial-usage-4');
 
     act(() => {
@@ -130,17 +151,23 @@ describe("Activity Modal Test", () => {
   });
 
   it("Use a vial and stop using it ", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+      dailyActivityOrderFilter(testState.deliver_times,
+                          testState.production,
+                          "2020-05-11",
+                          1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
-
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+      testState.deliver_times,
+      testState.delivery_endpoint),
     render(
-    <WebsocketContextProvider value={websocket}>
-      <ActivityModal {...props}/>
-    </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
-    const vial = props[DATA_VIAL].get(4)
+    const vial = testState.vial.get(4)
     const vialUsage = screen.queryByLabelText('vial-usage-4');
 
     act(() => {
@@ -158,15 +185,22 @@ describe("Activity Modal Test", () => {
 
 
   it("start creating a new vial", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+      dailyActivityOrderFilter(testState.deliver_times,
+                          testState.production,
+                          "2020-05-11",
+                          1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+      testState.deliver_times,
+      testState.delivery_endpoint)
 
     render(
-    <WebsocketContextProvider value={websocket}>
-      <ActivityModal {...props}/>
-    </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const vialNew = await screen.findByLabelText("add-new-vial");
 
@@ -183,15 +217,22 @@ describe("Activity Modal Test", () => {
   });
 
   it("start and stop creating a new vial", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
 
     render(
-    <WebsocketContextProvider value={websocket}>
-      <ActivityModal {...props}/>
-    </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
 
     const vialNew = await screen.findByLabelText("add-new-vial");
@@ -212,14 +253,22 @@ describe("Activity Modal Test", () => {
   });
 
   it("Create a new vial", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
 
-    render(<WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const vialNew = await screen.findByLabelText("add-new-vial");
 
@@ -246,15 +295,22 @@ describe("Activity Modal Test", () => {
   });
 
   it("edit a vial success", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+      dailyActivityOrderFilter(testState.deliver_times,
+                          testState.production,
+                          "2020-05-11",
+                          1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+      testState.deliver_times,
+      testState.delivery_endpoint)
 
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const vialEdit = await screen.findByLabelText('edit-vial-4');
 
@@ -283,15 +339,22 @@ describe("Activity Modal Test", () => {
   });
 
   it("edit a vial failed", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+      dailyActivityOrderFilter(testState.deliver_times,
+                          testState.production,
+                          "2020-05-11",
+                          1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+      testState.deliver_times,
+      testState.delivery_endpoint)
 
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     const vialEdit = await screen.findByLabelText('edit-vial-4');
 
@@ -316,19 +379,25 @@ describe("Activity Modal Test", () => {
       acceptIcon.click()
     });
 
-    //expect(websocket.sendEditModel).not.toBeCalled();
-    expect(await screen.findByText("Batch nr. er ikke formateret korrekt")).toBeVisible();
-    expect(await screen.findByText("Produktions tidspunk er ikke formattet som et tidspunkt")).toBeVisible();
-    expect(await screen.findByText("Volume er ikke et tal")).toBeVisible();
-    expect(await screen.findByText("Aktiviten er ikke et tal")).toBeVisible();
+    expect(websocket.sendEditModel).not.toBeCalled();
+    expect(screen.getByText("Batch nr. er ikke formateret korrekt")).toBeVisible();
+    expect(screen.getByText("Produktions tidspunk er ikke formattet som et tidspunkt")).toBeVisible();
+    expect(screen.getByText("Volume er ikke et tal")).toBeVisible();
+    expect(screen.getByText("Aktiviten er ikke et tal")).toBeVisible();
 
   });
 
   it("free an order success", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
+
     websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
       send : jest.fn(() => Promise.resolve({
@@ -336,11 +405,14 @@ describe("Activity Modal Test", () => {
       })),
     }
 
-    render(<WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
-    const vial = props[DATA_VIAL].get(4)
+    const vial = testState.vial.get(4)
     const vialUsage = screen.queryByLabelText('vial-usage-4');
 
     act(() => {
@@ -369,10 +441,16 @@ describe("Activity Modal Test", () => {
   });
 
   it("free an order Failed", async () => {
-    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new Map([
-      [1, [AppState[DATA_ACTIVITY_ORDER].get(5)]]
-    ]);
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
+    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint);
+
     websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
       send : jest.fn(() => Promise.resolve({
@@ -380,11 +458,14 @@ describe("Activity Modal Test", () => {
       })),
     }
 
-    render(<WebsocketContextProvider value={websocket}>
-      <ActivityModal {...props}/>
-    </WebsocketContextProvider>);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
-    const vial = props[DATA_VIAL].get(4)
+    const vial = testState.vial.get(4);
     const vialUsage = screen.queryByLabelText('vial-usage-4');
 
     act(() => {
@@ -413,49 +494,71 @@ describe("Activity Modal Test", () => {
   });
 
   it("Edit an order successfully", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
+
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     // Start editing the order
     await act(async () => {
-      const editIcon = await screen.findByLabelText("edit-order-activity-1")
+      const editIcon = await screen.findByLabelText("edit-order-activity-5")
       editIcon.click();
     });
     // edit the order
     await act(async () => {
-      const editForm = await screen.findByLabelText("edit-form-order-activity-1")
+      const editForm = await screen.findByLabelText("edit-form-order-activity-5")
       fireEvent.change(editForm,{target :{ value : "59420"}});
     });
     // Accept the Edit
     await act(async () => {
-      const editAccept = await screen.findByLabelText("edit-accept-order-activity-1")
+      const editAccept = await screen.findByLabelText("edit-accept-order-activity-5")
       editAccept.click();
     });
   });
 
   it("Edit an order failed", async () => {
-    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26);
+    const todays_orders = applyFilter(testState.activity_orders,
+                                      dailyActivityOrderFilter(testState.deliver_times,
+                                                               testState.production,
+                                                               "2020-05-11",
+                                                               1));
+    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
+
     render(
-      <WebsocketContextProvider value={websocket}>
-        <ActivityModal {...props}/>
-      </WebsocketContextProvider>);
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
 
     // Start editing the order
     await act(async () => {
-      const editIcon = await screen.findByLabelText("edit-order-activity-1")
+      const editIcon = await screen.findByLabelText("edit-order-activity-5")
       editIcon.click();
     });
     // edit the order
     await act(async () => {
-      const editForm = await screen.findByLabelText("edit-form-order-activity-1")
+      const editForm = await screen.findByLabelText("edit-form-order-activity-5")
       fireEvent.change(editForm,{target :{ value : "a59420"}});
     });
     // Accept the Edit
     await act(async () => {
-      const editAccept = await screen.findByLabelText("edit-accept-order-activity-1")
+      const editAccept = await screen.findByLabelText("edit-accept-order-activity-5")
       editAccept.click();
     });
   });

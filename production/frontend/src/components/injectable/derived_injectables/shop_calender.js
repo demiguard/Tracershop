@@ -64,7 +64,7 @@ export function ShopCalender({active_date, on_day_click, activity_orders, inject
 ShopCalender.propTypes = {
   active_date : propTypes.objectOf(Date).isRequired,
   on_day_click : propTypes.func.isRequired,
-  activity_orders : propTypes.arrayOf(ActivityOrder).isRequired,
-  injection_orders : propTypes.arrayOf(InjectionOrder).isRequired,
-  time_slots : propTypes.arrayOf(ActivityDeliveryTimeSlot).isRequired,
+  activity_orders : propTypes.arrayOf(propTypes.instanceOf(ActivityOrder)).isRequired,
+  injection_orders : propTypes.arrayOf(propTypes.instanceOf(InjectionOrder)).isRequired,
+  time_slots : propTypes.arrayOf(propTypes.instanceOf(ActivityDeliveryTimeSlot)).isRequired,
 }

@@ -2,7 +2,7 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { Location, Tracer } from "../dataclasses/dataclasses";
+import { ActivityOrder, Location, Tracer } from "../dataclasses/dataclasses";
 
 export function dayTracerFilter(day, tracerID){
   return (production) => {
@@ -64,3 +64,17 @@ export function applyFilter(collection, filterFunction) {
     collection.filter(filterFunction);
 }
 
+export function dailyActivityOrderFilter(timeSlots, productions, delivery_date, active_tracer){
+  /**
+   * @param {ActivityOrder} order
+   */
+  return (order) => {
+    const timeSlot = timeSlots.get(order.ordered_time_slot);
+    if (timeSlot === undefined){
+      console.log(state, order)
+    }
+    const production = productions.get(timeSlot.production_run);
+
+    return order.delivery_date === delivery_date && production.tracer == active_tracer;
+  }
+}
