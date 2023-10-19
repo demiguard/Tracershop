@@ -6,9 +6,9 @@ import React, {useContext} from "react";
 import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
-import { AppState, testState } from "../../app_state.js";
+import { testState } from "../../app_state.js";
 import { FutureBooking } from "../../../components/shop_pages/future_bookings.js";
-import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
+import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE } from "../../../lib/constants.js";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 
@@ -28,10 +28,12 @@ beforeEach(async () => {
   window.location = { href : "tracershop"}
   container = document.createElement("div");
   websocket = new TracerWebSocket();
-
-
-  props = {...AppState}
-  props[PROP_ACTIVE_DATE] = now
+  props = {
+    [PROP_ACTIVE_DATE] : now,
+    [PROP_ACTIVE_ENDPOINT] : 1,
+    [PROP_EXPIRED_ACTIVITY_DEADLINE] : false,
+    [PROP_EXPIRED_INJECTION_DEADLINE] : false,
+  }
 });
 
 afterEach(() => {

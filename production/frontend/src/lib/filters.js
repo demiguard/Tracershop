@@ -45,7 +45,7 @@ export function bookingFilter(dateString, locations, activeEndpoint){
   */
   const returnFunction = (booking) =>{
     const location = locations.get(booking.location);
-    booking.start_date === dateString && location.owner === activeEndpoint;
+    return booking.start_date === dateString && location.endpoint === activeEndpoint;
   }
 
   return returnFunction;

@@ -342,8 +342,10 @@ export class ProcedureLocationIndex {
       const map = new Map()
       this._dataStructure.set(procedure.series_description, map);
       const locationIDs = locationHelper.get(procedure.owner);
-      for(const locationID of locationIDs){
-        map.set(locationID, procedure);
+      if (locationIDs !== undefined){
+        for(const locationID of locationIDs){
+          map.set(locationID, procedure);
+        }
       }
     }
   }
