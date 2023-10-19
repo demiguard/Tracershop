@@ -13,8 +13,8 @@ import { StateContextProvider, WebsocketContextProvider } from "~/components/tra
 import { testState } from "~/tests/app_state";
 import { act } from "react-dom/test-utils";
 
-const module = jest.mock('~/lib/tracer_websocket.js');
-const tracer_websocket = require("~/lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket.js');
+const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 const onClose = jest.fn();
 
@@ -73,4 +73,38 @@ describe("Tracer Modal test suite", () => {
     expect(screen.queryByText("Customer_2")).toBeVisible();
     expect(screen.queryByText("Customer_3")).toBeNull();
   });
+
+  it("Add tracer to customer 4", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <TracerModal {...props}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    const customer2CheckBox = screen.getByLabelText("check-4")
+
+    act(() => {
+      fireEvent.click(customer2CheckBox);
+    })
+
+    expect(websocket.send).toBeCalled();
+  });
+
+  it("Remove tracer to customer 1", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <TracerModal {...props}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    const customer2CheckBox = screen.getByLabelText("check-1")
+
+    act(() => {
+      fireEvent.click(customer2CheckBox);
+    })
+
+    expect(websocket.send).toBeCalled();
+
+  });
+
 })

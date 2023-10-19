@@ -4,12 +4,11 @@ import { Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap
 
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants";
 
-import {DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING, WEBSOCKET_DATA,
+import {DATA_TRACER_MAPPING, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE
 } from "~/lib/shared_constants";
 
-import { renderTableRow } from "~/lib/rendering";
 import { setStateToEvent } from "~/lib/state_management";
 
 import propTypes from "prop-types";

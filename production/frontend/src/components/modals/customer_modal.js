@@ -452,7 +452,6 @@ export function CustomerModal({
                        || tempTimeSlot.production_run === timeSlotCorrect.production_run;
 
     useEffect(() => {
-      console.log("use effect triggered")
       const newTimeSlot = (active_time_slot === "") ?
           cleanTimeSlot
         : state.deliver_times.get(active_time_slot);

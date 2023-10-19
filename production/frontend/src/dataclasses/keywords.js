@@ -148,7 +148,8 @@ export const KEYWORD_Procedure_OWNER = "owner";
 
 // Model: ProcedureIdentifier
 export const KEYWORD_ProcedureIdentifier_ID = "id";
-export const KEYWORD_ProcedureIdentifier_STRING = "string";
+export const KEYWORD_ProcedureIdentifier_CODE = "code";
+export const KEYWORD_ProcedureIdentifier_DESCRIPTION = "description";
 
 // Model: ActivityProduction
 export const KEYWORD_ActivityProduction_ID = "id";

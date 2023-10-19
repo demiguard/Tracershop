@@ -101,7 +101,7 @@ describe("Activity Modal Test", () => {
     expect(screen.queryByLabelText('vial-usage-1')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-2')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-3')).toBeNull();
-    expect(screen.queryByLabelText('vial-usage-4')).not.toBeNull();
+    expect(screen.queryByLabelText('vial-usage-4')).toBeNull();
   });
 
 
@@ -141,7 +141,7 @@ describe("Activity Modal Test", () => {
       </StateContextProvider>);
 
     const vial = testState.vial.get(4)
-    const vialUsage = screen.queryByLabelText('vial-usage-4');
+    const vialUsage = screen.queryByLabelText('vial-usage-7');
 
     act(() => {
       vialUsage.click()
@@ -160,6 +160,7 @@ describe("Activity Modal Test", () => {
     props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
       testState.deliver_times,
       testState.delivery_endpoint),
+
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -167,8 +168,8 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vial = testState.vial.get(4)
-    const vialUsage = screen.queryByLabelText('vial-usage-4');
+    const vial = testState.vial.get(7)
+    const vialUsage = screen.getByLabelText('vial-usage-7');
 
     act(() => {
       vialUsage.click()
@@ -312,17 +313,17 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vialEdit = await screen.findByLabelText('edit-vial-4');
+    const vialEdit = screen.getByLabelText('edit-vial-7');
 
     act(() => {
       vialEdit.click()
     })
 
     await act(async () => {
-      const lotForm= await screen.findByLabelText('lot_number-4');
-      const fillTimeForm= await screen.findByLabelText('fill_time-4');
-      const volumeForm= await screen.findByLabelText('volume-4');
-      const activityForm= await screen.findByLabelText('activity-4');
+      const lotForm= await screen.findByLabelText('lot_number-7');
+      const fillTimeForm= await screen.findByLabelText('fill_time-7');
+      const volumeForm= await screen.findByLabelText('volume-7');
+      const activityForm= await screen.findByLabelText('activity-7');
 
       fireEvent.change(lotForm, {target : {value : "test-200511-1"}})
       fireEvent.change(fillTimeForm, {target : {value : "11:22:33"}})
@@ -331,11 +332,11 @@ describe("Activity Modal Test", () => {
     });
 
     await act(async () => {
-      const acceptIcon = await screen.findByLabelText("vial-edit-accept-4")
+      const acceptIcon = await screen.findByLabelText("vial-edit-accept-7")
       acceptIcon.click()
     });
 
-    //expect(websocket.sendEditModel).toBeCalled()
+    expect(websocket.sendEditModel).toBeCalled()
   });
 
   it("edit a vial failed", async () => {
@@ -356,17 +357,17 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vialEdit = await screen.findByLabelText('edit-vial-4');
+    const vialEdit = await screen.findByLabelText('edit-vial-7');
 
     act(() => {
       vialEdit.click()
     })
 
     await act(async () => {
-      const lotForm = await screen.findByLabelText('lot_number-4');
-      const fillTimeForm = await screen.findByLabelText('fill_time-4');
-      const volumeForm = await screen.findByLabelText('volume-4');
-      const activityForm = await screen.findByLabelText('activity-4');
+      const lotForm = await screen.findByLabelText('lot_number-7');
+      const fillTimeForm = await screen.findByLabelText('fill_time-7');
+      const volumeForm = await screen.findByLabelText('volume-7');
+      const activityForm = await screen.findByLabelText('activity-7');
 
       fireEvent.change(lotForm, {target : {value : "not a batch number"}})
       fireEvent.change(fillTimeForm, {target : {value : "not time"}})
@@ -375,7 +376,7 @@ describe("Activity Modal Test", () => {
     });
 
     await act(async () => {
-      const acceptIcon = await screen.findByLabelText("vial-edit-accept-4")
+      const acceptIcon = await screen.findByLabelText("vial-edit-accept-7")
       acceptIcon.click()
     });
 
@@ -412,8 +413,8 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vial = testState.vial.get(4)
-    const vialUsage = screen.queryByLabelText('vial-usage-4');
+    const vial = testState.vial.get(7)
+    const vialUsage = screen.queryByLabelText('vial-usage-7');
 
     act(() => {
       vialUsage.click();
@@ -465,8 +466,8 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vial = testState.vial.get(4);
-    const vialUsage = screen.queryByLabelText('vial-usage-4');
+    const vial = testState.vial.get(7);
+    const vialUsage = screen.queryByLabelText('vial-usage-7');
 
     act(() => {
       vialUsage.click();

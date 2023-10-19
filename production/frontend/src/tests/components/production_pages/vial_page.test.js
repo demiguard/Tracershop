@@ -3,23 +3,22 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { VialPage } from "~/components/production_pages/vial_page.js"
-import { DATA_CUSTOMER, DATA_VIAL } from "~/lib/shared_constants.js";
 
-const onClose = jest.fn()
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { testState } from "~/tests/app_state.js";
+
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
-let container = null;
 
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
-  container = document.createElement("div");
   websocket = tracer_websocket.TracerWebSocket;
 });
 
@@ -27,21 +26,278 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
-
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
 });
 
 
 describe("Vial page tests suite", () => {
-  const props = {};
-  props[DATA_VIAL] = new Map();
-  props[DATA_CUSTOMER] = new Map();
-
   it("Standard Render Tests", async () => {
-    render(<VialPage
-      {...props}
-    />);
+    render(
+    <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+    
+    for(const vial of testState.vial.values()){
+      // Note that multiple vials may have the same lot number, hence this.
+      expect(screen.getAllByText(vial.lot_number).length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it("Change sorting - ID", () => {
+    render(
+    <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const idTableHeader = screen.getByText('ID')
+      fireEvent.click(idTableHeader)
+    })
+
+    const vial_ids = screen.getAllByTestId('id_field').map(ele => Number(ele.textContent))
+
+    // I don't have ram to both vs code and firefox, so I can't check if this exists in jest / testing library...
+
+    let min_id = 0;
+
+    for(const vial_id of vial_ids){
+      expect(vial_id).toBeGreaterThan(min_id);
+      min_id = vial_id;
+    }
+  });
+
+  it("Change sorting - double ID", () => {
+    render(
+    <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const idTableHeader = screen.getByText('ID')
+      fireEvent.click(idTableHeader);
+    })
+
+    act(() => {
+      const idTableHeader = screen.getByText('ID')
+      fireEvent.click(idTableHeader);
+    })
+
+    const vial_ids = screen.getAllByTestId('id_field').map(ele => Number(ele.textContent))
+
+    // I don't have ram to both vs code and firefox, so I can't check if this exists in jest / testing library...
+
+    let min_id = Infinity;
+
+    for(const vial_id of vial_ids){
+      expect(vial_id).toBeLessThan(min_id);
+      min_id = vial_id;
+    }
+  });
+
+  it("Change sorting - Lot", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByText('Lot nummer')
+      fireEvent.click(lotTableHeader)
+    })
+
+    const lotNumbers = screen.getAllByTestId('lot_field').map(ele => ele.textContent);
+  });
+
+  it("Change sorting - Date", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByTestId('header-DATE')
+      fireEvent.click(lotTableHeader)
+    })
+  });
+
+  it("Change sorting - time", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByText('Tappe tidspunkt')
+      fireEvent.click(lotTableHeader)
+    })
+  });
+
+  it("Change sorting - volume", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByText('Volume')
+      fireEvent.click(lotTableHeader)
+    })
+  });
+
+  it("Change sorting - aktivitet", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByText('Aktivitet')
+      fireEvent.click(lotTableHeader)
+    })
+  });
+
+  it("Change sorting - Owner", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByText('Ejer')
+      fireEvent.click(lotTableHeader)
+    })
+  });
+
+  it("Change sorting - order", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lotTableHeader = screen.getByText('Ordre')
+      fireEvent.click(lotTableHeader)
+    })
+  });
+
+  it("Filter lot number", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lot_filter = screen.getByTestId("lot_filter")
+      fireEvent.change(lot_filter, {target : {value : "test-200511"}})
+    })
+
+    const lotNumbers = screen.getAllByTestId('lot_field').map(ele => ele.textContent)
+
+    for(const lot_number of lotNumbers){
+      expect(lot_number).toMatch(/test-200511/)
+    }
+  })
+
+  it("Filter Customer", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lot_filter = screen.getByTestId("customer-select")
+      fireEvent.change(lot_filter, {target : {value : "1"}})
+    })
+
+    const customers = screen.getAllByTestId('owner_field').map(ele => ele.textContent)
+
+    for(const customer of customers){
+      expect(customer).toEqual(testState.customer.get(1).short_name);
+    }
+  });
+
+  it("Filter Customer", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lot_filter = screen.getByTestId("customer-select")
+      fireEvent.change(lot_filter, {target : {value : "1"}})
+    })
+
+    const customers = screen.getAllByTestId('owner_field').map(ele => ele.textContent)
+
+    for(const customer of customers){
+      expect(customer).toEqual(testState.customer.get(1).short_name);
+    }
+  });
+
+  it("Fetch new vials - success", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lot_filter = screen.getByTestId("date-input")
+      fireEvent.change(lot_filter, {target : {value : "2019/11/04"}})
+    });
+
+    act(() => {
+      const lot_filter = screen.getByRole("button",{name : "Søg"})
+      fireEvent.click(lot_filter)
+    })
+
+    expect(websocket.send).toBeCalled();
+  });
+
+  it("Fetch new vials - Failure", () => {
+    render(
+      <StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <VialPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      const lot_filter = screen.getByTestId("date-input")
+      fireEvent.change(lot_filter, {target : {value : "21019/11/04"}})
+    });
+
+    act(() => {
+      const lot_filter = screen.getByRole("button",{name : "Søg"})
+      fireEvent.click(lot_filter)
+    })
+
+    expect(websocket.send).not.toBeCalled();
   });
 });

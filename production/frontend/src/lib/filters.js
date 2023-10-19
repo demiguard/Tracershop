@@ -2,7 +2,7 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { ActivityOrder, Location, Tracer } from "../dataclasses/dataclasses";
+import { ActivityOrder, DeliveryEndpoint, Location, Tracer } from "../dataclasses/dataclasses";
 
 export function dayTracerFilter(day, tracerID){
   return (production) => {
@@ -14,14 +14,17 @@ export function timeSlotOwnerFilter(endpointID){
   return (timeSlot) => timeSlot.destination === endpointID;
 }
 
-/** Function used 
+/** Filter function for selecting delivery endpoints with a specific
+ * Customer
  * 
- * @param {Number} CustomerID 
- * @returns 
+ * @param {Number} customerID Id of the customer the endpoint should have to
+ * survive the filtering
+ * 
  */
-export function endpointOwnerFilter(CustomerID){
-  return (endpoint) => endpoint.owner === CustomerID
+export function endpointOwnerFilter(customerID){
+  return (/**@type {DeliveryEndpoint} */endpoint) => endpoint.owner === customerID
 }
+
 
 export function tracerTypeFilter(tracerType){
   return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType

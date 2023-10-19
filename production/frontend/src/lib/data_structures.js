@@ -279,6 +279,39 @@ export function getProcedure(procedures, identifier, endpoint){
   return new Procedure(undefined, identifier.id, "", "", "", endpoint.id);
 }
 
+export class EndpointsProcedures {
+  /** @type {Map<Number, Map<String, Procedure>>} */ _procedures
+
+  /**
+   * 
+   * @param {Map<Number, Procedure>} procedures 
+   */
+  constructor(procedures){
+    this._procedures = new Map();
+
+    for(const procedure of procedures.values()) {
+      let subMap
+      if(this._procedures.has(procedure.owner)){
+        subMap = this._procedures.get(procedure.owner);
+      } else {
+        subMap = new Map()
+        this._procedures.set(procedure.owner, subMap);
+      }
+      subMap.set(procedure.series_description, procedure);
+    }
+  }
+
+  getProcedures(endpointID){
+    const tempMap = this._procedures.get(endpointID);
+    if(tempMap === undefined){
+      return new Map();
+    } else {
+      return tempMap;
+    }
+  }
+}
+
+
 /**
  * Filters out ActivityDeliveryTimeSlots not owned by EndpointID
  * @param {Array<ActivityDeliveryTimeSlot>| Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
@@ -327,6 +360,14 @@ export class ProcedureLocationIndex {
 
     const subMap = this._dataStructure.get(booking.procedure);
     return subMap.get(booking.location);
+  }
+}
+
+export class ProcedureIndex {
+  /** @type {Map<Number, >}*/ _dataStructure
+  
+  constructor(){
+    this._dataStructure = new Map();
   }
 }
 
