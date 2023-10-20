@@ -67,5 +67,5 @@ export const activity_orders = new Map([
       "2020-05-04T11:33:44", //freed_datetime
       null, //ordered_by
       null, //freed_by
-)]
+  )],
 ])

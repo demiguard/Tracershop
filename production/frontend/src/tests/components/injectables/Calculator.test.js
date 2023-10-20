@@ -5,7 +5,7 @@
 import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { Calculator, ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero, ErrorInvalidTimeFormat, ErrorTimeAfterProduction } from "../../../components/injectable/calculator.js"
+import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL, Calculator, ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero, ErrorInvalidTimeFormat, ErrorTimeAfterProduction } from "../../../components/injectable/calculator.js"
 import { CalculateProduction } from "../../../lib/physics.js"
 
 let container = null;
@@ -50,8 +50,8 @@ describe("Calculator Test", () =>{
       tracer={Tracer}
     />);
 
-    expect((await screen.findByLabelText("activity-new")).value).toEqual(defaultMBq.toString());
-    expect((await screen.findByLabelText("time-new")).value).toEqual("");
+    expect((await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)).value).toEqual(defaultMBq.toString());
+    expect((await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)).value).toEqual("");
   });
 
   it("Write Time", async () => {
@@ -64,7 +64,7 @@ describe("Calculator Test", () =>{
       tracer={Tracer}
     />);
 
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "0"}})
     expect(TimeInput.value).toEqual("0")
     fireEvent.change(TimeInput, {target : {value : "09"}})
@@ -85,9 +85,9 @@ describe("Calculator Test", () =>{
       tracer={Tracer}
     />);
 
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
@@ -95,8 +95,8 @@ describe("Calculator Test", () =>{
     expect(await screen.findByText("10000")).toBeVisible()
     expect(await screen.findByLabelText("delete-0")).toBeVisible();
 
-    expect((await screen.findByLabelText("activity-new")).value).toEqual(defaultMBq.toString());
-    expect((await screen.findByLabelText("time-new")).value).toEqual("");
+    expect((await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)).value).toEqual(defaultMBq.toString());
+    expect((await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)).value).toEqual("");
   });
 
   it("Add Entry - Invalid Time Format", async () => {
@@ -108,9 +108,9 @@ describe("Calculator Test", () =>{
       isotopes={isotopes}
       tracer={Tracer}
     />);
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : ""}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
 
     fireEvent.click(screen.getByAltText("Tilføj"))
@@ -129,9 +129,9 @@ describe("Calculator Test", () =>{
       isotopes={isotopes}
       tracer={Tracer}
     />);
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "01:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
@@ -147,9 +147,9 @@ describe("Calculator Test", () =>{
       isotopes={isotopes}
       tracer={Tracer}
     />);
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : ""}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
@@ -165,9 +165,9 @@ describe("Calculator Test", () =>{
       isotopes={isotopes}
       tracer={Tracer}
     />);
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "helloworld"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
@@ -183,9 +183,9 @@ describe("Calculator Test", () =>{
       isotopes={isotopes}
       tracer={Tracer}
     />);
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "0"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
@@ -202,9 +202,9 @@ describe("Calculator Test", () =>{
       isotopes={isotopes}
       tracer={Tracer}
     />);
-    const TimeInput = await screen.findByLabelText("time-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "-10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
 
@@ -223,9 +223,9 @@ describe("Calculator Test", () =>{
       tracer={Tracer}
     />);
 
-    const TimeInput = screen.getByLabelText("time-new")
+    const TimeInput = screen.getByLabelText(CALCULATOR_NEW_TIME_LABEL)
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
-    const ActivityInput = screen.getByLabelText("activity-new")
+    const ActivityInput = screen.getByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
     fireEvent.click(screen.getByAltText("Tilføj"))
     fireEvent.click(screen.getByLabelText("delete-0"));
@@ -245,12 +245,12 @@ describe("Calculator Test", () =>{
       tracer={Tracer}
     />);
 
-    const TimeInput = await screen.findByLabelText("time-new")
-    const ActivityInput = await screen.findByLabelText("activity-new")
+    const TimeInput = await screen.findByLabelText(CALCULATOR_NEW_TIME_LABEL)
+    const ActivityInput = await screen.findByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     // Sample 1
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
-    fireEvent.click(screen.getByAltText("Tilføj"))
+    fireEvent.click(screen.getByAltText("Tilføj"));
     // Sample 2
     fireEvent.change(TimeInput, {target : {value : "10:15"}})
     fireEvent.change(ActivityInput, {target : {value : "20000"}});

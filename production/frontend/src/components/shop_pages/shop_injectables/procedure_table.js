@@ -5,7 +5,7 @@ import { DATA_PROCEDURE } from "~/lib/shared_constants"
 import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
-import { EndpointsProcedures, ProcedureLocationIndex, getProcedure } from "~/lib/data_structures";
+import { EndpointsProcedures } from "~/lib/data_structures";
 import { DestinationSelect } from "../../injectable/derived_injectables/destination_select";
 import { initialize_customer_endpoint } from "~/lib/initialization";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";

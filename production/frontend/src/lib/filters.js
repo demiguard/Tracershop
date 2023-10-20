@@ -2,7 +2,8 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { ActivityOrder, DeliveryEndpoint, Location, Tracer } from "../dataclasses/dataclasses";
+import { ActivityOrder, DeliveryEndpoint, Location, Tracer, TracershopState } from "../dataclasses/dataclasses";
+import { getId } from "./utils";
 
 export function dayTracerFilter(day, tracerID){
   return (production) => {
@@ -80,4 +81,32 @@ export function dailyActivityOrderFilter(timeSlots, productions, delivery_date, 
 
     return order.delivery_date === delivery_date && production.tracer == active_tracer;
   }
+}
+
+/**
+ * 
+ * @param {TracershopState} state 
+ */
+export function getRelevantActivityOrders(state, day, active_tracer, active_endpoint, activeDateString){
+  const availableProductions =[...state.production.values()].filter(
+    (production) => {
+      return production.production_day === day && production.tracer === active_tracer
+  }).map(getId);
+
+  const availableTimeSlots = [...state.deliver_times.values()].filter(
+    (timeSlot) => {
+      const cond1 = availableProductions.includes(timeSlot.production_run)
+      const cond2 = timeSlot.destination === active_endpoint;
+
+      return cond1 && cond2;
+    }).map(getId)
+
+  const relevantActivityOrders = [...state.activity_orders.values()].filter(
+      (activityOrder) => {
+        const timeSlotConstraint = availableTimeSlots.includes(activityOrder.ordered_time_slot);
+        return timeSlotConstraint && activeDateString === activityOrder.delivery_date;
+    });
+
+
+  return [availableProductions,availableTimeSlots, relevantActivityOrders]
 }

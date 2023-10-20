@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope } from "../../../dataclasses/dataclasses";
 import { ParseDanishNumber, dateToDateString, nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
-import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssCenter } from "../../../lib/constants";
+import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants"
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
@@ -13,146 +13,12 @@ import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp, getTimeString } from "../../../lib/chronomancy";
 import { getPDFUrls } from "../../../lib/utils";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { parseDanishPositiveNumberInput } from "~/lib/user_input";
+import { setStateToEvent } from "~/lib/state_management";
+import { ErrorInput } from "~/components/injectable/error_input";
+import { OpenCloseButton } from "~/components/injectable/open_close_button";
 
-/**
- * This component is a row in the card of the activity timeSlot
- * @param {{
-*  date : Date
-*  order : ActivityOrder,
-*  timeSlot : ActivityDeliveryTimeSlot,
-*  timeSlots : Map<Number, ActivityDeliveryTimeSlot>
-*  websocket : TracerWebSocket,
-* }} props
-* @returns { Element }
-*/
-function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
- // State
- const [activity, setActivity] = useState(order.ordered_activity)
- const [comment, setComment] = useState(nullParser(order.comment))
- const [errorActivity, setErrorActivity] = useState("")
-
- useEffect(() => {
-    setActivity(order.ordered_activity)
-    setComment(order.comment)
-
-    return () => {}
- }, [order])
- // Functions
- function createOrder() {
-   const orderedActivity = ParseDanishNumber(activity);
-   if(isNaN(orderedActivity)){
-     setErrorActivity("Aktiviten kan ikke læses som et tal")
-     return;
-   }
-   if(orderedActivity <= 0){
-     setErrorActivity("Der skal bestilles en positiv mængde MBq tracer");
-     return;
-   }
-   const newOrder = new ActivityOrder(
-     undefined, // activity_order_id
-     orderedActivity, // ordered_activity
-     dateToDateString(date), // deliveryDate
-     1, // Status
-     comment, // comment
-     timeSlot.id, // ordered_time_slot
-     null,
-     null,
-     null,
-     null,
-   )
-
-   websocket.sendCreateActivityOrder(newOrder)
-   setActivity("")
-   setComment("")
-   setErrorActivity("")
- }
-
- function updateOrder() {
-   const newActivity = ParseDanishNumber(activity);
-   if(isNaN(newActivity)){
-     setErrorActivity("Aktiviten kan ikke læses som et tal")
-     return;
-   };
-
-   if(newActivity <= 0){
-     setErrorActivity("Der skal bestilles en positiv mængde MBq tracer");
-     return;
-   };
-   const newOrder = {
-     ...order
-   };
-   newOrder.ordered_activity = newActivity;
-   newOrder.comment = comment;
-
-   websocket.sendEditModel(DATA_ACTIVITY_ORDER, newOrder);
- }
-
- const ordered = order.status > 0
-
- const canEdit = order.status <= 1
- const changedActivity = !(order.ordered_activity === activity);
- const changedComment = !(nullParser(order.comment) === comment);
-
- let statusIcon;
- if(order.moved_to_time_slot){
-   statusIcon = (<ClickableIcon src="static/images/move_top.svg"/>);
- } else if (ordered) {
-   statusIcon = (<StatusIcon status={order.status}/>);
- } else {
-   statusIcon = ""
- }
-
- let statusInfo
- if (order.moved_to_time_slot){
-   const movedTimeSlot = timeSlots.get(order.moved_to_time_slot)
-   statusInfo = `Rykket til ${movedTimeSlot.delivery_time}`;
- } else if (ordered) {
-   statusInfo = `ID: ${order.id}`;
- } else {
-   statusInfo = "Ny ordre";
- }
-
- const ActivityInput = canEdit ? <FormControl
-   value={activity}
-   onChange={(event) => {setActivity(event.target.value)}}
- /> : <FormControl value={activity} readOnly/>;
-
- const commentInput = canEdit ?  <Form.Control
-     as="textarea"
-     rows={1}
-     value={comment}
-     onChange={(event) => {setComment(event.target.value)}}
-   /> : <Form.Control value={comment} readOnly/>
-
- const ActionImage = ordered ?
-   <ClickableIcon src="/static/images/update.svg" onClick={updateOrder}/>
-     : <ClickableIcon src="/static/images/cart.svg" onClick={createOrder}/>
-
- return <Row>
-   <Col xs={1} style={cssCenter}>
-     {statusIcon}
-   </Col>
-   <Col style={cssCenter} xs={1}>
-     {statusInfo}
-   </Col>
-   <Col>
-     <TracershopInputGroup label="Aktivitet">
-       {ActivityInput}
-       <InputGroup.Text>MBq</InputGroup.Text>
-     </TracershopInputGroup>
-   </Col>
-   <Col>
-     <TracershopInputGroup label="Kommentar">
-       {commentInput}
-     </TracershopInputGroup></Col>
-   <Col xs={1} style={{
-     justifyContent : 'right',
-     display: 'flex',
-   }}>
-     {canEdit && (changedActivity || changedComment) ? ActionImage : ""}
-   </Col>
- </Row>
-}
 
 
 /**
@@ -166,7 +32,6 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
 *  overhead : Number
 *  activityOrders: Array<ActivityOrder>,
 *  websocket : TracerWebSocket,
-*  timeSlots : Map<Number, ActivityProduction>
 *  validDeadline : Boolean
 *  Isotopes : Map<Number, Isotope>
 *  vials : Map<Number, Vial>
@@ -174,18 +39,24 @@ function ActivityOrderRow({date, order, timeSlot, timeSlots , websocket}){
 * @returns {Element}
 */
 export function TimeSlotCard({
-  endpoint,
-  timeSlot,
-  isotopes,
+  timeSlotID,
   activityOrders,
-  activeTracer,
-  websocket,
-  date,
-  timeSlots,
+  active_date,
   overhead,
-  validDeadline,
-  vials
+  activityDeadlineExpired,
+
 }){
+  const state = useTracershopState();
+  const websocket = useWebsocket();
+
+  // Prop extration
+  const timeSlot = state.deliver_times.get(timeSlotID);
+  const production = state.production.get(timeSlot.production_run)
+  const tracer = state.tracer.get(production.tracer);
+  // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the same endpoint and tracer
+  //(and day, but that assumption is not used here!)
+  const endpoint = state.delivery_endpoint.get(timeSlot.destination)
+
   // State
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
@@ -200,10 +71,9 @@ export function TimeSlotCard({
     _setNewOrderActivity({...newOrder, ordered_activity : Math.floor(newActivity)});
   }
   // Filter out irrelevant orders
-  const /**@type {Array<ActivityOrder>} */ orderedActivityOrders = activityOrders.filter((_order) => {
-    const /**@type {ActivityOrder} */ order = _order
-    return order.ordered_time_slot === timeSlot.id
-  });
+
+  const orderedActivityOrders = activityOrders.filter((order) =>
+    order.ordered_time_slot === timeSlotID);
 
   const /**@type {Array<ActivityOrder>} */ deliverableActivityOrders = activityOrders.filter((_order) => {
     const /**@type {ActivityOrder} */ order = _order
@@ -213,16 +83,156 @@ export function TimeSlotCard({
     return orderedHere || movedToHere;
   });
 
+  /**
+ * This component is a row in the card of the activity timeSlot
+ * @param {{
+*  timeSlots : Map<Number, ActivityDeliveryTimeSlot>
+* }} props
+* @returns { Element }
+*/
+function ActivityOrderRow({order}){
+  // State
+  const [activity, setActivity] = useState(order.ordered_activity);
+  const [comment, setComment] = useState(nullParser(order.comment));
+  const [errorActivity, setErrorActivity] = useState("");
+
+  // Functions
+  function createOrder() {
+    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity, "Aktiviten");
+    if(!validActivity){
+      setErrorActivity(numberActivity);
+      return;
+    }
+
+    const newOrder = new ActivityOrder(
+      undefined, // activity_order_id
+      numberActivity, // ordered_activity
+      dateToDateString(active_date), // deliveryDate
+      1, // Status
+      comment, // comment
+      timeSlot.id, // ordered_time_slot
+      null,
+      null,
+      null,
+      null,
+    )
+
+    websocket.sendCreateActivityOrder(newOrder)
+    setActivity("")
+    setComment("")
+    setErrorActivity("")
+  }
+
+  function updateOrder() {
+    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity)
+    if(!validActivity){
+      setErrorActivity(numberActivity)
+      return
+    }
+    const newOrder = {
+      ...order,
+      ordered_activity : numberActivity,
+      comment : comment
+    };
+
+    websocket.sendEditModel(DATA_ACTIVITY_ORDER, newOrder);
+  }
+
+  const orderID = (order.id !== undefined) ? order.id : "new";
+  const ordered = order.status > 0;
+  const canEdit = order.status <= 1;
+  const changedActivity = !(order.ordered_activity === activity);
+  const changedComment = !(nullParser(order.comment) === comment);
+
+  if(canEdit){ // React flips out if it can't update, which i guess is fair.
+    useEffect(() => {
+      setActivity(order.ordered_activity);
+      setComment(order.comment);
+    }, [order]); // we need this to ensure that calculator updates...
+  }
+
+  const statusIcon = (() => {
+    if(order.moved_to_time_slot){
+      return (<ClickableIcon src="static/images/move_top.svg"/>);
+    } else if (ordered) {
+      return (<StatusIcon status={order.status}/>);
+    } else {
+      return <div/>
+    };
+  })()
+
+  const statusInfo = (() => {
+    if (order.moved_to_time_slot){
+      const movedTimeSlot = state.deliver_times.get(order.moved_to_time_slot)
+      return `Rykket til ${movedTimeSlot.delivery_time}`;
+    } else if (ordered) {
+      return `ID: ${orderID}`;
+    } else {
+      return "Ny ordre";
+    }
+  })();
+
+  const activityInput = canEdit ? <ErrorInput error={errorActivity}>
+      <FormControl
+        data-testid={`activity-${orderID}`}
+        value={activity}
+        onChange={setStateToEvent(setActivity)}
+      />
+    </ErrorInput>
+     : <FormControl 
+          data-testid={`activity-${orderID}`} 
+          value={activity} readOnly
+       />;
+
+  const commentInput = canEdit ? <FormControl
+      data-testid={`comment-${orderID}`}
+      as="textarea"
+      rows={1}
+      value={comment}
+      onChange={setStateToEvent(setComment)}
+    /> : <FormControl data-testid={`comment-${orderID}`} value={comment} readOnly/>
+
+  const ActionImage = ordered ?
+      <ClickableIcon
+        label={`update-${orderID}`}
+        src="/static/images/update.svg"
+        onClick={updateOrder}
+      /> : <ClickableIcon
+        label={`create-${orderID}`}
+        src="/static/images/cart.svg"
+        onClick={createOrder}
+      />;
+
+  return (
+    <Row>
+      <Col xs={1} style={cssCenter}>
+        {statusIcon}
+      </Col>
+      <Col style={cssCenter} xs={1}>
+        {statusInfo}
+      </Col>
+      <Col>
+        <TracershopInputGroup label="Aktivitet">
+          {activityInput}
+          <InputGroup.Text>MBq</InputGroup.Text>
+        </TracershopInputGroup>
+      </Col>
+      <Col>
+        <TracershopInputGroup label="Kommentar">
+          {commentInput}
+        </TracershopInputGroup></Col>
+      <Col xs={1} style={cssAlignRight}>
+        {canEdit && (changedActivity || changedComment) ? ActionImage : ""}
+      </Col>
+    </Row>);
+  }
+
   // This Component displays all order in their original positions
   const orderRows = orderedActivityOrders.map((order) => {
     return <ActivityOrderRow
       key={order.id}
       order={order}
-      websocket={websocket}
-      timeSlot={timeSlot}
-      timeSlots={timeSlots}
-      date={date}
-      />
+    />
   })
 
   let header = <div></div>
@@ -233,21 +243,19 @@ export function TimeSlotCard({
       timeSlotActivity += order.ordered_activity
       minimumStatus = Math.min(minimumStatus, order.status);
     }
-    header = <StatusIcon status={minimumStatus}/>
+    header = <StatusIcon
+                label={`status-icon-time-slot-${timeSlot.id}`}
+                status={minimumStatus}
+             />
   }
 
-  if(validDeadline){
+  if(!activityDeadlineExpired){
     orderRows.push(<ActivityOrderRow
       key={-1}
       order={newOrder}
-      date={date}
-      timeSlot={timeSlot}
-      timeSlots={timeSlots}
-      websocket={websocket}
     />)
   }
 
-  const CollapseImageClassName = collapsed ? SiteStyles.rotated : ""
   const orderIds = [];
   let deliveryActivity = 0;
   let freedActivity = 0;
@@ -263,7 +271,7 @@ export function TimeSlotCard({
     if(order.moved_to_time_slot === null){
       deliveryActivity += overhead * order.ordered_activity
     } else {
-      const originalTimeSlot = timeSlots.get(order.ordered_time_slot);
+      const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot);
       const originalHour = Number(originalTimeSlot.delivery_time.substring(0,2))
       const originalMinute = Number(originalTimeSlot.delivery_time.substring(3,5))
 
@@ -271,62 +279,65 @@ export function TimeSlotCard({
     }
   }
 
-  for(const vial of vials.values()){
+  for(const vial of state.vial.values()){
     if(orderIds.includes(vial.assigned_to)){
       freedActivity += vial.activity;
     }
   }
 
   //  Card Content
-  let thirdColumnContent = "";
-  let fourthColumnContent = "";
-  let fifthColumnContent = "";
+  const [thirdColumnContent, fourthColumnContent, fifthColumnContent] = (() => {
+    if(minimumStatus == 3){
+      return [
+        `Udleveret ${freedActivity} MBq`,
+        `Frigivet kl ${freedTime}`,
+        <ClickableIcon
+          label={`delivery-${timeSlot.id}`}
+          src="static/images/delivery.svg"
+          onClick={() => {
+            window.location = getPDFUrls(endpoint, tracer, active_date);
+          }}
+        />
+      ]
+    } else if (!activityDeadlineExpired) {
+      return [
+        `Bestilt: ${timeSlotActivity} MBq`,
+        `Til Udlevering: ${Math.floor(deliveryActivity)} MBq`,
+        <ClickableIcon
+          label="open-calculator"
+          style={{
+            display : "inline-block",
+            marginLeft : "15px",
+            marginRight : "15px",
+          }}
+          className={SiteStyles.Margin15lr}
+          key={-1}
+          onClick={() => {setShowCalculator(!showCalculator)}}
+          src="static/images/calculator.svg"/>,
+      ]
+      } else {
+        return [
+          `Bestilt: ${timeSlotActivity} MBq`,
+          `Til Udlevering: ${Math.floor(deliveryActivity)} MBq`,
+          ""
+        ];
+      }
+    })();
 
-  if(minimumStatus == 3){
-    thirdColumnContent = `Udleveret ${freedActivity} MBq`;
-    fourthColumnContent = `Frigivet kl ${freedTime}`;
-    fifthColumnContent = <ClickableIcon src="static/images/delivery.svg"
-      onClick={() => {
-        window.location = getPDFUrls(endpoint, activeTracer, date);
-      }}
-    />
-  } else {
-    thirdColumnContent = `Bestilt: ${timeSlotActivity} MBq`
-    fourthColumnContent = `Til Udlevering: ${Math.floor(deliveryActivity)} MBq`
-    if(validDeadline){
-      fifthColumnContent = <ClickableIcon
-                        style={{
-                          display : "inline-block",
-                          marginLeft : "15px",
-                          marginRight : "15px",
-                        }}
-                        className={SiteStyles.Margin15lr}
-                        key={-1}
-                        onClick={() => {setShowCalculator(!showCalculator)}}
-                        src="static/images/calculator.svg"/>
-    } else {
-      fifthColumnContent = ""
-    }
-
-  }
-
-
-  const calculatorProps = {}
-  calculatorProps[PROP_ACTIVE_DATE] = combineDateAndTimeStamp(date,
-                                                              timeSlot.delivery_time)
-  calculatorProps[DATA_ISOTOPE] = isotopes;
-  calculatorProps[PROP_ON_CLOSE] = () => {setShowCalculator(false);}
-  calculatorProps[PROP_ACTIVE_TRACER] = activeTracer;
-  calculatorProps[PROP_COMMIT] = (activity) => {
-    setNewOrderActivity(String(activity))
-  }
-  calculatorProps.initial_MBq = 300
-
+  const calculatorProps = {
+    [PROP_ACTIVE_DATE] : combineDateAndTimeStamp(active_date,
+                                                 timeSlot.delivery_time),
+    [DATA_ISOTOPE] : state.isotopes,
+    [PROP_ON_CLOSE] : () => {setShowCalculator(false);},
+    [PROP_ACTIVE_TRACER] : tracer,
+    [PROP_COMMIT] : (activity) => {
+        setNewOrderActivity(String(activity))
+      },
+    initial_MBq : 300,
+  };
 
   return (
-  <Card style={{
-   padding : '0px'
-  }}>
+  <Card style={{padding : '0px'}}>
     {showCalculator ? <CalculatorModal
                         {...calculatorProps}
     /> : ""}
@@ -341,10 +352,9 @@ export function TimeSlotCard({
          justifyContent : 'right',
          display : 'flex',
        }}>
-         <ClickableIcon
-           className={CollapseImageClassName}
-           src={"/static/images/next.svg"}
-           onClick={() => {setCollapsed(!collapsed)}}
+         <OpenCloseButton
+            label={`open-time-slot-${timeSlot.id}`}
+            setOpen={setCollapsed}
          />
        </Col>
      </Row>
@@ -354,6 +364,6 @@ export function TimeSlotCard({
        {orderRows}
      </Card.Body>
    </Collapse>
- </Card>)
+ </Card>);
 }
 

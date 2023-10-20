@@ -330,7 +330,7 @@ export class ProcedureLocationIndex {
  * @param {Map<Number,Procedure>} procedures 
  * @param {Map<Number, Location>} Locations 
  */
-  constructor(procedures, Locations){
+  constructor(procedures, Locations, active_endpoint){
     this._dataStructure = new Map();
     const locationHelper = new ArrayMap();
 
@@ -339,6 +339,10 @@ export class ProcedureLocationIndex {
     }
 
     for(const procedure of procedures.values()){
+      if(procedure.owner !== active_endpoint){
+        // This is needed otherwise others procedure will overwrite.
+        continue;
+      }
       const map = new Map()
       this._dataStructure.set(procedure.series_description, map);
       const locationIDs = locationHelper.get(procedure.owner);
@@ -346,7 +350,10 @@ export class ProcedureLocationIndex {
         for(const locationID of locationIDs){
           map.set(locationID, procedure);
         }
+      } else {
+        console.log("Location IDs undefined!")
       }
+
     }
   }
 
@@ -359,7 +366,6 @@ export class ProcedureLocationIndex {
     if(!this._dataStructure.has(booking.procedure)){
       return undefined
     }
-
     const subMap = this._dataStructure.get(booking.procedure);
     return subMap.get(booking.location);
   }
@@ -387,6 +393,7 @@ export class TracerBookingMapping {
     for(const booking of bookings){
       const procedure = procedureLocationIndex.getProcedure(booking);
       if (procedure === undefined){
+        this._map.set(null, booking)
         continue;
       }
 

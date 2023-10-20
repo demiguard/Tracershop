@@ -68,7 +68,7 @@ describe("Authenticate Test Suite", () => {
 
     fireEvent.change(await screen.findByLabelText("username"), {target: {value: username}});
     fireEvent.change(await screen.findByLabelText("password"), {target: {value: password}});
-    fireEvent.click(await screen.getByRole('button', {name: /Log in/}))
+    fireEvent.click(screen.getByRole('button', {name: /Log in/}))
 
     expect(Auth).toHaveBeenCalledWith(username, password);
   })

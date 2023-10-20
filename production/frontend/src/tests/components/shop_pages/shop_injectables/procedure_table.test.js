@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import React, {useContext} from "react";
+import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
@@ -11,7 +11,6 @@ import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/s
 import { DATA_PROCEDURE } from "~/lib/shared_constants.js";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
-
 
 let websocket = null;
 
@@ -30,7 +29,6 @@ afterEach(() => {
   module.clearAllMocks()
   window.localStorage.clear()
   websocket = null;
-
 });
 
 describe("Procedure Table test suite", () => {

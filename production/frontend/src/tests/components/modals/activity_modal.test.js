@@ -347,8 +347,8 @@ describe("Activity Modal Test", () => {
                           1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
     props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-      testState.deliver_times,
-      testState.delivery_endpoint)
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint)
 
     render(
       <StateContextProvider value={testState}>
