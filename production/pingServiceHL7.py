@@ -57,17 +57,16 @@ def get_or_create_procedureIdentifier(code, description):
 
 
 @database_sync_to_async
-def create_booking(location, procedure_identifier, start_time, start_date, accession_number, study_uid):
+def create_booking(location, procedure_identifier, start_time, start_date, accession_number):
     try:
-        booking = Booking.objects.get(study_uid=study_uid)
+        booking = Booking.objects.get(accession_number=accession_number)
     except ObjectDoesNotExist:
-        booking = Booking(study_uid=study_uid)
+        booking = Booking(accession_number=accession_number)
 
     booking.location = location
     booking.procedure = procedure_identifier
     booking.start_date = start_date
     booking.start_time = start_time
-    booking.accession_number = accession_number
 
     booking.save()
 
@@ -75,9 +74,9 @@ def create_booking(location, procedure_identifier, start_time, start_date, acces
 
 
 @database_sync_to_async
-def delete_booking(study_uid):
+def delete_booking(accession_number):
     try:
-        booking = Booking.objects.get(study_uid=study_uid)
+        booking = Booking.objects.get(accession_number=accession_number)
         booking.delete()
     except ObjectDoesNotExist:
         return
@@ -105,9 +104,6 @@ def extract_booking_time(ORC_message_segment: Segment) -> Tuple[date, time]:
 def extract_accession_number(ORC_message_segment: Segment):
     return ORC_message_segment[20][0]
 
-def extract_study_uid(ZDS_segment: Segment):
-    return ZDS_segment[1][0]
-
 async def handleMessage(hl7_message: Message):
     message_type = extract_message_type(hl7_message)
 
@@ -132,15 +128,14 @@ async def handleMessage(hl7_message: Message):
             procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
             accession_number = extract_accession_number(ORC_message_segment)
             start_date, start_time = extract_booking_time(ORC_message_segment)
-            study_uid = extract_study_uid(ZDS_message_segment)
-            await create_booking(location, procedure_identifier, start_time, start_date, accession_number, study_uid)
-            logger.info(f"Added booking with uid: {study_uid}")
+            await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
+            logger.info(f"Added booking with uid: {accession_number}")
 
         if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] == 'Ended':
             # Delete
-            study_uid = extract_study_uid(ZDS_message_segment)
-            await delete_booking(study_uid)
-            logger.info(f"deleted booking with uid: {study_uid}")
+            accession_number = extract_accession_number(ORC_message_segment)
+            await delete_booking(accession_number)
+            logger.info(f"deleted booking with uid: {accession_number}")
 
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):
     """This will be called every time a socket connects

@@ -111,7 +111,7 @@ describe("Order Page tests", () => {
     })
 
     const expected_message = {}
-    expected_message[WEBSOCKET_DATE] = new Date("2020-05-31T22:00:00.000Z");
+    expected_message[WEBSOCKET_DATE] = new Date("2020-06-01T10:00:00.000Z");
     expected_message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_GET_ORDERS;
     expect(websocket.send).toBeCalledWith(expected_message)
   });

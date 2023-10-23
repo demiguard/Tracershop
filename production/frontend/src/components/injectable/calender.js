@@ -117,7 +117,7 @@ export function Calender({calender_date,
     const year  = activeMonth.getFullYear();
     const month = activeMonth.getMonth() + changeBy;
 
-    const NewMonth = new Date(year, month, 1);
+    const NewMonth = new Date(year, month, 1, 12);
 
     setActiveMonth(NewMonth)
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
@@ -166,14 +166,14 @@ export function Calender({calender_date,
 
   function Week({startingDate}) {
     return(
-      <div className="d-flex weekrow" key={startingDate}>
-        <Day date={startingDate} key={startingDate}/>
-        <Day date={startingDate + 1} key={startingDate + 1}/>
-        <Day date={startingDate + 2} key={startingDate + 2}/>
-        <Day date={startingDate + 3} key={startingDate + 3}/>
-        <Day date={startingDate + 4} key={startingDate + 4}/>
-        <Day date={startingDate + 5} key={startingDate + 5}/>
-        <Day date={startingDate + 6} key={startingDate + 6}/>
+      <div className="d-flex weekrow">
+        <Day date={startingDate}/>
+        <Day date={startingDate + 1}/>
+        <Day date={startingDate + 2}/>
+        <Day date={startingDate + 3}/>
+        <Day date={startingDate + 4}/>
+        <Day date={startingDate + 5}/>
+        <Day date={startingDate + 6}/>
       </div>
     );
   }

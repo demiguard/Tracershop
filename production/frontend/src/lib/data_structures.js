@@ -122,13 +122,15 @@ export class TimeSlotMapping {
   * 1. Filter out time slots of the wrong day and tracer
   * 2. Group TimeSlots together so a time slot can figure out if and what time
   *    slot it should move to.
-  * @param {Map<Number, DeliveryEndpoint>} endpoints
+  * @param {Map<Number, DeliveryEndpoint>} endpoints - This should be all
   * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
   * @param {Array<Number>} relevantProductions 
    */
   constructor(endpoints, timeSlots, relevantProductions) {
     /* The underlying datastructure 
       Customer_1 --> Endpoint_1 -> [time_slot_1, time_slot_2] // Sorted by time
+                 --> Endpoint_2 -> [time_slot_3, time_slot_4]
+      Customer_2 ...
     */
     this._timeSlotMapping = new Map();
     this._endpoints = endpoints
@@ -136,7 +138,7 @@ export class TimeSlotMapping {
 
     for(const endpoint of endpoints.values()){
       if(!this._timeSlotMapping.has(endpoint.owner)){
-        this._timeSlotMapping.set(endpoint.id, new ArrayMap())
+        this._timeSlotMapping.set(endpoint.owner, new ArrayMap())
       }
     }
 
@@ -151,7 +153,8 @@ export class TimeSlotMapping {
 
       if(destinationMapping === undefined){
         // Log error
-        console.log("Error, A timeslot have destination mapping")
+        console.log(`Error, A timeslot ${timeSlot.id} have no delivery endpoint mapping`)
+        console.log(endpoints);
         continue;
       }
 
@@ -161,6 +164,12 @@ export class TimeSlotMapping {
       });
     }
   }
+
+    *[Symbol.iterator](){
+      for(const timeSlotMap of this._timeSlotMapping){
+        yield timeSlotMap;
+      }
+    }
 
   /**
    * 
@@ -270,6 +279,39 @@ export function getProcedure(procedures, identifier, endpoint){
   return new Procedure(undefined, identifier.id, "", "", "", endpoint.id);
 }
 
+export class EndpointsProcedures {
+  /** @type {Map<Number, Map<String, Procedure>>} */ _procedures
+
+  /**
+   * 
+   * @param {Map<Number, Procedure>} procedures 
+   */
+  constructor(procedures){
+    this._procedures = new Map();
+
+    for(const procedure of procedures.values()) {
+      let subMap
+      if(this._procedures.has(procedure.owner)){
+        subMap = this._procedures.get(procedure.owner);
+      } else {
+        subMap = new Map()
+        this._procedures.set(procedure.owner, subMap);
+      }
+      subMap.set(procedure.series_description, procedure);
+    }
+  }
+
+  getProcedures(endpointID){
+    const tempMap = this._procedures.get(endpointID);
+    if(tempMap === undefined){
+      return new Map();
+    } else {
+      return tempMap;
+    }
+  }
+}
+
+
 /**
  * Filters out ActivityDeliveryTimeSlots not owned by EndpointID
  * @param {Array<ActivityDeliveryTimeSlot>| Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
@@ -288,7 +330,7 @@ export class ProcedureLocationIndex {
  * @param {Map<Number,Procedure>} procedures 
  * @param {Map<Number, Location>} Locations 
  */
-  constructor(procedures, Locations){
+  constructor(procedures, Locations, active_endpoint){
     this._dataStructure = new Map();
     const locationHelper = new ArrayMap();
 
@@ -297,12 +339,21 @@ export class ProcedureLocationIndex {
     }
 
     for(const procedure of procedures.values()){
+      if(procedure.owner !== active_endpoint){
+        // This is needed otherwise others procedure will overwrite.
+        continue;
+      }
       const map = new Map()
       this._dataStructure.set(procedure.series_description, map);
       const locationIDs = locationHelper.get(procedure.owner);
-      for(const locationID of locationIDs){
-        map.set(locationID, procedure);
+      if (locationIDs !== undefined){
+        for(const locationID of locationIDs){
+          map.set(locationID, procedure);
+        }
+      } else {
+        console.log("Location IDs undefined!")
       }
+
     }
   }
 
@@ -315,9 +366,16 @@ export class ProcedureLocationIndex {
     if(!this._dataStructure.has(booking.procedure)){
       return undefined
     }
-
     const subMap = this._dataStructure.get(booking.procedure);
     return subMap.get(booking.location);
+  }
+}
+
+export class ProcedureIndex {
+  /** @type {Map<Number, >}*/ _dataStructure
+  
+  constructor(){
+    this._dataStructure = new Map();
   }
 }
 
@@ -335,6 +393,7 @@ export class TracerBookingMapping {
     for(const booking of bookings){
       const procedure = procedureLocationIndex.getProcedure(booking);
       if (procedure === undefined){
+        this._map.set(null, booking)
         continue;
       }
 

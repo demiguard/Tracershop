@@ -6,7 +6,7 @@ const tracer_websocket = jest.createMockFromModule('../tracer_websocket.js');
 
 const TracerWebSocket = jest.fn();
 TracerWebSocket.getMessage = jest.fn((kw) => {return {[WEBSOCKET_MESSAGE_TYPE] : kw}});
-TracerWebSocket.send = jest.fn();
+TracerWebSocket.send = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendEditModel = jest.fn();
 TracerWebSocket.sendCreateModel = jest.fn();
 TracerWebSocket.sendDeleteModel = jest.fn();

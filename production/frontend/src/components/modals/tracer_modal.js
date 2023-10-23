@@ -4,12 +4,11 @@ import { Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap
 
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants";
 
-import {DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING, WEBSOCKET_DATA,
+import {DATA_TRACER_MAPPING, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE
 } from "~/lib/shared_constants";
 
-import { renderTableRow } from "~/lib/rendering";
 import { setStateToEvent } from "~/lib/state_management";
 
 import propTypes from "prop-types";
@@ -62,25 +61,29 @@ export function TracerModal ({active_tracer, on_close}) {
    * @param {Customer} customer - customer to be rendered
    * @returns {Element}
    */
-  function CustomerRow(customer){
+  function CustomerRow({customer}){
     const allowedToOrder = TracerMapping.has(customer.id)
-    return renderTableRow(customer.id, [
-      customer.short_name, <Form.Check
+    return (<tr>
+      <td>{customer.short_name}</td>
+      <td>
+      <Form.Check
         aria-label={`check-${customer.id}`}
         defaultChecked={allowedToOrder}
         type="checkbox"
         className="mb-2"
         onClick={(event) => updateTracerCustomer(event, customer.id)}
       />
-    ]);
+      </td>
+    </tr>);
   }
 
     const customerRows = [];
     const filterRegExp = new RegExp(filter,"g");
+    let i = 1;
     for(const customer of state.customer.values()){
-
-      if(filterRegExp.test(customer.short_name)) {
-        customerRows.push(CustomerRow(customer));
+      if(filterRegExp.test(customer.short_name) || filter === "") {
+        customerRows.push(<CustomerRow customer={customer} key={i}/>);
+        i++;
       }
     }
 

@@ -1,116 +1,243 @@
-import React, { useState } from "react";
-import { Container, FormCheck, FormControl, Row, Table } from "react-bootstrap";
-import { PROP_ACTIVE_ENDPOINT } from "~/lib/constants";
-import { DATA_CUSTOMER, DATA_ENDPOINT, DATA_PROCEDURE, DATA_PROCEDURE_IDENTIFIER, DATA_TRACER } from "~/lib/shared_constants"
+import React, { useState, useRef } from "react";
+import { FormControl, Table } from "react-bootstrap";
+import { PROP_ACTIVE_ENDPOINT, cssCenter } from "~/lib/constants";
+import { DATA_PROCEDURE } from "~/lib/shared_constants"
 import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "~/dataclasses/dataclasses";
-import { Select } from "../../injectable/select";
+import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
-import { getProcedure } from "~/lib/data_structures";
+import { EndpointsProcedures } from "~/lib/data_structures";
 import { DestinationSelect } from "../../injectable/derived_injectables/destination_select";
+import { initialize_customer_endpoint } from "~/lib/initialization";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { setStateToEvent } from "~/lib/state_management";
+import { ClickableIcon } from "~/components/injectable/icons";
+import { parseDanishNumberInput, parseWholePositiveNumber } from "~/lib/user_input";
+import { ErrorInput } from "~/components/injectable/error_input";
+
+export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
 
-export function ProcedureTable(props){
-  const [activeCustomer, setActiveCustomer] = useState(1);
-  const [activeEndpoint, setActiveEndpoint] = useState(1);
+export function ProcedureTable(){
+  const state = useTracershopState();
+  const websocket = useWebsocket();
+
+  const init = useRef({
+    customer : null,
+    endpoint : null,
+  });
+
+  if(init.current.customer === null || init.current.endpoint === null){
+    init.current = initialize_customer_endpoint(state.customer, state.delivery_endpoint)
+  }
+
+  const [activeCustomer, setActiveCustomer] = useState(init.current.customer);
+  const [activeEndpoint, setActiveEndpoint] = useState(init.current.endpoint);
+
+  const endpointProcedures = new EndpointsProcedures(state.procedure);
+  const activeProcedures = endpointProcedures.getProcedures(activeEndpoint);
 
   /**
   *
   * @param {{
-  *  endpoint : DeliveryEndpoint
-  *  procedures : Map<Number, Procedure>
-  *  procedureIdentifier : ProcedureIdentifier
-  *  tracers : Array<Object> - Mapped Tracer objects into display objects with name / id
-  *  websocket : TracerWebSocket
+  *  procedureIdentifier : Procedure
   * }} props
   * @returns {Element}
    */
-  function ProcedureRow({endpoint, procedures, procedureIdentifier, tracers, websocket}){
-    // Prop extractions
-    const procedure = getProcedure(procedures, procedureIdentifier, endpoint)
-
+  function ProcedureRow({procedure}){
+    const procedureIdentifier = state.procedure_identifier.get(procedure.series_description)
     // State Declaration
     const nullTracer = nullParser(procedure.tracer)
-    const [tracer, _setTracer] = useState(nullTracer);
-    const [units, _setUnits] = useState(procedure.tracer_units);
-    const [delay, _setDelay] = useState(procedure.delay_minutes);
-    const [usage, _setUsage] = useState(procedure.id !== undefined);
+    const [tracer, setTracer] = useState(nullTracer);
+    const [units, setUnits] = useState(procedure.tracer_units);
+    const [delay, setDelay] = useState(procedure.delay_minutes);
+    const [errorUnits, setErrorUnits] = useState("");
+    const [errorDelay, setErrorDelay] = useState("");
 
-    function setTracer(event) {
-      _setTracer(event.target.value);
-      let tracerID = event.target.value
-      if(tracerID === ""){
-        tracerID = null;
+    function commit(){
+      let parsedTracer = Number(tracer)
+      if(tracer === ""){
+        parsedTracer = null
       }
-      const newProcedure = {...procedure, tracer : tracerID}
+      const [validUnits, parsedUnits] = parseWholePositiveNumber(units);
+      const [validDelay, parsedDelay] = parseDanishNumberInput(delay);
 
-      websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
-    }
-
-    function setUnits(event){
-      _setUnits(event.target.value)
-
-      const newUnits = Number(event.target.value);
-      // Guards
-      if(isNaN(newUnits)){
+      if(validDelay && validUnits){
+        websocket.sendEditModel(DATA_PROCEDURE, [
+          {...procedure,
+            tracer : parsedTracer,
+            delay_minutes : parsedDelay,
+            tracer_units : parsedUnits,
+          }]);
         return;
       }
 
-      if(newUnits < 0){
-        return;
+      if(!validUnits){
+        setErrorUnits(parsedUnits);
       }
-
-      const newProcedure = {...procedure, tracer_units : newUnits}
-
-      websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
-    }
-
-    function setDelay(event) {
-      _setDelay(event.target.value);
-      const newDelay = Number(event.target.value);
-      // Guards
-      if(isNaN(newDelay)){
-        return;
+      if(!validDelay){
+        setErrorDelay(parsedDelay);
       }
-      const newProcedure = {...procedure, delay_minutes : newDelay}
-
-      websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
     }
 
-    function setUsage(event) {
-      const newUsage = !usage
-      _setUsage(newUsage)
-      const newProcedure = {...procedure, in_use : newUsage}
-
-      //websocket.sendEditModel(DATA_PROCEDURE, [newProcedure])
-    }
-
+    const tracerOptions = toOptions(state.tracer, 'short_name');
+    tracerOptions.push(new Option("", "---------"));
 
     return (
       <tr>
-        <td>{procedureIdentifier.string}</td>
+        <td>{procedureIdentifier.description}</td>
         <td>
           <Select
-            options={tracers}
+            data-testid={`tracer-${procedure.id}`}
+            options={tracerOptions}
             value={tracer}
-            onChange={setTracer}
+            onChange={setStateToEvent(setTracer)}
           />
         </td>
-        <td><FormControl value={units} onChange={setUnits}/></td>
-        <td><FormControl value={delay} onChange={setDelay}/></td>
-        <td style={{margin : 'auto',}}>
-          <FormCheck
-            style={{
-              justifyContent : 'center',
-              display : 'flex',
-           }}
-            checked={usage}
-            onChange={setUsage}
-         />
+        <td>
+          <ErrorInput error={errorUnits}>
+            <FormControl
+              value={units}
+              onChange={setStateToEvent(setUnits)}
+              data-testid={`units-${procedure.id}`}
+            />
+          </ErrorInput>
+        </td>
+        <td>
+          <ErrorInput error={errorDelay}>
+            <FormControl
+              data-testid={`delay-${procedure.id}`}
+              value={delay}
+              onChange={setStateToEvent(setDelay)}
+            />
+          </ErrorInput>
+          </td>
+        <td>
+          <ClickableIcon
+            src="/static/images/update.svg"
+            label={`update-${procedure.id}`}
+            onClick={commit}
+          />
         </td>
       </tr>
     );
   }
 
+
+  /**
+  *
+  * @returns {Element}
+   */
+  function NewProcedureRow(){
+    const procedure = new Procedure(undefined, "", "", "", "", activeEndpoint);
+    const procedureIdentifier = [...state.procedure_identifier.values()].filter(
+      (pi) => !activeProcedures.has(pi.id)
+    )
+    const procedureIdentifierOptions = toOptions(procedureIdentifier, 'description')
+    procedureIdentifierOptions.push(new Option("", "-----------------"))
+    // State Declaration
+    const [seriesDescription, setSeriesDescription] = useState(procedure.series_description)
+    const nullTracer = nullParser(procedure.tracer)
+    const [tracer, setTracer] = useState(nullTracer);
+    const [units, setUnits] = useState(procedure.tracer_units);
+    const [delay, setDelay] = useState(procedure.delay_minutes);
+    const [errorSeriesDescription, setErrorSeriesDescription] = useState("");
+    const [errorUnits, setErrorUnits] = useState("");
+    const [errorDelay, setErrorDelay] = useState("");
+
+    function commit(){
+      let parsedSeriesDescription = Number(seriesDescription)
+      if(seriesDescription === ""){
+        setErrorSeriesDescription(ERROR_MISSING_SERIES_DESCRIPTION);
+        return;
+      }
+      setErrorSeriesDescription("");
+      let parsedTracer = Number(tracer)
+      if(tracer === ""){
+        parsedTracer = null
+      }
+
+      const [validUnits, parsedUnits] = parseWholePositiveNumber(units, "Enheder");
+      const [validDelay, parsedDelay] = parseDanishNumberInput(delay, "Forsinkelsen");
+
+      if(validDelay && validUnits){
+        websocket.sendCreateModel(DATA_PROCEDURE, [
+          {...procedure,
+            series_description : parsedSeriesDescription,
+            tracer : parsedTracer,
+            delay_minutes : parsedDelay,
+            tracer_units : parsedUnits,
+          }]);
+        return;
+      }
+      // Error handling
+      if(!validUnits){
+        setErrorUnits(parsedUnits);
+      }
+      if(!validDelay){
+        setErrorDelay(parsedDelay);
+      }
+    }
+
+    const tracerOptions = toOptions(state.tracer, 'shortname');
+    tracerOptions.push(new Option("", "---------"));
+
+    return (
+      <tr>
+        <td>
+          <ErrorInput error={errorSeriesDescription}>
+            <Select
+              data-testid="new-procedure-identifier"
+              options={procedureIdentifierOptions}
+              value={seriesDescription}
+              onChange={setStateToEvent(setSeriesDescription)}
+            />
+          </ErrorInput>
+        </td>
+        <td>
+          <Select
+            data-testid="new-tracer"
+            options={tracerOptions}
+            value={tracer}
+            onChange={setStateToEvent(setTracer)}
+          />
+        </td>
+        <td>
+          <ErrorInput error={errorUnits}>
+            <FormControl
+              data-testid="new-units"
+              value={units}
+              onChange={setStateToEvent(setUnits)}/>
+          </ErrorInput>
+        </td>
+        <td>
+          <ErrorInput error={errorDelay}>
+            <FormControl
+              data-testid="new-delay"
+              value={delay}
+              onChange={setStateToEvent(setDelay)}
+            />
+          </ErrorInput>
+          </td>
+        <td>
+          <ClickableIcon
+            label="new-create"
+            src="/static/images/plus.svg"
+            onClick={commit}
+          />
+        </td>
+      </tr>
+    );
+  }
+
+  const procedureRows = [];
+  let index = 0;
+  for (const procedure of activeProcedures.values()){
+    procedureRows.push(<ProcedureRow
+      key={index}
+      procedure={procedure}
+    />);
+    index++;
+  }
 
   return (
   <div style={{
@@ -123,8 +250,8 @@ export function ProcedureTable(props){
         ariaLabelEndpoint="select-endpoint"
         activeCustomer={activeCustomer}
         activeEndpoint={activeEndpoint}
-        customers={props[DATA_CUSTOMER]}
-        endpoints={props[DATA_ENDPOINT]}
+        customers={state.customer}
+        endpoints={state.delivery_endpoint}
         setCustomer={setActiveCustomer}
         setEndpoint={setActiveEndpoint}
       />
@@ -137,10 +264,12 @@ export function ProcedureTable(props){
           <th>Enheder</th>
           <th>Forsinkelse (Minutter)</th>
           <th>I brug</th>
+          <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr></tr>
+        {procedureRows}
+        <NewProcedureRow/>
       </tbody>
     </Table>
   </div>)

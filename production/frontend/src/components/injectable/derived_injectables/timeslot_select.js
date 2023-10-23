@@ -41,5 +41,5 @@ export function TimeSlotSelect(props){
 };
 
 TimeSlotSelect.propTypes = {
-  [DATA_DELIVER_TIME] : propTypes.oneOfType([propTypes.instanceOf(Map), propTypes.arrayOf(ActivityDeliveryTimeSlot)])
+  [DATA_DELIVER_TIME] : propTypes.oneOfType([propTypes.instanceOf(Map), propTypes.array])
 }

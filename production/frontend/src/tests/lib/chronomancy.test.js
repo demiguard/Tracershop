@@ -6,44 +6,6 @@ import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants"
 
 
 describe("Chronomancy test suit", () => {
-  it("Bit chain", () => {
-    const production = new Map([
-      [1, new ActivityProduction(1, 0, 1, "07:00:00", null)],
-      [2, new ActivityProduction(2, 1, 1, "07:00:00", null)],
-      [3, new ActivityProduction(3, 2, 1, "07:00:00", null)],
-    ]);
-
-    const timeSlots = [new ActivityDeliveryTimeSlot(
-      1, WEEKLY_REPEAT_CHOICES.ALL, "08:15:00", null, 1, null
-    ), new ActivityDeliveryTimeSlot(
-      2, WEEKLY_REPEAT_CHOICES.EVEN, "08:15:00", null, 2, null
-    ), new ActivityDeliveryTimeSlot(
-      3, WEEKLY_REPEAT_CHOICES.ODD, "08:15:00", null, 3, null
-    )];
-    const bitChain = getBitChain(timeSlots, production)
-
-    expect(bitChain).toEqual(0x283)
-  })
-
-  it("Evaluate Bit chain", () => {
-    const production = new Map([
-      [1, new ActivityProduction(1, 0, 1, "07:00:00", null)],
-      [2, new ActivityProduction(2, 1, 1, "07:00:00", null)],
-      [3, new ActivityProduction(3, 2, 1, "07:00:00", null)],
-    ]);
-
-    const timeSlots = [new ActivityDeliveryTimeSlot(
-      1, WEEKLY_REPEAT_CHOICES.ALL, "08:15:00", null, 1, null
-    ), new ActivityDeliveryTimeSlot(
-      2, WEEKLY_REPEAT_CHOICES.EVEN, "08:15:00", null, 2, null
-    ), new ActivityDeliveryTimeSlot(
-      3, WEEKLY_REPEAT_CHOICES.ODD, "08:15:00", null, 3, null
-    )];
-    const bitChain = getBitChain(timeSlots, production)
-
-    expect(evalBitChain(bitChain, new Date(2018, 2, 12, 13, 5))).toBeTruthy()
-  });
-
   it("Expired deadline - the same day", () => {
     // now        2018/03/12 - 10:15:42
     // OrderDay - 2018/03/12 - 10:15:32

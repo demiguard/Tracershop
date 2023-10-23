@@ -15,6 +15,9 @@ import { ClickableIcon } from "./icons";
 import { Isotope } from "../../dataclasses/dataclasses";
 
 
+export const CALCULATOR_NEW_ACTIVITY_LABEL = "calculator-activity-new"
+export const CALCULATOR_NEW_TIME_LABEL = "calculator-time-new"
+
 // Error Messages
 export const ErrorInvalidTimeFormat = "Tidspunktet er ikke læseligt af systemet"
 export const ErrorTimeAfterProduction = "Tidspunktet er før produktions tidspunktet"
@@ -219,13 +222,13 @@ export function Calculator ({
     EntryTableRows.push(renderTableRow(
       "-1", [
         <FormControl
-          aria-label="time-new"
+          aria-label={CALCULATOR_NEW_TIME_LABEL}
           value={state.newEntry.time}
           onChange={changeNewEntry("time")}
           onKeyDown={InputEnterPress}
         />,
         <FormControl
-          aria-label="activity-new"
+          aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
           value={state.newEntry.activity}
           onChange={changeNewEntry("activity")}
           onKeyDown={InputEnterPress}

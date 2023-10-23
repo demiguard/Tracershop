@@ -124,14 +124,13 @@ class Booking(TracershopModel):
   status = SmallIntegerField(choices=BookingStatus.choices, default=BookingStatus.Initial)
   location = ForeignKey(Location, on_delete=RESTRICT)
   procedure = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
-  accession_number = CharField(max_length=32)
+  accession_number = CharField(max_length=32, unique=True, blank=True, null=True, default=None)
   start_time = TimeField()
   start_date = DateField()
-  study_uid = CharField(max_length=255, unique=True, blank=True, null=True, default=None)
 
   class Meta:
     indexes = [
-      Index(fields=['study_uid']),
+      Index(fields=['accession_number']),
       Index(fields=['start_date', 'start_time'])
     ]
 

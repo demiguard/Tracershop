@@ -1,69 +1,71 @@
+import { ActivityOrder } from "~/dataclasses/dataclasses";
+
 export const activity_orders = new Map([
-  [1, {
-      id : 1,
-      ordered_activity : 12345,
-      delivery_date : "2020-05-04", // That's Monday
-      status : 1,
-      comment : "Test comment",
-      ordered_time_slot : 1,
-      moved_to_time_slot : null,
-      freed_datetime : null,
-      ordered_by : null,
-      freed_by : null,
-  }], [2, {
-      id : 2,
-      ordered_activity : 62345,
-      delivery_date : "2020-05-04", // That's Monday
-      status : 1,
-      comment : "",
-      ordered_time_slot : 2,
-      moved_to_time_slot : 1,
-      freed_datetime : null,
-      ordered_by : null,
-      freed_by : null,
-  }], [3, {
-      id : 3,
-      ordered_activity: 22345,
-      delivery_date: "2020-04-27", // That's Monday
-      status: 3,
-      comment: null,
-      ordered_time_slot: 1,
-      moved_to_time_slot: null,
-      freed_datetime: "2020-05-27T11:33:44",
-      ordered_by: null,
-      freed_by: null,
-  }], [4, {
-      id : 4,
-      ordered_activity : 62345,
-      delivery_date : "2020-05-04", // That's Monday
-      status : 1,
-      comment : "",
-      ordered_time_slot : 2,
-      moved_to_time_slot : 1,
-      freed_datetime : null,
-      ordered_by : null,
-      freed_by : null,
-  }], [5, {
-      id : 5,
-      ordered_activity : 12345,
-      delivery_date : "2020-05-11", // That's Monday
-      status : 2,
-      comment : "Test comment",
-      ordered_time_slot : 1,
-      moved_to_time_slot : null,
-      freed_datetime : null,
-      ordered_by : null,
-      freed_by : null,
-  }],[6, {
-      id : 6,
-      ordered_activity: 22345,
-      delivery_date: "2020-05-04", // That's Monday
-      status: 3,
-      comment: null,
-      ordered_time_slot: 4,
-      moved_to_time_slot: null,
-      freed_datetime: "2020-05-04T11:33:44",
-      ordered_by: null,
-      freed_by: null,
-  }]
+  [1, new ActivityOrder(
+       1, // id
+       12345, // ordered_activity
+       "2020-05-04", // That's Monday // delivery_date
+       1, // status
+       "Test comment", // comment
+       1, // ordered_time_slot
+       null, // moved_to_time_slot
+       null, // freed_datetime
+       null, // ordered_by
+       null, // freed_by
+  )], [2, new ActivityOrder(
+       2, // id
+       62345, // ordered_activity
+       "2020-05-04", // That's Monday // delivery_date
+       1, // status
+       "", // comment
+       2, // ordered_time_slot
+       1, // moved_to_time_slot
+       null, // freed_datetime
+       null, // ordered_by
+       null, // freed_by
+    )], [3, new ActivityOrder(
+       3, //id
+       22345, //ordered_activity
+       "2020-04-27", // That's Monday //delivery_date
+       3, //status
+       null, //comment
+       1, //ordered_time_slot
+       null, //moved_to_time_slot
+       "2020-05-27T11:33:44", //freed_datetime
+       null, //ordered_by
+       null, //freed_by
+    )], [4, new ActivityOrder(
+      4, //id
+      62345, //ordered_activity
+      "2020-05-04", // That's Monday //delivery_date
+      1, //status
+      "", //comment
+      2, //ordered_time_slot
+      1, //moved_to_time_slot
+      null, //freed_datetime
+      null, //ordered_by
+      null, //freed_by
+    )], [5, new ActivityOrder(
+        5, //id
+        12345, //ordered_activity
+        "2020-05-11", // That's Monday //delivery_date
+        2, //status
+        "Test comment", //comment
+        1, //ordered_time_slot
+        null, //moved_to_time_slot
+        null, //freed_datetime
+        null, //ordered_by
+        null, //freed_by
+)],[6, new ActivityOrder(
+       6, //id
+      22345, //ordered_activity
+      "2020-05-04", // That's Monday //delivery_date
+      3, //status
+      null, //comment
+      4, //ordered_time_slot
+      null, //moved_to_time_slot
+      "2020-05-04T11:33:44", //freed_datetime
+      null, //ordered_by
+      null, //freed_by
+  )],
 ])

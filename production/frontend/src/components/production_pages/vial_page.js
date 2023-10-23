@@ -1,18 +1,18 @@
 
-import React, {Component, useState } from "react";
+import React, { useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
-import { DATA_CUSTOMER, DATA_VIAL, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS} from "~/lib/shared_constants"
-import { parseDate, parseDateToDanishDate, ParseJSONstr } from "../../lib/formatting";
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS} from "~/lib/shared_constants"
+import { parseDate, parseDateToDanishDate } from "../../lib/formatting";
 
 import { setStateToEvent } from "../../lib/state_management";
-
-import propTypes from 'prop-types'
 
 import { Vial } from "../../dataclasses/dataclasses";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { TracershopInputGroup } from "../injectable/tracershop_input_group";
 import { DateInput } from "../injectable/date_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { ErrorInput } from "../injectable/error_input";
+import { parseDateInput } from "~/lib/user_input";
 
 
 /**
@@ -20,7 +20,7 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context";
  * @readonly
  * @enum {number}
  */
-const SearchOptions = {
+const SortingOptions = {
   ID: 0,
   CHARGE : 1,
   DATE : 2,
@@ -39,13 +39,12 @@ export function VialPage(){
   const [lotNumber, setLotNumber] = useState("");
   const [customerID, setCustomer] = useState("");
   const [vialDay, setVialDay] = useState("");
-  const [searchOption, setSearchOption] = useState(SearchOptions.DATE);
-  const [searchInverted, setSearchInverted] = useState(false);
-
+  const [sortingOption, setSortingOption] = useState(SortingOptions.DATE);
+  const [sortingInverted, setSortingInverted] = useState(false);
+  const [dateError, setDateError] = useState("");
   /**
-   * 
+   * A row in the table
   * @param {{
-  *   customers : Map<Number, Customer>
     *   vial : Vial
     * }} param0
   * @returns {Element.JSX}
@@ -59,45 +58,44 @@ export function VialPage(){
                             : customer.short_name;
 
    return <tr>
-     <td>{vial.id}</td>
-     <td>{vial.lot_number}</td>
-     <td>{parseDateToDanishDate(vial.fill_date)}</td>
-     <td>{vial.fill_time}</td>
-     <td>{vial.volume}</td>
-     <td>{vial.activity}</td>
-     <td>{customerName}</td>
-     <td>{vial.assigned_to}</td>
+     <td data-testid="id_field">{vial.id}</td>
+     <td data-testid="lot_field">{vial.lot_number}</td>
+     <td data-testid="date_field">{parseDateToDanishDate(vial.fill_date)}</td>
+     <td data-testid="time_field">{vial.fill_time}</td>
+     <td data-testid="volume_field">{vial.volume}</td>
+     <td data-testid="activity_field">{vial.activity}</td>
+     <td data-testid="owner_field">{customerName}</td>
+     <td data-testid="order_field">{vial.assigned_to}</td>
    </tr>
 }
 
 
   /**
-   * 
-   * @param {SearchOptions} searchOption 
+   * Changes the sorting algorithm for the table, called when a user click on a header.
+   * @param {SortingOptions} searchOption 
    * @returns 
    */
-  function changeSearch(newSearchOption){
+  function changeSearch(newSortingOption){
     return (_) => {
-      if(searchOption == newSearchOption){
-        setSearchInverted(!searchInverted);
+      if(sortingOption == newSortingOption){
+        setSortingInverted(!sortingInverted);
       } else {
-        setSearchOption(newSearchOption);
+        setSortingOption(newSortingOption);
       }
     }
   }
 
-  function fetchVials(_){
-    try {
-      const date = parseDate(vialDay)
-      if(!isNaN(date)) { // YEAH THIS WORK WITH DATES
-        // I ASSUME IT*S BECAUSE JAVASCRIPT TREATS DAYS AS OBJECT AS AN INT SINCE 1970
-        const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS)
-        message[WEBSOCKET_DATE] = date;
-        websocket.send(message)
-      }
-    } catch {
-      return
+  function fetchVials(){
+    const [validDate, date] = parseDateInput(vialDay, "Søge datoen")
+    if(validDate){
+      setDateError("");
+      const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
+      message[WEBSOCKET_DATE] = date;
+      websocket.send(message);
+    } else {
+      setDateError(date)
     }
+
   }
 
   const VialRows = [...state.vial.values()].filter(
@@ -116,13 +114,13 @@ export function VialPage(){
       }
       return true;
     }).sort((vial1, vial2) => {
-      const invertedSearchFactor = (searchInverted) ? -1 : 1;
-      switch (searchOption) {
-        case SearchOptions.ID:
+      const invertedSearchFactor = (sortingInverted) ? -1 : 1;
+      switch (sortingOption) {
+        case SortingOptions.ID:
           return invertedSearchFactor*(vial1.id - vial2.id);
-        case SearchOptions.CHARGE:
+        case SortingOptions.CHARGE:
           return invertedSearchFactor*((vial1.lot_number > vial2.lot_number) - (vial1.lot_number < vial2.lot_number));
-        case SearchOptions.DATE:
+        case SortingOptions.DATE:
           const date1 = new Date(vial1.fill_date).valueOf();
           const date2 = new Date(vial2.fill_date).valueOf();
           return (
@@ -130,19 +128,19 @@ export function VialPage(){
             invertedSearchFactor*((date1>date2) - (date1<date2)) :
             NaN
         );
-        case SearchOptions.TIME:
+        case SortingOptions.TIME:
           return invertedSearchFactor*((vial1.fill_time > vial2.fill_time) - (vial1.fill_time < vial2.fill_time));
-        case SearchOptions.VOLUME:
+        case SortingOptions.VOLUME:
           return invertedSearchFactor*(vial1.volume - vial2.volume);
-        case SearchOptions.ACTIVITY:
+        case SortingOptions.ACTIVITY:
           return invertedSearchFactor*(vial1.activity - vial2.activity);
-        case SearchOptions.OWNER:
+        case SortingOptions.OWNER:
           return invertedSearchFactor*(vial1.customer - vial2.customer);
-        case SearchOptions.ORDER:
+        case SortingOptions.ORDER:
           return invertedSearchFactor*(vial1.order_map - vial2.order_map)
         default:
           /*istanbul ignore next */
-          throw "Unknown Search Option:" + searchOption
+          throw "Unknown Search Option:" + sortingOption
       }
     }).map(
     (vial) => <VialRow key={vial.id} vial={vial}/>);
@@ -153,6 +151,7 @@ export function VialPage(){
         <Col>
           <TracershopInputGroup label="Lot nummer Filter">
             <FormControl
+              data-testid="lot_filter"
               value={lotNumber}
               onChange={setStateToEvent(setLotNumber)}
               placeholder="lot nummer"
@@ -162,6 +161,7 @@ export function VialPage(){
         <Col>
           <TracershopInputGroup label="Kunde Filter">
             <CustomerSelect
+              data-testid="customer-select"
               value={customerID}
               customers={state.customer}
               emptyCustomer
@@ -170,12 +170,15 @@ export function VialPage(){
           </TracershopInputGroup>
         </Col>
         <Col>
-        <TracershopInputGroup label="Dato">
-          <DateInput
-            value={vialDay}
-            placeholder="DD/MM/YYYY"
-            stateFunction={setVialDay}
-          />
+          <TracershopInputGroup label="Dato">
+            <ErrorInput error={dateError}>
+              <DateInput
+                data-testid="date-input"
+                value={vialDay}
+                placeholder="DD/MM/YYYY"
+                stateFunction={setVialDay}
+              />
+            </ErrorInput>
           </TracershopInputGroup>
         </Col>
         <Col>
@@ -185,14 +188,14 @@ export function VialPage(){
       <Table>
         <thead>
           <tr>
-            <th onClick={changeSearch(SearchOptions.ID)}>ID</th>
-            <th onClick={changeSearch(SearchOptions.CHARGE)}>Batch nummer</th>
-            <th onClick={changeSearch(SearchOptions.DATE)}>Dato</th>
-            <th onClick={changeSearch(SearchOptions.TIME)}>Tappe tidspunkt</th>
-            <th onClick={changeSearch(SearchOptions.VOLUME)}>Volume</th>
-            <th onClick={changeSearch(SearchOptions.ACTIVITY)}>Aktivitet</th>
-            <th onClick={changeSearch(SearchOptions.OWNER)}>Ejer</th>
-            <th onClick={changeSearch(SearchOptions.ORDER)}>Ordre</th>
+            <th data-testid="header-ID" onClick={changeSearch(SortingOptions.ID)}>ID</th>
+            <th data-testid="header-CHARGE" onClick={changeSearch(SortingOptions.CHARGE)}>Lot nummer</th>
+            <th data-testid="header-DATE" onClick={changeSearch(SortingOptions.DATE)}>Dato</th>
+            <th data-testid="header-TIME" onClick={changeSearch(SortingOptions.TIME)}>Tappe tidspunkt</th>
+            <th data-testid="header-VOLUME" onClick={changeSearch(SortingOptions.VOLUME)}>Volume</th>
+            <th data-testid="header-ACTIVITY" onClick={changeSearch(SortingOptions.ACTIVITY)}>Aktivitet</th>
+            <th data-testid="header-OWNER" onClick={changeSearch(SortingOptions.OWNER)}>Ejer</th>
+            <th data-testid="header-ORDER" onClick={changeSearch(SortingOptions.ORDER)}>Ordre</th>
           </tr>
         </thead>
         <tbody>

@@ -32,19 +32,19 @@ afterEach(() => {
 });
 
 describe("Injectable HoverBox", () => {
-  it("Black Box test, no hover", async () => {
+  it("Black Box test, no hover", () => {
     const BaseMessage = "This is a message"
     const HoverMessage = "This is a hover message"
 
     const BaseDiv = <div>{BaseMessage}</div>;
     const HoverDiv = <div>{HoverMessage}</div>
 
-    const RenderErrorBox = render(<HoverBox
+    render(<HoverBox
       Base={BaseDiv}
       Hover={HoverDiv}
-    />, {target : container});
-    expect(await screen.findByText(BaseMessage)).toBeVisible();
-    expect(await screen.queryByText(HoverMessage)).not.toBeVisible();
+    />);
+    expect(screen.getByText(BaseMessage)).toBeVisible();
+    expect(screen.queryByText(HoverMessage)).not.toBeVisible();
   });
 
   it("Black Box test, hover", async () => {
@@ -54,17 +54,22 @@ describe("Injectable HoverBox", () => {
     const BaseDiv = <div>{BaseMessage}</div>;
     const HoverDiv = <div>{HoverMessage}</div>
 
-    const RenderErrorBox = render(<HoverBox
+    render(<HoverBox
       Base={BaseDiv}
       Hover={HoverDiv}
     />, {target : container});
 
-    await userEvent.hover(screen.getByText(BaseMessage));
+    await act(async () => {
+      await userEvent.hover(screen.getByText(BaseMessage));
+    });
+    expect(screen.getByText(BaseMessage)).toBeVisible();
+    expect(screen.queryByText(HoverMessage)).toBeVisible();
+
+    await act(async () => {
+      await userEvent.unhover(screen.getByText(BaseMessage));
+    })
     expect(await screen.findByText(BaseMessage)).toBeVisible();
-    expect(await screen.queryByText(HoverMessage)).toBeVisible();
-    await userEvent.unhover(screen.getByText(BaseMessage));
-    expect(await screen.findByText(BaseMessage)).toBeVisible();
-    expect(await screen.queryByText(HoverMessage)).not.toBeVisible();
+    expect(screen.queryByText(HoverMessage)).not.toBeVisible();
   });
 });
 

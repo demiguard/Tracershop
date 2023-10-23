@@ -204,9 +204,10 @@ export class Procedure {
 }
 
 export class ProcedureIdentifier {
-  constructor(id, string, ) {
+  constructor(id, code, description, ) {
     this.id=id
-    this.string=string
+    this.code=code
+    this.description=description
   }
 }
 

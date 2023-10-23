@@ -147,7 +147,7 @@ export function combineDateAndTimeStamp(date, timestampBlueprint){
   const dateString = dateToDateString(date);
   const timestamp = getTimeStamp(timestampBlueprint)
 
-    return new Date(`${dateString}T${timestamp.hour}:${timestamp.minute}:${timestamp.second}`)
+  return new Date(`${dateString}T${FormatDateStr(timestamp.hour)}:${FormatDateStr(timestamp.minute)}:${FormatDateStr(timestamp.second)}`)
 }
 
 export function getWeekNumber(date){
