@@ -436,9 +436,6 @@ export class OrderDateMapping {
 
   constructor(orders) {
     this._orderMap = new Map();
-
-    console.log(orders)
-
     for(const order of orders){
       if (this._orderMap.has(order.delivery_date)){
         this._orderMap.set(order.delivery_date, Math.min(order.status, this._orderMap.get(order.delivery_date)))

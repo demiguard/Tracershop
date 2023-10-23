@@ -4,7 +4,7 @@
 */
 
 import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
-import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
+import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
 
 
@@ -192,3 +192,42 @@ export function expiredDeadline(deadline, orderDate, closedDates,  now){
 
   return deadlineDate < now;
 }
+
+ /** Calculate the amount of days in the month
+*
+* Programmers Note and complaint
+* This takes advantage of javascript date system to largest gold medal.
+* Since the "zeroth" day of a month doesn't exists, (* Yeah 0-index is not for days *)
+* The date time system creates the last day of the previous month.
+* Note that there's not a +1 in front of the month, however here the next parcularity of
+* JavaScript's Date system. Months ARE zero indexed, so the +1 is kinda build in.
+* Then just select the date
+*
+*
+* @param {*} year
+* @param {*} month
+* @returns {Date}
+*/
+export function DaysInAMonth(year, month){
+ return new Date(year, month,0).getDate();
+};
+
+export function LastMondayInLastMonth(year,month){
+  let pivot = 1;
+  let pivotDate = new Date(year, month, pivot);
+  while((pivotDate.getDay() + 6) % 7 != DAYS.MONDAY){
+    pivot--;
+    pivotDate = new Date(year, month, pivot);
+  }
+  return pivot;
+};
+
+export function FirstSundayInNextMonth(year,month){
+  let pivot = DaysInAMonth(year, month);
+  let pivotDate = new Date(year, month, pivot);
+  while(pivotDate.getDay() != DAYS.SUNDAY){
+    pivot++;
+    pivotDate = new Date(year, month, pivot);
+  }
+  return pivot;
+};

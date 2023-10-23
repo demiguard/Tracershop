@@ -1,17 +1,18 @@
 import React, { useState } from "react";
 
 import { compareDates } from "~/lib/utils";
-import { FormatDateStr } from '~/lib/formatting';
-import { DAYS, DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR,
-  CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE, ORDER_STATUS, COLORS } from "~/lib/constants";
+
+import { DAYS_PER_WEEK, CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR,
+  CALENDER_PROP_ON_DAY_CLICK, ORDER_STATUS, COLORS } from "~/lib/constants";
 
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "~/lib/shared_constants"
 
 import PropTypes from 'prop-types'
-import { KEYWORD_ActivityProduction_PRODUCTION_DAY, KEYWORD_ClosedDate_CLOSE_DATE } from "~/dataclasses/keywords";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, ClosedDate, Deadline, InjectionOrder } from "~/dataclasses/dataclasses";
-import { calculateDeadline, evalBitChain, getBitChain } from "~/lib/chronomancy";
-import { useWebsocket } from "../tracer_shop_context";
+
+import { FirstSundayInNextMonth, LastMondayInLastMonth, expiredDeadline } from "~/lib/chronomancy";
+import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { dateToDateString } from "~/lib/formatting";
+import { OrderDateMapping } from "~/lib/data_structures";
 
 export const STATUS_COLORS = {
   [ORDER_STATUS.AVAILABLE] : "#d6d6d6",
@@ -21,10 +22,6 @@ export const STATUS_COLORS = {
   [ORDER_STATUS.UNAVAILABLE] : "#858585",
 }
 
-
-
-
-const CLOSED_DATE_COLOR = "date-status55";
 
 /** This is a calender, where stuff can be injected on date click and on month change
  *  Alot of functions are in injected into this Component.
@@ -43,11 +40,74 @@ const CALENDER_PROP_TYPES = {
 
 
 export function Calender({calender_date,
-                          calender_get_color,
                           calender_on_day_click,
+                          filter_activity_orders,
+                          filter_injection_orders,
+                          bit_chain,
+
                         }) {
+  const state = useTracershopState();
   const websocket = useWebsocket();
-  const [activeMonth, setActiveMonth] = useState(calender_date)
+  const [activeMonth, setActiveMonth] = useState(calender_date);
+
+  const server_config = state.server_config.get(1)
+  const activity_deadline = (server_config !== undefined) ?
+    state.deadline.get(server_config.global_activity_deadline) : undefined;
+
+  let injection_deadline = (server_config !== undefined) ?
+    state.deadline.get(server_config.global_injection_deadline) : undefined;
+
+
+  console.log([...state.injection_orders.values()].filter(filter_injection_orders))
+
+  const dateInjectionMapping = new OrderDateMapping([...state.injection_orders.values()].filter(filter_injection_orders));
+  const dateActivityMapping = new OrderDateMapping([...state.activity_orders.values()].filter(filter_activity_orders));
+
+  console.log(dateActivityMapping);
+
+  const year = activeMonth.getFullYear();
+  const month = activeMonth.getMonth();
+  const colorMap = new Map();
+
+  const lastMondayOffset = LastMondayInLastMonth(year, month)
+
+  let pivot = lastMondayOffset;
+  const firstSundayOffset = FirstSundayInNextMonth(year, month);
+
+
+  console.log(pivot, firstSundayOffset);
+  while(pivot <= firstSundayOffset +1){
+    const date = new Date(year, month, pivot);
+    const dateString = dateToDateString(date);
+    let activity_color_id =  ORDER_STATUS.UNAVAILABLE;
+    let injection_color_id = ORDER_STATUS.UNAVAILABLE;
+    if (bit_chain.eval(date) && !expiredDeadline(activity_deadline, date)){
+      activity_color_id = ORDER_STATUS.AVAILABLE;
+    }
+
+    if (!expiredDeadline(injection_deadline, date)){
+      injection_color_id = ORDER_STATUS.AVAILABLE;
+    }
+
+    if(dateActivityMapping.has_status_for_date(dateString)){
+      activity_color_id = dateActivityMapping.get_status_for_date(dateString);
+    }
+
+    if(dateInjectionMapping.has_status_for_date(dateString)){
+      injection_color_id = dateInjectionMapping.get_status_for_date(dateString);
+    }
+
+    colorMap.set(dateString, [STATUS_COLORS[activity_color_id],
+                               STATUS_COLORS[injection_color_id]]);
+
+    pivot++;
+  }
+
+
+  for(const closed_date of state.closed_date.values()){
+    colorMap.set(closed_date.closed_date), [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
+                                            STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]
+  }
 
   /** This function is called when the user changes the current month
    *
@@ -65,45 +125,6 @@ export function Calender({calender_date,
     websocket.send(message);
   }
 
-  /** Calculate the amount of days in the month
-   *
-   * Programmers Note and complaint
-   * This takes advantage of javascript date system to largest gold medal.
-   * Since the "zeroth" day of a month doesn't exists, (* Yeah 0-index is not for days *)
-   * The date time system creates the last day of the previous month.
-   * Note that there's not a +1 in front of the month, however here the next parcularity of
-   * JavaScript's Date system. Months ARE zero indexed, so the +1 is kinda build in.
-   * Then just select the date
-   *
-   *
-   * @param {*} year
-   * @param {*} month
-   * @returns {Date}
-   */
-  function DaysInAMonth(year, month){
-    return new Date(year, month,0).getDate();
-  };
-
-  function LastMondayInLastMonth(year,month){
-    let pivot = 1;
-    let pivotDate = new Date(year, month, pivot);
-    while((pivotDate.getDay() + 6) % 7 != DAYS.MONDAY){
-      pivot--;
-      pivotDate = new Date(year, month, pivot);
-    }
-    return pivot;
-  };
-
-  function FirstSundayInNextMonth(year,month){
-    let pivot = DaysInAMonth(year, month);
-    let pivotDate = new Date(year, month, pivot);
-    while(pivotDate.getDay() != DAYS.SUNDAY){
-      pivot++;
-      pivotDate = new Date(year, month, pivot);
-    }
-    return pivot;
-  };
-
  // ##### Render Functions ##### //
  /**
   * A day in the calender
@@ -116,7 +137,8 @@ export function Calender({calender_date,
   */ 
  function Day({date}) {
     const dateObject  = new Date(activeMonth.getFullYear(), activeMonth.getMonth(), date, 12);
-    const [backGroundColor, borderColor] = calender_get_color(date);
+    const dateString = dateToDateString(dateObject)
+    const [backGroundColor, borderColor] = (colorMap.has(dateString)) ?  colorMap.get(dateString) : ["#FF00FF", "#FF00FF"];
 
     const styles = {
         width : "17%",
@@ -145,6 +167,7 @@ export function Calender({calender_date,
   function Week({startingDate}) {
     return(
       <div className="d-flex weekrow" key={startingDate}>
+        <Day date={startingDate} key={startingDate}/>
         <Day date={startingDate + 1} key={startingDate + 1}/>
         <Day date={startingDate + 2} key={startingDate + 2}/>
         <Day date={startingDate + 3} key={startingDate + 3}/>
