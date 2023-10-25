@@ -1,9 +1,13 @@
 import React, { useState } from "react";
 import { Container } from "react-bootstrap";
 import { ActivityProduction } from "../../../dataclasses/dataclasses";
-import { WeeklyTimeTable } from "../../injectable/weekly_time_table";
-import { DAYS, DATA_PRODUCTION, DATA_TRACER, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER, WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC } from "../../../lib/constants";
-import { tracerTypeFilter } from "../../../lib/filters";
+import { WeeklyTimeTable } from "~/components/injectable/weekly_time_table";
+import { DAYS, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER,
+  WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR,
+  WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
+  WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC } from "~/lib/constants";
+import { DATA_PRODUCTION } from "~/lib/shared_constants";
+import { tracerTypeFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
 export function ProductionSetup(){
@@ -12,8 +16,8 @@ export function ProductionSetup(){
   const productions = [...state.production.values()]
   const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
-  )
-  const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id
+  );
+  const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id;
 
   const tempProductionInit = (productions.length === 0) ?
                                   new ActivityProduction(-1, DAYS.MONDAY, tracerInit, "", "", "")

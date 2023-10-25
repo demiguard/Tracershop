@@ -8,10 +8,11 @@ import { Location } from "~/dataclasses/dataclasses";
 import { nullParser } from "~/lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
-export function LocationTable(props){
+export function LocationTable({}){
   const websocket = useWebsocket();
+  const state = useTracershopState()
   const [filter, setFilter] = useState("");
   const [filterType, setFilterType] = useState(1);
 
@@ -27,11 +28,10 @@ export function LocationTable(props){
   * Row in the table
   * @param {{
   * location : Location
-  * websocket : TracerWebSocket
   * }} props
   * @returns {Element}
   */
-  function LocationTableRow({location, websocket}){
+  function LocationTableRow({location}){
     const nulledCommonName = nullParser(location.common_name);
     const [commonName, setCommonName] = useState(nulledCommonName);
     const nulledLocation = nullParser(location.endpoint);
@@ -71,8 +71,8 @@ export function LocationTable(props){
       </td>
       <td>
         <EndpointSelect
-          customer={props[DATA_CUSTOMER]}
-          deliveryEndpoint={props[DATA_ENDPOINT]}
+          customer={state.customer}
+          delivery_endpoint={state.delivery_endpoint}
           emptyEndpoint
           value={endpoint}
           onChange={updateEndpoint}
@@ -82,7 +82,7 @@ export function LocationTable(props){
   }
 
 
-  const /**@type {Array<Location>} */ locations = [...props[DATA_LOCATION].values()].filter((location) => {
+  const /**@type {Array<Location>} */ locations = [...state.location.values()].filter((location) => {
     if(filter === ""){
       return true
     }
@@ -102,7 +102,6 @@ export function LocationTable(props){
       return (<LocationTableRow
                 key={i}
                 location={location}
-                websocket={websocket}
               />);
   });
 

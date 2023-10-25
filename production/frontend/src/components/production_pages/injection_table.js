@@ -12,6 +12,10 @@ import { InjectionModal } from "../modals/injection_modal.js";
 import { StatusIcon } from "../injectable/icons.js";
 import { InjectionOrder } from "~/dataclasses/dataclasses.js";
 import { useTracershopState } from "../tracer_shop_context.js";
+import { InjectionUsage } from "../injectable/data_displays/injection_usage.js";
+import { Comment } from "../injectable/data_displays/comment.js";
+import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
+import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 
 
 const /**@Enum methods to sort the injection orders */ SortingMethods = {
@@ -37,20 +41,24 @@ export function InjectionTable({active_date}) {
   const state = useTracershopState();
   const danishDate = parseDateToDanishDate(dateToDateString(active_date))
 
-  const [Modal, setModal] = useState(Modals.NoModal);
-  const [modalOrder, setModalOrder] = useState("")
+  const [ModalState, setModalState] = useState({
+    modal : Modals.NoModal,
+    modalOrder : "",
+  });
   const [sortingMethod, _setSortingMethod] = useState(SortingMethods.ORDERED_TIME);
   const [invertedSorting, setInvertedSorting] = useState(false);
 
-
-
   function openCreateOrderModal(){
-    setModal(Modals.CreateOrder);
+    setModalState({
+      modal : Modals.CreateOrder
+    });
   }
 
   function closeModal(){
-    setModal(Modals.NoModal);
-    setModalOrder("");
+    setModalState({
+      modal : Modals.NoModal,
+      modalOrder : "",
+    });
   }
 
   function setSortingMethod(newMethod){
@@ -69,36 +77,37 @@ export function InjectionTable({active_date}) {
    * @param {InjectionOrder} order - Injection order that will open modal
    */
   function openOrderModal(order){
-    setModal(Modals.InjectionStatus);
-    setModalOrder(order.id);
+    setModalState({
+      modal : Modals.InjectionStatus,
+      modalOrder : order.id,
+    });
   }
 
   /**
    * 
-   * @param {InjectionOrder} order 
+   * @param {{ 
+   *    order : InjectionOrder
+   * }} props 
    * @returns 
    */
-  function renderIncompleteOrder(order) {
+  function OrderRow({order}) {
     const tracer = state.tracer.get(order.tracer);
     const endpoint = state.delivery_endpoint.get(order.endpoint)
     const customer = state.customer.get(endpoint.owner)
-    const TracerName = tracer.shortname;
 
-    return renderTableRow(
-      order.id,[
-        <StatusIcon
-          status={order.status}
-          onClick={() => openOrderModal(order)}
-        />,
-        order.id,
-        `${customer.short_name} - ${endpoint.name}`,
-        TracerName,
-        order.injections,
-        order.delivery_time,
-        INJECTION_USAGE[order.tracer_usage],
-        renderComment(order.comment),
-      ]
-    )
+    return (
+      <tr>
+        <td><StatusIcon status={order.status} onClick={() => openOrderModal(order)}/></td>
+        <td>{order.id}</td>
+        <td>{customer.short_name} - {endpoint.name}</td>
+        <td><TracerDisplay tracer={tracer}/></td>
+        <td>{order.injections}</td>
+        <td><TimeDisplay time={order.delivery_time}/> </td>
+        <td><InjectionUsage usage={order.tracer_usage}/></td>
+        <td><Comment comment={order.comment}/></td>
+      </tr>
+    );
+
   }
 
 
@@ -138,13 +147,11 @@ export function InjectionTable({active_date}) {
       }
     })
 
-
     const modalProps = {
       [PROP_ACTIVE_DATE] : active_date,
       [PROP_ON_CLOSE] : closeModal,
-      [PROP_MODAL_ORDER] : modalOrder,
+      [PROP_MODAL_ORDER] : ModalState.modalOrder,
     };
-
 
     return (
       <Container>
@@ -169,7 +176,7 @@ export function InjectionTable({active_date}) {
             </tr>
           </thead>
           <tbody>
-            {orders.map(renderIncompleteOrder)}
+            {orders.map((order) => <OrderRow key={order.id} order={order}/>)}
           </tbody>
         </Table> :
           <div>
@@ -177,10 +184,10 @@ export function InjectionTable({active_date}) {
           </div>
       }
 
-      {Modal != Modals.NoModal ?
-        <Modal
+      {ModalState.modal != Modals.NoModal ?
+        <ModalState.modal
           {...modalProps}
-        ></Modal> : ""}
+        ></ModalState.modal> : ""}
       </Container>
     );
 }

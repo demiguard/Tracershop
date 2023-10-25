@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 
 import { compareDates } from "~/lib/utils";
 
@@ -12,7 +12,7 @@ import PropTypes from 'prop-types'
 import { FirstSundayInNextMonth, LastMondayInLastMonth, expiredDeadline } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { dateToDateString } from "~/lib/formatting";
-import { OrderDateMapping } from "~/lib/data_structures";
+import { BitChain, OrderDateMapping } from "~/lib/data_structures";
 
 export const STATUS_COLORS = {
   [ORDER_STATUS.AVAILABLE] : "#d6d6d6",
@@ -33,11 +33,12 @@ export const STATUS_COLORS = {
  *  getColor - function that adds css classes, primarily to add a different color to the date
  */
 const CALENDER_PROP_TYPES = {
-  [CALENDER_PROP_DATE] : PropTypes.objectOf(Date).isRequired,
-  [CALENDER_PROP_GET_COLOR] : PropTypes.func.isRequired,
+  [CALENDER_PROP_DATE] : PropTypes.instanceOf(Date).isRequired,
   [CALENDER_PROP_ON_DAY_CLICK] : PropTypes.func.isRequired,
+  filter_activity_orders : PropTypes.func.isRequired,
+  filter_injection_orders : PropTypes.func.isRequired,
+  bit_chain : PropTypes.instanceOf(BitChain).isRequired,
 }
-
 
 export function Calender({calender_date,
                           calender_on_day_click,
@@ -50,64 +51,59 @@ export function Calender({calender_date,
   const websocket = useWebsocket();
   const [activeMonth, setActiveMonth] = useState(calender_date);
 
-  const server_config = state.server_config.get(1)
-  const activity_deadline = (server_config !== undefined) ?
-    state.deadline.get(server_config.global_activity_deadline) : undefined;
+  function getColorMap(){
+    const colorMap = new Map();
 
-  let injection_deadline = (server_config !== undefined) ?
-    state.deadline.get(server_config.global_injection_deadline) : undefined;
+    const year = activeMonth.getFullYear();
+    const month = activeMonth.getMonth();
 
+    const server_config = state.server_config.get(1)
+    const activity_deadline = (server_config !== undefined) ?
+      state.deadline.get(server_config.global_activity_deadline) : undefined;
+    let injection_deadline = (server_config !== undefined) ?
+      state.deadline.get(server_config.global_injection_deadline) : undefined;
 
-  console.log([...state.injection_orders.values()].filter(filter_injection_orders))
+    const dateInjectionMapping = new OrderDateMapping([...state.injection_orders.values()].filter(filter_injection_orders));
+    const dateActivityMapping = new OrderDateMapping([...state.activity_orders.values()].filter(filter_activity_orders));
 
-  const dateInjectionMapping = new OrderDateMapping([...state.injection_orders.values()].filter(filter_injection_orders));
-  const dateActivityMapping = new OrderDateMapping([...state.activity_orders.values()].filter(filter_activity_orders));
+    const lastMondayOffset = new Date(year, month -1,  LastMondayInLastMonth(year, month - 1));
+    let pivot = lastMondayOffset;
+    const firstSundayOffset = new Date(year, month + 1,  FirstSundayInNextMonth(year, month + 1));
 
-  console.log(dateActivityMapping);
+    while(!compareDates(pivot, firstSundayOffset)){
+      const dateString = dateToDateString(pivot);
+      let activity_color_id =  ORDER_STATUS.UNAVAILABLE;
+      let injection_color_id = ORDER_STATUS.UNAVAILABLE;
+      if (bit_chain.eval(pivot) && !expiredDeadline(activity_deadline, pivot)){
+        activity_color_id = ORDER_STATUS.AVAILABLE;
+      }
 
-  const year = activeMonth.getFullYear();
-  const month = activeMonth.getMonth();
-  const colorMap = new Map();
+      if (!expiredDeadline(injection_deadline, pivot)){
+        injection_color_id = ORDER_STATUS.AVAILABLE;
+      }
 
-  const lastMondayOffset = LastMondayInLastMonth(year, month)
+      if(dateActivityMapping.has_status_for_date(dateString)){
+        activity_color_id = dateActivityMapping.get_status_for_date(dateString);
+      }
 
-  let pivot = lastMondayOffset;
-  const firstSundayOffset = FirstSundayInNextMonth(year, month);
+      if(dateInjectionMapping.has_status_for_date(dateString)){
+        injection_color_id = dateInjectionMapping.get_status_for_date(dateString);
+      }
 
+      colorMap.set(dateString, [STATUS_COLORS[activity_color_id],
+                                 STATUS_COLORS[injection_color_id]]);
 
-  console.log(pivot, firstSundayOffset);
-  while(pivot <= firstSundayOffset +1){
-    const date = new Date(year, month, pivot);
-    const dateString = dateToDateString(date);
-    let activity_color_id =  ORDER_STATUS.UNAVAILABLE;
-    let injection_color_id = ORDER_STATUS.UNAVAILABLE;
-    if (bit_chain.eval(date) && !expiredDeadline(activity_deadline, date)){
-      activity_color_id = ORDER_STATUS.AVAILABLE;
+      pivot = new Date(pivot.getFullYear(), pivot.getMonth(), pivot.getDate() + 1);
     }
 
-    if (!expiredDeadline(injection_deadline, date)){
-      injection_color_id = ORDER_STATUS.AVAILABLE;
+    for(const closed_date of state.closed_date.values()){
+      colorMap.set(closed_date.closed_date), [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
+                                              STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]
     }
 
-    if(dateActivityMapping.has_status_for_date(dateString)){
-      activity_color_id = dateActivityMapping.get_status_for_date(dateString);
-    }
-
-    if(dateInjectionMapping.has_status_for_date(dateString)){
-      injection_color_id = dateInjectionMapping.get_status_for_date(dateString);
-    }
-
-    colorMap.set(dateString, [STATUS_COLORS[activity_color_id],
-                               STATUS_COLORS[injection_color_id]]);
-
-    pivot++;
+    return colorMap
   }
-
-
-  for(const closed_date of state.closed_date.values()){
-    colorMap.set(closed_date.closed_date), [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
-                                            STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]
-  }
+  let colorMap = getColorMap();
 
   /** This function is called when the user changes the current month
    *
@@ -122,7 +118,8 @@ export function Calender({calender_date,
     setActiveMonth(NewMonth)
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
-    websocket.send(message);
+    websocket.send(message).then(() => {
+    });
   }
 
  // ##### Render Functions ##### //
@@ -196,7 +193,7 @@ export function Calender({calender_date,
       border: "5px",
       borderColor: "blue",
       borderStyle: "solid",
-      width: "260px",
+      width: "300px",
       textAlign: "center",
       borderRadius: "8px",
       lineHeight: "20px",

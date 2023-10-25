@@ -1,20 +1,15 @@
 import React, { useState } from "react";
 import { Row, Col, Button } from "react-bootstrap";
 
-import { INJECTION_USAGE, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT,
-  PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
-  TRACER_TYPE_ACTIVITY } from "../../lib/constants";
-import { DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, DATA_ENDPOINT,
-  DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_PRODUCTION, DATA_TRACER, DATA_TRACER_MAPPING,
-  DATA_VIAL } from "~/lib/shared_constants"
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-import { getId } from "../../lib/utils";
+import { INJECTION_USAGE } from "~/lib/constants";
+import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
+
 import { dateToDateString } from "~/lib/formatting";
 
 import SiteStyles from '~/css/Site.module.css'
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
-import { getDay, getToday } from "~/lib/chronomancy";
+import { getDay } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { TracerCatalog } from "~/lib/data_structures";
 import { getRelevantActivityOrders } from "~/lib/filters";

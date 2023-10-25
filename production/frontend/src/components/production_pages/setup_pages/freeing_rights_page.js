@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Row, Col, Collapse, Container, Table } from 'react-bootstrap';
-import { USER_GROUPS, cssAlignRight, cssError } from '~/lib/constants';
+import { USER_GROUPS, cssAlignRight, cssCenter, cssError } from '~/lib/constants';
 import { DATA_RELEASE_RIGHT, DATA_TRACER, DATA_USER } from '~/lib/shared_constants';
 
 import { OpenCloseButton } from '../../injectable/open_close_button';
@@ -48,9 +48,9 @@ export function FreeingRightsPage(){
   const [expiryDateError, setExpiryDateError] = useState("");
   const [sortingMethod, setSortingMethod] = useState(SORTING_METHODS.USER);
   const userOptions = toOptions([...state.user.values()].filter(
-    (user) => [USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.PRODUCTION_USER].includes(user.user_group)
-    ), 'username', 'id')
-    const initialUser = (userOptions.length) ? userOptions[0].value : -1;
+    (user) => [USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.PRODUCTION_USER].includes(user.user_group) &&
+      user.id != state.logged_in_user.id), 'username', 'id')
+  const initialUser = (userOptions.length) ? userOptions[0].value : -1;
   const [activeUserID, setActiveUserID] = useState(initialUser);
   const tracerOptions = toOptions([...state.tracer.values()].filter(
       (tracer) => !tracer.archived
@@ -121,11 +121,14 @@ export function FreeingRightsPage(){
           />}
           Hover={<div>{expiryDateError}</div>}
         />
-        : <DateInput
-            placeholder='Udløbsdato'
-            value={expiryDate}
-            stateFunction={setExpiryDate}
-          />
+        : <HoverBox
+            Base={<DateInput
+              placeholder='Udløbsdato'
+              value={expiryDate}
+              stateFunction={setExpiryDate}
+            />}
+            Hover={<div>Hvis der er ingen udløbsdato, varer rettigheden for evigt.</div>}
+        />
 
   const releaseRights = [...state.release_right.values()].sort(
     sortingFunction(sortingMethod)).map(releaseRight => <ReleaseRightTableRow
@@ -136,7 +139,6 @@ export function FreeingRightsPage(){
 
   return (
   <Container>
-
       <Card>
         <Card.Header>
           <Row>
@@ -187,8 +189,8 @@ export function FreeingRightsPage(){
       <Col>
         {expiryDateForm}
       </Col>
-      <Col>
-        <ClickableIcon src="/static/images/accept.svg" onClick={createReleaseRight}/>
+      <Col style={cssCenter}>
+        <ClickableIcon src="/static/images/plus.svg" onClick={createReleaseRight}/>
       </Col>
     </Row>
   </Container>);

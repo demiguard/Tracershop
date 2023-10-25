@@ -21,7 +21,10 @@ import { compareDates } from "~/lib/utils.js";
 import { getToday } from "~/lib/chronomancy.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js";
 import { batchNumberValidator } from "~/lib/formatting.js";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
+import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage.js";
+import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
+import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -91,28 +94,14 @@ export function InjectionModal ({modal_order, on_close}) {
     })
   }
 
-  const destinationHover = <HoverBox
-    Base={<div>Destination:</div>}
-    Hover={<div>Kundens brugernavn, rigtige navn og <br/>
-      bestillerens profil, hvis tilgændelig.</div>}
-  />;
-  const destinationMessage = `${customer.short_name} - ${endpoint.name}`
-  const orderTime = order.delivery_time;
-
-    const tracerLongName = (tracer.clinical_name != "") ?
-      `${tracer.clinical_name} - ${isotope.atomic_letter}-${isotope.atomic_mass}`
-      : "IUPAC navn for denne tracer er ikke angivet!";
-    const tracerHover = <HoverBox
-      Base={<div>{tracer.shortname}</div>}
-      Hover={<div>{tracerLongName}</div>}
-    />;
+  const tracerLongName = (tracer.clinical_name != "") ?
+    `${tracer.clinical_name} - ${isotope.atomic_letter}-${isotope.atomic_mass}`
+    : "IUPAC navn for denne tracer er ikke angivet!";
+  
 
 
     const tableRows = [
-      renderTableRow("1", [destinationHover, destinationMessage]),
-      renderTableRow("2", [<div>Leverings tid:</div>, <div>{orderTime}</div>]),
-      renderTableRow("3", [<div>Tracer:</div>, <div style={{width : "75px"}}>{tracerHover}</div>]), // So the React-hover.Trigger inherits a width that's incorrect
-      renderTableRow("4", [<div>Anvendelse:</div>, <div>{INJECTION_USAGE[order.tracer_usage]}</div>]),
+      renderTableRow("4", []),
       renderTableRow("5", [<div>Injektioner:</div>, <div>{order.injections}</div>]),
     ]
 
@@ -175,7 +164,27 @@ export function InjectionModal ({modal_order, on_close}) {
             <Col md={colWidth}>
               <Table>
                 <tbody>
-                  {tableRows}
+                  <tr>
+                    <td>
+                      <HoverBox
+                        Base={<div>Destination:</div>}
+                        Hover={<div>Kundens brugernavn, rigtige navn og bestillerens profil, hvis tilgændelig.</div>}
+                      />
+                    </td>
+                    <td>{customer.short_name} - {endpoint.name}</td>
+                  </tr>
+                  <tr>
+                    <td><div>Leverings tid:</div></td>
+                    <td><div><TimeDisplay time={order.delivery_time}/></div></td>
+                  </tr>
+                  <tr>
+                    <td><div>Tracer:</div></td>
+                    <td><TracerDisplay tracer={tracer}/></td>
+                  </tr>
+                  <tr>
+                    <td><div>Anvendelse:</div></td>
+                    <td><InjectionUsage usage={order.tracer_usage}/></td>
+                  </tr>
                 </tbody>
               </Table>
             </Col>

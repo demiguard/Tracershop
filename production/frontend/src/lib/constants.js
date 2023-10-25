@@ -105,9 +105,9 @@ export const ORDER_STATUS = {
  * @enum {string}
  */
 export const INJECTION_USAGE_NAMES = {
-  0 : "Human",
-  1 : "Dyr",
-  2 : "Andet",
+  human : "Human",
+  animal : "Dyr",
+  other : "Andet",
 }
 
 export const INJECTION_USAGE = {

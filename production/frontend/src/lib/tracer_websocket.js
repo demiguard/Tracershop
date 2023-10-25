@@ -50,9 +50,6 @@ export class TracerWebSocket {
       const pipe = this._PromiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
-      if(pipe != undefined){
-        pipe.port2.postMessage(message);
-      }
 
       /**This is the state updating messages send by the server */
       switch(message[WEBSOCKET_MESSAGE_TYPE]) {
@@ -63,10 +60,10 @@ export class TracerWebSocket {
            * }
            */
           const state = ParseJSONstr(message[WEBSOCKET_DATA])
-            this.dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
+            this._dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-            this.dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
+            this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
 
         }
         break;
@@ -76,11 +73,14 @@ export class TracerWebSocket {
           if(message[AUTH_IS_AUTHENTICATED]){
             const state = ParseJSONstr(message[WEBSOCKET_DATA]);
 
-            this.dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
+            this._dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
           }
         }
         break;
-        }
+      }
+      if(pipe != undefined){
+        pipe.port2.postMessage(message);
+      }
     }
 
     this._ws.onclose = function(e) {
@@ -101,18 +101,15 @@ export class TracerWebSocket {
       this.send(message).then((data) => {
         let user;
         if (data[AUTH_IS_AUTHENTICATED]){
-          user = deserialize_single(data[AUTH_USER])
+          user = deserialize_single(data[AUTH_USER]);
         } else {
           user = new User();
         }
-        db.set(DATABASE_CURRENT_USER, user)
+        db.set(DATABASE_CURRENT_USER, user);
         this.dispatch(new UpdateCurrentUser(user));
-        this.send(this.getMessage(WEBSOCKET_MESSAGE_GET_STATE))
-
-      if(data[WEBSOCKET_SESSION_ID]) {
-        Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite:'strict'})
-      }
-
+        if(data[WEBSOCKET_SESSION_ID]) {
+          Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite:'strict'});
+        }
       });
     }
 

@@ -35,7 +35,7 @@ class ServerConfiguration(TracershopModel):
   id = models.AutoField(primary_key=True)
 
   SMTPServer = models.GenericIPAddressField(default="10.140.209.2")
-  DateRange = models.PositiveIntegerField(default=32)
+  DateRange = models.PositiveIntegerField(default=64)
   AdminPhoneNumber = models.CharField(max_length=32, default="35454147")
   AdminEmail = models.EmailField(max_length=64, default="christoffer.vilstrup.jensen@regionh.dk")
   global_activity_deadline = models.ForeignKey(Deadline,

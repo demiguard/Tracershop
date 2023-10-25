@@ -1,6 +1,6 @@
 /** Master Site */
 
-import React, { } from "react";
+import React, { useEffect } from "react";
 
 import { LoginSite } from "./login_site";
 import { AdminSite } from "./admin_site";
@@ -11,7 +11,7 @@ import { ErrorPage } from "../error_pages/error_page";
 import { User } from "~/dataclasses/dataclasses";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
-import { WEBSOCKET_MESSAGE_AUTH_LOGOUT } from "~/lib/shared_constants";
+import { WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants";
 import { UpdateCurrentUser } from "~/lib/websocket_actions";
 import Cookies from "js-cookie";
 import { db } from "~/lib/local_storage_driver";
@@ -72,6 +72,12 @@ export function TracerShop() {
   }
 
   const Site = get_site_from_user(tracershopState.logged_in_user);
+
+  useEffect(() => {
+    if(websocket !== null){
+      websocket.send(websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE));
+    }
+  }, [websocket])
 
   return (
   <ErrorBoundary FallbackComponent={ErrorPage}>

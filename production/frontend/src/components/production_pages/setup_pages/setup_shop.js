@@ -8,6 +8,7 @@ import { MarginButton } from "../../injectable/buttons";
 import { ProductionUserSetup } from "./production_user_setup";
 import { IsotopeSetupPage } from "./isotope_setup_page";
 import { FreeingRightsPage } from "./freeing_rights_page";
+import { ProductionSetup } from "./production_setup";
 
 const sites = {
   customer   : CustomerPage,
@@ -17,6 +18,7 @@ const sites = {
   users      : ProductionUserSetup,
   isotope    : IsotopeSetupPage,
   freed      : FreeingRightsPage,
+  production : ProductionSetup,
 }
 
 export const siteNames = {
@@ -26,7 +28,8 @@ export const siteNames = {
   deadline : "Deadlines",
   users : "Externe Kunder",
   isotope : "Isotoper",
-  freed : "Frigivelse rettigheder"
+  freed : "Frigivelse rettigheder",
+  production : "Produktioner",
 }
 
 
@@ -49,6 +52,5 @@ export function SetupShop(){
       marginTop : '15px',
     }}><div>{Buttons}</div></Row>
     <Site/>
-  </Container>
-  )
+  </Container>);
 }

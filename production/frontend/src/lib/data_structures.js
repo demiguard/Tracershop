@@ -306,7 +306,7 @@ export class EndpointsProcedures {
     if(tempMap === undefined){
       return new Map();
     } else {
-      return tempMap;
+      return  tempMap;
     }
   }
 }
@@ -467,7 +467,7 @@ export class ProductionBitChain extends BitChain {
   /**@type {Number} */ _chain
 
   /**
-   *
+   * A data structure for figuring out if tracer is being produced at a day.
    * @param {Map<Number, ActivityProduction>} productions 
    */
   constructor(productions){

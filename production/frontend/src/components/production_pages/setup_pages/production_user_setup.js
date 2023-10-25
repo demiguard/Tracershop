@@ -5,10 +5,9 @@ import React, { useState } from "react";
 import { Card, Col, Container, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 import {  USER_GROUPS, cssCenter } from "~/lib/constants";
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_CUSTOMER,
-  DATA_USER, DATA_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_SUCCESS } from "~/lib/shared_constants"
-import { Customer, User, UserAssignment } from "~/dataclasses/dataclasses";
+  DATA_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_SUCCESS } from "~/lib/shared_constants"
+import { User, UserAssignment } from "~/dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
-import { TracerWebSocket } from "~/lib/tracer_websocket"
 import { ClickableIcon } from "../../injectable/icons";
 import { makePassword } from "~/lib/formatting";
 import { HoverBox } from "../../injectable/hover_box";
@@ -66,7 +65,7 @@ export function ProductionUserSetup(){
         password
       ).then((message) => {
         if(message[WEBSOCKET_MESSAGE_SUCCESS] === WEBSOCKET_MESSAGE_SUCCESS){
-          setPassword("")
+          setPassword("");
         }
       })
     }
@@ -99,7 +98,7 @@ export function ProductionUserSetup(){
               <CustomerSelect
                 value={relatedCustomer}
                 onChange={(event) => {setRelatedCustomer(event.target.value)}}
-                customers={state.customers}
+                customers={state.customer}
                 emptyCustomer
               />
             </TracershopInputGroup>

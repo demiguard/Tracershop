@@ -51,6 +51,5 @@ export function ProductionSite({ logout, NavbarElements }) {
         <Container>
           <ActivePage/>
         </Container>
-      </div>
-  );
+      </div>);
 }

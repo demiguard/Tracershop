@@ -2,7 +2,48 @@
  * Also Remember Currying and Closure
 */
 
-import { ActivityDeliveryTimeSlot, DeliveryEndpoint } from "../dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracershopState } from "../dataclasses/dataclasses";
+
+/**
+ * @enum {Number}
+ */
+export const PROCEDURE_SORTING = {
+  PROCEDURE_CODE : 0,
+  TRACER : 1,
+  UNITS : 2,
+  DELAY : 3,
+}
+
+
+/**
+ * 
+ * @param {TracershopState} state 
+ * @param {PROCEDURE_SORTING} sortingMethod 
+ * @returns 
+ */
+export function sort_procedures(state, sortingMethod){
+  return (prod_1, prod_2) => {
+    switch (sortingMethod) {
+      case PROCEDURE_SORTING.PROCEDURE_CODE:{
+        if (prod_1.series_description === null) return 1;
+        if (prod_2.series_description === null) return -1;
+        const pi_1 = state.procedure_identifier.get(prod_1.series_description);
+        const pi_2= state.procedure_identifier.get(prod_2.series_description);
+        return pi_1.description > pi_2.description;
+      }
+      case PROCEDURE_SORTING.TRACER:
+        if (prod_1.tracer === null) return 1
+        if (prod_2.tracer === null) return -1
+        return prod_1.tracer - prod_2.tracer;
+      case PROCEDURE_SORTING.UNITS:
+        return prod_1.tracer_units - prod_2.tracer_units;
+      case PROCEDURE_SORTING.DELAY:
+        return prod_1.delay_minutes - prod_2.delay_minutes;
+      default:
+        throw "UNDEFINED SORTING METHOD!"
+    }
+  }
+}
 
 
 /**

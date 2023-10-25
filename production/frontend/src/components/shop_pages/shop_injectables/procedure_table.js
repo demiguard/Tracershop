@@ -1,11 +1,11 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FormControl, Table } from "react-bootstrap";
 import { PROP_ACTIVE_ENDPOINT, cssCenter } from "~/lib/constants";
 import { DATA_PROCEDURE } from "~/lib/shared_constants"
 import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
-import { EndpointsProcedures } from "~/lib/data_structures";
+import { EndpointsProcedures, TracerCatalog } from "~/lib/data_structures";
 import { DestinationSelect } from "../../injectable/derived_injectables/destination_select";
 import { initialize_customer_endpoint } from "~/lib/initialization";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
@@ -13,6 +13,7 @@ import { setStateToEvent } from "~/lib/state_management";
 import { ClickableIcon } from "~/components/injectable/icons";
 import { parseDanishNumberInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/error_input";
+import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
@@ -32,9 +33,18 @@ export function ProcedureTable(){
 
   const [activeCustomer, setActiveCustomer] = useState(init.current.customer);
   const [activeEndpoint, setActiveEndpoint] = useState(init.current.endpoint);
+  const [sortingMethod, setSortingMethod] = useState(PROCEDURE_SORTING.PROCEDURE_CODE);
 
   const endpointProcedures = new EndpointsProcedures(state.procedure);
   const activeProcedures = endpointProcedures.getProcedures(activeEndpoint);
+
+  const tracerCatalog = new TracerCatalog(state.tracer_mapping, state.tracer);
+  const availableTracers = tracerCatalog.getActivityCatalog(activeCustomer).concat(tracerCatalog.getInjectionCatalog(activeCustomer))
+
+  console.log(availableTracers);
+
+  const tracerOptions = toOptions(availableTracers, 'shortname');
+  tracerOptions.push(new Option("", "---------"));
 
   /**
   *
@@ -79,9 +89,6 @@ export function ProcedureTable(){
       }
     }
 
-    const tracerOptions = toOptions(state.tracer, 'short_name');
-    tracerOptions.push(new Option("", "---------"));
-
     return (
       <tr>
         <td>{procedureIdentifier.description}</td>
@@ -118,8 +125,7 @@ export function ProcedureTable(){
             onClick={commit}
           />
         </td>
-      </tr>
-    );
+      </tr>);
   }
 
 
@@ -133,6 +139,7 @@ export function ProcedureTable(){
       (pi) => !activeProcedures.has(pi.id)
     )
     const procedureIdentifierOptions = toOptions(procedureIdentifier, 'description')
+
     procedureIdentifierOptions.push(new Option("", "-----------------"))
     // State Declaration
     const [seriesDescription, setSeriesDescription] = useState(procedure.series_description)
@@ -177,9 +184,6 @@ export function ProcedureTable(){
         setErrorDelay(parsedDelay);
       }
     }
-
-    const tracerOptions = toOptions(state.tracer, 'shortname');
-    tracerOptions.push(new Option("", "---------"));
 
     return (
       <tr>
@@ -231,7 +235,9 @@ export function ProcedureTable(){
 
   const procedureRows = [];
   let index = 0;
-  for (const procedure of activeProcedures.values()){
+  const sortedProcedures = [...activeProcedures.values()].sort(sort_procedures(state, sortingMethod))
+
+  for (const procedure of sortedProcedures){
     procedureRows.push(<ProcedureRow
       key={index}
       procedure={procedure}

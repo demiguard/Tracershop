@@ -26,6 +26,7 @@ import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMappi
 import { OpenCloseButton } from "../injectable/open_close_button.js";
 import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 
 const Modals = {
   create_modal : CreateOrderModal,
@@ -148,7 +149,7 @@ export function ActivityTable ({active_tracer, active_date}) {
   * } props
   * @returns
   */
-  function RenderedTimeSlot({timeSlot}){
+  function TimeSlotRow({timeSlot}){
     const endpoint = state.delivery_endpoint.get(timeSlot.destination)
     const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
     const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id)
@@ -195,7 +196,6 @@ export function ActivityTable ({active_tracer, active_date}) {
 
         if (order.freed_datetime && freedTime === "") {
           const timestamp = getTimeString(order.freed_datetime)
-          const dateString = parseDateToDanishDate(dateToDateString(new Date  (order.freed_datetime)))
 
           freedTime = `${timestamp}`
         }
@@ -285,7 +285,7 @@ export function ActivityTable ({active_tracer, active_date}) {
              {headerIcon}
            </Col>
            <Col style={cssCenter}>{owner.short_name} - {endpoint.name}</Col>
-           <Col style={cssCenter}>{timeSlot.delivery_time}</Col>
+           <Col style={cssCenter}><TimeDisplay time={timeSlot.delivery_time}/></Col>
            <Col style={cssCenter}>{thirdColumnInterior}</Col>
            <Col style={cssCenter}>{fourthColumnInterior}</Col>
            <Col style={cssCenter}>{fifthColumnInterior}</Col>
@@ -360,7 +360,7 @@ function ProductionRow({active_production}){
 
   const renderedTimeSlots = [];
   for (const timeSlot of orderMapping){
-      renderedTimeSlots.push(<RenderedTimeSlot
+      renderedTimeSlots.push(<TimeSlotRow
                 key={timeSlot.id}
                 timeSlot = {timeSlot}
              />);
@@ -384,7 +384,6 @@ function ProductionRow({active_production}){
   if(Modals[modalIdentifier]){
     const ModalType = Modals[modalIdentifier]
     Modal = <ModalType {...modalProps} />
-    console.log(`Rendering ${Modal}`);
   }
 
   return (

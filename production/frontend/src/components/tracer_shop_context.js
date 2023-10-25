@@ -21,8 +21,8 @@ export const WebsocketContextProvider = ({children, value}) => {
 }
 
 /**
- * 
- * @returns 
+ * Custom hook that gets the global database state
+ * @returns {TracershopState}
  */
 export function useTracershopState() {
   return useContext(StateContext);
@@ -46,16 +46,17 @@ export function useWebsocket(){
  * @returns {TracershopState}
  */
 function tracershopReducer(state, action){
-  console.log("Updating with action", action)
+
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser ){
-    return Object.assign(TracershopState.prototype, {...state, logged_in_user : action.newUser});
+    const newState = Object.assign(new TracershopState(), state);
+    newState.logged_in_user = action.newUser;
+
+    return newState;
   }
 
   if(action instanceof UpdateState ){
-    const newState = Object.assign(TracershopState.prototype, {...state});
-
-    console.log(action.newState)
+    const newState = Object.assign(new TracershopState(), state);
 
     for (const key of Object.keys(action.newState)){
       let oldStateMap = newState[key];
@@ -67,10 +68,10 @@ function tracershopReducer(state, action){
       db.set(key, modelMap)
     }
 
-    return newState
+    return newState;
   }
   if(action instanceof DeleteState){
-    const newState = {...state}
+    const newState = Object.assign(new TracershopState(), state);
     const newStateMap = new Map(newState[action.dataType])
     if (action.element_id instanceof Array){
       for(const id of action.element_id){
@@ -80,10 +81,10 @@ function tracershopReducer(state, action){
       newStateMap.delete(action.element_id);
     }
     newState[action.dataType] = newStateMap;
-    return newState
+    return newState;
   }
 
-  throw "Unknown action"
+  throw "Unknown action";
 }
 
 

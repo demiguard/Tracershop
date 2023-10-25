@@ -207,13 +207,14 @@ export function ShopOrderPage ({}){
           </Container>
         </Row>
         <Row>
-            <div><ShopCalender
+            <div>
+              <ShopCalender
               active_date={today}
+              active_endpoint={activeEndpoint}
               on_day_click={setActiveDate}
-              injection_orders={calenderInjectionOrders}
-              activity_orders={calenderActivityOrders}
               time_slots={calenderTimeSlots}
-            /></div>
+            />
+          </div>
         </Row>
       </Col>
     </Row>
