@@ -1,11 +1,11 @@
 import React, { useState} from "react";
-import { Col, Row, FormControl, Modal, Table } from "react-bootstrap";
+import { Col, Row, FormControl, Modal, Table, Form } from "react-bootstrap";
 import propTypes from 'prop-types'
 
 import { Authenticate } from "../injectable/authenticate.js"
 
-import { changeState, setStateToEvent } from "../../lib/state_management.js";
-import { INJECTION_USAGE, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "../../lib/constants.js";
+import { setStateToEvent } from "../../lib/state_management.js";
+import { ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "../../lib/constants.js";
 
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
   WEBSOCKET_DATA, DATA_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -25,6 +25,7 @@ import { useTracershopState, useWebsocket } from "~/components/tracer_shop_conte
 import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage.js";
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
+import { ReleaseRightHolder } from "~/lib/data_structures.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -38,7 +39,8 @@ export function InjectionModal ({modal_order, on_close}) {
   const endpoint = state.delivery_endpoint.get(order.endpoint);
   const customer = state.customer.get(endpoint.owner);
   const tracer = state.tracer.get(order.tracer);
-  const isotope = state.isotopes.get(tracer.isotope);
+  const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
+  const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
   function acceptOrder(){
     order.status = 2;
@@ -94,14 +96,8 @@ export function InjectionModal ({modal_order, on_close}) {
     })
   }
 
-  const tracerLongName = (tracer.clinical_name != "") ?
-    `${tracer.clinical_name} - ${isotope.atomic_letter}-${isotope.atomic_mass}`
-    : "IUPAC navn for denne tracer er ikke angivet!";
-  
-
 
     const tableRows = [
-      renderTableRow("4", []),
       renderTableRow("5", [<div>Injektioner:</div>, <div>{order.injections}</div>]),
     ]
 
@@ -110,33 +106,44 @@ export function InjectionModal ({modal_order, on_close}) {
         "Kommentar:", <div style={{width : "25px"}}>{renderComment(order.comment)}</div> // So the React-hover.Trigger inherits a width that's incorrect
       ]));
     }
+  
+  const batchHover = <HoverBox
+  Base={<div>Batch Nummer</div>}
+  Hover={
+    <div>En kode på formattet XXXX-YYMMDD-R
+      <ul>
+        <li>XXXX - Tracer kode, ikke nødvendigvis på 4 bogstaver</li>
+        <li>YYMMDD - Dato kode</li>
+        <li>R - Produktion af denne tracer på denne dato</li>
+      </ul>
+    </div>}
+  />;
 
-    if (order.status == 2 || order.status == 3){
-      const BatchHover = <HoverBox
-      Base={<div>Batch Nummer</div>}
-      Hover={
-        <div>En kode på formattet XXXX-YYMMDD-R
-          <ul>
-            <li>XXXX - Tracer kode, ikke nødvendigvis på 4 bogstaver</li>
-            <li>YYMMDD - Dato kode</li>
-            <li>R - Produktion af denne tracer på denne dato</li>
-          </ul>
-        </div>}
-      />
-      if(order.status == 2 && !freeing){
-        tableRows.push(renderTableRow("999", [BatchHover, <FormControl
-          aria-label="batchnr-input"
-          value={lot_number}
-          onChange={setStateToEvent(setLotNumber)}
-          />]));
-      } else if (order.status == 2){
-        tableRows.push(renderTableRow("999", [BatchHover, lot_number]));
-      } else {
-        tableRows.push(renderTableRow("999", [BatchHover, order.lot_number]));
-      }
+  const batchInput = (() => {
+    if(order.status === ORDER_STATUS.RELEASED){
+      return <FormControl
+        aria-label="batchnr-input"
+        value={order.lot_number}
+        readOnly
+      />;
+    } else if(freeing) {
+      return <FormControl
+        aria-label="batchnr-input"
+        value={lot_number}
+        readOnly
+      />;
+    } else {
+      return <FormControl
+      aria-label="batchnr-input"
+      value={lot_number}
+      onChange={setStateToEvent(setLotNumber)}
+      />;
     }
+  })();
 
-
+  const freeingButton = RightsToFree ?
+      <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton>
+    : <MarginButton disabled>Frigiv Ordre</MarginButton>
 
   const colWidth = (freeing) ? 6 : 12;
   let secondaryElement = null; // Remember to wrap this is a <Col md={6}>
@@ -185,6 +192,20 @@ export function InjectionModal ({modal_order, on_close}) {
                     <td><div>Anvendelse:</div></td>
                     <td><InjectionUsage usage={order.tracer_usage}/></td>
                   </tr>
+                  {
+                   order.comment ? <tr>
+
+                    <td>Kommentar</td>
+                    <td>{order.comment}</td> {/* Note I render the comment rather than render a comment Icon */}
+                  </tr> : ""
+                  }
+                  {
+                    [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status) ? 
+                    <tr>
+                      <td>{batchHover}</td>
+                      <td>{batchInput}</td>
+                    </tr> : ""
+                  }
                 </tbody>
               </Table>
             </Col>
@@ -198,7 +219,7 @@ export function InjectionModal ({modal_order, on_close}) {
         <Modal.Footer>
           <div>
             {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
-            {order.status == 2 && !freeing ? <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton> : ""}
+            {order.status == 2 && !freeing ? freeingButton : ""}
             {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
             {order.status == 3 ? <MarginButton>Se følgeseddel</MarginButton> : ""}
             <CloseButton onClick={on_close}/>

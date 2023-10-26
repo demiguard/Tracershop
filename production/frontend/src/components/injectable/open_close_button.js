@@ -8,10 +8,10 @@ import SiteStyles from "/src/css/Site.module.css"
 export function OpenCloseButton({open, setOpen, label}) {
   const openClassName = open ? SiteStyles.rotated : "";
 
-  return <ClickableIcon
+  return (<ClickableIcon
     src="/static/images/next.svg"
     className={openClassName}
     label={label}
     onClick={() => setOpen(!open)}
-  />
+  />);
 }

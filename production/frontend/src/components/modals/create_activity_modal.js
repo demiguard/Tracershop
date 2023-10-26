@@ -10,7 +10,7 @@ import styles from '../../css/Site.module.css'
 import { HoverBox } from "../injectable/hover_box";
 import { ClickableIcon } from "../injectable/icons";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box"
-import { TracershopInputGroup } from '../injectable/tracershop_input_group'
+import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { getDay } from "~/lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";

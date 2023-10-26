@@ -38,7 +38,7 @@ export function TracershopNavbar({
   return (<Navbar className={styles.navbarMargin}>
     <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
     {Elements}
-  </Navbar>)
+  </Navbar>);
 }
 
 

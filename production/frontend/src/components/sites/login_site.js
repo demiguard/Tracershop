@@ -4,7 +4,7 @@ import propTypes from "prop-types";
 import Cookies from "js-cookie";
 
 import { TracershopNavbar } from "../injectable/navbar";
-import Authenticate from "../injectable/authenticate";
+import { Authenticate } from "../injectable/authenticate";
 import { DATABASE_CURRENT_USER, PROP_SET_USER } from "~/lib/constants";
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, DATA_AUTH, WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/shared_constants"
 

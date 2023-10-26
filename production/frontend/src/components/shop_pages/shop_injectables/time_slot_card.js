@@ -7,7 +7,7 @@ import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAl
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants"
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
-import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
+import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 
 import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
@@ -16,8 +16,9 @@ import { getPDFUrls } from "../../../lib/utils";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { setStateToEvent } from "~/lib/state_management";
-import { ErrorInput } from "~/components/injectable/error_input";
+import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
+import { EditableInput } from "~/components/injectable/inputs/number_input";
 
 
 
@@ -26,15 +27,10 @@ import { OpenCloseButton } from "~/components/injectable/open_close_button";
 * It contains all ordered
 * @param {{
 *  timeSlot : ActivityProduction,
-*  activeTracer : Tracer
-*  date : Date
-*  endpoint : DeliveryEndpoint
+*  active_date : Date
 *  overhead : Number
 *  activityOrders: Array<ActivityOrder>,
-*  websocket : TracerWebSocket,
-*  validDeadline : Boolean
-*  Isotopes : Map<Number, Isotope>
-*  vials : Map<Number, Vial>
+*  activityDeadlineExpired : Boolean
 * }} props - Input props
 * @returns {Element}
 */
@@ -172,26 +168,6 @@ function ActivityOrderRow({order}){
     }
   })();
 
-  const activityInput = canEdit ? <ErrorInput error={errorActivity}>
-      <FormControl
-        data-testid={`activity-${orderID}`}
-        value={activity}
-        onChange={setStateToEvent(setActivity)}
-      />
-    </ErrorInput>
-     : <FormControl 
-          data-testid={`activity-${orderID}`} 
-          value={activity} readOnly
-       />;
-
-  const commentInput = canEdit ? <FormControl
-      data-testid={`comment-${orderID}`}
-      as="textarea"
-      rows={1}
-      value={comment}
-      onChange={setStateToEvent(setComment)}
-    /> : <FormControl data-testid={`comment-${orderID}`} value={comment} readOnly/>
-
   const ActionImage = ordered ?
       <ClickableIcon
         label={`update-${orderID}`}
@@ -213,13 +189,27 @@ function ActivityOrderRow({order}){
       </Col>
       <Col>
         <TracershopInputGroup label="Aktivitet">
-          {activityInput}
+          <ErrorInput error={errorActivity}>
+            <EditableInput
+              canEdit={canEdit}
+              data-testid={`activity-${orderID}`}
+              value={activity}
+              onChange={setStateToEvent(setActivity)}
+            />
+          </ErrorInput>
           <InputGroup.Text>MBq</InputGroup.Text>
         </TracershopInputGroup>
       </Col>
       <Col>
         <TracershopInputGroup label="Kommentar">
-          {commentInput}
+        <EditableInput
+          canEdit={canEdit}
+          data-testid={`comment-${orderID}`}
+          as="textarea"
+          rows={1}
+          value={comment}
+          onChange={setStateToEvent(setComment)}
+        />
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>
         {canEdit && (changedActivity || changedComment) ? ActionImage : ""}
@@ -331,7 +321,8 @@ function ActivityOrderRow({order}){
     [PROP_ON_CLOSE] : () => {setShowCalculator(false);},
     [PROP_ACTIVE_TRACER] : tracer,
     [PROP_COMMIT] : (activity) => {
-        setNewOrderActivity(String(activity))
+        setNewOrderActivity(String(activity));
+        setShowCalculator(false);
       },
     initial_MBq : 300,
   };

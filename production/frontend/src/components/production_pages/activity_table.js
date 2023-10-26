@@ -11,7 +11,8 @@ import propTypes from 'prop-types'
 
 import { cssCenter, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
-  PROP_TRACER_CATALOG
+  PROP_TRACER_CATALOG,
+  ORDER_STATUS
 } from "../../lib/constants.js";
 
 import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
@@ -89,35 +90,19 @@ export function ActivityTable ({active_tracer, active_date}) {
     state.tracer
   )
 
-  const [modalIdentifier, _setModalIdentifier] = useState(null);
+  const [modalIdentifier, setModalIdentifier] = useState(null);
   const [timeSlotID, setTimeSlotID] = useState(null);
 
   // Order Filtering
-  const /**@type {Array<ActivityOrder>} */ all_orders = [...state.activity_orders.values()]
   const todays_orders = applyFilter(state.activity_orders,
                                     dailyActivityOrderFilter(state.deliver_times,
                                                         state.production,
                                                         delivery_date,
-                                                        active_tracer))
-  
-  all_orders.filter((order) => {
-    const timeSlot = state.deliver_times.get(order.ordered_time_slot);
-    if (timeSlot === undefined){
-      console.log(state, order)
-    }
-    const production = state.production.get(timeSlot.production_run);
-
-    return order.delivery_date === delivery_date && production.tracer == active_tracer;
-  });
+                                                        active_tracer));
 
   const orderMapping = new OrderMapping(todays_orders,
                                         state.deliver_times,
-                                        state.delivery_endpoint)
-
-  function setModalIdentifier(value){
-    console.log(`setModalIdentifier called with ${value}`)
-    _setModalIdentifier(value)
-  }
+                                        state.delivery_endpoint);
 
   /**
   * Row inside of a RenderedTimeSlot
@@ -150,24 +135,29 @@ export function ActivityTable ({active_tracer, active_date}) {
   * @returns
   */
   function TimeSlotRow({timeSlot}){
-    const endpoint = state.delivery_endpoint.get(timeSlot.destination)
-    const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
-    const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id)
+    const endpoint = state.delivery_endpoint.get(timeSlot.destination);
+    const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer);
+    const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
     // Prop extraction
-    const orders = orderMapping.getOrders(timeSlot.id)
+    const orders = orderMapping.getOrders(timeSlot.id);
 
-    const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot)
-    const firstAvailableTimeSlotID = firstAvailableTimeSlot.id
+    const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
+    const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
 
+    let orderedDate = null;
     let orderedMBq = 0;
     let deliveredMBq = 0;
     let freedMbq = 0;
-    let freedTime = ""
+    let freedTime = "";
     let minimumStatus = 3;
     const OrderData = [];
     let moved = true;
 
     for(const order of orders){
+      if(orderedDate === null){
+        orderedDate = new Date(order.delivery_date);
+      }
+
       const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id && order.moved_to_time_slot === null
       || order.moved_to_time_slot === timeSlot.id
       if (is_originalTimeSlot){
@@ -246,36 +236,37 @@ export function ActivityTable ({active_tracer, active_date}) {
                    />;
    }
 
-   // Yes I know turnery are thing. But I think this is more readable
-   // Fucking fight me
-   let thirdColumnInterior;
-   if (minimumStatus === 3){
-     thirdColumnInterior = `Udleveret: ${Math.floor(freedMbq)} MBq`
-   } else {
-     thirdColumnInterior = `Bestilt: ${Math.floor(orderedMBq)} MBq`
-   }
 
-   let fourthColumnInterior;
-   if (minimumStatus === 3){
-     fourthColumnInterior = `Frigivet kl: ${freedTime}`;
-   } else {
-     fourthColumnInterior = `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`
-   }
+   const [thirdColumnInterior, fourthColumnInterior, fifthColumnInterior] = (() => {
+      let fifthCol = null
+      if (minimumStatus === ORDER_STATUS.RELEASED){
+        if (!moved){
+          fifthCol = <ClickableIcon
+            src="/static/images/delivery.svg"
+            onClick={()=>{
+              window.location = getPDFUrls(endpoint, tracer, orderedDate);
+            }}
+          />
+        }
 
-   let fifthColumnInterior = null;
-   if (canMove && !moved){
-     fifthColumnInterior = <ClickableIcon
-                                   src="/static/images/move_top.svg"
-                                   onClick={moveOrders}
+        return [`Udleveret: ${Math.floor(freedMbq)} MBq`,
+                `Frigivet kl: ${freedTime}`, 
+                fifthCol 
+        ]
+      } else {
+        if (canMove && !moved){
+          fifthCol = <ClickableIcon
+                       src="/static/images/move_top.svg"
+                       onClick={moveOrders}
                      />
-   } else if (!moved && minimumStatus === 3) {
-     fifthColumnInterior = <ClickableIcon
-                     src="/static/images/delivery.svg"
-                     onClick={()=>{
-                       window.location = getPDFUrls(endpoint, tracer, props[PROP_ACTIVE_DATE])
-                     }}
-                   />
-   }
+        }
+        return [
+          `Bestilt: ${Math.floor(orderedMBq)} MBq`,
+          `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`,
+          fifthCol
+        ];
+      }
+    })();
 
    return (
      <Card key={timeSlot.id}>

@@ -8,10 +8,10 @@ import { setStateToEvent } from "../../lib/state_management";
 
 import { Vial } from "../../dataclasses/dataclasses";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
-import { TracershopInputGroup } from "../injectable/tracershop_input_group";
-import { DateInput } from "../injectable/date_input";
+import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
+import { DateInput } from "../injectable/inputs/date_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
-import { ErrorInput } from "../injectable/error_input";
+import { ErrorInput } from "../injectable/inputs/error_input";
 import { parseDateInput } from "~/lib/user_input";
 
 

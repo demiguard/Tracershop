@@ -2,8 +2,8 @@
  * @author Christoffer Vilstrup Jensen
  */
 import React, { Children } from "react";
-import { HoverBox } from "./hover_box";
-import { cssError } from "../../lib/constants";
+import { HoverBox } from "../hover_box";
+import { cssError } from "../../../lib/constants";
 
 export function ErrorInput({error, children}){
   if (error === ""){

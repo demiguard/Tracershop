@@ -6,7 +6,7 @@ import { DATA_RELEASE_RIGHT, DATA_TRACER, DATA_USER } from '~/lib/shared_constan
 import { OpenCloseButton } from '../../injectable/open_close_button';
 import { Select, toOptions } from '../../injectable/select';
 import { setStateToEvent } from '~/lib/state_management';
-import { DateInput } from '../../injectable/date_input';
+import { DateInput } from '../../injectable/inputs/date_input';
 import { ReleaseRight, Tracer, User } from '~/dataclasses/dataclasses';
 import { ClickableIcon } from '../../injectable/icons';
 import { TracerWebSocket } from '../../../lib/tracer_websocket';

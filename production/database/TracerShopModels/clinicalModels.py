@@ -92,7 +92,10 @@ class ReleaseRight(TracershopModel):
 
     return AuthActions.ACCEPT_LOG
 
-  def canDelete(self, _: Optional[User] = None) -> AuthActions:
+  def canDelete(self, user: Optional[User] = None) -> AuthActions:
+    if user is None:
+      return AuthActions.REJECT
+
     return AuthActions.ACCEPT_LOG
 
   def __str__(self) -> str:

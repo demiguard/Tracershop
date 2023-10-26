@@ -7,7 +7,7 @@ import {  USER_GROUPS, cssCenter } from "~/lib/constants";
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_CUSTOMER,
   DATA_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_SUCCESS } from "~/lib/shared_constants"
 import { User, UserAssignment } from "~/dataclasses/dataclasses";
-import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
+import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { ClickableIcon } from "../../injectable/icons";
 import { makePassword } from "~/lib/formatting";
 import { HoverBox } from "../../injectable/hover_box";

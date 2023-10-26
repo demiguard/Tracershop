@@ -1,25 +1,25 @@
-import React, {Component} from 'react'
+import React from 'react'
 import { Button } from 'react-bootstrap'
-import styles from '../../css/Site.module.css'
 
 export {MarginButton, CloseButton}
 
-class MarginButton extends Component {
-  render() {
-    const props = {...this.props}
+function MarginButton (props) {
+    const newProps = {...props}
 
-    if ("className" in props){
-      props["className"] += ` ${styles.Margin15lr}`;
+    if ("style" in props){
+      newProps["style"].marginLeft = "10px";
+      newProps["style"].marginRight = "10px";
     } else {
-      props["className"] = styles.Margin15lr;
+      newProps["style"] = {
+        marginLeft : "10px",
+        marginRight : "10px",
+      }
     }
 
-    return (<Button {...props}>{props.children}</Button>)
-  }
+    return (<Button {...newProps}>{props.children}</Button>)
+
 }
 
-class CloseButton extends Component {
-  render(){
-    return <MarginButton {...this.props}>Luk</MarginButton>
-  }
+function CloseButton (props) {
+  return (<MarginButton {...props}>Luk</MarginButton>);
 }

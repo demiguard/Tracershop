@@ -6,7 +6,7 @@ import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 import styles from '~/css/Site.module.css'
 import { renderComment } from "~/lib/rendering.js";
 
-import Authenticate from "../injectable/authenticate.js";
+import { Authenticate } from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
@@ -24,9 +24,9 @@ import { getTimeString } from "~/lib/chronomancy.js";
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
 import { compareDates, getPDFUrls } from "../../lib/utils.js";
-import { TimeInput } from "../injectable/time_form.js";
+import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
-import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
+import { OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
 
 
 /**
@@ -42,13 +42,16 @@ export function ActivityModal({
 }){
   // State extraction
   const state = useTracershopState();
-  const websocket = useWebsocket()
+  const websocket = useWebsocket();
   const timeSlot = state.deliver_times.get(timeSlotID)
   const /**@type {Array<ActivityOrder> | undefined}*/ orders = order_mapping.getOrders(timeSlot.id)
   const /**@type {DeliveryEndpoint} */ endpoint = state.delivery_endpoint.get(timeSlot.destination)
   const /**@type {Customer} */ customer = state.customer.get(endpoint.owner)
   const /**@type {Number} */ overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer)
   const /**@type {Tracer} */ tracer = state.tracer.get(active_tracer)
+  const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
+  const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
+
 
   const [errorMessage, setErrorMessage] = useState("");
   const [errorLevel, setErrorLevel] = useState("");
@@ -243,7 +246,7 @@ export function ActivityModal({
             aria-label={`vial-usage-${vial.id}`}
             onChange={onSelect}
             checked={selected}/>;
-  
+
     if (vial.assigned_to){
       commitContent = ""
     }
@@ -492,7 +495,7 @@ export function ActivityModal({
   // Buttons
   const AcceptButton =  <MarginButton onClick={onClickAccept}>Accepter Ordre</MarginButton>;
 
-  const canFree = selectedVials.size > 0 && !(addingVial);
+  const canFree = selectedVials.size > 0 && !(addingVial) && RightsToFree;
   const ConfirmButton = canFree ?
                           <MarginButton onClick={startFreeing}> Godkend Ordre </MarginButton>
                         : <MarginButton disabled>Godkend Ordre</MarginButton>;

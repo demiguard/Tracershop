@@ -6,10 +6,10 @@ import { dateToDateString } from "~/lib/formatting";
 import { PROP_ON_CLOSE, PROP_ACTIVE_DATE } from "~/lib/constants";
 import styles from '~/css/Site.module.css'
 import { Select, toOptions } from "../injectable/select";
-import { TracershopInputGroup } from '../injectable/tracershop_input_group'
+import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
-import { TimeInput } from "../injectable/time_form";
+import { TimeInput } from "../injectable/inputs/time_input";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { UsageSelect } from "../injectable/derived_injectables/usage_select";
@@ -17,7 +17,7 @@ import { TracerCatalog } from "~/lib/data_structures";
 import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 
-import { ErrorInput } from "../injectable/error_input";
+import { ErrorInput } from "../injectable/inputs/error_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import propTypes from "prop-types";
 

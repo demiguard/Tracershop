@@ -4,7 +4,7 @@ import {Row, Col, FormControl} from "react-bootstrap"
 import { cssCenter, cssError } from "~/lib/constants";
 import { DATA_ADDRESS, DATA_DICOM_ENDPOINT, DATA_SERVER_CONFIG, WEBSOCKET_DATA } from "~/lib/shared_constants"
 import { Address, DicomEndpoint, ServerConfiguration } from "../../../dataclasses/dataclasses";
-import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
+import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { ClickableIcon } from "../../injectable/icons";
 import { parseAETitleInput, parseIPInput, parsePortInput } from "../../../lib/user_input";
 import { ParseJSONstr } from "../../../lib/formatting";

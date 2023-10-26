@@ -1,11 +1,10 @@
-import React, { Component } from "react";
+import React, { useState } from "react";
 import propTypes from 'prop-types'
 import { Form, Button, Spinner } from "react-bootstrap";
 import styles from "../../css/Authenticate.module.css"
 import SiteStyles from "../../css/Site.module.css"
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
-
-export { Authenticate }
+import { setStateToEvent } from "~/lib/state_management";
 
 /**
  * This class is for the authentication box
@@ -20,53 +19,21 @@ export { Authenticate }
  *
  * @author Christoffer Vilstrup Jensen
  */
-export default class Authenticate extends Component {
-  static propTypes = {
-    authenticate : propTypes.func.isRequired,
-    errorMessage : propTypes.string,
-    headerMessage : propTypes.string,
-    fit_in : propTypes.bool,
-    spinner : propTypes.bool,
-    buttonMessage : propTypes.string
-  }
+export function Authenticate({ authenticate, errorMessage, headerMessage, fit_in, spinner, buttonMessage }){
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
 
-  static defaultProps = {
-    errorMessage : "",
-    headerMessage : "Log in",
-    fit_in : false,
-    spinner : false,
-    buttonMessage : "Log in"
-  }
-
-  constructor(props){
-    super(props);
-
-    this.state = {
-      username : "",
-      password : ""
-    }
-  }
-
-  handlePasswordChange = (event) => {
-    this.setState({password: event.target.value});
-  }
-
-  handleUserNameChange = (event) => {
-    this.setState({username: event.target.value});
-  }
-
-  onSubmitFunc(event) {
+  function onSubmitFunc(event) {
     event.preventDefault();
-    this.props.authenticate(this.state.username, this.state.password);
+    authenticate(username, password);
   }
 
-  render() {
-    return (
-      <div className={this.props.fit_in ? styles.AuthenticationBox : styles.AuthenticationBoxNoFit}>
-        <h3 className={"text-center " + styles.AuthenticationHeader + " " + SiteStyles.mariBold}>{this.props.headerMessage}</h3>
+  return (
+    <div className={fit_in ? styles.AuthenticationBox : styles.AuthenticationBoxNoFit}>
+      <h3 className={"text-center " + styles.AuthenticationHeader + " " + SiteStyles.mariBold}>{headerMessage}</h3>
         <hr className={SiteStyles.Margin0tb}/>
         <div>
-          <Form onSubmit={this.onSubmitFunc.bind(this)}>
+          <Form onSubmit={onSubmitFunc}>
             <div className={"form-group " + styles.formRow}>
               <label htmlFor="username">Bruger navn</label>
               <input
@@ -76,8 +43,8 @@ export default class Authenticate extends Component {
                 name="username"
                 aria-label="username"
                 autoComplete="new-password"
-                value={this.state.username}
-                onChange={this.handleUserNameChange}
+                value={username}
+                onChange={setStateToEvent(setUsername)}
               />
             </div>
             <div className={"form-group " + styles.formRow}>
@@ -88,17 +55,17 @@ export default class Authenticate extends Component {
                      autoComplete="new-password"
                      name="password"
                      aria-label="password"
-                     value={this.state.password}
-                     onChange={this.handlePasswordChange}/>
+                     value={password}
+                     onChange={setStateToEvent(setPassword)}/>
             </div>
-            {this.props.errorMessage ?
+            {errorMessage ?
               <AlertBox
                 level={ERROR_LEVELS.error}
-                message={this.props.errorMessage}
+                message={errorMessage}
               /> : null
             }
             <div className={"form-group " + styles.formRow}>
-              { this.props.spinner ?
+              { spinner ?
                   <Spinner
                     animation="border"
                     variant="primary"
@@ -106,13 +73,29 @@ export default class Authenticate extends Component {
                   <Button
                     type="submit"
                     className="btn btn-primary">
-                      {this.props.buttonMessage}
+                      {buttonMessage}
                   </Button>
               }
             </div>
           </Form>
         </div>
       </div>
-    )
-  }
+  );
+}
+
+Authenticate.propTypes = {
+  authenticate : propTypes.func.isRequired,
+  errorMessage : propTypes.string,
+  headerMessage : propTypes.string,
+  fit_in : propTypes.bool,
+  spinner : propTypes.bool,
+  buttonMessage : propTypes.string
+}
+
+Authenticate.defaultProps = {
+  errorMessage : "",
+  headerMessage : "Log in",
+  fit_in : false,
+  spinner : false,
+  buttonMessage : "Log in"
 }

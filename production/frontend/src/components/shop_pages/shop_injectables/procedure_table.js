@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef } from "react";
 import { FormControl, Table } from "react-bootstrap";
-import { PROP_ACTIVE_ENDPOINT, cssCenter } from "~/lib/constants";
+
 import { DATA_PROCEDURE } from "~/lib/shared_constants"
-import { Procedure, ProcedureIdentifier, DeliveryEndpoint } from "~/dataclasses/dataclasses";
+import { Procedure } from "~/dataclasses/dataclasses";
 import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
 import { EndpointsProcedures, TracerCatalog } from "~/lib/data_structures";
@@ -12,7 +12,7 @@ import { useTracershopState, useWebsocket } from "~/components/tracer_shop_conte
 import { setStateToEvent } from "~/lib/state_management";
 import { ClickableIcon } from "~/components/injectable/icons";
 import { parseDanishNumberInput, parseWholePositiveNumber } from "~/lib/user_input";
-import { ErrorInput } from "~/components/injectable/error_input";
+import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"

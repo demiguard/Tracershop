@@ -28,16 +28,26 @@ function addTimeColons(event, currentInput){
  * @returns 
  */
 export function TimeInput(props){
-  const formControlProps = {...props};
+  const newProps = {...props};
 
   function inputFunction(event){
     props.stateFunction(addTimeColons(event, props.value));
   }
 
-  delete formControlProps.stateFunction;
+  delete newProps.stateFunction;
+  newProps['onChange'] = inputFunction;
+
+  if('canEdit' in props){
+    if(!props['canEdit']){
+      newProps['readOnly'] = true;
+      delete newProps['onChange'];
+
+    }
+    delete newProps['canEdit'];
+  }
 
   return <FormControl
-    {...formControlProps}
+    {...newProps}
     onChange={inputFunction}
   />
 }

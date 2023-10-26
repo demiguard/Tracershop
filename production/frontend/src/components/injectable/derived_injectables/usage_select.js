@@ -6,7 +6,15 @@ import { INJECTION_USAGE } from '../../../lib/constants'
 export function UsageSelect(props){
   const newProps = {...props}
 
-  function nameFunction(name, id){
+  if('canEdit' in props){
+    if(!props['canEdit']){
+      newProps['disabled'] = true;
+      delete newProps['onChange']
+    }
+    delete newProps['canEdit']
+  }
+
+  function nameFunction(_, id){
     if(id === INJECTION_USAGE.human){
       return 'Human'
     }

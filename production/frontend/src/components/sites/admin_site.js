@@ -79,8 +79,7 @@ export function AdminSite({logout}) {
     throw `Undefined site ${activeSite} attempt to rendered`;
   }
 
-  return(
-  <ActiveSite
+  return(<ActiveSite
     logout={logout}
     NavbarElements={NavbarAdmin}
   />);

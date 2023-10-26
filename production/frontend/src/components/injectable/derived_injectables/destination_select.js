@@ -7,7 +7,7 @@
 import React from 'react'
 
 import { Customer, DeliveryEndpoint, Tracer, ActivityDeliveryTimeSlot } from "../../../dataclasses/dataclasses";
-import { TracershopInputGroup } from "../tracershop_input_group";
+import { TracershopInputGroup } from "../inputs/tracershop_input_group";
 import { CustomerSelect } from "./customer_select";
 import { EndpointSelect } from "./endpoint_select";
 import { TimeSlotSelect } from "./timeslot_select";

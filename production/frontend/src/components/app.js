@@ -7,7 +7,7 @@ export { App }
 export default function App() {
   return (
     <TracerShopContext>
-      <TracerShop/>);
+      <TracerShop/>
     </TracerShopContext>);
   }
 

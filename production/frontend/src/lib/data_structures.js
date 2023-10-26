@@ -3,10 +3,10 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
 import { getDay, getWeekNumber } from "./chronomancy";
-import { TRACER_TYPE, WEEKLY_REPEAT_CHOICES } from "./constants";
+import { TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
 import { sortTimeSlots } from "./sorting";
 import { numberfy } from "./utils";
@@ -523,3 +523,66 @@ export class OrderDateMapping {
   }
 }
 
+/**
+ * This is a mapping over the various release rights a Production user have.
+ * To determine if a user have rights to free a tracer:
+ * @example 
+ * // Return true or false
+ * const releaseRightHolder = new ReleaseRightHolder(user, releaseRights);
+ * releaseRightHolder.permissionForTracer(tracer);
+ */
+export class ReleaseRightHolder {
+  /** @type {Map} */_rightsMap
+  /** @type {Boolean} */ _allowAll
+
+  /**
+   * This is a mapping over the various release rights a Production user have.
+  * To determine if a user have rights to free a tracer:
+  * @example 
+  * // Return true or false
+  * const releaseRightHolder = new ReleaseRightHolder(user, releaseRights);
+  * releaseRightHolder.permissionForTracer(tracer);
+   * @param {User} user 
+   * @param {Map<Number, ReleaseRight>} releaseRights 
+   */
+  constructor(user, releaseRights) {
+    this._rightsMap = new Map();
+    this._allowAll = user.user_group === USER_GROUPS.ADMIN;
+    // While this class are personal, but that should be fine since it's a very rare
+    // that users switch around.
+
+    for(const releaseRight of releaseRights.values()){
+      if(releaseRight.releaser !== user.id) {
+        continue;
+      }
+
+      this._rightsMap.set(releaseRight.product, releaseRight.expiry_date);
+    }
+  }
+
+  permissionForTracer(tracer, now){
+    if(now === undefined){
+      now = new Date();
+    }
+
+    if(tracer instanceof Tracer){
+      tracer = tracer.id;
+    }
+
+    if(this._allowAll) {
+      return true;
+    }
+
+    const expiry_date = this._rightsMap.get(tracer);
+
+    if(expiry_date === undefined){
+      return false;
+    }
+
+    if(expiry_date === null){
+      return true;
+    }
+
+    return now < new Date(expiry_date);
+  }
+}

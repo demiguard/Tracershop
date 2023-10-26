@@ -11,13 +11,13 @@ const DispatchContext = createContext({});
 const WebsocketContext = createContext(TracerWebSocket);
 
 export function StateContextProvider({children, value}) {
-  return <StateContext.Provider value={value}>{children}</StateContext.Provider>
+  return (<StateContext.Provider value={value}>{children}</StateContext.Provider>);
 }
 export function DispatchContextProvider({children, value}) {
-  return <DispatchContext.Provider value={value}>{children}</DispatchContext.Provider>
+  return (<DispatchContext.Provider value={value}>{children}</DispatchContext.Provider>);
 }
 export const WebsocketContextProvider = ({children, value}) => {
-  return <WebsocketContext.Provider value={value}>{children}</WebsocketContext.Provider>
+  return (<WebsocketContext.Provider value={value}>{children}</WebsocketContext.Provider>);
 }
 
 /**

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { FormControl, InputGroup, Table } from "react-bootstrap";
-import { TracershopInputGroup } from "../../injectable/tracershop_input_group";
+import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { setStateToEvent } from "../../../lib/state_management";
 import { Option, Select, toOptions } from "../../injectable/select";
 import { DATA_CUSTOMER, DATA_ENDPOINT, DATA_LOCATION } from "~/lib/shared_constants"

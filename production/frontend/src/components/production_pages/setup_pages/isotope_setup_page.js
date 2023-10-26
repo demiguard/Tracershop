@@ -2,13 +2,13 @@ import React, {useState} from 'react';
 import { Container, FormCheck, FormControl, InputGroup, Table } from 'react-bootstrap';
 
 import { DATA_ISOTOPE } from '~/lib/shared_constants';
-import { TracershopInputGroup } from '../../injectable/tracershop_input_group';
+import { TracershopInputGroup } from '../../injectable/inputs/tracershop_input_group';
 import { setStateToEvent } from '../../../lib/state_management';
 import { ClickableIcon } from '../../injectable/icons';
 import { parseDanishPositiveNumberInput } from '../../../lib/user_input';
 import { Isotope } from '../../../dataclasses/dataclasses';
 import { TracerWebSocket } from '../../../lib/tracer_websocket';
-import { ErrorInput } from '../../injectable/error_input';
+import { ErrorInput } from '../../injectable/inputs/error_input';
 import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context';
 
 

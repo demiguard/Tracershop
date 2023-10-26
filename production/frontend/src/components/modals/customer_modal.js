@@ -18,7 +18,7 @@ import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 import styles from '~/css/Site.module.css'
 import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "~/dataclasses/dataclasses.js";
 import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
-import { TimeInput } from "../injectable/time_form.js";
+import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { setStateToEvent } from "~/lib/state_management.js";

@@ -10,7 +10,7 @@ import { DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
 } from "../../lib/constants.js";
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
   ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
-import { TracershopInputGroup } from "../injectable/tracershop_input_group.js";
+import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
@@ -207,8 +207,8 @@ export function ShopOrderPage ({}){
           </Container>
         </Row>
         <Row>
-            <div>
-              <ShopCalender
+          <div>
+            <ShopCalender
               active_date={today}
               active_endpoint={activeEndpoint}
               on_day_click={setActiveDate}

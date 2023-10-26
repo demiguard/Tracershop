@@ -88,7 +88,7 @@ class TracershopModel(Model):
     # Now this is a know problem and at some point in time, i'm gonna look for
     # the solution
     # https://stackoverflow.com/questions/30449960/django-save-vs-update-to-update-the-database
-    creating = bool(self.pk)
+    creating = self.pk is None
 
     if not creating:
       action = self.canEdit(user)
