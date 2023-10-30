@@ -83,7 +83,10 @@ export function ProductionUserSetup(){
             </Col>
             <Col style={cssCenter} xs="2">
               <HoverBox
-                Base={<Form.Check checked={user.active} onChange={changeActive}/>}
+                Base={<Form.Check 
+                          aria-label={`active-${user.id}`}
+                          checked={user.active}
+                          onChange={changeActive}/>}
                 Hover={<p>Om brugeren er aktiv og kan logge ind eller ej</p>}
               >
               </HoverBox>
@@ -96,8 +99,9 @@ export function ProductionUserSetup(){
                     }}
             >
               <CustomerSelect
+                aria-label={`related-customer-${user.id}`}
                 value={relatedCustomer}
-                onChange={(event) => {setRelatedCustomer(event.target.value)}}
+                onChange={setStateToEvent(setRelatedCustomer)}
                 customers={state.customer}
                 emptyCustomer
               />
@@ -105,17 +109,23 @@ export function ProductionUserSetup(){
             </Col>
             <Col>
               <TracershopInputGroup label="Kodeord">
-                <FormControl value={password} onChange={(event) => {setPassword(event.target.value)}}/>
+                <FormControl
+                  aria-label={`password-${user.id}`}
+                  value={password}
+                  onChange={setStateToEvent(setPassword)}/>
                 <InputGroup.Text style = {{width : AcceptIconWidth}}>
-                {password !== "" ?
+                {password.length > 7 ?
                   <ClickableIcon
+                    label={`update-password-${user.id}`}
                     src="/static/images/accept.svg"
                     onClick={sendPassword}
                   />
                  :
                   <HoverBox Base={
-                    <ClickableIcon src="/static/images/atom-svgrepo-com.svg"
-                    onClick={() => {setPassword(makePassword(12))}}
+                    <ClickableIcon 
+                    label={`generate-password-${user.id}`}
+                      src="/static/images/atom-svgrepo-com.svg"
+                      onClick={() => {setPassword(makePassword(12))}}
                     />}
                     Hover={<p
                       style={{
@@ -168,8 +178,9 @@ export function ProductionUserSetup(){
       <Card.Header>
         <Row>
           <Col>
-          <TracershopInputGroup label="Ny Extern login">
+          <TracershopInputGroup label="Nyt Extern login">
             <FormControl
+              aria-label="new-user-name"
               value={newUserName}
               onChange={setStateToEvent(setNewUserName)}/>
           </TracershopInputGroup>
@@ -177,6 +188,7 @@ export function ProductionUserSetup(){
       <Col>
           <TracershopInputGroup label="Kunde">
             <CustomerSelect
+              aria-label="new-customer"
               value={newCustomer}
               customers={state.customer}
               emptyCustomer
@@ -187,15 +199,20 @@ export function ProductionUserSetup(){
       <Col>
         <TracershopInputGroup label="Kodeord">
           <FormControl
+            aria-label="new-password"
             value={newPassword}
             onChange={setStateToEvent(setNewPassword)}
           />
           <InputGroup.Text style={{ width : AcceptIconWidth}}>
-          { canCreate ? <ClickableIcon src="static/images/plus.svg"
-            onClick={createExternalUser}
-          />
+          { canCreate ? <ClickableIcon
+                          label="create-new-user"
+                          src="static/images/plus.svg"
+                          onClick={createExternalUser}
+                        />
           : <HoverBox Base={
-            <ClickableIcon src="/static/images/atom-svgrepo-com.svg"
+            <ClickableIcon
+              label="generate-new-password"
+              src="/static/images/atom-svgrepo-com.svg"
             onClick={() => {setNewPassword(makePassword(12))}}
             />}
             shiftX={1000}
@@ -218,16 +235,14 @@ export function ProductionUserSetup(){
   }
 
   const ExternalUsersRows = [...state.user.values()].filter(
-    (_user) => {
-      const /**@type {User} */ user = _user
+    (user) => {
       return user.user_group === USER_GROUPS.SHOP_EXTERNAL
     }).map((user, i) => {
-    return(
-    <UserRow
-      key={i}
-      user={user}
-    />)
-  });
+              return(<UserRow
+                      key={i}
+                      user={user}
+                     />)});
+
 
   ExternalUsersRows.push(<NewUserRow key={-1} />);
 

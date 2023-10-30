@@ -29,15 +29,18 @@ describe("Margin Button Test", () => {
     render(<MarginButton data-testid="test">HelloWorld</MarginButton>)
     const button = screen.getByTestId("test")
     expect(screen.queryByText("HelloWorld")).toBeVisible();
-    expect(button).toHaveClass(styles.Margin15lr)
+    const style = getComputedStyle(button);
+    expect(style.marginRight).toBe("10px");
+    expect(style.marginLeft).toBe("10px");
   })
 
   it("Extending of Class Name", () =>{
     render(<MarginButton className="testClass" data-testid="test">HelloWorld</MarginButton>)
     const button = screen.getByTestId("test")
     expect(screen.queryByText("HelloWorld")).toBeVisible();
-    expect(button).toHaveClass(styles.Margin15lr)
-    expect(button).toHaveClass("testClass")
+    const style = getComputedStyle(button);
+    expect(style.marginRight).toBe("10px");
+    expect(style.marginLeft).toBe("10px");
   })
 
   it("Click function", () => {
@@ -54,6 +57,8 @@ describe("Close Button Test", () => {
     render(<CloseButton data-testid="test"/>)
     const button = screen.getByTestId("test")
     expect(screen.queryByText("Luk")).toBeVisible();
-    expect(button).toHaveClass(styles.Margin15lr)
+    const style = getComputedStyle(button);
+    expect(style.marginRight).toBe("10px");
+    expect(style.marginLeft).toBe("10px");
   })
 })

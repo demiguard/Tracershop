@@ -6,10 +6,10 @@ import React from "react";
 import { act } from "react-dom/test-utils";
 import { render, screen, cleanup } from "@testing-library/react"
 
-import { AppState } from "../../app_state.js";
+import { AppState, testState } from "../../app_state.js";
 
 import { CloseDaysPage } from "../../../components/production_pages/setup_pages/close_days_page.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -17,7 +17,7 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
 let container = null;
-let props = null;
+
 
 beforeAll(() => {
   jest.useFakeTimers('modern')
@@ -27,7 +27,7 @@ beforeAll(() => {
 beforeEach(() => {
     container = document.createElement("div");
     websocket = tracer_websocket.TracerWebSocket
-    props = {...AppState};
+
 });
 
 afterEach(() => {
@@ -37,15 +37,16 @@ afterEach(() => {
 
   if(container != null) container.remove();
   container = null;
-  props=null
 });
 
 
 describe("Close Days Setup test", () => {
   it("Standard Render test", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CloseDaysPage {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CloseDaysPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
     expect(await screen.findByLabelText('calender-day-1')).toBeVisible()
     expect(await screen.findByLabelText('calender-day-2')).toBeVisible()
@@ -58,9 +59,11 @@ describe("Close Days Setup test", () => {
   });
 
   it("Create close date", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CloseDaysPage {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CloseDaysPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       const button = await screen.findByLabelText('calender-day-12')
       button.click();
@@ -68,9 +71,11 @@ describe("Close Days Setup test", () => {
   })
 
   it("Delete close date", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <CloseDaysPage {...props}/>
-    </WebsocketContextProvider>);
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CloseDaysPage/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
     await act(async () => {
       // Note that from src/tests/test_state/close_dates
       const button = await screen.findByLabelText('calender-day-13')

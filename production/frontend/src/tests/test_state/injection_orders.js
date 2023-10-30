@@ -7,7 +7,7 @@ export const injection_orders = new Map([
       "2020-05-04", // delivery_date
       1, // injections
       1, // status
-      1, // tracer_usage
+      0, // tracer_usage
       null, // comment
       null, // ordered_by
       1, // endpoint
@@ -22,7 +22,7 @@ export const injection_orders = new Map([
       1, // injections
       2, // status
       1, // tracer_usage
-      null, // comment
+      "Test Comment!", // comment
       null, // ordered_by
       1, // endpoint
       2, // tracer
@@ -35,7 +35,22 @@ export const injection_orders = new Map([
       "2020-05-04", // delivery_date
       1, // injections
       3, // status
-      1, // tracer_usage
+      2, // tracer_usage
+      null, // comment
+      null, // ordered_by
+      1, // endpoint
+      2, // tracer
+      "test-200504-1", // lot_number
+      "", // freed_datetime
+      null, // freed_by
+  )],
+  [4, new InjectionOrder(
+      4, // id
+      "10:00:00", // delivery_time
+      "2020-05-04", // delivery_date
+      1, // injections
+      3, // status
+      3, // tracer_usage
       null, // comment
       null, // ordered_by
       1, // endpoint

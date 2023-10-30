@@ -3,19 +3,16 @@ import { Container, FormCheck, FormControl, InputGroup, Table } from 'react-boot
 
 import { DATA_ISOTOPE } from '~/lib/shared_constants';
 import { TracershopInputGroup } from '../../injectable/inputs/tracershop_input_group';
-import { setStateToEvent, setTempObjectToEvent } from '../../../lib/state_management';
-import { ClickableIcon } from '../../injectable/icons';
+import { setTempObjectToEvent } from '../../../lib/state_management';
 import { parseDanishPositiveNumberInput } from '../../../lib/user_input';
 import { Isotope } from '../../../dataclasses/dataclasses';
-import { TracerWebSocket } from '../../../lib/tracer_websocket';
 import { ErrorInput } from '../../injectable/inputs/error_input';
 import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context';
 import { CommitButton } from '~/components/injectable/commit_button';
 
 
-export function IsotopeSetupPage(props) {
+export function IsotopeSetupPage() {
   const state = useTracershopState();
-  const websocket = useWebsocket();
 
    /**
   * 
@@ -70,6 +67,7 @@ export function IsotopeSetupPage(props) {
       <td>
         <TracershopInputGroup label="Bogstav">
           <FormControl
+            aria-label={`atomic-letter-${isotope.id}`}
             maxLength={3}
             value={tempIsotope.atomic_letter}
             onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'atomic_letter')}
@@ -80,6 +78,7 @@ export function IsotopeSetupPage(props) {
         <TracershopInputGroup>
           <ErrorInput error={atomicNumberError}>
             <FormControl
+              aria-label={`atomic-number-${isotope.id}`}
               value={tempIsotope.atomic_number}
               onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'atomic_number')}
               />
@@ -93,6 +92,7 @@ export function IsotopeSetupPage(props) {
         <TracershopInputGroup>
           <ErrorInput error={atomicMassError}>
             <FormControl
+              aria-label={`atomic-mass-${isotope.id}`}
               value={tempIsotope.atomic_mass}
               onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'atomic_mass')}
               />
@@ -106,6 +106,7 @@ export function IsotopeSetupPage(props) {
         <TracershopInputGroup>
           <ErrorInput error={halflifeError}>
             <FormControl
+              aria-label={`halflife-${isotope.id}`}
               value={tempIsotope.halflife_seconds}
               onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'halflife_seconds')}
             />
@@ -117,12 +118,14 @@ export function IsotopeSetupPage(props) {
       </td>
       <td>
         <FormCheck
+          aria-label={`metastable-${isotope.id}`}
           onChange={() => {setMetastable(!tempIsotope.metastable)}}
           checked={tempIsotope.metastable}
           />
       </td>
       <td>
         {changed ? <CommitButton
+          label={`commit-${isotope.id}`}
           temp_object={tempIsotope}
           validate={validate}
           object_type={DATA_ISOTOPE}

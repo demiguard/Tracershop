@@ -89,7 +89,7 @@ export function FreeingRightsPage(){
    * }} param0 
    * @returns 
    */
-  function ReleaseRightTableRow({releaseRight, websocket}){
+  function ReleaseRightTableRow({releaseRight}){
     const user = state.user.get(releaseRight.releaser)
     const tracer = state.tracer.get(releaseRight.product)
     function deleteReleaseRight(){
@@ -106,14 +106,19 @@ export function FreeingRightsPage(){
       <td>{tracer.shortname}</td>
       <td>{expiryDate}</td>
       <td style={cssAlignRight}>
-        <ClickableIcon src="static/images/decline.svg" onClick={deleteReleaseRight}/>
+        <ClickableIcon 
+          label={`delete-release-right-${releaseRight.id}`}
+          src="static/images/decline.svg"
+          onClick={deleteReleaseRight}/>
       </td>
     </tr>)
   }
 
+  // So here we kinda get fucked by the fact double hover box, is not gonna work
   const expiryDateForm  = (expiryDateError !== "") ?
         <HoverBox
           Base={<DateInput
+            aria-label="new-expiry-date"
             style={cssError}
             placeholder='Udløbsdato'
             value={expiryDate}
@@ -123,6 +128,7 @@ export function FreeingRightsPage(){
         />
         : <HoverBox
             Base={<DateInput
+              aria-label="new-expiry-date"
               placeholder='Udløbsdato'
               value={expiryDate}
               stateFunction={setExpiryDate}
@@ -156,9 +162,15 @@ export function FreeingRightsPage(){
           <Table>
             <thead>
               <tr>
-                <th>Frigiver</th>
-                <th>Tracer</th>
-                <th>Udløbsdato</th>
+                <th
+                  aria-label='sort-user'
+                  onClick={() => {setSortingMethod(SORTING_METHODS.USER)}}>Frigiver</th>
+                <th
+                  aria-label='sort-tracer'
+                  onClick={() => {setSortingMethod(SORTING_METHODS.TRACER)}}>Tracer</th>
+                <th
+                  aria-label='sort-expiry-date'
+                  onClick={() => {setSortingMethod(SORTING_METHODS.EXPIRY_DATE)}}>Udløbsdato</th>
                 <th></th>
               </tr>
             </thead>
@@ -190,7 +202,11 @@ export function FreeingRightsPage(){
         {expiryDateForm}
       </Col>
       <Col style={cssCenter}>
-        <ClickableIcon src="/static/images/plus.svg" onClick={createReleaseRight}/>
+        <ClickableIcon
+          label="create-release-right"
+          src="/static/images/plus.svg"
+          onClick={createReleaseRight}
+        />
       </Col>
     </Row>
   </Container>);

@@ -39,9 +39,7 @@ export function ProcedureTable(){
   const activeProcedures = endpointProcedures.getProcedures(activeEndpoint);
 
   const tracerCatalog = new TracerCatalog(state.tracer_mapping, state.tracer);
-  const availableTracers = tracerCatalog.getActivityCatalog(activeCustomer).concat(tracerCatalog.getInjectionCatalog(activeCustomer))
-
-  console.log(availableTracers);
+  const availableTracers = tracerCatalog.getActivityCatalog(activeCustomer).concat(tracerCatalog.getInjectionCatalog(activeCustomer));
 
   const tracerOptions = toOptions(availableTracers, 'shortname');
   tracerOptions.push(new Option("", "---------"));
@@ -54,12 +52,11 @@ export function ProcedureTable(){
   * @returns {Element}
    */
   function ProcedureRow({procedure}){
-    const procedureIdentifier = state.procedure_identifier.get(procedure.series_description)
+    const procedureIdentifier = state.procedure_identifier.get(nullParser(procedure.series_description));
     // State Declaration
-    const nullTracer = nullParser(procedure.tracer)
-    const [tracer, setTracer] = useState(nullTracer);
-    const [units, setUnits] = useState(procedure.tracer_units);
-    const [delay, setDelay] = useState(procedure.delay_minutes);
+    const [tracer, setTracer] = useState(nullParser(procedure.tracer));
+    const [units, setUnits] = useState(nullParser(procedure.tracer_units));
+    const [delay, setDelay] = useState(nullParser(procedure.delay_minutes));
     const [errorUnits, setErrorUnits] = useState("");
     const [errorDelay, setErrorDelay] = useState("");
 
@@ -142,9 +139,8 @@ export function ProcedureTable(){
 
     procedureIdentifierOptions.push(new Option("", "-----------------"))
     // State Declaration
-    const [seriesDescription, setSeriesDescription] = useState(procedure.series_description)
-    const nullTracer = nullParser(procedure.tracer)
-    const [tracer, setTracer] = useState(nullTracer);
+    const [seriesDescription, setSeriesDescription] = useState(nullParser(procedure.series_description));
+    const [tracer, setTracer] = useState(nullParser(procedure.tracer));
     const [units, setUnits] = useState(procedure.tracer_units);
     const [delay, setDelay] = useState(procedure.delay_minutes);
     const [errorSeriesDescription, setErrorSeriesDescription] = useState("");

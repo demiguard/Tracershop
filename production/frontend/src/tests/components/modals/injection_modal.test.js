@@ -112,7 +112,7 @@ describe("Injection modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const input = await screen.findByLabelText("batchnr-input")
+    const input = await screen.findByLabelText("lot-input")
     fireEvent.change(input, {target : {value : "test-111111-1"}});
 
     expect(input.value).toBe("test-111111-1");
@@ -145,7 +145,7 @@ describe("Injection modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
+    fireEvent.change(await screen.findByLabelText("lot-input"), {target : {value : "test-111111-1"}});
 
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
@@ -174,7 +174,7 @@ describe("Injection modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    fireEvent.change(await screen.findByLabelText("batchnr-input"), {target : {value : "test-111111-1"}});
+    fireEvent.change(await screen.findByLabelText("lot-input"), {target : {value : "test-111111-1"}});
 
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
     fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));

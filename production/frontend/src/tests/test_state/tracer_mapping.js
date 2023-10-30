@@ -41,5 +41,11 @@ export const tracer_mapping = new Map([
     tracer : 1,
     max_injections : null,
     overhead_multiplier : 1.25
-}]
+}], [8, {
+    id : 7,
+    customer : 2,
+    tracer : 3,
+    max_injections : null,
+    overhead_multiplier : 1
+}],
 ])

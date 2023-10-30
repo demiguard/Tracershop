@@ -6,6 +6,7 @@ export function CommitButton({
   temp_object,
   validate,
   object_type,
+  label="",
   edit_image="/static/images/update.svg",
   add_image="/static/images/plus.svg",
 }){
@@ -33,6 +34,7 @@ export function CommitButton({
   }
 
   return <ClickableIcon
+    label={label}
     src={image_src}
     onClick={onClick}
   />

@@ -27,7 +27,6 @@ beforeAll(() => {
 
 beforeEach(() => {
     websocket = tracer_websocket.TracerWebSocket
-
 });
 
 afterEach(() => {

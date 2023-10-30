@@ -1,13 +1,14 @@
 /** This is the page, where a production admin can create a closed day */
 import React, { useState } from "react";
 
-
-import { CloseDayCalender } from "~/components/injectable/derived_injectables/close_day_calender";
 import { ProductionCalender } from "~/components/injectable/derived_injectables/production_calender";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { ClosedDate } from "~/dataclasses/dataclasses";
+import { dateToDateString } from "~/lib/formatting";
+import { DATA_CLOSED_DATE } from "~/lib/shared_constants";
 
 export function CloseDaysPage () {
+  const state = useTracershopState();
   const [activeDate, _] = useState(new Date())
   const websocket = useWebsocket();
   const closedDateMap = new Map();

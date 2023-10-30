@@ -165,7 +165,7 @@ export function InjectionModal ({modal_order, on_close}) {
                       <td><LotNumberHeader/></td>
                       <td>
                         <EditableInput
-                          aria-label="batch-input"
+                          aria-label="lot-input"
                           value={lot_number}
                           canEdit={canEdit}
                           onChange={setStateToEvent(setLotNumber)}

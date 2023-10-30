@@ -31,7 +31,7 @@ beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
+  websocket = tracer_websocket.TracerWebSocket;
 
 });
 
@@ -52,7 +52,6 @@ describe("Tracer shop test suite", () => {
       ...testState,
       logged_in_user : ANON,
     })
-
 
 
     render(<StateContextProvider value={newState}>

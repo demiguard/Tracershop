@@ -4,10 +4,12 @@ import { Tracer } from '~/dataclasses/dataclasses'
 import { HoverBox } from '../hover_box';
 
 export function TracerDisplay({tracer}){
+  const state = useTracershopState();
   if (tracer instanceof Number){
-    const state = useTracershopState();
     tracer = state.tracer.get(tracer)
   }
+  const isotope = state.isotopes.get(tracer.isotope);
+
   const clinicalName = (tracer.clinical_name != "") ?
   `${tracer.clinical_name} - ${isotope.atomic_letter}-${isotope.atomic_mass}`
   : "IUPAC navn for denne tracer er ikke angivet!";

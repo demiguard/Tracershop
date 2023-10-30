@@ -3,9 +3,8 @@ import React, { useState } from "react";
 import { Row, Col, Table, Button, Container } from 'react-bootstrap';
 import propTypes from "prop-types"
 
-import { INJECTION_USAGE,  PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER } from "../../lib/constants.js";
+import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER } from "../../lib/constants.js";
 import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting.js";
-import { renderTableRow, renderComment } from '~/lib/rendering.js';
 import { compareDates } from "../../lib/utils.js";
 import { CreateInjectionOrderModal } from "../modals/create_injection_modal.js";
 import { InjectionModal } from "../modals/injection_modal.js";
@@ -62,13 +61,11 @@ export function InjectionTable({active_date}) {
   }
 
   function setSortingMethod(newMethod){
-    return () => {
-      if(newMethod === sortingMethod){
-        setInvertedSorting(!invertedSorting);
-        return;
-      } else {
-        _setSortingMethod(newMethod);
-      }
+    if(newMethod === sortingMethod){
+      setInvertedSorting(!invertedSorting);
+      return;
+    } else {
+      _setSortingMethod(newMethod);
     }
   }
 
@@ -97,7 +94,11 @@ export function InjectionTable({active_date}) {
 
     return (
       <tr>
-        <td><StatusIcon status={order.status} onClick={() => openOrderModal(order)}/></td>
+        <td><StatusIcon
+              label={`status-icon-${order.id}`}
+              status={order.status}
+              onClick={() => openOrderModal(order)}/>
+        </td>
         <td>{order.id}</td>
         <td>{customer.short_name} - {endpoint.name}</td>
         <td><TracerDisplay tracer={tracer}/></td>
@@ -107,9 +108,7 @@ export function InjectionTable({active_date}) {
         <td><Comment comment={order.comment}/></td>
       </tr>
     );
-
   }
-
 
     const /**@type {Array<InjectionOrder>} */ orders = [];
 
@@ -165,13 +164,27 @@ export function InjectionTable({active_date}) {
         <Table>
           <thead>
             <tr>
-              <th onClick={() => {setSortingMethod(SortingMethods.STATUS)}}>Status</th>
-              <th onClick={() => {setSortingMethod(SortingMethods.ORDER_ID)}}>Order ID</th>
-              <th onClick={() => {setSortingMethod(SortingMethods.DESTINATION)}}>Destination</th>
-              <th onClick={() => {setSortingMethod(SortingMethods.TRACER)}}>Tracer</th>
-              <th onClick={() => {setSortingMethod(SortingMethods.INJECTIONS)}}>Injektioner</th>
-              <th onClick={() => {setSortingMethod(SortingMethods.ORDERED_TIME)}}>Bestilt Til</th>
-              <th onClick={() => {setSortingMethod(SortingMethods.USAGE)}}>Anvendelse</th>
+              <th
+                aria-label="sort-status"
+                onClick={() => {setSortingMethod(SortingMethods.STATUS)}}>Status</th>
+              <th
+                aria-label="sort-order-id"
+                onClick={() => {setSortingMethod(SortingMethods.ORDER_ID)}}>Order ID</th>
+              <th
+                aria-label="sort-destination"
+                onClick={() => {setSortingMethod(SortingMethods.DESTINATION)}}>Destination</th>
+              <th
+                aria-label="sort-tracer"
+                onClick={() => {setSortingMethod(SortingMethods.TRACER)}}>Tracer</th>
+              <th
+                aria-label="sort-injections"
+                onClick={() => {setSortingMethod(SortingMethods.INJECTIONS)}}>Injektioner</th>
+              <th
+                aria-label="sort-deliver-time"
+                onClick={() => {setSortingMethod(SortingMethods.ORDERED_TIME)}}>Bestilt Til</th>
+              <th
+                aria-label="sort-usage"
+                onClick={() => {setSortingMethod(SortingMethods.USAGE)}}>Anvendelse</th>
               <th>Kommentar</th>
             </tr>
           </thead>
