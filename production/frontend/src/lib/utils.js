@@ -1,6 +1,7 @@
 /** This module is for library functions which doesn't belong in other  */
 
-import { DeliveryEndpoint, Tracer } from "../dataclasses/dataclasses";
+import { DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
+import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH } from "./shared_constants";
 
 /**
  *
@@ -14,7 +15,7 @@ export function compareDates(d1, d2) {
 }
 
 export function BooleanMapping(bool){
-  return (bool) ? 1 : 0
+  return (bool) ? 1 : 0;
 }
 
 /** istanbul ignore next */
@@ -63,8 +64,17 @@ export function getId(obj){
  * @param {Date} date 
  */
 export function getPDFUrls(endpoint, tracer, date){
-  return `pdfs/${endpoint.id}/${tracer.id}/${
+  return `${URL_ACTIVITY_PDF_BASE_PATH}/${endpoint.id}/${tracer.id}/${
     date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`;
+}
+
+/**
+ * 
+ * @param {InjectionOrder} order 
+ * @returns {String} the path to the realease note of the injection order
+ */
+export function InjectionOrderPDFUrl(order){
+  return `${URL_INJECTION_PDF_BASE_PATH}/${order.id}`
 }
 
 /**

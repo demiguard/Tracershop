@@ -1,5 +1,6 @@
 import React, { useState } from "react";
-import { Container } from "react-bootstrap";
+import { Container, Row, Col, FormControl } from "react-bootstrap";
+
 import { ActivityProduction } from "../../../dataclasses/dataclasses";
 import { WeeklyTimeTable } from "~/components/injectable/weekly_time_table";
 import { DAYS, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER,
@@ -9,6 +10,8 @@ import { DAYS, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER,
 import { DATA_PRODUCTION } from "~/lib/shared_constants";
 import { tracerTypeFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { Select, toOptions } from "~/components/injectable/select";
+import { ErrorInput } from "~/components/injectable/inputs/error_input";
 
 export function ProductionSetup(){
   const state = useTracershopState();
@@ -19,10 +22,7 @@ export function ProductionSetup(){
   );
   const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id;
 
-  const tempProductionInit = (productions.length === 0) ?
-                                  new ActivityProduction(-1, DAYS.MONDAY, tracerInit, "", "", "")
-                                : {...productions[0]}
-
+  const tempProductionInit = new ActivityProduction(-1, DAYS.MONDAY, tracerInit, "", "", "")
   const [tempProduction, _setTempProduction] = useState(tempProductionInit);
 
   function setTempProduction(newTempProduction) {
@@ -69,7 +69,7 @@ export function ProductionSetup(){
    * @returns {string}
    */
   function weeklyTimeTableEntryColor(entry){
-    if(entry.id == state.tempProduction.id){
+    if(entry.id == tempProduction.id){
       return 'orange';
     }
 
@@ -81,15 +81,11 @@ export function ProductionSetup(){
    * @param {ActivityProduction} activityProduction
    */
   function weeklyTimeTableEntryOnClick(activityProduction){
-    setState({
-      tempProduction : {...activityProduction}
-    })
+    setTempProduction({...activityProduction});
   }
 
   function weeklyTimeTableInnerText(entry){
-    return (<div>
-      {entry.production_time}
-    </div>)
+    return (<div>{entry.production_time}</div>)
   }
 
   /**
@@ -113,16 +109,35 @@ export function ProductionSetup(){
 
 
   return (<Container>
+    <Row
+      style={{
+        margin : "15px"
+      }}>
+      <Col>
+        <Select
+          options={toOptions(activityTracers, 'shortname')}
+          value={tempProduction.tracer}
+        />
+      </Col>
+      <Col>
+        <Select
+          value={tempProduction.production_day}
+        />
+      </Col>
+      <Col>
+        <ErrorInput>
+          <FormControl value={tempProduction.production_time}/>
+        </ErrorInput>
+      </Col>
+      <Col>
+        
+      </Col>
+    </Row>
+
     <Row>
       <WeeklyTimeTable
         {...weeklyTimeTableProps}
       />
-    </Row>
-    <Row>
-      <Col></Col>
-      <Col></Col>
-      <Col></Col>
-      <Col></Col>
     </Row>
   </Container>)
 }

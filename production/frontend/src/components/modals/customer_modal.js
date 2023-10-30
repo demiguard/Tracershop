@@ -368,10 +368,8 @@ export function CustomerModal({
    * @param {ActivityDeliveryTimeSlot} entry
    */
   function weeklyTimeTableEntryOnClick(entry){
-    return (_event) => {
-      setActiveTimeSlot(entry.id);
-      setTempTimeSlot({...entry});
-    }
+    setActiveTimeSlot(entry.id);
+    setTempTimeSlot({...entry});
   }
 
   function weeklyTimeTableInnerText(entry){

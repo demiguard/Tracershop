@@ -58,6 +58,10 @@ export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
 export const JAVASCRIPT_VERSION = "1.0.1";
 
+export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
+export const URL_INDEX = "";
+export const URL_INJECTION_PDF_BASE_PATH = "injection_pdfs";
+
 export const WEBSOCKET_DATA = "data";
 export const WEBSOCKET_DATATYPE = "datatype";
 export const WEBSOCKET_DATA_ID = "dataID";

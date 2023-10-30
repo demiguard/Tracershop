@@ -17,24 +17,29 @@ import { renderComment, renderTableRow } from "~/lib/rendering.js";
 
 import { HoverBox } from "../injectable/hover_box.js";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
-import { compareDates } from "~/lib/utils.js";
+import { compareDates, InjectionOrderPDFUrl } from "~/lib/utils.js";
 import { getToday } from "~/lib/chronomancy.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js";
-import { batchNumberValidator } from "~/lib/formatting.js";
+import { batchNumberValidator, nullParser } from "~/lib/formatting.js";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
 import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage.js";
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 import { ReleaseRightHolder } from "~/lib/data_structures.js";
+import { EditableInput } from "../injectable/inputs/number_input.js";
+import { LotNumberHeader } from "../injectable/headers/lot_display.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
   const websocket = useWebsocket();
+  const order = state.injection_orders.get(modal_order);
+
   const [freeing, setFreeing] = useState(false);
-  const [lot_number, setLotNumber] = useState("");
+  const [lot_number, setLotNumber] = useState(nullParser(order.lot_number));
   const [error, setError] = useState("");
   const [errorLevel, setErrorLevel] = useState(ERROR_LEVELS.hint);
-  const order = state.injection_orders.get(modal_order);
+
+  const canEdit = !freeing && order.status !== ORDER_STATUS.RELEASED;
 
   const endpoint = state.delivery_endpoint.get(order.endpoint);
   const customer = state.customer.get(endpoint.owner);
@@ -97,50 +102,6 @@ export function InjectionModal ({modal_order, on_close}) {
   }
 
 
-    const tableRows = [
-      renderTableRow("5", [<div>Injektioner:</div>, <div>{order.injections}</div>]),
-    ]
-
-    if(order.comment != undefined && order.comment != ""){
-      tableRows.push(renderTableRow("666", [
-        "Kommentar:", <div style={{width : "25px"}}>{renderComment(order.comment)}</div> // So the React-hover.Trigger inherits a width that's incorrect
-      ]));
-    }
-  
-  const batchHover = <HoverBox
-  Base={<div>Batch Nummer</div>}
-  Hover={
-    <div>En kode på formattet XXXX-YYMMDD-R
-      <ul>
-        <li>XXXX - Tracer kode, ikke nødvendigvis på 4 bogstaver</li>
-        <li>YYMMDD - Dato kode</li>
-        <li>R - Produktion af denne tracer på denne dato</li>
-      </ul>
-    </div>}
-  />;
-
-  const batchInput = (() => {
-    if(order.status === ORDER_STATUS.RELEASED){
-      return <FormControl
-        aria-label="batchnr-input"
-        value={order.lot_number}
-        readOnly
-      />;
-    } else if(freeing) {
-      return <FormControl
-        aria-label="batchnr-input"
-        value={lot_number}
-        readOnly
-      />;
-    } else {
-      return <FormControl
-      aria-label="batchnr-input"
-      value={lot_number}
-      onChange={setStateToEvent(setLotNumber)}
-      />;
-    }
-  })();
-
   const freeingButton = RightsToFree ?
       <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton>
     : <MarginButton disabled>Frigiv Ordre</MarginButton>
@@ -194,16 +155,22 @@ export function InjectionModal ({modal_order, on_close}) {
                   </tr>
                   {
                    order.comment ? <tr>
-
                     <td>Kommentar</td>
                     <td>{order.comment}</td> {/* Note I render the comment rather than render a comment Icon */}
                   </tr> : ""
                   }
                   {
-                    [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status) ? 
+                    [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status) ?
                     <tr>
-                      <td>{batchHover}</td>
-                      <td>{batchInput}</td>
+                      <td><LotNumberHeader/></td>
+                      <td>
+                        <EditableInput
+                          aria-label="batch-input"
+                          value={lot_number}
+                          canEdit={canEdit}
+                          onChange={setStateToEvent(setLotNumber)}
+                        />
+                      </td>
                     </tr> : ""
                   }
                 </tbody>
@@ -221,7 +188,9 @@ export function InjectionModal ({modal_order, on_close}) {
             {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
             {order.status == 2 && !freeing ? freeingButton : ""}
             {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
-            {order.status == 3 ? <MarginButton>Se følgeseddel</MarginButton> : ""}
+            {order.status == 3 ? <MarginButton onClick={() => {
+              window.location = InjectionOrderPDFUrl(order)}
+            }>Se følgeseddel</MarginButton> : ""}
             <CloseButton onClick={on_close}/>
           </div>
         </Modal.Footer>

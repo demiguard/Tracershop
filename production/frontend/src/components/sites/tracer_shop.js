@@ -6,12 +6,12 @@ import { LoginSite } from "./login_site";
 import { AdminSite } from "./admin_site";
 import { ShopSite } from "./shop_site";
 import { ProductionSite } from "./production_site";
-import { DATABASE_CURRENT_USER, PROP_LOGOUT, PROP_USER, USER_GROUPS} from "~/lib/constants";
+import { DATABASE_CURRENT_USER, DATABASE_TODAY, PROP_LOGOUT, PROP_USER, USER_GROUPS} from "~/lib/constants";
 import { ErrorPage } from "../error_pages/error_page";
 import { User } from "~/dataclasses/dataclasses";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
-import { WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants";
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants";
 import { UpdateCurrentUser } from "~/lib/websocket_actions";
 import Cookies from "js-cookie";
 import { db } from "~/lib/local_storage_driver";
@@ -30,15 +30,15 @@ export function TracerShop() {
     * @param {User} user - User to figure out which site to return
     * @returns {Component}
   */
-  const tracershopState = useTracershopState()
-  const dispatch = useTracershopDispatch()
-  const websocket = useWebsocket()
+  const tracershopState = useTracershopState();
+  const dispatch = useTracershopDispatch();
+  const websocket = useWebsocket();
 
   function logout(){
     websocket.send(websocket.getMessage(WEBSOCKET_MESSAGE_AUTH_LOGOUT)).then(
       () => {
         dispatch(new UpdateCurrentUser(new User()));
-        Cookies.remove('sessionid')
+        Cookies.remove('sessionid');
         db.set(DATABASE_CURRENT_USER, new User());
       }
     )
@@ -52,20 +52,20 @@ export function TracerShop() {
   function get_site_from_user(user) {
 
     if(user.user_group == USER_GROUPS.ANON || user.user_group === undefined){
-      return SITES.log_in_site
+      return SITES.log_in_site;
     }
 
     if (user.user_group == USER_GROUPS.ADMIN){
-      return SITES.admin_site
+      return SITES.admin_site;
     }
     if([USER_GROUPS.PRODUCTION_ADMIN,
         USER_GROUPS.PRODUCTION_USER,].includes(user.user_group)){
-      return SITES.production_site
+      return SITES.production_site;
     }
     if([USER_GROUPS.SHOP_ADMIN,
         USER_GROUPS.SHOP_USER,
         USER_GROUPS.SHOP_EXTERNAL].includes(user.user_group)){
-          return SITES.shop_site
+          return SITES.shop_site;
     }
     /* istanbul ignore next */
     throw "Unknown User group: " + user.user_group;
@@ -75,7 +75,12 @@ export function TracerShop() {
 
   useEffect(() => {
     if(websocket !== null){
-      websocket.send(websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE));
+      const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE);
+      const today = db.get(DATABASE_TODAY);
+      if(today){
+        message[WEBSOCKET_DATE] = today;
+      }
+      websocket.send(message);
     }
   }, [websocket])
 

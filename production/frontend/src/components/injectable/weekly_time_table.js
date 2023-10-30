@@ -80,7 +80,7 @@ export function WeeklyTimeTable({day_function,
                     timeSlots={entry_hour - startingHour}
                     key={key}
                     day={entry_day}
-                    onClick={time_table_entry_onclick(entry)}
+                    onClick={() => {time_table_entry_onclick(entry)}}
                     >{innerText}
                  </AbsoluteCell>)
     key++;

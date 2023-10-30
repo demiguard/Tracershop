@@ -33,3 +33,9 @@ export function toggleState(stateKeyWord, This){
 export function setStateToEvent(stateFunction){
   return (event) => {stateFunction(event.target.value)}
 }
+
+export function setTempObjectToEvent(stateFunction, obj, keyword){
+  return (event) => {
+    stateFunction({...obj, [keyword] : event.target.value});
+  }
+}

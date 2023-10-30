@@ -9,7 +9,7 @@ Most of the functionality is found in:
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard library
-from datetime import date
+from datetime import date, datetime
 from pathlib import Path
 from typing import Iterable, Optional, Tuple, List, Sequence
 
@@ -166,7 +166,7 @@ class MailTemplate(canvas.Canvas):
         releaseTimes.append(timezone_aware.strftime("%H:%M:%S"))
 
     orderData = [[
-      str(order.activity_order_id),
+      str(order.id),
       f"{order.ordered_activity} MBq",
       str(order.ordered_time_slot.delivery_time),
       releaseTime
@@ -324,15 +324,21 @@ class MailTemplate(canvas.Canvas):
       injectionOrder : InjectionOrder,
       ) -> int:
 
+    if(injectionOrder.delivery_date < LEGACY_ENTRIES):
+      self.drawString(x_cursor, y_cursor, "Ordren er lavet i det gamle tracershop, og kan derfor manglel data")
+      y_cursor -= self._line_height
+
+
     tracer = injectionOrder.tracer
     isotope = tracer.isotope
 
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.injection_order_id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
     y_cursor -= self._line_height
 
     if injectionOrder.freed_datetime is None:
-      raise Exception # pragma: no cover
-    freedDatetime = injectionOrder.freed_datetime.strftime("%d/%m/%Y %H:%M")
+      freedDatetime = "Ukendt frigivelse tidspunkt"
+    else:
+      freedDatetime = injectionOrder.freed_datetime.strftime("%d/%m/%Y %H:%M")
 
     self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 

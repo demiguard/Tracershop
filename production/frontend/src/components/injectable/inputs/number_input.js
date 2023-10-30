@@ -6,7 +6,7 @@ export function EditableInput(props){
 
   if('canEdit' in props){
     if(!props['canEdit']){
-      props['readOnly'] = true;
+      newProps['readOnly'] = true;
 
       delete newProps['onChange'];
     }

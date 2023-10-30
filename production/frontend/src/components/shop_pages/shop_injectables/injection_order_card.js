@@ -14,8 +14,9 @@ import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { setStateToEvent } from "~/lib/state_management";
-import { getPDFUrls } from "~/lib/utils";
+import { InjectionOrderPDFUrl } from "~/lib/utils";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { EditableInput } from "~/components/injectable/inputs/number_input";
 
 /**
  * This is a card containing all the information on an injection order
@@ -72,7 +73,7 @@ export function InjectionOrderCard({
     }
 
     if(!validTimeInput){
-     setErrorDeliveryTime(timeInput)
+     setErrorDeliveryTime(timeInput);
     }
 
     return validInjections && validTimeInput;
@@ -80,7 +81,7 @@ export function InjectionOrderCard({
 
   function createInjectionOrder(){
     if(!validateState()){
-      return
+      return;
     }
     // Whoo double calculations - It's a smell, but boy it's insignificant
     const numberInjections = ParseDanishNumber(injections)
@@ -95,7 +96,7 @@ export function InjectionOrderCard({
     websocket.sendCreateInjectionOrder(newOrder);
     resetState();
   }
- 
+
   function editInjectionOrder(){
     if(!validateState()){
       return;
@@ -117,42 +118,22 @@ export function InjectionOrderCard({
   const changed = !(injectionOrder.tracer === tracer
                   && nullParser(injectionOrder.injections) === injections
                   && nullParser(injectionOrder.delivery_time) === deliveryTime
-                  && injectionOrder.tracer_usage === usage)
+                  && injectionOrder.tracer_usage === usage);
 
   const canEdit = injectionOrder.status <= 1 && !validDeadline;
 
-  let statusIcon = ""
+  let statusIcon = "";
   if(0 < injectionOrder.status){
-    statusIcon = <StatusIcon status={injectionOrder.status}></StatusIcon>
+    statusIcon = <StatusIcon status={injectionOrder.status}></StatusIcon>;
   }
 
-  let statusInfo = "Ny ordre"
+  let statusInfo = "Ny ordre";
   if(0 < injectionOrder.status){
-    statusInfo = `ID: ${injectionOrder.id}`
+    statusInfo = `ID: ${injectionOrder.id}`;
   }
 
-  const tracerOptions = toOptions(injectionTracers, 'shortname')
-  let tracerSelect = <Select
-                        options={tracerOptions}
-                        disabled
-                        value={tracer}
-                     />;
+  const tracerOptions = toOptions(injectionTracers, 'shortname');
 
-  if(canEdit){
-    tracerSelect = <Select
-      options={tracerOptions}
-      onChange={setStateToEvent(setTracer)}
-      value={tracer}
-    />;
-  }
-
-  let injectionForm = <Form.Control readOnly value={injections}/>;
-  if(canEdit){
-    injectionForm = <Form.Control
-                      value={injections}
-                      onChange={setStateToEvent(setInjections)}
-                    />;
-  }
 
   const ActionButton = (() => {
     if(injectionOrder.status === ORDER_STATUS.AVAILABLE && changed){
@@ -165,7 +146,7 @@ export function InjectionOrderCard({
       return <ClickableIcon
         src="/static/images/delivery.svg"
         onClick={()=>{
-          window.location = getPDFUrls(endpoint, tracer, new Date())
+          window.location = InjectionOrderPDFUrl(injectionOrder);
         }}
       />
     }
@@ -184,13 +165,22 @@ export function InjectionOrderCard({
         <Col xs={1}>{statusIcon}</Col>
         <Col>
           <TracershopInputGroup label="Tracer">
-            {tracerSelect}
+            <Select
+              canEdit={canEdit}
+              options={tracerOptions}
+              onChange={setStateToEvent(setTracer)}
+              value={tracer}
+            />
           </TracershopInputGroup>
         </Col>
         <Col>
           <TracershopInputGroup label="Injectioner">
             <ErrorInput error={errorInjections}>
-              {injectionForm}
+              <EditableInput
+                canEdit={canEdit}
+                value={injections}
+                onChange={setStateToEvent(setInjections)}
+              />
 
             </ErrorInput>
           </TracershopInputGroup>

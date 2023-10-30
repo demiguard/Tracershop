@@ -13,6 +13,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from asgiref.sync import sync_to_async
+from datetime import datetime
 import logging
 from pprint import pformat
 import traceback
@@ -376,8 +377,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message: (Dict) - This is message send by the user.
                         It have no specialized keys
     """
+    now = self.datetimeNow.now()
+
+    if(WEBSOCKET_DATE in message):
+      try:
+        now = datetime.strptime(message[WEBSOCKET_DATE][:10], '%Y-%m-%d')
+      except ValueError:
+        pass
+
+
     # Assumed to have no Field in the message since it can use the user in scope
-    instances = await self.db.getState(self.datetimeNow.now(),
+
+    instances = await self.db.getState(now,
                                        await get_user(self.scope))
 
     state = await self.db.serialize_dict(instances)

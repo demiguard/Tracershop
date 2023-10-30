@@ -23,7 +23,8 @@ export function TracershopInputGroup(props) {
     }}
     {...newProps}
     >
-      <InputGroup.Text>{label}</InputGroup.Text>
+
+      {label !== undefined ? <InputGroup.Text>{label}</InputGroup.Text> : ""}
       {children}
     </InputGroup>
   );

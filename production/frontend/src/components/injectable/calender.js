@@ -118,8 +118,7 @@ export function Calender({calender_date,
     setActiveMonth(NewMonth)
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
     message[WEBSOCKET_DATE] = NewMonth;
-    websocket.send(message).then(() => {
-    });
+    websocket.send(message);
   }
 
  // ##### Render Functions ##### //

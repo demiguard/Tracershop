@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Row, Col, Button, Container, Card, Collapse } from 'react-bootstrap'
 import { getId, getPDFUrls } from "../../lib/utils.js";
 import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
@@ -16,7 +16,7 @@ import { cssCenter, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
 } from "../../lib/constants.js";
 
 import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
-  WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME,
+  WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE,
 } from "~/lib/shared_constants.js"
 
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
@@ -96,9 +96,9 @@ export function ActivityTable ({active_tracer, active_date}) {
   // Order Filtering
   const todays_orders = applyFilter(state.activity_orders,
                                     dailyActivityOrderFilter(state.deliver_times,
-                                                        state.production,
-                                                        delivery_date,
-                                                        active_tracer));
+                                                             state.production,
+                                                             delivery_date,
+                                                             active_tracer));
 
   const orderMapping = new OrderMapping(todays_orders,
                                         state.deliver_times,

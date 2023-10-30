@@ -39,13 +39,6 @@ export function EndpointSelect(props){
   delete newProps.emptyEndpoint;
   newProps['options'] = endpointOptions
 
-  if(endpointOptions.length === 0){
-    <FormControl {...newProps} readOnly/>
-  }
-  if(endpointOptions.length === 1){
-    return <FormControl {...newProps} readOnly value={endpointOptions[0].name}/>
-  }
-
   return <Select {...newProps}/>
 }
 

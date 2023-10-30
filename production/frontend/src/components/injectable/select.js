@@ -33,6 +33,7 @@ export function toOptions(iterable, nameKey='name', valueKey = 'id'){
   }
 }
 
+
 export function toOptionsFromEnum(obj, namingFunction){
   const options = [];
   for(let [name, id] of Object.entries(obj)){
@@ -46,19 +47,31 @@ export function toOptionsFromEnum(obj, namingFunction){
 }
 
 
-
 export function Select(props) {
+  const newProps = {...props};
+
+  if('canEdit' in props){
+    if(!props['canEdit']){
+      newProps['disabled'] = true;
+      delete newProps['onChange'];
+    }
+    delete newProps['canEdit'];
+  }
+
   const Options = props.options.map(
     (/** @type {Option} */option) => <option value={option.value} key={option.value}>
                   {option.name}
                 </option>);
-  const newProps = {...props}
-  delete newProps['options']
 
+  if(props.options.length <= 1) {
+    newProps['disabled'] = true;
+  }
+  delete newProps['options'];
 
-  return (<Form.Select{...newProps}> {Options}</Form.Select>)
+  return (<Form.Select{...newProps}> {Options}</Form.Select>);
 }
 
 Select.propType = {
-  options : propTypes.arrayOf(Option)
+  options : propTypes.arrayOf(Option).isRequired,
+  canEdit : propTypes.bool,
 }
