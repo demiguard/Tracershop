@@ -1,11 +1,13 @@
 import React, { useState } from "react";
+import { Card, Col, Form, Row } from "react-bootstrap";
+import propTypes from 'prop-types';
+
 import { FormatTime, ParseDanishNumber, nullParser } from "~/lib/formatting";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
 import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { Select, toOptions } from "../../injectable/select";
-import { Card, Col, Form, Row } from "react-bootstrap";
-import { ERROR_BACKGROUND_COLOR, INJECTION_USAGE, ORDER_STATUS, cssCenter } from "~/lib/constants";
+import { ORDER_STATUS, cssCenter } from "~/lib/constants";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { getTimeString } from "../../../lib/chronomancy";
@@ -13,10 +15,11 @@ import { UsageSelect } from "../../injectable/derived_injectables/usage_select";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
-import { setStateToEvent } from "~/lib/state_management";
+import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { InjectionOrderPDFUrl } from "~/lib/utils";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { EditableInput } from "~/components/injectable/inputs/number_input";
+import { CommitButton } from "~/components/injectable/commit_button";
 
 /**
  * This is a card containing all the information on an injection order
@@ -26,29 +29,21 @@ import { EditableInput } from "~/components/injectable/inputs/number_input";
  * * endpoint
  * The backend is responsible for filling out the user who ordered it
  * @param {{
-*  injectionOrder : InjectionOrder
-*  injectionTracers : Array<Tracer>
-*  websocket : TracerWebSocket
-*  validDeadline : Boolean
+*  injection_order : InjectionOrder
+*  injection_tracers : Array<Tracer>
+*  valid_deadline : Boolean
 * }} props 
 * @returns Element
 */
 export function InjectionOrderCard({
-  injectionOrder,
-  injectionTracers,
-  validDeadline,
+  injection_order,
+  injection_tracers,
+  valid_deadline,
 }) {
-  const state = useTracershopState();
-  const websocket = useWebsocket();
-
   // State
-  const [tracer, setTracer] = useState(injectionOrder.tracer);
-  const [injections, setInjections] = useState(injectionOrder.injections);
+  const [tempInjectionOrder, setTempInjectionOrder] = useState(injection_order);
   const [errorInjections, setErrorInjections] = useState("")
-  const [deliveryTime, setDeliveryTime] = useState(injectionOrder.delivery_time);
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("")
-  const [usage, setUsage] = useState(injectionOrder.tracer_usage)
-  const endpoint = state.delivery_endpoint.get(injectionOrder.endpoint);
 
   function resetErrors(){
     setErrorInjections("");
@@ -56,105 +51,81 @@ export function InjectionOrderCard({
   }
 
   function resetState(){
-    setTracer(injectionTracers.tracer);
-    setInjections(injectionOrder.injections);
-    setDeliveryTime(injectionOrder.delivery_time);
-    setUsage(injectionOrder.tracer_usage)
-
+    setTempInjectionOrder(injection_order);
     resetErrors();
   }
 
-  function validateState(){
-    const [validInjections, numInjections] = parseWholePositiveNumber(injections, "Injektioner");
-    const [validTimeInput, timeInput] = parseTimeInput(deliveryTime, "Leverings Tiden");
+  function setDeliveryTime(value){
+    setTempInjectionOrder((prevState) => {return {...prevState, delivery_time : value}});
+  }
+
+  function validate(){
+    const [validInjections, injections] = parseWholePositiveNumber(tempInjectionOrder.injections, "Injektioner");
+    const [validTimeInput, delivery_time] = parseTimeInput(tempInjectionOrder.delivery_time, "Leverings Tiden");
 
     if(!validInjections){
-      setErrorInjections(numInjections);
+      setErrorInjections(injections);
     }
 
     if(!validTimeInput){
-     setErrorDeliveryTime(timeInput);
+     setErrorDeliveryTime(delivery_time);
     }
 
-    return validInjections && validTimeInput;
-  }
-
-  function createInjectionOrder(){
-    if(!validateState()){
-      return;
+    const valid = validInjections && validTimeInput;
+    if(valid){
+      if( 0 < injection_order.id){
+        resetState();
+      } else {
+        resetErrors();
+      }
     }
-    // Whoo double calculations - It's a smell, but boy it's insignificant
-    const numberInjections = ParseDanishNumber(injections)
-    const delivery_time = FormatTime(deliveryTime)
-    const newOrder = {...injectionOrder,
-      tracer : tracer,
-      injections : numberInjections,
+
+    return [valid, {...injection_order,
+      tracer : Number(tempInjectionOrder.tracer),
+      injections : injections,
       delivery_time : delivery_time,
-      tracer_usage : usage,
-    };
-
-    websocket.sendCreateInjectionOrder(newOrder);
-    resetState();
+      tracer_usage : Number(tempInjectionOrder.tracer_usage),
+    }];
   }
 
-  function editInjectionOrder(){
-    if(!validateState()){
-      return;
-    }
-    // Whoo double calculations - It's a smell, but boy it's insignificant
-    const numberInjections = ParseDanishNumber(injections);
-    const delivery_time = FormatTime(deliveryTime);
-    const newOrder = {...injectionOrder,
-      tracer : tracer,
-      injections : numberInjections,
-      delivery_time : delivery_time,
-      tracer_usage : usage,
-    };
 
-    websocket.sendEditModel(DATA_INJECTION_ORDER, [newOrder]);
-    resetErrors();
-  }
+  const changed = !(injection_order.tracer === tempInjectionOrder.tracer
+                  && nullParser(injection_order.injections) === tempInjectionOrder.injections
+                  && nullParser(injection_order.delivery_time) === tempInjectionOrder.delivery_time
+                  && injection_order.tracer_usage === tempInjectionOrder.tracer_usage);
 
-  const changed = !(injectionOrder.tracer === tracer
-                  && nullParser(injectionOrder.injections) === injections
-                  && nullParser(injectionOrder.delivery_time) === deliveryTime
-                  && injectionOrder.tracer_usage === usage);
-
-  const canEdit = injectionOrder.status <= 1 && !validDeadline;
+  const canEdit = injection_order.status <= 1 && valid_deadline;
 
   let statusIcon = "";
-  if(0 < injectionOrder.status){
-    statusIcon = <StatusIcon status={injectionOrder.status}></StatusIcon>;
+  if(0 < injection_order.status){
+    statusIcon = <StatusIcon status={injection_order.status}></StatusIcon>;
   }
 
   let statusInfo = "Ny ordre";
-  if(0 < injectionOrder.status){
-    statusInfo = `ID: ${injectionOrder.id}`;
+  if(0 < injection_order.status){
+    statusInfo = `ID: ${injection_order.id}`;
   }
 
-  const tracerOptions = toOptions(injectionTracers, 'shortname');
-
-
+  const tracerOptions = toOptions(injection_tracers, 'shortname');
   const ActionButton = (() => {
-    if(injectionOrder.status === ORDER_STATUS.AVAILABLE && changed){
+    if(injection_order.status === ORDER_STATUS.RELEASED){
       return <ClickableIcon
-        src="static/images/cart.svg"
-        onClick={createInjectionOrder}
-      />
-    }
-    if(injectionOrder.status === ORDER_STATUS.RELEASED){
-      return <ClickableIcon
+        label={`to-delivery-${injection_order.id}`}
         src="/static/images/delivery.svg"
         onClick={()=>{
-          window.location = InjectionOrderPDFUrl(injectionOrder);
+          window.location = InjectionOrderPDFUrl(injection_order);
         }}
       />
     }
-    if(injectionOrder.status === ORDER_STATUS.ORDERED && changed){
-      return <ClickableIcon
-      src="static/images/update.svg"
-      onClick={editInjectionOrder}
-    />}
+    if(changed && valid_deadline){
+      return <CommitButton
+        temp_object={tempInjectionOrder}
+        object_type={DATA_INJECTION_ORDER}
+        label={`commit-${injection_order.id}`}
+        validate={validate}
+      />
+    }
+
     return "";
   })();
 
@@ -166,10 +137,11 @@ export function InjectionOrderCard({
         <Col>
           <TracershopInputGroup label="Tracer">
             <Select
+              aria-label={`tracer-input-${injection_order.id}`}
               canEdit={canEdit}
               options={tracerOptions}
-              onChange={setStateToEvent(setTracer)}
-              value={tracer}
+              onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
+              value={tempInjectionOrder.tracer}
             />
           </TracershopInputGroup>
         </Col>
@@ -177,17 +149,21 @@ export function InjectionOrderCard({
           <TracershopInputGroup label="Injectioner">
             <ErrorInput error={errorInjections}>
               <EditableInput
+                aria-label={`injections-input-${injection_order.id}`}
                 canEdit={canEdit}
-                value={injections}
-                onChange={setStateToEvent(setInjections)}
+                value={tempInjectionOrder.injections}
+                onChange={setTempObjectToEvent(setTempInjectionOrder, 'injections')}
               />
-
             </ErrorInput>
           </TracershopInputGroup>
         </Col>
-        { injectionOrder.status === 3 ? <Col>
+        { injection_order.status === 3 ? <Col>
          <TracershopInputGroup label="Frigivet kl:">
-           <Form.Control value={getTimeString(injectionOrder.freed_datetime)} readOnly/>
+           <Form.Control
+              aria-label={`freed-datetime-${injection_order.id}`}
+              value={getTimeString(injection_order.freed_datetime)}
+              readOnly
+            />
            </TracershopInputGroup>
         </Col> : ""}
         <Col xs={1}></Col>
@@ -198,7 +174,8 @@ export function InjectionOrderCard({
           <TracershopInputGroup label={"Tid"}>
             <ErrorInput error={errorDeliveryTime}>
               <TimeInput
-                value={deliveryTime}
+                aria-label={`delivery-time-input-${injection_order.id}`}
+                value={tempInjectionOrder.delivery_time}
                 canEdit={canEdit}
                 stateFunction={setDeliveryTime}
               />
@@ -208,15 +185,19 @@ export function InjectionOrderCard({
         <Col>
           <TracershopInputGroup label={"Brug"}>
             <UsageSelect
-              onChange={setStateToEvent(setUsage)}
-              value={usage}
+              aria-label={`usage-input-${injection_order.id}`}
+              onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer_usage')}
+              value={tempInjectionOrder.tracer_usage}
               canEdit={canEdit}
             />
           </TracershopInputGroup>
         </Col>
-        { injectionOrder.status === 3 ? <Col>
+        { injection_order.status === 3 ? <Col>
           <TracershopInputGroup label="lot:">
-            <Form.Control value={injectionOrder.lot_number} readOnly/>
+            <Form.Control
+              aria-label={`lot-number-input-${injection_order.id}`}
+              value={nullParser(injection_order.lot_number)}
+            readOnly/>
            </TracershopInputGroup>
         </Col> : ""}
         <Col xs={1}>
@@ -225,4 +206,10 @@ export function InjectionOrderCard({
       </Row>
     </Card.Header>
   </Card>);
+}
+
+InjectionOrderCard.propTypes = {
+  injection_order : propTypes.instanceOf(InjectionOrder).isRequired,
+  injection_tracers : propTypes.arrayOf(propTypes.instanceOf(Tracer)).isRequired,
+  valid_deadline : propTypes.bool.isRequired,
 }

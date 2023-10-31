@@ -70,7 +70,7 @@ export function IsotopeSetupPage() {
             aria-label={`atomic-letter-${isotope.id}`}
             maxLength={3}
             value={tempIsotope.atomic_letter}
-            onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'atomic_letter')}
+            onChange={setTempObjectToEvent(setTempIsotope, 'atomic_letter')}
           />
         </TracershopInputGroup>
       </td>
@@ -80,7 +80,7 @@ export function IsotopeSetupPage() {
             <FormControl
               aria-label={`atomic-number-${isotope.id}`}
               value={tempIsotope.atomic_number}
-              onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'atomic_number')}
+              onChange={setTempObjectToEvent(setTempIsotope, 'atomic_number')}
               />
           </ErrorInput>
           <InputGroup.Text>
@@ -94,7 +94,7 @@ export function IsotopeSetupPage() {
             <FormControl
               aria-label={`atomic-mass-${isotope.id}`}
               value={tempIsotope.atomic_mass}
-              onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'atomic_mass')}
+              onChange={setTempObjectToEvent(setTempIsotope, 'atomic_mass')}
               />
           </ErrorInput>
           <InputGroup.Text>
@@ -108,7 +108,7 @@ export function IsotopeSetupPage() {
             <FormControl
               aria-label={`halflife-${isotope.id}`}
               value={tempIsotope.halflife_seconds}
-              onChange={setTempObjectToEvent(setTempIsotope, tempIsotope, 'halflife_seconds')}
+              onChange={setTempObjectToEvent(setTempIsotope, 'halflife_seconds')}
             />
           </ErrorInput>
           <InputGroup.Text>

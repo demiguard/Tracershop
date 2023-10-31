@@ -1,70 +1,71 @@
+import { Tracer } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "../../lib/constants";
 
 export const tracers = new Map([
-  [1, {
-      id : 1,
-      shortname : "test_tracer_1", // inconsistency, Fuck
-      clinical_name : "test_clinical_name_1",
-      isotope : 1,
-      tracer_type : TRACER_TYPE.ACTIVITY,
-      default_price_per_unit : null,
-      vial_tag : null,
-      archived : false,
-  }], [2, {
-      id : 2,
-      shortname : "test_tracer_2",
-      clinical_name : "test_clinical_name_2",
-      isotope : 1,
-      tracer_type : TRACER_TYPE.DOSE,
-      default_price_per_unit : null,
-      vial_tag : null,
-      archived : false,
-  }], [3, {
-      id : 3,
-      shortname : "test_tracer_3",
-      clinical_name : "test_clinical_name_3",
-      isotope : 3,
-      tracer_type : TRACER_TYPE.ACTIVITY,
-      default_price_per_unit : null,
-      vial_tag : null,
-      archived : false,
-  }], [4, {
-      id : 4,
-      shortname : "test_tracer_4",
-      clinical_name : "test_clinical_name_4",
-      isotope : 3,
-      tracer_type : TRACER_TYPE.DOSE,
-      default_price_per_unit : null,
-      vial_tag : null,
-      archived : false,
-  }], [5, {
-    id : 5,
-    shortname : "test_tracer_5",
-    clinical_name : "test_clinical_name_5",
-    isotope : 3,
-    tracer_type : TRACER_TYPE.DOSE,
-    default_price_per_unit : null,
-    vial_tag : null,
-    archived : true
-  }], [6, {
-    id : 6,
-    shortname : "test_tracer_6",
-    clinical_name : "test_clinical_name_6",
-    isotope : 1,
-    tracer_type : TRACER_TYPE.DOSE,
-    default_price_per_unit : null,
-    vial_tag : null,
-    archived : true
-  }],
-  [6, {
-    id : 7,
-    shortname : "test_tracer_7",
-    clinical_name : "test_clinical_name_7",
-    isotope : 1,
-    tracer_type : TRACER_TYPE.DOSE,
-    default_price_per_unit : null,
-    vial_tag : null,
-    archived : false
-  }]
+  [1, new Tracer(
+      1, // id
+      "test_tracer_1", // inconsistency, Fuck // shortname
+      "test_clinical_name_1", // clinical_name
+      1, // isotope
+      TRACER_TYPE.ACTIVITY, // tracer_type
+      null, // default_price_per_unit
+      null, // vial_tag
+      false, // archived
+)], [2, new Tracer(
+      2, // id
+      "test_tracer_2", // shortname
+      "test_clinical_name_2", // clinical_name
+      1, // isotope
+      TRACER_TYPE.DOSE, // tracer_type
+      null, // default_price_per_unit
+      null, // vial_tag
+      false, // archived
+)], [3, new Tracer(
+      3, // id
+      "test_tracer_3", // shortname
+      "test_clinical_name_3", // clinical_name
+      3, // isotope
+      TRACER_TYPE.ACTIVITY, // tracer_type
+      null, // default_price_per_unit
+      null, // vial_tag
+      false, // archived
+  )], [4, new Tracer(
+      4, // id
+      "test_tracer_4", // shortname
+      "test_clinical_name_4", // clinical_name
+      3, // isotope
+      TRACER_TYPE.DOSE, // tracer_type
+      null, // default_price_per_unit
+      null, // vial_tag
+      false, // archived
+  )], [5, new Tracer(
+      5, // id
+      "test_tracer_5", // shortname
+      "test_clinical_name_5", // clinical_name
+      3, // isotope
+      TRACER_TYPE.DOSE, // tracer_type
+      null, // default_price_per_unit
+      null, // vial_tag
+      true // archived
+  )], [6, new Tracer(
+    6, // id
+    "test_tracer_6", // shortname
+    "test_clinical_name_6", // clinical_name
+    1, // isotope
+    TRACER_TYPE.DOSE, // tracer_type
+    null, // default_price_per_unit
+    null, // vial_tag
+    true, // archived
+  )],
+  [6, new Tracer(
+    7, // id
+    "test_tracer_7", // shortname
+    "test_clinical_name_7", // clinical_name
+    1, // isotope
+    TRACER_TYPE.DOSE, // tracer_type
+    null, // default_price_per_unit
+    null, // vial_tag
+    false // archived
+  )]
 
 ])

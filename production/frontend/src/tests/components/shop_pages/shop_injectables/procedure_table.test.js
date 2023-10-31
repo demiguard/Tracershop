@@ -45,9 +45,9 @@ describe("Procedure Table test suite", () => {
     expect(screen.getByTestId("new-delay")).toBeVisible()
     expect(screen.getByLabelText("new-create")).toBeVisible()
 
-    for(const pi of testState.procedure_identifier.values()){
+    for(const production_identifier of testState.procedure_identifier.values()){
       // Either a pi is in a row or in the option, both visible
-      expect(screen.getByText(pi.description)).toBeVisible();
+      expect(screen.getByText(production_identifier.description)).toBeVisible();
     }
   });
 

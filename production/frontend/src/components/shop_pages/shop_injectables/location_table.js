@@ -10,17 +10,22 @@ import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
-export function LocationTable({}){
+const FILTER_TYPES = {
+  LOCATION_CODE : 1,
+  COMMON_NAME : 2,
+}
+
+export function LocationTable(){
   const websocket = useWebsocket();
   const state = useTracershopState()
   const [filter, setFilter] = useState("");
-  const [filterType, setFilterType] = useState(1);
+  const [filterType, setFilterType] = useState(FILTER_TYPES.LOCATION_CODE);
 
   const filterOptions = toOptions([{
-    id : 1,
+    id : FILTER_TYPES.LOCATION_CODE,
     name: "Rum Kode"
   }, {
-    id : 2,
+    id : FILTER_TYPES.COMMON_NAME,
     name : "Kalde Navn"
   }]);
 
@@ -32,10 +37,8 @@ export function LocationTable({}){
   * @returns {Element}
   */
   function LocationTableRow({location}){
-    const nulledCommonName = nullParser(location.common_name);
-    const [commonName, setCommonName] = useState(nulledCommonName);
-    const nulledLocation = nullParser(location.endpoint);
-    const [endpoint, setEndpoint] = useState(nulledLocation);
+    const [commonName, setCommonName] = useState(nullParser(location.common_name));
+    const [endpoint, setEndpoint] = useState(nullParser(location.endpoint));
 
     function updateCommonName(event){
       setCommonName(event.target.value)
@@ -66,11 +69,17 @@ export function LocationTable({}){
       <td>{location.location_code}</td>
       <td>
         <InputGroup>
-          <FormControl maxLength={120} value={commonName} onChange={updateCommonName}></FormControl>
+          <FormControl
+            aria-label={`location-common-name-${location.id}`}
+            maxLength={120}
+            value={commonName}
+            onChange={updateCommonName}
+          />
         </InputGroup>
       </td>
       <td>
         <EndpointSelect
+          aria-label={`location-delivery-endpoint-${location.id}`}
           customer={state.customer}
           delivery_endpoint={state.delivery_endpoint}
           emptyEndpoint
@@ -87,10 +96,10 @@ export function LocationTable({}){
       return true
     }
     const regex = new RegExp(filter, 'i');
-    if(filterType === 1){
+    if(filterType === FILTER_TYPES.LOCATION_CODE){
       return regex.test(location.location_code)
 
-    } else if (filterType === 2) {
+    } else if (filterType === FILTER_TYPES.COMMON_NAME) {
       const regex = new RegExp(filter, 'i');
       return regex.test(location.common_name)
     }
@@ -113,12 +122,16 @@ export function LocationTable({}){
       <div>
         <TracershopInputGroup label="Filter">
           <Select
+            aria-label="filter-type"
             options={filterOptions}
             value={filterType}
-
             onChange={setStateToEvent(setFilterType)}
             />
-          <FormControl value={filter} onChange={setStateToEvent(setFilter)}/>
+          <FormControl
+            aria-label="filter"
+            value={filter}
+            onChange={setStateToEvent(setFilter)}
+          />
         </TracershopInputGroup>
       </div>
 
@@ -136,3 +149,5 @@ export function LocationTable({}){
       </Table>
     </div>)
 }
+
+LocationTable.FilterTypes = FILTER_TYPES

@@ -214,6 +214,14 @@ class ActivityOrder(TracershopModel):
     if self.status == OrderStatus.Released and not user.is_server_admin:
       return AuthActions.REJECT_LOG
 
+  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
+    if(self.id is not None and self.id < 1):
+      self.id = None
+    if self.id is None:
+      self.status = OrderStatus.Ordered
+      self.ordered_by = user
+    super().save(user, *args, **kwargs)
+
   class Meta:
     indexes = [
       Index(fields=['delivery_date'])
@@ -257,6 +265,12 @@ class InjectionOrder(TracershopModel):
 
     return AuthActions.REJECT
 
+  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
+    if(self.id is not None and self.id < 1):
+      self.id = None
+      self.status = OrderStatus.Ordered
+      self.ordered_by = user
+    super().save(user, *args, **kwargs)
 
 class Vial(TracershopModel):
   id = BigAutoField(primary_key=True)

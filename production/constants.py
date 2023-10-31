@@ -25,3 +25,8 @@ DEBUG_LOGGER = "DebugLogger"
 ERROR_LOGGER = "ErrorLogger"
 AUDIT_LOGGER = "AuditLogger"
 PING_SERVICE_LOGGER = "PingServiceLogger"
+VIAL_LOGGER = "VialLogger"
+
+# Environment paths
+
+VIAL_WATCHER_FILE_PATH_ENV = "VIAL_WATCHER_FILE_PATH"

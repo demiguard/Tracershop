@@ -708,9 +708,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newOrderDict['status'] = 1
     newOrderDict['ordered_by'] = user.id
 
-    instances = await self.db.handleCreateModels(DATA_INJECTION_ORDER, newOrderDict, user)
-    customerIDs = await self.db.getCustomerIDs([instances])
-    data = await self.db.serialize_dict({DATA_INJECTION_ORDER : instances})
+    instances = await self.db.handleCreateModels(DATA_INJECTION_ORDER, newOrderDict, user);
+    customerIDs = await self.db.getCustomerIDs([instances]);
+    data = await self.db.serialize_dict({DATA_INJECTION_ORDER : instances});
     await self.__broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,

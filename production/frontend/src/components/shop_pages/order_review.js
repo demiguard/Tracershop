@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Row, Col, Button } from "react-bootstrap";
 
-import { INJECTION_USAGE } from "~/lib/constants";
+import { INJECTION_USAGE, ORDER_STATUS } from "~/lib/constants";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
 
 import { dateToDateString } from "~/lib/formatting";
@@ -99,29 +99,29 @@ export function OrderReview({active_endpoint, active_customer, active_date,
   const InjectionOrderCards = relevantInjectionOrders.map((injectionOrder) => {
     return (<InjectionOrderCard
       key={injectionOrder.id}
-      injectionOrder={injectionOrder}
-      injectionTracers = {availableInjectionTracers}
-      websocket={websocket}
-      validDeadline={injectionDeadlineValid}
+      injection_order={injectionOrder}
+      injection_tracers = {availableInjectionTracers}
+      valid_deadline={injectionDeadlineValid}
     />);
   })
 
   if(!(injectionDeadlineValid) && (availableInjectionTracers.length)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
-                                injectionOrder={{
-                                  delivery_time : "",
-                                  delivery_date : activeDateString,
-                                  injections : "",
-                                  status : 0,
-                                  tracer_usage : INJECTION_USAGE.human,
-                                  comment : "",
-                                  ordered_by : null,
-                                  endpoint : active_endpoint,
-                                  tracer : availableInjectionTracers[0].id,
-                                }}
-                                injectionTracers = {availableInjectionTracers}
-                                websocket={websocket}
+                                injection_order={new InjectionOrder(
+                                  -1,
+                                  "", // Delivery TIme
+                                  activeDateString, //
+                                  "", // injections
+                                  ORDER_STATUS.AVAILABLE, // Status
+                                  INJECTION_USAGE.human, // tracer_usage
+                                  "", // comment
+                                  null, // ordered_by
+                                  active_endpoint, // endpoint
+                                  availableInjectionTracers[0].id, // tracer
+                                  null, null , null)}
+                                injection_tracers = {availableInjectionTracers}
+                                valid_deadline={injectionDeadlineValid}
   />);
   }
 
