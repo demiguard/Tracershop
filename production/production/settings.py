@@ -239,7 +239,7 @@ LOGGING = {
             'class' : 'logging.handlers.TimedRotatingFileHandler',
             'filename' : pingService_file_log,
             'when' : 'D',
-            'backupCount' : '4',
+            'backupCount' : 4,
             'formatter' : 'django.server'
         },
     },
