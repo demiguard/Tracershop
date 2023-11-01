@@ -1,7 +1,7 @@
 import React, { } from "react";
 import { Container, Row } from "react-bootstrap";
 import styles from "/src/css/Errors.module.css"
-
+import { db } from "~/lib/local_storage_driver";
 
 
 export function  ErrorPage (props) {
@@ -9,6 +9,12 @@ export function  ErrorPage (props) {
   let errorMessage = ""
   let errorStack = []
   let lines = []
+
+  // error is done, 
+  for(const database_table of Object.keys(db.types)){
+    db.delete(database_table);
+  }
+
 
   if (props.error !== undefined){
     errorMessage = props.error.message;

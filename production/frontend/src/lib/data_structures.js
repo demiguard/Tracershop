@@ -84,7 +84,8 @@ export class TracerCatalog {
     if (customer_catalog !== undefined){
       return customer_catalog.tracerCatalogActivity;
     }
-    throw "Undefined customer referenced";
+    return [];
+
   }
 
   /**
@@ -98,6 +99,7 @@ export class TracerCatalog {
     if (customer_catalog !== undefined){
       return customer_catalog.tracerCatalogInjections;
     }
+    return [];
     throw "Undefined customer referenced";
   }
 
@@ -108,7 +110,9 @@ export class TracerCatalog {
     if (customer_catalog !== undefined){
       return customer_catalog.overheadMap.get(tracer_index);
     }
-    throw "Undefined customer referenced"
+    // There should be a handle here!
+    console.log(`Undefined customer - ${customerID}, tracer ${tracerID} referenced`);
+    return 1;
   }
 }
 

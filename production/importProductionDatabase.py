@@ -225,7 +225,7 @@ def get_tracer_customer(cursor: CursorBase,
                         tracers: Dict[int, Tracer],
                         customers: Dict[int, Customer],
                         overheads: Dict[int, float],
-                        fdg : Tracer) -> Dict[Tuple[int,int], TracerCatalog]:
+                        fdg : Tracer) -> Dict[Tuple[int,int], TracerCatalogPage]:
   cursor.execute("""SELECT
     tracer_id, customer_id
   FROM
@@ -236,7 +236,7 @@ def get_tracer_customer(cursor: CursorBase,
   for raw_tracer_customer in cursor.fetchall(): # type:ignore
     tracer = tracers[raw_tracer_customer['tracer_id']]
     customer = customers[raw_tracer_customer['customer_id']]
-    tc = TracerCatalog(
+    tc = TracerCatalogPage(
       tracer = tracer,
       customer = customer
     )
@@ -255,7 +255,7 @@ def get_tracer_customer(cursor: CursorBase,
       multiplier = 1 + overhead / 100
 
     customer = customers[customer_id]
-    tc = TracerCatalog(
+    tc = TracerCatalogPage(
       tracer=fdg,
       customer=customer,
       overhead_multiplier=multiplier
