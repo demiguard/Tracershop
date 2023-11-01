@@ -214,7 +214,7 @@ def get_legacy_production(cursor: CursorBase) -> Dict[int, LegacyProductionMembe
   """)
   for raw_production_member in cursor.fetchall(): # type:ignore
     lpm = LegacyProductionMember(
-      legacy_user_id = raw_production_member['Id'],
+      id = raw_production_member['Id'],
       legacy_production_username = raw_production_member['Username']
     )
     lpm.save()
@@ -240,8 +240,8 @@ def get_tracer_customer(cursor: CursorBase,
       tracer = tracer,
       customer = customer
     )
-    if (tracer.tracer_id, customer.customer_id) not in tracer_customer:
-      tracer_customer[(tracer.tracer_id, customer.customer_id)] = tc
+    if (tracer.id, customer.id) not in tracer_customer:
+      tracer_customer[(tracer.id, customer.id)] = tc
 
     try:
       tc.save()
@@ -261,7 +261,7 @@ def get_tracer_customer(cursor: CursorBase,
       overhead_multiplier=multiplier
     )
 
-    tracer_customer[(fdg.tracer_id, customer.customer_id)] = tc
+    tracer_customer[(fdg.id, customer.id)] = tc
     try:
       tc.save()
     except:
@@ -361,7 +361,7 @@ def get_injections_orders(cursor: CursorBase,
 
     if raw_t_order['status'] == 3:
       lio = LegacyInjectionOrder(
-        legacy_order_id = raw_t_order['oid'],
+        id = raw_t_order['oid'],
         legacy_freed_id = legacy_production_members.get(raw_t_order['BID']),
         new_order_id = injection_order
       )
@@ -448,7 +448,7 @@ def get_activityOrders(cursor: CursorBase,
       legacy_user = legacy_production_members[raw_order['frigivet_af']]
 
       lao = LegacyActivityOrder(
-        legacy_order_id = raw_order['OID'],
+        id = raw_order['OID'],
         new_order_id = ao,
         legacy_freed_id = legacy_user,
         legacy_freed_amount = raw_order['frigivet_amount'],
