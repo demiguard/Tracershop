@@ -5,7 +5,11 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 from datetime import date
 from pathlib import Path
+from logging import getLogger
 import os.path
+from constants import DEBUG_LOGGER
+
+
 
 # Third party Packages
 from django.contrib.auth import login
@@ -22,9 +26,12 @@ from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   InjectionOrder
 from tracerauth.backend import TracershopAuthenticationBackend
 
+debug_logger = getLogger(DEBUG_LOGGER)
+
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
+  debug_logger.info(request.headers)
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
     try:
       user = User.objects.get(username=request.headers['X-Tracer-User'])
