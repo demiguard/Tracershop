@@ -52,7 +52,7 @@ export const DAYS = { // So in the modern part of the world, aka the ones that u
   SUNDAY : 6,
 }
 export const DAYS_OBJECTS = [ // THIS IS THE SERVER SIDE REPRESENTATION OF DAYS
-  {name : "Mandag", day : 0}, // YES IT'S FUCKING WRONG
+  {name : "Mandag", day : 0},
   {name : "Tirsdag", day : 1},
   {name : "Onsdag", day : 2},
   {name : "Torsdag", day : 3},
