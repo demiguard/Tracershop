@@ -12,13 +12,11 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 const Pages = {
   orders : ShopOrderPage,
   setup : ShopSetup,
-  users : UserSetup
 }
 
 const AdminPages = {
   orders : "Bestillinger",
   setup : "Opsætning",
-  users : "Bruger"
 }
 
 const UserPages = {
@@ -31,38 +29,38 @@ export function ShopSite ({logout, NavbarElements}) {
   const Site = Pages[siteIdentifier];
 
   const /**@type {User} */ user = state.logged_in_user;
-  let relatedCustomer
-  if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
-    relatedCustomer = [...state.user_assignment.values()].filter((userAssignment) => {
-      return userAssignment.user === user.id
-    }).map((userAssignment) => {return userAssignment.customer})
-
-    if(relatedCustomer.length === 0){
-      // Blank site
-      return (
-        <div>
-          <TracershopNavbar
-            ActiveKey={null}
-            Names={{}}
-            logout={logout}
-            isAuthenticated={true}
-            NavbarElements={[]}
-            setActivePage={() => {}}
-          />
-          <NoAssociatedUser />
-        </div>);
+  const relatedCustomer = (() => {
+    if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
+      relatedCustomer = [...state.user_assignment.values()].filter((userAssignment) => {
+        return userAssignment.user === user.id
+      }).map((userAssignment) => {return state.customer.get(userAssignment.customer)})
+    } else if (user.user_group === USER_GROUPS.ADMIN) {
+      return [...state.customer.values()];
     }
-  } else if (user.user_group === USER_GROUPS.ADMIN) {
-    relatedCustomer = [...state.customer.values()].map((customer) => {return customer.id});
+  })()
+    // Blank site
+  if(relatedCustomer === 0){
+    return (
+      <div>
+        <TracershopNavbar
+          ActiveKey={null}
+          Names={{}}
+          logout={logout}
+          isAuthenticated={true}
+          NavbarElements={[]}
+          setActivePage={() => {}}
+          />
+        <NoAssociatedUser />
+      </div>);
   }
 
-  let availablePages
-  if([USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
-    availablePages = UserPages
-  } else {
-    availablePages = AdminPages
-  }
-
+  const availablePages = (() => {
+    if([USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
+      return  UserPages
+    } else {
+      return AdminPages
+    }
+  })();
 
   return(<div>
     <TracershopNavbar

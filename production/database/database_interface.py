@@ -15,6 +15,7 @@ from math import floor
 # Django Packages
 from channels.db import database_sync_to_async
 from django.apps import apps
+from django.conf import settings
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Model, ForeignKey, IntegerField
@@ -36,6 +37,7 @@ from database.models import ServerConfiguration, User,\
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
+from lib.ldap import ldap_search
 
 logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
@@ -311,13 +313,10 @@ class DatabaseInterface():
     return self.DATA_encoder.encode(serialized_dict)
 
   def getModels(self, user: User) -> List[Type[TracershopModel]]:
-    if user.user_group == UserGroups.Admin:
-      return [model
-              for model in apps.get_app_config('database').get_models()
+    return [model for model in apps.get_app_config('database').get_models()
                 # This line is here to ensure models are the correct type
                 # As django might add some models for itself
                 if issubclass(model, TracershopModel)]
-    return []
 
   @database_sync_to_async
   def getState(self, referenceTime: datetime, user: User) -> Dict[str, List[TracershopModel]]:
@@ -416,8 +415,7 @@ class DatabaseInterface():
       if endpointID in endpointIDs:
         return
       else:
-        endpointIDs.add(endpointID)
-
+        endpointIDs.add(endpointID
       owner = endpoint.owner # Database Access
       customerIDs.add(owner.id)
 
@@ -437,6 +435,27 @@ class DatabaseInterface():
         handler(instance)
 
     return [customerID for customerID in customerIDs]
+
+  @database_sync_to_async
+  def createUserAssignment(self, username, customer_id, user):
+    try:
+      customer = Customer.objects.get(pk=customer_id)
+    except ObjectDoesNotExist:
+      return  None
+
+    try:
+      user = User.objects.get(username=username)
+    except ObjectDoesNotExist:
+      ldap_result = ldap_search(username)
+
+
+      user = User()
+
+    user_assignment = UserAssignment(user=user, customer=customer)
+    user_assignment.save(user)
+
+    return user_assignment
+
 
   @database_sync_to_async
   def massOrder(self, bookings: Dict[str, bool], user: User):

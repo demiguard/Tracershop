@@ -3,13 +3,16 @@ import { LocationTable } from "./shop_injectables/location_table";
 import { Container, Row } from "react-bootstrap";
 import { ProcedureTable } from "./shop_injectables/procedure_table";
 import { MarginButton } from "../injectable/buttons";
+import { UserSetup } from "./user_setup";
 
 const SetupTables = {
   Lokationer : LocationTable,
-  Procedure : ProcedureTable
+  Procedure : ProcedureTable,
+  Bruger : UserSetup
 }
 
-export function ShopSetup (props){
+export function ShopSetup ({relatedCustomer: relatedCustomerID}){
+  console.log(relatedCustomerID)
 
   const [SetupTableIdentifier, setSetupTableIdentifier] = useState('Lokationer')
   const buttons = [...Object.keys(SetupTables)].map(
@@ -25,12 +28,13 @@ export function ShopSetup (props){
 
   return (<Container>
     <div style={{
+      marginBottom : "10px",
       display : "flex",
     }}>
       {buttons}
     </div>
     <Row>
-      <SetupTable {...props}/>
+      <SetupTable relatedCustomer={relatedCustomerID}/>
     </Row>
   </Container>);
 }

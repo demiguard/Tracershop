@@ -53,7 +53,7 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_OBJECT_DOES_NOT_EXISTS,\
     WEBSOCKET_MESSAGE_RESTORE_ORDERS,\
     WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE, \
-    WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID
+    WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
@@ -800,8 +800,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
     })
 
+  async def HandleCreateUserAssignment(self, message):
+    user = await get_user(self.scope)
+
+    username = message['username']
+    customerID = message['customer_id']
+
+    maybe_object = self.db.createUserAssignment(username, customerID, user)
+
+    if maybe_object is not None:
+      pass
+    else:
+      pass
+
 
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
+    WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT : handleLogout,
     WEBSOCKET_MESSAGE_AUTH_WHOAMI : handleWhoAmI,

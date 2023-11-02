@@ -79,6 +79,7 @@ export const WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER = "createActivityOrder";
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser";
 export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createInjectionOrder";
+export const WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT = "createUserAssignment";
 export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_EDIT_DJANGO = "editDjango";
@@ -107,6 +108,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "whoami",
   "createActivityOrder",
   "createInjectionOrder",
+  "createUserAssignment",
   "echo",
   "getOrders",
   "getState",

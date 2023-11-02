@@ -5,22 +5,20 @@ import { FormControl } from "react-bootstrap";
 import { Select, toOptions, Option } from "../select";
 import { Customer, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants";
+import { useTracershopState } from "~/components/tracer_shop_context";
 
 /**
  * Provides a select for endpoints. 
  * @param {*} param0 
  */
 export function EndpointSelect(props){
+  const state = useTracershopState();
+
   function namingEndpoint(endpoint){
-    if (props[DATA_CUSTOMER] instanceof Map){
-      const/**@type {Customer} */ customer = props[DATA_CUSTOMER].get(endpoint.owner);
-      return `${customer.short_name} - ${endpoint.name}`;
-    }
-    return  endpoint.name
+    const/**@type {Customer} */ customer = state.customer.get(endpoint.owner);
 
+    return `${customer.short_name} - ${endpoint.name}`;
   }
-
-
 
   let /**@type {}  */ endpointOptions = []  // this is a turnary but readability
   if (props[DATA_ENDPOINT] instanceof Map){
@@ -44,6 +42,6 @@ export function EndpointSelect(props){
 
 EndpointSelect.propTypes = {
   emptyEndpoint : propTypes.bool,
-  [DATA_CUSTOMER] : propTypes.objectOf(Map),
-  [DATA_ENDPOINT] : propTypes.oneOfType([propTypes.objectOf(Map), propTypes.array]),
+  [DATA_ENDPOINT] : propTypes.oneOf([propTypes.instanceOf(Map),
+                      propTypes.arrayOf(propTypes.instanceOf(DeliveryEndpoint))]),
 }

@@ -23,30 +23,37 @@ const Content = {
 };
 
 
-/**
- * Initialize the Shop order page
- * This should function should only run once when the component is rendering
- * the first time synchronously
- * @param {*} initRef
- * @param {*} state
- */
-function initialize(initRef, state){
-  let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
+
+export function ShopOrderPage ({relatedCustomer}){
+  const state = useTracershopState();
+
+  let init = useRef({
+    activeCustomer : null,
+    activeEndpoint : null,
+    today : null,
+    viewIdentifier : null,
+  })
+
+  if (init.current.activeCustomer === null
+    || init.current.activeEndpoint === null
+    || init.current.today === null
+    || init.current.viewIdentifier === null
+  ){
+    let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
 
     if(activeCustomer === null){
-      for(const [customerID, _customer] of state.customer){
-        activeCustomer = customerID
-        db.set(DATABASE_SHOP_CUSTOMER, customerID)
+      for(const customer of relatedCustomer){
+        activeCustomer = customer.id
+        db.set(DATABASE_SHOP_CUSTOMER, customer.id)
         break;
       }
     }
 
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
-    for(const [endpointID, _endpoint] of state.delivery_endpoint){
-      const /**@type {DeliveryEndpoint} */ endpoint = _endpoint;
+    for(const endpoint of state.delivery_endpoint.values()){
       if(endpoint.owner === activeCustomer){
         if(activeEndpoint === null){
-          activeEndpoint = endpointID
+          activeEndpoint = endpoint.id
           db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpoint)
         }
       }
@@ -68,31 +75,12 @@ function initialize(initRef, state){
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
 
-    initRef.current = {
+    init.current = {
       activeCustomer : activeCustomer,
       activeEndpoint : activeEndpoint,
       today : today,
       viewIdentifier : viewIdentifier,
     };
-}
-
-
-export function ShopOrderPage ({}){
-  const state = useTracershopState();
-
-  let init = useRef({
-    activeCustomer : null,
-    activeEndpoint : null,
-    today : null,
-    viewIdentifier : null,
-  })
-
-  if (init.current.activeCustomer === null
-    || init.current.activeEndpoint === null
-    || init.current.today === null
-    || init.current.viewIdentifier === null
-  ){
-    initialize(init, state);
   }
 
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
@@ -139,11 +127,6 @@ export function ShopOrderPage ({}){
                                                     today,
                                                     state.closed_date)
                                     : false;
-  const timeSlots = [...state.deliver_times.values()].filter(
-    (_timeSlot) => {
-      const /**@type {ActivityDeliveryTimeSlot} */ timeSlot = _timeSlot;
-      return timeSlot.destination === activeEndpoint;
-    });
 
   const SiteOptions = toOptions([
     {id : "Manuel", name : "Ordre oversigt"},
@@ -163,18 +146,6 @@ export function ShopOrderPage ({}){
     (timeSlot) => {return timeSlot.destination === activeEndpoint}
   )
 
-  const calenderTimeSlotsIds = calenderTimeSlots.map(getId);
-  const calenderActivityOrders = [...state.activity_orders.values()].filter(
-    (_activityOrder) => {
-      const /**@type {ActivityOrder} */ activityOrder = _activityOrder
-      return calenderTimeSlotsIds.includes(activityOrder.ordered_time_slot);
-    });
-
-  const calenderInjectionOrders = [...state.injection_orders.values()].filter(
-    (_injectionOrder) => {
-      const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
-      return injectionOrder.endpoint === activeEndpoint;
-    });
 
       return (
   <Container>
@@ -191,7 +162,7 @@ export function ShopOrderPage ({}){
               ariaLabelEndpoint="endpoint-select"
               activeCustomer={activeCustomer}
               activeEndpoint={activeEndpoint}
-              customers={state.customer /* This is a bug it should be filtered! */}
+              customers={relatedCustomer}
               endpoints={state.delivery_endpoint}
               setCustomer={setActiveCustomer}
               setEndpoint={setActiveEndpoint}
