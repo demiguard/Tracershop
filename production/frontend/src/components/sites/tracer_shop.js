@@ -39,6 +39,7 @@ export function TracerShop() {
       () => {
         dispatch(new UpdateCurrentUser(new User()));
         Cookies.remove('sessionid');
+        document.location.reload();
         db.set(DATABASE_CURRENT_USER, new User());
       }
     )
