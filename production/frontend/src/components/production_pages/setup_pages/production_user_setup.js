@@ -47,12 +47,11 @@ export function ProductionUserSetup(){
 
     function setRelatedCustomer(newCustomerID){
       const newCustomerIDNumber = Number(newCustomerID);
-      const oldCustomerIDNumber = Number(relatedCustomer);
-      _setRelatedCustomer(newCustomerID)
+      _setRelatedCustomer(newCustomerID);
 
-      if(relatedCustomer !== ""){
+      if(userAssignmentID !== null){
         // Delete the old one
-        websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, oldCustomerIDNumber);
+        websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, userAssignmentID);
       }
       if(newCustomerID !== ""){
         websocket.sendCreateModel(DATA_USER_ASSIGNMENT, new UserAssignment(undefined, user.id, newCustomerIDNumber))
