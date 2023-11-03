@@ -31,7 +31,7 @@ export function ShopSite ({logout, NavbarElements}) {
   const /**@type {User} */ user = state.logged_in_user;
   const relatedCustomer = (() => {
     if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
-      relatedCustomer = [...state.user_assignment.values()].filter((userAssignment) => {
+      return [...state.user_assignment.values()].filter((userAssignment) => {
         return userAssignment.user === user.id
       }).map((userAssignment) => {return state.customer.get(userAssignment.customer)})
     } else if (user.user_group === USER_GROUPS.ADMIN) {
@@ -39,7 +39,7 @@ export function ShopSite ({logout, NavbarElements}) {
     }
   })()
     // Blank site
-  if(relatedCustomer === 0){
+  if(relatedCustomer.length === 0){
     return (
       <div>
         <TracershopNavbar
