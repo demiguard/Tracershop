@@ -415,7 +415,7 @@ class DatabaseInterface():
       if endpointID in endpointIDs:
         return
       else:
-        endpointIDs.add(endpointID
+        endpointIDs.add(endpointID)
       owner = endpoint.owner # Database Access
       customerIDs.add(owner.id)
 
