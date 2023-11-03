@@ -218,8 +218,9 @@ class ActivityOrder(TracershopModel):
     if(self.id is not None and self.id < 1):
       self.id = None
     if self.id is None and user is not None:
-      self.status = OrderStatus.Ordered
-      self.ordered_by = user
+      pass
+      #self.status = OrderStatus.Ordered
+      #self.ordered_by = user
     super().save(user, *args, **kwargs)
 
   class Meta:
