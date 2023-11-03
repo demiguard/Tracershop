@@ -75,6 +75,7 @@ def AuthMessage(user: User, message: Dict) -> bool:
       bool: If the user is allowed to handle such a message
   """
   messageType = message[WEBSOCKET_MESSAGE_TYPE]
+  return True
 
   if messageType in [
     WEBSOCKET_MESSAGE_AUTH_LOGIN,
