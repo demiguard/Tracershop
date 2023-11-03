@@ -33,14 +33,15 @@ debug_logger = getLogger(DEBUG_LOGGER)
 def indexView(request, *args, **kwargs):
   debug_logger.info(request.headers)
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
+    header_user_group =  UserGroups(int(request.headers['X-Tracer-Role']))
     try:
       user = User.objects.get(username=request.headers['X-Tracer-User'])
-      if user.user_group != request.headers['X-Tracer-Role']:
-        user.user_group = UserGroups(request.headers['X-Tracer-Role'])
+      if user.user_group != header_user_group:
+        user.user_group = header_user_group
         user.save()
     except ObjectDoesNotExist:
       user = User.objects.create(username=request.headers['X-Tracer-User'],
-                          user_group=UserGroups(request.headers['X-Tracer-Role']))
+                          user_group=header_user_group)
 
     if user.user_group == UserGroups.ShopExternal:
       backend = "tracerauth.backend.TracershopAuthenticationBackend"
