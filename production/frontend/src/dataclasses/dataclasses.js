@@ -183,9 +183,9 @@ export class Tracer {
 }
 
 export class TracerCatalogPage {
-  constructor(id, customer, tracer, max_injections, overhead_multiplier, ) {
+  constructor(id, endpoint, tracer, max_injections, overhead_multiplier, ) {
     this.id=id
-    this.customer=customer
+    this.endpoint=endpoint
     this.tracer=tracer
     this.max_injections=max_injections
     this.overhead_multiplier=overhead_multiplier

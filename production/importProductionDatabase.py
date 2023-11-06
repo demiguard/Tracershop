@@ -169,7 +169,6 @@ def get_productions(cursor:CursorBase, fdg: Tracer) -> Dict[Days, List[ActivityP
     else:
       productions[day] = [production]
 
-  pprint(productions)
   return productions
 
 def get_customers(cursor: CursorBase) -> Tuple[Dict[int, Customer], Dict[int, DeliveryEndpoint], Dict[int, float]]:

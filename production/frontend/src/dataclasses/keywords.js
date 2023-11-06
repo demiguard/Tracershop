@@ -133,7 +133,7 @@ export const KEYWORD_Tracer_ARCHIVED = "archived";
 
 // Model: TracerCatalogPage
 export const KEYWORD_TracerCatalogPage_ID = "id";
-export const KEYWORD_TracerCatalogPage_CUSTOMER = "customer";
+export const KEYWORD_TracerCatalogPage_ENDPOINT = "endpoint";
 export const KEYWORD_TracerCatalogPage_TRACER = "tracer";
 export const KEYWORD_TracerCatalogPage_MAX_INJECTIONS = "max_injections";
 export const KEYWORD_TracerCatalogPage_OVERHEAD_MULTIPLIER = "overhead_multiplier";

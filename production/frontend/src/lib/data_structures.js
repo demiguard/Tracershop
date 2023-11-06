@@ -43,11 +43,11 @@ export class TracerCatalog {
     this._customerCatalogs = new Map()
 
     for(const tracerCatalogPage of tracerCatalogPages.values()){
-      if(!this._customerCatalogs.has(tracerCatalogPage.customer)){
-        this._customerCatalogs.set(tracerCatalogPage.customer, new CustomerCatalog())
+      if(!this._customerCatalogs.has(tracerCatalogPage.endpoint)){
+        this._customerCatalogs.set(tracerCatalogPage.endpoint, new CustomerCatalog())
       }
 
-      const customer_catalog = this._customerCatalogs.get(tracerCatalogPage.customer)
+      const customer_catalog = this._customerCatalogs.get(tracerCatalogPage.endpoint)
 
       const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
       if(tracer === undefined){
@@ -65,17 +65,18 @@ export class TracerCatalog {
 
   /**
    * Gets the entire catalog for a customer
-   * @param {Number} customerID - the ID of the customer in question
+   * @param {Number} endpointID - the ID of the customer in question
    * @returns {CustomerCatalog}
    */
-  getCatalog(customerID){
-    const index = numberfy(customerID)
+  getCatalog(endpointID){
+    const index = numberfy(endpointID)
 
     const customer_catalog = this._customerCatalogs.get(index);
     if (customer_catalog !== undefined){
       return customer_catalog
     }
-    throw "Undefined customer referenced";
+    console.log("Undefined customer referenced");
+    return new CustomerCatalog();
   }
 
   getActivityCatalog(customerID){
@@ -85,33 +86,32 @@ export class TracerCatalog {
       return customer_catalog.tracerCatalogActivity;
     }
     return [];
-
   }
 
   /**
    * Gets the injections tracers a customer can order
-   * @param {Number} customerID 
+   * @param {Number} endpointID 
    * @returns {Array<Tracer>}
    */
-  getInjectionCatalog(customerID){
-    const index = numberfy(customerID)
+  getInjectionCatalog(endpointID){
+    const index = numberfy(endpointID)
     const customer_catalog = this._customerCatalogs.get(index);
     if (customer_catalog !== undefined){
       return customer_catalog.tracerCatalogInjections;
     }
     return [];
-    throw "Undefined customer referenced";
+    
   }
 
-  getOverheadForTracer(customerID, tracerID){
-    const customer_index = numberfy(customerID)
+  getOverheadForTracer(endpointID, tracerID){
+    const customer_index = numberfy(endpointID)
     const tracer_index = numberfy(tracerID)
     const customer_catalog = this._customerCatalogs.get(customer_index);
     if (customer_catalog !== undefined){
       return customer_catalog.overheadMap.get(tracer_index);
     }
     // There should be a handle here!
-    console.log(`Undefined customer - ${customerID}, tracer ${tracerID} referenced`);
+    console.log(`Undefined customer - ${endpointID}, tracer ${tracerID} referenced`);
     return 1;
   }
 }

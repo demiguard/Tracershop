@@ -31,15 +31,15 @@ export function TracerModal ({active_tracer, on_close}) {
       const /**@type {TracerCatalogPage} */ tracerCatalog = _TracerCatalog
 
       if(tracerCatalog.tracer == active_tracer){
-        TracerMapping.set(tracerCatalog.customer, tracerCatalog.id)
+        TracerMapping.set(tracerCatalog.endpoint, tracerCatalog.id)
       }
     }
 
-  function updateTracerCustomer(event, CustomerID){
+  function updateTracerCustomer(event, endpointID){
     if(event.target.checked){
       const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_CREATE);
       const data = {};
-      data.customer = CustomerID;
+      data.endpoint = endpointID;
       data.tracer = active_tracer;
 
       message[WEBSOCKET_DATA] = data
@@ -47,7 +47,7 @@ export function TracerModal ({active_tracer, on_close}) {
 
       websocket.send(message);
     } else {
-      const tracerCatalogID = TracerMapping.get(CustomerID);
+      const tracerCatalogID = TracerMapping.get(endpointID);
       const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_DELETE);
       message[WEBSOCKET_DATA_ID] = tracerCatalogID
       message[WEBSOCKET_DATATYPE] = DATA_TRACER_MAPPING;
