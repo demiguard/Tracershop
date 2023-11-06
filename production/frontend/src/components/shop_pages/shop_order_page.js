@@ -43,18 +43,19 @@ export function ShopOrderPage ({relatedCustomer}){
 
     if(activeCustomer === null){
       for(const customer of relatedCustomer){
-        activeCustomer = customer.id
-        db.set(DATABASE_SHOP_CUSTOMER, customer.id)
+        activeCustomer = customer.id;
+        db.set(DATABASE_SHOP_CUSTOMER, customer.id);
         break;
       }
     }
 
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
+    if(activeEndpoint === null){
     for(const endpoint of state.delivery_endpoint.values()){
       if(endpoint.owner === activeCustomer){
-        if(activeEndpoint === null){
-          activeEndpoint = endpoint.id
-          db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpoint)
+          activeEndpoint = endpoint.id;
+          db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpoint);
+          break;
         }
       }
     }
@@ -144,10 +145,9 @@ export function ShopOrderPage ({relatedCustomer}){
 
   const calenderTimeSlots = [...state.deliver_times.values()].filter(
     (timeSlot) => {return timeSlot.destination === activeEndpoint}
-  )
+  );
 
-
-      return (
+  return (
   <Container>
     <Row>
       <Col sm={8}>

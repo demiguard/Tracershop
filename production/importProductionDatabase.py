@@ -223,7 +223,7 @@ def get_legacy_production(cursor: CursorBase) -> Dict[int, LegacyProductionMembe
 
 def get_tracer_customer(cursor: CursorBase,
                         tracers: Dict[int, Tracer],
-                        customers: Dict[int, Customer],
+                        endpoints: Dict[int, DeliveryEndpoint],
                         overheads: Dict[int, float],
                         fdg : Tracer) -> Dict[Tuple[int,int], TracerCatalogPage]:
   cursor.execute("""SELECT
@@ -235,13 +235,13 @@ def get_tracer_customer(cursor: CursorBase,
 
   for raw_tracer_customer in cursor.fetchall(): # type:ignore
     tracer = tracers[raw_tracer_customer['tracer_id']]
-    customer = customers[raw_tracer_customer['customer_id']]
+    endpoint = endpoints[raw_tracer_customer['customer_id']]
     tc = TracerCatalogPage(
       tracer = tracer,
-      customer = customer
+      endpoint = endpoint
     )
-    if (tracer.id, customer.id) not in tracer_customer:
-      tracer_customer[(tracer.id, customer.id)] = tc
+    if (tracer.id, endpoint.id) not in tracer_customer:
+      tracer_customer[(tracer.id, endpoint.id)] = tc
 
     try:
       tc.save()
@@ -254,14 +254,14 @@ def get_tracer_customer(cursor: CursorBase,
     else:
       multiplier = 1 + overhead / 100
 
-    customer = customers[customer_id]
+    endpoint = endpoint[customer_id]
     tc = TracerCatalogPage(
       tracer=fdg,
-      customer=customer,
+      endpoint=endpoint,
       overhead_multiplier=multiplier
     )
 
-    tracer_customer[(fdg.id, customer.id)] = tc
+    tracer_customer[(fdg.id, endpoint.id)] = tc
     try:
       tc.save()
     except:
@@ -518,7 +518,7 @@ if __name__ == '__main__':
 
   legacy_production_members = get_legacy_production(cursor)
   #bulk_create(LegacyProductionMember, legacy_production_members.values())
-  tracer_customer = get_tracer_customer(cursor, tracer_map, customer_map,overhead, fdg)
+  tracer_customer = get_tracer_customer(cursor, tracer_map, endpoint_map,overhead, fdg)
   #save_models(tracer_customer)
   activityDeliveryTimeSlots = get_activity_delivery_time_slots(cursor, endpoint_map, production_map)
 

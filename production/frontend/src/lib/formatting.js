@@ -2,6 +2,8 @@
  *
  */
 
+import { MODELS } from "~/dataclasses/dataclasses";
+
 /** Checks if the input string is on a date format, if it is, converts to a standardized format of
  * YYYY-MM-DD
  *
@@ -117,9 +119,9 @@ export function ParseJSONstr(JSONString){
   return json;
 }
 
-export function ParseDjangoModelJson(JSONString, originalMap){
+export function ParseDjangoModelJson(JSONString, originalMap, modelType){
   const json = ParseJSONstr(JSONString);
-  const ModelMap =  (originalMap instanceof Map ) ?  new Map(originalMap) : new Map();
+  const updatedMap =  (originalMap instanceof Map ) ?  new Map(originalMap) : new Map();
   // Use that it's a list of objects with information in the following form
   //{ model : string of model name on format module.model for instance api.database
   //  pk    : Something that is the primary key of the model instance
@@ -127,9 +129,12 @@ export function ParseDjangoModelJson(JSONString, originalMap){
   //}
   for (const model of json){
     model.fields.id = model.pk
-    ModelMap.set(model.pk, model.fields)
+    const Model = MODELS[modelType];
+    const serializedObject = new Model();
+    Object.assign(serializedObject, model.fields);
+    updatedMap.set(serializedObject.id, serializedObject);
   }
-  return ModelMap;
+  return updatedMap;
 }
 
 export function ParseEmail(input){

@@ -21,14 +21,13 @@ import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "~/lib
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
-import { setStateToEvent } from "~/lib/state_management.js";
+import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
 
 function MarginInputGroup({children}){
   return (<InputGroup style={{marginTop : "5px"}}>
     {children}
   </InputGroup>)
 }
-
 
 const cleanTimeSlot = {
   weekly_repeat : 0,
@@ -61,7 +60,6 @@ export function CustomerModal({
       endpoints.push(endpoint);
     }
   }
-
 
   const init = useRef({
     initial_endpoint : null,
@@ -98,7 +96,6 @@ export function CustomerModal({
     // Again this potential inefficiency is a O(1).
 
     const [tempTimeSlot, setTempTimeSlot] = useState({...cleanTimeSlot})
-    const [errors, setErrors] = useState({})
 
     function setActiveEndpoint(newEndpoint){
       _setActiveEndpoint(newEndpoint);
@@ -123,20 +120,7 @@ export function CustomerModal({
 
 
   function CustomerConfiguration(){
-    const [tempCustomer, _setTempCustomer] = useState({...customer});
-
-    function setTempCustomer(kw){
-      return (event) => {
-        _setTempCustomer({...tempCustomer, [kw] : event.target.value })
-      }
-    }
-
-    const tempCustomerShortName = nullParser(tempCustomer.short_name);
-    const tempCustomerLongName = nullParser(tempCustomer.long_name);
-    const tempCustomerBillingAddress = nullParser(tempCustomer.billing_address);
-    const tempCustomerBillingCity = nullParser(tempCustomer.billing_city);
-    const tempCustomerBillingZipCode = nullParser(tempCustomer.zip_code);
-    const tempCustomerBillingBillingEmail = nullParser(tempCustomer.billing_email);
+    const [tempCustomer, setTempCustomer] = useState({...customer});
 
     const customerDirty = tempCustomer.short_name !== customer.short_name
                        || tempCustomer.long_name !== customer.long_name
@@ -169,71 +153,65 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
         <Form.Control
-          value={tempCustomerShortName}
-          onChange={setTempCustomer('short_name')}
+          value={nullParser(tempCustomer.short_name)}
+          onChange={setTempObjectToEvent(setTempCustomer, 'short_name')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Kunde Navn</InputGroup.Text>
         <Form.Control
-          value={tempCustomerLongName}
-          onChange={setTempCustomer('long_name')}
+          value={nullParser(tempCustomer.long_name)}
+          onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings Addresse</InputGroup.Text>
         <Form.Control
-          value={tempCustomerBillingAddress}
-          onChange={setTempCustomer('billing_address')}
+          value={nullParser(tempCustomer.billing_address)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings By</InputGroup.Text>
         <Form.Control
-          value={tempCustomerBillingCity}
-          onChange={setTempCustomer('billing_city')}
+          value={nullParser(tempCustomer.billing_city)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
         <Form.Control
-          value={tempCustomerBillingZipCode}
-          onChange={setTempCustomer('billing_zip_code')}
+          value={nullParser(tempCustomer.zip_code)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Regnings Email</InputGroup.Text>
         <Form.Control
-          value={tempCustomerBillingBillingEmail}
-          onChange={setTempCustomer('billing_email')}
+          value={nullParser(tempCustomer.billing_email)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_email')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Dispenser id</InputGroup.Text>
         <Form.Control
-          value={tempCustomer.dispenser_id}
-          onChange={setTempCustomer('dispenser_id')}
+          value={nullParser(tempCustomer.dispenser_id)}
+          onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
         />
       </MarginInputGroup>
     </Col>)
   }
 
   function EndpointConfig({active_endpoint}){
-
     const endpoint = (typeof(active_endpoint) === 'number') ?
-    state.delivery_endpoint.get(active_endpoint)
-    : {...cleanEndpoint}
-    const activity_tracers = [...state.tracer.values()].filter(
-      (tracer) => tracer.tracer_type === TRACER_TYPE.ACTIVITY
-      )
-    const [tempEndpoint, _setTempEndpoint] = useState({...init.current.initial_tempEndpoint})
+    state.delivery_endpoint.get(active_endpoint) : {...cleanEndpoint};
+    const [tempEndpoint, _setTempEndpoint] = useState({...init.current.initial_tempEndpoint});
     const endpointDirty = endpoint.name === tempEndpoint.name
                         || endpoint.address === tempEndpoint.address
                         || endpoint.city === tempEndpoint.city
                         || endpoint.zip_code === tempEndpoint.zip_code
                         || endpoint.phone === tempEndpoint.phone;
 
-    const activityTracersOptions = toOptions(activity_tracers, 'shortname');
 
     function setTempEndpoint(kw){
       return (event) => {
@@ -290,18 +268,10 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Leveringssteder</InputGroup.Text>
         <EndpointSelect
-          options={endpoints}
+          delivery_endpoint={endpoints}
           onChange={() => {}}
           value={activeEndpoint}
         ></EndpointSelect>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Aktivitets Tracer</InputGroup.Text>
-        <Select
-          options={activityTracersOptions}
-          value={activeTracer}
-          onChange={setStateToEvent(setActiveTracer)}
-        />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
@@ -437,29 +407,15 @@ export function CustomerModal({
     return(<WeeklyTimeTable {...weeklyTimeTableProps}/>);
   }
 
-  function ActiveTimeSlotConfig({active_time_slot, active_endpoint, active_tracer}){
-    // Use effect here?
-    const [tempTimeSlot, _setTempTimeSlot] = useState({...cleanTimeSlot});
-
-    const timeSlotCorrect = (active_time_slot === "") ?
-          {...cleanTimeSlot}
-        : state.deliver_times.get(active_time_slot);
-
+  function ActiveTimeSlotConfig(){
     const timeSlotDirty = tempTimeSlot.delivery_time === timeSlotCorrect.delivery_time
                        || tempTimeSlot.weekly_repeat === timeSlotCorrect.weekly_repeat
                        || tempTimeSlot.production_run === timeSlotCorrect.production_run;
 
-    useEffect(() => {
-      const newTimeSlot = (active_time_slot === "") ?
-          cleanTimeSlot
-        : state.deliver_times.get(active_time_slot);
-      _setTempTimeSlot({...newTimeSlot})
-    }, [active_time_slot])
-
 
     function setTempTimeSlot(kw){
       return (event) => {
-        _setTempTimeSlot({...tempTimeSlot, [kw] : event.target.value })
+        setTempTimeSlot({...tempTimeSlot, [kw] : event.target.value })
       }
     }
 
@@ -475,7 +431,7 @@ export function CustomerModal({
       return false;
     }
 
-    if(!active_endpoint){ // database indexes are 1 index therefore always return true on valid endpotin
+    if(!activeEndpoint){ // database indexes are 1 index therefore always return true on valid endpotin
       return false
     }
 
@@ -496,7 +452,7 @@ export function CustomerModal({
     }
     // This is the object that will be send to the server
     const timeSlot = {...tempTimeSlot};
-    timeSlot.destination = active_endpoint
+    timeSlot.destination = activeEndpoint
     timeSlot.delivery_time = FormatTime(tempTimeSlot.delivery_time);
 
     if(activeTimeSlot === undefined){
@@ -518,11 +474,14 @@ export function CustomerModal({
     }
 
     const filteredProductions = [...state.production.values()].filter(
-      (prod) => prod.tracer === active_tracer
+      (prod) => prod.tracer === activeTracer
     );
 
     const productionOptions = toOptions(filteredProductions, productionNaming, 'id')
-
+    const activity_tracers = [...state.tracer.values()].filter(
+      (tracer) => tracer.tracer_type === TRACER_TYPE.ACTIVITY
+    );
+    const activityTracersOptions = toOptions(activity_tracers, 'shortname');
 
     return (<Col>
       <Row>
@@ -541,8 +500,16 @@ export function CustomerModal({
             onClick={initializeTimeSlotEndpoint}
           /> : ""}
         </Col>
-
       </Row>
+      <MarginInputGroup>
+          <InputGroup.Text>Aktivitets Tracer</InputGroup.Text>
+          <Select
+            options={activityTracersOptions}
+            value={activeTracer}
+            onChange={setStateToEvent(setActiveTracer)}
+          />
+      </MarginInputGroup>
+
       <MarginInputGroup>
         <InputGroup.Text>Leveringstid</InputGroup.Text>
         <TimeInput
@@ -564,7 +531,7 @@ export function CustomerModal({
         <InputGroup.Text>Levering fra Production</InputGroup.Text>
         <Select
           options={productionOptions}
-          onChange={setTempTimeSlot('tempTimeSlot', 'production_run', 'timeSlotDirty')}
+          onChange={setTempObjectToEvent('tempTimeSlot', 'production_run', 'timeSlotDirty')}
           value={tempTimeSlot.production_run}
           aria-label="production-select"
         />

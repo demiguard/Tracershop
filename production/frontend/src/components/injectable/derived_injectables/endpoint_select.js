@@ -8,12 +8,11 @@ import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants";
 import { useTracershopState } from "~/components/tracer_shop_context";
 
 /**
- * Provides a select for endpoints. 
- * @param {*} param0 
+ * Provides a select for endpoints.
+ * @param {*} param0
  */
 export function EndpointSelect(props){
   const state = useTracershopState();
-
   function namingEndpoint(endpoint){
     const/**@type {Customer} */ customer = state.customer.get(endpoint.owner);
 
@@ -41,7 +40,5 @@ export function EndpointSelect(props){
 }
 
 EndpointSelect.propTypes = {
-  emptyEndpoint : propTypes.bool,
-  [DATA_ENDPOINT] : propTypes.oneOf([propTypes.instanceOf(Map),
-                      propTypes.arrayOf(propTypes.instanceOf(DeliveryEndpoint))]),
+  emptyEndpoint : propTypes.bool
 }

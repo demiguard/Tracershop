@@ -46,7 +46,6 @@ export function useWebsocket(){
  * @returns {TracershopState}
  */
 function tracershopReducer(state, action){
-
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser ){
     const newState = Object.assign(new TracershopState(), state);
@@ -61,18 +60,18 @@ function tracershopReducer(state, action){
     for (const key of Object.keys(action.newState)){
       let oldStateMap = newState[key];
       if(action.refresh){
-        oldStateMap = null
+        oldStateMap = null;
       }
-      const modelMap = ParseDjangoModelJson(action.newState[key], oldStateMap);
-      newState[key] = modelMap
-      db.set(key, modelMap)
+      const modelMap = ParseDjangoModelJson(action.newState[key], oldStateMap, key);
+      newState[key] = modelMap;
+      db.set(key, modelMap);
     }
 
     return newState;
   }
   if(action instanceof DeleteState){
     const newState = Object.assign(new TracershopState(), state);
-    const newStateMap = new Map(newState[action.dataType])
+    const newStateMap = new Map(newState[action.dataType]);
     if (action.element_id instanceof Array){
       for(const id of action.element_id){
         newStateMap.delete(id);
@@ -90,11 +89,25 @@ function tracershopReducer(state, action){
 
 export function TracerShopContext({children}){
   function getDatabaseMap(databaseField){
-    const dbMap = db.get(databaseField);
+    const /**@type {Map} */ dbMap = db.get(databaseField);
     if(!dbMap){
+      console.log("Returning empty map");
       return new Map();
     }
-    return dbMap;
+
+    if(databaseField in MODELS){
+      const Model = MODELS[databaseField];
+      const serializedMap = new Map();
+      for(const rawObject of dbMap.values()){
+        const serializedObject = new Model();
+        Object.assign(serializedObject, rawObject);
+        serializedMap.set(serializedObject.id, serializedObject);
+      }
+
+      return serializedMap;
+    } else {
+      return dbMap;
+    }
   }
 
 

@@ -39,6 +39,7 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
   const filteredEndpoints = [...endpoints.values()].filter(
     (endpoint) => {return activeCustomer == endpoint.owner;}
   );
+
   const withTimeSlots = setTimeSlot !== undefined
                         && timeSlots !== undefined
 
@@ -96,6 +97,8 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     </TracershopInputGroup>
   }
 
+  console.log(filteredEndpoints)
+
   return (<div>
     <TracershopInputGroup label="Kunde">
       <CustomerSelect
@@ -108,7 +111,6 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     <TracershopInputGroup label="Destination">
       <EndpointSelect
         aria-label={ariaLabelEndpoint}
-        customer={customers}
         delivery_endpoint={filteredEndpoints}
         value={activeEndpoint}
         onChange={onChangeEndpoint}

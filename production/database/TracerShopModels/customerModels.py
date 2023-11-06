@@ -41,17 +41,6 @@ class Customer(TracershopModel):
   billing_zip_code = CharField(max_length=8, null=True, default=None)
   active_directory_code = CharField(max_length=128, null=True, default=None)
 
-class TracerCatalogPage(TracershopModel):
-  id = BigAutoField(primary_key=True)
-  customer = ForeignKey(Customer, on_delete=RESTRICT)
-  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
-  max_injections = SmallIntegerField(default=0)
-  overhead_multiplier = FloatField(default=1)
-
-  class Meta:
-    unique_together = ('customer', 'tracer')
-
-
 class UserAssignment(TracershopModel):
   id = BigAutoField(primary_key=True)
   user = ForeignKey(User, on_delete=CASCADE)
@@ -84,6 +73,16 @@ class DeliveryEndpoint(TracershopModel):
   phone = CharField(max_length=32, null=True, default=None)
   name = CharField(max_length=32, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT)
+
+class TracerCatalogPage(TracershopModel):
+  id = BigAutoField(primary_key=True)
+  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+  max_injections = SmallIntegerField(default=0)
+  overhead_multiplier = FloatField(default=1)
+
+  class Meta:
+    unique_together = ('endpoint', 'tracer')
 
 
 class Location(TracershopModel):
