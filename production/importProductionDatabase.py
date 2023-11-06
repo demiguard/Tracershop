@@ -254,7 +254,7 @@ def get_tracer_customer(cursor: CursorBase,
     else:
       multiplier = 1 + overhead / 100
 
-    endpoint = endpoint[customer_id]
+    endpoint = endpoints[customer_id]
     tc = TracerCatalogPage(
       tracer=fdg,
       endpoint=endpoint,
