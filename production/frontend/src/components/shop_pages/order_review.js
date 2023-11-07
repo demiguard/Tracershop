@@ -33,9 +33,9 @@ export function OrderReview({active_endpoint, active_customer, active_date,
     state.tracer_mapping, state.tracer
   )
 
-  const /**@type {Array<Tracer>} */ availableActivityTracers = tracerCatalog.getActivityCatalog(active_customer);
-  const /**@type {Array<Tracer>} */ availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_customer);
-
+  const /**@type {Array<Tracer>} */ availableActivityTracers = tracerCatalog.getActivityCatalog(active_endpoint);
+  const /**@type {Array<Tracer>} */ availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
+  console.log(availableActivityTracers, availableInjectionTracers, tracerCatalog);
 
   // State Definitions
   let activeTracerInit = -1

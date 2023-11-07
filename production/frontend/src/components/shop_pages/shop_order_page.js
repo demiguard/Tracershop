@@ -22,8 +22,6 @@ const Content = {
   Automatisk : FutureBooking,
 };
 
-
-
 export function ShopOrderPage ({relatedCustomer}){
   const state = useTracershopState();
 
