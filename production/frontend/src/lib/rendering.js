@@ -1,10 +1,7 @@
 import React, {} from "react";
-import { Button, Form, Image } from "react-bootstrap";
 import { HoverBox } from "../components/injectable/hover_box.js";
 import { ClickableIcon } from "../components/injectable/icons.js";
 import { FormatDateStr } from "./formatting.js";
-
-import { noop } from "./utils.js";
 
 /**
   * This function is for building Tables, it creates a single row.
@@ -47,7 +44,7 @@ export function renderDateTime(dateString){
 }
 
 /**
- * 
+ * @deprecated
  * @param {*} comment
  * @returns
  */
@@ -61,18 +58,3 @@ export function renderComment(comment){
   }
   return null;
 };
-
-/**
- * @deprecated
- * @param {*} imagePath 
- * @param {*} func 
- * @returns 
- */
-export function renderClickableIcon(imagePath, func){
-  const onClickFunc = (func === undefined) ? noop : func
-  return (
-    <Button variant="outline-light" onClick={onClickFunc}>
-      <Image className="statusIcon" src={imagePath}/>
-    </Button>
-  )
-}

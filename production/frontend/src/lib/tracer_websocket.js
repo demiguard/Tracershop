@@ -30,7 +30,6 @@ export class TracerWebSocket {
     this._ws = websocket;
     this._dispatch = dispatch
 
-
     /** This function is called, when a message is received through the websocket from the server.
      *  This function handles all the different messages.
      *  Therefore it's basicly a big switch statement on each message type
@@ -276,5 +275,5 @@ export async function safeSend(message, websocket){
     websocket.send(JSON.stringify(message));
   } else {
     console.log("Websocket died while sending a message")
-  }
+ }
 }

@@ -11,6 +11,8 @@ import { DestinationSelect } from "../../../../components/injectable/derived_inj
 import { customers } from "../../../test_state/customers";
 import { deliveryEndpoints } from "../../../test_state/delivery_endpoints";
 import { activityDeliveryTimeSlots } from "../../../test_state/activity_delivery_time_slots";
+import { StateContextProvider } from "~/components/tracer_shop_context";
+import { testState } from "~/tests/app_state";
 
 let container = null;
 
@@ -56,32 +58,36 @@ function StateHolder({
   }
 
   return (
-    <DestinationSelect
-    ariaLabelCustomer="customer-select"
-    ariaLabelEndpoint="endpoint-select"
-    ariaLabelTimeSlot="timeslot-select"
-    activeCustomer={customer}
-    activeEndpoint={endpoint}
-    activeTimeSlot={timeSlot}
-    customers={customers}
-    endpoints={endpoints}
-    timeSlots={timeSlots}
-    setCustomer={setCustomer}
-    setEndpoint={setEndpoint}
-    setTimeSlot={setTimeSlot}
-    />);
+    <StateContextProvider value={testState}>
+      <DestinationSelect
+        ariaLabelCustomer="customer-select"
+        ariaLabelEndpoint="endpoint-select"
+        ariaLabelTimeSlot="timeslot-select"
+        activeCustomer={customer}
+        activeEndpoint={endpoint}
+        activeTimeSlot={timeSlot}
+        customers={customers}
+        endpoints={endpoints}
+        timeSlots={timeSlots}
+        setCustomer={setCustomer}
+        setEndpoint={setEndpoint}
+        setTimeSlot={setTimeSlot}
+      />
+    </StateContextProvider>);
 }
 
 describe("DestinationSelect", () => {
   it("Standard Render Test", async () => {
-    render(<StateHolder
+    render(
+    <StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
       timeSlots={activityDeliveryTimeSlots}
       mockSetCustomer={mockSetCustomer}
       mockSetEndpoint={mockSetEndpoint}
       mockSetTimeSlot={mockSetTimeSlot}
-    />)
+      />
+    );
 
     expect(screen.getByLabelText(customerLabel)).toBeVisible();
     expect(screen.getByLabelText(endpointLabel)).toBeVisible();

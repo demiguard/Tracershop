@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Row, Col, FormControl } from "react-bootstrap";
 
 import { ActivityProduction } from "../../../dataclasses/dataclasses";
@@ -12,37 +12,51 @@ import { tracerTypeFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { Select, toOptions } from "~/components/injectable/select";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
-import { setTempObjectToEvent } from "~/lib/state_management";
+import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { parseTimeInput } from "~/lib/user_input";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { ClickableIcon } from "~/components/injectable/icons";
+import { numberfy } from "~/lib/utils";
 
 export function ProductionSetup(){
   const state = useTracershopState();
-  const websocket = useWebsocket()
-  const productions = [...state.production.values()]
+
   const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
   );
   const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id;
-
-  const tempProductionInit = new ActivityProduction(null, DAYS.MONDAY, tracerInit, "", "", "")
+  const [tracerID, setTracer] = useState(tracerInit);
+  const NumberTracerID = numberfy(tracerID)
+  const tempProductionInit = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", "", "")
   const [tempProduction, setTempProduction] = useState(tempProductionInit);
 
+  const productions = [...state.production.values()].filter((production) =>
+    production.tracer === NumberTracerID);
+
   function setNewProduction(){
-    setTempProduction(new ActivityProduction(null, DAYS.MONDAY, tracerInit, "", "", ""));
+    const default_production = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", "", "")
+    setTempProduction(default_production);
   }
 
+  useEffect(() => {
+    if(NumberTracerID !== tempProduction.tracer){
+      setNewProduction();
+    }
+  },[tracerID])
 
-  function setProductionTime(event){
-    setTempProduction(tempProduction => setTempProduction({...tempProduction, production_time : event.target.value}))
+  function setProductionTime(newValue){
+    setTempProduction(tempProduction =>  {return {...tempProduction, production_time : newValue}})
   }
 
   function validate(){
     const [validTime, formattedTime] = parseTimeInput(tempProduction.production_time, 'Produktions tidpunktet');
 
-    return [validTime, {...tempProduction, production_time : formattedTime}];
+    return [validTime, {...tempProduction,
+                        production_time : formattedTime,
+                        tracer : NumberTracerID,
+                        production_day : numberfy(tempProduction.production_day),
+                      }];
   }
 
   /**weekly time table functions */
@@ -88,7 +102,7 @@ export function ProductionSetup(){
   }
 
   function weeklyTimeTableInnerText(entry){
-    return (<div>{entry.production_time}</div>)
+    return (<div aria-label={`production-${entry.id}`}>{entry.production_time}</div>)
   }
 
   /**
@@ -110,9 +124,6 @@ export function ProductionSetup(){
     [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
   };
 
-  console.log(tempProduction.id)
-
-
   return (<Container>
     <Row
       style={{
@@ -120,13 +131,15 @@ export function ProductionSetup(){
       }}>
       <Col>
         <Select
+          aria-label="tracer-selector"
           options={toOptions(activityTracers, 'shortname')}
-          value={tempProduction.tracer}
-          onChange={setTempObjectToEvent(setTempProduction, 'tracer')}
+          value={tracerID}
+          onChange={setStateToEvent(setTracer)}
         />
       </Col>
       <Col>
         <Select
+          aria-label="day-selector"
           options={toOptions(DAYS_OBJECTS,'name', 'day')}
           value={tempProduction.production_day}
           onChange={setTempObjectToEvent(setTempProduction, 'production_day')}
@@ -137,8 +150,8 @@ export function ProductionSetup(){
           <TimeInput
             aria-label="production-time"
             value={tempProduction.production_time}
-            onChange={setTempObjectToEvent(setTempProduction, 'production_time')}
-            />
+            stateFunction={setProductionTime}
+          />
         </ErrorInput>
       </Col>
       <Col>

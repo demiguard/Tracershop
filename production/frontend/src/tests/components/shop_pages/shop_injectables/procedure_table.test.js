@@ -61,7 +61,7 @@ describe("Procedure Table test suite", () => {
     const endpointSelect = screen.getByLabelText("select-customer");
 
     act(() => {
-      fireEvent.change(endpointSelect,{target: {value: 2}});
+      fireEvent.change(endpointSelect, {target: {value: 2}});
     })
 
     const piSelect = screen.getByTestId("new-procedure-identifier");

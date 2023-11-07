@@ -54,7 +54,7 @@ describe("Shop Order page test suite", () => {
     render(
     <StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
-        <ShopOrderPage />
+        <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
@@ -68,7 +68,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage />
+          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -84,7 +84,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage />
+          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -103,7 +103,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage />
+          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -117,7 +117,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage />
+          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -131,7 +131,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage />
+          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 

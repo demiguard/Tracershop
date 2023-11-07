@@ -30,7 +30,7 @@ export class CustomerCatalog {
  * Each instance is unique to a customer.
  */
 export class TracerCatalog {
-  /**@type {Map<Number, CustomerCatalog } */ _customerCatalogs
+  /**@type {Map<Number, CustomerCatalog } */ _endpointCatalogs
 
   /**
    * Data structure containing information about which tracers a customer have access to
@@ -40,14 +40,14 @@ export class TracerCatalog {
    * @param {Map<Number, Tracer>} tracers The Collection of all tracers
    */
   constructor(tracerCatalogPages, tracers){
-    this._customerCatalogs = new Map()
+    this._endpointCatalogs = new Map()
 
     for(const tracerCatalogPage of tracerCatalogPages.values()){
-      if(!this._customerCatalogs.has(tracerCatalogPage.endpoint)){
-        this._customerCatalogs.set(tracerCatalogPage.endpoint, new CustomerCatalog())
+      if(!this._endpointCatalogs.has(tracerCatalogPage.endpoint)){
+        this._endpointCatalogs.set(tracerCatalogPage.endpoint, new CustomerCatalog())
       }
 
-      const customer_catalog = this._customerCatalogs.get(tracerCatalogPage.endpoint)
+      const endpoint_catalog = this._endpointCatalogs.get(tracerCatalogPage.endpoint)
 
       const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
       if(tracer === undefined){
@@ -55,10 +55,10 @@ export class TracerCatalog {
       }
 
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
-        customer_catalog.overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
-        customer_catalog.tracerCatalogActivity.push(tracer);
+        endpoint_catalog.overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
+        endpoint_catalog.tracerCatalogActivity.push(tracer);
       } else if (tracer.tracer_type === TRACER_TYPE.DOSE) {
-        customer_catalog.tracerCatalogInjections.push(tracer);
+        endpoint_catalog.tracerCatalogInjections.push(tracer);
       }
     }
   }
@@ -71,9 +71,9 @@ export class TracerCatalog {
   getCatalog(endpointID){
     const index = numberfy(endpointID)
 
-    const customer_catalog = this._customerCatalogs.get(index);
-    if (customer_catalog !== undefined){
-      return customer_catalog
+    const endpoint_catalog = this._endpointCatalogs.get(index);
+    if (endpoint_catalog !== undefined){
+      return endpoint_catalog
     }
     console.log("Undefined customer referenced");
     return new CustomerCatalog();
@@ -81,9 +81,9 @@ export class TracerCatalog {
 
   getActivityCatalog(customerID){
     const index = numberfy(customerID)
-    const customer_catalog = this._customerCatalogs.get(index);
-    if (customer_catalog !== undefined){
-      return customer_catalog.tracerCatalogActivity;
+    const endpoint_catalog = this._endpointCatalogs.get(index);
+    if (endpoint_catalog !== undefined){
+      return endpoint_catalog.tracerCatalogActivity;
     }
     return [];
   }
@@ -95,20 +95,19 @@ export class TracerCatalog {
    */
   getInjectionCatalog(endpointID){
     const index = numberfy(endpointID)
-    const customer_catalog = this._customerCatalogs.get(index);
-    if (customer_catalog !== undefined){
-      return customer_catalog.tracerCatalogInjections;
+    const endpoint_catalog = this._endpointCatalogs.get(index);
+    if (endpoint_catalog !== undefined){
+      return endpoint_catalog.tracerCatalogInjections;
     }
     return [];
-    
   }
 
   getOverheadForTracer(endpointID, tracerID){
-    const customer_index = numberfy(endpointID)
+    const endpoint_index = numberfy(endpointID)
     const tracer_index = numberfy(tracerID)
-    const customer_catalog = this._customerCatalogs.get(customer_index);
-    if (customer_catalog !== undefined){
-      return customer_catalog.overheadMap.get(tracer_index);
+    const endpoint_catalog = this._endpointCatalogs.get(endpoint_index);
+    if (endpoint_catalog !== undefined){
+      return endpoint_catalog.overheadMap.get(tracer_index);
     }
     // There should be a handle here!
     console.log(`Undefined customer - ${endpointID}, tracer ${tracerID} referenced`);
