@@ -32,7 +32,7 @@ export function ShopSite ({logout, NavbarElements}) {
   const relatedCustomer = (() => {
     if([USER_GROUPS.SHOP_ADMIN, USER_GROUPS.SHOP_EXTERNAL, USER_GROUPS.SHOP_USER].includes(user.user_group)){
       const relatedCustomer = new Map()
-      for(const userAssignment of state.user_assignment){
+      for(const userAssignment of state.user_assignment.values()){
         if(userAssignment.user === user.id){
           relatedCustomer.set(userAssignment.customer, state.customer.get(userAssignment.customer))
         }

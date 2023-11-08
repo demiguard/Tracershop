@@ -39,11 +39,10 @@ export function ProcedureTable(){
   const activeProcedures = endpointProcedures.getProcedures(activeEndpoint);
 
   const tracerCatalog = new TracerCatalog(state.tracer_mapping, state.tracer);
-  const availableTracers = tracerCatalog.getActivityCatalog(activeCustomer).concat(tracerCatalog.getInjectionCatalog(activeCustomer));
+  const availableTracers = tracerCatalog.getActivityCatalog(activeEndpoint).concat(tracerCatalog.getInjectionCatalog(activeEndpoint));
 
   const tracerOptions = toOptions(availableTracers, 'shortname');
   tracerOptions.push(new Option("", "---------"));
-
   /**
   *
   * @param {{
@@ -158,7 +157,7 @@ export function ProcedureTable(){
       if(tracer === ""){
         parsedTracer = null
       }
-
+      console.log(tracer)
       const [validUnits, parsedUnits] = parseWholePositiveNumber(units, "Enheder");
       const [validDelay, parsedDelay] = parseDanishNumberInput(delay, "Forsinkelsen");
 

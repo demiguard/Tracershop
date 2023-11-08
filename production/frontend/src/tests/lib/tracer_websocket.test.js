@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import WS from "jest-websocket-mock"
-import { AUTH_IS_AUTHENTICATED, JAVASCRIPT_VERSION, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
-  WEBSOCKET_DATA_ID, WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_ECHO,
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JAVASCRIPT_VERSION, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
+  WEBSOCKET_DATA_ID, WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_ECHO,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,
@@ -11,18 +11,23 @@ import { AUTH_IS_AUTHENTICATED, JAVASCRIPT_VERSION, WEBSOCKET_DATA, WEBSOCKET_DA
  } from "~/lib/shared_constants.js"
 import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { MessageChannel } from 'node:worker_threads'
+import { object } from "prop-types";
 
 let server = null;
 let websocket = null;
+
 let dispatch = jest.fn()
 
-
+const who_am_i_message = expect.objectContaining({
+  [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_AUTH_WHOAMI
+})
 
 beforeEach(async () => {
   window.MessageChannel = MessageChannel
   server = new WS("ws://localhost:1234", {jsonProtocol : true});
   websocket = new TracerWebSocket(new WebSocket("ws://localhost:1234"), dispatch);
   await server.connected;
+  await expect(server).toReceiveMessage(who_am_i_message);
 })
 
 afterEach(() =>{
@@ -53,7 +58,7 @@ describe("tracer websocket test suite", () => {
     }
     server.send(message);
 
-    expect(dispatch).toBeCalled();
+    expect(dispatch).toHaveBeenCalled();
   });
 
   it("Handle Free order message", () => {
@@ -70,7 +75,7 @@ describe("tracer websocket test suite", () => {
     }
     server.send(message);
 
-    expect(dispatch).toBeCalled();
+    expect(dispatch).toHaveBeenCalled();
   });
 
   it("Failed to Free order", () => {
@@ -88,7 +93,7 @@ describe("tracer websocket test suite", () => {
     }
     server.send(message);
 
-    expect(dispatch).not.toBeCalled();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 
   it("Handle delete message", () => {
@@ -104,7 +109,7 @@ describe("tracer websocket test suite", () => {
 
     server.send(message)
 
-    expect(dispatch).toBeCalled()
+    expect(dispatch).toHaveBeenCalled()
   })
 
 
@@ -155,7 +160,7 @@ describe("tracer websocket test suite", () => {
     //expect(server).toReceiveMessage(expect.objectContaining(expectedMessage));
   })
 
-  it("Send method - create model",  () => {
+  it("Send method - create model", async () => {
     const dataType = "dataType";
     const data = [{id : 1, data: "foo bar"}];
     websocket.sendCreateModel(dataType, [{id : 1, data: "foo bar"}]);
@@ -163,10 +168,57 @@ describe("tracer websocket test suite", () => {
     const expectedMessage = {
       [WEBSOCKET_DATATYPE] : dataType,
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_CREATE,
-      [WEBSOCKET_DATA] : [data],
-    }
+      [WEBSOCKET_DATA] : data,
+    };
     // we send a message on creation
-    //expect(server).toReceiveMessage(expect.objectContaining(expectedMessage))
+    await expect(server).toReceiveMessage(expect.objectContaining(expectedMessage));
   })
 
+  it("Send Delete Models - id", async () => {
+    const dataType = "asdf"
+    await websocket.sendDeleteModel(dataType, 1);
+
+    await expect(server).toReceiveMessage(expect.objectContaining({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      [WEBSOCKET_DATA_ID] : [1],
+      [WEBSOCKET_DATATYPE] : dataType
+    }));
+
+  });
+
+  it("Send Delete Models - model", async () => {
+    const dataType = "asdf"
+    await websocket.sendDeleteModel(dataType, {id : 1});
+
+    await expect(server).toReceiveMessage(expect.objectContaining({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      [WEBSOCKET_DATA_ID] : [1],
+      [WEBSOCKET_DATATYPE] : dataType
+    }));
+  });
+
+  it("Send ChangePassword", async () => {
+    websocket.sendChangePassword(1 , "new_password");
+
+    await expect(server).toReceiveMessage(expect.objectContaining({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+      [WEBSOCKET_DATA_ID] : 1,
+      [AUTH_PASSWORD] : "new_password",
+    }));
+  });
+
+  it("Send CreateExternalUser", async () => {
+    websocket.sendCreateExternalUser({
+      username : "new_user",
+      password : "new_user_password"
+    });
+
+    await expect(server).toReceiveMessage(expect.objectContaining({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
+      [WEBSOCKET_DATA] : {
+        [AUTH_USERNAME] : "new_user",
+        [AUTH_PASSWORD] : "new_user_password",
+      },
+    }));
+  });
 })

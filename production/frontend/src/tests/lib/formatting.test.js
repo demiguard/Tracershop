@@ -5,6 +5,8 @@ import { parseDate, ParseDanishNumber, parseDateToDanishDate,
   IPValidator,
   StringValidator
 } from "../../lib/formatting";
+import { DATA_ISOTOPE } from "~/lib/shared_constants";
+import { Isotope } from "~/dataclasses/dataclasses";
 
 describe("ParseDate Tests", () => {
   const target_date_1 = "2011-11-30"
@@ -177,24 +179,42 @@ describe("JSON parse Django Models",() => {
   const input = JSON.stringify([{
       pk : 1,
       fields : {
-        f : 1
+        atomic_number : 123,
+        atomic_mass : 456,
+        halflife_seconds : 789,
+        atomic_letter : "L",
+        metastable : true,
       }
     }, {
       pk : 2,
       fields : {
-        f : 2
+        atomic_number : 987,
+        atomic_mass : 654,
+        halflife_seconds : 321,
+        atomic_letter : "W" ,
+        metastable : false,
       }
    }
   ])
   it("Standard Test", () => {
-    const res = ParseDjangoModelJson(input);
+    const res = ParseDjangoModelJson(input, new Map([]), DATA_ISOTOPE);
     expect(res.size).toEqual(2);
-    const m1 = res.get(1);
-    const m2 = res.get(2);
-    expect(m1).toBeDefined();
-    expect(m2).toBeDefined();
-    expect(m1.f).toEqual(1);
-    expect(m2.f).toEqual(2);
+    const isotope_1 = res.get(1);
+    const isotope_2 = res.get(2);
+    expect(isotope_1).toBeDefined();
+    expect(isotope_2).toBeDefined();
+    expect(isotope_1).toBeInstanceOf(Isotope);
+    expect(isotope_2).toBeInstanceOf(Isotope);
+    expect(isotope_1.atomic_number).toBe(123);
+    expect(isotope_2.atomic_number).toBe(987);
+    expect(isotope_1.atomic_mass).toBe(456);
+    expect(isotope_2.atomic_mass).toBe(654);
+    expect(isotope_1.halflife_seconds).toBe(789);
+    expect(isotope_2.halflife_seconds).toBe(321);
+    expect(isotope_1.atomic_letter).toBe("L");
+    expect(isotope_2.atomic_letter).toBe("W");
+    expect(isotope_1.metastable).toBe(true);
+    expect(isotope_2.metastable).toBe(false);
   });
 });
 

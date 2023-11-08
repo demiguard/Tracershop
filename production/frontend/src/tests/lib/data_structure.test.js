@@ -1,6 +1,6 @@
-const { ActivityProduction, ActivityDeliveryTimeSlot } = require("~/dataclasses/dataclasses");
-const { WEEKLY_REPEAT_CHOICES } = require("~/lib/constants");
-const { TimeSlotBitChain } = require("~/lib/data_structures");
+const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage } = require("~/dataclasses/dataclasses");
+const { WEEKLY_REPEAT_CHOICES, TRACER_TYPE } = require("~/lib/constants");
+const { TimeSlotBitChain, TracerCatalog, CustomerCatalog } = require("~/lib/data_structures");
 
 
 describe("Bit chains test sweep", () => {
@@ -43,3 +43,41 @@ describe("Bit chains test sweep", () => {
   });
 })
 
+describe("Tracer catalog Tests", () => {
+  it("Empty Tracer catalog", () => {
+    const tracerCatalog = new TracerCatalog(new Map(), new Map());
+
+    const empty_endpoint_catalog = tracerCatalog.getCatalog(1)
+
+    expect(empty_endpoint_catalog).toBeInstanceOf(CustomerCatalog);
+    expect(empty_endpoint_catalog.tracerCatalogActivity).toStrictEqual([]);
+    expect(empty_endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
+    expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([]);
+    expect(tracerCatalog.getInjectionCatalog(1)).toStrictEqual([]);
+  });
+
+  it("My Own Test data", () =>  {
+    const tracer = new Tracer(
+      1, "name", "" , 1, TRACER_TYPE.ACTIVITY, null, null, null,
+    );
+
+
+    const tracerCatalog = new TracerCatalog(
+      new Map([
+        [1, new TracerCatalogPage(1, 1, 1, null, 1.5)]
+      ]),
+      new Map([
+        [1, tracer]
+      ])
+    );
+
+    const endpoint_catalog = tracerCatalog.getCatalog(1);
+    expect(endpoint_catalog).toBeInstanceOf(CustomerCatalog);
+    expect(endpoint_catalog.tracerCatalogActivity).toStrictEqual([tracer]);
+    expect(endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
+    expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([tracer]);
+    expect(tracerCatalog.getActivityCatalog(2)).toStrictEqual([]);
+    expect(tracerCatalog.getInjectionCatalog(1)).toStrictEqual([]);
+  });
+
+})

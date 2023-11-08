@@ -33,6 +33,7 @@ const cleanTimeSlot = {
   weekly_repeat : 0,
   delivery_time : "",
   production_run : 0,
+  id : ""
 };
 
 const cleanEndpoint = {
@@ -408,6 +409,7 @@ export function CustomerModal({
   }
 
   function ActiveTimeSlotConfig(){
+    const timeSlotCorrect = (activeTimeSlot === "") ? cleanTimeSlot : state.deliver_times.get(activeTimeSlot);
     const timeSlotDirty = tempTimeSlot.delivery_time === timeSlotCorrect.delivery_time
                        || tempTimeSlot.weekly_repeat === timeSlotCorrect.weekly_repeat
                        || tempTimeSlot.production_run === timeSlotCorrect.production_run;

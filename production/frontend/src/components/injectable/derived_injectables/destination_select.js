@@ -97,8 +97,6 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     </TracershopInputGroup>
   }
 
-  console.log(filteredEndpoints)
-
   return (<div>
     <TracershopInputGroup label="Kunde">
       <CustomerSelect

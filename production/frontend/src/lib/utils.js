@@ -21,27 +21,6 @@ export function BooleanMapping(bool){
 /** istanbul ignore next */
 export function noop(){}
 
-
-/**
- *
- * @param {*} character -
- * @param {String} kw - String
- * @param {Array} indexes - Array of indexes
- * @param {Object} This - StateHolder
- * @returns {CallableFunction} - Function that adds a
- */
-export function addCharacter(character, kw, indexes, This){
-  const returnFunction = (event) => {
-      if(event.code == "Backspace") return;
-      if(indexes.includes(event.target.value.length)){
-        const newState = {...This.state}
-        newState[kw] = event.target.value + character;
-        This.setState(newState);
-      }
-    }
-  return returnFunction.bind(this);
-}
-
 /** Removes an element from a list
  *
  * @param {Array} arr - Array to have an element removed

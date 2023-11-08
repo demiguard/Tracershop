@@ -19,7 +19,7 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-    websocket = tracer_websocket.TracerWebSocket;
+  websocket = tracer_websocket.TracerWebSocket;
 });
 
 afterEach(() => {
