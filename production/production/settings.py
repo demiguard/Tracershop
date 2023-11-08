@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 import os
 from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME,\
       LDAP_PASSWORD
-from production.config import debug_file_log, SQL_file_log, error_file_log,\
+from production.config import debug_file_log, error_file_log,\
       audit_file_log, pingService_file_log
 from constants import DEBUG_LOGGER, ERROR_LOGGER, AUDIT_LOGGER,\
       PING_SERVICE_LOGGER

@@ -39,8 +39,8 @@ class ProductionJSONEncoder(DjangoJSONEncoder):
 
 class ProductionJSONResponse(JsonResponse):
   def __init__(self, data, encoder=ProductionJSONEncoder, safe=True,
-                 DATA_dumps_params=None, **kwargs):
-    super().__init__(data, encoder=encoder,safe=safe, DATA_dumps_params=DATA_dumps_params, **kwargs)
+                 json_dumps_params=None, **kwargs):
+    super().__init__(data, encoder=encoder,safe=safe, json_dumps_params=json_dumps_params, **kwargs)
 
 def encode(text_data):
   return json.dumps(text_data, cls=ProductionJSONEncoder)

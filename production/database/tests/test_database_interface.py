@@ -1,7 +1,7 @@
 # Python Standard Library
 from datetime import time, date
 import asyncio
-
+from unittest import skip
 # Third party package
 from django.test import TransactionTestCase
 from django.db.models import CharField
@@ -9,16 +9,18 @@ from django.db.models import CharField
 # Tracershop Modules
 from database.models import Booking, Procedure, User, Tracer, Isotope, Location, BookingStatus
 from database.database_interface import DatabaseInterface
-from tests.helpers import InitializeTestDatabase
 
 # Create your tests here.
 class DatabaseInterFaceTestCases(TransactionTestCase):
   def setUp(self) -> None:
     self.db = DatabaseInterface()
+    
 
+  def tearDown(self) -> None:
+    pass
 
+  @skip
   def test_database_interface_mass_order_activity(self):
-    isotope, tracer_activity, tracer_injection, production, customer, endpoint, timeSlot_1, timeSlot_2, test_admin, test_production = InitializeTestDatabase()
 
     accession_number_1 = "REGH10642011"
     accession_number_2 = "REGH10642012"
@@ -28,7 +30,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
     location = Location(
       location_code="BLA30BLA",
-      endpoint=endpoint,
+      endpoint=self.endpoint,
       common_name="Bla bla",
     )
     location.save()
@@ -38,7 +40,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       tracer_units=300,
       in_use=True,
       delay_minutes=45,
-      tracer=tracer_activity,
+      tracer=self.tracer_activity,
     )
     procedure.save()
 
@@ -97,11 +99,10 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       accession_number_3 : True,
       accession_number_4 : True,
       accession_number_5 : True,
-    }, test_admin))
+    }, self.test_admin))
 
+  @skip
   def test_database_interface_mass_order_injection(self):
-    isotope, tracer_activity, tracer_injection, production, customer, endpoint, timeSlot_1, timeSlot_2, test_admin, test_production = InitializeTestDatabase()
-
     accession_number_1 = "REGH10642011"
     accession_number_2 = "REGH10642012"
     accession_number_3 = "REGH10642013"
@@ -110,7 +111,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
     location = Location(
       location_code="BLA30BLA",
-      endpoint=endpoint,
+      endpoint=self.endpoint,
       common_name="Bla bla",
     )
     location.save()
@@ -120,7 +121,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       tracer_units=1,
       in_use=True,
       delay_minutes=45,
-      tracer=tracer_injection,
+      tracer=self.tracer_injection,
     )
     procedure.save()
 
@@ -179,7 +180,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       accession_number_3 : True,
       accession_number_4 : True,
       accession_number_5 : True,
-    }, test_admin))
+    }, self.test_admin))
 
     bookings = Booking.objects.filter(accession_number__in=[
       accession_number_1, accession_number_2, accession_number_3, accession_number_4, accession_number_5

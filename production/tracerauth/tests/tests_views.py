@@ -12,7 +12,6 @@ class ExternalLoginTestCase(TransactionTestCase):
     self.factory = RequestFactory()
     self.view = ExternalLoginView()
     self.AdminUser = User(username="Admin",
-
                           user_group=UserGroups.Admin)
     self.AdminUser.set_password("Admin_password")
     self.AdminUser.save()

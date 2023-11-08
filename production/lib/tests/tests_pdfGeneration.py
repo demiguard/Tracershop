@@ -14,20 +14,20 @@ class PDFsGenerationTest(TestCase):
   def test_createActivityPDF_singleOrderVial(self):
     orderDate = date(1707, 4, 15)
     isotope = Isotope(
-      isotope_id = 123,
+      id = 123,
       atomic_number = 57,
       atomic_mass = 123,
       halflife_seconds = 123.123,
       atomic_letter = "Æ",
     )
     tracer = Tracer(
-      tracer_id =492,
+      id =492,
       shortname = "a_tracer",
       clinical_name = "Klinsk Navn",
       isotope =isotope,
       tracer_type = TracerTypes.ActivityBased,
     )
-    customer = Customer(customer_id= 5634,
+    customer = Customer(id= 5634,
                         short_name= "kunde",
                         long_name= "Kundens organisation",
                         dispenser_id= 2,
@@ -36,7 +36,7 @@ class PDFsGenerationTest(TestCase):
                         billing_email= "kunde email",
                         billing_phone= "kunde telefon",
                         billing_zip_code= "zip code",)
-    endpoint = DeliveryEndpoint(tracer_endpoint_id=23991,
+    endpoint = DeliveryEndpoint(id=23991,
                                 address="Endpoint address",
                                 city="endpoint city",
                                 zip_code="zip code",
@@ -44,26 +44,26 @@ class PDFsGenerationTest(TestCase):
                                 name="Endpoint name",
                                 owner = customer
     )
-    production_1 = ActivityProduction(activity_production_id = 78341,
+    production_1 = ActivityProduction(id = 78341,
                                       production_day=4,
                                       tracer=tracer,
                                       production_time=time(6,30,0))
-    production_2 = ActivityProduction(activity_production_id = 78342,
+    production_2 = ActivityProduction(id = 78342,
                                       production_day=4,
                                       tracer=tracer,
                                       production_time=time(16,30,0))
 
-    time_slot_1 = ActivityDeliveryTimeSlot(activity_delivery_time_slot_id = 48720,
+    time_slot_1 = ActivityDeliveryTimeSlot(id = 48720,
                                            weekly_repeat = WeeklyRepeat.EveryWeek,
                                            delivery_time = time(7,45,0),
                                            destination = endpoint,
                                            production_run = production_1,)
-    time_slot_2 = ActivityDeliveryTimeSlot(activity_delivery_time_slot_id = 48721,
+    time_slot_2 = ActivityDeliveryTimeSlot(id = 48721,
                                            weekly_repeat = WeeklyRepeat.EveryWeek,
                                            delivery_time = time(17,45,0),
                                            destination = endpoint,
                                            production_run = production_2,)
-    order_1 = ActivityOrder(activity_order_id=38104,
+    order_1 = ActivityOrder(id=38104,
                             ordered_activity=8311,
                             delivery_date=orderDate,
                             status=OrderStatus.Released,
@@ -71,7 +71,7 @@ class PDFsGenerationTest(TestCase):
                             ordered_time_slot=time_slot_1,
                             moved_to_time_slot=None,
                             freed_datetime=datetime(1707,4,15,7,58,11),)
-    vial_1 = Vial(vial_id=8181,
+    vial_1 = Vial(id=8181,
                   tracer=tracer,
                   activity=8421,
                   volume=13.44,
@@ -92,19 +92,19 @@ class PDFsGenerationTest(TestCase):
 
   def test_createInjectionPDF(self):
     isotope = Isotope(
-      isotope_id = 123,
+      id = 123,
       atomic_number = 57,
       atomic_mass = 123,
       halflife_seconds = 123.123,
       atomic_letter = "Æ",)
     tracer = Tracer(
-      tracer_id =492,
+      id =492,
       shortname = "a_tracer",
       clinical_name = "Klinsk Navn",
       isotope =isotope,
       tracer_type = TracerTypes.InjectionBased,
     )
-    customer = Customer(customer_id= 5634,
+    customer = Customer(id= 5634,
                         short_name= "kunde",
                         long_name= "Kundens organisation",
                         dispenser_id= 2,
@@ -113,7 +113,7 @@ class PDFsGenerationTest(TestCase):
                         billing_email= "kunde email",
                         billing_phone= "kunde telefon",
                         billing_zip_code= "zip code",)
-    endpoint = DeliveryEndpoint(tracer_endpoint_id=23991,
+    endpoint = DeliveryEndpoint(id=23991,
                                 address="Endpoint address",
                                 city="endpoint city",
                                 zip_code="zip code",
@@ -122,7 +122,7 @@ class PDFsGenerationTest(TestCase):
                                 owner = customer)
 
 
-    injectionOrder = InjectionOrder(injection_order_id=5112,
+    injectionOrder = InjectionOrder(id=5112,
                                     delivery_time=time(13,45,00),
                                     delivery_date=date(1777,4,30),
                                     injections=2,

@@ -11,18 +11,19 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
-from production.SECRET_KEY import KEY
 from production.config import debug_file_log, SQL_file_log
 
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+from constants import DEBUG_LOGGER, ERROR_LOGGER, AUDIT_LOGGER,\
+      PING_SERVICE_LOGGER
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = KEY
+SECRET_KEY = "TEST KEY!"
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -96,15 +97,11 @@ CHANNEL_LAYERS = {
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'test_tracershop',
-        'USER': 'tracershop',
-        'PASSWORD': 'fdg2world',
-        'HOST': 'localhost',
-        'PORT': '3306'
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'test_database.sqlite', # This is where you put the name of the db file.
+                 # If one doesn't exist, it will be created at migration time.
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
@@ -166,15 +163,15 @@ LOGGING = {
             'format': '[{server_time}] {message}',
             'style': '{',
         },
-        'SQL' : {
-            '()': 'django.utils.log.ServerFormatter',
-            'format' : '{message}',
-            'style' : '{'
+        'audit.formatter' : {
+            '()' : 'logging.Formatter',
+            'style' : '{',
+            'format' : '[{asctime}] {message}'
         },
     },
     'handlers': {
         'console': {
-            'level': 'INFO',
+            'level': 'DEBUG',
             'filters': ['require_debug_true'],
             'class': 'logging.StreamHandler',
         },
@@ -184,29 +181,37 @@ LOGGING = {
             'formatter': 'django.server',
         },
         'mail_admins': {
-            'level': 'ERROR',
+            'level': 'CRITICAL',
             'filters': ['require_debug_false'],
             'class': 'django.utils.log.AdminEmailHandler'
         },
         'myHandler' : {
             'level' : 'DEBUG',
-            'class' : 'logging.FileHandler',
-            'filename' : 'log/production_test.log',
-            'formatter'  : 'django.server'
+            'class' : 'logging.StreamHandler', # Should be changed to rotating file handler
+            'formatter' : 'django.server'
         },
-        'SQLHandler' : {
-            'level' : 'DEBUG',
-            'class' : 'logging.FileHandler',
-            'filename' : 'log/sql_test.log',
-            'formatter' : 'SQL'
-        }
+        'ErrorHandler' : {
+            'level' : 'ERROR',
+            'class' : 'logging.StreamHandler', # Should be changed to rotating file handler
+            'formatter' : 'django.server'
+        },
+        'audit_log' : {
+            'level' : "INFO",
+            'class' : 'logging.StreamHandler',
+            'formatter' : 'audit.formatter'
+        },
+        'pingServiceHandler' : {
+            'level' : 'INFO',
+            'class' : 'logging.StreamHandler',
+            'formatter' : 'django.server'
+        },
     },
     'loggers': {
         'django': {
             'handlers': ['console', 'mail_admins'],
             'level': 'INFO',
         },
-        'DebugLogger' : {
+        DEBUG_LOGGER : {
             'handlers':  ['myHandler', 'console'],
             'level': 'DEBUG'
         },
@@ -215,9 +220,19 @@ LOGGING = {
             'level': 'INFO',
             'propagate': False,
         },
-        'SQLLogger' : {
-            'handlers' : ['SQLHandler', 'console']
+        ERROR_LOGGER : {
+            'handlers': ['ErrorHandler'],
+            'level' : 'ERROR'
         },
+        AUDIT_LOGGER : {
+            'handlers' : ['console', 'audit_log'],
+            'level' : "INFO",
+        },
+        PING_SERVICE_LOGGER : {
+            'level' : "INFO",
+            'handlers' : ['pingServiceHandler'],
+        },
+
     }
 }
 

@@ -45,3 +45,4 @@ ipch/
 hl7_messsages/
 settings.json
 *.hl7
+*.sqlite

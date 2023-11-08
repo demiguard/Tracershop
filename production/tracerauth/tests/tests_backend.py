@@ -1,7 +1,4 @@
-from unittest import skip
-
 from django.test import TestCase, TransactionTestCase
-from django.conf import settings
 
 
 from tracerauth.backend import TracershopAuthenticationBackend, validString
@@ -16,7 +13,7 @@ class TracerAuthBackendTestCase(TransactionTestCase):
     self.basicUserName = "basicUser"
     self.basicPassword = "basicPassword"
 
-    self.basicUser = User(username=self.basicUserName, user_group=UserGroups.ShopUser, OldTracerBaseID=321)
+    self.basicUser = User(username=self.basicUserName, user_group=UserGroups.ShopUser)
     self.basicUser.set_password(self.basicPassword)
     self.basicUser.save()
     self.backend = TracershopAuthenticationBackend()

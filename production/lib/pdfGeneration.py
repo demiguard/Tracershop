@@ -50,7 +50,7 @@ BOTTOM_LINE = (50, 791, 545, 791)
 if fonts:
   defaultFont = "Mari_Light"
 else:
-  defaultFont = "helvetica" # pragma no cover
+  defaultFont = "Helvetica" # pragma no cover
 defaultFontSize = 13
 
 start_x_cursor = 58
@@ -162,7 +162,10 @@ class MailTemplate(canvas.Canvas):
       if order.freed_datetime is None:
         releaseTimes.append('')
       else:
-        timezone_aware = timezone.make_naive(order.freed_datetime)
+        try:
+          timezone_aware = timezone.make_naive(order.freed_datetime)
+        except ValueError:
+          timezone_aware = order.freed_datetime
         releaseTimes.append(timezone_aware.strftime("%H:%M:%S"))
 
     orderData = [[

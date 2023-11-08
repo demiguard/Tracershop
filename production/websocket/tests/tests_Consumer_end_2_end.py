@@ -19,7 +19,7 @@ from logging import ERROR
 from pprint import pprint
 import time
 from typing import Any, Dict
-from unittest import skip
+from unittest import skip, mock
 
 # Third party packages
 from channels.auth import AuthMiddlewareStack
@@ -37,15 +37,27 @@ from django.test import TestCase, TransactionTestCase, override_settings
 
 # Tracershop Production
 from core.side_effect_injection import DateTimeNow
-from constants import *
+from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
+  WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_ID,\
+  JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_ECHO,\
+  WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_AUTH_LOGOUT,\
+  WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_SUCCESS, ERROR_NO_MESSAGE_ID,\
+  WEBSOCKET_MESSAGE_GET_STATE, ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE,\
+  ERROR_INVALID_JAVASCRIPT_VERSION, DATA_CLOSED_DATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,\
+  WEBSOCKET_DATA, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, DATA_ACTIVITY_ORDER,\
+  DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_CUSTOMER, WEBSOCKET_MESSAGE_MODEL_DELETE,\
+  WEBSOCKET_MESSAGE_RESTORE_ORDERS, WEBSOCKET_MESSAGE_MODEL_CREATE, DATA_VIAL,\
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION
+
 from database.database_interface import DatabaseInterface
-from database.models import Address, ClosedDate, Database, ServerConfiguration,\
+from database.models import ClosedDate,\
     User, UserGroups, MODELS, ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
     Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder
-from websocket.consumer import Consumer
+
+with mock.patch('production.SECRET_KEY'):
+  from websocket import consumer
 
 # Testing library
-from tests.helpers import InitializeTestDatabase
 
 
 # Asgi Loading
@@ -59,7 +71,7 @@ class FakeDatetime(DateTimeNow):
 app = ProtocolTypeRouter({
   "http" : django_asgi_app,
   "websocket" : SessionMiddlewareStack(AuthMiddlewareStack(
-    URLRouter([re_path(r'ws/$', Consumer.as_asgi(datetimeNow=FakeDatetime()))]))
+    URLRouter([re_path(r'ws/$', consumer.Consumer.as_asgi(datetimeNow=FakeDatetime()))]))
   )
 })
 
@@ -89,8 +101,8 @@ class ConsumerTestCase(TransactionTestCase):
   InjectionOrderStatus2OID = 6631
 
   async def _sendReceive(self, comm: WebsocketCommunicator, message: Dict[str, Any]):
-    await comm.send_DATA_to(message)
-    return await comm.receive_DATA_from()
+    await comm.send_json_to(message)
+    return await comm.receive_json_from()
 
   async def _loginAdminSendRecieve(self, message : Dict):
     channel_layers_setting = {
@@ -169,7 +181,7 @@ class ConsumerTestCase(TransactionTestCase):
 
     self.assertTrue(whoAmI_reponse[AUTH_IS_AUTHENTICATED])
     self.assertEqual(whoAmI_reponse[AUTH_USERNAME], TEST_ADMIN_USERNAME)
-    self.assertEqual(whoAmI_reponse[LEGACY_KEYWORD_USERGROUP], 1)
+    self.assertEqual(whoAmI_reponse['user_group'], 1)
 
 
   async def test_login_logout_whoamI(self):
@@ -195,7 +207,7 @@ class ConsumerTestCase(TransactionTestCase):
 
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
     self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
-    self.assertEqual(whoAmIMessage[LEGACY_KEYWORD_USERGROUP], 0)
+    self.assertEqual(whoAmIMessage['user_group'], 0)
 
 
   async def test_login_wrong_password(self):
@@ -231,7 +243,7 @@ class ConsumerTestCase(TransactionTestCase):
 
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
     self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
-    self.assertEqual(whoAmIMessage[LEGACY_KEYWORD_USERGROUP], 0)
+    self.assertEqual(whoAmIMessage['user_group'], 0)
 
 
   ##### Error handling #####
@@ -331,10 +343,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm.connect()
 
-      await comm.send_DATA_to(self.loginAdminMessage)
-      _login_response = await comm.receive_DATA_from()
+      await comm.send_json_to(self.loginAdminMessage)
+      _login_response = await comm.receive_json_from()
 
-      await comm.send_DATA_to({
+      await comm.send_json_to({
         WEBSOCKET_MESSAGE_ID : self.message_id,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
@@ -344,7 +356,7 @@ class ConsumerTestCase(TransactionTestCase):
         }
       })
 
-      response = await comm.receive_DATA_from()
+      response = await comm.receive_json_from()
       await comm.disconnect()
 
 
@@ -385,20 +397,20 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(production.save)()
 
     customer = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer.save)()
     endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
+      id = 67,
       owner = customer,
       name="endpoint",
     )
     await database_sync_to_async(endpoint.save)()
 
     timeSlot= ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 7,
+      id = 7,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -414,10 +426,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
         WEBSOCKET_MESSAGE_ID : 6823494122,
@@ -430,7 +442,7 @@ class ConsumerTestCase(TransactionTestCase):
 
         }
       })
-      admin_message = await comm_admin.receive_DATA_from()
+      admin_message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
     # Assert
 
@@ -445,7 +457,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(isotope.save)()
 
     tracer = Tracer(
-      tracer_id=3,
+      id=3,
       isotope=isotope,
       shortname = "tracer",
       clinical_name="",
@@ -455,13 +467,13 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(tracer.save)()
 
     customer = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer.save)()
     endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
+      id = 67,
       owner = customer,
       name="endpoint",
     )
@@ -475,10 +487,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,
         WEBSOCKET_MESSAGE_ID : 6823494122,
@@ -492,7 +504,7 @@ class ConsumerTestCase(TransactionTestCase):
           'tracer' : 3
         }
       })
-      admin_message = await comm_admin.receive_DATA_from()
+      admin_message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
     # Assert
 
@@ -529,20 +541,20 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(production_2.save)()
 
     customer = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer.save)()
     endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
+      id = 67,
       owner = customer,
       name="endpoint",
     )
     await database_sync_to_async(endpoint.save)()
 
     timeSlot_1 = ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 7,
+      id = 7,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -551,7 +563,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(timeSlot_1.save)()
 
     timeSlot_2 = ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 8,
+      id = 8,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -561,7 +573,7 @@ class ConsumerTestCase(TransactionTestCase):
 
 
     order = ActivityOrder(
-      activity_order_id = 36,
+      id = 36,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
       status=1,
@@ -579,10 +591,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         DATA_ACTIVITY_ORDER : [36],
         DATA_DELIVER_TIME : 7,
         WEBSOCKET_MESSAGE_ID : 69230481,
@@ -590,7 +602,7 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
 
-      returnMessage = await comm_admin.receive_DATA_from()
+      returnMessage = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
     await database_sync_to_async(order.refresh_from_db)()
@@ -631,20 +643,20 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(production_2.save)()
 
     customer = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer.save)()
     endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
+      id = 67,
       owner = customer,
       name="endpoint",
     )
     await database_sync_to_async(endpoint.save)()
 
     timeSlot_1 = ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 7,
+      id = 7,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -653,7 +665,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(timeSlot_1.save)()
 
     timeSlot_2 = ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 8,
+      id = 8,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -663,7 +675,7 @@ class ConsumerTestCase(TransactionTestCase):
 
 
     order = ActivityOrder(
-      activity_order_id = 36,
+      id = 36,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
       status=1,
@@ -682,16 +694,16 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         DATA_ACTIVITY_ORDER : [36],
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RESTORE_ORDERS,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
 
       await comm_admin.disconnect()
 
@@ -724,20 +736,20 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(production.save)()
 
     customer = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer.save)()
     endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
+      id = 67,
       owner = customer,
       name="endpoint",
     )
     await database_sync_to_async(endpoint.save)()
 
     timeSlot = ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 7,
+      id = 7,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -746,7 +758,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(timeSlot.save)()
 
     order = ActivityOrder(
-      activity_order_id = 36,
+      id = 36,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
       status=2,
@@ -756,7 +768,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(order.save)()
 
     vial = Vial(
-      vial_id=15934,
+      id=15934,
       tracer=tracer,
       activity=48812,
       volume=13.82,
@@ -776,10 +788,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
@@ -793,7 +805,7 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
   async def test_freeActivityOrder_rejected(self):
@@ -874,10 +886,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : "NOT ADMIN PASSWORD",
@@ -891,7 +903,7 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
     self.assertFalse(message[AUTH_IS_AUTHENTICATED])
@@ -962,10 +974,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
@@ -978,7 +990,7 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
   async def test_freeInjectionOrder_rejected(self):
@@ -990,10 +1002,10 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         DATA_AUTH : {
           AUTH_USERNAME : TEST_ADMIN_USERNAME,
           AUTH_PASSWORD : "NOT ADMIN PASSWORD",
@@ -1006,19 +1018,19 @@ class ConsumerTestCase(TransactionTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
   async def test_deleteSingleModel(self):
     customer_1 = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer_1.save)()
 
     customer_2 = Customer(
-      customer_id = 78454,
+      id = 78454,
       short_name = "test",
       long_name = "teeest"
     )
@@ -1032,17 +1044,17 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         WEBSOCKET_DATA_ID : 78454,
         WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
     # Assert Model is gone
     with self.assertRaises(ObjectDoesNotExist):
@@ -1051,14 +1063,14 @@ class ConsumerTestCase(TransactionTestCase):
 
   async def test_deleteMultipleModels(self):
     customer_1 = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer_1.save)()
 
     customer_2 = Customer(
-      customer_id = 78454,
+      id = 78454,
       short_name = "test",
       long_name = "teeest"
     )
@@ -1072,17 +1084,17 @@ class ConsumerTestCase(TransactionTestCase):
       comm_admin = WebsocketCommunicator(app,"ws/")
       _conn, _subprotocal = await comm_admin.connect()
 
-      await comm_admin.send_DATA_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_DATA_from()
+      await comm_admin.send_json_to(self.loginAdminMessage)
+      admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_DATA_to({
+      await comm_admin.send_json_to({
         WEBSOCKET_DATA_ID : [78453,78454],
         WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
-      message = await comm_admin.receive_DATA_from()
+      message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
     # Assert Model is gone
