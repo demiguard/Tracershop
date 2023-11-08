@@ -17,6 +17,7 @@ import styles from '~/css/Site.module.css';
 import { Tracer, Customer, TracerCatalogPage } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { EndpointDisplay } from "../injectable/data_displays/endpoint";
 
 
 export function TracerModal ({active_tracer, on_close}) {
@@ -61,17 +62,17 @@ export function TracerModal ({active_tracer, on_close}) {
    * @param {Customer} customer - customer to be rendered
    * @returns {Element}
    */
-  function CustomerRow({customer}){
-    const allowedToOrder = TracerMapping.has(customer.id)
+  function EndpointRow({endpoint}){
+    const allowedToOrder = TracerMapping.has(endpoint.id)
     return (<tr>
-      <td>{customer.short_name}</td>
+      <td><EndpointDisplay endpoint={endpoint}/></td>
       <td>
       <Form.Check
-        aria-label={`check-${customer.id}`}
+        aria-label={`check-${endpoint.id}`}
         defaultChecked={allowedToOrder}
         type="checkbox"
         className="mb-2"
-        onClick={(event) => updateTracerCustomer(event, customer.id)}
+        onClick={(event) => updateTracerCustomer(event, endpoint.id)}
       />
       </td>
     </tr>);
@@ -79,11 +80,13 @@ export function TracerModal ({active_tracer, on_close}) {
 
     const customerRows = [];
     const filterRegExp = new RegExp(filter,"g");
-    let i = 1;
-    for(const customer of state.customer.values()){
-      if(filterRegExp.test(customer.short_name) || filter === "") {
-        customerRows.push(<CustomerRow customer={customer} key={i}/>);
-        i++;
+    for(const endpoint of state.delivery_endpoint.values()){
+      const customer = state.customer.get(endpoint.owner);
+      if(filter === ""
+          || filterRegExp.test(customer.short_name)
+          || filterRegExp.test(endpoint.name)
+          ) {
+        customerRows.push(<EndpointRow endpoint={endpoint} key={endpoint.id}/>);
       }
     }
 

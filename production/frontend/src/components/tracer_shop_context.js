@@ -91,7 +91,6 @@ export function TracerShopContext({children}){
   function getDatabaseMap(databaseField){
     const /**@type {Map} */ dbMap = db.get(databaseField);
     if(!dbMap){
-      console.log("Returning empty map");
       return new Map();
     }
 

@@ -35,7 +35,6 @@ export function OrderReview({active_endpoint, active_customer, active_date,
 
   const /**@type {Array<Tracer>} */ availableActivityTracers = tracerCatalog.getActivityCatalog(active_endpoint);
   const /**@type {Array<Tracer>} */ availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
-  console.log(availableActivityTracers, availableInjectionTracers, tracerCatalog);
 
   // State Definitions
   let activeTracerInit = -1
@@ -105,7 +104,7 @@ export function OrderReview({active_endpoint, active_customer, active_date,
     />);
   })
 
-  if(!(injectionDeadlineValid) && (availableInjectionTracers.length)) {
+  if(injectionDeadlineValid && (availableInjectionTracers.length > 0)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
                                 injection_order={new InjectionOrder(

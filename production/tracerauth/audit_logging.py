@@ -158,11 +158,11 @@ def logFreeActivityOrders(user: 'models.User',
   message = f"\nUser: {user.username} is releasing the following activity orders:\n"
 
   for order in orders:
-    message += f"  Order: {order.activity_order_id}\n"
+    message += f"  Order: {order.id}\n"
 
   message += "The following vials are released with the orders:\n"
   for vial in vials:
-    message += f"  Vial: {vial.vial_id} - {vial.lot_number}\n"
+    message += f"  Vial: {vial.id} - {vial.lot_number}\n"
 
   logger.info(message)
 
