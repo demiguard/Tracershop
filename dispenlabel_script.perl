@@ -187,6 +187,7 @@ sub movebp_print {
 
 sub move_print  {
     my($s) = @_; #VAL file name
+    my $scp_output = `scp $s gfr2:/mnt/vials`;
     my $print_dir = '/var/dispenser/print';
     my $VAL = "$print_dir/$_";
 
