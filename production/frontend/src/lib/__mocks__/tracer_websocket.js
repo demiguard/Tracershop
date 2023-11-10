@@ -10,8 +10,6 @@ TracerWebSocket.send = jest.fn((message) => new Promise(async function(resolve) 
 TracerWebSocket.sendEditModel = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendCreateModel = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendDeleteModel = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
-TracerWebSocket.sendCreateActivityOrder = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
-TracerWebSocket.sendCreateInjectionOrder = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendChangePassword = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendCreateExternalUser = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 

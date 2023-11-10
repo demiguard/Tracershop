@@ -20,6 +20,7 @@ import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "../injectable/inputs/error_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import propTypes from "prop-types";
+import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 
 
 export function CreateInjectionOrderModal({active_date, on_close}){
@@ -57,7 +58,9 @@ export function CreateInjectionOrderModal({active_date, on_close}){
       setErrorDeliveryTime(formattedDeliveryTime)
     }
     if(validDeliveryTime && validInjections){
-      websocket.sendCreateInjectionOrder(new InjectionOrder(
+      websocket.sendCreateModel(
+        DATA_INJECTION_ORDER,
+        new InjectionOrder(
         undefined, // id
         formattedDeliveryTime, // deliver_time
         dateToDateString(active_date), // delivery_Date
@@ -70,9 +73,9 @@ export function CreateInjectionOrderModal({active_date, on_close}){
         tracerID, // Tracer ID
         null, // lot_number
         null, // freed_datetime
-        null, // Freed_by
-      ))
-      on_close()
+        null, // freed_by
+      ));
+      on_close();
     }
   }
 

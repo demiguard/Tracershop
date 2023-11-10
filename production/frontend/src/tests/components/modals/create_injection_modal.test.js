@@ -7,12 +7,13 @@ import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
-import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
+import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
 
 import {AppState, testState} from '~/tests/app_state.js'
 import { act } from "react-dom/test-utils";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { users } from "~/tests/test_state/users";
+import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
 
 const onClose = jest.fn()
 
@@ -180,8 +181,14 @@ describe("Create injection Order", () => {
                                                       {name : "Opret Ordre"});
     act(() => {createOrderButton.click();})
 
-    expect(websocket.sendCreateInjectionOrder).toBeCalled()
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
+      injections : 4,
+      status : ORDER_STATUS.ORDERED,
+      delivery_time : "11:33:55",
+      delivery_date : "2023-04-05",
+      order_by : testState.logged_in_user.id,
+    }))
 
-    expect(onClose).toBeCalled()
+    expect(onClose).toHaveBeenCalled()
   });
 });

@@ -99,11 +99,13 @@ describe("create activity modal", () => {
     const orderButton = await screen.findByRole('button', {name : "Opret Ordre"})
 
     act(() => {
-      fireEvent.change(activityInput, {target : { value : 300}})
+      fireEvent.change(activityInput, {target : { value : "300"}})
       fireEvent.click(orderButton);
     });
 
-    expect(websocket.sendCreateActivityOrder).toBeCalled();
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, expect.objectContaining({
+      activity : 300
+    }));
   });
 
   it("Change to endpoint-less Customer", async () => {

@@ -100,23 +100,22 @@ function ActivityOrderRow({order}){
       return;
     }
 
-    const newOrder = new ActivityOrder(
-      undefined, // activity_order_id
-      numberActivity, // ordered_activity
-      dateToDateString(active_date), // deliveryDate
-      1, // Status
-      comment, // comment
-      timeSlot.id, // ordered_time_slot
-      null,
-      null,
-      null,
-      null,
-    )
-
-    websocket.sendCreateActivityOrder(newOrder)
-    setActivity("")
-    setComment("")
-    setErrorActivity("")
+    websocket.sendCreateModel(DATA_ACTIVITY_ORDER,
+      new ActivityOrder(
+        undefined, // activity_order_id
+        numberActivity, // ordered_activity
+        dateToDateString(active_date), // deliveryDate
+        1, // Status
+        comment, // comment
+        timeSlot.id, // ordered_time_slot
+        null,
+        null,
+        null,
+        null,
+      ));
+    setActivity("");
+    setComment("");
+    setErrorActivity("");
   }
 
   function updateOrder() {

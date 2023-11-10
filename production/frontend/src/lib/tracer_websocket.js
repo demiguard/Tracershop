@@ -169,86 +169,52 @@ export class TracerWebSocket {
   }
 
   sendEditModel(modelType, models){
-    const message = {}
-    message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_MODEL_EDIT
-    message[WEBSOCKET_DATA] = models
-    message[WEBSOCKET_DATATYPE] = modelType
-
-    return this.send(message);
+    return this.send({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_EDIT,
+      [WEBSOCKET_DATA] : models,
+      [WEBSOCKET_DATATYPE] : modelType,
+    });
   }
 
   sendCreateModel(modelType, models){
-    const message = {
+    return this.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_CREATE,
       [WEBSOCKET_DATA] : models,
       [WEBSOCKET_DATATYPE] : modelType,
-
-    };
-
-    return this.send(message);
+    });
   }
 
   sendDeleteModel(modelType, models){
-    let ids;
+    const ids = (() => {
+      if (models instanceof Array){
+        return models.map((model) => {return (typeof model === 'number') ? model : model.id});
+      } else if (typeof models === 'number') {
+        return [models];
+      } else {
+        return [models.id];
+      }
+    })();
 
-    if (models instanceof Array){
-      ids = models.map((model) => {return (typeof model === 'number') ? model : model.id});
-    } else if (typeof models === 'number') {
-      ids = [models];
-    } else {
-      ids = [models.id];
-    }
-
-    const message = {
+    this.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
       [WEBSOCKET_DATA_ID] : ids,
       [WEBSOCKET_DATATYPE] : modelType,
-    };
-
-    this.send(message);
-  }
-
-  /**
-   * sends a message to the backend for create a new Activity Order
-   * @param {ActivityOrder} newOrder
-   */
-  sendCreateActivityOrder(newOrder){
-    const message = {
-      [WEBSOCKET_DATA] : newOrder,
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
-    };
-    return this.send(message);
-  }
-
-  /**
-   * sends a message to the backend for create a new Injection Order
-   * @param {InjectionOrder} newOrder - order to be created
-   * @returns {Promise}
-   */
-  sendCreateInjectionOrder(newOrder){
-    const message = {
-      [WEBSOCKET_DATA] : newOrder,
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,
-    };
-
-    return this.send(message);
+    });
   }
 
   sendChangePassword(userID, newPassword){
-    const message = {
+    return this.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
       [WEBSOCKET_DATA_ID] : userID,
       [AUTH_PASSWORD] : newPassword,
-    };
-    return this.send(message)
+    });
   }
 
   sendCreateExternalUser(userSkeleton){
-    const message = {
+    return this.send({
       [WEBSOCKET_DATA] : userSkeleton,
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
-    };
-    return this.send(message)
+    });
   }
 
   /**
@@ -257,9 +223,9 @@ export class TracerWebSocket {
    */
   dispatch(action){
     if(this._dispatch !== undefined){
-      this._dispatch(action)
+      this._dispatch(action);
     } else {
-      console.log("Missed dispatch")
+      console.log("Missed dispatch");
     }
   }
 }

@@ -531,11 +531,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
     user: User = await get_user(self.scope)
 
     # Quick check if user and auth user matches before any database connection start working
-    if not Auth[AUTH_USERNAME] == user.username:
+    if not Auth[AUTH_USERNAME].upper() == user.username.upper():
+      logger.info(f"User: {user.username} Rejected freeing with miss matching username")
       return await self.__RejectFreeing(message)
 
-    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME], password=Auth[AUTH_PASSWORD])
+    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
+                                             password=Auth[AUTH_PASSWORD])
     if not user:
+      logger.info(f"User: {user.username} Rejected freeing with failed authentication")
       return await self.__RejectFreeing(message)
 
     # Authentication successful update
@@ -582,13 +585,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     # Step 1: Determine the user credentials are valid
     Auth = message[DATA_AUTH]
+    user: User = await get_user(self.scope)
 
     # Quick check if user and auth user matches before any database connection start working
-    if not Auth[AUTH_USERNAME] == self.scope['user'].username:
+    if not Auth[AUTH_USERNAME].upper() == self.scope['user'].username.upper():
+      logger.info(f"User: {user.username} Rejected freeing with miss matching username")
       return await self.__RejectFreeing(message)
 
-    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME], password=Auth[AUTH_PASSWORD])
+    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
+                                             password=Auth[AUTH_PASSWORD])
     if not user:
+      logger.info(f"User: {user.username} Rejected freeing with failed authentication")
       return await self.__RejectFreeing(message)
 
     # Step 2

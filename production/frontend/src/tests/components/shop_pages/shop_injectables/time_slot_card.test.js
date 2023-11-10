@@ -111,7 +111,7 @@ describe("Time slot card Test Suite", () => {
     fireEvent.click(commitButton);
   });
 
-  expect(websocket.sendCreateActivityOrder).toBeCalledWith(expect.objectContaining({
+  expect(websocket.sendCreateModel).toHaveBeenCalledWith(expect.objectContaining({
       ordered_activity : 40000,
       ordered_time_slot : default_time_slot_id,
       moved_to_time_slot : null,
@@ -145,7 +145,7 @@ describe("Time slot card Test Suite", () => {
     fireEvent.click(commitButton);
   });
 
-  expect(websocket.sendCreateActivityOrder).not.toBeCalled();
+  expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
   act(() => {
     fireEvent.mouseEnter(activityInput);

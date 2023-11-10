@@ -16,6 +16,7 @@ import { DestinationSelect } from "../injectable/derived_injectables/destination
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
+import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
 
 export function CreateOrderModal({active_date, active_tracer, on_close, timeSlotMapping}) {
   const state = useTracershopState();
@@ -60,7 +61,6 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
   const [showCalculator, setShowCalculator] = useState(false);
   const [error, setError] = useState("");
 
-
   function createOrder(_event){
     const [valid, amountNumber] = parseDanishPositiveNumberInput(amount, "Aktiviteten")
 
@@ -69,7 +69,7 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
       return;
     }
 
-    websocket.sendCreateActivityOrder(
+    websocket.sendCreateModel(DATA_ACTIVITY_ORDER,
       new ActivityOrder(undefined, // order_id
                         amountNumber, // ordered_activity
                         dateToDateString(active_date), // delivery_Date
@@ -77,9 +77,9 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
                         "", // comment
                         activeTimeSlot, // ordered_time_Slot
                         null, // moved_to_time_slot
-                        null, // ordered_by, set by backend
+                        state.logged_in_user.id, // ordered_by
                         null, // freed_by
-      ))
+      ));
     on_close();
   }
 
@@ -92,7 +92,7 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
   const day = getDay(active_date);
   const filteredTimeSlots = [...state.deliver_times.values()].filter(
     (timeSlot) => {
-      const production = state.production.get(timeSlot.production_run)
+      const production = state.production.get(timeSlot.production_run);
       return production.production_day == day;
     }
   )
