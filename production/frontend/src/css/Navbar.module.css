@@ -19,16 +19,15 @@ nav {
 }
 
 .NavbarElement {
+  color : white !important;
   width : 150px;
-  background: var(--secondary-color-2) !important;
   padding : 10px;
   margin-right: 15px !important;
   margin-left: 15px !important;
   border : 1px;
   border-style: solid;
-  border-color: var(--secondary-color-1);
   border-radius: 10px;
-  font-family: "marilight", "Helvetica Neue, Helvetica, Arial, sans-serif";
+  font-family: "mariheavy", "Helvetica Neue, Helvetica, Arial, sans-serif";
 }
 
 .MainIcon {

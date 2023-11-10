@@ -148,6 +148,7 @@ export function Calender({calender_date,
     }
 
     if (compareDates(calender_date, dateObject)){
+      styles.fontFamily = "MariPoster"
       styles.fontSize = "large";
       styles.color = "blue";
     }

@@ -246,7 +246,7 @@ export function TracerPage(){
           </th>
           <th>
             <HoverBox
-              Base={<div>Clinisk Navn</div>}
+              Base={<div>Klinisk Navn</div>}
               Hover={<div>Dette er fulde navn på tracer, som bruges på føglesedlen.</div>}
             />
           </th>

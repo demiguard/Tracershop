@@ -317,31 +317,37 @@ function ProductionRow({active_production}){
   const /**@type {Array<Number> | undefined} */ associatedTimeSlots = productionTimeSlotOwnerShip.getTimeSlots(active_production);
 
   if (associatedTimeSlots !== undefined) {
+    const timeSlotsIds = associatedTimeSlots.map(getId);
     for(const timeSlot of associatedTimeSlots){
       const customer = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
       const overhead = tracerCatalog.getOverheadForTracer(customer.id, tracer.id)
-      const orders = orderMapping.getOrders(timeSlot.id)
-      if(orders !== undefined) for (const order of orders){
-        let contributingTimeSlot = order.ordered_time_slot
-        if(order.moved_to_time_slot){
-          contributingTimeSlot = order.moved_to_time_slot
-        }
+      const orders = orderMapping.getOrders(timeSlot.id);
+      if(orders !== undefined) {
+        for (const order of orders){
+          const contributingTimeSlot = (() => {
+            const id = (order.moved_to_time_slot) ? order.moved_to_time_slot : order.ordered_time_slot;
+            return state.deliver_times.get(id);
+          })();
 
-        if(!(associatedTimeSlots.includes(contributingTimeSlot))){
-          continue;
-        }
-        const timeDifference = compareTimeStamp(contributingTimeSlot.delivery_time, production.production_time);
-        let amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
+          if(!(associatedTimeSlots.includes(contributingTimeSlot))){
+            console.log("Order belongs to a time slot that is not the production");
+            continue;
+          }
+          const timeDifference = compareTimeStamp(contributingTimeSlot.delivery_time, production.production_time);
+          let amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
 
-        activity_ordered += amount;
-        activity_overhead += amount * overhead;
+          activity_ordered += amount;
+          activity_overhead += amount * overhead;
+        }
       }
     }
   }
 
   return (
   <Row>
-    Kørsel {production.production_time} : {Math.floor(activity_ordered)} MBq / Overhead : {Math.floor(activity_overhead)} MBq
+    <h4>
+      Kørsel {production.production_time} : {Math.floor(activity_ordered)} MBq / Overhead : {Math.floor(activity_overhead)} MBq
+    </h4>
   </Row>);
   }
 
@@ -382,7 +388,7 @@ function ProductionRow({active_production}){
       <Container>
         <Row>
           <Col sm={10}>
-            <Row>Produktioner - {danishDateString}:</Row>
+            <Row><h3>Produktioner - {danishDateString}:</h3></Row>
             {productionRows}
           </Col>
           <Col sm={2}>

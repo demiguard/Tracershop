@@ -3,8 +3,7 @@ import { Navbar, Nav, Container, Button  } from "react-bootstrap";
 import styles from "~/css/Navbar.module.css"
 
 
-const NavBarButtonType = "outline-primary";
-
+const NavBarButtonType = "primary";
 
 export function TracershopNavbar({
   ActiveKey,

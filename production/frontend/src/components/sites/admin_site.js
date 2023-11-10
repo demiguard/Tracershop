@@ -65,10 +65,11 @@ export function AdminSite({logout}) {
 
   const NavbarAdmin = [(
     <NavDropdown
+      className={styles.NavbarElement + " btn-primary " + SiteStyles.pad0tb}
       aria-label="site-selector"
-      className={styles.NavbarElement + " btn-outline-primary " + SiteStyles.pad0tb}
-      title={SITE_NAMES[activeSite]}
+      title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}
       key="SiteSelector"
+
     >
       {RenderedSites}
     </NavDropdown>)];

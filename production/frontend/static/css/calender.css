@@ -35,6 +35,7 @@
 }
 
 .today {
+  font : "mariPoster";
   font-size: large;
   color:blue;
 }

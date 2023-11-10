@@ -185,13 +185,20 @@ export function InjectionModal ({modal_order, on_close}) {
         </Modal.Body>
         <Modal.Footer>
           <div>
-            {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
-            {order.status == 2 && !freeing ? freeingButton : ""}
-            {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
-            {order.status == 3 ? <MarginButton onClick={() => {
-              window.location = InjectionOrderPDFUrl(order)}
-            }>Se følgeseddel</MarginButton> : ""}
-            <CloseButton onClick={on_close}/>
+
+            <div className="d-flex justify-content-start">
+              <MarginButton>Afvis ordre</MarginButton>
+            </div>
+            <div className="d-flex justify-content-end">
+                {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
+                {order.status == 2 && !freeing ? freeingButton : ""}
+                {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
+                {order.status == 3 ? <MarginButton onClick={() => {
+                  window.location = InjectionOrderPDFUrl(order)}
+                }>Se følgeseddel</MarginButton> : ""}
+                <CloseButton onClick={on_close}/>
+
+            </div>
           </div>
         </Modal.Footer>
       </Modal>
