@@ -116,7 +116,7 @@ async def handleMessage(hl7_message: Message):
         logger.error("Reminder that whoever designed the HL7 standard is stupid")
         return
 
-    for ORC_message_segment, OBR_message_segment, ZDS_message_segment in zip(hl7_message['ORC'], hl7_message['OBR'], hl7_message['ZDS']):
+    for ORC_message_segment, OBR_message_segment in zip(hl7_message['ORC'], hl7_message['OBR']):
         # This is the name given by the standard. It is really part of the
         # message type. But for some god forsaken reason, did we decide to have
         # 10 different Message types to the same code
