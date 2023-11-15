@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
+import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 
 import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope } from "../../../dataclasses/dataclasses";
 import { ParseDanishNumber, dateToDateString, nullParser } from "../../../lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
-import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants"
+import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
-import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 
 import SiteStyles from '../../../css/Site.module.css'

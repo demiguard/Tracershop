@@ -1,10 +1,10 @@
 import React, {useState } from "react";
-import Navbar, { TracershopNavbar } from "../injectable/navbar";
+import { TracershopNavbar } from "../injectable/navbar";
 import { ShopSetup } from "../shop_pages/shop_setup.js";
 import { ShopOrderPage } from "../shop_pages/shop_order_page.js";
-import { UserSetup} from "../shop_pages/user_setup.js"
+
 import { PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constants";
-import {DATA_CUSTOMER, DATA_USER_ASSIGNMENT } from "../../lib/shared_constants";
+
 import { User, UserAssignment } from "../../dataclasses/dataclasses";
 import { NoAssociatedUser } from "../shop_pages/no_associated_user";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";

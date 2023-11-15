@@ -1,5 +1,5 @@
 import { jest } from '@jest/globals'
-import { WEBSOCKET_MESSAGE_TYPE } from '../shared_constants';
+import { WEBSOCKET_MESSAGE_TYPE } from '../shared_constants.js/index.js';
 
 const tracer_websocket = jest.createMockFromModule('../tracer_websocket.js');
 

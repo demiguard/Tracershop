@@ -1,11 +1,16 @@
-const path = require("path");
-const webpack = require("webpack");
+import { resolve } from 'path';
+import webpack from "webpack";
 
-module.exports = {
+import { JAVASCRIPT_VERSION } from './src/lib/shared_constants.js';
+
+export default {
   entry: "./src/index.js",
   output: {
-    path: path.resolve(__dirname, "./static/frontend"),
-    filename: "[name].js",
+    path: resolve("./static/frontend"),
+    filename: `[name]_${JAVASCRIPT_VERSION}.js`,
+  },
+  resolve : {
+    extensions : ['.js', '.jsx']
   },
   module: {
     rules: [
@@ -13,6 +18,9 @@ module.exports = {
         test: /\.js|.jsx$/,
         exclude: /node_modules/,
         use: "babel-loader",
+        resolve : {
+          fullySpecified : false,
+        },
       },
       {
         test: /\.css$/i,

@@ -56,7 +56,7 @@ export const ERROR_NO_MESSAGE_TYPE = "NoMessageType";
 export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.0.1";
+export const JAVASCRIPT_VERSION = "1.0.2";
 
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
 export const URL_INDEX = "";

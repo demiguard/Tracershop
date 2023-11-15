@@ -16,7 +16,7 @@ production/pdfData/
 production/certs
 *.sqlite3
 main.js
-main.js*
+main*.js*
 SECRET_KEY.py
 test_pdfs/
 pdfs/

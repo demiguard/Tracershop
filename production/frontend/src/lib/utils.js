@@ -1,7 +1,7 @@
 /** This module is for library functions which doesn't belong in other  */
 
 import { DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
-import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH } from "./shared_constants";
+import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH } from "./shared_constants.js";
 
 /**
  *

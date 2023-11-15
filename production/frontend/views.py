@@ -20,6 +20,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from django_auth_ldap.backend import LDAPBackend
 
 # Tracershop Production
+from shared_constants import JAVASCRIPT_VERSION
 from lib import pdfGeneration
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
@@ -50,7 +51,7 @@ def indexView(request, *args, **kwargs):
 
     login(request, user, backend=backend)
 
-  return render(request, "frontend/index.html")
+  return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
 
 def pdfView(request,
             endpointID:int,
