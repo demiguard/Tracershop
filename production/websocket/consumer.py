@@ -320,7 +320,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await self.enterUserGroups(user)
       key = self.scope["session"].session_key
       user = await self.db.serialize_dict({DATA_USER : [user]})
-      print(user)
     else:
       isAuth = False
       user = {}
@@ -452,7 +451,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     serialized_data = await self.db.serialize_dict({
       message[WEBSOCKET_DATATYPE] : instances
     })
-    print(user,  instances, customerIDs, serialized_data)
     await self.__broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : serialized_data,

@@ -90,11 +90,11 @@ class TracershopModel(Model):
     # https://stackoverflow.com/questions/30449960/django-save-vs-update-to-update-the-database
     creating = self.pk is None
 
-    if not creating:
-      action = self.canEdit(user)
+    if creating:
+      action = self.canCreate(user)
       CreateModelAuditEntry.log(user, self, action)
     else:
-      action = self.canCreate(user)
+      action = self.canEdit(user)
       EditModelAuditEntry.log(user, self, action)
 
     if action.should_act:

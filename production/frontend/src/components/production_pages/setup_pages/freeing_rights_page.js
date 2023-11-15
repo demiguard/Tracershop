@@ -90,15 +90,16 @@ export function FreeingRightsPage(){
    * @returns 
    */
   function ReleaseRightTableRow({releaseRight}){
-    const user = state.user.get(releaseRight.releaser)
-    const tracer = state.tracer.get(releaseRight.product)
+    console.log(releaseRight);
+    const user = state.user.get(releaseRight.releaser);
+    const tracer = state.tracer.get(releaseRight.product);
     function deleteReleaseRight(){
-      websocket.sendDeleteModel(DATA_RELEASE_RIGHT, releaseRight)
+      websocket.sendDeleteModel(DATA_RELEASE_RIGHT, releaseRight);
     }
 
-    let expiryDate = "Aldrig"
+    let expiryDate = "Aldrig";
     if (releaseRight.expiry_date){
-      expiryDate = releaseRight.expiry_date
+      expiryDate = releaseRight.expiry_date;
     }
 
     return (<tr>
@@ -111,7 +112,7 @@ export function FreeingRightsPage(){
           src="static/images/decline.svg"
           onClick={deleteReleaseRight}/>
       </td>
-    </tr>)
+    </tr>);
   }
 
   // So here we kinda get fucked by the fact double hover box, is not gonna work
@@ -134,14 +135,14 @@ export function FreeingRightsPage(){
               stateFunction={setExpiryDate}
             />}
             Hover={<div>Hvis der er ingen udløbsdato, varer rettigheden for evigt.</div>}
-        />
+        />;
 
   const releaseRights = [...state.release_right.values()].sort(
     sortingFunction(sortingMethod)).map(releaseRight => <ReleaseRightTableRow
       key={releaseRight.id}
       releaseRight={releaseRight}
       websocket={websocket}
-    />)
+    />);
 
   return (
   <Container>

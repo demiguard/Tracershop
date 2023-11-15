@@ -91,17 +91,17 @@ export function Calender({calender_date,
       }
 
       colorMap.set(dateString, [STATUS_COLORS[activity_color_id],
-                                 STATUS_COLORS[injection_color_id]]);
+                                STATUS_COLORS[injection_color_id]]);
 
       pivot = new Date(pivot.getFullYear(), pivot.getMonth(), pivot.getDate() + 1);
     }
 
     for(const closed_date of state.closed_date.values()){
-      colorMap.set(closed_date.closed_date), [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
-                                              STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]
+      colorMap.set(closed_date.close_date, [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
+                                            STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]);
     }
 
-    return colorMap
+    return colorMap;
   }
   let colorMap = getColorMap();
 

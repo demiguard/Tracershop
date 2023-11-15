@@ -104,7 +104,7 @@ export function InjectionModal ({modal_order, on_close}) {
 
   const freeingButton = RightsToFree ?
       <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton>
-    : <MarginButton disabled>Frigiv Ordre</MarginButton>
+    : <MarginButton disabled>Frigiv Ordre</MarginButton>;
 
   const colWidth = (freeing) ? 6 : 12;
   let secondaryElement = null; // Remember to wrap this is a <Col md={6}>
@@ -184,22 +184,25 @@ export function InjectionModal ({modal_order, on_close}) {
           /> : ""}
         </Modal.Body>
         <Modal.Footer>
-          <div>
-
-            <div className="d-flex justify-content-start">
-              <MarginButton>Afvis ordre</MarginButton>
-            </div>
-            <div className="d-flex justify-content-end">
+          <Row style={{width : "100%"}}>
+            <Col md={3}>
+              <HoverBox
+                Base={<MarginButton>Afvis ordre</MarginButton>}
+                Hover={"Ikke bygget færdig endnu!"}
+              />
+            </Col>
+            <Col md={{ span : 3, offset : 5}}>
                 {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
                 {order.status == 2 && !freeing ? freeingButton : ""}
                 {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
                 {order.status == 3 ? <MarginButton onClick={() => {
                   window.location = InjectionOrderPDFUrl(order)}
                 }>Se følgeseddel</MarginButton> : ""}
+           </Col>
+            <Col md={1}>
                 <CloseButton onClick={on_close}/>
-
-            </div>
-          </div>
+            </Col>
+          </Row>
         </Modal.Footer>
       </Modal>
     );
