@@ -11,6 +11,7 @@ import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID } f
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card.js";
 import { getRelevantActivityOrders } from "~/lib/filters.js";
 import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL } from "~/components/injectable/calculator.js";
+import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants.js";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
 
@@ -111,7 +112,7 @@ describe("Time slot card Test Suite", () => {
     fireEvent.click(commitButton);
   });
 
-  expect(websocket.sendCreateModel).toHaveBeenCalledWith(expect.objectContaining({
+  expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,expect.objectContaining({
       ordered_activity : 40000,
       ordered_time_slot : default_time_slot_id,
       moved_to_time_slot : null,

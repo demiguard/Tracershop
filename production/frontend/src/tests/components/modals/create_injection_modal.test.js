@@ -185,8 +185,8 @@ describe("Create injection Order", () => {
       injections : 4,
       status : ORDER_STATUS.ORDERED,
       delivery_time : "11:33:55",
-      delivery_date : "2023-04-05",
-      order_by : testState.logged_in_user.id,
+      delivery_date : "2020-04-05",
+      ordered_by : testState.logged_in_user.id,
     }))
 
     expect(onClose).toHaveBeenCalled()

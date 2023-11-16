@@ -10,9 +10,9 @@ import { jest } from '@jest/globals'
 import { CreateOrderModal } from '~/components/modals/create_activity_modal.js'
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE , PROP_TIME_SLOT_MAPPING
   } from "~/lib/constants.js";
-import { DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MODEL_CREATE } from "~/lib/shared_constants"
+import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants"
 
-import { AppState, testState } from '~/tests/app_state.js'
+import { testState } from '~/tests/app_state.js'
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { TimeSlotMapping } from "~/lib/data_structures.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -37,7 +37,7 @@ beforeEach(() => {
     [PROP_ON_CLOSE] : onClose,
     [PROP_TIME_SLOT_MAPPING] : new TimeSlotMapping(
       testState.delivery_endpoint, testState.deliver_times, [1,2]
-    )
+    ),
   };
 });
 
@@ -56,7 +56,6 @@ afterEach(() => {
 
 describe("create activity modal", () => {
   it("standard render test", async () => {
-
     render(<StateContextProvider value={testState}>
              <WebsocketContextProvider value={websocket}>
                <CreateOrderModal {...props} />
@@ -95,16 +94,16 @@ describe("create activity modal", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const activityInput = await screen.findByLabelText('activity-input')
-    const orderButton = await screen.findByRole('button', {name : "Opret Ordre"})
+    const activityInput = await screen.findByLabelText('activity-input');
+    const orderButton = await screen.findByRole('button', {name : "Opret Ordre"});
 
     act(() => {
-      fireEvent.change(activityInput, {target : { value : "300"}})
+      fireEvent.change(activityInput, {target : { value : "300"}});
       fireEvent.click(orderButton);
     });
 
     expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, expect.objectContaining({
-      activity : 300
+      ordered_activity : 300
     }));
   });
 
@@ -119,9 +118,7 @@ describe("create activity modal", () => {
     const customerSelect = await screen.findByLabelText('customer-select');
 
     act(() => {
-      fireEvent.change(customerSelect, {target : {value : 2}})
+      fireEvent.change(customerSelect, {target : {value : 2}});
     })
   })
-
-
 });

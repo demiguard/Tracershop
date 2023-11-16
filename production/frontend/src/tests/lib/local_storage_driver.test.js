@@ -1,8 +1,5 @@
 
-import { DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, DATA_CUSTOMER,
-    DATA_DELIVER_TIME, DATA_EMPLOYEE, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_RUN, DATA_TRACER, DATA_VIAL
-  } from "../../lib/shared_constants.js/index.js";
-import { db, MapDataName } from "../../lib/local_storage_driver.js"
+import { db } from "../../lib/local_storage_driver.js"
 
 test("Save and Read string", () => {
   const testKeyString = "key-string";
