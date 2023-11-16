@@ -137,6 +137,11 @@ async def handleMessage(hl7_message: Message):
             await delete_booking(accession_number)
             logger.info(f"deleted booking with uid: {accession_number}")
 
+        if ORC_message_segment[1][0] == 'CA':
+            accession_number = extract_accession_number(ORC_message_segment)
+            await delete_booking(accession_number)
+            logger.info(f"deleted booking with uid: {accession_number}")
+
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):
     """This will be called every time a socket connects
     with us.
