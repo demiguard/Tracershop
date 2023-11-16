@@ -126,7 +126,7 @@ export function TracerShopContext({children}){
   // or can be refereed to, if there's a rerender.
   let websocket = useRef(null);
   useEffect(() => { websocket.current = new TracerWebSocket(
-    new WebSocket("ws://" + window.location.host + "/ws/"),
+    new WebSocket("ws://" + window.location.host + "/ws/" + crypto.randomUUID()),
     dispatch)},[]);
 
   return(

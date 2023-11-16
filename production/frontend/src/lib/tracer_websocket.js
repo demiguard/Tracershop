@@ -82,15 +82,23 @@ export class TracerWebSocket {
       }
     }
 
+    this._ws.onchange = function(){
+      console.log("On Change was called!");
+    }
+
     this._ws.onclose = function(e) {
       for(const [messageID, channel] of this._PromiseMap){
         channel.port1.close();
         channel.port2.close();
       }
+      // I should open the thing again
+      setTimeout(function() {
+        connect();
+      }, 1000);
     }
 
     this._ws.onerror = function(err) {
-      console.error("Socket encounter error: ", err.message);
+      console.error("Socket encounter error: ", err);
       this._ws.close();
     }
 
@@ -130,6 +138,20 @@ export class TracerWebSocket {
     return message;
   }
 
+  async safeSend(message, websocket){
+    var iter = 0;
+    var readyState = websocket.readyState;
+    while(iter < 10 && readyState === 0){
+      await new Promise(r => setTimeout(r, 100));
+      readyState = websocket.readyState
+    }
+    if(websocket.readyState === WebSocket.OPEN){
+      websocket.send(JSON.stringify(message));
+    } else {
+      console.log("Websocket was unable to send a message")
+   }
+  }
+
   /**
    * 
    * @param {Object} data 
@@ -153,9 +175,15 @@ export class TracerWebSocket {
       data[WEBSOCKET_JAVASCRIPT_VERSION] = JAVASCRIPT_VERSION
     }
 
+    if(this._ws.readyState === WebSocket.CLOSING ||
+       this._ws.readyState === WebSocket.CLOSED
+      ) {
+        this._ws
+      }
+
     // Note that this function actually does the sending
     // The promises is just to call an async function.
-    new Promise(() => safeSend(data, this._ws));
+    new Promise(() => this.safeSend(data, this._ws));
 
     const promise = new Promise(async function (resolve) {
       const pipe = new MessageChannel();
@@ -228,18 +256,4 @@ export class TracerWebSocket {
       console.log("Missed dispatch");
     }
   }
-}
-
-export async function safeSend(message, websocket){
-  var iter = 0;
-  var readyState = websocket.readyState;
-  while(iter < 10 && readyState === 0){
-    await new Promise(r => setTimeout(r, 100));
-    readyState = websocket.readyState
-  }
-  if(websocket.readyState === 1 ){
-    websocket.send(JSON.stringify(message));
-  } else {
-    console.log("Websocket died while sending a message")
- }
 }
