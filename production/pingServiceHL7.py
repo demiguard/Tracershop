@@ -131,7 +131,7 @@ async def handleMessage(hl7_message: Message):
             await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
             logger.info(f"Added booking with uid: {accession_number}")
 
-        if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] == 'Ended':
+        if ORC_message_segment[1][0] == 'DC' and ORC_message_segment[5][0] == 'Ended':
             # Delete
             accession_number = extract_accession_number(ORC_message_segment)
             await delete_booking(accession_number)
