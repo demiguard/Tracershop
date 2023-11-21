@@ -48,7 +48,11 @@ describe("Tracer setup Page test suite", () => {
     </StateContextProvider>);
 
     for(const tracer of testState.tracer.values()){
-      expect(screen.getByText(tracer.shortname)).toBeVisible()
+      if(!tracer.archived){
+        expect(screen.getByLabelText(`set-shortname-${tracer.id}`)).toBeVisible();
+      } else {
+        expect(screen.queryByLabelText(`set-shortname-${tracer.id}`)).toBeNull();
+      }
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY || tracer.archived){
         expect(screen.queryByLabelText(`open-modal-${tracer.id}`)).toBeNull()
       } else {
@@ -65,13 +69,13 @@ describe("Tracer setup Page test suite", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const restoreIcon = screen.getByLabelText('restore-5')
+    const restoreIcon = screen.getByLabelText('restore-5');
     await act(async () => {
       fireEvent.click(restoreIcon);
-    })
+    });
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_TRACER,
-                                                   [expect.objectContaining({id : 5, archived : false})])
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER,
+                                                        expect.objectContaining({id : 5, archived : false}))
   })
 
   it("Change clinical name", async () =>{
@@ -86,14 +90,14 @@ describe("Tracer setup Page test suite", () => {
     await act(async () => {
       fireEvent.change(clinicalNameInput, {target : {value : "New Name"}});
     })
-    const saveIcon = screen.getByLabelText('save-tracer-1');
+    const saveIcon = screen.getByLabelText('commit-tracer-1');
 
     await act(async () => {
       fireEvent.click(saveIcon)
     });
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_TRACER,
-      [expect.objectContaining({id : 1, clinical_name : "New Name"})])
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER,
+      expect.objectContaining({id : 1, clinical_name : "New Name"}))
   })
 
   it("Open and close modal", async () => {
@@ -116,7 +120,45 @@ describe("Tracer setup Page test suite", () => {
       fireEvent.click(closeModal)
     });
 
-  })
+  });
+
+  it("Create a new Tracer", () => {
+    render(<StateContextProvider value={testState}>
+             <WebsocketContextProvider value={websocket}>
+               <TracerPage />
+              </WebsocketContextProvider>
+           </StateContextProvider>);
+
+    const shortnameInput = screen.getByLabelText('set-shortname--1');
+    const clinicalNameInput = screen.getByLabelText('set-clinical-name--1');
+    const vialTagInput = screen.getByLabelText('set-vial-tag--1');
+    const isotopeInput = screen.getByLabelText('set-isotope--1');
+    const tracerTypeInput = screen.getByLabelText('set-type--1');
+
+    act(() => {
+      fireEvent.change(shortnameInput, {target : {value: "new_tracer" }});
+      fireEvent.change(clinicalNameInput, {target : {value: "new_clinical" }});
+      fireEvent.change(vialTagInput, {target : {value: "tag" }});
+      fireEvent.change(isotopeInput, {target : {value: "2" }});
+      fireEvent.change(tracerTypeInput, {target : {value: TRACER_TYPE.ACTIVITY }});
+    });
+
+    const commit_button = screen.getByLabelText('commit-tracer--1');
+
+    act(() => {
+      commit_button.click();
+    });
+
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_TRACER, expect.objectContaining({
+      id : -1,
+      shortname : "new_tracer",
+      clinical_name : "new_clinical",
+      vial_tag : "tag",
+      isotope : 2,
+      tracer_type : TRACER_TYPE.ACTIVITY
+    }));
+
+  });
 })
 
 

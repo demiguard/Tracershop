@@ -28,7 +28,7 @@ export function endpointOwnerFilter(customerID){
 
 
 export function tracerTypeFilter(tracerType){
-  return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType
+  return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType && !tracer.archived
 }
 
 

@@ -68,3 +68,24 @@ export function numberfy(maybeNumber){
 
   return Number(maybeNumber)
 }
+
+
+/**
+ * Compares two object, to see if their state represents the same object, after user input.
+ * The primary use case is then you copy an object and you want to check if the copy is dirty.
+ * @param {Object} obj_1 
+ * @param {Object} obj_2 
+ * @returns {Boolean} - if the objects are equal.
+ */
+export function compareLoosely(obj_1, obj_2){
+  let eq = true;
+  for(const key of Object.keys(obj_1)){
+    if(key in obj_2){
+      // Note here it's rather important to use type coercion
+      // as many of these object contains user input.
+      // So "2" == 2 is a very common thing.
+      eq &= obj_1[key] == obj_2[key];
+    }
+  }
+  return eq
+}

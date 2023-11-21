@@ -5,7 +5,6 @@ import { ReducerAction, UpdateCurrentUser, UpdateState, DeleteState } from '~/li
 import { db } from '~/lib/local_storage_driver';
 import { DATABASE_CURRENT_USER } from '~/lib/constants';
 import { ParseDjangoModelJson } from '~/lib/formatting';
-import { v4 as uuidv4 } from 'uuid';
 
 
 const StateContext = createContext(new TracershopState());
@@ -128,7 +127,7 @@ export function TracerShopContext({children}){
   // or can be refereed to, if there's a rerender.
   let websocket = useRef(null);
   useEffect(() => { websocket.current = new TracerWebSocket(
-    new WebSocket("ws://" + window.location.host + "/ws/" + uuidv4()),
+    new WebSocket("ws://" + window.location.host + "/ws/"),
     dispatch)},[]);
 
   return(
