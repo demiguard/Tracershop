@@ -403,17 +403,18 @@ class Consumer(AsyncJsonWebsocketConsumer):
   ### Model modification
   async def HandleModelDelete(self, message: Dict[str, Any]):
     """Primitive endpoint for delete a model
-    Broadcasts it to global if successful, reponeds if failed.
+    Broadcasts it to global if successful, reposes if failed.
     Args:
       message (Dict[str, Any]): Dictionary containing the information to delete
                                 A model. Specify the tags:
                                     WEBSOCKET_DATA_ID - int / List[int]
                                     WEBSOCKET_DATATYPE - DATA_XXX
     """
+    user = await get_user(self.scope)
     success = await self.db.deleteModels(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA_ID],
-      await get_user(self.scope)
+      user
     )
 
     if success:
@@ -426,6 +427,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       })
     else:
+      logger.info(f"""
+        User: {user.username} attempted to delete {message[WEBSOCKET_DATATYPE]}
+        They attempted to delete object {message[WEBSOCKET_DATA_ID]}
+        """)
+
       await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,

@@ -143,25 +143,23 @@ class DatabaseInterface():
     returns true if successfully deleted all models
 
     """
-
     # So a performance hic up here is that canDelete must be called on all
     # objects with this notation, secondly delete also calls canDelete again
     # This means this operation "Might" have 3 database quires per object
     # 2 from canDelete, and 1 form the actually deletion
-
     modelType = getModelType(modelIdentifier)
     if isinstance(modelID, Iterable):
       models = modelType.objects.filter(pk__in = [id_ for id_ in modelID])
       canDelete = reduce(lambda x, y : x and y, [model.canDelete(user) for model in models], True)
-      if canDelete:
-        [model.delete() for model in models]
+      if bool(canDelete):
+        deleted = reduce(lambda x, y : x and y, [model.delete(user) for model in models], True)
     else:
       model = modelType.objects.get(pk=modelID)
-      canDelete = model.canEdit(user)
+      canDelete = model.canDelete(user)
 
       if canDelete:
-        model.delete()
-    return bool(canDelete)
+        deleted = model.delete(user)
+    return deleted
 
 
   def __createModel(self, model: Type[T], modelDict: Dict, user: User) -> T:
