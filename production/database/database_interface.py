@@ -153,12 +153,16 @@ class DatabaseInterface():
       canDelete = reduce(lambda x, y : x and y, [model.canDelete(user) for model in models], True)
       if bool(canDelete):
         deleted = reduce(lambda x, y : x and y, [model.delete(user) for model in models], True)
+      else:
+        return False
     else:
       model = modelType.objects.get(pk=modelID)
       canDelete = model.canDelete(user)
 
       if canDelete:
         deleted = model.delete(user)
+      else:
+        return False
     return deleted
 
 
