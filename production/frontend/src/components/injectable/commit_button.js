@@ -7,6 +7,7 @@ export function CommitButton({
   validate,
   object_type,
   label="",
+  callback=()=>{},
   edit_image="/static/images/update.svg",
   add_image="/static/images/plus.svg",
 }){
@@ -14,7 +15,7 @@ export function CommitButton({
 
   const tempObjectExists = temp_object.id !== undefined
                             && temp_object.id !== null
-                            && 0 < temp_object.id;
+                            && 0 <= temp_object.id;
 
   const image_src = (tempObjectExists) ? edit_image : add_image
 
@@ -26,11 +27,11 @@ export function CommitButton({
       return;
     }
 
-    if(tempObjectExists){
-      websocket.sendEditModel(object_type, formattedObject);
-    } else {
-      websocket.sendCreateModel(object_type, formattedObject);
-    }
+    const websocket_function = tempObjectExists ? websocket.sendEditModel :
+      websocket.sendCreateModel
+
+    websocket_function(object_type, formattedObject).then(
+      (response) => { callback(response); });
   }
 
   return <ClickableIcon

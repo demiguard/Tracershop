@@ -10,7 +10,7 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants.js";
 
 import { ParseJSONstr } from "~/lib/formatting.js";
-import { ActivityOrder, InjectionOrder, User } from "~/dataclasses/dataclasses.js";
+import { User } from "~/dataclasses/dataclasses.js";
 import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction } from '~/lib/websocket_actions';
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
@@ -21,7 +21,7 @@ export class TracerWebSocket {
   /**@type {React.Dispatch<React.ReducerAction>} */ _dispatch
 
   /**
-   * 
+   * This is websocket that is the primary source of communication between the front and backend
    * @param {WebSocket} Websocket 
    * @param {React.Dispatch<React.ReducerAction>} dispatch 
    */
@@ -82,19 +82,11 @@ export class TracerWebSocket {
       }
     }
 
-    this._ws.onchange = function(){
-      console.log("On Change was called!");
-    }
-
     this._ws.onclose = function(e) {
       for(const [messageID, channel] of this._PromiseMap){
         channel.port1.close();
         channel.port2.close();
       }
-      // I should open the thing again
-      setTimeout(function() {
-        connect();
-      }, 1000);
     }
 
     this._ws.onerror = function(err) {
@@ -102,7 +94,6 @@ export class TracerWebSocket {
       this._ws.close();
     }
 
-  if(true){
     this._ws.onopen = function (){
       const message = this.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI);
       this.send(message).then((data) => {
@@ -120,11 +111,10 @@ export class TracerWebSocket {
       });
     }
 
-    this._ws.onopen = this._ws.onopen.bind(this)
-  }
-    this._ws.onmessage = this._ws.onmessage.bind(this)
-    this._ws.onclose = this._ws.onclose.bind(this)
-    this._ws.onerror = this._ws.onerror.bind(this)
+    this._ws.onopen = this._ws.onopen.bind(this);
+    this._ws.onmessage = this._ws.onmessage.bind(this);
+    this._ws.onclose = this._ws.onclose.bind(this);
+    this._ws.onerror = this._ws.onerror.bind(this);
   }
 
   /** Creates a message object, that latter can be send by the websocket
@@ -133,9 +123,9 @@ export class TracerWebSocket {
    * @returns {Object} on json format, still need to add the data for the message
    */
   getMessage(messageType) {
-    const message = {};
-    message[WEBSOCKET_MESSAGE_TYPE] = messageType;
-    return message;
+    return {
+      [WEBSOCKET_MESSAGE_TYPE] : messageType,
+    };
   }
 
   async safeSend(message, websocket){
@@ -164,7 +154,7 @@ export class TracerWebSocket {
     // Message ID is the method, that allows us to asynchronous resolve the correct Promise
     let messageID;
     if (!data.hasOwnProperty(WEBSOCKET_MESSAGE_ID)){
-        var TestID =  Math.floor(Math.random() * 2147483647);
+        var TestID = Math.floor(Math.random() * 2147483647);
 
         messageID = TestID;
         data[WEBSOCKET_MESSAGE_ID] = messageID
