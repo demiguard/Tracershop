@@ -84,8 +84,10 @@ export function compareLoosely(obj_1, obj_2){
       // Note here it's rather important to use type coercion
       // as many of these object contains user input.
       // So "2" == 2 is a very common thing.
-      eq &= obj_1[key] == obj_2[key];
+      eq = eq && obj_1[key] == obj_2[key];
+    } else {
+      return false;
     }
   }
-  return eq
+  return eq;
 }

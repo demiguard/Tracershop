@@ -1,4 +1,4 @@
-import { BooleanMapping, compareDates, removeIndex, noop } from "../../lib/utils"
+import { BooleanMapping, compareDates, removeIndex, noop, compareLoosely } from "../../lib/utils"
 
 
 describe("Utilities Tests", () => {
@@ -39,6 +39,11 @@ describe("Utilities Tests", () => {
 
   it("No op test", () => {
     noop()
-  })
+  });
 
+  it("Compare loosy", () => {
+    expect(compareLoosely({a : 1}, {a : "1"})).toBe(true);
+    expect(compareLoosely({a : 1}, {})).toBe(false);
+    expect(compareLoosely({}, {a : "1"})).toBe(true);
+  });
 })

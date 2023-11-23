@@ -36,7 +36,7 @@ export const tracer_mapping = new Map([
       2, // endpoint
       1, // tracer
       null, // max_injections
-      1.25 // overhead_multiplier
+      1.50 // overhead_multiplier
 )], [7, new TracerCatalogPage(
     7, // id
     3, // endpoint

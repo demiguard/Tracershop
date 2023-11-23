@@ -8,6 +8,7 @@ import { DAYS, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, TRACER_TYPE,
   WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
    WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants.js";
 import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_PRODUCTION, DATA_TRACER,
+  DATA_TRACER_MAPPING,
   WEBSOCKET_DATA } from "~/lib/shared_constants.js"
 import { CloseButton } from "../injectable/buttons.js";
 import { Select, toOptions } from "../injectable/select.js"
@@ -16,7 +17,7 @@ import { ClickableIcon } from "../injectable/icons.js";
 import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 
 import styles from '~/css/Site.module.css'
-import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer } from "~/dataclasses/dataclasses.js";
+import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
 import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
@@ -24,6 +25,9 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
 import { compareLoosely } from "~/lib/utils.js";
 import { CommitButton } from "../injectable/commit_button.js";
+import { parseDanishPositiveNumberInput, parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input.js";
+import { ErrorInput } from "../injectable/inputs/error_input.js";
+import { clone } from "~/lib/serialization.js";
 
 function MarginInputGroup({children}){
   return (<InputGroup style={{marginTop : "5px"}}>
@@ -38,21 +42,23 @@ const cleanTimeSlot = {
   id : -1,
 };
 
-const cleanEndpoint = {
-  id : -1,
-  name : "",
-  address : "",
-  city : "",
-  zip_code : "",
-  phone : "",
-}
-
 export function CustomerModal({
   active_customer, on_close
 }) {
   const state = useTracershopState();
   const websocket = useWebsocket();
   const customer = state.customer.get(active_customer);
+
+  const cleanEndpoint = new DeliveryEndpoint(
+    -1, // id 
+    "Nyt", // name 
+    "", // address 
+    "", // city 
+    "", // zip_code 
+    "", // phone 
+    active_customer
+  )
+  
 
   const endpoints = []
   for(const endpoint of state.delivery_endpoint.values()){
@@ -61,10 +67,24 @@ export function CustomerModal({
     }
   }
 
+  endpoints.push(clone(
+    cleanEndpoint, DATA_ENDPOINT
+  ));
+
+  function initializeOverhead(endpointID, tracerID){
+    for(const tracerCatalogPage of state.tracer_mapping.values()){
+      if(tracerCatalogPage.endpoint === endpointID &&
+          tracerCatalogPage.tracer === tracerID ){
+          return [tracerCatalogPage.id, String(Math.round((tracerCatalogPage.overhead_multiplier - 1) * 100))];
+        }
+    }
+    return [null, "0"];
+  }
+
+
   const init = useRef({
     initial_endpoint : null,
     initial_tracer : null,
-
   });
 
   if(init.current.initial_endpoint === null
@@ -81,39 +101,73 @@ export function CustomerModal({
         }
       }
     }
+  const endpoint = (typeof(init.current.initial_endpoint) === 'number') ?
+    state.delivery_endpoint.get(init.current.initial_endpoint ) : cleanEndpoint;
 
-    const [activeEndpoint, _setActiveEndpoint] = useState(init.current.initial_endpoint);
-    const [activeTracer,   _setActiveTracer] = useState(init.current.initial_tracer);
-    const [activeTimeSlot, setActiveTimeSlot] = useState("");
+  const [tempTimeSlot, setTempTimeSlot] = useState({...cleanTimeSlot});
+  const [endpointError, setEndpointError] = useState("");
 
-    // Note, that I recreate the object to ensure that there is no reference to the init object.
-    // As the React docs where very much a DON'T RENDER REFs!
-    // I am unsure if this is needed or not, because it's a state
-    // Again this potential inefficiency is a O(1).
+  const [tempEndpoint, setTempEndpoint] = useState({...endpoint});
+  const [activeTracer,   _setActiveTracer] = useState(init.current.initial_tracer);
 
-    const [tempTimeSlot, setTempTimeSlot] = useState({...cleanTimeSlot});
-    const [overhead, setOverhead] = useState("0")
+  // Note that the tracerPage Id is unique on each render
+  const [tracerPageId, initialOverhead] = initializeOverhead(tempEndpoint.id, activeTracer);
+  const [overhead, setOverhead] = useState(initialOverhead);
 
-    // These function should also import tempTimeSlot
-    function setActiveEndpoint(newEndpoint){
-      _setActiveEndpoint(newEndpoint);
+  function initializeNewTimeSlot(){
+    setTempTimeSlot({...cleanTimeSlot});
+  }
+
+
+
+  // These function should also import tempTimeSlot
+  function setActiveEndpoint(newEndpointID){
+    newEndpointID = Number(newEndpointID);
+    if(newEndpointID === tempEndpoint.id){
+      return;
     }
 
-    function setActiveTracer(newTracer){
-      _setActiveTracer(newTracer);
+    const [, overhead] = initializeOverhead(newEndpointID, activeTracer);
+
+    initializeNewTimeSlot();
+    setOverhead(overhead);
+  }
+
+  function setActiveTracer(newTracer){
+    newTracer = Number(newTracer);
+    if(newTracer === activeTracer){
+      return;
     }
+    _setActiveTracer(newTracer);
+    const [, overhead] = initializeOverhead(tempEndpoint.id, newTracer);
+    setOverhead(overhead);
+    initializeNewTimeSlot();
+  }
+
 
   function CustomerConfiguration(){
     const [tempCustomer, setTempCustomer] = useState({...customer});
-    const customerDirty = compareLoosely(customer, tempCustomer);
-
+    const customerDirty = !compareLoosely(customer, tempCustomer);
+    const [dispenserError, setDispenserError] = useState("");
   /**
    * Function called in response to the user clicking accept key on customers
    *
    * Should update the customer
    */
   function validateCustomer(){
-    return [true, {...tempCustomer}]
+    let dispenser = null;
+    if(tempCustomer.dispenser_id) {
+      const [validDispenser, n_dispenser] = parseWholePositiveNumber(tempCustomer.dispenser_id, 'Dispenser ID');
+
+      if(!validDispenser){
+        setDispenserError(dispenser);
+        return [false,{}];
+      }
+      dispenser = n_dispenser;
+    }
+    setDispenserError("");
+
+    return [true, {...tempCustomer, dispenser_id : dispenser}];
   }
 
     return (<Col>
@@ -122,7 +176,7 @@ export function CustomerModal({
         {customerDirty ?
           <Col style={{ justifyContent : "right", display: "flex"}}>
             <CommitButton
-              label="customer-dirty"
+              label="customer-commit"
               temp_object={tempCustomer}
               object_type={DATA_CUSTOMER}
               validate={validateCustomer}/>
@@ -131,6 +185,7 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
         <Form.Control
+          aria-label="short-name-input"
           value={nullParser(tempCustomer.short_name)}
           onChange={setTempObjectToEvent(setTempCustomer, 'short_name')}
         />
@@ -138,6 +193,7 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Kunde Navn</InputGroup.Text>
         <Form.Control
+          aria-label="long-name-input"
           value={nullParser(tempCustomer.long_name)}
           onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
         />
@@ -145,6 +201,7 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Regnings Addresse</InputGroup.Text>
         <Form.Control
+          aria-label="address-input"
           value={nullParser(tempCustomer.billing_address)}
           onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
         />
@@ -152,6 +209,7 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Regnings By</InputGroup.Text>
         <Form.Control
+          aria-label="city-input"
           value={nullParser(tempCustomer.billing_city)}
           onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
         />
@@ -159,6 +217,7 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
         <Form.Control
+          aria-label="zip-input"
           value={nullParser(tempCustomer.zip_code)}
           onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
         />
@@ -166,57 +225,33 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Regnings Email</InputGroup.Text>
         <Form.Control
+          aria-label="email-input"
           value={nullParser(tempCustomer.billing_email)}
           onChange={setTempObjectToEvent(setTempCustomer,'billing_email')}
         />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Dispenser id</InputGroup.Text>
-        <Form.Control
-          value={nullParser(tempCustomer.dispenser_id)}
-          onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
-        />
+        <ErrorInput>
+          <Form.Control
+            aria-label="dispenser-input"
+            value={nullParser(tempCustomer.dispenser_id)}
+            onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
+          />
+        </ErrorInput>
       </MarginInputGroup>
     </Col>)
   }
 
   function EndpointConfig(){
-    const endpoint = (typeof(activeEndpoint) === 'number') ?
-      state.delivery_endpoint.get(activeEndpoint) : cleanEndpoint;
-    const [tempEndpoint, setTempEndpoint] = useState({...endpoint});
-    const endpointDirty = compareLoosely(endpoint, tempEndpoint);
-
-    /**
-     * Function called in response to the user clicking accept key on endpoint
-     *
-     * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
-     */
-    function confirmEndpoint(){
-      // This is the object that will be send to the server
-      const endpoint = {...tempEndpoint};
-      endpoint.owner = active_customer;
-      if(activeEndpoint === undefined){
-        websocket.sendCreateModel(DATA_ENDPOINT, endpoint).then((response) => {
-          const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT])
-          for(const endpointID of map.keys()){
-            // it's only one iteration long
-            setActiveEndpoint(endpointID);
-            break;
-          }
-        });
-      } else {
-        websocket.sendEditModel(DATA_ENDPOINT, endpoint);
-      }
-    }
+    const endpointDirty = !compareLoosely(endpoint, tempEndpoint);
 
     function validateEndpoint(){
-      
-
       return [true, {...tempEndpoint, owner : active_customer}]
     }
 
     function commit_callback(response){
-      if(activeEndpoint === undefined){
+      if(tempEndpoint.id === -1){
         const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT])
           for(const endpointID of map.keys()){
             // it's only one iteration long
@@ -226,7 +261,7 @@ export function CustomerModal({
       }
     }
 
-    return(<Col>
+    return(<Col aria-label={`active-endpoint-${tempEndpoint.id}`}>
       <Row>
         <Col><h4>LeveringsSted</h4></Col>
         <Col style={{display: "flex", justifyContent: "right"}}>
@@ -241,11 +276,14 @@ export function CustomerModal({
       </Row>
       <MarginInputGroup>
         <InputGroup.Text>Leveringssteder</InputGroup.Text>
-        <EndpointSelect
-          delivery_endpoint={endpoints}
-          onChange={() => {}}
-          value={activeEndpoint}
-        ></EndpointSelect>
+        <ErrorInput error={endpointError}>
+          <EndpointSelect
+            aria-label="endpoint-select"
+            delivery_endpoint={endpoints}
+            onChange={(event) => setActiveEndpoint(event.target.value)}
+            value={tempEndpoint.id}
+          />
+        </ErrorInput>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
@@ -271,9 +309,9 @@ export function CustomerModal({
       <MarginInputGroup>
         <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
         <Form.Control
-          value={nullParser(tempEndpoint.zip_code)}>
+          value={nullParser(tempEndpoint.zip_code)}
           onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
-        </Form.Control>
+        />
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
@@ -282,7 +320,7 @@ export function CustomerModal({
           onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
         />
       </MarginInputGroup>
-    </Col>)
+    </Col>);
   }
 
   function DeliveryTimeTable(){
@@ -313,7 +351,6 @@ export function CustomerModal({
    * @param {ActivityDeliveryTimeSlot} entry
    */
   function weeklyTimeTableEntryOnClick(entry){
-    setActiveTimeSlot(entry.id);
     setTempTimeSlot({...entry});
   }
 
@@ -335,7 +372,7 @@ export function CustomerModal({
    * @returns {string}
    */
   function weeklyTimeTableEntryColor(entry){
-    if(entry.id == activeTimeSlot){
+    if(entry.id == tempTimeSlot.id){
       return 'orange';
     }
 
@@ -364,7 +401,7 @@ export function CustomerModal({
     const timeSlots = []
 
     for(const timeSlot of state.deliver_times.values()){
-      if(timeSlot.destination === activeEndpoint){
+      if(timeSlot.destination === tempEndpoint.id){
         timeSlots.push(timeSlot);
       }
     }
@@ -385,71 +422,75 @@ export function CustomerModal({
   function ActiveTimeSlotConfig(){
     // Note that tempTimeSlot cannot be a state value here as it might
     // Change when the user changes endpoint.
-    const timeSlotCorrect = (activeTimeSlot === "") ? cleanTimeSlot : state.deliver_times.get(activeTimeSlot);
-    const timeSlotDirty = compareLoosely(timeSlotCorrect, tempTimeSlot)
-    
+    const timeSlotCorrect = (tempTimeSlot.id === -1) ? cleanTimeSlot : state.deliver_times.get(tempTimeSlot.id);
+    const timeSlotDirty = !compareLoosely(timeSlotCorrect, tempTimeSlot);
+    const [deliveryTimeError, setDeliveryTimeError] = useState("");
+    const [overheadError, setOverheadError] = useState("");
+
+    const tracerCatalogPage = tracerPageId !== null ? state.tracer_mapping.get(tracerPageId) :
+        new TracerCatalogPage(-1, tempEndpoint.id, activeTracer, 1, )
+
     tempTimeSlot.delivery_time === timeSlotCorrect.delivery_time
                        || tempTimeSlot.weekly_repeat === timeSlotCorrect.weekly_repeat
                        || tempTimeSlot.production_run === timeSlotCorrect.production_run;
 
+    function setTempTimeSlotDeliveryTime(value){
+      setTempTimeSlot(obj => {return {
+        ...obj, delivery_time : value
+      }});
+    }
 
-    function setTempTimeSlot(kw){
-      return (event) => {
-        setTempTimeSlot({...tempTimeSlot, [kw] : event.target.value })
+    function validateOverhead(){
+      const [validOverhead, parsedOverhead] = parseDanishPositiveNumberInput(overhead, "Overhead");
+
+      if(!validOverhead){
+        setOverheadError(parsedOverhead);
+        return [false, {}];
       }
+
+      setOverheadError("");
+
+      return [true, {...tracerCatalogPage, overhead_multiplier : parsedOverhead / 100 + 1}];
     }
 
+    /**
+     * Function called in response to the user clicking accept key on timeslots
+     *
+     * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
+     */
+    function validateTimeSlot(){
+      const [validDeliveryTime, deliveryTime] = parseTimeInput(tempTimeSlot.delivery_time, 'Leverings tiden');
 
-  /**
-   * Checks if the timeslot's field contains valid data
-   * @param {ActivityDeliveryTimeSlot} timeSlot - timeslot in question
-   * @returns {bool} - True if timeSlot is valid, false otherwise.
-   */
-  function validateTimeSlot(timeSlot){
-    const delivery_time = FormatTime(timeSlot.delivery_time)
-    if(delivery_time === null){
-      return false;
+      if(!validDeliveryTime){
+        setDeliveryTimeError(deliveryTime);
+        return [false, {}];
+      }
+
+      setDeliveryTimeError("");
+
+      if(tempEndpoint.id === -1){ // database indexes are 1 index therefore always return true on valid endpoint
+        setEndpointError("Man skal oprette et leveringstedet før man kan lave leverings tidspunnkter");
+        return [false, {}];
+      }
+      setEndpointError("");
+
+
+      // This is the object that will be send to the server
+      const timeSlot = {...tempTimeSlot};
+      timeSlot.destination = tempEndpoint.id;
+      timeSlot.delivery_time = deliveryTime;
+
+      return [true, timeSlot];
     }
-
-    if(!activeEndpoint){ // database indexes are 1 index therefore always return true on valid endpotin
-      return false
-    }
-
-    return true;
-  }
-
-
-  /**
-   * Function called in response to the user clicking accept key on timeslots
-   *
-   * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
-   */
-  function confirmTimeSlot(){
-    if(!validateTimeSlot(tempTimeSlot)){
-      // validateTimeSlot is responsible for updating state, such that errors
-      // are displayed
-      return;
-    }
-    // This is the object that will be send to the server
-    const timeSlot = {...tempTimeSlot};
-    timeSlot.destination = activeEndpoint
-    timeSlot.delivery_time = FormatTime(tempTimeSlot.delivery_time);
-
-    if(activeTimeSlot === undefined){
-      websocket.sendCreateModel(DATA_DELIVER_TIME, [timeSlot])
-    } else {
-      websocket.sendEditModel(DATA_DELIVER_TIME, [timeSlot])
-    }
-  }
 
     const WeeklyRepeatOptions = toOptions([
       { id : 0, name : "Alle Uger"},
       { id : 1, name : "Lige Uger"},
       { id : 2, name : "Ulige Uger"},
-    ])
+    ]);
 
     function productionNaming(production){
-      `${getDateName(production.production_day)} - ${production.production_time}`
+      return `${getDateName(production.production_day)} - ${production.production_time}`;
     }
 
     const filteredProductions = [...state.production.values()].filter(
@@ -462,47 +503,73 @@ export function CustomerModal({
     );
     const activityTracersOptions = toOptions(activity_tracers, 'shortname');
 
-    return (<Col>
+    return (<Col aria-label={`active-time-slot-${tempTimeSlot.id}`}>
       <Row>
         <Col><h4>Leveringstidspunkt</h4></Col>
         <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
         {timeSlotDirty ?
-          <ClickableIcon
-            label="time-slot-edit"
-            src={"static/images/accept.svg"}
-            onClick={confirmTimeSlot}
+          <CommitButton
+            temp_object={tempTimeSlot}
+            object_type={DATA_DELIVER_TIME}
+            label="time-slot-commit"
+            validate={validateTimeSlot}
           /> : ""}
-        {activeTimeSlot != undefined ?
+        {tempTimeSlot.id != -1 ?
           <ClickableIcon
-            label="time-slot-create"
+            label="time-slot-initialize"
             src={"static/images/plus.svg"}
-            onClick={initializeTimeSlotEndpoint}
+            onClick={initializeNewTimeSlot}
           /> : ""}
         </Col>
       </Row>
       <MarginInputGroup>
           <InputGroup.Text>Aktivitets Tracer</InputGroup.Text>
           <Select
+            aria-label="active-tracer-select"
             options={activityTracersOptions}
             value={activeTracer}
             onChange={setStateToEvent(setActiveTracer)}
           />
       </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Overhead</InputGroup.Text>
+        <ErrorInput error={overheadError}>
+          <Form.Control
+            aria-label="overhead-input"
+            value={overhead}
+            onChange={setStateToEvent(setOverhead)}
+            />
+        </ErrorInput>
+        <InputGroup.Text>%</InputGroup.Text>
+        { overhead !== initialOverhead ?
+          <InputGroup.Text>
+            <CommitButton
+              label="commit-overhead"
+              temp_object={tracerCatalogPage}
+              object_type={DATA_TRACER_MAPPING}
+              validate={validateOverhead}
+              add_image="/static/images/update.svg"
+            />
+          </InputGroup.Text> : ""
+        }
+      </MarginInputGroup>
 
       <MarginInputGroup>
         <InputGroup.Text>Leveringstid</InputGroup.Text>
-        <TimeInput
-          aria-label="time-slot-delivery-time"
-          value={tempTimeSlot.delivery_time}
-          stateFunction={setTempTimeSlot('tempTimeSlot', 'delivery_time', 'timeSlotDirty')}
-        />
+        <ErrorInput error={deliveryTimeError}>
+          <TimeInput
+            aria-label="time-slot-delivery-time"
+            value={tempTimeSlot.delivery_time}
+            stateFunction={setTempTimeSlotDeliveryTime}
+            />
+        </ErrorInput>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Ugenlig gentagelse</InputGroup.Text>
         <Select
           aria-label="weekly-select"
           options={WeeklyRepeatOptions}
-          onChange={setTempTimeSlot('tempTimeSlot', 'weekly_repeat', 'timeSlotDirty')}
+          onChange={setTempObjectToEvent(setTempTimeSlot, 'weekly_repeat')}
           value={tempTimeSlot.weekly_repeat}
         />
       </MarginInputGroup>
@@ -510,7 +577,7 @@ export function CustomerModal({
         <InputGroup.Text>Levering fra Production</InputGroup.Text>
         <Select
           options={productionOptions}
-          onChange={setTempObjectToEvent('tempTimeSlot', 'production_run', 'timeSlotDirty')}
+          onChange={setTempObjectToEvent(setTempTimeSlot, 'production_run')}
           value={tempTimeSlot.production_run}
           aria-label="production-select"
         />
