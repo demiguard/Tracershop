@@ -91,7 +91,7 @@ export function CustomerModal({
     || init.current.initial_tracer === null)
     {
       const endpoint_exists = endpoints.length > 0;
-      init.current.initial_endpoint = (endpoint_exists) ? endpoints[0].id : "";
+      init.current.initial_endpoint = (endpoint_exists) ? endpoints[0].id : -1;
       init.current.initial_tracer = ""
       for(const tracer of state.tracer.values()){
         if(tracer.tracer_type == TRACER_TYPE.ACTIVITY
@@ -101,8 +101,8 @@ export function CustomerModal({
         }
       }
     }
-  const endpoint = (typeof(init.current.initial_endpoint) === 'number') ?
-    state.delivery_endpoint.get(init.current.initial_endpoint ) : cleanEndpoint;
+  const endpoint = 0 < init.current.initial_endpoint ?
+    state.delivery_endpoint.get(init.current.initial_endpoint) : cleanEndpoint;
 
   const [tempTimeSlot, setTempTimeSlot] = useState({...cleanTimeSlot});
   const [endpointError, setEndpointError] = useState("");
