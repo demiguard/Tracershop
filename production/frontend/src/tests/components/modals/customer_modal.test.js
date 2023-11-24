@@ -4,13 +4,13 @@
 
 import React from "react";
 import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 
 import { jest } from '@jest/globals'
 import { AppState, testState } from '../../app_state.js';
 import { CustomerModal } from '../../../components/modals/customer_modal.js'
 import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, cssError } from "~/lib/constants.js";
-import { DATA_CUSTOMER, DATA_DELIVER_TIME } from "~/lib/shared_constants.js"
+import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_TRACER_MAPPING, WEBSOCKET_DATA } from "~/lib/shared_constants.js"
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -325,7 +325,7 @@ describe("Customer modal list", () => {
     const customerCommit = screen.getByLabelText('customer-commit');
 
     await act( async () => {
-      customerCommit.click()
+      customerCommit.click();
     });
 
     expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_CUSTOMER,
@@ -352,10 +352,12 @@ describe("Customer modal list", () => {
     });
 
     expect(websocket.sendEditModel).not.toHaveBeenCalled();
-    expect(dispenserInput).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+    await waitFor(() => {
+      expect(screen.getByLabelText('dispenser-input')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+    })
   });
 
-  it("Create Endpoint", () => {
+  it("Create Endpoint, with all error", async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerModal {...props} />
@@ -363,9 +365,149 @@ describe("Customer modal list", () => {
     </StateContextProvider>);
     const endpointSelect = screen.getByLabelText('endpoint-select');
 
-    act(() => {
+    await act(async () => {
       fireEvent.change(endpointSelect, {target : {value : "-1"}});
     });
-  })
 
+    let endpointNameInput = screen.getByLabelText('endpoint-name');
+    let endpointAddressInput = screen.getByLabelText('endpoint-address');
+    let endpointCityInput = screen.getByLabelText('endpoint-city');
+    let endpointZipCodeInput = screen.getByLabelText('endpoint-zip-code');
+    let endpointPhoneInput = screen.getByLabelText('endpoint-phone');
+    expect(endpointNameInput.value).toBe("Nyt");
+
+    expect(endpointNameInput).toBeVisible();
+    expect(endpointAddressInput).toBeVisible();
+    expect(endpointCityInput).toBeVisible();
+    expect(endpointZipCodeInput).toBeVisible();
+    expect(endpointPhoneInput).toBeVisible();
+
+    act(() => {fireEvent.change(screen.getByLabelText('endpoint-name'), {target : {value : ""}, bubbles : true});});
+    act(() => {fireEvent.change(screen.getByLabelText('endpoint-address'), {target : { value : "a".repeat(129) }, bubbles : true});});
+    act(() => {fireEvent.change(screen.getByLabelText('endpoint-city'), {target : { value : "a".repeat(129) }, bubbles : true});});
+    act(() => {fireEvent.change(screen.getByLabelText('endpoint-zip-code'), {target : { value : "a".repeat(129) }, bubbles : true});});
+    act(() => {fireEvent.change(screen.getByLabelText('endpoint-phone'), {target : { value : "a".repeat(129) }, bubbles : true});});
+
+    expect(screen.getByLabelText('endpoint-name').value).toBe("");
+    expect(screen.getByLabelText('endpoint-address').value).toBe("a".repeat(129));
+    expect(screen.getByLabelText('endpoint-city').value).toBe("a".repeat(129));
+    expect(screen.getByLabelText('endpoint-zip-code').value).toBe("a".repeat(129));
+    expect(screen.getByLabelText('endpoint-phone').value).toBe("a".repeat(129));
+
+    const commitButton = screen.getByLabelText('commit-endpoint');
+
+    await act(async () => {
+      commitButton.click();
+    });
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+    await waitFor(() => {
+      expect(screen.getByLabelText('endpoint-name')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+      expect(screen.getByLabelText('endpoint-address')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+      expect(screen.getByLabelText('endpoint-city')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+      expect(screen.getByLabelText('endpoint-zip-code')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+      expect(screen.getByLabelText('endpoint-phone')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+    });
+  });
+
+  it("Create Endpoint", async () => {
+    websocket = {
+      sendCreateModel : jest.fn((message) => new Promise(async function(resolve) {resolve({
+        [WEBSOCKET_DATA] : {
+          [DATA_ENDPOINT] : [
+            { pk : 6,
+              fields : {
+                name : "test name",
+                owner : 1,
+                zip_code : null,
+                address : null,
+                city : null,
+                phone : null,
+              }
+            }
+          ]
+        }
+      })})),
+      sendEditModel : jest.fn((message) => new Promise(async function(resolve) {resolve()})),
+    };
+
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+    const endpointSelect = screen.getByLabelText('endpoint-select');
+
+    await act(async () => {
+      fireEvent.change(endpointSelect, {target : {value : "-1"}});
+    });
+
+    const endpointNameInput = screen.getByLabelText('endpoint-name');
+    expect(endpointNameInput.value).toBe("Nyt");
+
+    act(() => {
+      fireEvent.change(endpointNameInput, {target : {value : "test name  "}});
+    })
+
+    expect(endpointNameInput.value).toBe("test name  ");
+
+    const commitButton = screen.getByLabelText('commit-endpoint');
+
+    await act(async () => {
+      commitButton.click();
+    });
+
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ENDPOINT,{
+      id : -1,
+      name : "test name",
+      city : null,
+      address : null,
+      zip_code : null,
+      phone : null,
+      owner : 1
+    });
+  });
+
+  it("Set Overhead Correct", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText('overhead-input'),
+      {target : { value : "44"}});
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText('commit-overhead'));
+    });
+
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER_MAPPING, expect.objectContaining({
+      endpoint : 1,
+      tracer : 1,
+      overhead_multiplier : 1.44
+    }));
+  });
+
+  it("Set Overhead incorrect", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText('overhead-input'),
+      {target : { value : "4a4"}});
+    });
+
+    act(() => {
+      fireEvent.click(screen.getByLabelText('commit-overhead'));
+    });
+
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('overhead-input')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+  });
 });

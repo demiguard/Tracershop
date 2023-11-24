@@ -117,6 +117,19 @@ export function parsePortInput(input, header=""){
   return [true, numberPort]
 }
 
+export function parseStringInput(input, header="", max_length=80, allow_empty=true){
+  input = input.trim();
+  if(input === "" && !allow_empty){
+    return [false, `${header} er ikke tasted ind`];
+  }
+
+  if(max_length < input.length){
+    return [false, `${header} kan ikke være længere end ${max_length} karaktere.`];
+  }
+
+  return [true, input];
+}
+
 export function parseAETitleInput(input, header=""){
   if(input === ""){
     return [false, `${header} er ikke tasted ind`];

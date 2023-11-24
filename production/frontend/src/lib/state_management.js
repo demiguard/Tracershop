@@ -37,13 +37,12 @@ export function setStateToEvent(stateFunction){
 /**
  * Shorthand for (event) => {stateFunction({...obj, [keyword] : event.target.value})}
  * Useful for setting objects
- * @param {CallableFunction} stateFunction 
- * @param {*} obj - The object that changes
+ * @param {CallableFunction} stateFunction
  * @param {String} keyword - The keyword this function should write to
  * @returns {CallableFunction}
  */
 export function setTempObjectToEvent(stateFunction, keyword){
   return (event) => {
-    stateFunction((obj) => {return {...obj, [keyword] : event.target.value}});
+    stateFunction(obj => {return {...obj, [keyword] : event.target.value}});
   }
 }

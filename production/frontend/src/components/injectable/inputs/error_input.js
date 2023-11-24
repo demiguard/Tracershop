@@ -15,7 +15,6 @@ export function ErrorInput({error, children}){
   } catch {
     /* istanbul ignore next */
   }
-
   const newComps = React.Children.map(children,(child) =>
     React.cloneElement(child, {
       ...child.props,
@@ -23,10 +22,8 @@ export function ErrorInput({error, children}){
     })
   );
 
-
   return <HoverBox
     Base={newComps}
     Hover={<p>{error}</p>}
-  />
-
+  />;
 }

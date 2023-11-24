@@ -69,6 +69,13 @@ export function numberfy(maybeNumber){
   return Number(maybeNumber)
 }
 
+export function nullify (input) {
+  if(!input) {
+    return null;
+  }
+
+  return input;
+}
 
 /**
  * Compares two object, to see if their state represents the same object, after user input.

@@ -23,11 +23,12 @@ import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
-import { compareLoosely } from "~/lib/utils.js";
+import { compareLoosely, nullify } from "~/lib/utils.js";
 import { CommitButton } from "../injectable/commit_button.js";
-import { parseDanishPositiveNumberInput, parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input.js";
+import { parseDanishPositiveNumberInput, parseStringInput, parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input.js";
 import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { clone } from "~/lib/serialization.js";
+import { tracerTypeFilter } from "~/lib/filters.js";
 
 function MarginInputGroup({children}){
   return (<InputGroup style={{marginTop : "5px"}}>
@@ -46,19 +47,17 @@ export function CustomerModal({
   active_customer, on_close
 }) {
   const state = useTracershopState();
-  const websocket = useWebsocket();
   const customer = state.customer.get(active_customer);
 
   const cleanEndpoint = new DeliveryEndpoint(
-    -1, // id 
-    "Nyt", // name 
-    "", // address 
-    "", // city 
-    "", // zip_code 
-    "", // phone 
+    -1, // id
+    "", // address
+    "", // city
+    "", // zip_code
+    "", // phone
+    "Nyt", // name
     active_customer
-  )
-  
+  );
 
   const endpoints = []
   for(const endpoint of state.delivery_endpoint.values()){
@@ -118,14 +117,16 @@ export function CustomerModal({
     setTempTimeSlot({...cleanTimeSlot});
   }
 
-
-
   // These function should also import tempTimeSlot
   function setActiveEndpoint(newEndpointID){
     newEndpointID = Number(newEndpointID);
     if(newEndpointID === tempEndpoint.id){
       return;
     }
+
+    const newEndpoint = (newEndpointID === -1) ? {...cleanEndpoint} : {...state.delivery_endpoint.get(newEndpointID)}
+    setTempEndpoint(newEndpoint);
+
 
     const [, overhead] = initializeOverhead(newEndpointID, activeTracer);
 
@@ -160,7 +161,7 @@ export function CustomerModal({
       const [validDispenser, n_dispenser] = parseWholePositiveNumber(tempCustomer.dispenser_id, 'Dispenser ID');
 
       if(!validDispenser){
-        setDispenserError(dispenser);
+        setDispenserError(n_dispenser);
         return [false,{}];
       }
       dispenser = n_dispenser;
@@ -169,7 +170,6 @@ export function CustomerModal({
 
     return [true, {...tempCustomer, dispenser_id : dispenser}];
   }
-
     return (<Col>
       <Row>
         <Col><h4>Kunde</h4></Col>
@@ -232,7 +232,7 @@ export function CustomerModal({
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Dispenser id</InputGroup.Text>
-        <ErrorInput>
+        <ErrorInput error={dispenserError}>
           <Form.Control
             aria-label="dispenser-input"
             value={nullParser(tempCustomer.dispenser_id)}
@@ -245,14 +245,54 @@ export function CustomerModal({
 
   function EndpointConfig(){
     const endpointDirty = !compareLoosely(endpoint, tempEndpoint);
+    const [error, setError] = useState({
+      name : "",
+      address : "",
+      city : "",
+      phone : "",
+      zip_code : "",
+    })
 
     function validateEndpoint(){
-      return [true, {...tempEndpoint, owner : active_customer}]
+      const [validName, name] = parseStringInput(tempEndpoint.name, 'Navnet', 32, false);
+      const [validAddress, address] = parseStringInput(tempEndpoint.address, 'Addressen', 128);
+      const [validCity, city] = parseStringInput(tempEndpoint.city, 'Byen', 128);
+      const [validZipCode, zipCode] = parseStringInput(tempEndpoint.zip_code, 'Post koden', 32);
+      const [validPhone, phone] = parseStringInput(tempEndpoint.phone, 'Telefon nummeret', 32);
+
+      const newError = {
+        name : "",
+        address : "",
+        city : "",
+        phone : "",
+        zip_code : "",
+      };
+
+      if (!validName){ newError.name = name;}
+      if (!validAddress){ newError.address = address;}
+      if (!validCity){ newError.city = city;}
+      if (!validZipCode){ newError.zip_code = zipCode;}
+      if (!validPhone){ newError.phone = phone;}
+
+      setError(newError);
+
+      if (!validName || !validAddress || !validCity || !validZipCode || !validPhone ){
+        return [false,{}];
+      }
+
+
+      return [true, {...tempEndpoint,
+        name : name,
+        address : nullify(address),
+        city : nullify(city),
+        phone : nullify(phone),
+        zip_code : nullify(zipCode),
+        owner : active_customer}];
     }
 
     function commit_callback(response){
       if(tempEndpoint.id === -1){
-        const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT])
+        const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT], new Map(), DATA_ENDPOINT);
           for(const endpointID of map.keys()){
             // it's only one iteration long
             setActiveEndpoint(endpointID);
@@ -287,38 +327,53 @@ export function CustomerModal({
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Internt Navn</InputGroup.Text>
-        <Form.Control
-          value={nullParser(tempEndpoint.name)}
-          onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
-        />
+        <ErrorInput error={error.name}>
+          <Form.Control
+            aria-label="endpoint-name"
+            value={nullParser(tempEndpoint.name)}
+            onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
+          />
+        </ErrorInput>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings Addresse</InputGroup.Text>
-        <Form.Control
-          value={nullParser(tempEndpoint.address)}
-          onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
-        />
+        <ErrorInput error={error.address}>
+          <Form.Control
+            aria-label="endpoint-address"
+            value={nullParser(tempEndpoint.address)}
+            onChange={setTempObjectToEvent(setTempEndpoint, 'address')}
+          />
+        </ErrorInput>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings By</InputGroup.Text>
-        <Form.Control
-          value={nullParser(tempEndpoint.city)}
-          onChange={setTempObjectToEvent(setTempEndpoint, 'city')}
-        />
+        <ErrorInput error={error.city}>
+          <Form.Control
+            aria-label="endpoint-city"
+            value={nullParser(tempEndpoint.city)}
+            onChange={setTempObjectToEvent(setTempEndpoint, 'city')}
+          />
+        </ErrorInput>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
-        <Form.Control
-          value={nullParser(tempEndpoint.zip_code)}
-          onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
-        />
+        <ErrorInput error={error.zip_code}>
+          <Form.Control
+            aria-label="endpoint-zip-code"
+            value={nullParser(tempEndpoint.zip_code)}
+            onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
+          />
+        </ErrorInput>
       </MarginInputGroup>
       <MarginInputGroup>
         <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
-        <Form.Control
-          value={nullParser(tempEndpoint.phone)}
-          onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
-        />
+        <ErrorInput error={error.phone}>
+          <Form.Control
+            aria-label="endpoint-phone"
+            value={nullParser(tempEndpoint.phone)}
+            onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
+          />
+        </ErrorInput>
       </MarginInputGroup>
     </Col>);
   }
@@ -385,6 +440,7 @@ export function CustomerModal({
     if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ODD){
       return '#FFEE99';
     }
+    /* istanbul ignore next */
     throw "Unknown weekly repeat"
   }
 
@@ -498,9 +554,7 @@ export function CustomerModal({
     );
 
     const productionOptions = toOptions(filteredProductions, productionNaming, 'id')
-    const activity_tracers = [...state.tracer.values()].filter(
-      (tracer) => tracer.tracer_type === TRACER_TYPE.ACTIVITY
-    );
+    const activity_tracers = [...state.tracer.values()].filter(tracerTypeFilter(TRACER_TYPE.ACTIVITY));
     const activityTracersOptions = toOptions(activity_tracers, 'shortname');
 
     return (<Col aria-label={`active-time-slot-${tempTimeSlot.id}`}>
@@ -599,8 +653,11 @@ export function CustomerModal({
         <Container>
           <Row>
             <CustomerConfiguration/>
-            <EndpointConfig/>
-            <ActiveTimeSlotConfig/>
+            <EndpointConfig tempEndpoint={tempEndpoint}/>
+            <ActiveTimeSlotConfig
+              tempEndpoint={tempEndpoint}
+              tempTimeSlot={tempTimeSlot}
+            />
           </Row>
           <br/>
           <Row>
