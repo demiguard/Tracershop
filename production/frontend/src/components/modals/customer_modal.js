@@ -17,7 +17,7 @@ import { ClickableIcon } from "../injectable/icons.js";
 import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 
 import styles from '~/css/Site.module.css'
-import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Tracer, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
+import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
 import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
