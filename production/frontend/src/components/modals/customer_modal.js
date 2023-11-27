@@ -113,6 +113,10 @@ export function CustomerModal({
   const [tracerPageId, initialOverhead] = initializeOverhead(tempEndpoint.id, activeTracer);
   const [overhead, setOverhead] = useState(initialOverhead);
 
+  const [tempCustomer, setTempCustomer] = useState({...customer});
+  const customerDirty = !compareLoosely(customer, tempCustomer);
+  const [dispenserError, setDispenserError] = useState("");
+
   function initializeNewTimeSlot(){
     setTempTimeSlot({...cleanTimeSlot});
   }
@@ -146,10 +150,6 @@ export function CustomerModal({
   }
 
 
-  function CustomerConfiguration(){
-    const [tempCustomer, setTempCustomer] = useState({...customer});
-    const customerDirty = !compareLoosely(customer, tempCustomer);
-    const [dispenserError, setDispenserError] = useState("");
   /**
    * Function called in response to the user clicking accept key on customers
    *
@@ -170,82 +170,10 @@ export function CustomerModal({
 
     return [true, {...tempCustomer, dispenser_id : dispenser}];
   }
-    return (<Col>
-      <Row>
-        <Col><h4>Kunde</h4></Col>
-        {customerDirty ?
-          <Col style={{ justifyContent : "right", display: "flex"}}>
-            <CommitButton
-              label="customer-commit"
-              temp_object={tempCustomer}
-              object_type={DATA_CUSTOMER}
-              validate={validateCustomer}/>
-          </Col> : ""}
-      </Row>
-      <MarginInputGroup>
-        <InputGroup.Text>Internt Navn</InputGroup.Text>
-        <Form.Control
-          aria-label="short-name-input"
-          value={nullParser(tempCustomer.short_name)}
-          onChange={setTempObjectToEvent(setTempCustomer, 'short_name')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Kunde Navn</InputGroup.Text>
-        <Form.Control
-          aria-label="long-name-input"
-          value={nullParser(tempCustomer.long_name)}
-          onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings Addresse</InputGroup.Text>
-        <Form.Control
-          aria-label="address-input"
-          value={nullParser(tempCustomer.billing_address)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings By</InputGroup.Text>
-        <Form.Control
-          aria-label="city-input"
-          value={nullParser(tempCustomer.billing_city)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
-        <Form.Control
-          aria-label="zip-input"
-          value={nullParser(tempCustomer.zip_code)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings Email</InputGroup.Text>
-        <Form.Control
-          aria-label="email-input"
-          value={nullParser(tempCustomer.billing_email)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_email')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Dispenser id</InputGroup.Text>
-        <ErrorInput error={dispenserError}>
-          <Form.Control
-            aria-label="dispenser-input"
-            value={nullParser(tempCustomer.dispenser_id)}
-            onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-    </Col>)
-  }
 
-  function EndpointConfig(){
-    const endpointDirty = !compareLoosely(endpoint, tempEndpoint);
-    const [error, setError] = useState({
+
+  const endpointDirty = !compareLoosely(endpoint, tempEndpoint);
+  const [tempEndpointError, setTempEndpointError] = useState({
       name : "",
       address : "",
       city : "",
@@ -274,7 +202,7 @@ export function CustomerModal({
       if (!validZipCode){ newError.zip_code = zipCode;}
       if (!validPhone){ newError.phone = phone;}
 
-      setError(newError);
+      setTempEndpointError(newError);
 
       if (!validName || !validAddress || !validCity || !validZipCode || !validPhone ){
         return [false,{}];
@@ -300,83 +228,6 @@ export function CustomerModal({
         }
       }
     }
-
-    return(<Col aria-label={`active-endpoint-${tempEndpoint.id}`}>
-      <Row>
-        <Col><h4>LeveringsSted</h4></Col>
-        <Col style={{display: "flex", justifyContent: "right"}}>
-          {endpointDirty ? <CommitButton
-                              temp_object={tempEndpoint}
-                              validate={validateEndpoint}
-                              callback={commit_callback}
-                              object_type={DATA_ENDPOINT}
-                              label="commit-endpoint"
-                           /> : ""}
-        </Col>
-      </Row>
-      <MarginInputGroup>
-        <InputGroup.Text>Leveringssteder</InputGroup.Text>
-        <ErrorInput error={endpointError}>
-          <EndpointSelect
-            aria-label="endpoint-select"
-            delivery_endpoint={endpoints}
-            onChange={(event) => setActiveEndpoint(event.target.value)}
-            value={tempEndpoint.id}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Internt Navn</InputGroup.Text>
-        <ErrorInput error={error.name}>
-          <Form.Control
-            aria-label="endpoint-name"
-            value={nullParser(tempEndpoint.name)}
-            onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings Addresse</InputGroup.Text>
-        <ErrorInput error={error.address}>
-          <Form.Control
-            aria-label="endpoint-address"
-            value={nullParser(tempEndpoint.address)}
-            onChange={setTempObjectToEvent(setTempEndpoint, 'address')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings By</InputGroup.Text>
-        <ErrorInput error={error.city}>
-          <Form.Control
-            aria-label="endpoint-city"
-            value={nullParser(tempEndpoint.city)}
-            onChange={setTempObjectToEvent(setTempEndpoint, 'city')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
-        <ErrorInput error={error.zip_code}>
-          <Form.Control
-            aria-label="endpoint-zip-code"
-            value={nullParser(tempEndpoint.zip_code)}
-            onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
-        <ErrorInput error={error.phone}>
-          <Form.Control
-            aria-label="endpoint-phone"
-            value={nullParser(tempEndpoint.phone)}
-            onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-    </Col>);
-  }
 
   function DeliveryTimeTable(){
   /**
@@ -475,89 +326,250 @@ export function CustomerModal({
     return(<WeeklyTimeTable {...weeklyTimeTableProps}/>);
   }
 
-  function ActiveTimeSlotConfig(){
-    // Note that tempTimeSlot cannot be a state value here as it might
-    // Change when the user changes endpoint.
-    const timeSlotCorrect = (tempTimeSlot.id === -1) ? cleanTimeSlot : state.deliver_times.get(tempTimeSlot.id);
-    const timeSlotDirty = !compareLoosely(timeSlotCorrect, tempTimeSlot);
-    const [deliveryTimeError, setDeliveryTimeError] = useState("");
-    const [overheadError, setOverheadError] = useState("");
+  // Note that tempTimeSlot cannot be a state value here as it might
+  // Change when the user changes endpoint.
+  const timeSlotCorrect = (tempTimeSlot.id === -1) ? cleanTimeSlot : state.deliver_times.get(tempTimeSlot.id);
+  const timeSlotDirty = !compareLoosely(timeSlotCorrect, tempTimeSlot);
+  const [deliveryTimeError, setDeliveryTimeError] = useState("");
+  const [overheadError, setOverheadError] = useState("");
 
-    const tracerCatalogPage = tracerPageId !== null ? state.tracer_mapping.get(tracerPageId) :
-        new TracerCatalogPage(-1, tempEndpoint.id, activeTracer, 1, )
+  const tracerCatalogPage = tracerPageId !== null ? state.tracer_mapping.get(tracerPageId) :
+      new TracerCatalogPage(-1, tempEndpoint.id, activeTracer, 1, )
 
-    tempTimeSlot.delivery_time === timeSlotCorrect.delivery_time
-                       || tempTimeSlot.weekly_repeat === timeSlotCorrect.weekly_repeat
-                       || tempTimeSlot.production_run === timeSlotCorrect.production_run;
+  tempTimeSlot.delivery_time === timeSlotCorrect.delivery_time
+                      || tempTimeSlot.weekly_repeat === timeSlotCorrect.weekly_repeat
+                      || tempTimeSlot.production_run === timeSlotCorrect.production_run;
 
-    function setTempTimeSlotDeliveryTime(value){
-      setTempTimeSlot(obj => {return {
-        ...obj, delivery_time : value
-      }});
+  function setTempTimeSlotDeliveryTime(value){
+    setTempTimeSlot(obj => {return {
+      ...obj, delivery_time : value
+    }});
+  }
+
+  function validateOverhead(){
+    const [validOverhead, parsedOverhead] = parseDanishPositiveNumberInput(overhead, "Overhead");
+
+    if(!validOverhead){
+      setOverheadError(parsedOverhead);
+      return [false, {}];
     }
 
-    function validateOverhead(){
-      const [validOverhead, parsedOverhead] = parseDanishPositiveNumberInput(overhead, "Overhead");
+    setOverheadError("");
 
-      if(!validOverhead){
-        setOverheadError(parsedOverhead);
-        return [false, {}];
-      }
+    return [true, {...tracerCatalogPage, overhead_multiplier : parsedOverhead / 100 + 1}];
+  }
 
-      setOverheadError("");
+  /**
+   * Function called in response to the user clicking accept key on timeslots
+    *
+    * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
+    */
+  function validateTimeSlot(){
+    const [validDeliveryTime, deliveryTime] = parseTimeInput(tempTimeSlot.delivery_time, 'Leverings tiden');
 
-      return [true, {...tracerCatalogPage, overhead_multiplier : parsedOverhead / 100 + 1}];
+    if(!validDeliveryTime){
+      setDeliveryTimeError(deliveryTime);
+      return [false, {}];
     }
 
-    /**
-     * Function called in response to the user clicking accept key on timeslots
-     *
-     * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
-     */
-    function validateTimeSlot(){
-      const [validDeliveryTime, deliveryTime] = parseTimeInput(tempTimeSlot.delivery_time, 'Leverings tiden');
+    setDeliveryTimeError("");
 
-      if(!validDeliveryTime){
-        setDeliveryTimeError(deliveryTime);
-        return [false, {}];
-      }
-
-      setDeliveryTimeError("");
-
-      if(tempEndpoint.id === -1){ // database indexes are 1 index therefore always return true on valid endpoint
-        setEndpointError("Man skal oprette et leveringstedet før man kan lave leverings tidspunnkter");
-        return [false, {}];
-      }
-      setEndpointError("");
-
-
-      // This is the object that will be send to the server
-      const timeSlot = {...tempTimeSlot};
-      timeSlot.destination = tempEndpoint.id;
-      timeSlot.delivery_time = deliveryTime;
-
-      return [true, timeSlot];
+    if(tempEndpoint.id === -1){ // database indexes are 1 index therefore always return true on valid endpoint
+      setEndpointError("Man skal oprette et leveringstedet før man kan lave leverings tidspunnkter");
+      return [false, {}];
     }
+    setEndpointError("");
 
-    const WeeklyRepeatOptions = toOptions([
-      { id : 0, name : "Alle Uger"},
-      { id : 1, name : "Lige Uger"},
-      { id : 2, name : "Ulige Uger"},
-    ]);
 
-    function productionNaming(production){
-      return `${getDateName(production.production_day)} - ${production.production_time}`;
-    }
+    // This is the object that will be send to the server
+    const timeSlot = {...tempTimeSlot};
+    timeSlot.destination = tempEndpoint.id;
+    timeSlot.delivery_time = deliveryTime;
 
-    const filteredProductions = [...state.production.values()].filter(
-      (prod) => prod.tracer === activeTracer
-    );
+    return [true, timeSlot];
+  }
 
-    const productionOptions = toOptions(filteredProductions, productionNaming, 'id')
-    const activity_tracers = [...state.tracer.values()].filter(tracerTypeFilter(TRACER_TYPE.ACTIVITY));
-    const activityTracersOptions = toOptions(activity_tracers, 'shortname');
+  const WeeklyRepeatOptions = toOptions([
+    { id : 0, name : "Alle Uger"},
+    { id : 1, name : "Lige Uger"},
+    { id : 2, name : "Ulige Uger"},
+  ]);
 
-    return (<Col aria-label={`active-time-slot-${tempTimeSlot.id}`}>
+  function productionNaming(production){
+    return `${getDateName(production.production_day)} - ${production.production_time}`;
+  }
+
+  const filteredProductions = [...state.production.values()].filter(
+    (prod) => prod.tracer === activeTracer
+  );
+
+  const productionOptions = toOptions(filteredProductions, productionNaming, 'id')
+  const activity_tracers = [...state.tracer.values()].filter(tracerTypeFilter(TRACER_TYPE.ACTIVITY));
+  const activityTracersOptions = toOptions(activity_tracers, 'shortname');
+
+  return (
+    <Modal
+      show={true}
+      size="xl"
+      onHide={on_close}
+      className = {styles.mariLight}
+    >
+      <Modal.Header>
+        <Modal.Title>Kunde Konfigurering - {customer.short_name} </Modal.Title>
+      </Modal.Header>
+      <Modal.Body>
+        <Container>
+          <Row>
+          <Col>
+            {/* This is the customer configuration */}
+            <Row>
+        <Col><h4>Kunde</h4></Col>
+        {customerDirty ?
+          <Col style={{ justifyContent : "right", display: "flex"}}>
+            <CommitButton
+              label="customer-commit"
+              temp_object={tempCustomer}
+              object_type={DATA_CUSTOMER}
+              validate={validateCustomer}/>
+          </Col> : ""}
+      </Row>
+      <MarginInputGroup>
+        <InputGroup.Text>Internt Navn</InputGroup.Text>
+        <Form.Control
+          aria-label="short-name-input"
+          value={nullParser(tempCustomer.short_name)}
+          onChange={setTempObjectToEvent(setTempCustomer, 'short_name')}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Kunde Navn</InputGroup.Text>
+        <Form.Control
+          aria-label="long-name-input"
+          value={nullParser(tempCustomer.long_name)}
+          onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings Addresse</InputGroup.Text>
+        <Form.Control
+          aria-label="address-input"
+          value={nullParser(tempCustomer.billing_address)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings By</InputGroup.Text>
+        <Form.Control
+          aria-label="city-input"
+          value={nullParser(tempCustomer.billing_city)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
+        <Form.Control
+          aria-label="zip-input"
+          value={nullParser(tempCustomer.zip_code)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Regnings Email</InputGroup.Text>
+        <Form.Control
+          aria-label="email-input"
+          value={nullParser(tempCustomer.billing_email)}
+          onChange={setTempObjectToEvent(setTempCustomer,'billing_email')}
+        />
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Dispenser id</InputGroup.Text>
+        <ErrorInput error={dispenserError}>
+          <Form.Control
+            aria-label="dispenser-input"
+            value={nullParser(tempCustomer.dispenser_id)}
+            onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+    </Col>
+    {/* This is the endpoint configuration */}
+    <Col aria-label={`active-endpoint-${tempEndpoint.id}`}>
+      <Row>
+        <Col><h4>LeveringsSted</h4></Col>
+        <Col style={{display: "flex", justifyContent: "right"}}>
+          {endpointDirty ? <CommitButton
+                              temp_object={tempEndpoint}
+                              validate={validateEndpoint}
+                              callback={commit_callback}
+                              object_type={DATA_ENDPOINT}
+                              label="commit-endpoint"
+                           /> : ""}
+        </Col>
+      </Row>
+      <MarginInputGroup>
+        <InputGroup.Text>Leveringssteder</InputGroup.Text>
+        <ErrorInput error={endpointError}>
+          <EndpointSelect
+            aria-label="endpoint-select"
+            delivery_endpoint={endpoints}
+            onChange={(event) => setActiveEndpoint(event.target.value)}
+            value={tempEndpoint.id}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Internt Navn</InputGroup.Text>
+        <ErrorInput error={tempEndpointError.name}>
+          <Form.Control
+            aria-label="endpoint-name"
+            value={nullParser(tempEndpoint.name)}
+            onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings Addresse</InputGroup.Text>
+        <ErrorInput error={tempEndpointError.address}>
+          <Form.Control
+            aria-label="endpoint-address"
+            value={nullParser(tempEndpoint.address)}
+            onChange={setTempObjectToEvent(setTempEndpoint, 'address')}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings By</InputGroup.Text>
+        <ErrorInput error={tempEndpointError.city}>
+          <Form.Control
+            aria-label="endpoint-city"
+            value={nullParser(tempEndpoint.city)}
+            onChange={setTempObjectToEvent(setTempEndpoint, 'city')}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
+        <ErrorInput error={tempEndpointError.zip_code}>
+          <Form.Control
+            aria-label="endpoint-zip-code"
+            value={nullParser(tempEndpoint.zip_code)}
+            onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+      <MarginInputGroup>
+        <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
+        <ErrorInput error={tempEndpointError.phone}>
+          <Form.Control
+            aria-label="endpoint-phone"
+            value={nullParser(tempEndpoint.phone)}
+            onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
+          />
+        </ErrorInput>
+      </MarginInputGroup>
+    </Col>
+    {/* Activity Time Slot */}
+    <Col aria-label={`active-time-slot-${tempTimeSlot.id}`}>
       <Row>
         <Col><h4>Leveringstidspunkt</h4></Col>
         <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
@@ -636,34 +648,13 @@ export function CustomerModal({
           aria-label="production-select"
         />
       </MarginInputGroup>
-    </Col>)
-  }
-
-  return (
-    <Modal
-      show={true}
-      size="xl"
-      onHide={on_close}
-      className = {styles.mariLight}
-    >
-      <Modal.Header>
-        <Modal.Title>Kunde Konfigurering - {customer.short_name} </Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        <Container>
-          <Row>
-            <CustomerConfiguration/>
-            <EndpointConfig tempEndpoint={tempEndpoint}/>
-            <ActiveTimeSlotConfig
-              tempEndpoint={tempEndpoint}
-              tempTimeSlot={tempTimeSlot}
-            />
-          </Row>
-          <br/>
-          <Row>
-            <DeliveryTimeTable/>
-          </Row>
-        </Container>
+    </Col>
+    </Row>
+      <br/>
+        <Row>
+          <DeliveryTimeTable/>
+        </Row>
+      </Container>
       </Modal.Body>
       <Modal.Footer>
         <CloseButton onClick={on_close}/>
