@@ -42,7 +42,8 @@ config.py
 Release/
 Debug/
 ipch/
-hl7_messsages/
+hl7_messages/
 settings.json
 *.hl7
 *.sqlite
+test_printing/
