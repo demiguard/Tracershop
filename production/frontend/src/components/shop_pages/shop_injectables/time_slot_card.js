@@ -2,8 +2,8 @@ import React, { useEffect, useState } from "react";
 import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 
 import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope } from "../../../dataclasses/dataclasses";
-import { ParseDanishNumber, dateToDateString, nullParser } from "../../../lib/formatting";
-import { TracerWebSocket } from "../../../lib/tracer_websocket";
+import { dateToDateString, nullParser } from "../../../lib/formatting";
+
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
@@ -18,7 +18,7 @@ import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { setStateToEvent } from "~/lib/state_management";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
-import { EditableInput } from "~/components/injectable/inputs/number_input";
+import { EditableInput } from "~/components/injectable/inputs/editable_input";
 
 
 

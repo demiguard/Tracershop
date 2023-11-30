@@ -27,7 +27,9 @@ import { compareDates, getPDFUrls } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
-
+import { CommitButton } from "../injectable/commit_button.js";
+import { Optional } from "../injectable/optional.js";
+import { setTempObjectToEvent } from "~/lib/state_management.js";
 
 /**
  * 
@@ -155,48 +157,24 @@ export function ActivityModal({
    * @returns
    */
   function VialRow({vial, onSelect, selected, setError}){
+    const vialErrorInit = {
+      lot_number : "",
+      full_time : "",
+      volume : "",
+      activity : ""
+    }
+
     const [editing, setEditing] = useState(false);
-    const [editingVial, _setDisplayVial] = useState({...vial});
+    const [tempVial, setTempVial] = useState({...vial});
+    const [vialErrors, setVialErrors] = useState({...vialErrorInit});
 
     function setDisplayVial(newVial){
-      _setDisplayVial({
-        ...editingVial,
+      setTempVial({
+        ...tempVial,
         ...newVial,
       })
     }
 
-    function setFillTime(newFillTime){
-      setDisplayVial({
-        fill_time : newFillTime
-      })
-    }
-
-    function updateVial() {
-      const [batchValid, formattedLotNumber] = parseBatchNumberInput(editingVial.lot_number, "Batch nr.");
-      const [timeValid, formattedFillTime] = parseTimeInput(editingVial.fill_time, "Produktions tidspunk");
-      const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(editingVial.volume, "Volume");
-      const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(editingVial.activity, "Aktiviten");
-
-      const errors = []
-      // You need this other wise you have short circuiting
-      const valid_batch = concatErrors(errors, batchValid, formattedLotNumber)
-      const valid_time  = concatErrors(errors, timeValid, formattedFillTime)
-      const valid_volume = concatErrors(errors, volumeValid, formattedVolume)
-      const valid_activity = concatErrors(errors, activityValid, formattedActivity);
-
-      if(valid_batch && valid_time && valid_volume && valid_activity){
-        websocket.sendEditModel(DATA_VIAL, [{
-          ...vial,
-          lot_number : formattedLotNumber,
-          fill_time : formattedFillTime,
-          volume : formattedVolume,
-          activity : formattedActivity
-        }])
-        setEditing(false)
-      } else {
-        setError(ERROR_LEVELS.error, errors.map((err, i) => <p key={i}>{err}</p>))
-      }
-    }
 
     // Refresh the vial
     useEffect(() => {
@@ -204,25 +182,63 @@ export function ActivityModal({
       return () => {}
     }, [vial])
 
-    const lotNumberContent = editing ?
-                              <FormControl value={editingVial.lot_number}
-                                aria-label={`lot_number-${vial.id}`}
-                                onChange={(event) => {setDisplayVial({lot_number : event.target.value})}}
-                              />
-                            : vial.lot_number;
+    function setFillTime(newFillTime){
+      setTempVial(tmp => {return {...tmp,
+        fill_time : newFillTime
+      }})
+    }
+
+    function validate() {
+      const [batchValid, formattedLotNumber] = parseBatchNumberInput(tempVial.lot_number, "lot nr.");
+      const [timeValid, formattedFillTime] = parseTimeInput(tempVial.fill_time, "Produktions tidspunk");
+      const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(tempVial.volume, "Volume");
+      const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(tempVial.activity, "Aktiviten");
+
+      const newVialError = {
+        ...vialErrorInit
+      }
+      if(!batchValid) {
+        newVialError.lot_number = formattedLotNumber;
+      }
+
+      if(!timeValid){
+        newVialError.full_time = formattedFillTime;
+      }
+      if(!volumeValid){
+        newVialError.volume = formattedVolume;
+      }
+      if(!activityValid){
+        newVialError.activity = formattedActivity;
+      }
+
+      setVialErrors(newVialError);
+
+      const success = batchValid && timeValid && volumeValid && activityValid;
+      if(success){
+        setEditing(false);
+      }
+
+      return [success,
+        { ...vial,
+          lot_number : formattedLotNumber,
+          fill_time : formattedFillTime,
+          volume : formattedVolume,
+          activity : formattedActivity
+        }];
+    }
 
     const productionTimeContent = editing ?
                                     <TimeInput
-                                      value={editingVial.fill_time}
+                                      value={tempVial.fill_time}
                                       aria-label={`fill_time-${vial.id}`}
                                       stateFunction={setFillTime}
                                     />
                                   : vial.fill_time;
     const volumeContent = editing ? <FormControl
       aria-label={`volume-${vial.id}`}
-      value={editingVial.volume}
+      value={tempVial.volume}
       onChange={(event) => {setDisplayVial({volume : event.target.value})}}/> : vial.volume;
-    const activityContent = editing ? <FormControl value={editingVial.activity}
+    const activityContent = editing ? <FormControl value={tempVial.activity}
       aria-label={`activity-${vial.id}`}
       onChange={(event) => {setDisplayVial({activity : event.target.value})}}/> : vial.activity;
 
@@ -233,9 +249,11 @@ export function ActivityModal({
       setEditing(true);
     }}/>
 
-    const editingContent = editing ? <ClickableIcon src="/static/images/accept.svg"
+    const editingContent = editing ? <CommitButton
+      temp_object={tempVial}
+      object_type={DATA_VIAL}
+      validate={validate}
       label={`vial-edit-accept-${vial.id}`}
-      onClick={updateVial}
     /> : canEditIcon;
 
     let commitContent = editing ? <ClickableIcon
@@ -254,7 +272,15 @@ export function ActivityModal({
     return (
       <tr>
         <td>{vial.id}</td>
-        <td>{lotNumberContent}</td>
+        <td>
+          <Optional exists={editing} alternative={vial.lot_number}>
+            <FormControl
+              value={tempVial.lot_number}
+              aria-label={`lot_number-${vial.id}`}
+              onChange={setTempObjectToEvent(setTempVial, 'lot_number')}
+            />
+          </Optional>
+        </td>
         <td>{productionTimeContent}</td>
         <td>{volumeContent}</td>
         <td>{activityContent}</td>

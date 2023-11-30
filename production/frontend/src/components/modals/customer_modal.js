@@ -1,14 +1,13 @@
 
-import React, { useEffect, useRef, useState } from "react";
-import { Modal, Row, FormControl, Col, Form, Container, Card, InputGroup } from "react-bootstrap";
+import React, { useRef, useState } from "react";
+import { Modal, Row, FormControl, Col, Form, Container, InputGroup } from "react-bootstrap";
 import propTypes from "prop-types";
 
 import { DAYS, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, TRACER_TYPE,
   WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES,
   WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
    WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants.js";
-import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_PRODUCTION, DATA_TRACER,
-  DATA_TRACER_MAPPING,
+import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_TRACER_MAPPING,
   WEBSOCKET_DATA } from "~/lib/shared_constants.js"
 import { CloseButton } from "../injectable/buttons.js";
 import { Select, toOptions } from "../injectable/select.js"
@@ -17,11 +16,11 @@ import { ClickableIcon } from "../injectable/icons.js";
 import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 
 import styles from '~/css/Site.module.css'
-import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
-import { FormatTime, ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
+import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
+import { ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState } from "../tracer_shop_context.js";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
 import { compareLoosely, nullify } from "~/lib/utils.js";
 import { CommitButton } from "../injectable/commit_button.js";
@@ -36,16 +35,7 @@ function MarginInputGroup({children}){
   </InputGroup>)
 }
 
-const cleanTimeSlot = {
-  weekly_repeat : 0,
-  delivery_time : "",
-  production_run : 0,
-  id : -1,
-};
-
-export function CustomerModal({
-  active_customer, on_close
-}) {
+export function CustomerModal({active_customer, on_close}) {
   const state = useTracershopState();
   const customer = state.customer.get(active_customer);
 
@@ -80,6 +70,38 @@ export function CustomerModal({
     return [null, "0"];
   }
 
+  function initializeProductionRun(activity_tracer) {
+    /**
+     * Compares two activity production to find the better default
+     * @param {ActivityProduction | null} prod_1 
+     * @param {ActivityProduction} prod_2 
+     * @returns {ActivityProduction}
+     */
+    function compare_productions(prod_1, prod_2){
+      if(prod_1 === null){
+        return prod_2;
+      }
+      if(prod_1.production_day < prod_2.production_day){
+        return prod_1;
+      }
+      if(prod_1.production_day > prod_2.production_day){
+        return prod_2;
+      }
+      if(prod_1.production_time < prod_2.production_time){
+        return prod_1;
+      } else {
+        return prod_2;
+      }
+    }
+
+    let prod = null;
+    for(const production of state.production.values()){
+      if(production.tracer === Number(activity_tracer)){
+        prod = compare_productions(prod, production);
+      }
+    }
+    return prod ? prod.id : "";
+  }
 
   const init = useRef({
     initial_endpoint : null,
@@ -87,8 +109,7 @@ export function CustomerModal({
   });
 
   if(init.current.initial_endpoint === null
-    || init.current.initial_tracer === null)
-    {
+    || init.current.initial_tracer === null) {
       const endpoint_exists = endpoints.length > 0;
       init.current.initial_endpoint = (endpoint_exists) ? endpoints[0].id : -1;
       init.current.initial_tracer = ""
@@ -99,15 +120,26 @@ export function CustomerModal({
           break;
         }
       }
-    }
+
+  }
   const endpoint = 0 < init.current.initial_endpoint ?
-    state.delivery_endpoint.get(init.current.initial_endpoint) : cleanEndpoint;
+  state.delivery_endpoint.get(init.current.initial_endpoint) : cleanEndpoint;
+
+  const [activeTracer,   _setActiveTracer] = useState(init.current.initial_tracer);
+  const [endpointError, setEndpointError] = useState("");
+  const [tempEndpoint, setTempEndpoint] = useState({...endpoint});
+  const initial_production = initializeProductionRun(activeTracer);
+
+  const cleanTimeSlot = new ActivityDeliveryTimeSlot(
+    -1, // id
+    0, // weekly_repeat
+    "", //delivery_time
+    tempEndpoint.id,
+    initial_production,
+    null
+  );
 
   const [tempTimeSlot, setTempTimeSlot] = useState({...cleanTimeSlot});
-  const [endpointError, setEndpointError] = useState("");
-
-  const [tempEndpoint, setTempEndpoint] = useState({...endpoint});
-  const [activeTracer,   _setActiveTracer] = useState(init.current.initial_tracer);
 
   // Note that the tracerPage Id is unique on each render
   const [tracerPageId, initialOverhead] = initializeOverhead(tempEndpoint.id, activeTracer);
@@ -128,9 +160,10 @@ export function CustomerModal({
       return;
     }
 
-    const newEndpoint = (newEndpointID === -1) ? {...cleanEndpoint} : {...state.delivery_endpoint.get(newEndpointID)}
+    const newEndpoint = state.delivery_endpoint.has(newEndpointID) ?
+      {...state.delivery_endpoint.get(newEndpointID)}
+       : {...cleanEndpoint, id : newEndpointID}
     setTempEndpoint(newEndpoint);
-
 
     const [, overhead] = initializeOverhead(newEndpointID, activeTracer);
 
@@ -201,7 +234,6 @@ export function CustomerModal({
       if (!validCity){ newError.city = city;}
       if (!validZipCode){ newError.zip_code = zipCode;}
       if (!validPhone){ newError.phone = phone;}
-
       setTempEndpointError(newError);
 
       if (!validName || !validAddress || !validCity || !validZipCode || !validPhone ){

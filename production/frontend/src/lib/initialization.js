@@ -55,24 +55,18 @@ export function initialize_customer_endpoint_tracer_from_tracerCatalog(
   let /**@type {Number | String} */ tracerInit = "";
 
   for(const tracerCatalogPage of tracerCatalogPages.values()){
-    customerInit = tracerCatalogPage.customer;
-    tracerInit = tracerCatalogPage.tracer
+    endpointInit = tracerCatalogPage.endpoint;
+    tracerInit = tracerCatalogPage.tracer;
+    customerInit = endpoints.get(endpointInit).owner;
   }
 
-  for(const endpoint of endpoints.values()){
-    if(endpoint.owner === customerInit){
-      endpointInit = endpoint.id;
-      break;
-    }
-  }
-
-  customerInit = numberfy(customerInit)
-  endpointInit = numberfy(endpointInit)
-  tracerInit = numberfy(tracerInit)
+  customerInit = numberfy(customerInit);
+  endpointInit = numberfy(endpointInit);
+  tracerInit = numberfy(tracerInit);
 
   return {
     customer : customerInit,
     endpoint : endpointInit,
     tracer : tracerInit
-  }
+  };
 }

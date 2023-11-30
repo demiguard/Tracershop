@@ -70,11 +70,10 @@ describe("Injection modal test suite", () =>{
 
 
     fireEvent.click(await screen.findByRole('button', {name : "Accepter Ordre"}));
-
-    expect(websocket.sendEditModel).toBeCalled();
+    expect(websocket.sendEditModel).toHaveBeenCalled();
   });
 
-  it("Standard Render test status 2", async () => {
+  it("Standard Render test status 2", () => {
     modalProps[PROP_MODAL_ORDER] = 2
 
     render(<StateContextProvider value={testState}>
@@ -83,11 +82,10 @@ describe("Injection modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-
     expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
     expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
     expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
   it("Start freeing empty Order", async () => {

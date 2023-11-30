@@ -1,9 +1,7 @@
 import React, { useState} from "react";
 import { Col, Row, FormControl, Modal, Table, Form } from "react-bootstrap";
 import propTypes from 'prop-types'
-
 import { Authenticate } from "../injectable/authenticate.js"
-
 import { setStateToEvent } from "../../lib/state_management.js";
 import { ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "../../lib/constants.js";
 
@@ -13,7 +11,6 @@ import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
 } from "~/lib/shared_constants.js"
 
 import styles from '~/css/Site.module.css'
-import { renderComment, renderTableRow } from "~/lib/rendering.js";
 
 import { HoverBox } from "../injectable/hover_box.js";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
@@ -26,7 +23,7 @@ import { InjectionUsage } from "~/components/injectable/data_displays/injection_
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 import { ReleaseRightHolder } from "~/lib/data_structures.js";
-import { EditableInput } from "../injectable/inputs/number_input.js";
+import { EditableInput } from "../injectable/inputs/editable_input.js";
 import { LotNumberHeader } from "../injectable/headers/lot_display.js";
 
 export function InjectionModal ({modal_order, on_close}) {
@@ -152,15 +149,11 @@ export function InjectionModal ({modal_order, on_close}) {
                   <tr>
                     <td><div>Anvendelse:</div></td>
                     <td><InjectionUsage usage={order.tracer_usage}/></td>
-                  </tr>
-                  {
-                   order.comment ? <tr>
+                  </tr>{
+                    order.comment ? <tr>
                     <td>Kommentar</td>
-                    <td>{order.comment}</td> {/* Note I render the comment rather than render a comment Icon */}
-                  </tr> : ""
-                  }
-                  {
-                    [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status) ?
+                    <td>{order.comment /* Note I render the comment rather than render a comment Icon */}</td>
+                  </tr> : null }{ [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status) ?
                     <tr>
                       <td><LotNumberHeader/></td>
                       <td>
@@ -171,17 +164,15 @@ export function InjectionModal ({modal_order, on_close}) {
                           onChange={setStateToEvent(setLotNumber)}
                         />
                       </td>
-                    </tr> : ""
-                  }
-                </tbody>
+                    </tr> : null }</tbody>
               </Table>
             </Col>
-            {secondaryElement ? secondaryElement : ""}
+            {secondaryElement ? secondaryElement : null}
           </Row>
           {error != "" ? <AlertBox
             level={errorLevel}
             message={error}
-          /> : ""}
+          /> : null}
         </Modal.Body>
         <Modal.Footer>
           <Row style={{width : "100%"}}>

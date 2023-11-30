@@ -50,13 +50,22 @@ describe("Create injection Order", () => {
              </WebsocketContextProvider>
            </StateContextProvider>);
 
+    //screen.debug();
+
     expect(screen.getByLabelText("select-customer")).toBeVisible();
+    expect(screen.getByLabelText("select-customer").value).not.toBe("NaN");
     expect(screen.getByLabelText("select-endpoint")).toBeVisible();
+    expect(screen.getByLabelText("select-endpoint").value).not.toBe("NaN");
     expect(screen.getByLabelText("tracer-select")).toBeVisible();
+    expect(screen.getByLabelText("tracer-select").value).not.toBe("NaN");
     expect(screen.getByLabelText("usage-select")).toBeVisible();
+    expect(screen.getByLabelText("usage-select").value).toBe("0");
     expect(screen.getByLabelText("injection-input")).toBeVisible();
+    expect(screen.getByLabelText("injection-input").value).toBe("");
     expect(screen.getByLabelText("delivery-time-input")).toBeVisible();
+    expect(screen.getByLabelText("delivery-time-input").value).toBe("");
     expect(screen.getByLabelText("comment-input")).toBeVisible();
+    expect(screen.getByLabelText("comment-input").value).toBe("");
     // Buttons
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible()
     expect(screen.getByRole('button', {name : "Opret Ordre"})).toBeVisible()

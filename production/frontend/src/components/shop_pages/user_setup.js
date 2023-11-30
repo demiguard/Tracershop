@@ -4,7 +4,7 @@ import { setStateToEvent } from "~/lib/state_management";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { UserAssignment } from "~/dataclasses/dataclasses";
-import { EditableInput } from "../injectable/inputs/number_input";
+import { EditableInput } from "../injectable/inputs/editable_input";
 import { ClickableIcon } from "../injectable/icons";
 import { Col, Row } from "react-bootstrap";
 import { cssCenter } from "~/lib/constants";

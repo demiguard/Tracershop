@@ -47,5 +47,4 @@ export const activityDeliveryTimeSlots = new Map([
     8, // Tracer 1, Thursday, 6 // production_run
     null, // expiration_date
 )]
-
-])
+]);

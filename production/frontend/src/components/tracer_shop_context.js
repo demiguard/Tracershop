@@ -109,13 +109,16 @@ export function TracerShopContext({children}){
     }
   }
 
-
-  let user = db.get(DATABASE_CURRENT_USER);
-  if(user && !(user instanceof User)){
-    user = new User(user, user.id ,user.username, user.user_group, user.active);
-  } else {
-    user = new User();
-  }
+  const user = (
+    () => {
+      const init_user = db.get(DATABASE_CURRENT_USER);
+      if(init_user && !(init_user instanceof User)){
+        return new User(init_user, init_user.id ,init_user.username, init_user.user_group, init_user.active);
+      } else {
+        return new User();
+      }
+    }
+  )();
   const initial_state = new TracershopState(user);
 
   for(const keyword of Object.keys(MODELS)){

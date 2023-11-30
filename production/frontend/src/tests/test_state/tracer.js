@@ -57,10 +57,20 @@ export const tracers = new Map([
     null, // vial_tag
     true, // archived
   )],
-  [6, new Tracer(
+  [7, new Tracer(
     7, // id
     "test_tracer_7", // shortname
     "test_clinical_name_7", // clinical_name
+    1, // isotope
+    TRACER_TYPE.DOSE, // tracer_type
+    null, // default_price_per_unit
+    null, // vial_tag
+    false // archived
+  )],
+  [8, new Tracer(
+    8, // id
+    "Archive_able_tracer", // shortname
+    "Archive_able_tracer", // clinical_name
     1, // isotope
     TRACER_TYPE.DOSE, // tracer_type
     null, // default_price_per_unit

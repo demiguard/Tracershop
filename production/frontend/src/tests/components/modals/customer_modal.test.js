@@ -188,8 +188,8 @@ describe("Customer modal list", () => {
       fireEvent.click(editButton);
     });
 
-    expect(websocket.sendCreateModel).not.toBeCalled();
-    expect(websocket.sendEditModel).toBeCalled();
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModel).toHaveBeenCalled();
     //expect(screen.getByLabelText("time-slot-edit")).toBeVisible();
   });
 
@@ -427,8 +427,8 @@ describe("Customer modal list", () => {
             }
           ]
         }
-      })})),
-      sendEditModel : jest.fn((message) => new Promise(async function(resolve) {resolve()})),
+      });})),
+      sendEditModel : jest.fn((message) => new Promise(async function(resolve) {resolve();})),
     };
 
     render(<StateContextProvider value={testState}>
@@ -450,14 +450,13 @@ describe("Customer modal list", () => {
     })
 
     expect(endpointNameInput.value).toBe("test name  ");
-
     const commitButton = screen.getByLabelText('commit-endpoint');
 
     await act(async () => {
       commitButton.click();
     });
 
-    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ENDPOINT,{
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ENDPOINT, {
       id : -1,
       name : "test name",
       city : null,
@@ -477,7 +476,7 @@ describe("Customer modal list", () => {
 
     act(() => {
       fireEvent.change(screen.getByLabelText('overhead-input'),
-      {target : { value : "44"}});
+                       {target : { value : "44"}});
     });
 
     act(() => {
@@ -509,5 +508,24 @@ describe("Customer modal list", () => {
 
     expect(websocket.sendEditModel).not.toHaveBeenCalled();
     expect(screen.getByLabelText('overhead-input')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+  });
+
+  it("Debug test", async () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+    const endpointSelect = screen.getByLabelText('endpoint-select');
+    await act(async () => {
+      fireEvent.change(endpointSelect, {target : {value : "-1"}});
+    });
+
+    const endpointNameInput = screen.getByLabelText('endpoint-name');
+    expect(endpointNameInput.value).toBe("Nyt");
+
+    act(() => {
+      fireEvent.change(endpointNameInput, {target : {value : "test name  "}});
+    })
   });
 });

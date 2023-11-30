@@ -2,9 +2,8 @@ import React, { useState } from "react";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import propTypes from 'prop-types';
 
-import { FormatTime, ParseDanishNumber, nullParser } from "~/lib/formatting";
+import { nullParser } from "~/lib/formatting";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { Select, toOptions } from "../../injectable/select";
 import { ORDER_STATUS, cssCenter } from "~/lib/constants";
@@ -15,11 +14,11 @@ import { UsageSelect } from "../../injectable/derived_injectables/usage_select";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
-import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
+import { setTempObjectToEvent } from "~/lib/state_management";
 import { InjectionOrderPDFUrl } from "~/lib/utils";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
-import { EditableInput } from "~/components/injectable/inputs/number_input";
+import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitButton } from "~/components/injectable/commit_button";
+import { Optional } from "~/components/injectable/optional";
 
 /**
  * This is a card containing all the information on an injection order
@@ -157,15 +156,17 @@ export function InjectionOrderCard({
             </ErrorInput>
           </TracershopInputGroup>
         </Col>
-        { injection_order.status === 3 ? <Col>
-         <TracershopInputGroup label="Frigivet kl:">
-           <Form.Control
-              aria-label={`freed-datetime-${injection_order.id}`}
-              value={getTimeString(injection_order.freed_datetime)}
-              readOnly
-            />
+        <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
+          <Col>
+            <TracershopInputGroup label="Frigivet kl:">
+              <Form.Control
+                aria-label={`freed-datetime-${injection_order.id}`}
+                value={getTimeString(injection_order.freed_datetime)}
+                readOnly
+              />
            </TracershopInputGroup>
-        </Col> : ""}
+        </Col>
+        </Optional>
         <Col xs={1}></Col>
       </Row>
       <Row>
@@ -192,14 +193,16 @@ export function InjectionOrderCard({
             />
           </TracershopInputGroup>
         </Col>
-        { injection_order.status === 3 ? <Col>
-          <TracershopInputGroup label="lot:">
-            <Form.Control
-              aria-label={`lot-number-input-${injection_order.id}`}
-              value={nullParser(injection_order.lot_number)}
-            readOnly/>
-           </TracershopInputGroup>
-        </Col> : ""}
+        <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
+          <Col>
+            <TracershopInputGroup label="lot:">
+              <Form.Control
+                aria-label={`lot-number-input-${injection_order.id}`}
+                value={nullParser(injection_order.lot_number)}
+                readOnly/>
+             </TracershopInputGroup>
+          </Col>
+        </Optional>
         <Col xs={1}>
           {ActionButton}
         </Col>

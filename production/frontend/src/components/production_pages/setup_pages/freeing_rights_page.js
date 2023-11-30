@@ -59,7 +59,7 @@ export function FreeingRightsPage(){
   const [activeTracerID, setActiveTracerID] = useState(initial_tracer);
 
   function createReleaseRight(){
-    let formattedExpiryDate
+    let formattedExpiryDate;
     if(expiryDate === "") {
       formattedExpiryDate = null
     } else {
@@ -90,7 +90,6 @@ export function FreeingRightsPage(){
    * @returns 
    */
   function ReleaseRightTableRow({releaseRight}){
-    console.log(releaseRight);
     const user = state.user.get(releaseRight.releaser);
     const tracer = state.tracer.get(releaseRight.product);
     function deleteReleaseRight(){

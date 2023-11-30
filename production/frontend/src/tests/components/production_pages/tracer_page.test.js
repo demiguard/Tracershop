@@ -157,8 +157,44 @@ describe("Tracer setup Page test suite", () => {
       isotope : 2,
       tracer_type : TRACER_TYPE.ACTIVITY
     }));
-
   });
-})
+
+  it("Archive tracer", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <TracerPage />
+       </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      screen.getByLabelText('archive-8').click();
+    });
+
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER, expect.objectContaining({
+      id : 8,
+      archived : true
+    }));
+  });
+
+  it("Filter out Tracer", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <TracerPage />
+       </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText('tracer-filter'), {target : { value : "test_tracer_4"}});
+    });
+
+    for(const tracer of testState.tracer.values()){
+      if(tracer.shortname === "test_tracer_4"){
+        expect(screen.getByLabelText("active-tracer-" + tracer.id)).toBeVisible();
+      } else {
+        expect(screen.queryByLabelText("active-tracer-" + tracer.id)).toBeNull();
+      }
+    }
+  });
+});
 
 

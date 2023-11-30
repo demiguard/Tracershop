@@ -153,11 +153,10 @@ export function ProcedureTable(){
         return;
       }
       setErrorSeriesDescription("");
-      let parsedTracer = Number(tracer)
+      let parsedTracer = Number(tracer);
       if(tracer === ""){
-        parsedTracer = null
+        parsedTracer = null;
       }
-      console.log(tracer)
       const [validUnits, parsedUnits] = parseWholePositiveNumber(units, "Enheder");
       const [validDelay, parsedDelay] = parseDanishNumberInput(delay, "Forsinkelsen");
 
@@ -273,5 +272,5 @@ export function ProcedureTable(){
         <NewProcedureRow/>
       </tbody>
     </Table>
-  </div>)
+  </div>);
 }

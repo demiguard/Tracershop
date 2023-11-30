@@ -15,6 +15,7 @@ import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { OpenCloseButton } from "../../injectable/open_close_button.js";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
 import { CommitButton } from "~/components/injectable/commit_button.js";
+import { nullParser } from "~/lib/formatting.js";
 
 
 export function TracerPage(){
@@ -89,15 +90,14 @@ export function TracerPage(){
     }
 
     function validate(){
-
       return [true, {
         ...tempTracer,
         isotope : Number(tempTracer.isotope),
         tracer_type : Number(tempTracer.tracer_type),
-      }]
+      }];
     }
 
-    return (<tr>
+    return (<tr aria-label={`active-tracer-${tracer.id}`}>
       <td>
         {0 < tracer.id ?  <FormControl
             readOnly
@@ -106,7 +106,7 @@ export function TracerPage(){
         /> :
           <FormControl
             aria-label={`set-shortname-${tracer.id}`}
-            value={tempTracer.shortname}
+            value={nullParser(tempTracer.shortname)}
             onChange={setTempObjectToEvent(setTempTracer, 'shortname')}
         />
         }
@@ -114,14 +114,14 @@ export function TracerPage(){
       <td>
         <FormControl
           aria-label={`set-clinical-name-${tracer.id}`}
-          value={tempTracer.clinical_name}
+          value={nullParser(tempTracer.clinical_name)}
           onChange={setTempObjectToEvent(setTempTracer, 'clinical_name')}
         />
       </td>
       <td>
         <FormControl
           aria-label={`set-vial-tag-${tracer.id}`}
-          value={tempTracer.vial_tag}
+          value={nullParser(tempTracer.vial_tag)}
           onChange={setTempObjectToEvent(setTempTracer, 'vial_tag')}
         />
       </td>
@@ -180,7 +180,7 @@ export function TracerPage(){
           </Col> : ""}
         </Row>
       </td>
-    </tr>)
+    </tr>);
   }
 
   const activeTracerRows = [];
@@ -222,6 +222,7 @@ export function TracerPage(){
   return (<Container>
     <Row>
       <FormControl
+        aria-label="tracer-filter"
         value={tracerFilter}
         onChange={setStateToEvent(setTracerFilter)}
       />

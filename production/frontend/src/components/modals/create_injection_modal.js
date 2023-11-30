@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
 
 import { dateToDateString } from "~/lib/formatting";
@@ -27,9 +27,22 @@ export function CreateInjectionOrderModal({active_date, on_close}){
   const state = useTracershopState();
   const websocket = useWebsocket();
   // Initialize select
-  let initialization = initialize_customer_endpoint_tracer_from_tracerCatalog(
-    state.delivery_endpoint, state.tracer_mapping
-  )
+  
+
+  const initialization = useRef({
+    customer : null,
+    endpoint : null,
+    tracer : null,
+  });
+
+  if(initialization.current.customer === null
+      || initialization.current.endpoint === null
+      || initialization.current.tracer === null
+    ){
+    initialization.current = initialize_customer_endpoint_tracer_from_tracerCatalog(
+      state.delivery_endpoint, state.tracer_mapping
+    );
+  }
 
   const tracerCatalog = new TracerCatalog(
     state.tracer_mapping,
@@ -39,7 +52,7 @@ export function CreateInjectionOrderModal({active_date, on_close}){
   const [customerID, setCustomer] = useState(initialization.customer);
   const [endpointID, setEndpoint] = useState(initialization.endpoint)
   const [tracerID, setTracer] = useState(initialization.tracer);
-  const [usage, setUsage] = useState(1);
+  const [usage, setUsage] = useState(0);
   const [injections, setInjections] = useState("");
   const [deliverTime, setDeliveryTime] = useState("")
   const [comment, setComment] = useState("")

@@ -77,7 +77,7 @@ function StateHolder({
 }
 
 describe("DestinationSelect", () => {
-  it("Standard Render Test", async () => {
+  it("Standard Render Test", () => {
     render(
     <StateHolder
       customers={customers}
@@ -98,7 +98,7 @@ describe("DestinationSelect", () => {
     expect(screen.getByText(activityDeliveryTimeSlots.get(1).delivery_time))
   });
 
-  it("Change TimeSlot", async () => {
+  it("Change TimeSlot",  () => {
     render(<StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
@@ -108,16 +108,16 @@ describe("DestinationSelect", () => {
       mockSetTimeSlot={mockSetTimeSlot}
     />)
 
-    await act(async () => {
-      const timeSlotSelect = await screen.findByLabelText(timeSlotLabel);
+    act(() => {
+      const timeSlotSelect = screen.getByLabelText(timeSlotLabel);
       fireEvent.change(timeSlotSelect, {target : {value : "2"}});
     });
 
-    expect(await screen.findByText(activityDeliveryTimeSlots.get(2).delivery_time))
-    expect(mockSetTimeSlot).toBeCalledWith(2);
+    expect(screen.getAllByText(activityDeliveryTimeSlots.get(2).delivery_time).length).toBeGreaterThanOrEqual(1);
+    expect(mockSetTimeSlot).toHaveBeenCalledWith(2);
   });
 
-  it("Change endpoint", async () => {
+  it("Change endpoint", () => {
     render(<StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
@@ -127,16 +127,16 @@ describe("DestinationSelect", () => {
       mockSetTimeSlot={mockSetTimeSlot}
     />)
 
-    await act(async () => {
-      const endpointSelect = await screen.findByLabelText(endpointLabel);
+    act(() => {
+      const endpointSelect = screen.getByLabelText(endpointLabel);
       fireEvent.change(endpointSelect, {target : {value : "2"}});
     });
 
-    expect(await screen.findByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(2).name}`))
-    expect(mockSetEndpoint).toBeCalledWith(2);
+    expect(screen.getByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(2).name}`))
+    expect(mockSetEndpoint).toHaveBeenCalledWith(2);
   });
 
-  it("Change customer with Cascades", async () => {
+  it("Change customer with Cascades", () => {
     render(<StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
@@ -144,59 +144,57 @@ describe("DestinationSelect", () => {
       mockSetCustomer={mockSetCustomer}
       mockSetEndpoint={mockSetEndpoint}
       mockSetTimeSlot={mockSetTimeSlot}
-    />)
+    />);
 
-    await act(async () => {
-      const customerSelect = await screen.findByLabelText(customerLabel);
+    act(() => {
+      const customerSelect = screen.getByLabelText(customerLabel);
       fireEvent.change(customerSelect, {target : {value : "3"}});
     });
 
-    expect(await screen.findByText(customers.get(3).short_name));
-    expect(await screen.findByText(`${customers.get(3).short_name} - ${deliveryEndpoints.get(4).name}`));
-    expect(await screen.findByText(activityDeliveryTimeSlots.get(3).delivery_time));
+    expect(screen.getByText(customers.get(3).short_name));
+    expect(screen.getByText(`${customers.get(3).short_name} - ${deliveryEndpoints.get(4).name}`));
+    expect(screen.getByText(activityDeliveryTimeSlots.get(3).delivery_time));
 
-    expect(mockSetCustomer).toBeCalledWith(3);
-    expect(mockSetEndpoint).toBeCalledWith(4);
-    expect(mockSetTimeSlot).toBeCalledWith(4);
+    expect(mockSetCustomer).toHaveBeenCalledWith(3);
+    expect(mockSetEndpoint).toHaveBeenCalledWith(4);
+    expect(mockSetTimeSlot).toHaveBeenCalledWith(4);
   });
 
-  it("Minimal Standard Render Test", async () => {
+  it("Minimal Standard Render Test", () => {
     render(<StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
       mockSetTimeSlot={mockSetTimeSlot}
       mockSetCustomer={mockSetCustomer}
       mockSetEndpoint={mockSetEndpoint}
+    />);
 
-    />)
-
-    expect(await screen.findByLabelText(customerLabel)).toBeVisible();
-    expect(await screen.findByLabelText(endpointLabel)).toBeVisible();
-
-    expect(await screen.findByText(customers.get(1).short_name))
-    expect(await screen.findByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(1).name}`))
+    expect(screen.getByLabelText(customerLabel)).toBeVisible();
+    expect(screen.getByLabelText(endpointLabel)).toBeVisible();
+    expect(screen.getByText(customers.get(1).short_name));
+    expect(screen.getByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(1).name}`));
   });
 
 
-  it("Minimal Change endpoint", async () => {
+  it("Minimal Change endpoint", () => {
     render(<StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
       mockSetCustomer={mockSetCustomer}
       mockSetEndpoint={mockSetEndpoint}
       mockSetTimeSlot={mockSetTimeSlot}
-    />)
+    />);
 
-    await act(async () => {
-      const endpointSelect = await screen.findByLabelText(endpointLabel);
+    act( () => {
+      const endpointSelect = screen.getByLabelText(endpointLabel);
       fireEvent.change(endpointSelect, {target : {value : "2"}});
     });
 
-    expect(await screen.findByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(2).name}`))
-    expect(mockSetEndpoint).toBeCalledWith(2);
+    expect(screen.getByText(`${customers.get(1).short_name} - ${deliveryEndpoints.get(2).name}`)).toBeVisible();
+    expect(mockSetEndpoint).toHaveBeenCalledWith(2);
   });
 
-  it("Minimal Change customer with Cascades", async () => {
+  it("Minimal Change customer with Cascades", () => {
     render(<StateHolder
       customers={customers}
       endpoints={deliveryEndpoints}
@@ -205,15 +203,15 @@ describe("DestinationSelect", () => {
       mockSetTimeSlot={mockSetTimeSlot}
     />)
 
-    await act(async () => {
-      const customerSelect = await screen.findByLabelText(customerLabel);
+    act(() => {
+      const customerSelect = screen.getByLabelText(customerLabel);
       fireEvent.change(customerSelect, {target : {value : "3"}});
     });
 
-    expect(await screen.findByText(customers.get(3).short_name));
-    expect(await screen.findByText(`${customers.get(3).short_name} - ${deliveryEndpoints.get(4).name}`));
+    expect(screen.getByText(customers.get(3).short_name)).toBeVisible();
+    expect(screen.getByText(`${customers.get(3).short_name} - ${deliveryEndpoints.get(4).name}`)).toBeVisible();
 
-    expect(mockSetCustomer).toBeCalledWith(3);
-    expect(mockSetEndpoint).toBeCalledWith(4);
+    expect(mockSetCustomer).toHaveBeenCalledWith(3);
+    expect(mockSetEndpoint).toHaveBeenCalledWith(4);
   });
 })
