@@ -123,6 +123,7 @@ function TracerCard({tracer,
     }).map(
       (booking, i) => {
         const procedure = procedureLocationIndex.getProcedure(booking);
+        const series_description = state.procedure_identifier.get(procedure.series_description);
         const location = state.location.get(booking.location);
         const checked = orderList[booking.accession_number];
         const locationName = (location.common_name) ? location.common_name : location.location_code;
@@ -134,7 +135,7 @@ function TracerCard({tracer,
 
         return (<tr key={i}>
           <td>{booking.accession_number}</td>
-          <td>{procedure.series_description}</td>
+          <td>{series_description}</td>
           <td>{locationName}</td>
           <td>{booking.start_time}</td>
           <td>{FormatDateStr(injectionTimeStamp.hour)}:{FormatDateStr(injectionTimeStamp.minute)}:{FormatDateStr(timeStamp.second)}</td>
@@ -155,7 +156,7 @@ function TracerCard({tracer,
    <Card>
       <Card.Header>
         <Row>
-        <Col>{tracer.shortname}</Col>;
+        <Col>{tracer.shortname}</Col>
          <Col style={cssAlignRight}>
             <ClickableIcon
               label={`open-tracer-${tracer.id}`}
@@ -175,7 +176,7 @@ function TracerCard({tracer,
                <th>Studie</th>
                <th>Lokation</th>
                <th>Studie tid</th>
-               <th>Injecktion tid</th>
+               <th>Injektion tid</th>
                <th>Bestil</th>
              </tr>
            </thead>

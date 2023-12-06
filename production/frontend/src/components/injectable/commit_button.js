@@ -27,8 +27,8 @@ export function CommitButton({
       return;
     }
 
-    const websocket_function = tempObjectExists ? websocket.sendEditModel :
-      websocket.sendCreateModel
+    const websocket_function = tempObjectExists ? websocket.sendEditModel.bind(websocket) :
+      websocket.sendCreateModel.bind(websocket);
 
     websocket_function(object_type, formattedObject).then(
       (response) => { callback(response); });

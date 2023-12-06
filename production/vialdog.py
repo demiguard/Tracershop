@@ -24,7 +24,6 @@ logger = logging.getLogger(VIAL_LOGGER)
 
 tracer_mapping = {}
 customer_mapping = {}
-
 def _create_tracer_mapping():
   for tracer in Tracer.objects.all():
     if tracer.vial_tag is not None and tracer.vial_tag != "":
@@ -141,7 +140,24 @@ class VialFileHandler(FileSystemEventHandler):
         vial.save()
         val_path.unlink()
     except:
-      logger.error("Failed to do stuff!")
+      logger.error(f"Failed to process file {event.src_path}")
+
+  def on_modified(self, event: FileCreatedEvent):
+    if event.is_directory:
+      return
+
+    val_path = Path(event.src_path)
+
+    with val_path.open("r") as fp:
+      data = fp.readlines()
+
+    try:
+      vial = parse_val_file(data)
+      if vial is not None:
+        vial.save()
+        val_path.unlink()
+    except:
+      logger.error(f"Failed to process file {event.src_path}")
 
 
 observer = Observer()

@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
-import { renderTableRow } from "../../../lib/rendering.js";
 
 import { HistoryModal } from "../../modals/history_modal.js";
 import { CustomerModal } from "../../modals/customer_modal.js";
@@ -34,11 +33,9 @@ export function CustomerPage () {
     return retFunc;
   }
 
-  const /**@type {Array<Element>} */ customerRows = [];
-  const FilterRegEx = new RegExp(filter,'g')
-  for (const customer of state.customer.values()) {
-    if (FilterRegEx.test(customer.short_name)) {
-      customerRows.push(renderTableRow(customer.id,[
+  function CustomerRow({customer}){
+    return <tr>
+      <td>
         <Container>
           <Row className="justify-content-between">
             <Col xs={3}>{customer.short_name}</Col>
@@ -53,7 +50,15 @@ export function CustomerPage () {
             </Col>
           </Row>
         </Container>
-      ]));
+      </td>
+    </tr>
+  }
+
+  const /**@type {Array<Element>} */ customerRows = [];
+  const FilterRegEx = new RegExp(filter,'g')
+  for (const customer of state.customer.values()) {
+    if (FilterRegEx.test(customer.short_name)) {
+      customerRows.push(<CustomerRow key={customer.id} customer={customer}/>);
     }
   }
 

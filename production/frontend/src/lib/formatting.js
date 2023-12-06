@@ -39,7 +39,7 @@ export function parseDate(inputStr){
   }
 
   //Todo add more formats
-  return null
+  return null;
 }
 
 /**
@@ -55,7 +55,7 @@ export function ParseDanishNumber(numberString){
     const parsedNumber = numberString.replace(/,/g, ".");
     return Number(parsedNumber);
   } else {
-    return numberString
+    return numberString;
   }
 }
 
@@ -96,7 +96,6 @@ export function FormatTime (timeStr) {
   if (/^[0-9]:[0-5][0-9]$/g.test(timeStr)) return "0" + timeStr + ":00";
   if (/^([0-1][0-9]|2[0-3]):[0-5][0-9]:$/g.test(timeStr)) return timeStr + "00";
   if (/^[0-9]:[0-5][0-9]:$/g.test(timeStr)) return "0" + timeStr + "00";
-
 
   return null;
 }
@@ -246,3 +245,21 @@ export function makePassword(len){
 export function Capitalize(str){
   return str[0].toLocaleUpperCase() + str.slice(1).toLocaleLowerCase();
 }
+
+/** Parses a date object into a danish formatted string
+ *
+ * @param {String} dateString - The String to be converted into a date object to be converted and back again
+ * @returns {String} - the formatted string
+ */
+export function renderDateTime(dateString){
+  const dateObject = new Date(dateString);
+  const hours    = FormatDateStr(dateObject.getHours());
+  const minutes  = FormatDateStr(dateObject.getMinutes());
+  const day      = FormatDateStr(dateObject.getDate());
+  const month    = FormatDateStr(dateObject.getMonth() + 1);
+  const year     = String(dateObject.getFullYear());
+
+  return `${hours}:${minutes} ${day}/${month}/${year}`;
+}
+
+

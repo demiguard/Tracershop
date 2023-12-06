@@ -8,7 +8,7 @@ import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ActivityModal } from '~/components/modals/activity_modal.js'
-import {  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
+import {  ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
 } from "~/lib/constants.js";
 import { DATA_ACTIVITY_ORDER, DATA_VIAL } from "~/lib/shared_constants.js"
@@ -31,7 +31,6 @@ const todays_orders = applyFilter(testState.activity_orders,
                                                       testState.production,
                                                       "2020-05-04",
                                                       1))
-
 
 beforeEach(() => {
   delete window.location
@@ -119,10 +118,10 @@ describe("Activity Modal Test", () => {
       acceptButton.click()
     })
 
-    expect(websocket.sendEditModel).toBeCalled();
+    expect(websocket.sendEditModel).toHaveBeenCalled();
   });
 
-  it("Use a vial", async () => {
+  it("Use a vial", () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -144,13 +143,13 @@ describe("Activity Modal Test", () => {
     const vialUsage = screen.queryByLabelText('vial-usage-7');
 
     act(() => {
-      vialUsage.click()
+      vialUsage.click();
     })
 
-    expect(await screen.findByText(vial.activity)).toBeVisible()
+    expect(screen.getAllByText(vial.activity + " MBq").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("Use a vial and stop using it ", async () => {
+  it("Use a vial and stop using it ", () => {
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                           testState.production,
@@ -172,14 +171,14 @@ describe("Activity Modal Test", () => {
     const vialUsage = screen.getByLabelText('vial-usage-7');
 
     act(() => {
-      vialUsage.click()
-    })
+      vialUsage.click();
+    });
 
-    expect(await screen.findByText(vial.activity)).toBeVisible();
+    expect(screen.getAllByText(`${vial.activity} MBq` ).length).toBeGreaterThanOrEqual(2);
 
     act(() => {
-      vialUsage.click()
-    })
+      vialUsage.click();
+    });
 
     // To do assert this
   });
@@ -206,15 +205,15 @@ describe("Activity Modal Test", () => {
     const vialNew = await screen.findByLabelText("add-new-vial");
 
     await act(async () => {
-      vialNew.click()
-    })
+      vialNew.click();
+    });
 
-    expect(await screen.findByLabelText('lot_number-new')).toBeVisible()
-    expect(await screen.findByLabelText('fill_time-new')).toBeVisible()
-    expect(await screen.findByLabelText('volume-new')).toBeVisible()
-    expect(await screen.findByLabelText('activity-new')).toBeVisible()
-    expect(await screen.findByLabelText('accept-new')).toBeVisible()
-    expect(await screen.findByLabelText('decline-new')).toBeVisible()
+    expect(await screen.findByLabelText('lot_number--1')).toBeVisible();
+    expect(await screen.findByLabelText('fill_time--1')).toBeVisible();
+    expect(await screen.findByLabelText('volume--1')).toBeVisible();
+    expect(await screen.findByLabelText('activity--1')).toBeVisible();
+    expect(await screen.findByLabelText('vial-commit--1')).toBeVisible();
+    expect(await screen.findByLabelText('vial-edit-decline--1')).toBeVisible();
   });
 
   it("start and stop creating a new vial", async () => {
@@ -223,10 +222,10 @@ describe("Activity Modal Test", () => {
                                                                testState.production,
                                                                "2020-05-11",
                                                                1));
-    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
+    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26);
     props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
                                                  testState.deliver_times,
-                                                 testState.delivery_endpoint)
+                                                 testState.delivery_endpoint);
 
     render(
       <StateContextProvider value={testState}>
@@ -241,16 +240,16 @@ describe("Activity Modal Test", () => {
     await act(async () => {
       vialNew.click();
     })
-    const stopAdding = await screen.findByLabelText('decline-new')
+    const stopAdding = await screen.findByLabelText('vial-edit-decline--1');
     await act(async () => {
-      stopAdding.click()
-    })
-    expect(screen.queryByLabelText('lot_number-new')).toBeNull();
-    expect(screen.queryByLabelText('fill_time-new')).toBeNull();
-    expect(screen.queryByLabelText('volume-new')).toBeNull();
-    expect(screen.queryByLabelText('activity-new')).toBeNull();
-    expect(screen.queryByLabelText('accept-new')).toBeNull();
-    expect(screen.queryByLabelText('decline-new')).toBeNull();
+      stopAdding.click();
+    });
+    expect(screen.queryByLabelText('lot_number--1')).toBeNull();
+    expect(screen.queryByLabelText('fill_time--1')).toBeNull();
+    expect(screen.queryByLabelText('volume--1')).toBeNull();
+    expect(screen.queryByLabelText('activity--1')).toBeNull();
+    expect(screen.queryByLabelText('vial-commit--1')).toBeNull();
+    expect(screen.queryByLabelText('vial-edit-decline--1')).toBeNull();
   });
 
   it("Create a new vial", async () => {
@@ -276,10 +275,10 @@ describe("Activity Modal Test", () => {
     await act(async () => {
       vialNew.click();
     })
-    const lotNumberInput = screen.queryByLabelText('lot_number-new');
-    const fillTimeInput = screen.queryByLabelText('fill_time-new');
-    const volumeInput = screen.queryByLabelText('volume-new');
-    const activityInput = screen.queryByLabelText('activity-new');
+    const lotNumberInput = screen.queryByLabelText('lot_number--1');
+    const fillTimeInput = screen.queryByLabelText('fill_time--1');
+    const volumeInput = screen.queryByLabelText('volume--1');
+    const activityInput = screen.queryByLabelText('activity--1');
 
     await act(async () => {
       fireEvent.change(lotNumberInput, {target : { value : "fdg-200504-1"}});
@@ -288,7 +287,7 @@ describe("Activity Modal Test", () => {
       fireEvent.change(activityInput, {target : {value : "13665"}});
     })
 
-    const accept = screen.queryByLabelText('accept-new');
+    const accept = screen.queryByLabelText('vial-commit--1');
     await act(async () => {
       accept.click();
     })
@@ -332,11 +331,11 @@ describe("Activity Modal Test", () => {
     });
 
     await act(async () => {
-      const acceptIcon = await screen.findByLabelText("vial-edit-accept-7")
-      acceptIcon.click()
+      const acceptIcon = await screen.findByLabelText("vial-commit-7");
+      acceptIcon.click();
     });
 
-    expect(websocket.sendEditModel).toBeCalled()
+    expect(websocket.sendEditModel).toHaveBeenCalled();
   });
 
   it("edit a vial failed", async () => {
@@ -364,10 +363,10 @@ describe("Activity Modal Test", () => {
     })
 
     await act(async () => {
-      const lotForm = await screen.findByLabelText('lot_number-7');
-      const fillTimeForm = await screen.findByLabelText('fill_time-7');
-      const volumeForm = await screen.findByLabelText('volume-7');
-      const activityForm = await screen.findByLabelText('activity-7');
+      const lotForm = screen.getByLabelText('lot_number-7');
+      const fillTimeForm = screen.getByLabelText('fill_time-7');
+      const volumeForm = screen.getByLabelText('volume-7');
+      const activityForm = screen.getByLabelText('activity-7');
 
       fireEvent.change(lotForm, {target : {value : "not a batch number"}})
       fireEvent.change(fillTimeForm, {target : {value : "not time"}})
@@ -376,15 +375,15 @@ describe("Activity Modal Test", () => {
     });
 
     await act(async () => {
-      const acceptIcon = await screen.findByLabelText("vial-edit-accept-7")
-      acceptIcon.click()
+      const acceptIcon = await screen.findByLabelText("vial-commit-7")
+      acceptIcon.click();
     });
 
-    expect(websocket.sendEditModel).not.toBeCalled();
-    expect(screen.getByText("Batch nr. er ikke formateret korrekt")).toBeVisible();
-    expect(screen.getByText("Produktions tidspunk er ikke formattet som et tidspunkt")).toBeVisible();
-    expect(screen.getByText("Volume er ikke et tal")).toBeVisible();
-    expect(screen.getByText("Aktiviten er ikke et tal")).toBeVisible();
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('lot_number-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+    expect(screen.getByLabelText('fill_time-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+    expect(screen.getByLabelText('volume-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
+    expect(screen.getByLabelText('activity-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
 
   });
 

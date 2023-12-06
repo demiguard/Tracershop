@@ -1,4 +1,7 @@
-export const JAVASCRIPT_VERSION = "1.0.1";
+/**
+ * @typedef {T[keyof T]} valueof<T>
+ * @template T
+ */
 
 
 
@@ -88,7 +91,12 @@ export const WEEKLY_REPEAT_CHOICES = {
 }
 
 
-/** @enum */
+/**
+ * @constant
+ * @typedef {Number} OrderStatus
+
+
+ * @enum {OrderStatus} */
 export const ORDER_STATUS = {
   AVAILABLE : 0,
   ORDERED : 1,

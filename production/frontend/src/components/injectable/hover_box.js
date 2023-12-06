@@ -6,8 +6,6 @@
 import React, { useState } from 'react'
 import styles from "../../css/Site.module.css"
 
-
-export { HoverBox }
 /**
  * Box that is displayed in a Hover
  */
@@ -43,7 +41,7 @@ function Trigger(props){
   )
 }
 
-function HoverBox (props){
+export function HoverBox (props){
   const styleProps = props.styles !== undefined ? {...props.styles} : {}
   const [hoverState, updateHoverComponentStyle] = useState({
     display: 'none',

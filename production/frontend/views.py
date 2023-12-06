@@ -32,8 +32,6 @@ debug_logger = getLogger(DEBUG_LOGGER)
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
-  debug_logger.info(request.headers)
-  debug_logger.info(request.META)
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
     header_user_group =  UserGroups(int(request.headers['X-Tracer-Role']))
     try:

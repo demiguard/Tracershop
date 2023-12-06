@@ -9,6 +9,7 @@ import { screen, render, cleanup, fireEvent, getByAltText } from "@testing-libra
 import userEvent from '@testing-library/user-event'
 
 import { ClickableIcon, StatusIcon } from "../../../components/injectable/icons.js";
+import { testState } from "~/tests/app_state.js";
 
 let container = null;
 let root = null
@@ -36,7 +37,7 @@ describe("Clickable icon tests", () => {
   it("Black Block render test", () => {
     const url = "dummy/url"
     const altText = "altDummy";
-    const RenderedIcon = render(<ClickableIcon
+    render(<ClickableIcon
       src={url}
       altText={altText}
       onClick={dummyClickable}
@@ -47,10 +48,10 @@ describe("Clickable icon tests", () => {
     expect(image).toHaveAttribute("src", url)
   })
 
-  it("Black Block render click", async () => {
+  it("Black Block render click", () => {
     const url = "dummy/url"
     const altText = "altDummy";
-    const RenderedIcon = render(<ClickableIcon
+    render(<ClickableIcon
       src={url}
       altText={altText}
       onClick={dummyClickable}
@@ -58,18 +59,18 @@ describe("Clickable icon tests", () => {
     />)
     const image = screen.getByAltText(altText);
 
-    await fireEvent(image, new MouseEvent('click', {bubbles: true, cancelable: true}));
+    fireEvent(image, new MouseEvent('click', {bubbles: true, cancelable: true}));
 
     expect(dummyClickable).toHaveBeenCalled();
-  })
+  });
 })
 
 describe("Status icon tests", () => {
   it("Black Block render test", () => {
     const url = "/static/images/clipboard1.svg"
     const altText = "altDummy";
-    const RenderedIcon = render(<StatusIcon
-      status={1}
+    render(<StatusIcon
+      order={testState.activity_orders.get(1)}
       altText={altText}
       onClick={dummyClickable}
       label={"label"}
@@ -77,29 +78,21 @@ describe("Status icon tests", () => {
     const image = screen.getByAltText(altText);
 
     expect(image).toHaveAttribute("src", url)
-  })
+  });
 
-  it("Black Block render click", async () => {
+  it("Black Block render click", () => {
     const url = "dummy/url"
     const altText = "altDummy";
-    const RenderedIcon = render(<StatusIcon
-      status={1}
+    render(<StatusIcon
+      order={testState.activity_orders.get(1)}
       altText={altText}
       onClick={dummyClickable}
       label={"label"}
     />)
     const image = screen.getByAltText(altText);
 
-    await fireEvent(image, new MouseEvent('click', {bubbles: true, cancelable: true}));
+    fireEvent(image, new MouseEvent('click', {bubbles: true, cancelable: true}));
 
     expect(dummyClickable).toHaveBeenCalled();
-  })
-
-  it("Status tests", () => {
-    expect(StatusIcon.statusImages(1)).toEqual("/static/images/clipboard1.svg");
-    expect(StatusIcon.statusImages(2)).toEqual("/static/images/clipboard2.svg");
-    expect(StatusIcon.statusImages(3)).toEqual("/static/images/clipboard3.svg");
-    expect(StatusIcon.statusImages(0)).toEqual("/static/images/clipboard0.svg");
-    expect(() => StatusIcon.statusImages(235)).toThrow("Unknown status");
   });
-})
+});

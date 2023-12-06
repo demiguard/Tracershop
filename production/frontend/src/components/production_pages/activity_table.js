@@ -20,14 +20,15 @@ import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
 } from "~/lib/shared_constants.js"
 
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
-import { renderComment } from "../../lib/rendering.js";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint } from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.js";
-import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMapping } from "../../lib/data_structures.js";
+import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
 import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
+import { Comment } from "../injectable/data_displays/comment.js";
+import { Optional } from "../injectable/optional.js";
 
 const Modals = {
   create_modal : CreateOrderModal,
@@ -67,28 +68,28 @@ export function ActivityTable ({active_tracer, active_date}) {
   const activeDay = getDay(active_date)
   const delivery_date = dateToDateString(active_date)
   const danishDateString = parseDateToDanishDate(delivery_date);
-  const websocket = useWebsocket()
+  const websocket = useWebsocket();
 
   const /**@type {Array<Number>} */ relevantProductions = applyFilter(
     state.production,
     productionDayTracerFilter(activeDay, active_tracer)
-  ).map(getId)
+  ).map(getId);
 
   const timeSlotMapping = new TimeSlotMapping(
     state.delivery_endpoint,
     state.deliver_times,
     relevantProductions,
-  )
+  );
 
   const productionTimeSlotOwnerShip = new ProductionTimeSlotOwnerShip(
     relevantProductions,
     state.deliver_times
-  )
+  );
 
   const tracerCatalog = new TracerCatalog(
     state.tracer_mapping,
     state.tracer
-  )
+  );
 
   const [modalIdentifier, setModalIdentifier] = useState(null);
   const [timeSlotID, setTimeSlotID] = useState(null);
@@ -112,17 +113,11 @@ export function ActivityTable ({active_tracer, active_date}) {
   * @returns { Element }
   */
   function OrderRow({order}){
-    let statusIcon = <StatusIcon status={order.status}/>
-
-    if (order.moved_to_time_slot != null){
-      statusIcon = <ClickableIcon src="/static/images/move_top.svg"/>
-    }
-
     return (<Row>
-      <Col>{statusIcon}</Col>
+      <Col><StatusIcon order={order}/></Col>
       <Col>Order ID: {order.id}</Col>
       <Col>{order.ordered_activity} MBq</Col>
-      <Col>{order.comment ? renderComment(order.comment) : ""}</Col>
+      <Col><Comment comment={order.comment}/></Col>
     </Row>);
  }
 
@@ -140,6 +135,7 @@ export function ActivityTable ({active_tracer, active_date}) {
     const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
     // Prop extraction
     const orders = orderMapping.getOrders(timeSlot.id);
+    const orderCollection = new ActivityOrderCollection(orders, state, overhead);
 
     const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
     const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
@@ -172,7 +168,7 @@ export function ActivityTable ({active_tracer, active_date}) {
       if(order.moved_to_time_slot === timeSlot.id){
         const /**@type {ActivityDeliveryTimeSlot} */ originalTimeSlot =  state.deliver_times.get(order.ordered_time_slot);
         const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, timeSlot.delivery_time);
-        deliveredMBq += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity)  * overhead
+        deliveredMBq += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity) * overhead
       }
 
       minimumStatus = Math.min(minimumStatus, order.status);
@@ -198,8 +194,8 @@ export function ActivityTable ({active_tracer, active_date}) {
           />);
         }
      }
-    const canMove = firstAvailableTimeSlotID !== timeSlot.id && minimumStatus < 3;
-
+    const canMove = firstAvailableTimeSlotID !== timeSlot.id
+      && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
 
    // State
    const [open, setOpen] = useState(false);
@@ -219,51 +215,26 @@ export function ActivityTable ({active_tracer, active_date}) {
      websocket.send(message);
    }
 
-   // Sub-components
-   let headerIcon = <StatusIcon
-                       label={`time-slot-icon-${timeSlot.id}`}
-                       status={minimumStatus}
-                       onClick={() => {
-                         setTimeSlotID(timeSlot.id)
-                         setModalIdentifier('activityModal')
-                       }}
-                     />
-   if(moved){
-     headerIcon = <ClickableIcon
-                     src="/static/images/move_top.svg"
-                     label={`time-slot-icon-${timeSlot.id}`}
-                     onClick={canMove ? restoreOrders : () => {}}
-                   />;
+   function headerFunction(){
+    if (moved && canMove) {
+      restoreOrders()
+    } else {
+      setTimeSlotID(timeSlot.id);
+      setModalIdentifier('activityModal');
+    }
    }
 
-
-   const [thirdColumnInterior, fourthColumnInterior, fifthColumnInterior] = (() => {
-      let fifthCol = null
+   const [thirdColumnInterior, fourthColumnInterior] = (() => {
       if (minimumStatus === ORDER_STATUS.RELEASED){
-        if (!moved){
-          fifthCol = <ClickableIcon
-            src="/static/images/delivery.svg"
-            onClick={()=>{
-              window.location = getPDFUrls(endpoint, tracer, orderedDate);
-            }}
-          />
-        }
-
         return [`Udleveret: ${Math.floor(freedMbq)} MBq`,
-                `Frigivet kl: ${freedTime}`, 
-                fifthCol 
-        ]
+                `Frigivet kl: ${freedTime}`,
+        ];
       } else {
         if (canMove && !moved){
-          fifthCol = <ClickableIcon
-                       src="/static/images/move_top.svg"
-                       onClick={moveOrders}
-                     />
         }
         return [
           `Bestilt: ${Math.floor(orderedMBq)} MBq`,
           `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`,
-          fifthCol
         ];
       }
     })();
@@ -273,13 +244,32 @@ export function ActivityTable ({active_tracer, active_date}) {
        <Card.Header>
          <Row>
            <Col xs={1} style={cssCenter}>
-             {headerIcon}
+              <StatusIcon
+                label={`time-slot-icon-${timeSlot.id}`}
+                orderCollection={orderCollection}
+                onClick={headerFunction}
+              />
            </Col>
-           <Col style={cssCenter}>{owner.short_name} - {endpoint.name}</Col>
+           <Col style={cssCenter}>{orderCollection.owner.short_name} - {orderCollection.endpoint.name}</Col>
            <Col style={cssCenter}><TimeDisplay time={timeSlot.delivery_time}/></Col>
            <Col style={cssCenter}>{thirdColumnInterior}</Col>
            <Col style={cssCenter}>{fourthColumnInterior}</Col>
-           <Col style={cssCenter}>{fifthColumnInterior}</Col>
+           <Col style={cssCenter}>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !moved}>
+              <ClickableIcon
+                src="/static/images/delivery.svg"
+                onClick={()=>{
+                  window.location = getPDFUrls(endpoint, tracer, orderedDate);
+                }}
+              />
+            </Optional>
+            <Optional exists={canMove && !moved}>
+              <ClickableIcon
+                src="/static/images/move_top.svg"
+                onClick={moveOrders}
+              />
+            </Optional>
+           </Col>
            <Col xs={1} style={{
              justifyContent : 'right',
              display : 'flex'
@@ -309,15 +299,14 @@ export function ActivityTable ({active_tracer, active_date}) {
  * @returns 
  */
 function ProductionRow({active_production}){
-  const /**@type {ActivityProduction} */ production = state.production.get(active_production)
+  const /**@type {ActivityProduction} */ production = state.production.get(active_production);
 
   let activity_ordered = 0;
-  let activity_overhead = 0
+  let activity_overhead = 0;
 
   const /**@type {Array<Number> | undefined} */ associatedTimeSlots = productionTimeSlotOwnerShip.getTimeSlots(active_production);
 
   if (associatedTimeSlots !== undefined) {
-    const timeSlotsIds = associatedTimeSlots.map(getId);
     for(const timeSlot of associatedTimeSlots){
       const customer = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
       const overhead = tracerCatalog.getOverheadForTracer(customer.id, tracer.id)
@@ -325,12 +314,14 @@ function ProductionRow({active_production}){
       if(orders !== undefined) {
         for (const order of orders){
           const contributingTimeSlot = (() => {
-            const id = (order.moved_to_time_slot) ? order.moved_to_time_slot : order.ordered_time_slot;
+            const id = order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
             return state.deliver_times.get(id);
           })();
 
           if(!(associatedTimeSlots.includes(contributingTimeSlot))){
-            console.log("Order belongs to a time slot that is not the production");
+            // This is indicate that the order have been moved to an other production
+            // So it should not be included in the production!
+            //console.log(`Order ${order.id} belongs to a time slot`, contributingTimeSlot, `that is not the production: ${associatedTimeSlots.map(getId)}`);
             continue;
           }
           const timeDifference = compareTimeStamp(contributingTimeSlot.delivery_time, production.production_time);
@@ -352,7 +343,7 @@ function ProductionRow({active_production}){
   }
 
   const productionRows = relevantProductions.map((productionID) => {
-    return (<ProductionRow key={productionID} active_production={productionID}/>)
+    return (<ProductionRow key={productionID} active_production={productionID}/>);
   })
 
   const renderedTimeSlots = [];
@@ -375,12 +366,12 @@ function ProductionRow({active_production}){
     [PROP_TIME_SLOT_MAPPING] : timeSlotMapping,
     [PROP_ORDER_MAPPING] : orderMapping,
     [PROP_TRACER_CATALOG] : tracerCatalog,
-  }
+  };
 
-  let Modal = null
+  let Modal = null;
   if(Modals[modalIdentifier]){
-    const ModalType = Modals[modalIdentifier]
-    Modal = <ModalType {...modalProps} />
+    const ModalType = Modals[modalIdentifier];
+    Modal = <ModalType {...modalProps} />;
   }
 
   return (
@@ -401,7 +392,7 @@ function ProductionRow({active_production}){
       <Container>
         {renderedTimeSlots}
       </Container>
-      { modalIdentifier != null ? Modal : null }
+      { modalIdentifier != null ? Modal : null}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { nullParser } from "~/lib/formatting";
 import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { CommitButton } from "~/components/injectable/commit_button";
 
 const FILTER_TYPES = {
   LOCATION_CODE : 1,
@@ -39,12 +40,24 @@ export function LocationTable(){
   function LocationTableRow({location}){
     const [commonName, setCommonName] = useState(nullParser(location.common_name));
     const [endpoint, setEndpoint] = useState(nullParser(location.endpoint));
+    const [tempLocation, setTempLocation] = useState(location);
+    function validate(){
+      if(tempLocation.common_name > 120){
+        return false, {};
+      }
+      const newCommonName = tempLocation.common_name ? tempLocation.common_name : null;
+      const newEndpoint = tempLocation.endpoint ? Number(tempLocation.endpoint) : null;
+
+      return true, {...tempLocation, commonName : newCommonName, endpoint : newEndpoint};
+    }
+
 
     function updateCommonName(event){
       setCommonName(event.target.value)
 
       const newLocation = {...location}
       newLocation.common_name = event.target.value
+
 
       if(newLocation.common_name.length <= 120){
         websocket.sendEditModel(DATA_LOCATION, [newLocation])
@@ -85,6 +98,13 @@ export function LocationTable(){
           emptyEndpoint
           value={endpoint}
           onChange={updateEndpoint}
+        />
+      </td>
+      <td>
+        <CommitButton
+          temp_object={tempLocation}
+          object_type={DATA_LOCATION}
+          validate={}
         />
       </td>
     </tr>)
@@ -141,6 +161,7 @@ export function LocationTable(){
           <th>Rum kode</th>
           <th>Kalde navn</th>
           <th>Destination</th>
+          <th></th>
         </tr>
         </thead>
         <tbody>

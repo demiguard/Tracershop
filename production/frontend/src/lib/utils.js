@@ -32,6 +32,11 @@ export function removeIndex(arr, index){
   return arr.slice(0,index).concat(arr.slice(index + 1 , arr.length));
 }
 
+/**
+ * 
+ * @param {*} obj 
+ * @returns {Number}
+ */
 export function getId(obj){
   return obj.id
 }

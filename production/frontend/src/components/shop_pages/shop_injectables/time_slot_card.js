@@ -19,6 +19,7 @@ import { setStateToEvent } from "~/lib/state_management";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
+import { ActivityOrderCollection } from "~/lib/data_structures";
 
 
 
@@ -45,13 +46,13 @@ export function TimeSlotCard({
   const state = useTracershopState();
   const websocket = useWebsocket();
 
-  // Prop extration
+  // Prop extraction
   const timeSlot = state.deliver_times.get(timeSlotID);
-  const production = state.production.get(timeSlot.production_run)
+  const production = state.production.get(timeSlot.production_run);
   const tracer = state.tracer.get(production.tracer);
   // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the same endpoint and tracer
   //(and day, but that assumption is not used here!)
-  const endpoint = state.delivery_endpoint.get(timeSlot.destination)
+  const endpoint = state.delivery_endpoint.get(timeSlot.destination);
 
   // State
   const [collapsed, setCollapsed] = useState(false);
@@ -70,6 +71,8 @@ export function TimeSlotCard({
 
   const orderedActivityOrders = activityOrders.filter((order) =>
     order.ordered_time_slot === timeSlotID);
+
+  const orderCollection = new ActivityOrderCollection(orderedActivityOrders, state)
 
   const /**@type {Array<ActivityOrder>} */ deliverableActivityOrders = activityOrders.filter((_order) => {
     const /**@type {ActivityOrder} */ order = _order
@@ -150,7 +153,7 @@ function ActivityOrderRow({order}){
     if(order.moved_to_time_slot){
       return (<ClickableIcon src="static/images/move_top.svg"/>);
     } else if (ordered) {
-      return (<StatusIcon status={order.status}/>);
+      return (<StatusIcon order={order}/>);
     } else {
       return <div/>
     };
@@ -234,7 +237,7 @@ function ActivityOrderRow({order}){
     }
     header = <StatusIcon
                 label={`status-icon-time-slot-${timeSlot.id}`}
-                status={minimumStatus}
+                orderCollection={orderCollection}
              />
   }
 

@@ -5,7 +5,6 @@ import propTypes from 'prop-types'
 
 import { FormatDateStr, FormatTime, ParseDanishNumber } from "../../lib/formatting";
 import { CalculateProduction, CountMinutes } from "../../lib/physics";
-import { renderTableRow } from "../../lib/rendering";
 import { removeIndex } from "../../lib/utils";
 
 import styles from '../../css/Calculator.module.css'
@@ -41,9 +40,6 @@ export function Calculator ({
   initial_MBq, productionTime, defaultMBq, isotopes, cancel, tracer, commit
 }) {
   const entries = [];
-
-
-
 
     if(initial_MBq !== undefined && initial_MBq > 0){
       const hour = FormatDateStr(productionTime.getHours());
@@ -184,22 +180,24 @@ export function Calculator ({
   const isotope = isotopes.get(tracer.isotope);
   const ProductionTimeString = `${FormatDateStr(productionTime.getHours())}:${FormatDateStr(productionTime.getMinutes())}`;
 
+  function EntryRow({entryIdx}){
+    return <tr>
+      <td>{state.entries[entryIdx].time.substring(0,5)}</td>
+      <td>{state.entries[entryIdx].activity}</td>
+      <td><ClickableIcon
+          src={"/static/images/decline.svg"}
+          onClick={removeEntry(entryIdx)}
+          label={"delete-"+entryIdx.toString()}
+        /></td>
+    </tr>
+  }
+
 
     const EntryTableRows = [];
     var totalActivity = 0.0;
 
     for(const entryIdx in state.entries){
-      const entry = state.entries[entryIdx];
-      EntryTableRows.push(renderTableRow(entryIdx,[
-
-        state.entries[entryIdx].time.substring(0,5),
-        state.entries[entryIdx].activity,
-        <ClickableIcon
-          src={"/static/images/decline.svg"}
-          onClick={removeEntry(entryIdx)}
-          label={"delete-"+entryIdx.toString()}
-        />
-      ]));
+      EntryTableRows.push(<EntryRow key={entryIdx} entryIdx={entryIdx}/>);
     }
 
     for(const entry of state.entries){ // This list is what? 3 short, we can iterate over it twice
@@ -219,27 +217,27 @@ export function Calculator ({
 
     totalActivity = Math.floor(totalActivity);
 
-    EntryTableRows.push(renderTableRow(
-      "-1", [
-        <FormControl
+    EntryTableRows.push(
+      <tr key={-1}>
+        <td><FormControl
           aria-label={CALCULATOR_NEW_TIME_LABEL}
           value={state.newEntry.time}
           onChange={changeNewEntry("time")}
           onKeyDown={InputEnterPress}
-        />,
-        <FormControl
+        /></td>
+        <td><FormControl
           aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
           value={state.newEntry.activity}
           onChange={changeNewEntry("activity")}
           onKeyDown={InputEnterPress}
-        />,
-        <ClickableIcon
+        /></td>
+        <td><ClickableIcon
           src={"/static/images/plus.svg"}
           onClick={addEntry}
           altText={"Tilføj"}
-        />
-      ]
-    ));
+        /></td>
+      </tr>
+    );
 
     return (
     <div className={styles.Calculator}>

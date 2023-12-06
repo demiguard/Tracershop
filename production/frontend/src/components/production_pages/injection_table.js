@@ -96,7 +96,7 @@ export function InjectionTable({active_date}) {
       <tr>
         <td><StatusIcon
               label={`status-icon-${order.id}`}
-              status={order.status}
+              order={order}
               onClick={() => openOrderModal(order)}/>
         </td>
         <td>{order.id}</td>

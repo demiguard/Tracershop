@@ -3,13 +3,114 @@
  * Many of these are equivalent to an SQL query.
 */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
-import { getDay, getWeekNumber } from "./chronomancy";
-import { TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES } from "./constants";
+import { compareTimeStamp, getDay, getWeekNumber } from "./chronomancy";
+import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof } from "./constants";
 import { applyFilter, timeSlotOwnerFilter } from "./filters";
+import { CalculateProduction } from "./physics";
 import { sortTimeSlots } from "./sorting";
-import { numberfy } from "./utils";
+import { getId, numberfy } from "./utils";
+import { useTracershopState } from "~/components/tracer_shop_context";
+
+/** An order collection is a grouping of orders, which should be delivered to a single time slot */
+export class IOrderCollection {
+  /** @type {valueof<OrderStatus>} */ minimum_status
+  /** @type {Boolean} */ moved
+  /** @type {} */ orders
+  /** @type {Array<Number>} */ orderIDs
+  /** @type {} */ ordered_date
+  /** @type {DeliveryEndpoint | null} */ endpoint
+  /** @type {Customer | null} */ owner
+  /** @type {Tracer | null} */ tracer
+  /** @type {Isotope | null} */ isotope
+
+  /** Base class for order  order collection is a grouping of orders, which should be delivered to a single time slot 
+
+  */
+  constructor() {
+    this.minimum_status = ORDER_STATUS.UNAVAILABLE;
+    this.moved = false;
+    this.orders = [];
+    this.orderIDs = [];
+    this.ordered_date = null;
+    this.endpoint = null;
+    this.owner = null;
+    this.tracer = null;
+    this.isotope = null;
+  }
+
+  get_minimum_status () {
+    return this.minimum_status()
+  }
+}
+
+export class ActivityOrderCollection extends IOrderCollection {
+  delivering_time_slot
+  delivery_time
+  production
+  moved
+  ordered_activity
+  deliver_activity
+  delivered_activity
+  orders
+  orderIDs
+
+  /**
+   * This is a collection of orders
+   * @param {Array<ActivityOrder>} activity_orders
+   * @param {TracershopState} state
+   */
+  constructor(activity_orders, state, overhead = 1) {
+    super();
+    this.delivering_time_slot = null;
+    this.freed_time = null;
+    this.production = null;
+    this.moved = true;
+    this.ordered_activity = 0;
+    this.deliver_activity = 0;
+    this.delivered_activity = 0;
+    this.orders = activity_orders;
+    this.orderIDs = activity_orders.map(getId);
+    for(const order of activity_orders) {
+      // Guard Statements
+      const deliveringTimeSlotId = order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
+      if(this.delivering_time_slot == null || this.ordered_date == null) {
+        this.ordered_date = order.delivery_date;
+        this.delivering_time_slot = state.deliver_times.get(deliveringTimeSlotId);
+        this.production = state.production.get(this.delivering_time_slot.production_run);
+        this.tracer = state.tracer.get(this.production.tracer);
+        this.isotope = state.isotopes.get(this.tracer.isotope);
+        this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
+        this.owner = state.customer.get(this.endpoint.owner);
+      } else if (this.ordered_date != order.delivery_date || this.delivering_time_slot.id != deliveringTimeSlotId) {
+        console.log(this, order, deliveringTimeSlotId);
+        throw "Incorrect filtered orders!";
+      }
+      // Update internal values
+      const originalTimeSlot =  state.deliver_times.get(order.ordered_time_slot);
+      this.minimum_status = Math.min(this.minimum_status, order.status);
+      this.moved &= order.moved_to_time_slot !== null;
+      if(order.ordered_time_slot === deliveringTimeSlotId.id){
+        this.ordered_activity += order.ordered_activity
+        this.deliver_activity += order.ordered_activity * overhead;
+      } else {
+        const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, this.delivering_time_slot.delivery_time);
+        this.deliver_activity += CalculateProduction(this.isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity) * overhead;
+      }
+      if(order.freed_time != null && this.freed_time != null){
+        this.freed_time = order.freed_time;
+      }
+    } // End of Order for loop;
+    if(this.minimum_status === ORDER_STATUS.RELEASED){
+      for(const vial of state.vial.values()){
+        if (this.orderIDs.includes(vial.assigned_to)){
+          this.delivered_activity += vial.activity;
+        }
+      }
+    }
+  }
+}
 
 
 export class CustomerCatalog {
@@ -589,3 +690,4 @@ export class ReleaseRightHolder {
     return now < new Date(expiry_date);
   }
 }
+

@@ -95,11 +95,6 @@ export function InjectionOrderCard({
 
   const canEdit = injection_order.status <= 1 && valid_deadline;
 
-  let statusIcon = "";
-  if(0 < injection_order.status){
-    statusIcon = <StatusIcon status={injection_order.status}></StatusIcon>;
-  }
-
   let statusInfo = "Ny ordre";
   if(0 < injection_order.status){
     statusInfo = `ID: ${injection_order.id}`;
@@ -132,7 +127,11 @@ export function InjectionOrderCard({
   <Card style={{padding : '0px'}}>
     <Card.Header>
       <Row>
-        <Col xs={1}>{statusIcon}</Col>
+        <Col xs={1}>
+          <Optional exists={ORDER_STATUS.AVAILABLE < injection_order.status}>
+            <StatusIcon order={injection_order}/>
+          </Optional>
+        </Col>
         <Col>
           <TracershopInputGroup label="Tracer">
             <Select
