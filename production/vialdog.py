@@ -95,7 +95,7 @@ def _parse_activity(string: str, vial: Vial):
 
 
 def _parse_volume(string: str, vial: Vial):
-  regex = re.compile("volume:\s*(\d+(?\.\d+)?)\s*ml\s*")
+  regex = re.compile("volume:\s*(\d+(\.\d+)?)\s*ml\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     volume_str = regex_match.groups()
