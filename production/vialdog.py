@@ -19,7 +19,7 @@ from database.models import Vial, Tracer, Customer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
 from watchdog.observers.polling import PollingObserver as Observer
 
-VIAL_WATCHER_FILE_PATH = os.environ(VIAL_WATCHER_FILE_PATH_ENV)
+VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
 
 tracer_mapping = {}
