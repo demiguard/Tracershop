@@ -90,16 +90,16 @@ def _parse_activity(string: str, vial: Vial):
   regex = re.compile("activity:\s*(\d+(\.\d+)?)\s*MBq;\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
-    activity_str, = regex_match.groups()
-    vial.activity = float(activity_str)
+    activity_str = regex_match.groups()
+    vial.activity = float(activity_str[0])
 
 
 def _parse_volume(string: str, vial: Vial):
-  regex = re.compile("volume:\s*(\d+(?\.\d+)?)\s*ml")
+  regex = re.compile("volume:\s*(\d+(?\.\d+)?)\s*ml\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
-    volume_str, = regex_match.groups()
-    vial.volume = float(volume_str)
+    volume_str = regex_match.groups()
+    vial.volume = float(volume_str[0])
 
 
 parserFunctions = {
