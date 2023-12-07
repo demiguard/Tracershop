@@ -104,7 +104,7 @@ export function LocationTable(){
         <CommitButton
           temp_object={tempLocation}
           object_type={DATA_LOCATION}
-          validate={}
+          validate={validate}
         />
       </td>
     </tr>)

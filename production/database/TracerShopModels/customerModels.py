@@ -8,7 +8,10 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Third Party Packages
 from typing import Optional
-from django.db.models import Model, DateField, BigAutoField, CharField, EmailField, TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField, RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField, SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
+from django.db.models import DateField, BigAutoField, CharField, EmailField,\
+    TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField,\
+    RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField,\
+    SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel, Days

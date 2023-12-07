@@ -164,6 +164,25 @@ observer = Observer()
 observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
 observer.start()
 
+vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
+
+# Process files that might have been there earlier
+
+for val_path in vial_file_path.glob('VAL*'):
+  logger.info(f"Processing file {val_path}")
+
+  with val_path.open("r") as fp:
+    data = fp.readlines()
+
+  try:
+    vial = parse_val_file(data)
+    if vial is not None:
+      vial.save()
+      val_path.unlink()
+  except:
+    logger.error(f"Failed to process file {val_path}")
+
+
 try:
   while True:
     sleep(600)
