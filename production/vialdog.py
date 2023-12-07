@@ -87,7 +87,7 @@ def _parse_fill_time(string: str, vial: Vial):
     vial.fill_time = time(int(hour_str), int(min_str), int(sec_str))
 
 def _parse_activity(string: str, vial: Vial):
-  regex = re.compile("activity:\s*(\d+(?\.\d+)?)\s*MBq;")
+  regex = re.compile("activity:\s*(\d+(\.\d+)?)\s*MBq;\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     activity_str, = regex_match.groups()
