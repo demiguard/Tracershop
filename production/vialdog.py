@@ -76,7 +76,7 @@ def _parse_fill_date(string: str, vial: Vial):
   regex_match = regex.match(string)
   if regex_match is not None:
     day_str, month_str, year_str = regex_match.groups()
-    vial.fill_date = date(int(day_str), int(month_str), 2000 + int(year_str))
+    vial.fill_date = date(2000 + int(year_str), int(month_str), int(day_str))
 
 
 def _parse_fill_time(string: str, vial: Vial):
