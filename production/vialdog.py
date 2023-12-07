@@ -9,7 +9,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
 django.setup()
 
 import re
-
+import io
 from datetime import date, time
 from typing import List
 from time import sleep
@@ -131,7 +131,7 @@ class VialFileHandler(FileSystemEventHandler):
   def on_created(self, event: FileCreatedEvent):
     val_path = Path(event.src_path)
 
-    with val_path.open("r") as fp:
+    with io.open(val_path, "r") as fp:
       data = fp.readlines()
 
     try:
@@ -148,7 +148,7 @@ class VialFileHandler(FileSystemEventHandler):
 
     val_path = Path(event.src_path)
 
-    with val_path.open("r") as fp:
+    with io.open(val_path, "r") as fp:
       data = fp.readlines()
 
     try:
@@ -171,7 +171,7 @@ vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
 for val_path in vial_file_path.glob('VAL*'):
   logger.info(f"Processing file {val_path}")
 
-  with val_path.open("r") as fp:
+  with io.open(val_path, 'r') as fp:
     data = fp.readlines()
 
   try:
