@@ -8,6 +8,7 @@ import logging
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
 django.setup()
 
+import traceback
 import re
 import io
 from datetime import date, time
@@ -21,6 +22,12 @@ from watchdog.observers.polling import PollingObserver as Observer
 
 VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
+
+def _get_file_contents(path):
+  with io.open(path, "r", encoding="iso-8859-1") as fp:
+      data = fp.readlines()
+
+  return data
 
 tracer_mapping = {}
 customer_mapping = {}
@@ -104,6 +111,17 @@ parserFunctions = {
   'volume': _parse_volume,
 }
 
+def handle_path(path):
+  data = _get_file_contents(path)
+
+  try:
+    vial = parse_val_file(data)
+    if vial is not None:
+      vial.save()
+      val_path.unlink()
+  except Exception:
+    logger.error(traceback.format_exc())
+    logger.error(f"Failed to process file {path}")
 
 def parse_val_file(file_content: List[str]) -> Vial:
   vial = Vial()
@@ -130,35 +148,14 @@ class VialFileHandler(FileSystemEventHandler):
 
   def on_created(self, event: FileCreatedEvent):
     val_path = Path(event.src_path)
-
-    with io.open(val_path, "r") as fp:
-      data = fp.readlines()
-
-    try:
-      vial = parse_val_file(data)
-      if vial is not None:
-        vial.save()
-        val_path.unlink()
-    except:
-      logger.error(f"Failed to process file {event.src_path}")
+    handle_path(val_path)
 
   def on_modified(self, event: FileCreatedEvent):
     if event.is_directory:
       return
 
     val_path = Path(event.src_path)
-
-    with io.open(val_path, "r") as fp:
-      data = fp.readlines()
-
-    try:
-      vial = parse_val_file(data)
-      if vial is not None:
-        vial.save()
-        val_path.unlink()
-    except:
-      logger.error(f"Failed to process file {event.src_path}")
-
+    handle_path(val_path)
 
 observer = Observer()
 observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
@@ -170,17 +167,7 @@ vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
 
 for val_path in vial_file_path.glob('VAL*'):
   logger.info(f"Processing file {val_path}")
-
-  with io.open(val_path, 'r') as fp:
-    data = fp.readlines()
-
-  try:
-    vial = parse_val_file(data)
-    if vial is not None:
-      vial.save()
-      val_path.unlink()
-  except:
-    logger.error(f"Failed to process file {val_path}")
+  handle_path(val_path)
 
 
 try:
