@@ -55,7 +55,8 @@ def _parse_customer(string: str, vial: Vial):
       vial.owner = customer_mapping[dispenser_id]
 
 def _parse_charge(string: str, vial: Vial):
-  regex = re.compile("charge:\s*(\w+)\s*")
+  # I could regex this correctly, but...
+  regex = re.compile("charge:\s*([\w\-]+)\s*")
   regex_match = regex.match(string)
   if regex_match is None:
     return
