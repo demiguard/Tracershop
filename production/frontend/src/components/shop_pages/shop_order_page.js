@@ -16,16 +16,18 @@ import { getId } from "../../lib/utils.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
+import { BookingOverview } from "./booking_overview.js";
 
 const Content = {
   Manuel : OrderReview,
   Automatisk : FutureBooking,
+  Overview : BookingOverview,
 };
 
 export function ShopOrderPage ({relatedCustomer}){
   const state = useTracershopState();
 
-  let init = useRef({
+  const init = useRef({
     activeCustomer : null,
     activeEndpoint : null,
     today : null,
@@ -40,7 +42,7 @@ export function ShopOrderPage ({relatedCustomer}){
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
 
     if(activeCustomer === null){
-      for(const customer of relatedCustomer){
+      for(const customer of relatedCustomer.values()){
         activeCustomer = customer.id;
         db.set(DATABASE_SHOP_CUSTOMER, customer.id);
         break;
@@ -64,7 +66,6 @@ export function ShopOrderPage ({relatedCustomer}){
       today = new Date();
       db.set(DATABASE_TODAY, today);
     } if (typeof(today) === 'string'){
-      console.log(today.substring(1, today.length - 1))
       today = new Date(today.substring(1, today.length - 1));
     }
 
@@ -82,8 +83,10 @@ export function ShopOrderPage ({relatedCustomer}){
     };
   }
 
+
+
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
-  const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeCustomer);
+  const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
   const [today, setToday] = useState(init.current.today);
   const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
 
@@ -129,7 +132,8 @@ export function ShopOrderPage ({relatedCustomer}){
 
   const SiteOptions = toOptions([
     {id : "Manuel", name : "Ordre oversigt"},
-    {id : "Automatisk", name : "Bookinger"}
+    {id : "Automatisk", name : "Bookinger"},
+    {id : "Overview", name : "Booking Oversigt"},
   ])
 
   const Site = Content[viewIdentifier]
@@ -146,9 +150,9 @@ export function ShopOrderPage ({relatedCustomer}){
   );
 
   return (
-  <Container>
-    <Row>
-      <Col sm={8}>
+  <Container style={{padding : "0px"}}>
+    <Row style={{margin : "0px"}}>
+      <Col sm={8} style={{padding : "0px"}}>
         <Site {...siteProps} />
       </Col>
       <Col sm={1}/>

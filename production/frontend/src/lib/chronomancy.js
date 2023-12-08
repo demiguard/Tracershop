@@ -2,7 +2,6 @@
  * This module resolves around time and deadlines
  * It also partly exists to offload formatting
 */
-
 import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
 import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
@@ -17,8 +16,41 @@ export function getToday(){
   return new Date()
 }
 
+export class TimeStamp {
+  /** @type {Number} */hour
+  /** @type {Number} */minute
+  /** @type {Number} */second
+
+  constructor(arg_1, minute, second){
+    console.log(arg_1, typeof(arg_1),typeof(arg_1) == "string" );
+
+    if(typeof(arg_1) == "string"){
+      this.hour = Number(arg_1.substring(0, 2));
+      this.minute = Number(arg_1.substring(3, 5));
+      this.second = Number(arg_1.substring(6, 8));
+    }
+    else if(arg_1 instanceof Date){
+      this.hour = arg_1.getHours();
+      this.minute = arg_1.getMinutes();
+      this.second = arg_1.getSeconds();
+    }
+    else if(arg_1.hasOwnProperty('hour')
+         && arg_1.hasOwnProperty('minute')
+         && arg_1.hasOwnProperty('second')){
+      this.hour = arg_1.hour;
+      this.minute = arg_1.minute;
+      this.second = arg_1.second;
+    } else {
+      this.hour = arg_1;
+      this.minute = minute;
+      this.second = second;
+    }
+  }
+}
+
 /**
  * @idempotence
+ * @deprecated
  * @param {string | Date | {hour : Number, minute : Number, second : Number}} timeStamp
  * @returns {{
  *  hour : Number,
@@ -53,8 +85,8 @@ export function getTimeStamp(timeStamp){
 }
 
 export function compareTimeStamp(timeStamp_1, timeStamp_2){
-  timeStamp_1 = getTimeStamp(timeStamp_1);
-  timeStamp_2 = getTimeStamp(timeStamp_2);
+  timeStamp_1 = new TimeStamp(timeStamp_1);
+  timeStamp_2 = new TimeStamp(timeStamp_2);
 
   return {
     hour : timeStamp_1.hour - timeStamp_2.hour,

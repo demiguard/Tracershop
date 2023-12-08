@@ -41,6 +41,14 @@ export function getId(obj){
   return obj.id
 }
 
+export function toMapping(objs){
+  const newMap = new Map();
+  for(const obj of objs){
+    newMap.set(obj.id, obj);
+  }
+  return newMap;
+}
+
 /**
  * 
  * @param {DeliveryEndpoint} endpoint 

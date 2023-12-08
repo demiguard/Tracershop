@@ -150,6 +150,7 @@ export const KEYWORD_Procedure_OWNER = "owner";
 export const KEYWORD_ProcedureIdentifier_ID = "id";
 export const KEYWORD_ProcedureIdentifier_CODE = "code";
 export const KEYWORD_ProcedureIdentifier_DESCRIPTION = "description";
+export const KEYWORD_ProcedureIdentifier_IS_PET = "is_pet";
 
 // Model: ActivityProduction
 export const KEYWORD_ActivityProduction_ID = "id";

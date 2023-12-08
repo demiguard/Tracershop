@@ -32,3 +32,11 @@ body {
 #app {
   min-height: 100%;
 }
+
+.row {
+  margin : 0px;
+}
+
+.container {
+  padding : 0px;
+}

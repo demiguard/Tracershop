@@ -110,3 +110,9 @@ export function getRelevantActivityOrders(state, day, active_tracer, active_endp
 
   return [availableProductions,availableTimeSlots, relevantActivityOrders]
 }
+
+export function locationEndpointFilter(active_endpoint){
+  return (location) => {
+    return location.endpoint === active_endpoint;
+  }
+}
