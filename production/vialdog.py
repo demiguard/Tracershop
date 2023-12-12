@@ -134,9 +134,9 @@ def handle_path(path):
     vial = parse_val_file(data)
     if vial is not None:
       vial.save()
-      data = async_to_sync(dbi.serialize_dict({
+      data = async_to_sync(dbi.serialize_dict)({
         DATA_VIAL : [vial]
-      }))
+      })
       async_to_sync(channel_layer.group_send)(
                 CHANNEL_GROUP_GLOBAL, {
                     WEBSOCKET_MESSAGE_ID : getNewMessageID(),
