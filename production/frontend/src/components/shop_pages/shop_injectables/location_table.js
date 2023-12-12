@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { FormControl, InputGroup, Table } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
-import { setStateToEvent } from "../../../lib/state_management";
+import { setStateToEvent, setTempObjectToEvent } from "../../../lib/state_management";
 import { Option, Select, toOptions } from "../../injectable/select";
 import { DATA_CUSTOMER, DATA_ENDPOINT, DATA_LOCATION } from "~/lib/shared_constants"
 import { Location } from "~/dataclasses/dataclasses";
@@ -38,9 +38,8 @@ export function LocationTable(){
   * @returns {Element}
   */
   function LocationTableRow({location}){
-    const [commonName, setCommonName] = useState(nullParser(location.common_name));
-    const [endpoint, setEndpoint] = useState(nullParser(location.endpoint));
     const [tempLocation, setTempLocation] = useState(location);
+
     function validate(){
       if(tempLocation.common_name > 120){
         return false, {};
@@ -51,44 +50,18 @@ export function LocationTable(){
       return true, {...tempLocation, commonName : newCommonName, endpoint : newEndpoint};
     }
 
-
-    function updateCommonName(event){
-      setCommonName(event.target.value)
-
-      const newLocation = {...location}
-      newLocation.common_name = event.target.value
-
-
-      if(newLocation.common_name.length <= 120){
-        websocket.sendEditModel(DATA_LOCATION, [newLocation])
-      }
-    }
-
-    function updateEndpoint(event){
-      setEndpoint(event.target.value);
-      const newLocation = {...location};
-
-      if (event.target.value === ""){
-        newLocation.endpoint = null;
-      } else {
-        newLocation.endpoint = event.target.value;
-      }
-
-      websocket.sendEditModel(DATA_LOCATION, [newLocation]);
-    }
-
     return (
     <tr>
       <td>{location.location_code}</td>
       <td>
-        <InputGroup>
+        <TracershopInputGroup>
           <FormControl
             aria-label={`location-common-name-${location.id}`}
             maxLength={120}
-            value={commonName}
-            onChange={updateCommonName}
+            value={tempLocation.common_name}
+            onChange={setTempObjectToEvent(setTempLocation, 'common_name')}
           />
-        </InputGroup>
+        </TracershopInputGroup>
       </td>
       <td>
         <EndpointSelect
@@ -96,8 +69,8 @@ export function LocationTable(){
           customer={state.customer}
           delivery_endpoint={state.delivery_endpoint}
           emptyEndpoint
-          value={endpoint}
-          onChange={updateEndpoint}
+          value={tempLocation.endpoint}
+          onChange={setTempObjectToEvent(setTempLocation, 'endpoint')}
         />
       </td>
       <td>

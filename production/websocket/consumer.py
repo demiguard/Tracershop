@@ -35,7 +35,7 @@ from django.db.models import QuerySet
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
-from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT
+from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT, CHANNEL_GROUP_GLOBAL
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
     ERROR_UNKNOWN_FAILURE,\
@@ -79,7 +79,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
    Communication with all clients are needed because the client might cause updates that all clients are need to be aware of.
    Because of the low user count this is ok.
   """
-  global_group = "global"
+  global_group = CHANNEL_GROUP_GLOBAL
   channel_layer: RedisChannelLayer
 
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
@@ -823,7 +823,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       pass
     else:
       pass
-
 
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,

@@ -22,8 +22,6 @@ export class TimeStamp {
   /** @type {Number} */second
 
   constructor(arg_1, minute, second){
-    console.log(arg_1, typeof(arg_1),typeof(arg_1) == "string" );
-
     if(typeof(arg_1) == "string"){
       this.hour = Number(arg_1.substring(0, 2));
       this.minute = Number(arg_1.substring(3, 5));

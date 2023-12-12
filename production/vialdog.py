@@ -1,6 +1,7 @@
 if __name__ != '__main__':
   exit(1)
 
+# Script setup
 import os
 import django
 import logging
@@ -8,17 +9,30 @@ import logging
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'production.settings')
 django.setup()
 
-import traceback
-import re
-import io
+# Python standard library
 from datetime import date, time
-from typing import List
-from time import sleep
+import io
+import re
 from pathlib import Path
-from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV
-from database.models import Vial, Tracer, Customer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
+from time import sleep
+import traceback
+from typing import List
+
+# Third party packages
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from watchdog.observers.polling import PollingObserver as Observer
+from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
+
+# Tracershop packages:
+from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV, CHANNEL_GROUP_GLOBAL
+from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_DATA,\
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, DATA_VIAL, WEBSOCKET_MESSAGE_UPDATE_STATE
+from database.database_interface import DatabaseInterface
+from database.models import Vial, Tracer, Customer
+from websocket.messages import getNewMessageID
+
+dbi = DatabaseInterface()
 
 VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
@@ -113,12 +127,26 @@ parserFunctions = {
 }
 
 def handle_path(path):
+  channel_layer = get_channel_layer()
   data = _get_file_contents(path)
 
   try:
     vial = parse_val_file(data)
     if vial is not None:
       vial.save()
+      data = async_to_sync(dbi.serialize_dict({
+        DATA_VIAL : [vial]
+      }))
+      async_to_sync(channel_layer.group_send)(
+                CHANNEL_GROUP_GLOBAL, {
+                    WEBSOCKET_MESSAGE_ID : getNewMessageID(),
+                    WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+                    WEBSOCKET_DATA : data,
+                    WEBSOCKET_REFRESH : False,
+                    WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+                    'type' : 'broadcastMessage',
+                }
+            )
       val_path.unlink()
   except Exception:
     logger.error(traceback.format_exc())

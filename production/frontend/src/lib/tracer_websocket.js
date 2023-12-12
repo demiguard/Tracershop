@@ -62,7 +62,9 @@ export class TracerWebSocket {
             this._dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-            this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
+            if(message[WEBSOCKET_DATA]){ // if the delete was successful or not
+              this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
+            }
 
         }
         break;
@@ -154,7 +156,7 @@ export class TracerWebSocket {
     // Message ID is the method, that allows us to asynchronous resolve the correct Promise
     let messageID;
     if (!data.hasOwnProperty(WEBSOCKET_MESSAGE_ID)){
-        var TestID = Math.floor(Math.random() * 2147483647);
+        const TestID = Math.floor(Math.random() * 2147483647);
 
         messageID = TestID;
         data[WEBSOCKET_MESSAGE_ID] = messageID

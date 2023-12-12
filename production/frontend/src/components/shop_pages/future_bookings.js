@@ -9,7 +9,7 @@ import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structu
 import { ClickableIcon } from "~/components/injectable/icons";
 import SiteStyles from "~/css/Site.module.css"
 import { MarginButton } from "~/components/injectable/buttons";
-import { getTimeStamp } from "~/lib/chronomancy";
+import { TimeStamp, getTimeStamp } from "~/lib/chronomancy";
 import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { bookingFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
@@ -127,15 +127,16 @@ function TracerCard({tracer,
         const location = state.location.get(booking.location);
         const checked = orderList[booking.accession_number];
         const locationName = (location.common_name) ? location.common_name : location.location_code;
-        const timeStamp = getTimeStamp(booking.start_time);
-        const injectionTimeStamp = {
-          hour : timeStamp.hour + Math.floor((timeStamp.minute + procedure.delay_minutes) / 60),
-          minute : (timeStamp.minute + procedure.delay_minutes) % 60
-        };
+        const timeStamp = new TimeStamp(booking.start_time);
+        const injectionTimeStamp = new TimeStamp(
+          timeStamp.hour + Math.floor((timeStamp.minute + procedure.delay_minutes) / 60), // Hour
+          (timeStamp.minute + procedure.delay_minutes) % 60, // Minute
+          0 // Seconds
+        );
 
         return (<tr key={i}>
           <td>{booking.accession_number}</td>
-          <td>{series_description}</td>
+          <td>{series_description.description}</td>
           <td>{locationName}</td>
           <td>{booking.start_time}</td>
           <td>{FormatDateStr(injectionTimeStamp.hour)}:{FormatDateStr(injectionTimeStamp.minute)}:{FormatDateStr(timeStamp.second)}</td>

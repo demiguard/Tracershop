@@ -64,9 +64,6 @@ export function TimeTable({entries,
   floating_time_stamp_function = (_fo) => {return new TimeStamp(12, 0, 0)},
   column_name_function = () => {},
   inner_text_function = (entry) => {return <div></div>},
-  time_table_entry_onclick = (entry) => {return () => {}},
-  color_function = (_entry) => {return 'lightblue'},
-  label_function = (_entry) => {return ""},
   startingHour = 6,
   stoppingHour = 14}){
 
@@ -102,7 +99,6 @@ export function TimeTable({entries,
     for(const floating_object_index in floating_objects){
       const floating_object = floating_objects[floating_object_index];
       const floating_object_timeStamp = floating_time_stamp_function(floating_object);
-      console.log(floating_object_timeStamp);
       const offset = floating_object_timeStamp.hour - startingTimeStamp.hour + (floating_object_timeStamp.minute / 60);
       absoluteCells.push(<AbsoluteCell offset={offset} key={floating_object_index}>{inner_text_function(floating_object)}</AbsoluteCell>);
     }

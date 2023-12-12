@@ -19,15 +19,22 @@ from typing import Tuple
 # Thrid party packages
 import aiorun
 from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from django.core.exceptions import ObjectDoesNotExist
 from hl7 import Message, Segment
 from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
 
 # Tracershop Packages
-from constants import PING_SERVICE_LOGGER
+from constants import PING_SERVICE_LOGGER, CHANNEL_GROUP_GLOBAL
+from shared_constants import DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE,\
+    WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_ID,\
+    WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_MODEL_DELETE
+from database.database_interface import DatabaseInterface
 from database.models import Booking, Location, ProcedureIdentifier, BookingStatus
-
+from websocket.messages import getNewMessageID
 logger = logging.getLogger(PING_SERVICE_LOGGER)
+
+database_interface = DatabaseInterface()
 
 def in_(message, key):
     try:
@@ -74,13 +81,14 @@ def create_booking(location, procedure_identifier, start_time, start_date, acces
 
 
 @database_sync_to_async
-def delete_booking(accession_number):
+def delete_booking(accession_number) -> int:
     try:
         booking = Booking.objects.get(accession_number=accession_number)
+        booking_id = booking.id
         booking.delete()
+        return booking_id
     except ObjectDoesNotExist:
-        return
-    return
+        return 0
 
 
 def extract_location(ORB_message_segment: Segment):
@@ -105,6 +113,7 @@ def extract_accession_number(ORC_message_segment: Segment):
     return ORC_message_segment[20][0]
 
 async def handleMessage(hl7_message: Message):
+    channel_layer = get_channel_layer()
     message_type = extract_message_type(hl7_message)
 
     if message_type != 'ORMO01':
@@ -128,19 +137,39 @@ async def handleMessage(hl7_message: Message):
             procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
             accession_number = extract_accession_number(ORC_message_segment)
             start_date, start_time = extract_booking_time(ORC_message_segment)
-            await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
+            booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
+            data = await database_interface.serialize_dict({
+                DATA_BOOKING : [booking]
+            })
+
+            await channel_layer.group_send( CHANNEL_GROUP_GLOBAL, {
+                    WEBSOCKET_MESSAGE_ID : getNewMessageID(),
+                    WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+                    WEBSOCKET_DATA : data,
+                    WEBSOCKET_REFRESH : False,
+                    WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+                    'type' : 'broadcastMessage',
+                }
+            )
             logger.info(f"Added booking with uid: {accession_number}")
 
-        if ORC_message_segment[1][0] == 'DC' and ORC_message_segment[5][0] == 'Ended':
+        if ORC_message_segment[1][0] == 'DC' and ORC_message_segment[5][0] == 'Ended'\
+            or ORC_message_segment[1][0] == 'CA':
             # Delete
             accession_number = extract_accession_number(ORC_message_segment)
-            await delete_booking(accession_number)
+            booking_id = await delete_booking(accession_number)
             logger.info(f"deleted booking with uid: {accession_number}")
-
-        if ORC_message_segment[1][0] == 'CA':
-            accession_number = extract_accession_number(ORC_message_segment)
-            await delete_booking(accession_number)
-            logger.info(f"deleted booking with uid: {accession_number}")
+            if 0 < booking_id:
+                await channel_layer.group_send(
+                    CHANNEL_GROUP_GLOBAL, {
+                        'type' : 'broadcastMessage',
+                        WEBSOCKET_MESSAGE_ID : getNewMessageID(),
+                        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+                        WEBSOCKET_DATA_ID : [booking_id],
+                        WEBSOCKET_DATA : True,
+                        WEBSOCKET_DATATYPE : DATA_BOOKING,
+                        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+                    })
 
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):
     """This will be called every time a socket connects

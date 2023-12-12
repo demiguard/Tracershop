@@ -30,3 +30,5 @@ VIAL_LOGGER = "VialLogger"
 # Environment paths
 
 VIAL_WATCHER_FILE_PATH_ENV = "VIAL_WATCHER_FILE_PATH"
+
+CHANNEL_GROUP_GLOBAL = "global"
