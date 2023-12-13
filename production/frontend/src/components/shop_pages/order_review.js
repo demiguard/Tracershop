@@ -27,7 +27,6 @@ export function OrderReview({active_endpoint, active_customer, active_date,
   injectionDeadlineValid, activityDeadlineExpired,
 }){
   const state = useTracershopState()
-  const websocket = useWebsocket();
 
   const tracerCatalog = new TracerCatalog(
     state.tracer_mapping, state.tracer

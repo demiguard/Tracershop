@@ -3,6 +3,7 @@ import { useTracershopState } from "../tracer_shop_context";
 import { TimeTable } from "../injectable/time_table";
 import { applyFilter, bookingFilter, locationEndpointFilter } from "~/lib/filters";
 import { toMapping } from "~/lib/utils";
+import { BookingTimeGroupLocation } from "~/lib/data_structures"
 import { dateToDateString } from "~/lib/formatting";
 import { TimeStamp } from "~/lib/chronomancy";
 
@@ -15,8 +16,11 @@ export function BookingOverview({
                                           locationEndpointFilter(active_endpoint)));
   const bookings = applyFilter(state.booking, bookingFilter(dateString, state.location, active_endpoint));
 
+  const bookingTimeGroupLocation = new BookingTimeGroupLocation(state.booking, state.location, active_endpoint, active_date);
+
   return <div>
     <TimeTable
+      TimeTableDataContainer={bookingTimeGroupLocation}
       column_objects={locations}
       column_name_function={(location) => {
         return location.common_name ? location.common_name : location.location_code;

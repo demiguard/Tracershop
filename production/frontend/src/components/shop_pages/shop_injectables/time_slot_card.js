@@ -20,6 +20,8 @@ import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { ActivityOrderCollection } from "~/lib/data_structures";
+import { Optional } from "~/components/injectable/optional";
+import { CommitButton } from "~/components/injectable/commit_button";
 
 
 
@@ -50,6 +52,7 @@ export function TimeSlotCard({
   const timeSlot = state.deliver_times.get(timeSlotID);
   const production = state.production.get(timeSlot.production_run);
   const tracer = state.tracer.get(production.tracer);
+  const canOrder = !activityDeadlineExpired;
   // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the same endpoint and tracer
   //(and day, but that assumption is not used here!)
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
@@ -90,12 +93,30 @@ export function TimeSlotCard({
 * @returns { Element }
 */
 function ActivityOrderRow({order}){
+  const [tempOrder, setTempOrder] = useState(order)
   // State
   const [activity, setActivity] = useState(order.ordered_activity);
   const [comment, setComment] = useState(nullParser(order.comment));
   const [errorActivity, setErrorActivity] = useState("");
 
   // Functions
+  function validate(){
+    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity, "Aktiviten");
+    if(!validActivity){
+      setErrorActivity(numberActivity);
+      return false, {};
+    }
+
+    return true, {
+      ...order,
+      ordered_activity : activity
+    }
+  }
+
+  function commitCallBack(){
+    setTempOrder(order => {return {...order, ordered_activity : "", comment : ""};})
+  }
+
   function createOrder() {
     const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity, "Aktiviten");
     if(!validActivity){
@@ -164,7 +185,7 @@ function ActivityOrderRow({order}){
       const movedTimeSlot = state.deliver_times.get(order.moved_to_time_slot)
       return `Rykket til ${movedTimeSlot.delivery_time}`;
     } else if (ordered) {
-      return `ID: ${orderID}`;
+      return `ID: ${order.id}`;
     } else {
       return "Ny ordre";
     }
@@ -214,7 +235,15 @@ function ActivityOrderRow({order}){
         />
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>
-        {canEdit && (changedActivity || changedComment) ? ActionImage : ""}
+        <Optional exists={canEdit && (changedActivity || changedComment)}>
+          <CommitButton
+            temp_object={tempOrder}
+            validate={validate}
+            callback={commitCallBack}
+            add_image="/static/images/cart.svg"
+            object_type={DATA_ACTIVITY_ORDER}
+          />
+        </Optional>
       </Col>
     </Row>);
   }
@@ -235,10 +264,6 @@ function ActivityOrderRow({order}){
       timeSlotActivity += order.ordered_activity
       minimumStatus = Math.min(minimumStatus, order.status);
     }
-    header = <StatusIcon
-                label={`status-icon-time-slot-${timeSlot.id}`}
-                orderCollection={orderCollection}
-             />
   }
 
   if(!activityDeadlineExpired){
@@ -261,7 +286,7 @@ function ActivityOrderRow({order}){
     orderIds.push(order.id);
 
     if(order.moved_to_time_slot === null){
-      deliveryActivity += overhead * order.ordered_activity
+      deliveryActivity += overhead * order.ordered_activity;
     } else {
       const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot);
       const originalHour = Number(originalTimeSlot.delivery_time.substring(0,2))
@@ -336,11 +361,25 @@ function ActivityOrderRow({order}){
     /> : ""}
   <Card.Header>
     <Row>
-      <Col xs={1} style={cssCenter}>{header}</Col>
+      <Col xs={1} style={cssCenter}>
+        <Optional exists={orderedActivityOrders.length}>
+          <StatusIcon
+            label={`status-icon-time-slot-${timeSlot.id}`}
+            orderCollection={orderCollection}
+          />
+        </Optional>
+      </Col>
       <Col xs={2} style={cssCenter}>{timeSlot.delivery_time}</Col>
       <Col xs={3} style={cssCenter}>{thirdColumnContent}</Col>
       <Col xs={3} style={cssCenter}>{fourthColumnContent}</Col>
-      <Col style={cssCenter}> {fifthColumnContent}</Col>
+      <Col style={cssCenter}>
+        <Optional exists={canOrder}>
+
+        </Optional>
+        <Optional exists={orderCollection.minimumStatus}>
+          
+        </Optional>
+      </Col>
         <Col style={{
          justifyContent : 'right',
          display : 'flex',

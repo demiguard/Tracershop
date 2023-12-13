@@ -3,15 +3,21 @@
  * Many of these are equivalent to an SQL query.
 */
 
+import React, {useRef, useState} from 'react'
+
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
-import { compareTimeStamp, getDay, getWeekNumber } from "./chronomancy";
+import { TimeStamp, compareTimeStamp, getDay, getWeekNumber } from "./chronomancy";
 import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof } from "./constants";
-import { applyFilter, timeSlotOwnerFilter } from "./filters";
+import { applyFilter, bookingFilter, locationEndpointFilter, timeSlotOwnerFilter } from "./filters";
+import { dateToDateString } from "./formatting";
 import { CalculateProduction } from "./physics";
 import { sortTimeSlots } from "./sorting";
-import { getId, numberfy } from "./utils";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { HoverBox } from "~/components/injectable/hover_box"
+import { TIME_TABLE_CELL_HEIGHT_PIXELS } from "~/components/injectable/time_table"
+import { getId, numberfy, toMapping } from "./utils";
+import { useTracershopState } from "~/components/tracer_shop_context"
+import { useOverflow } from "~/effects/overflow"
 
 /** An order collection is a grouping of orders, which should be delivered to a single time slot */
 export class IOrderCollection {
@@ -475,8 +481,11 @@ export class ProcedureLocationIndex {
   }
 }
 
+/**
+ * @template T
+ */
 export class ProcedureIndex {
-  /** @type {Map<Number, >}*/ _dataStructure
+  /** @type {Map<Number,T >}*/ _dataStructure
   
   constructor(){
     this._dataStructure = new Map();
@@ -691,3 +700,131 @@ export class ReleaseRightHolder {
   }
 }
 
+/**
+ * @template T,U
+ */
+export class ITimeTableDataContainer {
+  /** @type {Map<Number, ArrayMap<Number, U>>}*/ entryMapping
+  /** @type {Map<Number, T>}*/ columns
+  /** @type {(T) => Element} */ columnNameFunction
+  /** @type {([U]) => Element} */ cellFunction
+  /** @type {Number} The starting hour of the Time Table */ min_hour
+  /** @type {Number} The stopping hour of the Time Table */ max_hour
+
+  /**
+   * 
+   * @param {(T) => Element} columnNameFunction
+   * @param {([U]) => Element} cellFunction
+   */
+  constructor(columnNameFunction, cellFunction){
+    this.entryMapping = new Map();
+    this.columns = new Map();
+    this.columnNameFunction = columnNameFunction;
+    this.cellFunction = cellFunction;
+    this.min_hour = 8
+    this.max_hour = 18
+  }
+
+
+}
+
+export class BookingTimeGroupLocation extends ITimeTableDataContainer {
+  /**
+   * ITimeTableDataContainer for creating an table with:
+   *         | Room_1   | Room_2   | ...
+   * ------------------------------------
+   * $Time_1 | bookings | bookings | ...
+   * ------------------------------------
+   * $Time_2 | bookings | bookings | ...
+   * 
+   * @param {Map<Number, Booking>} all_bookings 
+   * @param {Map<Number, Location>} all_locations 
+   * @param {Number} active_endpoint 
+   * @param {Date} active_date 
+   */
+  constructor(all_bookings, all_locations, active_endpoint, active_date){
+    function columnNameFunction(location) {
+      const name = location.common_name ? location.common_name : location.location_code;
+      return <div>{name}</div>;
+    }
+
+    /**
+     * 
+     * @param {Array<Booking>} bookings 
+     * @returns 
+     */
+    function cellFunction(bookings){
+      const state = useTracershopState();
+      const [hasOverflowed, setHasOverflowed] = useState(false);
+      const ref = useRef();
+      // Note we do not use the actually overflow to determine rendering.
+      // This is to prevent flickering back and forth between an over- and
+      // underflowing of the component
+      useOverflow(ref, (overflow) => {
+        if(overflow){
+          setHasOverflowed(true);
+        }
+      });
+
+      const accession_numbers = bookings.map((booking) => {
+        const procedureIdentifier = state.procedure_identifier.get(booking.procedure);
+        return <div key={booking.id}>{procedureIdentifier.description}</div>
+      });
+      const hoverContent = bookings.map((booking) => {
+        const procedureIdentifier = state.procedure_identifier.get(booking.procedure);
+
+        return <div key={booking.id} style={{
+          border : "2px",
+          borderStyle : "solid",
+          borderColor : "black",
+          padding : "5px",
+          margin : "5px",
+        }}>
+        <div>{procedureIdentifier.description}</div>
+        <div>{booking.start_time}</div>
+        <div>{booking.accession_number}</div>
+      </div>;})
+
+
+      const lineHeight = hasOverflowed ? TIME_TABLE_CELL_HEIGHT_PIXELS : "normal";
+
+      const baseContent = hasOverflowed ? <p>{bookings.length} undersøgelser</p> : <div>{accession_numbers}</div>
+      const base = <div ref={ref} style={{ height : TIME_TABLE_CELL_HEIGHT_PIXELS, lineHeight : lineHeight }}>{baseContent}</div>
+      const hover = <div style={{
+        lineHeight : 'normal'
+      }}>
+        {hoverContent}
+      </div>
+
+      return <HoverBox
+        Base={base}
+        Hover={hover}
+      />;
+    }
+
+
+    super(columnNameFunction,cellFunction);
+    this.max_hour = 10;
+    const dateString = dateToDateString(active_date);
+
+    this.columns = toMapping(applyFilter(all_locations,
+                                          locationEndpointFilter(active_endpoint)));
+    const /**@type {Array<Booking>} */ bookings = applyFilter(all_bookings,
+                                                              bookingFilter(dateString,
+                                                                            this.columns,
+                                                                            active_endpoint));
+
+    for(const booking of bookings){
+      if (!this.entryMapping.has(booking.location)){
+        this.entryMapping.set(booking.location, new ArrayMap())
+      }
+      const bookingTimeStamp = new TimeStamp(booking.start_time);
+      if(this.max_hour <= bookingTimeStamp.hour){
+        this.max_hour = bookingTimeStamp.hour +1;
+      }
+      const locationArrayMap = this.entryMapping.get(booking.location);
+      locationArrayMap.set(bookingTimeStamp.hour, booking);
+      locationArrayMap.sortEntries(bookingTimeStamp.hour, (b1, b2) => b1.start_time > b2.start_time);
+    }
+  }
+}

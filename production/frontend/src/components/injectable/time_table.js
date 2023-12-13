@@ -3,6 +3,12 @@ import { Row, Col } from 'react-bootstrap';
 import { ArrayMap } from '~/lib/array_map';
 import { TimeStamp } from '~/lib/chronomancy';
 import { FormatDateStr } from '~/lib/formatting';
+import { ITimeTableDataContainer } from '~/lib/data_structures'
+
+
+export const TIME_TABLE_CELL_HEIGHT = 50;
+export const TIME_TABLE_CELL_HEIGHT_PIXELS = `${TIME_TABLE_CELL_HEIGHT}px`;
+
 
 const cssWeeklyTimeTable = {
   borderRadius: "1px",
@@ -12,8 +18,8 @@ const cssWeeklyTimeTable = {
 };
 
 const cssCell = {
-  height: "50px",
-  lineHeight: "50px",
+  height: TIME_TABLE_CELL_HEIGHT_PIXELS,
+  lineHeight: TIME_TABLE_CELL_HEIGHT_PIXELS,
   justifyContent: "center",
   alignItems: "center",
   borderStyle: "solid",
@@ -29,14 +35,17 @@ const cssTopCell = {
 }
 
 const cssAbsoluteCell = {
-  lineHeight: "30px",
-  height: "30px",
+  lineHeight: TIME_TABLE_CELL_HEIGHT_PIXELS,
+  height: TIME_TABLE_CELL_HEIGHT_PIXELS,
   backgroundColor: "lightblue",
   position: "absolute",
   justifyContent: "center",
   alignItems: "center",
   padding : '0px',
   margin : '0px',
+  border : '2px',
+  borderColor : '#0000AA',
+  borderStyle : 'solid'
 }
 
 function PaddingLessCol({children}){
@@ -57,7 +66,16 @@ function TopCell({children}){
 // Look man
 // There is simply just too much functionality that is being injected here
 // And I have NO idea how to reduce this
+
+/**
+ * 
+ * @param {{
+ *   TimeTableDataContainer : ITimeTableDataContainer
+ * }} param0 
+ * @returns 
+ */
 export function TimeTable({entries,
+  TimeTableDataContainer,
   column_objects = new Map(),
   floating_objects = [],
   floating_key_function = (_fo) => {return null;},
@@ -77,7 +95,7 @@ export function TimeTable({entries,
 
   function AbsoluteCell({children, offset = 0}){
   const width = `${(1 / number_of_columns) * 100}%`;
-  const top = `${(Math.ceil(offset + 1) * 50)}px`;
+  const top = `${(Math.ceil(offset + 1) * TIME_TABLE_CELL_HEIGHT)}px`;
 
   return (<Row
     style={{...cssAbsoluteCell,
@@ -92,19 +110,25 @@ export function TimeTable({entries,
     const tableCells = [];
     const absoluteCells = [];
 
-    for(let hour = startingHour; hour <= stoppingHour; hour++){
+    for(let hour = TimeTableDataContainer.min_hour; hour <= TimeTableDataContainer.max_hour; hour++){
       tableCells.push(<Cell key={hour}></Cell>);
     }
 
-    for(const floating_object_index in floating_objects){
-      const floating_object = floating_objects[floating_object_index];
-      const floating_object_timeStamp = floating_time_stamp_function(floating_object);
-      const offset = floating_object_timeStamp.hour - startingTimeStamp.hour + (floating_object_timeStamp.minute / 60);
-      absoluteCells.push(<AbsoluteCell offset={offset} key={floating_object_index}>{inner_text_function(floating_object)}</AbsoluteCell>);
+    if(floating_objects instanceof ArrayMap){
+      for(const [hour, objects] of floating_objects){
+        if(!(TimeTableDataContainer.min_hour < hour && hour < TimeTableDataContainer.max_hour)){
+          // The object would be rendered
+          continue;
+        }
+        const offset = hour - TimeTableDataContainer.min_hour;
+        absoluteCells.push(<AbsoluteCell offset={offset} key={hour}>
+          {TimeTableDataContainer.cellFunction(objects)}
+        </AbsoluteCell>)
+      }
     }
 
     return (<PaddingLessCol>
-      <TopCell>{column_name_function(columnHeader)}</TopCell>
+      <TopCell>{TimeTableDataContainer.columnNameFunction(columnHeader)}</TopCell>
       {tableCells}
       {absoluteCells}
     </PaddingLessCol>);
@@ -113,15 +137,15 @@ export function TimeTable({entries,
   const hourlyCells = [];
   const timeColumns = [];
 
-  for(let hour = startingHour; hour <= stoppingHour; hour++){
+  for(let hour = TimeTableDataContainer.min_hour; hour <= TimeTableDataContainer.max_hour; hour++){
     hourlyCells.push(<Cell key={hour}>{`${FormatDateStr(hour)}:00:00`}</Cell>);
   }
 
-  for(const [id, columnObject] of column_objects) {
+  for(const [id, columnObject] of TimeTableDataContainer.columns) {
     timeColumns.push(<TimeColumn
       key={id}
       columnHeader={columnObject}
-      floating_objects={floatingMapping.has(columnObject.id) ? floatingMapping.get(columnObject.id) : []}
+      floating_objects={TimeTableDataContainer.entryMapping.has(id) ? TimeTableDataContainer.entryMapping.get(id) : new ArrayMap()}
     />);
   }
 
@@ -133,3 +157,5 @@ export function TimeTable({entries,
       {timeColumns}
     </Row>
 }
+
+

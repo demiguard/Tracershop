@@ -1,6 +1,7 @@
 venv/
 *.msql
 *.log
+log/
 *.pyc
 __pycache__/
 .vscode/settings.json
@@ -42,6 +43,7 @@ config.py
 Release/
 Debug/
 ipch/
+db.json
 hl7_messages/
 settings.json
 *.hl7
