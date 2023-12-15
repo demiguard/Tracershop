@@ -169,7 +169,7 @@ class DatabaseInterface():
   def __createModel(self, model: Type[T], modelDict: Dict, user: User) -> T:
     instance = model()
     instance.assignDict(modelDict)
-    instance.save(user) # Sets primary key as side effect && and logs if needed
+    instance.save(user) # Sets primary key as side effect and logs if needed
 
     return instance
 

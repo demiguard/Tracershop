@@ -1,28 +1,27 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 
-import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope } from "../../../dataclasses/dataclasses";
+import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope, TracershopState } from "../../../dataclasses/dataclasses";
 import { dateToDateString, nullParser } from "../../../lib/formatting";
 
-import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
+import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
 import { ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 
 import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
-import { combineDateAndTimeStamp, getTimeString } from "../../../lib/chronomancy";
-import { getPDFUrls } from "../../../lib/utils";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { combineDateAndTimeStamp, getTimeString } from "~/lib/chronomancy";
+import { compareLoosely, getPDFUrls, nullify } from "~/lib/utils";
+import { useTracershopState } from "~/components/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
-import { setStateToEvent } from "~/lib/state_management";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { ActivityOrderCollection } from "~/lib/data_structures";
 import { Optional } from "~/components/injectable/optional";
 import { CommitButton } from "~/components/injectable/commit_button";
-
+import { setTempObjectToEvent } from "~/lib/state_management";
 
 
 /**
@@ -43,10 +42,8 @@ export function TimeSlotCard({
   active_date,
   overhead,
   activityDeadlineExpired,
-
 }){
   const state = useTracershopState();
-  const websocket = useWebsocket();
 
   // Prop extraction
   const timeSlot = state.deliver_times.get(timeSlotID);
@@ -60,16 +57,8 @@ export function TimeSlotCard({
   // State
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
-  const [newOrder, _setNewOrderActivity] = useState({
-    status : "",
-    ordered_activity : "",
-    comment : "",
-    moved_to_time_slot : "",
-  }); // This is a new object because otherwise react rendering engine fucks up
+  const calculatorActivity = useRef("");
 
-  function setNewOrderActivity(newActivity){
-    _setNewOrderActivity({...newOrder, ordered_activity : Math.floor(newActivity)});
-  }
   // Filter out irrelevant orders
 
   const orderedActivityOrders = activityOrders.filter((order) =>
@@ -92,82 +81,41 @@ export function TimeSlotCard({
 * }} props
 * @returns { Element }
 */
-function ActivityOrderRow({order}){
-  const [tempOrder, setTempOrder] = useState(order)
+function ActivityOrderRow({order, calculatorActivity}){
   // State
-  const [activity, setActivity] = useState(order.ordered_activity);
-  const [comment, setComment] = useState(nullParser(order.comment));
+  const [tempOrder, setTempOrder] = useState(order)
   const [errorActivity, setErrorActivity] = useState("");
 
   // Functions
   function validate(){
-    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity, "Aktiviten");
+    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(tempOrder.ordered_activity, "Aktiviten");
     if(!validActivity){
       setErrorActivity(numberActivity);
-      return false, {};
+      return [false, {}];
     }
 
-    return true, {
+    return [true, {
       ...order,
-      ordered_activity : activity
-    }
+      ordered_activity : numberActivity,
+      comment : nullify(tempOrder.comment),
+      status : ORDER_STATUS.ORDERED,
+    }];
   }
 
   function commitCallBack(){
     setTempOrder(order => {return {...order, ordered_activity : "", comment : ""};})
   }
 
-  function createOrder() {
-    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity, "Aktiviten");
-    if(!validActivity){
-      setErrorActivity(numberActivity);
-      return;
-    }
-
-    websocket.sendCreateModel(DATA_ACTIVITY_ORDER,
-      new ActivityOrder(
-        undefined, // activity_order_id
-        numberActivity, // ordered_activity
-        dateToDateString(active_date), // deliveryDate
-        1, // Status
-        comment, // comment
-        timeSlot.id, // ordered_time_slot
-        null,
-        null,
-        null,
-        null,
-      ));
-    setActivity("");
-    setComment("");
-    setErrorActivity("");
-  }
-
-  function updateOrder() {
-    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(activity)
-    if(!validActivity){
-      setErrorActivity(numberActivity)
-      return
-    }
-    const newOrder = {
-      ...order,
-      ordered_activity : numberActivity,
-      comment : comment
-    };
-
-    websocket.sendEditModel(DATA_ACTIVITY_ORDER, newOrder);
-  }
-
-  const orderID = (order.id !== undefined) ? order.id : "new";
   const ordered = order.status > 0;
   const canEdit = order.status <= 1;
-  const changedActivity = !(order.ordered_activity === activity);
-  const changedComment = !(nullParser(order.comment) === comment);
+  const changedTemp = compareLoosely(order, tempOrder);
 
-  if(canEdit){ // React flips out if it can't update, which i guess is fair.
+  if(!ordered){ // React flips out if it can't update, which i guess is fair.
     useEffect(() => {
-      setActivity(order.ordered_activity);
-      setComment(order.comment);
-    }, [order]); // we need this to ensure that calculator updates...
+      if(calculatorActivity.current){
+        setTempOrder(obj => {return {...obj, ordered_activity : calculatorActivity.current}});
+      }
+    }, [calculatorActivity]); // we need this to ensure that calculator updates...
   }
 
   const statusIcon = (() => {
@@ -191,17 +139,6 @@ function ActivityOrderRow({order}){
     }
   })();
 
-  const ActionImage = ordered ?
-      <ClickableIcon
-        label={`update-${orderID}`}
-        src="/static/images/update.svg"
-        onClick={updateOrder}
-      /> : <ClickableIcon
-        label={`create-${orderID}`}
-        src="/static/images/cart.svg"
-        onClick={createOrder}
-      />;
-
   return (
     <Row>
       <Col xs={1} style={cssCenter}>
@@ -211,31 +148,28 @@ function ActivityOrderRow({order}){
         {statusInfo}
       </Col>
       <Col>
-        <TracershopInputGroup label="Aktivitet">
-          <ErrorInput error={errorActivity}>
-            <EditableInput
-              canEdit={canEdit}
-              data-testid={`activity-${orderID}`}
-              value={activity}
-              onChange={setStateToEvent(setActivity)}
-            />
-          </ErrorInput>
-          <InputGroup.Text>MBq</InputGroup.Text>
+        <TracershopInputGroup label="Aktivitet" error={errorActivity} tail={"MBq"}>
+          <EditableInput
+            canEdit={canEdit}
+            data-testid={`activity-${order.id}`}
+            value={tempOrder.ordered_activity}
+            onChange={setTempObjectToEvent(setTempOrder, 'ordered_activity')}
+          />
         </TracershopInputGroup>
       </Col>
       <Col>
         <TracershopInputGroup label="Kommentar">
         <EditableInput
           canEdit={canEdit}
-          data-testid={`comment-${orderID}`}
+          data-testid={`comment-${order.id}`}
           as="textarea"
           rows={1}
-          value={comment}
-          onChange={setStateToEvent(setComment)}
+          value={nullParser(tempOrder.comment)}
+          onChange={setTempObjectToEvent(setTempOrder, 'comment')}
         />
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>
-        <Optional exists={canEdit && (changedActivity || changedComment)}>
+        <Optional exists={canEdit && !changedTemp}>
           <CommitButton
             temp_object={tempOrder}
             validate={validate}
@@ -256,7 +190,6 @@ function ActivityOrderRow({order}){
     />
   })
 
-  let header = <div></div>
   let timeSlotActivity = 0
   let minimumStatus = 5;
   if(orderedActivityOrders.length){
@@ -269,7 +202,19 @@ function ActivityOrderRow({order}){
   if(!activityDeadlineExpired){
     orderRows.push(<ActivityOrderRow
       key={-1}
-      order={newOrder}
+      order={new ActivityOrder(
+        -1,
+        "",
+        dateToDateString(active_date),
+        ORDER_STATUS.AVAILABLE,
+        "",
+        timeSlotID,
+        null,
+        null,
+        null,
+        null
+      )}
+      calculatorActivity={calculatorActivity}
     />)
   }
 
@@ -348,7 +293,7 @@ function ActivityOrderRow({order}){
     [PROP_ON_CLOSE] : () => {setShowCalculator(false);},
     [PROP_ACTIVE_TRACER] : tracer,
     [PROP_COMMIT] : (activity) => {
-        setNewOrderActivity(String(activity));
+        calculatorActivity.current = String(Math.floor(activity))
         setShowCalculator(false);
       },
     initial_MBq : 300,
@@ -356,13 +301,13 @@ function ActivityOrderRow({order}){
 
   return (
   <Card style={{padding : '0px'}}>
-    {showCalculator ? <CalculatorModal
-                        {...calculatorProps}
-    /> : ""}
+    <Optional exists={showCalculator}>
+      <CalculatorModal {...calculatorProps}/>
+    </Optional>
   <Card.Header>
     <Row>
       <Col xs={1} style={cssCenter}>
-        <Optional exists={orderedActivityOrders.length}>
+        <Optional exists={!!orderedActivityOrders.length}>
           <StatusIcon
             label={`status-icon-time-slot-${timeSlot.id}`}
             orderCollection={orderCollection}
@@ -374,10 +319,12 @@ function ActivityOrderRow({order}){
       <Col xs={3} style={cssCenter}>{fourthColumnContent}</Col>
       <Col style={cssCenter}>
         <Optional exists={canOrder}>
-
+          <ClickableIcon
+            src="/static/images/calculator.svg"
+            onClick={() => {setShowCalculator(true);}}
+          />
         </Optional>
-        <Optional exists={orderCollection.minimumStatus}>
-          
+        <Optional exists={orderCollection.minimumStatus === 3}>
         </Optional>
       </Col>
         <Col style={{
@@ -398,4 +345,3 @@ function ActivityOrderRow({order}){
    </Collapse>
  </Card>);
 }
-

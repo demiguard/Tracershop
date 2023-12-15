@@ -3,6 +3,21 @@
     "baseUrl": ".",
     "paths": {
       "~/*": ["src/*"]
-    }
-  }
+    },
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "target": "ES2020",
+    "jsx": "preserve",
+    "strictNullChecks": true,
+    "strictFunctionTypes": true
+  },
+  "exclude": [
+      ".git/**",
+      "node_modules",
+      "**/node_modules/**",
+      ".npm",
+      "**/static/frontend/**",
+      "**/coverage/**"
+
+  ]
 }

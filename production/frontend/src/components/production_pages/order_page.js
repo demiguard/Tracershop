@@ -2,21 +2,15 @@ import React, { useState } from "react";
 import { Button, Container, Row, Col } from 'react-bootstrap';
 import { InjectionTable } from './injection_table.js';
 import { ActivityTable } from './activity_table.js';
-import { TRACER_TYPE, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE, KEYWORD_ID,
-  CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK, CALENDER_PROP_ON_MONTH_CHANGE,
-  CALENDER_PROP_DATE, 
-  DATABASE_ACTIVE_TRACER,
-  DATABASE_TODAY} from "~/lib/constants.js";
-import { DATA_PRODUCTION, DATA_ACTIVITY_ORDER, DATA_TRACER, DATA_INJECTION_ORDER,
-  DATA_CLOSED_DATE, DATA_SERVER_CONFIG, DATA_DEADLINE } from "~/lib/shared_constants.js";
+import { TRACER_TYPE, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE,
+  DATABASE_ACTIVE_TRACER, DATABASE_TODAY} from "~/lib/constants.js";
 import { db } from "~/lib/local_storage_driver.js";
 
-import { Calender, getColorProduction, productionGetMonthlyOrders } from "../injectable/calender.js";
-
 import SiteStyles from '~/css/Site.module.css'
-import { KEYWORD_ServerConfiguration_GLOBAL_ACTIVITY_DEADLINE, KEYWORD_ServerConfiguration_GLOBAL_INJECTION_DEADLINE } from "~/dataclasses/keywords.js";
+
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ProductionCalender } from "../injectable/derived_injectables/production_calender.js";
+import { Optional } from "~/components/injectable/optional.js";
 
 const Tables = {
   activity : ActivityTable,
@@ -25,7 +19,6 @@ const Tables = {
 
 export function OrderPage() {
   const state = useTracershopState();
-  const websocket = useWebsocket();
 
   let /**@type {Date} */ today = db.get(DATABASE_TODAY);
   if(!today || !today instanceof Date){
@@ -43,7 +36,6 @@ export function OrderPage() {
   }
 
   const activeTableInit = (activeTracerInit == -1) ? "injections" : "activity";
-
   const [activeDate, _setActiveDate] = useState(today);
   const [activeTracer, setActiveTracer] = useState(activeTracerInit);
   const [activeTable, setActiveTable] = useState(activeTableInit);
@@ -67,7 +59,9 @@ export function OrderPage() {
         setActiveTable("activity")
         }}
       >
-        {underline ? <u>{tracer.shortname}</u> : tracer.shortname}
+        <Optional exists={underline} alternative={<div>{tracer.shortname}</div>}>
+          <u>{tracer.shortname}</u>
+        </Optional>
       </Button>
     );
   }
@@ -93,36 +87,34 @@ export function OrderPage() {
           { underlineSpecial ? <u>Special</u> : "Special"}
       </Button>));
 
-    // Keyword setting
-    const OrderTable = Tables[activeTable]
-    const newProps = {
-      [PROP_ACTIVE_TRACER] : activeTracer,
-      [PROP_ACTIVE_DATE] : activeDate
-    }
-
-
-    return (
-      <Container>
-        <Row>
-          <Col>
-            {TableSwitchButtons}
-          </Col>
-        </Row>
-        <Row>
-          <Col sm={8}>
-            <OrderTable
-              {...newProps}
-            />
-          </Col>
-          <Col sm={1}></Col>
-          <Col sm={3}>
-            <ProductionCalender
-              active_date={activeDate}
-              on_day_click={setActiveDate}
-            />
-          </Col>
-        </Row>
-      </Container>
-    );
+  // Keyword setting
+  const OrderTable = Tables[activeTable];
+  const newProps = {
+    [PROP_ACTIVE_TRACER] : activeTracer,
+    [PROP_ACTIVE_DATE] : activeDate
   }
 
+  return (
+    <Container>
+      <Row>
+        <Col>
+          {TableSwitchButtons}
+        </Col>
+      </Row>
+      <Row>
+        <Col sm={8}>
+          <OrderTable
+            {...newProps}
+          />
+        </Col>
+        <Col sm={1}></Col>
+        <Col sm={3}>
+          <ProductionCalender
+            active_date={activeDate}
+            on_day_click={setActiveDate}
+          />
+        </Col>
+      </Row>
+    </Container>
+  );
+}

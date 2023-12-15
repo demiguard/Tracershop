@@ -1,7 +1,7 @@
 /**
  * @author Christoffer Vilstrup Jensen
  */
-import React, { Children } from "react";
+import React from "react";
 import { HoverBox } from "../hover_box";
 import { cssError } from "../../../lib/constants";
 
