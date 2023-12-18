@@ -1,18 +1,17 @@
 import React, { Component, useRef, useState } from "react";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { FormatDateStr, dateToDateString } from "~/lib/formatting";
-import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, TRACER_TYPE, cssAlignRight, cssCenter } from "../../lib/constants";
-import { DATA_BOOKING, DATA_LOCATION, DATA_PROCEDURE, DATA_TRACER,
-  WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER } from "~/lib/shared_constants";
-import { Booking, Procedure, Tracer, Location } from "~/dataclasses/dataclasses";
+import { TRACER_TYPE, cssAlignRight, cssCenter } from "../../lib/constants";
+import { WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER } from "~/lib/shared_constants";
+import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
 import { ClickableIcon } from "~/components/injectable/icons";
 import SiteStyles from "~/css/Site.module.css"
 import { MarginButton } from "~/components/injectable/buttons";
-import { TimeStamp, getTimeStamp } from "~/lib/chronomancy";
-import { TracerWebSocket } from "~/lib/tracer_websocket";
+import { TimeStamp } from "~/lib/chronomancy";
 import { bookingFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { Optional } from "~/components/injectable/optional";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -26,6 +25,11 @@ export function FutureBooking ({active_date, active_endpoint,
                                                             state.location,
                                                             active_endpoint);
 
+  // Note that there's no state in this component, so that means there's no
+  // rerender with user interaction, therefore the following line will only
+  // happen when stuff is relevant
+  // Although there's some argument for just creating a bit top level data
+  // structure
 
   const bookings = [...state.booking.values()].filter(bookingFilter(
     dateString, state.location, active_endpoint
@@ -37,8 +41,8 @@ export function FutureBooking ({active_date, active_endpoint,
  *
  * @param {{
  *  bookings : Array<Booking>
-  * }} param0 
-  * @returns 
+  * }} param0
+  * @returns
   */
   function ProcedureCard({bookings}){
     const [open, setOpen] = useState(false);
@@ -75,41 +79,36 @@ export function FutureBooking ({active_date, active_endpoint,
       </Collapse>
     </Card>)
  }
- 
+
 
 /**
- * 
+ *
  * @param {{
 *   tracer : Tracer
 *   bookings : Array<Booking>
-* }} param0 
-* @returns 
+* }} param0
+* @returns
 */
 function TracerCard({tracer,
                     bookings,
   }) {
 
-  const bookingListInit = useRef(null)
+  // This is overkill, but...
+  const bookingListInit = useRef(null);
   if(bookingListInit.current === null){
-    bookingListInit.current = {}
+    bookingListInit.current = {};
     bookings.map((booking) => {
-      bookingListInit[booking.accession_number] = true;
+      bookingListInit.current[booking.accession_number] = true;
     });
   }
 
-  const [open, setOpen] = useState(false)
-  const [orderList, _setState] = useState(bookingListInit)
+  const [open, setOpen] = useState(false);
+  const [bookingProgram, setBookingProgram] = useState(bookingListInit.current);
 
-  function setState(newState){
-    _setState({
-      ...orderList,
-      ...newState,
-    })
-  }
 
   function onClickOrder() {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MASS_ORDER);
-    message[WEBSOCKET_DATA] = orderList;
+    message[WEBSOCKET_DATA] = bookingProgram;
     websocket.send(message);
   }
 
@@ -125,7 +124,7 @@ function TracerCard({tracer,
         const procedure = procedureLocationIndex.getProcedure(booking);
         const series_description = state.procedure_identifier.get(procedure.series_description);
         const location = state.location.get(booking.location);
-        const checked = orderList[booking.accession_number];
+        const checked = bookingProgram[booking.accession_number];
         const locationName = (location.common_name) ? location.common_name : location.location_code;
         const timeStamp = new TimeStamp(booking.start_time);
         const injectionTimeStamp = new TimeStamp(
@@ -144,9 +143,9 @@ function TracerCard({tracer,
               checked={checked}
               data-testid={`toggle-${booking.id}`}
               onChange={() => {
-                const newState = {}
-                newState[booking.accession_number] = !checked
-                setState(newState)
+                setBookingProgram((prevBookingProgram) => {
+                  return {...prevBookingProgram, [booking.accession_number] : !checked };
+                });
               }}
               />
           </td>
@@ -185,14 +184,16 @@ function TracerCard({tracer,
              {rows}
            </tbody>
          </Table>
-         { deadlineExpired ? "" : <Row style={{justifyContent : "right",display : "flex",}}>
-             <div>
-               <MarginButton
+         <Optional exists={!deadlineExpired}>
+          <Row style={{justifyContent : "right",display : "flex",}}>
+            <div>
+              <MarginButton
                 data-testid={`order-button-${tracer.id}`}
-                onClick={onClickOrder}>Bestil</MarginButton>
-             </div>
+                onClick={onClickOrder}>Bestil
+              </MarginButton>
+            </div>
            </Row>
-         }
+         </Optional>
        </Card.Body>
      </Collapse>
    </Card>);
@@ -227,4 +228,3 @@ function TracerCard({tracer,
       {bookingCards}
     </div>);
 }
-

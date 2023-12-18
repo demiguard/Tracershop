@@ -15,7 +15,6 @@ import { combineDateAndTimeStamp, getTimeString } from "~/lib/chronomancy";
 import { compareLoosely, getPDFUrls, nullify } from "~/lib/utils";
 import { useTracershopState } from "~/components/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
-import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { ActivityOrderCollection } from "~/lib/data_structures";

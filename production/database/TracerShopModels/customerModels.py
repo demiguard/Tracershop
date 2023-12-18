@@ -25,10 +25,14 @@ class ClosedDate(TracershopModel):
   id = BigAutoField(primary_key=True)
   close_date = DateField()
 
+  def __str__(self) -> str:
+    return f"Closed day at {self.close_date}"
+
   class Meta:
     indexes = [
       Index(fields=['close_date'])
     ]
+
 
 
 class Customer(TracershopModel):
@@ -44,10 +48,16 @@ class Customer(TracershopModel):
   billing_zip_code = CharField(max_length=8, null=True, default=None)
   active_directory_code = CharField(max_length=128, null=True, default=None)
 
+  def __str__(self) -> str:
+    return self.short_name
+
 class UserAssignment(TracershopModel):
   id = BigAutoField(primary_key=True)
   user = ForeignKey(User, on_delete=CASCADE)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
+
+  def __str__(self) -> str:
+    return f"User: {self.user} is assigned to {self.customer}"
 
   class Meta:
     unique_together = ('user', 'customer')
@@ -77,12 +87,18 @@ class DeliveryEndpoint(TracershopModel):
   name = CharField(max_length=32, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT)
 
+  def __str__(self) -> str:
+    return f"{self.owner} - {self.name}"
+
 class TracerCatalogPage(TracershopModel):
   id = BigAutoField(primary_key=True)
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   max_injections = SmallIntegerField(default=0)
   overhead_multiplier = FloatField(default=1)
+
+  def __str__(self) -> str:
+    return f"{self.endpoint} catalog {self.tracer}"
 
   class Meta:
     unique_together = ('endpoint', 'tracer')
@@ -97,20 +113,46 @@ class Location(TracershopModel):
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
   common_name = CharField(max_length=120, null=True, default=None)
 
+  def __str__(self) -> str:
+    baseString = "Location: "
+    if self.common_name is not None:
+      return baseString + " " + self.common_name
+    else:
+      return baseString + " " + self.location_code
+
+
 class ProcedureIdentifier(TracershopModel):
   id = BigAutoField(primary_key=True)
   code = CharField(max_length=128, blank=True, unique=True, null=True, default=None)
   description = CharField(max_length=255, blank=True, unique=True, null=True, default=None)
   is_pet = BooleanField(default=False)
 
+  def __str__(self) -> str:
+    baseString = "Procedure Identifier: "
+    if self.description is not None:
+      return baseString + " " + self.description
+    else:
+      return baseString + " " + self.code
+
 
 class Procedure(TracershopModel):
   id = BigAutoField(primary_key=True)
-  series_description = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT, default=None, null=True)
+  series_description = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
   tracer_units = FloatField(default=0.0)
   delay_minutes = FloatField(default=0.0)
-  tracer = ForeignKey(Tracer, on_delete=RESTRICT, default=None, null=True)
-  owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, default=None, null=True)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+  owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+
+  def __str__(self) -> str:
+    series_description = "(Missing)"
+    if self.series_description is not None and self.series_description.description is not None:
+      series_description = self.series_description.description
+
+    owner = "(Missing)"
+    if self.owner:
+      owner = str(self.owner)
+
+    return f"Procedure: {series_description} for {owner}"
 
   class Meta:
     unique_together = ('series_description', 'owner')
@@ -130,6 +172,9 @@ class Booking(TracershopModel):
   accession_number = CharField(max_length=32, unique=True, blank=True, null=True, default=None)
   start_time = TimeField()
   start_date = DateField()
+
+  def __str__(self) -> str:
+    return f"Booking: {self.accession_number}"
 
   class Meta:
     indexes = [
@@ -286,6 +331,17 @@ class Vial(TracershopModel):
   fill_date = DateField()
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
+
+  def __str__(self) -> str:
+    customerString = "(Missing)"
+    if self.customer is not None:
+      customerString = str(self.customer)
+
+    tracerString = "(Missing)"
+    if self.tracer:
+      tracerString = str(self.tracer)
+
+    return f"Vial - {tracerString} - {customerString}"
 
   def canDelete(self, user: Optional[User] = None) -> AuthActions:
     if user is not None and user.is_production_member:

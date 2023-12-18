@@ -12,7 +12,6 @@ class SQLInjectionException(SecurityException):
     super().__init__("SQL Injection Detected")
 
 
-
 class DatabaseNotSetupException(Exception):
   pass
 
@@ -23,4 +22,10 @@ class DatabaseInvalidQueriesConfiguration(Exception):
   pass
 
 class IllegalActionAttempted(Exception):
+  pass
+
+class RequestingNonExistingEndpoint(Exception):
+  pass
+
+class UndefinedReference(Exception):
   pass

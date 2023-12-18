@@ -51,12 +51,15 @@ def _create_tracer_mapping():
       tracer_mapping[tracer.vial_tag] = tracer
 _create_tracer_mapping()
 
+logger.debug(f"Started with tracer mapping: {tracer_mapping}")
 
 def _create_customer_mapping():
   for customer in Customer.objects.all():
     if customer.dispenser_id is not None:
       customer_mapping[customer.dispenser_id] = customer
 _create_customer_mapping()
+logger.debug(f"Started with customer mapping: {customer_mapping}")
+
 
 
 def _parse_customer(string: str, vial: Vial):
@@ -67,6 +70,7 @@ def _parse_customer(string: str, vial: Vial):
     dispenser_id = int(dispenser_id_str)
     if dispenser_id in customer_mapping:
       vial.owner = customer_mapping[dispenser_id]
+  logger.debug(f"Parsed String: \"{str}\" and mapped it to customer {vial.owner}")
 
 def _parse_charge(string: str, vial: Vial):
   # I could regex this correctly, but...
@@ -147,7 +151,7 @@ def handle_path(path):
                     'type' : 'broadcastMessage',
                 }
             )
-      val_path.unlink()
+      path.unlink()
   except Exception:
     logger.error(traceback.format_exc())
     logger.error(f"Failed to process file {path}")

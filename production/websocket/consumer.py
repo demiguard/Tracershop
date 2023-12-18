@@ -34,7 +34,7 @@ from django.db.models import QuerySet
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import IllegalActionAttempted
+from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
 from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT, CHANNEL_GROUP_GLOBAL
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
@@ -51,7 +51,7 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MASS_ORDER,\
     WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,\
     WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_OBJECT_DOES_NOT_EXISTS,\
-    WEBSOCKET_MESSAGE_RESTORE_ORDERS,\
+    WEBSOCKET_MESSAGE_RESTORE_ORDERS, WEBSOCKET_MESSAGE_ERROR,\
     WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE, \
     WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT
 from database.database_interface import DatabaseInterface
@@ -221,13 +221,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
             logger.error(f"It had message type: {message[WEBSOCKET_MESSAGE_TYPE]}")
         else:
           logger.error(f"A message without message ID was send, it's not valid by the error: {error}")
-        await self.HandleKnownError(message, error)
+        await self.HandleInvalidMessage(message, error)
         return
       logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
       user = await get_user(self.scope)
       if not auth.AuthMessage(user, message):
         logger.info(f"Insufficient Rights for {user}!")
-        await self.HandleKnownError(message, ERROR_INSUFFICIENT_PERMISSIONS)
+        await self.HandleInvalidMessage(message, ERROR_INSUFFICIENT_PERMISSIONS)
         return
 
       handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
@@ -236,7 +236,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         # The only case this should happen is when a message type have been added but a handler have been made
         # I.E It's a NOT implemented case.
         logger.critical(f"Missing handler for {message[WEBSOCKET_MESSAGE_TYPE]}")
-        await self.HandleKnownError(message, ERROR_INVALID_MESSAGE_TYPE)
+        await self.HandleInvalidMessage(message, ERROR_INVALID_MESSAGE_TYPE)
       else:
         await handler(self, message)
     except Exception as E: # pragma: no cover
@@ -272,7 +272,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
        WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
     }) # pragma: cover
 
-  async def HandleKnownError(self, message, error):
+  async def HandleInvalidMessage(self, message : Dict, error):
     if error == ERROR_NO_MESSAGE_ID:
       await self.send_json({
         WEBSOCKET_MESSAGE_SUCCESS: error
@@ -282,6 +282,29 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_SUCCESS: error,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
       })
+
+  async def RespondWithError(self, message: Dict, error: Dict):
+    """Informs the client of an exceptional error(s)
+
+    Args:
+        message (Dict): The Original Message
+        error (Dict): An Dictionary with errors codes to inform the frontend
+    """
+    # An exceptional error is an error that shouldn't be able to happen.
+    # An exceptional error is a reference to an non existing database object
+    # An exceptional error is a order to an non existing destination
+    # An non-exceptional error is user attempting to log in to an non-existing user
+    # An non-exceptional error is user attempting to log with the wrong user
+
+    message_id = "(Missing)"
+    if WEBSOCKET_MESSAGE_ID in message:
+      message_id = message[WEBSOCKET_MESSAGE_ID]
+
+    await self.send_json({
+      WEBSOCKET_MESSAGE_ID : message_id,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_ERROR,
+      WEBSOCKET_MESSAGE_ERROR : error,
+    })
 
   ##### Handlers #####
   # Universal Handlers
@@ -299,8 +322,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
       message (Dict[str, Any]): message send by the user with extra fields:
                                   DATA_AUTH
-                                    AUTH_USERNAME
-                                    AUTH_PASSWORD
+                                  AUTH_USERNAME
+                                  AUTH_PASSWORD
     """
     auth = message[DATA_AUTH]
     username = auth[AUTH_USERNAME]
@@ -749,7 +772,21 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   or rejected.
     """
     user = get_user(self.scope)
-    orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
+    print(message)
+
+    try:
+      orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
+    except RequestingNonExistingEndpoint:
+      self.send_json()
+
+      return
+
+
+      print("Gottem'")
+      pass
+
+
+
     ActivityCustomerIDs = await self.db.getCustomerIDs(orders[DATA_ACTIVITY_ORDER])
     InjectionCustomerIDs = await self.db.getCustomerIDs(orders[DATA_INJECTION_ORDER])
 

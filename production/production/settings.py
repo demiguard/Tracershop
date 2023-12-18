@@ -14,9 +14,9 @@ import os
 from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME,\
       LDAP_PASSWORD
 from production.config import debug_file_log, error_file_log,\
-      audit_file_log, pingService_file_log
+      audit_file_log, pingService_file_log, vialLogger_file_log
 from constants import DEBUG_LOGGER, ERROR_LOGGER, AUDIT_LOGGER,\
-      PING_SERVICE_LOGGER
+      PING_SERVICE_LOGGER, VIAL_LOGGER
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import ldap
@@ -242,33 +242,45 @@ LOGGING = {
             'backupCount' : 4,
             'formatter' : 'django.server'
         },
+        "vialServiceHandler" : {
+            'level' : 'DEBUG',
+            'class' : 'logging.handlers.TimedRotatingFileHandler',
+            'filename' : vialLogger_file_log,
+            'when' : 'D',
+            'backupCount' : 4,
+            'formatter' : 'django.server'
+        }
     },
     'loggers': {
         'django': {
-            'handlers': ['console', 'mail_admins'],
-            'level': 'INFO',
+            "level" : 'INFO',
+            "handlers" : ['console', 'mail_admins'],
         },
         DEBUG_LOGGER : {
-            'handlers':  ['myHandler', 'console'],
-            'level': 'DEBUG'
+            "level" : 'DEBUG',
+            "handlers" :  ['myHandler', 'console'],
         },
         'django.server': {
-            'handlers': ['django.server'],
-            'level': 'INFO',
-            'propagate': False,
+            "level" : 'INFO',
+            "handlers" : ['django.server'],
+            "propagate" : False,
         },
         ERROR_LOGGER : {
-            'handlers': ['ErrorHandler'],
-            'level' : 'ERROR'
+            "level" : "ERROR",
+            "handlers" : ["ErrorHandler", "console"],
         },
         AUDIT_LOGGER : {
-            'handlers' : ['console', 'audit_log'],
-            'level' : "INFO",
+            "level" : "INFO",
+            "handlers" : ['console', 'audit_log'],
         },
         PING_SERVICE_LOGGER : {
-            'level' : "INFO",
-            'handlers' : ['pingServiceHandler'],
+            "level" : "INFO",
+            "handlers" : ["pingServiceHandler"],
         },
+        VIAL_LOGGER : {
+          "level" : "DEBUG",
+          "handlers" : ["vialServiceHandler"]
+        }
 
     }
 }
@@ -277,7 +289,7 @@ LOGGING = {
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL = "/static/"
 
 # Logging
 

@@ -25,7 +25,7 @@ from django.db.models.query import QuerySet
 # Tracershop Production Packages
 from constants import ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import IllegalActionAttempted
+from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD
 from database.models import ServerConfiguration, User,\
@@ -39,7 +39,7 @@ from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
 from lib.ldap import ldap_search
 
-logger = logging.getLogger(DEBUG_LOGGER)
+debug_logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
 
 
@@ -122,8 +122,8 @@ class DatabaseInterface():
     try:
       model.assignDict(jsonModel)
     except Exception as e:
-      logger.error(e, exc_info=True)
-      logger.error(f"Could not assign {jsonModel} to {model}")
+      debug_logger.error(e, exc_info=True)
+      debug_logger.error(f"Could not assign {jsonModel} to {model}")
       return None
 
     return model
@@ -327,7 +327,7 @@ class DatabaseInterface():
     for model in models:
       modelKeyword = INVERTED_MODELS.get(model)
       if modelKeyword is None:
-        logger.warning(f"ModelKeyword {model.__name__} is missing in database.models.INVERTED_MODELS")
+        debug_logger.warning(f"ModelKeyword {model.__name__} is missing in database.models.INVERTED_MODELS")
         continue
       if modelKeyword in self.__modelGetters:
         instances[modelKeyword] = self.__modelGetters[modelKeyword](referenceTime, user)
@@ -462,8 +462,8 @@ class DatabaseInterface():
   @database_sync_to_async
   def massOrder(self, bookings: Dict[str, bool], user: User):
     timeSlotsBookings: Dict[ActivityDeliveryTimeSlot, float] = {}
-    injectionBookings: List[InjectionOrder] = []
-    activityBookings: List[ActivityOrder] = []
+    injectionOrders: List[InjectionOrder] = []
+    activityOrders: List[ActivityOrder] = []
     bookingUpdated: List[Booking] = []
 
     bookingDate = date(1970, 1 ,1)
@@ -472,7 +472,7 @@ class DatabaseInterface():
       try:
         booking = Booking.objects.get(accession_number=accessionNumber)
       except ObjectDoesNotExist:
-        logger.error(f"Booking for accession Number {accessionNumber} have no matching backend copy")
+        debug_logger.error(f"Booking for accession number: {accessionNumber} have no matching backend copy")
         continue
 
       bookingDate = booking.start_date
@@ -481,13 +481,13 @@ class DatabaseInterface():
 
       if endpoint is None:
         error_logger.error(f"Booking {booking} is being ordered, but its location: {booking.location} has no associated endpoint!")
+        raise RequestingNonExistingEndpoint
 
       try:
         procedure = Procedure.objects.get(series_description=procedureIdentifier,
                                           owner=endpoint)
       except ObjectDoesNotExist:
         error_logger.error(f"Could not find a matching procedure for DeliveryEndpoint: {endpoint} and series description: {procedureIdentifier}")
-        continue
       except MultipleObjectsReturned:
         # There's a unique_together that prevents this line from being relevant
         error_logger.critical(f"Database corruption! Multiple Procedures are associated with DeliveryEndpoint: {endpoint} and series description: {procedureIdentifier}")
@@ -505,11 +505,11 @@ class DatabaseInterface():
 
       # Muh Turnery Operation, mate that would NOT fit in a turnery
       if tracer.tracer_type == TracerTypes.InjectionBased:
-        injectionBookings.append(InjectionOrder(
+        injectionOrders.append(InjectionOrder(
           delivery_time=booking.start_time,
           delivery_date=booking.start_date,
           injections=procedure.tracer_units,
-          status=1,
+          status=OrderStatus.Ordered,
           tracer_usage=TracerUsage.human,
           comment="",
           ordered_by=user,
@@ -532,8 +532,8 @@ class DatabaseInterface():
         ).order_by('delivery_time').reverse()
 
         if len(timeSlots) == 0:
-          error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_date}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day)}")
-          continue
+          error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_date}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day).name}")
+          raise RequestingNonExistingEndpoint
         timeSlot = timeSlots[0]
         timeDelta = subtract_times(booking_time.time(), timeSlot.delivery_time)
 
@@ -544,25 +544,27 @@ class DatabaseInterface():
         timeSlotsBookings[timeSlot] += activity
 
         booking.status = BookingStatus.Ordered
-
+      debug_logger.debug(f"Scheduling {booking} for update")
       bookingUpdated.append(booking)
     # End of booking iteration
 
     for timeSlot, activity in timeSlotsBookings.items():
-      activityBookings.append(
+      activityOrders.append(
         ActivityOrder(
           ordered_activity=floor(activity),
           delivery_date=bookingDate,
-          status=OrderStatus.Accepted,
+          status=OrderStatus.Ordered,
           comment="",
           ordered_time_slot=timeSlot,
           ordered_by=user
         )
       )
 
-    activityOrders = ActivityOrder.objects.bulk_create(activityBookings)
-    injectionsOrders = InjectionOrder.objects.bulk_create(injectionBookings)
-
+    debug_logger.debug(f"Creating {len(activityOrders)} activity bookings")
+    activityOrders = ActivityOrder.objects.bulk_create(activityOrders)
+    debug_logger.debug(f"Creating {len(injectionOrders)} Injections bookings")
+    injectionsOrders = InjectionOrder.objects.bulk_create(injectionOrders)
+    debug_logger.debug(f"Updating {len(bookingUpdated)} Bookings")
     Booking.objects.bulk_update(bookingUpdated, ['status'])
 
     return {
