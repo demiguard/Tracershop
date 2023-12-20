@@ -54,9 +54,12 @@ export const ERROR_NO_JAVASCRIPT_VERSION = "NoJavaScriptVersion";
 export const ERROR_NO_MESSAGE_ID = "NoMessageID";
 export const ERROR_NO_MESSAGE_TYPE = "NoMessageType";
 export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
+export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.0.8";
+export const JAVASCRIPT_VERSION = "1.0.9";
+
+export const NO_ERROR = "";
 
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
 export const URL_INDEX = "";
@@ -84,6 +87,7 @@ export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_EDIT_DJANGO = "editDjango";
 export const WEBSOCKET_MESSAGE_EDIT_STATE = "editState";
+export const WEBSOCKET_MESSAGE_ERROR = "error";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
 export const WEBSOCKET_MESSAGE_FREE_ORDER = "freeOrder";
@@ -106,8 +110,6 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "login",
   "logout",
   "whoami",
-  "createActivityOrder",
-  "createInjectionOrder",
   "createUserAssignment",
   "echo",
   "getOrders",
@@ -118,8 +120,6 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "deleteModel",
   "editModel",
   "massOrder",
-  "OrderActivity",
-  "OrderInjection",
   "moveOrder",
   "restoreOrders",
   "changeExternalPassword",
