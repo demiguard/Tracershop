@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Row, Col, Button, Container, Card, Collapse } from 'react-bootstrap'
 import { getId, getPDFUrls } from "../../lib/utils.js";
 import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
@@ -11,18 +11,20 @@ import propTypes from 'prop-types'
 
 import { cssCenter, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
-  PROP_TRACER_CATALOG,
-  ORDER_STATUS
+  PROP_TRACER_CATALOG, ORDER_STATUS
 } from "../../lib/constants.js";
 
 import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
-  WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_DATE,
+  WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME,
 } from "~/lib/shared_constants.js"
 
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer, DeliveryEndpoint } from "../../dataclasses/dataclasses.js";
-import { compareTimeStamp, getDay, getTimeString } from "../../lib/chronomancy.js";
-import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog, OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer,
+  DeliveryEndpoint } from "../../dataclasses/dataclasses.js";
+import { compareTimeStamp, getDay, getTimeString
+  } from "../../lib/chronomancy.js";
+import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
+  OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
 import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
@@ -57,7 +59,7 @@ function getTimeSlotOwner(timeSlot, endpoints, customers){
  * @param {{
  *  active_tracer : Number,
  *  active_date : Date
- * }} props 
+ * }} props
  * @returns {Element}
  */
 export function ActivityTable ({active_tracer, active_date}) {
@@ -295,8 +297,8 @@ export function ActivityTable ({active_tracer, active_date}) {
  * tracer needs to be produced
  * @param {{
  *  active_production : Number - ID of the production
- * }} props 
- * @returns 
+ * }} props
+ * @returns
  */
 function ProductionRow({active_production}){
   const /**@type {ActivityProduction} */ production = state.production.get(active_production);

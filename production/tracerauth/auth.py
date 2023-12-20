@@ -1,13 +1,21 @@
+"""Module containing function for handling IT security aspects of message
+handling
+"""
+
+__author__ = "Christoffer Vilstrup Jensen"
+
 # Python Standard Library
-from datetime import datetime
-from typing import Any,Callable, Dict, Iterable, List, Type
+from datetime import date
+from logging import getLogger
+from typing import Any, Callable, Dict, Iterable, List, Type
 
 # Third party Libraries
-from channels.db import database_sync_to_async
-from django.apps import apps
 from django.contrib.auth.models import AnonymousUser
 
 # Tracershop App
+from constants import ERROR_LOGGER
+from lib.Formatting import toDate, toDateTime, toTime
+from lib.utils import identity
 from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   ERROR_INSUFFICIENT_DATA, ERROR_INVALID_JAVASCRIPT_VERSION,\
   ERROR_NO_MESSAGE_TYPE, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_JAVASCRIPT_VERSION,\
@@ -16,13 +24,21 @@ from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_FREE_INJECTION,\
   WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_DATATYPE,\
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,\
-  WEBSOCKET_MESSAGE_TYPE,\
+  WEBSOCKET_MESSAGE_TYPE, NO_ERROR, WEBSOCKET_DATE,\
+  WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_MODEL_CREATE,\
+  WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_RESTORE_ORDERS,\
+  WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,\
   WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_ECHO,\
   WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_FREE_ACTIVITY,\
   WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,\
   WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,\
   WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
-from database.models import User, UserGroups, TracershopModel, Tracer, INVERTED_MODELS, MODELS
+from database.models import User, UserGroups
+
+from tracerauth.types import MessageType, MessageField, MessageObjectField,\
+  Message
+
+error_logger = getLogger(ERROR_LOGGER)
 
 requiredMessageFields = {
   WEBSOCKET_MESSAGE_AUTH_LOGIN : [DATA_AUTH],
@@ -30,6 +46,38 @@ requiredMessageFields = {
   WEBSOCKET_MESSAGE_GET_STATE : [],
   WEBSOCKET_MESSAGE_MODEL_DELETE : [WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE],
   WEBSOCKET_MESSAGE_MODEL_EDIT : [WEBSOCKET_DATA, WEBSOCKET_DATATYPE],
+}
+
+MESSAGE_TYPES = {
+  WEBSOCKET_MESSAGE_AUTH_LOGIN : MessageType(WEBSOCKET_MESSAGE_AUTH_LOGIN, [
+    MessageObjectField(DATA_AUTH, [
+      MessageField(AUTH_USERNAME, str),
+      MessageField(AUTH_PASSWORD, str),
+    ])
+  ]),
+  WEBSOCKET_MESSAGE_AUTH_LOGOUT : MessageType(WEBSOCKET_MESSAGE_AUTH_LOGOUT, []),
+  WEBSOCKET_MESSAGE_AUTH_WHOAMI : MessageType(WEBSOCKET_MESSAGE_AUTH_WHOAMI, []),
+
+  WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : MessageType(WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, []), # This function is not done?
+  WEBSOCKET_MESSAGE_ECHO : MessageType(WEBSOCKET_MESSAGE_ECHO, []),
+  WEBSOCKET_MESSAGE_GET_ORDERS : MessageType(WEBSOCKET_MESSAGE_GET_ORDERS, [
+    MessageField(WEBSOCKET_DATE, toDate, required=True)
+  ]),
+  WEBSOCKET_MESSAGE_GET_STATE : MessageType(WEBSOCKET_MESSAGE_GET_STATE, [
+    MessageField(WEBSOCKET_DATE, toDate, required=False)
+  ]),
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY : MessageType(WEBSOCKET_MESSAGE_FREE_ACTIVITY, []),
+  WEBSOCKET_MESSAGE_FREE_INJECTION : MessageType(WEBSOCKET_MESSAGE_FREE_INJECTION, []),
+  WEBSOCKET_MESSAGE_MODEL_CREATE : MessageType(WEBSOCKET_MESSAGE_MODEL_CREATE, []),
+  WEBSOCKET_MESSAGE_MODEL_DELETE : MessageType(WEBSOCKET_MESSAGE_MODEL_DELETE, []),
+  WEBSOCKET_MESSAGE_MODEL_EDIT : MessageType(WEBSOCKET_MESSAGE_MODEL_EDIT, []),
+  WEBSOCKET_MESSAGE_MASS_ORDER : MessageType(WEBSOCKET_MESSAGE_MASS_ORDER, [
+    MessageField(WEBSOCKET_DATA, identity)
+  ]),
+  WEBSOCKET_MESSAGE_MOVE_ORDERS : MessageType(WEBSOCKET_MESSAGE_MOVE_ORDERS, []),
+  WEBSOCKET_MESSAGE_RESTORE_ORDERS : MessageType(WEBSOCKET_MESSAGE_RESTORE_ORDERS, []),
+  WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : MessageType(WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, []),
+  WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : MessageType(WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, []),
 }
 
 requiredDataFields = {
@@ -138,6 +186,8 @@ def validateMessage(message: Dict) -> str:
   """Checks is a message contains the correct fields to be a valid message.
   Note a valid message is returned as falsy, while a truthy indicate an error.
 
+  Note that this function should not be used 
+
   Args:
       message (Dict): The message to be validated
 
@@ -155,19 +205,24 @@ def validateMessage(message: Dict) -> str:
   if not message[WEBSOCKET_JAVASCRIPT_VERSION] == JAVASCRIPT_VERSION:
     return ERROR_INVALID_JAVASCRIPT_VERSION
 
-  for field in requiredMessageFields.get(message[WEBSOCKET_MESSAGE_TYPE], []):
+  message_type = message[WEBSOCKET_MESSAGE_TYPE]
+
+  if message_type not in requiredMessageFields:
+    error_logger.warning(f"Message type: {message_type} is not in Require Message Fields")
+
+  for field in requiredMessageFields.get(message_type, []):
     if field not in message:
-      print(f"Missing {field} in f{message}")
+      error_logger.error(f"Missing {field} in f{message}")
       return ERROR_INVALID_MESSAGE
 
   if WEBSOCKET_DATA in message:
     data = message[WEBSOCKET_DATA]
-    for field, Type in requiredDataFields.get(message[WEBSOCKET_MESSAGE_TYPE], []):
+    for field, Type in requiredDataFields.get(message_type, []):
       if field not in data or not ValidateType(data[field], Type):
         return ERROR_INSUFFICIENT_DATA
 
   if DATA_AUTH in message and not ValidateAuthObject(message[DATA_AUTH]):
     return ERROR_INVALID_AUTH
 
-  return ""
+  return NO_ERROR
 

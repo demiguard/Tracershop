@@ -38,7 +38,7 @@ from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoin
 from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT, CHANNEL_GROUP_GLOBAL
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
-    ERROR_UNKNOWN_FAILURE,\
+    ERROR_UNKNOWN_FAILURE, ERROR_TYPE, NO_ERROR,\
     DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_DELIVER_TIME, DATA_INJECTION_ORDER, DATA_VIAL,\
     DATA_USER, DATA_USER_ASSIGNMENT,\
     WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_DATE,\
@@ -214,20 +214,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     try:
       error = auth.validateMessage(message)
-      if error != "":
-        if WEBSOCKET_MESSAGE_ID in message:
-          logger.error(f"The message {message[WEBSOCKET_MESSAGE_ID]} was send, It's not valid by the error: {error}")
-          if WEBSOCKET_MESSAGE_TYPE in message:
-            logger.error(f"It had message type: {message[WEBSOCKET_MESSAGE_TYPE]}")
-        else:
-          logger.error(f"A message without message ID was send, it's not valid by the error: {error}")
-        await self.HandleInvalidMessage(message, error)
+      if error != NO_ERROR:
+        await self.RespondWithError(message, {ERROR_TYPE : error})
         return
+
       logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
       user = await get_user(self.scope)
       if not auth.AuthMessage(user, message):
         logger.info(f"Insufficient Rights for {user}!")
-        await self.HandleInvalidMessage(message, ERROR_INSUFFICIENT_PERMISSIONS)
+        await self.RespondWithError(message, {ERROR_TYPE :ERROR_INSUFFICIENT_PERMISSIONS})
         return
 
       handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
@@ -236,12 +231,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
         # The only case this should happen is when a message type have been added but a handler have been made
         # I.E It's a NOT implemented case.
         logger.critical(f"Missing handler for {message[WEBSOCKET_MESSAGE_TYPE]}")
-        await self.HandleInvalidMessage(message, ERROR_INVALID_MESSAGE_TYPE)
+        await self.RespondWithError(message, {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
       else:
         await handler(self, message)
     except Exception as E: # pragma: no cover
-      await self.HandleUnknownError(E, message)
       # Very broad catch here, to prevent a hanging message on the client side
+      await self.HandleUnknownError(E, message)
 
   ### Error handling ###
   async def HandleUnknownError(self,
@@ -267,21 +262,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if settings.DEBUG:
       print(exceptionTraceback)
 
-    await self.send_json({ #pragma: no cover
-       WEBSOCKET_MESSAGE_SUCCESS : ERROR_UNKNOWN_FAILURE,
-       WEBSOCKET_MESSAGE_ID : FailingMessage[WEBSOCKET_MESSAGE_ID]
+    await self.RespondWithError(FailingMessage, {
+      ERROR_TYPE : ERROR_UNKNOWN_FAILURE
     }) # pragma: cover
 
-  async def HandleInvalidMessage(self, message : Dict, error):
-    if error == ERROR_NO_MESSAGE_ID:
-      await self.send_json({
-        WEBSOCKET_MESSAGE_SUCCESS: error
-      })
-    else:
-      await self.send_json({
-        WEBSOCKET_MESSAGE_SUCCESS: error,
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID]
-      })
 
   async def RespondWithError(self, message: Dict, error: Dict):
     """Informs the client of an exceptional error(s)
@@ -368,8 +352,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       isAuth = False
       user_serialized = {}
       key = ""
-
-    logger.info(f"Who Am i: {user}")
 
     await self.send_json({
       WEBSOCKET_SESSION_ID : key,
@@ -635,7 +617,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # Log the change to db
     logFreeInjectionOrder(user, order)
 
-    # Step 3 Boardcast it
+    # Step 3 Broadcast it
     newState = await self.db.serialize_dict({
         DATA_INJECTION_ORDER : [order],
     })
@@ -714,46 +696,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_REFRESH : True,
     })
 
-
-  async def HandleCreateActivityOrder(self, message: Dict[str, Any]):
-    user = await get_user(self.scope)
-    newOrderDict = message[WEBSOCKET_DATA]
-    newOrderDict['status'] = 1
-    newOrderDict['ordered_by'] = user.id
-
-    instances = await self.db.handleCreateModels(DATA_ACTIVITY_ORDER, newOrderDict, user)
-    customerIDs = await self.db.getCustomerIDs(instances)
-    data = await self.db.serialize_dict({DATA_ACTIVITY_ORDER : instances})
-    returnMessage = {
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_DATA : data,
-      WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-    }
-
-    await self.__broadcastCustomer(returnMessage, customerIDs)
-
-
-  async def HandleCreateInjectionOrder(self, message: Dict[str, Any]):
-    user = await get_user(self.scope)
-    newOrderDict = message[WEBSOCKET_DATA]
-
-    newOrderDict['status'] = 1
-    newOrderDict['ordered_by'] = user.id
-
-    instances = await self.db.handleCreateModels(DATA_INJECTION_ORDER, newOrderDict, user);
-    customerIDs = await self.db.getCustomerIDs([instances]);
-    data = await self.db.serialize_dict({DATA_INJECTION_ORDER : instances});
-    await self.__broadcastCustomer({
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_DATA : data,
-      WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-    }, customerIDs)
-
-
   async def HandleMassOrder(self, message: Dict[str, Any]):
     """Handler function for the WEBSOCKET_MESSAGE_MASS_ORDER messages.
     The message types indicates a user wishes to place a number of orders
@@ -777,13 +719,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     try:
       orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
     except RequestingNonExistingEndpoint:
-      self.send_json()
-
+      await self.RespondWithError(message,
+                                  { ERROR_TYPE : ""})
       return
 
 
-      print("Gottem'")
-      pass
 
 
 
@@ -874,8 +814,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetTimeSensitiveData,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
     WEBSOCKET_MESSAGE_RESTORE_ORDERS : HandleRestoreOrders,
-    WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER : HandleCreateActivityOrder,
-    WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER : HandleCreateInjectionOrder,
     WEBSOCKET_MESSAGE_FREE_ACTIVITY : HandleFreeActivityOrderTimeSlot,
     WEBSOCKET_MESSAGE_FREE_INJECTION : HandleFreeInjectionOrder,
     WEBSOCKET_MESSAGE_MASS_ORDER : HandleMassOrder,
