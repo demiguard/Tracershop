@@ -17,10 +17,10 @@ export function timeSlotOwnerFilter(endpointID){
 
 /** Filter function for selecting delivery endpoints with a specific
  * Customer
- * 
+ *
  * @param {Number} customerID Id of the customer the endpoint should have to
  * survive the filtering
- * 
+ *
  */
 export function endpointOwnerFilter(customerID){
   return (/**@type {DeliveryEndpoint} */endpoint) => endpoint.owner === customerID
@@ -34,17 +34,20 @@ export function tracerTypeFilter(tracerType){
 
 /**
  * Filters booking to a date,
- * @param {String} dateString 
+ * @param {String} dateString
  * @param {Map<Number, Location>} locations
  * @param {Number} activeEndpoint
  * @returns {CallableFunction}
  */
 export function bookingFilter(dateString, locations, activeEndpoint){
   /**
-  * @param {Booking} booking 
+  * @param {Booking} booking
   * @returns {Boolean}
   */
   const returnFunction = (booking) =>{
+    if(!locations.has(booking.location)){
+      return false;
+    }
     const location = locations.get(booking.location);
     return booking.start_date === dateString && location.endpoint === activeEndpoint;
   }
@@ -58,8 +61,8 @@ export function productionDayTracerFilter(day, tracerID){
 
 /**
  * Applies a filter to a collection
- * @param {Array | Map} collection 
- * @param {CallableFunction} filterFunction 
+ * @param {Array | Map} collection
+ * @param {CallableFunction} filterFunction
  * @returns {Array}
  */
 export function applyFilter(collection, filterFunction) {
@@ -84,8 +87,8 @@ export function dailyActivityOrderFilter(timeSlots, productions, delivery_date, 
 }
 
 /**
- * 
- * @param {TracershopState} state 
+ *
+ * @param {TracershopState} state
  */
 export function getRelevantActivityOrders(state, day, active_tracer, active_endpoint, activeDateString){
   const availableProductions =[...state.production.values()].filter(

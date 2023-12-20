@@ -31,7 +31,7 @@ export class IOrderCollection {
   /** @type {Tracer | null} */ tracer
   /** @type {Isotope | null} */ isotope
 
-  /** Base class for order  order collection is a grouping of orders, which should be delivered to a single time slot 
+  /** Base class for order  order collection is a grouping of orders, which should be delivered to a single time slot
 
   */
   constructor() {
@@ -197,7 +197,7 @@ export class TracerCatalog {
 
   /**
    * Gets the injections tracers a customer can order
-   * @param {Number} endpointID 
+   * @param {Number} endpointID
    * @returns {Array<Tracer>}
    */
   getInjectionCatalog(endpointID){
@@ -233,11 +233,11 @@ export class TimeSlotMapping {
   * 2. Group TimeSlots together so a time slot can figure out if and what time
   *    slot it should move to.
   * @param {Map<Number, DeliveryEndpoint>} endpoints - This should be all
-  * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
-  * @param {Array<Number>} relevantProductions 
+  * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
+  * @param {Array<Number>} relevantProductions
    */
   constructor(endpoints, timeSlots, relevantProductions) {
-    /* The underlying datastructure 
+    /* The underlying datastructure
       Customer_1 --> Endpoint_1 -> [time_slot_1, time_slot_2] // Sorted by time
                  --> Endpoint_2 -> [time_slot_3, time_slot_4]
       Customer_2 ...
@@ -282,8 +282,8 @@ export class TimeSlotMapping {
     }
 
   /**
-   * 
-   * @param {ActivityDeliveryTimeSlot} timeSlot 
+   *
+   * @param {ActivityDeliveryTimeSlot} timeSlot
    */
   getFirstTimeSlot(timeSlot){
     const endpoint = this._endpoints.get(timeSlot.destination);
@@ -298,9 +298,9 @@ export class ProductionTimeSlotOwnerShip {
   /**@type {ArrayMap<Number, ActivityDeliveryTimeSlot>} underlying data structure */ _productionMapping
 
   /**
-   * 
-   * @param {Array<Number>} relevantProductions 
-   * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
+   *
+   * @param {Array<Number>} relevantProductions
+   * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
    */
   constructor(relevantProductions, timeSlots){
     this._productionMapping = new ArrayMap()
@@ -322,7 +322,7 @@ export class ProductionTimeSlotOwnerShip {
 /**
  * Creates a mapping over time slots with which orders should be rendered under the time slot
  * If a time slot is missing from the map, that means it should not be rendered.
- * @param {Array<ActivityOrder>} orders 
+ * @param {Array<ActivityOrder>} orders
  * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
  * @param {Map<Number, DeliveryEndpoint>}
  * @returns {Map<Number, Array<ActivityOrder>}
@@ -347,8 +347,8 @@ export class OrderMapping{
   }
 
   /**
-   * 
-   * @param {Number} timeSlotID 
+   *
+   * @param {Number} timeSlotID
    * @returns {Array<ActivityOrder>}
    */
   getOrders(timeSlotID){
@@ -371,9 +371,9 @@ export class OrderMapping{
 
 /**
  * gets a procedure, if it doesn't exists create a dummy object
- * @param {Map<Number, Procedure>} procedures 
- * @param {ProcedureIdentifier} identifier 
- * @param {DeliveryEndpoint} endpoint 
+ * @param {Map<Number, Procedure>} procedures
+ * @param {ProcedureIdentifier} identifier
+ * @param {DeliveryEndpoint} endpoint
  */
 export function getProcedure(procedures, identifier, endpoint){
   // So here is where the idea of how procedures are represented in tracershop
@@ -393,8 +393,8 @@ export class EndpointsProcedures {
   /** @type {Map<Number, Map<String, Procedure>>} */ _procedures
 
   /**
-   * 
-   * @param {Map<Number, Procedure>} procedures 
+   *
+   * @param {Map<Number, Procedure>} procedures
    */
   constructor(procedures){
     this._procedures = new Map();
@@ -424,7 +424,7 @@ export class EndpointsProcedures {
 
 /**
  * Filters out ActivityDeliveryTimeSlots not owned by EndpointID
- * @param {Array<ActivityDeliveryTimeSlot>| Map<Number, ActivityDeliveryTimeSlot>} timeSlots 
+ * @param {Array<ActivityDeliveryTimeSlot>| Map<Number, ActivityDeliveryTimeSlot>} timeSlots
  * @param {Number} endpointID - Number corresponding to the ID of the Endpoint
  * @returns {Array<ActivityDeliveryTimeSlot>}
  */
@@ -437,8 +437,8 @@ export class ProcedureLocationIndex {
   /** @type {Map<Number, Map<Number, Procedure>}*/ _dataStructure
 
 /**
- * @param {Map<Number,Procedure>} procedures 
- * @param {Map<Number, Location>} Locations 
+ * @param {Map<Number,Procedure>} procedures
+ * @param {Map<Number, Location>} Locations
  */
   constructor(procedures, Locations, active_endpoint){
     this._dataStructure = new Map();
@@ -486,7 +486,7 @@ export class ProcedureLocationIndex {
  */
 export class ProcedureIndex {
   /** @type {Map<Number,T >}*/ _dataStructure
-  
+
   constructor(){
     this._dataStructure = new Map();
   }
@@ -496,8 +496,8 @@ export class TracerBookingMapping {
   /** @type {ArrayMap<Number | undefined, Booking>} */ _map
 
   /**
-   * 
-   * @param {Iterable<Booking>} bookings 
+   *
+   * @param {Iterable<Booking>} bookings
    * @param {ProcedureLocationIndex} procedureLocationIndex
    */
   constructor(bookings, procedureLocationIndex){
@@ -532,7 +532,7 @@ export class BitChain {
 
   /**
    * Function that evau
-   * @returns {Boolean} 
+   * @returns {Boolean}
    */
   eval(){
     throw "Virtual Function"
@@ -581,7 +581,7 @@ export class ProductionBitChain extends BitChain {
 
   /**
    * A data structure for figuring out if tracer is being produced at a day.
-   * @param {Map<Number, ActivityProduction>} productions 
+   * @param {Map<Number, ActivityProduction>} productions
    */
   constructor(productions){
     super()
@@ -600,7 +600,7 @@ export class ProductionBitChain extends BitChain {
 }
 
 /**
- * 
+ *
  * @param {Map<Number,ActivityOrder | InjectionOrder>} orders
  */
 export class OrderDateMapping {
@@ -619,17 +619,17 @@ export class OrderDateMapping {
 
   /**
    *
-   * @param {String} date_string 
-   * @returns 
+   * @param {String} date_string
+   * @returns
    */
   get_status_for_date(date_string){
     return this._orderMap.get(date_string);
   }
 
   /**
-   * Check if the order mapping has 
-   * @param {String} date_string 
-   * @returns 
+   * Check if the order mapping has
+   * @param {String} date_string
+   * @returns
    */
   has_status_for_date(date_string){
     return this._orderMap.has(date_string)
@@ -639,7 +639,7 @@ export class OrderDateMapping {
 /**
  * This is a mapping over the various release rights a Production user have.
  * To determine if a user have rights to free a tracer:
- * @example 
+ * @example
  * // Return true or false
  * const releaseRightHolder = new ReleaseRightHolder(user, releaseRights);
  * releaseRightHolder.permissionForTracer(tracer);
@@ -651,12 +651,12 @@ export class ReleaseRightHolder {
   /**
    * This is a mapping over the various release rights a Production user have.
   * To determine if a user have rights to free a tracer:
-  * @example 
+  * @example
   * // Return true or false
   * const releaseRightHolder = new ReleaseRightHolder(user, releaseRights);
   * releaseRightHolder.permissionForTracer(tracer);
-   * @param {User} user 
-   * @param {Map<Number, ReleaseRight>} releaseRights 
+   * @param {User} user
+   * @param {Map<Number, ReleaseRight>} releaseRights
    */
   constructor(user, releaseRights) {
     this._rightsMap = new Map();
@@ -712,7 +712,7 @@ export class ITimeTableDataContainer {
   /** @type {Number} The stopping hour of the Time Table */ max_hour
 
   /**
-   * 
+   *
    * @param {(T) => Element} columnNameFunction
    * @param {([U]) => Element} cellFunction
    */
@@ -736,11 +736,11 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
    * $Time_1 | bookings | bookings | ...
    * ------------------------------------
    * $Time_2 | bookings | bookings | ...
-   * 
-   * @param {Map<Number, Booking>} all_bookings 
-   * @param {Map<Number, Location>} all_locations 
-   * @param {Number} active_endpoint 
-   * @param {Date} active_date 
+   *
+   * @param {Map<Number, Booking>} all_bookings
+   * @param {Map<Number, Location>} all_locations
+   * @param {Number} active_endpoint
+   * @param {Date} active_date
    */
   constructor(all_bookings, all_locations, active_endpoint, active_date){
     function columnNameFunction(location) {
@@ -749,9 +749,9 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
     }
 
     /**
-     * 
-     * @param {Array<Booking>} bookings 
-     * @returns 
+     *
+     * @param {Array<Booking>} bookings
+     * @returns
      */
     function cellFunction(bookings){
       const state = useTracershopState();
