@@ -37,7 +37,13 @@ dbi = DatabaseInterface()
 VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
 
+class ExceptionEmptyFile(Exception):
+  pass
+
 def _get_file_contents(path):
+  if path.stat().st_size == 0:
+    raise ExceptionEmptyFile
+
   with io.open(path, "r", encoding="iso-8859-1") as fp:
       data = fp.readlines()
 
@@ -132,7 +138,15 @@ parserFunctions = {
 
 def handle_path(path):
   channel_layer = get_channel_layer()
-  data = _get_file_contents(path)
+
+  try:
+    data = _get_file_contents(path)
+  except ExceptionEmptyFile:
+    logger.error(f"Path: {path} is an empty file, Ignoring it!")
+    return
+  except IOError as Exception:
+    logger.error("Stale File handle!")
+    return
 
   try:
     vial = parse_val_file(data)
