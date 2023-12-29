@@ -20,23 +20,23 @@ from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreated
 from watchdog.observers.polling import PollingObserver as Observer
 
 class CopyFileHandler(FileSystemEventHandler):
-  def on_any_event(self, event: FileSystemEvent):
-    #logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
-    pass
-
   def on_created(self, event: FileCreatedEvent):
-    print(f"on_created triggered with {event.src_path}")
-    src_file = Path(event.src_path)
-    dst_file = Path(dst_path) / src_file.name
-    copy(src_file, dst_file)
+    try:
+      src_file = Path(event.src_path)
+      dst_file = Path(dst_path) / src_file.name
+      copy(src_file, dst_file)
+    except OSError:
+      print("wopsy")
 
   def on_modified(self, event: FileCreatedEvent):
-    print(f"on_modified triggered with {event.src_path}")
     if event.is_directory:
       return
-    src_file = Path(event.src_path)
-    dst_file = Path(dst_path) / src_file.name
-    copy(src_file, dst_file)
+    try:
+      src_file = Path(event.src_path)
+      dst_file = Path(dst_path) / src_file.name
+      copy(src_file, dst_file)
+    except OSError:
+      print("wopsy")
 
 observer = Observer()
 observer.schedule(CopyFileHandler(), src_path, True)

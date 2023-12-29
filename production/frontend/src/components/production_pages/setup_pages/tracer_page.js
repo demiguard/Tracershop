@@ -2,20 +2,21 @@ import React, { useState } from "react";
 import { Container, Table, FormControl, Row, Card, Collapse , Col} from "react-bootstrap";
 
 import { TracerModal } from "../../modals/tracer_modal.js";
-import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
+import { setStateToEvent, setTempMapToEvent } from "~/lib/state_management.js";
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
   TracerTypeOptions, cssAlignRight, TRACER_TYPE} from "~/lib/constants.js";
-
+import { Tracer } from "~/dataclasses/dataclasses.js";
 import { DATA_TRACER } from "~/lib/shared_constants.js"
-import { Tracer, TracerCatalog } from "~/dataclasses/dataclasses.js";
 import { ClickableIcon } from "../../injectable/icons.js";
 import { Select,  toOptions } from "../../injectable/select.js";
 import { HoverBox } from "../../injectable/hover_box.js";
-import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { OpenCloseButton } from "../../injectable/open_close_button.js";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
 import { CommitButton } from "~/components/injectable/commit_button.js";
 import { nullParser } from "~/lib/formatting.js";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
+import { compareLoosely } from "~/lib/utils.js";
+import { Optional } from "~/components/injectable/optional.js";
 
 
 export function TracerPage(){
@@ -24,6 +25,7 @@ export function TracerPage(){
   const [modalTracerID, setModalTracerID] = useState(-1)
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
+  const [tracers, setTracers] = useState(state.tracer);
   const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
 
@@ -40,178 +42,142 @@ export function TracerPage(){
     return () => {setModalTracerID(tracer.id)}
   }
 
-  /**
-   * Row for a tracer that is archived
-   * Note these are here to benefit from closure
-   * @param {{
-  *   tracer : Tracer
-  * }} param0 - props
-  * @returns {Element}
-  */
-  function ArchiveTracerRow({tracer}){
-    function restoreTracer(){
+  function restoreTracer(tracer){
+    return () => {
       websocket.sendEditModel(DATA_TRACER, {...tracer, archived : false,});
     }
-
-    return (<tr>
-      <td>{tracer.shortname}</td>
-      <td style={cssAlignRight}>
-        <ClickableIcon
-          label={`restore-${tracer.id}`}
-          src="static/images/archive_up.svg"
-          onClick={restoreTracer}
-        />
-      </td>
-    </tr>);
   }
 
-  /**
-   * Row for a tracer that is active in use
-   * Note these are here to benefit from closure
-   * @param {{
-   *   tracer : Tracer,
-   *   tracerCatalog : Map<Number, TracerCatalog>
-   *   websocket : TracerWebSocket
-   * }} param0 - props
-   * @returns {Element}
-   */
-  function ActiveTracerRow({tracer}){
-    const [tempTracer, setTempTracer] = useState({...tracer})
-
-
-    const archiveAble = !activeTracers.has(tracer.id) && 0 < tracer.id ;
-    const changed = tempTracer.clinical_name !== tracer.clinical_name
-                    || Number(tempTracer.isotope) !== tracer.isotope
-                    || Number(tempTracer.tracer_type) !== tracer.tracer_type;
-
-    function ArchiveTracer(){
-      // This function cannot be called with an empty tracer
+  function ArchiveTracer(tracer){
+    // This function cannot be called with an empty tracer
+    () => {
       websocket.sendEditModel(DATA_TRACER, {...tracer, archived : true});
     }
+  }
 
-    function validate(){
+  function validate(tracer){
+    return () => {
       return [true, {
-        ...tempTracer,
-        isotope : Number(tempTracer.isotope),
-        tracer_type : Number(tempTracer.tracer_type),
+        ...tracer,
+        isotope : Number(tracer.isotope),
+        tracer_type : Number(tracer.tracer_type),
       }];
     }
+  }
 
-    return (<tr aria-label={`active-tracer-${tracer.id}`}>
-      <td>
-        {0 < tracer.id ?  <FormControl
-            readOnly
-            aria-label={`set-shortname-${tracer.id}`}
-            value={tempTracer.shortname}
-        /> :
-          <FormControl
-            aria-label={`set-shortname-${tracer.id}`}
-            value={nullParser(tempTracer.shortname)}
-            onChange={setTempObjectToEvent(setTempTracer, 'shortname')}
-        />
-        }
-      </td>
-      <td>
-        <FormControl
-          aria-label={`set-clinical-name-${tracer.id}`}
-          value={nullParser(tempTracer.clinical_name)}
-          onChange={setTempObjectToEvent(setTempTracer, 'clinical_name')}
-        />
-      </td>
-      <td>
-        <FormControl
-          aria-label={`set-vial-tag-${tracer.id}`}
-          value={nullParser(tempTracer.vial_tag)}
-          onChange={setTempObjectToEvent(setTempTracer, 'vial_tag')}
-        />
+  const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false));
+
+  const activeTracerRows = [];
+  const archiveTracerRows = [];
+  const filter = new RegExp(tracerFilter, 'g');
+  for(const tracer of tracers.values()){
+    if(filter.test(tracer.shortname)){
+      if (tracer.archived){
+        archiveTracerRows.push(
+          <tr key={tracer.id}>
+            <td>{tracer.shortname}</td>
+            <td style={cssAlignRight}>
+              <ClickableIcon
+                label={`restore-${tracer.id}`}
+                src="static/images/archive_up.svg"
+                onClick={restoreTracer(tracer)}
+              />
+            </td>
+          </tr>);
+      } else {
+        const archiveAble = !activeTracers.has(tracer.id) && 0 < tracer.id ;
+        const changed = !compareLoosely(tracer, state.tracer.get(tracer.id));
+        console.log(validate(tracer))
+
+        activeTracerRows.push(
+          <tr key={tracer.id} aria-label={`active-tracer-${tracer.id}`}>
+            <td>
+              <FormControl
+                readOnly
+                aria-label={`set-shortname-${tracer.id}`}
+                value={tracer.shortname}
+              />
+            </td>
+            <td>
+              <FormControl
+                aria-label={`set-clinical-name-${tracer.id}`}
+                value={nullParser(tracer.clinical_name)}
+                onChange={setTempMapToEvent(setTracers, tracer.id, 'clinical_name')}
+              />
+            </td>
+            <td>
+              <FormControl
+                aria-label={`set-vial-tag-${tracer.id}`}
+                value={nullParser(tracer.vial_tag)}
+                onChange={setTempMapToEvent(setTracers, tracer.id, 'vial_tag')}
+            />
       </td>
       <td>
         <Select
           aria-label={`set-isotope-${tracer.id}`}
           options={isotopeOptions}
-          onChange={setTempObjectToEvent(setTempTracer, 'isotope')}
-          value={tempTracer.isotope}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'isotope')}
+          value={tracer.isotope}
         />
       </td>
       <td>
         <Select
           aria-label={`set-type-${tracer.id}`}
           options={toOptions(TracerTypeOptions)}
-          value={tempTracer.tracer_type}
-          onChange={setTempObjectToEvent(setTempTracer, 'tracer_type')}
+          value={tracer.tracer_type}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'tracer_type')}
         />
       </td>
       <td>
         <Row>
-        { tempTracer.tracer_type === TRACER_TYPE.DOSE && 0 < tempTracer.id ?
-            <Col><HoverBox
-            Base={<ClickableIcon
-              label={`open-modal-${tracer.id}`}
-              src="/static/images/setting.png"
-              onClick={openModal(tracer)}
-              />}
-              Hover={<div>Klik her for at konfigurer hvilke kunner kan bestille den injektion tracer</div>}
-              /></Col>
-          : "" }
-        { archiveAble ?
-          <Col><HoverBox
-          Base={<ClickableIcon
-            label={`archive-${tracer.id}`}
-            src="/static/images/archive_down.svg"
-            onClick={ArchiveTracer}
-            />}
-            Hover={<div>Klik her for arkiver Traceren</div>}
-            /></Col> : ""  }
-        { changed ?
+          <Optional exists={tracer.tracer_type === TRACER_TYPE.DOSE && 0 < tracer.id}>
+            <Col>
+              <HoverBox
+                Base={<ClickableIcon
+                  label={`open-modal-${tracer.id}`}
+                  src="/static/images/setting.png"
+                  onClick={openModal(tracer)}
+                />}
+                Hover={<div>Klik her for at konfigurer hvilke kunner kan bestille den injektion tracer</div>}
+              />
+            </Col>
+          </Optional>
+        <Optional exists={archiveAble}>
           <Col>
             <HoverBox
-              Base={
-                <CommitButton
-                  temp_object={tempTracer}
-                  validate={validate}
+              Base={<ClickableIcon
+                label={`archive-${tracer.id}`}
+                src="/static/images/archive_down.svg"
+                onClick={ArchiveTracer}
+              />}
+              Hover={<div>Klik her for arkiver Traceren</div>}
+            />
+          </Col>
+        </Optional>
+        <Optional exists={changed}>
+            <Col>
+              <HoverBox
+                Base={
+                  <CommitButton
+                  temp_object={tracer}
+                  validate={validate(tracer)}
                   object_type={DATA_TRACER}
                   label={`commit-tracer-${tracer.id}`}
-                />
-              }
-              Hover={<div>
-                Klik her for at gemme ændringer
-              </div>}
-            />
-          </Col> : ""}
+                  />
+                }
+                Hover={<div>
+                  Klik her for at gemme ændringer
+                </div>}
+              />
+            </Col>
+          </Optional>
         </Row>
       </td>
     </tr>);
-  }
+    } // end else archived
+  } // end if filtered
+} // end for loop
 
-  const activeTracerRows = [];
-  const archiveTracerRows = [];
-  const filter = new RegExp(tracerFilter, 'g');
-  for(const tracer of state.tracer.values()){
-    if(filter.test(tracer.shortname)){
-      if (tracer.archived){
-        archiveTracerRows.push(
-          <ArchiveTracerRow
-            key={tracer.id}
-            tracer={tracer}
-          />);
-      } else {
-        activeTracerRows.push(
-          <ActiveTracerRow
-            key={tracer.id}
-            tracer={tracer}
-          />);
-      }
-    }
-  }
-
-  activeTracerRows.push(
-    <ActiveTracerRow
-      key={-1}
-      tracer={new Tracer(
-        -1, "", "", 1, TRACER_TYPE.DOSE, null, "", false
-      )}
-    />
-  );
 
   const tracerModalProps = {
     [PROP_ACTIVE_TRACER] : modalTracerID,
@@ -221,11 +187,13 @@ export function TracerPage(){
 
   return (<Container>
     <Row>
-      <FormControl
-        aria-label="tracer-filter"
-        value={tracerFilter}
-        onChange={setStateToEvent(setTracerFilter)}
-      />
+      <TracershopInputGroup label="Tracer Navn Filter">
+        <FormControl
+          aria-label="tracer-filter"
+          value={tracerFilter}
+          onChange={setStateToEvent(setTracerFilter)}
+        />
+      </TracershopInputGroup>
     </Row>
     <Row>
       <Table>

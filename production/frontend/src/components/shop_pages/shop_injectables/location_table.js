@@ -1,26 +1,27 @@
 import React, { useState } from "react";
-import { FormControl, InputGroup, Table } from "react-bootstrap";
+import { FormControl, Table } from "react-bootstrap";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
-import { setStateToEvent, setTempObjectToEvent } from "../../../lib/state_management";
-import { Option, Select, toOptions } from "../../injectable/select";
-import { DATA_CUSTOMER, DATA_ENDPOINT, DATA_LOCATION } from "~/lib/shared_constants"
-import { Location } from "~/dataclasses/dataclasses";
+import { setStateToEvent, setTempMapToEvent, setTempObjectToEvent } from "../../../lib/state_management";
+import { Select, toOptions } from "../../injectable/select";
+import { DATA_LOCATION } from "~/lib/shared_constants"
 import { nullParser } from "~/lib/formatting";
-import { TracerWebSocket } from "../../../lib/tracer_websocket";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { CommitButton } from "~/components/injectable/commit_button";
+import { compareLoosely } from "~/lib/utils";
+import { Optional } from "~/components/injectable/optional";
 
 const FILTER_TYPES = {
   LOCATION_CODE : 1,
   COMMON_NAME : 2,
 }
 
+
 export function LocationTable(){
-  const websocket = useWebsocket();
   const state = useTracershopState()
   const [filter, setFilter] = useState("");
   const [filterType, setFilterType] = useState(FILTER_TYPES.LOCATION_CODE);
+  const [tempLocations, setTempLocations] = useState(state.location);
 
   const filterOptions = toOptions([{
     id : FILTER_TYPES.LOCATION_CODE,
@@ -30,61 +31,20 @@ export function LocationTable(){
     name : "Kalde Navn"
   }]);
 
-  /**
-  * Row in the table
-  * @param {{
-  * location : Location
-  * }} props
-  * @returns {Element}
-  */
-  function LocationTableRow({location}){
-    const [tempLocation, setTempLocation] = useState(location);
-
-    function validate(){
+  function validate(location_id){
+    const tempLocation = tempLocations.get(location_id);
+    return () => {
       if(tempLocation.common_name > 120){
-        return false, {};
+        return [false, {}];
       }
       const newCommonName = tempLocation.common_name ? tempLocation.common_name : null;
       const newEndpoint = tempLocation.endpoint ? Number(tempLocation.endpoint) : null;
 
-      return true, {...tempLocation, commonName : newCommonName, endpoint : newEndpoint};
+      return [true, {...tempLocation, common_name : newCommonName, endpoint : newEndpoint}];
     }
-
-    return (
-    <tr>
-      <td>{location.location_code}</td>
-      <td>
-        <TracershopInputGroup>
-          <FormControl
-            aria-label={`location-common-name-${location.id}`}
-            maxLength={120}
-            value={tempLocation.common_name}
-            onChange={setTempObjectToEvent(setTempLocation, 'common_name')}
-          />
-        </TracershopInputGroup>
-      </td>
-      <td>
-        <EndpointSelect
-          aria-label={`location-delivery-endpoint-${location.id}`}
-          customer={state.customer}
-          delivery_endpoint={state.delivery_endpoint}
-          emptyEndpoint
-          value={tempLocation.endpoint}
-          onChange={setTempObjectToEvent(setTempLocation, 'endpoint')}
-        />
-      </td>
-      <td>
-        <CommitButton
-          temp_object={tempLocation}
-          object_type={DATA_LOCATION}
-          validate={validate}
-        />
-      </td>
-    </tr>)
   }
 
-
-  const /**@type {Array<Location>} */ locations = [...state.location.values()].filter((location) => {
+  const locations = [...tempLocations.values()].filter((location) => {
     if(filter === ""){
       return true
     }
@@ -100,12 +60,61 @@ export function LocationTable(){
   }).sort((loc_1, loc_2) => {
     return loc_2.location_code < loc_1.location_code
   }).map(
-    (location, i) => {
-      return (<LocationTableRow
-                key={i}
-                location={location}
-              />);
+    (location) => {
+      const changed = !compareLoosely(state.location.get(location.id), location);
+      return (
+        <tr key={location.id}>
+          <td style={{
+            verticalAlign : "middle",
+            textAlign : "center"
+          }}>{location.location_code}</td>
+          <td style={{
+            verticalAlign : "middle",
+            textAlign : "center"
+          }}>
+            <TracershopInputGroup>
+              <FormControl
+                aria-label={`location-common-name-${location.id}`}
+                maxLength={120}
+                value={nullParser(location.common_name)}
+                onChange={setTempMapToEvent(setTempLocations, location.id, 'common_name')}
+              />
+            </TracershopInputGroup>
+          </td>
+          <td style={{
+            verticalAlign : "middle",
+            textAlign : "center"
+          }}>
+            <EndpointSelect
+              aria-label={`location-delivery-endpoint-${location}`}
+              customer={state.customer}
+              delivery_endpoint={state.delivery_endpoint}
+              emptyEndpoint
+              value={nullParser(location.endpoint)}
+              onChange={setTempMapToEvent(setTempLocations, location.id, 'endpoint')}
+            />
+          </td>
+          <td style={{
+            verticalAlign : "middle",
+            textAlign : "center"
+          }}>
+            <Optional exists={changed}>
+              <CommitButton
+                temp_object={location}
+                object_type={DATA_LOCATION}
+                validate={validate(location.id)}
+              />
+            </Optional>
+          </td>
+        </tr>)
   });
+
+  // I really wanna state how much I fucking hate react RN.
+  // So there's a functional difference to making a new component with
+  // everything neat and clearly separated, and this mess.
+  // When you have multi components you either lose focus when typing or
+  // have your state reset, when the original state changes.
+  // This is fucking stupid because you're forced to write ugly code.
 
   return (
     <div style={{

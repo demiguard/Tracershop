@@ -68,11 +68,11 @@ function TopCell({children}){
 // And I have NO idea how to reduce this
 
 /**
- * 
+ *
  * @param {{
  *   TimeTableDataContainer : ITimeTableDataContainer
- * }} param0 
- * @returns 
+ * }} param0
+ * @returns
  */
 export function TimeTable({entries,
   TimeTableDataContainer,
@@ -149,7 +149,13 @@ export function TimeTable({entries,
     />);
   }
 
-  return <Row style={cssWeeklyTimeTable}>
+  const fontSize = Math.min(1, 1.5 - (timeColumns.length) / 8 );
+
+  return <Row style={{...cssWeeklyTimeTable,
+      fontSize : `${fontSize}rem`
+    }}
+    aria-label='TimeTable'
+    >
       <PaddingLessCol>
         <TopCell></TopCell>
         {hourlyCells}
@@ -157,5 +163,3 @@ export function TimeTable({entries,
       {timeColumns}
     </Row>
 }
-
-
