@@ -74,8 +74,6 @@ export function TracerPage(){
     }
   }
 
-
-
   const activeTracerRows = [];
   const archiveTracerRows = [];
   const filter = new RegExp(tracerFilter, 'g');
@@ -191,9 +189,6 @@ export function TracerPage(){
     [PROP_ACTIVE_TRACER] : modalTracerID,
     [PROP_ON_CLOSE] : closeModal,
   };
-
-
-
 
   activeTracerRows.push(
     <tr key="-1">
