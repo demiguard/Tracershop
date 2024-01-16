@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Container, Table, FormControl, Row, Card, Collapse , Col} from "react-bootstrap";
 
 import { TracerModal } from "../../modals/tracer_modal.js";
@@ -25,6 +25,7 @@ export function TracerPage(){
   const [modalTracerID, setModalTracerID] = useState(-1)
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
+  const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false));
   const [tracers, setTracers] = useState(state.tracer);
   const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
@@ -33,6 +34,10 @@ export function TracerPage(){
   for(const catalogPage of state.tracer_mapping.values()){
     activeTracers.add(catalogPage.tracer);
   }
+
+  useEffect(() => {
+    setTracers(state.tracer)
+  }, [state.tracer])
 
   function closeModal(){
     setModalTracerID(-1);
@@ -55,6 +60,10 @@ export function TracerPage(){
     }
   }
 
+  function validateNew(){
+    return [true, newTracer];
+  }
+
   function validate(tracer){
     return () => {
       return [true, {
@@ -65,7 +74,7 @@ export function TracerPage(){
     }
   }
 
-  const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false));
+
 
   const activeTracerRows = [];
   const archiveTracerRows = [];
@@ -87,7 +96,6 @@ export function TracerPage(){
       } else {
         const archiveAble = !activeTracers.has(tracer.id) && 0 < tracer.id ;
         const changed = !compareLoosely(tracer, state.tracer.get(tracer.id));
-        console.log(validate(tracer))
 
         activeTracerRows.push(
           <tr key={tracer.id} aria-label={`active-tracer-${tracer.id}`}>
@@ -183,6 +191,74 @@ export function TracerPage(){
     [PROP_ACTIVE_TRACER] : modalTracerID,
     [PROP_ON_CLOSE] : closeModal,
   };
+
+
+
+
+  activeTracerRows.push(
+    <tr key="-1">
+      <td>
+        <FormControl value={newTracer.shortname}
+                     onChange={(event) => {setNewTracer(old => {
+                      return {
+                        ...old,
+                        shortname : event.target.value
+                      };          })}}
+        />
+      </td>
+      <td>
+        <FormControl value={newTracer.clinical_name}
+                     onChange={(event) => {setNewTracer(old => {
+                      return {
+                        ...old,
+                        clinical_name : event.target.value
+                      };          })}}
+        />
+      </td>
+      <td>
+        <FormControl value={newTracer.vial_tag}
+                     onChange={(event) => {setNewTracer(old => {
+                       return {
+                         ...old,
+                         vial_tag : event.target.value
+                       };})}}
+        />
+      </td>
+      <td>
+        <Select
+          aria-label={"set-isotope-new"}
+          options={isotopeOptions}
+          onChange={(event) => {setNewTracer(old => {
+            return {
+              ...old,
+              isotope : Number(event.target.value)
+            };          })}}
+          value={newTracer.isotope}
+        />
+      </td>
+      <td>
+        <Select
+          aria-label={"set-type-new"}
+          options={toOptions(TracerTypeOptions)}
+          value={newTracer.tracer_type}
+          onChange={(event) => {setNewTracer(old => {
+            return {
+              ...old,
+              tracer_type : Number(event.target.value)
+            };})}}
+        />
+      </td>
+      <td>
+        <Optional exists={newTracer.shortname.length >= 3 }>
+          <CommitButton
+            temp_object={newTracer}
+            object_type={DATA_TRACER}
+            validate={validateNew}
+          />
+        </Optional>
+      </td>
+    </tr>
+  )
 
 
   return (<Container>
