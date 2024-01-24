@@ -47,7 +47,7 @@ def _get_file_contents(path):
     raise ExceptionEmptyFile
 
   with io.open(path, "r", encoding="iso-8859-1") as fp:
-      data = fp.readlines()
+    data = fp.readlines()
 
   return data
 
@@ -70,12 +70,12 @@ logger.debug(f"Started with customer mapping: {customer_mapping}")
 
 
 def handle_path(path):
-  logger.info("Aquiring channel Layer")
+  logger.debug("Aquiring channel Layer")
   channel_layer = get_channel_layer()
-  logger.info("Aquired channel Layer")
+  logger.debug("Aquired channel Layer")
 
   try:
-    data = _get_file_contents(path)
+    file_content = _get_file_contents(path)
   except ExceptionEmptyFile:
     logger.error(f"Path: {path} is an empty file, Ignoring it!")
     return
@@ -83,8 +83,10 @@ def handle_path(path):
     logger.error("Stale File handle!")
     return
 
+  logger.debug(f"Read File content: {file_content}")
+
   try:
-    vial = parse_val_file(data)
+    vial = parse_val_file(file_content)
     logger.info(f"Parsed File to vial: {vial}")
     if vial is not None:
       vial.save()
@@ -102,9 +104,9 @@ def handle_path(path):
                     'type' : 'broadcastMessage',
                 }
             ))
-      logger.info(f"Send, Deleting file: {path}")
+      logger.info(f"Send vial to service, Deleting file: {path}")
       path.unlink()
-  except Exception:
+  except Exception as E:
     logger.error(traceback.format_exc())
     logger.error(f"Failed to process file {path}")
 
