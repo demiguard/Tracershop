@@ -334,8 +334,8 @@ class Vial(TracershopModel):
 
   def __str__(self) -> str:
     customerString = "(Missing)"
-    if self.customer is not None:
-      customerString = str(self.customer)
+    if self.owner is not None:
+      customerString = str(self.owner)
 
     tracerString = "(Missing)"
     if self.tracer:
