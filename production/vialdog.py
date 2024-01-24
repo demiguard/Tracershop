@@ -30,7 +30,9 @@ from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS, WE
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, DATA_VIAL, WEBSOCKET_MESSAGE_UPDATE_STATE
 from database.database_interface import DatabaseInterface
 from database.models import Vial, Tracer, Customer
+from lib.parsing import parse_val_file, update_customer_mapping, update_tracer_mapping
 from websocket.messages import getNewMessageID
+
 
 dbi = DatabaseInterface()
 
@@ -67,75 +69,6 @@ _create_customer_mapping()
 logger.debug(f"Started with customer mapping: {customer_mapping}")
 
 
-
-def _parse_customer(string: str, vial: Vial):
-  regex = re.compile("customer:\s*(\d+)\w+\s*")
-  regex_match = regex.match(string)
-  if regex_match is not None:
-    dispenser_id_str, = regex_match.groups()
-    dispenser_id = int(dispenser_id_str)
-    if dispenser_id in customer_mapping:
-      vial.owner = customer_mapping[dispenser_id]
-  logger.debug(f"Parsed String: \"{str}\" and mapped it to customer {vial.owner}")
-
-def _parse_charge(string: str, vial: Vial):
-  # I could regex this correctly, but...
-  regex = re.compile("charge:\s*([\w\-]+)\s*")
-  regex_match = regex.match(string)
-  if regex_match is None:
-    return
-  lot_number, = regex_match.groups()
-  vial.lot_number = lot_number
-  vial_tag_regex = re.compile("(\w+)-\d{6}-\d+")
-  vial_tag_match = vial_tag_regex.match(lot_number)
-  if vial_tag_match is None:
-    return
-
-  vial_tag, = vial_tag_match.groups()
-  if vial_tag in tracer_mapping:
-    vial.tracer = tracer_mapping[vial_tag]
-
-
-def _parse_fill_date(string: str, vial: Vial):
-  regex = re.compile("filldate:\s*(\d{2}).(\d{2}).(\d{2})\s*")
-  regex_match = regex.match(string)
-  if regex_match is not None:
-    day_str, month_str, year_str = regex_match.groups()
-    vial.fill_date = date(2000 + int(year_str), int(month_str), int(day_str))
-
-
-def _parse_fill_time(string: str, vial: Vial):
-  regex = re.compile("filltime:\s*(\d{2}):(\d{2}):(\d{2})\s*")
-  regex_match = regex.match(string)
-  if regex_match is not None:
-    hour_str, min_str, sec_str = regex_match.groups()
-    vial.fill_time = time(int(hour_str), int(min_str), int(sec_str))
-
-def _parse_activity(string: str, vial: Vial):
-  regex = re.compile("activity:\s*(\d+(\.\d+)?)\s*MBq;\s*")
-  regex_match = regex.match(string)
-  if regex_match is not None:
-    activity_str = regex_match.groups()
-    vial.activity = float(activity_str[0])
-
-
-def _parse_volume(string: str, vial: Vial):
-  regex = re.compile("volume:\s*(\d+(\.\d+)?)\s*ml\s*")
-  regex_match = regex.match(string)
-  if regex_match is not None:
-    volume_str = regex_match.groups()
-    vial.volume = float(volume_str[0])
-
-
-parserFunctions = {
-  'customer' : _parse_customer,
-  'charge' : _parse_charge,
-  'filldate': _parse_fill_date,
-  'filltime': _parse_fill_time,
-  'activity': _parse_activity,
-  'volume': _parse_volume,
-}
-
 def handle_path(path):
   channel_layer = get_channel_layer()
 
@@ -170,24 +103,6 @@ def handle_path(path):
     logger.error(traceback.format_exc())
     logger.error(f"Failed to process file {path}")
 
-def parse_val_file(file_content: List[str]) -> Vial:
-  vial = Vial()
-  keyword_regex = re.compile("(\w+):")
-  for val_string in file_content:
-    match = keyword_regex.match(val_string)
-    if match is None:
-      logger.error(f"Could not Parse line: {val_string}")
-      continue
-
-    key, = match.groups()
-    if key not in parserFunctions:
-      continue
-
-    # These function
-    parserFunctions[key](val_string, vial)
-
-  return vial
-
 
 class VialFileHandler(FileSystemEventHandler):
   def on_any_event(self, event: FileSystemEvent):
@@ -216,12 +131,11 @@ for val_path in vial_file_path.glob('VAL*'):
   logger.info(f"Processing file {val_path}")
   handle_path(val_path)
 
-
 try:
   while True:
     sleep(600)
-    _create_tracer_mapping()
-    _create_customer_mapping()
+    update_tracer_mapping()
+    update_customer_mapping()
 finally:
   observer.stop()
   observer.join()
