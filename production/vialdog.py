@@ -84,7 +84,7 @@ def handle_path(path):
     return
 
   logger.debug(f"Read File content: {file_content}")
-  vial = parse_val_file(file_content)
+  vial = parse_val_file(file_content, logger)
   logger.info(f"Parsed File to vial: {vial}")
   vial.save()
   data = async_to_sync(dbi.serialize_dict)({
