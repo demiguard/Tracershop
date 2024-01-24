@@ -70,7 +70,9 @@ logger.debug(f"Started with customer mapping: {customer_mapping}")
 
 
 def handle_path(path):
+  logger.info("Aquiring channel Layer")
   channel_layer = get_channel_layer()
+  logger.info("Aquired channel Layer")
 
   try:
     data = _get_file_contents(path)
@@ -122,17 +124,20 @@ class VialFileHandler(FileSystemEventHandler):
     val_path = Path(event.src_path)
     handle_path(val_path)
 
+vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
+val_files = [f for f in vial_file_path.glob('VAL*')]
+for val_path in val_files:
+  logger.info(f"Processing file {val_path}")
+  handle_path(val_path)
+  logger.info(f"Handled Path: {val_path}")
+
 observer = Observer()
 observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
 observer.start()
 
-vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
 
 # Process files that might have been there earlier
 
-for val_path in vial_file_path.glob('VAL*'):
-  logger.info(f"Processing file {val_path}")
-  handle_path(val_path)
 
 try:
   while True:
