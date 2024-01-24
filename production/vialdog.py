@@ -85,12 +85,12 @@ def handle_path(path):
 
   logger.debug(f"Read File content: {file_content}")
   vial = parse_val_file(file_content, logger)
-  logger.info(f"Parsed File to vial: {vial}")
+  logger.debug(f"Parsed File to vial: {vial}")
   vial.save()
   data = async_to_sync(dbi.serialize_dict)({
     DATA_VIAL : [vial]
   })
-  logger.info(f"Serialized dict to {data}")
+  logger.debug(f"Serialized dict to {data}")
   async_to_sync(channel_layer.group_send)(
             CHANNEL_GROUP_GLOBAL, {
                 WEBSOCKET_MESSAGE_ID : getNewMessageID(),
@@ -106,7 +106,7 @@ def handle_path(path):
 
 class VialFileHandler(FileSystemEventHandler):
   def on_any_event(self, event: FileSystemEvent):
-    logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
+    logger.debug(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
 
   def on_created(self, event: FileCreatedEvent):
     val_path = Path(event.src_path)
@@ -122,9 +122,9 @@ class VialFileHandler(FileSystemEventHandler):
 vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
 val_files = [f for f in vial_file_path.glob('VAL*')]
 for val_path in val_files:
-  logger.info(f"Processing file {val_path}")
+  logger.debug(f"Processing file {val_path}")
   handle_path(val_path)
-  logger.info(f"Handled Path: {val_path}")
+  logger.debug(f"Handled Path: {val_path}")
 
 observer = Observer()
 observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)

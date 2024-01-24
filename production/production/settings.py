@@ -278,7 +278,7 @@ LOGGING = {
             "handlers" : ["pingServiceHandler"],
         },
         VIAL_LOGGER : {
-          "level" : "DEBUG",
+          "level" : "INFO",
           "handlers" : ["vialServiceHandler"]
         }
 
