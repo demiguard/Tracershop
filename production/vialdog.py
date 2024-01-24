@@ -83,12 +83,14 @@ def handle_path(path):
 
   try:
     vial = parse_val_file(data)
+    logger.info(f"Parsed File to vial: {vial}")
     if vial is not None:
       vial.save()
       data = async_to_sync(dbi.serialize_dict)({
         DATA_VIAL : [vial]
       })
-      async_to_sync(channel_layer.group_send)(
+      logger.info(f"Serialized dict to {data}")
+      async_to_sync(channel_layer.group_send(
                 CHANNEL_GROUP_GLOBAL, {
                     WEBSOCKET_MESSAGE_ID : getNewMessageID(),
                     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -97,7 +99,8 @@ def handle_path(path):
                     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
                     'type' : 'broadcastMessage',
                 }
-            )
+            ))
+      logger.info(f"Send, Deleting file: {path}")
       path.unlink()
   except Exception:
     logger.error(traceback.format_exc())
