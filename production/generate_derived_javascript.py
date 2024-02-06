@@ -65,6 +65,20 @@ with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
       if field.name in model.exclude:
         continue
       out.write(f"    this.{field.name}={field.name}\n")
+    out.write("  }\n\n")
+    out.write(f"  /**Copies the {model.__name__.lower()}\n")
+    out.write(f"  * @returns {{ {model.__name__} }}\n")
+    out.write("   */\n")
+    out.write("  copy(){\n")
+    out.write("    return new this.constructor(\n")
+    for i,field in enumerate(model._meta.fields):
+      if field.name in model.exclude:
+        continue
+      out.write(f"      this.{field.name}")
+      if i != len(model._meta.fields) -1: # Note there is a bug here if the last field is in exclude
+        out.write(",")
+      out.write("\n")
+    out.write("    )\n")
     out.write("  }\n")
     out.write("}\n\n")
 

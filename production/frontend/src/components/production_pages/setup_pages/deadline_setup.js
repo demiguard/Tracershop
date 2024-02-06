@@ -1,18 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Button, Col, Container, Row } from "react-bootstrap";
 
 import { DAYS, DEADLINE_TYPES, cssCenter, cssError } from "../../../lib/constants";
 import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants";
 import { Deadline, ServerConfiguration } from "../../../dataclasses/dataclasses";
 import { Select, toOptions } from "../../injectable/select";
-import { TracerWebSocket } from "../../../lib/tracer_websocket";
-import { setStateToEvent } from "../../../lib/state_management";
+import { appendNewObject, setStateToEvent, setTempMapToEvent } from "../../../lib/state_management";
 import { parseTimeInput } from "../../../lib/user_input";
 import { TimeInput } from "../../injectable/inputs/time_input";
 import { ErrorInput } from "../../injectable/inputs/error_input";
 import { DaysSelect } from "../../injectable/derived_injectables/days_select";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { nullParser } from "~/lib/formatting";
+import { Optional } from "~/components/injectable/optional";
+import { compareLoosely, nullify } from "~/lib/utils";
+import { CommitButton } from "~/components/injectable/commit_button";
+
+
 
 
 /**
@@ -24,7 +28,7 @@ export const GlobalDeadlineValuesOptions = {
   GLOBAL_INJECTION_DEADLINE : 3,
 }
 
-const globalOptions = toOptions([
+const GLOBAL_OPTIONS = toOptions([
   {id : GlobalDeadlineValuesOptions.NO_OPTION, name: "-----"},
   {id : GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE, name: "Aktivitet Deadline"},
   {id : GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE, name: "Injektion Deadline"},
@@ -38,6 +42,9 @@ const DEADLINE_TYPE_OPTIONS = toOptions([{
   name : "Ugenlig Deadline",
 }])
 
+function getNewDeadline(){
+  return new Deadline(-1, DEADLINE_TYPES.DAILY, "", null);
+}
 
 /**
  * This is a table like, that displays the deadlines to the user.
@@ -47,6 +54,14 @@ const DEADLINE_TYPE_OPTIONS = toOptions([{
 export function DeadlineSetup(){
   const state = useTracershopState();
   const websocket = useWebsocket();
+
+  const [deadlines, setDeadlines] = useState(appendNewObject(state.deadline, getNewDeadline));
+  const [errors, setErrors] = useState(new Map())
+
+  useEffect(() => {
+    setDeadlines(appendNewObject(state.deadline, getNewDeadline));
+  }, [state.deadline])
+
   const /**@type {ServerConfiguration | undefined} */ serverConfig = state.server_config.get(1);
 
   if(serverConfig === undefined){
@@ -73,189 +88,113 @@ export function DeadlineSetup(){
         } break;
       }
     }
-
   }
 
+  const Deadlines = [...deadlines.values()].map(
+    (deadline, i) => {
+      const error = errors.has(deadline.id) ? errors.get(deadline.id) : "";
+      const changed = state.deadline.has(deadline.id) ?
+                        !compareLoosely(state.deadline.get(deadline.id), deadline)
+                        : true;
 
+      const isGlobalDeadline = globalActivityDeadline == deadline.id || globalInjectionDeadline == deadline.id;
 
-/** This row is the representation of a deadline to a user.
- *
- * @param {{
- *  deadline : Deadline,
-*  setGlobalDeadline : Function,
-*  activityDeadline : Number,
-*  injectionDeadline : Number,
-* }} props
-* @returns {Element}
-*/
-function DeadlineRow({deadline,
-                     setGlobalDeadline,
-                     activityDeadline,
-                     injectionDeadline,
-                   }){
- const [deadlineType, _setDeadlineType] = useState(deadline.deadline_type)
- const [time, _setTime] = useState(deadline.deadline_time)
- const [day, _setDay] = useState(deadline.deadline_day)
+      let globalValue = (() => {
+        if(deadline.id === globalActivityDeadline){
+          return GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE;
+        }
+        if (deadline.id === globalInjectionDeadline){
+          return GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE;
+        }
+        return GlobalDeadlineValuesOptions.NO_OPTION;
+      })();
 
+      function validate(){
+        const [validTime, time] = parseTimeInput(deadline.deadline_time, "Deadline tidspunktet");
 
- // State Setters
- function setDeadlineType(event){
-   const newDeadlineType = Number(event.target.value);
-   if (deadlineType === newDeadlineType){
-     return;
-   }
+        if(!validTime){
+          setErrors(oldErrors => {
+            const newErrors = new Map(oldErrors);
+            newErrors.set(deadline.id, time);
+            return newErrors;
+          });
+          return [false, {}];
+        }
 
-   if(newDeadlineType === DEADLINE_TYPES.DAILY){
-     _setDay(null);
-   } else if(newDeadlineType === DEADLINE_TYPES.WEEKLY){
-     _setDay(1);
-   }
+        if (errors.has(deadline.id)){
+          setErrors(oldErrors => {
+            const newErrors = new Map(oldErrors);
+            newErrors.delete(deadline.id);
+            return newErrors;
+          });
+        }
 
-   _setDeadlineType(newDeadlineType);
-
-   websocket.sendEditModel(DATA_DEADLINE, {...deadline, deadline_type : Number(event.target.value)})
- }
-
- function setDay(event) {
-   const newDay = Number(event.target.value)
-   if (day === newDay){
-     return;
-   }
-   _setDay(newDay)
-
-   websocket.sendEditModel(DATA_DEADLINE, {...deadline, deadline_day : newDay})
- }
-
- function setTime(inputValue){
-   _setTime(inputValue)
-
-   const [valid, time] = parseTimeInput(inputValue)
-   if (valid){
-     websocket.sendEditModel(DATA_DEADLINE, {...deadline, deadline_time : time})
-   }
- }
-
- let globalValue = GlobalDeadlineValuesOptions.NO_OPTION;
- if (deadline.id === activityDeadline){
-   globalValue = GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE;
- }
- if (deadline.id === injectionDeadline){
-   globalValue = GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE;
- }
-
- return <Row style={{
-   marginBottom : "10px",
-   marginTop : "10px",
- }}>
-   <Col>
-     <Select
-       aria-label={`type-${deadline.id}`}
-       options={DEADLINE_TYPE_OPTIONS}
-       onChange={setDeadlineType}
-       value={deadlineType}
-     />
-   </Col>
-   <Col>
-     <TimeInput
-       value={time}
-       aria-label={`time-${deadline.id}`}
-       stateFunction={setTime}/>
-   </Col>
-   <Col style={cssCenter}>
-       { deadlineType === DEADLINE_TYPES.WEEKLY ? <DaysSelect
-         aria-label={`days-${deadline.id}`}
-         value={day}
-         onChange={setDay}
-       /> : "-----"}
-   </Col>
-   <Col>
-     { globalValue === GlobalDeadlineValuesOptions.NO_OPTION ?
-     <Select
-       aria-label={`global-${deadline.id}`}
-       options={globalOptions}
-       value={globalValue}
-       onChange={setGlobalDeadline(deadline)}
-     /> : <Select
-       aria-label={`global-${deadline.id}`}
-       options={globalOptions}
-       value={globalValue}
-       onChange={setGlobalDeadline(deadline)}
-       disabled
-     />
-   }
-   </Col>
- </Row>
-}
-
-
-  /**
-  * A row where a user can create a new Deadline
-  * @returns {Element}
-  */
-  function NewDeadlineRow(){
-    const [deadlineType, setDeadlineType] = useState(DEADLINE_TYPES.DAILY);
-    const [deadlineTime, setDeadlineTime] = useState("");
-    const [day, setDay] = useState(DAYS.MONDAY);
-    const [error, setError] = useState("");
-
-    function createDeadline(){
-      const [validTime, timeOutput] = parseTimeInput(deadlineTime, "Deadline tidspunktet");
-
-      if (validTime){
-        setError("");
-        websocket.sendCreateModel(DATA_DEADLINE, [
-          new Deadline(undefined, Number(deadlineType), timeOutput, day)
-        ]);
-      } else {
-        setError(timeOutput);
+        return [true, {...deadline, deadline_time : time,
+                                    deadline_type : Number(deadline.deadline_type),
+                                    deadline_day : nullify(Number(deadline.deadline_day))}];
       }
-    }
 
-    return (<Row>
+      function setTime(new_time_value){
+        const newDeadline = deadline.copy();
+        newDeadline.deadline_time = new_time_value;
+        setDeadlines(old_state => {
+          const newState = new Map(old_state);
+          newState.set(newDeadline.id, newDeadline);
+          return newState;
+        } )
+      }
+
+      return (<Row key={i}>
       <Col>
         <Select
-          aria-label="type-new"
+          aria-label={`type-${deadline.id}`}
           options={DEADLINE_TYPE_OPTIONS}
-          value={deadlineType}
-          onChange={setStateToEvent(setDeadlineType)}
+          value={deadline.deadline_type}
+          onChange={setTempMapToEvent(setDeadlines, deadline.id, 'deadline_type')}
         />
       </Col>
       <Col>
         <ErrorInput error={error}>
           <TimeInput
-            aria-label="time-new"
-            stateFunction={setDeadlineTime}
-            value={deadlineTime}
+            aria-label={`time-${deadline.id}`}
+            value={deadline.deadline_time}
+            stateFunction={setTime}
           />
         </ErrorInput>
       </Col>
       <Col style={cssCenter}>
-        {Number(deadlineType) === DEADLINE_TYPES.WEEKLY ? <DaysSelect
-            aria-label="days-new"
-            value={day}
-            onChange={setStateToEvent(setDay)}
-          /> : "-----"}
+        <Optional exists={Number(deadline.deadline_type) === DEADLINE_TYPES.WEEKLY} alternative={<p>--------------</p>}>
+          <DaysSelect
+            aria-label={`days-${deadline.id}`}
+            value={deadline.deadline_day}
+            onChange={setTempMapToEvent(setDeadlines, deadline.id, 'deadline_day')}
+          />
+        </Optional>
       </Col>
       <Col>
-          <Button onClick={createDeadline}>Opret Deadline</Button>
+        <Optional exists={deadline.id != -1}>
+          <Select
+            aria-label={`global-${deadline.id}`}
+            canEdit={!isGlobalDeadline}
+            options={GLOBAL_OPTIONS}
+            onChange={setGlobalDeadline(deadline)}
+            value={globalValue}
+          />
+        </Optional>
+      </Col>
+      <Col>
+        <Optional exists={changed}>
+          <CommitButton
+            label={`commit-${deadline.id}`}
+            temp_object={deadline}
+            validate={validate}
+            object_type={DATA_DEADLINE}
+          />
+        </Optional>
+
       </Col>
     </Row>)
-  }
-
-  const Deadlines = [...state.deadline.values()].map(
-    (deadline, i) => <DeadlineRow
-                        deadline={deadline}
-                        setGlobalDeadline={setGlobalDeadline}
-                        key={i}
-                        activityDeadline={globalActivityDeadline}
-                        injectionDeadline={globalInjectionDeadline}
-                      />);
-
-  Deadlines.push(
-    <NewDeadlineRow
-      key={-1}
-    />
-  )
+    });
 
   return <Container>
     <Row>
@@ -263,6 +202,7 @@ function DeadlineRow({deadline,
       <Col><h3>Tidspunkt</h3></Col>
       <Col><h3>Dag</h3></Col>
       <Col><h3>Globale Deadlines</h3></Col>
+      <Col></Col>
       <hr/>
     </Row>
     {Deadlines}

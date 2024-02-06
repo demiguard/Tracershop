@@ -10,7 +10,7 @@ import SiteStyles from '~/css/Site.module.css'
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay } from "~/lib/chronomancy";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState } from "../tracer_shop_context";
 import { TracerCatalog } from "~/lib/data_structures";
 import { getRelevantActivityOrders } from "~/lib/filters";
 
@@ -32,8 +32,8 @@ export function OrderReview({active_endpoint, active_customer, active_date,
     state.tracer_mapping, state.tracer
   )
 
-  const /**@type {Array<Tracer>} */ availableActivityTracers = tracerCatalog.getActivityCatalog(active_endpoint);
-  const /**@type {Array<Tracer>} */ availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
+  const availableActivityTracers = tracerCatalog.getActivityCatalog(active_endpoint);
+  const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
 
   // State Definitions
   let activeTracerInit = -1

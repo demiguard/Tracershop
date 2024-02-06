@@ -83,8 +83,6 @@ export function ShopOrderPage ({relatedCustomer}){
     };
   }
 
-
-
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
   const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
   const [today, setToday] = useState(init.current.today);
@@ -174,7 +172,7 @@ export function ShopOrderPage ({relatedCustomer}){
                 aria-label="site-select"
                 options={SiteOptions}
                 onChange={setView}
-                value={state.view}
+                value={viewIdentifier}
               />
             </TracershopInputGroup>
           </Container>

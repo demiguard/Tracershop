@@ -24,10 +24,7 @@ beforeEach(() => {
   window.location = { href : "tracershop"}
   container = document.createElement("div");
   websocket = tracer_websocket.TracerWebSocket;
-
-
 });
-
 
 afterEach(() => {
   cleanup();
@@ -59,6 +56,9 @@ describe("Tracer setup Page test suite", () => {
         expect(screen.getByLabelText(`open-modal-${tracer.id}`)).toBeVisible()
       }
     }
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
   });
 
   it("Restore Tracer", async () => {
@@ -196,5 +196,3 @@ describe("Tracer setup Page test suite", () => {
     }
   });
 });
-
-

@@ -50,11 +50,30 @@ export function setTempObjectToEvent(stateFunction, keyword){
 export function setTempMapToEvent(stateFunction, id, keyword){
   return (event) => {
     stateFunction(oldMap => {
-      const newObject = {...oldMap.get(id)};
+      const newObject = oldMap.get(id).copy();
       const newMap = new Map(oldMap);
       newObject[keyword] = event.target.value;
       newMap.set(id, newObject);
       return newMap;
     })
   }
+}
+
+/**
+ * @template T
+ * @callback TConstructor
+ * @returns {T}
+ */
+
+/**
+ * This add an object to constructed by the nConstructor.
+ * @template T
+ * @param {Map<Number, T>} map
+ * @param {TConstructor<T>} nConstructor
+ * @returns {Map<Number, T>}
+ */
+export function appendNewObject(map, nConstructor){
+  const stateMap = new Map(map);
+  stateMap.set(-1, nConstructor());
+  return stateMap
 }

@@ -8,6 +8,18 @@ export class Address {
     this.port=port
     this.description=description
   }
+
+  /**Copies the address
+  * @returns { Address }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.ip,
+      this.port,
+      this.description
+    )
+  }
 }
 
 export class ActivityOrder {
@@ -23,6 +35,24 @@ export class ActivityOrder {
     this.ordered_by=ordered_by
     this.freed_by=freed_by
   }
+
+  /**Copies the activityorder
+  * @returns { ActivityOrder }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.ordered_activity,
+      this.delivery_date,
+      this.status,
+      this.comment,
+      this.ordered_time_slot,
+      this.moved_to_time_slot,
+      this.freed_datetime,
+      this.ordered_by,
+      this.freed_by
+    )
+  }
 }
 
 export class Booking {
@@ -35,12 +65,37 @@ export class Booking {
     this.start_time=start_time
     this.start_date=start_date
   }
+
+  /**Copies the booking
+  * @returns { Booking }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.status,
+      this.location,
+      this.procedure,
+      this.accession_number,
+      this.start_time,
+      this.start_date
+    )
+  }
 }
 
 export class ClosedDate {
   constructor(id, close_date, ) {
     this.id=id
     this.close_date=close_date
+  }
+
+  /**Copies the closeddate
+  * @returns { ClosedDate }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.close_date
+    )
   }
 }
 
@@ -57,6 +112,24 @@ export class Customer {
     this.billing_zip_code=billing_zip_code
     this.active_directory_code=active_directory_code
   }
+
+  /**Copies the customer
+  * @returns { Customer }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.short_name,
+      this.long_name,
+      this.dispenser_id,
+      this.billing_address,
+      this.billing_city,
+      this.billing_email,
+      this.billing_phone,
+      this.billing_zip_code,
+      this.active_directory_code
+    )
+  }
 }
 
 export class Deadline {
@@ -65,6 +138,18 @@ export class Deadline {
     this.deadline_type=deadline_type
     this.deadline_time=deadline_time
     this.deadline_day=deadline_day
+  }
+
+  /**Copies the deadline
+  * @returns { Deadline }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.deadline_type,
+      this.deadline_time,
+      this.deadline_day
+    )
   }
 }
 
@@ -77,6 +162,20 @@ export class ActivityDeliveryTimeSlot {
     this.production_run=production_run
     this.expiration_date=expiration_date
   }
+
+  /**Copies the activitydeliverytimeslot
+  * @returns { ActivityDeliveryTimeSlot }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.weekly_repeat,
+      this.delivery_time,
+      this.destination,
+      this.production_run,
+      this.expiration_date
+    )
+  }
 }
 
 export class DicomEndpoint {
@@ -84,6 +183,17 @@ export class DicomEndpoint {
     this.id=id
     this.address=address
     this.ae_title=ae_title
+  }
+
+  /**Copies the dicomendpoint
+  * @returns { DicomEndpoint }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.address,
+      this.ae_title
+    )
   }
 }
 
@@ -96,6 +206,21 @@ export class DeliveryEndpoint {
     this.phone=phone
     this.name=name
     this.owner=owner
+  }
+
+  /**Copies the deliveryendpoint
+  * @returns { DeliveryEndpoint }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.address,
+      this.city,
+      this.zip_code,
+      this.phone,
+      this.name,
+      this.owner
+    )
   }
 }
 
@@ -115,6 +240,27 @@ export class InjectionOrder {
     this.freed_datetime=freed_datetime
     this.freed_by=freed_by
   }
+
+  /**Copies the injectionorder
+  * @returns { InjectionOrder }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.delivery_time,
+      this.delivery_date,
+      this.injections,
+      this.status,
+      this.tracer_usage,
+      this.comment,
+      this.ordered_by,
+      this.endpoint,
+      this.tracer,
+      this.lot_number,
+      this.freed_datetime,
+      this.freed_by
+    )
+  }
 }
 
 export class Isotope {
@@ -126,6 +272,20 @@ export class Isotope {
     this.atomic_letter=atomic_letter
     this.metastable=metastable
   }
+
+  /**Copies the isotope
+  * @returns { Isotope }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.atomic_number,
+      this.atomic_mass,
+      this.halflife_seconds,
+      this.atomic_letter,
+      this.metastable
+    )
+  }
 }
 
 export class ReleaseRight {
@@ -135,12 +295,34 @@ export class ReleaseRight {
     this.releaser=releaser
     this.product=product
   }
+
+  /**Copies the releaseright
+  * @returns { ReleaseRight }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.expiry_date,
+      this.releaser,
+      this.product
+    )
+  }
 }
 
 export class LegacyProductionMember {
   constructor(id, legacy_production_username, ) {
     this.id=id
     this.legacy_production_username=legacy_production_username
+  }
+
+  /**Copies the legacyproductionmember
+  * @returns { LegacyProductionMember }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.legacy_production_username
+    )
   }
 }
 
@@ -151,6 +333,18 @@ export class Location {
     this.endpoint=endpoint
     this.common_name=common_name
   }
+
+  /**Copies the location
+  * @returns { Location }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.location_code,
+      this.endpoint,
+      this.common_name
+    )
+  }
 }
 
 export class Message {
@@ -159,6 +353,17 @@ export class Message {
     this.message=message
     this.expiration=expiration
   }
+
+  /**Copies the message
+  * @returns { Message }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.message,
+      this.expiration
+    )
+  }
 }
 
 export class MessageAssignment {
@@ -166,6 +371,17 @@ export class MessageAssignment {
     this.id=id
     this.message_id=message_id
     this.customer_id=customer_id
+  }
+
+  /**Copies the messageassignment
+  * @returns { MessageAssignment }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.message_id,
+      this.customer_id
+    )
   }
 }
 
@@ -180,6 +396,22 @@ export class Tracer {
     this.vial_tag=vial_tag
     this.archived=archived
   }
+
+  /**Copies the tracer
+  * @returns { Tracer }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.shortname,
+      this.clinical_name,
+      this.isotope,
+      this.tracer_type,
+      this.default_price_per_unit,
+      this.vial_tag,
+      this.archived
+    )
+  }
 }
 
 export class TracerCatalogPage {
@@ -189,6 +421,19 @@ export class TracerCatalogPage {
     this.tracer=tracer
     this.max_injections=max_injections
     this.overhead_multiplier=overhead_multiplier
+  }
+
+  /**Copies the tracercatalogpage
+  * @returns { TracerCatalogPage }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.endpoint,
+      this.tracer,
+      this.max_injections,
+      this.overhead_multiplier
+    )
   }
 }
 
@@ -201,6 +446,20 @@ export class Procedure {
     this.tracer=tracer
     this.owner=owner
   }
+
+  /**Copies the procedure
+  * @returns { Procedure }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.series_description,
+      this.tracer_units,
+      this.delay_minutes,
+      this.tracer,
+      this.owner
+    )
+  }
 }
 
 export class ProcedureIdentifier {
@@ -209,6 +468,18 @@ export class ProcedureIdentifier {
     this.code=code
     this.description=description
     this.is_pet=is_pet
+  }
+
+  /**Copies the procedureidentifier
+  * @returns { ProcedureIdentifier }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.code,
+      this.description,
+      this.is_pet
+    )
   }
 }
 
@@ -220,6 +491,19 @@ export class ActivityProduction {
     this.production_time=production_time
     this.expiration_date=expiration_date
   }
+
+  /**Copies the activityproduction
+  * @returns { ActivityProduction }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.production_day,
+      this.tracer,
+      this.production_time,
+      this.expiration_date
+    )
+  }
 }
 
 export class SecondaryEmail {
@@ -227,6 +511,17 @@ export class SecondaryEmail {
     this.id=id
     this.email=email
     this.record_user=record_user
+  }
+
+  /**Copies the secondaryemail
+  * @returns { SecondaryEmail }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.email,
+      this.record_user
+    )
   }
 }
 
@@ -242,6 +537,23 @@ export class ServerConfiguration {
     this.ping_service_ae_tile=ping_service_ae_tile
     this.ris_dicom_endpoint=ris_dicom_endpoint
   }
+
+  /**Copies the serverconfiguration
+  * @returns { ServerConfiguration }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.SMTPServer,
+      this.DateRange,
+      this.AdminPhoneNumber,
+      this.AdminEmail,
+      this.global_activity_deadline,
+      this.global_injection_deadline,
+      this.ping_service_ae_tile,
+      this.ris_dicom_endpoint
+    )
+  }
 }
 
 export class User {
@@ -252,6 +564,19 @@ export class User {
     this.user_group=user_group
     this.active=active
   }
+
+  /**Copies the user
+  * @returns { User }
+   */
+  copy(){
+    return new this.constructor(
+      this.last_login,
+      this.id,
+      this.username,
+      this.user_group,
+      this.active
+    )
+  }
 }
 
 export class UserAssignment {
@@ -259,6 +584,17 @@ export class UserAssignment {
     this.id=id
     this.user=user
     this.customer=customer
+  }
+
+  /**Copies the userassignment
+  * @returns { UserAssignment }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.user,
+      this.customer
+    )
   }
 }
 
@@ -273,6 +609,23 @@ export class Vial {
     this.fill_date=fill_date
     this.assigned_to=assigned_to
     this.owner=owner
+  }
+
+  /**Copies the vial
+  * @returns { Vial }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.tracer,
+      this.activity,
+      this.volume,
+      this.lot_number,
+      this.fill_time,
+      this.fill_date,
+      this.assigned_to,
+      this.owner
+    )
   }
 }
 

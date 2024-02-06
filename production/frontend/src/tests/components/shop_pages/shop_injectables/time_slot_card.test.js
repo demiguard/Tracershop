@@ -78,7 +78,7 @@ describe("Time slot card Test Suite", () => {
     act(() => {
       fireEvent.click(openButton);
     });
-    expect(screen.queryByLabelText('create-new')).toBeNull();
+    expect(screen.queryByLabelText('commit--1')).toBeNull();
 
     for(const order of relevantActivityOrders ){
       if(order.ordered_time_slot === 1){
@@ -87,7 +87,7 @@ describe("Time slot card Test Suite", () => {
     }
   });
 
-  it("Create an New order", () => {
+  it("Create an New order", async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <TimeSlotCard {...props} />
@@ -100,15 +100,15 @@ describe("Time slot card Test Suite", () => {
     fireEvent.click(openButton);
   });
 
-  const activityInput = screen.getByTestId('activity-new');
-  const commentInput = screen.getByTestId('comment-new');
+  const activityInput = screen.getByTestId('activity--1');
+  const commentInput = screen.getByTestId('comment--1');
   act(() => {
     fireEvent.change(activityInput, {target : {value : "40000"}})
     fireEvent.change(commentInput, {target : {value : "test comment"}})
   });
 
-  const commitButton = screen.getByLabelText('create-new');
-  act(() => {
+  const commitButton = screen.getByLabelText('commit--1');
+  await act(async () => {
     fireEvent.click(commitButton);
   });
 
@@ -134,14 +134,14 @@ describe("Time slot card Test Suite", () => {
     fireEvent.click(openButton);
   });
 
-  const activityInput = screen.getByTestId('activity-new');
-  const commentInput = screen.getByTestId('comment-new');
+  const activityInput = screen.getByTestId('activity--1');
+  const commentInput = screen.getByTestId('comment--1');
   act(() => {
     fireEvent.change(activityInput, {target : {value : "4asdgf0000"}})
     fireEvent.change(commentInput, {target : {value : "test comment"}})
   });
 
-  const commitButton = screen.getByLabelText('create-new');
+  const commitButton = screen.getByLabelText('create--1');
   act(() => {
     fireEvent.click(commitButton);
   });
@@ -210,7 +210,6 @@ describe("Time slot card Test Suite", () => {
     const timeSlotActivityInput = screen.getByTestId('activity-new');
 
     expect(timeSlotActivityInput.value).toBe("5000");
-
   });
 
 

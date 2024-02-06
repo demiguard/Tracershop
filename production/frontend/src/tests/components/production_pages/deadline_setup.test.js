@@ -56,9 +56,10 @@ describe("Deadline Setup tests", () => {
     await act(async () => {
       const input = await screen.findByLabelText('type-1')
       fireEvent.change(input, {target : {value : "1"}})
+      fireEvent.click(await screen.findByLabelText("commit-1"));
     })
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_DEADLINE, expect.objectContaining({
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_DEADLINE, expect.objectContaining({
       id : 1,
       deadline_type : DEADLINE_TYPES.WEEKLY,
       deadline_time : "12:00:00",
@@ -67,6 +68,7 @@ describe("Deadline Setup tests", () => {
 
   })
 
+  // This test is trivially ensure and kinda legacy because the confirmation method changed
   it("Change deadline Type to same value", async () => {
     render(<StateContextProvider value={testState} >
       <WebsocketContextProvider value={websocket}>
@@ -78,7 +80,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : "0"}})
     })
 
-    expect(websocket.sendEditModel).not.toBeCalled();
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
   })
 
   it("Change deadline time", async () => {
@@ -89,25 +91,27 @@ describe("Deadline Setup tests", () => {
     </StateContextProvider>);
 
     await act(async () => {
-      const input = await screen.findByLabelText('time-1')
+      const input = await screen.findByLabelText('time-1');
 
-      fireEvent.change(input, {target : {value : ""}})
-      expect(input.value).toBe("")
-      fireEvent.change(input, {target : {value : "1"}})
-      expect(input.value).toBe("1")
-      fireEvent.change(input, {target : {value : "12"}})
-      expect(input.value).toBe("12")
-      fireEvent.change(input, {target : {value : "123"}})
-      expect(input.value).toBe("12:3")
-      fireEvent.change(input, {target : {value : "12:30"}})
-      expect(input.value).toBe("12:30")
-      fireEvent.change(input, {target : {value : "12:300"}})
-      expect(input.value).toBe("12:30:0")
-      fireEvent.change(input, {target : {value : "12:30:00"}})
-      expect(input.value).toBe("12:30:00")
+      fireEvent.change(input, {target : {value : ""}});
+      expect(input.value).toBe("");
+      fireEvent.change(input, {target : {value : "1"}});
+      expect(input.value).toBe("1");
+      fireEvent.change(input, {target : {value : "12"}});
+      expect(input.value).toBe("12");
+      fireEvent.change(input, {target : {value : "123"}});
+      expect(input.value).toBe("12:3");
+      fireEvent.change(input, {target : {value : "12:30"}});
+      expect(input.value).toBe("12:30");
+      fireEvent.change(input, {target : {value : "12:300"}});
+      expect(input.value).toBe("12:30:0");
+      fireEvent.change(input, {target : {value : "12:30:00"}});
+      expect(input.value).toBe("12:30:00");
+
+      fireEvent.click(await screen.findByLabelText("commit-1"));
     })
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_DEADLINE,
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_DEADLINE,
       expect.objectContaining({
         id : 1,
         deadline_type : DEADLINE_TYPES.DAILY,
@@ -132,7 +136,7 @@ describe("Deadline Setup tests", () => {
       expect(input.value).toBe("");
     })
 
-    expect(websocket.sendEditModel).not.toBeCalled();
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
   });
 
   it("Change deadline time", async () => {
@@ -144,10 +148,10 @@ describe("Deadline Setup tests", () => {
 
     await act(async () => {
       const input = await screen.findByLabelText('days-2')
-
       fireEvent.change(input, {target : {value : "2"}})
+      fireEvent.click(await screen.findByLabelText("commit-2"));
     })
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_DEADLINE,expect.objectContaining({
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_DEADLINE,expect.objectContaining({
       id : 2,
       deadline_type : DEADLINE_TYPES.WEEKLY,
       deadline_time : "12:00:00",
@@ -166,7 +170,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : "3"}})
     })
 
-    expect(websocket.sendEditModel).not.toBeCalled();
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
   });
 
   it("Change Deadline to Global", async () => {
@@ -180,7 +184,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.NO_OPTION}`}})
     })
 
-    expect(websocket.sendEditModel).not.toBeCalled();
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
   })
 
   it("Change Deadline to Global Activity deadline", async () => {
@@ -194,7 +198,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE}`}})
     })
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
       global_activity_deadline : 3,
     }));
   });
@@ -211,7 +215,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE}`}})
     });
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
       global_injection_deadline : 3,
     }));
   });
@@ -224,15 +228,15 @@ describe("Deadline Setup tests", () => {
     </StateContextProvider>);
 
     await act(async () => {
-      const inputTime = await screen.findByLabelText('time-new')
+      const inputTime = await screen.findByLabelText('time--1')
       fireEvent.change(inputTime, {target : {value : "12:30:00"}})
-      fireEvent.click(await screen.findByRole("button", { name : "Opret Deadline"}))
+      fireEvent.click(await screen.findByLabelText("commit--1"));
     })
 
-    expect(websocket.sendCreateModel).toBeCalledWith(DATA_DEADLINE, [expect.objectContaining({
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_DEADLINE, expect.objectContaining({
       deadline_type : DEADLINE_TYPES.DAILY,
       deadline_time : "12:30:00",
-    })])
+    }))
   })
 
   it("create new weekly deadline success", async () => {
@@ -243,17 +247,17 @@ describe("Deadline Setup tests", () => {
     </StateContextProvider>);
 
     await act(async () => {
-      const inputTime = await screen.findByLabelText('time-new')
+      const inputTime = await screen.findByLabelText('time--1')
       fireEvent.change(inputTime, {target : {value : "12:30:00"}})
-      const inputType = await screen.findByLabelText('type-new')
+      const inputType = await screen.findByLabelText('type--1')
       fireEvent.change(inputType, {target : {value : "1"}})
-      fireEvent.click(await screen.findByRole("button", { name : "Opret Deadline"}))
+      fireEvent.click(await screen.findByLabelText("commit--1"));
     })
 
-    expect(websocket.sendCreateModel).toBeCalledWith(DATA_DEADLINE, [expect.objectContaining({
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_DEADLINE, expect.objectContaining({
       deadline_type : DEADLINE_TYPES.WEEKLY,
       deadline_time : "12:30:00",
-    })])
+    }))
   })
 
 
@@ -265,18 +269,18 @@ describe("Deadline Setup tests", () => {
     </StateContextProvider>);
 
     await act(async () => {
-      const inputTime = await screen.findByLabelText('time-new')
-      fireEvent.change(inputTime, {target : {value : "12:aa:00"}})
-      fireEvent.click(await screen.findByRole("button", { name : "Opret Deadline"}))
+      const inputTime = await screen.findByLabelText('time--1');
+      fireEvent.change(inputTime, {target : {value : "12:aa:00"}});
+      fireEvent.click(await screen.findByLabelText("commit--1"));
     })
 
-    expect(websocket.sendCreateModel).not.toBeCalled();
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
     await act(async () => {
-      const inputTime = await screen.findByLabelText('time-new')
-      userEvent.hover(inputTime)
+      const inputTime = await screen.findByLabelText('time--1');
+      userEvent.hover(inputTime);
     });
 
-    expect(await screen.findByText("Deadline tidspunktet er ikke formattet som et tidspunkt"))
+    expect(await screen.findByText("Deadline tidspunktet er ikke formattet som et tidspunkt"));
   })
 });

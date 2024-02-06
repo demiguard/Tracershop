@@ -88,6 +88,9 @@ class TracershopModel(Model):
     # Now this is a know problem and at some point in time, i'm gonna look for
     # the solution
     # https://stackoverflow.com/questions/30449960/django-save-vs-update-to-update-the-database
+    if self.pk <= 0:
+      self.pk = None
+
     creating = self.pk is None
 
     if creating:

@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { Container, Table, FormControl, Row, Card, Collapse , Col} from "react-bootstrap";
 
 import { TracerModal } from "../../modals/tracer_modal.js";
-import { setStateToEvent, setTempMapToEvent } from "~/lib/state_management.js";
+import { appendNewObject, setStateToEvent, setTempMapToEvent } from "~/lib/state_management.js";
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
   TracerTypeOptions, cssAlignRight, TRACER_TYPE} from "~/lib/constants.js";
 import { Tracer } from "~/dataclasses/dataclasses.js";
@@ -17,7 +17,12 @@ import { nullParser } from "~/lib/formatting.js";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
 import { compareLoosely } from "~/lib/utils.js";
 import { Optional } from "~/components/injectable/optional.js";
+import { EditableInput } from "~/components/injectable/inputs/editable_input.js";
 
+
+function getNewTracer(){
+  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false);
+}
 
 export function TracerPage(){
   const state = useTracershopState();
@@ -26,7 +31,7 @@ export function TracerPage(){
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
   const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false));
-  const [tracers, setTracers] = useState(state.tracer);
+  const [tracers, setTracers] = useState(appendNewObject(state.tracer, getNewTracer));
   const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
 
@@ -36,8 +41,8 @@ export function TracerPage(){
   }
 
   useEffect(() => {
-    setTracers(state.tracer)
-  }, [state.tracer])
+    setTracers(appendNewObject(state.tracer, getNewTracer));
+  }, [state.tracer]);
 
   function closeModal(){
     setModalTracerID(-1);
@@ -55,13 +60,9 @@ export function TracerPage(){
 
   function ArchiveTracer(tracer){
     // This function cannot be called with an empty tracer
-    () => {
+    return () => {
       websocket.sendEditModel(DATA_TRACER, {...tracer, archived : true});
     }
-  }
-
-  function validateNew(){
-    return [true, newTracer];
   }
 
   function validate(tracer){
@@ -93,15 +94,16 @@ export function TracerPage(){
           </tr>);
       } else {
         const archiveAble = !activeTracers.has(tracer.id) && 0 < tracer.id ;
-        const changed = !compareLoosely(tracer, state.tracer.get(tracer.id));
+        const changed = state.tracer.has(tracer.id) ? !compareLoosely(tracer, state.tracer.get(tracer.id)) : true;
 
         activeTracerRows.push(
           <tr key={tracer.id} aria-label={`active-tracer-${tracer.id}`}>
             <td>
-              <FormControl
-                readOnly
+              <EditableInput
+                canEdit={tracer.id == -1}
                 aria-label={`set-shortname-${tracer.id}`}
                 value={tracer.shortname}
+                onChange={setTempMapToEvent(setTracers, tracer.id, 'shortname')}
               />
             </td>
             <td>
@@ -154,13 +156,13 @@ export function TracerPage(){
               Base={<ClickableIcon
                 label={`archive-${tracer.id}`}
                 src="/static/images/archive_down.svg"
-                onClick={ArchiveTracer}
+                onClick={ArchiveTracer(tracer)}
               />}
               Hover={<div>Klik her for arkiver Traceren</div>}
             />
           </Col>
         </Optional>
-        <Optional exists={changed}>
+        <Optional exists={changed && tracer.shortname.length >= 3}>
             <Col>
               <HoverBox
                 Base={
@@ -189,72 +191,6 @@ export function TracerPage(){
     [PROP_ACTIVE_TRACER] : modalTracerID,
     [PROP_ON_CLOSE] : closeModal,
   };
-
-  activeTracerRows.push(
-    <tr key="-1">
-      <td>
-        <FormControl value={newTracer.shortname}
-                     onChange={(event) => {setNewTracer(old => {
-                      return {
-                        ...old,
-                        shortname : event.target.value
-                      };          })}}
-        />
-      </td>
-      <td>
-        <FormControl value={newTracer.clinical_name}
-                     onChange={(event) => {setNewTracer(old => {
-                      return {
-                        ...old,
-                        clinical_name : event.target.value
-                      };          })}}
-        />
-      </td>
-      <td>
-        <FormControl value={newTracer.vial_tag}
-                     onChange={(event) => {setNewTracer(old => {
-                       return {
-                         ...old,
-                         vial_tag : event.target.value
-                       };})}}
-        />
-      </td>
-      <td>
-        <Select
-          aria-label={"set-isotope-new"}
-          options={isotopeOptions}
-          onChange={(event) => {setNewTracer(old => {
-            return {
-              ...old,
-              isotope : Number(event.target.value)
-            };          })}}
-          value={newTracer.isotope}
-        />
-      </td>
-      <td>
-        <Select
-          aria-label={"set-type-new"}
-          options={toOptions(TracerTypeOptions)}
-          value={newTracer.tracer_type}
-          onChange={(event) => {setNewTracer(old => {
-            return {
-              ...old,
-              tracer_type : Number(event.target.value)
-            };})}}
-        />
-      </td>
-      <td>
-        <Optional exists={newTracer.shortname.length >= 3 }>
-          <CommitButton
-            temp_object={newTracer}
-            object_type={DATA_TRACER}
-            validate={validateNew}
-          />
-        </Optional>
-      </td>
-    </tr>
-  )
-
 
   return (<Container>
     <Row>

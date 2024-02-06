@@ -102,7 +102,7 @@ function ActivityOrderRow({order, calculatorActivity}){
   }
 
   function commitCallBack(){
-    setTempOrder(order => {return {...order, ordered_activity : "", comment : ""};})
+    setTempOrder(order => {return {...order, ordered_activity : "", comment : ""};});
   }
 
   const ordered = order.status > 0;
@@ -170,6 +170,7 @@ function ActivityOrderRow({order, calculatorActivity}){
       <Col xs={1} style={cssAlignRight}>
         <Optional exists={canEdit && !changedTemp}>
           <CommitButton
+            label={`commit-${order.id}`}
             temp_object={tempOrder}
             validate={validate}
             callback={commitCallBack}
