@@ -82,7 +82,7 @@ describe("Injection order card test suite", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const filterInput = screen.getByLabelText('location-delivery-endpoint-1');
+    const filterInput = screen.getByLabelText('filter');
 
     act(() => {
       fireEvent.change(filterInput, {target : {value : "2"}});

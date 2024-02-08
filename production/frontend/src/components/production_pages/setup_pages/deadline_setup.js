@@ -141,7 +141,25 @@ export function DeadlineSetup(){
           const newState = new Map(old_state);
           newState.set(newDeadline.id, newDeadline);
           return newState;
-        } )
+        });
+      }
+
+      function setDeadlineType(event){
+        const new_type = Number(event.target.value);
+        if (new_type != deadline.deadline_type){
+          const newDeadline = deadline.copy();
+          newDeadline.deadline_type = new_type;
+          if(new_type == DEADLINE_TYPES.DAILY){
+            newDeadline.deadline_day = null;
+          } else { // WEEKLY TYPE
+            newDeadline.deadline_day = DAYS.MONDAY;
+          }
+          setDeadlines(old_state => {
+            const newState = new Map(old_state);
+            newState.set(newDeadline.id, newDeadline);
+            return newState;
+          });
+        } // Else do nothing
       }
 
       return (<Row key={i}>
@@ -150,7 +168,7 @@ export function DeadlineSetup(){
           aria-label={`type-${deadline.id}`}
           options={DEADLINE_TYPE_OPTIONS}
           value={deadline.deadline_type}
-          onChange={setTempMapToEvent(setDeadlines, deadline.id, 'deadline_type')}
+          onChange={setDeadlineType}
         />
       </Col>
       <Col>

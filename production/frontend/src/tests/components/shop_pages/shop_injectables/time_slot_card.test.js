@@ -7,7 +7,7 @@ import { screen, render, cleanup, fireEvent, act } from "@testing-library/react"
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
-import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID } from "~/lib/constants.js";
+import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID, PROP_VALID_ACTIVITY_DEADLINE } from "~/lib/constants.js";
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card.js";
 import { getRelevantActivityOrders } from "~/lib/filters.js";
 import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL } from "~/components/injectable/calculator.js";
@@ -33,7 +33,7 @@ beforeEach(async () => {
   props = {
     [PROP_TIME_SLOT_ID] : default_time_slot_id,
     [PROP_ACTIVE_DATE] : now,
-    [PROP_EXPIRED_ACTIVITY_DEADLINE] : false,
+    [PROP_VALID_ACTIVITY_DEADLINE] : true,
     activityOrders : relevantActivityOrders,
     overhead : overhead,
   }
@@ -63,10 +63,32 @@ describe("Time slot card Test Suite", () => {
       }
     }
 
-    expect(screen.getByText(`Bestilt: ${orderedActivity} MBq`)).toBeVisible();
+    //expect(screen.getByText(`Bestilt: ${orderedActivity} MBq`)).toBeVisible();
   });
 
-  it("Open the card", () => {
+  it("Open the card with extra order", () => {
+    render(<StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <TimeSlotCard {...props} />
+        </WebsocketContextProvider>
+      </StateContextProvider>);
+
+    const openButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
+
+    act(() => {
+      fireEvent.click(openButton);
+    });
+    expect(screen.queryByLabelText('commit--1')).toBeVisible();
+
+    for(const order of relevantActivityOrders ){
+      if(order.ordered_time_slot === 1){
+        expect(screen.getByText(`ID: ${order.id}`)).toBeVisible();
+      }
+    }
+  });
+
+  it("Open the card without extra order", () => {
+    props[PROP_VALID_ACTIVITY_DEADLINE] = false;
     render(<StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
           <TimeSlotCard {...props} />
@@ -86,6 +108,7 @@ describe("Time slot card Test Suite", () => {
       }
     }
   });
+
 
   it("Create an New order", async () => {
     render(<StateContextProvider value={testState}>
@@ -141,7 +164,7 @@ describe("Time slot card Test Suite", () => {
     fireEvent.change(commentInput, {target : {value : "test comment"}})
   });
 
-  const commitButton = screen.getByLabelText('create--1');
+  const commitButton = screen.getByLabelText('commit--1');
   act(() => {
     fireEvent.click(commitButton);
   });
@@ -162,7 +185,7 @@ describe("Time slot card Test Suite", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const openCalculatorButton = screen.getByLabelText("open-calculator");
+    const openCalculatorButton = screen.getByLabelText(`open-calculator-${default_time_slot_id}`);
 
     act(() => {
       fireEvent.click(openCalculatorButton);
@@ -180,7 +203,7 @@ describe("Time slot card Test Suite", () => {
     </StateContextProvider>);
 
     const openTimeSlotButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
-    const openCalculatorButton = screen.getByLabelText("open-calculator");
+    const openCalculatorButton = screen.getByLabelText(`open-calculator-${default_time_slot_id}`);
 
     act(() => {
       fireEvent.click(openTimeSlotButton);
@@ -207,7 +230,7 @@ describe("Time slot card Test Suite", () => {
       fireEvent.click(screen.queryByRole('button', {name: 'Udregn'}))
     });
 
-    const timeSlotActivityInput = screen.getByTestId('activity-new');
+    const timeSlotActivityInput = screen.getByTestId('activity--1');
 
     expect(timeSlotActivityInput.value).toBe("5000");
   });

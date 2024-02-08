@@ -62,7 +62,7 @@ export function setTempMapToEvent(stateFunction, id, keyword){
 /**
  * @template T
  * @callback TConstructor
- * @returns {T}
+ * @returns {T | null}
  */
 
 /**
@@ -74,6 +74,28 @@ export function setTempMapToEvent(stateFunction, id, keyword){
  */
 export function appendNewObject(map, nConstructor){
   const stateMap = new Map(map);
-  stateMap.set(-1, nConstructor());
+  const obj = nConstructor();
+  if (obj != null){
+    stateMap.set(-1, obj);
+  }
   return stateMap
+}
+
+export function set_state_error(stateFunction, id, error){
+  stateFunction(oldErrors => {
+    const newErrors = new Map(oldErrors);
+    newErrors.set(id, error);
+    return newErrors;
+  })
+}
+
+export function reset_error(stateFunction, id){
+  stateFunction(oldErrors => {
+    if (oldErrors.has(id)){
+      const newErrors = new Map(oldErrors)
+      newErrors.delete(id)
+    } else {
+      return oldErrors
+    }
+  })
 }

@@ -19,56 +19,111 @@ import { getId, numberfy, toMapping } from "./utils";
 import { useTracershopState } from "~/components/tracer_shop_context"
 import { useOverflow } from "~/effects/overflow"
 
-/** An order collection is a grouping of orders, which should be delivered to a single time slot */
-export class IOrderCollection {
-  /** @type {valueof<OrderStatus>} */ minimum_status
-  /** @type {Boolean} */ moved
-  /** @type {} */ orders
-  /** @type {Array<Number>} */ orderIDs
-  /** @type {} */ ordered_date
-  /** @type {DeliveryEndpoint | null} */ endpoint
-  /** @type {Customer | null} */ owner
-  /** @type {Tracer | null} */ tracer
-  /** @type {Isotope | null} */ isotope
 
-  /** Base class for order  order collection is a grouping of orders, which should be delivered to a single time slot
+/**
+ * Wraps a group of orders, for the purpose of providing a single view of the
+ * group.
+ *
+ * All orders must share the following properties to form a valid ActivityOrderCollection:
+ * * ordered_date
+ * * All orders must be scheduled to be delivered in the same time slot
+ *
+ * This property grants the following properties:
+ * * Same Tracer and isotope because Time slots can only have a one production
+ * * Same DeliveryEndpoint / Customer, with the same reasons
+ *
+ * One could think about an instance as the piece of paper a waiter write down a
+ * group of people orders, which then gets handed to the kitchen.
+ */
+export class ActivityOrderCollection {
+  /**
+   * @desc Underlying collection that this class wraps, orders in this list
+   * will be delivered to the same endpoint at same day.
+   * @type {Array<ActivityOrder>}
+   */ orders
+  /**
+   * @desc Time slot that {@link orders} will be delivered to.
+   * @type {ActivityDeliveryTimeSlot}
+   */ delivering_time_slot
 
+  /**
+   * @desc the minimum status among {@link orders} with the ordering:
+   * AVAILABLE < ORDERED < ACCEPTED < RELEASED < CANCELLED < UNAVAILABLE
+   * @type {ORDER_STATUS}
+   */ minimum_status
+  /**
+   * @desc Shared date between {@link orders}
+   * @type {String}
+   */ ordered_date
+  /**
+   * @desc DeliveryEndpoint for {@link delivering_time_slot}
+   * @type {DeliveryEndpoint}
+   */ endpoint
+  /**
+   * @desc Owner of {@link endpoint} which take deliveries from {@link delivering_time_slot}
+   * @type {Customer}
+   */ owner
+  /**
+   * @desc Tracer for {@link delivering_time_slot}
+   * @type {Tracer}
+   */ tracer
+  /**
+   * @desc Isotope of the {@link tracer}
+   * @type {Isotope}
+   */ isotope
+  /**
+   * @desc The production for {@link delivering_time_slot}
+   * @type {ActivityProduction}
+   */ production
+  /**
+   * @desc If all orders of {@link orders}, then this string holds the time
+   * the collection was freed
+   * @type {String | null} // I find ?String unclear compared to String | null
+   */ freed_time
+  /**
+   * @desc If {@link orders} contains any orders, that do not delivery to the
+   * time slot that they have been ordered to, then this is true otherwise false
+   * @type {Boolean}
+   */ moved
+  /**
+   * @desc Combined ordered activity of {@link orders}
+   * @type {Number}
+   */ ordered_activity
+  /**
+   * @desc Combined activity ordered of {@link orders} with an account of overhead
+   * @type {Number}
+   */ deliver_activity
+  /**
+   * @desc Activity delivered to fulfil {@link orders}
+   * @type {Number}
+   */ delivered_activity
+
+  /**
+   * @desc ID of all orders in {@link orders}
+   * @type {Array<Number>}
+   */ orderIDs
+
+/**
+  * Wraps a group of orders, for the purpose of providing a single view of the
+  * group.
+  *
+  * All orders must share the following properties to form a valid ActivityOrderCollection:
+  * * ordered_date
+  * * tracer
+  * * endpoint
+  *
+  * One could think about an instance as the piece of paper a waiter write down a
+  * group of people orders, which then gets handed to the kitchen.
+  * @param {Array<ActivityOrder>} activity_orders
+  * @param {TracershopState} state
   */
-  constructor() {
+  constructor(activity_orders, state, overhead = 1) {
     this.minimum_status = ORDER_STATUS.UNAVAILABLE;
-    this.moved = false;
-    this.orders = [];
-    this.orderIDs = [];
     this.ordered_date = null;
     this.endpoint = null;
     this.owner = null;
     this.tracer = null;
     this.isotope = null;
-  }
-
-  get_minimum_status () {
-    return this.minimum_status()
-  }
-}
-
-export class ActivityOrderCollection extends IOrderCollection {
-  delivering_time_slot
-  delivery_time
-  production
-  moved
-  ordered_activity
-  deliver_activity
-  delivered_activity
-  orders
-  orderIDs
-
-  /**
-   * This is a collection of orders
-   * @param {Array<ActivityOrder>} activity_orders
-   * @param {TracershopState} state
-   */
-  constructor(activity_orders, state, overhead = 1) {
-    super();
     this.delivering_time_slot = null;
     this.freed_time = null;
     this.production = null;
@@ -115,6 +170,10 @@ export class ActivityOrderCollection extends IOrderCollection {
         }
       }
     }
+  }
+
+  get_minimum_status () {
+    return this.minimum_status
   }
 }
 

@@ -109,7 +109,7 @@ describe("tracer websocket test suite", () => {
 
     server.send(message)
 
-    expect(dispatch).toHaveBeenCalled()
+    expect(dispatch).not.toHaveBeenCalled()
   })
 
 

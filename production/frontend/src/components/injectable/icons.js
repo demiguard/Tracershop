@@ -1,9 +1,10 @@
 import React, { Component } from 'react'
 import {Image, Button} from 'react-bootstrap'
 import propTypes from 'prop-types'
-import { ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses'
-import { IOrderCollection } from '~/lib/data_structures'
+import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from '~/dataclasses/dataclasses'
+import { ActivityOrderCollection } from '~/lib/data_structures'
 import { ORDER_STATUS } from '~/lib/constants'
+import { InjectionOrderPDFUrl, getPDFUrls } from '~/lib/utils'
 
 export function ClickableIcon ({
     altText,
@@ -50,17 +51,21 @@ export function ClickableIcon ({
     </Button>
 }
 
+ClickableIcon.propTypes = {
+  src : propTypes.string.isRequired,
+  onClick : propTypes.func
+}
 
 /**
- * 
+ *
  * @param {{
  *  altText : String
  *  onClick : Callable
  *  label : String
  *  order : {ActivityOrder, InjectionOrder}
- *  orderCollection : IOrderCollection
- * }} param0 
- * @returns 
+ *  orderCollection : ActivityOrderCollection
+ * }} param0
+ * @returns
  */
 export function StatusIcon ({altText, onClick, label, order, orderCollection}) {
 
@@ -99,5 +104,50 @@ StatusIcon.propTypes = {
   onClick : propTypes.func,
   label: propTypes.string,
   order: propTypes.oneOfType([propTypes.instanceOf(ActivityOrder), propTypes.instanceOf(InjectionOrder)]),
-  orderCollection : propTypes.instanceOf(IOrderCollection),
+  orderCollection : propTypes.instanceOf(ActivityOrderCollection),
 };
+
+export function ActivityDeliveryIcon(props){
+  const newProps = {...props}
+  delete newProps['endpoint']
+  delete newProps['tracer']
+  delete newProps['date']
+  return <ClickableIcon
+    src="/static/images/delivery.svg"
+    onClick={() => {window.location = getPDFUrls(props.endpoint, props.tracer, props.date)}}
+    {...newProps} // This is here to make props overwrite default props
+  />
+}
+
+// I feel dirty
+const ActivityDeliveryIconInheritedPropTypes = {...ClickableIcon.propTypes};
+delete ActivityDeliveryIconInheritedPropTypes['src'];
+delete ActivityDeliveryIconInheritedPropTypes['onClick'];
+
+ActivityDeliveryIcon.propTypes = {
+  ...ActivityDeliveryIconInheritedPropTypes,
+  endpoint : propTypes.instanceOf(DeliveryEndpoint).isRequired,
+  tracer : propTypes.instanceOf(Tracer).isRequired,
+  date : propTypes.instanceOf(Date).isRequired,
+}
+
+// I feel dirty
+const injectionDeliveryIconInheritedPropTypes = {...ClickableIcon.propTypes};
+delete injectionDeliveryIconInheritedPropTypes['src'];
+delete injectionDeliveryIconInheritedPropTypes['onClick'];
+
+
+export function InjectionDeliveryIcon(props){
+  const newProps = {...props}
+  delete newProps['order']
+  return <ClickableIcon
+  src="/static/images/delivery.svg"
+  onClick={() => window.location = InjectionOrderPDFUrl(props.order)}
+  {...newProps}  // This is here to make props overwrite default props
+  />
+}
+
+InjectionDeliveryIcon.propTypes = {
+  ...injectionDeliveryIconInheritedPropTypes,
+  order: propTypes.instanceOf(InjectionOrder).isRequired
+}

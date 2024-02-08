@@ -23,22 +23,22 @@ import { getRelevantActivityOrders } from "~/lib/filters";
  * }} props
  * @returns Element
  */
-export function OrderReview({active_endpoint, active_customer, active_date,
-  injectionDeadlineValid, activityDeadlineExpired,
+export function OrderReview({active_endpoint,
+                             active_customer,
+                             active_date,
+                             injectionDeadlineValid,
+                             activityDeadlineValid,
 }){
-  const state = useTracershopState()
+  const state = useTracershopState();
 
-  const tracerCatalog = new TracerCatalog(
-    state.tracer_mapping, state.tracer
-  )
-
+  const tracerCatalog = new TracerCatalog(state.tracer_mapping, state.tracer);
   const availableActivityTracers = tracerCatalog.getActivityCatalog(active_endpoint);
   const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
 
   // State Definitions
-  let activeTracerInit = -1
+  let activeTracerInit = -1;
   if (0 < availableActivityTracers.length){
-    activeTracerInit = availableActivityTracers[0].id
+    activeTracerInit = availableActivityTracers[0].id;
   }
 
   const [activeTracer, setActiveTracer] = useState(activeTracerInit);
@@ -83,7 +83,7 @@ export function OrderReview({active_endpoint, active_customer, active_date,
       active_date={active_date}
       activityOrders={relevantActivityOrders}
       overhead={overhead}
-      activityDeadlineExpired={activityDeadlineExpired}
+      activityDeadlineValid={activityDeadlineValid}
       />);
 
   const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
