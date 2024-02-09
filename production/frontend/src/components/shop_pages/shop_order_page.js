@@ -132,19 +132,19 @@ export function ShopOrderPage ({relatedCustomer}){
     {id : "Manuel", name : "Ordre oversigt"},
     {id : "Automatisk", name : "Bookinger"},
     {id : "Overview", name : "Booking Oversigt"},
-  ])
+  ]);
 
-  const Site = Content[viewIdentifier]
+  const Site = Content[viewIdentifier];
   const siteProps = {
     [PROP_ACTIVE_DATE] : today,
     [PROP_ACTIVE_CUSTOMER] : activeCustomer,
     [PROP_ACTIVE_ENDPOINT] : activeEndpoint,
     [PROP_VALID_ACTIVITY_DEADLINE] :  !Boolean(activityDeadlineExpired),
     [PROP_VALID_INJECTION_DEADLINE] : !Boolean(injectionDeadlineExpired),
-  }
+  };
 
   const calenderTimeSlots = [...state.deliver_times.values()].filter(
-    (timeSlot) => {return timeSlot.destination === activeEndpoint}
+    (timeSlot) => timeSlot.destination === activeEndpoint
   );
 
   return (

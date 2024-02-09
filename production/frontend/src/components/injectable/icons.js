@@ -108,15 +108,18 @@ StatusIcon.propTypes = {
 };
 
 export function ActivityDeliveryIcon(props){
-  const newProps = {...props}
-  delete newProps['endpoint']
-  delete newProps['tracer']
-  delete newProps['date']
-  return <ClickableIcon
+  const newProps = {...props};
+  delete newProps['orderCollection'];
+  if(props.orderCollection.minimum_status === ORDER_STATUS.RELEASED){
+    return <ClickableIcon
     src="/static/images/delivery.svg"
-    onClick={() => {window.location = getPDFUrls(props.endpoint, props.tracer, props.date)}}
+    onClick={() => {window.location = getPDFUrls(props.orderCollection.endpoint,
+                                                 props.orderCollection.tracer,
+                                                 new Date(props.orderCollection.ordered_date))}}
     {...newProps} // This is here to make props overwrite default props
   />
+  }
+  return <div aria-label='empty-delivery-icon'></div>;
 }
 
 // I feel dirty
@@ -126,9 +129,7 @@ delete ActivityDeliveryIconInheritedPropTypes['onClick'];
 
 ActivityDeliveryIcon.propTypes = {
   ...ActivityDeliveryIconInheritedPropTypes,
-  endpoint : propTypes.instanceOf(DeliveryEndpoint).isRequired,
-  tracer : propTypes.instanceOf(Tracer).isRequired,
-  date : propTypes.instanceOf(Date).isRequired,
+  orderCollection : propTypes.instanceOf(ActivityOrderCollection),
 }
 
 // I feel dirty

@@ -1,7 +1,7 @@
 """These constants are shared between the frontend and the backend
 They are keywords in json objects transferred back and forth.
 """
-JAVASCRIPT_VERSION = "1.0.12" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.0.13" # Remember to update this to catch bugs
 
 # Long list JSON key word used in Json messages
 # These should have great overlap with the constants in production/frontend/src/lib/constants.js

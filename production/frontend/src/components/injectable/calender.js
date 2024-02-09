@@ -130,7 +130,7 @@ export function Calender({calender_date,
   *          is the first of Feb
   * }} props
   * @returns {Element}
-  */ 
+  */
  function Day({date}) {
     const dateObject  = new Date(activeMonth.getFullYear(), activeMonth.getMonth(), date, 12);
     const dateString = dateToDateString(dateObject)
@@ -214,7 +214,8 @@ export function Calender({calender_date,
             src="/static/images/prev.svg"/>
         </div>
         <div>
-          {activeMonth.toLocaleString('default', {month:"long"})}
+          <p style={{margin : "0px"}}>{activeMonth.toLocaleString('default', {month:"long"})}</p>
+          <p style={{margin : "0px"}}>{activeMonth.toLocaleString('default', {year: "numeric"})}</p>
         </div>
         <div onClick={() => changeMonth(1)}>
           <img

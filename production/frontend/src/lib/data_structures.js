@@ -144,7 +144,8 @@ export class ActivityOrderCollection {
         this.isotope = state.isotopes.get(this.tracer.isotope);
         this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
         this.owner = state.customer.get(this.endpoint.owner);
-      } else if (this.ordered_date != order.delivery_date || this.delivering_time_slot.id != deliveringTimeSlotId) {
+      } else if (this.ordered_date != order.delivery_date
+              || this.delivering_time_slot.id != deliveringTimeSlotId) {
         console.log(this, order, deliveringTimeSlotId);
         throw "Incorrect filtered orders!";
       }
@@ -156,8 +157,11 @@ export class ActivityOrderCollection {
         this.ordered_activity += order.ordered_activity
         this.deliver_activity += order.ordered_activity * overhead;
       } else {
-        const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, this.delivering_time_slot.delivery_time);
-        this.deliver_activity += CalculateProduction(this.isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity) * overhead;
+        const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time,
+                                           this.delivering_time_slot.delivery_time);
+        this.deliver_activity += CalculateProduction(this.isotope.halflife_seconds,
+                                                     timeDelta.hour * 60 + timeDelta.minute,
+                                                     order.ordered_activity) * overhead;
       }
       if(order.freed_time != null && this.freed_time != null){
         this.freed_time = order.freed_time;
@@ -173,7 +177,7 @@ export class ActivityOrderCollection {
   }
 
   get_minimum_status () {
-    return this.minimum_status
+    return this.minimum_status;
   }
 }
 
@@ -235,11 +239,11 @@ export class TracerCatalog {
    * @returns {CustomerCatalog}
    */
   getCatalog(endpointID){
-    const index = numberfy(endpointID)
+    const index = numberfy(endpointID);
 
     const endpoint_catalog = this._endpointCatalogs.get(index);
     if (endpoint_catalog !== undefined){
-      return endpoint_catalog
+      return endpoint_catalog;
     }
     console.log("Undefined customer referenced");
     return new CustomerCatalog();

@@ -87,7 +87,6 @@ export function TimeSlotCard({
   // State
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
-  const calculatorActivity = useRef("");
   const [errors, setErrors] = useState(new Map());
   const [orders, setOrders] = useState(
     appendNewObject(toMapping(deliverableActivityOrders), newOrderFunction)
@@ -213,8 +212,8 @@ export function TimeSlotCard({
   //  Card Content
   const [thirdColumnContent, fourthColumnContent] = (() => {
     if(orderCollection.minimum_status == ORDER_STATUS.RELEASED){
-
-      const freed_time = (orderCollection.freed_time != null) ? orderCollection.freed_time : "Ukendt tidspunk!";
+      const freed_time = (orderCollection.freed_time != null) ?
+                        orderCollection.freed_time : "Ukendt tidspunk!";
       return [
         `Udleveret ${orderCollection.delivered_activity} MBq`,
         `Frigivet kl: ${freed_time}`,
@@ -282,9 +281,8 @@ export function TimeSlotCard({
         <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
           <ActivityDeliveryIcon
             label={`delivery-${timeSlot.id}`}
-            endpoint={orderCollection.endpoint}
-            tracer={orderCollection.tracer}
-            date={active_date}/>
+            orderCollection={orderCollection}
+          />
         </Optional>
       </Col>
         <Col style={{

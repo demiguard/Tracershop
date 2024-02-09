@@ -13,9 +13,9 @@ django.setup()
 
 from database.models import MODELS
 
+# Refactor this out at some point
 curly_brace_left = "{"
 curly_brace_right = "}"
-
 
 from typing import List
 
@@ -105,14 +105,3 @@ with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
     out.write("    }\n")
   out.write("  }\n")
   out.write("}\n")
-
-with open('frontend/src/dataclasses/keywords.js', 'w') as out:
-  out.write("/**Automatically generated file by generate JavascriptDataClasses.py */\n")
-  out.write("/**Contains all keywords used by database */\n\n")
-
-  for model in MODELS.values():
-    out.write(f"// Model: {model.__name__}\n")
-    for field in model._meta.fields:
-      out.write(f"export const KEYWORD_{model.__name__}_{field.name.upper()} = \"{field.name}\";\n")
-
-    out.write("\n")
