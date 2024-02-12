@@ -55,7 +55,15 @@ def get_or_create_location(location_str: str) -> Location:
 
 @database_sync_to_async
 def get_or_create_procedureIdentifier(code, description):
-    procedure_identifier, created = ProcedureIdentifier.objects.get_or_create(code=code, description=description)
+    # This block renames prodcedure identifiers
+    if ProcedureIdentifier.objects.exists(code=code):
+        procedure_identifier = ProcedureIdentifier.objects.get(code=code)
+        if procedure_identifier.description != description:
+            logger.warning(f"Changing Study name from: {procedure_identifier.description} to {description}")
+            procedure_identifier.description = description
+            procedure_identifier.save()
+    else:
+        procedure_identifier, created = ProcedureIdentifier.objects.get_or_create(code=code, description=description)
 
     if created:
         logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
