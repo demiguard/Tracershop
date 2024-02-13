@@ -61,7 +61,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'production.urls'
 
-TEST_RUNNER = "tests.TestRunner.CustomRunner"
+TEST_RUNNER = "tests.runner.CustomRunner"
 
 TEMPLATES = [
     {
@@ -84,10 +84,7 @@ WSGI_APPLICATION = 'production.wsgi.application'
 
 CHANNEL_LAYERS = {
     'default' : {
-        'BACKEND' : 'channels_redis.core.RedisChannelLayer',
-        'CONFIG'  : {
-            'hosts' : [('127.0.0.1', 6379)]
-        }
+        'BACKEND' : 'channels.layers.InMemoryChannelLayer',
     }
 }
 
@@ -98,8 +95,11 @@ CHANNEL_LAYERS = {
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'test_database.sqlite', # This is where you put the name of the db file.
+        'NAME': 'database.sqlite', # This is where you put the name of the db file.
                  # If one doesn't exist, it will be created at migration time.
+        'TEST' : {
+          "NAME" : "test_database.sqlite"
+        }
     }
 }
 
@@ -120,10 +120,14 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+PASSWORD_HASHERS = [
+  #"django.contrib.auth.hashers.PBKDF2SHA1PasswordHasher",
+  "django.contrib.auth.hashers.MD5PasswordHasher" # Speeds up things by quite a bit
+]
+
 AUTH_USER_MODEL = "database.User"
 
 AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
-
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'
 

@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 # Third Party
 from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
   TimeField, DateTimeField, DateField
-from django.core.exceptions import FieldDoesNotExist
+from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 
 # Tracershop Modules
 from database.TracerShopModels import authModels
@@ -90,13 +90,15 @@ class TracershopModel(Model):
     # https://stackoverflow.com/questions/30449960/django-save-vs-update-to-update-the-database
     if self.pk is not None and self.pk <= 0:
       self.pk = None
-
-    creating = self.pk is None
+      creating = True
+    else:
+      creating = not self.__class__.objects.filter(pk=self.pk).exists()
 
     if creating:
       action = self.canCreate(user)
       CreateModelAuditEntry.log(user, self, action)
     else:
+      print(f"Editing {self.__class__.__name__} with id: {self.pk}")
       action = self.canEdit(user)
       EditModelAuditEntry.log(user, self, action)
 

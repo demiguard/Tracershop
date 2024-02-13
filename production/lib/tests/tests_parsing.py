@@ -7,7 +7,7 @@ from datetime import date, time
 from logging import getLogger, Logger, DEBUG
 
 # Third party packages
-from django.test import TestCase
+from django.test import TestCase, TransactionTestCase
 
 # Tracershop packages
 from database.models import Customer, Isotope, Tracer, TracerTypes, Vial

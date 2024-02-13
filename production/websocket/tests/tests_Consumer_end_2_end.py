@@ -75,11 +75,8 @@ app = ProtocolTypeRouter({
   )
 })
 
-
-
 TEST_ADMIN_USERNAME = "admin_username"
 TEST_ADMIN_PASSWORD = "admin_password"
-
 
 #NOTE: that sadly the connection cannot be in a setup case,
 # due to it being in different event loop
@@ -124,8 +121,100 @@ class ConsumerTestCase(TransactionTestCase):
     self.user.set_password(TEST_ADMIN_PASSWORD)
     self.user.save()
 
+    self.isotope = Isotope(
+      atomic_number=92,
+      atomic_mass=235,
+      halflife_seconds=1337, # it's more but doesn't matter,
+      atomic_letter='U'
+    )
+
+    self.isotope.save(self.user)
+    self.inj_tracer = Tracer(
+      id=3,
+      isotope=self.isotope,
+      shortname = "tracer",
+      clinical_name="",
+      tracer_type=2,
+      vial_tag=""
+    )
+    self.inj_tracer.save(self.user)
+
+    self.act_tracer = Tracer(
+      isotope=self.isotope,
+      shortname = "tracer",
+      clinical_name="",
+      tracer_type=1,
+      vial_tag=""
+    )
+    self.act_tracer.save(self.user)
+
+    self.production = ActivityProduction(
+      tracer=self.act_tracer,
+      production_day = 3,
+      production_time = "07:00:00",
+    )
+    self.production.save(self.user)
+
+
+    self.production_later = ActivityProduction(
+      tracer=self.act_tracer,
+      production_day = 3,
+      production_time = "12:00:00",
+    )
+
+    self.production_later.save(self.user)
+
+    self.customer = Customer(
+      id = 78453,
+      short_name = "test",
+      long_name = "teeest"
+    )
+    self.customer.save(self.user)
+    self.endpoint = DeliveryEndpoint(
+      id = 67,
+      owner = self.customer,
+      name="endpoint",
+    )
+
+    self.endpoint.save(self.user)
+
+    self.timeSlot= ActivityDeliveryTimeSlot(
+      id = 7,
+      weekly_repeat = 0,
+      delivery_time = "08:00:00",
+      destination=self.endpoint,
+      production_run=self.production
+    )
+    self.timeSlot.save(self.user)
+
+    self.timeSlot_later = ActivityDeliveryTimeSlot(
+      id = 8,
+      weekly_repeat = 0,
+      delivery_time = "18:00:00",
+      destination=self.endpoint,
+      production_run=self.production_later
+    )
+    self.timeSlot_later.save(self.user)
+
+    self.late_order = ActivityOrder(
+      id = 36,
+      ordered_activity = 42181,
+      delivery_date = "2020-06-11",
+      status=1,
+      comment=None,
+      ordered_time_slot=self.timeSlot_later,
+    )
+    self.late_order.save(self.user)
+
   def tearDown(self):
-    pass
+    ActivityOrder.objects.all().delete()
+    ActivityDeliveryTimeSlot.objects.all().delete()
+    DeliveryEndpoint.objects.all().delete()
+    Customer.objects.all().delete()
+    ActivityProduction.objects.all().delete()
+    Tracer.objects.all().delete()
+    Isotope.objects.all().delete()
+    User.objects.all().delete()
 
   #Universal Messages
   async def test_connect_to_consumer(self):
@@ -370,219 +459,7 @@ class ConsumerTestCase(TransactionTestCase):
 
     await comm.disconnect()
 
-  async def test_createActivityOrder(self):
-    """I am really not sure how this works"""
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
-
-    tracer = Tracer(
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=1,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
-
-    production = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "07:00:00",
-    )
-    await database_sync_to_async(production.save)()
-
-    customer = Customer(
-      id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-    timeSlot= ActivityDeliveryTimeSlot(
-      id = 7,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production
-    )
-    await database_sync_to_async(timeSlot.save)()
-
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
-        WEBSOCKET_MESSAGE_ID : 6823494122,
-        WEBSOCKET_DATA : {
-          'ordered_activity' : 15892,
-          'delivery_date' : '2020-05-03',
-          'comment' : None,
-          'ordered_time_slot' : 7,
-          'moved_to_time_slot' : None,
-
-        }
-      })
-      admin_message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
-    # Assert
-
-
-  async def test_createInjectionOrder(self):
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
-
-    tracer = Tracer(
-      id=3,
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=2,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
-
-    customer = Customer(
-      id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,
-        WEBSOCKET_MESSAGE_ID : 6823494122,
-        WEBSOCKET_DATA : {
-          'delivery_time' : "10:30:00",
-          'delivery_date' : '2020-05-03',
-          'comment' : None,
-          'injections' : 3,
-          'tracer_usage' : 0,
-          'endpoint' : 67,
-          'tracer' : 3
-        }
-      })
-      admin_message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
-    # Assert
-
   async def test_moveOrders(self):
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
-
-    tracer = Tracer(
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=1,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
-
-    production_1 = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "07:00:00",
-    )
-    await database_sync_to_async(production_1.save)()
-
-    production_2 = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "12:00:00",
-    )
-    await database_sync_to_async(production_2.save)()
-
-    customer = Customer(
-      id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-    timeSlot_1 = ActivityDeliveryTimeSlot(
-      id = 7,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production_1
-    )
-    await database_sync_to_async(timeSlot_1.save)()
-
-    timeSlot_2 = ActivityDeliveryTimeSlot(
-      id = 8,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production_2
-    )
-    await database_sync_to_async(timeSlot_2.save)()
-
-
-    order = ActivityOrder(
-      id = 36,
-      ordered_activity = 42181,
-      delivery_date = "2020-06-11",
-      status=1,
-      comment=None,
-      ordered_time_slot=timeSlot_2,
-    )
-
-    await database_sync_to_async(order.save)()
-
     channel_layers_setting = {
         "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
     }
@@ -605,10 +482,10 @@ class ConsumerTestCase(TransactionTestCase):
       returnMessage = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
 
-    await database_sync_to_async(order.refresh_from_db)()
+    await database_sync_to_async(self.order.refresh_from_db)()
 
-    timeSlot: ActivityDeliveryTimeSlot = await database_sync_to_async(order.__getitem__)('moved_to_time_slot')
-    self.assertEqual(timeSlot.activity_delivery_time_slot_id, 7)
+    timeSlot: ActivityDeliveryTimeSlot = await database_sync_to_async(self.order.__getitem__)('moved_to_time_slot')
+    self.assertEqual(self.timeSlot.id, 7)
 
   async def test_RestoreOrder(self):
     isotope = Isotope(
@@ -834,20 +711,20 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(production.save)()
 
     customer = Customer(
-      customer_id = 78453,
+      id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer.save)()
     endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
+      id = 67,
       owner = customer,
       name="endpoint",
     )
     await database_sync_to_async(endpoint.save)()
 
     timeSlot = ActivityDeliveryTimeSlot(
-      activity_delivery_time_slot_id = 7,
+      id = 7,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=endpoint,
@@ -856,7 +733,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(timeSlot.save)()
 
     order = ActivityOrder(
-      activity_order_id = 36,
+      id = 36,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
       status=2,
@@ -866,7 +743,7 @@ class ConsumerTestCase(TransactionTestCase):
     await database_sync_to_async(order.save)()
 
     vial = Vial(
-      vial_id=15934,
+      id=15934,
       tracer=tracer,
       activity=48812,
       volume=13.82,
@@ -1023,14 +900,14 @@ class ConsumerTestCase(TransactionTestCase):
 
   async def test_deleteSingleModel(self):
     customer_1 = Customer(
-      id = 78453,
+      id = 178453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer_1.save)()
 
     customer_2 = Customer(
-      id = 78454,
+      id = 278454,
       short_name = "test",
       long_name = "teeest"
     )
@@ -1048,7 +925,7 @@ class ConsumerTestCase(TransactionTestCase):
       admin_login_message = await comm_admin.receive_json_from()
 
       await comm_admin.send_json_to({
-        WEBSOCKET_DATA_ID : 78454,
+        WEBSOCKET_DATA_ID : 278454,
         WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
@@ -1058,19 +935,22 @@ class ConsumerTestCase(TransactionTestCase):
       await comm_admin.disconnect()
     # Assert Model is gone
     with self.assertRaises(ObjectDoesNotExist):
-      await database_sync_to_async(Customer.objects.get)(pk=78454)
+      await database_sync_to_async(Customer.objects.get)(pk=278454)
+
+    customer_1_again = Customer.objects.get(pk=178453)
+    customer_1_again.delete() # Clean up for other functions
 
 
   async def test_deleteMultipleModels(self):
     customer_1 = Customer(
-      id = 78453,
+      id = 278453,
       short_name = "test",
       long_name = "teeest"
     )
     await database_sync_to_async(customer_1.save)()
 
     customer_2 = Customer(
-      id = 78454,
+      id = 178454,
       short_name = "test",
       long_name = "teeest"
     )
@@ -1088,7 +968,7 @@ class ConsumerTestCase(TransactionTestCase):
       admin_login_message = await comm_admin.receive_json_from()
 
       await comm_admin.send_json_to({
-        WEBSOCKET_DATA_ID : [78453,78454],
+        WEBSOCKET_DATA_ID : [278453,178454],
         WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
@@ -1099,7 +979,7 @@ class ConsumerTestCase(TransactionTestCase):
 
     # Assert Model is gone
     with self.assertRaises(ObjectDoesNotExist):
-      await database_sync_to_async(Customer.objects.get)(pk=78453)
+      await database_sync_to_async(Customer.objects.get)(pk=278453)
 
     with self.assertRaises(ObjectDoesNotExist):
-      await database_sync_to_async(Customer.objects.get)(pk=78454)
+      await database_sync_to_async(Customer.objects.get)(pk=178454)

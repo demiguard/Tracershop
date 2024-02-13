@@ -48,4 +48,5 @@ hl7_messages/
 settings.json
 *.hl7
 *.sqlite
+*.sqlite3
 test_printing/
