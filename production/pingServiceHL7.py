@@ -64,9 +64,9 @@ def get_or_create_procedureIdentifier(code, description):
             procedure_identifier.save()
     except ObjectDoesNotExist:
         procedure_identifier, created = ProcedureIdentifier.objects.get_or_create(code=code, description=description)
+        if created:
+            logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
 
-    if created:
-        logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
 
     return procedure_identifier
 
