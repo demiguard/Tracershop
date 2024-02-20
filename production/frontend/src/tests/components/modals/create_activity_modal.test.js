@@ -102,9 +102,8 @@ describe("create activity modal", () => {
       fireEvent.click(orderButton);
     });
 
-    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, expect.objectContaining({
-      ordered_activity : 300
-    }));
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,
+      expect.objectContaining({ordered_activity : 300 }));
   });
 
   it("Change to endpoint-less Customer", async () => {
@@ -120,5 +119,5 @@ describe("create activity modal", () => {
     act(() => {
       fireEvent.change(customerSelect, {target : {value : 2}});
     })
-  })
+  });
 });

@@ -387,6 +387,37 @@ describe("Activity Modal Test", () => {
 
   });
 
+  it("Select and unselect, then assert you can't free", async () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+      dailyActivityOrderFilter(testState.deliver_times,
+                               testState.production,
+                               "2020-05-11",
+                               1));
+    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                                                 testState.deliver_times,
+                                                 testState.delivery_endpoint);
+
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
+
+    // Click
+    await act(async () => {
+      screen.queryByLabelText('vial-usage-7').click();
+    });
+    // And click again
+
+    await act(async () => {
+      screen.queryByLabelText('vial-usage-7').click();
+    });
+
+    expect(screen.getByRole('button', {'name' : "Godkend Ordre"})).toBeDisabled()
+  })
+
   it("free an order success", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
@@ -562,4 +593,52 @@ describe("Activity Modal Test", () => {
       editAccept.click();
     });
   });
-});
+
+  it("Create a new vial", async () => {
+    render(<StateContextProvider value={testState}>
+             <WebsocketContextProvider value={websocket}>
+               <ActivityModal {...props} />
+             </WebsocketContextProvider>
+           </StateContextProvider>);
+
+    await act(async () => {
+      screen.getByLabelText("add-new-vial").click();
+    });
+    // Rerender
+    await act(async () => {
+      fireEvent.change(
+        screen.getByLabelText('lot_number--1'),
+        {target: {value : "FDGF-112233-1"}}
+        );
+        fireEvent.change(
+          screen.getByLabelText('fill_time--1'),
+          {target: {value : "12:34:56"}}
+      );
+      fireEvent.change(
+        screen.getByLabelText('volume--1'),
+        {target: {value : "13,37"}}
+        );
+        fireEvent.change(
+          screen.getByLabelText('activity--1'),
+        {target: {value : "122451.151"}}
+      );
+    });
+    // Rerender
+    await act(async () => {
+      screen.getByLabelText('vial-commit--1').click();
+    });
+
+    // Assert
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_VIAL,
+      expect.objectContaining({
+        lot_number : "FDGF-112233-1",
+        volume : 13.37,
+        fill_date : "2020-05-04",
+        fill_time : "12:34:56",
+        tracer : 1,
+        assigned_to : null,
+        owner : 1,
+        activity : 122451.151
+      }));
+    });
+  });

@@ -34,12 +34,12 @@ import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 
 /**
- * 
+ *
  * @param {{
  *  tracer_catalog : TracerCatalog
  *  order_mapping : OrderMapping,
- * }} param0 
- * @returns 
+ * }} param0
+ * @returns
  */
 export function ActivityModal({
   active_date, active_tracer, order_mapping, on_close, timeSlotID, tracer_catalog
@@ -77,7 +77,6 @@ export function ActivityModal({
   * @returns {Element}
   */
   function OrderRow({order}){
-    
     const [activity, setActivity] = useState(order.ordered_activity);
     const [editing, setEditing] = useState(false);
     const [error, setError] = useState(false);
@@ -382,92 +381,6 @@ export function ActivityModal({
     );
   }
 
-  function NewVialRow({stopAddingVial, setError}){
-    const [lot_number, setLotNumber] = useState("");
-    const [fill_time, setFillTime] = useState("");
-    const [volume, setVolume] = useState("");
-    const [activity, setActivity] = useState("");
-
-    function addNewVial(){
-      const errors = []
-      const [batchValid, formattedLotNumber] = parseBatchNumberInput(lot_number, 'Batch nr.');
-      const [timeValid, formattedFillTime] = parseTimeInput(fill_time, "Produktions tidspunk");
-      const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(volume, "Volume");
-      const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(activity, "Activitet");
-
-      const valid = concatErrors(errors, batchValid, formattedLotNumber)
-                  && concatErrors(errors, timeValid, formattedFillTime)
-                  && concatErrors(errors, volumeValid, formattedVolume)
-                  && concatErrors(errors, activityValid, formattedActivity);
-
-      if(valid){
-        websocket.sendCreateModel(DATA_VIAL, [{
-          owner : customer.id,
-          fill_date : active_date,
-          lot_number : formattedLotNumber,
-          fill_time : formattedFillTime,
-          volume : formattedVolume,
-          activity : formattedActivity
-        }])
-        stopAddingVial()
-      } else {
-        setError(ERROR_LEVELS.error, errors.map((err, i) => <p key={i}>{err}</p> ));
-      }
-    }
-
-    return (
-      <tr>
-        <td>Ny</td>
-        <td>
-          <FormControl
-            aria-label="lot_number-new"
-            value={lot_number}
-            onChange={(event) => {
-              setLotNumber(event.target.value)
-            }}/>
-        </td>
-        <td>
-          <TimeInput
-            aria-label="fill_time-new"
-            stateFunction={setFillTime}
-            value={fill_time}
-            />
-        </td>
-        <td>
-          <FormControl
-            aria-label="volume-new"
-            value={volume}
-            onChange={(event) => {
-              setVolume(event.target.value)
-            }}/>
-        </td>
-        <td>
-          <FormControl
-            aria-label="activity-new"
-            value={activity}
-            onChange={(event) => {
-              setActivity(event.target.value)
-            }}/>
-        </td>
-        <td>
-          <ClickableIcon
-            src="static/images/accept.svg"
-            label="accept-new"
-            onClick={addNewVial}
-          />
-        </td>
-        <td>
-          <ClickableIcon
-            label="decline-new"
-            src="static/images/decline.svg"
-            onClick={stopAddingVial}
-          />
-        </td>
-      </tr>
-    );
-  }
-
-
   // Value extraction
   const dateString = dateToDateString(active_date)
   let minimum_status = 5;
@@ -667,7 +580,7 @@ export function ActivityModal({
       minimum_status={minimum_status}
       key={-1}
       vial={new Vial(
-        -1, "", "", "", "", "", active_date, "", 1
+        -1, active_tracer, "", "", "", "", dateToDateString(active_date), null, customer.id
       )}
       selected={false}
       onSelect={() => {}}

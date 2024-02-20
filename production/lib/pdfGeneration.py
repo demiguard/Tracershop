@@ -37,8 +37,6 @@ except:
   fonts = False # pragma: no cover
 
 WIDTH, HEIGHT = A4
-print(f"width:{(WIDTH)}, height:{HEIGHT}")
-
 
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES
