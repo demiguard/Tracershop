@@ -19,6 +19,7 @@ from django.db.models import QuerySet
 from django.utils import timezone
 
 # Third party packages
+from reportlab.lib.pagesizes import A4
 from reportlab.pdfgen import canvas
 import reportlab.rl_config
 reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
@@ -35,6 +36,8 @@ try:
 except:
   fonts = False # pragma: no cover
 
+WIDTH, HEIGHT = A4
+print(f"width:{(WIDTH)}, height:{HEIGHT}")
 
 
 # Tracershop Production packages
@@ -53,30 +56,88 @@ else:
   defaultFont = "Helvetica" # pragma no cover
 defaultFontSize = 13
 
-start_x_cursor = 58
+
+LINE_WIDTH = 500
+
+start_x_cursor = (WIDTH - 500) / 2
 start_y_cursor = 780
+
+
 
 def order_pair(i,j):
   return (min(i,j), max(i,j))
 
 
+MonthNames = {
+  1  : "Januar",
+  2  : "Februar",
+  3  : "Marts",
+  4  : "April",
+  5  : "Maj",
+  6  : "Juni",
+  7  : "Juli",
+  8  : "August",
+  9  : "September",
+  10 : "Oktober",
+  11 : "November",
+  12 : "December",
+}
+
+
 class MailTemplate(canvas.Canvas):
-  _line_height = 18 # How large is a text line
+  line_height = 18 # How large is a text line
   _font       = defaultFont
   _font_size  = defaultFontSize
   _Length_per_character = 6.5
   _table_width = 450
 
-  def __init__(self, filename: str):
+  def __init__(self, filename: str, now: Optional[datetime]=None):
     super().__init__(filename)
-
+    icon_ordinate = 780
+    icon_height = 48
+    self.setLineWidth(0.5)
     self.setStrokeColorRGB(0.0,0.0,0.0)
-    self.lines([
-      TOP_LINE,
-      BOTTOM_LINE
-    ])
+    self.drawInlineImage("pdfData/Logo_Rigshospitalet_Hospital_RGB.jpg",
+                         start_x_cursor,
+                         icon_ordinate,
+                         width=128,
+                         height=icon_height,
+                         preserveAspectRatio=True)
+    if now == None:
+      now = datetime.now()
 
-    self.drawInlineImage("pdfData/petlogo_small.png",  417, 750 , width= 128, height=32)
+    today_string = f"{now.day}-{MonthNames[now.month]}-{now.year}"
+
+    today_text_length = self.stringWidth(today_string,
+                                         self._font,
+                                         self._font_size)
+
+    date_abscissa = WIDTH - start_x_cursor - today_text_length
+    date_ordinate = icon_ordinate + (icon_height - self._font_size) / 2
+
+    self.drawString(date_abscissa, date_ordinate, today_string)
+
+  def resetFont(self):
+    self.setFont(self._font, self._font_size)
+
+  def drawBoldString(self,
+                     abscissa,
+                     ordinate,
+                     string_to_bold,
+                     bold_font_size=defaultFontSize):
+    """Adds a string which is bold
+
+    Args:
+        abscissa (int): Also named x, in none Mathematical circles
+        ordinate (int): Also named x, in none Mathematical circles
+        string_to_bold (str): Str to be written in bold
+    """
+    if fonts:
+      self.setFont('Mari_Bold', bold_font_size)
+    else:
+      self.setFont('Helvetica-bold', bold_font_size)
+    self.drawString(abscissa, ordinate, string_to_bold)
+    self.resetFont()
 
   def ApplyEndpoint(self, x_cursor:int, y_cursor:int, endpoint: DeliveryEndpoint) -> int:
     self.setStrokeColorRGB(0.5,0.5,1.0)
@@ -108,7 +169,7 @@ class MailTemplate(canvas.Canvas):
       if line is None:
         line = ''
       self.drawString(x_cursor, y_cursor, line)
-      y_cursor -= self._line_height
+      y_cursor -= self.line_height
       max_text_length = max(max_text_length, len(line))
 
     Y_bot =  y_cursor + 10
@@ -145,9 +206,9 @@ class MailTemplate(canvas.Canvas):
     tracer = pivotProduction.tracer
 
     self.drawString(x_cursor, y_cursor, f"Dato: {dateConverter(order_date, '%d/%m/%Y')}")
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
     self.drawString(x_cursor, y_cursor, f"Hermed frigives {tracer.clinical_name} - {tracer.isotope.atomic_letter}-{tracer.isotope.atomic_mass} til humant brug.")
-    y_cursor -= 2 * self._line_height
+    y_cursor -= 2 * self.line_height
 
     HeaderText = [
       "Order ID",
@@ -214,12 +275,17 @@ class MailTemplate(canvas.Canvas):
       y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, tableContent)
     else:
       self.drawString(x_cursor, y_cursor, "Der er ingen vials")
-      y_cursor -= self._line_height
+      y_cursor -= self.line_height
 
     return y_cursor
 
 
-  def _drawBox(self, t4: Tuple[int,int,int,int]):
+  def p_drawBox(self, t1: Tuple[int, int], t2: Tuple[int, int]):
+    x_1, y_1 = t1
+    x_2, y_2 = t2
+    return self.drawBox(x_1, y_1, x_2, y_2)
+
+  def t_drawBox(self, t4: Tuple[int,int,int,int]):
     """Overloaded function of draw box.
 
     Args:
@@ -294,7 +360,7 @@ class MailTemplate(canvas.Canvas):
       self.drawString(x, line_y + 2 , text)
       x += line_length / len(Texts)
       if separator_lines and i != len(Texts) -1:
-        self.line(x - 5, line_y + self._line_height, x - 5, line_y )
+        self.line(x - 5, line_y + self.line_height, x - 5, line_y )
 
   def drawTable(self, x_cursor: int, y_cursor: int, table_width: int, textLines: List[List[str]]):
     """[summary]
@@ -313,10 +379,10 @@ class MailTemplate(canvas.Canvas):
           x_cursor,
           y_cursor,
           x_cursor + table_width,
-          y_cursor + self._line_height
+          y_cursor + self.line_height
         )
       self.drawTableTextLine(x_cursor, y_cursor, table_width, TableTextLine)
-      y_cursor -= self._line_height
+      y_cursor -= self.line_height
 
     return y_cursor
 
@@ -329,14 +395,14 @@ class MailTemplate(canvas.Canvas):
 
     if(injectionOrder.delivery_date < LEGACY_ENTRIES):
       self.drawString(x_cursor, y_cursor, "Ordren er lavet i det gamle tracershop, og kan derfor manglel data")
-      y_cursor -= self._line_height
+      y_cursor -= self.line_height
 
 
     tracer = injectionOrder.tracer
     isotope = tracer.isotope
 
     self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
 
     if injectionOrder.freed_datetime is None:
       freedDatetime = "Ukendt frigivelse tidspunkt"
@@ -346,7 +412,7 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 
 
-    y_cursor -= self._line_height * 2
+    y_cursor -= self.line_height * 2
 
     return y_cursor
 
@@ -355,30 +421,30 @@ class MailTemplate(canvas.Canvas):
     self.drawString(x_cursor, y_cursor, f"Venlig Hilsen")
 
     x_cursor += 15
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
 
     self.drawString(x_cursor, y_cursor, "Nic Gillings")
 
-    y_cursor -= self._line_height * 8.2
+    y_cursor -= self.line_height * 8.2
 
     self.drawInlineImage("pdfData/sig.png", x_cursor + 30, y_cursor, 128, 109, preserveAspectRatio=True)
 
-    y_cursor -= self._line_height * 2
+    y_cursor -= self.line_height * 2
 
     self.drawString(x_cursor, y_cursor, f"PET & Cyklotronenheden UK 3982")
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
 
     self.drawString(x_cursor, y_cursor, f"Rigshospitalet")
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
 
     self.drawString(x_cursor, y_cursor, f"Blegdamsvej 9")
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
 
     self.drawString(x_cursor, y_cursor, f"2100 København Ø")
-    y_cursor -= self._line_height * 2
+    y_cursor -= self.line_height * 2
 
     self.drawString(x_cursor, y_cursor, f"Tlf: +45 35453949")
-    y_cursor -= self._line_height
+    y_cursor -= self.line_height
 
     return y_cursor
 
@@ -409,7 +475,7 @@ def DrawActivityOrder(
   if LEGACY_ENTRIES < order_date :
     template.drawString(x_cursor, y_cursor, 'Orderen er lavet i det gamle system.\
  Derfor kan orderen være ufuldstændig.')
-    y_cursor -= template._line_height * 2
+    y_cursor -= template.line_height * 2
   if len(vials) != 0:
     y_cursor = template.applyVials(x_cursor, y_cursor, vials)
 
@@ -437,4 +503,189 @@ def DrawInjectionOrder(
 
   y_cursor = template.ApplySender(x_cursor, y_cursor)
 
+  template.save()
+
+def DrawTransportDocument(filename, customer):
+  pass
+
+
+def DrawDeliveryNote(filename):
+  pass
+
+
+def DrawReleaseCertificate(filename :str,
+                           order_date : date,
+                           endpoint : DeliveryEndpoint,
+                           productions : Sequence[ActivityProduction],
+                           orders : Sequence[ActivityOrder] ,
+                           vials : Sequence[Vial],):
+  template = MailTemplate(filename)
+  x_cursor = start_x_cursor
+  y_cursor = 400
+
+  formatted_date = order_date.strftime("%d:%m:%Y")
+  pivot_production = productions[0]
+  pivot_vial = vials[0]
+
+  # this should be a function
+  title = "BATCH FRIGIVELSESCERTIFIKAT"
+  title_width = template.stringWidth(title, "Mari_Bold", 22)
+
+  title_abscissa = ((WIDTH) - title_width) / 2
+  template.drawBoldString(title_abscissa, 750, title, bold_font_size=22)
+
+  table_row_y_top_1 = 730
+  table_row_y_top_2 = table_row_y_top_1 - template.line_height * 1.5
+  table_row_y_top_3 = table_row_y_top_1 - template.line_height * 3.0
+  table_row_y_top_4 = table_row_y_top_1 - template.line_height * 4.5
+  table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 11
+
+
+  # First line of the first table
+  box_abscissa_start = start_x_cursor
+  box_abscissa_end = WIDTH - start_x_cursor
+  box_abscissa_middle_1 = (box_abscissa_end - box_abscissa_start) * 0.4
+  box_abscissa_middle_2 = (box_abscissa_end - box_abscissa_start) * 0.6
+  # Boxes 1
+  template.p_drawBox((box_abscissa_start,    table_row_y_top_1),
+                     (box_abscissa_middle_1, table_row_y_top_1 - template.line_height * 1.5))
+  template.p_drawBox((box_abscissa_middle_1, table_row_y_top_1),
+                     (box_abscissa_middle_2, table_row_y_top_1 - template.line_height * 1.5))
+  template.p_drawBox((box_abscissa_middle_2, table_row_y_top_1),
+                     (box_abscissa_end,      table_row_y_top_1 - template.line_height * 1.5))
+  # Boxes 2
+  template.p_drawBox((box_abscissa_start,    table_row_y_top_2),
+                     (box_abscissa_middle_1, table_row_y_top_2 - template.line_height * 1.5))
+  template.p_drawBox((box_abscissa_middle_1, table_row_y_top_2),
+                     (box_abscissa_middle_2, table_row_y_top_2 - template.line_height * 1.5))
+  template.p_drawBox((box_abscissa_middle_2, table_row_y_top_2),
+                     (box_abscissa_end,      table_row_y_top_2 - template.line_height * 1.5))
+  # Boxes 3
+  template.p_drawBox((box_abscissa_start,    table_row_y_top_3),
+                     (box_abscissa_middle_1, table_row_y_top_3 - template.line_height * 1.5))
+  template.p_drawBox((box_abscissa_middle_1, table_row_y_top_3),
+                     (box_abscissa_middle_2, table_row_y_top_3 - template.line_height * 1.5))
+  template.p_drawBox((box_abscissa_middle_2, table_row_y_top_3),
+                     (box_abscissa_end,      table_row_y_top_3 - template.line_height * 1.5))
+  # Boxes 4
+  template.p_drawBox((box_abscissa_start,    table_row_y_top_4),
+                     (box_abscissa_middle_1, table_row_y_top_bottom))
+  template.p_drawBox((box_abscissa_middle_1, table_row_y_top_4),
+                     (box_abscissa_middle_2, table_row_y_top_bottom))
+  template.p_drawBox((box_abscissa_middle_2, table_row_y_top_4),
+                     (box_abscissa_end,      table_row_y_top_bottom))
+
+  header_box_text_start = box_abscissa_start + 5
+
+  template.drawBoldString(header_box_text_start, table_row_y_top_1 - template.line_height, "Produktnavn")
+  template.drawBoldString(header_box_text_start, table_row_y_top_2 - template.line_height, "Batchnummer")
+  template.drawBoldString(header_box_text_start, table_row_y_top_3 - template.line_height, "Fremstillingsdato")
+  template.drawBoldString(header_box_text_start, table_row_y_top_4 - template.line_height, "Fremstiller")
+
+  header_box_text_info_start = box_abscissa_middle_2 + 5
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_1 - (template.line_height),
+                      pivot_production.tracer.clinical_name)
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_2 - (template.line_height),
+                      pivot_vial.lot_number)
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_3 - (template.line_height),
+                      formatted_date)
+  # Line 1
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (template.line_height),
+                      "Cyklotron og Radiokemi, enhed 3982")
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (2 * template.line_height),
+                      "Afdeling for Klinisk Fysiologi og Nuklear")
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (3 * template.line_height),
+                      "Medicin")
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (4 * template.line_height),
+                      "Rigshospitalet")
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (5 * template.line_height),
+                      "Blegdamsvej 9")
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (6 * template.line_height),
+                      "2100 København Ø")
+
+  # Table 2 Header
+  t2_abscissa_m1 = (box_abscissa_end - box_abscissa_start) * 0.2 + box_abscissa_start
+  t2_abscissa_m2 = (box_abscissa_end - box_abscissa_start) * 0.4 + box_abscissa_start
+  t2_abscissa_m3 = (box_abscissa_end - box_abscissa_start) * 0.6 + box_abscissa_start
+  t2_abscissa_m4 = (box_abscissa_end - box_abscissa_start) * 0.8 + box_abscissa_start
+
+  def draw_table_2_row(ordinate, texts: Tuple[str, str, str, str, str], bold=False):
+    template.p_drawBox((box_abscissa_start, ordinate),
+                       (t2_abscissa_m1, ordinate - template.line_height * 1.5))
+    template.p_drawBox((t2_abscissa_m1, ordinate),
+                       (t2_abscissa_m2, ordinate - template.line_height * 1.5))
+    template.p_drawBox((t2_abscissa_m2, ordinate),
+                       (t2_abscissa_m3, ordinate - template.line_height * 1.5))
+    template.p_drawBox((t2_abscissa_m3, ordinate),
+                       (t2_abscissa_m4, ordinate - template.line_height * 1.5))
+    template.p_drawBox((t2_abscissa_m4, ordinate),
+                       (box_abscissa_end, ordinate - template.line_height * 1.5))
+
+    t1,t2,t3,t4,t5 = texts
+    if bold:
+      template.drawBoldString(box_abscissa_start + 5, ordinate - template.line_height, t1)
+      template.drawBoldString(t2_abscissa_m1 + 5, ordinate - template.line_height, t2)
+      template.drawBoldString(t2_abscissa_m2 + 5, ordinate - template.line_height, t3)
+      template.drawBoldString(t2_abscissa_m3 + 5, ordinate - template.line_height, t4)
+      template.drawBoldString(t2_abscissa_m4 + 5, ordinate - template.line_height, t5)
+    else:
+      template.drawString(box_abscissa_start + 5, ordinate - template.line_height, t1)
+      template.drawString(t2_abscissa_m1 + 5, ordinate - template.line_height, t2)
+      template.drawString(t2_abscissa_m2 + 5, ordinate - template.line_height, t3)
+      template.drawString(t2_abscissa_m3 + 5, ordinate - template.line_height, t4)
+      template.drawString(t2_abscissa_m4 + 5, ordinate - template.line_height, t5)
+
+
+
+  draw_table_2_row(table_row_y_top_bottom, ("Ordre ID", "Bestilt", "Kalibreret kl:", "Leveret", "Frigivet kl:"), True)
+  ordinate = table_row_y_top_bottom - template.line_height * 1.5
+  max_rows = max(len(orders), len(vials))
+  for i in range(max_rows):
+    if i < len(orders):
+      order = orders[i]
+      order_id = str(order.id)
+      ordered_activity = f"{order.ordered_activity} MBq"
+      freed = order.freed_datetime.strftime('%H:%M')
+    else:
+      order_id = ""
+      ordered_activity = ""
+      freed = ""
+
+    if i < len(vials):
+      vial = vials[0]
+      calibration_time = f"{vial.fill_time.isoformat('minutes')}"
+      vial_activity = f"{vial.activity} MBq"
+    else:
+      calibration_time = ""
+      vial_activity = ""
+
+    draw_table_2_row(ordinate, (order_id, ordered_activity, calibration_time, vial_activity, freed))
+    ordinate = table_row_y_top_bottom - template.line_height * 1.5
+
+  ordinate -= template.line_height * 3
+
+  template.drawString(x_cursor, ordinate, "Det attesteres hermed, at produktet er fremstillet, analyseret og pakket på ovennævnte")
+  ordinate -= template.line_height
+  template.drawString(x_cursor, ordinate, "site i fuld overensstemmelse med kravene til GMP og gældende markedsføringstilladelse.")
+  ordinate -= template.line_height * 1.5
+  template.drawString(x_cursor, ordinate, "Hermed frigives Produktet til humant brug.")
+  ordinate -= template.line_height * 2.5
+  template.drawString(x_cursor, ordinate, "QP Name: Nic Gillings")
+  ordinate -= template.line_height * 2.5
+  template.drawString(x_cursor, ordinate, f"Date: {formatted_date}")
+  ordinate -= template.line_height * 1.5
+  template.drawString(x_cursor, ordinate, f"Signature:")
+  ordinate -= template.line_height * 1.5
+  sig_height = 109
+
+  template.drawInlineImage("pdfData/sig.png", x_cursor + 30, ordinate - sig_height, 128, sig_height, preserveAspectRatio=True)
   template.save()

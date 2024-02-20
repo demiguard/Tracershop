@@ -32,3 +32,9 @@ VIAL_LOGGER = "VialLogger"
 VIAL_WATCHER_FILE_PATH_ENV = "VIAL_WATCHER_FILE_PATH"
 
 CHANNEL_GROUP_GLOBAL = "global"
+
+# Environment Variables
+ENV_TEST_PDF_DIRECTORY = "TRACER_TEST_PDF"
+
+# Environment variables defaults
+ENV_TEST_PDF_DIRECTORY_DEFAULT = "test_pdf"

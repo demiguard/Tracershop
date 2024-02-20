@@ -20,6 +20,7 @@ main.js
 main*.js*
 SECRET_KEY.py
 test_pdfs/
+test_pdf/
 pdfs/
 fonts/
 *.code-workspace

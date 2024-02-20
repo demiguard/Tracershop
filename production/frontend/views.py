@@ -101,7 +101,7 @@ def pdfView(request,
   if not dirPath.exists():
     dirPath.mkdir(parents=True, exist_ok=True)
 
-  pdfGeneration.DrawActivityOrder(
+  pdfGeneration.DrawReleaseCertificate(
     filename,
     order_date,
     endpoint,
