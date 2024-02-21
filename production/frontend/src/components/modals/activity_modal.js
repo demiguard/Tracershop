@@ -11,27 +11,46 @@ import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { Comment } from "../injectable/data_displays/comment.js";
 
-import { ERROR_BACKGROUND_COLOR,
-  PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID} from "~/lib/constants.js";
+import { ERROR_BACKGROUND_COLOR, NEW_LOCAL_ID, ORDER_STATUS, StateType } from "~/lib/constants.js";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
   DATA_AUTH, DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_ISOTOPE,
   DATA_PRODUCTION, DATA_TRACER, DATA_USER, DATA_VIAL, WEBSOCKET_DATA,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "~/lib/shared_constants.js"
-import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting.js";
+import { dateToDateString, formatReleaserUsername, parseDateToDanishDate } from "~/lib/formatting.js";
 import { getTimeString } from "~/lib/chronomancy.js";
 
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-import { compareDates, getPDFUrls } from "../../lib/utils.js";
+import { compareDates, getPDFUrls, toMapping } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
-import { OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
+import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
-import { setTempObjectToEvent } from "~/lib/state_management.js";
+import { reset_error, setTempObjectToEvent } from "~/lib/state_management.js";
 import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
+
+/**
+ * Filters out vials that is should not be displayed by the activity modal
+ * @param {String} dateString
+ * @param {ActivityOrderCollection} orderCollection
+ * @param {Customer} customer
+ * @returns {Boolean} - True if the vial should be displayed false otherwise
+ */
+function vialFilterFunction(dateString, orderCollection, customer){
+  return (vial) => {
+    if(vial.fill_date !== dateString){
+      return false;
+    }
+    if(orderCollection.minimum_status === ORDER_STATUS.RELEASED){
+      return orderCollection.orderIDs.includes(vial.assigned_to)
+    } else {
+      return vial.owner === customer.id;
+    }
+  }
+}
 
 /**
  *
@@ -47,23 +66,76 @@ export function ActivityModal({
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket();
-  const timeSlot = state.deliver_times.get(timeSlotID)
-  const /**@type {Array<ActivityOrder> | undefined}*/ orders = order_mapping.getOrders(timeSlot.id)
-  const /**@type {DeliveryEndpoint} */ endpoint = state.delivery_endpoint.get(timeSlot.destination)
-  const /**@type {Customer} */ customer = state.customer.get(endpoint.owner)
-  const /**@type {Number} */ overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer)
-  const /**@type {Tracer} */ tracer = state.tracer.get(active_tracer)
+  //
+  const dateString = dateToDateString(active_date);
+  const timeSlot = state.deliver_times.get(timeSlotID);
+  const originalOrders = order_mapping.getOrders(timeSlot.id);
+  const endpoint = state.delivery_endpoint.get(timeSlot.destination);
+  const customer = state.customer.get(endpoint.owner);
+  const overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer);
+  const tracer = state.tracer.get(active_tracer);
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
+  const orderCollection = new ActivityOrderCollection(originalOrders, state, overhead);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
+  console.log(orderCollection)
+
+  // Order State
+  const /** @type {StateType<Map<Number, ActivityOrder>>} */
+    [orders, setOrders] = useState(new Map());
+  const [orderErrors, setOrderErrors] = useState(new Map());
+  const [editingOrders, setEditingOrders] = useState(new Set());
+  // Vials State
+  const /** @type {StateType<Map<Number,Vial>>} */
+    [vials, setVials] = useState(new Map());
+  const [vialErrors, setVialError] = useState(new Map());
+  const [selectedVials, setSelectedVials] = useState(new Set());
+  const [editingVials, setEditingVials] = useState(new Set());
 
   const [errorMessage, setErrorMessage] = useState("");
   const [errorLevel, setErrorLevel] = useState("");
   const [freeing, setFreeing] = useState(false);
-  const [addingVial, setAddingVial] = useState(false);
-  const [selectedVials, setSelectedVials] = useState(new Set());
   const [loginMessage, setLoginMessage] = useState("");
   const [loginSpinner, setLoginSpinner] = useState(false);
+
+  // Effects
+  // These effects are for updating prop dependant state
+  useEffect(function initializeVials() {
+    setVials(oldVials => {
+      const newOriginalVials = [...state.vial.values()].filter(
+        vialFilterFunction(dateString, orderCollection, customer))
+      const newVials = toMapping(newOriginalVials);
+      if (oldVials.has(NEW_LOCAL_ID)){
+        newVials.set(NEW_LOCAL_ID, oldVials.get(NEW_LOCAL_ID))
+      }
+      return newVials;
+    });
+  }, [state.vial]);
+
+  useEffect(function initializeOrders(){
+    setOrders(toMapping(order_mapping.getOrders(timeSlot.id)));
+  }, [order_mapping]);
+
+  // Derived State
+  const addingVial = vials.has(NEW_LOCAL_ID);
+
+  // Helper functions
+  function allocateNewVial(){
+    setVials(oldVials => {
+      const newVials = new Map(oldVials);
+      newVials.set(NEW_LOCAL_ID, new Vial(NEW_LOCAL_ID, active_tracer, "", "", "", "", dateString, null, customer.id))
+      return newVials;
+    });
+  }
+
+  function deallocateNewVial(){
+    setVials(oldVials => {
+      const newVials = new Map(oldVials);
+      newVials.delete(NEW_LOCAL_ID);
+      return newVials;
+    });
+  }
+
 
    /**
   * A time slot may multiple orders and each of these objects refers to an order
@@ -126,7 +198,7 @@ export function ActivityModal({
                           />
     }
 
-    let iconFunction= canEdit ? () => {setEditing(true)} : () => {}
+    let iconFunction = canEdit ? () => {setEditing(true)} : () => {}
     return (
       <Row>
         <Col>Order ID:{order.id}</Col>
@@ -164,7 +236,7 @@ export function ActivityModal({
    * }} props for component
    * @returns
    */
-  function VialRow({vial, onSelect, selected, minimum_status}){
+  function VialRow({vial, onSelect, selected}){
     const vialErrorInit = {
       lot_number : "",
       full_time : "",
@@ -186,9 +258,10 @@ export function ActivityModal({
 
     };
 
+
     const assignable = !Boolean(vial.assigned_to);
     // This value should be moved into orderRowState
-    const canEdit = (minimum_status == 1 || minimum_status == 2) && !freeing;
+    const canEdit = (orderCollection.minimum_status == 1 || orderCollection.minimum_status == 2) && !freeing;
     const vialRowState = (() => {
       if(editing) {return vialRowStates.EDITING;}
       if(selected){return vialRowStates.SELECTED;}
@@ -283,8 +356,8 @@ export function ActivityModal({
                   value={tempVial.fill_time}
                   aria-label={`fill_time-${vial.id}`}
                   stateFunction={setFillTime}
-                />
-              </ErrorInput>
+                  />
+                </ErrorInput>
             </TracershopInputGroup>
           </Optional>
         </td>
@@ -332,11 +405,7 @@ export function ActivityModal({
                 temp_object={tempVial}
                 object_type={DATA_VIAL}
                 validate={validate}
-                callback={() => {
-                  if(creating){
-                    setAddingVial(false);
-                  }
-                }}
+                callback={deallocateNewVial}
                 label={`vial-commit-${vial.id}`}
               />
             </div>
@@ -365,7 +434,7 @@ export function ActivityModal({
               <ClickableIcon
                 label={`vial-edit-decline-${vial.id}`}
                 src="/static/images/decline.svg"
-                onClick={() => {setEditing(false); if(creating) {setAddingVial(false);}}}
+                onClick={() => {setEditing(false); if(creating) {deallocateNewVial()}}}
               />
               </div>
               <div> {/* SELECTED */}
@@ -381,58 +450,109 @@ export function ActivityModal({
     );
   }
 
-  // Value extraction
-  const dateString = dateToDateString(active_date)
-  let minimum_status = 5;
-  let activity = 0;
-  let freed_activity = 0;
-  let freedTime = null;
-  let freed_by = null;
-  let commentString = "";
-  const orderRows = []
-  const orderIDs = []
-
-  for(const order of orders){
-    minimum_status = Math.min(minimum_status, order.status)
-
-    orderIDs.push(order.id);
-
-    if (order.comment){
-      commentString += `Orderer ${order.id} - ${order.comment}\n`;
+  // "Subcomponents"
+  const orderRows = [...orders.values()].map((order) => {
+    const editing = editingOrders.has(order.id);
+    const canEdit = order.status == ORDER_STATUS.ACCEPTED
+            || order.status == ORDER_STATUS.ORDERED;
+    const orderRowStates = {
+      DEFAULT : 0,
+      DEFAULT_CANNOT_EDIT : 1,
+      EDITING : 2,
     }
+    const orderRowState = (() => {
+      if(editing){return orderRowStates.EDITING;}
+      if(!canEdit){return orderRowStates.DEFAULT_CANNOT_EDIT;}
+      return orderRowStates.DEFAULT;
+    })();
 
-    activity += Math.floor(order.ordered_activity) * overhead;
+    const error = orderErrors.has(order.id) ? orderErrors.get(order.id) : "";
 
-    if (freedTime === null && order.freed_datetime){
-      const timestamp = getTimeString(order.freed_datetime)
-      const dateString = parseDateToDanishDate(dateToDateString(new Date(order.freed_datetime)))
-
-      freedTime = `${timestamp} - ${dateString}`
-    }
-
-    if (freed_by === null && order.freed_by){
-      const freeingUser = state.user.get(order.freed_by);
-      freed_by = freeingUser.username.toUpperCase();
-    }
-
-    orderRows.push(
-      <OrderRow key={order.id} order={order}/>);
-  }
-
-  const vials = [...state.vial.values()].filter(
-    (_vial) => {
-      const /**@type {Vial} */ vial = _vial
-      if(vial.fill_date !== dateString){
-        return false;
+    function validate(){
+      const [valid, activityNumber] = parseDanishPositiveNumberInput(order.ordered_activity);
+      if(!valid){
+        setOrderErrors(oldErrors => {
+          const newErrors = new Map(oldErrors);
+          newErrors.set(order.id, activityNumber);
+          return newErrors;
+        });
+        return [false, {}];
       }
-      if(minimum_status === 3){
-        freed_activity += vial.activity;
-        return orderIDs.includes(vial.assigned_to)
-      } else {
-        return vial.owner === customer.id;
-      }
+      return [true, {...order,
+        ordered_activity : activityNumber,
+      }]
     }
-  )
+
+    function commitCallback(){
+      setEditingOrders(oldEditingOrders => {
+        const newEditingOrders = new Set(oldEditingOrders);
+        newEditingOrders.delete(order.id)
+        return newEditingOrders;
+      });
+    }
+
+
+
+    let activityDisplay = canEdit ?
+                            <HoverBox
+                              Base={<p>{`${order.ordered_activity} MBq`}</p>}
+                              Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
+                              />
+                            : `${order.ordered_activity} MBq`;
+
+      if(editing){
+        activityDisplay = (
+          <ErrorInput error={error}>
+            <FormControl
+                              aria-label={`edit-form-order-activity-${order.id}`}
+                              value={order.ordered_activity}
+                              onChange={(event) => {
+                                setOrders(orders => {
+                                  const newOrders = new Map(orders)
+                                  newOrders.set(order.id, {...order,
+                                    ordered_activity : event.target.value})
+                                  })
+                                  reset_error(set, order.id)
+                                }}
+                            />
+          </ErrorInput>);
+    }
+
+    return (
+      <Row key={order.id}>
+        <Col>Order ID:{order.id}</Col>
+        <Col>{activityDisplay}</Col>
+        <Col xs={2}>
+          <Comment comment={order.comment}/>
+        </Col>
+        <Col xs={2} style={{
+          justifyContent : "right", display : "flex"
+        }}><Optional exists={editing} alternative={
+          <StatusIcon
+                label={`edit-order-activity-${order.id}`}
+                order={order}
+                onClick={() => {
+                  if(canEdit){
+                    setEditingOrders(editingOrders => {
+                      const newEditingOrders = new Set(editingOrders)
+                      newEditingOrders.add(order.id)
+                      return newEditingOrders
+                    });
+                  }
+                }}
+          />
+        }>
+          <CommitButton
+            object_type={DATA_ACTIVITY_ORDER}
+            temp_object={order}
+            validate={validate}
+            callback={commitCallback}
+          />
+        </Optional>
+          </Col>
+      </Row>
+    )
+  })
 
   function startFreeing(){
     if(compareDates(active_date, new Date())){
@@ -447,14 +567,9 @@ export function ActivityModal({
   // Functions
   function onClickAccept(){
     const orders = order_mapping.getOrders(timeSlotID);
-
-    if(orders.length == 0){
-      return;
-    }
-
     for(const order of orders){
-      if (order.status == 1){
-        order.status = 2
+      if (order.status === ORDER_STATUS.ORDERED){
+        order.status = ORDER_STATUS.RELEASED;
       }
     }
     websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders)
@@ -488,10 +603,6 @@ export function ActivityModal({
     });
   }
 
-  function stopAddingVial(){
-    setAddingVial(false);
-  }
-
   function setError(level, error){
     setErrorLevel(level)
     setErrorMessage(<div>{error}</div>);
@@ -500,21 +611,21 @@ export function ActivityModal({
   /**
    * @param {Vial} vial */
   function selectVial(vial){
-    if(freeing || minimum_status === 3){
+    if(freeing || orderCollection.minimum_status === ORDER_STATUS.RELEASED){
       return () => {};
     }
 
     return () => {
-      if(selectedVials.has(vial.id)){
-        const newSelectedVials = new Set(selectedVials);
-        newSelectedVials.delete(vial.id)
-        setSelectedVials(newSelectedVials);
-      } else {
-        const newSelectedVials = new Set(selectedVials);
-        newSelectedVials.add(vial.id)
-        setSelectedVials(newSelectedVials);
-      }
-    }
+      setSelectedVials(oldSelection => {
+        const newSelection = new(oldSelection);
+        if(oldSelection.has(vial.id)){
+          newSelection.delete(vial.id);
+        } else {
+          newSelection.add(vial.id);
+        }
+        return newSelection;
+      })
+    };
   }
 
   // Sub elements
@@ -561,33 +672,19 @@ export function ActivityModal({
     allocationTotal += vial.activity;
   }
 
-  const vialRows = vials.map((_vial, i) => {
+  const vialRows = [...vials.values()].map((_vial) => {
     const /**@type {Vial} */ vial = _vial;
-    const selected = minimum_status === 3 ? true : selectedVials.has(vial.id);
+    const selected = orderCollection.minimum_status === ORDER_STATUS.RELEASED ?
+      true : selectedVials.has(vial.id);
     return <VialRow
-      minimum_status={minimum_status}
       key={vial.id}
       vial={vial}
       selected={selected}
       onSelect={selectVial(vial)}
       setError={setError}
     />
-  })
+  });
 
-  if(addingVial){
-    vialRows.push(
-      <VialRow
-      minimum_status={minimum_status}
-      key={-1}
-      vial={new Vial(
-        -1, active_tracer, "", "", "", "", dateToDateString(active_date), null, customer.id
-      )}
-      selected={false}
-      onSelect={() => {}}
-      setError={setError}
-      />
-    )
-  }
 
   return (
     <Modal
@@ -598,7 +695,7 @@ export function ActivityModal({
       className={styles.mariLight}>
     <Modal.Header>
       <h3>
-        Ordre - {parseDateToDanishDate(dateToDateString(active_date))} - {timeSlot.delivery_time}
+        Ordre - {parseDateToDanishDate(dateString)} - {timeSlot.delivery_time}
       </h3>
     </Modal.Header>
     <Modal.Body>
@@ -622,30 +719,30 @@ export function ActivityModal({
             <hr/>
             <Row>
               <Col>{totalActivityHover}</Col>
-              <Col>{Math.floor(activity)} MBq</Col>
+              <Col>{Math.floor(orderCollection.deliver_activity)} MBq</Col>
             </Row>
             <hr/>
-            <Optional exists={minimum_status == 2}>
+            <Optional exists={orderCollection.minimum_status == ORDER_STATUS.ACCEPTED}>
               <Row>
                 <Col>Allokeret aktivitet:</Col>
                 <Col data-testid="allocation-col" >{Math.floor(allocationTotal)} MBq</Col>
               </Row>
               <hr/>
             </Optional>
-            <Optional exists={minimum_status == 3}>
+            <Optional exists={orderCollection.minimum_status == ORDER_STATUS.RELEASED}>
               <Row>
                 <Col>Frigivet aktivitet</Col>
-                <Col>{Math.floor(freed_activity)} MBq</Col>
+                <Col>{Math.floor(orderCollection.delivered_activity)} MBq</Col>
               </Row>
               <hr/>
               <Row>
                 <Col>Frigivet tidpunktet</Col>
-                <Col>{freedTime}</Col>
+                <Col>{orderCollection.freed_time}</Col>
               </Row>
               <hr/>
               <Row>
                 <Col>Frigivet af</Col>
-                <Col>{freed_by}</Col>
+                <Col>{formatReleaserUsername(orderCollection.freed_by)}</Col>
               </Row>
               <hr/>
             </Optional>
@@ -681,7 +778,7 @@ export function ActivityModal({
                 <ClickableIcon
                   label="add-new-vial"
                   src="/static/images/plus.svg"
-                  onClick={() => {setAddingVial(true)}}/>
+                  onClick={allocateNewVial}/>
               </div>}
             </div>
           </div>
@@ -689,10 +786,10 @@ export function ActivityModal({
       </Modal.Body>
     <Modal.Footer>
       <div>
-        {minimum_status == 1 ? AcceptButton : "" }
-        {minimum_status == 2 && !freeing ? ConfirmButton : ""}
-        {minimum_status == 2 && freeing ? CancelFreeButton : ""}
-        {minimum_status == 3 ? PDFButton : ""}
+        {orderCollection.minimum_status == 1 ? AcceptButton : "" }
+        {orderCollection.minimum_status == 2 && !freeing ? ConfirmButton : ""}
+        {orderCollection.minimum_status == 2 && freeing ? CancelFreeButton : ""}
+        {orderCollection.minimum_status == 3 ? PDFButton : ""}
         <CloseButton onClick={on_close}/>
       </div>
     </Modal.Footer>

@@ -92,8 +92,24 @@ export function set_state_error(stateFunction, id, error){
 export function reset_error(stateFunction, id){
   stateFunction(oldErrors => {
     if (oldErrors.has(id)){
-      const newErrors = new Map(oldErrors)
-      newErrors.delete(id)
+      const newErrors = new Map(oldErrors);
+      newErrors.delete(id);
+      return newErrors;
+    } else {
+      return oldErrors;
+    }
+  });
+}
+
+
+export function reset_sub_error(stateFunction, id, error_key_word){
+  stateFunction(oldErrors => {
+    if (oldErrors.has(id)){
+      const newErrors = new Map(oldErrors);
+      const newError = newErrors.get(id);
+      newError[error_key_word] = "";
+      newErrors.set(id, newError);
+      return newErrors;
     } else {
       return oldErrors
     }

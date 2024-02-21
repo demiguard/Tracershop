@@ -8,10 +8,12 @@ import { FormatTime, ParseDanishNumber, batchNumberValidator, parseDate } from "
 
 
 /**
- * Parses a string, which should contain a danish number. If it doesn't, returns false, 
- * and a description why it's faulty.
- * @param {string} input 
- * @returns
+ * Parses a string, which should contain a danish number. If it doesn't, returns
+ * false, and a description why it's faulty.
+ * @param {string} input
+ * @param {string} header - Incase of an error the header will be put in first
+ * describing the error
+ * @returns {[Boolean, string | Number]}
  */
 export function parseDanishNumberInput (input, header="") {
   const inputNumber = ParseDanishNumber(input);
@@ -143,11 +145,11 @@ export function parseAETitleInput(input, header=""){
 
 
 /**
- * 
+ *
  * @param {Array<String>} errorList - Container for the error messages
  * @param {Boolean} valid true if error
  * @param {String | any} errorMessage string if error otherwise any
- * @returns 
+ * @returns
  */
 export function concatErrors(errorList, valid, errorMessage){
   if(!valid) {
@@ -158,9 +160,9 @@ export function concatErrors(errorList, valid, errorMessage){
 
 /**
  *
- * @param {*} input 
- * @param {*} header 
- * @returns 
+ * @param {*} input
+ * @param {*} header
+ * @returns
  */
 export function parseDateInput(input, header=""){
   const dateString = parseDate(input);

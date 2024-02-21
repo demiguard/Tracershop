@@ -5,7 +5,7 @@
 
 import React, {useRef, useState} from 'react'
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState, User } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
 import { TimeStamp, compareTimeStamp, getDay, getWeekNumber } from "./chronomancy";
 import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof } from "./constants";
@@ -86,15 +86,16 @@ export class ActivityOrderCollection {
    * @type {Boolean}
    */ moved
   /**
-   * @desc Combined ordered activity of {@link orders}
+   * @desc Combined ordered activity of {@link orders} with out overhead
    * @type {Number}
    */ ordered_activity
   /**
-   * @desc Combined activity ordered of {@link orders} with an account of overhead
+   * @desc Combined activity ordered of {@link orders} with accounting for
+   * overhead
    * @type {Number}
    */ deliver_activity
   /**
-   * @desc Activity delivered to fulfil {@link orders}
+   * @desc Activity released to fulfil {@link orders}
    * @type {Number}
    */ delivered_activity
 
@@ -102,6 +103,12 @@ export class ActivityOrderCollection {
    * @desc ID of all orders in {@link orders}
    * @type {Array<Number>}
    */ orderIDs
+
+  /**
+   * @desc If the orderCollection was freed, then this is the user that freed
+   * them
+   * @type {User | null}
+   */ freed_by
 
 /**
   * Wraps a group of orders, for the purpose of providing a single view of the
@@ -126,6 +133,7 @@ export class ActivityOrderCollection {
     this.isotope = null;
     this.delivering_time_slot = null;
     this.freed_time = null;
+    this.freed_by = null;
     this.production = null;
     this.moved = true;
     this.ordered_activity = 0;
@@ -163,8 +171,11 @@ export class ActivityOrderCollection {
                                                      timeDelta.hour * 60 + timeDelta.minute,
                                                      order.ordered_activity) * overhead;
       }
-      if(order.freed_time != null && this.freed_time != null){
+      if(order.freed_time !== null && this.freed_time === null){
         this.freed_time = order.freed_time;
+      }
+      if(order.freed_by !== null && this.freed_by === null){
+        this.freed_by = state.user.get(order.freed_by);
       }
     } // End of Order for loop;
     if(this.minimum_status === ORDER_STATUS.RELEASED){

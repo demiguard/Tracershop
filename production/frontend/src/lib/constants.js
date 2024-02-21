@@ -1,9 +1,13 @@
+import React from "react";
 /**
  * @typedef {T[keyof T]} valueof<T>
  * @template T
  */
 
-
+/**
+ * @typedef {[T, React.Dispatch<T>]} StateType<T>
+ * @template T
+ */
 
 export const COLORS = {
   primaryColor: "#009ce8",
@@ -144,7 +148,7 @@ export const cssError = {
   marginColor : ERROR_MARGIN_COLOR,
 }
 
-
+export const NEW_LOCAL_ID = -1;
 
 export const DATABASE_ADMIN_PAGE = "admin_page";
 export const DATABASE_CURRENT_USER = "current_user";

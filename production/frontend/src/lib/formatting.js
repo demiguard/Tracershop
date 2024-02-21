@@ -2,7 +2,7 @@
  *
  */
 
-import { MODELS } from "~/dataclasses/dataclasses";
+import { MODELS, User } from "~/dataclasses/dataclasses";
 
 /** Checks if the input string is on a date format, if it is, converts to a standardized format of
  * YYYY-MM-DD
@@ -146,7 +146,7 @@ export function isNotNaN(number){
 }
 
 /**
- * 
+ *
  * @param {String} input - String to be checked
  * @param {Number} min_length - whole number indicating minimum length of string
  * @param {Number} max_length - Maximum length of string to parse check
@@ -181,7 +181,7 @@ export function dateToDateString(date){
 }
 
 /**
- * 
+ *
  * @param {Date | Number} day - date or number from 0-6
  * @returns {String} the name of the day
  */
@@ -238,8 +238,8 @@ export function makePassword(len){
 }
 
 /**
- * 
- * @param {String} str 
+ *
+ * @param {String} str
  * @returns {String}
  */
 export function Capitalize(str){
@@ -262,4 +262,14 @@ export function renderDateTime(dateString){
   return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
 
-
+/**
+ *
+ * @param {User | null} user
+ * @returns
+ */
+export function formatReleaserUsername(user){
+  if(user === null){
+    return ""
+  }
+  return user.username.toUpperCase();
+}
