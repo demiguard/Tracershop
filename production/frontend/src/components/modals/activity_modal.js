@@ -28,9 +28,10 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
-import { reset_error, setTempObjectToEvent } from "~/lib/state_management.js";
+import { reset_error, setTempMapToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
 import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
+
 
 /**
  * Filters out vials that is should not be displayed by the activity modal
@@ -78,8 +79,6 @@ export function ActivityModal({
   const orderCollection = new ActivityOrderCollection(originalOrders, state, overhead);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
-  console.log(orderCollection)
-
   // Order State
   const /** @type {StateType<Map<Number, ActivityOrder>>} */
     [orders, setOrders] = useState(new Map());
@@ -89,8 +88,10 @@ export function ActivityModal({
   const /** @type {StateType<Map<Number,Vial>>} */
     [vials, setVials] = useState(new Map());
   const [vialErrors, setVialError] = useState(new Map());
-  const [selectedVials, setSelectedVials] = useState(new Set());
-  const [editingVials, setEditingVials] = useState(new Set());
+  const /** @type {StateType<Set<Number>>} */
+    [selectedVials, setSelectedVials] = useState(new Set());
+  const /** @type {StateType<Set<Number>>} */
+    [editingVials, setEditingVials] = useState(new Set());
 
   const [errorMessage, setErrorMessage] = useState("");
   const [errorLevel, setErrorLevel] = useState("");
@@ -101,12 +102,12 @@ export function ActivityModal({
   // Effects
   // These effects are for updating prop dependant state
   useEffect(function initializeVials() {
-    setVials(oldVials => {
+    setVials(vials => {
       const newOriginalVials = [...state.vial.values()].filter(
         vialFilterFunction(dateString, orderCollection, customer))
       const newVials = toMapping(newOriginalVials);
-      if (oldVials.has(NEW_LOCAL_ID)){
-        newVials.set(NEW_LOCAL_ID, oldVials.get(NEW_LOCAL_ID))
+      if (vials.has(NEW_LOCAL_ID)){
+        newVials.set(NEW_LOCAL_ID, vials.get(NEW_LOCAL_ID))
       }
       return newVials;
     });
@@ -123,331 +124,9 @@ export function ActivityModal({
   function allocateNewVial(){
     setVials(oldVials => {
       const newVials = new Map(oldVials);
-      newVials.set(NEW_LOCAL_ID, new Vial(NEW_LOCAL_ID, active_tracer, "", "", "", "", dateString, null, customer.id))
+      newVials.set(NEW_LOCAL_ID, new Vial(NEW_LOCAL_ID, active_tracer, "", "", "", "", dateString, null, customer.id));
       return newVials;
     });
-  }
-
-  function deallocateNewVial(){
-    setVials(oldVials => {
-      const newVials = new Map(oldVials);
-      newVials.delete(NEW_LOCAL_ID);
-      return newVials;
-    });
-  }
-
-
-   /**
-  * A time slot may multiple orders and each of these objects refers to an order
-  * connected by a common time slot.
-  * @param {{
-  *  order : ActivityOrder,
-  *  websocket : TracerWebSocket,
-  *  timeSlots : Map<Number, ActivityDeliveryTimeSlot>
-  *  timeSlotId : Number
-  * }} props
-  * @returns {Element}
-  */
-  function OrderRow({order}){
-    const [activity, setActivity] = useState(order.ordered_activity);
-    const [editing, setEditing] = useState(false);
-    const [error, setError] = useState(false);
-
-    const canEdit = order.status == 1 || order.status == 2;
-    const orderRowStates = {
-      DEFAULT : 0,
-      DEFAULT_CANNOT_EDIT : 1,
-      EDITING : 2,
-    }
-    const orderRowState = (() => {
-      if(editing){return orderRowStates.EDITING;}
-      if(!canEdit){return orderRowStates.DEFAULT_CANNOT_EDIT;}
-      return orderRowStates.DEFAULT;
-    })();
-
-    const displayStyle = error ? {backgroundColor : ERROR_BACKGROUND_COLOR} : {}
-
-    function acceptEdit (){
-      const [valid, activityNumber] = parseDanishPositiveNumberInput(activity);
-      if(!valid){
-        setError(true);
-        return;
-      }
-      order.ordered_activity = activityNumber;
-
-      websocket.sendEditModel(DATA_ACTIVITY_ORDER, [order]);
-      setEditing(false);
-      setError(false);
-    }
-
-    let activityDisplay = canEdit ?
-                            <HoverBox
-                              Base={<p>{`${activity} MBq`}</p>}
-                              Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
-                              />
-                            : `${activity} MBq`;
-
-      if(editing){
-        activityDisplay = <FormControl
-                            aria-label={`edit-form-order-activity-${order.id}`}
-                            style={displayStyle}
-                            value={activity}
-                            onChange={(event) => {
-                              setActivity(event.target.value)
-                            }}
-                          />
-    }
-
-    let iconFunction = canEdit ? () => {setEditing(true)} : () => {}
-    return (
-      <Row>
-        <Col>Order ID:{order.id}</Col>
-        <Col>{activityDisplay}</Col>
-        <Col xs={2}>
-          <Comment comment={order.comment}/>
-        </Col>
-        <Col xs={2} style={{
-          justifyContent : "right", display : "flex"
-        }}><Optional exists={editing} alternative={
-          <StatusIcon
-                label={`edit-order-activity-${order.id}`}
-                order={order}
-                onClick={iconFunction}
-          />
-        }>
-          <ClickableIcon
-            label={`edit-accept-order-activity-${order.id}`}
-            src="static/images/accept.svg"
-            onClick={acceptEdit}
-          />
-        </Optional>
-          </Col>
-      </Row>
-    )
-  }
-
-  /**
-   * A row in the vial table
-   * @param {{
-   * vial : Vial,
-   * minimum_status : Number,
-   * onSelect : CallableFunction,
-   * selected : Boolean,
-   * }} props for component
-   * @returns
-   */
-  function VialRow({vial, onSelect, selected}){
-    const vialErrorInit = {
-      lot_number : "",
-      full_time : "",
-      volume : "",
-      activity : ""
-    }
-
-    const creating = vial.id <= 0;
-    const [editing, setEditing] = useState(creating);
-    const [tempVial, setTempVial] = useState({...vial});
-    const [vialErrors, setVialErrors] = useState({...vialErrorInit});
-
-    // Note there's a level of
-    const vialRowStates = {
-      DEFAULT : 0,
-      DEFAULT_CANNOT_EDIT : 1,
-      EDITING : 2,
-      SELECTED : 3,
-
-    };
-
-
-    const assignable = !Boolean(vial.assigned_to);
-    // This value should be moved into orderRowState
-    const canEdit = (orderCollection.minimum_status == 1 || orderCollection.minimum_status == 2) && !freeing;
-    const vialRowState = (() => {
-      if(editing) {return vialRowStates.EDITING;}
-      if(selected){return vialRowStates.SELECTED;}
-      if(canEdit) {return vialRowStates.DEFAULT;}
-      return vialRowStates.DEFAULT_CANNOT_EDIT;
-    })();
-
-    function setDisplayVial(newVial){
-      setTempVial({
-        ...tempVial,
-        ...newVial,
-      })
-    }
-
-
-    // Refresh the vial
-    useEffect(() => {
-      setDisplayVial(vial)
-      return () => {}
-    }, [vial])
-
-    function setFillTime(newFillTime){
-      setTempVial(tmp => {return {...tmp,
-        fill_time : newFillTime
-      }})
-    }
-
-    function validate() {
-      const [batchValid, formattedLotNumber] = parseBatchNumberInput(tempVial.lot_number, "lot nr.");
-      const [timeValid, formattedFillTime] = parseTimeInput(tempVial.fill_time, "Produktions tidspunk");
-      const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(tempVial.volume, "Volume");
-      const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(tempVial.activity, "Aktiviten");
-
-      const newVialError = {
-        ...vialErrorInit
-      }
-      if(!batchValid) {
-        newVialError.lot_number = formattedLotNumber;
-      }
-
-      if(!timeValid){
-        newVialError.full_time = formattedFillTime;
-      }
-      if(!volumeValid){
-        newVialError.volume = formattedVolume;
-      }
-      if(!activityValid){
-        newVialError.activity = formattedActivity;
-      }
-
-      setVialErrors(newVialError);
-
-      const success = batchValid && timeValid && volumeValid && activityValid;
-      if(success){
-        setEditing(false);
-      }
-
-      return [success,
-        { ...vial,
-          lot_number : formattedLotNumber,
-          fill_time : formattedFillTime,
-          volume : formattedVolume,
-          activity : formattedActivity
-        }];
-    }
-
-    return (
-      <tr>
-        <td>
-          <Optional exists={!creating} alternative={<div>Ny</div>}>
-            {vial.id}
-          </Optional>
-        </td>
-        <td>
-          <Optional exists={editing} alternative={<div>{vial.lot_number}</div>}>
-            <TracershopInputGroup>
-            <ErrorInput error={vialErrors.lot_number}>
-              <FormControl
-                value={tempVial.lot_number}
-                aria-label={`lot_number-${vial.id}`}
-                onChange={setTempObjectToEvent(setTempVial, 'lot_number')}
-                />
-            </ErrorInput>
-            </TracershopInputGroup>
-          </Optional>
-        </td>
-        <td>
-          <Optional exists={editing} alternative={<div>{vial.fill_time}</div>}>
-            <TracershopInputGroup>
-              <ErrorInput error={vialErrors.full_time}>
-                <TimeInput
-                  value={tempVial.fill_time}
-                  aria-label={`fill_time-${vial.id}`}
-                  stateFunction={setFillTime}
-                  />
-                </ErrorInput>
-            </TracershopInputGroup>
-          </Optional>
-        </td>
-        <td>
-          <Optional exists={editing} alternative={<div>{vial.volume} ml</div>}>
-            <TracershopInputGroup>
-              <ErrorInput error={vialErrors.volume}>
-                <FormControl
-                  aria-label={`volume-${vial.id}`}
-                  value={tempVial.volume}
-                  onChange={setTempObjectToEvent(setTempVial, 'volume')}
-                />
-              </ErrorInput>
-              <InputGroup.Text> ml</InputGroup.Text>
-            </TracershopInputGroup>
-          </Optional>
-        </td>
-        <td>
-          <Optional exists={editing} alternative={<div>{vial.activity} MBq</div>}>
-          <TracershopInputGroup>
-              <ErrorInput error={vialErrors.activity}>
-              <FormControl
-                value={tempVial.activity}
-                aria-label={`activity-${vial.id}`}
-                onChange={setTempObjectToEvent(setTempVial, 'activity')}/>
-              </ErrorInput>
-              <InputGroup.Text> MBq</InputGroup.Text>
-            </TracershopInputGroup>
-          </Optional>
-        </td>
-        <td>
-        <Optional exists={!Boolean(vial.assigned_to)}>
-          <Options index={vialRowState}>
-            <div> {/* DEFAULT */}
-              <ClickableIcon
-                src="/static/images/pen.svg"
-                label={`edit-vial-${vial.id}`}
-                onClick={() => {setEditing(true);}}
-              />
-            </div>
-            <div> {/* DEFAULT_CANNOT_EDIT */}
-            </div>
-            <div> {/* EDITING */}
-              <CommitButton
-                temp_object={tempVial}
-                object_type={DATA_VIAL}
-                validate={validate}
-                callback={deallocateNewVial}
-                label={`vial-commit-${vial.id}`}
-              />
-            </div>
-            <div> {/* SELECTED */}
-            </div>
-          </Options>
-        </Optional>
-        </td>
-        <td>
-          <Optional exists={assignable}>
-            <Options index={vialRowState}>
-              <div> {/* DEFAULT */}
-                <Form.Check
-                  aria-label={`vial-usage-${vial.id}`}
-                  onChange={onSelect}
-                  checked={selected}
-                />
-              </div>
-              <div> {/* DEFAULT_CANNOT_EDIT */}
-              <Form.Check
-                aria-label={`vial-usage-${vial.id}`}
-                readOnly
-                checked={selected}/>
-              </div>
-              <div> {/* EDITING */}
-              <ClickableIcon
-                label={`vial-edit-decline-${vial.id}`}
-                src="/static/images/decline.svg"
-                onClick={() => {setEditing(false); if(creating) {deallocateNewVial()}}}
-              />
-              </div>
-              <div> {/* SELECTED */}
-              <Form.Check
-                aria-label={`vial-usage-${vial.id}`}
-                onChange={onSelect}
-                checked={selected}/>
-              </div>
-            </Options>
-          </Optional>
-        </td>
-      </tr>
-    );
   }
 
   // "Subcomponents"
@@ -469,7 +148,7 @@ export function ActivityModal({
     const error = orderErrors.has(order.id) ? orderErrors.get(order.id) : "";
 
     function validate(){
-      const [valid, activityNumber] = parseDanishPositiveNumberInput(order.ordered_activity);
+      const [valid, activityNumber] = parseDanishPositiveNumberInput(order.ordered_activity, "Aktiviteten");
       if(!valid){
         setOrderErrors(oldErrors => {
           const newErrors = new Map(oldErrors);
@@ -491,37 +170,41 @@ export function ActivityModal({
       });
     }
 
-
-
-    let activityDisplay = canEdit ?
-                            <HoverBox
-                              Base={<p>{`${order.ordered_activity} MBq`}</p>}
-                              Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
-                              />
-                            : `${order.ordered_activity} MBq`;
-
-      if(editing){
-        activityDisplay = (
-          <ErrorInput error={error}>
-            <FormControl
-                              aria-label={`edit-form-order-activity-${order.id}`}
-                              value={order.ordered_activity}
-                              onChange={(event) => {
-                                setOrders(orders => {
-                                  const newOrders = new Map(orders)
-                                  newOrders.set(order.id, {...order,
-                                    ordered_activity : event.target.value})
-                                  })
-                                  reset_error(set, order.id)
-                                }}
-                            />
-          </ErrorInput>);
-    }
-
     return (
       <Row key={order.id}>
         <Col>Order ID:{order.id}</Col>
-        <Col>{activityDisplay}</Col>
+        <Col>
+          <Options index={orderRowState}>
+            <div> {/** DEFAULT  */}
+              <HoverBox
+                Base={<p>{`${order.ordered_activity} MBq`}</p>}
+                Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
+              />
+            </div>
+            <div> {/** DEFAULT_CANNOT_EDIT */}
+              {`${order.ordered_activity} MBq`}
+            </div>
+            <div> {/** EDITING  */}
+              <ErrorInput error={error}>
+                <FormControl
+                  aria-label={`edit-form-order-activity-${order.id}`}
+                  value={order.ordered_activity}
+                  onChange={(event) => {
+                    setOrders(orders => {
+                      const newOrders = new Map(orders);
+                      const newOrder = order.copy()
+                      newOrder.ordered_activity = event.target.value;
+                      newOrders.set(order.id, newOrder);
+                        return newOrders;
+                      });
+                      reset_error(setOrderErrors, order.id);
+                    }}
+                  />
+              </ErrorInput>
+            </div>
+
+          </Options>
+        </Col>
         <Col xs={2}>
           <Comment comment={order.comment}/>
         </Col>
@@ -543,6 +226,7 @@ export function ActivityModal({
           />
         }>
           <CommitButton
+            label={`edit-accept-order-activity-${order.id}`}
             object_type={DATA_ACTIVITY_ORDER}
             temp_object={order}
             validate={validate}
@@ -551,8 +235,266 @@ export function ActivityModal({
         </Optional>
           </Col>
       </Row>
-    )
-  })
+    );
+  });
+
+  const renderedVials = [...vials.values()].map( // Vial rows
+    (vial) => {
+      const selected = selectedVials.has(vial.id);
+      const creating = vial.id === NEW_LOCAL_ID;
+      const editing = editingVials.has(vial.id) || creating;
+      const canEdit = (orderCollection.minimum_status === ORDER_STATUS.ACCEPTED
+                    || orderCollection.minimum_status === ORDER_STATUS.ORDERED)
+                    && !freeing;
+      const assignable = !Boolean(vial.assigned_to);
+
+      const vialRowStates = {
+        DEFAULT : 0,
+        DEFAULT_CANNOT_EDIT : 1,
+        EDITING : 2,
+        SELECTED : 3,
+      };
+
+      const vialErrorInit = {
+        lot_number : "",
+        fill_time : "",
+        volume : "",
+        activity : "",
+      }
+
+      const vialRowState = (() => {
+        if(editing) {return vialRowStates.EDITING;}
+        if(selected){return vialRowStates.SELECTED;}
+        if(canEdit) {return vialRowStates.DEFAULT;}
+        return vialRowStates.DEFAULT_CANNOT_EDIT;
+      })();
+
+      const error = vialErrors.has(vial.id) ? vialErrors.get(vial.id) : {
+        lot_number : "",
+        fill_time : "",
+        volume : "",
+        activity : "",
+      };
+
+      // Vial Row functions
+      function startEditing() {
+        setEditingVials(editingVials => {
+          const newEditingVials = new Set(editingVials);
+          newEditingVials.add(vial.id);
+          return newEditingVials;
+        });
+      }
+
+      /**
+       * Function called after
+       */
+      function stopEditing() {
+        setEditingVials(editingVials => {
+          const newEditingVials = new Set(editingVials);
+          newEditingVials.delete(vial.id);
+          return newEditingVials;
+        });
+        if(creating){
+          setVials(vials => {
+            const newVials = new Map(vials);
+            newVials.delete(NEW_LOCAL_ID);
+            return newVials;
+          });
+        } else { // Discards edits, note that it's the useEffect initVials
+          // responsible for updating the vial
+          setVials(vials => {
+            const newVials = new Map(vials);
+            const newVial = state.vial.get(vial.id).copy();
+            newVials.set(vial.id, newVial);
+            return newVials;
+          });
+        }
+      }
+
+      function onSelect(){
+        if (orderCollection.minimum_status === ORDER_STATUS.ACCEPTED) {
+          setSelectedVials(selectedVials => {
+            const newSelectedVials = new Set(selectedVials)
+            if(selectedVials.has(vial.id)){
+              newSelectedVials.delete(vial.id);
+            } else {
+              newSelectedVials.add(vial.id);
+            }
+            return newSelectedVials
+          })
+        }
+      }
+
+      function validate() {
+        const [batchValid, formattedLotNumber] = parseBatchNumberInput(vial.lot_number, "lot nr.");
+        const [timeValid, formattedFillTime] = parseTimeInput(vial.fill_time, "Produktions tidspunk");
+        const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(vial.volume, "Volume");
+        const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(vial.activity, "Aktiviten");
+
+        const newVialError = {
+          ...vialErrorInit
+        }
+        if(!batchValid) {
+          newVialError.lot_number = formattedLotNumber;
+        }
+
+        if(!timeValid){
+          newVialError.fill_time = formattedFillTime;
+        }
+        if(!volumeValid){
+          newVialError.volume = formattedVolume;
+        }
+        if(!activityValid){
+          newVialError.activity = formattedActivity;
+        }
+
+        setVialError(vialErrors => {
+          const newVialErrors = new Map(vialErrors);
+          newVialErrors.set(vial.id, newVialError);
+          return newVialErrors
+        });
+
+        const success = batchValid && timeValid && volumeValid && activityValid;
+        return [success,
+          { ...vial,
+            lot_number : formattedLotNumber,
+            fill_time : formattedFillTime,
+            volume : formattedVolume,
+            activity : formattedActivity
+          }];
+      }
+
+      return (
+        <tr key={vial.id}>
+          <td>
+            <Optional exists={!creating} alternative={<div>Ny</div>}>
+              {vial.id}
+            </Optional>
+          </td>
+          <td>
+            <Optional exists={editing} alternative={<div>{vial.lot_number}</div>}>
+              <TracershopInputGroup>
+              <ErrorInput error={error.lot_number}>
+                <FormControl
+                  value={vial.lot_number}
+                  aria-label={`lot_number-${vial.id}`}
+                  onChange={setTempMapToEvent(setVials, vial.id, 'lot_number')}
+                />
+              </ErrorInput>
+              </TracershopInputGroup>
+            </Optional>
+          </td>
+          <td>
+            <Optional exists={editing} alternative={<div>{vial.fill_time}</div>}>
+              <TracershopInputGroup>
+                <ErrorInput error={error.full_time}>
+                  <TimeInput
+                    value={vial.fill_time}
+                    aria-label={`fill_time-${vial.id}`}
+                    stateFunction={function setFillTime(newFillTime){
+                      setVials(vials => {
+                        const newVials = new Map(vials);
+                        const newVial = vial.copy();
+                        newVial.fill_time = newFillTime;
+                        newVials.set(vial.id, newVial);
+                        return newVials;
+                      });
+                    }}
+                  />
+                  </ErrorInput>
+              </TracershopInputGroup>
+            </Optional>
+          </td>
+          <td>
+            <Optional exists={editing} alternative={<div>{vial.volume} ml</div>}>
+              <TracershopInputGroup>
+                <ErrorInput error={error.volume}>
+                  <FormControl
+                    aria-label={`volume-${vial.id}`}
+                    value={vial.volume}
+                    onChange={setTempMapToEvent(setVials, vial.id, 'volume')}
+                  />
+                </ErrorInput>
+                <InputGroup.Text> ml</InputGroup.Text>
+              </TracershopInputGroup>
+            </Optional>
+          </td>
+          <td>
+            <Optional exists={editing} alternative={<div>{vial.activity} MBq</div>}>
+            <TracershopInputGroup>
+                <ErrorInput error={error.activity}>
+                  <FormControl
+                    value={vial.activity}
+                    aria-label={`activity-${vial.id}`}
+                    onChange={setTempMapToEvent(setVials, vial.id, 'activity')}
+                  />
+                </ErrorInput>
+                <InputGroup.Text> MBq</InputGroup.Text>
+              </TracershopInputGroup>
+            </Optional>
+          </td>
+          <td>
+          <Optional exists={!Boolean(vial.assigned_to)}>
+            <Options index={vialRowState}>
+              <div> {/* DEFAULT */}
+                <ClickableIcon
+                  src="/static/images/pen.svg"
+                  label={`edit-vial-${vial.id}`}
+                  onClick={startEditing}
+                />
+              </div>
+              <div> {/* DEFAULT_CANNOT_EDIT */}
+              </div>
+              <div> {/* EDITING */}
+                <CommitButton
+                  temp_object={vial}
+                  object_type={DATA_VIAL}
+                  validate={validate}
+                  callback={stopEditing}
+                  label={`vial-commit-${vial.id}`}
+                />
+              </div>
+              <div> {/* SELECTED */}
+              </div>
+            </Options>
+          </Optional>
+          </td>
+          <td>
+            <Optional exists={assignable}>
+              <Options index={vialRowState}>
+                <div> {/* DEFAULT */}
+                  <Form.Check
+                    aria-label={`vial-usage-${vial.id}`}
+                    onChange={onSelect}
+                    checked={selected}
+                  />
+                </div>
+                <div> {/* DEFAULT_CANNOT_EDIT */}
+                <Form.Check
+                  aria-label={`vial-usage-${vial.id}`}
+                  readOnly
+                  checked={selected}/>
+                </div>
+                <div> {/* EDITING */}
+                <ClickableIcon
+                  label={`vial-edit-decline-${vial.id}`}
+                  src="/static/images/decline.svg"
+                  onClick={stopEditing}
+                />
+                </div>
+                <div> {/* SELECTED */}
+                <Form.Check
+                  aria-label={`vial-usage-${vial.id}`}
+                  onChange={onSelect}
+                  checked={selected}/>
+                </div>
+              </Options>
+            </Optional>
+          </td>
+        </tr>
+      );
+    }
+  )
 
   function startFreeing(){
     if(compareDates(active_date, new Date())){
@@ -569,7 +511,7 @@ export function ActivityModal({
     const orders = order_mapping.getOrders(timeSlotID);
     for(const order of orders){
       if (order.status === ORDER_STATUS.ORDERED){
-        order.status = ORDER_STATUS.RELEASED;
+        order.status = ORDER_STATUS.ACCEPTED;
       }
     }
     websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders)
@@ -584,7 +526,7 @@ export function ActivityModal({
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {};
     data[DATA_DELIVER_TIME] = timeSlotID
-    data[DATA_ACTIVITY_ORDER] = orderIDs
+    data[DATA_ACTIVITY_ORDER] = orderCollection.orderIDs
     data[DATA_VIAL] = [...selectedVials];
     message[WEBSOCKET_DATA] = data;
     const auth = {};
@@ -608,25 +550,7 @@ export function ActivityModal({
     setErrorMessage(<div>{error}</div>);
   }
 
-  /**
-   * @param {Vial} vial */
-  function selectVial(vial){
-    if(freeing || orderCollection.minimum_status === ORDER_STATUS.RELEASED){
-      return () => {};
-    }
 
-    return () => {
-      setSelectedVials(oldSelection => {
-        const newSelection = new(oldSelection);
-        if(oldSelection.has(vial.id)){
-          newSelection.delete(vial.id);
-        } else {
-          newSelection.add(vial.id);
-        }
-        return newSelection;
-      })
-    };
-  }
 
   // Sub elements
   // Buttons
@@ -647,7 +571,7 @@ export function ActivityModal({
         authenticate={onFree}
         errorMessage={loginMessage}
         fit_in={false}
-        headerMessage={`Frigiv Ordre - ${orderIDs.join(', ')}`}
+        headerMessage={`Frigiv Ordre - ${orderCollection.orderIDs.join(', ')}`}
         spinner={loginSpinner}
         buttonMessage={"Frigiv Ordre"}
       />
@@ -671,20 +595,6 @@ export function ActivityModal({
     const vial = state.vial.get(vid);
     allocationTotal += vial.activity;
   }
-
-  const vialRows = [...vials.values()].map((_vial) => {
-    const /**@type {Vial} */ vial = _vial;
-    const selected = orderCollection.minimum_status === ORDER_STATUS.RELEASED ?
-      true : selectedVials.has(vial.id);
-    return <VialRow
-      key={vial.id}
-      vial={vial}
-      selected={selected}
-      onSelect={selectVial(vial)}
-      setError={setError}
-    />
-  });
-
 
   return (
     <Modal
@@ -769,7 +679,7 @@ export function ActivityModal({
                 </tr>
               </thead>
             <tbody>
-              {vialRows}
+              {renderedVials}
             </tbody>
           </Table>
           <div className="flex-row-reverse d-flex">

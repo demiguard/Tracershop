@@ -8,7 +8,7 @@ import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ActivityModal } from '~/components/modals/activity_modal.js'
-import {  ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
+import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
 } from "~/lib/constants.js";
 import { DATA_ACTIVITY_ORDER, DATA_VIAL } from "~/lib/shared_constants.js"
@@ -112,13 +112,15 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const acceptButton = await screen.findByRole('button', {name : "Accepter Ordre"});
-
     act(() => {
-      acceptButton.click()
+      screen.getByRole('button', {name : "Accepter Ordre"}).click()
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalled();
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, [
+      expect.objectContaining({ status : ORDER_STATUS.ACCEPTED }),
+      expect.objectContaining({ status : ORDER_STATUS.ACCEPTED }),
+      expect.objectContaining({ status : ORDER_STATUS.ACCEPTED }),
+    ]);
   });
 
   it("Use a vial", () => {
@@ -290,9 +292,21 @@ describe("Activity Modal Test", () => {
     const accept = screen.queryByLabelText('vial-commit--1');
     await act(async () => {
       accept.click();
-    })
+    });
 
-  });
+    // Assert
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_VIAL,
+      expect.objectContaining({
+        lot_number : "fdg-200504-1",
+        volume : 13.44,
+        fill_date : "2020-05-11",
+        fill_time : "11:33:44",
+        tracer : 1,
+        assigned_to : null,
+        owner : 1,
+        activity : 13665
+      }));
+    });
 
   it("edit a vial success", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
@@ -356,11 +370,9 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vialEdit = await screen.findByLabelText('edit-vial-7');
-
-    act(() => {
-      vialEdit.click()
-    })
+    await act(async () => {
+      screen.getByLabelText('edit-vial-7').click();
+    });
 
     await act(async () => {
       const lotForm = screen.getByLabelText('lot_number-7');
@@ -565,6 +577,7 @@ describe("Activity Modal Test", () => {
                                                                testState.production,
                                                                "2020-05-11",
                                                                1));
+
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
     props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
                                                  testState.deliver_times,
@@ -579,66 +592,29 @@ describe("Activity Modal Test", () => {
 
     // Start editing the order
     await act(async () => {
-      const editIcon = await screen.findByLabelText("edit-order-activity-5")
-      editIcon.click();
+      screen.getByLabelText("edit-order-activity-5").click()
     });
     // edit the order
     await act(async () => {
-      const editForm = await screen.findByLabelText("edit-form-order-activity-5")
+      const editForm = screen.getByLabelText("edit-form-order-activity-5")
       fireEvent.change(editForm,{target :{ value : "a59420"}});
     });
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
     // Accept the Edit
     await act(async () => {
-      const editAccept = await screen.findByLabelText("edit-accept-order-activity-5")
-      editAccept.click();
+      screen.getByLabelText("edit-accept-order-activity-5").click();
     });
+    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('edit-form-order-activity-5')).toHaveStyle({
+      background : ERROR_BACKGROUND_COLOR
+    });
+
+    await act(async () => {
+      fireEvent.mouseEnter(screen.getByLabelText('edit-form-order-activity-5'));
+    });
+
+    expect(screen.getByText('Aktiviteten er ikke et tal')).toBeVisible();
   });
 
-  it("Create a new vial", async () => {
-    render(<StateContextProvider value={testState}>
-             <WebsocketContextProvider value={websocket}>
-               <ActivityModal {...props} />
-             </WebsocketContextProvider>
-           </StateContextProvider>);
 
-    await act(async () => {
-      screen.getByLabelText("add-new-vial").click();
-    });
-    // Rerender
-    await act(async () => {
-      fireEvent.change(
-        screen.getByLabelText('lot_number--1'),
-        {target: {value : "FDGF-112233-1"}}
-        );
-        fireEvent.change(
-          screen.getByLabelText('fill_time--1'),
-          {target: {value : "12:34:56"}}
-      );
-      fireEvent.change(
-        screen.getByLabelText('volume--1'),
-        {target: {value : "13,37"}}
-        );
-        fireEvent.change(
-          screen.getByLabelText('activity--1'),
-        {target: {value : "122451.151"}}
-      );
-    });
-    // Rerender
-    await act(async () => {
-      screen.getByLabelText('vial-commit--1').click();
-    });
-
-    // Assert
-    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_VIAL,
-      expect.objectContaining({
-        lot_number : "FDGF-112233-1",
-        volume : 13.37,
-        fill_date : "2020-05-04",
-        fill_time : "12:34:56",
-        tracer : 1,
-        assigned_to : null,
-        owner : 1,
-        activity : 122451.151
-      }));
-    });
   });

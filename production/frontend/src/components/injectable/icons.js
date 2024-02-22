@@ -52,6 +52,7 @@ export function ClickableIcon ({
 }
 
 ClickableIcon.propTypes = {
+  altText : propTypes.string,
   src : propTypes.string.isRequired,
   onClick : propTypes.func
 }
@@ -67,7 +68,7 @@ ClickableIcon.propTypes = {
  * }} param0
  * @returns
  */
-export function StatusIcon ({altText, onClick, label, order, orderCollection}) {
+export function StatusIcon ({onClick, label, order, orderCollection}) {
 
   function statusImages(status) {
     if (status == ORDER_STATUS.ORDERED) {return "/static/images/clipboard1.svg";}
@@ -86,13 +87,12 @@ export function StatusIcon ({altText, onClick, label, order, orderCollection}) {
         return statusImages(orderCollection.minimum_status);
       }
     }
-    if(order instanceof ActivityOrder && order.moved_to_time_slot){
+    if(order instanceof ActivityOrder && !!order.moved_to_time_slot){
       return "/static/images/move_top.svg";
     }
     return statusImages(order.status);
   })()
     return <ClickableIcon
-      altText={altText}
       onClick={onClick}
       label={label}
       src={statusImagePath}
@@ -100,10 +100,11 @@ export function StatusIcon ({altText, onClick, label, order, orderCollection}) {
 }
 
 StatusIcon.propTypes = {
-  altText: propTypes.string,
   onClick : propTypes.func,
   label: propTypes.string,
-  order: propTypes.oneOfType([propTypes.instanceOf(ActivityOrder), propTypes.instanceOf(InjectionOrder)]),
+  order: propTypes.oneOfType([
+    propTypes.instanceOf(ActivityOrder),
+    propTypes.instanceOf(InjectionOrder)]),
   orderCollection : propTypes.instanceOf(ActivityOrderCollection),
 };
 

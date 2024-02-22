@@ -100,7 +100,7 @@ export class ActivityOrderCollection {
    */ delivered_activity
 
   /**
-   * @desc ID of all orders in {@link orders}
+   * @desc ID of all orders in the collection of {@link orders}
    * @type {Array<Number>}
    */ orderIDs
 
