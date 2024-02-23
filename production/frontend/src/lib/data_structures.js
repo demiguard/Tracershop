@@ -78,7 +78,7 @@ export class ActivityOrderCollection {
   /**
    * @desc If all orders of {@link orders}, then this string holds the time
    * the collection was freed
-   * @type {String | null} // I find ?String unclear compared to String | null
+   * @type {String | null}
    */ freed_time
   /**
    * @desc If {@link orders} contains any orders, that do not delivery to the
@@ -171,8 +171,8 @@ export class ActivityOrderCollection {
                                                      timeDelta.hour * 60 + timeDelta.minute,
                                                      order.ordered_activity) * overhead;
       }
-      if(order.freed_time !== null && this.freed_time === null){
-        this.freed_time = order.freed_time;
+      if(order.freed_datetime !== null && this.freed_time === null){
+        this.freed_time = order.freed_datetime;
       }
       if(order.freed_by !== null && this.freed_by === null){
         this.freed_by = state.user.get(order.freed_by);

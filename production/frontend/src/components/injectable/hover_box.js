@@ -4,6 +4,7 @@
  */
 
 import React, { useState } from 'react'
+import { cssCenter } from '~/lib/constants';
 import styles from "../../css/Site.module.css"
 
 /**
@@ -44,9 +45,10 @@ function Trigger(props){
 export function HoverBox (props){
   const styleProps = props.styles !== undefined ? {...props.styles} : {}
   const [hoverState, updateHoverComponentStyle] = useState({
-    display: 'none',
-    position: 'absolute',
     zIndex : 999,
+    ...cssCenter,
+    position: 'absolute',
+    display: 'none',
     ...styleProps
   })
 

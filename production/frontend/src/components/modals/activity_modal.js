@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Col, Form, FormControl, InputGroup, Modal, Row, Table } from "react-bootstrap";
+import { Col, Container, Form, FormControl, InputGroup, Modal, Row, Table } from "react-bootstrap";
 
 import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction, Tracer, Isotope } from "~/dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
@@ -11,13 +11,13 @@ import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { Comment } from "../injectable/data_displays/comment.js";
 
-import { ERROR_BACKGROUND_COLOR, NEW_LOCAL_ID, ORDER_STATUS, StateType } from "~/lib/constants.js";
+import { ERROR_BACKGROUND_COLOR, NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants.js";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
   DATA_AUTH, DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_ISOTOPE,
   DATA_PRODUCTION, DATA_TRACER, DATA_USER, DATA_VIAL, WEBSOCKET_DATA,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "~/lib/shared_constants.js"
-import { dateToDateString, formatReleaserUsername, parseDateToDanishDate } from "~/lib/formatting.js";
+import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
 import { getTimeString } from "~/lib/chronomancy.js";
 
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
@@ -31,6 +31,7 @@ import { Optional, Options } from "../injectable/optional.js";
 import { reset_error, setTempMapToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
 import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
+import { CancelBox } from "~/components/injectable/cancel_box.js";
 
 
 /**
@@ -51,6 +52,11 @@ function vialFilterFunction(dateString, orderCollection, customer){
       return vial.owner === customer.id;
     }
   }
+}
+
+const marginRows = {
+  marginTop : "7px",
+  marginBottom : "7px",
 }
 
 /**
@@ -98,6 +104,7 @@ export function ActivityModal({
   const [freeing, setFreeing] = useState(false);
   const [loginMessage, setLoginMessage] = useState("");
   const [loginSpinner, setLoginSpinner] = useState(false);
+  const [showCancelBox, setShowCancelBox] = useState(false);
 
   // Effects
   // These effects are for updating prop dependant state
@@ -119,6 +126,8 @@ export function ActivityModal({
 
   // Derived State
   const addingVial = vials.has(NEW_LOCAL_ID);
+  const canCancel = orderCollection.minimum_status === ORDER_STATUS.ACCEPTED
+                || orderCollection.minimum_status === ORDER_STATUS.ORDERED;
 
   // Helper functions
   function allocateNewVial(){
@@ -172,40 +181,44 @@ export function ActivityModal({
 
     return (
       <Row key={order.id}>
-        <Col>Order ID:{order.id}</Col>
+        <Col xs={3} style={{display : "block", margin: 'auto', alignItems: 'center'}}>ID:{order.id}</Col>
         <Col>
           <Options index={orderRowState}>
             <div> {/** DEFAULT  */}
               <HoverBox
-                Base={<p>{`${order.ordered_activity} MBq`}</p>}
-                Hover={<p>Tryg på status Ikonet for at ændre dosis</p>}
+                Base={<div style={marginRows}>{`${order.ordered_activity} MBq`}</div>}
+                Hover={<div>Tryg på status Ikonet for at ændre dosis</div>}
               />
             </div>
-            <div> {/** DEFAULT_CANNOT_EDIT */}
+            <div style={cssCenter}> {/** DEFAULT_CANNOT_EDIT */}
               {`${order.ordered_activity} MBq`}
             </div>
             <div> {/** EDITING  */}
-              <ErrorInput error={error}>
-                <FormControl
-                  aria-label={`edit-form-order-activity-${order.id}`}
-                  value={order.ordered_activity}
-                  onChange={(event) => {
-                    setOrders(orders => {
-                      const newOrders = new Map(orders);
-                      const newOrder = order.copy()
-                      newOrder.ordered_activity = event.target.value;
-                      newOrders.set(order.id, newOrder);
-                        return newOrders;
-                      });
-                      reset_error(setOrderErrors, order.id);
-                    }}
-                  />
-              </ErrorInput>
+
+                <TracershopInputGroup
+                  error={error}
+                  tail={"MBq"}
+                >
+                    <FormControl
+                      aria-label={`edit-form-order-activity-${order.id}`}
+                      value={order.ordered_activity}
+                      onChange={(event) => {
+                      setOrders(orders => {
+                        const newOrders = new Map(orders);
+                        const newOrder = order.copy()
+                        newOrder.ordered_activity = event.target.value;
+                        newOrders.set(order.id, newOrder);
+                          return newOrders;
+                        });
+                        reset_error(setOrderErrors, order.id);
+                      }}
+                    />
+                  </TracershopInputGroup>
             </div>
 
           </Options>
         </Col>
-        <Col xs={2}>
+        <Col xs={2} style={cssCenter}>
           <Comment comment={order.comment}/>
         </Col>
         <Col xs={2} style={{
@@ -366,28 +379,25 @@ export function ActivityModal({
 
       return (
         <tr key={vial.id}>
-          <td>
+          <td style={cssTableCenter}>
             <Optional exists={!creating} alternative={<div>Ny</div>}>
               {vial.id}
             </Optional>
           </td>
           <td>
             <Optional exists={editing} alternative={<div>{vial.lot_number}</div>}>
-              <TracershopInputGroup>
-              <ErrorInput error={error.lot_number}>
+              <TracershopInputGroup error={error.lot_number}>
                 <FormControl
                   value={vial.lot_number}
                   aria-label={`lot_number-${vial.id}`}
                   onChange={setTempMapToEvent(setVials, vial.id, 'lot_number')}
                 />
-              </ErrorInput>
               </TracershopInputGroup>
             </Optional>
           </td>
           <td>
             <Optional exists={editing} alternative={<div>{vial.fill_time}</div>}>
-              <TracershopInputGroup>
-                <ErrorInput error={error.full_time}>
+              <TracershopInputGroup error={error.fill_time}>
                   <TimeInput
                     value={vial.fill_time}
                     aria-label={`fill_time-${vial.id}`}
@@ -401,39 +411,32 @@ export function ActivityModal({
                       });
                     }}
                   />
-                  </ErrorInput>
               </TracershopInputGroup>
             </Optional>
           </td>
           <td>
             <Optional exists={editing} alternative={<div>{vial.volume} ml</div>}>
-              <TracershopInputGroup>
-                <ErrorInput error={error.volume}>
+              <TracershopInputGroup error={error.volume} tail={"ml"}>
                   <FormControl
                     aria-label={`volume-${vial.id}`}
                     value={vial.volume}
                     onChange={setTempMapToEvent(setVials, vial.id, 'volume')}
                   />
-                </ErrorInput>
-                <InputGroup.Text> ml</InputGroup.Text>
               </TracershopInputGroup>
             </Optional>
           </td>
           <td>
             <Optional exists={editing} alternative={<div>{vial.activity} MBq</div>}>
-            <TracershopInputGroup>
-                <ErrorInput error={error.activity}>
+            <TracershopInputGroup error={error.activity} tail={"MBq"}>
                   <FormControl
                     value={vial.activity}
                     aria-label={`activity-${vial.id}`}
                     onChange={setTempMapToEvent(setVials, vial.id, 'activity')}
                   />
-                </ErrorInput>
-                <InputGroup.Text> MBq</InputGroup.Text>
               </TracershopInputGroup>
             </Optional>
           </td>
-          <td>
+          <td style={cssTableCenter}>
           <Optional exists={!Boolean(vial.assigned_to)}>
             <Options index={vialRowState}>
               <div> {/* DEFAULT */}
@@ -459,7 +462,7 @@ export function ActivityModal({
             </Options>
           </Optional>
           </td>
-          <td>
+          <td style={cssTableCenter}>
             <Optional exists={assignable}>
               <Options index={vialRowState}>
                 <div> {/* DEFAULT */}
@@ -550,18 +553,45 @@ export function ActivityModal({
     setErrorMessage(<div>{error}</div>);
   }
 
+  function startCancelOrders(){
+    setShowCancelBox(true);
+  }
+  function stopCancelOrders(){
+    setShowCancelBox(false);
+  }
 
+  function confirmCancel(){
+    const ordersToBeSend = []
+    const cancelationTime = new Date();
+    const cancelationTimeString = `${cancelationTime.getFullYear()}-${cancelationTime.getMonth() + 1}-${cancelationTime.getDay()} ${cancelationTime.getHours()}:${cancelationTime.getMinutes()}:${cancelationTime.getSeconds()}`
+    for(const order of orderCollection.orders){
+      ordersToBeSend.push({...order,
+        status : ORDER_STATUS.CANCELLED,
+        freed_by : state.logged_in_user.id,
+        freed_datetime : cancelationTimeString,
+      });
+    }
+    if(ordersToBeSend.length){
+      websocket.sendEditModel(DATA_ACTIVITY_ORDER, ordersToBeSend);
+    }
+    setShowCancelBox(false);
+  }
 
   // Sub elements
   // Buttons
-  const AcceptButton =  <MarginButton onClick={onClickAccept}>Accepter Ordre</MarginButton>;
+  const AcceptButton = editingOrders.size === 0 ?
+      <MarginButton onClick={onClickAccept}>Accepter</MarginButton>
+    : <HoverBox
+        Base={<MarginButton disabled>Accepter</MarginButton>}
+        Hover={<div>Du kan ikke accepter ordre imens du redigerer dem.</div>}
+      />;
 
   const canFree = selectedVials.size > 0 && !(addingVial) && RightsToFree;
   const ConfirmButton = canFree ?
-                          <MarginButton onClick={startFreeing}> Godkend Ordre </MarginButton>
-                        : <MarginButton disabled>Godkend Ordre</MarginButton>;
-  const CancelFreeButton = <MarginButton onClick={() => {setFreeing(false)}}>Rediger Ordre</MarginButton>
-  const PDFButton = <MarginButton onClick={onClickToPDF}>Se føgleseddel</MarginButton>;
+                          <MarginButton onClick={startFreeing}>Godkend</MarginButton>
+                        : <MarginButton disabled>Godkend</MarginButton>;
+  const CancelFreeButton = <MarginButton onClick={() => {setFreeing(false)}}>Rediger</MarginButton>
+  const PDFButton = <MarginButton onClick={onClickToPDF}>Føgleseddel</MarginButton>;
 
   let sideElement = <div></div>;
 
@@ -597,6 +627,7 @@ export function ActivityModal({
   }
 
   return (
+    <div>
     <Modal
     data-testid="activity_modal"
       show={true}
@@ -610,51 +641,55 @@ export function ActivityModal({
     </Modal.Header>
     <Modal.Body>
         <Row>
-          <Col md={(freeing) ? 6 : 12}>
+          <Col md={freeing ? 6 : 12}>
           <Row>
-            <Row>
+            <Row style={marginRows}>
               <Col>{destinationHover}</Col>
               <Col>{destinationMessage}</Col>
             </Row>
-            <hr/>
-            <Row>
+            <hr style={marginLess}/>
+            <Row style={marginRows}>
               <Col>Levering tidspunkt:</Col>
               <Col>{timeSlot.delivery_time}</Col>
             </Row>
-            <hr/>
-            <Row>
-              <Col>{orderRows.length == 1 ? "Order" : "Ordre" }</Col>
+            <hr style={marginLess}/>
+            <Row style={marginRows}>
+              <Col style={{
+                display : "block",
+                margin: 'auto',
+                alignItems: 'center',
+              }}>{orderRows.length == 1 ? "Order" : "Ordre" }</Col>
               <Col>{orderRows}</Col>
             </Row>
-            <hr/>
-            <Row>
+            <hr style={marginLess}/>
+            <Row style={marginRows}>
               <Col>{totalActivityHover}</Col>
               <Col>{Math.floor(orderCollection.deliver_activity)} MBq</Col>
             </Row>
-            <hr/>
+            <hr style={marginLess}/>
             <Optional exists={orderCollection.minimum_status == ORDER_STATUS.ACCEPTED}>
-              <Row>
+              <Row style={marginRows}>
                 <Col>Allokeret aktivitet:</Col>
-                <Col data-testid="allocation-col" >{Math.floor(allocationTotal)} MBq</Col>
+                <Col data-testid="allocation-col">{Math.floor(allocationTotal)} MBq</Col>
               </Row>
-              <hr/>
+              <hr style={marginLess}/>
             </Optional>
             <Optional exists={orderCollection.minimum_status == ORDER_STATUS.RELEASED}>
-              <Row>
+              <Row style={marginRows}>
                 <Col>Frigivet aktivitet</Col>
                 <Col>{Math.floor(orderCollection.delivered_activity)} MBq</Col>
               </Row>
-              <hr/>
-              <Row>
+              <hr style={marginLess}/>
+              <Row style={marginRows}>
                 <Col>Frigivet tidpunktet</Col>
                 <Col>{orderCollection.freed_time}</Col>
               </Row>
-              <hr/>
-              <Row>
+              <hr style={marginLess}/>
+              <Row style={marginRows}>
                 <Col>Frigivet af</Col>
-                <Col>{formatReleaserUsername(orderCollection.freed_by)}</Col>
+                <Col>{formatUsername(orderCollection.freed_by)}</Col>
               </Row>
-              <hr/>
+              <hr style={marginLess}/>
             </Optional>
           </Row>
         </Col>
@@ -695,14 +730,43 @@ export function ActivityModal({
         </Row>
       </Modal.Body>
     <Modal.Footer>
-      <div>
-        {orderCollection.minimum_status == 1 ? AcceptButton : "" }
-        {orderCollection.minimum_status == 2 && !freeing ? ConfirmButton : ""}
-        {orderCollection.minimum_status == 2 && freeing ? CancelFreeButton : ""}
-        {orderCollection.minimum_status == 3 ? PDFButton : ""}
-        <CloseButton onClick={on_close}/>
-      </div>
+      <Container>
+      <Row className="justify-content-around">
+        <Col>
+          <Optional exists={canCancel}>
+            <Col md="auto">
+              <MarginButton onClick={startCancelOrders}>Afvis</MarginButton>
+            </Col>
+          </Optional>
+        </Col>
+        <Col>
+          <Row className="justify-content-end">
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ORDERED}>
+              <Col md="auto">{AcceptButton}</Col>
+            </Optional>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ACCEPTED && !freeing}>
+              <Col md="auto">{ConfirmButton}</Col>
+            </Optional>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ACCEPTED && freeing}>
+              <Col md="auto">{CancelFreeButton}</Col>
+            </Optional>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
+              <Col md="auto">{PDFButton}</Col>
+            </Optional>
+            <Col md="auto">
+              <CloseButton onClick={on_close}/>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
+      </Container>
     </Modal.Footer>
     </Modal>
-  )
+    <CancelBox
+      confirm = {confirmCancel}
+      show={showCancelBox}
+      onClose={stopCancelOrders}
+    />
+    </div>
+  );
 }

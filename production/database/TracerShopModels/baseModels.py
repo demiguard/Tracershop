@@ -1,4 +1,5 @@
 # Python standard Library
+from logging import getLogger
 from datetime import datetime, date, time
 from typing import Any, Dict, List, Optional
 
@@ -8,11 +9,13 @@ from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 
 # Tracershop Modules
+from constants import ERROR_LOGGER
 from database.TracerShopModels import authModels
 from tracerauth.audit_logging import CreateModelAuditEntry, DeleteModelAuditEntry, EditModelAuditEntry
 from tracerauth.types import AuthActions
 from lib.utils import classproperty
 
+error_logger = getLogger(ERROR_LOGGER)
 
 class TracershopModel(Model):
   #The main point about this class is allowing you go: model[fieldName] for reading data
@@ -59,27 +62,31 @@ class TracershopModel(Model):
     Args:
       modelDict (Dict[str, Any]): The dict containing any amount of data
     """
-
-    for key, value in modelDict.items():
-      field = self._meta.get_field(key) # Fails if key doesn't match a field!
-      if value is None:
+    try:
+      for key, value in modelDict.items():
+        field = self._meta.get_field(key) # Fails if key doesn't match a field!
+        if value is None:
+          self.__setattr__(key, value)
+        elif isinstance(field, ForeignKey):
+            value = field.remote_field.model.objects.get(pk=value)
+        # Note that Big and Small IntegerField superclass IntegerField, so we cool
+        # There might be a bug here with Integer Choices.
+        elif isinstance(field, IntegerField):
+          value = int(value)
+        elif isinstance(field, TimeField):
+          dt = datetime.strptime(f"1970-01-01 {value}", "%Y-%m-%d %H:%M:%S")
+          value = dt.time()
+        elif isinstance(field, DateTimeField):
+          value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+        elif isinstance(field, DateField):
+          value = value[:10]
+          value = datetime.strptime(value, "%Y-%m-%d").date()
+        # End of assignment
         self.__setattr__(key, value)
-      elif isinstance(field, ForeignKey):
-          value = field.remote_field.model.objects.get(pk=value)
-      # Note that Big and Small IntegerField superclass IntegerField, so we cool
-      # There might be a bug here with Integer Choices.
-      elif isinstance(field, IntegerField):
-        value = int(value)
-      elif isinstance(field, TimeField):
-        dt = datetime.strptime(f"1970-01-01 {value}", "%Y-%m-%d %H:%M:%S")
-        value = dt.time()
-      elif isinstance(field, DateTimeField):
-        value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
-      elif isinstance(field, DateField):
-        value = value[:10]
-        value = datetime.strptime(value, "%Y-%m-%d").date()
-      # End of assignment
-      self.__setattr__(key, value)
+    except Exception as e:
+      error_logger.error(f"Caught an error in assigning {key} - {field} to {value}")
+
+      raise e
 
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool:
     # Something important to note is that if you have query set and that updates

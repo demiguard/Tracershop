@@ -16,7 +16,7 @@ from django.db.models import DateField, BigAutoField, CharField, EmailField,\
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
-from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer
+from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer, ReleaseRight
 from database.TracerShopModels import authModels
 from tracerauth.types import AuthActions
 
@@ -241,18 +241,28 @@ class ActivityOrder(TracershopModel):
     related_name="activity_freed_by"
   )
 
+  @property
+  def tracer(self) -> Tracer:
+    self.ordered_time_slot.production_run.tracer
+
   def canEdit(self, user: Optional[User] = None) -> AuthActions:
     if user is None:
       return AuthActions.REJECT
 
     database_self = self.__class__.objects.get(pk=self.pk)
-    if database_self.status == OrderStatus.Ordered:
-      return AuthActions.ACCEPT
 
-    if database_self.status == OrderStatus.Accepted and user.is_production_member:
-      return AuthActions.ACCEPT_LOG
+    if database_self.status == OrderStatus.Released and not user.is_server_admin:
+      return AuthActions.REJECT_LOG
 
-    return AuthActions.REJECT
+    if self.status == OrderStatus.Released:
+      if (user.is_server_admin or ReleaseRight.objects.filter(
+                                    releaser=user,
+                                    tracer=self.tracer).exists()):
+        return AuthActions.ACCEPT_LOG
+      else:
+        return AuthActions.REJECT_LOG
+
+    return AuthActions.ACCEPT
 
   def canDelete(self, user: Optional[User]= None) -> AuthActions:
     self.refresh_from_db()
@@ -261,6 +271,8 @@ class ActivityOrder(TracershopModel):
 
     if self.status == OrderStatus.Released and not user.is_server_admin:
       return AuthActions.REJECT_LOG
+
+    return AuthActions.ACCEPT_LOG
 
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
     if(self.id is not None and self.id < 1):

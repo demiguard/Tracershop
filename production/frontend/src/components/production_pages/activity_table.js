@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Row, Col, Button, Container, Card, Collapse } from 'react-bootstrap'
 import { getId, getPDFUrls } from "../../lib/utils.js";
-import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
+import { dateToDateString, formatTimeStamp, formatUsername, parseDateToDanishDate, renderDateTime } from "../../lib/formatting.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
@@ -142,62 +142,19 @@ export function ActivityTable ({active_tracer, active_date}) {
     const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
     const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
 
-    let orderedDate = null;
-    let orderedMBq = 0;
-    let deliveredMBq = 0;
-    let freedMbq = 0;
-    let freedTime = "";
-    let minimumStatus = 3;
     const OrderData = [];
-    let moved = true;
 
     for(const order of orders){
-      if(orderedDate === null){
-        orderedDate = new Date(order.delivery_date);
-      }
-
-      const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id && order.moved_to_time_slot === null
-      || order.moved_to_time_slot === timeSlot.id
-      if (is_originalTimeSlot){
-        moved = false;
-      }
-      if(order.ordered_time_slot === timeSlot.id){
-        orderedMBq += order.ordered_activity;
-        if (order.moved_to_time_slot === null) {
-          deliveredMBq += order.ordered_activity * overhead
-        }
-      }
-      if(order.moved_to_time_slot === timeSlot.id){
-        const /**@type {ActivityDeliveryTimeSlot} */ originalTimeSlot =  state.deliver_times.get(order.ordered_time_slot);
-        const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time, timeSlot.delivery_time);
-        deliveredMBq += CalculateProduction(isotope.halflife_seconds, timeDelta.hour * 60 + timeDelta.minute, order.ordered_activity) * overhead
-      }
-
-      minimumStatus = Math.min(minimumStatus, order.status);
-
-      if(minimumStatus === 3){
-        for(const vial of state.vial.values()){
-          if (vial.assigned_to === order.id){
-            freedMbq += vial.activity
-          }
-        }
-
-        if (order.freed_datetime && freedTime === "") {
-          const timestamp = getTimeString(order.freed_datetime)
-
-          freedTime = `${timestamp}`
-        }
-      }
+      const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id
+                               && order.moved_to_time_slot === null
+                               || order.moved_to_time_slot === timeSlot.id
 
       if(is_originalTimeSlot){
-        OrderData.push(<OrderRow
-          key={order.id}
-          order={order}
-          />);
-        }
-     }
+        OrderData.push(<OrderRow key={order.id} order={order}/>);
+      }
+    }
     const canMove = firstAvailableTimeSlotID !== timeSlot.id
-      && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
+                 && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
 
    // State
    const [open, setOpen] = useState(false);
@@ -218,7 +175,7 @@ export function ActivityTable ({active_tracer, active_date}) {
    }
 
    function headerFunction(){
-    if (moved && canMove) {
+    if (orderCollection.moved && canMove) {
       restoreOrders()
     } else {
       setTimeSlotID(timeSlot.id);
@@ -227,16 +184,21 @@ export function ActivityTable ({active_tracer, active_date}) {
    }
 
    const [thirdColumnInterior, fourthColumnInterior] = (() => {
-      if (minimumStatus === ORDER_STATUS.RELEASED){
-        return [`Udleveret: ${Math.floor(freedMbq)} MBq`,
-                `Frigivet kl: ${freedTime}`,
+      if (orderCollection.minimum_status === ORDER_STATUS.CANCELLED){
+        return [`Afvist af ${formatUsername(orderCollection.freed_by)}`,
+                `Afvist Kl: ${renderDateTime(orderCollection.freed_time)}`];
+      }
+
+      if (orderCollection.minimum_status === ORDER_STATUS.RELEASED){
+        return [`Udleveret: ${Math.floor(orderCollection.delivered_activity)} MBq`,
+                `Frigivet kl: ${formatTimeStamp(orderCollection.freed_time)}`,
         ];
       } else {
-        if (canMove && !moved){
+        if (canMove && !orderCollection.moved){
         }
         return [
-          `Bestilt: ${Math.floor(orderedMBq)} MBq`,
-          `Til Udlevering: ${Math.floor(deliveredMBq)} MBq`,
+          `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
+          `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
         ];
       }
     })();
@@ -257,15 +219,15 @@ export function ActivityTable ({active_tracer, active_date}) {
            <Col style={cssCenter}>{thirdColumnInterior}</Col>
            <Col style={cssCenter}>{fourthColumnInterior}</Col>
            <Col style={cssCenter}>
-            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !moved}>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !orderCollection.moved}>
               <ClickableIcon
                 src="/static/images/delivery.svg"
                 onClick={()=>{
-                  window.location = getPDFUrls(endpoint, tracer, orderedDate);
+                  window.location = getPDFUrls(endpoint, tracer, new Date(orderCollection.ordered_date));
                 }}
               />
             </Optional>
-            <Optional exists={canMove && !moved}>
+            <Optional exists={canMove && !orderCollection.moved}>
               <ClickableIcon
                 src="/static/images/move_top.svg"
                 onClick={moveOrders}

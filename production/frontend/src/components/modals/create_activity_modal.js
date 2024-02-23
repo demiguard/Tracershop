@@ -17,6 +17,7 @@ import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
+import { NEW_LOCAL_ID, ORDER_STATUS } from "~/lib/constants";
 
 export function CreateOrderModal({active_date, active_tracer, on_close, timeSlotMapping}) {
   const state = useTracershopState();
@@ -70,13 +71,14 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
     }
 
     websocket.sendCreateModel(DATA_ACTIVITY_ORDER,
-      new ActivityOrder(undefined, // order_id
+      new ActivityOrder(NEW_LOCAL_ID, // order_id
                         amountNumber, // ordered_activity
                         dateToDateString(active_date), // delivery_Date
-                        1, // status
-                        "", // comment
+                        ORDER_STATUS.ACCEPTED, // status
+                        "Lavet af productionen", // comment
                         activeTimeSlot, // ordered_time_Slot
                         null, // moved_to_time_slot
+                        null, // freed_datetime
                         state.logged_in_user.id, // ordered_by
                         null, // freed_by
       ));

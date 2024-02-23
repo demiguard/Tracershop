@@ -148,6 +148,15 @@ export const cssError = {
   marginColor : ERROR_MARGIN_COLOR,
 }
 
+export const cssTableCenter = {
+  textAlign : "center",
+  verticalAlign : "middle",
+}
+
+export const marginLess = {
+  margin : "0px"
+}
+
 export const NEW_LOCAL_ID = -1;
 
 export const DATABASE_ADMIN_PAGE = "admin_page";

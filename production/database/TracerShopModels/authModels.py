@@ -42,10 +42,20 @@ class User(AbstractBaseUser, TracershopModel):
     return self.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin]
 
   @property
+  def is_production_member(self) -> bool:
+    return self.user_group in [UserGroups.Admin,
+                               UserGroups.ProductionAdmin,
+                               UserGroups.ProductionUser]
+
+  @property
   def is_shop_admin(self) -> bool:
     return self.user_group in [UserGroups.Admin, UserGroups.ShopAdmin]
 
-
+  @property
+  def is_production_member(self) -> bool:
+    return self.user_group in [UserGroups.Admin,
+                               UserGroups.ShopAdmin,
+                               UserGroups.ShopUser]
 
   @classproperty
   def exclude(cls) -> List[str]:

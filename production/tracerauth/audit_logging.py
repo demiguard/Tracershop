@@ -7,6 +7,7 @@ import logging
 from typing import List, Iterable, Optional, Tuple
 
 # Third party packages
+from django.db.models import ManyToManyRel, ManyToOneRel
 
 # Tracershop modules
 from constants import AUDIT_LOGGER
@@ -94,7 +95,7 @@ class DeleteModelAuditEntry(AuditLogModelEntry):
 
     messages_lines = []
     if user is not None:
-      messages_lines.append(f"User: {user.username} is deleting an instance of {model.__class__.__name__}")
+      messages_lines.append(f"User: {user.username} is deleting an instance of {model.__class__.__name__} with id {model.pk}")
     else:
       messages_lines.append(f"System is delete an instance of {model.__class__.__name__}")
 
@@ -114,11 +115,16 @@ class DeleteModelAuditEntry(AuditLogModelEntry):
 class EditModelAuditEntry(AuditLogModelEntry):
   @classmethod
   def _get_accept_message(cls, user: Optional['models.User'],
-                           model: 'models.TracershopModel') -> str:
+                               model: 'models.TracershopModel') -> str:
     database_copy = model.__class__.objects.get(pk=model.pk)
     log_fields = []
+    print(model.__class__.__name__)
 
     for field in model._meta.get_fields(include_parents=True):
+      if isinstance(field, ManyToManyRel) or isinstance(field, ManyToOneRel):
+        # This is other models pointing at this object, which isn't changed by
+        # this save
+        continue
       if field.name in model.exclude:
         # Don't log sensitive information!
         continue
@@ -136,7 +142,7 @@ class EditModelAuditEntry(AuditLogModelEntry):
 
     messages_lines = []
     if user is not None:
-      messages_lines.append(f"User: {user.username} is editing an instance of {model.__class__.__name__}")
+      messages_lines.append(f"User: {user.username} is editing an instance of {model.__class__.__name__} with id {model.pk}")
     else:
       messages_lines.append(f"System is editing an instance of {model.__class__.__name__}")
     for field_name, original_value, new_value in log_fields:
@@ -153,8 +159,8 @@ class EditModelAuditEntry(AuditLogModelEntry):
     return f"User: {user.username} attempted to edit an instance of {model.__class__.__name__}  with id {model.pk} but was denied permission."
 
 def logFreeActivityOrders(user: 'models.User',
-                    orders: Iterable['models.ActivityOrder'],
-                    vials: Iterable['models.Vial']):
+                          orders: Iterable['models.ActivityOrder'],
+                          vials: Iterable['models.Vial']):
   message = f"\nUser: {user.username} is releasing the following activity orders:\n"
 
   for order in orders:

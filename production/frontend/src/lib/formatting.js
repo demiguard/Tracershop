@@ -267,9 +267,35 @@ export function renderDateTime(dateString){
  * @param {User | null} user
  * @returns
  */
-export function formatReleaserUsername(user){
+export function formatUsername(user){
   if(user === null){
-    return ""
+    return "";
   }
+  console.log(user)
+
   return user.username.toUpperCase();
+}
+
+/**
+ *
+ * @param {String | Date | null} date
+ * @returns
+ */
+export function formatTimeStamp(date){
+  if (date === null) {
+    return "Ukendt";
+  }
+
+  if(!(date instanceof Date)){
+    const newDate = new Date(date); // I was tired when i wrote this
+    return newDate.toLocaleTimeString([], {hour12 : false,
+                                           hour : "2-digit",
+                                           minute : "2-digit"
+                                     });
+  }
+
+  return date.toLocaleTimeString([], {hour12 : false,
+                                      hour : "2-digit",
+                                      minute : "2-digit"
+  })
 }
