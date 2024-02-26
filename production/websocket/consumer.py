@@ -613,7 +613,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     order.freed_datetime = self.datetimeNow.now()
     order.freed_by = self.scope['user']
     order.status = OrderStatus.Released
-    await self.db.saveModel(order)
+    await self.db.saveModel(order, user)
     # Log the change to db
     logFreeInjectionOrder(user, order)
 

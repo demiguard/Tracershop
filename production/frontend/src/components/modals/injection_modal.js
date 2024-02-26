@@ -25,6 +25,8 @@ import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 import { ReleaseRightHolder } from "~/lib/data_structures.js";
 import { EditableInput } from "../injectable/inputs/editable_input.js";
 import { LotNumberHeader } from "../injectable/headers/lot_display.js";
+import { Optional } from "~/components/injectable/optional.js";
+import { CancelBox } from "~/components/injectable/cancel_box.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -32,11 +34,13 @@ export function InjectionModal ({modal_order, on_close}) {
   const order = state.injection_orders.get(modal_order);
 
   const [freeing, setFreeing] = useState(false);
+  const [canceling, setCanceling] = useState(false);
   const [lot_number, setLotNumber] = useState(nullParser(order.lot_number));
   const [error, setError] = useState("");
   const [errorLevel, setErrorLevel] = useState(ERROR_LEVELS.hint);
 
-  const canEdit = !freeing && order.status !== ORDER_STATUS.RELEASED;
+  const canEdit = !freeing && (order.status === ORDER_STATUS.ACCEPTED
+        || order.status === ORDER_STATUS.ORDERED);
 
   const endpoint = state.delivery_endpoint.get(order.endpoint);
   const customer = state.customer.get(endpoint.owner);
@@ -45,8 +49,23 @@ export function InjectionModal ({modal_order, on_close}) {
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
   function acceptOrder(){
-    order.status = 2;
+    order.status = ORDER_STATUS.ACCEPTED;
     websocket.sendEditModel(DATA_INJECTION_ORDER, [order]);
+  }
+
+  function startCanceling(){
+    setCanceling(true);
+  }
+
+  function stopCanceling(){
+    setCanceling(false);
+  }
+
+  function commitCanceling(){
+    const cancelingOrder = {...order};
+    cancelingOrder.status = ORDER_STATUS.CANCELLED;
+    websocket.sendEditModel(DATA_INJECTION_ORDER, [cancelingOrder]);
+    stopCanceling();
   }
 
   function startFreeing(){
@@ -117,12 +136,14 @@ export function InjectionModal ({modal_order, on_close}) {
     }
 
     return(
+      <div>
+
       <Modal
         show={true}
         size="lg"
         onHide={on_close}
         className={styles.mariLight}
-      >
+        >
         <Modal.Header>Injection Ordre {modal_order}</Modal.Header>
         <Modal.Body>
           <Row>
@@ -134,7 +155,7 @@ export function InjectionModal ({modal_order, on_close}) {
                       <HoverBox
                         Base={<div>Destination:</div>}
                         Hover={<div>Kundens brugernavn, rigtige navn og bestillerens profil, hvis tilgændelig.</div>}
-                      />
+                        />
                     </td>
                     <td>{customer.short_name} - {endpoint.name}</td>
                   </tr>
@@ -162,7 +183,7 @@ export function InjectionModal ({modal_order, on_close}) {
                           value={lot_number}
                           canEdit={canEdit}
                           onChange={setStateToEvent(setLotNumber)}
-                        />
+                          />
                       </td>
                     </tr> : null }</tbody>
               </Table>
@@ -172,15 +193,14 @@ export function InjectionModal ({modal_order, on_close}) {
           {error != "" ? <AlertBox
             level={errorLevel}
             message={error}
-          /> : null}
+            /> : null}
         </Modal.Body>
         <Modal.Footer>
           <Row style={{width : "100%"}}>
             <Col md={3}>
-              <HoverBox
-                Base={<MarginButton>Afvis ordre</MarginButton>}
-                Hover={"Ikke bygget færdig endnu!"}
-              />
+              <Optional exists={canEdit}>
+                <MarginButton onClick={startCanceling}>Afvis ordre</MarginButton>
+              </Optional>
             </Col>
             <Col md={{ span : 3, offset : 5}}>
                 {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
@@ -196,11 +216,15 @@ export function InjectionModal ({modal_order, on_close}) {
           </Row>
         </Modal.Footer>
       </Modal>
-    );
+      <CancelBox
+        show={canceling}
+        onClose={stopCanceling}
+        confirm={commitCanceling}
+      />
+    </div>);
 }
 
 InjectionModal.propTypes = {
   [PROP_ON_CLOSE] : propTypes.func.isRequired,
   [PROP_MODAL_ORDER] : propTypes.number.isRequired,
 }
-

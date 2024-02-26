@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
 
 import { dateToDateString } from "~/lib/formatting";
@@ -8,7 +8,7 @@ import styles from '~/css/Site.module.css'
 import { Select, toOptions } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { InjectionOrder } from "~/dataclasses/dataclasses";
-import { CloseButton } from "../injectable/buttons";
+import { CloseButton, MarginButton } from "../injectable/buttons";
 import { TimeInput } from "../injectable/inputs/time_input";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
@@ -21,13 +21,15 @@ import { ErrorInput } from "../injectable/inputs/error_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import propTypes from "prop-types";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
+import { getId } from "~/lib/utils";
+import { Optional } from "~/components/injectable/optional";
 
 
 export function CreateInjectionOrderModal({active_date, on_close}){
   const state = useTracershopState();
   const websocket = useWebsocket();
   // Initialize select
-  
+
 
   const initialization = useRef({
     customer : null,
@@ -49,15 +51,19 @@ export function CreateInjectionOrderModal({active_date, on_close}){
     state.tracer,
   );
 
-  const [customerID, setCustomer] = useState(initialization.customer);
-  const [endpointID, setEndpoint] = useState(initialization.endpoint)
-  const [tracerID, setTracer] = useState(initialization.tracer);
+  const [customerID, setCustomer] = useState(initialization.current.customer);
+  const [endpointID, setEndpoint] = useState(initialization.current.endpoint)
+  const [tracerID, setTracer] = useState(initialization.current.tracer);
   const [usage, setUsage] = useState(0);
   const [injections, setInjections] = useState("");
   const [deliverTime, setDeliveryTime] = useState("")
   const [comment, setComment] = useState("")
   const [errorInjection, setErrorInjection] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("");
+
+  // Can send
+  const canOrder = !!endpointID && !!tracerID;
+
 
   function SubmitOrder(_event){
     //Validation
@@ -74,26 +80,38 @@ export function CreateInjectionOrderModal({active_date, on_close}){
       websocket.sendCreateModel(
         DATA_INJECTION_ORDER,
         new InjectionOrder(
-        undefined, // id
-        formattedDeliveryTime, // deliver_time
-        dateToDateString(active_date), // delivery_Date
-        numberInjections, // injections
-        1, // Status
-        usage, // tracer_usage
-        comment, // Comment
-        state.logged_in_user.id, // Ordered By
-        endpointID, // Delivery ID
-        tracerID, // Tracer ID
-        null, // lot_number
-        null, // freed_datetime
-        null, // freed_by
+          undefined, // id
+          formattedDeliveryTime, // deliver_time
+          dateToDateString(active_date), // delivery_Date
+          numberInjections, // injections
+          1, // Status
+          usage, // tracer_usage
+          comment, // Comment
+          state.logged_in_user.id, // Ordered By
+          endpointID, // Delivery ID
+          tracerID, // Tracer ID
+          null, // lot_number
+          null, // freed_datetime
+          null, // freed_by
       ));
       on_close();
     }
   }
 
-  const tracerOptions = toOptions(tracerCatalog.getInjectionCatalog(customerID),
+  const tracerOptions = toOptions(tracerCatalog.getInjectionCatalog(endpointID),
                                   'shortname', 'id')
+
+  useEffect(() => {
+    const newOptions = tracerCatalog.getInjectionCatalog(endpointID);
+    const newOptionsIDs = newOptions.map(getId);
+    if(!(newOptionsIDs.includes(tracerID))){
+      if(newOptions.length){
+        setTracer(newOptions[0].id);
+      } else {
+        setTracer("");
+      }
+    }
+  }, [endpointID])
 
   return(
     <Modal
@@ -160,8 +178,10 @@ export function CreateInjectionOrderModal({active_date, on_close}){
         </Row>
       </ModalBody>
       <Modal.Footer>
+        <Optional exists={canOrder} alternative={<Button disabled={true}>Opret Ordre</Button>}>
+          <Button onClick={SubmitOrder}>Opret Ordre</Button>
+        </Optional>
         <CloseButton onClick={on_close}/>
-        <Button onClick={SubmitOrder}>Opret Ordre</Button>
       </Modal.Footer>
     </Modal>);
 }

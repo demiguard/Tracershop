@@ -193,7 +193,7 @@ export class ActivityOrderCollection {
 }
 
 
-export class CustomerCatalog {
+export class EndpointCatalog {
   /**@type {Array<Tracer>} */ tracerCatalogActivity
   /**@type {Array<Tracer>} */ tracerCatalogInjections
   /**@type {Map<Number, Number>} */ overheadMap
@@ -211,7 +211,7 @@ export class CustomerCatalog {
  * Each instance is unique to a customer.
  */
 export class TracerCatalog {
-  /**@type {Map<Number, CustomerCatalog } */ _endpointCatalogs
+  /**@type {Map<Number, EndpointCatalog } */ _endpointCatalogs
 
   /**
    * Data structure containing information about which tracers a customer have access to
@@ -225,7 +225,7 @@ export class TracerCatalog {
 
     for(const tracerCatalogPage of tracerCatalogPages.values()){
       if(!this._endpointCatalogs.has(tracerCatalogPage.endpoint)){
-        this._endpointCatalogs.set(tracerCatalogPage.endpoint, new CustomerCatalog())
+        this._endpointCatalogs.set(tracerCatalogPage.endpoint, new EndpointCatalog())
       }
 
       const endpoint_catalog = this._endpointCatalogs.get(tracerCatalogPage.endpoint)
@@ -247,7 +247,7 @@ export class TracerCatalog {
   /**
    * Gets the entire catalog for a customer
    * @param {Number} endpointID - the ID of the customer in question
-   * @returns {CustomerCatalog}
+   * @returns {EndpointCatalog}
    */
   getCatalog(endpointID){
     const index = numberfy(endpointID);
@@ -256,8 +256,8 @@ export class TracerCatalog {
     if (endpoint_catalog !== undefined){
       return endpoint_catalog;
     }
-    console.log("Undefined customer referenced");
-    return new CustomerCatalog();
+    console.log("Undefined endpoint referenced");
+    return new EndpointCatalog();
   }
 
   getActivityCatalog(customerID){
