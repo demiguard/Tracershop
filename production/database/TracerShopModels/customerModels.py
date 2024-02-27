@@ -314,23 +314,27 @@ class InjectionOrder(TracershopModel):
     ]
 
   def canEdit(self, user: Optional[User] = None) -> AuthActions:
-    database_self = self.__class__.objects.get(pk=self.pk)
     if user is None:
       return AuthActions.REJECT
 
-    if database_self.status == OrderStatus.Ordered:
-      return AuthActions.ACCEPT
+    database_self = self.__class__.objects.get(pk=self.pk)
 
-    if database_self.status == OrderStatus.Accepted and user.is_production_member:
-      return AuthActions.ACCEPT_LOG
+    if database_self.status == OrderStatus.Released and not user.is_server_admin:
+      return AuthActions.REJECT_LOG
 
-    return AuthActions.REJECT
+    if self.status == OrderStatus.Released:
+      if (user.is_server_admin or ReleaseRight.objects.filter(
+                                    releaser=user,
+                                    tracer=self.tracer).exists()):
+        return AuthActions.ACCEPT_LOG
+      else:
+        return AuthActions.REJECT_LOG
+
+    return AuthActions.ACCEPT
 
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
     if(self.id is not None and self.id < 1):
       self.id = None
-      self.status = OrderStatus.Ordered
-      self.ordered_by = user
     super().save(user, *args, **kwargs)
 
 class Vial(TracershopModel):

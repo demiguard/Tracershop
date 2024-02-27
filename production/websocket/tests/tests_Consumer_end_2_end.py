@@ -47,12 +47,14 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   WEBSOCKET_DATA, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, DATA_ACTIVITY_ORDER,\
   DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_CUSTOMER, WEBSOCKET_MESSAGE_MODEL_DELETE,\
   WEBSOCKET_MESSAGE_RESTORE_ORDERS, WEBSOCKET_MESSAGE_MODEL_CREATE, DATA_VIAL,\
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_MESSAGE_ERROR,\
+  ERROR_TYPE, AUTH_USER
 
 from database.database_interface import DatabaseInterface
-from database.models import ClosedDate,\
-    User, UserGroups, MODELS, ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
-    Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder
+from database.models import ClosedDate, User, UserGroups, MODELS,\
+    ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
+    Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder,\
+    OrderStatus
 
 with mock.patch('production.SECRET_KEY'):
   from websocket import consumer
@@ -196,17 +198,70 @@ class ConsumerTestCase(TransactionTestCase):
     )
     self.timeSlot_later.save(self.user)
 
-    self.late_order = ActivityOrder(
+    self.moved_order = ActivityOrder(
       id = 36,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
-      status=1,
+      status=OrderStatus.Ordered,
+      comment=None,
+      ordered_time_slot=self.timeSlot_later,
+      moved_to_time_slot=self.timeSlot,
+    )
+    self.moved_order.save(self.user)
+
+    self.late_order = ActivityOrder(
+      id = 37,
+      ordered_activity = 42181,
+      delivery_date = "2020-06-11",
+      status=OrderStatus.Accepted,
       comment=None,
       ordered_time_slot=self.timeSlot_later,
     )
     self.late_order.save(self.user)
 
+    self.to_be_freed_order = ActivityOrder(
+      id = 1245,
+      ordered_activity = 42181,
+      delivery_date = "2020-06-11",
+      status=OrderStatus.Accepted,
+      comment=None,
+      ordered_time_slot=self.timeSlot,
+    )
+    self.to_be_freed_order.save(self.user)
+
+    self.vial = Vial(
+      id=15934,
+      tracer=self.act_tracer,
+      activity=48812,
+      volume=13.82,
+      lot_number="Test-200611-1",
+      fill_time="11:33:55",
+      fill_date="2020-06-11",
+      assigned_to=None,
+      owner=self.customer,
+    )
+    self.vial.save(self.user)
+
+    self.injection_order = InjectionOrder(
+      id = 481,
+      delivery_time="09:07:45",
+      delivery_date="2020-06-11",
+      injections=1,
+      status=OrderStatus.Accepted,
+      tracer_usage=1,
+      comment=None,
+      endpoint=self.endpoint,
+      tracer=self.inj_tracer,
+      lot_number=None,
+      freed_datetime=None,
+      freed_by=None,
+    )
+
+    self.injection_order.save(self.user)
+
   def tearDown(self):
+    InjectionOrder.objects.all().delete()
+    Vial.objects.all().delete()
     ActivityOrder.objects.all().delete()
     ActivityDeliveryTimeSlot.objects.all().delete()
     DeliveryEndpoint.objects.all().delete()
@@ -224,19 +279,14 @@ class ConsumerTestCase(TransactionTestCase):
       await comm.disconnect()
 
   async def test_echo(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app,"ws/")
-      conn, subprotocal = await comm.connect()
-      response = await self._sendReceive(comm, {
-          WEBSOCKET_MESSAGE_ID : self.message_id,
-          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
-      })
-      await comm.disconnect()
+    comm = WebsocketCommunicator(app,"ws/")
+    conn, subprotocal = await comm.connect()
+    response = await self._sendReceive(comm, {
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
+    })
+    await comm.disconnect()
 
     self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
     self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_ECHO)
@@ -245,169 +295,116 @@ class ConsumerTestCase(TransactionTestCase):
   ##### Auth #####
 
   async def test_login_persists(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, _subprotocol = await comm.connect()
+    response = await self._sendReceive(comm, self.loginAdminMessage)
+    sessionID = response['sessionid']
+    await comm.disconnect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app,"ws/", headers=b'')
-      _conn, _subprotocol = await comm.connect()
-      response = await self._sendReceive(comm, self.loginAdminMessage)
-      sessionID = response['sessionid']
-      await comm.disconnect()
+    sessionCookie = "sessionid=" + sessionID
 
-      sessionCookie = "sessionid=" + sessionID
+    recomm = WebsocketCommunicator(app, "ws/", headers=[("cookie".encode(), sessionCookie.encode())])
+    _conn, _subprotocol = await recomm.connect()
 
-      recomm = WebsocketCommunicator(app, "ws/", headers=[("cookie".encode(), sessionCookie.encode())])
-      _conn, _subprotocol = await recomm.connect()
-
-      whoAmI_reponse = await self._sendReceive(recomm, {
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      await recomm.disconnect()
+    whoAmI_reponse = await self._sendReceive(recomm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    await recomm.disconnect()
 
     self.assertTrue(whoAmI_reponse[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmI_reponse[AUTH_USERNAME], TEST_ADMIN_USERNAME)
-    self.assertEqual(whoAmI_reponse['user_group'], 1)
-
 
   async def test_login_logout_whoamI(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, subprotocol = await comm.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app,"ws/", headers=b'')
-      _conn, subprotocol = await comm.connect()
-
-      loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
-      logoutMessage = await self._sendReceive(comm, {
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      whoAmIMessage = await self._sendReceive(comm, {
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
+    loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
+    logoutMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGOUT,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    whoAmIMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
 
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
-    self.assertEqual(whoAmIMessage['user_group'], 0)
-
+    self.assertEqual(whoAmIMessage[AUTH_USER], {})
 
   async def test_login_wrong_password(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app,"ws/", headers=b'')
+    _conn, subprotocol = await comm.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app,"ws/", headers=b'')
-      _conn, subprotocol = await comm.connect()
+    response = await self._sendReceive(comm, {
+      DATA_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : "Not_ADMIN_password"
+      },
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
 
-      response = await self._sendReceive(comm, {
-        DATA_AUTH : {
-          AUTH_USERNAME : TEST_ADMIN_USERNAME,
-          AUTH_PASSWORD : "Not_ADMIN_password"
-        },
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
+    self.assertFalse(response[AUTH_IS_AUTHENTICATED])
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
 
+    whoAmIMessage = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
 
-      self.assertFalse(response[AUTH_IS_AUTHENTICATED])
-      self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
-
-      whoAmIMessage = await self._sendReceive(comm, {
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-
-      await comm.disconnect()
+    await comm.disconnect()
 
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmIMessage[AUTH_USERNAME], "")
-    self.assertEqual(whoAmIMessage['user_group'], 0)
+    self.assertEqual(whoAmIMessage[AUTH_USER], {})
 
 
   ##### Error handling #####
   # These Test showcase how the Consumer handles messages, that are invalid in some form or another
   async def test_invalidated_Message(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app, "ws/", headers=b'')
-      _conn, subprotocal = await comm.connect()
-
-      response = await self._sendReceive(comm, {})
-      await comm.disconnect()
-
-    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_NO_MESSAGE_ID)
+    response = await self._sendReceive(comm, {})
+    await comm.disconnect()
 
 
-  async def test_insufficientPermissions(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app, "ws/", headers=b'')
-      _conn, subprotocal = await comm.connect()
-
-      response = await self._sendReceive(comm, {
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_STATE,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      await comm.disconnect()
-
-    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INSUFFICIENT_PERMISSIONS)
-
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], { ERROR_TYPE : ERROR_NO_MESSAGE_ID })
 
   async def test_InvalidMessageType(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app, "ws/", headers=b'')
-      _conn, subprotocal = await comm.connect()
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_MESSAGE_TYPE : "Not a message type!",
+    })
+    await comm.disconnect()
 
-      response = await self._sendReceive(comm, {
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_TYPE : "Not a message type!",
-      })
-      await comm.disconnect()
-
-    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INVALID_MESSAGE_TYPE)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
 
 
   async def test_InvalidJavascript(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app, "ws/", headers=b'')
+    _conn, subprotocal = await comm.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm = WebsocketCommunicator(app, "ws/", headers=b'')
-      _conn, subprotocal = await comm.connect()
+    response = await self._sendReceive(comm, {
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_JAVASCRIPT_VERSION : '1.0.0',
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
+    })
+    await comm.disconnect()
 
-      response = await self._sendReceive(comm, {
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_JAVASCRIPT_VERSION : '1.0.0',
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
-      })
-      await comm.disconnect()
-
-    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], ERROR_INVALID_JAVASCRIPT_VERSION)
-
+    self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
+    self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : ERROR_INVALID_JAVASCRIPT_VERSION})
 
   ##### Message Testing #####
   async def test_GetState(self):
@@ -423,31 +420,24 @@ class ConsumerTestCase(TransactionTestCase):
     keyword = DATA_CLOSED_DATE
     Model = MODELS[keyword]
 
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
+    await comm.send_json_to(self.loginAdminMessage)
+    _login_response = await comm.receive_json_from()
 
-      comm = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm.connect()
+    await comm.send_json_to({
+      WEBSOCKET_MESSAGE_ID : self.message_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      WEBSOCKET_DATATYPE : keyword,
+      WEBSOCKET_DATA : {
+        "close_date" : "2021-11-30"
+      }
+    })
 
-      await comm.send_json_to(self.loginAdminMessage)
-      _login_response = await comm.receive_json_from()
-
-      await comm.send_json_to({
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        WEBSOCKET_DATATYPE : keyword,
-        WEBSOCKET_DATA : {
-          "close_date" : "2021-11-30"
-        }
-      })
-
-      response = await comm.receive_json_from()
-      await comm.disconnect()
-
+    response = await comm.receive_json_from()
+    await comm.disconnect()
 
     modelBackend: ClosedDate = await database_sync_to_async(Model.objects.get)(close_date=datetime.date(2021,11,30))
     self.assertIn(WEBSOCKET_DATA, response)
@@ -460,415 +450,123 @@ class ConsumerTestCase(TransactionTestCase):
     await comm.disconnect()
 
   async def test_moveOrders(self):
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+    await comm_admin.send_json_to({
+      DATA_ACTIVITY_ORDER : [36],
+      DATA_DELIVER_TIME : 7,
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
 
-      await comm_admin.send_json_to({
-        DATA_ACTIVITY_ORDER : [36],
-        DATA_DELIVER_TIME : 7,
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MOVE_ORDERS,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
+    returnMessage = await comm_admin.receive_json_from()
+    await comm_admin.disconnect()
 
-      returnMessage = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
+    await database_sync_to_async(self.late_order.refresh_from_db)()
 
-    await database_sync_to_async(self.order.refresh_from_db)()
-
-    timeSlot: ActivityDeliveryTimeSlot = await database_sync_to_async(self.order.__getitem__)('moved_to_time_slot')
+    timeSlot: ActivityDeliveryTimeSlot = await database_sync_to_async(self.late_order.__getitem__)('moved_to_time_slot')
     self.assertEqual(self.timeSlot.id, 7)
 
   async def test_RestoreOrder(self):
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    tracer = Tracer(
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=1,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-    production_1 = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "07:00:00",
-    )
-    await database_sync_to_async(production_1.save)()
+    await comm_admin.send_json_to({
+      DATA_ACTIVITY_ORDER : [36],
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RESTORE_ORDERS,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    message = await comm_admin.receive_json_from()
 
-    production_2 = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "12:00:00",
-    )
-    await database_sync_to_async(production_2.save)()
+    await comm_admin.disconnect()
 
-    customer = Customer(
-      id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-    timeSlot_1 = ActivityDeliveryTimeSlot(
-      id = 7,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production_1
-    )
-    await database_sync_to_async(timeSlot_1.save)()
-
-    timeSlot_2 = ActivityDeliveryTimeSlot(
-      id = 8,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production_2
-    )
-    await database_sync_to_async(timeSlot_2.save)()
-
-
-    order = ActivityOrder(
-      id = 36,
-      ordered_activity = 42181,
-      delivery_date = "2020-06-11",
-      status=1,
-      comment=None,
-      ordered_time_slot=timeSlot_2,
-      moved_to_time_slot=timeSlot_1,
-    )
-
-    await database_sync_to_async(order.save)()
-
-    channel_layers_setting = {
-        "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS=channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        DATA_ACTIVITY_ORDER : [36],
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RESTORE_ORDERS,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      message = await comm_admin.receive_json_from()
-
-      await comm_admin.disconnect()
-
-    await database_sync_to_async(order.refresh_from_db)()
-    self.assertIsNone(order.moved_to_time_slot)
+    await database_sync_to_async(self.moved_order.refresh_from_db)()
+    self.assertIsNone(self.moved_order.moved_to_time_slot)
 
   async def test_freeActivityOrder(self):
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    tracer = Tracer(
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=1,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-    production = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "07:00:00",
-    )
-    await database_sync_to_async(production.save)()
-
-    customer = Customer(
-      id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-    timeSlot = ActivityDeliveryTimeSlot(
-      id = 7,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production
-    )
-    await database_sync_to_async(timeSlot.save)()
-
-    order = ActivityOrder(
-      id = 36,
-      ordered_activity = 42181,
-      delivery_date = "2020-06-11",
-      status=2,
-      comment=None,
-      ordered_time_slot=timeSlot,
-    )
-    await database_sync_to_async(order.save)()
-
-    vial = Vial(
-      id=15934,
-      tracer=tracer,
-      activity=48812,
-      volume=13.82,
-      lot_number="Test-200611-1",
-      fill_time="11:33:55",
-      fill_date="2020-06-11",
-      assigned_to=None,
-      owner=customer,
-    )
-    await database_sync_to_async(vial.save)()
-
-    channel_layers_setting = {
-      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        DATA_AUTH : {
-          AUTH_USERNAME : TEST_ADMIN_USERNAME,
-          AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
-        },
-        WEBSOCKET_DATA : {
-          DATA_VIAL : [15934],
-          DATA_DELIVER_TIME : 7,
-          DATA_ACTIVITY_ORDER : [36],
-        },
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
+    await comm_admin.send_json_to({
+      DATA_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+      },
+      WEBSOCKET_DATA : {
+        DATA_VIAL : [self.vial.id],
+        DATA_DELIVER_TIME : 7,
+        DATA_ACTIVITY_ORDER : [self.to_be_freed_order.id],
+      },
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    message = await comm_admin.receive_json_from()
+    await comm_admin.disconnect()
 
   async def test_freeActivityOrder_rejected(self):
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    tracer = Tracer(
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=1,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-    production = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "07:00:00",
-    )
-    await database_sync_to_async(production.save)()
-
-    customer = Customer(
-      id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-    timeSlot = ActivityDeliveryTimeSlot(
-      id = 7,
-      weekly_repeat = 0,
-      delivery_time = "08:00:00",
-      destination=endpoint,
-      production_run=production
-    )
-    await database_sync_to_async(timeSlot.save)()
-
-    order = ActivityOrder(
-      id = 36,
-      ordered_activity = 42181,
-      delivery_date = "2020-06-11",
-      status=2,
-      comment=None,
-      ordered_time_slot=timeSlot,
-    )
-    await database_sync_to_async(order.save)()
-
-    vial = Vial(
-      id=15934,
-      tracer=tracer,
-      activity=48812,
-      volume=13.82,
-      lot_number="Test-200611-1",
-      fill_time="11:33:55",
-      fill_date="2020-06-11",
-      assigned_to=None,
-      owner=customer,
-    )
-    await database_sync_to_async(vial.save)()
-
-    channel_layers_setting = {
-      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        DATA_AUTH : {
-          AUTH_USERNAME : TEST_ADMIN_USERNAME,
-          AUTH_PASSWORD : "NOT ADMIN PASSWORD",
-        },
-        WEBSOCKET_DATA : {
-          DATA_VIAL : [15934],
-          DATA_DELIVER_TIME : 7,
-          DATA_ACTIVITY_ORDER : [36],
-        },
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
+    await comm_admin.send_json_to({
+      DATA_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : "NOT ADMIN PASSWORD",
+      },
+      WEBSOCKET_DATA : {
+        DATA_VIAL : [self.vial.id],
+        DATA_DELIVER_TIME : 7,
+        DATA_ACTIVITY_ORDER : [self.to_be_freed_order.id],
+      },
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    message = await comm_admin.receive_json_from()
+    await comm_admin.disconnect()
 
     self.assertFalse(message[AUTH_IS_AUTHENTICATED])
-    await database_sync_to_async(order.refresh_from_db)()
-    self.assertEqual(order.status, 2)
+    await database_sync_to_async(self.to_be_freed_order.refresh_from_db)()
+    self.assertEqual(self.to_be_freed_order.status, OrderStatus.Accepted.value)
 
 
   async def test_freeInjectionOrder(self):
-    isotope = Isotope(
-      atomic_number=92,
-      atomic_mass=235,
-      halflife_seconds=1337, # it's more but doesn't matter,
-      atomic_letter='U'
-    )
-    await database_sync_to_async(isotope.save)()
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    tracer = Tracer(
-      isotope=isotope,
-      shortname = "tracer",
-      clinical_name="",
-      tracer_type=1,
-      vial_tag=""
-    )
-    await database_sync_to_async(tracer.save)()
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-    production = ActivityProduction(
-      tracer=tracer,
-      production_day = 3,
-      production_time = "07:00:00",
-    )
-    await database_sync_to_async(production.save)()
-
-    customer = Customer(
-      customer_id = 78453,
-      short_name = "test",
-      long_name = "teeest"
-    )
-    await database_sync_to_async(customer.save)()
-    endpoint = DeliveryEndpoint(
-      tracer_endpoint_id = 67,
-      owner = customer,
-      name="endpoint",
-    )
-    await database_sync_to_async(endpoint.save)()
-
-    order = InjectionOrder(
-      injection_order_id = 481,
-      delivery_time="09:07:45",
-      delivery_date="2020-06-11",
-      injections=1,
-      status=2,
-      tracer_usage=1,
-      comment=None,
-      endpoint=endpoint,
-      tracer=tracer,
-      lot_number=None,
-      freed_datetime=None,
-      freed_by=None,
-    )
-
-    await database_sync_to_async(order.save)()
-
-    channel_layers_setting = {
-      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
-
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        DATA_AUTH : {
-          AUTH_USERNAME : TEST_ADMIN_USERNAME,
-          AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
-        },
-        WEBSOCKET_DATA : {
-          WEBSOCKET_DATA_ID : 481,
-          "lot_number" : "gfh-200611-1",
-        },
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
+    await comm_admin.send_json_to({
+      DATA_AUTH : {
+        AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+      },
+      WEBSOCKET_DATA : {
+        WEBSOCKET_DATA_ID : self.injection_order.id,
+        "lot_number" : "gfh-200611-1",
+      },
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    message = await comm_admin.receive_json_from()
+    await comm_admin.disconnect()
 
   async def test_freeInjectionOrder_rejected(self):
     channel_layers_setting = {
@@ -912,33 +610,27 @@ class ConsumerTestCase(TransactionTestCase):
       long_name = "teeest"
     )
     await database_sync_to_async(customer_2.save)()
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    channel_layers_setting = {
-      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        WEBSOCKET_DATA_ID : 278454,
-        WEBSOCKET_DATATYPE : DATA_CUSTOMER,
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
+    await comm_admin.send_json_to({
+      WEBSOCKET_DATA_ID : 278454,
+      WEBSOCKET_DATATYPE : DATA_CUSTOMER,
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    message = await comm_admin.receive_json_from()
+    await comm_admin.disconnect()
     # Assert Model is gone
     with self.assertRaises(ObjectDoesNotExist):
       await database_sync_to_async(Customer.objects.get)(pk=278454)
 
-    customer_1_again = Customer.objects.get(pk=178453)
-    customer_1_again.delete() # Clean up for other functions
+    customer_1_again: Customer = await database_sync_to_async(Customer.objects.get)(pk=178453)
+    await database_sync_to_async(customer_1_again.delete)() # Clean up for other functions
 
 
   async def test_deleteMultipleModels(self):
@@ -955,27 +647,21 @@ class ConsumerTestCase(TransactionTestCase):
       long_name = "teeest"
     )
     await database_sync_to_async(customer_2.save)()
+    comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await comm_admin.connect()
 
-    channel_layers_setting = {
-      "default": {"BACKEND": "channels.layers.InMemoryChannelLayer"}
-    }
+    await comm_admin.send_json_to(self.loginAdminMessage)
+    admin_login_message = await comm_admin.receive_json_from()
 
-    with override_settings(CHANNEL_LAYERS = channel_layers_setting):
-      comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await comm_admin.connect()
-
-      await comm_admin.send_json_to(self.loginAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
-
-      await comm_admin.send_json_to({
-        WEBSOCKET_DATA_ID : [278453,178454],
-        WEBSOCKET_DATATYPE : DATA_CUSTOMER,
-        WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      })
-      message = await comm_admin.receive_json_from()
-      await comm_admin.disconnect()
+    await comm_admin.send_json_to({
+      WEBSOCKET_DATA_ID : [278453,178454],
+      WEBSOCKET_DATATYPE : DATA_CUSTOMER,
+      WEBSOCKET_MESSAGE_ID : 69230481,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+    })
+    message = await comm_admin.receive_json_from()
+    await comm_admin.disconnect()
 
     # Assert Model is gone
     with self.assertRaises(ObjectDoesNotExist):

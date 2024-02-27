@@ -241,7 +241,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
   ### Error handling ###
   async def HandleUnknownError(self,
                                exception : Exception,
-                               FailingMessage : dict):
+                               FailingMessage : dict): #pragma no cover
     """
     This Function is triggered when an unhandled exception is happens server side.
     It sends an Error message back to the client informing it,
@@ -538,15 +538,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # Turn this into a function
     Auth = message[DATA_AUTH]
     user: User = await get_user(self.scope)
+    if not user:
+      logger.info(f"Anno tried to free an order")
+      return await self.__RejectFreeing(message)
+
 
     # Quick check if user and auth user matches before any database connection start working
     if not Auth[AUTH_USERNAME].upper() == user.username.upper():
       logger.info(f"User: {user.username} Rejected freeing with miss matching username")
       return await self.__RejectFreeing(message)
 
-    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
+    message_user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
                                              password=Auth[AUTH_PASSWORD])
-    if not user:
+    if not message_user:
       logger.info(f"User: {user.username} Rejected freeing with failed authentication")
       return await self.__RejectFreeing(message)
 
@@ -601,9 +605,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
       logger.info(f"User: {user.username} Rejected freeing with miss matching username")
       return await self.__RejectFreeing(message)
 
-    user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
+    message_user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
                                              password=Auth[AUTH_PASSWORD])
-    if not user:
+    if not message_user:
       logger.info(f"User: {user.username} Rejected freeing with failed authentication")
       return await self.__RejectFreeing(message)
 

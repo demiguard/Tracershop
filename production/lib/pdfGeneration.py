@@ -25,7 +25,7 @@ import reportlab.rl_config
 reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-try:
+try: #pragma: no cover
   pdfmetrics.registerFont(TTFont('Mari', 'pdfData/Mari.ttf'))
   pdfmetrics.registerFont(TTFont('Mari_Bold', 'pdfData/Mari_Bold.ttf'))
   pdfmetrics.registerFont(TTFont('Mari_Book', 'pdfData/Mari_Book.ttf'))
@@ -48,7 +48,7 @@ from database.models import Customer, ActivityOrder, ActivityProduction, Deliver
 TOP_LINE    = (50,50, 545, 50)
 BOTTOM_LINE = (50, 791, 545, 791)
 
-if fonts:
+if fonts: #pragma: no cover
   defaultFont = "Mari_Light"
 else:
   defaultFont = "Helvetica" # pragma no cover
@@ -130,10 +130,10 @@ class MailTemplate(canvas.Canvas):
         ordinate (int): Also named x, in none Mathematical circles
         string_to_bold (str): Str to be written in bold
     """
-    if fonts:
+    if fonts: #pragma: no cover
       self.setFont('Mari_Bold', bold_font_size)
     else:
-      self.setFont('Helvetica-bold', bold_font_size)
+      self.setFont('Helvetica', bold_font_size)
     self.drawString(abscissa, ordinate, string_to_bold)
     self.resetFont()
 
@@ -527,7 +527,12 @@ def DrawReleaseCertificate(filename :str,
 
   # this should be a function
   title = "BATCH FRIGIVELSESCERTIFIKAT"
-  title_width = template.stringWidth(title, "Mari_Bold", 22)
+  if fonts: #pragma: no cover
+    bold_font = 'Mari_Bold'
+  else:
+    bold_font = 'Helvetica'
+
+  title_width = template.stringWidth(title, bold_font, 22)
 
   title_abscissa = ((WIDTH) - title_width) / 2
   template.drawBoldString(title_abscissa, 750, title, bold_font_size=22)

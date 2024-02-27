@@ -32,12 +32,12 @@ class AuditLogModelEntry(ABC):
   @classmethod
   @abstractmethod
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
-    raise NotImplementedError("Derived must overwrite")
+    raise NotImplementedError("Derived must overwrite") # pragma no cover
 
   @classmethod
   @abstractmethod
   def _get_reject_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
-    raise NotImplementedError("Derived must overwrite")
+    raise NotImplementedError("Derived must overwrite") # pragma no cover
 
   @classmethod
   def log(cls, user: Optional['models.User'], model: 'models.TracershopModel', action : AuthActions):
@@ -54,6 +54,8 @@ class CreateModelAuditEntry(AuditLogModelEntry):
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
     log_fields = []
     for field in model._meta.get_fields(include_parents=True):
+      if isinstance(field, ManyToManyRel) or isinstance(field, ManyToOneRel):
+        continue
       if field.name in model.exclude:
         # Don't log sensitive information!
         continue
@@ -85,6 +87,8 @@ class DeleteModelAuditEntry(AuditLogModelEntry):
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
     log_fields = []
     for field in model._meta.get_fields(include_parents=True):
+      if isinstance(field, ManyToManyRel) or isinstance(field, ManyToOneRel):
+        continue
       if field.name in model.exclude:
         # Don't log sensitive information!
         continue
@@ -118,7 +122,6 @@ class EditModelAuditEntry(AuditLogModelEntry):
                                model: 'models.TracershopModel') -> str:
     database_copy = model.__class__.objects.get(pk=model.pk)
     log_fields = []
-    print(model.__class__.__name__)
 
     for field in model._meta.get_fields(include_parents=True):
       if isinstance(field, ManyToManyRel) or isinstance(field, ManyToOneRel):

@@ -19,6 +19,7 @@ import sys
 import argparse
 
 # Third party Packages
+from coverage import Coverage
 
 # Tracershop Packages
 
@@ -36,10 +37,11 @@ argparser.add_argument("-k", '--test_name_patterns', help="bla", nargs='*', requ
 
 args = argparser.parse_args()
 
-print(args.test_name_patterns)
-print(args.verbose)
-
 if __name__ == "__main__":
+  #cov = Coverage(config_file='.coveragerc')
+  #cov.start()
+
+
   TestRunner = get_runner(settings)
   test_runner = TestRunner(
     verbosity=clamp(0, 3, args.verbose),
@@ -52,6 +54,11 @@ if __name__ == "__main__":
     labels = ['database','tests', 'lib', 'tracerauth', 'websocket']
 
   failures = test_runner.run_tests(test_labels=labels)
+
+  #cov.stop()
+  #cov.save()
+  #cov.lcov_report(outfile="coverage/coverage.lcov")
+  #cov.report()
 
   sys.exit(bool(failures))
 
