@@ -4,9 +4,9 @@ import { DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses"
 import { numberfy } from "./utils";
 
 /**
- * 
- * @param {*} customers 
- * @param {*} endpoints 
+ *
+ * @param {*} customers
+ * @param {*} endpoints
  * @returns {
  *  customer : Number - Id of initial customer,
  *  endpoint : Number - Id of initial endpoint - owned by customer
@@ -41,10 +41,10 @@ export function initialize_customer_endpoint(
 
 /**
  * Initialize customer a related endpoint a tracer
- * @param {Map<Number, DeliveryEndpoint>} endpoints 
- * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages 
- * @returns 
- * 
+ * @param {Map<Number, DeliveryEndpoint>} endpoints
+ * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages
+ * @returns
+ *
  * @example initialize_customer_endpoint_tracer_from_tracerCatalog(props[DATA_ENDPOINT], props[DATA_TRACER_MAPPING])
  */
 export function initialize_customer_endpoint_tracer_from_tracerCatalog(

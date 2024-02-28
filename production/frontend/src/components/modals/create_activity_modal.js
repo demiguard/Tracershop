@@ -18,6 +18,8 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
 import { NEW_LOCAL_ID, ORDER_STATUS } from "~/lib/constants";
+import { Optional } from "~/components/injectable/optional";
+import { ErrorInput } from "~/components/injectable/inputs/error_input";
 
 export function CreateOrderModal({active_date, active_tracer, on_close, timeSlotMapping}) {
   const state = useTracershopState();
@@ -88,7 +90,6 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
   function commitCalculator(activity){
     setAmount(activity);
     setShowCalculator(false);
-
   }
 
   const day = getDay(active_date);
@@ -99,7 +100,13 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
     }
   )
 
-  const Tracer = state.tracer.get(active_tracer)
+  const canCreate = !((!!activeCustomer) && (!!activeEndpoint) && (!!activeTimeSlot) && (!showCalculator) && (!!amount));
+  const Tracer = state.tracer.get(active_tracer);
+  const dateString = dateToDateString(active_date)
+  const deliveryTimeSlot = state.deliver_times.get(activeTimeSlot);
+  const deliveryTime = deliveryTimeSlot ? new Date(`${dateString} ${deliveryTimeSlot.delivery_time}`) : NaN;
+  console.log(activeTimeSlot, deliveryTimeSlot, deliveryTime)
+  const canCalculator = !isNaN(deliveryTime); // Note that js considers date object as numbers, and invalid dates are isomorphic to NaN
 
   return (
       <Modal
@@ -113,7 +120,7 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
           <Calculator
             isotopes={state.isotopes}
             tracer={Tracer}
-            productionTime={deliveryDateTime}
+            productionTime={deliveryTime}
             defaultMBq={300}
             cancel={() => {setShowCalculator(false);}}
             commit={commitCalculator}
@@ -134,42 +141,29 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
                 setEndpoint={setActiveEndpoint}
                 setTimeSlot={setActiveTimeSlot}
               />
-              <TracershopInputGroup label="Aktivitet">
+              <TracershopInputGroup label="Aktivitet" error={error} tail={"Mbq"}>
                 <FormControl
                   aria-label={"activity-input"}
                   onChange={setStateToEvent(setAmount)}
-                  value={state.amount}
+                  value={amount}
                 />
-                <InputGroup.Text>
-                  MBq
-                </InputGroup.Text>
-                <InputGroup.Text>
-                  <ClickableIcon
-                    src="/static/images/calculator.svg"
-                    onClick={(_event) => {setState({showCalculator : true})}}
-                  />
-                </InputGroup.Text>
               </TracershopInputGroup>
             </Row>
-
-            { error !== "" ?
-            <Row>
-              <AlertBox
-                message={<div>error</div>}
-                level={ERROR_LEVELS.error}
-              >
-              </AlertBox>
-            </Row> : null }
           </Container>
           }
 
         </Modal.Body>
         <Modal.Footer>
-          {showCalculator ? <HoverBox
-            Base={<Button disabled={true}>Opret Ordre</Button>}
-            Hover={<div>Du kan ikke opret en ordre imens at du bruger lommeregneren</div>}
-          ></HoverBox>
-           : <Button onClick={createOrder}>Opret Ordre</Button>}
+          <Optional exists={!canCreate} alternative={
+            <Button disabled={true}>Opret Ordre</Button>}>
+            <Button onClick={createOrder}>Opret Ordre</Button>
+          </Optional>
+          <Optional exists={canCalculator && !showCalculator}>
+            <ClickableIcon
+              onClick={(_event) => {setShowCalculator(true);}}
+              src="/static/images/calculator.svg"
+            />
+          </Optional>
           <Button onClick={on_close}>Luk</Button>
         </Modal.Footer>
       </Modal>

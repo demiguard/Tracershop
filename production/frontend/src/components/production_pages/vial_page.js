@@ -40,7 +40,7 @@ export function VialPage(){
   const [customerID, setCustomer] = useState("");
   const [vialDay, setVialDay] = useState("");
   const [sortingOption, setSortingOption] = useState(SortingOptions.DATE);
-  const [sortingInverted, setSortingInverted] = useState(false);
+  const [sortingInverted, setSortingInverted] = useState(true);
   const [dateError, setDateError] = useState("");
   /**
    * A row in the table
@@ -72,8 +72,8 @@ export function VialPage(){
 
   /**
    * Changes the sorting algorithm for the table, called when a user click on a header.
-   * @param {SortingOptions} searchOption 
-   * @returns 
+   * @param {SortingOptions} searchOption
+   * @returns
    */
   function changeSearch(newSortingOption){
     return (_) => {
