@@ -26,12 +26,12 @@ reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 try: #pragma: no cover
-  pdfmetrics.registerFont(TTFont('Mari', 'pdfData/Mari.ttf'))
-  pdfmetrics.registerFont(TTFont('Mari_Bold', 'pdfData/Mari_Bold.ttf'))
-  pdfmetrics.registerFont(TTFont('Mari_Book', 'pdfData/Mari_Book.ttf'))
-  pdfmetrics.registerFont(TTFont('Mari_Heavy', 'pdfData/Mari_Heavy.ttf'))
-  pdfmetrics.registerFont(TTFont('Mari_Light', 'pdfData/Mari_Light.ttf'))
-  pdfmetrics.registerFont(TTFont('Mari_Poster', 'pdfData/Mari_Poster.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari',        f'{settings.BASE_DIR}/pdfData/Mari.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Bold',   f'{settings.BASE_DIR}/pdfData/Mari_Bold.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Book',   f'{settings.BASE_DIR}/pdfData/Mari_Book.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Heavy',  f'{settings.BASE_DIR}/pdfData/Mari_Heavy.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Light',  f'{settings.BASE_DIR}/pdfData/Mari_Light.ttf'))
+  pdfmetrics.registerFont(TTFont('Mari_Poster', f'{settings.BASE_DIR}/pdfData/Mari_Poster.ttf'))
   fonts = True
 except:
   fonts = False # pragma: no cover
@@ -42,6 +42,8 @@ WIDTH, HEIGHT = A4
 from constants import LEGACY_ENTRIES
 from lib.Formatting import dateConverter, timeConverter, mapTracerUsage
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
+
+
 
 ##### Constant declarations #####
 #Lines are on the format (x1, y1, x2, y2)
@@ -95,7 +97,7 @@ class MailTemplate(canvas.Canvas):
     icon_height = 48
     self.setLineWidth(0.5)
     self.setStrokeColorRGB(0.0,0.0,0.0)
-    self.drawInlineImage("pdfData/Logo_Rigshospitalet_Hospital_RGB.jpg",
+    self.drawInlineImage(f"{settings.BASE_DIR}/pdfData/Logo_Rigshospitalet_Hospital_RGB.jpg",
                          start_x_cursor,
                          icon_ordinate,
                          width=128,
@@ -425,7 +427,7 @@ class MailTemplate(canvas.Canvas):
 
     y_cursor -= self.line_height * 8.2
 
-    self.drawInlineImage("pdfData/sig.png", x_cursor + 30, y_cursor, 128, 109, preserveAspectRatio=True)
+    self.drawInlineImage(f"{settings.BASE_DIR}/pdfData/sig.png", x_cursor + 30, y_cursor, 128, 109, preserveAspectRatio=True)
 
     y_cursor -= self.line_height * 2
 
@@ -690,5 +692,5 @@ def DrawReleaseCertificate(filename :str,
   ordinate -= template.line_height * 1.5
   sig_height = 109
 
-  template.drawInlineImage("pdfData/sig.png", x_cursor + 30, ordinate - sig_height, 128, sig_height, preserveAspectRatio=True)
+  template.drawInlineImage(f"{settings.BASE_DIR}/pdfData/sig.png", x_cursor + 30, ordinate - sig_height, 128, sig_height, preserveAspectRatio=True)
   template.save()
