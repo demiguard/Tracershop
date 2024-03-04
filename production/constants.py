@@ -38,3 +38,10 @@ ENV_TEST_PDF_DIRECTORY = "TRACER_TEST_PDF"
 
 # Environment variables defaults
 ENV_TEST_PDF_DIRECTORY_DEFAULT = "test_pdf"
+
+# LDAP Group names
+LDAP_DN_SITE_ADMIN_GROUP       = 'CN=RGH-B-SE Tracershop Site-Admin,OU=Tracershop,OU=Ressource Grupper,OU=FAELLES Administration,OU=Region Hovedstaden,DC=regionh,DC=top,DC=local'
+LDAP_DN_PRODUCTION_ADMIN_GROUP = 'CN=RGH-B-SE Tracershop Production-Admin,OU=Tracershop,OU=Ressource Grupper,OU=FAELLES Administration,OU=Region Hovedstaden,DC=regionh,DC=top,DC=local'
+LDAP_DN_PRODUCTION_USER_GROUP  = 'CN=RGH-B-SE Tracershop Production-User,OU=Tracershop,OU=Ressource Grupper,OU=FAELLES Administration,OU=Region Hovedstaden,DC=regionh,DC=top,DC=local'
+LDAP_DN_SHOP_ADMIN_GROUP       = 'CN=RGH-B-SE Tracershop Shop-Admin,OU=Tracershop,OU=Ressource Grupper,OU=FAELLES Administration,OU=Region Hovedstaden,DC=regionh,DC=top,DC=local'
+LDAP_DN_SHOP_USER_GROUP        = 'CN=RGH-B-SE Tracershop Shop-User,OU=Tracershop,OU=Ressource Grupper,OU=FAELLES Administration,OU=Region Hovedstaden,DC=regionh,DC=top,DC=local'

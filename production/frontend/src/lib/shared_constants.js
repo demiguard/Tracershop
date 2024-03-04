@@ -61,6 +61,13 @@ export const JAVASCRIPT_VERSION = "1.1.0";
 
 export const NO_ERROR = "";
 
+export const SUCCESS_STATUS_CREATING_USER_ASSIGNMENT = {
+  SUCCESS : 0,
+  NO_LDAP_USERNAME : 1,
+  INCORRECT_GROUPS : 2,
+  MISSING_CUSTOMER : 3,
+};
+
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
 export const URL_INDEX = "";
 export const URL_INJECTION_PDF_BASE_PATH = "injection_pdfs";
@@ -73,12 +80,10 @@ export const WEBSOCKET_DEAD_ORDERS = "deadOrders";
 export const WEBSOCKET_ERROR = "error";
 export const WEBSOCKET_EVENT_TYPE = "type";
 export const WEBSOCKET_JAVASCRIPT_VERSION = "javascriptVersion";
-export const WEBSOCKET_MESSAGE_ANSWER = "answer";
 export const WEBSOCKET_MESSAGE_AUTH_LOGIN = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT = "logout";
 export const WEBSOCKET_MESSAGE_AUTH_WHOAMI = "whoami";
 export const WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword";
-export const WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER = "createActivityOrder";
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser";
 export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createInjectionOrder";
@@ -90,18 +95,17 @@ export const WEBSOCKET_MESSAGE_EDIT_STATE = "editState";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
-export const WEBSOCKET_MESSAGE_FREE_ORDER = "freeOrder";
 export const WEBSOCKET_MESSAGE_GET_HISTORY = "history";
 export const WEBSOCKET_MESSAGE_GET_ORDERS = "getOrders";
 export const WEBSOCKET_MESSAGE_GET_STATE = "getState";
 export const WEBSOCKET_MESSAGE_GREAT_STATE = "getGREATState";
 export const WEBSOCKET_MESSAGE_ID = "messageID";
+export const WEBSOCKET_MESSAGE_LOG_ERROR = "logError";
 export const WEBSOCKET_MESSAGE_MASS_ORDER = "massOrder";
 export const WEBSOCKET_MESSAGE_MODEL_CREATE = "createModel";
 export const WEBSOCKET_MESSAGE_MODEL_DELETE = "deleteModel";
 export const WEBSOCKET_MESSAGE_MODEL_EDIT = "editModel";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS = "moveOrder";
-export const WEBSOCKET_MESSAGE_ORDER_ACTIVITY = "OrderActivity";
 export const WEBSOCKET_MESSAGE_ORDER_INJECTION = "OrderInjection";
 export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
 export const WEBSOCKET_MESSAGE_SUCCESS = "success";
@@ -122,6 +126,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "massOrder",
   "moveOrder",
   "restoreOrders",
+  "logError",
   "changeExternalPassword",
   "createExternalUser",
 ]

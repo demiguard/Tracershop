@@ -17,7 +17,7 @@ from datetime import datetime
 import logging
 from pprint import pformat
 import traceback
-from typing import Any, Dict, List, Callable, Coroutine, Optional
+from typing import Any, Dict, List, Callable, Optional, Tuple
 
 # Django packages
 from channels.db import database_sync_to_async
@@ -26,11 +26,9 @@ from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
-from django.contrib.sessions.backends.db import SessionStore
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
-from django.db.models import QuerySet
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
@@ -44,7 +42,6 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_DATE,\
     WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, \
     WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,\
-    WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER, WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER,\
     WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,\
     WEBSOCKET_MESSAGE_ECHO, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION,\
     WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_GET_STATE,\
@@ -53,16 +50,19 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_OBJECT_DOES_NOT_EXISTS,\
     WEBSOCKET_MESSAGE_RESTORE_ORDERS, WEBSOCKET_MESSAGE_ERROR,\
     WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE, \
-    WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT
+    WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
+    WEBSOCKET_MESSAGE_LOG_ERROR, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
+    WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
-      TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups
-from lib.Formatting import toDateTime
+      TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups, UserAssignment
+from lib.formatting import toDateTime, formatFrontendErrorMessage
 from lib.ProductionJSON import encode, decode
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
-from tracerauth.tracerLdap import checkUserGroupMembership
+from tracerauth.ldap import checkUserGroupMembership
+from tracerauth.types import AuthenticationResult
 
 logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
@@ -101,6 +101,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, AnonymousUser):
       return
 
+
     if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_add('production', self.channel_name)
     if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
@@ -122,9 +123,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ### --- Websocket methods --- ####
   async def connect(self):
-    """Method called when a user connect
-    """
-
+    """Method called when a user connect"""
     await self.channel_layer.group_add(self.global_group, self.channel_name)
     user = await get_user(self.scope)
     await self.enterUserGroups(user)
@@ -147,26 +146,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def __broadcastGlobal(self, message: Dict):
-    """Boardcast only to produciton
+    """Broadcast a message to all connected users
 
     Args:
-        message (Dict): _description_
-
-    Raises:
-        Exception: _description_
+        message (Dict): Message to be broadcast
     """
     self.__prepBroadcastMessage(message)
     await self.channel_layer.group_send(self.global_group, message) #
 
 
   async def __broadcastProduction(self, message: Dict):
-    """Broadcast only to production
+    """Broadcast only to the group production
 
     Args:
-        message (Dict): _description_
-
-    Raises:
-        Exception: _description_
+        message (Dict): Message to be send
     """
     self.__prepBroadcastMessage(message)
     await self.channel_layer.group_send('production', message) #
@@ -184,12 +177,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def broadcastMessage(self, message: Dict):
-    """Send the event to each subscriber to the websocket.
+    """WARNING: IS THIS A PRIVATE HELPER FUNCTION THAT YOU SHOULDN'T CALL IN
+    HANDLER FUNCTIONS. Use __broadcastGlobal instead!
+
+    Send the event to each subscriber to the websocket.
     Note this function gets call for each websocket connected to the group
 
     This function is called by __broadcast
 
-    Note that this function CANNOT be named with leading underscore by channels
+    Note that this function CANNOT be named with leading underscore due to
+    constraints made by channels
     """
     await self.send_json(message)
 
@@ -222,7 +219,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       user = await get_user(self.scope)
       if not auth.AuthMessage(user, message):
         logger.info(f"Insufficient Rights for {user}!")
-        await self.RespondWithError(message, {ERROR_TYPE :ERROR_INSUFFICIENT_PERMISSIONS})
+        await self.RespondWithError(message, {ERROR_TYPE : ERROR_INSUFFICIENT_PERMISSIONS})
         return
 
       handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
@@ -234,6 +231,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.RespondWithError(message, {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
       else:
         await handler(self, message)
+    except IllegalActionAttempted:
+      error_logger.critical(pformat(f"""user: {user} send the message {pformat(message)} which contains an action witch the system detected as Illegal, either we got a pen tester, a bad actor or a frontend error."""))
     except Exception as E: # pragma: no cover
       # Very broad catch here, to prevent a hanging message on the client side
       await self.HandleUnknownError(E, message)
@@ -313,7 +312,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     username = auth[AUTH_USERNAME]
     password = auth[AUTH_PASSWORD]
     user: User = await database_sync_to_async(authenticate)(username=username,
-                                                      password=password)
+                                                            password=password)
     if user:
       if user.user_group == UserGroups.Anon:
         newUserGroup = checkUserGroupMembership(user.username)
@@ -399,6 +398,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : state,
@@ -425,6 +425,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if success:
       await self.__broadcastGlobal({
         WEBSOCKET_DATA : True,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
         WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -438,6 +439,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         """)
 
       await self.send_json({
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -453,22 +455,21 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATA
                                   WEBSOCKET_DATATYPE
     """
-    logger.debug(f"Message: {pformat(message)}")
     user = await get_user(self.scope)
     instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
                                                  message[WEBSOCKET_DATA],
                                                  user)
-    customerIDs = await self.db.getCustomerIDs(instances)
     serialized_data = await self.db.serialize_dict({
       message[WEBSOCKET_DATATYPE] : instances
     })
-    await self.__broadcastCustomer({
+    await self.__broadcastGlobal({
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : serialized_data,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
       WEBSOCKET_REFRESH : False,
-    }, customerIDs)
+    })
 
 
   async def HandleModelEdit(self, message: Dict) -> None:
@@ -504,6 +505,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
       })
 
   ### End Model Primitives
@@ -515,6 +517,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
       AUTH_IS_AUTHENTICATED : False
     })
 
+
+  async def __authenticateFreeing(self, message):
+    Auth = message[DATA_AUTH]
+    user: User = await get_user(self.scope)
+    authentication_result: Tuple[AuthenticationResult,
+                                 Optional[User]] = await database_sync_to_async(auth.authenticate_user)(
+      username=Auth[AUTH_USERNAME],
+      password=Auth[AUTH_PASSWORD],
+      logged_in_user=user
+    )
+
+    result, _ = authentication_result
+
+    return result, user
 
   async def HandleFreeActivityOrderTimeSlot(self, message: Dict[str, Any]):
     """Handler for freeing an activity order
@@ -536,23 +552,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # 4. Broadcast to users
 
     # Turn this into a function
-    Auth = message[DATA_AUTH]
-    user: User = await get_user(self.scope)
-    if not user:
-      logger.info(f"Anno tried to free an order")
+    result, user = await self.__authenticateFreeing(message)
+
+    if result != AuthenticationResult.SUCCESS:
       return await self.__RejectFreeing(message)
 
-
-    # Quick check if user and auth user matches before any database connection start working
-    if not Auth[AUTH_USERNAME].upper() == user.username.upper():
-      logger.info(f"User: {user.username} Rejected freeing with miss matching username")
-      return await self.__RejectFreeing(message)
-
-    message_user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
-                                             password=Auth[AUTH_PASSWORD])
-    if not message_user:
-      logger.info(f"User: {user.username} Rejected freeing with failed authentication")
-      return await self.__RejectFreeing(message)
 
     # Authentication successful update
     data = message[WEBSOCKET_DATA]
@@ -597,18 +601,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # 3. Broadcast to users
 
     # Step 1: Determine the user credentials are valid
-    Auth = message[DATA_AUTH]
-    user: User = await get_user(self.scope)
+    result, user = await self.__authenticateFreeing(message)
 
-    # Quick check if user and auth user matches before any database connection start working
-    if not Auth[AUTH_USERNAME].upper() == self.scope['user'].username.upper():
-      logger.info(f"User: {user.username} Rejected freeing with miss matching username")
-      return await self.__RejectFreeing(message)
-
-    message_user = await sync_to_async(authenticate)(username=Auth[AUTH_USERNAME],
-                                             password=Auth[AUTH_PASSWORD])
-    if not message_user:
-      logger.info(f"User: {user.username} Rejected freeing with failed authentication")
+    if result != AuthenticationResult.SUCCESS:
       return await self.__RejectFreeing(message)
 
     # Step 2
@@ -617,7 +612,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     order.freed_datetime = self.datetimeNow.now()
     order.freed_by = self.scope['user']
     order.status = OrderStatus.Released
-    await self.db.saveModel(order, user)
+    await self.db.saveModel(order, user) # Note this may fail!
     # Log the change to db
     logFreeInjectionOrder(user, order)
 
@@ -654,6 +649,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_DATA : data,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     }, customerIDs)
 
   async def HandleRestoreOrders(self, message : Dict):
@@ -677,6 +673,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_DATA : data,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     }, customerIDs)
 
   async def HandleGetTimeSensitiveData(self, message: Dict[str, Any]):
@@ -686,7 +683,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message (Dict[str, Any]): request to get the orders, contains extra fields:
                                   WEBSOCKET_DATE - Central date
     """
-    user = get_user(self.scope)
+    user = await get_user(self.scope)
     client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=DATA_DATETIME_FORMAT)
     data = await self.db.serialize_dict(
       await self.db.getTimeSensitiveData(client_date, user)
@@ -697,6 +694,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_REFRESH : True,
     })
 
@@ -717,19 +715,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   The Boolean describes if the over is accepted
                                   or rejected.
     """
-    user = get_user(self.scope)
-    print(message)
+    user = await get_user(self.scope)
 
     try:
       orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
-    except RequestingNonExistingEndpoint:
-      await self.RespondWithError(message,
-                                  { ERROR_TYPE : ""})
-      return
-
-
-
-
+    except RequestingNonExistingEndpoint: # pragma: no cover
+      return await self.RespondWithError(message, { ERROR_TYPE : ""})
 
     ActivityCustomerIDs = await self.db.getCustomerIDs(orders[DATA_ACTIVITY_ORDER])
     InjectionCustomerIDs = await self.db.getCustomerIDs(orders[DATA_INJECTION_ORDER])
@@ -744,6 +735,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_DATA : data,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     }, customerIDs)
 
   async def HandleChangeExternalPassword(self, message: Dict[str, Any]):
@@ -759,10 +751,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     try:
       await self.db.changeExternalPassword(externalUserID, externalNewPassword)
     except ObjectDoesNotExist:
-      await self.send_json({
+      return await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_OBJECT_DOES_NOT_EXISTS,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
       })
     except IllegalActionAttempted:
       return
@@ -775,7 +768,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   async def HandleCreateExternalUser(self, message):
     user: User = await get_user(self.scope)
-    if user.user_group not in [UserGroups.Admin, UserGroups.ProductionUser]:
+    if not user.is_production_admin:
       raise IllegalActionAttempted
     newUser, newUserAssignment = await self.db.createExternalUser(message[WEBSOCKET_DATA])
 
@@ -790,6 +783,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_DATA : data,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     })
 
   async def HandleCreateUserAssignment(self, message):
@@ -798,12 +792,51 @@ class Consumer(AsyncJsonWebsocketConsumer):
     username = message['username']
     customerID = message['customer_id']
 
-    maybe_object = self.db.createUserAssignment(username, customerID, user)
+    temp_res: Tuple[SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,
+                    Optional[UserAssignment],
+                    Optional[User]] = await self.db.createUserAssignment(username, customerID, user)
+    success, user_assignment, new_user = temp_res
 
-    if maybe_object is not None:
-      pass
-    else:
-      pass
+    if success != SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS:
+      return await self.send_json({
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_MESSAGE_STATUS : success.value,
+      })
+
+    if user_assignment is None: # pragma no cover
+      error_logger.critical("Somebody somewhere fucked up a contract...")
+
+    returnDict = {
+      DATA_USER_ASSIGNMENT : [user_assignment],
+    }
+    if new_user is not None:
+      returnDict[DATA_USER] = [new_user]
+
+    serializedReturnDict = await self.db.serialize_dict(returnDict)
+
+    return await self.__broadcastGlobal({
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_STATUS : success.value,
+      WEBSOCKET_DATA : serializedReturnDict,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    })
+
+  async def HandleLogFrontendError(self, message: dict):
+    """Logs criticals errors produced on the frontend
+
+    Args:
+        message (dict): {
+          WEBSOCKET_MESSAGE_ERROR : A Javascript error prop
+        }
+    """
+    user = await get_user(self.scope)
+    formatted_error = formatFrontendErrorMessage(message[WEBSOCKET_MESSAGE_ERROR])
+    error_logger.error(
+      f"User: {user} encountered critical error: {formatted_error}"
+    )
 
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,
@@ -823,4 +856,5 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_MASS_ORDER : HandleMassOrder,
     WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : HandleChangeExternalPassword,
     WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : HandleCreateExternalUser,
+    WEBSOCKET_MESSAGE_LOG_ERROR : HandleLogFrontendError,
   }

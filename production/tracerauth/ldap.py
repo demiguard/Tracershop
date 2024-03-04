@@ -13,11 +13,11 @@ base_ldap_path = "OU=Region Hovedstaden,DC=regionh,DC=top,DC=local"
 ldap_server    = "ldap://regionh.top.local"
 
 ldapTracershopGroups = {
-  "RGH-B-SE Tracershop Production-User" : UserGroups.ProductionUser,
-  "RGH-B-SE Tracershop Shop-Admin" : UserGroups.ShopAdmin,
-  "RGH-B-SE Tracershop Shop-User" : UserGroups.ShopUser,
+  "RGH-B-SE Tracershop Production-User"  : UserGroups.ProductionUser,
+  "RGH-B-SE Tracershop Shop-Admin"       : UserGroups.ShopAdmin,
+  "RGH-B-SE Tracershop Shop-User"        : UserGroups.ShopUser,
   "RGH-B-SE Tracershop Production-Admin" : UserGroups.ProductionAdmin,
-  "RGH-B-SE Tracershop Site-Admin" : UserGroups.Admin,
+  "RGH-B-SE Tracershop Site-Admin"       : UserGroups.Admin,
 }
 
 
@@ -30,7 +30,24 @@ def _initializeLdapConnection(username=LDAP_USERNAME, password=LDAP_PASSWORD):
   conn.simple_bind_s(username, password)
   return conn
 
-def checkUserGroupMembership(username: str) -> UserGroups:
+def checkUserGroupMembership(username: str) -> Optional[UserGroups]:
+  """Queries connected LDAP system for a user's tracershop user group
+  return None if the user doesn't exists
+
+  Args:
+      username (str): _description_
+
+  Returns:
+      Optional[UserGroups]: _description_
+
+  Note: This function is mocked due to dependency on LDAP server
+  to mock:
+  >>> from tracerauth.tests.mocks import mock_ldap
+  >>> with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroupMembership):
+  ...    from dependant_module import function/Class # to test
+  """
+  print("real function")
+
   conn = _initializeLdapConnection()
   base="OU=Region Hovedstaden,DC=regionh,DC=top,DC=local"
   searchFilter = f"(&(cn={username}))"
@@ -43,5 +60,5 @@ def checkUserGroupMembership(username: str) -> UserGroups:
         for ldapTracershopGroupsName in ldapTracershopGroups.keys():
           if ldapTracershopGroupsName in group_str:
             return ldapTracershopGroups[ldapTracershopGroupsName]
-  return UserGroups.Anon
+  return None
 

@@ -46,7 +46,6 @@ def in_(message, key):
 @database_sync_to_async
 def get_or_create_location(location_str: str) -> Location:
     location, created = Location.objects.get_or_create(location_code=location_str)
-
     if created:
         logger.info(f"Created Location with code {location_str}")
 
@@ -63,10 +62,15 @@ def get_or_create_procedureIdentifier(code, description):
             procedure_identifier.description = description
             procedure_identifier.save()
     except ObjectDoesNotExist:
-        procedure_identifier, created = ProcedureIdentifier.objects.get_or_create(code=code, description=description)
-        if created:
-            logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
-
+        try:
+            procedure_identifier = ProcedureIdentifier.objects.get(description=description)
+            procedure_identifier.code = code
+            logger.info(f"Changing code from {procedure_identifier.code} to {code} for description {description}")
+            procedure_identifier.save()
+        except ObjectDoesNotExist:
+            procedure_identifier, created = ProcedureIdentifier.objects.get_or_create(code=code, description=description)
+            if created:
+                logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
 
     return procedure_identifier
 

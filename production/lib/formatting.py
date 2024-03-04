@@ -1,11 +1,17 @@
-import json
+"""This module converts objects to their desired string form"""
 
-import re
-
-from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_JS, SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
+# Python standard modules
 from datetime import date, time, datetime
+from pprint import pprint
+import re
+from typing import Dict
 
+# Third Party modules
+
+# Tracershop Packages
+from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_JS, SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
 from database import models
+
 
 def FormatDateTimeJStoSQL(datetimestr : str) -> str:
   if re.match(DATETIME_REGULAR_EXPRESSION_JS, datetimestr):
@@ -49,7 +55,12 @@ def toDate(DateStr : str, Format: str=DATE_FORMAT) -> date:
   return DummyTime.date()
 
 def mergeDateAndTime(Date : date, Time: time) -> datetime:
-  return datetime(Date.year, Date.month, Date.day, Time.hour, Time.minute, Time.second)
+  return datetime(Date.year,
+                  Date.month,
+                  Date.day,
+                  Time.hour,
+                  Time.minute,
+                  Time.second)
 
 def ParseSQLField(SQL_Field : str) -> str:
   """Extracts the Field name from a composite field
@@ -79,4 +90,20 @@ def mapTracerUsage(tracerUsage: models.TracerUsage):
   if tracerUsage == models.TracerUsage.animal:
     return "dyr"
   if tracerUsage == models.TracerUsage.other:
-    return "Andet"
+    return "andet"
+
+def formatFrontendErrorMessage(message: Dict) -> str:
+  raw_error_message = message.get("message", "Unknown error")
+  raw_stack = message.get('stack', "")
+  tracershop_code_regex = re.compile(r"src/components/(.+)\?:(\d+):(\d+)")
+
+  def helper(string: str):
+    res = re.findall(tracershop_code_regex, string)
+    fileName, lineNumber, index = res[0]
+    return f"{fileName} at: {lineNumber}"
+
+  raw_split_stack = raw_stack.split('\n')
+  split_stack = [helper(x) for x in filter(lambda string:
+    tracershop_code_regex.search(string) is not None, raw_split_stack)]
+
+  return f"\"{raw_error_message}\" raised at: " + "\n".join(split_stack).strip()

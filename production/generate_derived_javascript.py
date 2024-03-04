@@ -17,6 +17,7 @@ from database.models import MODELS
 curly_brace_left = "{"
 curly_brace_right = "}"
 
+from enum import Enum
 from typing import List
 
 import shared_constants
@@ -42,6 +43,11 @@ with open('frontend/src/lib/shared_constants.js', 'w') as out:
     if isinstance(value, str):
       out.write(f"export const {key} = \"{value}\";\n")
 
+    if isinstance(value, type) and issubclass(value, Enum):
+      out.write(f"export const {key} = {{\n")
+      for val in value:
+        out.write(f"  {val.name} : {val.value},\n")
+      out.write(f"}};\n")
     if isinstance(value, List):
       out.write(f"export const {key} = [\n")
       for val in value:

@@ -2,16 +2,26 @@
 from datetime import time, date
 import asyncio
 from unittest import skip
+from unittest.mock import patch
+
+# Mocks
+from tracerauth.tests.mocks import mocks_ldap
+
 # Third party package
+from asynctest import patch as aPatch
 from django.test import TransactionTestCase
 from django.db.models import CharField
 
 # Tracershop Modules
+from shared_constants import SUCCESS_STATUS_CREATING_USER_ASSIGNMENT
 from database.models import Booking, Procedure, User, Tracer, Isotope,\
   Location, BookingStatus, UserGroups, ProcedureIdentifier, Customer,\
   DeliveryEndpoint, TracerTypes, ActivityOrder, InjectionOrder,\
-  ActivityDeliveryTimeSlot, ActivityProduction, Days, WeeklyRepeat
-from database.database_interface import DatabaseInterface
+  ActivityDeliveryTimeSlot, ActivityProduction, Days, WeeklyRepeat,\
+  UserAssignment
+
+with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroupMembership):
+  from database.database_interface import DatabaseInterface
 
 # Create your tests here.
 class DatabaseInterFaceTestCases(TransactionTestCase):
@@ -19,6 +29,9 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     self.db = DatabaseInterface()
     self.test_admin = User(username="test_admin", user_group= UserGroups.Admin)
     self.test_admin.save()
+
+    self.shop_admin = User(username="shop_admin", user_group= UserGroups.ShopAdmin)
+    self.shop_admin.save()
 
     self.accession_number_1 = "REGH10642011"
     self.accession_number_2 = "REGH10642012"
@@ -85,13 +98,6 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
     self.procedure_identifier.save()
 
-    self.procedure_identifier_inj = ProcedureIdentifier(
-      code="asdfgkl587jqwer",
-      description="test_procedure_inj"
-    )
-
-    self.procedure_identifier_inj.save()
-
     self.procedure = Procedure(
       id=5687920,
       series_description = self.procedure_identifier,
@@ -101,6 +107,15 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       owner=self.endpoint
     )
     self.procedure.save()
+
+
+    self.procedure_identifier_inj = ProcedureIdentifier(
+      code="asdfgkl587jqwer",
+      description="test_procedure_inj"
+    )
+
+    self.procedure_identifier_inj.save()
+
 
     self.procedure_inj = Procedure(
       id=56879125,
@@ -235,6 +250,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     Location.objects.all().delete()
     ProcedureIdentifier.objects.all().delete()
     DeliveryEndpoint.objects.all().delete()
+    UserAssignment.objects.all().delete()
     Customer.objects.all().delete()
     Tracer.objects.all().delete()
     Isotope.objects.all().delete()
@@ -251,13 +267,15 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
   def test_database_interface_mass_order_injection(self):
 
-    asyncio.run(self.db.massOrder({
+    res = asyncio.run(self.db.massOrder({
       self.inj_accession_number_1 : True,
       self.inj_accession_number_2 : True,
       self.inj_accession_number_3 : True,
       self.inj_accession_number_4 : True,
       self.inj_accession_number_5 : True,
     }, self.test_admin))
+
+    print(res)
 
     bookings = Booking.objects.filter(accession_number__in=[
       self.inj_accession_number_1,
@@ -269,4 +287,47 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
     for booking in bookings:
       self.assertEqual(booking.status, BookingStatus.Ordered)
+
+
+  async def test_createUserAssignment_existingUser(self):
+    username = self.shop_admin.username
+    status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
+
+    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS)
+    self.assertIsNotNone(userAssignment)
+    self.assertIsNone(user)
+
+
+  async def test_createUserAssignment_missingUser(self):
+    username = "-AAAA0003"
+    status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
+
+    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS)
+    self.assertIsNotNone(userAssignment)
+    self.assertIsNotNone(user)
+    self.assertEqual(user.user_group, mocks_ldap.mockedUserGroups[user.username])
+
+  async def test_createUserAssignment_NotAUser(self):
+    username = "not a username"
+    status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
+
+    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME)
+    self.assertIsNone(userAssignment)
+    self.assertIsNone(user)
+
+  async def test_createUserAssignment_AssignmentToSiteAdmin(self):
+    username = "-AAAA0000"
+    status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
+
+    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS)
+    self.assertIsNone(userAssignment)
+    self.assertIsNone(user)
+
+  async def test_createUserAssignment_MissingCustomer(self):
+    username = "-AAAA0003"
+    status, userAssignment, user = await self.db.createUserAssignment(username, 189508160918, self.test_admin)
+
+    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.MISSING_CUSTOMER)
+    self.assertIsNone(userAssignment)
+    self.assertIsNone(user)
 

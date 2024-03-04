@@ -27,7 +27,8 @@ from constants import ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
-    DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD
+    DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
+    SUCCESS_STATUS_CREATING_USER_ASSIGNMENT
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
@@ -37,11 +38,10 @@ from database.models import ServerConfiguration, User,\
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
-from lib.ldap import ldap_search
+from tracerauth.ldap import checkUserGroupMembership
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
-
 
 
 class DatabaseInterface():
@@ -69,12 +69,6 @@ class DatabaseInterface():
 
   @property
   def __modelSerializer(self) -> Dict[str, Callable[[str, Dict[str, Any]], TracershopModel]]:
-    return {
-
-    }
-
-  @property
-  def __modelCanChangeFunctions(self) -> Dict[Type[TracershopModel], Callable[[TracershopModel], bool]]:
     return {
 
     }
@@ -217,7 +211,7 @@ class DatabaseInterface():
     """
     ##### User check, can free
     if user.user_group not in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
-      raise Exception
+      raise IllegalActionAttempted()
 
     timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
     orders = ActivityOrder.objects.filter(pk__in=orderIDs)
@@ -231,9 +225,10 @@ class DatabaseInterface():
 
     for order in orders:
       if not order.status == OrderStatus.Accepted:
-        print(f"Order Status missmatch! {order.status}", order.status == OrderStatus.Accepted)
+        error_logger.error(f"Order Status missmatch! {order.status}")
         raise Exception
       if not (order.moved_to_time_slot == timeSlot or order.ordered_time_slot == timeSlot):
+        error_logger.error(f"Attempting to free orders which doesn't belong to timeslot: {timeSlot}")
         raise Exception
 
       order.status = OrderStatus.Released
@@ -439,24 +434,36 @@ class DatabaseInterface():
     return [customerID for customerID in customerIDs]
 
   @database_sync_to_async
-  def createUserAssignment(self, username, customer_id, user):
+  def createUserAssignment(self, username, customer_id, creating_user) -> Tuple[SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, Optional[UserAssignment], Optional[User]]:
     try:
       customer = Customer.objects.get(pk=customer_id)
     except ObjectDoesNotExist:
-      return  None
+      error_logger.info(f"User {creating_user} tried to create an association between {username} and a non-existent customer")
+      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.MISSING_CUSTOMER, None, None
 
+    user = None
     try:
       user = User.objects.get(username=username)
+      user_created = False
     except ObjectDoesNotExist:
-      ldap_result = ldap_search(username)
+      ldap_user_group = checkUserGroupMembership(username)
+      if ldap_user_group is None:
+        return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME, None, None
 
-
-      user = User()
+      if ldap_user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
+        user_created = True
+        user = User(username=username, user_group=ldap_user_group)
+        user.save(creating_user)
+      else:
+        return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
 
     user_assignment = UserAssignment(user=user, customer=customer)
-    user_assignment.save(user)
+    user_assignment.save(creating_user)
 
-    return user_assignment
+    if user_created:
+      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS, user_assignment, user
+    else:
+      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS, user_assignment, None
 
 
   @database_sync_to_async

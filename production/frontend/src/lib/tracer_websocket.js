@@ -5,8 +5,7 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
   WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH,
-  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER,
-  WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants.js";
 
 import { ParseJSONstr } from "~/lib/formatting.js";
@@ -22,8 +21,8 @@ export class TracerWebSocket {
 
   /**
    * This is websocket that is the primary source of communication between the front and backend
-   * @param {WebSocket} Websocket 
-   * @param {React.Dispatch<React.ReducerAction>} dispatch 
+   * @param {WebSocket} Websocket
+   * @param {React.Dispatch<React.ReducerAction>} dispatch
    */
   constructor(websocket, dispatch){
     this._PromiseMap = new Map();
@@ -145,9 +144,9 @@ export class TracerWebSocket {
   }
 
   /**
-   * 
-   * @param {Object} data 
-   * @returns 
+   *
+   * @param {Object} data
+   * @returns
    */
   send(data){
     // Note that this function is just a wrapper around
@@ -239,7 +238,7 @@ export class TracerWebSocket {
 
   /**
    * Dispatches safely to the consumer
-   * @param {ReducerAction} action 
+   * @param {ReducerAction} action
    */
   dispatch(action){
     if(this._dispatch !== undefined){

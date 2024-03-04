@@ -7,14 +7,16 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 from datetime import date
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Type
+from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple,  Type
 
 # Third party Libraries
+from django.http.request import HttpRequest
+from django.contrib.auth import authenticate
 from django.contrib.auth.models import AnonymousUser
 
 # Tracershop App
 from constants import ERROR_LOGGER
-from lib.Formatting import toDate, toDateTime, toTime
+from lib.formatting import toDate, toDateTime, toTime
 from lib.utils import identity
 from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   ERROR_INSUFFICIENT_DATA, ERROR_INVALID_JAVASCRIPT_VERSION,\
@@ -31,12 +33,11 @@ from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_ECHO,\
   WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_FREE_ACTIVITY,\
   WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,\
-  WEBSOCKET_MESSAGE_EDIT_STATE, WEBSOCKET_MESSAGE_DELETE_DATA_CLASS,\
-  WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
+  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
 from database.models import User, UserGroups
 
 from tracerauth.types import MessageType, MessageField, MessageObjectField,\
-  Message
+  Message, AuthenticationResult
 
 error_logger = getLogger(ERROR_LOGGER)
 
@@ -125,62 +126,6 @@ def AuthMessage(user: User, message: Dict) -> bool:
   messageType = message[WEBSOCKET_MESSAGE_TYPE]
   return True
 
-  if messageType in [
-    WEBSOCKET_MESSAGE_AUTH_LOGIN,
-    WEBSOCKET_MESSAGE_AUTH_LOGOUT,
-    WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-    WEBSOCKET_MESSAGE_ECHO]: # Global Messages
-    return True
-  if isinstance(user, AnonymousUser):
-    return False
-  if user.user_group == UserGroups.Admin:
-    return True
-  if user.user_group == UserGroups.ProductionAdmin:
-    if messageType in [
-        WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-        WEBSOCKET_MESSAGE_FREE_ACTIVITY,
-        WEBSOCKET_MESSAGE_FREE_INJECTION,
-        WEBSOCKET_MESSAGE_MOVE_ORDERS,
-        WEBSOCKET_MESSAGE_ECHO,
-        WEBSOCKET_MESSAGE_GET_ORDERS,
-        WEBSOCKET_MESSAGE_EDIT_STATE,
-        WEBSOCKET_MESSAGE_DELETE_DATA_CLASS]:
-      return True
-    else:
-      return False
-
-  if user.user_group == UserGroups.ProductionUser:
-    if messageType in [
-        WEBSOCKET_MESSAGE_CREATE_DATA_CLASS,
-        WEBSOCKET_MESSAGE_FREE_ACTIVITY,
-        WEBSOCKET_MESSAGE_FREE_INJECTION,
-        WEBSOCKET_MESSAGE_MOVE_ORDERS,
-        WEBSOCKET_MESSAGE_ECHO,
-        WEBSOCKET_MESSAGE_GET_ORDERS,
-        WEBSOCKET_MESSAGE_EDIT_STATE,
-        WEBSOCKET_MESSAGE_DELETE_DATA_CLASS]:
-      return True
-    else:
-      return False
-
-  if user.user_group == UserGroups.ShopAdmin:
-    if messageType in []:
-      return True
-    else:
-      return False
-
-  if user.user_group == UserGroups.ShopUser:
-    if messageType in []:
-      return True
-    else:
-      return False
-
-  if user.user_group == UserGroups.ShopExternal:
-    if messageType in []:
-      return True
-    else:
-      return False
-  return False # Unreachable code
 
 def validateMessage(message: Dict) -> str:
   """Checks is a message contains the correct fields to be a valid message.
@@ -226,3 +171,17 @@ def validateMessage(message: Dict) -> str:
 
   return NO_ERROR
 
+
+def authenticate_user(username: str,
+                      password: str,
+                      logged_in_user: Optional[User]=None,
+                      request: Optional[HttpRequest]=None
+                     ) -> Tuple[AuthenticationResult, Optional[User]]:
+  if logged_in_user and logged_in_user.username.upper() != username.upper():
+    return AuthenticationResult.MISS_MATCH_USERNAME, None
+
+  user = authenticate(request=request, username=username, password=password)
+  if user:
+    return AuthenticationResult.SUCCESS, user
+  else:
+    return AuthenticationResult.INVALID_PASSWORD, None

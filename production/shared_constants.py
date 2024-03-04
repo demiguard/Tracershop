@@ -1,11 +1,20 @@
-"""These constants are shared between the frontend and the backend
-They are keywords in json objects transferred back and forth.
+"""These constants are shared between the frontend and the backend.
+They are keywords in json objects transferred back and forth by the websocket.
+It's important that there's no constants which overlap unless they are intended.
+
+There's a script synchronizing the frontend and backend in 'generate_derived_javascript.js'
 """
+
+from enum import Enum as __Enum
+
+# This is the variable the version of the javascript that server matches with
+# This is used ensure that users get newer javascripts version and doesn't
+# Work on older (And maybe bug prone) versions
 JAVASCRIPT_VERSION = "1.1.0" # Remember to update this to catch bugs
 
-# Long list JSON key word used in Json messages
-# These should have great overlap with the constants in production/frontend/src/lib/constants.js
-
+# The Auth key words are members in a Auth data object with is parsed back and
+# forth regrading authentication. This object is placed in the root message with
+# the keyword DATA_AUTH
 AUTH_USERNAME = "username"
 AUTH_PASSWORD = "password"
 AUTH_DETAIL = "detail"
@@ -14,6 +23,10 @@ AUTH_USER = "auth_user"
 
 # Errors string
 
+# Errors are an enum index with error type. When a backend error happens then
+# the WEBSOCKET_MESSAGE_SUCCESS is set with WEBSOCKET_MESSAGE_ERROR and
+# ERROR_TYPE is with an error. Note that in production, it is a sign of a bug.
+# The frontend doesn't have any relevant error handling, for these errors.
 ERROR_TYPE = "error_type"
 ERROR_INVALID_AUTH = "InvalidAuth"
 ERROR_INVALID_DATACLASS_TYPE = "NoDataClass"
@@ -29,7 +42,7 @@ ERROR_INSUFFICIENT_DATA = "InsufficientData"
 ERROR_UNKNOWN_FAILURE = "unknownError"
 NO_ERROR = ""
 
-# There is some problems regarding what the difference is between a DATA_ var and a WEBSOCKET_DATA_ constant
+# Data
 
 DATA_ACTIVITY_ORDER = "activity_orders"
 DATA_ADDRESS  = "address"
@@ -77,37 +90,33 @@ WEBSOCKET_DATE                             = "date"
 WEBSOCKET_DEAD_ORDERS                      = "deadOrders"
 WEBSOCKET_ERROR                            = "error"
 WEBSOCKET_JAVASCRIPT_VERSION               = "javascriptVersion"
-WEBSOCKET_MESSAGE_ANSWER                   = "answer"
 WEBSOCKET_MESSAGE_AUTH_LOGIN               = "login"
 WEBSOCKET_MESSAGE_AUTH_LOGOUT              = "logout"
 WEBSOCKET_MESSAGE_AUTH_WHOAMI              = "whoami"
 WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword"
 WEBSOCKET_MESSAGE_CREATE_DATA_CLASS        = "createDataClass"
-WEBSOCKET_MESSAGE_CREATE_ACTIVITY_ORDER    = "createActivityOrder"
 WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER     = "createExternalUser"
 WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER   = "createInjectionOrder"
 WEBSOCKET_MESSAGE_DELETE_DATA_CLASS        = "deleteDataClass"
 WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT   = "createUserAssignment"
 WEBSOCKET_MESSAGE_ECHO                     = "echo"
-WEBSOCKET_MESSAGE_EDIT_STATE               = "editState"
-WEBSOCKET_MESSAGE_EDIT_DJANGO              = "editDjango"
 WEBSOCKET_MESSAGE_ERROR                    = "error"
 WEBSOCKET_MESSAGE_FREE_ACTIVITY            = "freeActivity"
 WEBSOCKET_MESSAGE_FREE_INJECTION           = "freeInjection"
-WEBSOCKET_MESSAGE_FREE_ORDER               = "freeOrder"
 WEBSOCKET_MESSAGE_GET_HISTORY              = "history"
 WEBSOCKET_MESSAGE_GET_ORDERS               = "getOrders"
 WEBSOCKET_MESSAGE_GREAT_STATE              = "getGREATState"
 WEBSOCKET_MESSAGE_GET_STATE                = "getState"
 WEBSOCKET_MESSAGE_ID                       = "messageID"
 WEBSOCKET_MESSAGE_MASS_ORDER               = "massOrder"
-WEBSOCKET_MESSAGE_ORDER_ACTIVITY           = "OrderActivity"
 WEBSOCKET_MESSAGE_ORDER_INJECTION          = "OrderInjection"
 WEBSOCKET_MESSAGE_MODEL_CREATE             = "createModel"
 WEBSOCKET_MESSAGE_MODEL_DELETE             = "deleteModel"
 WEBSOCKET_MESSAGE_MODEL_EDIT               = "editModel"
 WEBSOCKET_MESSAGE_MOVE_ORDERS              = "moveOrder"
+WEBSOCKET_MESSAGE_LOG_ERROR                = "logError"
 WEBSOCKET_MESSAGE_RESTORE_ORDERS           = "restoreOrders"
+WEBSOCKET_MESSAGE_STATUS                   = "status"
 WEBSOCKET_MESSAGE_SUCCESS                  = "success"
 WEBSOCKET_MESSAGE_TYPE                     = "messageType"
 WEBSOCKET_MESSAGE_UPDATE_STATE             = "updateState"
@@ -134,9 +143,21 @@ WEBSOCKET_MESSAGE_TYPES = [
   WEBSOCKET_MESSAGE_MASS_ORDER,
   WEBSOCKET_MESSAGE_MOVE_ORDERS,
   WEBSOCKET_MESSAGE_RESTORE_ORDERS,
+  WEBSOCKET_MESSAGE_LOG_ERROR,
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
 ]
 
-# Python Specific Constants
+# Note for shared enums it very important that a value is assigned, to ensure
+# a consistent view
+class SUCCESS_STATUS_CREATING_USER_ASSIGNMENT(__Enum):
+  SUCCESS = 0
+  NO_LDAP_USERNAME = 1
+  INCORRECT_GROUPS = 2
+  MISSING_CUSTOMER = 3
 
+class SUCCESS_STATUS_CRUD(__Enum):
+  SUCCESS = 0
+  UNSPECIFIED_REJECT = 1
+  ARCHIVED_OBJECT = 2
+  MISSING_RIGHTS = 3

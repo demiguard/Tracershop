@@ -47,6 +47,13 @@ class AuthActions(Enum):
     return self.should_act
 
 
+class AuthenticationResult(Enum):
+  SUCCESS = 0
+  INVALID_PASSWORD = 1
+  MISS_MATCH_USERNAME = 2
+
+
+# This is used for message validation
 class MessageField:
   __slots__ = ('_required', '_name', '_type')
 

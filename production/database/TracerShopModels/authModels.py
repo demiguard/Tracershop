@@ -38,6 +38,10 @@ class User(AbstractBaseUser, TracershopModel):
   USERNAME_FIELD = 'username'
 
   @property
+  def is_server_admin(self) -> bool:
+    return self.user_group == UserGroups.Admin
+
+  @property
   def is_production_admin(self) -> bool:
     return self.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin]
 
@@ -50,7 +54,7 @@ class User(AbstractBaseUser, TracershopModel):
   @property
   def is_shop_admin(self) -> bool:
     return self.user_group in [UserGroups.Admin, UserGroups.ShopAdmin]
-  
+
   @property
   def is_shop_member(self) -> bool:
     return self.user_group in [UserGroups.Admin,

@@ -40,7 +40,7 @@ WIDTH, HEIGHT = A4
 
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES
-from lib.Formatting import dateConverter, timeConverter, mapTracerUsage
+from lib.formatting import dateConverter, timeConverter, mapTracerUsage
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
 

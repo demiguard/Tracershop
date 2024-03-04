@@ -6,12 +6,12 @@ import { LoginSite } from "./login_site";
 import { AdminSite } from "./admin_site";
 import { ShopSite } from "./shop_site";
 import { ProductionSite } from "./production_site";
-import { DATABASE_CURRENT_USER, DATABASE_TODAY, PROP_LOGOUT, PROP_USER, USER_GROUPS} from "~/lib/constants";
+import { DATABASE_CURRENT_USER, DATABASE_TODAY, USER_GROUPS} from "~/lib/constants";
 import { ErrorPage } from "../error_pages/error_page";
 import { User } from "~/dataclasses/dataclasses";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants";
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants";
 import { UpdateCurrentUser } from "~/lib/websocket_actions";
 import Cookies from "js-cookie";
 import { db } from "~/lib/local_storage_driver";
@@ -46,8 +46,8 @@ export function TracerShop() {
   }
 
   /**
-   * 
-   * @param {User} user 
+   * Mapping of user groups to the site that tracershop should display to them.
+   * @param {User} user
    * @returns {Element}
    */
   function get_site_from_user(user) {
