@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Row, Col, Button, Container, Card, Collapse } from 'react-bootstrap'
-import { getId, getPDFUrls } from "../../lib/utils.js";
+import { getId, openActivityReleasePDF } from "../../lib/utils.js";
 import { dateToDateString, formatTimeStamp, formatUsername, parseDateToDanishDate, renderDateTime } from "../../lib/formatting.js";
 import { CalculateProduction } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
@@ -223,7 +223,7 @@ export function ActivityTable ({active_tracer, active_date}) {
               <ClickableIcon
                 src="/static/images/delivery.svg"
                 onClick={()=>{
-                  window.location = getPDFUrls(endpoint, tracer, new Date(orderCollection.ordered_date));
+                  openActivityReleasePDF(endpoint, tracer, new Date(orderCollection.ordered_date));
                 }}
               />
             </Optional>

@@ -72,7 +72,7 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    expect(await screen.findByRole('button', {name : "Accepter Ordre"}))
+    expect(await screen.findByRole('button', {name : "Accepter"}))
     expect(await screen.findByLabelText('vial-usage-1')).toBeVisible();
     expect(screen.queryByLabelText('vial-usage-2')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-3')).toBeNull();
@@ -96,7 +96,7 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull()
+    expect(screen.queryByRole('button', {name : "Accepter"})).toBeNull()
     expect(screen.queryByLabelText('vial-usage-1')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-2')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-3')).toBeNull();
@@ -113,7 +113,7 @@ describe("Activity Modal Test", () => {
       </StateContextProvider>);
 
     act(() => {
-      screen.getByRole('button', {name : "Accepter Ordre"}).click()
+      screen.getByRole('button', {name : "Accepter"}).click()
     })
 
     expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, [
@@ -427,7 +427,7 @@ describe("Activity Modal Test", () => {
       screen.queryByLabelText('vial-usage-7').click();
     });
 
-    expect(screen.getByRole('button', {'name' : "Godkend Ordre"})).toBeDisabled()
+    expect(screen.getByRole('button', {'name' : "Godkend"})).toBeDisabled()
   })
 
   it("free an order success", async () => {
@@ -465,7 +465,7 @@ describe("Activity Modal Test", () => {
     const allocColumn = await screen.findByTestId('allocation-col');
     expect(allocColumn.innerHTML).toEqual(`${vial.activity} MBq`);
 
-    const freeButton = await screen.findByRole('button', {name : "Godkend Ordre"});
+    const freeButton = await screen.findByRole('button', {name : "Godkend"});
 
     act(() => {
       freeButton.click()
@@ -518,7 +518,7 @@ describe("Activity Modal Test", () => {
     const allocColumn = await screen.findByTestId('allocation-col');
     expect(allocColumn.innerHTML).toEqual(`${vial.activity} MBq`);
 
-    const freeButton = await screen.findByRole('button', {name : "Godkend Ordre"});
+    const freeButton = await screen.findByRole('button', {name : "Godkend"});
 
     act(() => {
       freeButton.click()

@@ -1,10 +1,11 @@
-/**
+  /**
  * @jest-environment jsdom
  */
 
 import React from "react";
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
+import userEvent from "@testing-library/user-event";
 
 import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
@@ -78,12 +79,14 @@ describe("Create injection Order", () => {
             </WebsocketContextProvider>
           </StateContextProvider>);
 
-  const createOrderButton = await screen.findByRole('button',
-                                                    {name : "Opret Ordre"});
-  act(() => {createOrderButton.click()});
 
-  expect(await screen.findByText(
-    "Injektioner er ikke tasted ind"))
+  await act(async () => {screen.findByRole('button',{name : "Opret Ordre"}).click()});
+
+  await act(async () => {
+    userEvent.hover(screen.getByLabelText('injection-input'))
+  });
+
+  expect(await screen.findByText("Injektioner er ikke tasted ind"))
   });
 
   it("Error - Bannans Injections", async () => {
@@ -93,14 +96,19 @@ describe("Create injection Order", () => {
      </WebsocketContextProvider>
    </StateContextProvider>);
 
-    const injectionInput = await screen.findByLabelText("injection-input");
-    fireEvent.change(injectionInput, {target : {value : "a"}});
+  act(() => {
+    fireEvent.change(screen.getByLabelText("injection-input"), {target : {value : "a"}});
+  })
 
-    const createOrderButton = await screen.findByRole('button',
-                                                      {name : "Opret Ordre"});
-    act(() =>{createOrderButton.click()});
+  act(() => {screen.getByRole('button',{name : "Opret Ordre"}).click()});
 
-    expect(screen.getByText("Injektioner er ikke et tal"))
+
+  await act(async () => {
+    userEvent.hover(screen.getByLabelText('injection-input'))
+  });
+
+  expect(screen.getByText("Injektioner er ikke et tal")).toBeVisible()
+
   });
 
   it("Error - Negative Injections", async () => {
@@ -186,9 +194,7 @@ describe("Create injection Order", () => {
     const deliveryTimeInput = await screen.findByLabelText("delivery-time-input");
     fireEvent.change(deliveryTimeInput, {target : {value : "11:33:55"}});
 
-    const createOrderButton = await screen.findByRole('button',
-                                                      {name : "Opret Ordre"});
-    act(() => {createOrderButton.click();})
+    await act(async () => {screen.getByRole('button',{name : "Opret Ordre"}).click();})
 
     expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
       injections : 4,

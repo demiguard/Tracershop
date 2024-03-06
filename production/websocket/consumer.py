@@ -14,6 +14,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python standard Library
 from asgiref.sync import sync_to_async
 from datetime import datetime
+from enum import Enum
 import logging
 from pprint import pformat
 import traceback
@@ -137,12 +138,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
     logger.debug(f"{user} disconnected!")
 
 
-  def __prepBroadcastMessage(self, message: Dict) -> None:
+  def __prepBroadcastMessage(self, message: Dict[str, Any]) -> None:
     if 'type' not in message:
       message['type'] = "broadcastMessage" # This is needed to point it to the send place
 
     if WEBSOCKET_MESSAGE_SUCCESS not in message:
       message[WEBSOCKET_MESSAGE_SUCCESS] = WEBSOCKET_MESSAGE_SUCCESS
+
+    for key, value in message.items():
+      if isinstance(value, Enum):
+        message[key] = value.value
 
 
   async def __broadcastGlobal(self, message: Dict):
@@ -398,7 +403,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : state,
@@ -439,7 +444,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         """)
 
       await self.send_json({
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -505,7 +510,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
       })
 
   ### End Model Primitives
@@ -694,7 +699,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
       WEBSOCKET_REFRESH : True,
     })
 
@@ -755,7 +760,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_OBJECT_DOES_NOT_EXISTS,
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
       })
     except IllegalActionAttempted:
       return

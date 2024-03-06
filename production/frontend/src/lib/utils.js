@@ -33,8 +33,8 @@ export function removeIndex(arr, index){
 }
 
 /**
- * 
- * @param {*} obj 
+ *
+ * @param {*} obj
  * @returns {Number}
  */
 export function getId(obj){
@@ -50,19 +50,19 @@ export function toMapping(objs){
 }
 
 /**
- * 
- * @param {DeliveryEndpoint} endpoint 
- * @param {Tracer} tracer 
- * @param {Date} date 
+ *
+ * @param {DeliveryEndpoint} endpoint
+ * @param {Tracer} tracer
+ * @param {Date} date
  */
-export function getPDFUrls(endpoint, tracer, date){
-  return `${URL_ACTIVITY_PDF_BASE_PATH}/${endpoint.id}/${tracer.id}/${
-    date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`;
+export function openActivityReleasePDF(endpoint, tracer, date){
+  window.open(`${URL_ACTIVITY_PDF_BASE_PATH}/${endpoint.id}/${tracer.id}/${
+    date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`)
 }
 
 /**
- * 
- * @param {InjectionOrder} order 
+ *
+ * @param {InjectionOrder} order
  * @returns {String} the path to the realease note of the injection order
  */
 export function InjectionOrderPDFUrl(order){
@@ -71,8 +71,8 @@ export function InjectionOrderPDFUrl(order){
 
 /**
  * Function for creating a maybe monad from a number
- * @param {*} maybeNumber 
- * @returns 
+ * @param {*} maybeNumber
+ * @returns
  */
 export function numberfy(maybeNumber){
   if (maybeNumber === "" || maybeNumber === null){
@@ -93,8 +93,8 @@ export function nullify (input) {
 /**
  * Compares two object, to see if their state represents the same object, after user input.
  * The primary use case is then you copy an object and you want to check if the copy is dirty.
- * @param {Object} obj_1 
- * @param {Object} obj_2 
+ * @param {Object} obj_1
+ * @param {Object} obj_2
  * @returns {Boolean} - if the objects are equal.
  */
 export function compareLoosely(obj_1, obj_2){

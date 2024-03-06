@@ -4,7 +4,7 @@ import propTypes from 'prop-types'
 import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures'
 import { ORDER_STATUS } from '~/lib/constants'
-import { InjectionOrderPDFUrl, getPDFUrls } from '~/lib/utils'
+import { InjectionOrderPDFUrl, openActivityReleasePDF } from '~/lib/utils'
 
 export function ClickableIcon ({
     altText,
@@ -114,9 +114,9 @@ export function ActivityDeliveryIcon(props){
   if(props.orderCollection.minimum_status === ORDER_STATUS.RELEASED){
     return <ClickableIcon
     src="/static/images/delivery.svg"
-    onClick={() => {window.location = getPDFUrls(props.orderCollection.endpoint,
-                                                 props.orderCollection.tracer,
-                                                 new Date(props.orderCollection.ordered_date))}}
+    onClick={() => {openActivityReleasePDF(props.orderCollection.endpoint,
+                                           props.orderCollection.tracer,
+                                           new Date(props.orderCollection.ordered_date))}}
     {...newProps} // This is here to make props overwrite default props
   />
   }

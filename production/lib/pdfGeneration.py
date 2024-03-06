@@ -618,12 +618,13 @@ def DrawReleaseCertificate(filename :str,
                       "2100 København Ø")
 
   # Table 2 Header
-  t2_abscissa_m1 = (box_abscissa_end - box_abscissa_start) * 0.2 + box_abscissa_start
-  t2_abscissa_m2 = (box_abscissa_end - box_abscissa_start) * 0.4 + box_abscissa_start
-  t2_abscissa_m3 = (box_abscissa_end - box_abscissa_start) * 0.6 + box_abscissa_start
-  t2_abscissa_m4 = (box_abscissa_end - box_abscissa_start) * 0.8 + box_abscissa_start
+  t2_abscissa_m1 = (box_abscissa_end - box_abscissa_start) * 0.125 + box_abscissa_start
+  t2_abscissa_m2 = (box_abscissa_end - box_abscissa_start) * 0.325 + box_abscissa_start
+  t2_abscissa_m3 = (box_abscissa_end - box_abscissa_start) * 0.48 + box_abscissa_start
+  t2_abscissa_m4 = (box_abscissa_end - box_abscissa_start) * 0.65 + box_abscissa_start
+  t2_abscissa_m5 = (box_abscissa_end - box_abscissa_start) * 0.775 + box_abscissa_start
 
-  def draw_table_2_row(ordinate, texts: Tuple[str, str, str, str, str], bold=False):
+  def draw_table_2_row(ordinate, texts: Tuple[str, str, str, str,str, str], bold=False):
     template.p_drawBox((box_abscissa_start, ordinate),
                        (t2_abscissa_m1, ordinate - template.line_height * 1.5))
     template.p_drawBox((t2_abscissa_m1, ordinate),
@@ -633,25 +634,30 @@ def DrawReleaseCertificate(filename :str,
     template.p_drawBox((t2_abscissa_m3, ordinate),
                        (t2_abscissa_m4, ordinate - template.line_height * 1.5))
     template.p_drawBox((t2_abscissa_m4, ordinate),
+                       (t2_abscissa_m5, ordinate - template.line_height * 1.5))
+    template.p_drawBox((t2_abscissa_m5, ordinate),
                        (box_abscissa_end, ordinate - template.line_height * 1.5))
 
-    t1,t2,t3,t4,t5 = texts
+
+    t1,t2,t3,t4,t5, t6 = texts
     if bold:
       template.drawBoldString(box_abscissa_start + 5, ordinate - template.line_height, t1)
       template.drawBoldString(t2_abscissa_m1 + 5, ordinate - template.line_height, t2)
       template.drawBoldString(t2_abscissa_m2 + 5, ordinate - template.line_height, t3)
       template.drawBoldString(t2_abscissa_m3 + 5, ordinate - template.line_height, t4)
       template.drawBoldString(t2_abscissa_m4 + 5, ordinate - template.line_height, t5)
+      template.drawBoldString(t2_abscissa_m5 + 5, ordinate - template.line_height, t6)
     else:
       template.drawString(box_abscissa_start + 5, ordinate - template.line_height, t1)
       template.drawString(t2_abscissa_m1 + 5, ordinate - template.line_height, t2)
       template.drawString(t2_abscissa_m2 + 5, ordinate - template.line_height, t3)
       template.drawString(t2_abscissa_m3 + 5, ordinate - template.line_height, t4)
       template.drawString(t2_abscissa_m4 + 5, ordinate - template.line_height, t5)
+      template.drawString(t2_abscissa_m5 + 5, ordinate - template.line_height, t6)
 
 
 
-  draw_table_2_row(table_row_y_top_bottom, ("Ordre ID", "Bestilt", "Kalibreret kl:", "Leveret", "Frigivet kl:"), True)
+  draw_table_2_row(table_row_y_top_bottom, ("Ordre ID", "Bestilt", "Kalibreret kl:", "Leveret", "Volume:", "Frigivet kl:"), True)
   ordinate = table_row_y_top_bottom - template.line_height * 1.5
   max_rows = max(len(orders), len(vials))
   for i in range(max_rows):
@@ -659,22 +665,29 @@ def DrawReleaseCertificate(filename :str,
       order = orders[i]
       order_id = str(order.id)
       ordered_activity = f"{order.ordered_activity} MBq"
-      freed = order.freed_datetime.strftime('%H:%M')
+      try:
+        timezone_aware = timezone.make_naive(order.freed_datetime)
+      except ValueError:
+        timezone_aware = order.freed_datetime
+
+      freed = timezone_aware.strftime('%H:%M %d/%m/%Y')
     else:
       order_id = ""
       ordered_activity = ""
       freed = ""
 
     if i < len(vials):
-      vial = vials[0]
+      vial = vials[i]
       calibration_time = f"{vial.fill_time.isoformat('minutes')}"
       vial_activity = f"{vial.activity} MBq"
+      volume = f"{vial.volume} ml"
     else:
       calibration_time = ""
       vial_activity = ""
+      volume = ""
 
-    draw_table_2_row(ordinate, (order_id, ordered_activity, calibration_time, vial_activity, freed))
-    ordinate = table_row_y_top_bottom - template.line_height * 1.5
+    draw_table_2_row(ordinate, (order_id, ordered_activity, calibration_time, vial_activity, volume, freed))
+    ordinate -= template.line_height * 1.5
 
   ordinate -= template.line_height * 3
 

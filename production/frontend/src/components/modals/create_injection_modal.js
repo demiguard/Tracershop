@@ -150,23 +150,19 @@ export function CreateInjectionOrderModal({active_date, on_close}){
               value={usage}
             />
           </TracershopInputGroup>
-          <TracershopInputGroup label={"Injektioner"}>
-            <ErrorInput error={errorInjection}>
-              <Form.Control
-                aria-label="injection-input"
-                value={injections}
-                onChange={setStateToEvent(setInjections)}
-              />
-            </ErrorInput>
+          <TracershopInputGroup label={"Injektioner"} error={errorInjection}>
+            <Form.Control
+              aria-label="injection-input"
+              value={injections}
+              onChange={setStateToEvent(setInjections)}
+            />
           </TracershopInputGroup>
-          <TracershopInputGroup label={"Leverings tid"}>
-            <ErrorInput error={errorDeliveryTime}>
-              <TimeInput
-                aria-label="delivery-time-input"
-                value={deliverTime}
-                stateFunction={setDeliveryTime}
-              />
-            </ErrorInput>
+          <TracershopInputGroup label={"Leverings tid"} error={errorDeliveryTime}>
+            <TimeInput
+              aria-label="delivery-time-input"
+              value={deliverTime}
+              stateFunction={setDeliveryTime}
+            />
           </TracershopInputGroup>
           <TracershopInputGroup label="Kommentar">
             <Form.Control

@@ -22,7 +22,7 @@ import { getTimeString } from "~/lib/chronomancy.js";
 
 import { TracerWebSocket } from "../../lib/tracer_websocket.js";
 import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-import { compareDates, getPDFUrls, toMapping } from "../../lib/utils.js";
+import { compareDates, openActivityReleasePDF, toMapping } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
@@ -521,7 +521,7 @@ export function ActivityModal({
   }
 
   function onClickToPDF() {
-    window.location = getPDFUrls(endpoint, tracer, active_date)
+    openActivityReleasePDF(endpoint, tracer, active_date)
   }
 
   function onFree(username, password){
@@ -591,7 +591,7 @@ export function ActivityModal({
                           <MarginButton onClick={startFreeing}>Godkend</MarginButton>
                         : <MarginButton disabled>Godkend</MarginButton>;
   const CancelFreeButton = <MarginButton onClick={() => {setFreeing(false)}}>Rediger</MarginButton>
-  const PDFButton = <MarginButton onClick={onClickToPDF}>Føgleseddel</MarginButton>;
+  const PDFButton = <MarginButton onClick={onClickToPDF}>Frigivelsecertifikat</MarginButton>;
 
   let sideElement = <div></div>;
 

@@ -12,7 +12,7 @@ import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_g
 import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp, getTimeString } from "~/lib/chronomancy";
-import { compareLoosely, getPDFUrls, nullify, toMapping } from "~/lib/utils";
+import { compareLoosely, nullify, toMapping } from "~/lib/utils";
 import { useTracershopState } from "~/components/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";

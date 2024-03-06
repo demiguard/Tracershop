@@ -57,7 +57,7 @@ export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.1.0";
+export const JAVASCRIPT_VERSION = "1.1.1";
 
 export const NO_ERROR = "";
 
@@ -66,6 +66,12 @@ export const SUCCESS_STATUS_CREATING_USER_ASSIGNMENT = {
   NO_LDAP_USERNAME : 1,
   INCORRECT_GROUPS : 2,
   MISSING_CUSTOMER : 3,
+};
+export const SUCCESS_STATUS_CRUD = {
+  SUCCESS : 0,
+  UNSPECIFIED_REJECT : 1,
+  ARCHIVED_OBJECT : 2,
+  MISSING_RIGHTS : 3,
 };
 
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
@@ -90,8 +96,6 @@ export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createInjectionOrder";
 export const WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT = "createUserAssignment";
 export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO = "echo";
-export const WEBSOCKET_MESSAGE_EDIT_DJANGO = "editDjango";
-export const WEBSOCKET_MESSAGE_EDIT_STATE = "editState";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
@@ -108,6 +112,7 @@ export const WEBSOCKET_MESSAGE_MODEL_EDIT = "editModel";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS = "moveOrder";
 export const WEBSOCKET_MESSAGE_ORDER_INJECTION = "OrderInjection";
 export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
+export const WEBSOCKET_MESSAGE_STATUS = "status";
 export const WEBSOCKET_MESSAGE_SUCCESS = "success";
 export const WEBSOCKET_MESSAGE_TYPE = "messageType";
 export const WEBSOCKET_MESSAGE_TYPES = [

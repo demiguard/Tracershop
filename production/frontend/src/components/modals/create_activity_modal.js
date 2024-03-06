@@ -105,7 +105,6 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
   const dateString = dateToDateString(active_date)
   const deliveryTimeSlot = state.deliver_times.get(activeTimeSlot);
   const deliveryTime = deliveryTimeSlot ? new Date(`${dateString} ${deliveryTimeSlot.delivery_time}`) : NaN;
-  console.log(activeTimeSlot, deliveryTimeSlot, deliveryTime)
   const canCalculator = !isNaN(deliveryTime); // Note that js considers date object as numbers, and invalid dates are isomorphic to NaN
 
   return (
