@@ -21,6 +21,7 @@ from typing import List
 # Third party packages
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
+from django.db.utils import IntegrityError
 from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
 
@@ -92,7 +93,12 @@ def handle_path(path):
   logger.debug(f"Read File content: {file_content}")
   vial = parse_val_file(file_content, logger)
   logger.debug(f"Parsed File to vial: {vial}")
-  vial.save()
+  try:
+    vial.save()
+  except IntegrityError:
+    logger.error(f"Path: {path} doesn't contain a valid val file")
+    return
+
   data = async_to_sync(dbi.serialize_dict)({
     DATA_VIAL : [vial]
   })
