@@ -79,9 +79,15 @@ def handle_path(path):
   except ExceptionEmptyFile:
     logger.error(f"Path: {path} is an empty file, Ignoring it!")
     return
-  except IOError as Exception:
-    logger.error("Stale File handle!")
+  except IOError as e:
+    logger.error(f"Stale File handle for path: {path}")
     return
+  except Exception as exception:
+    logger.error(f"Unhandled exception: {exception}")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    return
+
+
 
   logger.debug(f"Read File content: {file_content}")
   vial = parse_val_file(file_content, logger)
@@ -122,9 +128,9 @@ class VialFileHandler(FileSystemEventHandler):
 vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
 val_files = [f for f in vial_file_path.glob('VAL*')]
 for val_path in val_files:
-  logger.debug(f"Processing file {val_path}")
+  logger.info(f"Processing file {val_path}")
   handle_path(val_path)
-  logger.debug(f"Handled Path: {val_path}")
+  logger.info(f"Handled Path: {val_path}")
 
 observer = Observer()
 observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)

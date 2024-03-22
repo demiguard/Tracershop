@@ -17,13 +17,23 @@ export class ArrayMap {
   }
 
   has(key){
-    return this._map.has(key)
+    return this._map.has(key);
   }
 
-  get(key){
-    return this._map.get(key)
+  /** Gets an
+   * @template D - Type of the default value
+   * @param {K} key Key in the key/value par
+   * @param {D} _default Default value returned if the map doesn't have the key
+   * Defaults to undefined, which is also the default for Map
+   * @returns {Array<V> | D}
+   */
+  get(key, _default=undefined){
+    if(this._map.has(key)){
+      return this._map.get(key);
+    } else {
+      return _default;
+    }
   }
-
 
   set(key, value){
     if(this.has(key)){

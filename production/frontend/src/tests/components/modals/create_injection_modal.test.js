@@ -104,7 +104,7 @@ describe("Create injection Order", () => {
 
 
   await act(async () => {
-    userEvent.hover(screen.getByLabelText('injection-input'))
+    userEvent.hover(screen.getByLabelText('injection-input'));
   });
 
   expect(screen.getByText("Injektioner er ikke et tal")).toBeVisible()

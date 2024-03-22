@@ -1,7 +1,7 @@
 /** This component is used by production admins to allocate external shop users
  * to their customers
   */
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { Card, Col, Container, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 import {  USER_GROUPS, cssCenter } from "~/lib/constants";
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_CUSTOMER,
@@ -14,27 +14,43 @@ import { HoverBox } from "../../injectable/hover_box";
 import { CustomerSelect } from "../../injectable/derived_injectables/customer_select";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
+import { ArrayMap } from "~/lib/array_map";
 
 const /**@type {String} Css size of the icon for clicking an action button */ AcceptIconWidth = "52px"
 
 
 export function ProductionUserSetup(){
   const state = useTracershopState()
-  const websocket = useWebsocket();
-  const [userFilter, setUserFilter] = useState('');
+  const /** @type {{current : Map<Number, User>?}} */ initial_external_users = useRef(null);
+  const userMapping = new ArrayMap()
+  for(const userAssignment of state.user_assignment.values()){
+    userMapping.set(userAssignment.user, userAssignment.customer);
+  }
 
-  const userMapping = new Map() // Again an Array Map
-  for(const _userAssignment of state.user_assignment.values()){
-    const /**@type {UserAssignment} */ userAssignment = _userAssignment;
-    if(userMapping.has(userAssignment.user)){
-      userMapping.get(userAssignment.user).push([userAssignment.id, userAssignment.customer]);
-    } else {
-      userMapping.set(userAssignment.user,[[userAssignment.id, userAssignment.customer]]);
+  if(initial_external_users.current === null){
+    initial_external_users.current = new Map();
+    for (const user of state.user.mapping){
+      if(user.user_group === USER_GROUPS.SHOP_EXTERNAL){
+        const user_assignment = userMapping.get(user.id, null)
+
+
+        initial_external_users.current.set(user.id, {
+          id : user.id,
+          username : user.username,
+          password : "",
+          user_assignment :
+        });
+      }
     }
   }
 
+  const websocket = useWebsocket();
+  const [userFilter, setUserFilter] = useState('');
+  const [userState, setUserState] = useState(initial_external_users.current);
+
+
    /**
-  * 
+  *
   * @param {{
   * user : User,
   * }} props
@@ -82,7 +98,7 @@ export function ProductionUserSetup(){
             </Col>
             <Col style={cssCenter} xs="2">
               <HoverBox
-                Base={<Form.Check 
+                Base={<Form.Check
                           aria-label={`active-${user.id}`}
                           checked={user.active}
                           onChange={changeActive}/>}
@@ -121,7 +137,7 @@ export function ProductionUserSetup(){
                   />
                  :
                   <HoverBox Base={
-                    <ClickableIcon 
+                    <ClickableIcon
                     label={`generate-password-${user.id}`}
                       src="/static/images/atom-svgrepo-com.svg"
                       onClick={() => {setPassword(makePassword(12))}}
@@ -145,9 +161,9 @@ export function ProductionUserSetup(){
 
 
    /**
-  * 
+  *
   * @param {{
-   * }} param0 
+   * }} param0
    * @returns {Element}
    */
   function NewUserRow(){

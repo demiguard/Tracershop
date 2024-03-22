@@ -103,19 +103,19 @@ class MailTemplate(canvas.Canvas):
                          width=128,
                          height=icon_height,
                          preserveAspectRatio=True)
-    if now == None:
-      now = datetime.now()
+    #if now == None:
+    #  now = datetime.now()
 
-    today_string = f"{now.day}-{MonthNames[now.month]}-{now.year}"
+    #today_string = f"{now.day}-{MonthNames[now.month]}-{now.year}"
 
-    today_text_length = self.stringWidth(today_string,
-                                         self._font,
-                                         self._font_size)
+    #today_text_length = self.stringWidth(today_string,
+    #                                     self._font,
+    #                                     self._font_size)
 
-    date_abscissa = WIDTH - start_x_cursor - today_text_length
-    date_ordinate = icon_ordinate + (icon_height - self._font_size) / 2
+    #date_abscissa = WIDTH - start_x_cursor - today_text_length
+    #date_ordinate = icon_ordinate + (icon_height - self._font_size) / 2
 
-    self.drawString(date_abscissa, date_ordinate, today_string)
+    #self.drawString(date_abscissa, date_ordinate, today_string)
 
   def resetFont(self):
     self.setFont(self._font, self._font_size)
@@ -527,6 +527,15 @@ def DrawReleaseCertificate(filename :str,
   pivot_production = productions[0]
   pivot_vial = vials[0]
 
+  production_datetime = datetime(pivot_vial.fill_date.year,
+                                 pivot_vial.fill_date.month,
+                                 pivot_vial.fill_date.day,
+                                 pivot_vial.fill_time.hour,
+                                 pivot_vial.fill_time.minute,
+                                 pivot_vial.fill_time.second)
+
+  production_date_string = production_datetime.strftime("%d/%m-%Y")
+
   # this should be a function
   title = "BATCH FRIGIVELSESCERTIFIKAT"
   if fonts: #pragma: no cover
@@ -543,14 +552,14 @@ def DrawReleaseCertificate(filename :str,
   table_row_y_top_2 = table_row_y_top_1 - template.line_height * 1.5
   table_row_y_top_3 = table_row_y_top_1 - template.line_height * 3.0
   table_row_y_top_4 = table_row_y_top_1 - template.line_height * 4.5
-  table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 11
+  table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 10
 
 
   # First line of the first table
   box_abscissa_start = start_x_cursor
   box_abscissa_end = WIDTH - start_x_cursor
   box_abscissa_middle_1 = (box_abscissa_end - box_abscissa_start) * 0.4
-  box_abscissa_middle_2 = (box_abscissa_end - box_abscissa_start) * 0.6
+  box_abscissa_middle_2 = (box_abscissa_end - box_abscissa_start) * 0.5
   # Boxes 1
   template.p_drawBox((box_abscissa_start,    table_row_y_top_1),
                      (box_abscissa_middle_1, table_row_y_top_1 - template.line_height * 1.5))
@@ -596,25 +605,22 @@ def DrawReleaseCertificate(filename :str,
                       pivot_vial.lot_number)
   template.drawString(header_box_text_info_start,
                       table_row_y_top_3 - (template.line_height),
-                      formatted_date)
+                      production_date_string)
   # Line 1
   template.drawString(header_box_text_info_start,
                       table_row_y_top_4 - (template.line_height),
                       "Cyklotron og Radiokemi, enhed 3982")
   template.drawString(header_box_text_info_start,
                       table_row_y_top_4 - (2 * template.line_height),
-                      "Afdeling for Klinisk Fysiologi og Nuklear")
+                      "Afdeling for Klinisk Fysiologi og Nuklear Medicin")
   template.drawString(header_box_text_info_start,
                       table_row_y_top_4 - (3 * template.line_height),
-                      "Medicin")
-  template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (4 * template.line_height),
                       "Rigshospitalet")
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (5 * template.line_height),
+                      table_row_y_top_4 - (4 * template.line_height),
                       "Blegdamsvej 9")
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (6 * template.line_height),
+                      table_row_y_top_4 - (5 * template.line_height),
                       "2100 København Ø")
 
   # Table 2 Header
@@ -657,7 +663,14 @@ def DrawReleaseCertificate(filename :str,
 
 
 
-  draw_table_2_row(table_row_y_top_bottom, ("Ordre ID", "Bestilt", "Kalibreret kl:", "Leveret", "Volume:", "Frigivet kl:"), True)
+  draw_table_2_row(table_row_y_top_bottom,
+                   ("Ordre ID",
+                    "Bestilt",
+                    "Kalibreret kl",
+                    "Leveret",
+                    "Volume",
+                    "Frigivet kl"),
+                   True)
   ordinate = table_row_y_top_bottom - template.line_height * 1.5
   max_rows = max(len(orders), len(vials))
   for i in range(max_rows):
@@ -695,13 +708,13 @@ def DrawReleaseCertificate(filename :str,
   ordinate -= template.line_height
   template.drawString(x_cursor, ordinate, "site i fuld overensstemmelse med kravene til GMP og gældende markedsføringstilladelse.")
   ordinate -= template.line_height * 1.5
-  template.drawString(x_cursor, ordinate, "Hermed frigives Produktet til humant brug.")
+  template.drawString(x_cursor, ordinate, "Hermed frigives produktet til humant brug.")
   ordinate -= template.line_height * 2.5
-  template.drawString(x_cursor, ordinate, "QP Name: Nic Gillings")
+  template.drawString(x_cursor, ordinate, "QP navn: Nic Gillings")
   ordinate -= template.line_height * 2.5
-  template.drawString(x_cursor, ordinate, f"Date: {formatted_date}")
+  template.drawString(x_cursor, ordinate, f"Dato: {production_date_string}")
   ordinate -= template.line_height * 1.5
-  template.drawString(x_cursor, ordinate, f"Signature:")
+  template.drawString(x_cursor, ordinate, f"Underskrift:")
   ordinate -= template.line_height * 1.5
   sig_height = 109
 
