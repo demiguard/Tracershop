@@ -44,33 +44,33 @@ export class TimeStamp {
       this.second = second;
     }
   }
+
+  toMinutes(){
+    return this.hour * 60 + this.minute + Math.floor(this.second / 60);
+  }
 }
 
 /**
  * @idempotence
  * @deprecated
  * @param {string | Date | {hour : Number, minute : Number, second : Number}} timeStamp
- * @returns {{
- *  hour : Number,
- *  minute : Number,
- *  second : Number,
- * }}
+ * @returns {TimeStamp}
  */
 export function getTimeStamp(timeStamp){
   if(typeof timeStamp == "string"){
-    timeStamp = FormatTime(timeStamp)
-    return {
+    timeStamp = FormatTime(timeStamp);
+    return new TimeStamp({
       hour   : Number(timeStamp.substring(0, 2)),
       minute : Number(timeStamp.substring(3, 5)),
       second : Number(timeStamp.substring(6, 8)),
-    }
+    });
   }
   if(timeStamp instanceof Date){
-    return {
+    return new TimeStamp({
       hour : timeStamp.getHours(),
       minute : timeStamp.getMinutes(),
       second : timeStamp.getSeconds(),
-    }
+    })
   }
 
   if (timeStamp.hasOwnProperty('hour')
@@ -86,11 +86,11 @@ export function compareTimeStamp(timeStamp_1, timeStamp_2){
   timeStamp_1 = new TimeStamp(timeStamp_1);
   timeStamp_2 = new TimeStamp(timeStamp_2);
 
-  return {
+  return new TimeStamp({
     hour : timeStamp_1.hour - timeStamp_2.hour,
     minute : timeStamp_1.minute - timeStamp_2.minute,
     second : timeStamp_1.second - timeStamp_2.second,
-  }
+  });
 }
 
 
@@ -126,7 +126,7 @@ function calculateDailyDeadline(deadline, date){
 /**
  * Calculates a weekly deadline from a deadline object and a date
  * @param {Deadline} deadline - the deadline is question, assured to be deadline_type === 1
- * @param {Date} date 
+ * @param {Date} date
  * @returns {Date}
  */
 function _calculateWeeklyDeadline(deadline, date){
@@ -168,7 +168,7 @@ export function getTimeString(date){
 }
 
 /**
- * 
+ *
  * @param {Date} date
  * @param {string} timestamp
  * @returns {Date}

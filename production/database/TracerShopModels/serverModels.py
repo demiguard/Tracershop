@@ -4,14 +4,13 @@
 from django.db import models
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.networkModels import DicomEndpoint
+from django.db.models import Index, SET_NULL
 
-from django.db.models import IntegerChoices, BigAutoField, SmallIntegerField, TimeField, AutoField, ForeignKey, GenericIPAddressField, PositiveIntegerField, CharField, EmailField, SET_NULL
 
 
 class DeadlineTypes(models.IntegerChoices):
   daily = 0
   weekly = 1
-
 
 class Deadline(TracershopModel):
   id = models.BigAutoField(primary_key=True)
@@ -19,6 +18,21 @@ class Deadline(TracershopModel):
   deadline_time = models.TimeField(null=True, default=None)
   deadline_day = models.SmallIntegerField(choices=Days.choices, null=True, default=True)
 
+class ServerLogLevels(models.IntegerChoices):
+  warning = 1
+  error = 2
+  critical = 3
+
+class ServerLog(TracershopModel):
+  id = models.BigAutoField(primary_key=True)
+  created = models.DateTimeField(auto_now_add=True)
+  message = models.CharField(max_length=1024)
+  level = models.SmallIntegerField(choices=ServerLogLevels.choices)
+
+  class Meta:
+    indexes = [
+      Index(fields=['created'])
+    ]
 
 class ServerConfiguration(TracershopModel):
   """

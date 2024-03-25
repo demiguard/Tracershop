@@ -68,7 +68,7 @@ ClickableIcon.propTypes = {
  * }} param0
  * @returns
  */
-export function StatusIcon ({onClick, label, order, orderCollection}) {
+export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
 
   function statusImages(status) {
     if (status == ORDER_STATUS.ORDERED) {return "/static/images/clipboard1.svg";}
@@ -93,6 +93,7 @@ export function StatusIcon ({onClick, label, order, orderCollection}) {
     return statusImages(order.status);
   })()
     return <ClickableIcon
+      altText={altText}
       onClick={onClick}
       label={label}
       src={statusImagePath}

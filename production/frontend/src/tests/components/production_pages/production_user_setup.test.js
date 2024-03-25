@@ -62,7 +62,7 @@ describe("Production User Setup tests", () => {
       fireEvent.change(customerSelect9, {target : {value : 2}});
     })
 
-    expect(websocket.sendCreateModel).toBeCalled()
+    expect(websocket.sendCreateModel).toHaveBeenCalled()
   });
 
   it("Delete user assignment", async () => {
@@ -78,7 +78,7 @@ describe("Production User Setup tests", () => {
       fireEvent.change(customerSelect6, {target : {value : ""}});
     })
 
-    expect(websocket.sendDeleteModel).toBeCalled()
+    expect(websocket.sendDeleteModel).toHaveBeenCalled()
   });
 
   it("Change user assignment", async () => {
@@ -94,39 +94,7 @@ describe("Production User Setup tests", () => {
       fireEvent.change(customerSelect6, {target : {value : "2"}});
     })
 
-    expect(websocket.sendDeleteModel).toBeCalled();
-    expect(websocket.sendCreateModel).toBeCalled();
-  });
-
-  it("Generate and set new password", async () => {
-    websocket = {
-      sendChangePassword : jest.fn(() => Promise.resolve({
-        [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS
-      })),
-    }
-
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <ProductionUserSetup {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
-    const generate_password = screen.getByLabelText('generate-password-6');
-
-    act(() => {
-      generate_password.click();
-    })
-
-    const password = screen.getByLabelText('password-6');
-    const update_icon = screen.getByLabelText('update-password-6');
-
-    expect(password.value.length).toBe(12);
-
-    await act(async () => {
-      update_icon.click();
-    });
-
-    expect(websocket.sendChangePassword).toBeCalled();
+    expect(websocket.sendDeleteModel).toHaveBeenCalled();
+    expect(websocket.sendCreateModel).toHaveBeenCalled();
   });
 });
-

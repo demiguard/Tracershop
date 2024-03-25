@@ -37,6 +37,7 @@ export const DATA_RELEASE_RIGHT = "release_right";
 export const DATA_RUN = "run";
 export const DATA_SECONDARY_EMAIL = "secondary_email";
 export const DATA_SERVER_CONFIG = "server_config";
+export const DATA_SERVER_LOG = "server_log";
 export const DATA_TRACER = "tracer";
 export const DATA_TRACER_MAPPING = "tracer_mapping";
 export const DATA_USER = "user";
@@ -57,7 +58,7 @@ export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.1.1";
+export const JAVASCRIPT_VERSION = "1.1.2";
 
 export const NO_ERROR = "";
 
@@ -72,6 +73,12 @@ export const SUCCESS_STATUS_CRUD = {
   UNSPECIFIED_REJECT : 1,
   ARCHIVED_OBJECT : 2,
   MISSING_RIGHTS : 3,
+};
+
+export const TRACER_USAGE = {
+  human : 0,
+  animal : 1,
+  other : 2,
 };
 
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";

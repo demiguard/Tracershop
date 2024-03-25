@@ -556,6 +556,27 @@ export class ServerConfiguration {
   }
 }
 
+export class ServerLog {
+  constructor(id, created, message, level, ) {
+    this.id=id
+    this.created=created
+    this.message=message
+    this.level=level
+  }
+
+  /**Copies the serverlog
+  * @returns { ServerLog }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.created,
+      this.message,
+      this.level
+    )
+  }
+}
+
 export class User {
   constructor(last_login, id, username, user_group, active, ) {
     this.last_login=last_login
@@ -653,6 +674,7 @@ export const MODELS = {
   production : ActivityProduction,
   secondary_email : SecondaryEmail,
   server_config : ServerConfiguration,
+  server_log : ServerLog,
   user : User,
   user_assignment : UserAssignment,
   vial : Vial,
@@ -683,11 +705,12 @@ export class TracershopState {
   /** @type { Map<Number, ActivityProduction>} */ production
   /** @type { Map<Number, SecondaryEmail>} */ secondary_email
   /** @type { Map<Number, ServerConfiguration>} */ server_config
+  /** @type { Map<Number, ServerLog>} */ server_log
   /** @type { Map<Number, User>} */ user
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, user, user_assignment, vial, ){
+  constructor(logged_in_user, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
     if(address !== undefined){
       this.address = address
@@ -803,6 +826,11 @@ export class TracershopState {
       this.server_config = server_config
     } else {
       this.server_config = new Map()
+    }
+    if(server_log !== undefined){
+      this.server_log = server_log
+    } else {
+      this.server_log = new Map()
     }
     if(user !== undefined){
       this.user = user

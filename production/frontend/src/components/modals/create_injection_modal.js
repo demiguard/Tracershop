@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
 
 import { dateToDateString } from "~/lib/formatting";
-import { PROP_ON_CLOSE, PROP_ACTIVE_DATE } from "~/lib/constants";
+import { PROP_ON_CLOSE, PROP_ACTIVE_DATE, ORDER_STATUS } from "~/lib/constants";
 import styles from '~/css/Site.module.css'
 import { Select, toOptions } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
@@ -17,7 +17,6 @@ import { TracerCatalog } from "~/lib/data_structures";
 import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 
-import { ErrorInput } from "../injectable/inputs/error_input";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import propTypes from "prop-types";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
@@ -84,7 +83,7 @@ export function CreateInjectionOrderModal({active_date, on_close}){
           formattedDeliveryTime, // deliver_time
           dateToDateString(active_date), // delivery_Date
           numberInjections, // injections
-          1, // Status
+          ORDER_STATUS.ORDERED, // Status
           usage, // tracer_usage
           comment, // Comment
           state.logged_in_user.id, // Ordered By

@@ -11,7 +11,8 @@ from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DAT
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, DATA_LOCATION, DATA_ENDPOINT,\
     DATA_SECONDARY_EMAIL, DATA_PROCEDURE, DATA_USER, DATA_USER_ASSIGNMENT,\
     DATA_MESSAGE, DATA_MESSAGE_ASSIGNMENT, DATA_DEADLINE, DATA_DICOM_ENDPOINT,\
-    DATA_LEGACY_PRODUCTION_MEMBER, DATA_PROCEDURE_IDENTIFIER, DATA_RELEASE_RIGHT
+    DATA_LEGACY_PRODUCTION_MEMBER, DATA_PROCEDURE_IDENTIFIER, DATA_RELEASE_RIGHT,\
+    DATA_SERVER_LOG
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -45,6 +46,7 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_PRODUCTION : ActivityProduction,
   DATA_SECONDARY_EMAIL : SecondaryEmail,
   DATA_SERVER_CONFIG : ServerConfiguration,
+  DATA_SERVER_LOG : ServerLog,
   DATA_USER : User,
   DATA_USER_ASSIGNMENT : UserAssignment,
   DATA_VIAL : Vial,

@@ -1,0 +1,165 @@
+import React, { useRef, useState } from "react";
+import { Canvas, StaticCanvas } from "~/components/injectable/Canvas";
+import { useTracershopState } from "~/components/tracer_shop_context";
+import { InjectionOrder } from "~/dataclasses/dataclasses";
+import { TimeStamp, compareTimeStamp } from "~/lib/chronomancy";
+import { ORDER_STATUS } from "~/lib/constants";
+import { useContainerDimensions } from "~/lib/react_hooks";
+
+const colors = ["#55FF88", "#FFEE44", "#AA0033"];
+const texts = [
+    "Frigivet til tiden",
+    "Forsinket max 30 min",
+    "Forsinket mere end 30 min",
+];
+
+/**
+ *
+ * @param {Array<InjectionOrder} injectionOrders
+ * @returns {{
+ *
+ * }}
+ */
+export function separatorInjectionOrders(injectionOrders){
+  let total = 0;
+  let releasedOnTime = 0;
+  let releasedDelayed30 = 0;
+  let releasedDelayed30Plus = 0;
+
+  for(const order of injectionOrders){
+    if(order.status == ORDER_STATUS.RELEASED){
+      total++;
+
+      const releaseTimeStamp = new TimeStamp(new Date(order.freed_datetime));
+      const deliverTimeStamp = new TimeStamp(order.delivery_time)
+
+      const timeDifference = compareTimeStamp(releaseTimeStamp, deliverTimeStamp).toMinutes();
+
+      if(timeDifference <= 0){
+        releasedOnTime++;
+      } else if(timeDifference < 30){
+        releasedDelayed30++;
+      } else {
+        releasedDelayed30Plus++;
+      }
+    }
+  }
+
+  return {
+    total : total,
+    releasedOnTime : releasedOnTime,
+    releasedDelayed30 : releasedDelayed30,
+    releasedDelayed30Plus : releasedDelayed30Plus,
+    percentages : [releasedOnTime / total, releasedDelayed30 / total, releasedDelayed30Plus / total]
+  };
+}
+
+
+
+export function MonitorPage({}) {
+  const state = useTracershopState();
+  const componentRef = useRef(null);
+
+  const [activeTracer, setActiveTracer] = useState(-1);
+  const { width } = useContainerDimensions(componentRef);
+
+  const canvasHeight = width * 9 / 16;
+  const percentages = [0.6,0.3, 0.1];
+
+  function inTimeFrame(date){
+    return true;
+  }
+
+  const tracerName = (() => {
+    if(state.tracer.has(activeTracer)){
+      const tracer = state.tracer.get(activeTracer);
+      return tracer.shortname;
+    }
+
+    return "Injections tracer";
+  })();
+
+  const orders = []
+  if (0 < activeTracer) {
+    const productions = []
+    for(const production of state.production.values()){
+      if(production.tracer == activeTracer){
+        productions.push(production.id);
+      }
+    }
+    const timeSlots = []
+    for(const timeSlot of state.deliver_times.values()){
+      if(productions.includes(timeSlot.production)){
+        timeSlots.push(timeSlot);
+      }
+    }
+    for(const activity_order of state.activity_orders.values()){
+      if(timeSlots.includes(activity_order.ordered_time_slot)
+          && inTimeFrame(activity_order.delivery_date)
+          && activity_order.status === ORDER_STATUS.RELEASED
+          ){
+            orders.push(activity_order);
+          }
+    }
+  } else { // Injection tracers
+
+  }
+
+
+  /**
+   *
+   * @param {CanvasRenderingContext2D} context
+   */
+  function draw(context){
+    let startAngle = 3 * Math.PI / 2;
+
+    const circleCenterAbscissa = context.canvas.width / 2;
+    const circleCenterOrdinate = context.canvas.height / 2;
+    const circle_radius = 0.8 * Math.min(circleCenterOrdinate, circleCenterAbscissa);
+
+    context.font = "32px MariBook";
+    context.fillStyle = "#000000";
+    const headerLength = context.measureText(tracerName);
+
+    context.fillText(tracerName, circleCenterAbscissa - headerLength.width / 2, 32);
+
+    const boxWidth = 25;
+    const boxAbscissa = circleCenterAbscissa + circle_radius;
+    const textAbscissa = boxAbscissa + boxWidth * 2;
+    let boxOrdinateStart = context.canvas.height / 10;
+    let textOrdinateStart = context.canvas.height / 10 + boxWidth - 5;
+
+    for(let i = 0; i < percentages.length; i++){
+      if(percentages[i] != 0.0){
+        context.fillStyle = colors[i];
+        context.strokeStyle = colors[i];
+
+        let endAngle = startAngle - 2 * Math.PI * percentages[i];
+
+        context.beginPath();
+        context.arc(circleCenterAbscissa,circleCenterOrdinate,circle_radius, startAngle, endAngle, true);
+        context.lineTo(circleCenterAbscissa,circleCenterOrdinate);
+        context.fill();
+
+        context.strokeStyle = "#000000";
+        context.lineWidth = 2;
+        context.fillRect(boxAbscissa, boxOrdinateStart, boxWidth, boxWidth)
+        context.strokeRect(boxAbscissa, boxOrdinateStart, boxWidth, boxWidth)
+
+        context.font = "24px MariBook"
+        context.fillStyle = "#000000"
+        context.fillText(texts[i], textAbscissa, textOrdinateStart);
+
+        boxOrdinateStart += boxWidth * 2.5;
+        textOrdinateStart += boxWidth * 2.5;
+
+        startAngle = endAngle;
+      }
+    }
+
+  }
+
+  return (<div ref={componentRef}>
+    <StaticCanvas draw={draw} width={width}  height={canvasHeight}/>
+  </div>);
+}

@@ -37,7 +37,7 @@ describe("Vial page tests suite", () => {
         <VialPage/>
       </WebsocketContextProvider>
     </StateContextProvider>);
-    
+
     for(const vial of testState.vial.values()){
       // Note that multiple vials may have the same lot number, hence this.
       expect(screen.getAllByText(vial.lot_number).length).toBeGreaterThanOrEqual(1);
@@ -61,10 +61,10 @@ describe("Vial page tests suite", () => {
 
     // I don't have ram to both vs code and firefox, so I can't check if this exists in jest / testing library...
 
-    let min_id = 0;
+    let min_id = Infinity;
 
     for(const vial_id of vial_ids){
-      expect(vial_id).toBeGreaterThan(min_id);
+      expect(vial_id).toBeLessThan(min_id);
       min_id = vial_id;
     }
   });
@@ -91,10 +91,10 @@ describe("Vial page tests suite", () => {
 
     // I don't have ram to both vs code and firefox, so I can't check if this exists in jest / testing library...
 
-    let min_id = Infinity;
+    let min_id = 0;
 
     for(const vial_id of vial_ids){
-      expect(vial_id).toBeLessThan(min_id);
+      expect(vial_id).toBeGreaterThan(min_id);
       min_id = vial_id;
     }
   });
@@ -277,7 +277,7 @@ describe("Vial page tests suite", () => {
       fireEvent.click(lot_filter)
     })
 
-    expect(websocket.send).toBeCalled();
+    expect(websocket.send).toHaveBeenCalled();
   });
 
   it("Fetch new vials - Failure", () => {
@@ -298,6 +298,6 @@ describe("Vial page tests suite", () => {
       fireEvent.click(lot_filter)
     })
 
-    expect(websocket.send).not.toBeCalled();
+    expect(websocket.send).not.toHaveBeenCalled();
   });
 });

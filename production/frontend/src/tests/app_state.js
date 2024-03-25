@@ -3,7 +3,7 @@ import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_CLOSED_DATE, DATA_CUSTOMER,
   DATA_DEADLINE, DATA_DELIVER_TIME, DATA_EMPLOYEE, DATA_ENDPOINT,
   DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_LOCATION, DATA_PROCEDURE,
   DATA_PROCEDURE_IDENTIFIER, DATA_PRODUCTION, DATA_SERVER_CONFIG, DATA_TRACER,
-  DATA_TRACER_MAPPING, DATA_USER, DATA_USER_ASSIGNMENT, DATA_VIAL 
+  DATA_TRACER_MAPPING, DATA_USER, DATA_USER_ASSIGNMENT, DATA_VIAL
 } from "../lib/shared_constants.js"
 import { activityDeliveryTimeSlots } from "./test_state/activity_delivery_time_slots"
 import { activity_orders } from "./test_state/activity_orders"
@@ -81,6 +81,7 @@ export const testState = new TracershopState(
   productions,
   secondary_emails,
   serverConfig,
+  new Map(),
   users,
   user_assignments,
   vials,

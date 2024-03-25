@@ -596,7 +596,7 @@ class DatabaseInterface():
     newExternalUser.set_password(userSkeleton[AUTH_PASSWORD])
     newExternalUser.save()
 
-    if DATA_CUSTOMER in userSkeleton:
+    if DATA_CUSTOMER in userSkeleton and userSkeleton[DATA_CUSTOMER]:
       customer = Customer.objects.get(pk=userSkeleton[DATA_CUSTOMER])
 
       newUserAssignment = UserAssignment(user=newExternalUser, customer=customer)

@@ -1,6 +1,6 @@
 const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage } = require("~/dataclasses/dataclasses");
 const { WEEKLY_REPEAT_CHOICES, TRACER_TYPE } = require("~/lib/constants");
-const { TimeSlotBitChain, TracerCatalog, CustomerCatalog } = require("~/lib/data_structures");
+const { TimeSlotBitChain, TracerCatalog, CustomerCatalog, EndpointCatalog } = require("~/lib/data_structures");
 
 
 describe("Bit chains test sweep", () => {
@@ -49,7 +49,7 @@ describe("Tracer catalog Tests", () => {
 
     const empty_endpoint_catalog = tracerCatalog.getCatalog(1)
 
-    expect(empty_endpoint_catalog).toBeInstanceOf(CustomerCatalog);
+    expect(empty_endpoint_catalog).toBeInstanceOf(EndpointCatalog);
     expect(empty_endpoint_catalog.tracerCatalogActivity).toStrictEqual([]);
     expect(empty_endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
     expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([]);
@@ -72,7 +72,7 @@ describe("Tracer catalog Tests", () => {
     );
 
     const endpoint_catalog = tracerCatalog.getCatalog(1);
-    expect(endpoint_catalog).toBeInstanceOf(CustomerCatalog);
+    expect(endpoint_catalog).toBeInstanceOf(EndpointCatalog);
     expect(endpoint_catalog.tracerCatalogActivity).toStrictEqual([tracer]);
     expect(endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
     expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([tracer]);

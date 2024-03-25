@@ -42,33 +42,6 @@ export function VialPage(){
   const [sortingOption, setSortingOption] = useState(SortingOptions.DATE);
   const [sortingInverted, setSortingInverted] = useState(true);
   const [dateError, setDateError] = useState("");
-  /**
-   * A row in the table
-  * @param {{
-    *   vial : Vial
-    * }} param0
-  * @returns {Element.JSX}
-  */
- function VialRow({
-   vial,
- }){
-   const customer = state.customer.get(vial.owner)
-   const customerName = customer === undefined ?
-                            "Ukendt ejer"
-                            : customer.short_name;
-
-   return <tr>
-     <td data-testid="id_field">{vial.id}</td>
-     <td data-testid="lot_field">{vial.lot_number}</td>
-     <td data-testid="date_field">{parseDateToDanishDate(vial.fill_date)}</td>
-     <td data-testid="time_field">{vial.fill_time}</td>
-     <td data-testid="volume_field">{vial.volume}</td>
-     <td data-testid="activity_field">{vial.activity}</td>
-     <td data-testid="owner_field">{customerName}</td>
-     <td data-testid="order_field">{vial.assigned_to}</td>
-   </tr>
-}
-
 
   /**
    * Changes the sorting algorithm for the table, called when a user click on a header.
@@ -142,8 +115,23 @@ export function VialPage(){
           /*istanbul ignore next */
           throw "Unknown Search Option:" + sortingOption
       }
-    }).map(
-    (vial) => <VialRow key={vial.id} vial={vial}/>);
+    }).map((vial) => {
+        const customer = state.customer.get(vial.owner);
+        const customerName = customer === undefined ?
+                                 "Ukendt ejer"
+                                 : customer.short_name;
+
+        return <tr key={vial.id}>
+          <td data-testid="id_field">{vial.id}</td>
+          <td data-testid="lot_field">{vial.lot_number}</td>
+          <td data-testid="date_field">{parseDateToDanishDate(vial.fill_date)}</td>
+          <td data-testid="time_field">{vial.fill_time}</td>
+          <td data-testid="volume_field">{vial.volume}</td>
+          <td data-testid="activity_field">{vial.activity}</td>
+          <td data-testid="owner_field">{customerName}</td>
+          <td data-testid="order_field">{vial.assigned_to}</td>
+        </tr>
+    });
 
   return (
     <Container>

@@ -47,10 +47,36 @@ export function setTempObjectToEvent(stateFunction, keyword){
   }
 }
 
+/**
+ *
+ * @param {*} stateFunction
+ * @param {*} id
+ * @param {*} keyword
+ * @returns
+ */
 export function setTempMapToEvent(stateFunction, id, keyword){
   return (event) => {
     stateFunction(oldMap => {
       const newObject = oldMap.get(id).copy();
+      const newMap = new Map(oldMap);
+      newObject[keyword] = event.target.value;
+      newMap.set(id, newObject);
+      return newMap;
+    })
+  }
+}
+
+/**
+ *
+ * @param {*} stateFunction
+ * @param {*} id
+ * @param {*} keyword
+ * @returns
+ */
+export function setTempObjectMapToEvent(stateFunction, id, keyword){
+  return (event) => {
+    stateFunction(oldMap => {
+      const newObject = {...oldMap.get(id)};
       const newMap = new Map(oldMap);
       newObject[keyword] = event.target.value;
       newMap.set(id, newObject);

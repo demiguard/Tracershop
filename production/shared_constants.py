@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.1.1" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.1.2" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -69,6 +69,7 @@ DATA_TRACER = "tracer"
 DATA_TRACER_MAPPING = "tracer_mapping"
 DATA_RELEASE_RIGHT = "release_right"
 DATA_SERVER_CONFIG = "server_config"
+DATA_SERVER_LOG = "server_log"
 DATA_SECONDARY_EMAIL = "secondary_email"
 DATA_VIAL = "vial"
 DATA_USER = "user"
@@ -147,6 +148,12 @@ WEBSOCKET_MESSAGE_TYPES = [
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
 ]
+
+class TRACER_USAGE(__Enum):
+  human = 0
+  animal = 1
+  other = 2
+
 
 # Note for shared enums it very important that a value is assigned, to ensure
 # a consistent view
