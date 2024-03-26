@@ -43,6 +43,12 @@ export class TimeStamp {
       this.minute = minute;
       this.second = second;
     }
+
+    if(this.hour === undefined ||
+       this.minute === undefined ||
+       this.second === undefined){
+      throw "Unknown timestamp format";
+    }
   }
 
   toMinutes(){
@@ -50,37 +56,6 @@ export class TimeStamp {
   }
 }
 
-/**
- * @idempotence
- * @deprecated
- * @param {string | Date | {hour : Number, minute : Number, second : Number}} timeStamp
- * @returns {TimeStamp}
- */
-export function getTimeStamp(timeStamp){
-  if(typeof timeStamp == "string"){
-    timeStamp = FormatTime(timeStamp);
-    return new TimeStamp({
-      hour   : Number(timeStamp.substring(0, 2)),
-      minute : Number(timeStamp.substring(3, 5)),
-      second : Number(timeStamp.substring(6, 8)),
-    });
-  }
-  if(timeStamp instanceof Date){
-    return new TimeStamp({
-      hour : timeStamp.getHours(),
-      minute : timeStamp.getMinutes(),
-      second : timeStamp.getSeconds(),
-    })
-  }
-
-  if (timeStamp.hasOwnProperty('hour')
-   && timeStamp.hasOwnProperty('minute')
-   && timeStamp.hasOwnProperty('second')){
-    return timeStamp
-  }
-
-  throw "Unknown timestamp format"
-}
 
 export function compareTimeStamp(timeStamp_1, timeStamp_2){
   timeStamp_1 = new TimeStamp(timeStamp_1);
@@ -163,7 +138,7 @@ export function calculateDeadline(deadline, date){
 }
 
 export function getTimeString(date){
-  const timeStamp = getTimeStamp(new Date(date));
+  const timeStamp = new TimeStamp(new Date(date));
   return `${FormatDateStr(timeStamp.hour)}:${FormatDateStr(timeStamp.minute)}:${FormatDateStr(timeStamp.second)}`
 }
 
@@ -175,7 +150,7 @@ export function getTimeString(date){
  */
 export function combineDateAndTimeStamp(date, timestampBlueprint){
   const dateString = dateToDateString(date);
-  const timestamp = getTimeStamp(timestampBlueprint)
+  const timestamp = new TimeStamp(timestampBlueprint)
 
   return new Date(`${dateString}T${FormatDateStr(timestamp.hour)}:${FormatDateStr(timestamp.minute)}:${FormatDateStr(timestamp.second)}`)
 }
@@ -261,3 +236,25 @@ export function FirstSundayInNextMonth(year,month){
   }
   return pivot;
 };
+
+export class DateRange {
+  constructor(start_date, end_date){
+    this.start_date = new Date(start_date);
+    this.end_date = new Date(end_date);
+
+    if(isNaN(this.start_date) || isNaN(this.end_date)){
+      throw "Invalid input date";
+    }
+  }
+
+  in_range(test_date){
+    if(!(test_date instanceof Date)){
+      test_date = new Date(test_date);
+    }
+
+    if(isNaN(test_date)){
+      throw "Invalid input date";
+    }
+    return this.start_date < test_date && test_date < this.end_date;
+  }
+}

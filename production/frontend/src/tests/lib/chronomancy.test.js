@@ -1,5 +1,5 @@
 import { ActivityDeliveryTimeSlot, ActivityProduction, ClosedDate, Deadline } from "../../dataclasses/dataclasses"
-import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, getTimeStamp, getTimeString } from "../../lib/chronomancy"
+import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, TimeStamp, getTimeString } from "../../lib/chronomancy"
 import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants"
 
 
@@ -83,7 +83,7 @@ describe("Chronomancy test suit", () => {
   });
 
   it("Get time stamp, string", () => {
-    const timeStamp = getTimeStamp("11:55:33");
+    const timeStamp = new TimeStamp("11:55:33");
 
     expect(timeStamp.hour).toBe(11);
     expect(timeStamp.minute).toBe(55);
@@ -91,7 +91,7 @@ describe("Chronomancy test suit", () => {
   });
 
   it("Get time stamp, date", () => {
-    const timeStamp = getTimeStamp(new Date(2018,5,6, 11, 55, 33));
+    const timeStamp = new TimeStamp(new Date(2018,5,6, 11, 55, 33));
 
     expect(timeStamp.hour).toBe(11);
     expect(timeStamp.minute).toBe(55);
@@ -99,10 +99,10 @@ describe("Chronomancy test suit", () => {
   });
 
   it("Throws error on unknown format", () => {
-    expect(() => {getTimeStamp(145)}).toThrow("Unknown timestamp format");});
+    expect(() => {new TimeStamp(145)}).toThrow("Unknown timestamp format");});
 
   it("Get time stamp, object", () => {
-    const timeStamp = getTimeStamp({
+    const timeStamp = new TimeStamp({
       hour : 11,
       minute : 55,
       second : 33,
@@ -147,4 +147,3 @@ describe("Chronomancy test suit", () => {
     expect(getTimeString(timeDate)).toEqual(correct_res)
   })
 })
-

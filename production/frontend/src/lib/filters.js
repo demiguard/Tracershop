@@ -2,7 +2,7 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { ActivityOrder, DeliveryEndpoint, Location, Tracer, TracershopState } from "../dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, DeliveryEndpoint, Location, Tracer, TracershopState } from "../dataclasses/dataclasses";
 import { getId } from "./utils";
 
 export function dayTracerFilter(day, tracerID){
@@ -118,4 +118,83 @@ export function locationEndpointFilter(active_endpoint){
   return (location) => {
     return location.endpoint === active_endpoint;
   }
+}
+
+/**
+ *
+ * @param {{
+ *
+ * }} param0
+ * @returns
+ */
+export function productionsFilter({state, tracerID, day, ids = false}){
+  const productions = []
+  for(const production of state.production.values()){
+    const tracerCondition = tracerID === undefined || production.tracer === tracerID;
+    const dayCondition = day === undefined || production.day === day;
+
+    if(tracerCondition && dayCondition){
+      if(ids){
+        productions.append(production.id);
+      } else {
+        productions.append(production);
+      }
+    }
+  }
+  return productions;
+}
+
+/**
+ *
+ * @param {TracershopState} state
+ * @param {Number} TracerID
+ * @param {Array<ActivityDeliveryTimeSlot>}
+ */
+export function timeSlotsFilter({state, tracerID, day, endpointID, ids = false}){
+
+
+  const productionIDs = tracerID !== undefined ? productionsFilter({state : state,
+                                                                    tracerID : tracerID,
+                                                                    day : day,
+                                                                    ids : true,
+                                                                   }) : undefined;
+  const timeSlots = []
+  for(const timeSlot of state.deliver_times.values()){
+    const tracerCondition = productionIDs !== undefined ?
+      productionIDs.includes(timeSlot.id) : true;
+    const endpointCondition = endpointID !== undefined ? timeSlot.destination == endpointID : true;
+
+    if(tracerCondition && endpointCondition){
+      if(ids){
+        timeSlots.append(timeSlot.id)
+      } else {
+        timeSlots.append(timeSlot)
+      }
+    }
+  }
+  return timeSlots
+}
+
+
+export function activityOrdersForTracer({state, timeSlotFilterArgs, ids=false}){
+  const timeSlotIDs = timeSlotFilterArgs !== undefined ? timeSlotsFilter({state : state,
+                                       day : timeSlotFilterArgs.day,
+                                       endpointID : timeSlotFilterArgs.endpointID,
+                                       tracerID: timeSlotFilterArgs.tracerID,
+                                       ids : true}) : undefined;
+  const activityOrders = [];
+  for(const activityOrder of state.activity_orders.values()){
+    const timeSlotCondition = timeSlotIDs !== undefined ?
+      timeSlotIDs.includes(activityOrder.ordered_time_slot) : true;
+
+    if(timeSlotCondition){
+      if(ids){
+        activityOrders.push(activityOrder.id);
+      } else {
+        activityOrders.push(activityOrder);
+      }
+    }
+  }
+
+  return activityOrders
 }

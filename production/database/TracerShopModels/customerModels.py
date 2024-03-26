@@ -34,7 +34,6 @@ class ClosedDate(TracershopModel):
     ]
 
 
-
 class Customer(TracershopModel):
   """This represents the organization that is ordering tracers in tracershop"""
   id = BigAutoField(primary_key=True)

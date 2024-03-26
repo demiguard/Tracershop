@@ -1,7 +1,7 @@
 import React, { useRef, useState } from "react";
-import { Canvas, StaticCanvas } from "~/components/injectable/Canvas";
+import { StaticCanvas } from "~/components/injectable/Canvas";
 import { useTracershopState } from "~/components/tracer_shop_context";
-import { InjectionOrder } from "~/dataclasses/dataclasses";
+import { ActivityOrder, InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { TimeStamp, compareTimeStamp } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
 import { useContainerDimensions } from "~/lib/react_hooks";
@@ -17,7 +17,11 @@ const texts = [
  *
  * @param {Array<InjectionOrder} injectionOrders
  * @returns {{
- *
+ *   total : Number,
+ *   releasedOnTime : Number,
+ *   releasedDelayed30 : Number,
+ *   releasedDelayed30Plus : Number
+ *   percentages : Array<Number>
  * }}
  */
 export function separatorInjectionOrders(injectionOrders){
@@ -31,9 +35,10 @@ export function separatorInjectionOrders(injectionOrders){
       total++;
 
       const releaseTimeStamp = new TimeStamp(new Date(order.freed_datetime));
-      const deliverTimeStamp = new TimeStamp(order.delivery_time)
+      const deliveryTimeStamp = new TimeStamp(order.delivery_time)
 
-      const timeDifference = compareTimeStamp(releaseTimeStamp, deliverTimeStamp).toMinutes();
+      const timeDifference = compareTimeStamp(releaseTimeStamp,
+                                              deliveryTimeStamp).toMinutes();
 
       if(timeDifference <= 0){
         releasedOnTime++;
@@ -54,6 +59,44 @@ export function separatorInjectionOrders(injectionOrders){
   };
 }
 
+/**
+ *
+ * @param {Array<ActivityOrder} activity_orders
+ * @param {TracershopState} state
+ * @returns
+ */
+export function separatorActivityOrders(activity_orders, state){
+  let total = 0;
+  let releasedOnTime = 0;
+  let releasedDelayed30 = 0;
+  let releasedDelayed30Plus = 0;
+
+  for(const activity_order of activity_orders){
+    total++;
+    const releaseTimeStamp = new TimeStamp(new Date(order.freed_datetime));
+    const deliveryTimeStamp = activity_order.moved_to_time_slot ?
+        state.deliver_times.get(activity_order.moved_to_time_slot)
+      : state.deliver_times.get(activity_order.ordered_time_slot);
+
+    const timeDifference = compareTimeStamp(releaseTimeStamp,
+                                            deliveryTimeStamp).toMinutes();
+    if(timeDifference <= 0){
+      releasedOnTime++;
+    } else if(timeDifference < 30){
+      releasedDelayed30++;
+    } else {
+      releasedDelayed30Plus++;
+    }
+  }
+
+  return {
+    total : total,
+    releasedOnTime : releasedOnTime,
+    releasedDelayed30 : releasedDelayed30,
+    releasedDelayed30Plus : releasedDelayed30Plus,
+    percentages : [releasedOnTime / total, releasedDelayed30 / total, releasedDelayed30Plus / total]
+  };
+}
 
 
 export function MonitorPage({}) {
@@ -81,18 +124,8 @@ export function MonitorPage({}) {
 
   const orders = []
   if (0 < activeTracer) {
-    const productions = []
-    for(const production of state.production.values()){
-      if(production.tracer == activeTracer){
-        productions.push(production.id);
-      }
-    }
-    const timeSlots = []
-    for(const timeSlot of state.deliver_times.values()){
-      if(productions.includes(timeSlot.production)){
-        timeSlots.push(timeSlot);
-      }
-    }
+
+
     for(const activity_order of state.activity_orders.values()){
       if(timeSlots.includes(activity_order.ordered_time_slot)
           && inTimeFrame(activity_order.delivery_date)
