@@ -93,6 +93,13 @@ def handle_path(path):
   logger.debug(f"Read File content: {file_content}")
   vial = parse_val_file(file_content, logger)
   logger.debug(f"Parsed File to vial: {vial}")
+
+  # Check if the vial exists already
+  if vial.objects.filter(fill_date=vial.fill_date, fill_time=vial.fill_time).exists():
+    logger.info(f"Vial Exists at {path}")
+    path.unlink()
+    return
+
   try:
     vial.save()
   except IntegrityError:
@@ -115,14 +122,14 @@ def handle_path(path):
   logger.info(f"Send vial to service, Deleting file: {path}")
   path.unlink()
 
-
 class VialFileHandler(FileSystemEventHandler):
   def on_any_event(self, event: FileSystemEvent):
     logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
 
-  #def on_created(self, event: FileCreatedEvent):
-  #  val_path = Path(event.src_path)
-  #  handle_path(val_path)
+  def on_created(self, event: FileCreatedEvent):
+    logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
+    val_path = Path(event.src_path)
+    handle_path(val_path)
 
   def on_modified(self, event: FileCreatedEvent):
     if event.is_directory:

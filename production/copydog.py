@@ -48,13 +48,14 @@ from watchdog.observers.polling import PollingObserver as Observer
 class CopyFileHandler(FileSystemEventHandler):
   def on_any_event(self, event):
     logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
-  #def on_created(self, event: FileCreatedEvent):
-  #  try:
-  #    src_file = Path(event.src_path)
-  #    dst_file = Path(dst_path) / src_file.name
-  #    copy_file(src_file, dst_file)
-  #  except OSError:
-  #    print("wopsy")
+
+  def on_created(self, event: FileCreatedEvent):
+    try:
+      src_file = Path(event.src_path)
+      dst_file = Path(dst_path) / src_file.name
+      copy_file(src_file, dst_file)
+    except OSError:
+      print("wopsy")
 
   def on_modified(self, event: FileCreatedEvent):
     logger.info(f"Event Triggered for {event.src_path}")
