@@ -51,3 +51,4 @@ settings.json
 *.sqlite
 *.sqlite3
 test_printing/
+data/

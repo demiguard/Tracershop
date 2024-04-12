@@ -118,7 +118,7 @@ def handle_path(path):
 
 class VialFileHandler(FileSystemEventHandler):
   def on_any_event(self, event: FileSystemEvent):
-    logger.debug(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
+    logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
 
   #def on_created(self, event: FileCreatedEvent):
   #  val_path = Path(event.src_path)
