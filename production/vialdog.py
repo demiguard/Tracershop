@@ -30,12 +30,14 @@ from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV, CHANNEL_GROUP_GLO
 from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_DATA,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, DATA_VIAL, WEBSOCKET_MESSAGE_UPDATE_STATE
 from database.database_interface import DatabaseInterface
-from database.models import Vial, Tracer, Customer
+from database.models import Vial, Tracer, Customer, User
 from lib.parsing import parse_val_file, update_customer_mapping, update_tracer_mapping
 from websocket.messages import getNewMessageID
 
 
 dbi = DatabaseInterface()
+
+admin_user = User.objects.get(username="cjen0668")
 
 VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
@@ -101,7 +103,7 @@ def handle_path(path):
     return
 
   try:
-    vial.save()
+    vial.save(admin_user)
   except IntegrityError:
     logger.error(f"Path: {path} doesn't contain a valid val file")
     return
