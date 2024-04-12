@@ -90,14 +90,12 @@ def handle_path(path):
     logger.error(f"Traceback: {traceback.format_exc()}")
     return
 
-
-
   logger.debug(f"Read File content: {file_content}")
   vial = parse_val_file(file_content, logger)
   logger.debug(f"Parsed File to vial: {vial}")
 
   # Check if the vial exists already
-  if vial.objects.filter(fill_date=vial.fill_date, fill_time=vial.fill_time).exists():
+  if Vial.objects.filter(fill_date=vial.fill_date, fill_time=vial.fill_time).exists():
     logger.info(f"Vial Exists at {path}")
     path.unlink()
     return
@@ -109,6 +107,8 @@ def handle_path(path):
     return
   except Exception as e:
     logger.error(f"Unknown exception of {e} encountered!")
+
+  logger.info("Vial doesn't exists saving!")
 
   data = async_to_sync(dbi.serialize_dict)({
     DATA_VIAL : [vial]
