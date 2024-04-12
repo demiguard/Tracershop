@@ -105,6 +105,8 @@ def handle_path(path):
   except IntegrityError:
     logger.error(f"Path: {path} doesn't contain a valid val file")
     return
+  except Exception as e:
+    logger.error(f"Unknown exception of {e} encountered!")
 
   data = async_to_sync(dbi.serialize_dict)({
     DATA_VIAL : [vial]
