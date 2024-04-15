@@ -95,14 +95,16 @@ with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
 
   out.write("\nexport class TracershopState {\n")
   out.write(f"  /** @type {{ User }} */ logged_in_user\n")
+  out.write(f"  /** @type {{ Date }} */ today\n")
 
   for key, model in MODELS.items():
     out.write(f"  /** @type {{ Map<Number, {model.__name__}>}} */ {key}\n")
 
-  out.write("\n  constructor(logged_in_user, ")
+  out.write("\n  constructor(logged_in_user, today, ")
   for key, model in MODELS.items():
     out.write(f"{key}, ")
   out.write("){\n    this.logged_in_user=logged_in_user\n")
+  out.write("    this.today=today\n")
   for key, model in MODELS.items():
     out.write(f"    if({key} !== undefined){{\n")
     out.write(f"      this.{key} = {key}\n")

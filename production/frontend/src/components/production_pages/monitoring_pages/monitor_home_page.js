@@ -1,10 +1,23 @@
+// Third party imports
 import React, { useRef, useState } from "react";
+import { Button, Col, FormControl, Row } from "react-bootstrap";
+
+//CSS
+import SiteStyles from '~/css/Site.module.css'
+
+// Tracershop imports imports
 import { StaticCanvas } from "~/components/injectable/Canvas";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { ActivityOrder, InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
-import { TimeStamp, compareTimeStamp } from "~/lib/chronomancy";
-import { ORDER_STATUS } from "~/lib/constants";
+import { TimeStamp, compareTimeStamp, datify, getDateRangeForMonth, getSiteDate, setSiteDate } from "~/lib/chronomancy";
+import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
 import { useContainerDimensions } from "~/lib/react_hooks";
+import { activityOrdersFilter, injectionOrdersFilter } from "~/lib/filters";
+import { Optional } from "~/components/injectable/optional";
+import { HoverBox } from "~/components/injectable/hover_box";
+import { MonthSelector } from "~/components/injectable/month_selector";
+import { UpdateToday } from "~/lib/state_actions";
+
 
 const colors = ["#55FF88", "#FFEE44", "#AA0033"];
 const texts = [
@@ -13,6 +26,7 @@ const texts = [
     "Forsinket mere end 30 min",
 ];
 
+//#region Separators
 /**
  *
  * @param {Array<InjectionOrder} injectionOrders
@@ -61,7 +75,7 @@ export function separatorInjectionOrders(injectionOrders){
 
 /**
  *
- * @param {Array<ActivityOrder} activity_orders
+ * @param {Array<ActivityOrder>} activity_orders
  * @param {TracershopState} state
  * @returns
  */
@@ -73,10 +87,12 @@ export function separatorActivityOrders(activity_orders, state){
 
   for(const activity_order of activity_orders){
     total++;
-    const releaseTimeStamp = new TimeStamp(new Date(order.freed_datetime));
-    const deliveryTimeStamp = activity_order.moved_to_time_slot ?
+    const releaseTimeStamp = new TimeStamp(new Date(activity_order.freed_datetime));
+    const deliveryTimeSlot = activity_order.moved_to_time_slot ?
         state.deliver_times.get(activity_order.moved_to_time_slot)
       : state.deliver_times.get(activity_order.ordered_time_slot);
+
+    const deliveryTimeStamp = new TimeStamp(deliveryTimeSlot.delivery_time);
 
     const timeDifference = compareTimeStamp(releaseTimeStamp,
                                             deliveryTimeStamp).toMinutes();
@@ -98,20 +114,48 @@ export function separatorActivityOrders(activity_orders, state){
   };
 }
 
-
+//#region Component
 export function MonitorPage({}) {
   const state = useTracershopState();
+  const websocket = useWebsocket();
+  const dispatch = useTracershopDispatch();
   const componentRef = useRef(null);
 
+  const [activeMonth, setActiveMonth] = useState(state.today);
   const [activeTracer, setActiveTracer] = useState(-1);
   const { width } = useContainerDimensions(componentRef);
-
   const canvasHeight = width * 9 / 16;
-  const percentages = [0.6,0.3, 0.1];
 
-  function inTimeFrame(date){
-    return true;
+  const dateRange = getDateRangeForMonth(activeMonth);
+
+  //#region Buttons
+  const buttonRows = [];
+  for(const tracer of state.tracer.values()){
+    if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
+      const buttonHTML = (
+          <Button
+            className={SiteStyles.Margin15lr}
+            key={tracer.id}
+            onClick={() => {setActiveTracer(() => {return tracer.id;})}}
+            size="sm"
+          >
+            {tracer.shortname}
+          </Button>
+      );
+
+      buttonRows.push(buttonHTML);
+    }
   }
+  const injectionHTML = (
+        <Button key={-1}
+            className={SiteStyles.Margin15lr}
+            onClick={() => {setActiveTracer(() => {return -1;})}}
+            size="sm"
+        >
+          Special
+        </Button>
+  );
+  buttonRows.push(injectionHTML);
 
   const tracerName = (() => {
     if(state.tracer.has(activeTracer)){
@@ -122,28 +166,33 @@ export function MonitorPage({}) {
     return "Injections tracer";
   })();
 
-  const orders = []
-  if (0 < activeTracer) {
+  const separator = (() => {
+    if (0 < activeTracer) {
+      const orders = activityOrdersFilter(state,  {
+          timeSlotFilterArgs : { tracerID : activeTracer },
+          status : ORDER_STATUS.RELEASED,
+          dateRange : dateRange
+        })
 
+      return separatorActivityOrders(orders, state);
+    } else {
+      const orders = injectionOrdersFilter(state, {
+        status : ORDER_STATUS.RELEASED,
+        dateRange : dateRange
+      });
 
-    for(const activity_order of state.activity_orders.values()){
-      if(timeSlots.includes(activity_order.ordered_time_slot)
-          && inTimeFrame(activity_order.delivery_date)
-          && activity_order.status === ORDER_STATUS.RELEASED
-          ){
-            orders.push(activity_order);
-          }
+      return separatorInjectionOrders(orders, state);
     }
-  } else { // Injection tracers
-
-  }
-
-
+  })();
   /**
    *
    * @param {CanvasRenderingContext2D} context
    */
   function draw(context){
+    context.clearRect(0,0, context.canvas.width, context.canvas.height)
+    if (separator.total === 0){
+      return;
+    }
     let startAngle = 3 * Math.PI / 2;
 
     const circleCenterAbscissa = context.canvas.width / 2;
@@ -161,6 +210,7 @@ export function MonitorPage({}) {
     const textAbscissa = boxAbscissa + boxWidth * 2;
     let boxOrdinateStart = context.canvas.height / 10;
     let textOrdinateStart = context.canvas.height / 10 + boxWidth - 5;
+    const percentages = separator.percentages;
 
     for(let i = 0; i < percentages.length; i++){
       if(percentages[i] != 0.0){
@@ -189,10 +239,38 @@ export function MonitorPage({}) {
         startAngle = endAngle;
       }
     }
-
   }
 
+
+  const statsDiv = (
+    <div>
+      <div>Ordre I alt: {separator.total}</div>
+      <div>Ordre Behandlet til tiden: {separator.releasedOnTime}</div>
+      <div>Ordre Forsinket mindre end 30 minutter: {separator.releasedDelayed30}</div>
+      <div>Ordre Forsinket mere end 30 minutter: {separator.releasedDelayed30Plus}</div>
+    </div>
+  )
+
   return (<div ref={componentRef}>
-    <StaticCanvas draw={draw} width={width}  height={canvasHeight}/>
+    <Row className="justify-content-md-start">
+      <Col>
+        {buttonRows}
+      </Col>
+      <Col>
+        <MonthSelector
+          stateDate={activeMonth}
+          setDate={setActiveMonth}
+          callback={(newActiveMonth) => {
+            dispatch(new UpdateToday(newActiveMonth, websocket));
+          }}
+        />
+      </Col>
+    </Row>
+    <Optional exists={separator.total !== 0}>
+      <HoverBox
+        Base={<StaticCanvas draw={draw} width={width} height={canvasHeight}/>}
+        Hover={statsDiv}
+      />
+    </Optional>
   </div>);
 }

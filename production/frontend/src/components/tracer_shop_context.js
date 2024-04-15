@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { TracerWebSocket } from '../lib/tracer_websocket';
 import { MODELS, TracershopState, User } from '../dataclasses/dataclasses';
-import { ReducerAction, UpdateCurrentUser, UpdateState, DeleteState } from '~/lib/websocket_actions';
+import { ReducerAction, UpdateCurrentUser, UpdateState, DeleteState, UpdateToday } from '~/lib/state_actions';
 import { db } from '~/lib/local_storage_driver';
-import { DATABASE_CURRENT_USER } from '~/lib/constants';
+import { DATABASE_CURRENT_USER, DATABASE_TODAY } from '~/lib/constants';
 import { ParseDjangoModelJson } from '~/lib/formatting';
+import { datify } from '~/lib/chronomancy';
 
 const StateContext = createContext(new TracershopState());
 const DispatchContext = createContext({});
@@ -33,19 +34,19 @@ export function useTracershopDispatch(){
 }
 
 /**
- * 
+ *
  * @returns {TracerWebSocket}
  */
 export function useWebsocket(){
   return useContext(WebsocketContext)
 }
 /**
- * 
- * @param {TracershopState} state 
- * @param {ReducerAction} action 
+ *
+ * @param {TracershopState} state
+ * @param {ReducerAction} action
  * @returns {TracershopState}
  */
-function tracershopReducer(state, action){
+function tracershopReducer(state, action, websocket){
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser ){
     const newState = Object.assign(new TracershopState(), state);
@@ -83,11 +84,27 @@ function tracershopReducer(state, action){
     return newState;
   }
 
+  if(action instanceof UpdateToday){
+    const newState = Object.assign(new TracershopState(), state);
+    newState.today = datify(action.updatedToday);
+    if(action.websocket){
+      action.websocket.send({
+
+      });
+    }
+    return newState;
+  }
+
   throw "Unknown action";
 }
 
 
 export function TracerShopContext({children}){
+  let websocket = useRef(null);
+  useEffect(() => { websocket.current = new TracerWebSocket(
+    new WebSocket("ws://" + window.location.host + "/ws/"),
+    dispatch)},[]);
+
   function getDatabaseMap(databaseField){
     const /**@type {Map} */ dbMap = db.get(databaseField);
     if(!dbMap){
@@ -119,7 +136,13 @@ export function TracerShopContext({children}){
       }
     }
   )();
-  const initial_state = new TracershopState(user);
+  let today = db.get(DATABASE_TODAY);
+  if(today === null){
+    today = new Date();
+    db.set(DATABASE_TODAY, today);
+  }
+
+  const initial_state = new TracershopState(user, today);
 
   for(const keyword of Object.keys(MODELS)){
     initial_state[keyword] = getDatabaseMap(keyword);
@@ -127,19 +150,15 @@ export function TracerShopContext({children}){
   const [state, dispatch] = useReducer(tracershopReducer, initial_state);
   // You have to use a useRef and a useEffect to ensure that the websocket is recreated
   // or can be refereed to, if there's a rerender.
-  let websocket = useRef(null);
-  useEffect(() => { websocket.current = new TracerWebSocket(
-    new WebSocket("ws://" + window.location.host + "/ws/"),
-    dispatch)},[]);
+
 
   return(
-    <StateContext.Provider value={state}>
-      <DispatchContext.Provider value={dispatch}>
-        <WebsocketContext.Provider value={websocket.current}>
+    <WebsocketContext.Provider value={websocket.current}>
+      <StateContext.Provider value={state}>
+        <DispatchContext.Provider value={dispatch}>
           {children}
-        </WebsocketContext.Provider>
-      </DispatchContext.Provider>
-    </StateContext.Provider>
+        </DispatchContext.Provider>
+      </StateContext.Provider>
+    </WebsocketContext.Provider>
   );
 }
-

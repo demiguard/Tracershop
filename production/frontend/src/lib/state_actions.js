@@ -1,3 +1,5 @@
+import { TracerWebSocket } from "~/lib/tracer_websocket";
+
 export class ReducerAction {}
 
 /**
@@ -33,5 +35,18 @@ export class DeleteState extends ReducerAction {
     super();
     this.dataType = dataType;
     this.element_id = element_id;
+  }
+}
+
+export class UpdateToday extends ReducerAction {
+  /**
+   * Updated the today attribute of the TracershopState
+   * @param {Date} updatedToday
+   * @param {TracerWebSocket?} websocket
+   */
+  constructor(updatedToday, websocket) {
+    super()
+    this.updatedToday = updatedToday
+    this.websocket = websocket
   }
 }

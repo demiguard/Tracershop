@@ -682,6 +682,7 @@ export const MODELS = {
 
 export class TracershopState {
   /** @type { User } */ logged_in_user
+  /** @type { Date } */ today
   /** @type { Map<Number, Address>} */ address
   /** @type { Map<Number, ActivityOrder>} */ activity_orders
   /** @type { Map<Number, Booking>} */ booking
@@ -710,8 +711,9 @@ export class TracershopState {
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user, today, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
+    this.today=today
     if(address !== undefined){
       this.address = address
     } else {

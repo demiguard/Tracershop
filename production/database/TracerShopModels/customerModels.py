@@ -372,7 +372,7 @@ class Vial(TracershopModel):
 
   class Meta:
     indexes = [
-      Index(fields=['fill_date'])
+      Index(fields=['fill_date', 'fill_time'])
     ]
 
 class LegacyProductionMember(TracershopModel):

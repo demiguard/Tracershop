@@ -10,7 +10,7 @@ from logging import basicConfig, getLogger, INFO
 from logging.handlers import TimedRotatingFileHandler
 
 if 'COPYDOG_LOG' in environ:
-  basicConfig(level=INFO
+  basicConfig(level=INFO,
     handlers=[TimedRotatingFileHandler(filename=environ['COPYDOG_LOG'],
                                        when='w0',
                                        backupCount=5)]

@@ -11,7 +11,7 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, DATA_AU
 
 import { deserialize_single } from "~/lib/serialization";
 import { useWebsocket, useTracershopDispatch } from "../tracer_shop_context";
-import { UpdateCurrentUser } from "~/lib/websocket_actions";
+import { UpdateCurrentUser } from "~/lib/state_actions";
 import { db } from "~/lib/local_storage_driver";
 
 const DEFAULT_STATE = {

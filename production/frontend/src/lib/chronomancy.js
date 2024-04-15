@@ -2,6 +2,7 @@
  * This module resolves around time and deadlines
  * It also partly exists to offload formatting
 */
+import { db } from "~/lib/local_storage_driver";
 import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
 import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
@@ -14,6 +15,15 @@ import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
  */
 export function getToday(){
   return new Date()
+}
+
+
+export function datify(dateLike){
+  if(dateLike instanceof Date){
+    return dateLike
+  } else {
+    return new Date(dateLike)
+  }
 }
 
 export class TimeStamp {
@@ -47,7 +57,8 @@ export class TimeStamp {
     if(this.hour === undefined ||
        this.minute === undefined ||
        this.second === undefined){
-      throw "Unknown timestamp format";
+      console.log(arg_1)
+      throw { error : `Unknown timestamp format from string: ${arg_1}, ${minute}, ${second}`};
     }
   }
 
@@ -238,23 +249,33 @@ export function FirstSundayInNextMonth(year,month){
 };
 
 export class DateRange {
-  constructor(start_date, end_date){
-    this.start_date = new Date(start_date);
-    this.end_date = new Date(end_date);
+  constructor(startDate, endDate){
+    this.startDate = datify(startDate)
+    this.endDate = datify(endDate);
 
-    if(isNaN(this.start_date) || isNaN(this.end_date)){
+    if(isNaN(this.startDate) || isNaN(this.endDate)){
       throw "Invalid input date";
     }
   }
 
   in_range(test_date){
-    if(!(test_date instanceof Date)){
-      test_date = new Date(test_date);
-    }
+    const date = datify(test_date);
 
-    if(isNaN(test_date)){
+    if(isNaN(date)){
       throw "Invalid input date";
     }
-    return this.start_date < test_date && test_date < this.end_date;
+    return this.startDate < date && date < this.endDate;
   }
+}
+
+/**
+ *
+ * @param {Date} date
+ * @returns {DateRange}
+ */
+export function getDateRangeForMonth(input_date){
+  const date = datify(input_date)
+  const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+  const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  return new DateRange(startDate, endDate)
 }

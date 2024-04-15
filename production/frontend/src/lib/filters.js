@@ -4,6 +4,7 @@
 
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, DeliveryEndpoint, Location, Tracer, TracershopState } from "../dataclasses/dataclasses";
 import { getId } from "./utils";
+import { DateRange } from "~/lib/chronomancy";
 
 export function dayTracerFilter(day, tracerID){
   return (production) => {
@@ -122,12 +123,15 @@ export function locationEndpointFilter(active_endpoint){
 
 /**
  *
- * @param {{
- *
- * }} param0
+ * @param {
+ *  @param state {TracershopState}
+ *  @param productionFilterParams { tracerID : Number,
+ *    day : Number,
+ *    ids : Boolean,
+ *  }} param0
  * @returns
  */
-export function productionsFilter({state, tracerID, day, ids = false}){
+export function productionsFilter(state, {tracerID, day, ids = false}){
   const productions = []
   for(const production of state.production.values()){
     const tracerCondition = tracerID === undefined || production.tracer === tracerID;
@@ -135,9 +139,9 @@ export function productionsFilter({state, tracerID, day, ids = false}){
 
     if(tracerCondition && dayCondition){
       if(ids){
-        productions.append(production.id);
+        productions.push(production.id);
       } else {
-        productions.append(production);
+        productions.push(production);
       }
     }
   }
@@ -150,10 +154,10 @@ export function productionsFilter({state, tracerID, day, ids = false}){
  * @param {Number} TracerID
  * @param {Array<ActivityDeliveryTimeSlot>}
  */
-export function timeSlotsFilter({state, tracerID, day, endpointID, ids = false}){
+export function timeSlotsFilter(state, {tracerID, day, endpointID, ids = false}){
 
 
-  const productionIDs = tracerID !== undefined ? productionsFilter({state : state,
+  const productionIDs = tracerID !== undefined ? productionsFilter(state, {
                                                                     tracerID : tracerID,
                                                                     day : day,
                                                                     ids : true,
@@ -161,14 +165,14 @@ export function timeSlotsFilter({state, tracerID, day, endpointID, ids = false})
   const timeSlots = []
   for(const timeSlot of state.deliver_times.values()){
     const tracerCondition = productionIDs !== undefined ?
-      productionIDs.includes(timeSlot.id) : true;
+      productionIDs.includes(timeSlot.production_run) : true;
     const endpointCondition = endpointID !== undefined ? timeSlot.destination == endpointID : true;
 
     if(tracerCondition && endpointCondition){
       if(ids){
-        timeSlots.append(timeSlot.id)
+        timeSlots.push(timeSlot.id)
       } else {
-        timeSlots.append(timeSlot)
+        timeSlots.push(timeSlot)
       }
     }
   }
@@ -176,25 +180,78 @@ export function timeSlotsFilter({state, tracerID, day, endpointID, ids = false})
 }
 
 
-export function activityOrdersForTracer({state, timeSlotFilterArgs, ids=false}){
-  const timeSlotIDs = timeSlotFilterArgs !== undefined ? timeSlotsFilter({state : state,
+/**
+ *
+ * @param {TracershopState} state
+ * @param {{
+ *  timeSlotFilterArgs,
+ *  dateRange : DateRange | undefined
+ * }} param1
+ * @returns
+ */
+export function activityOrdersFilter(state, {
+    timeSlotFilterArgs,
+    status,
+    dateRange,
+    ids=false}){
+  const timeSlotIDs = timeSlotFilterArgs !== undefined ? timeSlotsFilter(state, {
                                        day : timeSlotFilterArgs.day,
                                        endpointID : timeSlotFilterArgs.endpointID,
                                        tracerID: timeSlotFilterArgs.tracerID,
                                        ids : true}) : undefined;
-  const activityOrders = [];
-  for(const activityOrder of state.activity_orders.values()){
-    const timeSlotCondition = timeSlotIDs !== undefined ?
-      timeSlotIDs.includes(activityOrder.ordered_time_slot) : true;
 
-    if(timeSlotCondition){
+  const activityOrders = [];
+
+  for(const order of state.activity_orders.values()){
+    const timeSlotCondition = timeSlotIDs !== undefined ?
+      timeSlotIDs.includes(order.ordered_time_slot) : true;
+    const statusCondition = status !== undefined
+        ? order.status === status : true;
+    const dateRangeCondition = dateRange !== undefined ?
+      dateRange.in_range(order.delivery_date) : true
+
+
+    if(timeSlotCondition && statusCondition && dateRangeCondition){
       if(ids){
-        activityOrders.push(activityOrder.id);
+        activityOrders.push(order.id);
       } else {
-        activityOrders.push(activityOrder);
+
+        activityOrders.push(order);
       }
     }
   }
 
   return activityOrders
 }
+
+/**
+ *
+ * @param {TracershopState} state
+ * @param {*} param1
+ * @returns
+ */
+export function injectionOrdersFilter(state, {
+  status,
+  dateRange,
+
+  ids
+}) {
+  const injectionOrders = [];
+
+  for(const order of state.injection_orders.values()){
+    const statusCondition = status !== undefined
+      ? order.status === status : true;
+    const dateRangeCondition = dateRange !== undefined ?
+      dateRange.in_range(order.delivery_date) : true
+
+    if(statusCondition && dateRangeCondition) {
+      if(ids){
+        injectionOrders.push(order.id)
+      } else {
+        injectionOrders.push(order)
+      }
+    }
+  }
+
+  return injectionOrders
+};

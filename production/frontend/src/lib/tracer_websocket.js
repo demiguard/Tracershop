@@ -10,7 +10,7 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
 
 import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
-import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction } from '~/lib/websocket_actions';
+import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction } from '~/lib/state_actions';
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
