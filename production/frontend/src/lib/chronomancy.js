@@ -279,3 +279,16 @@ export function getDateRangeForMonth(input_date){
   const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
   return new DateRange(startDate, endDate)
 }
+
+export function getDateRangeForDate(input_date){
+  const date = datify(input_date)
+  const startDate = new Date(date.getFullYear(),
+                             date.getMonth(),
+                             date.getDate(),
+                             0,0,0);
+  const endDate = new Date(date.getFullYear(),
+                           date.getMonth(),
+                           date.getDate(),
+                           23, 59, 59);
+  return new DateRange(startDate, endDate)
+}

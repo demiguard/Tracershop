@@ -88,10 +88,21 @@ export function dailyActivityOrderFilter(timeSlots, productions, delivery_date, 
 }
 
 /**
- *
+ * A specialized activityOrderFilter, which also gets productions, time slots,
+ * and orders
+ * TODO: rename this
  * @param {TracershopState} state
+ * @param {Day} day
+ * @param {Number} active_tracer id of the active tracer
+ * @param {Number} active_endpoint id of the active endpoint
+ * @param {String} activeDateString String representing a date on the format
+ * YYYY-MM-DD
  */
-export function getRelevantActivityOrders(state, day, active_tracer, active_endpoint, activeDateString){
+export function getRelevantActivityOrders(state,
+                                          day,
+                                          active_tracer,
+                                          active_endpoint,
+                                          activeDateString){
   const availableProductions =[...state.production.values()].filter(
     (production) => {
       return production.production_day === day && production.tracer === active_tracer

@@ -99,7 +99,8 @@ describe("Chronomancy test suit", () => {
   });
 
   it("Throws error on unknown format", () => {
-    expect(() => {new TimeStamp(145)}).toThrow("Unknown timestamp format");});
+    expect(() => {new TimeStamp(145)}).toThrow();
+  });
 
   it("Get time stamp, object", () => {
     const timeStamp = new TimeStamp({

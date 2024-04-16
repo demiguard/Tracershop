@@ -51,36 +51,37 @@ describe("Customer page tests suite", () => {
     }
   });
 
-  it("Filter users", async () => {
+  it("Filter users", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerPage/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    await act(async () => {
-      const form = await screen.findByLabelText('customer-filter')
+    act(() => {
+      const form = screen.getByLabelText('customer-filter')
       fireEvent.change(form, {target : {value : "Customer_3"}})
     })
 
     expect(screen.queryByText("Customer_1")).toBeNull();
-    expect(await screen.findByText("Customer_3")).toBeVisible();
+    expect(screen.getByText("Customer_3")).toBeVisible();
   });
-  it("Open & close setting", async () => {
+
+  it("Open & close setting", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerPage/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    await act(async () => {
-      const settingsIcon = await screen.findByLabelText('settings-3')
+    act(() => {
+      const settingsIcon = screen.getByLabelText('settings-3')
       settingsIcon.click()
-    })
+    });
     //TODO: This doesn't quite work
-    await act(async () => {
+    act(() => {
       const event = new KeyboardEvent('keydown', { key: 'Escape' })
       document.dispatchEvent(event)
-    })
+    });
   });
 });

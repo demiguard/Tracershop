@@ -58,6 +58,7 @@ AppState[DATA_USER_ASSIGNMENT] = user_assignments;
 
 export const testState = new TracershopState(
   users.get(1),
+  new Date(2020,4,5),
   address,
   activity_orders,
   bookings,

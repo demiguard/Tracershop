@@ -13,6 +13,7 @@ import { FirstSundayInNextMonth, LastMondayInLastMonth, expiredDeadline } from "
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { dateToDateString } from "~/lib/formatting";
 import { BitChain, OrderDateMapping } from "~/lib/data_structures";
+import { MonthSelector } from "~/components/injectable/month_selector";
 
 export const STATUS_COLORS = {
   [ORDER_STATUS.AVAILABLE] : "#d6d6d6",
@@ -40,12 +41,73 @@ const CALENDER_PROP_TYPES = {
   bit_chain : PropTypes.instanceOf(BitChain).isRequired,
 }
 
+//#region Day
+ /**
+  * A day in the calender
+  * @param {{
+ *   date : Number - date of active month, note that this date may correspond to a none existent
+ *          date of the month. such a 32 of Jan, this would mean the day that would be rendered
+ *          is the first of Feb
+ * }} props
+ * @returns {Element}
+ */
+function Day({date, calender_date, colorMap, calender_on_day_click, activeMonth}) {
+   const dateObject  = new Date(activeMonth.getFullYear(), activeMonth.getMonth(), date, 12);
+   const dateString = dateToDateString(dateObject)
+   const [backGroundColor, borderColor] = (colorMap.has(dateString)) ?  colorMap.get(dateString) : ["#FF00FF", "#FF00FF"];
+
+   const styles = {
+       width : "17%",
+       border: "5px",
+       borderColor : borderColor,
+       borderStyle: "solid",
+       borderRadius: "100%",
+       padding: "3px",
+       margin: "3px",
+       backgroundColor : backGroundColor,
+   }
+
+   if (compareDates(calender_date, dateObject)){
+     styles.fontFamily = "MariPoster"
+     styles.fontSize = "large";
+     styles.color = "blue";
+   }
+
+   return (
+     <div
+       style={styles}
+       aria-label={`calender-day-${dateObject.getDate()}`}
+       onClick={() => calender_on_day_click(dateObject)}> {dateObject.getDate()}</div>
+   );
+ }
+
+//#region Week
+
+function Week({activeMonth,
+               calender_date,
+               startingDate,
+               colorMap,
+               calender_on_day_click
+}) {
+  return(
+    <div className="d-flex weekrow">
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 1}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 2}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 3}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 4}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 5}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 6}/>
+    </div>
+  );
+}
+
+
 export function Calender({calender_date,
                           calender_on_day_click,
                           filter_activity_orders,
                           filter_injection_orders,
                           bit_chain,
-
                         }) {
   const state = useTracershopState();
   const websocket = useWebsocket();
@@ -103,89 +165,36 @@ export function Calender({calender_date,
 
     return colorMap;
   }
-  let colorMap = getColorMap();
+  const colorMap = getColorMap();
 
   /** This function is called when the user changes the current month
    *
    * @param {Number} changeBy - This number indicates how many months you wish to change by
    */
-  function changeMonth(changeBy) {
-    const year  = activeMonth.getFullYear();
-    const month = activeMonth.getMonth() + changeBy;
-
-    const NewMonth = new Date(year, month, 1, 12);
-
-    setActiveMonth(NewMonth)
+  function changeMonthCallback(newMonth) {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
-    message[WEBSOCKET_DATE] = NewMonth;
+    message[WEBSOCKET_DATE] = newMonth;
     websocket.send(message);
   }
 
- // ##### Render Functions ##### //
- /**
-  * A day in the calender
-  * @param {{
-  *   date : Number - date of active month, note that this date may correspond to a none existent
-  *          date of the month. such a 32 of Jan, this would mean the day that would be rendered
-  *          is the first of Feb
-  * }} props
-  * @returns {Element}
-  */
- function Day({date}) {
-    const dateObject  = new Date(activeMonth.getFullYear(), activeMonth.getMonth(), date, 12);
-    const dateString = dateToDateString(dateObject)
-    const [backGroundColor, borderColor] = (colorMap.has(dateString)) ?  colorMap.get(dateString) : ["#FF00FF", "#FF00FF"];
-
-    const styles = {
-        width : "17%",
-        border: "5px",
-        borderColor : borderColor,
-        borderStyle: "solid",
-        borderRadius: "100%",
-        padding: "3px",
-        margin: "3px",
-        backgroundColor : backGroundColor,
-    }
-
-    if (compareDates(calender_date, dateObject)){
-      styles.fontFamily = "MariPoster"
-      styles.fontSize = "large";
-      styles.color = "blue";
-    }
-
-    return (
-      <div
-        style={styles}
-        aria-label={`calender-day-${dateObject.getDate()}`}
-        onClick={() => calender_on_day_click(dateObject)}> {dateObject.getDate()}</div>
-    );
-  }
-
-  function Week({startingDate}) {
-    return(
-      <div className="d-flex weekrow">
-        <Day date={startingDate}/>
-        <Day date={startingDate + 1}/>
-        <Day date={startingDate + 2}/>
-        <Day date={startingDate + 3}/>
-        <Day date={startingDate + 4}/>
-        <Day date={startingDate + 5}/>
-        <Day date={startingDate + 6}/>
-      </div>
-    );
-  }
 
   let startingDate = LastMondayInLastMonth(activeMonth.getFullYear(), activeMonth.getMonth())
   const EndingDate = FirstSundayInNextMonth(activeMonth.getFullYear(), activeMonth.getMonth())
+  const weeks = [];
 
-    const weeks = [];
+  while (startingDate <= EndingDate) {
+    weeks.push((<Week
+                  calender_date={calender_date}
+                  calender_on_day_click={calender_on_day_click}
+                  activeMonth={activeMonth}
+                  colorMap={colorMap}
+                  startingDate={startingDate}
+                  key={weeks.length + 1}
+                />));
+    startingDate += DAYS_PER_WEEK;
+  }
 
-    while (startingDate <= EndingDate) {
-      weeks.push((<Week startingDate={startingDate} key={weeks.length + 1} />));
-      startingDate += DAYS_PER_WEEK;
-    }
-
-    return (
+  return (
     <div style={{
       padding: "0px",
       margin: "auto",
@@ -205,23 +214,12 @@ export function Calender({calender_date,
         }}
         className="calender-header flex-row d-flex justify-content-around"
       >
-        <div onClick={() => changeMonth(-1)}>
-          <img
-            aria-label="prev-month"
-            className="tableButton"
-            id="DecrementMonth"
-            alt="Sidste"
-            src="/static/images/prev.svg"/>
-        </div>
-        <div>
-          <p style={{margin : "0px"}}>{activeMonth.toLocaleString('default', {month:"long"})}</p>
-          <p style={{margin : "0px"}}>{activeMonth.toLocaleString('default', {year: "numeric"})}</p>
-        </div>
-        <div onClick={() => changeMonth(1)}>
-          <img
-            aria-label="next-month"
-            className="tableButton" id="IncreaseMonth" alt="Næste" src="/static/images/next.svg"/>
-        </div>
+        <MonthSelector
+          stateDate={activeMonth}
+          setDate={setActiveMonth}
+          callback={changeMonthCallback}
+          calender_on_day_click={calender_on_day_click}
+        />
       </div>
         <div className="calender-dates d-flex">
           <div className="calender-row"> Man</div>

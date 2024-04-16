@@ -1,7 +1,7 @@
 import React, { useRef, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
 import { Optional } from '~/components/injectable/optional';
-import { useContainerDimensions } from '~/lib/react_hooks';
+import { useContainerDimensions } from '~/effects/dimensions';
 
 function MonthRow({children}){
   return <Row style={{
@@ -26,7 +26,9 @@ function MonthContainer({children, onClick}){
   }}><div>{children}</div></Col>
 }
 
-export function MonthSelector({stateDate, setDate, callback}) {
+export function MonthSelector(props) {
+  const {stateDate, setDate, callback, ...rest} = props
+
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [tempDate, setTempDate] = useState(stateDate);
   const monthSelectorRef = useRef(null);

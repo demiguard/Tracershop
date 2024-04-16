@@ -6,12 +6,12 @@ import { Button, Col, FormControl, Row } from "react-bootstrap";
 import SiteStyles from '~/css/Site.module.css'
 
 // Tracershop imports imports
-import { StaticCanvas } from "~/components/injectable/Canvas";
+import { StaticCanvas } from "~/components/injectable/canvas";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { ActivityOrder, InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { TimeStamp, compareTimeStamp, datify, getDateRangeForMonth, getSiteDate, setSiteDate } from "~/lib/chronomancy";
 import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
-import { useContainerDimensions } from "~/lib/react_hooks";
+import { useContainerDimensions } from "~/effects/dimensions";
 import { activityOrdersFilter, injectionOrdersFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { HoverBox } from "~/components/injectable/hover_box";

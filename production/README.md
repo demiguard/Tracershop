@@ -1,33 +1,48 @@
 # Tracershop production
-*Last edited 2022-08-05*
+*Last edited 2024-04-16*
 
-This is a [django](https://www.djangoproject.com/) [ASGI](https://asgi.readthedocs.io/en/latest/specs/main.html) web site with a [react](https://reactjs.org/) frontend, that should run at the URL: http://tracershop-prod.petnet.rh.dk or simply http://tracershop-prod. It's a one site webpage. It consists of the following files & modules:
+This is a [django](https://www.djangoproject.com/)
+[ASGI](https://asgi.readthedocs.io/en/latest/specs/main.html) web site with a
+[react](https://reactjs.org/) frontend.
+It's available at: [Tracershop](https://tracershop.regionh.dk)
 
-- api
+It's a one site webpage. It consists of the following files & modules:
+
+##### Modules
+- core
+- database
+- data_scripts
 - frontend
 - lib
 - production
 - tests
 - TracerAuth
 - websocket
+
+##### Files
+- clearProductionDatabase.py
 - constants.py
 - config.py
 - manage.py
-- runTests.py
+- run_tests.py
+- copydog.py
+- generate_derived_javascript
+- import_data.py
+- importProductionDatabase.py
+- pingServiceHL7.py
+- shared_constants.py
+- vialdog.py
 
-In addition there's some other directorie:
-- \_\_pycache\_\_
-- legacy_code
-- log
-- test_pdfs
 
-This is a python application with a virtual environment found in the parent directory and should be activated before running any other command.
+This is a python application with a virtual environment found in the parent
+directory and should be activated before running any other command.
 > `source ../venv/bin/activate`
 
 Once this is done a test version of the server can be started using:
 > `python3 manage.py runserver`
 
-This opens the server locally, to open the server from connections else where run
+This opens the server locally, to open the server from connections else where
+run
 > `python3 manage.py runserver 0.0.0.0:8000`
 
 Which allows external computers to access the server.
@@ -36,7 +51,8 @@ To sync the django application models and the underlying mysql database run:
 > `python3 manage makemigrations`
 > `python3 manage migrate`
 
-Note this only creates the tables and constraints, and not the entries in the database. This can be done using
+Note this only creates the tables and constraints, and not the entries in the
+database. This can be done using
 > `python3 manage shell`
 > `>>> from api import models`
 > `models.<Model you wish to create>(table values).save()`
@@ -49,14 +65,17 @@ To generate a coverage report of the python tests run
 > `coverage run runTests.py`
 > `coverage report -m` or `coverage report -m --skip-covered`
 
-## Api
-The api is a depricated django module, that handles AJAX queries. The endpoints in here will slowly be moved into the websocket instead, since it's in theory faster. See [Source](https://www.geeksforgeeks.org/what-is-web-socket-and-how-it-is-different-from-the-http/) if wanna you waste 5 minutes.
+## Core
 
-Most of the module are views that interact with the database in some way, hence why it should be moved to the websocket.
+## Data Scripts
 
-TODO: This module consists of very important django models, these should probbally be moved into a new database module.
+## Database
 
 ## Frontend
+
+
+See [README](production/frontend/README.md) for details
+
 This is react the frontend, meaning it's mostly javascript code, however it also consits of the index endpoint and the static files at: *production/frontend/static/*
 
 The frontend is build using npm and webpack. However these commands must be run from the frontend directory.
