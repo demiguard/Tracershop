@@ -8,7 +8,7 @@ It's available at: [Tracershop](https://tracershop.regionh.dk)
 
 It's a one site webpage. It consists of the following files & modules:
 
-##### Modules
+#### Modules
 - core
 - database
 - data_scripts
@@ -19,7 +19,7 @@ It's a one site webpage. It consists of the following files & modules:
 - TracerAuth
 - websocket
 
-##### Files
+#### Files
 - clearProductionDatabase.py
 - constants.py
 - config.py
@@ -67,65 +67,35 @@ To generate a coverage report of the python tests run
 
 ## Core
 
+*There is only two hard things in computer science: Naming, cache invalidation*
+*and off by 1 problems ~Leon Bambrick*
+
+*All Problems of software can be solved by adding another layer of indirection*
+*except for the problem of too many levels of indirection*
+
+All programs, libraries and other software programs have dangling functions that
+are hard to place, are on the edge case of the software or are so small
+dedicating an entire module is overkill. The common solution is to add a
+`utils`, `lib` or a `core` module, that acts as catch all for these functions.
+
+The main problems is from an outsider perspective, it can be very hard to know
+what is inside of such a module. So for Tracershop I decided:
+
+* Core - Things that are completely independent of other tracershop modules.
+* Lib - Things that cannot be put into core.
+
+Note that i have not had the time to actually fix this.
+
+
 ## Data Scripts
 
 ## Database
 
 ## Frontend
+The front of the site, this is where the main http endpoint is located in views.
 
+See [README](frontend/README.md) for details.
 
-See [README](production/frontend/README.md) for details
-
-This is react the frontend, meaning it's mostly javascript code, however it also consits of the index endpoint and the static files at: *production/frontend/static/*
-
-The frontend is build using npm and webpack. However these commands must be run from the frontend directory.
-> `cd frontend`
-
-To build the react app run:
-> `npm run dev`
-
-This makes the compiler watch the frontend directory. To close the compiler again, send it a SIGINT. It compiles a development version, which is unsuited for production.
-To make it compile a production build run:
-> `npm run build`
-
-There's a handful of tests that can be run with:
-> `npm run test`
-
-The configuration for webpack is found at: *production/frontend/webpack.config.js*
-
-### The React Application
-A React app is build of composing components. All of the javascript source code can be found in *production/frontend/src* where the entry point is the *App.js*
-
-The app components contains a very large state, this is because, it's a requirement that the state is shared between simultaneous users. So when one user makes a change, the other users should be made aware of that change as fast as possible, such that users doesn't make conflicting changes. For instance if two users becomes aware of the need to make an order for a customer. Then the program should makes an attempt to ensure that the second user can see that the first user already have made the order.
-This is achieved by using websockets and keeping a large part of the database in memory, and then synchornizing as nessesary. This is also why websockets are needed, since HTTP is a stateless protocol, meaning that the server needs a method to send data unpromped to the user. Since having the entire database in memory is a bad idea, the tables with large amounts of data have been cut down. These are:
-- orders
-- t_orders
-- VAL
-However some full tables are contained in memory:
-- TracerCustomer
-- Tracers
-- Users (Kinda)
-- blockDeliverDate (kinda)
-- delvierTimes
-- isotopes
-- productions
-
-To ensure that the page can load without a copy of the state is saved in local memory, using [Local Storage](https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage) found in *src/lib/localstorageDriver.js*
-
-As described above this a one page site, this means that the user connect to the sites onces and in general doesn't makes additional HTTP requests, with the exception of making requests for resources. While this is goal, some of the code have been shamelessly stolen from the internet. The common use case is to use http protocol over websocket, hence the stolen parts are might be using some ajax ~ aka: HTTP requests.
-
-The site itself doesn't appear one site, and what you normally would considers differnt views can be found in *production/frontend/src/components/ProductionPages*
-The different pages can be found in pages directory, and the Pages constant found in *App.js*. This means it should be fairly easy to extend the App with additional pages:
-1. Create a new React component
-2. Import and add the component to the Pages constant
-
-The pages is then integrated automaticly with a button in the navbar should automaticly be created, that when the user clicks on it, the app displays that page. The viewed page is a part of the App state, meaning that all views have the same props, however they might use them differently or not at all. This is technically a break of encapsulation, but as far as my knowlegde goes it pointers passed around, and therefore shouldn't cause large performance problems.
-
-As there's quite a few promps or modals they have their own folder. Finally if some components are used multiple places, they should be placed under injectables.
-
-Commonly used function, that are not associated with a components or able to be generalized can be found in lib. There's also some common objects for rendering in there.
-
-**TODO**: Much of the react app remains untests, this should be ratified at some point.
 
 ## Lib
 This is where most library functions are placed. The two major components revovle around the legacy database. So first a little history lesson. Django require SQL 5.7 or greater, and the old tracershop is running on a 5.1 MYSQL database. Django have a pretty nice database abstration in models, that allows the programmer to ignore the existance of the database and "frees" the programmer from writting SQL. This is done by using models, where the class corospons to a table and an instance of a model (often) corospond to an entry of that table. Sadly Due to the matematical fact of 1 < 7, the old database cannot be used a django database and as such much of djangos model interface is unable to represent the old database. The concept of models and instances is useful and desired and is implemented in [Python's dataclasses](https://docs.python.org/3/library/dataclasses.html), to attempt to replicate the functionality of django models.
