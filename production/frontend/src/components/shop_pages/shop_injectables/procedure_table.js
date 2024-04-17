@@ -14,6 +14,7 @@ import { ClickableIcon } from "~/components/injectable/icons";
 import { parseDanishNumberInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
+import { InputSelect } from "~/components/injectable/input_select";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
@@ -119,6 +120,14 @@ export function ProcedureTable(){
             src="/static/images/update.svg"
             label={`update-${procedure.id}`}
             onClick={commit}
+          />
+        </td>
+        <td>
+          <InputSelect
+            data-testid={`tracer-${procedure.id}`}
+            options={tracerOptions}
+            value={tracer}
+            onChange={setStateToEvent(setTracer)}
           />
         </td>
       </tr>);
