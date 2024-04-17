@@ -8,9 +8,10 @@ import { db } from "~/lib/local_storage_driver.js";
 
 import SiteStyles from '~/css/Site.module.css'
 
-import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket , useTracershopDispatch} from "../tracer_shop_context.js";
 import { ProductionCalender } from "../injectable/derived_injectables/production_calender.js";
 import { Optional } from "~/components/injectable/optional.js";
+import { UpdateToday } from "~/lib/state_actions.js";
 
 const Tables = {
   activity : ActivityTable,
@@ -19,12 +20,10 @@ const Tables = {
 
 export function OrderPage() {
   const state = useTracershopState();
+  const dispatch = useTracershopDispatch()
+  const websocket = useWebsocket();
 
-  let /**@type {Date} */ today = db.get(DATABASE_TODAY);
-  if(!today || !today instanceof Date){
-    today = new Date();
-  }
-
+  let /**@type {Date} */ today = state.today;
   let /**@type {Number | null} */ activeTracerInit = db.get(DATABASE_ACTIVE_TRACER);
   if(!activeTracerInit) {
     const tracers = [...state.tracer.values()].filter(
@@ -36,17 +35,14 @@ export function OrderPage() {
   }
 
   const activeTableInit = (activeTracerInit == -1) ? "injections" : "activity";
-  const [activeDate, _setActiveDate] = useState(today);
   const [activeTracer, setActiveTracer] = useState(activeTracerInit);
   const [activeTable, setActiveTable] = useState(activeTableInit);
 
   // Calender functions
-  function setActiveDate(NewDate) {
-    db.set(DATABASE_TODAY, NewDate);
-    _setActiveDate(NewDate)
+  function setActiveDate(newDate) {
+    dispatch(new UpdateToday(newDate, websocket));
   }
 
-  // ##### End Calender Functions ##### //
   // ##### Render functions ##### //
 
   function renderTableSwitchButton(tracer) {
@@ -91,7 +87,7 @@ export function OrderPage() {
   const OrderTable = Tables[activeTable];
   const newProps = {
     [PROP_ACTIVE_TRACER] : activeTracer,
-    [PROP_ACTIVE_DATE] : activeDate
+    [PROP_ACTIVE_DATE] : today
   }
 
   return (
@@ -110,7 +106,7 @@ export function OrderPage() {
         <Col sm={1}></Col>
         <Col sm={3}>
           <ProductionCalender
-            active_date={activeDate}
+            active_date={today}
             on_day_click={setActiveDate}
           />
         </Col>

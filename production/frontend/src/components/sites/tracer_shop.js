@@ -73,14 +73,10 @@ export function TracerShop() {
   }
 
   const Site = get_site_from_user(tracershopState.logged_in_user);
-
   useEffect(() => {
     if(websocket !== null){
       const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE);
-      const today = db.get(DATABASE_TODAY);
-      if(today){
-        message[WEBSOCKET_DATE] = today;
-      }
+      message[WEBSOCKET_DATE] = tracershopState.today;
       websocket.send(message);
     }
   }, [websocket])

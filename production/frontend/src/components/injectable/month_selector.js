@@ -3,11 +3,16 @@ import { Col, Row } from 'react-bootstrap';
 import { Optional } from '~/components/injectable/optional';
 import { useContainerDimensions } from '~/effects/dimensions';
 
-function MonthRow({children}){
+function MonthRow(props){
+  const {children, style,...rest} = props;
+
   return <Row style={{
     margin : "0px",
-    height : "25%"
-  }}>
+    height : "25%",
+    ...style
+  }}
+   {...rest}
+  >
     {children}
   </Row>
 }
@@ -71,7 +76,7 @@ export function MonthSelector(props) {
   const MonthPicker = <div
     style={{position: "relative",
     width : "0px",
-    height : "0px"
+    height : "0px",
   }}>
     <div style={{
       position : "absolute",
@@ -123,8 +128,8 @@ export function MonthSelector(props) {
     </div>
   </div>
 
-  return (<div>
-  <div className='flex-row d-flex justify-content-around' ref={monthSelectorRef}>
+  return (<div style={{width : "100%"}}>
+  <div style={{width : "100%"}} className='flex-row d-flex justify-content-around' ref={monthSelectorRef}>
     <div onClick={() => changeMonth(-1)}>
       <img
         aria-label="prev-month"

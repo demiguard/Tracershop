@@ -6,6 +6,7 @@ import { db } from '~/lib/local_storage_driver';
 import { DATABASE_CURRENT_USER, DATABASE_TODAY } from '~/lib/constants';
 import { ParseDjangoModelJson } from '~/lib/formatting';
 import { datify } from '~/lib/chronomancy';
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
 
 const StateContext = createContext(new TracershopState());
 const DispatchContext = createContext({});
@@ -89,7 +90,8 @@ function tracershopReducer(state, action, websocket){
     newState.today = datify(action.updatedToday);
     if(action.websocket){
       action.websocket.send({
-
+        [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_GET_ORDERS,
+        [WEBSOCKET_DATE] : newState.today
       });
     }
     return newState;

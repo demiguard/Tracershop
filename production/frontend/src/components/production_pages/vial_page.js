@@ -1,16 +1,15 @@
 
 import React, { useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
+
+//
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS} from "~/lib/shared_constants"
-import { parseDate, parseDateToDanishDate } from "../../lib/formatting";
-
+import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
 import { setStateToEvent } from "../../lib/state_management";
-
-import { Vial } from "../../dataclasses/dataclasses";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
 import { DateInput } from "../injectable/inputs/date_input";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { ErrorInput } from "../injectable/inputs/error_input";
 import { parseDateInput } from "~/lib/user_input";
 
@@ -33,7 +32,8 @@ const SortingOptions = {
 
 
 export function VialPage(){
-  const state = useTracershopState()
+  const state = useTracershopState();
+  const dispatch = useTracershopDispatch();
   const websocket = useWebsocket();
   // State
   const [lotNumber, setLotNumber] = useState("");
@@ -63,6 +63,7 @@ export function VialPage(){
     if(validDate){
       setDateError("");
       const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
+      console.log(date)
       message[WEBSOCKET_DATE] = date;
       websocket.send(message);
     } else {
@@ -85,6 +86,13 @@ export function VialPage(){
           return false;
         }
       }
+      const [validDate, date] = parseDateInput(vialDay)
+      if(validDate){
+        if(dateToDateString(date) !== vial.fill_date){
+          return false;
+        }
+      }
+
       return true;
     }).sort((vial1, vial2) => {
       const invertedSearchFactor = (sortingInverted) ? -1 : 1;
@@ -96,11 +104,15 @@ export function VialPage(){
         case SortingOptions.DATE:
           const date1 = new Date(vial1.fill_date).valueOf();
           const date2 = new Date(vial2.fill_date).valueOf();
-          return (
-            isFinite(date1) && isFinite(date2) ?
-            invertedSearchFactor*((date1>date2) - (date1<date2)) :
-            NaN
-        );
+          if(date1 != date2){
+            return (
+              isFinite(date1) && isFinite(date2) ?
+              invertedSearchFactor*((date1>date2) - (date1<date2)) :
+              NaN
+            );
+          } else {
+            return invertedSearchFactor*((vial1.fill_time > vial2.fill_time) - (vial1.fill_time < vial2.fill_time));
+          }
         case SortingOptions.TIME:
           return invertedSearchFactor*((vial1.fill_time > vial2.fill_time) - (vial1.fill_time < vial2.fill_time));
         case SortingOptions.VOLUME:

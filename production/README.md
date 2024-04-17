@@ -86,10 +86,34 @@ what is inside of such a module. So for Tracershop I decided:
 
 Note that i have not had the time to actually fix this.
 
-
-## Data Scripts
-
 ## Database
+
+So here comes one my very few pain points with django. Which is their apps.
+I never really got what an "app" is, and how to separate the different aspects.
+
+From the django docs:
+
+*Projects vs. apps*
+*What’s the difference between a project and an app? An app is a web*
+*application that does something – e.g., a blog system, a database of public*
+*records or a small poll app. A project is a collection of configuration and*
+*apps for a particular website. A project can contain multiple apps. An app*
+*can be in multiple projects.*
+
+Okay, so the project maps to the entire website, while apps maps to part of the
+website. The problem is just when two apps want the same data, who should own
+the data?
+And here I am not talking about high polymorphic apps like the django-REST or
+channels, django-ldap-auth which makes very few assumptions about the data.
+
+Well you could merge the apps, however in that case you'll VERY quick end up
+with a single app, which isn't great, because it doesn't provide any separation.
+
+I also wish push back on the idea that everything should be easily separable.
+Mainly because a product is a product and a library is a library. When you write
+something it's very good to have an idea about what is your responsibility and
+just as important what isn't your responsibility.
+
 
 ## Frontend
 The front of the site, this is where the main http endpoint is located in views.

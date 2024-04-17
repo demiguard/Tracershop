@@ -14,9 +14,10 @@ import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_grou
 import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
 import { BookingOverview } from "./booking_overview.js";
+import { UpdateToday } from "~/lib/state_actions.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -26,17 +27,17 @@ const Content = {
 
 export function ShopOrderPage ({relatedCustomer}){
   const state = useTracershopState();
+  const dispatch = useTracershopDispatch();
+  const websocket = useWebsocket();
 
   const init = useRef({
     activeCustomer : null,
     activeEndpoint : null,
-    today : null,
     viewIdentifier : null,
   })
 
   if (init.current.activeCustomer === null
     || init.current.activeEndpoint === null
-    || init.current.today === null
     || init.current.viewIdentifier === null
   ){
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
@@ -60,15 +61,6 @@ export function ShopOrderPage ({relatedCustomer}){
       }
     }
 
-    let /**@type {Date} */ today = db.get(DATABASE_TODAY);
-
-    if(today === null || today === undefined){
-      today = new Date();
-      db.set(DATABASE_TODAY, today);
-    } if (typeof(today) === 'string'){
-      today = new Date(today.substring(1, today.length - 1));
-    }
-
     let viewIdentifier = db.get(DATABASE_SHOP_ORDER_PAGE);
     if (viewIdentifier === null){
       viewIdentifier = "Manuel";
@@ -78,19 +70,16 @@ export function ShopOrderPage ({relatedCustomer}){
     init.current = {
       activeCustomer : activeCustomer,
       activeEndpoint : activeEndpoint,
-      today : today,
       viewIdentifier : viewIdentifier,
     };
   }
 
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
   const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
-  const [today, setToday] = useState(init.current.today);
   const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
 
-  function setActiveDate(NewDate) {
-    db.set(DATABASE_TODAY, NewDate);
-    setToday(NewDate);
+  function setActiveDate(newDate) {
+    dispatch(new UpdateToday(newDate, websocket));
   }
 
   function setView(event){
@@ -119,12 +108,12 @@ export function ShopOrderPage ({relatedCustomer}){
 
   const activityDeadlineExpired = activityDeadline ?
                                     expiredDeadline(activityDeadline,
-                                                    today,
+                                                    state.today,
                                                     state.closed_date)
                                     : false;
   const injectionDeadlineExpired = injectionDeadline ?
                                     expiredDeadline(injectionDeadline,
-                                                    today,
+                                                    state.today,
                                                     state.closed_date)
                                     : false;
 
@@ -136,7 +125,7 @@ export function ShopOrderPage ({relatedCustomer}){
 
   const Site = Content[viewIdentifier];
   const siteProps = {
-    [PROP_ACTIVE_DATE] : today,
+    [PROP_ACTIVE_DATE] : state.today,
     [PROP_ACTIVE_CUSTOMER] : activeCustomer,
     [PROP_ACTIVE_ENDPOINT] : activeEndpoint,
     [PROP_VALID_ACTIVITY_DEADLINE] :  !Boolean(activityDeadlineExpired),
@@ -180,7 +169,7 @@ export function ShopOrderPage ({relatedCustomer}){
         <Row>
           <div>
             <ShopCalender
-              active_date={today}
+              active_date={state.today}
               active_endpoint={activeEndpoint}
               on_day_click={setActiveDate}
               time_slots={calenderTimeSlots}

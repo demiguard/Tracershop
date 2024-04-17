@@ -124,6 +124,13 @@ class TracershopModel(Model):
     return False
 
 
+#class DateIndexableModel(TracershopModel):
+#  @classmethod
+#  def date_index(cls, date_from, date_to):
+#    raise NotImplemented
+
+
+
 class Days(IntegerChoices):
   """Enum describing the days. Note these overlap with datetime module,
   so they can't be changed without break a fuck ton of code.
