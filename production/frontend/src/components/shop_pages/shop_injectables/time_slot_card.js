@@ -13,7 +13,7 @@ import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp, getTimeString } from "~/lib/chronomancy";
 import { compareLoosely, nullify, toMapping } from "~/lib/utils";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
@@ -43,6 +43,7 @@ export function TimeSlotCard({
   activityDeadlineValid,
 }){
   const state = useTracershopState();
+  const websocket = useWebsocket();
 
   // Prop extraction
   const timeSlot = state.deliver_times.get(timeSlotID);
@@ -124,6 +125,10 @@ export function TimeSlotCard({
       }];
     }
 
+    function deleteOrder(){
+      websocket.sendDeleteModel(DATA_ACTIVITY_ORDER, [order]);
+    }
+
     // Rewrite
     function commitCallBack(){
       setOrders(old => {
@@ -203,6 +208,13 @@ export function TimeSlotCard({
               callback={commitCallBack}
               add_image="/static/images/cart.svg"
               object_type={DATA_ACTIVITY_ORDER}
+            />
+          </Optional>
+          <Optional exists={canEdit && !changedTemp && ordered}>
+            <ClickableIcon
+              src={"static/images/decline.svg"}
+              onClick={deleteOrder}
+              label={`delete-order-${order.id}`}
             />
           </Optional>
         </Col>

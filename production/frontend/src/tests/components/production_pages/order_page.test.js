@@ -11,7 +11,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE,  
 import { AppState, testState } from "../../app_state.js";
 import { OrderPage } from "../../../components/production_pages/order_page.js";
 import { db } from "../../../lib/local_storage_driver.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -21,6 +21,8 @@ jest.mock('../../../components/production_pages/activity_table', () =>
 jest.mock('../../../components/production_pages/injection_table', () =>
   ({InjectionTable : () => <div>InjectionTableMocked</div>}))
 
+
+const dispatchMock = jest.fn();
 
 let websocket = null;
 
@@ -87,9 +89,11 @@ describe("Order Page tests", () => {
 
   it("Change day", async () => {
     render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <OrderPage/>
-      </WebsocketContextProvider>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <OrderPage/>
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
     </StateContextProvider>);
 
     await act(async () =>{
