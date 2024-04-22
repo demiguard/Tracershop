@@ -1,6 +1,7 @@
 import React from "react";
 import { Form } from "react-bootstrap";
 import propTypes from 'prop-types'
+import { InputSelect } from "~/components/injectable/input_select";
 
 export class Option {
   constructor(value, name){
@@ -48,17 +49,18 @@ export function toOptionsFromEnum(obj, namingFunction){
 
 
 export function Select(props) {
-  const newProps = {...props};
+  const {canEdit, options, ...newProps} = props;
 
-  if('canEdit' in props){
-    if(!props['canEdit']){
+  if(canEdit !== undefined || canEdit){
       newProps['disabled'] = true;
       delete newProps['onChange'];
     }
-    delete newProps['canEdit'];
+
+  if(options.length > 10){
+    return <InputSelect {...props}/>
   }
 
-  const Options = props.options.map(
+  const Options = options.map(
     (/** @type {Option} */option) => <option value={option.value} key={option.value}>
                   {option.name}
                 </option>);

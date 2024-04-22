@@ -12,8 +12,6 @@ const SetupTables = {
 }
 
 export function ShopSetup ({relatedCustomer: relatedCustomerID}){
-  console.log(relatedCustomerID)
-
   const [SetupTableIdentifier, setSetupTableIdentifier] = useState('Lokationer')
   const buttons = [...Object.keys(SetupTables)].map(
     (key, i) => <MarginButton

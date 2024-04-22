@@ -122,14 +122,6 @@ export function ProcedureTable(){
             onClick={commit}
           />
         </td>
-        <td>
-          <InputSelect
-            data-testid={`tracer-${procedure.id}`}
-            options={tracerOptions}
-            value={tracer}
-            onChange={setStateToEvent(setTracer)}
-          />
-        </td>
       </tr>);
   }
 

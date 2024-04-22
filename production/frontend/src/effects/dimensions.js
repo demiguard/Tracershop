@@ -1,13 +1,57 @@
 import React, { useEffect, useState } from "react";
 
+function getPixelNumber(pixelString){
+  const words = pixelString.split(" ");
+  const pixelRegex = /\d+(\.\d+)?px/g // Matches stuff like 0px and 141.13px
+
+  for(const pixelString of words){
+    if(!pixelRegex.test(pixelString)){
+      continue
+    }
+
+    const numberString = pixelString.substring(0, pixelString.length - 2)
+    return Number(numberString);
+  }
+  return 0;
+}
+
 export function useContainerDimensions(ref) {
-  const [dimensions, setDimensions] = useState({width : 0, height : 0});
+  const [dimensions, setDimensions] = useState({
+    width : 0,
+    height : 0,
+    padding : {
+      bottom : 0,
+      top : 0,
+      left : 0,
+      right : 0,
+    },
+    border : {
+      bottom : 0,
+      top : 0,
+      left : 0,
+      right : 0,
+    }
+  });
 
   useEffect(() => {
     function getDims() {
+      const style = window.getComputedStyle(ref.current);
+
       return {
         width : ref.current.offsetWidth,
         height : ref.current.offsetHeight,
+        padding : {
+          bottom : getPixelNumber(style["paddingBottom"]),
+          top : getPixelNumber(style["paddingTop"]),
+          right : getPixelNumber(style["paddingRight"]),
+          left : getPixelNumber(style["paddingLeft"]),
+        },
+        border : {
+          bottom : getPixelNumber(style["borderBottom"]),
+          top : getPixelNumber(style["borderTop"]),
+          right : getPixelNumber(style["borderRight"]),
+          left : getPixelNumber(style["borderLeft"]),
+        }
       }
     }
 

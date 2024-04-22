@@ -15,7 +15,7 @@ import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { setTempObjectToEvent } from "~/lib/state_management";
-import { InjectionOrderPDFUrl } from "~/lib/utils";
+import { InjectionOrderPDFUrl, compareLoosely } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { Optional } from "~/components/injectable/optional";
@@ -31,7 +31,7 @@ import { Optional } from "~/components/injectable/optional";
 *  injection_order : InjectionOrder
 *  injection_tracers : Array<Tracer>
 *  valid_deadline : Boolean
-* }} props 
+* }} props
 * @returns Element
 */
 export function InjectionOrderCard({
@@ -84,19 +84,19 @@ export function InjectionOrderCard({
       injections : injections,
       delivery_time : delivery_time,
       tracer_usage : Number(tempInjectionOrder.tracer_usage),
+      status : ORDER_STATUS.ORDERED,
     }];
   }
 
 
-  const changed = !(injection_order.tracer === tempInjectionOrder.tracer
-                  && nullParser(injection_order.injections) === tempInjectionOrder.injections
-                  && nullParser(injection_order.delivery_time) === tempInjectionOrder.delivery_time
-                  && injection_order.tracer_usage === tempInjectionOrder.tracer_usage);
+  const changed = !compareLoosely(injection_order, tempInjectionOrder);
 
   const canEdit = injection_order.status <= 1 && valid_deadline;
 
   let statusInfo = "Ny ordre";
-  if(0 < injection_order.status){
+  const orderExists = 0 < injection_order.status;
+
+  if(orderExists){
     statusInfo = `ID: ${injection_order.id}`;
   }
 
@@ -119,6 +119,12 @@ export function InjectionOrderCard({
         validate={validate}
       />
     }
+    if(!changed && valid_deadline && orderExists){
+      return <ClickableIcon
+        src="static/images/decline.svg"
+      />
+    }
+
 
     return "";
   })();
@@ -164,7 +170,7 @@ export function InjectionOrderCard({
                 readOnly
               />
            </TracershopInputGroup>
-        </Col>
+          </Col>
         </Optional>
         <Col xs={1}></Col>
       </Row>

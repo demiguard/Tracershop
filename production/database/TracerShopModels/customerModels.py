@@ -334,6 +334,7 @@ class InjectionOrder(TracershopModel):
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
     if(self.id is not None and self.id < 1):
       self.id = None
+
     super().save(user, *args, **kwargs)
 
 class Vial(TracershopModel):

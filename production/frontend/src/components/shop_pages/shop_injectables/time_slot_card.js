@@ -302,6 +302,7 @@ export function TimeSlotCard({
          display : 'flex',
        }}>
          <OpenCloseButton
+            open={collapsed}
             label={`open-time-slot-${timeSlot.id}`}
             setOpen={setCollapsed}
          />
