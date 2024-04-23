@@ -72,7 +72,7 @@ def process_path(path: Path):
   processed_path = False
   while not processed_path:
     process = Process(target=handle_path, args=[path])
-    process.run()
+    process.start()
     pid = process.pid
     process.join(2.0)
     if process.is_alive():
