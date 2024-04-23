@@ -199,6 +199,11 @@ LOGGING = {
             'style' : '{',
             'format' : '[{asctime}] {message}'
         },
+        'vial.formatter' : {
+          '()' : 'logging.Formatter',
+          'style' : '{',
+          'format' : '[{asctime}] {process} {thread} - {message}'
+        }
     },
     'handlers': {
         'console': {
@@ -248,7 +253,7 @@ LOGGING = {
             'filename' : vialLogger_file_log,
             'when' : 'D',
             'backupCount' : 4,
-            'formatter' : 'django.server'
+            'formatter' : 'vial.formatter'
         }
     },
     'loggers': {
