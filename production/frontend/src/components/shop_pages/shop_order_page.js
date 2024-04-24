@@ -6,7 +6,8 @@ import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
 import { DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
+  PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
+  PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
 } from "../../lib/constants.js";
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
   ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";

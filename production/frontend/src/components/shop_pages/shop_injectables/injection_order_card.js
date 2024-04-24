@@ -139,6 +139,9 @@ export function InjectionOrderCard({
           </Optional>
         </Col>
         <Col>
+        <div style={{
+          display : "ruby"
+        }}>
           <TracershopInputGroup label="Tracer">
             <Select
               aria-label={`tracer-input-${injection_order.id}`}
@@ -146,8 +149,9 @@ export function InjectionOrderCard({
               options={tracerOptions}
               onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
               value={tempInjectionOrder.tracer}
-            />
+              />
           </TracershopInputGroup>
+          </div>
         </Col>
         <Col>
           <TracershopInputGroup label="Injectioner">

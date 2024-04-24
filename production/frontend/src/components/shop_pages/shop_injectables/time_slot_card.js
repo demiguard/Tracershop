@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 
 import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope, TracershopState } from "../../../dataclasses/dataclasses";
-import { dateToDateString, nullParser } from "../../../lib/formatting";
+import { dateToDateString, nullParser, renderDateTime } from "../../../lib/formatting";
 
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
@@ -225,7 +225,8 @@ export function TimeSlotCard({
   const [thirdColumnContent, fourthColumnContent] = (() => {
     if(orderCollection.minimum_status == ORDER_STATUS.RELEASED){
       const freed_time = (orderCollection.freed_time != null) ?
-                        orderCollection.freed_time : "Ukendt tidspunk!";
+                          renderDateTime(orderCollection.freed_time).substring(0,5)
+                        : "Ukendt tidspunk!";
       return [
         `Udleveret ${orderCollection.delivered_activity} MBq`,
         `Frigivet kl: ${freed_time}`,

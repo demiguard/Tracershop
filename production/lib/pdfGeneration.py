@@ -525,7 +525,15 @@ def DrawReleaseCertificate(filename :str,
 
   formatted_date = order_date.strftime("%d:%m:%Y")
   pivot_production = productions[0]
-  pivot_vial = vials[0]
+  if len(vials):
+    pivot_vial = vials[0]
+  else:
+    pivot_order = orders[0]
+    pivot_vial = Vial(
+      fill_date = pivot_order.freed_datetime.date(),
+      fill_time = pivot_order.freed_datetime.time(),
+      lot_number = "Ukendt batch nummer"
+    )
 
   production_datetime = datetime(pivot_vial.fill_date.year,
                                  pivot_vial.fill_date.month,
@@ -682,8 +690,13 @@ def DrawReleaseCertificate(filename :str,
         timezone_aware = timezone.make_naive(order.freed_datetime)
       except ValueError:
         timezone_aware = order.freed_datetime
+      except AttributeError:
+        timezone_aware = order.freed_datetime
 
-      freed = timezone_aware.strftime('%H:%M %d/%m/%Y')
+      if timezone_aware is not None:
+        freed = timezone_aware.strftime('%H:%M %d/%m/%Y')
+      else:
+        freed = "Ukendt tidspunkt"
     else:
       order_id = ""
       ordered_activity = ""

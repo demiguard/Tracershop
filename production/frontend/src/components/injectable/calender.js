@@ -9,11 +9,12 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "~/lib/shared_const
 
 import PropTypes from 'prop-types'
 
-import { FirstSundayInNextMonth, LastMondayInLastMonth, expiredDeadline } from "~/lib/chronomancy";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { FirstSundayInNextMonth, LastMondayInLastMonth, datify, expiredDeadline } from "~/lib/chronomancy";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { dateToDateString } from "~/lib/formatting";
 import { BitChain, OrderDateMapping } from "~/lib/data_structures";
 import { MonthSelector } from "~/components/injectable/month_selector";
+import { UpdateToday } from "~/lib/state_actions";
 
 export const STATUS_COLORS = {
   [ORDER_STATUS.AVAILABLE] : "#d6d6d6",
@@ -111,6 +112,7 @@ export function Calender({calender_date,
                         }) {
   const state = useTracershopState();
   const websocket = useWebsocket();
+  const dispatch = useTracershopDispatch();
   const [activeMonth, setActiveMonth] = useState(calender_date);
 
   function getColorMap(){
@@ -172,9 +174,7 @@ export function Calender({calender_date,
    * @param {Number} changeBy - This number indicates how many months you wish to change by
    */
   function changeMonthCallback(newMonth) {
-    const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
-    message[WEBSOCKET_DATE] = newMonth;
-    websocket.send(message);
+    dispatch(new UpdateToday(datify(newMonth), websocket))
   }
 
 
