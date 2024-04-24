@@ -299,3 +299,7 @@ export function formatTimeStamp(date){
                                       minute : "2-digit"
   })
 }
+
+export function escapeInputString(string){
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}

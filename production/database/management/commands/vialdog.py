@@ -4,6 +4,8 @@ import io
 import os
 import logging
 import re
+from multiprocessing import Process
+from threading import Thread
 from pathlib import Path
 from time import sleep
 import traceback
@@ -32,6 +34,8 @@ dbi = DatabaseInterface()
 
 VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
+
+
 
 
 class Command(BaseCommand):
@@ -66,7 +70,25 @@ class Command(BaseCommand):
     logger.debug(f"Started with customer mapping: {customer_mapping}")
 
 
+    def process_path(path: Path):
+      logger.info(f"Started to process {path}")
+      processed_path = False
+      while not processed_path:
+        process = Process(target=handle_path, args=[path])
+        process.start()
+        pid = process.pid
+        process.join(2.0)
+        if process.is_alive():
+          process.terminate()
+          logger.info(f"process {pid} timeouted!")
+        else:
+          processed_path = True
+        process.close() #
+      logger.info(f"Finished processing {path}")
+
+
     def handle_path(path):
+      logger.getLogger(VIAL_LOGGER)
       logger.debug("Aquiring channel Layer")
       channel_layer = get_channel_layer()
       logger.debug("Aquired channel Layer")
@@ -127,7 +149,8 @@ class Command(BaseCommand):
       def on_created(self, event: FileCreatedEvent):
         logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
         val_path = Path(event.src_path)
-        handle_path(val_path)
+        val_thread = Thread(target=process_path, args=[val_path])
+        val_thread.run()
 
       def on_modified(self, event: FileCreatedEvent):
         if event.is_directory:

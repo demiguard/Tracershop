@@ -147,7 +147,7 @@ export function VialPage(){
 
   return (
     <Container>
-      <Row>
+      <Row className="justify-content-center">
         <Col>
           <TracershopInputGroup label="Lot nummer Filter">
             <FormControl
@@ -158,16 +158,20 @@ export function VialPage(){
             />
           </TracershopInputGroup>
         </Col>
-        <Col>
-          <TracershopInputGroup label="Kunde Filter">
-            <CustomerSelect
-              data-testid="customer-select"
-              value={customerID}
-              customers={state.customer}
-              emptyCustomer
-              onChange={setStateToEvent(setCustomer)}
-            />
-          </TracershopInputGroup>
+          <Col>
+            <div style={{
+              display : "ruby"
+            }}>
+              <TracershopInputGroup label="Kunde Filter">
+                <CustomerSelect
+                  data-testid="customer-select"
+                  value={customerID}
+                  customers={state.customer}
+                  emptyCustomer
+                  onChange={setStateToEvent(setCustomer)}
+                  />
+              </TracershopInputGroup>
+          </div>
         </Col>
         <Col>
           <TracershopInputGroup label="Dato">

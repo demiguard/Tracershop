@@ -794,7 +794,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   async def HandleCreateUserAssignment(self, message):
     user = await get_user(self.scope)
-
     username = message['username']
     customerID = message['customer_id']
 

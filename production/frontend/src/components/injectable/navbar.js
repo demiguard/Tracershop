@@ -2,8 +2,15 @@ import React, { Component } from "react";
 import { Navbar, Nav, Container, Button  } from "react-bootstrap";
 import styles from "~/css/Navbar.module.css"
 
-
 const NavBarButtonType = "primary";
+
+function getName(key, names, identifier){
+  if(key === identifier){
+    return <u>{names[identifier]}</u>
+  } else {
+    return <div>{names[identifier]}</div>
+  }
+}
 
 export function TracershopNavbar({
   ActiveKey,
@@ -13,31 +20,31 @@ export function TracershopNavbar({
   NavbarElements,
   setActivePage,
 }){
-
-  const Elements = (NavbarElements) ? NavbarElements : [];
+  const elements = NavbarElements ? [...NavbarElements] : [];
   for(const identifier of Object.keys(Names)) {
-      Elements.push(<Button
-        aria-label={`navbar-${identifier}`}
-        className={styles.NavbarElement}
-        variant={NavBarButtonType}
-        key={identifier}
-        onClick={() => setActivePage(identifier)}
-      >{identifier === ActiveKey ? <div><u>{Names[identifier]}</u></div> : <div>{Names[identifier]}</div>}</Button>);
-    }
-
+    const innerHTML = getName(ActiveKey, Names, identifier);
+    elements.push(<Button
+      aria-label={`navbar-${identifier}`}
+      className={styles.NavbarElement}
+      variant={NavBarButtonType}
+      key={identifier}
+      onClick={() => setActivePage(identifier)}
+    >{innerHTML}</Button>);
+  }
 
   if (isAuthenticated){
-    Elements.push((<Button
+    elements.push(
+    <Button
       className={styles.NavbarElement}
       key="logout"
       onClick={logout}
-      variant={NavBarButtonType}>Log ud</Button>));
+      variant={NavBarButtonType}>
+        Log ud
+    </Button>);
   }
 
   return (<Navbar className={styles.navbarMargin}>
     <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
-    {Elements}
+    {elements}
   </Navbar>);
 }
-
-

@@ -5,11 +5,9 @@ import { FormControl } from "react-bootstrap";
 import PropTypes from 'prop-types'
 import { Customer } from "../../../dataclasses/dataclasses";
 
-const propTypes = PropTypes // WELL I COULDN*T RENAME IN THE IMPORT
-
 /**
- * 
- * @param {*} param0 
+ * This is a select for customers
+ * @param {*} param0
  */
 export function CustomerSelect(props){
   let /**@type {Array<Customer>}  */ customerOptions = []  // this is a turnary but, i think this easier to read
@@ -40,7 +38,7 @@ export function CustomerSelect(props){
   />
 }
 
-CustomerSelect.propTypes = {
-  customers : PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.instanceOf(Customer)), PropTypes.instanceOf(Map)]).isRequired,
-  customerEmpty : PropTypes.oneOf([undefined, propTypes.bool])
-}
+// CustomerSelect.propTypes = {
+  // customers : PropTypes.oneOfType([PropTypes.arrayOf(PropTypes.instanceOf(Customer)), PropTypes.instanceOf(Map)]).isRequired,
+  // customerEmpty : PropTypes.oneOf([undefined, propTypes.bool])
+// }

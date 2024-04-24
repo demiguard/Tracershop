@@ -5,6 +5,7 @@ import { Optional } from "~/components/injectable/optional";
 import { RelativeAnchor } from "~/components/injectable/relative_anchor";
 import { Option } from "~/components/injectable/select";
 import { useContainerDimensions } from "~/effects/dimensions";
+import { escapeInputString } from "~/lib/formatting";
 
 
 function InputOption({style, option, onOptionClick}){
@@ -101,7 +102,7 @@ export function InputSelect(props){
   function updateUserInput(event){
     const value = event.target.value;
     setUserInput(value);
-    const lowerCaseValue = value.toLocaleLowerCase();
+    const lowerCaseValue = escapeInputString(value).toLocaleLowerCase();
     setFilterRegex(lowerCaseValue);
     if(inverseMapping.has(lowerCaseValue)){
       onChange({target: {value : inverseMapping.get(lowerCaseValue)}});
@@ -110,6 +111,10 @@ export function InputSelect(props){
 
   function onFocus(){
     setIsFocused(true);
+    if(!value){
+      setUserInput("");
+      setFilterRegex("");
+    }
   }
 
   function onBlur(){
@@ -147,8 +152,9 @@ export function InputSelect(props){
     <RelativeAnchor>
       <img
         onClick={() => {
-          setIsFocused(true);
-          setFilterRegex("");
+          if(!isFocused){
+            ref.current.focus()
+          }
         }}
         src="static/images/arrow_down.svg"
         style={{

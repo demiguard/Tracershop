@@ -434,7 +434,12 @@ class DatabaseInterface():
     return [customerID for customerID in customerIDs]
 
   @database_sync_to_async
-  def createUserAssignment(self, username, customer_id, creating_user) -> Tuple[SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, Optional[UserAssignment], Optional[User]]:
+  def createUserAssignment(self,
+                           username : str,
+                           customer_id : int,
+                           creating_user) -> Tuple[SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,
+                                                   Optional[UserAssignment],
+                                                   Optional[User]]:
     try:
       customer = Customer.objects.get(pk=customer_id)
     except ObjectDoesNotExist:
@@ -452,10 +457,13 @@ class DatabaseInterface():
 
       if ldap_user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
         user_created = True
-        user = User(username=username, user_group=ldap_user_group)
+        user = User(username=username.upper(), user_group=ldap_user_group)
         user.save(creating_user)
       else:
         return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
+
+    if not user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
+      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
 
     user_assignment = UserAssignment(user=user, customer=customer)
     user_assignment.save(creating_user)
