@@ -18,8 +18,27 @@ function MonthRow(props){
 }
 
 function MonthContainer({children, onClick}){
+  const [styleState, setStyleState] = useState({background : "#FFFFFF"})
+
+  function onHover(){
+    if(onClick){
+      setStyleState({
+        background : "#bdfffd"
+      })
+    }
+  }
+
+  function onLeave(){
+    if(onClick){
+      setStyleState({
+        background : "#ffffff"
+      })
+    }
+  }
 
   return <Col
+  onMouseEnter={onHover}
+  onMouseLeave={onLeave}
   onClick={onClick}
   style={{
     display : "flex",
@@ -28,6 +47,7 @@ function MonthContainer({children, onClick}){
     alignItems : "center",
     border : "1px",
     borderStyle : "solid",
+    ...styleState
   }}><div>{children}</div></Col>
 }
 
@@ -99,8 +119,9 @@ export function MonthSelector(props) {
           src="/static/images/prev.svg"/>
         </MonthContainer>
         <MonthContainer>{tempDate.toLocaleString('default', {year: "numeric"})}</MonthContainer>
-        <MonthContainer><img
+        <MonthContainer
           onClick={() => {changeTempYear(1)}}
+        ><img
           aria-label="next-year"
           className="tableButton"
           id="DecrementYear"
