@@ -562,7 +562,7 @@ def DrawReleaseCertificate(filename :str,
   table_row_y_top_2 = table_row_y_top_1 - template.line_height * 1.5
   table_row_y_top_3 = table_row_y_top_1 - template.line_height * 3.0
   table_row_y_top_4 = table_row_y_top_1 - template.line_height * 4.5
-  table_row_y_top_5 = table_row_y_top_1 - template.line_height * 4.5
+  table_row_y_top_5 = table_row_y_top_1 - template.line_height * 6
   table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 11.5
 
 
@@ -720,7 +720,7 @@ def DrawReleaseCertificate(filename :str,
     if i < len(vials):
       vial = vials[i]
       calibration_time = f"{vial.fill_time.isoformat('minutes')}"
-      vial_activity = f"{toDanishDecimalString(vial.activity)} MBq"
+      vial_activity = f"{toDanishDecimalString(vial.activity, 0)} MBq"
       volume = f"{toDanishDecimalString(vial.volume)} ml"
     else:
       calibration_time = ""
