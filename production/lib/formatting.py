@@ -107,3 +107,8 @@ def formatFrontendErrorMessage(message: Dict) -> str:
     tracershop_code_regex.search(string) is not None, raw_split_stack)]
 
   return f"\"{raw_error_message}\" raised at: " + "\n".join(split_stack).strip()
+
+def toDanishDecimalString(number, decimals = 2):
+  if decimals == 0:
+    return str(int(number))
+  return str(round(number, decimals)).replace('.', ',')

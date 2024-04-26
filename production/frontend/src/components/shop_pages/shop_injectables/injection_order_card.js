@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Col, Form, Row } from "react-bootstrap";
 import propTypes from 'prop-types';
 
@@ -88,11 +88,36 @@ export function InjectionOrderCard({
     }];
   }
 
+  useEffect(function updateNewTracerSelection() {
+    const current_tracer = tempInjectionOrder.tracer;
+
+    for(const tracer of injection_tracers){
+      if (tracer.id === current_tracer){
+        return;
+      }
+    }
+    const newCurrent = injection_tracers[0].id;
+
+    setTempInjectionOrder(inj_order => {
+      return {
+        ...inj_order,
+        tracer : newCurrent
+      };
+    });
+  },[injection_tracers]);
+
+  useEffect(function updateInjectionOrder() {
+    setTempInjectionOrder(inj => {
+      return {
+        ...inj,
+        ...injection_order
+      }
+    });
+  },[injection_order]);
+
 
   const changed = !compareLoosely(injection_order, tempInjectionOrder);
-
   const canEdit = injection_order.status <= 1 && valid_deadline;
-
   let statusInfo = "Ny ordre";
   const orderExists = 0 < injection_order.status;
 
@@ -124,8 +149,6 @@ export function InjectionOrderCard({
         src="static/images/decline.svg"
       />
     }
-
-
     return "";
   })();
 

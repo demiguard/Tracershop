@@ -28,9 +28,9 @@ export function toOptions(iterable, nameKey='name', valueKey = 'id'){
     return iterable.map(toOption);
   } else {
     for(const entry of iterable){
-      options.push(toOption(entry))
+      options.push(toOption(entry));
     }
-    return options
+    return options;
   }
 }
 
@@ -39,10 +39,10 @@ export function toOptionsFromEnum(obj, namingFunction){
   const options = [];
   for(let [name, id] of Object.entries(obj)){
     if(namingFunction !== undefined){
-      name = namingFunction(name, id)
+      name = namingFunction(name, id);
     }
 
-    options.push(new Option(id, name))
+    options.push(new Option(id, name));
   }
   return options;
 }
@@ -51,7 +51,7 @@ export function toOptionsFromEnum(obj, namingFunction){
 export function Select(props) {
   const {canEdit, options, ...newProps} = props;
 
-  if(canEdit !== undefined || canEdit){
+  if(canEdit !== undefined && !canEdit){
       newProps['disabled'] = true;
       delete newProps['onChange'];
     }

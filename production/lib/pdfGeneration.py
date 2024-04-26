@@ -40,7 +40,7 @@ WIDTH, HEIGHT = A4
 
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES
-from lib.formatting import dateConverter, timeConverter, mapTracerUsage
+from lib.formatting import dateConverter, timeConverter, mapTracerUsage, toDanishDecimalString
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
 
@@ -523,6 +523,8 @@ def DrawReleaseCertificate(filename :str,
   x_cursor = start_x_cursor
   y_cursor = 400
 
+  customer = endpoint.owner
+
   formatted_date = order_date.strftime("%d:%m:%Y")
   pivot_production = productions[0]
   if len(vials):
@@ -545,7 +547,7 @@ def DrawReleaseCertificate(filename :str,
   production_date_string = production_datetime.strftime("%d/%m-%Y")
 
   # this should be a function
-  title = "BATCH FRIGIVELSESCERTIFIKAT"
+  title = "FRIGIVELSESCERTIFIKAT"
   if fonts: #pragma: no cover
     bold_font = 'Mari_Bold'
   else:
@@ -560,7 +562,8 @@ def DrawReleaseCertificate(filename :str,
   table_row_y_top_2 = table_row_y_top_1 - template.line_height * 1.5
   table_row_y_top_3 = table_row_y_top_1 - template.line_height * 3.0
   table_row_y_top_4 = table_row_y_top_1 - template.line_height * 4.5
-  table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 10
+  table_row_y_top_5 = table_row_y_top_1 - template.line_height * 4.5
+  table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 11.5
 
 
   # First line of the first table
@@ -568,67 +571,79 @@ def DrawReleaseCertificate(filename :str,
   box_abscissa_end = WIDTH - start_x_cursor
   box_abscissa_middle_1 = (box_abscissa_end - box_abscissa_start) * 0.4
   box_abscissa_middle_2 = (box_abscissa_end - box_abscissa_start) * 0.5
-  # Boxes 1
+  # Box 1
   template.p_drawBox((box_abscissa_start,    table_row_y_top_1),
                      (box_abscissa_middle_1, table_row_y_top_1 - template.line_height * 1.5))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_1),
                      (box_abscissa_middle_2, table_row_y_top_1 - template.line_height * 1.5))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_1),
                      (box_abscissa_end,      table_row_y_top_1 - template.line_height * 1.5))
-  # Boxes 2
+  # Box 2
   template.p_drawBox((box_abscissa_start,    table_row_y_top_2),
                      (box_abscissa_middle_1, table_row_y_top_2 - template.line_height * 1.5))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_2),
                      (box_abscissa_middle_2, table_row_y_top_2 - template.line_height * 1.5))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_2),
                      (box_abscissa_end,      table_row_y_top_2 - template.line_height * 1.5))
-  # Boxes 3
+  # Box 3
   template.p_drawBox((box_abscissa_start,    table_row_y_top_3),
                      (box_abscissa_middle_1, table_row_y_top_3 - template.line_height * 1.5))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_3),
                      (box_abscissa_middle_2, table_row_y_top_3 - template.line_height * 1.5))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_3),
                      (box_abscissa_end,      table_row_y_top_3 - template.line_height * 1.5))
-  # Boxes 4
+  # Box 4
   template.p_drawBox((box_abscissa_start,    table_row_y_top_4),
-                     (box_abscissa_middle_1, table_row_y_top_bottom))
+                     (box_abscissa_middle_1, table_row_y_top_5))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_4),
-                     (box_abscissa_middle_2, table_row_y_top_bottom))
+                     (box_abscissa_middle_2, table_row_y_top_5))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_4),
+                     (box_abscissa_end,      table_row_y_top_5))
+  # Box 5
+  template.p_drawBox((box_abscissa_start,    table_row_y_top_5),
+                     (box_abscissa_middle_1, table_row_y_top_bottom))
+  template.p_drawBox((box_abscissa_middle_1, table_row_y_top_5),
+                     (box_abscissa_middle_2, table_row_y_top_bottom))
+  template.p_drawBox((box_abscissa_middle_2, table_row_y_top_5),
                      (box_abscissa_end,      table_row_y_top_bottom))
 
   header_box_text_start = box_abscissa_start + 5
 
-  template.drawBoldString(header_box_text_start, table_row_y_top_1 - template.line_height, "Produktnavn")
-  template.drawBoldString(header_box_text_start, table_row_y_top_2 - template.line_height, "Batchnummer")
-  template.drawBoldString(header_box_text_start, table_row_y_top_3 - template.line_height, "Fremstillingsdato")
-  template.drawBoldString(header_box_text_start, table_row_y_top_4 - template.line_height, "Fremstiller")
+  template.drawBoldString(header_box_text_start, table_row_y_top_1 - template.line_height, "Modtager")
+  template.drawBoldString(header_box_text_start, table_row_y_top_2 - template.line_height, "Produktnavn")
+  template.drawBoldString(header_box_text_start, table_row_y_top_3 - template.line_height, "Batchnummer")
+  template.drawBoldString(header_box_text_start, table_row_y_top_4 - template.line_height, "Fremstillingsdato")
+  template.drawBoldString(header_box_text_start, table_row_y_top_5 - template.line_height, "Fremstiller")
 
   header_box_text_info_start = box_abscissa_middle_2 + 5
   template.drawString(header_box_text_info_start,
                       table_row_y_top_1 - (template.line_height),
-                      pivot_production.tracer.clinical_name)
+                      customer.long_name)
+
   template.drawString(header_box_text_info_start,
                       table_row_y_top_2 - (template.line_height),
-                      pivot_vial.lot_number)
+                      pivot_production.tracer.clinical_name)
   template.drawString(header_box_text_info_start,
                       table_row_y_top_3 - (template.line_height),
+                      pivot_vial.lot_number)
+  template.drawString(header_box_text_info_start,
+                      table_row_y_top_4 - (template.line_height),
                       production_date_string)
   # Line 1
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (template.line_height),
+                      table_row_y_top_5 - (template.line_height),
                       "Cyklotron og Radiokemi, enhed 3982")
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (2 * template.line_height),
+                      table_row_y_top_5 - (2 * template.line_height),
                       "Afdeling for Klinisk Fysiologi og Nuklear Medicin")
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (3 * template.line_height),
+                      table_row_y_top_5 - (3 * template.line_height),
                       "Rigshospitalet")
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (4 * template.line_height),
+                      table_row_y_top_5 - (4 * template.line_height),
                       "Blegdamsvej 9")
   template.drawString(header_box_text_info_start,
-                      table_row_y_top_4 - (5 * template.line_height),
+                      table_row_y_top_5 - (5 * template.line_height),
                       "2100 København Ø")
 
   # Table 2 Header
@@ -685,7 +700,7 @@ def DrawReleaseCertificate(filename :str,
     if i < len(orders):
       order = orders[i]
       order_id = str(order.id)
-      ordered_activity = f"{order.ordered_activity} MBq"
+      ordered_activity = f"{toDanishDecimalString(order.ordered_activity, 0)} MBq"
       try:
         timezone_aware = timezone.make_naive(order.freed_datetime)
       except ValueError:
@@ -705,8 +720,8 @@ def DrawReleaseCertificate(filename :str,
     if i < len(vials):
       vial = vials[i]
       calibration_time = f"{vial.fill_time.isoformat('minutes')}"
-      vial_activity = f"{vial.activity} MBq"
-      volume = f"{vial.volume} ml"
+      vial_activity = f"{toDanishDecimalString(vial.activity)} MBq"
+      volume = f"{toDanishDecimalString(vial.volume)} ml"
     else:
       calibration_time = ""
       vial_activity = ""

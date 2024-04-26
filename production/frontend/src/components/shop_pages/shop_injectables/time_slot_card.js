@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Card, Collapse, Col, Form, FormControl, InputGroup, Row } from "react-bootstrap";
+import { Card, Collapse, Col, Row } from "react-bootstrap";
 
-import { ActivityOrder, ActivityDeliveryTimeSlot, Vial, Isotope, TracershopState } from "../../../dataclasses/dataclasses";
+import { ActivityOrder } from "../../../dataclasses/dataclasses";
 import { dateToDateString, nullParser, renderDateTime } from "../../../lib/formatting";
 
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
@@ -9,7 +9,6 @@ import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants
 import { ActivityDeliveryIcon, ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 
-import SiteStyles from '../../../css/Site.module.css'
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp, getTimeString } from "~/lib/chronomancy";
 import { compareLoosely, nullify, toMapping } from "~/lib/utils";
@@ -21,7 +20,6 @@ import { ActivityOrderCollection } from "~/lib/data_structures";
 import { Optional } from "~/components/injectable/optional";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { appendNewObject, reset_error, setTempMapToEvent, set_state_error } from "~/lib/state_management";
-
 
 /**
 * This is a card, representing the users view of ActivityDeliveryTimeSlot
