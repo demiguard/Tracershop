@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import { Navbar, Nav, Container, Button  } from "react-bootstrap";
+import { WebsocketIcon } from "~/components/injectable/icons";
 import styles from "~/css/Navbar.module.css"
 
 const NavBarButtonType = "primary";
@@ -46,5 +47,6 @@ export function TracershopNavbar({
   return (<Navbar className={styles.navbarMargin}>
     <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
     {elements}
+    <WebsocketIcon/>
   </Navbar>);
 }

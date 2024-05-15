@@ -84,6 +84,7 @@ export class TracerWebSocket {
     }
 
     this._ws.onclose = function(e) {
+      console.log("Websocket is now closed!")
       for(const [messageID, channel] of this._PromiseMap){
         channel.port1.close();
         channel.port2.close();
@@ -118,6 +119,10 @@ export class TracerWebSocket {
     this._ws.onerror = this._ws.onerror.bind(this);
   }
 
+  close(){
+    this._ws.close();
+  }
+
   /** Creates a message object, that latter can be send by the websocket
    *
    * @param {String} messageType - a WEBSOCKET_MESSAGE_* constants
@@ -130,17 +135,35 @@ export class TracerWebSocket {
   }
 
   async safeSend(message, websocket){
-    var iter = 0;
-    var readyState = websocket.readyState;
-    while(iter < 10 && readyState === 0){
-      await new Promise(r => setTimeout(r, 100));
-      readyState = websocket.readyState
-    }
-    if(websocket.readyState === WebSocket.OPEN){
-      websocket.send(JSON.stringify(message));
-    } else {
-      console.log("Websocket was unable to send a message")
-   }
+    let readyState = websocket.readyState;
+    switch(readyState) {
+      case WebSocket.CONNECTING:
+        let iter = 0;
+        while(iter < 10 && websocket.readyState === WebSocket.CONNECTING){
+          await new Promise(r => setTimeout(r, 100));
+        }
+        if(websocket.readyState !== WebSocket.OPEN){
+          throw {
+            columnNumber : "",
+            fileName : "",
+            lineLumber : "",
+            message : "The Websocket is disconnected from the server",
+            stack : "",
+          }
+        }
+      // Deliberate fall through
+      case WebSocket.OPEN:
+        websocket.send(JSON.stringify(message));
+        break;
+      default:
+        throw {
+          columnNumber : "",
+          fileName : "",
+          lineLumber : "",
+          message : "The Websocket is disconnected from the server",
+          stack : "",
+        };
+    };
   }
 
   /**
@@ -168,9 +191,9 @@ export class TracerWebSocket {
 
     if(this._ws.readyState === WebSocket.CLOSING ||
        this._ws.readyState === WebSocket.CLOSED
-      ) {
-        this._ws
-      }
+     ) {
+       this._ws = new WebSocket("ws://" + window.location.host + "/ws/");
+     }
 
     // Note that this function actually does the sending
     // The promises is just to call an async function.

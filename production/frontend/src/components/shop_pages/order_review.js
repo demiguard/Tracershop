@@ -13,6 +13,8 @@ import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../tracer_shop_context";
 import { TracerCatalog } from "~/lib/data_structures";
 import { getRelevantActivityOrders } from "~/lib/filters";
+import { Optional } from "~/components/injectable/optional";
+import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 
 
 /**
@@ -101,7 +103,18 @@ export function OrderReview({active_endpoint,
       injection_tracers = {availableInjectionTracers}
       valid_deadline={injectionDeadlineValid}
     />);
-  })
+  });
+
+  const /**@type {ServerConfiguration | undefined} */ serverConfig = state.server_config.get(1);
+  const /**@type {Deadline | undefined} */ activityDeadline = (serverConfig !== undefined) ?
+                                                                  state.deadline.get(serverConfig.global_activity_deadline)
+                                                                  : undefined;
+  const /**@type {Deadline | undefined} */ injectionDeadline = (serverConfig !== undefined) ?
+                                                                   state.deadline.get(serverConfig.global_injection_deadline)
+                                                                   : undefined;
+
+
+
 
   if(injectionDeadlineValid && (availableInjectionTracers.length > 0)) {
     InjectionOrderCards.push(<InjectionOrderCard
@@ -120,11 +133,25 @@ export function OrderReview({active_endpoint,
                                   null, null , null)}
                                 injection_tracers = {availableInjectionTracers}
                                 valid_deadline={injectionDeadlineValid}
-  />);
+                              />);
   }
 
   return (
   <Row>
+    <Row>
+      <Col>
+        <DeadlineDisplay
+          deadline_name="aktivites ordre"
+          deadline={activityDeadline}
+        />
+      </Col>
+      <Col>
+        <DeadlineDisplay
+          deadline_name="injektions ordre"
+          deadline={injectionDeadline}
+        />
+      </Col>
+    </Row>
     <Row style={{margin : '15px'}}>
       <Col>{tracerButtons}</Col>
     </Row>
@@ -133,9 +160,9 @@ export function OrderReview({active_endpoint,
         Der ikke valgt en aktivitets tracer, klik på en af dem for at bestille den.
       </h3>}
     </Row>
-    { InjectionOrderCards.length ?
-      <Row style={{margin : '15px'}}><h3>Injection Ordre</h3></Row> : ""}
-    { InjectionOrderCards.length ?
-      <Row>{InjectionOrderCards}</Row>  : "" }
+    <Optional exists={!!(InjectionOrderCards.length)}>
+      <Row style={{margin : '15px'}}><h3>Injection Ordre</h3></Row>
+      <Row>{InjectionOrderCards}</Row>
+    </Optional>
   </Row>);
 }

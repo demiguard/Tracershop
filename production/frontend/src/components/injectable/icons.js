@@ -5,6 +5,7 @@ import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from '~/datac
 import { ActivityOrderCollection } from '~/lib/data_structures'
 import { ORDER_STATUS } from '~/lib/constants'
 import { InjectionOrderPDFUrl, openActivityReleasePDF } from '~/lib/utils'
+import { useWebsocket } from '~/components/tracer_shop_context'
 
 export function ClickableIcon ({
     altText,
@@ -141,11 +142,11 @@ delete injectionDeliveryIconInheritedPropTypes['onClick'];
 
 
 export function InjectionDeliveryIcon(props){
-  const newProps = {...props}
-  delete newProps['order']
+  const {order, ...newProps} = props;
+
   return <ClickableIcon
   src="/static/images/delivery.svg"
-  onClick={() => window.location = InjectionOrderPDFUrl(props.order)}
+  onClick={() => window.location = InjectionOrderPDFUrl(order)}
   {...newProps}  // This is here to make props overwrite default props
   />
 }
@@ -153,4 +154,17 @@ export function InjectionDeliveryIcon(props){
 InjectionDeliveryIcon.propTypes = {
   ...injectionDeliveryIconInheritedPropTypes,
   order: propTypes.instanceOf(InjectionOrder).isRequired
+}
+
+export function WebsocketIcon(){
+  const websocket = useWebsocket();
+  if(!websocket){
+    return <div></div>
+  }
+
+  switch(websocket._ws.readyState){
+
+    default:
+      return <div></div>
+  }
 }

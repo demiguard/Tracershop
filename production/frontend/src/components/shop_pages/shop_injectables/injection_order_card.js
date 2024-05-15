@@ -177,7 +177,7 @@ export function InjectionOrderCard({
           </div>
         </Col>
         <Col>
-          <TracershopInputGroup label="Injectioner">
+          <TracershopInputGroup label="Injektioner">
             <ErrorInput error={errorInjections}>
               <EditableInput
                 aria-label={`injections-input-${injection_order.id}`}

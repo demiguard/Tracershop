@@ -65,6 +65,28 @@ export class TimeStamp {
   toMinutes(){
     return this.hour * 60 + this.minute + Math.floor(this.second / 60);
   }
+
+  toVerboseString(){
+    let timeString = "";
+
+    if(this.hour === 1){
+      timeString += "1 time";
+    } else if(this.hour !== 0) {
+      timeString += `${this.hour} timer`;
+    }
+
+    if(this.minute === 1){
+      timeString += "1 minut";
+    } else if(this.minute !== 0) {
+      timeString += `${this.minute} minutter`;
+    }
+
+    return timeString;
+  }
+
+  toDisplayString(){
+    return `${FormatDateStr(this.hour)}:${FormatDateStr(this.minute)}:${FormatDateStr(this.second)}`;
+  }
 }
 
 
@@ -72,14 +94,25 @@ export function compareTimeStamp(timeStamp_1, timeStamp_2){
   timeStamp_1 = new TimeStamp(timeStamp_1);
   timeStamp_2 = new TimeStamp(timeStamp_2);
 
+  let hours = timeStamp_1.hour - timeStamp_2.hour
+  let minutes = timeStamp_1.minute - timeStamp_2.minute
+  let seconds = timeStamp_1.second - timeStamp_2.second
+
+  if (seconds < 0){
+    minutes--;
+    seconds += 60;
+  }
+  if(minutes < 0){
+    hours--;
+    minutes += 60;
+  }
+
   return new TimeStamp({
-    hour : timeStamp_1.hour - timeStamp_2.hour,
-    minute : timeStamp_1.minute - timeStamp_2.minute,
-    second : timeStamp_1.second - timeStamp_2.second,
+    hour   : hours,
+    minute : minutes,
+    second : seconds,
   });
 }
-
-
 
 /**
  * So javascript has the american interpretation of days, something to be fixed
@@ -207,6 +240,12 @@ export function expiredDeadline(deadline, orderDate, closedDates,  now){
   const deadlineDate = calculateDeadline(deadline, orderDate);
 
   return deadlineDate < now;
+}
+
+export function sameDate(date_1, date_2){
+  return date_1.getDate() === date_2.getDate() &&
+         date_1.getMonth() === date_2.getMonth() &&
+         date_1.getFullYear() === date_2.getFullYear();
 }
 
  /** Calculate the amount of days in the month

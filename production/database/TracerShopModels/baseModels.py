@@ -105,7 +105,6 @@ class TracershopModel(Model):
       action = self.canCreate(user)
       CreateModelAuditEntry.log(user, self, action)
     else:
-      print(f"Editing {self.__class__.__name__} with id: {self.pk}")
       action = self.canEdit(user)
       EditModelAuditEntry.log(user, self, action)
 
