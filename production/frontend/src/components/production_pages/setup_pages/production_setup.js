@@ -27,15 +27,16 @@ export function ProductionSetup(){
   );
   const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id;
   const [tracerID, setTracer] = useState(tracerInit);
-  const NumberTracerID = numberfy(tracerID)
+  const NumberTracerID = numberfy(tracerID);
   const tempProductionInit = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", "", "")
   const [tempProduction, setTempProduction] = useState(tempProductionInit);
+  const [errorTime, setTimeError] = useState("");
 
   const productions = [...state.production.values()].filter((production) =>
     production.tracer === NumberTracerID);
 
   function setNewProduction(){
-    const default_production = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", "", "")
+    const default_production = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", null);
     setTempProduction(default_production);
   }
 
@@ -51,6 +52,11 @@ export function ProductionSetup(){
 
   function validate(){
     const [validTime, formattedTime] = parseTimeInput(tempProduction.production_time, 'Produktions tidpunktet');
+
+    if(!validTime){
+      setTimeError(formattedTime);
+      return [false, {}];
+    }
 
     return [validTime, {...tempProduction,
                         production_time : formattedTime,
@@ -82,7 +88,7 @@ export function ProductionSetup(){
 
   /**
    * Called when the weekly time table determine the color of an entry
-   * @param {ActivityDeliveryTimeSlot} entry - 
+   * @param {ActivityDeliveryTimeSlot} entry -
    * @returns {string}
    */
   function weeklyTimeTableEntryColor(entry){
@@ -94,7 +100,7 @@ export function ProductionSetup(){
   }
 
   /**
-   * 
+   *
    * @param {ActivityProduction} activityProduction
    */
   function weeklyTimeTableEntryOnClick(activityProduction){
@@ -106,9 +112,9 @@ export function ProductionSetup(){
   }
 
   /**
-   * 
-   * @param {ActivityProduction} activityProduction 
-   * @returns 
+   *
+   * @param {ActivityProduction} activityProduction
+   * @returns
    */
   function weeklyTimeTableLabelFunction(activityProduction){
     return `activity-production-${activityProduction.id}`;
@@ -146,7 +152,7 @@ export function ProductionSetup(){
         />
       </Col>
       <Col>
-        <ErrorInput error="">
+        <ErrorInput error={errorTime}>
           <TimeInput
             aria-label="production-time"
             value={tempProduction.production_time}

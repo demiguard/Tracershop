@@ -66,6 +66,7 @@ export function InputSelect(props){
 
   const ref = useRef(null);
   const {width, height, border, padding} = useContainerDimensions(ref)
+
   const iconSize = 18; // pixels
   const [userInput, setUserInput] = useState(initial_userInput);
   const [filterRegex, setFilterRegex] = useState("");
@@ -122,7 +123,8 @@ export function InputSelect(props){
   }
 
   const OptionsHTML = (
-      <div style={{
+    <div
+      style={{
         zIndex : 2,
         position: "relative",
         marginTop : "2px",
@@ -133,43 +135,46 @@ export function InputSelect(props){
         borderStyle : "solid",
         borderRadius : "3px",
       }}>
-        {validOptions}
-      </div>
-    );
+      {validOptions}
+    </div>
+  );
+
+  const left_padding = width - padding.left - iconSize;
+  const top_padding = height - padding.bottom;
 
   return (
-  <div style={{
-    flex : "auto"
-  }}>
-    <Form.Control
-      ref={ref}
-      onFocus={onFocus}
-      onBlur={onBlur}
-      value={userInput}
-      onChange={updateUserInput}
-      {...rest}
-    />
-    <RelativeAnchor>
-      <img
-        onClick={() => {
-          if(!isFocused){
-            ref.current.focus()
-          }
-        }}
-        src="static/images/arrow_down.svg"
-        style={{
-          height : `${iconSize}px`,
-          width :  `${iconSize}px`,
-          position : "relative",
-          left : `${width - padding.left - iconSize}px`,
-          top : `-${height - padding.bottom}px`,
-        }}
-        />
-      </RelativeAnchor>
-    <Optional exists={isFocused}>
+    <div
+    style={{ flex : "min-content" }}
+    >
+      <Form.Control
+        ref={ref}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        value={userInput}
+        onChange={updateUserInput}
+        {...rest}
+      />
       <RelativeAnchor>
-        {OptionsHTML}
+        <img
+          onClick={() => {
+            if(!isFocused){
+              ref.current.focus();
+            }
+          }}
+          src="static/images/arrow_down.svg"
+          style={{
+            height : `${iconSize}px`,
+            width :  `${iconSize}px`,
+            position : "relative",
+            left : `${left_padding}px`,
+            top : `-${top_padding}px`,
+          }}
+          />
       </RelativeAnchor>
-    </Optional>
+      <Optional exists={isFocused}>
+        <RelativeAnchor>
+          {OptionsHTML}
+        </RelativeAnchor>
+      </Optional>
   </div>);
 }

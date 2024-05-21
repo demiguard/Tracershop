@@ -78,6 +78,7 @@ def process_path(path: Path):
     if process.is_alive():
       process.terminate()
       logger.info(f"process {pid} timeouted!")
+      sleep(1)
     else:
       processed_path = True
     process.close() #
@@ -102,7 +103,7 @@ def handle_path(path: Path):
     logger.error(f"Traceback: {traceback.format_exc()}")
     return
 
-  logger.debug(f"Read File content: {file_content}")
+  logger.debug(f"Read File {path} content: {file_content}")
   vial = parse_val_file(file_content, logger)
   logger.debug(f"Parsed File to vial: {vial}")
 

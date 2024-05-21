@@ -98,10 +98,11 @@ parserFunctions = {
   'volume': _parse_volume,
 }
 
-def parse_val_file(file_content: List[str], logger) -> Vial:
+def parse_val_file(file_content: List[str], logger : Logger) -> Vial:
   vial = Vial()
   keyword_regex = re.compile("(\w+):")
   for val_string in file_content:
+    logger.debug(f"Parsing {val_string}")
     match = keyword_regex.match(val_string)
     if match is None:
       logger.error(f"Could not Parse line: {val_string}")

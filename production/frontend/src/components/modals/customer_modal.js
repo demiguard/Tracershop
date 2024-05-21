@@ -1,5 +1,5 @@
 
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import { Modal, Row, FormControl, Col, Form, Container, InputGroup } from "react-bootstrap";
 import propTypes from "prop-types";
 
@@ -27,13 +27,106 @@ import { CommitButton } from "../injectable/commit_button.js";
 import { parseDanishPositiveNumberInput, parseStringInput, parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input.js";
 import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { clone } from "~/lib/serialization.js";
-import { tracerTypeFilter } from "~/lib/filters.js";
+import { timeSlotsFilter, tracerTypeFilter } from "~/lib/filters.js";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
+import { Optional } from "~/components/injectable/optional.js";
 
 function MarginInputGroup({children}){
   return (<InputGroup style={{marginTop : "5px"}}>
     {children}
   </InputGroup>)
 }
+
+function DeliveryTimeTable({tempTimeSlotID, setTempTimeSlot, timeSlots}){
+  const state = useTracershopState();
+  /**
+   * Gets how far to the left a time slot should be in the graph
+   * @param {ActivityDeliveryTimeSlot} timeSlot
+   * @returns {Number}
+   */
+  function weeklyTimeTableDayGetter(timeSlot) {
+    const production = state.production.get(timeSlot.production_run);
+    return production.production_day;
+  }
+
+  /**
+   * Gets how far down the weekly time table an entry should be
+   * @param {ActivityDeliveryTimeSlot} timeSlot - The entry in question
+   * @returns {Number}
+   */
+  function weeklyTimeTableHourGetter(timeSlot) {
+    const hour = Number(timeSlot.delivery_time.substring(0,2));
+    const minutes = Number(timeSlot.delivery_time.substring(3,5));
+    return hour + minutes / 60
+  }
+
+  /**
+   * This produces the function that is called when the user clicks on an floating
+   * timeslot (entry)
+   * @param {ActivityDeliveryTimeSlot} entry
+   */
+  function weeklyTimeTableEntryOnClick(entry){
+    setTempTimeSlot({...entry});
+  }
+
+  function weeklyTimeTableInnerText(entry){
+    return <div style={{
+      display: 'block',
+      marginLeft: 'auto',
+      marginRight: 'auto',
+      width: '50%',
+      //padding : '0px',
+    }}><ClickableIcon
+      src={"static/images/delivery.svg"}
+    /></div>
+  }
+
+  /**
+   * get the color of said entry
+   * @param {ActivityDeliveryTimeSlot} entry -
+   * @returns {string}
+   */
+  function weeklyTimeTableEntryColor(entry){
+    if(entry.id == tempTimeSlotID){
+      return 'orange';
+    }
+
+    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ALL){
+      return 'lightblue';
+    }
+    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.EVEN){
+      return 'lightgreen';
+    }
+    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ODD){
+      return '#FFEE99';
+    }
+    /* istanbul ignore next */
+    throw "Unknown weekly repeat"
+  }
+
+  /**
+   * creates a label to be tagged to the cell, created by the entry
+   * @param {ActivityDeliveryTimeSlot} entry - entry in question
+   * @returns {String}
+   */
+  function weeklyTimeTableLabelFunction(entry){
+    // This function exists to create targets for test to select for
+    return `time-slot-${entry.id}`
+  }
+
+  const weeklyTimeTableProps = {
+    [WEEKLY_TIME_TABLE_PROP_ENTRIES] : timeSlots,
+    [WEEKLY_TIME_TABLE_PROP_DAY_GETTER] : weeklyTimeTableDayGetter,
+    [WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] : weeklyTimeTableHourGetter,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] : weeklyTimeTableEntryOnClick,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] : weeklyTimeTableEntryColor,
+    [WEEKLY_TIME_TABLE_PROP_INNER_TEXT] : weeklyTimeTableInnerText,
+    [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
+  };
+
+  return <WeeklyTimeTable {...weeklyTimeTableProps}/>;
+}
+
 
 export function CustomerModal({active_customer, on_close}) {
   const state = useTracershopState();
@@ -73,8 +166,8 @@ export function CustomerModal({active_customer, on_close}) {
   function initializeProductionRun(activity_tracer) {
     /**
      * Compares two activity production to find the better default
-     * @param {ActivityProduction | null} prod_1 
-     * @param {ActivityProduction} prod_2 
+     * @param {ActivityProduction | null} prod_1
+     * @param {ActivityProduction} prod_2
      * @returns {ActivityProduction}
      */
     function compare_productions(prod_1, prod_2){
@@ -149,9 +242,25 @@ export function CustomerModal({active_customer, on_close}) {
   const customerDirty = !compareLoosely(customer, tempCustomer);
   const [dispenserError, setDispenserError] = useState("");
 
+  // Effects
+  useEffect(function updateProduction(){
+    const initial_production = initializeProductionRun(activeTracer);
+    setTempTimeSlot(oldTimeSlot => {
+      return {
+        ...oldTimeSlot,
+        production_run : initial_production
+      };
+    });
+  }, [activeTracer]);
+
+  const availableTimeSlots = timeSlotsFilter(state, {
+    tracerID : activeTracer,
+    endpointID : tempEndpoint.id,
+  });
+
   function initializeNewTimeSlot(){
     setTempTimeSlot({...cleanTimeSlot});
-  }
+  };
 
   // These function should also import tempTimeSlot
   function setActiveEndpoint(newEndpointID){
@@ -204,7 +313,6 @@ export function CustomerModal({active_customer, on_close}) {
     return [true, {...tempCustomer, dispenser_id : dispenser}];
   }
 
-
   const endpointDirty = !compareLoosely(endpoint, tempEndpoint);
   const [tempEndpointError, setTempEndpointError] = useState({
       name : "",
@@ -212,170 +320,80 @@ export function CustomerModal({active_customer, on_close}) {
       city : "",
       phone : "",
       zip_code : "",
-    })
+  });
 
-    function validateEndpoint(){
-      const [validName, name] = parseStringInput(tempEndpoint.name, 'Navnet', 32, false);
-      const [validAddress, address] = parseStringInput(tempEndpoint.address, 'Addressen', 128);
-      const [validCity, city] = parseStringInput(tempEndpoint.city, 'Byen', 128);
-      const [validZipCode, zipCode] = parseStringInput(tempEndpoint.zip_code, 'Post koden', 32);
-      const [validPhone, phone] = parseStringInput(tempEndpoint.phone, 'Telefon nummeret', 32);
+  function validateEndpoint(){
+    const [validName, name] = parseStringInput(tempEndpoint.name, 'Navnet', 32, false);
+    const [validAddress, address] = parseStringInput(tempEndpoint.address, 'Addressen', 128);
+    const [validCity, city] = parseStringInput(tempEndpoint.city, 'Byen', 128);
+    const [validZipCode, zipCode] = parseStringInput(tempEndpoint.zip_code, 'Post koden', 32);
+    const [validPhone, phone] = parseStringInput(tempEndpoint.phone, 'Telefon nummeret', 32);
 
-      const newError = {
-        name : "",
-        address : "",
-        city : "",
-        phone : "",
-        zip_code : "",
-      };
-
-      if (!validName){ newError.name = name;}
-      if (!validAddress){ newError.address = address;}
-      if (!validCity){ newError.city = city;}
-      if (!validZipCode){ newError.zip_code = zipCode;}
-      if (!validPhone){ newError.phone = phone;}
-      setTempEndpointError(newError);
-
-      if (!validName || !validAddress || !validCity || !validZipCode || !validPhone ){
-        return [false,{}];
-      }
-
-
-      return [true, {...tempEndpoint,
-        name : name,
-        address : nullify(address),
-        city : nullify(city),
-        phone : nullify(phone),
-        zip_code : nullify(zipCode),
-        owner : active_customer}];
-    }
-
-    function commit_callback(response){
-      if(tempEndpoint.id === -1){
-        const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT], new Map(), DATA_ENDPOINT);
-          for(const endpointID of map.keys()){
-            // it's only one iteration long
-            setActiveEndpoint(endpointID);
-            break;
-        }
-      }
-    }
-
-  function DeliveryTimeTable(){
-  /**
-   * Gets how far to the left a time slot should be in the graph
-   * @param {ActivityDeliveryTimeSlot} timeSlot
-   * @returns {Number}
-   */
-  function weeklyTimeTableDayGetter(timeSlot) {
-    const production = state.production.get(timeSlot.production_run);
-    return production.production_day;
-  }
-
-  /**
-   * Gets how far down the weekly time table an entry should be
-   * @param {ActivityDeliveryTimeSlot} timeSlot - The entry in question
-   * @returns {Number}
-   */
-  function weeklyTimeTableHourGetter(timeSlot) {
-    const hour = Number(timeSlot.delivery_time.substring(0,2));
-    const minutes = Number(timeSlot.delivery_time.substring(3,5));
-    return hour + minutes / 60
-  }
-
-  /**
-   * This produces the function that is called when the user clicks on an floating
-   * timeslot (entry)
-   * @param {ActivityDeliveryTimeSlot} entry
-   */
-  function weeklyTimeTableEntryOnClick(entry){
-    setTempTimeSlot({...entry});
-  }
-
-  function weeklyTimeTableInnerText(entry){
-    return <div style={{
-      display: 'block',
-      marginLeft: 'auto',
-      marginRight: 'auto',
-      width: '50%',
-      //padding : '0px',
-    }}><ClickableIcon
-      src={"static/images/delivery.svg"}
-    /></div>
-  }
-
-  /**
-   * get the color of said entry
-   * @param {ActivityDeliveryTimeSlot} entry - 
-   * @returns {string}
-   */
-  function weeklyTimeTableEntryColor(entry){
-    if(entry.id == tempTimeSlot.id){
-      return 'orange';
-    }
-
-    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ALL){
-      return 'lightblue';
-    }
-    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.EVEN){
-      return 'lightgreen';
-    }
-    if(entry.weekly_repeat == WEEKLY_REPEAT_CHOICES.ODD){
-      return '#FFEE99';
-    }
-    /* istanbul ignore next */
-    throw "Unknown weekly repeat"
-  }
-
-  /**
-   * creates a label to be tagged to the cell, created by the entry
-   * @param {ActivityDeliveryTimeSlot} entry - entry in question
-   * @returns {String}
-   */
-  function weeklyTimeTableLabelFunction(entry){
-    // This function exists to create targets for test to select for
-    return `time-slot-${entry.id}`
-  }
-
-    const timeSlots = []
-
-    for(const timeSlot of state.deliver_times.values()){
-      if(timeSlot.destination === tempEndpoint.id){
-        timeSlots.push(timeSlot);
-      }
-    }
-
-    const weeklyTimeTableProps = {
-      [WEEKLY_TIME_TABLE_PROP_ENTRIES] : timeSlots,
-      [WEEKLY_TIME_TABLE_PROP_DAY_GETTER] : weeklyTimeTableDayGetter,
-      [WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] : weeklyTimeTableHourGetter,
-      [WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] : weeklyTimeTableEntryOnClick,
-      [WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] : weeklyTimeTableEntryColor,
-      [WEEKLY_TIME_TABLE_PROP_INNER_TEXT] : weeklyTimeTableInnerText,
-      [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
+    const newError = {
+      name : "",
+      address : "",
+      city : "",
+      phone : "",
+      zip_code : "",
     };
 
-    return(<WeeklyTimeTable {...weeklyTimeTableProps}/>);
+    if(!validName){
+      newError.name = name;
+    }
+    if(!validAddress){
+      newError.address = address;
+    }
+    if(!validCity){
+      newError.city = city;
+    }
+    if(!validZipCode){
+      newError.zip_code = zipCode;
+    }
+    if(!validPhone){
+      newError.phone = phone;
+    }
+    setTempEndpointError(newError);
+
+    if (!validName || !validAddress || !validCity || !validZipCode || !validPhone ){
+      return [false,{}];
+    }
+
+    return [true, {...tempEndpoint,
+      name : name,
+      address : nullify(address),
+      city : nullify(city),
+      phone : nullify(phone),
+      zip_code : nullify(zipCode),
+      owner : active_customer}];
+  }
+
+  function commit_callback(response){
+    if(tempEndpoint.id === -1){
+      const map = ParseDjangoModelJson(response[WEBSOCKET_DATA][DATA_ENDPOINT], new Map(), DATA_ENDPOINT);
+        for(const endpointID of map.keys()){
+          // it's only one iteration long
+          setActiveEndpoint(endpointID);
+          break;
+      }
+    }
   }
 
   // Note that tempTimeSlot cannot be a state value here as it might
   // Change when the user changes endpoint.
-  const timeSlotCorrect = (tempTimeSlot.id === -1) ? cleanTimeSlot : state.deliver_times.get(tempTimeSlot.id);
+  const timeSlotCorrect = (tempTimeSlot.id === -1) ?
+    cleanTimeSlot : state.deliver_times.get(tempTimeSlot.id);
   const timeSlotDirty = !compareLoosely(timeSlotCorrect, tempTimeSlot);
   const [deliveryTimeError, setDeliveryTimeError] = useState("");
   const [overheadError, setOverheadError] = useState("");
 
-  const tracerCatalogPage = tracerPageId !== null ? state.tracer_mapping.get(tracerPageId) :
-      new TracerCatalogPage(-1, tempEndpoint.id, activeTracer, 1, )
-
-  tempTimeSlot.delivery_time === timeSlotCorrect.delivery_time
-                      || tempTimeSlot.weekly_repeat === timeSlotCorrect.weekly_repeat
-                      || tempTimeSlot.production_run === timeSlotCorrect.production_run;
+  const tracerCatalogPage = tracerPageId !== null ?
+      state.tracer_mapping.get(tracerPageId)
+    : new TracerCatalogPage(-1, tempEndpoint.id, activeTracer, 1);
 
   function setTempTimeSlotDeliveryTime(value){
-    setTempTimeSlot(obj => {return {
-      ...obj, delivery_time : value
-    }});
+    setTempTimeSlot(obj => {
+      return {...obj, delivery_time : value};
+    });
   }
 
   function validateOverhead(){
@@ -404,6 +422,13 @@ export function CustomerModal({active_customer, on_close}) {
       return [false, {}];
     }
 
+    const production = state.production.get(tempTimeSlot.production_run);
+
+    if(production.production_time > deliveryTime){
+      setDeliveryTimeError("Der kan ikke laves en levering før den valgte produktion");
+      return [false, {}];
+    }
+
     setDeliveryTimeError("");
 
     if(tempEndpoint.id === -1){ // database indexes are 1 index therefore always return true on valid endpoint
@@ -411,7 +436,6 @@ export function CustomerModal({active_customer, on_close}) {
       return [false, {}];
     }
     setEndpointError("");
-
 
     // This is the object that will be send to the server
     const timeSlot = {...tempTimeSlot};
@@ -447,244 +471,222 @@ export function CustomerModal({active_customer, on_close}) {
       className = {styles.mariLight}
     >
       <Modal.Header>
-        <Modal.Title>Kunde Konfigurering - {customer.short_name} </Modal.Title>
+        <Modal.Title>Kunde konfigurering - {customer.short_name} </Modal.Title>
       </Modal.Header>
       <Modal.Body>
         <Container>
           <Row>
-          <Col>
+            <Col>
             {/* This is the customer configuration */}
+              <Row>
+                <Col><h4>Kunde</h4></Col>
+                <Optional exists={customerDirty}>
+                  <Col style={{ justifyContent : "right", display: "flex"}}>
+                    <CommitButton
+                      label="customer-commit"
+                      temp_object={tempCustomer}
+                      object_type={DATA_CUSTOMER}
+                      validate={validateCustomer}
+                    />
+                  </Col>
+                </Optional>
+              </Row>
+              <TracershopInputGroup label="Intern navn">
+                <Form.Control
+                  aria-label="short-name-input"
+                  value={nullParser(tempCustomer.short_name)}
+                  onChange={setTempObjectToEvent(setTempCustomer, 'short_name')}
+                />
+              </TracershopInputGroup>
+              <TracershopInputGroup label="Kunde navn">
+                <Form.Control
+                  aria-label="long-name-input"
+                  value={nullParser(tempCustomer.long_name)}
+                  onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
+                />
+              </TracershopInputGroup>
+              <TracershopInputGroup label="Regning addresse">
+                <Form.Control
+                  aria-label="address-input"
+                  value={nullParser(tempCustomer.billing_address)}
+                  onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
+                />
+              </TracershopInputGroup>
+              <TracershopInputGroup label="Regnings by">
+                <Form.Control
+                  aria-label="city-input"
+                  value={nullParser(tempCustomer.billing_city)}
+                  onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
+                />
+              </TracershopInputGroup>
+              <TracershopInputGroup label="Regning post nummer">
+                <Form.Control
+                  aria-label="zip-input"
+                  value={nullParser(tempCustomer.zip_code)}
+                  onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
+                />
+              </TracershopInputGroup>
+              <TracershopInputGroup label="Regnings Email">
+                <Form.Control
+                  aria-label="email-input"
+                  value={nullParser(tempCustomer.billing_email)}
+                  onChange={setTempObjectToEvent(setTempCustomer,'billing_email')}
+                />
+              </TracershopInputGroup>
+              <TracershopInputGroup label="Dispenser ID" error={dispenserError}>
+                <Form.Control
+                  aria-label="dispenser-input"
+                  value={nullParser(tempCustomer.dispenser_id)}
+                  onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
+                />
+              </TracershopInputGroup>
+            </Col>
+            {/* This is the endpoint configuration */}
+            <Col aria-label={`active-endpoint-${tempEndpoint.id}`}>
             <Row>
-        <Col><h4>Kunde</h4></Col>
-        {customerDirty ?
-          <Col style={{ justifyContent : "right", display: "flex"}}>
-            <CommitButton
-              label="customer-commit"
-              temp_object={tempCustomer}
-              object_type={DATA_CUSTOMER}
-              validate={validateCustomer}/>
-          </Col> : ""}
-      </Row>
-      <MarginInputGroup>
-        <InputGroup.Text>Internt Navn</InputGroup.Text>
-        <Form.Control
-          aria-label="short-name-input"
-          value={nullParser(tempCustomer.short_name)}
-          onChange={setTempObjectToEvent(setTempCustomer, 'short_name')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Kunde Navn</InputGroup.Text>
-        <Form.Control
-          aria-label="long-name-input"
-          value={nullParser(tempCustomer.long_name)}
-          onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings Addresse</InputGroup.Text>
-        <Form.Control
-          aria-label="address-input"
-          value={nullParser(tempCustomer.billing_address)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings By</InputGroup.Text>
-        <Form.Control
-          aria-label="city-input"
-          value={nullParser(tempCustomer.billing_city)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings Post nummer</InputGroup.Text>
-        <Form.Control
-          aria-label="zip-input"
-          value={nullParser(tempCustomer.zip_code)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Regnings Email</InputGroup.Text>
-        <Form.Control
-          aria-label="email-input"
-          value={nullParser(tempCustomer.billing_email)}
-          onChange={setTempObjectToEvent(setTempCustomer,'billing_email')}
-        />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Dispenser id</InputGroup.Text>
-        <ErrorInput error={dispenserError}>
-          <Form.Control
-            aria-label="dispenser-input"
-            value={nullParser(tempCustomer.dispenser_id)}
-            onChange={setTempObjectToEvent(setTempCustomer,'dispenser_id')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-    </Col>
-    {/* This is the endpoint configuration */}
-    <Col aria-label={`active-endpoint-${tempEndpoint.id}`}>
-      <Row>
-        <Col><h4>LeveringsSted</h4></Col>
-        <Col style={{display: "flex", justifyContent: "right"}}>
-          {endpointDirty ? <CommitButton
-                              temp_object={tempEndpoint}
-                              validate={validateEndpoint}
-                              callback={commit_callback}
-                              object_type={DATA_ENDPOINT}
-                              label="commit-endpoint"
-                           /> : ""}
-        </Col>
-      </Row>
-      <MarginInputGroup>
-        <InputGroup.Text>Leveringssteder</InputGroup.Text>
-        <ErrorInput error={endpointError}>
-          <EndpointSelect
-            aria-label="endpoint-select"
-            delivery_endpoint={endpoints}
-            onChange={(event) => setActiveEndpoint(event.target.value)}
-            value={tempEndpoint.id}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Internt Navn</InputGroup.Text>
-        <ErrorInput error={tempEndpointError.name}>
-          <Form.Control
-            aria-label="endpoint-name"
-            value={nullParser(tempEndpoint.name)}
-            onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings Addresse</InputGroup.Text>
-        <ErrorInput error={tempEndpointError.address}>
-          <Form.Control
-            aria-label="endpoint-address"
-            value={nullParser(tempEndpoint.address)}
-            onChange={setTempObjectToEvent(setTempEndpoint, 'address')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings By</InputGroup.Text>
-        <ErrorInput error={tempEndpointError.city}>
-          <Form.Control
-            aria-label="endpoint-city"
-            value={nullParser(tempEndpoint.city)}
-            onChange={setTempObjectToEvent(setTempEndpoint, 'city')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings Postnummer</InputGroup.Text>
-        <ErrorInput error={tempEndpointError.zip_code}>
-          <Form.Control
-            aria-label="endpoint-zip-code"
-            value={nullParser(tempEndpoint.zip_code)}
-            onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Leverings telefonnummer</InputGroup.Text>
-        <ErrorInput error={tempEndpointError.phone}>
-          <Form.Control
-            aria-label="endpoint-phone"
-            value={nullParser(tempEndpoint.phone)}
-            onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
-          />
-        </ErrorInput>
-      </MarginInputGroup>
-    </Col>
+              <Col><h4>Leverings sted</h4></Col>
+              <Col style={{display: "flex", justifyContent: "right"}}>
+                <Optional exists={endpointDirty}>
+                  <CommitButton
+                    temp_object={tempEndpoint}
+                    validate={validateEndpoint}
+                    callback={commit_callback}
+                    object_type={DATA_ENDPOINT}
+                    label="commit-endpoint"
+                  />
+                </Optional>
+              </Col>
+            </Row>
+            <TracershopInputGroup
+              label="Leveringssteder"
+              error={endpointError}
+            >
+              <EndpointSelect
+                aria-label="endpoint-select"
+                delivery_endpoint={endpoints}
+                onChange={(event) => setActiveEndpoint(event.target.value)}
+                value={tempEndpoint.id}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Intern Navn" error={tempEndpointError.name}>
+              <Form.Control
+                aria-label="endpoint-name"
+                value={nullParser(tempEndpoint.name)}
+                onChange={setTempObjectToEvent(setTempEndpoint, 'name')}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Leverings addresse" error={tempEndpointError.address}>
+              <Form.Control
+                aria-label="endpoint-address"
+                value={nullParser(tempEndpoint.address)}
+                onChange={setTempObjectToEvent(setTempEndpoint, 'address')}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Leverings by" error={tempEndpointError.city}>
+              <Form.Control
+                aria-label="endpoint-city"
+                value={nullParser(tempEndpoint.city)}
+                onChange={setTempObjectToEvent(setTempEndpoint, 'city')}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Leverings postnummer" error={tempEndpointError.zip_code}>
+              <Form.Control
+                aria-label="endpoint-zip-code"
+                value={nullParser(tempEndpoint.zip_code)}
+                onChange={setTempObjectToEvent(setTempEndpoint,'zip_code')}
+              />
+            </TracershopInputGroup>
+            <TracershopInputGroup label="Leverings telefon nummer" error={tempEndpointError.phone}>
+              <Form.Control
+                aria-label="endpoint-phone"
+                value={nullParser(tempEndpoint.phone)}
+                onChange={setTempObjectToEvent(setTempEndpoint,'phone')}
+              />
+            </TracershopInputGroup>
+          </Col>
     {/* Activity Time Slot */}
     <Col aria-label={`active-time-slot-${tempTimeSlot.id}`}>
       <Row>
         <Col><h4>Leveringstidspunkt</h4></Col>
         <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
-        {timeSlotDirty ?
-          <CommitButton
-            temp_object={tempTimeSlot}
-            object_type={DATA_DELIVER_TIME}
-            label="time-slot-commit"
-            validate={validateTimeSlot}
-          /> : ""}
-        {tempTimeSlot.id != -1 ?
-          <ClickableIcon
-            label="time-slot-initialize"
-            src={"static/images/plus.svg"}
-            onClick={initializeNewTimeSlot}
-          /> : ""}
+          <Optional exists={timeSlotDirty}>
+            <CommitButton
+              temp_object={tempTimeSlot}
+              object_type={DATA_DELIVER_TIME}
+              label="time-slot-commit"
+              validate={validateTimeSlot}
+            />
+          </Optional>
+          <Optional exists={tempTimeSlot.id != -1}>
+            <ClickableIcon
+              label="time-slot-initialize"
+              src={"static/images/plus.svg"}
+              onClick={initializeNewTimeSlot}
+            />
+          </Optional>
         </Col>
       </Row>
-      <MarginInputGroup>
-          <InputGroup.Text>Aktivitets Tracer</InputGroup.Text>
-          <Select
-            aria-label="active-tracer-select"
-            options={activityTracersOptions}
-            value={activeTracer}
-            onChange={setStateToEvent(setActiveTracer)}
+      <TracershopInputGroup label="Aktivitets tracer">
+        <Select
+          aria-label="active-tracer-select"
+          options={activityTracersOptions}
+          value={activeTracer}
+          onChange={setStateToEvent(setActiveTracer)}
+        />
+      </TracershopInputGroup>
+      <TracershopInputGroup label="Overhead" error={overheadError} tail={
+        <Optional exists={overhead !== initialOverhead} alternative={<div>%</div>}>
+          <CommitButton
+            label="commit-overhead"
+            temp_object={tracerCatalogPage}
+            object_type={DATA_TRACER_MAPPING}
+            validate={validateOverhead}
+            add_image="/static/images/update.svg"
           />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Overhead</InputGroup.Text>
-        <ErrorInput error={overheadError}>
-          <Form.Control
-            aria-label="overhead-input"
-            value={overhead}
-            onChange={setStateToEvent(setOverhead)}
-            />
-        </ErrorInput>
-        <InputGroup.Text>%</InputGroup.Text>
-        { overhead !== initialOverhead ?
-          <InputGroup.Text>
-            <CommitButton
-              label="commit-overhead"
-              temp_object={tracerCatalogPage}
-              object_type={DATA_TRACER_MAPPING}
-              validate={validateOverhead}
-              add_image="/static/images/update.svg"
-            />
-          </InputGroup.Text> : ""
-        }
-      </MarginInputGroup>
-
-      <MarginInputGroup>
-        <InputGroup.Text>Leveringstid</InputGroup.Text>
-        <ErrorInput error={deliveryTimeError}>
-          <TimeInput
+        </Optional>
+        }>
+        <Form.Control
+          aria-label="overhead-input"
+          value={overhead}
+          onChange={setStateToEvent(setOverhead)}
+          />
+      </TracershopInputGroup>
+      <TracershopInputGroup label="Leveringstid" error={deliveryTimeError}>
+        <TimeInput
             aria-label="time-slot-delivery-time"
             value={tempTimeSlot.delivery_time}
             stateFunction={setTempTimeSlotDeliveryTime}
-            />
-        </ErrorInput>
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Ugenlig gentagelse</InputGroup.Text>
+        />
+      </TracershopInputGroup>
+      <TracershopInputGroup label="ugenlig gentagelse">
         <Select
           aria-label="weekly-select"
           options={WeeklyRepeatOptions}
           onChange={setTempObjectToEvent(setTempTimeSlot, 'weekly_repeat')}
           value={tempTimeSlot.weekly_repeat}
         />
-      </MarginInputGroup>
-      <MarginInputGroup>
-        <InputGroup.Text>Levering fra Production</InputGroup.Text>
-        <Select
-          options={productionOptions}
-          onChange={setTempObjectToEvent(setTempTimeSlot, 'production_run')}
-          value={tempTimeSlot.production_run}
-          aria-label="production-select"
-        />
-      </MarginInputGroup>
+      </TracershopInputGroup>
+      <Row>
+        <TracershopInputGroup label="Levering fra Production">
+          <Select
+            options={productionOptions}
+            onChange={setTempObjectToEvent(setTempTimeSlot, 'production_run')}
+            value={tempTimeSlot.production_run}
+            aria-label="production-select"
+          />
+        </TracershopInputGroup>
+      </Row>
     </Col>
     </Row>
-      <br/>
-        <Row>
-          <DeliveryTimeTable/>
+    <hr/>
+        <Row style={{
+          margin : "0px"
+        }}>
+          <DeliveryTimeTable
+            tempTimeSlotID={tempTimeSlot.id}
+            timeSlots = {availableTimeSlots}
+            setTempTimeSlot={setTempTimeSlot}
+          />
         </Row>
       </Container>
       </Modal.Body>
@@ -694,4 +696,3 @@ export function CustomerModal({active_customer, on_close}) {
     </Modal>
   );
 }
-
