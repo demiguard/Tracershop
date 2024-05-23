@@ -8,7 +8,6 @@ from unittest.mock import patch
 from tracerauth.tests.mocks import mocks_ldap
 
 # Third party package
-from asynctest import patch as aPatch
 from django.test import TransactionTestCase
 from django.db.models import CharField
 

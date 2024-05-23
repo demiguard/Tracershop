@@ -10,12 +10,13 @@ from logging import getLogger
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple,  Type
 
 # Third party Libraries
+from django.core.exceptions import ObjectDoesNotExist
 from django.http.request import HttpRequest
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import AnonymousUser
 
 # Tracershop App
-from constants import ERROR_LOGGER
+from constants import ERROR_LOGGER, DEBUG_LOGGER
 from lib.formatting import toDate, toDateTime, toTime
 from lib.utils import identity
 from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
@@ -40,6 +41,7 @@ from tracerauth.types import MessageType, MessageField, MessageObjectField,\
   Message, AuthenticationResult
 
 error_logger = getLogger(ERROR_LOGGER)
+debug_logger = getLogger(DEBUG_LOGGER)
 
 requiredMessageFields = {
   WEBSOCKET_MESSAGE_AUTH_LOGIN : [DATA_AUTH],
@@ -185,3 +187,36 @@ def authenticate_user(username: str,
     return AuthenticationResult.SUCCESS, user
   else:
     return AuthenticationResult.INVALID_PASSWORD, None
+
+def login_from_header(request):
+  if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
+    header_user_group =  UserGroups(int(request.headers['X-Tracer-Role']))
+    header_user_name = request.headers['X-Tracer-User']
+
+    if header_user_group == UserGroups.ShopExternal:
+      # Note that username is not parsed so we have to get creative
+      # Also this is very insecure... ffs
+      login_from_header_external_user()
+    else:
+      login_from_header_internal_user(header_user_group, header_user_name)
+
+  else:
+    debug_logger.info(f"X-Tracer-User and X-Tracer-Role not found in header")
+    debug_logger.info(request.headers)
+
+def login_from_header_internal_user(request, user_group : UserGroups, username : str):
+  try:
+    user = User.objects.get(username=username)
+    if user.user_group != user_group:
+      user.user_group = user_group
+      user.save()
+  except ObjectDoesNotExist:
+    user = User.objects.create(username=username,
+                          user_group=user_group)
+  login(request, user, backend="django_auth_ldap.backend.LDAPBackend")
+
+def login_from_header_external_user(request):
+  pass
+  #successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
+
+

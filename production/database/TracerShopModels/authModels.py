@@ -9,7 +9,9 @@ __author__ = "Christoffer Vilstrup Jensen"
 from typing import List
 
 # Third party Packages
-from django.db.models import Model, BigAutoField, CASCADE, CharField, EmailField, ForeignKey, IntegerChoices, SmallIntegerField, RESTRICT, BooleanField
+from django.db.models import Model, BigAutoField, CASCADE, CharField,\
+  EmailField, ForeignKey, IntegerChoices, SmallIntegerField, RESTRICT,\
+    BooleanField, DateTimeField, Index
 
 # Tracershop Packages
 from database.TracerShopModels.baseModels import TracershopModel
@@ -74,3 +76,16 @@ class SecondaryEmail(TracershopModel):
   id = BigAutoField(primary_key=True)
   email = EmailField()
   record_user = ForeignKey(User, on_delete=CASCADE)
+
+
+"""
+class SuccessfulLogin(TracershopModel):
+  id = BigAutoField()
+  login_time = DateTimeField(auto_now=True)
+  user = ForeignKey(User, CASCADE)
+
+  class Meta:
+    indexes = [
+      Index(fields="login_time")
+    ]
+"""

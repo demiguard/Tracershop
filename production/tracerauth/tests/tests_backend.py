@@ -21,8 +21,7 @@ class TracerAuthBackendTestCase(TransactionTestCase):
   def tearDown(self) -> None:
     self.basicUser.delete()
 
-
-
+  #region Tests
   # Test Valid Password / usernames
   def test_validString(self):
     self.assertTrue(validString("Helloworld"))
@@ -31,7 +30,7 @@ class TracerAuthBackendTestCase(TransactionTestCase):
     self.assertFalse(validString("Hello world"))
     self.assertFalse(validString("Something\"; DROP DATABASE DATABASE"))
 
-  def test_Authenticatation_basic(self):
+  def test_Authentication_basic(self):
     user = self.backend.authenticate(None, self.basicUserName, self.basicPassword)
     self.assertEqual(user, self.basicUser)
 

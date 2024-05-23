@@ -99,4 +99,4 @@ class MessageType:
 
 class Message:
   def __init__(self, messageType: MessageType, skeleton: Dict[str, Any]) -> None:
-    pass 
+    pass

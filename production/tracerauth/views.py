@@ -7,7 +7,7 @@ from typing import Optional
 from django.views.generic import View
 from django.http import HttpResponse
 from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth import authenticate, get_backends
+from django.contrib.auth import authenticate, get_backends, login
 
 # Tracershop Production packages
 from constants import DEBUG_LOGGER
@@ -26,11 +26,13 @@ class ExternalLoginView(View):
 
     user: Optional[User] = authenticate(username=request.GET['username'], # type: ignore
                                         password=request.GET['password'])
+
     if user is None:
       logger.info("Authentication failed with incorrect password")
       return HttpResponse(status=403)
     if user.user_group != UserGroups.ShopExternal:
       logger.info("Authentication failed with requested user having incorrect user group")
       return HttpResponse(status=403)
-
+    login(request, user, 'tracerauth.backend.TracershopAuthenticationBackend')
+    
     return HttpResponse(status=200)

@@ -49,6 +49,8 @@ def indexView(request, *args, **kwargs):
       backend = "django_auth_ldap.backend.LDAPBackend"
 
     login(request, user, backend=backend)
+  else:
+    debug_logger.info("unable to log user in")
 
   return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
 
