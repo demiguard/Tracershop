@@ -78,11 +78,11 @@ class SecondaryEmail(TracershopModel):
   record_user = ForeignKey(User, on_delete=CASCADE)
 
 class SuccessfulLogin(TracershopModel):
-  id = BigAutoField()
+  id = BigAutoField(primary_key=True)
   login_time = DateTimeField(auto_now=True)
   user = ForeignKey(User, CASCADE)
 
   class Meta:
     indexes = [
-      Index(fields="login_time")
+      Index(fields=["login_time"])
     ]
