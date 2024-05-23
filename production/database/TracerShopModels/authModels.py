@@ -77,8 +77,6 @@ class SecondaryEmail(TracershopModel):
   email = EmailField()
   record_user = ForeignKey(User, on_delete=CASCADE)
 
-
-"""
 class SuccessfulLogin(TracershopModel):
   id = BigAutoField()
   login_time = DateTimeField(auto_now=True)
@@ -88,4 +86,3 @@ class SuccessfulLogin(TracershopModel):
     indexes = [
       Index(fields="login_time")
     ]
-"""

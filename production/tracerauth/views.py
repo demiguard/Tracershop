@@ -11,7 +11,7 @@ from django.contrib.auth import authenticate, get_backends, login
 
 # Tracershop Production packages
 from constants import DEBUG_LOGGER
-from database.models import User, UserGroups
+from database.models import User, UserGroups, SuccessfulLogin
 
 logger = getLogger(DEBUG_LOGGER)
 
@@ -33,6 +33,7 @@ class ExternalLoginView(View):
     if user.user_group != UserGroups.ShopExternal:
       logger.info("Authentication failed with requested user having incorrect user group")
       return HttpResponse(status=403)
-    login(request, user, 'tracerauth.backend.TracershopAuthenticationBackend')
-    
+    login = SuccessfulLogin(user)
+    login.save()
+
     return HttpResponse(status=200)

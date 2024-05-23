@@ -35,7 +35,7 @@ from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_FREE_ACTIVITY,\
   WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,\
   WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
-from database.models import User, UserGroups
+from database.models import User, UserGroups, SuccessfulLogin
 
 from tracerauth.types import MessageType, MessageField, MessageObjectField,\
   Message, AuthenticationResult
@@ -196,15 +196,15 @@ def login_from_header(request):
     if header_user_group == UserGroups.ShopExternal:
       # Note that username is not parsed so we have to get creative
       # Also this is very insecure... ffs
-      login_from_header_external_user()
+      _login_from_header_external_user(request)
     else:
-      login_from_header_internal_user(header_user_group, header_user_name)
+      _login_from_header_internal_user(request, header_user_group, header_user_name)
 
   else:
     debug_logger.info(f"X-Tracer-User and X-Tracer-Role not found in header")
     debug_logger.info(request.headers)
 
-def login_from_header_internal_user(request, user_group : UserGroups, username : str):
+def _login_from_header_internal_user(request, user_group : UserGroups, username : str):
   try:
     user = User.objects.get(username=username)
     if user.user_group != user_group:
@@ -215,8 +215,11 @@ def login_from_header_internal_user(request, user_group : UserGroups, username :
                           user_group=user_group)
   login(request, user, backend="django_auth_ldap.backend.LDAPBackend")
 
-def login_from_header_external_user(request):
-  pass
-  #successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
-
-
+def _login_from_header_external_user(request):
+  successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
+  login(
+    request,
+    successful_login.user,
+    backend="tracerauth.auth.TracershopAuthenticationBackend"
+  )
+  successful_login.delete()
