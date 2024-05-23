@@ -7,7 +7,7 @@ from typing import Optional
 from django.views.generic import View
 from django.http import HttpResponse
 from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth import authenticate, get_backends, login
+from django.contrib.auth import authenticate
 
 # Tracershop Production packages
 from constants import DEBUG_LOGGER
@@ -33,7 +33,7 @@ class ExternalLoginView(View):
     if user.user_group != UserGroups.ShopExternal:
       logger.info("Authentication failed with requested user having incorrect user group")
       return HttpResponse(status=403)
-    login = SuccessfulLogin(user)
+    login = SuccessfulLogin(user=user)
     login.save()
 
     return HttpResponse(status=200)
