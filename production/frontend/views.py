@@ -25,33 +25,15 @@ from lib import pdfGeneration
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
   InjectionOrder
-from tracerauth.backend import TracershopAuthenticationBackend
+from tracerauth.auth import login_from_header
 
 debug_logger = getLogger(DEBUG_LOGGER)
 
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
-  if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
-    header_user_group =  UserGroups(int(request.headers['X-Tracer-Role']))
-    try:
-      user = User.objects.get(username=request.headers['X-Tracer-User'])
-      if user.user_group != header_user_group:
-        user.user_group = header_user_group
-        user.save()
-    except ObjectDoesNotExist:
-      user = User.objects.create(username=request.headers['X-Tracer-User'],
-                          user_group=header_user_group)
-
-    if user.user_group == UserGroups.ShopExternal:
-      backend = "tracerauth.backend.TracershopAuthenticationBackend"
-    else:
-      backend = "django_auth_ldap.backend.LDAPBackend"
-
-    login(request, user, backend=backend)
-  else:
-    debug_logger.info("unable to log user in")
-
+  login_from_header(request)
+  
   return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
 
 def pdfView(request,
