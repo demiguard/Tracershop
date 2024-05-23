@@ -26,6 +26,7 @@ from channels.auth import login, get_user, logout
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
 from django.contrib.auth import authenticate
+from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist
@@ -57,9 +58,11 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
-      TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups, UserAssignment
+      TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups,\
+      UserAssignment, SuccessfulLogin
 from lib.formatting import toDateTime, formatFrontendErrorMessage
 from lib.ProductionJSON import encode, decode
+
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
 from tracerauth.ldap import checkUserGroupMembership
@@ -67,6 +70,14 @@ from tracerauth.types import AuthenticationResult
 
 logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
+
+# this is placed bad
+@database_sync_to_async
+def get_login() -> AbstractBaseUser:
+  try:
+    return SuccessfulLogin.objects.all().order_by('login_time')[0].user
+  except:
+    return AnonymousUser
 
 class Consumer(AsyncJsonWebsocketConsumer):
   """This is the websocket that communicates with all clients.
@@ -127,6 +138,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """Method called when a user connect"""
     await self.channel_layer.group_add(self.global_group, self.channel_name)
     user = await get_user(self.scope)
+    if user == AnonymousUser:
+      user = await get_login()
     await self.enterUserGroups(user)
     await self.accept()
     logger.debug(f"{user} connected!")

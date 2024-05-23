@@ -217,6 +217,8 @@ def _login_from_header_internal_user(request, user_group : UserGroups, username 
   login(request, user, backend="django_auth_ldap.backend.LDAPBackend")
 
 def _login_from_header_external_user(request):
+  return
+  """Note that i'll try and do this from the websocket instead
   successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
   login(
     request,
@@ -224,3 +226,4 @@ def _login_from_header_external_user(request):
     backend="tracerauth.auth.TracershopAuthenticationBackend"
   )
   successful_login.delete()
+  """
