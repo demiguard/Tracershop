@@ -191,7 +191,7 @@ def authenticate_user(username: str,
 def login_from_header(request):
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
     header_user_group =  UserGroups(int(request.headers['X-Tracer-Role']))
-    header_user_name = request.headers['X-Tracer-User']
+    header_user_name  = request.headers['X-Tracer-User']
 
     if header_user_group == UserGroups.ShopExternal:
       # Note that username is not parsed so we have to get creative
@@ -199,10 +199,11 @@ def login_from_header(request):
       _login_from_header_external_user(request)
     else:
       _login_from_header_internal_user(request, header_user_group, header_user_name)
-
+    return True
   else:
     debug_logger.info(f"X-Tracer-User and X-Tracer-Role not found in header")
     debug_logger.info(request.headers)
+    return False
 
 def _login_from_header_internal_user(request, user_group : UserGroups, username : str):
   try:

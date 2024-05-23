@@ -32,8 +32,10 @@ debug_logger = getLogger(DEBUG_LOGGER)
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
-  login_from_header(request)
-  
+  success = login_from_header(request)
+  if not success:
+    debug_logger.info(request.headers)
+
   return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
 
 def pdfView(request,
