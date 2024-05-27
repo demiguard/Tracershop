@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.1.8" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.1.9" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -117,6 +117,7 @@ WEBSOCKET_MESSAGE_MODEL_EDIT               = "editModel"
 WEBSOCKET_MESSAGE_MOVE_ORDERS              = "moveOrder"
 WEBSOCKET_MESSAGE_LOG_ERROR                = "logError"
 WEBSOCKET_MESSAGE_RESTORE_ORDERS           = "restoreOrders"
+WEBSOCKET_MESSAGE_RESTART_VIAL_DOG          = "restartVialDog"
 WEBSOCKET_MESSAGE_STATUS                   = "status"
 WEBSOCKET_MESSAGE_SUCCESS                  = "success"
 WEBSOCKET_MESSAGE_TYPE                     = "messageType"
@@ -145,6 +146,7 @@ WEBSOCKET_MESSAGE_TYPES = [
   WEBSOCKET_MESSAGE_MOVE_ORDERS,
   WEBSOCKET_MESSAGE_RESTORE_ORDERS,
   WEBSOCKET_MESSAGE_LOG_ERROR,
+  WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
 ]

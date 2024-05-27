@@ -58,7 +58,7 @@ export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.1.8";
+export const JAVASCRIPT_VERSION = "1.1.9";
 
 export const NO_ERROR = "";
 
@@ -118,6 +118,7 @@ export const WEBSOCKET_MESSAGE_MODEL_DELETE = "deleteModel";
 export const WEBSOCKET_MESSAGE_MODEL_EDIT = "editModel";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS = "moveOrder";
 export const WEBSOCKET_MESSAGE_ORDER_INJECTION = "OrderInjection";
+export const WEBSOCKET_MESSAGE_RESTART_VIAL_DOG = "restartVialDog";
 export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
 export const WEBSOCKET_MESSAGE_STATUS = "status";
 export const WEBSOCKET_MESSAGE_SUCCESS = "success";

@@ -15,6 +15,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 from asgiref.sync import sync_to_async
 from datetime import datetime
 from enum import Enum
+from subprocess import call
 import logging
 from pprint import pformat
 import traceback
@@ -34,8 +35,9 @@ from django.conf import settings
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
-from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT, CHANNEL_GROUP_GLOBAL
+from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint
+from constants import DEBUG_LOGGER, ERROR_LOGGER, DATA_DATETIME_FORMAT,\
+    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_MESSAGE_ID,\
     ERROR_UNKNOWN_FAILURE, ERROR_TYPE, NO_ERROR,\
@@ -54,7 +56,7 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE, \
     WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
     WEBSOCKET_MESSAGE_LOG_ERROR, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
-    WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD
+    WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
@@ -71,6 +73,7 @@ from tracerauth.types import AuthenticationResult
 
 logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
+audit_logger = logging.getLogger(AUDIT_LOGGER)
 
 
 class Consumer(AsyncJsonWebsocketConsumer):
@@ -222,6 +225,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     try:
       error = auth.validateMessage(message)
       if error != NO_ERROR:
+        error_logger.error(f"Handling an invalid message {message}")
+        error_logger.error(f"With error code: {error}")
         await self.RespondWithError(message, {ERROR_TYPE : error})
         return
 
@@ -862,6 +867,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
       f"User: {user} encountered critical error: {formatted_error}"
     )
 
+  async def HandleRestartVials(self, message: Dict[str, Any]):
+    """Restarts the vial fetcher system
+
+    Args:
+        message (Dict[str, Any]): the message from the websocket
+    """
+    user: User = await get_user(self.scope)
+
+    if user.is_production_member:
+      try:
+        call(['sudo', 'systemctl', 'restart', 'vialdog'], timeout=1.0)
+      except:
+        error_logger.error("Web service is not setup in sudoers!")
+      audit_logger.info(f"user: {user.username} restarted the vial dog")
+
+
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,
     WEBSOCKET_MESSAGE_AUTH_LOGIN : handleLogin,
@@ -870,6 +891,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_ECHO : HandleEcho,
     WEBSOCKET_MESSAGE_MODEL_CREATE : HandleModelCreate,
     WEBSOCKET_MESSAGE_MODEL_EDIT : HandleModelEdit,
+    WEBSOCKET_MESSAGE_RESTART_VIAL_DOG : HandleRestartVials,
     WEBSOCKET_MESSAGE_MODEL_DELETE : HandleModelDelete,
     WEBSOCKET_MESSAGE_GET_STATE : HandleGetState,
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetTimeSensitiveData,

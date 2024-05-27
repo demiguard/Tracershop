@@ -19,7 +19,7 @@ import { getId, numberfy, toMapping } from "./utils";
 import { useTracershopState } from "~/components/tracer_shop_context"
 import { useOverflow } from "~/effects/overflow"
 
-
+//#region ActivityOrderCollection
 /**
  * Wraps a group of orders, for the purpose of providing a single view of the
  * group.
@@ -192,7 +192,7 @@ export class ActivityOrderCollection {
   }
 }
 
-
+//#region EndpointCatalog
 export class EndpointCatalog {
   /**@type {Array<Tracer>} */ tracerCatalogActivity
   /**@type {Array<Tracer>} */ tracerCatalogInjections
@@ -206,6 +206,7 @@ export class EndpointCatalog {
 }
 
 
+//#region TracerCatalog
 /**
  * Data structure containing information about which tracers a customer have access to
  * Each instance is unique to a customer.
@@ -296,7 +297,7 @@ export class TracerCatalog {
   }
 }
 
-
+//#region TimeSlotMapping
 export class TimeSlotMapping {
   /**@type {Map<Number, ArrayMap<Number, ActivityDeliveryTimeSlot>} */ _timeSlotMapping
 

@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
 
 //
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS} from "~/lib/shared_constants"
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
 import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
 import { setStateToEvent } from "../../lib/state_management";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
@@ -12,6 +12,7 @@ import { DateInput } from "../injectable/inputs/date_input";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { ErrorInput } from "../injectable/inputs/error_input";
 import { parseDateInput } from "~/lib/user_input";
+import { MarginButton } from "~/components/injectable/buttons";
 
 
 /**
@@ -56,6 +57,12 @@ export function VialPage(){
         setSortingOption(newSortingOption);
       }
     }
+  }
+
+  function restartVialDog() {
+    websocket.send({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_RESTART_VIAL_DOG
+    });
   }
 
   function fetchVials(){
@@ -186,7 +193,8 @@ export function VialPage(){
           </TracershopInputGroup>
         </Col>
         <Col>
-          <Button  onClick={fetchVials}>Søg</Button>
+          <MarginButton onMouseDown={fetchVials}>Søg</MarginButton>
+          <MarginButton onMouseDown={restartVialDog}>Hent manglende glas</MarginButton>
         </Col>
       </Row>
       <Table>
