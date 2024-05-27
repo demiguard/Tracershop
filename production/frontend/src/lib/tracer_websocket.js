@@ -46,9 +46,11 @@ export class TracerWebSocket {
     this._ws.onmessage = function(messageEvent) {
       const message = JSON.parse(messageEvent.data);
       const pipe = this._PromiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
+      if(pipe != undefined){
+        pipe.port2.postMessage(message);
+      }
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
-
       /**This is the state updating messages send by the server */
       switch(message[WEBSOCKET_MESSAGE_TYPE]) {
         case WEBSOCKET_MESSAGE_UPDATE_STATE:
@@ -78,9 +80,7 @@ export class TracerWebSocket {
         }
         break;
       }
-      if(pipe != undefined){
-        pipe.port2.postMessage(message);
-      }
+
     }
 
     this._ws.onclose = function(e) {

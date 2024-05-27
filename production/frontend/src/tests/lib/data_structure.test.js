@@ -1,4 +1,4 @@
-const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage } = require("~/dataclasses/dataclasses");
+const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage, TracershopState } = require("~/dataclasses/dataclasses");
 const { WEEKLY_REPEAT_CHOICES, TRACER_TYPE } = require("~/lib/constants");
 const { TimeSlotBitChain, TracerCatalog, CustomerCatalog, EndpointCatalog } = require("~/lib/data_structures");
 
@@ -79,5 +79,20 @@ describe("Tracer catalog Tests", () => {
     expect(tracerCatalog.getActivityCatalog(2)).toStrictEqual([]);
     expect(tracerCatalog.getInjectionCatalog(1)).toStrictEqual([]);
   });
+});
 
-})
+describe("ActivityOrderCollection", () => {
+  const state = new TracershopState();
+  state.deliver_times = new Map([
+
+  ]);
+  state.production = new Map([
+
+  ]);
+
+  it("Creation Test", () => {
+
+
+
+  })
+});

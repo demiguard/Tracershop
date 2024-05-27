@@ -81,11 +81,12 @@ export function ProductionUserSetup(){
       function handleUserClick(){
         if(userExists){
           if(user.password){
-            websocket.send({
+            const promise = websocket.send({
               [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
               [WEBSOCKET_DATA_ID] : user.id,
               [AUTH_PASSWORD] : user.password
-            }).then(() => {
+            })
+            promise.then(() => {
               setUserState(oldState => {
                 const newState = new Map(oldState);
                 newState.set(user.id, {...user, password : ""});

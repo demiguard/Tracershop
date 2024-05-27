@@ -615,7 +615,7 @@ class DatabaseInterface():
     return newExternalUser, newUserAssignment
 
   @database_sync_to_async # This is just to get a sync environment.
-  def changeExternalPassword(externalUserID, externalNewPassword):
+  def changeExternalPassword(self, externalUserID : int, externalNewPassword: str):
     """changes the password of a user
 
     Args:

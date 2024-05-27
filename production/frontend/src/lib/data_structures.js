@@ -161,7 +161,7 @@ export class ActivityOrderCollection {
       const originalTimeSlot =  state.deliver_times.get(order.ordered_time_slot);
       this.minimum_status = Math.min(this.minimum_status, order.status);
       this.moved &= order.moved_to_time_slot !== null;
-      if(order.ordered_time_slot === deliveringTimeSlotId.id){
+      if(order.ordered_time_slot === deliveringTimeSlotId){
         this.ordered_activity += order.ordered_activity
         this.deliver_activity += order.ordered_activity * overhead;
       } else {

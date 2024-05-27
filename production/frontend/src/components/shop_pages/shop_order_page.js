@@ -8,6 +8,7 @@ import { DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
   PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
+  USER_GROUPS,
 } from "../../lib/constants.js";
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
   ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
@@ -19,6 +20,7 @@ import { useTracershopDispatch, useTracershopState, useWebsocket } from "../trac
 import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
+import { Optional } from "~/components/injectable/optional.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -157,14 +159,16 @@ export function ShopOrderPage ({relatedCustomer}){
               setCustomer={setActiveCustomer}
               setEndpoint={setActiveEndpoint}
             />
-            <TracershopInputGroup label="Side">
-              <Select
-                aria-label="site-select"
-                options={SiteOptions}
-                onChange={setView}
-                value={viewIdentifier}
-              />
-            </TracershopInputGroup>
+            <Optional exists={state.logged_in_user.user_group !== USER_GROUPS.SHOP_EXTERNAL}>
+              <TracershopInputGroup label="Side">
+                <Select
+                  aria-label="site-select"
+                  options={SiteOptions}
+                  onChange={setView}
+                  value={viewIdentifier}
+                  />
+              </TracershopInputGroup>
+            </Optional>
           </Container>
         </Row>
         <Row>

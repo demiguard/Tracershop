@@ -10,10 +10,11 @@ from logging import getLogger
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple,  Type
 
 # Third party Libraries
+from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
 from django.http.request import HttpRequest
 from django.contrib.auth import authenticate, login
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, AbstractBaseUser
 
 # Tracershop App
 from constants import ERROR_LOGGER, DEBUG_LOGGER
@@ -201,11 +202,11 @@ def login_from_header(request):
       _login_from_header_internal_user(request, header_user_group, header_user_name)
     return True
   else:
-    debug_logger.info(f"X-Tracer-User and X-Tracer-Role not found in header")
-    debug_logger.info(request.headers)
     return False
 
-def _login_from_header_internal_user(request, user_group : UserGroups, username : str):
+def _login_from_header_internal_user(request: HttpRequest,
+                                     user_group : UserGroups,
+                                     username : str) -> None:
   try:
     user = User.objects.get(username=username)
     if user.user_group != user_group:
@@ -216,14 +217,25 @@ def _login_from_header_internal_user(request, user_group : UserGroups, username 
                           user_group=user_group)
   login(request, user, backend="django_auth_ldap.backend.LDAPBackend")
 
-def _login_from_header_external_user(request):
-  return
-  """Note that i'll try and do this from the websocket instead
-  successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
-  login(
-    request,
-    successful_login.user,
-    backend="tracerauth.auth.TracershopAuthenticationBackend"
-  )
-  successful_login.delete()
+def _login_from_header_external_user(request: HttpRequest) -> None:
+  """This function doesn't nothing because the login happens from "who am i"
+  message send by websocket on login.
+
+  Args:
+      request (_type_): _description_
   """
+  return None
+
+
+
+# this is placed bad
+@database_sync_to_async
+def get_login() -> AbstractBaseUser:
+  try:
+    successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
+    user = successful_login.user
+    successful_login.delete()
+    return user
+  except Exception as exception:
+
+    return AnonymousUser()

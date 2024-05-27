@@ -65,19 +65,13 @@ from lib.ProductionJSON import encode, decode
 
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
+from tracerauth.backend import TracershopAuthenticationBackend
 from tracerauth.ldap import checkUserGroupMembership
 from tracerauth.types import AuthenticationResult
 
 logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
 
-# this is placed bad
-@database_sync_to_async
-def get_login() -> AbstractBaseUser:
-  try:
-    return SuccessfulLogin.objects.all().order_by('login_time')[0].user
-  except:
-    return AnonymousUser
 
 class Consumer(AsyncJsonWebsocketConsumer):
   """This is the websocket that communicates with all clients.
@@ -138,8 +132,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """Method called when a user connect"""
     await self.channel_layer.group_add(self.global_group, self.channel_name)
     user = await get_user(self.scope)
-    if user == AnonymousUser:
-      user = await get_login()
     await self.enterUserGroups(user)
     await self.accept()
     logger.debug(f"{user} connected!")
@@ -317,6 +309,26 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   ##### AUTH METHODS #####
+  async def respond_auth_message(self, message: Dict[str, Any], isAuth, serialized_user, session_id):
+    await self.send_json({
+      AUTH_IS_AUTHENTICATED : isAuth,
+      AUTH_USER : serialized_user,
+      WEBSOCKET_SESSION_ID : session_id,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+    })
+
+  async def respond_reject_auth_message(self, message: Dict[str, Any]):
+    await self.send_json({
+      AUTH_IS_AUTHENTICATED : False,
+      AUTH_USER : {},
+      WEBSOCKET_SESSION_ID : "",
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+    })
+
   async def handleLogin(self, message: Dict[str, Any]):
     """Handles a login request by the user
 
@@ -337,47 +349,40 @@ class Consumer(AsyncJsonWebsocketConsumer):
         if newUserGroup != UserGroups.Anon:
           user.user_group = newUserGroup
           await database_sync_to_async(user.save)()
-
-      isAuth = True
       await login(self.scope, user)
       await sync_to_async(self.scope["session"].save)()
       await self.enterUserGroups(user)
-      key = self.scope["session"].session_key
-      user = await self.db.serialize_dict({DATA_USER : [user]})
-    else:
-      isAuth = False
-      user = {}
-      key = ""
+      serialized_user = await self.db.serialize_dict({DATA_USER : [user]})
+      return await self.respond_auth_message(message,
+                                             True,
+                                             serialized_user,
+                                             self.scope["session"].session_key)
+    return await self.respond_reject_auth_message(message)
 
-    await self.send_json({
-      AUTH_IS_AUTHENTICATED : isAuth,
-      AUTH_USER : user,
-      WEBSOCKET_SESSION_ID : key,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    })
-
+  # This is a mess
   async def handleWhoAmI(self, message):
     user = await get_user(self.scope)
     if isinstance(user, User):
       await self.enterUserGroups(user)
-      isAuth = True
       user_serialized = await self.db.serialize_dict({DATA_USER : [user]})
-      key = self.scope["session"].session_key
-    else:
-      isAuth = False
-      user_serialized = {}
-      key = ""
-
-    await self.send_json({
-      WEBSOCKET_SESSION_ID : key,
-      AUTH_IS_AUTHENTICATED : isAuth,
-      AUTH_USER : user_serialized,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    })
+      return await self.respond_auth_message(message, True, user_serialized, self.scope["session"].session_key)
+    elif isinstance(user, AnonymousUser):
+      successful_login_exists = await database_sync_to_async(SuccessfulLogin.objects.exists)()
+      if successful_login_exists:
+        user = await auth.get_login()
+        if not isinstance(user, AnonymousUser):
+          await login(self.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')
+          session = self.scope["session"]
+          logger.info(f"session type: {type(session)} session {session}")
+          await database_sync_to_async(session.save)()
+          await self.enterUserGroups(user)
+          serialized_user = await self.db.serialize_dict({DATA_USER : [user]})
+          session_key = self.scope["session"].session_key
+          return await self.respond_auth_message(message,
+                                                 True,
+                                                 serialized_user,
+                                                 session_key)
+    await self.respond_reject_auth_message(message)
 
   async def handleLogout(self, message):
     user = await get_user(self.scope)
@@ -770,16 +775,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await self.db.changeExternalPassword(externalUserID, externalNewPassword)
     except ObjectDoesNotExist:
       return await self.send_json({
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_OBJECT_DOES_NOT_EXISTS,
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
       })
     except IllegalActionAttempted:
+      error_logger.error("Somehow an illegal action was attempted!")
       return
     # Success return message
     await self.send_json({
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_DATA_ID],
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value

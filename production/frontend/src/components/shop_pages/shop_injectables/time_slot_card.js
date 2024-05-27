@@ -67,8 +67,8 @@ export function TimeSlotCard({
     }
   }
 
-  // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the same endpoint and tracer
-  //(and day, but that assumption is not used here!)
+  // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the
+  //same endpoint and tracer (and day, but that assumption is not used here!)
   const orderedActivityOrders = activityOrders.filter((order) =>
     order.ordered_time_slot === timeSlotID);
 
@@ -105,6 +105,10 @@ export function TimeSlotCard({
 
   // This Component displays all order in their original positions
   const orderRows = [...orders.values()].map((order, i) => {
+    //#region Sub component
+    // This is a kind of sub-component, that if this way due to the react engine
+    // The prettier thing is probably to move this out as a private module
+    //function
     // Functions
     function validate(){
       const [validActivity, numberActivity] = parseDanishPositiveNumberInput(order.ordered_activity, "Aktiviten");
@@ -218,6 +222,7 @@ export function TimeSlotCard({
         </Col>
       </Row>);
   });
+  //#region End of sub-component
 
   //  Card Content
   const [thirdColumnContent, fourthColumnContent] = (() => {
