@@ -11,7 +11,8 @@ import propTypes from 'prop-types'
 
 import { cssCenter, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
-  PROP_TRACER_CATALOG, ORDER_STATUS
+  PROP_TRACER_CATALOG, ORDER_STATUS,
+  DAYS_OBJECTS
 } from "../../lib/constants.js";
 
 import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
@@ -26,7 +27,7 @@ import { compareTimeStamp, getDay, getTimeString
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
   OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
-import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter } from "../../lib/filters.js";
+import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter, productionsFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 import { Comment } from "../injectable/data_displays/comment.js";
@@ -36,6 +37,221 @@ const Modals = {
   create_modal : CreateOrderModal,
   activityModal : ActivityModal,
 }
+
+//#region Order Row
+/**
+  * Row of an order inside of a RenderedTimeSlot
+  * @param {{
+  *   order : ActivityOrder
+  * }} props
+  * @returns { Element }
+  */
+  function OrderRow({order}){
+    return (
+    <Row>
+      <Col><StatusIcon order={order}/></Col>
+      <Col>Order ID: {order.id}</Col>
+      <Col>{order.ordered_activity} MBq</Col>
+      <Col><Comment comment={order.comment}/></Col>
+    </Row>);
+ }
+
+
+ //#region TimeSlotRow
+/**
+  * This is similar to the shop side TimeSlotCard,
+  * however the functionality is quite different
+  * Creates a number of OrderRow inside of the card.
+  * @param {
+* timeSlot : ActivityDeliveryTimeSlot
+* } props
+* @returns
+*/
+function TimeSlotRow({timeSlot, tracer, tracerCatalog, orderMapping, timeSlotMapping}){
+  const state = useTracershopState();
+  const websocket = useWebsocket();
+  const endpoint = state.delivery_endpoint.get(timeSlot.destination);
+  const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer);
+  const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
+  // Prop extraction
+  const orders = orderMapping.getOrders(timeSlot.id);
+  const orderCollection = new ActivityOrderCollection(orders, state, overhead);
+
+  const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
+  const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
+
+  const OrderData = [];
+
+  for(const order of orders){
+    const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id
+                             && order.moved_to_time_slot === null
+                             || order.moved_to_time_slot === timeSlot.id
+
+    if(is_originalTimeSlot){
+      OrderData.push(<OrderRow key={order.id} order={order}/>);
+    }
+  }
+  const canMove = firstAvailableTimeSlotID !== timeSlot.id
+               && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
+
+ // State
+ const [open, setOpen] = useState(false);
+
+ // Functions
+ function moveOrders(){
+   const message = websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+
+   message[DATA_DELIVER_TIME] = firstAvailableTimeSlotID;
+   message[DATA_ACTIVITY_ORDER] = orders.map(getId);
+   websocket.send(message);
+ }
+
+ function restoreOrders(){
+   const message = websocket.getMessage(WEBSOCKET_MESSAGE_RESTORE_ORDERS);
+   message[DATA_ACTIVITY_ORDER] = orders.map(getId);
+   websocket.send(message);
+ }
+
+ function headerFunction(){
+  if (orderCollection.moved && canMove) {
+    restoreOrders()
+  } else {
+    setTimeSlotID(timeSlot.id);
+    setModalIdentifier('activityModal');
+  }
+ }
+
+ const [thirdColumnInterior, fourthColumnInterior] = (() => {
+    if (orderCollection.minimum_status === ORDER_STATUS.CANCELLED){
+      return [`Afvist af ${formatUsername(orderCollection.freed_by)}`,
+              `Afvist Kl: ${renderDateTime(orderCollection.freed_time)}`];
+    }
+
+    if (orderCollection.minimum_status === ORDER_STATUS.RELEASED){
+      return [`Udleveret: ${Math.floor(orderCollection.delivered_activity)} MBq`,
+              `Frigivet kl: ${formatTimeStamp(orderCollection.freed_time)}`,
+      ];
+    } else {
+      if (canMove && !orderCollection.moved){
+      }
+      return [
+        `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
+        `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
+      ];
+    }
+  })();
+
+ return (
+   <Card key={timeSlot.id}>
+     <Card.Header>
+       <Row>
+         <Col xs={1} style={cssCenter}>
+            <StatusIcon
+              label={`time-slot-icon-${timeSlot.id}`}
+              orderCollection={orderCollection}
+              onClick={headerFunction}
+            />
+         </Col>
+         <Col style={cssCenter}>{orderCollection.owner.short_name} - {orderCollection.endpoint.name}</Col>
+         <Col style={cssCenter}><TimeDisplay time={timeSlot.delivery_time}/></Col>
+         <Col style={cssCenter}>{thirdColumnInterior}</Col>
+         <Col style={cssCenter}>{fourthColumnInterior}</Col>
+         <Col style={cssCenter}>
+          <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !orderCollection.moved}>
+            <ClickableIcon
+              src="/static/images/delivery.svg"
+              onClick={()=>{
+                openActivityReleasePDF(endpoint, tracer, new Date(orderCollection.ordered_date));
+              }}
+            />
+          </Optional>
+          <Optional exists={canMove && !orderCollection.moved}>
+            <ClickableIcon
+              src="/static/images/move_top.svg"
+              onClick={moveOrders}
+            />
+          </Optional>
+         </Col>
+         <Col xs={1} style={{
+           justifyContent : 'right',
+           display : 'flex'
+         }}>
+           <OpenCloseButton
+             label={`open-time-slot-${timeSlot.id}`}
+             open={open}
+             setOpen={setOpen}
+           />
+         </Col>
+       </Row>
+     </Card.Header>
+     <Collapse in={open}>
+       <Card.Body>
+         {OrderData}
+       </Card.Body>
+     </Collapse>
+   </Card>);
+}
+
+
+//#region
+/**
+ * Row over the actual table,with the goal of informing the user of how much
+ * tracer needs to be produced
+ * @arg {{
+*  active_production : Number - ID of the production
+*  productionTimeSlotOwnerShip : ProductionTimeSlotOwnerShip -
+*  tracerCatalog : TracerCatalog - A catalog of the tracers the customers can
+*  orderMapping : OrderMapping - A mapping of orders to time slots, taking into account that orders may have been moved
+* }} props
+* @returns
+*/
+function ProductionRow({active_production, productionTimeSlotOwnerShip, tracerCatalog, orderMapping}){
+  const state = useTracershopState();
+  const production = state.production.get(active_production);
+  const tracer = state.tracer.get(production.tracer);
+  const isotope = state.isotopes.get(tracer.isotope);
+
+  let activity_ordered = 0;
+  let activity_overhead = 0;
+
+  const /**@type {Array<Number> | undefined} */ associatedTimeSlots = productionTimeSlotOwnerShip.getTimeSlots(active_production);
+
+  if (associatedTimeSlots !== undefined) {
+    for(const timeSlot of associatedTimeSlots){
+      const customer = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
+      const overhead = tracerCatalog.getOverheadForTracer(customer.id, tracer.id)
+      const orders = orderMapping.getOrders(timeSlot.id);
+      if(orders !== undefined) {
+        for (const order of orders){
+          const contributingTimeSlot = (() => {
+            const id = order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
+            return state.deliver_times.get(id);
+          })();
+
+          if(!(associatedTimeSlots.includes(contributingTimeSlot))){
+            // This is indicate that the order have been moved to an other production
+            // So it should not be included in the production!
+            //console.log(`Order ${order.id} belongs to a time slot`, contributingTimeSlot, `that is not the production: ${associatedTimeSlots.map(getId)}`);
+            continue;
+          }
+          const timeDifference = compareTimeStamp(contributingTimeSlot.delivery_time, production.production_time);
+          const amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
+
+          activity_ordered += amount;
+          activity_overhead += amount * overhead;
+        }
+      }
+    }
+ }
+
+ return (
+ <Row>
+   <h4>
+     Kørsel {production.production_time} : {Math.floor(activity_ordered)} MBq / Overhead : {Math.floor(activity_overhead)} MBq
+   </h4>
+ </Row>);
+ }
+
 
 /**
  * gets the owner of a time slot
@@ -64,15 +280,12 @@ function getTimeSlotOwner(timeSlot, endpoints, customers){
  */
 export function ActivityTable ({active_tracer, active_date}) {
   const state = useTracershopState();
-
   const tracer = state.tracer.get(active_tracer);
-  const isotope = state.isotopes.get(tracer.isotope);
   const activeDay = getDay(active_date)
   const delivery_date = dateToDateString(active_date)
   const danishDateString = parseDateToDanishDate(delivery_date);
-  const websocket = useWebsocket();
 
-  const /**@type {Array<Number>} */ relevantProductions = applyFilter(
+  const relevantProductions = applyFilter(
     state.production,
     productionDayTracerFilter(activeDay, active_tracer)
   ).map(getId);
@@ -107,207 +320,14 @@ export function ActivityTable ({active_tracer, active_date}) {
                                         state.deliver_times,
                                         state.delivery_endpoint);
 
-  /**
-  * Row inside of a RenderedTimeSlot
-  * @param {{
-  *   order : ActivityOrder
-  * }} props
-  * @returns { Element }
-  */
-  function OrderRow({order}){
-    return (<Row>
-      <Col><StatusIcon order={order}/></Col>
-      <Col>Order ID: {order.id}</Col>
-      <Col>{order.ordered_activity} MBq</Col>
-      <Col><Comment comment={order.comment}/></Col>
-    </Row>);
- }
-
- /**
-  * This is similiar to the shop side TimeSlotCard, however the functionality is quite different
-  * Creates a number of OrderRow inside of the card.
-  * @param {
-  * timeSlot : ActivityDeliveryTimeSlot
-  * } props
-  * @returns
-  */
-  function TimeSlotRow({timeSlot}){
-    const endpoint = state.delivery_endpoint.get(timeSlot.destination);
-    const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer);
-    const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
-    // Prop extraction
-    const orders = orderMapping.getOrders(timeSlot.id);
-    const orderCollection = new ActivityOrderCollection(orders, state, overhead);
-
-    const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
-    const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
-
-    const OrderData = [];
-
-    for(const order of orders){
-      const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id
-                               && order.moved_to_time_slot === null
-                               || order.moved_to_time_slot === timeSlot.id
-
-      if(is_originalTimeSlot){
-        OrderData.push(<OrderRow key={order.id} order={order}/>);
-      }
-    }
-    const canMove = firstAvailableTimeSlotID !== timeSlot.id
-                 && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
-
-   // State
-   const [open, setOpen] = useState(false);
-
-   // Functions
-   function moveOrders(){
-     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-
-     message[DATA_DELIVER_TIME] = firstAvailableTimeSlotID;
-     message[DATA_ACTIVITY_ORDER] = orders.map(getId);
-     websocket.send(message);
-   }
-
-   function restoreOrders(){
-     const message = websocket.getMessage(WEBSOCKET_MESSAGE_RESTORE_ORDERS);
-     message[DATA_ACTIVITY_ORDER] = orders.map(getId);
-     websocket.send(message);
-   }
-
-   function headerFunction(){
-    if (orderCollection.moved && canMove) {
-      restoreOrders()
-    } else {
-      setTimeSlotID(timeSlot.id);
-      setModalIdentifier('activityModal');
-    }
-   }
-
-   const [thirdColumnInterior, fourthColumnInterior] = (() => {
-      if (orderCollection.minimum_status === ORDER_STATUS.CANCELLED){
-        return [`Afvist af ${formatUsername(orderCollection.freed_by)}`,
-                `Afvist Kl: ${renderDateTime(orderCollection.freed_time)}`];
-      }
-
-      if (orderCollection.minimum_status === ORDER_STATUS.RELEASED){
-        return [`Udleveret: ${Math.floor(orderCollection.delivered_activity)} MBq`,
-                `Frigivet kl: ${formatTimeStamp(orderCollection.freed_time)}`,
-        ];
-      } else {
-        if (canMove && !orderCollection.moved){
-        }
-        return [
-          `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
-          `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
-        ];
-      }
-    })();
-
-   return (
-     <Card key={timeSlot.id}>
-       <Card.Header>
-         <Row>
-           <Col xs={1} style={cssCenter}>
-              <StatusIcon
-                label={`time-slot-icon-${timeSlot.id}`}
-                orderCollection={orderCollection}
-                onClick={headerFunction}
-              />
-           </Col>
-           <Col style={cssCenter}>{orderCollection.owner.short_name} - {orderCollection.endpoint.name}</Col>
-           <Col style={cssCenter}><TimeDisplay time={timeSlot.delivery_time}/></Col>
-           <Col style={cssCenter}>{thirdColumnInterior}</Col>
-           <Col style={cssCenter}>{fourthColumnInterior}</Col>
-           <Col style={cssCenter}>
-            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !orderCollection.moved}>
-              <ClickableIcon
-                src="/static/images/delivery.svg"
-                onClick={()=>{
-                  openActivityReleasePDF(endpoint, tracer, new Date(orderCollection.ordered_date));
-                }}
-              />
-            </Optional>
-            <Optional exists={canMove && !orderCollection.moved}>
-              <ClickableIcon
-                src="/static/images/move_top.svg"
-                onClick={moveOrders}
-              />
-            </Optional>
-           </Col>
-           <Col xs={1} style={{
-             justifyContent : 'right',
-             display : 'flex'
-           }}>
-             <OpenCloseButton
-               label={`open-time-slot-${timeSlot.id}`}
-               open={open}
-               setOpen={setOpen}
-             />
-           </Col>
-         </Row>
-       </Card.Header>
-       <Collapse in={open}>
-         <Card.Body>
-           {OrderData}
-         </Card.Body>
-       </Collapse>
-     </Card>);
-  }
-
-/**
- * Row over the actual table,with the goal of informing the user of how much
- * tracer needs to be produced
- * @param {{
- *  active_production : Number - ID of the production
- * }} props
- * @returns
- */
-function ProductionRow({active_production}){
-  const /**@type {ActivityProduction} */ production = state.production.get(active_production);
-
-  let activity_ordered = 0;
-  let activity_overhead = 0;
-
-  const /**@type {Array<Number> | undefined} */ associatedTimeSlots = productionTimeSlotOwnerShip.getTimeSlots(active_production);
-
-  if (associatedTimeSlots !== undefined) {
-    for(const timeSlot of associatedTimeSlots){
-      const customer = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
-      const overhead = tracerCatalog.getOverheadForTracer(customer.id, tracer.id)
-      const orders = orderMapping.getOrders(timeSlot.id);
-      if(orders !== undefined) {
-        for (const order of orders){
-          const contributingTimeSlot = (() => {
-            const id = order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
-            return state.deliver_times.get(id);
-          })();
-
-          if(!(associatedTimeSlots.includes(contributingTimeSlot))){
-            // This is indicate that the order have been moved to an other production
-            // So it should not be included in the production!
-            //console.log(`Order ${order.id} belongs to a time slot`, contributingTimeSlot, `that is not the production: ${associatedTimeSlots.map(getId)}`);
-            continue;
-          }
-          const timeDifference = compareTimeStamp(contributingTimeSlot.delivery_time, production.production_time);
-          let amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
-
-          activity_ordered += amount;
-          activity_overhead += amount * overhead;
-        }
-      }
-    }
-  }
-
-  return (
-  <Row>
-    <h4>
-      Kørsel {production.production_time} : {Math.floor(activity_ordered)} MBq / Overhead : {Math.floor(activity_overhead)} MBq
-    </h4>
-  </Row>);
-  }
-
   const productionRows = relevantProductions.map((productionID) => {
-    return (<ProductionRow key={productionID} active_production={productionID}/>);
+    return (<ProductionRow
+      key={productionID}
+      active_production={productionID}
+      productionTimeSlotOwnerShip={productionTimeSlotOwnerShip}
+      tracerCatalog={tracerCatalog}
+      orderMapping={orderMapping}
+    />);
   })
 
   const renderedTimeSlots = [];
@@ -315,6 +335,10 @@ function ProductionRow({active_production}){
       renderedTimeSlots.push(<TimeSlotRow
                 key={timeSlot.id}
                 timeSlot = {timeSlot}
+                tracer={tracer}
+                tracerCatalog={tracerCatalog}
+                orderMapping={orderMapping}
+                timeSlotMapping={timeSlotMapping}
              />);
   }
 
@@ -338,13 +362,29 @@ function ProductionRow({active_production}){
     Modal = <ModalType {...modalProps} />;
   }
 
+  let available_days_html = <div></div>;
+  if(productionRows.length === 0){
+    const /**@type {ActivityProduction[]} */ weekly_productions = productionsFilter(state, {tracerID : active_tracer});
+    const /**@type {Set<Number>} */ production_days = new Set();
+    for(const production of weekly_productions){
+      production_days.add(production.production_day);
+    }
+    const available_days =  [...production_days]
+      .sort((a,b) => a - b)
+      .map((day) => DAYS_OBJECTS[day].name)
+      .join(", ");
+    available_days_html = <Row><h3>{tracer.shortname} bliver kun produceret: {available_days}</h3></Row>;
+  }
+
   return (
     <div>
       <Container>
         <Row>
           <Col sm={10}>
-            <Row><h3>Produktioner - {danishDateString}:</h3></Row>
-            {productionRows}
+            <Optional exists={!!productionRows.length} alternative={available_days_html}>
+              <Row><h3>Produktioner - {danishDateString}:</h3></Row>
+              {productionRows}
+            </Optional>
           </Col>
           <Col sm={2}>
             <Button

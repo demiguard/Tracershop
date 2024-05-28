@@ -87,6 +87,7 @@ class Command(BaseCommand):
       out.write("\nexport class TracershopState {\n")
       out.write(f"  /** @type {{ User }} */ logged_in_user\n")
       out.write(f"  /** @type {{ Date }} */ today\n")
+      out.write(f"  /** @type {{ Number }} */ readyState\n")
 
       for key, model in MODELS.items():
         out.write(f"  /** @type {{ Map<Number, {model.__name__}>}} */ {key}\n")
@@ -96,6 +97,7 @@ class Command(BaseCommand):
         out.write(f"{key}, ")
       out.write("){\n    this.logged_in_user=logged_in_user\n")
       out.write("    this.today=today\n")
+      out.write("   this.readyState = WebSocket.CLOSED\n")
       for key, model in MODELS.items():
         out.write(f"    if({key} !== undefined){{\n")
         out.write(f"      this.{key} = {key}\n")

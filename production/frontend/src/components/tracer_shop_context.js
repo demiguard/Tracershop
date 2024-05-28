@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
 import { TracerWebSocket } from '../lib/tracer_websocket';
 import { MODELS, TracershopState, User } from '../dataclasses/dataclasses';
-import { ReducerAction, UpdateCurrentUser, UpdateState, DeleteState, UpdateToday } from '~/lib/state_actions';
+import { ReducerAction, UpdateCurrentUser, UpdateState, DeleteState, UpdateToday, UpdateWebsocketConnectionState } from '~/lib/state_actions';
 import { db } from '~/lib/local_storage_driver';
 import { DATABASE_CURRENT_USER, DATABASE_TODAY } from '~/lib/constants';
 import { ParseDjangoModelJson } from '~/lib/formatting';
@@ -39,7 +39,7 @@ export function useTracershopDispatch(){
  * @returns {TracerWebSocket}
  */
 export function useWebsocket(){
-  return useContext(WebsocketContext)
+  return useContext(WebsocketContext);
 }
 /**
  *
@@ -94,6 +94,12 @@ function tracershopReducer(state, action, websocket){
         [WEBSOCKET_DATE] : newState.today
       });
     }
+    return newState;
+  }
+  if(action instanceof UpdateWebsocketConnectionState){
+    console.log("Updating websocket")
+    const newState = Object.assign(new TracershopState(), state);
+    newState.readyState = action.readyState;
     return newState;
   }
 

@@ -10,7 +10,7 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
 
 import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
-import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction } from '~/lib/state_actions';
+import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction, UpdateWebsocketConnectionState } from '~/lib/state_actions';
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
@@ -84,7 +84,8 @@ export class TracerWebSocket {
     }
 
     this._ws.onclose = function(e) {
-      console.log("Websocket is now closed!")
+      console.log("Closing websocket")
+      dispatch(new UpdateWebsocketConnectionState(WebSocket.CLOSED));
       for(const [messageID, channel] of this._PromiseMap){
         channel.port1.close();
         channel.port2.close();
@@ -97,6 +98,7 @@ export class TracerWebSocket {
     }
 
     this._ws.onopen = function (){
+      dispatch(new UpdateWebsocketConnectionState(WebSocket.OPEN));
       const message = this.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI);
       this.send(message).then((data) => {
         let user;

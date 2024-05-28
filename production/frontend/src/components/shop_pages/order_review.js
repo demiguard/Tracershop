@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Row, Col, Button } from "react-bootstrap";
 
-import { INJECTION_USAGE, ORDER_STATUS } from "~/lib/constants";
+import { DATABASE_ACTIVE_TRACER, INJECTION_USAGE, ORDER_STATUS } from "~/lib/constants";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
 
 import { dateToDateString } from "~/lib/formatting";
@@ -15,6 +15,7 @@ import { TracerCatalog } from "~/lib/data_structures";
 import { getRelevantActivityOrders } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
+import { db } from "~/lib/local_storage_driver";
 
 
 /**
@@ -34,18 +35,25 @@ export function OrderReview({active_endpoint,
   const state = useTracershopState();
 
   const tracerCatalog = new TracerCatalog(state.tracer_mapping, state.tracer);
-  const availableActivityTracers = tracerCatalog.getActivityCatalog(active_endpoint);
+  const availableActivityTracers  = tracerCatalog.getActivityCatalog(active_endpoint);
   const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
+  const day = getDay(active_date);
 
   // State Definitions
   let activeTracerInit = -1;
   if (0 < availableActivityTracers.length){
     activeTracerInit = availableActivityTracers[0].id;
   }
+  const local_stored_active_tracer = db.get(DATABASE_ACTIVE_TRACER);
+  if(local_stored_active_tracer &&
+      availableActivityTracers.includes(
+        state.tracer.get(local_stored_active_tracer)
+      )){
+    activeTracerInit = local_stored_active_tracer;
+  }
 
   const [activeTracer, setActiveTracer] = useState(activeTracerInit);
-
-  const day = getDay(active_date);
+  db.set(DATABASE_ACTIVE_TRACER, activeTracer);
   const activeDateString = dateToDateString(active_date);
 
   const [, // AvailableProductions
@@ -58,6 +66,7 @@ export function OrderReview({active_endpoint,
 
   function setTracer(tracer){
     return () => {
+      db.set(DATABASE_ACTIVE_TRACER, tracer.id);
       setActiveTracer(tracer.id);
     }
   }

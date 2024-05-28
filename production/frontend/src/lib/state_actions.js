@@ -50,3 +50,10 @@ export class UpdateToday extends ReducerAction {
     this.websocket = websocket
   }
 }
+
+export class UpdateWebsocketConnectionState extends ReducerAction {
+  constructor(newReadyState){
+    super();
+    this.readyState = newReadyState;
+  }
+}

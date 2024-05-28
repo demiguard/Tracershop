@@ -143,7 +143,7 @@ export function locationEndpointFilter(active_endpoint){
  * @returns
  */
 export function productionsFilter(state, {tracerID, day, ids = false}){
-  const productions = []
+  const productions = [];
   for(const production of state.production.values()){
     const tracerCondition = tracerID === undefined || production.tracer === tracerID;
     const dayCondition = day === undefined || production.day === day;
@@ -156,6 +156,7 @@ export function productionsFilter(state, {tracerID, day, ids = false}){
       }
     }
   }
+  console.log(productions);
   return productions;
 }
 

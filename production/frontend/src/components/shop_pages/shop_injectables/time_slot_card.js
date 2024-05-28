@@ -254,17 +254,19 @@ export function TimeSlotCard({
     [PROP_ON_CLOSE] : () => {setShowCalculator(false);},
     [PROP_ACTIVE_TRACER] : tracer,
     [PROP_COMMIT] : (activity) => {
-        if(orders.has(-1)){
-          const order = orders.get(-1).copy();
-          order.ordered_activity = Math.floor(activity);
-          setOrders(old => {
-            const newOrders = new Map(old);
-            newOrders.set(-1, order);
-            return newOrders;
-          })
-        }
-        setShowCalculator(false);
-      },
+      if(orders.has(-1)){
+        const order = orders.get(-1).copy();
+        order.ordered_activity = Math.floor(activity);
+        setOrders(old => {
+          const newOrders = new Map(old);
+          newOrders.set(-1, order);
+          return newOrders;
+        })
+      }
+
+      setShowCalculator(false);
+      setCollapsed(true);
+    },
     initial_MBq : 300,
   };
 
@@ -291,7 +293,7 @@ export function TimeSlotCard({
           <ClickableIcon
             label={`open-calculator-${timeSlot.id}`}
             src="/static/images/calculator.svg"
-            onClick={() => {setShowCalculator(true);}}
+            onMouseDown={() => {setShowCalculator(true);}}
           />
         </Optional>
         <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED}>

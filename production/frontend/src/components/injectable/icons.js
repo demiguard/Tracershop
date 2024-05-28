@@ -1,16 +1,17 @@
-import React, { Component } from 'react'
-import {Image, Button} from 'react-bootstrap'
+import React from 'react'
+import {Image, Button, Col, Row} from 'react-bootstrap'
 import propTypes from 'prop-types'
-import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from '~/dataclasses/dataclasses'
+import { ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures'
 import { ORDER_STATUS } from '~/lib/constants'
 import { InjectionOrderPDFUrl, openActivityReleasePDF } from '~/lib/utils'
-import { useWebsocket } from '~/components/tracer_shop_context'
+import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context'
 
 export function ClickableIcon ({
     altText,
     src,
     onClick,
+    onMouseDown,
     label,
     className ,
     style,
@@ -31,7 +32,6 @@ export function ClickableIcon ({
     variant = "variant-light"
   }
 
-
   if (className) {
     className = `statusIcon ${className}`;
   } else {
@@ -43,6 +43,7 @@ export function ClickableIcon ({
               variant={variant}
               aria-label={label}
               onClick={onClick}
+              onMouseDown={onMouseDown}
     >
       <Image
         className={className}
@@ -157,14 +158,19 @@ InjectionDeliveryIcon.propTypes = {
 }
 
 export function WebsocketIcon(){
-  const websocket = useWebsocket();
-  if(!websocket){
-    return <div></div>
-  }
-
-  switch(websocket._ws.readyState){
-
+  const state = useTracershopState();
+  switch(state.readyState){
+    case WebSocket.CLOSED:
+    case WebSocket.CLOSING:
+      return (
+      <Row style={{
+        justifyContent : 'end'
+      }}>
+        <img style={{
+          height : '50px'
+        }} src={"/static/images/network_disconnect.svg"}/>
+      </Row>);
     default:
-      return <div></div>
+      return null
   }
 }

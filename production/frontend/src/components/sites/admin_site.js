@@ -1,5 +1,5 @@
 import React, { useRef, useState } from "react";
-import { NavDropdown } from "react-bootstrap";
+import { Col, NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "../../lib/constants.js";
 import { db } from "../../lib/local_storage_driver.js";
 import { ConfigSite } from "./config_site.js";
@@ -64,15 +64,16 @@ export function AdminSite({logout}) {
     }
 
   const NavbarAdmin = [(
-    <NavDropdown
-      className={styles.NavbarElement + " btn-primary " + SiteStyles.pad0tb}
-      aria-label="site-selector"
-      title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}
-      key="SiteSelector"
+    <Col key="SiteSelector">
+      <NavDropdown
+        className={styles.NavbarElement + " btn-primary " + SiteStyles.pad0tb}
+        aria-label="site-selector"
+        title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}
+      >
+        {RenderedSites}
+      </NavDropdown>
+    </Col>)];
 
-    >
-      {RenderedSites}
-    </NavDropdown>)];
   const ActiveSite = SITES[activeSite];
 
   if(ActiveSite === undefined){

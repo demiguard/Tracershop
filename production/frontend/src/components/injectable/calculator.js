@@ -1,4 +1,4 @@
-import React, { Component, useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
 
 import propTypes from 'prop-types'
@@ -56,29 +56,38 @@ export function Calculator ({
       newEntry : {
         time : "", // Will be on the format HH:MM:SS, Note that the seconds will be ignore and not displayed.
         activity : defaultMBq,
-
       },
     });
 
 
   function _addColon(timeStr){
     if(timeStr.length == 2){
-      return timeStr + ":"
+      return timeStr + ":";
     } else {
-      return timeStr
+      return timeStr;
     }
   }
 
   function InputEnterPress(event){
     if (event.key == "Enter"){
-      addEntry()
+      if (state.newEntry.time === ""){
+        commit_activity();
+      } else {
+        addEntry();
+      }
+      event.preventDefault();
     }
   }
+
+  useEffect(function addEnterListener() {
+    window.addEventListener('keydown', InputEnterPress);
+    return () => { window.removeEventListener('keydown', InputEnterPress); };
+  }, [state]);
 
   function changeNewEntry(key){
     const ReturnFunction = (event) => {
       const newNewEntry = { // Look it's a new newEntry, I didn't make up this naming conventions.
-        // Ooh wait. I open for feedback.
+        // Ooh wait. I am open for feedback.
         time : state.newEntry.time,
         activity : state.newEntry.activity
       };
@@ -157,7 +166,7 @@ export function Calculator ({
   }
 
   function commit_activity() {
-    var activity = 0.0;
+    let activity = 0.0;
     const /**@type {Isotope} */ isotope = isotopes.get(tracer.isotope);
     for(const entry of state.entries){
       const hour = Number(entry.time.substring(0,2));
@@ -168,13 +177,14 @@ export function Calculator ({
         productionTime.getDate(),
         hour,
         min
-      )
+      );
       const timeDelta = CountMinutes(productionTime, entryDate);
       activity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
     }
 
     activity = (activity < 0) ? 0 : activity;
 
+    // External function, expected to close the calculator
     commit(activity);
   }
   const isotope = isotopes.get(tracer.isotope);
@@ -223,13 +233,11 @@ export function Calculator ({
           aria-label={CALCULATOR_NEW_TIME_LABEL}
           value={state.newEntry.time}
           onChange={changeNewEntry("time")}
-          onKeyDown={InputEnterPress}
         /></td>
         <td><FormControl
           aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
           value={state.newEntry.activity}
           onChange={changeNewEntry("activity")}
-          onKeyDown={InputEnterPress}
         /></td>
         <td><ClickableIcon
           src={"/static/images/plus.svg"}

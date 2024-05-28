@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Card, Col, Form, Row } from "react-bootstrap";
+import { Card, Col, Form, FormControl, Row } from "react-bootstrap";
 import propTypes from 'prop-types';
 
 import { nullParser } from "~/lib/formatting";
@@ -19,6 +19,7 @@ import { InjectionOrderPDFUrl, compareLoosely } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { Optional } from "~/components/injectable/optional";
+import { useTracershopState } from "~/components/tracer_shop_context";
 
 /**
  * This is a card containing all the information on an injection order
@@ -43,6 +44,7 @@ export function InjectionOrderCard({
   const [tempInjectionOrder, setTempInjectionOrder] = useState(injection_order);
   const [errorInjections, setErrorInjections] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("")
+  const state = useTracershopState();
 
   function resetErrors(){
     setErrorInjections("");
@@ -55,7 +57,9 @@ export function InjectionOrderCard({
   }
 
   function setDeliveryTime(value){
-    setTempInjectionOrder((prevState) => {return {...prevState, delivery_time : value}});
+    setTempInjectionOrder(
+      (prevState) => {return {...prevState, delivery_time : value}}
+    );
   }
 
   function validate(){
@@ -96,7 +100,8 @@ export function InjectionOrderCard({
         return;
       }
     }
-    const newCurrent = injection_tracers[0].id;
+    const newCurrent = injection_tracers.length
+      ? injection_tracers[0].id : undefined;
 
     setTempInjectionOrder(inj_order => {
       return {
@@ -152,6 +157,21 @@ export function InjectionOrderCard({
     return "";
   })();
 
+  const TracerSelect = <Select
+    aria-label={`tracer-input-${injection_order.id}`}
+    canEdit={canEdit}
+    options={tracerOptions}
+    onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
+    value={tempInjectionOrder.tracer}
+  />;
+
+  const tempTracer = state.tracer.get(injection_order.tracer);
+  const TracerForm = tempTracer ? <FormControl
+                        disabled
+                        aria-label={`tracer-input-${injection_order.id}`}
+                        value={tempTracer.shortname}
+                     /> : <div></div>;
+
   return (
   <Card style={{padding : '0px'}}>
     <Card.Header>
@@ -166,13 +186,9 @@ export function InjectionOrderCard({
           display : "ruby"
         }}>
           <TracershopInputGroup label="Tracer">
-            <Select
-              aria-label={`tracer-input-${injection_order.id}`}
-              canEdit={canEdit}
-              options={tracerOptions}
-              onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
-              value={tempInjectionOrder.tracer}
-              />
+            <Optional exists={canEdit} alternative={TracerForm}>
+              {TracerSelect}
+            </Optional>
           </TracershopInputGroup>
           </div>
         </Col>

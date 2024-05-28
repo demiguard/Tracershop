@@ -140,6 +140,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "moveOrder",
   "restoreOrders",
   "logError",
+  "restartVialDog",
   "changeExternalPassword",
   "createExternalUser",
 ]

@@ -46,8 +46,7 @@ export function OrderPage() {
   // ##### Render functions ##### //
 
   function renderTableSwitchButton(tracer) {
-    const underline = tracer.id === state.activeTracer;
-
+    const underline = tracer.id === activeTracer;
     return (
       <Button className={SiteStyles.Margin15lr} key={tracer.shortname} sz="sm" onClick={() => {
         db.set("activeTracer", tracer.id);
