@@ -97,7 +97,6 @@ function tracershopReducer(state, action, websocket){
     return newState;
   }
   if(action instanceof UpdateWebsocketConnectionState){
-    console.log("Updating websocket")
     const newState = Object.assign(new TracershopState(), state);
     newState.readyState = action.readyState;
     return newState;

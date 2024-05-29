@@ -84,7 +84,6 @@ export class TracerWebSocket {
     }
 
     this._ws.onclose = function(e) {
-      console.log("Closing websocket")
       dispatch(new UpdateWebsocketConnectionState(WebSocket.CLOSED));
       for(const [messageID, channel] of this._PromiseMap){
         channel.port1.close();

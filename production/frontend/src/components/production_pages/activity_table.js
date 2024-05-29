@@ -67,7 +67,13 @@ const Modals = {
 * } props
 * @returns
 */
-function TimeSlotRow({timeSlot, tracer, tracerCatalog, orderMapping, timeSlotMapping}){
+function TimeSlotRow({timeSlot,
+                      setTimeSlotID,
+                      setModalIdentifier,
+                      tracer,
+                      tracerCatalog,
+                      orderMapping,
+                      timeSlotMapping}){
   const state = useTracershopState();
   const websocket = useWebsocket();
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
@@ -339,6 +345,8 @@ export function ActivityTable ({active_tracer, active_date}) {
                 tracerCatalog={tracerCatalog}
                 orderMapping={orderMapping}
                 timeSlotMapping={timeSlotMapping}
+                setTimeSlotID={setTimeSlotID}
+                setModalIdentifier={setModalIdentifier}
              />);
   }
 
