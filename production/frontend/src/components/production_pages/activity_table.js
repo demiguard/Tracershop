@@ -21,7 +21,7 @@ import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
 
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer,
-  DeliveryEndpoint } from "../../dataclasses/dataclasses.js";
+  DeliveryEndpoint, Tracer} from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay, getTimeString
   } from "../../lib/chronomancy.js";
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
@@ -57,23 +57,25 @@ const Modals = {
  }
 
 
- //#region TimeSlotRow
+//#region TimeSlotRow
 /**
   * This is similar to the shop side TimeSlotCard,
   * however the functionality is quite different
   * Creates a number of OrderRow inside of the card.
-  * @param {
-* timeSlot : ActivityDeliveryTimeSlot
-* } props
+  * @param {object} props
+  * @param {ActivityDeliveryTimeSlot} props.timeSlot - The time slot for the Row
+  * @param {Tracer} props.tracer - Tracer of the time slot
+  * @param {React.Dispatch<React.SetStateAction<null>>} props.setModalIdentifier
+  * Function for activating the activity modal
+  * @param {React.Dispatch<React.SetStateAction<null>>} props.setTimeSlotID
+  * Function for specifying it should be this time slot that should be opened
+  * @param {TimeSlotMapping} props.timeSlotMapping
 * @returns
 */
-function TimeSlotRow({timeSlot,
-                      setTimeSlotID,
-                      setModalIdentifier,
-                      tracer,
-                      tracerCatalog,
-                      orderMapping,
-                      timeSlotMapping}){
+function TimeSlotRow(props){
+  const {timeSlot, setTimeSlotID, setModalIdentifier, tracer, tracerCatalog,
+    orderMapping, timeSlotMapping} = props; // desugaring
+
   const state = useTracershopState();
   const websocket = useWebsocket();
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
@@ -84,7 +86,7 @@ function TimeSlotRow({timeSlot,
   const orderCollection = new ActivityOrderCollection(orders, state, overhead);
 
   const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
-  const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
+  const /**@type {Number} */ firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
 
   const OrderData = [];
 
@@ -97,7 +99,7 @@ function TimeSlotRow({timeSlot,
       OrderData.push(<OrderRow key={order.id} order={order}/>);
     }
   }
-  const canMove = firstAvailableTimeSlotID !== timeSlot.id
+  const canMove = firstAvailableTimeSlot.id !== timeSlot.id
                && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
 
  // State
@@ -137,14 +139,17 @@ function TimeSlotRow({timeSlot,
       return [`Udleveret: ${Math.floor(orderCollection.delivered_activity)} MBq`,
               `Frigivet kl: ${formatTimeStamp(orderCollection.freed_time)}`,
       ];
-    } else {
-      if (canMove && !orderCollection.moved){
-      }
-      return [
-        `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
-        `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
-      ];
     }
+
+    if (orderCollection.moved){
+      return ['', <div>Rykket til <TimeDisplay time={firstAvailableTimeSlot.delivery_time}/></div>]
+    }
+
+    return [
+      `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
+      `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
+    ];
+
   })();
 
  return (
@@ -192,18 +197,38 @@ function TimeSlotRow({timeSlot,
      </Card.Header>
      <Collapse in={open}>
        <Card.Body>
-         {OrderData}
+          {OrderData}
+          <Optional exists={!(orderCollection.moved)}>
+            <Row style={{justifyContent : "end"}}>
+              <Col xs={1}>
+                <Button
+                  style={{
+                    marginLeft : "-15px"
+                  }}
+                  onMouseDown={() => {
+                    setTimeSlotID(timeSlot.id);
+                    setModalIdentifier('activityModal');
+                  }}>
+                  Åben
+                </Button>
+              </Col>
+            </Row>
+          </Optional>
        </Card.Body>
      </Collapse>
    </Card>);
 }
 
 
-//#region
+//#region Production Row
 /**
  * Row over the actual table,with the goal of informing the user of how much
  * tracer needs to be produced
- * @arg {{
+ * @param {object} props
+ * @param {Number} props.active_production - Id of the Production to be rendered
+ * @param {ProductionTimeSlotOwnerShip} props.productionTimeSlotOwnerShip - Data structure
+ *
+ * {{
 *  active_production : Number - ID of the production
 *  productionTimeSlotOwnerShip : ProductionTimeSlotOwnerShip -
 *  tracerCatalog : TracerCatalog - A catalog of the tracers the customers can
@@ -211,7 +236,10 @@ function TimeSlotRow({timeSlot,
 * }} props
 * @returns
 */
-function ProductionRow({active_production, productionTimeSlotOwnerShip, tracerCatalog, orderMapping}){
+function ProductionRow({active_production,
+                        productionTimeSlotOwnerShip,
+                        tracerCatalog,
+                        orderMapping}){
   const state = useTracershopState();
   const production = state.production.get(active_production);
   const tracer = state.tracer.get(production.tracer);
@@ -237,10 +265,11 @@ function ProductionRow({active_production, productionTimeSlotOwnerShip, tracerCa
           if(!(associatedTimeSlots.includes(contributingTimeSlot))){
             // This is indicate that the order have been moved to an other production
             // So it should not be included in the production!
-            //console.log(`Order ${order.id} belongs to a time slot`, contributingTimeSlot, `that is not the production: ${associatedTimeSlots.map(getId)}`);
+            //console.log(`Order `, order, ` belongs to a time slot`, contributingTimeSlot, `that is not the production: ${associatedTimeSlots.map(getId)}`);
             continue;
           }
-          const timeDifference = compareTimeStamp(contributingTimeSlot.delivery_time, production.production_time);
+          const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot)
+          const timeDifference = compareTimeStamp(originalTimeSlot.delivery_time, production.production_time);
           const amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
 
           activity_ordered += amount;
@@ -275,7 +304,7 @@ function getTimeSlotOwner(timeSlot, endpoints, customers){
   return customer
 }
 
-
+//#region Activity table
 /** This is the main row block of content
  *
  * @param {{

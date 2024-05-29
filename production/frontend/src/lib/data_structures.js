@@ -143,7 +143,8 @@ export class ActivityOrderCollection {
     this.orderIDs = activity_orders.map(getId);
     for(const order of activity_orders) {
       // Guard Statements
-      const deliveringTimeSlotId = order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
+      const deliveringTimeSlotId = order.moved_to_time_slot ?
+        order.moved_to_time_slot : order.ordered_time_slot;
       if(this.delivering_time_slot == null || this.ordered_date == null) {
         this.ordered_date = order.delivery_date;
         this.delivering_time_slot = state.deliver_times.get(deliveringTimeSlotId);
@@ -357,8 +358,10 @@ export class TimeSlotMapping {
     }
 
   /**
-   *
+   * Gets the first available time slot in a grouping of time slots from the
+   * same day and tracer
    * @param {ActivityDeliveryTimeSlot} timeSlot
+   * @returns {ActivityDeliveryTimeSlot}
    */
   getFirstTimeSlot(timeSlot){
     const endpoint = this._endpoints.get(timeSlot.destination);

@@ -80,7 +80,6 @@ export class TracerWebSocket {
         }
         break;
       }
-
     }
 
     this._ws.onclose = function(e) {

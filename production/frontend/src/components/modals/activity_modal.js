@@ -266,6 +266,7 @@ export function ActivityModal({
         DEFAULT_CANNOT_EDIT : 1,
         EDITING : 2,
         SELECTED : 3,
+        UNSELECTABLE : 4
       };
 
       const vialErrorInit = {
@@ -278,6 +279,9 @@ export function ActivityModal({
       const vialRowState = (() => {
         if(editing) {return vialRowStates.EDITING;}
         if(selected){return vialRowStates.SELECTED;}
+        if(orderCollection.minimum_status === ORDER_STATUS.ORDERED){
+          return vialRowStates.UNSELECTABLE;
+        }
         if(canEdit) {return vialRowStates.DEFAULT;}
         return vialRowStates.DEFAULT_CANNOT_EDIT;
       })();
@@ -491,6 +495,9 @@ export function ActivityModal({
                   onChange={onSelect}
                   checked={selected}/>
                 </div>
+                <div> {/* UNSELECTABLE */}
+
+                </div>
               </Options>
             </Optional>
           </td>
@@ -644,49 +651,45 @@ export function ActivityModal({
           <Col md={freeing ? 6 : 12}>
           <Row>
             <Row style={marginRows}>
-              <Col>{destinationHover}</Col>
+              <Col xs={3}>{destinationHover}</Col>
               <Col>{destinationMessage}</Col>
             </Row>
             <hr style={marginLess}/>
             <Row style={marginRows}>
-              <Col>Levering tidspunkt:</Col>
+              <Col xs={3}>Levering tidspunkt:</Col>
               <Col>{timeSlot.delivery_time}</Col>
             </Row>
             <hr style={marginLess}/>
             <Row style={marginRows}>
-              <Col style={{
-                display : "block",
-                margin: 'auto',
-                alignItems: 'center',
-              }}>{orderRows.length == 1 ? "Order" : "Ordre" }</Col>
+              <Col xs={3} style={{}}>{orderRows.length == 1 ? "Order" : "Ordre" }</Col>
               <Col>{orderRows}</Col>
             </Row>
             <hr style={marginLess}/>
             <Row style={marginRows}>
-              <Col>{totalActivityHover}</Col>
+              <Col xs={3}>{totalActivityHover}</Col>
               <Col>{Math.floor(orderCollection.deliver_activity)} MBq</Col>
             </Row>
             <hr style={marginLess}/>
             <Optional exists={orderCollection.minimum_status == ORDER_STATUS.ACCEPTED}>
               <Row style={marginRows}>
-                <Col>Allokeret aktivitet:</Col>
+                <Col xs={3}>Allokeret aktivitet:</Col>
                 <Col data-testid="allocation-col">{Math.floor(allocationTotal)} MBq</Col>
               </Row>
               <hr style={marginLess}/>
             </Optional>
             <Optional exists={orderCollection.minimum_status == ORDER_STATUS.RELEASED}>
               <Row style={marginRows}>
-                <Col>Frigivet aktivitet</Col>
+                <Col xs={3}>Frigivet aktivitet</Col>
                 <Col>{Math.floor(orderCollection.delivered_activity)} MBq</Col>
               </Row>
               <hr style={marginLess}/>
               <Row style={marginRows}>
-                <Col>Frigivet tidpunktet</Col>
+                <Col xs={3}>Frigivet tidpunktet</Col>
                 <Col>{orderCollection.freed_time}</Col>
               </Row>
               <hr style={marginLess}/>
               <Row style={marginRows}>
-                <Col>Frigivet af</Col>
+                <Col xs={3}>Frigivet af</Col>
                 <Col>{formatUsername(orderCollection.freed_by)}</Col>
               </Row>
               <hr style={marginLess}/>
