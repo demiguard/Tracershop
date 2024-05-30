@@ -156,7 +156,7 @@ export function productionsFilter(state, {tracerID, day, ids = false}){
       }
     }
   }
-  console.log(productions);
+
   return productions;
 }
 

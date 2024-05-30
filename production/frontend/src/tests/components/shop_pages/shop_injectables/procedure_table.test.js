@@ -6,28 +6,30 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider,
+  DispatchContextProvider } from "~/components/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
-import { DATA_PROCEDURE } from "~/lib/shared_constants.js";
+import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
 
 let websocket = null;
 
 const now = new Date(2020,4, 4, 10, 36, 44);
+const dispatch = jest.fn();
 
 beforeEach(async () => {
-  jest.useFakeTimers('modern')
-  jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
+  jest.useFakeTimers('modern');
+  jest.setSystemTime(now);
+  delete window.location;
+  window.location = { href : "tracershop"};
   websocket = tracer_websocket.TracerWebSocket;
 });
 
 afterEach(() => {
   cleanup();
-  module.clearAllMocks()
-  window.localStorage.clear()
+  module.clearAllMocks();
+  window.localStorage.clear();
   websocket = null;
 });
 
@@ -35,15 +37,16 @@ describe("Procedure Table test suite", () => {
   it("Standard Render test", async() => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
-        <ProcedureTable/>
+        <DispatchContextProvider value={dispatch}>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </DispatchContextProvider>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    expect(screen.getByTestId("new-procedure-identifier")).toBeVisible()
-    expect(screen.getByTestId("new-tracer")).toBeVisible()
-    expect(screen.getByTestId("new-units")).toBeVisible()
-    expect(screen.getByTestId("new-delay")).toBeVisible()
-    expect(screen.getByLabelText("new-create")).toBeVisible()
+    expect(screen.getByTestId("new-procedure-identifier")).toBeVisible();
+    expect(screen.getByTestId("new-tracer")).toBeVisible();
+    expect(screen.getByTestId("new-units")).toBeVisible();
+    expect(screen.getByLabelText("new-create")).toBeVisible();
 
     for(const production_identifier of testState.procedure_identifier.values()){
       // Either a pi is in a row or in the option, both visible
@@ -52,9 +55,21 @@ describe("Procedure Table test suite", () => {
   });
 
   it("Change to customer 2 and create a procedure", () => {
+    const ResolvingWebsocket = {
+      getMessage : jest.fn((input) => {return {
+        WEBSOCKET_MESSAGE_TYPE : input
+      }}),
+      send : jest.fn((message) => {return new Promise(async function(resolve) {
+        return {status : SUCCESS_STATUS_CRUD.SUCCESS};
+      })}),
+      sendCreateModel : jest.fn(() => {return new Promise(async function(resolve) {
+        return {status : SUCCESS_STATUS_CRUD.SUCCESS};
+      })})
+    }
+
     render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <ProcedureTable/>
+      <WebsocketContextProvider value={ResolvingWebsocket}>
+        <ProcedureTable relatedCustomer={testState.customer}/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
@@ -67,18 +82,16 @@ describe("Procedure Table test suite", () => {
     const piSelect = screen.getByTestId("new-procedure-identifier");
     const tracerSelect = screen.getByTestId("new-tracer");
     const unitsInput = screen.getByTestId("new-units");
-    const delayInput = screen.getByTestId("new-delay");
     const createButton = screen.getByLabelText("new-create");
 
     act(() => {
       fireEvent.change(piSelect, {target: {value : 2}});
       fireEvent.change(tracerSelect, {target: {value : 3}});
       fireEvent.change(unitsInput, {target: {value : "2000"}});
-      fireEvent.change(delayInput, {target: {value : "0"}});
       fireEvent.click(createButton);
     });
 
-    expect(websocket.sendCreateModel).toBeCalledWith(DATA_PROCEDURE, [expect.objectContaining({
+    expect(ResolvingWebsocket.sendCreateModel).toHaveBeenCalledWith(DATA_PROCEDURE, [expect.objectContaining({
       series_description : 2,
       tracer : 3,
       tracer_units : 2000,
@@ -90,7 +103,7 @@ describe("Procedure Table test suite", () => {
   it("Change to customer 2 and attempt to create a blank", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
-        <ProcedureTable/>
+        <ProcedureTable relatedCustomer={testState.customer}/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
@@ -108,17 +121,26 @@ describe("Procedure Table test suite", () => {
 
     const piSelect = screen.getByTestId("new-procedure-identifier");
     act(() => {
-      fireEvent.mouseEnter(piSelect)
+      fireEvent.mouseEnter(piSelect);
     })
 
-    expect(websocket.sendCreateModel).not.toBeCalled();
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
     expect(screen.getByText(ERROR_MISSING_SERIES_DESCRIPTION)).toBeVisible();
   })
 
   it("Change to customer 2 and attempt Type non sense in", () => {
+    const ResolvingWebsocket = {
+      getMessage : jest.fn((input) => {return {
+        WEBSOCKET_MESSAGE_TYPE : input
+      }}),
+      send : jest.fn((message) => {return new Promise(async function(resolve) {
+        return {status : SUCCESS_STATUS_CRUD.SUCCESS};
+      })}),
+      sendCreateModel : jest.fn()
+    }
     render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <ProcedureTable/>
+      <WebsocketContextProvider value={ResolvingWebsocket}>
+        <ProcedureTable relatedCustomer={testState.customer}/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
@@ -130,19 +152,17 @@ describe("Procedure Table test suite", () => {
 
     const piSelect = screen.getByTestId("new-procedure-identifier");
     const unitsInput = screen.getByTestId("new-units");
-    const delayInput = screen.getByTestId("new-delay");
     const createButton = screen.getByLabelText("new-create");
 
 
     act(() => {
       fireEvent.change(piSelect, {target: {value : 2}});
-
       fireEvent.change(unitsInput, {target: {value : "asdf2000"}});
-      fireEvent.change(delayInput, {target: {value : "asdf0"}});
+
       fireEvent.click(createButton);
     });
 
-    expect(websocket.sendCreateModel).not.toBeCalled();
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
     act(() => {
       fireEvent.mouseEnter(unitsInput)
@@ -151,32 +171,32 @@ describe("Procedure Table test suite", () => {
     expect(screen.getByText("Enheder")).toBeVisible();
   })
 
-  // EDIT TESTS!
+  //#region edit Tests
   it("Edit Procedure 1 successfully", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
-        <ProcedureTable/>
+        <ProcedureTable relatedCustomer={testState.customer}/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
     const tracerSelect = screen.getByTestId("tracer-1");
     const unitsInput = screen.getByTestId("units-1");
-    const delayInput = screen.getByTestId("delay-1");
-    const editButton = screen.getByLabelText("update-1");
 
     act(() => {
       fireEvent.change(tracerSelect, {target: {value : ""}});
       fireEvent.change(unitsInput, {target: {value : "2000"}});
-      fireEvent.change(delayInput, {target: {value : "0"}});
-      fireEvent.click(editButton);
     });
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_PROCEDURE, [expect.objectContaining({
+    act(() => {
+      const editButton = screen.getByLabelText("update-1");
+      fireEvent.click(editButton);
+    })
+
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_PROCEDURE, [expect.objectContaining({
       id : 1,
       series_description : 1,
       tracer : null,
       tracer_units : 2000,
-      delay_minutes : 0,
       owner : 1,
     })]);
   })
@@ -185,25 +205,25 @@ describe("Procedure Table test suite", () => {
   it("Edit procedure 1 with nonsense", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
-        <ProcedureTable/>
+        <ProcedureTable relatedCustomer={testState.customer}/>
       </WebsocketContextProvider>
     </StateContextProvider>);
 
     const unitsInput = screen.getByTestId("units-1");
-    const delayInput = screen.getByTestId("delay-1");
-    const editButton = screen.getByLabelText("update-1");
-
 
     act(() => {
       fireEvent.change(unitsInput, {target: {value : "asdf2000"}});
-      fireEvent.change(delayInput, {target: {value : "asdf0"}});
-      fireEvent.click(editButton);
     });
 
-    expect(websocket.sendCreateModel).not.toBeCalled();
+    act(() => {
+      const editButton = screen.getByLabelText("update-1");
+      fireEvent.click(editButton);
+    })
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
     act(() => {
-      fireEvent.mouseEnter(unitsInput)
+      fireEvent.mouseEnter(unitsInput);
     })
 
     expect(screen.getByText("Enheder")).toBeVisible();

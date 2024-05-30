@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -12,10 +12,11 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 import { Calender } from '../../../components/injectable/calender.js'
 import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK } from "../../../lib/constants.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider, DispatchContextProvider } from "~/components/tracer_shop_context.js";
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
 import { ProductionBitChain } from "~/lib/data_structures.js";
 import { testState } from "~/tests/app_state.js";
+import { UpdateToday } from "~/lib/state_actions.js";
 
 let websocket = null
 
@@ -33,7 +34,7 @@ const calenderBitChain = new ProductionBitChain(testState.production);
 const date = new Date(2012,5,26,11,26,45);
 const getColor = jest.fn(() => {return ["#ffffff, #000"]});
 const onDayClick = jest.fn((str) => {return str});
-
+const dispatch = jest.fn()
 
 const calender_props = {
   [CALENDER_PROP_DATE] : date,
@@ -44,12 +45,8 @@ const calender_props = {
   bit_chain : calenderBitChain,
 };
 
-
-
 describe("Calender render Tests", () => {
   it("Standard RenderTest", () => {
-
-
     render( <StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <Calender {...calender_props} />
@@ -80,36 +77,32 @@ describe("Calender render Tests", () => {
   });
 
   it("Increase Month", async () => {
-    render( <StateContextProvider value={testState}>
+    render(<StateContextProvider value={testState}>
+    <DispatchContextProvider value={dispatch}>
       <WebsocketContextProvider value={websocket}>
         <Calender {...calender_props} />
       </WebsocketContextProvider>
+    </DispatchContextProvider>
     </StateContextProvider>);
 
-    fireEvent(await screen.findByAltText("Næste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
-    expect(websocket.getMessage).toBeCalledWith(WEBSOCKET_MESSAGE_GET_ORDERS);
-    expect(websocket.send).toBeCalledWith(expect.objectContaining({
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_GET_ORDERS,
-      [WEBSOCKET_DATE] : new Date(2012,6,1,12,0,0),
-    }));
+    await act(async () => {
+      fireEvent(await screen.findByAltText("Næste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
+    })
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining(new UpdateToday(new Date(2012,6,1,12,0,0), websocket)))
   });
 
   it("Decrease Month", async () => {
-    render( <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <Calender {...calender_props} />
-      </WebsocketContextProvider>
+    render(
+    <StateContextProvider value={testState}>
+      <DispatchContextProvider value={dispatch}>
+        <WebsocketContextProvider value={websocket}>
+          <Calender {...calender_props} />
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
     </StateContextProvider>);
-
-    fireEvent(await screen.findByAltText("Sidste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
-    expect(websocket.getMessage).toBeCalledWith(WEBSOCKET_MESSAGE_GET_ORDERS);
-    expect(websocket.send).toBeCalledWith(expect.objectContaining({
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_GET_ORDERS,
-      [WEBSOCKET_DATE] : new Date(2012,4,1,12,0,0),
-    }));
+    await act(async () => {
+      fireEvent(await screen.findByAltText("Sidste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
+    })
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining(new UpdateToday(new Date(2012,4,1,12,0,0), websocket)))
   });
 });
-
-
-
-

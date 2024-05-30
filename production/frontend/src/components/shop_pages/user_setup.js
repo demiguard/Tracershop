@@ -12,8 +12,8 @@ import { DATA_USER_ASSIGNMENT, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKE
   WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
 
-const ERROR_MESSAGE_NO_LDAP_USERNAME = "Bruger findes ikke!"
-const ERROR_MESSAGE_INCORRECT_GROUPS = "Brugeren har ikke korrekte CBAS rettigheder!"
+export const ERROR_MESSAGE_NO_LDAP_USERNAME = "Bruger findes ikke!"
+export const ERROR_MESSAGE_INCORRECT_GROUPS = "Brugeren har ikke korrekte CBAS rettigheder!"
 
 function UserAssignmentRow(props){
   const {user_assignment, activeCustomer} = props;
@@ -34,34 +34,43 @@ function UserAssignmentRow(props){
       customer_id : activeCustomer
     }).then((data) => {
       if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME){
+        console.log("Setting ldap")
         setError(ERROR_MESSAGE_NO_LDAP_USERNAME);
       } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS){
+        console.log("Setting groups")
         setError(ERROR_MESSAGE_INCORRECT_GROUPS);
       } else if (data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS){
+        console.log("fixed")
         setUserName("");
-      } else {
-        console.log(data)
       }
     });
   }
 
   function delete_user_assignment(){
+    console.log("Hello world")
     websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, user_assignment.id);
   }
 
   const ActionButton = (exists) ? <ClickableIcon
     src="/static/images/decline.svg"
+    altText={"Slet tildeling"}
+    label={`delete-assignment-${user_assignment.id}`}
     onClick={delete_user_assignment}
   /> : <ClickableIcon
-    onClick={create_user_assignment}
+    altText={"Tilføj tildeling"}
+    onMouseDown={create_user_assignment}
     src="/static/images/plus.svg"
   />;
+
+  const label = exists ?
+    `user-assignment-${user_assignment.id}` : "user-assignment-new";
 
   return (
   <Row>
     <Col>
       <TracershopInputGroup error={error} label="Brugernavn:">
         <EditableInput
+          aria-label={label}
           canEdit={!exists}
           value={username}
           onChange={setStateToEvent(setUserName)}

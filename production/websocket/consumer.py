@@ -452,8 +452,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     if success:
       await self.__broadcastGlobal({
-        WEBSOCKET_DATA : True,
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
         WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
@@ -471,7 +470,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-        WEBSOCKET_DATA : False,
       })
 
   async def HandleModelCreate(self, message: Dict[str, Any]):

@@ -2,16 +2,17 @@
  * @jest-environment jsdom
  */
 import WS from "jest-websocket-mock"
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JAVASCRIPT_VERSION, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JAVASCRIPT_VERSION, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   WEBSOCKET_DATA_ID, WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_ECHO,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,
+  WEBSOCKET_MESSAGE_STATUS,
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,
   WEBSOCKET_REFRESH
  } from "~/lib/shared_constants.js"
 import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { MessageChannel } from 'node:worker_threads'
-import { object } from "prop-types";
+import { UpdateWebsocketConnectionState } from "~/lib/state_actions";
 
 let server = null;
 let websocket = null;
@@ -83,7 +84,6 @@ describe("tracer websocket test suite", () => {
     const refresh = true
 
     const message = {
-
       [AUTH_IS_AUTHENTICATED] : false,
       [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
       [WEBSOCKET_MESSAGE_ID] : 42069420,
@@ -93,7 +93,8 @@ describe("tracer websocket test suite", () => {
     }
     server.send(message);
 
-    expect(dispatch).not.toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(new UpdateWebsocketConnectionState(WebSocket.OPEN))
+    expect(dispatch).toHaveBeenCalledTimes(1);
   });
 
   it("Handle delete message", () => {
@@ -105,11 +106,13 @@ describe("tracer websocket test suite", () => {
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
       [WEBSOCKET_DATATYPE] : datatype,
       [WEBSOCKET_DATA_ID] : ids,
-    }
+      [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT
+    };
 
-    server.send(message)
+    server.send(message);
 
-    expect(dispatch).not.toHaveBeenCalled()
+    expect(dispatch).toHaveBeenCalledWith(new UpdateWebsocketConnectionState(WebSocket.OPEN))
+    expect(dispatch).toHaveBeenCalledTimes(1);
   })
 
 

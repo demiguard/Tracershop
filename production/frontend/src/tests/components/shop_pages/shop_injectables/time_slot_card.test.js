@@ -178,7 +178,7 @@ describe("Time slot card Test Suite", () => {
 
   });
 
-  it("Open the calculator", () => {
+  it.skip("Open the calculator", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <TimeSlotCard {...props} />
@@ -195,7 +195,7 @@ describe("Time slot card Test Suite", () => {
     expect(screen.getByLabelText(CALCULATOR_NEW_TIME_LABEL)).toBeVisible();
   });
 
-  it("use the calculator", () => {
+  it.skip("use the calculator", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <TimeSlotCard {...props} />

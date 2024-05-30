@@ -8,16 +8,22 @@ import { jest } from '@jest/globals'
 
 import { VialPage } from "~/components/production_pages/vial_page.js"
 
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider, DispatchContextProvider } from "~/components/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
+import { UpdateToday } from "~/lib/state_actions.js";
+import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
+const dispatch = jest.fn()
+const now = new Date(2019,5,11,20,11,2);
 
 beforeEach(() => {
   delete window.location
+  jest.useFakeTimers('modern');
+  jest.setSystemTime(now);
   window.location = { href : "tracershop"}
   websocket = tracer_websocket.TracerWebSocket;
 });
@@ -33,9 +39,11 @@ describe("Vial page tests suite", () => {
   it("Standard Render Tests", async () => {
     render(
     <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+      <DispatchContextProvider value={dispatch}>
+        <WebsocketContextProvider value={websocket}>
+          <VialPage/>
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
     </StateContextProvider>);
 
     for(const vial of testState.vial.values()){
@@ -47,9 +55,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - ID", () => {
     render(
     <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+      <DispatchContextProvider value={dispatch}>
+        <WebsocketContextProvider value={websocket}>
+          <VialPage/>
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -72,9 +82,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - double ID", () => {
     render(
     <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+      <DispatchContextProvider value={dispatch}>
+        <WebsocketContextProvider value={websocket}>
+          <VialPage/>
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -102,9 +114,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - Lot", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -118,9 +132,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - Date", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -132,9 +148,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - time", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -146,9 +164,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - volume", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -160,23 +180,27 @@ describe("Vial page tests suite", () => {
   it("Change sorting - aktivitet", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
-      const lotTableHeader = screen.getByText('Aktivitet')
-      fireEvent.click(lotTableHeader)
+      const lotTableHeader = screen.getByText('Aktivitet');
+      fireEvent.click(lotTableHeader);
     })
   });
 
   it("Change sorting - Owner", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -188,9 +212,11 @@ describe("Vial page tests suite", () => {
   it("Change sorting - order", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -202,9 +228,11 @@ describe("Vial page tests suite", () => {
   it("Filter lot number", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -222,9 +250,11 @@ describe("Vial page tests suite", () => {
   it("Filter Customer", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -242,9 +272,11 @@ describe("Vial page tests suite", () => {
   it("Filter Customer", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -259,33 +291,46 @@ describe("Vial page tests suite", () => {
     }
   });
 
-  it("Fetch new vials - success", () => {
+  it("Fetch new vials - success", async () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
-    act(() => {
-      const lot_filter = screen.getByTestId("date-input")
-      fireEvent.change(lot_filter, {target : {value : "2019/11/04"}})
+    await act(async () => {
+      const dateInput = screen.getByTestId("date-input");
+      fireEvent.change(dateInput, {target : {value : "04/11/2019"}});
     });
 
-    act(() => {
-      const lot_filter = screen.getByRole("button",{name : "Søg"})
-      fireEvent.click(lot_filter)
-    })
+    expect(screen.getByTestId("date-input")).toHaveValue('04/11/2019');
 
-    expect(websocket.send).toHaveBeenCalled();
+    await act(async () => {
+      const searchButton = screen.getByRole("button",{name : "Søg"});
+      fireEvent.mouseDown(searchButton);
+    });
+
+    expect(screen.getByTestId("date-input")).not.toHaveStyle({
+      background : ERROR_BACKGROUND_COLOR
+    });
+
+    expect(dispatch).toHaveBeenCalledWith(
+      // 1 Is because of time zone, so expect this test to be flaky
+      // Keeping track of time is hard...
+      expect.objectContaining(new UpdateToday(new Date(2019,10,4,1,0,0,0), websocket)));
   });
 
   it("Fetch new vials - Failure", () => {
     render(
       <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <VialPage/>
-      </WebsocketContextProvider>
+        <DispatchContextProvider value={dispatch}>
+          <WebsocketContextProvider value={websocket}>
+            <VialPage/>
+          </WebsocketContextProvider>
+        </DispatchContextProvider>
     </StateContextProvider>);
 
     act(() => {
@@ -298,6 +343,6 @@ describe("Vial page tests suite", () => {
       fireEvent.click(lot_filter)
     })
 
-    expect(websocket.send).not.toHaveBeenCalled();
+    expect(dispatch).not.toHaveBeenCalled();
   });
 });

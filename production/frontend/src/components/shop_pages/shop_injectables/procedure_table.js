@@ -2,7 +2,7 @@ import React, { useState, useRef } from "react";
 import { FormControl, Table } from "react-bootstrap";
 
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants"
-import { Procedure } from "~/dataclasses/dataclasses";
+import { Customer, Procedure } from "~/dataclasses/dataclasses";
 import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
 import { EndpointsProcedures, TracerCatalog } from "~/lib/data_structures";
@@ -41,7 +41,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
       }
       const [validUnits, parsedUnits] = parseWholePositiveNumber(units);
 
-      if(validDelay && validUnits){
+      if(validUnits){
         websocket.sendEditModel(DATA_PROCEDURE, [
           {...procedure,
             tracer : parsedTracer,
@@ -140,9 +140,6 @@ function NewProcedureRow({activeEndpoint, activeProcedures, tracerOptions}){
     if(!validUnits){
       setErrorUnits(parsedUnits);
     }
-    if(!validDelay){
-      setErrorDelay(parsedDelay);
-    }
   }
 
   return (
@@ -184,10 +181,14 @@ function NewProcedureRow({activeEndpoint, activeProcedures, tracerOptions}){
   );
 }
 
+/**
+ *
+ * @param {object} param0
+ * @param {Map<Number, Customer>} param0.relatedCustomer
+ * @returns
+ */
 export function ProcedureTable({relatedCustomer}){
   const state = useTracershopState();
-
-  console.log(relatedCustomer)
 
   const init = useRef({
     customer : null,
@@ -211,10 +212,10 @@ export function ProcedureTable({relatedCustomer}){
   const tracerOptions = toOptions(availableTracers, 'shortname');
   tracerOptions.push(new Option("", "---------"));
   const procedureRows = [];
-  let index = 0;
   const sortedProcedures = [...activeProcedures.values()].sort(sort_procedures(state,
-                                                                               sortingMethod))
+    sortingMethod));
 
+  let index = 0;
   for (const procedure of sortedProcedures){
     procedureRows.push(<ProcedureRow
       key={index}

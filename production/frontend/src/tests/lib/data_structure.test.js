@@ -1,7 +1,11 @@
+/**
+ * @jest-environment jsdom
+ */
+
 const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage, TracershopState } = require("~/dataclasses/dataclasses");
 const { WEEKLY_REPEAT_CHOICES, TRACER_TYPE } = require("~/lib/constants");
 const { TimeSlotBitChain, TracerCatalog, CustomerCatalog, EndpointCatalog } = require("~/lib/data_structures");
-
+const { WebSocket } = require('ws');
 
 describe("Bit chains test sweep", () => {
   it("Bit chain", () => {

@@ -12,6 +12,7 @@ import { AppState, testState } from "../../app_state.js";
 import { OrderPage } from "../../../components/production_pages/order_page.js";
 import { db } from "../../../lib/local_storage_driver.js";
 import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { UpdateToday } from "~/lib/state_actions.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -97,27 +98,32 @@ describe("Order Page tests", () => {
     </StateContextProvider>);
 
     await act(async () =>{
-       const div = await screen.findByLabelText('calender-day-13')
-       div.click()
-    })
+       const div = await screen.findByLabelText('calender-day-13');
+       div.click();
+    });
+
+    expect(dispatchMock).toHaveBeenCalledWith(expect.objectContaining(
+      new UpdateToday(new Date(2020,4,13,12,0,0), websocket)
+    ));
   })
 
   it("Change month", async () => {
     render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <OrderPage/>
-      </WebsocketContextProvider>
+      <DispatchContextProvider value={dispatchMock}>
+        <WebsocketContextProvider value={websocket}>
+          <OrderPage/>
+        </WebsocketContextProvider>
+      </DispatchContextProvider>
     </StateContextProvider>);
 
     await act(async () =>{
-       const image = await screen.findByLabelText('next-month')
-       image.click()
+       const image = await screen.findByLabelText('next-month');
+       image.click();
     })
 
-    const expected_message = {}
-    expected_message[WEBSOCKET_DATE] = new Date("2020-06-01T10:00:00.000Z");
-    expected_message[WEBSOCKET_MESSAGE_TYPE] = WEBSOCKET_MESSAGE_GET_ORDERS;
-    expect(websocket.send).toBeCalledWith(expected_message)
+    expect(dispatchMock).toHaveBeenCalledWith(expect.objectContaining(
+      new UpdateToday(new Date(2020,5,1,12,0,0), websocket)
+    ));
   });
 
   it("Load saved db data", async () => {
@@ -129,6 +135,6 @@ describe("Order Page tests", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    expect(await screen.findByText('InjectionTableMocked')).toBeVisible()
+    expect(await screen.findByText('InjectionTableMocked')).toBeVisible();
   });
 });

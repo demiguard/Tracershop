@@ -4,8 +4,8 @@ import { FormControl } from "react-bootstrap"
 
 /**
  * Attempt 3 making this
- * @param {Event} event 
- * @param {String} currentInput 
+ * @param {Event} event
+ * @param {String} currentInput
  * @returns {String}
  */
 function addDateSlashes(event, currentInput){
@@ -29,13 +29,11 @@ function addDateSlashes(event, currentInput){
  * @returns {Element}
  */
 export function DateInput(props){
-  const formControlProps = {...props};
+  const  {stateFunction, ...formControlProps} = props;
 
   function inputFunction(event){
-    props.stateFunction(addDateSlashes(event, props.value));
+    stateFunction(addDateSlashes(event, props.value));
   }
-
-  delete formControlProps.stateFunction;
 
   return <FormControl
     {...formControlProps}

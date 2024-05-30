@@ -13,6 +13,7 @@ import { useTracershopDispatch, useTracershopState, useWebsocket } from "../trac
 import { ErrorInput } from "../injectable/inputs/error_input";
 import { parseDateInput } from "~/lib/user_input";
 import { MarginButton } from "~/components/injectable/buttons";
+import { UpdateToday } from "~/lib/state_actions";
 
 
 /**
@@ -66,13 +67,10 @@ export function VialPage(){
   }
 
   function fetchVials(){
-    const [validDate, date] = parseDateInput(vialDay, "Søge datoen")
+    console.log("hello world");
+    const [validDate, date] = parseDateInput(vialDay, "Søge datoen");
     if(validDate){
-      setDateError("");
-      const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_ORDERS);
-      console.log(date)
-      message[WEBSOCKET_DATE] = date;
-      websocket.send(message);
+      dispatch(new UpdateToday(date, websocket));
     } else {
       setDateError(date)
     }
@@ -181,15 +179,13 @@ export function VialPage(){
           </div>
         </Col>
         <Col>
-          <TracershopInputGroup label="Dato">
-            <ErrorInput error={dateError}>
+          <TracershopInputGroup label="Dato" error={dateError}>
               <DateInput
                 data-testid="date-input"
                 value={vialDay}
                 placeholder="DD/MM/YYYY"
                 stateFunction={setVialDay}
               />
-            </ErrorInput>
           </TracershopInputGroup>
         </Col>
         <Col>

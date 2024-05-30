@@ -135,13 +135,13 @@ describe("Production Setup", () => {
       commitButton.click();
     });
 
-    expect(websocket.sendCreateModel).toBeCalledWith(DATA_PRODUCTION, expect.objectContaining({
-      id : null,
-      production_time : "11:22:00",
-      tracer : 3,
-      production_day : 4,
-      expiration_date : "",
-    }))
-
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_PRODUCTION,
+      expect.objectContaining({
+        id : null,
+        production_time : "11:22:00",
+        tracer : 3,
+        production_day : 4,
+        expiration_date : null,
+      }));
   });
 });

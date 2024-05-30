@@ -57,7 +57,6 @@ export class TimeStamp {
     if(this.hour === undefined ||
        this.minute === undefined ||
        this.second === undefined){
-      console.log(arg_1)
       throw { error : `Unknown timestamp format from string: ${arg_1}, ${minute}, ${second}`};
     }
   }
@@ -76,9 +75,9 @@ export class TimeStamp {
     }
 
     if(this.minute === 1){
-      timeString += "1 minut";
+      timeString += " 1 minut";
     } else if(this.minute !== 0) {
-      timeString += `${this.minute} minutter`;
+      timeString += ` ${this.minute} minutter`;
     }
 
     return timeString;

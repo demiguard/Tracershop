@@ -35,6 +35,9 @@ export function useContainerDimensions(ref) {
   });
 
   function getDims() {
+    if(ref.current === null){
+      return dimensions;
+    }
     const style = window.getComputedStyle(ref.current);
     return {
       width : ref.current.clientWidth,

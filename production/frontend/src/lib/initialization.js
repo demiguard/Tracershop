@@ -1,12 +1,12 @@
 /** This module exists to provide consistent initialization of various fields */
 
-import { DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses";
+import { Customer, DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses";
 import { numberfy } from "./utils";
 
 /**
  *
- * @param {*} customers
- * @param {*} endpoints
+ * @param {Map<Number, Customer>} customers
+ * @param {Map<Number, DeliveryEndpoint>} endpoints
  * @returns {
  *  customer : Number - Id of initial customer,
  *  endpoint : Number - Id of initial endpoint - owned by customer

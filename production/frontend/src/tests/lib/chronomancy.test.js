@@ -1,11 +1,21 @@
 import { ActivityDeliveryTimeSlot, ActivityProduction, ClosedDate, Deadline } from "../../dataclasses/dataclasses"
-import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, TimeStamp, getTimeString } from "../../lib/chronomancy"
+import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, TimeStamp, getTimeString, datify, getToday, DateRange } from "../../lib/chronomancy"
 import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants"
 
 
 
 
 describe("Chronomancy test suit", () => {
+  it("today test, typesafety", () => {
+    expect(getToday()).toBeInstanceOf(Date);
+  })
+
+  it("Datify, a date",() => {
+    expect(datify(new Date())).toBeInstanceOf(Date);
+    expect(datify("2023-11-11")).toBeInstanceOf(Date);
+  })
+
+  //#region Deadline Tests
   it("Expired deadline - the same day", () => {
     // now        2018/03/12 - 10:15:42
     // OrderDay - 2018/03/12 - 10:15:32
@@ -82,6 +92,8 @@ describe("Chronomancy test suit", () => {
     expect(deadlineDate).toEqual(new Date(2018, 2, 15, 13, 0 ))
   });
 
+
+  //#region Timestamp tests
   it("Get time stamp, string", () => {
     const timeStamp = new TimeStamp("11:55:33");
 
@@ -120,8 +132,8 @@ describe("Chronomancy test suit", () => {
 
     const compared = compareTimeStamp(time_1, time_2)
 
-    expect(compared.hour).toBe(4);
-    expect(compared.minute).toBe(-20);
+    expect(compared.hour).toBe(3);
+    expect(compared.minute).toBe(40);
     expect(compared.second).toBe(15);
   });
 
@@ -138,6 +150,13 @@ describe("Chronomancy test suit", () => {
     expect(result.getSeconds()).toBe(11)
   })
 
+  it("compare timestamp, negative seconds", () => {
+    const compared = compareTimeStamp(new TimeStamp(1,0,0), new TimeStamp(0,0,1))
+    expect(compared.hour).toBe(0);
+    expect(compared.minute).toBe(59);
+    expect(compared.second).toBe(59);
+  })
+
   it("getTimeString string conversion", () => {
     const correct_res = "11:22:33"
 
@@ -146,5 +165,45 @@ describe("Chronomancy test suit", () => {
 
     expect(getTimeString(timeString)).toEqual(correct_res)
     expect(getTimeString(timeDate)).toEqual(correct_res)
+  });
+
+  it("Timestamp to minutes", () => {
+    expect(new TimeStamp(1, 2 , 3).toMinutes()).toEqual(62);
+  });
+
+  it("Timestamp to minutes string", () => {
+    expect(new TimeStamp(1, 2, 3).toVerboseString()).toEqual("1 time 2 minutter");
+    expect(new TimeStamp(2, 2, 3).toVerboseString()).toEqual("2 timer 2 minutter");
+    expect(new TimeStamp(2, 1, 3).toVerboseString()).toEqual("2 timer 1 minut");
+  });
+
+  it("Time stamp display string", () => {
+    expect(new TimeStamp(1,3,0).toDisplayString()).toEqual("01:03:00")
+  });
+
+  //#region DateRange Tests
+  it("DateRange, string construction", () => {
+    const dr = new DateRange("2011-11-11", "2021-11-11")
+
+    expect(dr.startDate).toBeInstanceOf(Date);
+    expect(dr.endDate).toBeInstanceOf(Date);
+    expect(dr.startDate.getFullYear()).toEqual(2011);
+    expect(dr.endDate.getFullYear()).toEqual(2021);
+  });
+
+  it("DateRange, invalid construction", () => {
+    expect(() => {new DateRange()}).toThrow("Invalid input date");
+  });
+
+  it("in range test", () => {
+    const dr = new DateRange("2011-11-11", "2021-11-11")
+    expect(dr.in_range("2011-12-10")).toBe(true);
+    expect(dr.in_range("2011-10-10")).toBe(false);
+    expect(dr.in_range("2021-12-10")).toBe(false);
+    expect(dr.in_range("2021-10-10")).toBe(true);
+
+    expect(() => {
+      dr.in_range();
+    }).toThrow();
   })
 })

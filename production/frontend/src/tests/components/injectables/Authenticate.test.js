@@ -72,7 +72,7 @@ describe("Authenticate Test Suite", () => {
 
     expect(Auth).toHaveBeenCalledWith(username, password);
   })
-  it("Spinner Test", async () => {
+  it("Spinner Test", () => {
     const headerMessage = "header";
     render(<Authenticate
       authenticate={Auth}
@@ -82,6 +82,6 @@ describe("Authenticate Test Suite", () => {
       spinner={true}
     />);
 
-    expect(await screen.queryByRole('button', {name: /Log in/})).toBeNull();
+    expect(screen.queryByRole('button', {name: /Log in/})).toBeNull();
   });
 })

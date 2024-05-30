@@ -17,7 +17,7 @@ function MonthRow(props){
   </Row>
 }
 
-function MonthContainer({children, onClick}){
+function MonthContainer({label, children, onClick}){
   const [styleState, setStyleState] = useState({background : "#FFFFFF"})
 
   function onHover(){
@@ -37,6 +37,7 @@ function MonthContainer({children, onClick}){
   }
 
   return <Col
+  aria-label={label}
   onMouseEnter={onHover}
   onMouseLeave={onLeave}
   onClick={onClick}
@@ -118,7 +119,7 @@ export function MonthSelector(props) {
           alt="Sidste"
           src="/static/images/prev.svg"/>
         </MonthContainer>
-        <MonthContainer>{tempDate.toLocaleString('default', {year: "numeric"})}</MonthContainer>
+        <MonthContainer label="year">{tempDate.toLocaleString('default', {year: "numeric"})}</MonthContainer>
         <MonthContainer
           onClick={() => {changeTempYear(1)}}
         ><img
@@ -129,22 +130,22 @@ export function MonthSelector(props) {
           src="/static/images/next.svg"/></MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer onClick={selectMonth(0)}>Jan</MonthContainer>
-        <MonthContainer onClick={selectMonth(1)}>Feb</MonthContainer>
-        <MonthContainer onClick={selectMonth(2)}>Mar</MonthContainer>
-        <MonthContainer onClick={selectMonth(3)}>Apr</MonthContainer>
+        <MonthContainer label={"jan"} onClick={selectMonth(0)}>Jan</MonthContainer>
+        <MonthContainer label={"feb"} onClick={selectMonth(1)}>Feb</MonthContainer>
+        <MonthContainer label={"mar"} onClick={selectMonth(2)}>Mar</MonthContainer>
+        <MonthContainer label={"apr"} onClick={selectMonth(3)}>Apr</MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer onClick={selectMonth(4)}>Maj</MonthContainer>
-        <MonthContainer onClick={selectMonth(5)}>Jun</MonthContainer>
-        <MonthContainer onClick={selectMonth(6)}>Jul</MonthContainer>
-        <MonthContainer onClick={selectMonth(7)}>Aug</MonthContainer>
+        <MonthContainer label={"may"} onClick={selectMonth(4)}>Maj</MonthContainer>
+        <MonthContainer label={"jul"} onClick={selectMonth(5)}>Jun</MonthContainer>
+        <MonthContainer label={"jun"} onClick={selectMonth(6)}>Jul</MonthContainer>
+        <MonthContainer label={"aug"} onClick={selectMonth(7)}>Aug</MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer onClick={selectMonth(8)}>Sep</MonthContainer>
-        <MonthContainer onClick={selectMonth(9)}>Okt</MonthContainer>
-        <MonthContainer onClick={selectMonth(10)}>Nov</MonthContainer>
-        <MonthContainer onClick={selectMonth(11)}>Dec</MonthContainer>
+        <MonthContainer label={"sep"} onClick={selectMonth(8)}>Sep</MonthContainer>
+        <MonthContainer label={"oct"} onClick={selectMonth(9)}>Okt</MonthContainer>
+        <MonthContainer label={"nov"} onClick={selectMonth(10)}>Nov</MonthContainer>
+        <MonthContainer label={"dec"} onClick={selectMonth(11)}>Dec</MonthContainer>
       </MonthRow>
     </div>
   </div>
@@ -159,9 +160,10 @@ export function MonthSelector(props) {
         alt="Sidste"
         src="/static/images/prev.svg"/>
     </div>
-    <div onClick={() => {setShowMonthPicker(
-      b => !b
-    )}}>
+    <div
+      aria-label='toggle-picker'
+      onClick={() => {setShowMonthPicker(b => !b)}}
+    >
       <p style={{margin : "0px"}}>{stateDate.toLocaleString('default', {month:"long"})}</p>
       <p style={{margin : "0px"}}>{stateDate.toLocaleString('default', {year: "numeric"})}</p>
     </div>

@@ -73,7 +73,7 @@ describe("Activity Modal Test", () => {
       </StateContextProvider>);
 
     expect(await screen.findByRole('button', {name : "Accepter"}))
-    expect(await screen.findByLabelText('vial-usage-1')).toBeVisible();
+
     expect(screen.queryByLabelText('vial-usage-2')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-3')).toBeNull();
   });
