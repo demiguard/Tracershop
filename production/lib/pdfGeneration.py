@@ -691,7 +691,7 @@ def DrawReleaseCertificate(filename :str,
                     "Bestilt",
                     "Kalibreret kl",
                     "Leveret",
-                    "Volume",
+                    "Volumen",
                     "Frigivet kl"),
                    True)
   ordinate = table_row_y_top_bottom - template.line_height * 1.5

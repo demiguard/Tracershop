@@ -200,7 +200,7 @@ export function VialPage(){
             <th data-testid="header-CHARGE" onClick={changeSearch(SortingOptions.CHARGE)}>Lot nummer</th>
             <th data-testid="header-DATE" onClick={changeSearch(SortingOptions.DATE)}>Dato</th>
             <th data-testid="header-TIME" onClick={changeSearch(SortingOptions.TIME)}>Tappe tidspunkt</th>
-            <th data-testid="header-VOLUME" onClick={changeSearch(SortingOptions.VOLUME)}>Volume</th>
+            <th data-testid="header-VOLUME" onClick={changeSearch(SortingOptions.VOLUME)}>Volumen</th>
             <th data-testid="header-ACTIVITY" onClick={changeSearch(SortingOptions.ACTIVITY)}>Aktivitet</th>
             <th data-testid="header-OWNER" onClick={changeSearch(SortingOptions.OWNER)}>Ejer</th>
             <th data-testid="header-ORDER" onClick={changeSearch(SortingOptions.ORDER)}>Ordre</th>

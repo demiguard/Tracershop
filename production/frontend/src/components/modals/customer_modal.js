@@ -505,28 +505,28 @@ export function CustomerModal({active_customer, on_close}) {
                   onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
                 />
               </TracershopInputGroup>
-              <TracershopInputGroup label="Regning addresse">
+              <TracershopInputGroup label="Kunde addresse">
                 <Form.Control
                   aria-label="address-input"
                   value={nullParser(tempCustomer.billing_address)}
                   onChange={setTempObjectToEvent(setTempCustomer,'billing_address')}
                 />
               </TracershopInputGroup>
-              <TracershopInputGroup label="Regnings by">
+              <TracershopInputGroup label="Kunde by">
                 <Form.Control
                   aria-label="city-input"
                   value={nullParser(tempCustomer.billing_city)}
                   onChange={setTempObjectToEvent(setTempCustomer,'billing_city')}
                 />
               </TracershopInputGroup>
-              <TracershopInputGroup label="Regning post nummer">
+              <TracershopInputGroup label="Kunde post nummer">
                 <Form.Control
                   aria-label="zip-input"
                   value={nullParser(tempCustomer.zip_code)}
                   onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
                 />
               </TracershopInputGroup>
-              <TracershopInputGroup label="Regnings Email">
+              <TracershopInputGroup label="Kunde Email">
                 <Form.Control
                   aria-label="email-input"
                   value={nullParser(tempCustomer.billing_email)}

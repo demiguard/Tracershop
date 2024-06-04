@@ -710,7 +710,7 @@ export function ActivityModal({
                   <th>ID</th>
                   <th>Batch</th>
                   <th>Produktions Tidpunkt</th>
-                  <th>Volume</th>
+                  <th>Volumen</th>
                   <th>Aktivitet</th>
                   <th></th>
                   <th>Brug</th>

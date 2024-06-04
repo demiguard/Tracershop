@@ -143,12 +143,7 @@ export function TracerShopContext({children}){
       }
     }
   )();
-  let today = db.get(DATABASE_TODAY);
-  if(today === null){
-    today = new Date();
-    db.set(DATABASE_TODAY, today);
-  }
-
+  const today = new Date();
   const initial_state = new TracershopState(user, today);
 
   for(const keyword of Object.keys(MODELS)){

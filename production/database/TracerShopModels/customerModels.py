@@ -124,7 +124,7 @@ class ProcedureIdentifier(TracershopModel):
   id = BigAutoField(primary_key=True)
   code = CharField(max_length=128, blank=True, unique=True, null=True, default=None)
   description = CharField(max_length=255, blank=True, unique=True, null=True, default=None)
-  is_pet = BooleanField(default=False)
+  is_pet = BooleanField(default=True)
 
   def __str__(self) -> str:
     baseString = "Procedure Identifier: "

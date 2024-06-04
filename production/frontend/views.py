@@ -17,15 +17,15 @@ from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.http import FileResponse, HttpResponseNotFound
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
-from django_auth_ldap.backend import LDAPBackend
 
 # Tracershop Production
 from shared_constants import JAVASCRIPT_VERSION
 from lib import pdfGeneration
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
-  InjectionOrder
+  InjectionOrder, UserAssignment
 from tracerauth.auth import login_from_header
+from tracerauth.ldap import guess_customer_group
 
 debug_logger = getLogger(DEBUG_LOGGER)
 
@@ -33,7 +33,15 @@ debug_logger = getLogger(DEBUG_LOGGER)
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
   success = login_from_header(request)
-  if not success:
+  if success:
+    user = request.user
+    if isinstance(user, User):
+      if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
+        if not UserAssignment.objects.filter(user=user).exists():
+          mStreetAddress, user_assignments  = guess_customer_group(user.username)
+          if mStreetAddress is not None and len(user_assignments) == 1:
+            debug_logger.error(f"Create a notification that {mStreetAddress} doens't map to a customer")
+  else:
     debug_logger.info(request.headers)
 
   return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
