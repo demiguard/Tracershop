@@ -9,14 +9,10 @@ from django.test import TestCase, RequestFactory
 from database.models import User, UserGroups
 from frontend.views import indexView
 
-
-
 # Create your tests here.
 class ViewTestCase(TestCase):
   def setUp(self) -> None:
     self.factory = RequestFactory()
-    
-
 
   @classmethod
   def setupTestData(cls) -> None:

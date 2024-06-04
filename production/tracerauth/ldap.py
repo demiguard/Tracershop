@@ -26,7 +26,7 @@ ldapTracershopGroups = {
 
 error_logger = getLogger(ERROR_LOGGER)
 
-class LDAPConnection:
+class LDAPConnection: #pragma: no cover
   def __init__(self, username=LDAP_USERNAME, password=LDAP_PASSWORD) -> None:
     self.username = username
     self.password = password
@@ -43,7 +43,7 @@ class LDAPConnection:
   def __exit__(self, exception_type, exception, traceback):
     self.conn.unbind()
 
-def query_username(username: str, conn: Optional[LDAPObject]=None):
+def _query_username(username: str, conn: Optional[LDAPObject]=None):
   if conn is None:
     with LDAPConnection() as conn:
       base="OU=Region Hovedstaden,DC=regionh,DC=top,DC=local"
@@ -63,28 +63,31 @@ def _extract_UserAssignments(user, user_properties):
   uas = []
 
   if 'streetAddress' in user_properties:
-    for binary_street_address in user_properties['streetAddress']:
-      street_address = binary_street_address.decode()
-      for customer in Customer.objects.all():
-        if(customer.billing_address == street_address):
-          ua = UserAssignment(user=user, customer=customer)
-          ua.save()
-          uas.append(ua)
+    binary_street_address = user_properties['streetAddress']
+    street_address = binary_street_address.decode()
+    for customer in Customer.objects.all():
+      if(customer.billing_address == street_address):
+        ua = UserAssignment(user=user, customer=customer)
+        ua.save()
+        uas.append(ua)
   else:
     error_logger.error(f"user properties for {user.username} doesn't contain a street address")
 
   return street_address, uas
 
 def guess_customer_group(username: str) -> Tuple[Optional[str], List[UserAssignment]]:
-  user_properties = _extract_user_properties(query_username(username))
+  user_properties = _extract_user_properties(_query_username(username))
   if user_properties is None:
     return None, []
+
   try:
     user = User.objects.get(username=username)
   except ObjectDoesNotExist:
+    # just make it?
     error_logger.error(f"user {username} doesn't exists!")
     return None, []
-  except MultipleObjectsReturned:
+  except MultipleObjectsReturned: #pragma no cover
+    # This is a database integrity violation
     error_logger.error(f"user {username} returns multiple objects!")
     return None, []
 
@@ -109,16 +112,15 @@ def checkUserGroupMembership(username: str) -> Optional[UserGroups]:
   >>> with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroupMembership):
   ...    from dependant_module import function/Class # to test
   """
+  user_properties = _extract_user_properties(_query_username(username))
+  if user_properties is None:
+    return None
 
-  query = query_username(username)
-
-  if len(query):
-    user_properties = query[0][1]
-    if 'memberOf' in user_properties:
-      for group_bytes in user_properties['memberOf']:
-        group_str = group_bytes.decode()
-        for ldapTracershopGroupsName in ldapTracershopGroups.keys():
-          if ldapTracershopGroupsName in group_str:
-            return ldapTracershopGroups[ldapTracershopGroupsName]
+  if 'memberOf' in user_properties:
+    for group_bytes in user_properties['memberOf']:
+      group_str = group_bytes.decode()
+      for ldapTracershopGroupsName in ldapTracershopGroups.keys():
+        if ldapTracershopGroupsName in group_str:
+          return ldapTracershopGroups[ldapTracershopGroupsName]
   return None
 

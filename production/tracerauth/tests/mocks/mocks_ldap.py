@@ -20,5 +20,47 @@ mockedUserGroups = {
   # Therefore they cannot be returned from the LDAP service
 }
 
+FAKE_LDAP_CN = 'BLA BLA BLA BLA'
+
+class LDAPConnection():
+  class FakeLDAPObject:
+    def search_s(self, *args, **kwargs):
+      return [
+        (FAKE_LDAP_CN, {
+          'memberOf' : [b'RGH-B-SE Tracershop Site-Admin'],
+          'streetAddress' : b'customer_1_billing_address'
+        })
+      ]
+
+  def __enter__(self):
+    return self.FakeLDAPObject()
+  
+  def __exit__(self, exception_type, exeception_value, traceback):
+    pass
+
+class EmptyLDAPConnection():
+  class FakeLDAPObject:
+    def search_s(self, *args, **kwargs):
+      return []
+
+  def __enter__(self):
+    return self.FakeLDAPObject()
+  
+  def __exit__(self, exception_type, exeception_value, traceback):
+    pass
+
+class AlteredLDAPConnection:
+  class FakeLDAPObject:
+    def search_s(self, *args, **kwargs):
+      return [
+        (FAKE_LDAP_CN, {})
+      ]
+
+  def __enter__(self):
+    return self.FakeLDAPObject()
+
+  def __exit__(self, exception_type, exeception_value, traceback):
+    pass
+
 def checkUserGroupMembership(username: str) -> UserGroups:
   return mockedUserGroups.get(username, None)
