@@ -25,7 +25,7 @@ from django.db.models.query import QuerySet
 # Tracershop Production Packages
 from constants import ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint
+from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
     SUCCESS_STATUS_CREATING_USER_ASSIGNMENT
@@ -107,7 +107,8 @@ class DatabaseInterface():
     return updateModels # type: ignore # type checker is stupid
 
   def __editModel(self, model_identifier: str, jsonModel : Dict, user: User) -> Optional[TracershopModel]:
-    if model_identifier in self.__modelSerializer:
+    if model_identifier in self.__modelSerializer: #pragma: no cover
+      # So this is a case of premature perfection
       model = self.__modelSerializer[model_identifier](model_identifier, jsonModel)
     else:
       model = self.__defaultModelDeserializer(model_identifier, jsonModel)
@@ -115,7 +116,7 @@ class DatabaseInterface():
       return None
     try:
       model.assignDict(jsonModel)
-    except Exception as e:
+    except Exception as e: #pragma: no cover
       debug_logger.error(e, exc_info=True)
       debug_logger.error(f"Could not assign {jsonModel} to {model}")
       return None
@@ -128,7 +129,7 @@ class DatabaseInterface():
     if key is None:
       return model.objects.get(pk=identifier)
     else:
-      return model.objects.get(key=identifier)
+      return model.objects.get(**{ key : identifier})
 
   @database_sync_to_async
   def deleteModels(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
@@ -218,18 +219,18 @@ class DatabaseInterface():
     vials = Vial.objects.filter(pk__in=vialIDs)
 
     if len(vials) == 0:
-      raise Exception
+      raise UndefinedReference
     if len(orders) == 0:
-      raise Exception
+      raise UndefinedReference
     pivot_order = orders[0]
 
     for order in orders:
       if not order.status == OrderStatus.Accepted:
-        error_logger.error(f"Order Status missmatch! {order.status}")
-        raise Exception
+        error_logger.error(f"Order Status missmatch! {order.id}")
+        raise IllegalActionAttempted
       if not (order.moved_to_time_slot == timeSlot or order.ordered_time_slot == timeSlot):
-        error_logger.error(f"Attempting to free orders which doesn't belong to timeslot: {timeSlot}")
-        raise Exception
+        error_logger.error(f"Attempting to free orders which doesn't belong to timeslot: {timeSlot.id}")
+        raise IllegalActionAttempted
 
       order.status = OrderStatus.Released
       order.freed_by = user
@@ -237,7 +238,8 @@ class DatabaseInterface():
 
     for vial in vials:
       if vial.assigned_to is not None:
-        raise Exception
+        error_logger.error(f"Attempting to re-release vial {vial.id} to order {pivot_order.id}")
+        raise IllegalActionAttempted
 
       vial.assigned_to = pivot_order
     # Commit!
@@ -336,11 +338,27 @@ class DatabaseInterface():
     destination = ActivityDeliveryTimeSlot.objects.get(pk=destinationID)
 
     for order in orders:
+      if OrderStatus(order.status) == OrderStatus.Released:
+          error_logger.error("Attempted to move a released order")
+          raise IllegalActionAttempted
       if order.ordered_time_slot != destination:
+        # Guard Clauses for assumptions
+        if order.ordered_time_slot.destination != destination.destination:
+          error_logger.error("Attempted to set Destination to another endpoints time slot")
+          raise IllegalActionAttempted
+        if order.ordered_time_slot.production_run.production_day != destination.production_run.production_day:
+          error_logger.error("Attempted to set Destination to another time slot produced on another day")
+          raise IllegalActionAttempted
+        if order.ordered_time_slot.delivery_time < destination.delivery_time:
+          error_logger.error(f"Attempted to move an order that should have been delivered: {order.ordered_time_slot.delivery_time} to a time slot which delivers {destination.delivery_time}")
+          raise IllegalActionAttempted
+
         order.moved_to_time_slot = destination
       else:
+        # Restore orders
         order.moved_to_time_slot = None
 
+    # Note that bulk update skips the validation in the save method
     ActivityOrder.objects.bulk_update(orders, ['moved_to_time_slot'])
 
     return orders
@@ -457,8 +475,7 @@ class DatabaseInterface():
 
       if ldap_user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
         user_created = True
-        user = User(username=username.upper(), user_group=ldap_user_group)
-        user.save(creating_user)
+        user = User.objects.create(username=username.upper(), user_group=ldap_user_group)
       else:
         return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
 

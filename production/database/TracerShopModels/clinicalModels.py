@@ -58,9 +58,6 @@ class ActivityProduction(TracershopModel):
   def __str__(self) -> str:
     return f"Production of {self.tracer.shortname} - {Days(self.production_day).name} - {self.production_time}"
 
-  def __repr__(self) -> str:
-    return str(self)
-
 class ReleaseRight(TracershopModel):
   id = BigAutoField(primary_key=True)
   expiry_date = DateField(null=True, default=None)
@@ -95,6 +92,9 @@ class ReleaseRight(TracershopModel):
   def canDelete(self, user: Optional[User] = None) -> AuthActions:
     if user is None:
       return AuthActions.REJECT
+
+    if not user.is_production_admin:
+      return AuthActions.REJECT_LOG
 
     return AuthActions.ACCEPT_LOG
 
