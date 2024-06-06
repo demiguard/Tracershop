@@ -199,7 +199,6 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   def __str__(self) -> str:
     return f"ActivityDeliveryTimeSlot at {Days(self.production_run.production_day).name} - {self.delivery_time} to {self.destination.owner.short_name}"
 
-
 class OrderStatus(IntegerChoices):
   Ordered = 1
   Accepted = 2
@@ -214,7 +213,6 @@ class ActivityOrder(TracershopModel):
   comment = CharField(max_length=800, null=True, default=None)
   ordered_time_slot = ForeignKey(
     ActivityDeliveryTimeSlot, on_delete=RESTRICT, related_name="ordered")
-
   moved_to_time_slot = ForeignKey(
     ActivityDeliveryTimeSlot,
     on_delete=RESTRICT,
@@ -240,11 +238,17 @@ class ActivityOrder(TracershopModel):
 
   @property
   def tracer(self) -> Tracer:
-    self.ordered_time_slot.production_run.tracer
+    return self.ordered_time_slot.production_run.tracer
 
   def canEdit(self, user: Optional[User] = None) -> AuthActions:
     if user is None:
       return AuthActions.REJECT
+
+    if user.is_shop_member and not user.is_server_admin:
+      if self.status == OrderStatus.Ordered:
+        return AuthActions.ACCEPT
+      else:
+        return AuthActions.REJECT_LOG
 
     database_self = self.__class__.objects.get(pk=self.pk)
 
@@ -254,7 +258,7 @@ class ActivityOrder(TracershopModel):
     if self.status == OrderStatus.Released:
       if (user.is_server_admin or ReleaseRight.objects.filter(
                                     releaser=user,
-                                    tracer=self.tracer).exists()):
+                                    product=self.tracer).exists()):
         return AuthActions.ACCEPT_LOG
       else:
         return AuthActions.REJECT_LOG
@@ -262,22 +266,26 @@ class ActivityOrder(TracershopModel):
     return AuthActions.ACCEPT
 
   def canDelete(self, user: Optional[User]= None) -> AuthActions:
-    self.refresh_from_db()
     if user is None:
       return AuthActions.REJECT
+    self.refresh_from_db()
+
+    if user.is_shop_member and not user.is_server_admin:
+      if self.status == OrderStatus.Ordered:
+        return AuthActions.ACCEPT
+      else:
+        return AuthActions.REJECT_LOG
 
     if self.status == OrderStatus.Released and not user.is_server_admin:
       return AuthActions.REJECT_LOG
+    elif self.status == OrderStatus.Released and user.is_server_admin:
+      return AuthActions.ACCEPT_LOG
 
-    return AuthActions.ACCEPT_LOG
+    return AuthActions.ACCEPT
 
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
-    if(self.id is not None and self.id < 1):
+    if(self.id is not None and self.id < 1): #pragma no cover
       self.id = None
-    if self.id is None and user is not None:
-      pass
-      #self.status = OrderStatus.Ordered
-      #self.ordered_by = user
     super().save(user, *args, **kwargs)
 
   class Meta:
@@ -314,6 +322,12 @@ class InjectionOrder(TracershopModel):
     if user is None:
       return AuthActions.REJECT
 
+    if user.is_shop_member and not user.is_server_admin:
+      if self.status == OrderStatus.Ordered:
+        return AuthActions.ACCEPT
+      else:
+        return AuthActions.REJECT_LOG
+
     database_self = self.__class__.objects.get(pk=self.pk)
 
     if database_self.status == OrderStatus.Released and not user.is_server_admin:
@@ -322,15 +336,33 @@ class InjectionOrder(TracershopModel):
     if self.status == OrderStatus.Released:
       if (user.is_server_admin or ReleaseRight.objects.filter(
                                     releaser=user,
-                                    tracer=self.tracer).exists()):
+                                    product=self.tracer).exists()):
         return AuthActions.ACCEPT_LOG
       else:
         return AuthActions.REJECT_LOG
 
     return AuthActions.ACCEPT
 
+  def canDelete(self, user: User | None = None) -> AuthActions:
+    if user is None:
+      return AuthActions.REJECT
+    self.refresh_from_db()
+
+    if user.is_shop_member and not user.is_server_admin:
+      if self.status == OrderStatus.Ordered:
+        return AuthActions.ACCEPT
+      else:
+        return AuthActions.REJECT_LOG
+
+    if self.status == OrderStatus.Released and not user.is_server_admin:
+      return AuthActions.REJECT_LOG
+    elif self.status == OrderStatus.Released and user.is_server_admin:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.ACCEPT
+
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
-    if(self.id is not None and self.id < 1):
+    if(self.id is not None and self.id < 1): #pragma no cover
       self.id = None
 
     super().save(user, *args, **kwargs)

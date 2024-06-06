@@ -6,10 +6,8 @@ __author__ = "Christoffer Vilstrup Jensen"
 from datetime import date
 from pathlib import Path
 from logging import getLogger
+from traceback import format_tb
 import os.path
-from constants import DEBUG_LOGGER
-
-
 
 # Third party Packages
 from django.contrib.auth import login
@@ -19,28 +17,34 @@ from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
 # Tracershop Production
-from shared_constants import JAVASCRIPT_VERSION
-from lib import pdfGeneration
+from constants import DEBUG_LOGGER, ERROR_LOGGER
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
   InjectionOrder, UserAssignment
+from lib import pdfGeneration
+from shared_constants import JAVASCRIPT_VERSION
 from tracerauth.auth import login_from_header
 from tracerauth.ldap import guess_customer_group
 
 debug_logger = getLogger(DEBUG_LOGGER)
+error_logger = getLogger(ERROR_LOGGER)
 
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
   success = login_from_header(request)
   if success:
-    user = request.user
-    if isinstance(user, User):
-      if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
-        if not UserAssignment.objects.filter(user=user).exists():
-          mStreetAddress, user_assignments  = guess_customer_group(user.username)
-          if mStreetAddress is not None and len(user_assignments) == 1:
-            debug_logger.error(f"Create a notification that {mStreetAddress} doens't map to a customer")
+    try:
+      user = request.user
+      if isinstance(user, User):
+        if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
+          if not UserAssignment.objects.filter(user=user).exists():
+            mStreetAddress, user_assignments = guess_customer_group(user.username)
+            if mStreetAddress is not None and len(user_assignments) == 0:
+              debug_logger.error(f"Create a notification that {mStreetAddress} doens't map to a customer")
+    except Exception as E:
+      error_logger.error("Assignment of user group threw an unhandled exception")
+      error_logger.error(format_tb(E.__traceback__))
   else:
     debug_logger.info(request.headers)
 

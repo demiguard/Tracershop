@@ -28,7 +28,7 @@ class LDAPConnection():
       return [
         (FAKE_LDAP_CN, {
           'memberOf' : [b'RGH-B-SE Tracershop Site-Admin'],
-          'streetAddress' : b'customer_1_billing_address'
+          'streetAddress' : [b'customer_1_billing_address']
         })
       ]
 

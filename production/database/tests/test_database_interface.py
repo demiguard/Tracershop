@@ -31,7 +31,6 @@ with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroup
 
 # Create your tests here.
 class DatabaseInterFaceTestCases(TransactionTestCase):
-  
 
   def setUp(self) -> None:
     self.db = DatabaseInterface()
@@ -308,7 +307,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     )
 
     self.assigned_vial = Vial.objects.create(
-      id=781935,
+      id=781935,  
       tracer=self.tracer,
       activity=51895,
       volume=12.12,
@@ -345,8 +344,6 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
         self.accession_number_4 : True,
         self.accession_number_5 : True,
       }, self.test_admin))
-
-    
 
     bookings = Booking.objects.filter(accession_number__in=[
       self.accession_number_1,
