@@ -63,7 +63,7 @@ def _extract_UserAssignments(user, user_properties):
   uas = []
 
   if 'streetAddress' in user_properties:
-    binary_street_address = user_properties['streetAddress']
+    binary_street_address = user_properties['streetAddress'][0]
     street_address = binary_street_address.decode()
     for customer in Customer.objects.all():
       if(customer.billing_address == street_address):

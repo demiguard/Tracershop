@@ -115,9 +115,9 @@ class Location(TracershopModel):
   def __str__(self) -> str:
     baseString = "Location: "
     if self.common_name is not None:
-      return baseString + " " + self.common_name
+      return baseString + self.common_name
     else:
-      return baseString + " " + self.location_code
+      return baseString + self.location_code
 
 
 class ProcedureIdentifier(TracershopModel):
@@ -129,9 +129,9 @@ class ProcedureIdentifier(TracershopModel):
   def __str__(self) -> str:
     baseString = "Procedure Identifier: "
     if self.description is not None:
-      return baseString + " " + self.description
+      return baseString + self.description
     else:
-      return baseString + " " + self.code
+      return baseString + self.code
 
 
 class Procedure(TracershopModel):
@@ -199,8 +199,6 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   def __str__(self) -> str:
     return f"ActivityDeliveryTimeSlot at {Days(self.production_run.production_day).name} - {self.delivery_time} to {self.destination.owner.short_name}"
 
-  def __repr__(self) -> str:
-    return str(self)
 
 class OrderStatus(IntegerChoices):
   Ordered = 1
