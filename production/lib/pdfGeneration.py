@@ -40,7 +40,8 @@ WIDTH, HEIGHT = A4
 
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES
-from lib.formatting import dateConverter, timeConverter, mapTracerUsage, toDanishDecimalString
+from lib.formatting import dateConverter, timeConverter, mapTracerUsage,\
+  toDanishDecimalString, empty_none_formatter
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
 
@@ -615,14 +616,17 @@ def DrawReleaseCertificate(filename :str,
   template.drawBoldString(header_box_text_start, table_row_y_top_4 - template.line_height, "Fremstillingsdato")
   template.drawBoldString(header_box_text_start, table_row_y_top_5 - template.line_height, "Fremstiller")
 
+  long_name = empty_none_formatter(customer.long_name)
+  clinical_name = empty_none_formatter(pivot_production.tracer.clinical_name)
+
   header_box_text_info_start = box_abscissa_middle_2 + 5
   template.drawString(header_box_text_info_start,
                       table_row_y_top_1 - (template.line_height),
-                      customer.long_name)
+                      long_name)
 
   template.drawString(header_box_text_info_start,
                       table_row_y_top_2 - (template.line_height),
-                      pivot_production.tracer.clinical_name)
+                      clinical_name)
   template.drawString(header_box_text_info_start,
                       table_row_y_top_3 - (template.line_height),
                       pivot_vial.lot_number)

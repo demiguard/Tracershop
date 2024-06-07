@@ -51,14 +51,9 @@ if __name__ == "__main__":
   if args.test_label is not None:
     labels = [args.test_label]
   else:
-    labels = ['database','tests', 'lib', 'tracerauth', 'websocket']
+    labels = ['database','tests', 'frontend', 'lib', 'tracerauth', 'websocket']
 
   failures = test_runner.run_tests(test_labels=labels)
-
-  #cov.stop()
-  #cov.save()
-  #cov.lcov_report(outfile="coverage/coverage.lcov")
-  #cov.report()
 
   sys.exit(bool(failures))
 

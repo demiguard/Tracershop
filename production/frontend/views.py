@@ -20,8 +20,8 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 from constants import DEBUG_LOGGER, ERROR_LOGGER
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
-  InjectionOrder, UserAssignment
-from lib import pdfGeneration
+  InjectionOrder, UserAssignment, Days
+from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder
 from shared_constants import JAVASCRIPT_VERSION
 from tracerauth.auth import login_from_header
 from tracerauth.ldap import guess_customer_group
@@ -34,17 +34,17 @@ error_logger = getLogger(ERROR_LOGGER)
 def indexView(request, *args, **kwargs):
   success = login_from_header(request)
   if success:
-    try:
       user = request.user
       if isinstance(user, User):
         if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
           if not UserAssignment.objects.filter(user=user).exists():
-            mStreetAddress, user_assignments = guess_customer_group(user.username)
-            if mStreetAddress is not None and len(user_assignments) == 0:
-              debug_logger.error(f"Create a notification that {mStreetAddress} doens't map to a customer")
-    except Exception as E:
-      error_logger.error("Assignment of user group threw an unhandled exception")
-      error_logger.error(format_tb(E.__traceback__))
+            try:
+              mStreetAddress, user_assignments = guess_customer_group(user.username)
+              if mStreetAddress is not None and len(user_assignments) == 0:
+                debug_logger.error(f"Create a notification that {mStreetAddress} doens't map to a customer")
+            except Exception as E:
+              error_logger.error("Assignment of user group threw an unhandled exception")
+              error_logger.error(format_tb(E.__traceback__))
   else:
     debug_logger.info(request.headers)
 
@@ -61,28 +61,36 @@ def pdfView(request,
   try:
     order_date = date(year, month, day)
   except ValueError:
+    debug_logger.info("URL parameter point to a none existent day")
+    debug_logger.info(f"year: {year}")
+    debug_logger.info(f"month: {month}")
+    debug_logger.info(f"day: {day}")
     return HttpResponseNotFound(request)
 
   try:
     endpoint = DeliveryEndpoint.objects.get(pk=endpointID)
   except ObjectDoesNotExist:
-    # Maybe add some logging
+    debug_logger.info("URL parameter point to a none existent endpoint")
+    debug_logger.info(f"endpointID: {endpointID}")
     return HttpResponseNotFound(request)
 
   productions = ActivityProduction.objects.filter(tracer__pk=tracerID,
                                                   production_day=order_date.weekday())
   if len(productions) == 0:
+    debug_logger.info(f"No productions could be found at {order_date}, which is a {Days(order_date.weekday()).name}")
     return HttpResponseNotFound(request)
 
   timeSlots = ActivityDeliveryTimeSlot.objects.filter(destination__pk=endpointID,
                                                       production_run__in=productions)
   if len(timeSlots) == 0:
+    debug_logger.info(f"No timeslots could be found at {order_date}")
     return HttpResponseNotFound(request)
 
   orders = ActivityOrder.objects.filter(status=OrderStatus.Released,
                                         ordered_time_slot__in=timeSlots,
                                         delivery_date=order_date,)
   if len(orders) == 0:
+    debug_logger.info(f"No released orders could be found at {order_date}")
     return HttpResponseNotFound(request)
 
   vials = Vial.objects.filter(assigned_to__in=orders)
@@ -99,7 +107,7 @@ def pdfView(request,
   if not dirPath.exists():
     dirPath.mkdir(parents=True, exist_ok=True)
 
-  pdfGeneration.DrawReleaseCertificate(
+  DrawReleaseCertificate(
     filename,
     order_date,
     endpoint,
@@ -113,19 +121,18 @@ def pdfView(request,
 def pdfInjectionView(request, injection_order_id: int):
   try:
     injection_order = InjectionOrder.objects.get(pk=injection_order_id, status=OrderStatus.Released);
-  except:
+  except ObjectDoesNotExist:
     return HttpResponseNotFound(request)
 
   filename = f"frontend/static/frontend/pdfs/injection_orders/injection_order_{injection_order_id}.pdf"
   pathFilename = Path(filename)
 
   dirPath = Path(os.path.dirname(pathFilename))
-  if not dirPath.exists():
+  if not dirPath.exists(): #pragma: no cover
     dirPath.mkdir(parents=True, exist_ok=True)
 
-  if(pathFilename.exists()):
+  if(pathFilename.exists()): #pragma: no cover
     return FileResponse(open(filename, 'rb'))
-
-  pdfGeneration.DrawInjectionOrder(filename, injection_order)
+  DrawInjectionOrder(filename, injection_order)
 
   return FileResponse(open(filename, 'rb'))

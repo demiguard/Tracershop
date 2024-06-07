@@ -4,7 +4,7 @@
 from datetime import date, time, datetime
 from pprint import pprint
 import re
-from typing import Dict
+from typing import Dict, Optional
 
 # Third Party modules
 
@@ -13,11 +13,11 @@ from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_J
 from database import models
 
 
-def FormatDateTimeJStoSQL(datetimestr : str) -> str:
-  if re.match(DATETIME_REGULAR_EXPRESSION_JS, datetimestr):
-    return datetimestr.replace("T", " ")
-  if re.match(DATETIME_REGULAR_EXPRESSION, datetimestr):
-    return datetimestr
+def FormatDateTimeJStoSQL(datetime_string : str) -> str:
+  if re.match(DATETIME_REGULAR_EXPRESSION_JS, datetime_string):
+    return datetime_string.replace("T", " ")
+  if re.match(DATETIME_REGULAR_EXPRESSION, datetime_string):
+    return datetime_string
   else: #
     raise ValueError("Input is not datetime format")
 
@@ -35,11 +35,11 @@ def dateConverter(Date : date, Format: str=DATE_FORMAT) -> str:
   """
   return Date.strftime(Format)
 
-def timeConverter(Time : time, Format: str=TIME_FORMAT) -> str:
-  return Time.strftime(Format)
+def timeConverter(time_ : time, Format: str=TIME_FORMAT) -> str:
+  return time_.strftime(Format)
 
-def datetimeConverter(DateTime : datetime, Format: str=DATETIME_FORMAT ) -> str:
-  return DateTime.strftime(Format)
+def datetimeConverter(date_time : datetime, Format: str=DATETIME_FORMAT ) -> str:
+  return date_time.strftime(Format)
 
 def toTime(TimeStr : str, Format: str=TIME_FORMAT) -> time:
   # Since time doesn't have a strptime, you have to take advantage of datetimes
@@ -112,3 +112,8 @@ def toDanishDecimalString(number, decimals = 2):
   if decimals == 0:
     return str(int(number))
   return str(round(number, decimals)).replace('.', ',')
+
+def empty_none_formatter(optional_string: Optional[str]):
+  if optional_string is None:
+    return ""
+  return optional_string
