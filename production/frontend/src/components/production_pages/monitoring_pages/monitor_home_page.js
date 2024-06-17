@@ -19,11 +19,12 @@ import { MonthSelector } from "~/components/injectable/month_selector";
 import { UpdateToday } from "~/lib/state_actions";
 
 
-const colors = ["#55FF88", "#FFEE44", "#AA0033"];
+const colors = ["#55FF88", "#FFEE44", "#AA0033", "#3300AA"];
 const texts = [
     "Frigivet til tiden",
     "Forsinket max 30 min",
     "Forsinket mere end 30 min",
+    "Ej frigivet",
 ];
 
 //#region Separators
@@ -35,19 +36,32 @@ const texts = [
  *   releasedOnTime : Number,
  *   releasedDelayed30 : Number,
  *   releasedDelayed30Plus : Number
+ *   notReleased : Number
  *   percentages : Array<Number>
  * }}
  */
 export function separatorInjectionOrders(injectionOrders){
+  const now = new Date()
   let total = 0;
   let releasedOnTime = 0;
   let releasedDelayed30 = 0;
   let releasedDelayed30Plus = 0;
+  let notReleased = 0;
 
+  // TODO: refactor
   for(const order of injectionOrders){
-    if(order.status == ORDER_STATUS.RELEASED){
-      total++;
+    if(order.status == ORDER_STATUS.RELEASED
+      || order.status == ORDER_STATUS.ACCEPTED){
 
+      if(order.status == ORDER_STATUS.ACCEPTED){
+        if(datify(order.delivery_date) < now){
+          total++;
+          notReleased++;
+        }
+        continue;
+      }
+
+      total++;
       const releaseTimeStamp = new TimeStamp(new Date(order.freed_datetime));
       const deliveryTimeStamp = new TimeStamp(order.delivery_time)
 
@@ -69,7 +83,12 @@ export function separatorInjectionOrders(injectionOrders){
     releasedOnTime : releasedOnTime,
     releasedDelayed30 : releasedDelayed30,
     releasedDelayed30Plus : releasedDelayed30Plus,
-    percentages : [releasedOnTime / total, releasedDelayed30 / total, releasedDelayed30Plus / total]
+    notReleased : notReleased,
+    percentages : [releasedOnTime / total,
+                   releasedDelayed30 / total,
+                   releasedDelayed30Plus / total,
+                   notReleased / total
+                  ]
   };
 }
 
@@ -80,12 +99,22 @@ export function separatorInjectionOrders(injectionOrders){
  * @returns
  */
 export function separatorActivityOrders(activity_orders, state){
+  const now = new Date()
   let total = 0;
   let releasedOnTime = 0;
   let releasedDelayed30 = 0;
   let releasedDelayed30Plus = 0;
+  let notReleased = 0;
 
   for(const activity_order of activity_orders){
+    if(activity_order.status == ORDER_STATUS.ACCEPTED){
+      if(datify(activity_order.delivery_date) < now){
+        total++;
+        notReleased++;
+      }
+      continue;
+    }
+
     total++;
     const releaseTimeStamp = new TimeStamp(new Date(activity_order.freed_datetime));
     const deliveryTimeSlot = activity_order.moved_to_time_slot ?
@@ -110,7 +139,8 @@ export function separatorActivityOrders(activity_orders, state){
     releasedOnTime : releasedOnTime,
     releasedDelayed30 : releasedDelayed30,
     releasedDelayed30Plus : releasedDelayed30Plus,
-    percentages : [releasedOnTime / total, releasedDelayed30 / total, releasedDelayed30Plus / total]
+    notReleased : notReleased,
+    percentages : [releasedOnTime / total, releasedDelayed30 / total, releasedDelayed30Plus / total, notReleased / total]
   };
 }
 
@@ -170,14 +200,14 @@ export function MonitorPage({}) {
     if (0 < activeTracer) {
       const orders = activityOrdersFilter(state,  {
           timeSlotFilterArgs : { tracerID : activeTracer },
-          status : ORDER_STATUS.RELEASED,
+          status : [ORDER_STATUS.ACCEPTED, ORDER_STATUS.RELEASED],
           dateRange : dateRange
         })
 
       return separatorActivityOrders(orders, state);
     } else {
       const orders = injectionOrdersFilter(state, {
-        status : ORDER_STATUS.RELEASED,
+        status : [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED],
         dateRange : dateRange
       });
 
@@ -214,10 +244,11 @@ export function MonitorPage({}) {
 
     for(let i = 0; i < percentages.length; i++){
       if(percentages[i] != 0.0){
+        const percentage = percentages[i];
         context.fillStyle = colors[i];
         context.strokeStyle = colors[i];
 
-        let endAngle = startAngle - 2 * Math.PI * percentages[i];
+        let endAngle = startAngle - 2 * Math.PI * percentage;
 
         context.beginPath();
         context.arc(circleCenterAbscissa,circleCenterOrdinate,circle_radius, startAngle, endAngle, true);
@@ -229,9 +260,9 @@ export function MonitorPage({}) {
         context.fillRect(boxAbscissa, boxOrdinateStart, boxWidth, boxWidth)
         context.strokeRect(boxAbscissa, boxOrdinateStart, boxWidth, boxWidth)
 
-        context.font = "24px MariBook"
+        context.font = "20px MariBook"
         context.fillStyle = "#000000"
-        context.fillText(texts[i], textAbscissa, textOrdinateStart);
+        context.fillText(texts[i] + ` ${Math.round(percentage * 100)}%`, textAbscissa, textOrdinateStart);
 
         boxOrdinateStart += boxWidth * 2.5;
         textOrdinateStart += boxWidth * 2.5;
@@ -248,6 +279,7 @@ export function MonitorPage({}) {
       <div>Ordre Behandlet til tiden: {separator.releasedOnTime}</div>
       <div>Ordre Forsinket mindre end 30 minutter: {separator.releasedDelayed30}</div>
       <div>Ordre Forsinket mere end 30 minutter: {separator.releasedDelayed30Plus}</div>
+      <div>Ej Frigivet: {separator.notReleased}</div>
     </div>
   )
 

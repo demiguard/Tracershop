@@ -21,6 +21,9 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Model, ForeignKey, IntegerField
 from django.db.models.query import QuerySet
 
+# Third party packages
+from pandas import DataFrame
+
 
 # Tracershop Production Packages
 from constants import ERROR_LOGGER, DEBUG_LOGGER
@@ -648,4 +651,111 @@ class DatabaseInterface():
     externalUser.set_password(externalNewPassword)
     externalUser.save()
 
+  def get_csv_data(self, csv_date: date):
+    start_date = date(csv_date.year, csv_date.month, 1)
+    try:
+      end_date = date(csv_date.year, csv_date.month + 1, 1) - timedelta(days=1)
+    except ValueError:
+      end_date = date(csv_date.year + 1, 1, 1)
 
+    activity_orders = ActivityOrder.objects.filter(
+      delivery_date__gte=start_date,
+      delivery_date__lte=end_date,
+      status=OrderStatus.Released,
+    ).order_by(
+      'ordered_time_slot__production_run__tracer',
+      'delivery_date'
+    )
+
+    injection_orders = InjectionOrder.objects.filter(
+      delivery_date__gte=start_date,
+      delivery_date__lte=end_date,
+      status=OrderStatus.Released,
+    ).order_by(
+      'tracer',
+      'delivery_date'
+    )
+
+    vials = Vial.objects.filter(
+      fill_date__gte=start_date,
+      fill_date__lte=end_date,
+    ).order_by(
+      'fill_date', 'fill_time'
+    )
+
+    return_dir: Dict[str, Dict[str, List[Any]]] = {}
+
+    for activity_order in activity_orders:
+      owner = activity_order.ordered_time_slot.destination.owner
+      if owner.short_name not in return_dir:
+        return_dir[owner.short_name] = {
+          'Tracer' : [],
+          'Dato' : [],
+          'Bestilt MBq' : [],
+          'Injektioner' : [],
+          'Frigivelse Tidspunkt' : [],
+        }
+
+      owner_dict = return_dir[owner.short_name]
+      owner_dict['Tracer'].append(activity_order.ordered_time_slot.production_run.tracer.shortname)
+      owner_dict['Dato'].append(activity_order.delivery_date)
+      owner_dict['Bestilt MBq'].append(activity_order.ordered_activity)
+      owner_dict['Injektioner'].append(0)
+      if activity_order.freed_datetime is None:
+        freed_datetime = "Ukendt"
+      else:
+        freed_datetime = activity_order.freed_datetime.replace(
+          hour=activity_order.freed_datetime.hour,
+          tzinfo=None)
+      owner_dict['Frigivelse Tidspunkt'].append(freed_datetime)
+
+    for injection_order in injection_orders:
+      owner = injection_order.endpoint.owner
+      if owner.short_name not in return_dir:
+        return_dir[owner.short_name] = {
+          'Tracer' : [],
+          'Dato' : [],
+          'Bestilt MBq' : [],
+          'Injektioner' : [],
+          'Frigivelse Tidspunkt' : [],
+        }
+
+      owner_dict = return_dir[owner.short_name]
+      owner_dict['Tracer'].append(injection_order.tracer.shortname)
+      owner_dict['Dato'].append(injection_order.delivery_date)
+      owner_dict['Bestilt MBq'].append(0)
+      owner_dict['Injektioner'].append(injection_order.injections)
+      if injection_order.freed_datetime is None:
+        freed_datetime = "Ukendt"
+      else:
+        freed_datetime = injection_order.freed_datetime.replace(hour=injection_order.freed_datetime.hour,
+                                                                tzinfo=None)
+      owner_dict['Frigivelse Tidspunkt'].append(freed_datetime)
+
+    return_dir['Hætteglas'] = {
+      'Tracer' : [],
+      'Aktivity' : [],
+      'Volumen' : [],
+      'Batch nummer' : [],
+      'Dato' : [],
+      'Tappe tidspunkt' : [],
+      'Ejer' : []
+    }
+
+    vial_dir = return_dir['Hætteglas']
+    for vial in vials:
+      if vial.tracer is None:
+        vial_dir['Tracer'].append('Ukendt')
+      else:
+        vial_dir['Tracer'].append(vial.tracer.shortname)
+      vial_dir['Aktivity'].append(vial.activity)
+      vial_dir['Volumen'].append(vial.volume)
+      vial_dir['Batch nummer'].append(vial.lot_number)
+      vial_dir['Dato'].append(vial.fill_date)
+      vial_dir['Tappe tidspunkt'].append(vial.fill_time)
+      if vial.owner is None:
+        vial_dir['Ejer'].append('Ukendt Kunde')
+      else:
+        vial_dir['Ejer'].append(vial.owner.short_name)
+
+    return return_dir

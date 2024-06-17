@@ -217,8 +217,15 @@ export function activityOrdersFilter(state, {
   for(const order of state.activity_orders.values()){
     const timeSlotCondition = timeSlotIDs !== undefined ?
       timeSlotIDs.includes(order.ordered_time_slot) : true;
-    const statusCondition = status !== undefined
-        ? order.status === status : true;
+    const statusCondition = (() => {
+      if(status instanceof Array){
+        return status.includes(order.status)
+      }
+      if(status !== undefined){
+        return order.status === status
+      }
+      return true;
+    })();
     const dateRangeCondition = dateRange !== undefined ?
       dateRange.in_range(order.delivery_date) : true
 
@@ -245,14 +252,22 @@ export function activityOrdersFilter(state, {
 export function injectionOrdersFilter(state, {
   status,
   dateRange,
-
   ids
 }) {
   const injectionOrders = [];
 
   for(const order of state.injection_orders.values()){
-    const statusCondition = status !== undefined
-      ? order.status === status : true;
+    const statusCondition = (() => {
+      if(status instanceof Array){
+        return status.includes(order.status)
+      }
+      if(status !== undefined){
+        return order.status === status
+      }
+
+      return true;
+    })();
+
     const dateRangeCondition = dateRange !== undefined ?
       dateRange.in_range(order.delivery_date) : true
 

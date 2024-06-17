@@ -21,6 +21,8 @@ from constants import DEBUG_LOGGER, ERROR_LOGGER
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
   InjectionOrder, UserAssignment, Days
+from database.database_interface import DatabaseInterface
+from lib.formatting import format_csv_data
 from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder
 from shared_constants import JAVASCRIPT_VERSION
 from tracerauth.auth import login_from_header
@@ -116,7 +118,7 @@ def pdfView(request,
     [vial for vial in vials],
   )
 
-  return FileResponse(open(filename, 'rb'))
+  return FileResponse(open(filename, 'rb'), filename="FrigivelsesDokument.pdf")
 
 def pdfInjectionView(request, injection_order_id: int):
   try:
@@ -135,4 +137,16 @@ def pdfInjectionView(request, injection_order_id: int):
     return FileResponse(open(filename, 'rb'))
   DrawInjectionOrder(filename, injection_order)
 
-  return FileResponse(open(filename, 'rb'))
+  return FileResponse(open(filename, 'rb'), filename="FrigivelsesDokument.pdf")
+
+def vial_csv_view(request, year: int, month: int):
+  try:
+    csv_date = date(year, month, 1)
+  except ValueError:
+    return HttpResponseNotFound(request)
+
+  database = DatabaseInterface()
+  csv_data = database.get_csv_data(csv_date)
+  formatted_data = format_csv_data(csv_data)
+
+  return FileResponse(formatted_data, filename="data.xlsx")
