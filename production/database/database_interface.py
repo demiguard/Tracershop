@@ -253,8 +253,6 @@ class DatabaseInterface():
 
     return orders, vials
 
-
-
   def __timeUserSensitiveFilter(self, model_identifier: str):
     model = MODELS[model_identifier]
     timeField = TIME_SENSITIVE_FIELDS[model_identifier]
@@ -329,7 +327,7 @@ class DatabaseInterface():
     for model in models:
       modelKeyword = INVERTED_MODELS.get(model)
       if modelKeyword is None:
-        debug_logger.warning(f"ModelKeyword {model.__name__} is missing in database.models.INVERTED_MODELS")
+        #debug_logger.warning(f"ModelKeyword {model.__name__} is missing in database.models.INVERTED_MODELS")
         continue
       if modelKeyword in self.__modelGetters:
         instances[modelKeyword] = self.__modelGetters[modelKeyword](referenceTime, user)
