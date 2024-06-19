@@ -557,17 +557,20 @@ class DatabaseInterface():
         day=booking.start_date.weekday()
         productions=ActivityProduction.objects.filter(
           production_day=day,
+          tracer=tracer
         )
-        booking_time = combine_date_time(booking.start_date, booking.start_time)\
-          + timedelta(minutes=procedure.delay_minutes)
+        booking_time = combine_date_time(booking.start_date, booking.start_time)
         timeSlots = ActivityDeliveryTimeSlot.objects.filter(
           destination=endpoint,
           production_run__in=productions,
-          delivery_time__lte=booking_time.time()
+          delivery_time__lte= booking.start_time
         ).order_by('delivery_time').reverse()
 
         if len(timeSlots) == 0:
           error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_date}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day).name}")
+          error_logger.error(f"Productions: {productions}")
+          error_logger.error(f"Tracer: {tracer}")
+          error_logger.error(f"booking_time: {booking_time}")
           raise RequestingNonExistingEndpoint
         timeSlot = timeSlots[0]
         timeDelta = subtract_times(booking_time.time(), timeSlot.delivery_time)
