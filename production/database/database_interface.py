@@ -11,6 +11,7 @@ from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, U
 import logging
 from functools import reduce
 from math import floor
+from zoneinfo import ZoneInfo
 
 # Django Packages
 from channels.db import database_sync_to_async
@@ -46,7 +47,6 @@ from tracerauth.ldap import checkUserGroupMembership
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
 
-
 class DatabaseInterface():
   """This class is the interface for the production database. This includes
   both the Django database and the Production database
@@ -61,6 +61,7 @@ class DatabaseInterface():
       self._serverConfig = ServerConfiguration.get()
     return self._serverConfig
 
+
   @property
   def __modelGetters(self) -> Dict[str, Callable]:
     return {
@@ -69,6 +70,7 @@ class DatabaseInterface():
       DATA_INJECTION_ORDER : self.__timeUserSensitiveFilter(DATA_INJECTION_ORDER),
       DATA_VIAL : self.__timeUserSensitiveFilter(DATA_VIAL),
     }
+
 
   @property
   def __modelSerializer(self) -> Dict[str, Callable[[str, Dict[str, Any]], TracershopModel]]:
@@ -704,9 +706,10 @@ class DatabaseInterface():
       if activity_order.freed_datetime is None:
         freed_datetime = "Ukendt"
       else:
-        freed_datetime = activity_order.freed_datetime.replace(
-          hour=activity_order.freed_datetime.hour,
-          tzinfo=None)
+        freed_datetime = activity_order.freed_datetime.astimezone(
+          ZoneInfo('Europe/Copenhagen')
+        ).replace(tzinfo=None)
+
       owner_dict['Frigivelse Tidspunkt'].append(freed_datetime)
 
     for injection_order in injection_orders:
@@ -728,8 +731,9 @@ class DatabaseInterface():
       if injection_order.freed_datetime is None:
         freed_datetime = "Ukendt"
       else:
-        freed_datetime = injection_order.freed_datetime.replace(hour=injection_order.freed_datetime.hour,
-                                                                tzinfo=None)
+        freed_datetime = injection_order.freed_datetime.astimezone(
+          ZoneInfo('Europe/Copenhagen')
+        ).replace(tzinfo=None)
       owner_dict['Frigivelse Tidspunkt'].append(freed_datetime)
 
     return_dir['Hætteglas'] = {

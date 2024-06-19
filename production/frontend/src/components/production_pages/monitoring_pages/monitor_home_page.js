@@ -177,15 +177,30 @@ export function MonitorPage({}) {
     }
   }
   const injectionHTML = (
-        <Button key={-1}
-            className={SiteStyles.Margin15lr}
-            onClick={() => {setActiveTracer(() => {return -1;})}}
-            size="sm"
-        >
-          Special
-        </Button>
+    <Button key={-1}
+        className={SiteStyles.Margin15lr}
+        onClick={() => {setActiveTracer(() => {return -1;})}}
+        size="sm"
+    >
+      Special
+    </Button>
   );
   buttonRows.push(injectionHTML);
+  const excel_button = (
+    <Button
+    key={-2}
+    className={SiteStyles.Margin15lr}
+    onClick={
+      () => {
+        window.open(`excel/${activeMonth.getFullYear()}/${activeMonth.getMonth() + 1}/data.xlsx`)
+      }
+    }
+    size="sm"
+      >
+      Hent Excel ark
+    </Button>
+  )
+  buttonRows.push(excel_button);
 
   const tracerName = (() => {
     if(state.tracer.has(activeTracer)){
