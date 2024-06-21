@@ -21,7 +21,7 @@ import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { Optional } from "~/components/injectable/optional.js";
-import { DATA_BOOKING } from "~/lib/shared_constants.js";
+import { DATA_BOOKING, WEBSOCKET_DATA } from "~/lib/shared_constants.js";
 import { ParseDjangoModelJson } from "~/lib/formatting.js";
 
 const Content = {
@@ -85,18 +85,20 @@ export function ShopOrderPage ({relatedCustomer}){
   const [bookings, SetBookings] = useState([])
   const activeDate = state.today
   useEffect(() => {
-    websocket.sendGetBookings(
-      activeDate, activeEndpoint
-    ).then((data) => {
-      console.log(data)
-      const bookingsMap = ParseDjangoModelJson(data, null, DATA_BOOKING)
-      console.log(data)
-      SetBookings([...bookingsMap.values()])
-    });
+    if(websocket !== null){
+      websocket.sendGetBookings(
+        activeDate, activeEndpoint
+      ).then((data) => {
+
+        const bookingsMap = ParseDjangoModelJson(data[WEBSOCKET_DATA], null, DATA_BOOKING)
+
+        SetBookings([...bookingsMap.values()])
+      });
+    }
     return () => {
       SetBookings([])
     }
-  }, [activeEndpoint, activeDate])
+  }, [activeEndpoint, activeDate, websocket])
 
   function setActiveDate(newDate) {
     dispatch(new UpdateToday(newDate, websocket));
