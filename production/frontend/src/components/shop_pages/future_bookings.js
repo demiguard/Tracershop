@@ -16,31 +16,10 @@ import { Optional } from "~/components/injectable/optional";
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
 
-export function FutureBooking ({active_date, active_endpoint,
-  activityDeadlineExpired, injectionDeadlineExpired}) {
-  const state = useTracershopState();
-  const websocket = useWebsocket();
-  const dateString = dateToDateString(active_date);
-  const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
-                                                            state.location,
-                                                            active_endpoint);
-
-  // Note that there's no state in this component, so that means there's no
-  // rerender with user interaction, therefore the following line will only
-  // happen when stuff is relevant
-  // Although there's some argument for just creating a bit top level data
-  // structure
-
-  const bookings = [...state.booking.values()].filter(bookingFilter(
-    dateString, state.location, active_endpoint
-  ));
-
-  const bookingMapping = new TracerBookingMapping(bookings, procedureLocationIndex);
-
   /**
  *
  * @param {{
- *  bookings : Array<Booking>
+  *  bookings : Array<Booking>
   * }} param0
   * @returns
   */
@@ -80,7 +59,14 @@ export function FutureBooking ({active_date, active_endpoint,
     </Card>)
  }
 
-
+export function FutureBooking ({active_date, active_endpoint, booking,
+  activityDeadlineExpired, injectionDeadlineExpired}) {
+  const state = useTracershopState();
+  const websocket = useWebsocket();
+  const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
+                                                            state.location,
+                                                            active_endpoint);
+  const bookingMapping = new TracerBookingMapping(booking, procedureLocationIndex);
 /**
  *
  * @param {{

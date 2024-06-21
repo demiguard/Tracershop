@@ -106,6 +106,7 @@ export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
+export const WEBSOCKET_MESSAGE_GET_BOOKINGS = "getBookings";
 export const WEBSOCKET_MESSAGE_GET_HISTORY = "history";
 export const WEBSOCKET_MESSAGE_GET_ORDERS = "getOrders";
 export const WEBSOCKET_MESSAGE_GET_STATE = "getState";

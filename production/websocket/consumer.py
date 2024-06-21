@@ -13,7 +13,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from asgiref.sync import sync_to_async
-from datetime import datetime
+from datetime import datetime, date
 from enum import Enum
 from subprocess import call
 import logging
@@ -56,13 +56,14 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE, \
     WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
     WEBSOCKET_MESSAGE_LOG_ERROR, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
-    WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG
+    WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,\
+    WEBSOCKET_MESSAGE_GET_BOOKINGS
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
       TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups,\
       UserAssignment, SuccessfulLogin
-from lib.formatting import toDateTime, formatFrontendErrorMessage
+from lib.formatting import toDateTime, formatFrontendErrorMessage, toDate
 from lib.ProductionJSON import encode, decode
 
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
@@ -880,6 +881,27 @@ class Consumer(AsyncJsonWebsocketConsumer):
         error_logger.error("Web service is not setup in sudoers!")
       audit_logger.info(f"user: {user.username} restarted the vial dog")
 
+  async def HandleGetBookings(self, message: Dict[str, Any]):
+    """This is mostly here because Bookings ended up being 10 mb data
+
+    Args:
+        message (Dict[str, Any]): _description_
+    """
+    booking_date = toDate(message[WEBSOCKET_DATE][:10])
+    bookings = await self.db.get_bookings(
+      booking_date,
+      message[WEBSOCKET_DATA_ID]
+    )
+
+    await self.send_json({
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
+      WEBSOCKET_DATA : bookings,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+    })
+
 
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,
@@ -892,6 +914,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_RESTART_VIAL_DOG : HandleRestartVials,
     WEBSOCKET_MESSAGE_MODEL_DELETE : HandleModelDelete,
     WEBSOCKET_MESSAGE_GET_STATE : HandleGetState,
+    WEBSOCKET_MESSAGE_GET_BOOKINGS : HandleGetBookings,
     WEBSOCKET_MESSAGE_GET_ORDERS : HandleGetTimeSensitiveData,
     WEBSOCKET_MESSAGE_MOVE_ORDERS : HandleMoveOrders,
     WEBSOCKET_MESSAGE_RESTORE_ORDERS : HandleRestoreOrders,

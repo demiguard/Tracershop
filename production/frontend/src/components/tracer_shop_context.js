@@ -117,7 +117,11 @@ export function TracerShopContext({children}){
   let websocket = useRef(null);
   useEffect(() => { websocket.current = new TracerWebSocket(
     new WebSocket("ws://" + window.location.host + "/ws/"),
-    dispatch)},[]);
+    dispatch)
+    return () => {
+      websocket.current = null;
+    }
+  },[]);
 
   function getDatabaseMap(databaseField){
     const /**@type {Map} */ dbMap = db.get(databaseField);

@@ -72,6 +72,7 @@ export function ActivityModal({
 }){
   // State extraction
   const state = useTracershopState();
+  const state_vials = state.vial;
   const websocket = useWebsocket();
   //
   const dateString = dateToDateString(active_date);
@@ -110,7 +111,7 @@ export function ActivityModal({
   // These effects are for updating prop dependant state
   useEffect(function initializeVials() {
     setVials(vials => {
-      const newOriginalVials = [...state.vial.values()].filter(
+      const newOriginalVials = [...state_vials.values()].filter(
         vialFilterFunction(dateString, orderCollection, customer))
       const newVials = toMapping(newOriginalVials);
       if (vials.has(NEW_LOCAL_ID)){
@@ -118,7 +119,7 @@ export function ActivityModal({
       }
       return newVials;
     });
-  }, [state.vial]);
+  }, [state_vials]);
 
   useEffect(function initializeOrders(){
     setOrders(toMapping(order_mapping.getOrders(timeSlot.id)));

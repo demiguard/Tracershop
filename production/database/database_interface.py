@@ -38,7 +38,8 @@ from database.models import ServerConfiguration, User,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
-    TracerUsage, ActivityProduction, Customer, Procedure, Days
+    TracerUsage, ActivityProduction, Customer, Procedure, Days,\
+    Location
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -559,18 +560,18 @@ class DatabaseInterface():
           production_day=day,
           tracer=tracer
         )
-        booking_time = combine_date_time(booking.start_date, booking.start_time)
+        booking_time = combine_date_time(booking.start_date, booking.start_time)\
+          + timedelta(minutes=procedure.delay_minutes)
         timeSlots = ActivityDeliveryTimeSlot.objects.filter(
           destination=endpoint,
           production_run__in=productions,
-          delivery_time__lte= booking.start_time
+          delivery_time__lte=booking_time.time()
         ).order_by('delivery_time').reverse()
 
         if len(timeSlots) == 0:
-          error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_date}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day).name}")
+          error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_time}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day).name}")
           error_logger.error(f"Productions: {productions}")
-          error_logger.error(f"Tracer: {tracer}")
-          error_logger.error(f"booking_time: {booking_time}")
+          error_logger.error(f"Booking Time: {booking_time}")
           raise RequestingNonExistingEndpoint
         timeSlot = timeSlots[0]
         timeDelta = subtract_times(booking_time.time(), timeSlot.delivery_time)
@@ -609,6 +610,27 @@ class DatabaseInterface():
       DATA_ACTIVITY_ORDER : activityOrders,
       DATA_INJECTION_ORDER : injectionsOrders
     }
+  
+  @staticmethod
+  @database_sync_to_async
+  def get_bookings(
+    date_: date, delivery_endpoint_id: int 
+  ):
+    locations = Location.objects.filter(
+      endpoint__id=delivery_endpoint_id,
+    )
+    bookings = Booking.objects.filter(
+      location__in=locations,
+      start_date=date_ 
+    )
+
+    bookings_models = serialize('python', bookings)
+    for serialized_model in bookings_models:
+      fields = serialized_model['fields']
+      for keyword in Booking.exclude: #type: ignore
+        del fields[keyword]
+
+    return bookings_models
 
   @database_sync_to_async
   def createExternalUser(self, userSkeleton: Dict[str, Any]):

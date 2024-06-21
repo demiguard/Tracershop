@@ -55,33 +55,6 @@ export class ActivityOrder {
   }
 }
 
-export class Booking {
-  constructor(id, status, location, procedure, accession_number, start_time, start_date, ) {
-    this.id=id
-    this.status=status
-    this.location=location
-    this.procedure=procedure
-    this.accession_number=accession_number
-    this.start_time=start_time
-    this.start_date=start_date
-  }
-
-  /**Copies the booking
-  * @returns { Booking }
-   */
-  copy(){
-    return new this.constructor(
-      this.id,
-      this.status,
-      this.location,
-      this.procedure,
-      this.accession_number,
-      this.start_time,
-      this.start_date
-    )
-  }
-}
-
 export class ClosedDate {
   constructor(id, close_date, ) {
     this.id=id
@@ -653,7 +626,6 @@ export class Vial {
 export const MODELS = {
   address : Address,
   activity_orders : ActivityOrder,
-  booking : Booking,
   closed_date : ClosedDate,
   customer : Customer,
   deadline : Deadline,
@@ -686,7 +658,6 @@ export class TracershopState {
   /** @type { Number } */ readyState
   /** @type { Map<Number, Address>} */ address
   /** @type { Map<Number, ActivityOrder>} */ activity_orders
-  /** @type { Map<Number, Booking>} */ booking
   /** @type { Map<Number, ClosedDate>} */ closed_date
   /** @type { Map<Number, Customer>} */ customer
   /** @type { Map<Number, Deadline>} */ deadline
@@ -712,7 +683,7 @@ export class TracershopState {
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, today, address, activity_orders, booking, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -725,11 +696,6 @@ export class TracershopState {
       this.activity_orders = activity_orders
     } else {
       this.activity_orders = new Map()
-    }
-    if(booking !== undefined){
-      this.booking = booking
-    } else {
-      this.booking = new Map()
     }
     if(closed_date !== undefined){
       this.closed_date = closed_date

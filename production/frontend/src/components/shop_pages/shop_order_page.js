@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { Select, toOptions } from '../injectable/select.js'
 import { FutureBooking } from "./future_bookings.js";
@@ -21,6 +21,8 @@ import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { Optional } from "~/components/injectable/optional.js";
+import { DATA_BOOKING } from "~/lib/shared_constants.js";
+import { ParseDjangoModelJson } from "~/lib/formatting.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -80,6 +82,21 @@ export function ShopOrderPage ({relatedCustomer}){
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
   const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
   const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
+  const [bookings, SetBookings] = useState([])
+  const activeDate = state.today
+  useEffect(() => {
+    websocket.sendGetBookings(
+      activeDate, activeEndpoint
+    ).then((data) => {
+      console.log(data)
+      const bookingsMap = ParseDjangoModelJson(data, null, DATA_BOOKING)
+      console.log(data)
+      SetBookings([...bookingsMap.values()])
+    });
+    return () => {
+      SetBookings([])
+    }
+  }, [activeEndpoint, activeDate])
 
   function setActiveDate(newDate) {
     dispatch(new UpdateToday(newDate, websocket));
@@ -133,6 +150,7 @@ export function ShopOrderPage ({relatedCustomer}){
     [PROP_ACTIVE_ENDPOINT] : activeEndpoint,
     [PROP_VALID_ACTIVITY_DEADLINE] :  !Boolean(activityDeadlineExpired),
     [PROP_VALID_INJECTION_DEADLINE] : !Boolean(injectionDeadlineExpired),
+    [DATA_BOOKING] : bookings
   };
 
   const calenderTimeSlots = [...state.deliver_times.values()].filter(
