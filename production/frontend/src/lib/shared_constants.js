@@ -58,7 +58,7 @@ export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.2.6";
+export const JAVASCRIPT_VERSION = "1.2.7";
 
 export const NO_ERROR = "";
 
