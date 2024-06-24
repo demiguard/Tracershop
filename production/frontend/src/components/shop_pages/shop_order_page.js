@@ -89,14 +89,20 @@ export function ShopOrderPage ({relatedCustomer}){
       websocket.sendGetBookings(
         activeDate, activeEndpoint
       ).then((data) => {
+        const newBookings = [];
 
-        const bookingsMap = ParseDjangoModelJson(data[WEBSOCKET_DATA], null, DATA_BOOKING)
+        for(const serialized_booking of data[WEBSOCKET_DATA]){
+          const booking = {};
+          Object.assign(booking, serialized_booking.fields);
+          booking.id = serialized_booking.id;
+          newBookings.push(booking);
+        }
 
-        SetBookings([...bookingsMap.values()])
+        SetBookings(newBookings);
       });
     }
     return () => {
-      SetBookings([])
+      SetBookings([]);
     }
   }, [activeEndpoint, activeDate, websocket])
 

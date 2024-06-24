@@ -71,7 +71,6 @@ function tracershopReducer(state, action, websocket){
       const modelMap = ParseDjangoModelJson(action.newState[key], oldStateMap, key);
       newState[key] = modelMap;
       if(!EXCLUDED_FROM_LOCAL_STORAGE.includes(key)){
-        console.log(key)
         db.set(key, modelMap);
       }
     }
@@ -119,6 +118,9 @@ export function TracerShopContext({children}){
     new WebSocket("ws://" + window.location.host + "/ws/"),
     dispatch)
     return () => {
+      if(websocket.current !== null){
+        websocket.current.close();
+      }
       websocket.current = null;
     }
   },[]);

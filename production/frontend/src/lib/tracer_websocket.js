@@ -19,6 +19,7 @@ import { db } from "./local_storage_driver";
 
 export class TracerWebSocket {
   /**@type {WebSocket} */ _ws
+  /**@type {Map<Number, MessageChannel> }*/ _promiseMap
   /**@type {React.Dispatch<React.ReducerAction>} */ _dispatch
 
   /**
@@ -27,7 +28,7 @@ export class TracerWebSocket {
    * @param {React.Dispatch<React.ReducerAction>} dispatch
    */
   constructor(websocket, dispatch){
-    this._PromiseMap = new Map();
+    this._promiseMap = new Map();
     this._ws = websocket;
     this._dispatch = dispatch
 
@@ -47,9 +48,12 @@ export class TracerWebSocket {
      */
     this._ws.onmessage = function(messageEvent) {
       const message = JSON.parse(messageEvent.data);
-      const pipe = this._PromiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
+      const pipe = this._promiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
       if(pipe != undefined){
         pipe.port2.postMessage(message);
+        pipe.port1.close()
+        pipe.port2.close()
+        this._promiseMap.delete(message[WEBSOCKET_MESSAGE_ID])
       }
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
@@ -86,7 +90,7 @@ export class TracerWebSocket {
 
     this._ws.onclose = function(e) {
       dispatch(new UpdateWebsocketConnectionState(WebSocket.CLOSED));
-      for(const [messageID, channel] of this._PromiseMap){
+      for(const [messageID, channel] of this._promiseMap){
         channel.port1.close();
         channel.port2.close();
       }
@@ -206,7 +210,7 @@ export class TracerWebSocket {
       pipe.port1.onmessage = function (messageEvent) {
         resolve(messageEvent.data);
       }
-      this._PromiseMap.set(messageID, pipe);
+      this._promiseMap.set(messageID, pipe);
     }.bind(this));
 
     return promise;

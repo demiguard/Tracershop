@@ -1,7 +1,7 @@
 import React, { useState, useRef } from "react";
 import { FormControl, Table } from "react-bootstrap";
 
-import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants"
+import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS } from "~/lib/shared_constants"
 import { Customer, Procedure } from "~/dataclasses/dataclasses";
 import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
@@ -15,6 +15,8 @@ import { parseDanishNumberInput, parseWholePositiveNumber } from "~/lib/user_inp
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
 import { InputSelect } from "~/components/injectable/input_select";
+import { CommitButton } from "~/components/injectable/commit_button";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
@@ -25,47 +27,116 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
   * }} props
   * @returns {Element}
    */
-  function ProcedureRow({procedure, tracerOptions}){
+  function ProcedureRow({procedure, tracerOptions, activeProcedures}){
     const websocket = useWebsocket();
     const state = useTracershopState();
     const procedureIdentifier = state.procedure_identifier.get(nullParser(procedure.series_description));
+
     // State Declaration
     const [tracer, setTracer] = useState(nullParser(procedure.tracer));
     const [units, setUnits] = useState(nullParser(procedure.tracer_units));
+    const [delay, setDelay] = useState(nullParser(procedure.delay_minutes));
+    const [seriesDescription, setSeriesDescription] = useState(procedure.series_description);
+    const [errorTracer, setErrorTracer] = useState("");
     const [errorUnits, setErrorUnits] = useState("");
+    const [errorDelay, setErrorDelay] = useState("");
+    const [errorSeriesDescription, setErrorSeriesDescription] = useState("");
 
-    function commit(){
-      let parsedTracer = Number(tracer)
+    let procedureContent = undefined;
+    if(procedureIdentifier){
+      procedureContent = <div>{procedureIdentifier.description}</div>;
+    } else {
+      const procedureIdentifier = [...state.procedure_identifier.values()].filter(
+        (pi) => !activeProcedures.has(pi.id)
+      )
+      const procedureIdentifierOptions = toOptions(procedureIdentifier, 'description')
+      procedureIdentifierOptions.push(new Option("", "-----------------"))
+
+      procedureContent = (
+        <ErrorInput error={errorSeriesDescription}>
+          <Select
+            data-testid="new-procedure-identifier"
+            options={procedureIdentifierOptions}
+            value={seriesDescription}
+            onChange={setStateToEvent(setSeriesDescription)}
+          />
+        </ErrorInput>
+      );
+    }
+
+    function validate(){
+      let parsedTracer = Number(tracer);
       if(tracer === ""){
         parsedTracer = null
       }
+      const validTracer = parsedTracer !== null;
       const [validUnits, parsedUnits] = parseWholePositiveNumber(units);
-
-      if(validUnits){
-        websocket.sendEditModel(DATA_PROCEDURE, [
-          {...procedure,
-            tracer : parsedTracer,
-            delay_minutes : 0,
-            tracer_units : parsedUnits,
-          }]);
-        return;
-      }
+      const [validDelay, parsedDelay] = parseDanishNumberInput(delay);
+      const validSeriesDescription = procedure.series_description !== "" || seriesDescription;
+      const parsedSeriesDescription = procedure.series_description || seriesDescription;
 
       if(!validUnits){
         setErrorUnits(parsedUnits);
+      } else {
+        setErrorUnits("");
+      }
+      if(!validDelay){
+        setErrorDelay(parsedDelay);
+      } else {
+        setErrorDelay("");
+      }
+      if(!validSeriesDescription){
+        setErrorSeriesDescription("Dette er ikke kendt undersøgelse");
+      } else {
+        setErrorSeriesDescription("");
+      }
+      if(!validTracer){
+        setErrorTracer("Du skal vælge en tracer");
+      } else {
+        setErrorTracer("")
+      }
+
+      return [validDelay && validUnits && validSeriesDescription && validTracer, {
+        ...procedure,
+        tracer : parsedTracer,
+        delay_minutes : parsedDelay,
+        tracer_units : parsedUnits,
+        series_description : parsedSeriesDescription,
+      }];
+    }
+
+    function commit_callback(response){
+      console.log(response, procedure.id)
+      if (response[WEBSOCKET_MESSAGE_STATUS] === SUCCESS_STATUS_CRUD.SUCCESS &&
+          procedure.id === undefined){
+        setDelay(0);
+        setUnits(0);
+        setTracer("");
+        setSeriesDescription("");
       }
     }
 
     return (
       <tr>
-        <td>{procedureIdentifier.description}</td>
+        <td>{procedureContent}</td>
         <td>
-          <Select
-            data-testid={`tracer-${procedure.id}`}
-            options={tracerOptions}
-            value={tracer}
-            onChange={setStateToEvent(setTracer)}
-          />
+          <TracershopInputGroup error={errorTracer}>
+            <Select
+              data-testid={`tracer-${procedure.id}`}
+              options={tracerOptions}
+              value={tracer}
+              onChange={setStateToEvent(setTracer)}
+            />
+          </TracershopInputGroup>
+        </td>
+        <td>
+          <ErrorInput error={errorDelay}>
+            <FormControl
+              data-testid={`delay-${procedure.id}`}
+              value={delay}
+              onChange={setStateToEvent(setDelay)}
+            />
+          </ErrorInput>
         </td>
         <td>
           <ErrorInput error={errorUnits}>
@@ -77,109 +148,16 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
           </ErrorInput>
         </td>
         <td>
-          <ClickableIcon
-            src="/static/images/update.svg"
-            label={`update-${procedure.id}`}
-            onClick={commit}
+          <CommitButton
+            object_type={DATA_PROCEDURE}
+            temp_object={procedure}
+            label={`commit-${procedure.id}`}
+            validate={validate}
+            callback={commit_callback}
           />
         </td>
       </tr>);
   }
-
-
-/**
-  *
-  * @returns {Element}
-   */
-function NewProcedureRow({activeEndpoint, activeProcedures, tracerOptions}){
-  const websocket = useWebsocket();
-  const state = useTracershopState();
-  const procedure = new Procedure(undefined, "", "", "", "", activeEndpoint);
-  const procedureIdentifier = [...state.procedure_identifier.values()].filter(
-    (pi) => !activeProcedures.has(pi.id)
-  )
-  const procedureIdentifierOptions = toOptions(procedureIdentifier, 'description')
-
-  procedureIdentifierOptions.push(new Option("", "-----------------"))
-  // State Declaration
-  const [seriesDescription, setSeriesDescription] = useState(nullParser(procedure.series_description));
-  const [tracer, setTracer] = useState(nullParser(procedure.tracer));
-  const [units, setUnits] = useState(procedure.tracer_units);
-  const [errorSeriesDescription, setErrorSeriesDescription] = useState("");
-  const [errorUnits, setErrorUnits] = useState("");
-
-  function commit(){
-    let parsedSeriesDescription = Number(seriesDescription)
-    if(seriesDescription === ""){
-      setErrorSeriesDescription(ERROR_MISSING_SERIES_DESCRIPTION);
-      return;
-    }
-    setErrorSeriesDescription("");
-    let parsedTracer = Number(tracer);
-    if(tracer === ""){
-      parsedTracer = null;
-    }
-    const [validUnits, parsedUnits] = parseWholePositiveNumber(units, "Enheder");
-
-    if(validUnits){
-      websocket.sendCreateModel(DATA_PROCEDURE, [
-        {...procedure,
-          series_description : parsedSeriesDescription,
-          tracer : parsedTracer,
-          delay_minutes : 0,
-          tracer_units : parsedUnits,
-        }]).then((data) => {
-          if(data.status === SUCCESS_STATUS_CRUD.SUCCESS){
-            setSeriesDescription("");
-            setUnits("")
-          }
-        });
-      return;
-    }
-    // Error handling
-    if(!validUnits){
-      setErrorUnits(parsedUnits);
-    }
-  }
-
-  return (
-    <tr>
-      <td>
-        <ErrorInput error={errorSeriesDescription}>
-          <Select
-            data-testid="new-procedure-identifier"
-            options={procedureIdentifierOptions}
-            value={seriesDescription}
-            onChange={setStateToEvent(setSeriesDescription)}
-          />
-        </ErrorInput>
-      </td>
-      <td>
-        <Select
-          data-testid="new-tracer"
-          options={tracerOptions}
-          value={tracer}
-          onChange={setStateToEvent(setTracer)}
-        />
-      </td>
-      <td>
-        <ErrorInput error={errorUnits}>
-          <FormControl
-            data-testid="new-units"
-            value={units}
-            onChange={setStateToEvent(setUnits)}/>
-        </ErrorInput>
-      </td>
-      <td>
-        <ClickableIcon
-          label="new-create"
-          src="/static/images/plus.svg"
-          onClick={commit}
-        />
-      </td>
-    </tr>
-  );
-}
 
 /**
  *
@@ -222,9 +200,22 @@ export function ProcedureTable({relatedCustomer}){
       procedure={procedure}
       activeEndpoint={activeEndpoint}
       tracerOptions={tracerOptions}
+      activeProcedures={activeProcedures}
     />);
     index++;
   }
+
+  procedureRows.push(
+    <ProcedureRow
+      key={-1}
+      procedure={
+        new Procedure(undefined, "", 0, 0, "", activeEndpoint)
+      }
+      activeEndpoint={activeEndpoint}
+      tracerOptions={tracerOptions}
+      activeProcedures={activeProcedures}
+    />
+  )
 
   return (
   <div style={{
@@ -248,18 +239,14 @@ export function ProcedureTable({relatedCustomer}){
         <tr>
           <th>Series Description</th>
           <th>Tracer</th>
-          <th>Enheder</th>
+          <th>Forsinkelse I Minutter</th>
+          <th>MBq / Injektioner per undersøgelse</th>
           <th>I brug</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
         {procedureRows}
-        <NewProcedureRow
-          activeEndpoint={activeEndpoint}
-          activeProcedures={activeProcedures}
-          tracerOptions={tracerOptions}
-        />
       </tbody>
     </Table>
   </div>);
