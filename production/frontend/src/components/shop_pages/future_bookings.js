@@ -24,6 +24,7 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
   * @returns
   */
   function ProcedureCard({bookings}){
+    const state = useState();
     const [open, setOpen] = useState(false);
     const openClassName = open ? SiteStyles.rotated : "";
     // Using Set for eliminating duplicates
