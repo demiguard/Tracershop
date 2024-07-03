@@ -400,7 +400,7 @@ export function ActivityTable ({active_tracer, active_date}) {
   }
 
   let available_days_html = <div></div>;
-  if(productionRows.length === 0){
+  if(productionRows.length === 0 && active_tracer != -1){
     const /**@type {ActivityProduction[]} */ weekly_productions = productionsFilter(state, {tracerID : active_tracer});
     const /**@type {Set<Number>} */ production_days = new Set();
     for(const production of weekly_productions){
