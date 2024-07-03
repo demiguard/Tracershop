@@ -60,6 +60,49 @@ function TopCell({children}){
   return (<Row style={cssTopCell}>{children}</Row>);
 }
 
+function AbsoluteCell({children, number_of_columns,  offset = 0}){
+  const width = `${(1 / number_of_columns) * 100}%`;
+  const top = `${(Math.ceil(offset + 1) * TIME_TABLE_CELL_HEIGHT)}px`;
+
+  return (<Row
+    style={{...cssAbsoluteCell,
+      width : width,
+      top : top,
+    }}
+    >{children}</Row>);
+}
+
+function TimeColumn({TimeTableDataContainer,
+                     columnHeader,
+                     number_of_columns,
+                     floating_objects}){
+
+  const tableCells = [];
+  const absoluteCells = [];
+
+  for(let hour = TimeTableDataContainer.min_hour; hour <= TimeTableDataContainer.max_hour; hour++){
+    tableCells.push(<Cell key={hour}></Cell>);
+  }
+
+  if(floating_objects instanceof ArrayMap){
+    for(const [hour, objects] of floating_objects){
+      if(!(TimeTableDataContainer.min_hour < hour && hour < TimeTableDataContainer.max_hour)){
+        // The object would be rendered
+        continue;
+      }
+      const offset = hour - TimeTableDataContainer.min_hour;
+      absoluteCells.push(<AbsoluteCell number_of_columns={number_of_columns} offset={offset} key={hour}>
+        {TimeTableDataContainer.cellFunction(objects)}
+      </AbsoluteCell>)
+    }
+  }
+
+  return (<PaddingLessCol>
+    <TopCell>{TimeTableDataContainer.columnNameFunction(columnHeader)}</TopCell>
+    {tableCells}
+    {absoluteCells}
+  </PaddingLessCol>);
+  }
 
 
 
@@ -85,54 +128,12 @@ export function TimeTable({entries,
   startingHour = 6,
   stoppingHour = 14}){
 
-  const startingTimeStamp = new TimeStamp(startingHour,0,0);
   const floatingMapping = new ArrayMap();
   const number_of_columns = column_objects.size + 1;
 
   for(const floating_object of floating_objects){
     floatingMapping.set(floating_key_function(floating_object),floating_object);
   }
-
-  function AbsoluteCell({children, offset = 0}){
-  const width = `${(1 / number_of_columns) * 100}%`;
-  const top = `${(Math.ceil(offset + 1) * TIME_TABLE_CELL_HEIGHT)}px`;
-
-  return (<Row
-    style={{...cssAbsoluteCell,
-      width : width,
-      top : top,
-    }}
-    >{children}</Row>);
-  }
-
-  function TimeColumn({columnHeader, floating_objects}){
-
-    const tableCells = [];
-    const absoluteCells = [];
-
-    for(let hour = TimeTableDataContainer.min_hour; hour <= TimeTableDataContainer.max_hour; hour++){
-      tableCells.push(<Cell key={hour}></Cell>);
-    }
-
-    if(floating_objects instanceof ArrayMap){
-      for(const [hour, objects] of floating_objects){
-        if(!(TimeTableDataContainer.min_hour < hour && hour < TimeTableDataContainer.max_hour)){
-          // The object would be rendered
-          continue;
-        }
-        const offset = hour - TimeTableDataContainer.min_hour;
-        absoluteCells.push(<AbsoluteCell offset={offset} key={hour}>
-          {TimeTableDataContainer.cellFunction(objects)}
-        </AbsoluteCell>)
-      }
-    }
-
-    return (<PaddingLessCol>
-      <TopCell>{TimeTableDataContainer.columnNameFunction(columnHeader)}</TopCell>
-      {tableCells}
-      {absoluteCells}
-    </PaddingLessCol>);
-    }
 
   const hourlyCells = [];
   const timeColumns = [];
@@ -143,6 +144,8 @@ export function TimeTable({entries,
 
   for(const [id, columnObject] of TimeTableDataContainer.columns) {
     timeColumns.push(<TimeColumn
+      number_of_columns={number_of_columns}
+      TimeTableDataContainer={TimeTableDataContainer}
       key={id}
       columnHeader={columnObject}
       floating_objects={TimeTableDataContainer.entryMapping.has(id) ? TimeTableDataContainer.entryMapping.get(id) : new ArrayMap()}

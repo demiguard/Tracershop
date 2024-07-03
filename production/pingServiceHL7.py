@@ -150,19 +150,6 @@ async def handleMessage(hl7_message: Message):
             accession_number = extract_accession_number(ORC_message_segment)
             start_date, start_time = extract_booking_time(ORC_message_segment)
             booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
-            data = await database_interface.serialize_dict({
-                DATA_BOOKING : [booking]
-            })
-
-            await channel_layer.group_send( CHANNEL_GROUP_GLOBAL, {
-                    WEBSOCKET_MESSAGE_ID : getNewMessageID(),
-                    WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-                    WEBSOCKET_DATA : data,
-                    WEBSOCKET_REFRESH : False,
-                    WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-                    'type' : 'broadcastMessage',
-                }
-            )
             logger.info(f"Added booking with uid: {accession_number}")
 
         if ORC_message_segment[1][0] == 'DC' and ORC_message_segment[5][0] == 'Ended'\
