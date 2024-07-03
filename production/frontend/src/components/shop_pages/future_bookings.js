@@ -9,7 +9,6 @@ import { ClickableIcon } from "~/components/injectable/icons";
 import SiteStyles from "~/css/Site.module.css"
 import { MarginButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
-import { bookingFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { Optional } from "~/components/injectable/optional";
 
@@ -24,7 +23,7 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
   * @returns
   */
   function ProcedureCard({bookings}){
-    const state = useState();
+    const state = useTracershopState();
     const [open, setOpen] = useState(false);
     const openClassName = open ? SiteStyles.rotated : "";
     // Using Set for eliminating duplicates

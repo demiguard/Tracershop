@@ -16,9 +16,8 @@ import { StateContextProvider, WebsocketContextProvider } from "~/components/tra
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
-let websocket = null;
+let websocket = tracer_websocket.TracerWebSocket;
 let container = null;
-let props = null;
 
 const now = new Date(2020,4, 4, 10, 36, 44);
 
@@ -29,20 +28,12 @@ beforeEach(() => {
   jest.setSystemTime(now);
   delete window.location;
   window.location = { href : "tracershop"};
-  container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
-
 });
 
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
-
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
-  props = null;
 });
 
 describe("Admin site test suite", () => {
@@ -74,7 +65,7 @@ describe("Admin site test suite", () => {
     expect(screen.getByLabelText("navbar-admin-shop")).toBeVisible();
   });
 
-  it("Switch Site", () => {
+  it("Switch Site", async () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -87,7 +78,7 @@ describe("Admin site test suite", () => {
       fireEvent.click(dropDown)
     })
 
-    act(() => {
+    await act(async () => {
       const shopSite = screen.getByLabelText("navbar-admin-shop")
       fireEvent.click(shopSite)
     })

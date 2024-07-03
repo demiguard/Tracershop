@@ -10,9 +10,9 @@ const locations = new Map([
 describe("Booking Filter test suite", () => {
   it("1", () => {
     const bookings = [
-      new Booking(1, 1, 1, 1, "asdf", "10:30:00", "2020-05-04"),
-      new Booking(2, 1, 1, 1, "asdf", "10:30:00", "2020-11-04"),
-      new Booking(3, 1, 2, 1, "asdf", "10:30:00", "2020-05-04"),
+      {id : 1, status : 1, location :  1, procedure : 1, accession_number : "asdf", start_time : "10:30:00", start_date : "2020-05-04"},
+      {id : 2, status : 1, location :  1, procedure : 1, accession_number : "asdf", start_time : "10:30:00", start_date : "2020-11-04"},
+      {id : 3, status : 1, location :  2, procedure : 1, accession_number : "asdf", start_time : "10:30:00", start_date : "2020-05-04"},
     ]
 
     const res = bookings.filter(bookingFilter(

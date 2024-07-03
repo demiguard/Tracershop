@@ -55,7 +55,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
       procedureContent = (
         <ErrorInput error={errorSeriesDescription}>
           <Select
-            data-testid="new-procedure-identifier"
+            data-testid={`procedure-identifier-${procedure.id}`}
             options={procedureIdentifierOptions}
             value={seriesDescription}
             onChange={setStateToEvent(setSeriesDescription)}
@@ -70,10 +70,10 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
         parsedTracer = null
       }
       const validTracer = parsedTracer !== null;
-      const [validUnits, parsedUnits] = parseWholePositiveNumber(units);
-      const [validDelay, parsedDelay] = parseDanishNumberInput(delay);
+      const [validUnits, parsedUnits] = parseWholePositiveNumber(units, "Enheder");
+      const [validDelay, parsedDelay] = parseDanishNumberInput(delay, "Forsinkelse");
       const validSeriesDescription = procedure.series_description !== "" || seriesDescription;
-      const parsedSeriesDescription = procedure.series_description || seriesDescription;
+      const parsedSeriesDescription = procedure.series_description || Number(seriesDescription);
 
       if(!validUnits){
         setErrorUnits(parsedUnits);
@@ -86,7 +86,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
         setErrorDelay("");
       }
       if(!validSeriesDescription){
-        setErrorSeriesDescription("Dette er ikke kendt undersøgelse");
+        setErrorSeriesDescription(ERROR_MISSING_SERIES_DESCRIPTION);
       } else {
         setErrorSeriesDescription("");
       }
@@ -106,9 +106,8 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
     }
 
     function commit_callback(response){
-      console.log(response, procedure.id)
       if (response[WEBSOCKET_MESSAGE_STATUS] === SUCCESS_STATUS_CRUD.SUCCESS &&
-          procedure.id === undefined){
+          procedure.id === -1){
         setDelay(0);
         setUnits(0);
         setTracer("");
@@ -209,7 +208,7 @@ export function ProcedureTable({relatedCustomer}){
     <ProcedureRow
       key={-1}
       procedure={
-        new Procedure(undefined, "", 0, 0, "", activeEndpoint)
+        new Procedure(-1, "", 0, 0, "", activeEndpoint)
       }
       activeEndpoint={activeEndpoint}
       tracerOptions={tracerOptions}

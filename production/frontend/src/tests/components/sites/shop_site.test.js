@@ -31,7 +31,7 @@ beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
   container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
+  websocket = tracer_websocket.TracerWebSocket;
   props = {...AppState};
   props[PROP_USER] = users.get(1);
 });

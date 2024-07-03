@@ -38,9 +38,9 @@ export function useTracershopDispatch(){
   return useContext(DispatchContext);
 }
 
-/**
- *
- * @returns {TracerWebSocket}
+/** Returns the websocket that should be used throughout the site.
+ *  If null, then websocket have been established yet
+ * @returns {TracerWebSocket | null}
  */
 export function useWebsocket(){
   return useContext(WebsocketContext);
@@ -52,7 +52,6 @@ export function useWebsocket(){
  * @returns {TracershopState}
  */
 function tracershopReducer(state, action){
-  console.log("Dispatching");
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser ){
     const newState = Object.assign(new TracershopState(), state);

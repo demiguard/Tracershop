@@ -27,7 +27,6 @@ jest.mock('~/components/shop_pages/future_bookings', () =>
 jest.useFakeTimers('modern')
 const now = new Date(2020,4, 4, 10, 36, 44)
 jest.setSystemTime(now)
-import { db } from "~/lib/local_storage_driver.js";
 
 const dispatchMock = jest.fn()
 

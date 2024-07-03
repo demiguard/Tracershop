@@ -55,9 +55,7 @@ export class TracerWebSocket {
           pipe.port1.close();
           pipe.port2.close();
           this._promiseMap.delete(message[WEBSOCKET_MESSAGE_ID]);
-        }, 50);
-      } else {
-        console.log(`Message ${message[WEBSOCKET_MESSAGE_ID]} had no pipe to dispatch to`);
+        }, 150);
       }
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.

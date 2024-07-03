@@ -36,7 +36,6 @@ import { secondary_emails } from "./test_state/secondary_email"
 export const AppState = {}
 
 AppState[DATA_ACTIVITY_ORDER] = activity_orders
-AppState[DATA_BOOKING] = bookings
 AppState[DATA_CUSTOMER] = customers
 AppState[DATA_DEADLINE] = deadlines
 AppState[DATA_DELIVER_TIME] = activityDeliveryTimeSlots
@@ -61,7 +60,6 @@ export const testState = new TracershopState(
   new Date(2020,4,5),
   address,
   activity_orders,
-  bookings,
   closed_dates,
   customers,
   deadlines,
