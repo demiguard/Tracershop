@@ -49,11 +49,15 @@ export class TracerWebSocket {
     this._ws.onmessage = function(messageEvent) {
       const message = JSON.parse(messageEvent.data);
       const pipe = this._promiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
-      if(pipe != undefined){
+      if(pipe !== undefined){
         pipe.port2.postMessage(message);
-        pipe.port1.close()
-        pipe.port2.close()
-        this._promiseMap.delete(message[WEBSOCKET_MESSAGE_ID])
+        setTimeout(() => {
+          pipe.port1.close();
+          pipe.port2.close();
+          this._promiseMap.delete(message[WEBSOCKET_MESSAGE_ID]);
+        }, 50);
+      } else {
+        console.log(`Message ${message[WEBSOCKET_MESSAGE_ID]} had no pipe to dispatch to`);
       }
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
@@ -72,7 +76,6 @@ export class TracerWebSocket {
             if(message[WEBSOCKET_DATA]){ // if the delete was successful or not
               this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
             }
-
         }
         break;
         case WEBSOCKET_MESSAGE_FREE_INJECTION:

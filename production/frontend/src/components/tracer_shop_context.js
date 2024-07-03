@@ -51,7 +51,8 @@ export function useWebsocket(){
  * @param {ReducerAction} action
  * @returns {TracershopState}
  */
-function tracershopReducer(state, action, websocket){
+function tracershopReducer(state, action){
+  console.log("Dispatching");
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser ){
     const newState = Object.assign(new TracershopState(), state);
