@@ -410,7 +410,12 @@ export function ActivityTable ({active_tracer, active_date}) {
       .sort((a,b) => a - b)
       .map((day) => DAYS_OBJECTS[day].name)
       .join(", ");
-    available_days_html = <Row><h3>{tracer.shortname} bliver kun produceret: {available_days}</h3></Row>;
+    if(tracer){
+      available_days_html = <Row><h3>{tracer.shortname} bliver kun produceret: {available_days}</h3></Row>;
+    } else {
+      console.log("Active_tracer:", active_tracer)
+      console.log(state)
+    }
   }
 
   return (
