@@ -23,8 +23,8 @@ export function PingServiceConfig(props){
     ris_dicom_endpoint = new DicomEndpoint(undefined, undefined, "");
     ris_dicom_endpoint_address = new Address(undefined, "", "", "Address for ping service")
   } else {
-    ris_dicom_endpoint = state.dicom_endpoint.get(server_config.ris_dicom_endpoint)
-    ris_dicom_endpoint_address = state.address.get(ris_dicom_endpoint.address)
+    ris_dicom_endpoint = state.dicom_endpoint.get(server_config.ris_dicom_endpoint);
+    ris_dicom_endpoint_address = state.address.get(ris_dicom_endpoint.address);
   }
 
   const [state_, _setState] = useState({
