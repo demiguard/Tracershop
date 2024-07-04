@@ -43,10 +43,10 @@ describe("Procedure Table test suite", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    expect(screen.getByTestId("new-procedure-identifier")).toBeVisible();
-    expect(screen.getByTestId("new-tracer")).toBeVisible();
-    expect(screen.getByTestId("new-units")).toBeVisible();
-    expect(screen.getByLabelText("new-create")).toBeVisible();
+    expect(screen.getByTestId("procedure-identifier--1")).toBeVisible();
+    expect(screen.getByTestId("tracer--1")).toBeVisible();
+    expect(screen.getByTestId("units--1")).toBeVisible();
+    expect(screen.getByLabelText("commit--1")).toBeVisible();
 
     for(const production_identifier of testState.procedure_identifier.values()){
       // Either a pi is in a row or in the option, both visible
@@ -79,10 +79,10 @@ describe("Procedure Table test suite", () => {
       fireEvent.change(endpointSelect, {target: {value: 2}});
     })
 
-    const piSelect = screen.getByTestId("new-procedure-identifier");
-    const tracerSelect = screen.getByTestId("new-tracer");
-    const unitsInput = screen.getByTestId("new-units");
-    const createButton = screen.getByLabelText("new-create");
+    const piSelect = screen.getByTestId("procedure-identifier--1");
+    const tracerSelect = screen.getByTestId("tracer--1");
+    const unitsInput = screen.getByTestId("units--1");
+    const createButton = screen.getByLabelText("commit--1");
 
     act(() => {
       fireEvent.change(piSelect, {target: {value : 2}});
@@ -91,13 +91,13 @@ describe("Procedure Table test suite", () => {
       fireEvent.click(createButton);
     });
 
-    expect(ResolvingWebsocket.sendCreateModel).toHaveBeenCalledWith(DATA_PROCEDURE, [expect.objectContaining({
+    expect(ResolvingWebsocket.sendCreateModel).toHaveBeenCalledWith(DATA_PROCEDURE, expect.objectContaining({
       series_description : 2,
       tracer : 3,
       tracer_units : 2000,
       delay_minutes : 0,
       owner : 3,
-    })]);
+    }));
   })
 
   it("Change to customer 2 and attempt to create a blank", () => {
@@ -113,14 +113,14 @@ describe("Procedure Table test suite", () => {
       fireEvent.change(endpointSelect,{target: {value: 2}});
     })
 
-    const createButton = screen.getByLabelText("new-create");
+    const createButton = screen.getByLabelText("commit--1");
 
     act(() => {
       fireEvent.click(createButton);
     });
 
-    const piSelect = screen.getByTestId("new-procedure-identifier");
     act(() => {
+      const piSelect = screen.getByTestId("procedure-identifier--1").closest("div");
       fireEvent.mouseEnter(piSelect);
     })
 
@@ -150,9 +150,10 @@ describe("Procedure Table test suite", () => {
       fireEvent.change(endpointSelect,{target: {value: 2}});
     })
 
-    const piSelect = screen.getByTestId("new-procedure-identifier");
-    const unitsInput = screen.getByTestId("new-units");
-    const createButton = screen.getByLabelText("new-create");
+    const piSelect = screen.getByTestId("procedure-identifier--1");
+    const unitsInput = screen.getByTestId("units--1");
+
+    const createButton = screen.getByLabelText("commit--1");
 
 
     act(() => {
@@ -164,15 +165,18 @@ describe("Procedure Table test suite", () => {
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
+
     act(() => {
-      fireEvent.mouseEnter(unitsInput)
+      const unitsInputParent = screen.getByTestId("units--1").closest("div");
+      fireEvent.mouseEnter(unitsInputParent);
     })
 
-    expect(screen.getByText("Enheder")).toBeVisible();
+
+    expect(screen.getByText("Enheder er ikke et tal")).toBeVisible();
   })
 
   //#region edit Tests
-  it("Edit Procedure 1 successfully", () => {
+  it("Edit Procedure 1 successfully", async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <ProcedureTable relatedCustomer={testState.customer}/>
@@ -183,22 +187,23 @@ describe("Procedure Table test suite", () => {
     const unitsInput = screen.getByTestId("units-1");
 
     act(() => {
-      fireEvent.change(tracerSelect, {target: {value : ""}});
+      fireEvent.change(tracerSelect, {target: {value : "1"}});
       fireEvent.change(unitsInput, {target: {value : "2000"}});
     });
 
-    act(() => {
-      const editButton = screen.getByLabelText("update-1");
+    await act(async () => {
+      const editButton = screen.getByLabelText("commit-1");
       fireEvent.click(editButton);
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_PROCEDURE, [expect.objectContaining({
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_PROCEDURE, expect.objectContaining({
       id : 1,
       series_description : 1,
-      tracer : null,
+      tracer : 1,
+      delay_minutes : 15,
       tracer_units : 2000,
       owner : 1,
-    })]);
+    }));
   })
 
 
@@ -216,17 +221,18 @@ describe("Procedure Table test suite", () => {
     });
 
     act(() => {
-      const editButton = screen.getByLabelText("update-1");
+      const editButton = screen.getByLabelText("commit-1");
       fireEvent.click(editButton);
     })
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
     act(() => {
-      fireEvent.mouseEnter(unitsInput);
+      const unitsInputParent = screen.getByTestId("units-1").closest("div");
+      fireEvent.mouseEnter(unitsInputParent);
     })
 
-    expect(screen.getByText("Enheder")).toBeVisible();
+    expect(screen.getByText("Enheder er ikke et tal")).toBeVisible();
   })
 
 

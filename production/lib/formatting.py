@@ -3,10 +3,13 @@
 # Python standard modules
 from datetime import date, time, datetime
 from pprint import pprint
+from io import BytesIO
 import re
-from typing import Dict, Optional
+from typing import Any, Dict, List, Optional
 
 # Third Party modules
+from pandas import DataFrame, ExcelWriter
+
 
 # Tracershop Packages
 from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_JS, SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
@@ -117,3 +120,14 @@ def empty_none_formatter(optional_string: Optional[str]):
   if optional_string is None:
     return ""
   return optional_string
+
+def format_csv_data(csv_data: Dict[str, Dict[str, List[Any]]]):
+  excel_bytes = BytesIO()
+
+  with ExcelWriter(excel_bytes) as writer:
+    for sheet_name, data_frame_raw in csv_data.items():
+      data_frame = DataFrame(data_frame_raw)
+      data_frame.to_excel(writer, sheet_name=sheet_name)
+
+  excel_bytes.seek(0)
+  return excel_bytes

@@ -6,7 +6,9 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
-  AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants.js";
+  AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER, WEBSOCKET_MESSAGE_GET_STATE,
+  WEBSOCKET_MESSAGE_GET_BOOKINGS,
+  WEBSOCKET_DATE} from "~/lib/shared_constants.js";
 
 import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
@@ -17,6 +19,7 @@ import { db } from "./local_storage_driver";
 
 export class TracerWebSocket {
   /**@type {WebSocket} */ _ws
+  /**@type {Map<Number, MessageChannel> }*/ _promiseMap
   /**@type {React.Dispatch<React.ReducerAction>} */ _dispatch
 
   /**
@@ -25,7 +28,7 @@ export class TracerWebSocket {
    * @param {React.Dispatch<React.ReducerAction>} dispatch
    */
   constructor(websocket, dispatch){
-    this._PromiseMap = new Map();
+    this._promiseMap = new Map();
     this._ws = websocket;
     this._dispatch = dispatch
 
@@ -45,9 +48,14 @@ export class TracerWebSocket {
      */
     this._ws.onmessage = function(messageEvent) {
       const message = JSON.parse(messageEvent.data);
-      const pipe = this._PromiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
-      if(pipe != undefined){
+      const pipe = this._promiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
+      if(pipe !== undefined){
         pipe.port2.postMessage(message);
+        setTimeout(() => {
+          pipe.port1.close();
+          pipe.port2.close();
+          this._promiseMap.delete(message[WEBSOCKET_MESSAGE_ID]);
+        }, 150);
       }
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
@@ -66,7 +74,6 @@ export class TracerWebSocket {
             if(message[WEBSOCKET_DATA]){ // if the delete was successful or not
               this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
             }
-
         }
         break;
         case WEBSOCKET_MESSAGE_FREE_INJECTION:
@@ -84,7 +91,7 @@ export class TracerWebSocket {
 
     this._ws.onclose = function(e) {
       dispatch(new UpdateWebsocketConnectionState(WebSocket.CLOSED));
-      for(const [messageID, channel] of this._PromiseMap){
+      for(const [messageID, channel] of this._promiseMap){
         channel.port1.close();
         channel.port2.close();
       }
@@ -204,7 +211,7 @@ export class TracerWebSocket {
       pipe.port1.onmessage = function (messageEvent) {
         resolve(messageEvent.data);
       }
-      this._PromiseMap.set(messageID, pipe);
+      this._promiseMap.set(messageID, pipe);
     }.bind(this));
 
     return promise;
@@ -257,6 +264,14 @@ export class TracerWebSocket {
       [WEBSOCKET_DATA] : userSkeleton,
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
     });
+  }
+
+  sendGetBookings(date, activeEndpoint){
+    return this.send({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_GET_BOOKINGS,
+      [WEBSOCKET_DATE] : date,
+      [WEBSOCKET_DATA_ID] : activeEndpoint,
+    })
   }
 
   /**

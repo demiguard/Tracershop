@@ -58,7 +58,7 @@ export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
-export const JAVASCRIPT_VERSION = "1.2.3";
+export const JAVASCRIPT_VERSION = "1.2.11";
 
 export const NO_ERROR = "";
 
@@ -106,6 +106,7 @@ export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
+export const WEBSOCKET_MESSAGE_GET_BOOKINGS = "getBookings";
 export const WEBSOCKET_MESSAGE_GET_HISTORY = "history";
 export const WEBSOCKET_MESSAGE_GET_ORDERS = "getOrders";
 export const WEBSOCKET_MESSAGE_GET_STATE = "getState";
@@ -137,6 +138,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "deleteModel",
   "editModel",
   "massOrder",
+  "getBookings",
   "moveOrder",
   "restoreOrders",
   "logError",

@@ -172,7 +172,7 @@ describe("Vial page tests suite", () => {
     </StateContextProvider>);
 
     act(() => {
-      const lotTableHeader = screen.getByText('Volume')
+      const lotTableHeader = screen.getByText('Volumen')
       fireEvent.click(lotTableHeader)
     })
   });

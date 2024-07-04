@@ -12,7 +12,7 @@ import { DATA_USER_ASSIGNMENT, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKE
   WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
 
-export const ERROR_MESSAGE_NO_LDAP_USERNAME = "Bruger findes ikke!"
+export const ERROR_MESSAGE_NO_LDAP_USERNAME = "BAM ID findes ikke. Bemærk at det er"
 export const ERROR_MESSAGE_INCORRECT_GROUPS = "Brugeren har ikke korrekte CBAS rettigheder!"
 
 function UserAssignmentRow(props){
@@ -34,20 +34,17 @@ function UserAssignmentRow(props){
       customer_id : activeCustomer
     }).then((data) => {
       if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME){
-        console.log("Setting ldap")
         setError(ERROR_MESSAGE_NO_LDAP_USERNAME);
       } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS){
-        console.log("Setting groups")
         setError(ERROR_MESSAGE_INCORRECT_GROUPS);
       } else if (data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS){
-        console.log("fixed")
         setUserName("");
+        setError("")
       }
     });
   }
 
   function delete_user_assignment(){
-    console.log("Hello world")
     websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, user_assignment.id);
   }
 

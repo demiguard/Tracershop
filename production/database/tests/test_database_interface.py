@@ -174,7 +174,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
 
     # 2018-03-12 is a monday
-    bookingDate = date(2018,3, 12)
+    self.bookingDate = date(2018,3, 12)
 
     Booking.objects.create(
       status=BookingStatus.Initial,
@@ -182,7 +182,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_1,
       start_time=time(9,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -191,7 +191,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_2,
       start_time=time(10,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -200,7 +200,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_3,
       start_time=time(11,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -209,7 +209,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_4,
       start_time=time(12,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -218,7 +218,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_5,
       start_time=time(13,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -227,7 +227,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_1,
       start_time=time(9,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -236,7 +236,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_2,
       start_time=time(10,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -245,7 +245,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_3,
       start_time=time(11,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -254,7 +254,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_4,
       start_time=time(12,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     Booking.objects.create(
@@ -263,7 +263,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_5,
       start_time=time(13,15,0),
-      start_date=bookingDate,
+      start_date=self.bookingDate,
     )
 
     self.order = ActivityOrder.objects.create(
@@ -639,3 +639,12 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
           self.shop_admin.id, new_password
         )
       )
+
+  async def test_get_bookings(self):
+    bookings = await self.db.get_bookings(
+      self.bookingDate,
+      self.endpoint.id
+    )
+
+    self.assertEqual(len(bookings), 10)
+  

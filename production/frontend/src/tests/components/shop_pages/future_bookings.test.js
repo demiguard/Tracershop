@@ -6,6 +6,7 @@ import React, {useContext} from "react";
 import { act } from "react-dom/test-utils"
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
+import { bookings } from "~/tests/test_state/bookings.js";
 import { testState } from "../../app_state.js";
 import { FutureBooking, missingSetupHeader } from "../../../components/shop_pages/future_bookings.js";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE } from "../../../lib/constants.js";
@@ -34,6 +35,7 @@ beforeEach(async () => {
     [PROP_ACTIVE_ENDPOINT] : 1,
     [PROP_EXPIRED_ACTIVITY_DEADLINE] : false,
     [PROP_EXPIRED_INJECTION_DEADLINE] : false,
+    booking : [...bookings.values()],
   }
 });
 

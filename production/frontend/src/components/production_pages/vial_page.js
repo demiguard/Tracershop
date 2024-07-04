@@ -67,7 +67,7 @@ export function VialPage(){
   }
 
   function fetchVials(){
-    console.log("hello world");
+
     const [validDate, date] = parseDateInput(vialDay, "Søge datoen");
     if(validDate){
       dispatch(new UpdateToday(date, websocket));

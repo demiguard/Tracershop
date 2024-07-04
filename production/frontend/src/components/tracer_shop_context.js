@@ -6,11 +6,15 @@ import { db } from '~/lib/local_storage_driver';
 import { DATABASE_CURRENT_USER, DATABASE_TODAY } from '~/lib/constants';
 import { ParseDjangoModelJson } from '~/lib/formatting';
 import { datify } from '~/lib/chronomancy';
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
+import { DATA_BOOKING, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
 
 const StateContext = createContext(new TracershopState());
 const DispatchContext = createContext({});
 const WebsocketContext = createContext(TracerWebSocket);
+
+const EXCLUDED_FROM_LOCAL_STORAGE = [
+  DATA_BOOKING
+]
 
 export function StateContextProvider({children, value}) {
   return (<StateContext.Provider value={value}>{children}</StateContext.Provider>);
@@ -34,9 +38,9 @@ export function useTracershopDispatch(){
   return useContext(DispatchContext);
 }
 
-/**
- *
- * @returns {TracerWebSocket}
+/** Returns the websocket that should be used throughout the site.
+ *  If null, then websocket have been established yet
+ * @returns {TracerWebSocket | null}
  */
 export function useWebsocket(){
   return useContext(WebsocketContext);
@@ -47,7 +51,7 @@ export function useWebsocket(){
  * @param {ReducerAction} action
  * @returns {TracershopState}
  */
-function tracershopReducer(state, action, websocket){
+function tracershopReducer(state, action){
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser ){
     const newState = Object.assign(new TracershopState(), state);
@@ -66,7 +70,9 @@ function tracershopReducer(state, action, websocket){
       }
       const modelMap = ParseDjangoModelJson(action.newState[key], oldStateMap, key);
       newState[key] = modelMap;
-      db.set(key, modelMap);
+      if(!EXCLUDED_FROM_LOCAL_STORAGE.includes(key)){
+        db.set(key, modelMap);
+      }
     }
 
     return newState;
@@ -110,7 +116,14 @@ export function TracerShopContext({children}){
   let websocket = useRef(null);
   useEffect(() => { websocket.current = new TracerWebSocket(
     new WebSocket("ws://" + window.location.host + "/ws/"),
-    dispatch)},[]);
+    dispatch)
+    return () => {
+      if(websocket.current !== null){
+        websocket.current.close();
+      }
+      websocket.current = null;
+    }
+  },[]);
 
   function getDatabaseMap(databaseField){
     const /**@type {Map} */ dbMap = db.get(databaseField);

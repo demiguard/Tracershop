@@ -23,7 +23,7 @@ from database.TracerShopModels.serverModels import *
 MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_ADDRESS : Address,
   DATA_ACTIVITY_ORDER : ActivityOrder,
-  DATA_BOOKING : Booking,
+  #DATA_BOOKING : Booking, # Bookings are added 
   DATA_CLOSED_DATE : ClosedDate,
   DATA_CUSTOMER : Customer,
   DATA_DEADLINE : Deadline,

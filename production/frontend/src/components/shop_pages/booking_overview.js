@@ -8,15 +8,12 @@ import { dateToDateString } from "~/lib/formatting";
 import { TimeStamp } from "~/lib/chronomancy";
 
 export function BookingOverview({
-  active_date, active_endpoint,
+  active_date, active_endpoint, booking
 }){
   const state = useTracershopState();
-  const dateString = dateToDateString(active_date)
   const locations = toMapping(applyFilter(state.location,
                                           locationEndpointFilter(active_endpoint)));
-  const bookings = applyFilter(state.booking, bookingFilter(dateString, state.location, active_endpoint));
-
-  const bookingTimeGroupLocation = new BookingTimeGroupLocation(state.booking, state.location, active_endpoint, active_date);
+  const bookingTimeGroupLocation = new BookingTimeGroupLocation(booking, locations, active_endpoint, active_date);
 
   return <div>
     <TimeTable
@@ -25,11 +22,10 @@ export function BookingOverview({
       column_name_function={(location) => {
         return location.common_name ? location.common_name : location.location_code;
       }}
-      floating_objects={bookings}
+      floating_objects={booking}
       floating_key_function={(booking) => {return booking.location;}}
       floating_time_stamp_function={(booking) => {return new TimeStamp(booking.start_time)}}
       inner_text_function={(booking) => {return booking.accession_number;}}
-
       startingHour={8}
       stoppingHour={18}
     />
