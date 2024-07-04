@@ -1,0 +1,12 @@
+#!/bin/bash
+
+source venv/bin/activate
+
+# Backend tests
+cd production
+./run_coverage.sh
+
+# Frontend tests
+cd frontend
+npm run test
+
