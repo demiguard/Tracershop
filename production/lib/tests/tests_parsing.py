@@ -288,5 +288,3 @@ class ParsingTestCase(TestCase):
     self.assertEqual(vial.fill_date, date(2024,1,24))
     self.assertEqual(vial.assigned_to, None)
     self.assertEqual(vial.owner, self.hilleroed)
-
-
