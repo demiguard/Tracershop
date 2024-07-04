@@ -19,7 +19,13 @@ import { setStateToEvent } from "~/lib/state_management";
  *
  * @author Christoffer Vilstrup Jensen
  */
-export function Authenticate({ authenticate, errorMessage, headerMessage, fit_in, spinner, buttonMessage }){
+export function Authenticate({ authenticate,
+                               errorMessage = "",
+                               headerMessage="Log in",
+                               fit_in = false,
+                               spinner = false,
+                               buttonMessage = "Log in"
+                            }){
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -90,12 +96,4 @@ Authenticate.propTypes = {
   fit_in : propTypes.bool,
   spinner : propTypes.bool,
   buttonMessage : propTypes.string
-}
-
-Authenticate.defaultProps = {
-  errorMessage : "",
-  headerMessage : "Log in",
-  fit_in : false,
-  spinner : false,
-  buttonMessage : "Log in"
 }

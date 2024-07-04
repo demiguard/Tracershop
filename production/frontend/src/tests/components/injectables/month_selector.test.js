@@ -1,13 +1,12 @@
 /**
  * @jest-environment jsdom
  */
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import React, {useState} from 'react'
-import { act } from 'react-dom/test-utils';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+
 import { MonthSelector } from '~/components/injectable/month_selector';
 
 const module = jest.mock('~/lib/tracer_websocket.js');
-
 
 beforeAll(() => {
   jest.useFakeTimers('modern')

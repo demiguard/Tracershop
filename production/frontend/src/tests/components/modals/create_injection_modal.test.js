@@ -3,17 +3,16 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import userEvent from "@testing-library/user-event";
 
 import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
 import { ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
 
-import {AppState, testState} from '~/tests/app_state.js'
-import { act } from "react-dom/test-utils";
+import { testState} from '~/tests/app_state.js'
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
-import { users } from "~/tests/test_state/users";
+
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
 
 const onClose = jest.fn()

@@ -3,9 +3,8 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from '@testing-library/user-event'
 
 import { HoverBox } from "../../../components/injectable/hover_box.js"
@@ -72,4 +71,3 @@ describe("Injectable HoverBox", () => {
     expect(screen.queryByText(HoverMessage)).not.toBeVisible();
   });
 });
-

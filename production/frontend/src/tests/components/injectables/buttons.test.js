@@ -3,9 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { createRoot } from "react-dom/client";
-import { screen, render, cleanup, fireEvent, getByTestId } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, getByTestId } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { MarginButton, CloseButton } from "../../../components/injectable/buttons.js";
 

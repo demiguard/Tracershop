@@ -3,8 +3,7 @@
  */
 
 import React, {StrictMode} from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
@@ -30,6 +29,10 @@ jest.setSystemTime(now)
 
 const dispatchMock = jest.fn()
 
+beforeAll(() => {
+  global.IS_REACT_ACT_ENVIRONMENT = true;
+})
+
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop"}
@@ -48,21 +51,20 @@ afterEach(() => {
 });
 
 describe("Shop Order page test suite", () => {
-  it("Standard Render Test", () => {
-    render(
-    <StrictMode>
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
-    </StrictMode>);
-
+  it("Standard Render Test", async () => {
+    await act(async () => {
+      render(
+        <StateContextProvider value={testState}>
+          <WebsocketContextProvider value={websocket}>
+            <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          </WebsocketContextProvider>
+        </StateContextProvider>);
+    });
   });
 
   it("Change Day", async () => {
-    render(
-      <StrictMode>
+    await act(async () => {
+      render(
         <StateContextProvider value={testState}>
           <DispatchContextProvider value={dispatchMock}>
             <WebsocketContextProvider value={websocket}>
@@ -70,7 +72,8 @@ describe("Shop Order page test suite", () => {
             </WebsocketContextProvider>
           </DispatchContextProvider>
         </StateContextProvider>
-      </StrictMode>);
+      );
+    })
 
     await act(async () => {
       const day = await screen.findByLabelText('calender-day-7')
@@ -81,16 +84,16 @@ describe("Shop Order page test suite", () => {
   });
 
   it("Change month", async () => {
-    render(
-      <StrictMode>
+    await act(async () => {
+      render(
         <StateContextProvider value={testState}>
           <DispatchContextProvider value={dispatchMock}>
             <WebsocketContextProvider value={websocket}>
               <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
             </WebsocketContextProvider>
           </DispatchContextProvider>
-        </StateContextProvider>
-      </StrictMode>);
+        </StateContextProvider>);
+    });
 
     await act(async () => {
       const prevMonth = await screen.findByLabelText('prev-month')
@@ -101,13 +104,16 @@ describe("Shop Order page test suite", () => {
   });
 
   it("Change Site", async () => {
-    render(<StrictMode>
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
-    </StrictMode>);
+    await act(async () => {
+      render(
+      <StrictMode>
+        <StateContextProvider value={testState}>
+          <WebsocketContextProvider value={websocket}>
+            <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          </WebsocketContextProvider>
+        </StateContextProvider>
+      </StrictMode>);
+    });
 
     await act(async () => {
       const siteSelect = await screen.findByLabelText('site-select')
@@ -116,14 +122,16 @@ describe("Shop Order page test suite", () => {
   });
 
   it("Change customer", async () => {
-    render(
-      <StrictMode>
-        <StateContextProvider value={testState}>
-          <WebsocketContextProvider value={websocket}>
-            <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
-          </WebsocketContextProvider>
-        </StateContextProvider>
-      </StrictMode>);
+    await act(async () => {
+      render(
+        <StrictMode>
+          <StateContextProvider value={testState}>
+            <WebsocketContextProvider value={websocket}>
+              <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+            </WebsocketContextProvider>
+          </StateContextProvider>
+        </StrictMode>);
+    });
 
     await act(async () => {
       const customerSelect = await screen.findByLabelText('customer-select')
@@ -132,15 +140,15 @@ describe("Shop Order page test suite", () => {
   });
 
   it("Change endpoint", async () => {
-    render(
-      <StrictMode>
-
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
-      </StrictMode>);
+    await act(async () => {
+      render(
+        <StateContextProvider value={testState}>
+          <WebsocketContextProvider value={websocket}>
+            <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          </WebsocketContextProvider>
+        </StateContextProvider>
+      );
+    });
 
     await act(async () => {
       const endpointSelect = await screen.findByLabelText('endpoint-select')

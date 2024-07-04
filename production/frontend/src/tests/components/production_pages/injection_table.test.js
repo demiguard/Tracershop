@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils";
-import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
+import { act, fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
 
 
 import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";

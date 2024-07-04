@@ -25,10 +25,6 @@
     "bootstrap": "^5.0.2",
     "file-loader": "^6.2.0",
     "history": "^5.3.0",
-    "jest-axe": "^7.0.0",
-    "jest-css-modules": "^2.1.0",
-    "jest-environment-jsdom": "^29.2.2",
-    "jest-websocket-mock": "^2.5.0",
     "jquery": "^3.6.0",
     "js-cookie": "^3.0.1",
     "prop-types": "^15.8.1",
@@ -40,25 +36,29 @@
     "react-router-dom": "^6.2.2",
     "react-scripts": "^5.0.1",
     "sockjs": "^0.3.21",
-    "style-loader": "^3.0.0",
+    "style-loader": "^4.0.0",
     "svg-url-loader": "^8.0.0",
-    "uuid": "^9.0.1",
-    "webpack-cli": "^4.9.2"
+    "webpack-cli": "^5.1.4"
   },
   "devDependencies": {
     "@babel/plugin-transform-modules-commonjs": "^7.14.5",
-    "@testing-library/jest-dom": "^5.16.5",
-    "@testing-library/react": "^13.4.0",
-    "css-loader": "^6.7.1",
+    "@testing-library/dom": "^10.3.0",
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^16.0.0",
+    "css-loader": "^7.1.2",
     "jest": "^29.2.2",
-    "less-loader": "^11.1.0",
-    "sass-loader": "^13.1.0"
+    "jest-css-modules": "^2.1.0",
+    "jest-environment-jsdom": "^29.2.2",
+    "jest-websocket-mock": "^2.5.0",
+    "less-loader": "^12.2.0",
+    "sass-loader": "^14.2.1"
   },
   "jest": {
     "rootDir": "./",
     "setupFilesAfterEnv": [
       "<rootDir>/src/setupTests.js"
     ],
+    "testEnvironment": "jsdom",
     "moduleNameMapper": {
       "\\.(css|less|scss|sss|styl)$": "<rootDir>/node_modules/jest-css-modules",
       "^~/(.*)$": "<rootDir>/src"

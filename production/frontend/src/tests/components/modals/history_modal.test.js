@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { HistoryModal } from "../../../components/modals/history_modal.js";
@@ -18,24 +17,16 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 const onClose = jest.fn();
 
-let websocket = null;
-let container = null;
-
+const websocket = tracer_websocket.TracerWebSocket;
 
 beforeEach(() => {
   delete window.location
   window.location = { href : "tracershop" }
-  container = document.createElement("div");
-  websocket = tracer_websocket.TracerWebSocket;
 });
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
-
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
 });
 
 
@@ -67,7 +58,9 @@ describe("History modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    fireEvent.click(await screen.findByRole('button', {name : "Hent historik"}));
+    act(() => {
+      fireEvent.click(screen.getByRole('button', {name : "Hent historik"}));
+    })
 
     expect(screen.findByText("Loading"));
   });
@@ -126,10 +119,13 @@ describe("History modal test suite", () =>{
     </StateContextProvider>);
 
     await act(async () => {
-      const getHistoryButton = await screen.findByRole('button', {name : "Hent historik"});
+      const getHistoryButton = screen.getByRole('button', {name : "Hent historik"});
       fireEvent.click(getHistoryButton);
-    })
-    fireEvent.click(await screen.findByRole('button', {name: "Ny Historik"}))
+    });
+
+    await act( async () => {
+      fireEvent.click(screen.getByRole('button', {name: "Ny Historik"}))
+    });
 
     expect(await screen.findByRole('button', {name : "Hent historik"})).toBeVisible();
     expect(await screen.findByLabelText("month-selector")).toBeVisible();
@@ -165,10 +161,8 @@ describe("History modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    await act(async () => { // The extra Act is needed because the modal depends on the websocket response.
-      // Therefore an extra update is triggered which this act catches.
-      const getHistoryButton = await screen.findByRole('button', {name : "Hent historik"});
-      fireEvent.click(getHistoryButton);
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', {name : "Hent historik"}));
     });
     expect(await screen.findByText("Download")).toBeVisible();
   });

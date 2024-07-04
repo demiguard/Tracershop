@@ -3,13 +3,12 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, waitFor, queryByAttribute } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { TracerPage } from "../../../components/production_pages/setup_pages/tracer_page"
 import { TRACER_TYPE } from "~/lib/constants.js";
 import { DATA_TRACER } from "~/lib/shared_constants";
 import { testState } from "../../app_state.js"
-import { act } from "react-dom/test-utils";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context";
 
 

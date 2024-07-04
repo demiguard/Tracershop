@@ -4,8 +4,8 @@
 
 
 import React, {useState} from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { DestinationSelect } from "../../../../components/injectable/derived_injectables/destination_select";
 import { customers } from "../../../test_state/customers";

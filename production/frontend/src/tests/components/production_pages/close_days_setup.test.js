@@ -3,8 +3,8 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils";
-import { render, screen, cleanup } from "@testing-library/react"
+
+import { act, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState, testState } from "../../app_state.js";
 

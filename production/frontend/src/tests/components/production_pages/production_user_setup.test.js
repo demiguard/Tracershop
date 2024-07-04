@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils";
-import { fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
+import { act, fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState, testState } from "~/tests/app_state.js";
 

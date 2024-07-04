@@ -3,9 +3,9 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
+
 import { createRoot } from "react-dom/client";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { TracershopNavbar } from "../../../components/injectable/navbar";
 import { jest } from '@jest/globals'
 
@@ -63,7 +63,7 @@ describe("Navbar Render Test", () => {
       ActiveKey={NAMES[0]}
       logout={logout}
       Names={NAMES}
-      NavbarElements={[<div key={999}>{injectName}</div>]} // this should be a button 
+      NavbarElements={[<div key={999}>{injectName}</div>]} // this should be a button
       setActivePage={setActivePage}
       isAuthenticated={false}
     />);

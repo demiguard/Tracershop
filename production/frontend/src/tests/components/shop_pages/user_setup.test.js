@@ -2,8 +2,8 @@
  * @jest-environment jsdom
  */
 import React, {StrictMode} from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";

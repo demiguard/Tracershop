@@ -3,14 +3,14 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { CustomerPage } from "../../../components/production_pages/setup_pages/customer_page.js"
 import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
 import { AppState, testState } from "../../app_state.js";
-import { act } from "react-dom/test-utils";
+
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 

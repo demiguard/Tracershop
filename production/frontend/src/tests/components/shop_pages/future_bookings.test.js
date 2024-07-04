@@ -3,8 +3,7 @@
  */
 
 import React, {useContext} from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { bookings } from "~/tests/test_state/bookings.js";
 import { testState } from "../../app_state.js";

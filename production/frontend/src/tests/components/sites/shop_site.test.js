@@ -3,8 +3,8 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { AppState, testState } from "../../app_state.js";
 
@@ -48,14 +48,14 @@ afterEach(() => {
 });
 
 describe("Shop shop test suite", () => {
-  it("standard test - render test Site Admin", () => {
-
-    render(<StateContextProvider value={testState}>
+  it("standard test - render test Site Admin", async () => {
+    await act(async () => { // Theres a useEffect that have to catch this
+      render(<StateContextProvider value={testState}>
              <WebsocketContextProvider value={websocket}>
               <ShopSite logout={logout} />
              </WebsocketContextProvider>
            </StateContextProvider>);
-
+    });
   });
 
 
@@ -64,41 +64,47 @@ describe("Shop shop test suite", () => {
       ...testState,
       logged_in_user : users.get(4),
     });
-
-    render(<StateContextProvider value={newState}>
-      <WebsocketContextProvider value={websocket}>
-       <ShopSite logout={logout} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    await act(async () => {
+      render(
+        <StateContextProvider value={newState}>
+          <WebsocketContextProvider value={websocket}>
+           <ShopSite logout={logout} />
+          </WebsocketContextProvider>
+        </StateContextProvider>);
+    });
 
     expect(screen.queryByLabelText("no-assoc-internal-user-error")).toBeNull();
   });
 
-  it("standard test - shop internal",  () => {
+  it("standard test - shop internal", async () => {
     const newState = Object.assign(new TracershopState(), {
       ...testState,
       logged_in_user : users.get(5),
     });
-
-    render(<StateContextProvider value={newState}>
-      <WebsocketContextProvider value={websocket}>
-       <ShopSite logout={logout} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    await act(async () => {
+      render(
+        <StateContextProvider value={newState}>
+          <WebsocketContextProvider value={websocket}>
+            <ShopSite logout={logout} />
+          </WebsocketContextProvider>
+        </StateContextProvider>);
+    });
     expect(screen.queryByLabelText("no-assoc-internal-user-error")).toBeNull();
   });
 
-  it("standard test -  external",  () => {
+  it("standard test - external", async () => {
     const newState = Object.assign(new TracershopState(), {
       ...testState,
       logged_in_user : users.get(6),
     });
-
-    render(<StateContextProvider value={newState}>
-      <WebsocketContextProvider value={websocket}>
-       <ShopSite logout={logout} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    await act(async () => {
+      render(
+        <StateContextProvider value={newState}>
+          <WebsocketContextProvider value={websocket}>
+            <ShopSite logout={logout} />
+          </WebsocketContextProvider>
+        </StateContextProvider>);
+    });
 
     expect(screen.queryByLabelText("no-assoc-external-user-error")).toBeNull();
   });

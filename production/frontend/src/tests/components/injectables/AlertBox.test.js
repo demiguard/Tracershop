@@ -3,9 +3,8 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
 import { createRoot } from "react-dom/client";
-import { screen, render, cleanup } from "@testing-library/react";
+import { act, screen, render, cleanup } from "@testing-library/react";
 
 import { AlertBox, ERROR_LEVELS } from "../../../components/injectable/alert_box.js"
 
@@ -42,4 +41,3 @@ describe("Injectable AlertBox", () => {
     expect(await screen.findByText(TestMessage)).toBeVisible();
   });
 });
-

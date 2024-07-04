@@ -3,9 +3,7 @@
  */
 
 import React from "react";
-import { act, scryRenderedComponentsWithType } from "react-dom/test-utils";
-import { render, screen, cleanup } from "@testing-library/react"
-
+import { act, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState } from "../../app_state.js";
 import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js";

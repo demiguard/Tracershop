@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils";
-import { fireEvent, render, screen, cleanup } from "@testing-library/react"
+import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 
 import { DEADLINE_TYPES  } from "~/lib/constants.js";

@@ -3,8 +3,10 @@ configure({
   computedStyleSupportsPseudoElements: true
 })
 import "@testing-library/jest-dom"
-import '@testing-library/jest-dom/extend-expect'
-import 'jest-axe/extend-expect'
+
+const { getComputedStyle } = window;
+window.getComputedStyle = (elt) => getComputedStyle(elt);
+window.open = jest.fn()
 
 class LocalStorageMock {
   constructor() {

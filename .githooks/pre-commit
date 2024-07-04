@@ -10,3 +10,6 @@ cd production
 cd frontend
 npm run test
 
+curl https://icanhazdadjoke.com
+
+echo -e "\n"

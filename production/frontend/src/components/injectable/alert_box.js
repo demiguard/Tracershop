@@ -42,7 +42,7 @@ export const ERROR_LEVELS = {
 /** Stateless Box displaying an important message
  *
  */
-export function AlertBox ({message, level}) {
+export function AlertBox ({message = "", level = ERROR_TYPE_ERROR}) {
     return (
       <Row
         style={{
@@ -58,9 +58,4 @@ export function AlertBox ({message, level}) {
 AlertBox.propTypes = {
   level : propTypes.oneOf(warning_levels),
   message : propTypes.oneOfType([propTypes.string, propTypes.element])
-}
-
-AlertBox.defaultProps = {
-  level : ERROR_TYPE_ERROR,
-  message : ""
 }

@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { act } from "react-dom/test-utils";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { CreateOrderModal } from '~/components/modals/create_activity_modal.js'

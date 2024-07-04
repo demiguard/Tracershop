@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { AppState, testState } from "../../app_state.js";
 

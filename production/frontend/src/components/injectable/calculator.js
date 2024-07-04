@@ -24,7 +24,6 @@ export const ErrorActivityInvalidNumber = "Aktiviten er ikke et tal"
 export const ErrorActivityZero = "Der kan ikke bestilles et nul mændge af aktivitet"
 export const ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge af aktivitet"
 
-
 /** This component is a radioactive calculator aka. It calculates how much Radio active material you need at a point at production time.
  * Given a desired amount at a given time.
  *
@@ -37,7 +36,7 @@ export const ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge
  *  tracer - Object Active Tracer for the material in question
  */
 export function Calculator ({
-  initial_MBq, productionTime, defaultMBq, isotopes, cancel, tracer, commit
+  initial_MBq = 0, productionTime, defaultMBq = 300, isotopes, cancel, tracer, commit
 }) {
   const entries = [];
 
@@ -297,9 +296,4 @@ Calculator.propTypes = {
   productionTime : propTypes.instanceOf(Date).isRequired,
   tracer : propTypes.instanceOf(Object).isRequired,
   initial_MBq : propTypes.number,
-}
-
-Calculator.defaultProps = {
-  defaultMBq : 300,
-  initial_MBq : 0,
 }

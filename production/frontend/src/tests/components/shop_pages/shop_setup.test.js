@@ -3,8 +3,8 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ShopSetup } from '../../../components/shop_pages/shop_setup'
@@ -20,41 +20,26 @@ jest.mock('../../../components/shop_pages/shop_injectables/location_table', () =
 jest.mock('../../../components/shop_pages/shop_injectables/procedure_table', () =>
   ({ProcedureTable : () => <div>ProcedureTableMock</div>}))
 
-
-
-let websocket = null;
-let container = null;
-let props = null;
-
+const websocket = tracer_websocket.TracerWebSocket;
 const now = new Date(2020,4, 4, 10, 36, 44)
 
 beforeEach(() => {
-  jest.useFakeTimers('modern')
-  jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
-  props = {...AppState}
-
+  jest.useFakeTimers('modern');
+  jest.setSystemTime(now);
+  window.location = { href : "tracershop"};
 });
-
 
 afterEach(() => {
   cleanup();
-  module.clearAllMocks()
-  window.localStorage.clear()
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
-  props = null;
+  module.clearAllMocks();
+  window.localStorage.clear();
 });
 
 describe("Shop Setup test suite",() => {
   it("Standard render test", async () => {
 
     render(<WebsocketContextProvider value={websocket}>
-      <ShopSetup {...props}/>
+      <ShopSetup />
     </WebsocketContextProvider>);
     expect(await screen.findByLabelText('setup-Lokationer')).toBeVisible()
     expect(await screen.findByLabelText('setup-Procedure')).toBeVisible()
@@ -63,13 +48,13 @@ describe("Shop Setup test suite",() => {
 
   it("Switch to production", async () => {
     render(<WebsocketContextProvider value={websocket}>
-      <ShopSetup {...props}/>
+      <ShopSetup/>
     </WebsocketContextProvider>);
 
     await act(async () => {
       const switchButton = await screen.findByLabelText('setup-Procedure');
       switchButton.click();
     })
-    expect(await screen.findByText("ProcedureTableMock")).toBeVisible();
+    expect(screen.getByText("ProcedureTableMock")).toBeVisible();
   });
 });

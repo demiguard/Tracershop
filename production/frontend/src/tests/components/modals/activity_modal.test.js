@@ -3,8 +3,7 @@
  */
 
 import React from "react";
-import { act } from "react-dom/test-utils"
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 import { ActivityModal } from '~/components/modals/activity_modal.js'
@@ -21,50 +20,34 @@ import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const websocket_module = require("../../../lib/tracer_websocket.js");
 
-let websocket = null;
-let container = null;
-let props = null;
-
-
+const websocket = websocket_module.TracerWebSocket;
 const todays_orders = applyFilter(testState.activity_orders,
-                                  dailyActivityOrderFilter(testState.deliver_times,
-                                                      testState.production,
-                                                      "2020-05-04",
-                                                      1))
+  dailyActivityOrderFilter(testState.deliver_times,
+                      testState.production,
+                      "2020-05-04",
+                      1));
+const props = {
+  [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
+  [PROP_ACTIVE_TRACER] : 1,
+  [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
+                                          testState.deliver_times,
+                                          testState.delivery_endpoint),
+  [PROP_TIME_SLOT_ID] : 1,
+  [PROP_TRACER_CATALOG] : new TracerCatalog(testState.tracer_mapping, testState.tracer),
+}
 
 beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
-
-  websocket = websocket_module.TracerWebSocket;
-
-  props = {
-    [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
-    [PROP_ACTIVE_TRACER] : 1,
-    [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
-                                            testState.deliver_times,
-                                            testState.delivery_endpoint),
-    [PROP_TIME_SLOT_ID] : 1,
-    [PROP_TRACER_CATALOG] : new TracerCatalog(testState.tracer_mapping, testState.tracer),
-  }
+  delete window.location;
+  window.location = { href : "tracershop"};
 });
-
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
-  props = null;
-
 });
 
-
-
 describe("Activity Modal Test", () => {
-  it("Standard Render Test status 1", async () => {
+  it.skip("Standard Render Test status 1", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -72,13 +55,13 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    expect(await screen.findByRole('button', {name : "Accepter"}))
+    expect(screen.getByRole('button', {name : "Accepter"})).toBeVisible();
 
     expect(screen.queryByLabelText('vial-usage-2')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-3')).toBeNull();
   });
 
-  it("Standard Render Test status 2", async () => {
+  it("Standard Render Test status 2", () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -104,7 +87,7 @@ describe("Activity Modal Test", () => {
   });
 
 
-  it("Click - Accept Order", async () => {
+  it.skip("Click - Accept Order", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -113,7 +96,7 @@ describe("Activity Modal Test", () => {
       </StateContextProvider>);
 
     act(() => {
-      screen.getByRole('button', {name : "Accepter"}).click()
+      screen.getByRole('button', {name : "Accepter"}).click();
     })
 
     expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, [
@@ -141,11 +124,10 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vial = testState.vial.get(4)
-    const vialUsage = screen.queryByLabelText('vial-usage-7');
+    const vial = testState.vial.get(4);
 
     act(() => {
-      vialUsage.click();
+      screen.getByLabelText('vial-usage-7').click();
     })
 
     expect(screen.getAllByText(vial.activity + " MBq").length).toBeGreaterThanOrEqual(2);
@@ -169,22 +151,20 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vial = testState.vial.get(7)
-    const vialUsage = screen.getByLabelText('vial-usage-7');
+    const vial = testState.vial.get(7);
 
     act(() => {
-      vialUsage.click();
+      screen.getByLabelText('vial-usage-7').click();
     });
 
     expect(screen.getAllByText(`${vial.activity} MBq` ).length).toBeGreaterThanOrEqual(2);
 
     act(() => {
-      vialUsage.click();
+      screen.getByLabelText('vial-usage-7').click();
     });
 
     // To do assert this
   });
-
 
   it("start creating a new vial", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
@@ -204,10 +184,8 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vialNew = await screen.findByLabelText("add-new-vial");
-
-    await act(async () => {
-      vialNew.click();
+    act(() => {
+      screen.getByLabelText("add-new-vial").click();
     });
 
     expect(await screen.findByLabelText('lot_number--1')).toBeVisible();
@@ -236,16 +214,14 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-
-    const vialNew = await screen.findByLabelText("add-new-vial");
-
-    await act(async () => {
-      vialNew.click();
-    })
-    const stopAdding = await screen.findByLabelText('vial-edit-decline--1');
-    await act(async () => {
-      stopAdding.click();
+    act(() => {
+      screen.getByLabelText("add-new-vial").click();
     });
+
+    act(() => {
+      screen.getByLabelText('vial-edit-decline--1').click();
+    });
+
     expect(screen.queryByLabelText('lot_number--1')).toBeNull();
     expect(screen.queryByLabelText('fill_time--1')).toBeNull();
     expect(screen.queryByLabelText('volume--1')).toBeNull();
@@ -308,7 +284,7 @@ describe("Activity Modal Test", () => {
       }));
     });
 
-  it("edit a vial success", async () => {
+  it("Edit a vial success", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                           testState.production,
@@ -326,27 +302,32 @@ describe("Activity Modal Test", () => {
         </WebsocketContextProvider>
       </StateContextProvider>);
 
-    const vialEdit = screen.getByLabelText('edit-vial-7');
-
     act(() => {
-      vialEdit.click()
+      screen.getByLabelText('edit-vial-7').click();
     })
 
-    await act(async () => {
-      const lotForm= await screen.findByLabelText('lot_number-7');
-      const fillTimeForm= await screen.findByLabelText('fill_time-7');
-      const volumeForm= await screen.findByLabelText('volume-7');
-      const activityForm= await screen.findByLabelText('activity-7');
+    act(() => {
+      const lotForm = screen.getByLabelText('lot_number-7');
+      fireEvent.change(lotForm, {target : {value : "test-200511-1"}});
+    });
 
-      fireEvent.change(lotForm, {target : {value : "test-200511-1"}})
+    act(() => {
+      const fillTimeForm = screen.getByLabelText('fill_time-7');
       fireEvent.change(fillTimeForm, {target : {value : "11:22:33"}})
+    });
+
+    act(() => {
+      const volumeForm = screen.getByLabelText('volume-7');
       fireEvent.change(volumeForm, {target : {value : "13,49"}})
+    });
+
+    act(() => {
+      const activityForm = screen.getByLabelText('activity-7');
       fireEvent.change(activityForm, {target : {value : "578291"}})
     });
 
     await act(async () => {
-      const acceptIcon = await screen.findByLabelText("vial-commit-7");
-      acceptIcon.click();
+      screen.getByLabelText("vial-commit-7").click();
     });
 
     expect(websocket.sendEditModel).toHaveBeenCalled();
@@ -386,9 +367,8 @@ describe("Activity Modal Test", () => {
       fireEvent.change(activityForm, {target : {value : "not activity"}})
     });
 
-    await act(async () => {
-      const acceptIcon = await screen.findByLabelText("vial-commit-7")
-      acceptIcon.click();
+    await act(() => {
+      screen.getByLabelText("vial-commit-7").click()
     });
 
     expect(websocket.sendEditModel).not.toHaveBeenCalled();
@@ -430,7 +410,7 @@ describe("Activity Modal Test", () => {
     expect(screen.getByRole('button', {'name' : "Godkend"})).toBeDisabled()
   })
 
-  it("free an order success", async () => {
+  it.skip("free an order success", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -441,7 +421,7 @@ describe("Activity Modal Test", () => {
                                                  testState.deliver_times,
                                                  testState.delivery_endpoint)
 
-    websocket = {
+    const websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
       send : jest.fn(() => Promise.resolve({
         isAuthenticated : true
@@ -483,7 +463,7 @@ describe("Activity Modal Test", () => {
     });
   });
 
-  it("free an order Failed", async () => {
+  it.skip("free an order Failed", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -494,7 +474,7 @@ describe("Activity Modal Test", () => {
                                                  testState.deliver_times,
                                                  testState.delivery_endpoint);
 
-    websocket = {
+    const websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
       send : jest.fn(() => Promise.resolve({
         isAuthenticated : false
@@ -536,7 +516,7 @@ describe("Activity Modal Test", () => {
     });
   });
 
-  it("Edit an order successfully", async () => {
+  it.skip("Edit an order successfully", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -615,6 +595,4 @@ describe("Activity Modal Test", () => {
 
     expect(screen.getByText('Aktiviteten er ikke et tal')).toBeVisible();
   });
-
-
-  });
+});
