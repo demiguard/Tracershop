@@ -2,7 +2,6 @@ import React from "react";
 import { Col, Row } from "react-bootstrap";
 import propTypes from 'prop-types'
 
-import ErrorStyles from "../../css/Errors.module.css"
 import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_WARNING } from "~/lib/constants.js";
 
 const warning_levels = [
@@ -18,15 +17,59 @@ const Warning_names = {
 }
 
 const stylings = {
-  hint : ErrorStyles.hint,
-  warning : ErrorStyles.warning,
-  error : ErrorStyles.error
+  hint : {
+    borderColor: 'var(--tertiary-color-1)',
+    fontFamily: 'mariRegular',
+    margin: '15px',
+    border: '3px',
+    borderStyle: 'solid',
+    borderRadius: '5px',
+  },
+  warning : {
+    borderColor: '#cc8800',
+    fontFamily: 'mariRegular',
+    margin: '15px',
+    border: '3px',
+    borderStyle: 'solid',
+    borderRadius: '5px',
+    backgroundColor: '#FFDD99',
+  },
+  error : {
+    fontFamily: 'mariRegular',
+    display: 'block',
+    margin: '15px' ,
+    border: '3px',
+    borderStyle: 'solid',
+    borderColor: '#fc0c04',
+    borderRadius: '5px',
+    backgroundColor: '#ffcaca',
+  },
 }
 
 const headerStylings = {
-  hint : ErrorStyles.hintHeader,
-  warning : ErrorStyles.warningHeader,
-  error : ErrorStyles.errorHeader,
+  hint : {
+    fontSize: 'large',
+    fontFamily: 'mariPoster',
+    backgroundColor: 'var(--tertiary-color-1)',
+    color: '#FFFFFF',
+    verticalAlign: 'middle',
+    padding: '0.5rem',
+  },
+  warning : {
+    fontSize: 'large',
+    fontFamily: 'mariPoster',
+    backgroundColor: '#c80',
+    color: '#FFFFFF',
+    verticalAlign: 'middle',
+    padding: '0.5rem',
+  },
+  error : {
+    fontSize: 'large',
+    fontFamily: 'mariPoster',
+    backgroundColor: '#fc0c04',
+    color: '#FFFFFF',
+    padding: '0.5rem',
+  },
 }
 
 /**

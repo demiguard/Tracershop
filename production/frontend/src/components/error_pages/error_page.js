@@ -1,9 +1,24 @@
 import React, { } from "react";
-import { Container, Row } from "react-bootstrap";
-import styles from "/src/css/Errors.module.css"
+import { Container } from "react-bootstrap";
+// import styles from "/src/css/Errors.module.css"
 import { db } from "~/lib/local_storage_driver";
 import { useWebsocket } from "~/components/tracer_shop_context"
 import { WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_LOG_ERROR, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+
+const styles = {
+  ErrorContainer : {
+    borderStyle: 'solid',
+    borderColor: 'black',
+    borderLeft: '2px',
+    borderRight: '2px',
+    borderTop: '0',
+    borderBottom: '0',
+    minHeight: '100vh',
+    boxShadow: '3px 3px 6px 6px #888888',
+  }
+}
+
+
 
 export function ErrorPage (props) {
   console.log(props)

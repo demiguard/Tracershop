@@ -4,7 +4,6 @@ import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
 
 import { dateToDateString } from "~/lib/formatting";
 import { PROP_ON_CLOSE, PROP_ACTIVE_DATE, ORDER_STATUS } from "~/lib/constants";
-import styles from '~/css/Site.module.css'
 import { Select, toOptions } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { InjectionOrder } from "~/dataclasses/dataclasses";
@@ -22,13 +21,13 @@ import propTypes from "prop-types";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 import { getId } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";
+import { FONT_LIGHT } from "~/lib/styles";
 
 
 export function CreateInjectionOrderModal({active_date, on_close}){
   const state = useTracershopState();
   const websocket = useWebsocket();
   // Initialize select
-
 
   const initialization = useRef({
     customer : null,
@@ -116,7 +115,7 @@ export function CreateInjectionOrderModal({active_date, on_close}){
     <Modal
       show={true}
       onHide={on_close}
-      className={styles.mariLight}
+      className={FONT_LIGHT}
     >
       <Modal.Header>
         Opret ny injektion ordre

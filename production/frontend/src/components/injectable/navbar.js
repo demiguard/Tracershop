@@ -1,9 +1,27 @@
-import React, { Component } from "react";
-import { Navbar, Nav, Container, Button, Col, Row  } from "react-bootstrap";
+import React from "react";
+import { Navbar, Container, Button, Col, Row  } from "react-bootstrap";
 import { WebsocketIcon } from "~/components/injectable/icons";
-import { Optional } from "~/components/injectable/optional";
 import { useWebsocket } from "~/components/tracer_shop_context";
-import styles from "~/css/Navbar.module.css"
+
+const styles = {
+  navbarElement : {
+    color : 'white' ,
+    width : '150px',
+    padding : '10px',
+    marginRight: '15px',
+    marginLeft: '15px',
+    border : '1px',
+    borderStyle: 'solid',
+    borderRadius: '10px',
+    fontFamily: "mariheavy, Helvetica Neue, Helvetica, Arial, sans-serif",
+  },
+  navbarMargin : {
+    marginBottom: '20px',
+  },
+  mainIcon : {
+
+  }
+}
 
 const NavBarButtonType = "primary";
 
@@ -23,7 +41,6 @@ export function TracershopNavbar({
   NavbarElements,
   setActivePage,
 }){
-  const websocket = useWebsocket();
   const elements = NavbarElements ? [...NavbarElements] : [];
   for(const identifier of Object.keys(Names)) {
     const innerHTML = getName(ActiveKey, Names, identifier);
@@ -37,7 +54,7 @@ export function TracershopNavbar({
     key={identifier}>
       <Button
         aria-label={`navbar-${identifier}`}
-        className={styles.NavbarElement}
+        className={styles.navbarElement}
         variant={NavBarButtonType}
         onClick={() => setActivePage(identifier)}
         >{innerHTML}
@@ -53,7 +70,7 @@ export function TracershopNavbar({
         alignItems : "center"
       }} key="logout">
       <Button
-        className={styles.NavbarElement}
+        className={styles.navbarElement}
         onClick={logout}
         variant={NavBarButtonType}>
           Log ud
@@ -62,11 +79,11 @@ export function TracershopNavbar({
   }
 
   return (
-  <Navbar className={styles.navbarMargin}>
+  <Navbar style={styles.navbarMargin}>
     <Container style={{margin : '0px', maxWidth : '100%'}}>
       <Row>
         <Col>
-          <img className={styles.MainIcon} src="/static/images/logo.png" height="50px"/>
+          <img style={styles.mainIcon} src="/static/images/logo.png" height="50px"/>
         </Col>
         {elements}
       </Row>

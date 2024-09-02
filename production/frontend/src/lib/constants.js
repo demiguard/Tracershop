@@ -128,7 +128,6 @@ export const INJECTION_USAGE = {
   other : 2,
 }
 
-
 export const ERROR_BACKGROUND_COLOR = "#FF3333";
 export const ERROR_MARGIN_COLOR = "#FF0000";
 export const cssCenter = {
@@ -137,6 +136,17 @@ export const cssCenter = {
   alignItems: 'center',
   textAlign: 'center'
 }
+
+export const ERROR_CONTAINER_CSS = {
+  borderStyle : 'solid',
+  borderColor : 'black',
+  borderLeft: '2px',
+  borderRight: '2px',
+  borderTop: '0px',
+  borderBottom: '0px',
+  minHeight: '100vh',
+  boxShadow: '3px 3px 6px 6px #888888',
+};
 
 export const cssAlignRight = {
           justifyContent : 'right',

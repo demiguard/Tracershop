@@ -5,7 +5,17 @@
 
 import React, { useState } from 'react'
 import { cssCenter } from '~/lib/constants';
-import styles from "../../css/Site.module.css"
+
+const HOVER_BOX_CSS = {
+  maxWidth: '350px',
+  backgroundColor: '#FFFFFF',
+  padding: '5px',
+  zIndex: '999',
+  border: '1px',
+  borderStyle: 'solid',
+  borderColor: 'var(--grey-1)',
+};
+
 
 /**
  * Box that is displayed in a Hover
@@ -17,10 +27,13 @@ function Hover(props){
 
   return(
     <div
-      className={styles.HoverBox}
       onMouseOver={() => setVisibility(true)}
       onMouseOut={() => setVisibility(false)}
-      style={hoverState}
+      style={{
+        ...HOVER_BOX_CSS,
+        ...hoverState
+      }
+      }
     >
       {props.children}
     </div>

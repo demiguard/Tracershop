@@ -1,10 +1,46 @@
 import React, { useState } from "react";
 import propTypes from 'prop-types'
 import { Form, Button, Spinner } from "react-bootstrap";
-import styles from "../../css/Authenticate.module.css"
-import SiteStyles from "../../css/Site.module.css"
+//import styles from "../../css/Authenticate.module.css"
+import { FONT_BOLD } from '~/lib/styles'
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { setStateToEvent } from "~/lib/state_management";
+
+const styles = {
+  authenticateBox : {
+    width: '20em',
+    margin: '6em',
+    border: '2px',
+    borderColor: 'var(--secondary-color-1)',
+    borderStyle: 'solid',
+    borderRadius: '10px',
+  },
+  authenticationBoxNoFit : {
+    border: '2px',
+    borderColor: 'var(--secondary-color-1)',
+    borderStyle: 'solid',
+    borderRadius: '10px',
+  },
+  authenticationHeader : {
+    backgroundColor: 'var(--secondary-color-3)',
+    color: 'var(--primary-color)',
+    lineHeight: '150%',
+    marginBottom: '0pt',
+    borderTopLeftRadius : '10px',
+    borderTopRightRadius : '10px',
+  },
+  formRow : {
+    padding : '1.5em'
+  },
+  errorBox : {
+    margin: '1.5em',
+    padding: '5px',
+    backgroundColor: 'var(--red-2)',
+    borderColor: 'var(--red-1)',
+    borderStyle: 'solid',
+    border: '2px',
+  }
+}
 
 /**
  * This class is for the authentication box
@@ -35,12 +71,15 @@ export function Authenticate({ authenticate,
   }
 
   return (
-    <div className={fit_in ? styles.AuthenticationBox : styles.AuthenticationBoxNoFit}>
-      <h3 className={"text-center " + styles.AuthenticationHeader + " " + SiteStyles.mariBold}>{headerMessage}</h3>
-        <hr className={SiteStyles.Margin0tb}/>
+    <div style={fit_in ? styles.authenticateBox : styles.authenticationBoxNoFit}>
+      <h3 style={{
+        ...styles.authenticationHeader,
+        ...FONT_BOLD
+      }} className={"text-center"}>{headerMessage}</h3>
+        <hr/>
         <div>
           <Form onSubmit={onSubmitFunc}>
-            <div className={"form-group " + styles.formRow}>
+            <div className={"form-group"} style={styles.formRow}>
               <label htmlFor="username">Bruger navn</label>
               <input
                 type="text"
