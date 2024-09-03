@@ -78,6 +78,10 @@ DATA_LEGACY_PRODUCTION_MEMBER = "legacy_production_member"
 DATA_LEGACY_INJECTION_ORDER = "legacy_injection_order"
 DATA_LEGACY_ACTIVITY_ORDER = "legacy_activity_order"
 
+EXCLUDED_STATE_MODELS = [
+  DATA_BOOKING
+]
+
 URL_INDEX = ""
 URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs"
 URL_INJECTION_PDF_BASE_PATH = "injection_pdfs"

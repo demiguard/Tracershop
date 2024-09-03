@@ -3,15 +3,14 @@ import { Button, Container, Row, Col } from 'react-bootstrap';
 import { InjectionTable } from './injection_table.js';
 import { ActivityTable } from './activity_table.js';
 import { TRACER_TYPE, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE,
-  DATABASE_ACTIVE_TRACER, DATABASE_TODAY} from "~/lib/constants.js";
+  DATABASE_ACTIVE_TRACER } from "~/lib/constants.js";
 import { db } from "~/lib/local_storage_driver.js";
 
-import SiteStyles from '~/css/Site.module.css'
-
-import { useTracershopState, useWebsocket , useTracershopDispatch} from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket, useTracershopDispatch} from "../tracer_shop_context.js";
 import { ProductionCalender } from "../injectable/derived_injectables/production_calender.js";
 import { Optional } from "~/components/injectable/optional.js";
 import { UpdateToday } from "~/lib/state_actions.js";
+import { MARGIN } from "~/lib/styles.js";
 
 const Tables = {
   activity : ActivityTable,
@@ -48,7 +47,7 @@ export function OrderPage() {
   function renderTableSwitchButton(tracer) {
     const underline = tracer.id === activeTracer;
     return (
-      <Button className={SiteStyles.Margin15lr} key={tracer.shortname} sz="sm" onClick={() => {
+      <Button style={MARGIN.leftRight.px15} key={tracer.shortname} sz="sm" onClick={() => {
         db.set("activeTracer", tracer.id);
         setActiveTracer(tracer.id)
         setActiveTable("activity")
@@ -71,7 +70,7 @@ export function OrderPage() {
 
     TableSwitchButtons.push((
       <Button
-        className={SiteStyles.Margin15lr}
+        style={MARGIN.leftRight.px15}
         key="special"
         sz="sm"
         onClick={() => {db.set("activeTracer", -1);

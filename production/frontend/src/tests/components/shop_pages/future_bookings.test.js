@@ -9,7 +9,7 @@ import { bookings } from "~/tests/test_state/bookings.js";
 import { testState } from "../../app_state.js";
 import { FutureBooking, missingSetupHeader } from "../../../components/shop_pages/future_bookings.js";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE } from "../../../lib/constants.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, useTracershopState, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -103,6 +103,5 @@ describe("Future Bookings Test Suite", () => {
     });
 
     expect(websocket.send).toBeCalled()
-
   });
 });

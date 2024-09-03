@@ -6,15 +6,38 @@ import { db } from '~/lib/local_storage_driver';
 import { DATABASE_CURRENT_USER, DATABASE_TODAY } from '~/lib/constants';
 import { ParseDjangoModelJson } from '~/lib/formatting';
 import { datify } from '~/lib/chronomancy';
-import { DATA_BOOKING, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
+import { DATA_BOOKING, EXCLUDED_STATE_MODELS, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
+import { Logs } from '~/lib/logs';
 
 const StateContext = createContext(new TracershopState());
 const DispatchContext = createContext({});
 const WebsocketContext = createContext(TracerWebSocket);
+const LogsContext = createContext(new Logs())
 
 const EXCLUDED_FROM_LOCAL_STORAGE = [
   DATA_BOOKING
 ]
+
+function getDatabaseMap(databaseField){
+  const /**@type {Map} */ dbMap = db.get(databaseField);
+  if(!dbMap){
+    return new Map();
+  }
+
+  if(databaseField in MODELS){
+    const Model = MODELS[databaseField];
+    const serializedMap = new Map();
+    for(const rawObject of dbMap.values()){
+      const serializedObject = new Model();
+      Object.assign(serializedObject, rawObject);
+      serializedMap.set(serializedObject.id, serializedObject);
+    }
+
+    return serializedMap;
+  } else {
+    return dbMap;
+  }
+}
 
 export function StateContextProvider({children, value}) {
   return (<StateContext.Provider value={value}>{children}</StateContext.Provider>);
@@ -51,18 +74,16 @@ export function useWebsocket(){
  * @param {ReducerAction} action
  * @returns {TracershopState}
  */
-function tracershopReducer(state, action){
+export function tracershopReducer(state, action){
+  const newState = Object.assign(new TracershopState(), state);
   // Note that switch statements here do not work because the typing checker
-  if(action instanceof UpdateCurrentUser ){
-    const newState = Object.assign(new TracershopState(), state);
+  if(action instanceof UpdateCurrentUser){
     newState.logged_in_user = action.newUser;
 
     return newState;
   }
 
   if(action instanceof UpdateState ){
-    const newState = Object.assign(new TracershopState(), state);
-
     for (const key of Object.keys(action.newState)){
       let oldStateMap = newState[key];
       if(action.refresh){
@@ -77,8 +98,8 @@ function tracershopReducer(state, action){
 
     return newState;
   }
+
   if(action instanceof DeleteState){
-    const newState = Object.assign(new TracershopState(), state);
     const newStateMap = new Map(newState[action.dataType]);
     if (action.element_id instanceof Array){
       for(const id of action.element_id){
@@ -92,7 +113,6 @@ function tracershopReducer(state, action){
   }
 
   if(action instanceof UpdateToday){
-    const newState = Object.assign(new TracershopState(), state);
     newState.today = datify(action.updatedToday);
     if(action.websocket){
       action.websocket.send({
@@ -103,14 +123,12 @@ function tracershopReducer(state, action){
     return newState;
   }
   if(action instanceof UpdateWebsocketConnectionState){
-    const newState = Object.assign(new TracershopState(), state);
     newState.readyState = action.readyState;
     return newState;
   }
 
   throw "Unknown action";
 }
-
 
 export function TracerShopContext({children}){
   let websocket = useRef(null);
@@ -124,27 +142,6 @@ export function TracerShopContext({children}){
       websocket.current = null;
     }
   },[]);
-
-  function getDatabaseMap(databaseField){
-    const /**@type {Map} */ dbMap = db.get(databaseField);
-    if(!dbMap){
-      return new Map();
-    }
-
-    if(databaseField in MODELS){
-      const Model = MODELS[databaseField];
-      const serializedMap = new Map();
-      for(const rawObject of dbMap.values()){
-        const serializedObject = new Model();
-        Object.assign(serializedObject, rawObject);
-        serializedMap.set(serializedObject.id, serializedObject);
-      }
-
-      return serializedMap;
-    } else {
-      return dbMap;
-    }
-  }
 
   const user = (
     () => {
@@ -160,6 +157,9 @@ export function TracerShopContext({children}){
   const initial_state = new TracershopState(user, today);
 
   for(const keyword of Object.keys(MODELS)){
+    if(EXCLUDED_STATE_MODELS.includes(keyword)){
+      continue;
+    }
     initial_state[keyword] = getDatabaseMap(keyword);
   }
   const [state, dispatch] = useReducer(tracershopReducer, initial_state);

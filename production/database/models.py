@@ -23,7 +23,7 @@ from database.TracerShopModels.serverModels import *
 MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_ADDRESS : Address,
   DATA_ACTIVITY_ORDER : ActivityOrder,
-  #DATA_BOOKING : Booking, # Bookings are added 
+  DATA_BOOKING : Booking, # Note that this is not visible in state
   DATA_CLOSED_DATE : ClosedDate,
   DATA_CUSTOMER : Customer,
   DATA_DEADLINE : Deadline,
@@ -98,4 +98,3 @@ def getOrCreateModel(key, Model: Type[T], keyWord: str) -> T:
 
 def getModelType(identifier: str) -> Type[TracershopModel]:
   return MODELS[identifier] # type ignore
-

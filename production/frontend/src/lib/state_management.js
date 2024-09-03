@@ -30,8 +30,11 @@ export function toggleState(stateKeyWord, This){
  * @param {CallableFunction} stateFunction - the setState function related to variable
  * @returns {CallableFunction}
  */
-export function setStateToEvent(stateFunction){
-  return (event) => {stateFunction(event.target.value)}
+export function setStateToEvent(stateFunction, formatFunction){
+  return (event) => {
+    const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
+    stateFunction(value);
+  }
 }
 
 /**
@@ -39,11 +42,13 @@ export function setStateToEvent(stateFunction){
  * Useful for setting objects
  * @param {CallableFunction} stateFunction
  * @param {String} keyword - The keyword this function should write to
+ * @param {CallableFunction | undefined} formatFunction
  * @returns {CallableFunction}
  */
-export function setTempObjectToEvent(stateFunction, keyword){
+export function setTempObjectToEvent(stateFunction, keyword, formatFunction){
   return (event) => {
-    stateFunction(obj => {return {...obj, [keyword] : event.target.value}});
+    const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
+    stateFunction(obj => {return {...obj, [keyword] : value}});
   }
 }
 
@@ -54,12 +59,13 @@ export function setTempObjectToEvent(stateFunction, keyword){
  * @param {*} keyword
  * @returns
  */
-export function setTempMapToEvent(stateFunction, id, keyword){
+export function setTempMapToEvent(stateFunction, id, keyword, formatFunction){
   return (event) => {
     stateFunction(oldMap => {
+      const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
       const newObject = oldMap.get(id).copy();
       const newMap = new Map(oldMap);
-      newObject[keyword] = event.target.value;
+      newObject[keyword] = value;
       newMap.set(id, newObject);
       return newMap;
     })

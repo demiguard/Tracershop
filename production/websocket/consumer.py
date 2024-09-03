@@ -422,7 +422,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     instances = await self.db.getState(now,
                                        await get_user(self.scope))
-
     state = await self.db.serialize_dict(instances)
 
     await self.send_json({

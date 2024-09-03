@@ -1,9 +1,8 @@
 
 import React, { useRef, useState, useEffect } from "react";
-import { Modal, Row, FormControl, Col, Form, Container, InputGroup } from "react-bootstrap";
-import propTypes from "prop-types";
+import { Modal, Row, Col, Form, Container } from "react-bootstrap";
 
-import { DAYS, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, TRACER_TYPE,
+import {  TRACER_TYPE,
   WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES,
   WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
    WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants.js";
@@ -15,7 +14,6 @@ import { ClickableIcon } from "../injectable/icons.js";
 
 import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
 
-import styles from '~/css/Site.module.css'
 import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
 import { ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
@@ -30,12 +28,14 @@ import { clone } from "~/lib/serialization.js";
 import { timeSlotsFilter, tracerTypeFilter } from "~/lib/filters.js";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
 import { Optional } from "~/components/injectable/optional.js";
+import { FONT, MARGIN } from "~/lib/styles.js";
 
-function MarginInputGroup({children}){
-  return (<InputGroup style={{marginTop : "5px"}}>
-    {children}
-  </InputGroup>)
-}
+
+const WeeklyRepeatOptions = toOptions([
+  { id : 0, name : "Alle Uger"},
+  { id : 1, name : "Lige Uger"},
+  { id : 2, name : "Ulige Uger"},
+]);
 
 function DeliveryTimeTable({tempTimeSlotID, setTempTimeSlot, timeSlots}){
   const state = useTracershopState();
@@ -264,17 +264,17 @@ export function CustomerModal({active_customer, on_close}) {
 
   // These function should also import tempTimeSlot
   function setActiveEndpoint(newEndpointID){
-    newEndpointID = Number(newEndpointID);
-    if(newEndpointID === tempEndpoint.id){
+    const newEndpointIDNumber = Number(newEndpointID);
+    if(newEndpointIDNumber === tempEndpoint.id){
       return;
     }
 
-    const newEndpoint = state.delivery_endpoint.has(newEndpointID) ?
-      {...state.delivery_endpoint.get(newEndpointID)}
-       : {...cleanEndpoint, id : newEndpointID}
+    const newEndpoint = state.delivery_endpoint.has(newEndpointIDNumber) ?
+      {...state.delivery_endpoint.get(newEndpointIDNumber)}
+       : {...cleanEndpoint, id : newEndpointIDNumber}
     setTempEndpoint(newEndpoint);
 
-    const [, overhead] = initializeOverhead(newEndpointID, activeTracer);
+    const [, overhead] = initializeOverhead(newEndpointIDNumber, activeTracer);
 
     initializeNewTimeSlot();
     setOverhead(overhead);
@@ -445,12 +445,6 @@ export function CustomerModal({active_customer, on_close}) {
     return [true, timeSlot];
   }
 
-  const WeeklyRepeatOptions = toOptions([
-    { id : 0, name : "Alle Uger"},
-    { id : 1, name : "Lige Uger"},
-    { id : 2, name : "Ulige Uger"},
-  ]);
-
   function productionNaming(production){
     return `${getDateName(production.production_day)} - ${production.production_time}`;
   }
@@ -468,7 +462,7 @@ export function CustomerModal({active_customer, on_close}) {
       show={true}
       size="xl"
       onHide={on_close}
-      className = {styles.mariLight}
+      style={FONT.light}
     >
       <Modal.Header>
         <Modal.Title>Kunde konfigurering - {customer.short_name} </Modal.Title>
@@ -631,6 +625,7 @@ export function CustomerModal({active_customer, on_close}) {
           aria-label="active-tracer-select"
           options={activityTracersOptions}
           value={activeTracer}
+          // Note that here the set Active Tracer handles invalid values
           onChange={setStateToEvent(setActiveTracer)}
         />
       </TracershopInputGroup>
@@ -662,7 +657,7 @@ export function CustomerModal({active_customer, on_close}) {
         <Select
           aria-label="weekly-select"
           options={WeeklyRepeatOptions}
-          onChange={setTempObjectToEvent(setTempTimeSlot, 'weekly_repeat')}
+          onChange={setTempObjectToEvent(setTempTimeSlot, 'weekly_repeat', Number)}
           value={tempTimeSlot.weekly_repeat}
         />
       </TracershopInputGroup>
@@ -670,7 +665,7 @@ export function CustomerModal({active_customer, on_close}) {
         <TracershopInputGroup label="Levering fra Production">
           <Select
             options={productionOptions}
-            onChange={setTempObjectToEvent(setTempTimeSlot, 'production_run')}
+            onChange={setTempObjectToEvent(setTempTimeSlot, 'production_run', Number)}
             value={tempTimeSlot.production_run}
             aria-label="production-select"
           />
@@ -679,12 +674,10 @@ export function CustomerModal({active_customer, on_close}) {
     </Col>
     </Row>
     <hr/>
-        <Row style={{
-          margin : "0px"
-        }}>
+        <Row style={MARGIN.all.px0}>
           <DeliveryTimeTable
             tempTimeSlotID={tempTimeSlot.id}
-            timeSlots = {availableTimeSlots}
+            timeSlots={availableTimeSlots}
             setTempTimeSlot={setTempTimeSlot}
           />
         </Row>

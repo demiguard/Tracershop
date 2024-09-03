@@ -1,7 +1,35 @@
 import React from "react"
 import { Col, Row } from "react-bootstrap"
-import WeeklyTimeTableStyles from '../../css/weekly_time_table.module.css'
+import { MARGIN, PADDING } from "~/lib/styles";
 import { FormatDateStr } from "../../lib/formatting";
+
+const WeeklyTimeTableStyles = {
+  Cell : {
+    height: "50px",
+    lineHeight: "50px",
+    justifyContent: "center",
+    alignItems: "center",
+    borderStyle: "solid",
+    borderColor: "black",
+    borderWidth: "1px",
+  },
+  TopCell : {
+    borderBottomWidth: "3px",
+  },
+  AbsoluteCell : {
+    lineHeight: "30px",
+    width: "12.5%",
+    height: "30px",
+    backgroundColor: "lightblue",
+    position: "absolute",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  WeeklyTimeTableStyle : {
+    borderRadius: '1px'
+  }
+}
+
 
 function PaddingLessCol({children}){
   return (<Col style={{padding : '0px'}}>{children}</Col>)
@@ -9,10 +37,10 @@ function PaddingLessCol({children}){
 
 function Cell({children}){
   return (<Row style={{
-      padding : '0px',
-      margin : '0px',
-    }}
-    className={WeeklyTimeTableStyles.Cell}>
+      ...PADDING.all.px0,
+      ...MARGIN.all.px0,
+      ...WeeklyTimeTableStyles.Cell
+    }}>
       {children}
   </Row>)
 }
@@ -20,10 +48,11 @@ function Cell({children}){
 function TopCell({children}){
   return (<Row
     style={{
-      padding : '0px',
-      margin : '0px',
-    }}
-    className={`${WeeklyTimeTableStyles.Cell} ${WeeklyTimeTableStyles.TopCell}`}>{children}</Row>);
+      ...PADDING.all.px0,
+      ...MARGIN.all.px0,
+      ...WeeklyTimeTableStyles.Cell,
+      ...WeeklyTimeTableStyles.TopCell
+    }}>{children}</Row>);
 }
 
 function AbsoluteCell({
@@ -35,16 +64,17 @@ function AbsoluteCell({
     label = "",
    }){
   return (<Row
-    style={{
-      padding : '0px',
-      backgroundColor : color,
-      top : `calc(${timeSlots + 1} * 50px + 0px)`,
-      left : `calc(25px + ${day + 1} * (12.5% - 3px))`,
-      width: "calc(12.5% - 5px)",
-    }}
-    aria-label={label}
-    onClick={onClick}
-    className={`${WeeklyTimeTableStyles.AbsoluteCell}`}>{children}</Row>)
+      style={{
+        ...WeeklyTimeTableStyles.AbsoluteCell,
+        padding : '0px',
+        backgroundColor : color,
+        top : `calc(${timeSlots + 1} * 50px + 0px)`,
+        left : `calc(25px + ${day + 1} * (12.5% - 3px))`,
+        width: "calc(12.5% - 5px)",
+      }}
+      aria-label={label}
+      onClick={onClick}
+    >{children}</Row>)
 }
 
 export function WeeklyTimeTable({day_function,
@@ -96,8 +126,11 @@ export function WeeklyTimeTable({day_function,
 
   return (
   <Row
-    className={WeeklyTimeTableStyles.WeeklyTimeTable}
-    style={{position : "relative"}}
+
+    style={{
+      ...WeeklyTimeTableStyles.WeeklyTimeTableStyle,
+      position : "relative"
+    }}
   >
     <PaddingLessCol>
       <TopCell></TopCell>

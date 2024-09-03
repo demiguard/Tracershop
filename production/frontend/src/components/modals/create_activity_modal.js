@@ -1,15 +1,10 @@
 import React, { useRef, useState } from "react";
-import { Modal, Button, FormControl, InputGroup, Row, Container } from "react-bootstrap";
+import { Modal, Button, FormControl, Row, Container } from "react-bootstrap";
 
 import { Calculator } from "../injectable/calculator";
 import { dateToDateString } from "~/lib/formatting";
-
-
 import { ActivityOrder } from "~/dataclasses/dataclasses";
-import styles from '../../css/Site.module.css'
-import { HoverBox } from "../injectable/hover_box";
 import { ClickableIcon } from "../injectable/icons";
-import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box"
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { getDay } from "~/lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
@@ -19,7 +14,7 @@ import { setStateToEvent } from "~/lib/state_management";
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
 import { NEW_LOCAL_ID, ORDER_STATUS } from "~/lib/constants";
 import { Optional } from "~/components/injectable/optional";
-import { ErrorInput } from "~/components/injectable/inputs/error_input";
+import { FONT, MARGIN } from "~/lib/styles";
 
 export function CreateOrderModal({active_date, active_tracer, on_close, timeSlotMapping}) {
   const state = useTracershopState();
@@ -111,7 +106,7 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
       <Modal
         show={true}
         onHide={on_close}
-        className={styles.mariLight}
+        style={FONT.light}
       >
         <Modal.Header> Opret Order </Modal.Header>
         <Modal.Body>
@@ -125,7 +120,7 @@ export function CreateOrderModal({active_date, active_tracer, on_close, timeSlot
             commit={commitCalculator}
           /> :
           <Container>
-            <Row className={styles.Margin15tb}>
+            <Row style={MARGIN.topBottom.px15}>
               <DestinationSelect
                 ariaLabelCustomer="customer-select"
                 ariaLabelEndpoint="endpoint-select"

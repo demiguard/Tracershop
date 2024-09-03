@@ -5,7 +5,7 @@ import { ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures'
 import { ORDER_STATUS } from '~/lib/constants'
 import { InjectionOrderPDFUrl, openActivityReleasePDF } from '~/lib/utils'
-import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context'
+import { useTracershopState } from '~/components/tracer_shop_context'
 
 export function ClickableIcon ({
     altText,
@@ -17,7 +17,6 @@ export function ClickableIcon ({
     style,
     variant,
   }){
-
 
   if(style === undefined){
     style = {
@@ -38,19 +37,19 @@ export function ClickableIcon ({
     className = "statusIcon";
   }
 
-    return <Button
-              style={style}
-              variant={variant}
-              aria-label={label}
-              onClick={onClick}
-              onMouseDown={onMouseDown}
+  return (<Button
+            style={style}
+            variant={variant}
+            aria-label={label}
+            onClick={onClick}
+            onMouseDown={onMouseDown}
     >
       <Image
         className={className}
         src={src}
         alt={altText}
       />
-    </Button>
+    </Button>)
 }
 
 ClickableIcon.propTypes = {

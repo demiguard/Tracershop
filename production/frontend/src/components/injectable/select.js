@@ -47,7 +47,11 @@ export function toOptionsFromEnum(obj, namingFunction){
   return options;
 }
 
-
+/**
+ *
+ * @param {Array<Option>} props.options
+ * @returns
+ */
 export function Select(props) {
   const {canEdit, options, ...newProps} = props;
 

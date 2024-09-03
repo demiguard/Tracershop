@@ -2,7 +2,7 @@ import React, { } from "react";
 import { Container } from "react-bootstrap";
 // import styles from "/src/css/Errors.module.css"
 import { db } from "~/lib/local_storage_driver";
-import { useWebsocket } from "~/components/tracer_shop_context"
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context"
 import { WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_LOG_ERROR, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
 const styles = {
@@ -18,20 +18,19 @@ const styles = {
   }
 }
 
-
-
 export function ErrorPage (props) {
-  console.log(props)
-  let errorMessage = ""
-  let lines = []
+  let errorMessage = "";
+  let lines = [];
 
-  const websocket = useWebsocket()
+  const websocket = useWebsocket();
+  const state = useTracershopState();
+
+  console.log(state);
 
   // error is done, reset the state such that
   for(const database_table of Object.keys(db.types)){
     db.delete(database_table);
   }
-
 
   if (props.error !== undefined){
     const backend_error = {
@@ -78,7 +77,7 @@ export function ErrorPage (props) {
   }
 
   return(<Container
-    className={styles.ErrorContainer}
+    style={styles.ErrorContainer}
   >
     <h1>Ukendt fejl</h1>
     <p>Der er sket en unkendt fejl, som ikke kunne håndteres.</p>

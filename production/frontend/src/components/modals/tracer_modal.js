@@ -1,24 +1,19 @@
-import React, {Component, useState} from "react";
-
+import React, {useState} from "react";
+import propTypes from "prop-types";
 import { Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants";
-
 import {DATA_TRACER_MAPPING, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE
 } from "~/lib/shared_constants";
 
 import { setStateToEvent } from "~/lib/state_management";
-
-import propTypes from "prop-types";
-
-import styles from '~/css/Site.module.css';
 import { Tracer, Customer, TracerCatalogPage } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { EndpointDisplay } from "../injectable/data_displays/endpoint";
-
+import { FONT } from "~/lib/styles";
 
 export function TracerModal ({active_tracer, on_close}) {
   const state = useTracershopState();
@@ -95,10 +90,10 @@ export function TracerModal ({active_tracer, on_close}) {
         show={true}
         size="lg"
         onHide={on_close}
-        className={styles.mariLight}
+        style={FONT.light}
       >
         <Modal.Header>
-          <Modal.Title>Tracer Catalog for {tracer.short_name}</Modal.Title>
+          <Modal.Title>Tracer Catalog for {tracer.shortname}</Modal.Title>
         </Modal.Header>
         <Modal.Body>
         <Container>

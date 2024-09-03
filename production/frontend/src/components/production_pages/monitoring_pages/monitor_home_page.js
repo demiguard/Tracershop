@@ -2,9 +2,6 @@
 import React, { useRef, useState } from "react";
 import { Button, Col, FormControl, Row } from "react-bootstrap";
 
-//CSS
-import SiteStyles from '~/css/Site.module.css'
-
 // Tracershop imports imports
 import { StaticCanvas } from "~/components/injectable/canvas";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
@@ -17,7 +14,7 @@ import { Optional } from "~/components/injectable/optional";
 import { HoverBox } from "~/components/injectable/hover_box";
 import { MonthSelector } from "~/components/injectable/month_selector";
 import { UpdateToday } from "~/lib/state_actions";
-
+import { MARGIN } from "~/lib/styles";
 
 const colors = ["#55FF88", "#FFEE44", "#AA0033", "#3300AA"];
 const texts = [
@@ -164,7 +161,7 @@ export function MonitorPage({}) {
     if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
       const buttonHTML = (
           <Button
-            className={SiteStyles.Margin15lr}
+            style={MARGIN.leftRight.px15}
             key={tracer.id}
             onClick={() => {setActiveTracer(() => {return tracer.id;})}}
             size="sm"
@@ -178,7 +175,7 @@ export function MonitorPage({}) {
   }
   const injectionHTML = (
     <Button key={-1}
-        className={SiteStyles.Margin15lr}
+        style={MARGIN.leftRight.px15}
         onClick={() => {setActiveTracer(() => {return -1;})}}
         size="sm"
     >
@@ -189,7 +186,7 @@ export function MonitorPage({}) {
   const excel_button = (
     <Button
     key={-2}
-    className={SiteStyles.Margin15lr}
+    style={MARGIN.leftRight.px15}
     onClick={
       () => {
         window.open(`excel/${activeMonth.getFullYear()}/${activeMonth.getMonth() + 1}/data.xlsx`)

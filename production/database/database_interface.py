@@ -32,7 +32,7 @@ from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
-    SUCCESS_STATUS_CREATING_USER_ASSIGNMENT
+    SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, EXCLUDED_STATE_MODELS
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
@@ -327,7 +327,7 @@ class DatabaseInterface():
     instances = {}
     for model in models:
       modelKeyword = INVERTED_MODELS.get(model)
-      if modelKeyword is None:
+      if modelKeyword is None or modelKeyword in EXCLUDED_STATE_MODELS:
         #debug_logger.warning(f"ModelKeyword {model.__name__} is missing in database.models.INVERTED_MODELS")
         continue
       if modelKeyword in self.__modelGetters:
@@ -610,18 +610,18 @@ class DatabaseInterface():
       DATA_ACTIVITY_ORDER : activityOrders,
       DATA_INJECTION_ORDER : injectionsOrders
     }
-  
+
   @staticmethod
   @database_sync_to_async
   def get_bookings(
-    date_: date, delivery_endpoint_id: int 
+    date_: date, delivery_endpoint_id: int
   ):
     locations = Location.objects.filter(
       endpoint__id=delivery_endpoint_id,
     )
     bookings = Booking.objects.filter(
       location__in=locations,
-      start_date=date_ 
+      start_date=date_
     )
 
     bookings_models = serialize('python', bookings)
@@ -664,7 +664,7 @@ class DatabaseInterface():
     """changes the password of a user
 
     Args:
-        externalUserID (int): The 
+        externalUserID (int): The
         externalNewPassword (string): _description_
 
     Raises:

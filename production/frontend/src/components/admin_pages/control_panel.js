@@ -1,31 +1,51 @@
 import React, { useContext, useState } from "react";
-import { Container, Button, Card, Collapse } from "react-bootstrap";
+import { Container, Button, Card, Collapse, Col, Row } from "react-bootstrap";
 
 
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { ProcedureIdentifierTable } from "~/components/admin_pages/procedure_identifier_table";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
+import { JUSTIFY, FLEX, CENTER, MARGIN } from "~/lib/styles";
 
 export function ControlPanel(){
   const state = useTracershopState();
   const websocket = useWebsocket();
 
-  const [showProcedures, setShowProcedures] = useState(false)
+  const [showProcedures, setShowProcedures] = useState(false);
 
   function closeWebsocket(){
-    websocket.close()
+    websocket.close();
   }
 
   return (
     <Container>
-      <Button onClick={closeWebsocket}>Luk Websocket</Button>
+      <Row style={MARGIN.topBottom.px15}>
+        <Col>
+          <Button onClick={closeWebsocket}>Luk Websocket</Button>
+        </Col>
+        <Col>
+          <Button onClick={() => {throw "exception!"}}>Raise Exception!</Button>
+        </Col>
+        <Col>
+          <Button onClick={() => {console.log(state)}}>print state</Button>
+        </Col>
+      </Row>
       <Card>
         <Card.Header>
-          Procedures
-          <OpenCloseButton open={showProcedures} setOpen={setShowProcedures}/>
+          <div style={JUSTIFY.between}>
+            <div style={{...FLEX, ...CENTER}}>Procedures</div>
+            <div style={FLEX}>
+              <OpenCloseButton
+                open={showProcedures}
+                setOpen={setShowProcedures}
+              />
+            </div>
+          </div>
         </Card.Header>
-        <Collapse in showProcedures>
-          <ProcedureIdentifierTable/>
+        <Collapse in={showProcedures}>
+          <div>
+            <ProcedureIdentifierTable/>
+          </div>
         </Collapse>
       </Card>
     </Container>)

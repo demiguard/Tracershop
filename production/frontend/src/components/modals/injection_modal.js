@@ -1,16 +1,15 @@
 import React, { useState} from "react";
-import { Col, Row, FormControl, Modal, Table, Form } from "react-bootstrap";
 import propTypes from 'prop-types'
+import { Col, Row, Modal, Table } from "react-bootstrap";
+
 import { Authenticate } from "../injectable/authenticate.js"
-import { setStateToEvent } from "../../lib/state_management.js";
-import { ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "../../lib/constants.js";
+import { setStateToEvent } from "~/lib/state_management.js";
+import { ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~/lib/constants.js";
 
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
   WEBSOCKET_DATA, DATA_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION,
   WEBSOCKET_DATA_ID
 } from "~/lib/shared_constants.js"
-
-import styles from '~/css/Site.module.css'
 
 import { HoverBox } from "../injectable/hover_box.js";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
@@ -27,6 +26,7 @@ import { EditableInput } from "../injectable/inputs/editable_input.js";
 import { LotNumberHeader } from "../injectable/headers/lot_display.js";
 import { Optional } from "~/components/injectable/optional.js";
 import { CancelBox } from "~/components/injectable/cancel_box.js";
+import { FONT } from "~/lib/styles.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -142,7 +142,7 @@ export function InjectionModal ({modal_order, on_close}) {
         show={true}
         size="lg"
         onHide={on_close}
-        className={styles.mariLight}
+        style={FONT.light}
         >
         <Modal.Header>Injection Ordre {modal_order}</Modal.Header>
         <Modal.Body>

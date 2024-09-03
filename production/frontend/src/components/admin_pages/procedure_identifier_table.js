@@ -11,19 +11,20 @@ import { DATA_PROCEDURE_IDENTIFIER } from '~/lib/shared_constants';
  * @param {ProcedureIdentifier} param0.pi
  * @returns
  */
-function ProcedureIdentifierRow({pi}){
+function ProcedureIdentifierRow({procedure_identifier}){
   const websocket = useWebsocket();
   function togglePet(){
-    websocket.sendEditModel(DATA_PROCEDURE_IDENTIFIER, {...pi, is_pet : !pi.is_pet});
+    websocket.sendEditModel(DATA_PROCEDURE_IDENTIFIER, {...procedure_identifier, is_pet : !procedure_identifier.is_pet});
   }
 
-  return <tr>
-    <td>{pi.description}</td>
-    <td>{pi.code}</td>
+  return (
+  <tr>
+    <td>{procedure_identifier.description}</td>
+    <td>{procedure_identifier.code}</td>
     <td>
-      <FormCheck checked={pi.is_pet} onClick={togglePet}/>
+      <FormCheck checked={procedure_identifier.is_pet} onChange={togglePet}/>
     </td>
-  </tr>
+  </tr>);
 }
 
 /** This Component displays all procedure identifiers for the purpose of
@@ -34,7 +35,7 @@ export function ProcedureIdentifierTable() {
 
   const piRows = [];
   for(const pi of state.procedure_identifier.values()){
-    piRows.push(<ProcedureIdentifierRow pi={pi} key={pi.id}/>);
+    piRows.push(<ProcedureIdentifierRow procedure_identifier={pi} key={pi.id}/>);
   }
 
   return <Table>

@@ -3,19 +3,31 @@ import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
 
 import propTypes from 'prop-types'
 
-import { FormatDateStr, FormatTime, ParseDanishNumber } from "../../lib/formatting";
-import { CalculateProduction, CountMinutes } from "../../lib/physics";
-import { removeIndex } from "../../lib/utils";
-
-import styles from '../../css/Calculator.module.css'
+import { FormatDateStr, FormatTime, ParseDanishNumber } from "~/lib/formatting";
+import { CalculateProduction, CountMinutes } from "~/lib/physics";
+import { removeIndex } from "~/lib/utils";
 
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { ClickableIcon } from "./icons";
-import { Isotope } from "../../dataclasses/dataclasses";
+import { Isotope } from "~/dataclasses/dataclasses";
+import { FONT } from "~/lib/styles";
 
 
 export const CALCULATOR_NEW_ACTIVITY_LABEL = "calculator-activity-new"
 export const CALCULATOR_NEW_TIME_LABEL = "calculator-time-new"
+
+const CalculatorStyle = {
+  ButtonStyle : {
+    ...FONT.light,
+    width : "150px",
+  },
+  HeaderStyle : {
+    ...FONT.heavy
+  },
+  Calculator : {
+    ...FONT.light
+  }
+};
 
 // Error Messages
 export const ErrorInvalidTimeFormat = "Tidspunktet er ikke læseligt af systemet"
@@ -247,12 +259,12 @@ export function Calculator ({
     );
 
     return (
-    <div className={styles.Calculator}>
-      <Row className={styles.CalculatorHeader}>
+    <div style={CalculatorStyle.Calculator}>
+      <Row className={CalculatorStyle.Header}>
         <h3>Dosislommeregner</h3>
       </Row>
       <hr/>
-      <Row className={styles.CalculatorInfo}>
+      <Row>
         <p>Tracer - {tracer.shortname}</p>
         <p>Produktions tidpunkt - {ProductionTimeString}</p>
         <p>Halvering tid - {isotope.halflife_seconds} s</p>
@@ -278,10 +290,10 @@ export function Calculator ({
       /> : null}
       <Row>
         <Col>
-          <Button className={styles.CalculatorButton} onClick={commit_activity}>Udregn</Button>
+          <Button className={CalculatorStyle.Button} onClick={commit_activity}>Udregn</Button>
         </Col>
         <Col>
-          <Button className={styles.CalculatorButton} onClick={cancel}>Tilbage</Button>
+          <Button className={CalculatorStyle.Button} onClick={cancel}>Tilbage</Button>
         </Col>
       </Row>
     </div>);

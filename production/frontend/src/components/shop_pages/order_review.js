@@ -6,7 +6,6 @@ import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
 
 import { dateToDateString } from "~/lib/formatting";
 
-import SiteStyles from '~/css/Site.module.css'
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay } from "~/lib/chronomancy";
@@ -16,6 +15,7 @@ import { getRelevantActivityOrders } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 import { db } from "~/lib/local_storage_driver";
+import { MARGIN } from "~/lib/styles";
 
 
 /**
@@ -76,7 +76,7 @@ export function OrderReview({active_endpoint,
     const underline = tracer.id === activeTracer;
 
     return (<Button
-      className={SiteStyles.Margin15lr}
+      style={MARGIN.leftRight.px15}
       key={tracer.id}
       onClick={setTracer(tracer)}
       sz="sm"

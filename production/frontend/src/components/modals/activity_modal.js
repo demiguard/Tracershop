@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { Col, Container, Form, FormControl, InputGroup, Modal, Row, Table } from "react-bootstrap";
+import { Col, Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 
-import { Customer, DeliveryEndpoint, ActivityDeliveryTimeSlot, ActivityOrder, Vial, ActivityProduction, Tracer, Isotope } from "~/dataclasses/dataclasses.js";
+import { Customer, ActivityOrder, Vial } from "~/dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
-import styles from '~/css/Site.module.css'
 
 import { Authenticate } from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
@@ -18,10 +17,7 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDE
   DATA_PRODUCTION, DATA_TRACER, DATA_USER, DATA_VIAL, WEBSOCKET_DATA,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "~/lib/shared_constants.js"
 import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
-import { getTimeString } from "~/lib/chronomancy.js";
-
-import { TracerWebSocket } from "../../lib/tracer_websocket.js";
-import { concatErrors, parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
+import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
 import { compareDates, openActivityReleasePDF, toMapping } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
@@ -29,9 +25,9 @@ import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalo
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
 import { reset_error, setTempMapToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
-import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 import { CancelBox } from "~/components/injectable/cancel_box.js";
+import { FONT } from "~/lib/styles.js";
 
 
 /**
@@ -641,7 +637,8 @@ export function ActivityModal({
       show={true}
       size="lg"
       onHide={on_close}
-      className={styles.mariLight}>
+      style={FONT.light}
+      >
     <Modal.Header>
       <h3>
         Ordre - {parseDateToDanishDate(dateString)} - {timeSlot.delivery_time}

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import propTypes from 'prop-types'
 import { Form, Button, Spinner } from "react-bootstrap";
 //import styles from "../../css/Authenticate.module.css"
-import { FONT_BOLD } from '~/lib/styles'
+import { FONT, MARGIN } from '~/lib/styles'
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { setStateToEvent } from "~/lib/state_management";
 
@@ -74,9 +74,9 @@ export function Authenticate({ authenticate,
     <div style={fit_in ? styles.authenticateBox : styles.authenticationBoxNoFit}>
       <h3 style={{
         ...styles.authenticationHeader,
-        ...FONT_BOLD
+        ...FONT.bold
       }} className={"text-center"}>{headerMessage}</h3>
-        <hr/>
+        <hr style={MARGIN.topBottom.px0}/>
         <div>
           <Form onSubmit={onSubmitFunc}>
             <div className={"form-group"} style={styles.formRow}>
@@ -92,7 +92,7 @@ export function Authenticate({ authenticate,
                 onChange={setStateToEvent(setUsername)}
               />
             </div>
-            <div className={"form-group " + styles.formRow}>
+            <div className={"form-group"} style={styles.formRow}>
               <label htmlFor="username">Kodeord</label>
               <input type="password"
                      className="form-control"
@@ -109,7 +109,7 @@ export function Authenticate({ authenticate,
                 message={errorMessage}
               /> : null
             }
-            <div className={"form-group " + styles.formRow}>
+            <div className={"form-group"} style={styles.formRow}>
               { spinner ?
                   <Spinner
                     animation="border"

@@ -6,16 +6,16 @@ import { WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER } from "~/lib/shared_const
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
 import { ClickableIcon } from "~/components/injectable/icons";
-import SiteStyles from "~/css/Site.module.css"
 import { MarginButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { Optional } from "~/components/injectable/optional";
+import { OpenCloseButton } from "~/components/injectable/open_close_button";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
 
-  /**
+  /** This component is for showing booking for not setup
  *
  * @param {{
   *  bookings : Array<Booking>
@@ -25,7 +25,6 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
   function ProcedureCard({bookings}){
     const state = useTracershopState();
     const [open, setOpen] = useState(false);
-    const openClassName = open ? SiteStyles.rotated : "";
     // Using Set for eliminating duplicates
     const /**@type {Set<Number>} */ procedureIdentifierIDs = new Set(
       bookings.map((booking) => {
@@ -44,11 +43,10 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
         <Row>
           <Col>{missingSetupHeader}</Col>
           <Col style={cssAlignRight}>
-                <ClickableIcon
+                <OpenCloseButton
                   label="open-unset-procedures"
-                  className={openClassName}
-                  src={"/static/images/next.svg"}
-                  onClick={() => {setOpen(!open)}}
+                  open={open}
+                  setOpen={setOpen}
                 />
           </Col>
         </Row>
@@ -57,16 +55,8 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
         <Card.Body>{rows}</Card.Body>
       </Collapse>
     </Card>)
- }
+}
 
-export function FutureBooking ({active_date, active_endpoint, booking,
-  activityDeadlineExpired, injectionDeadlineExpired}) {
-  const state = useTracershopState();
-  const websocket = useWebsocket();
-  const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
-                                                            state.location,
-                                                            active_endpoint);
-  const bookingMapping = new TracerBookingMapping(booking, procedureLocationIndex);
 /**
  *
  * @param {{
@@ -77,8 +67,13 @@ export function FutureBooking ({active_date, active_endpoint, booking,
 */
 function TracerCard({tracer,
                     bookings,
-  }) {
+                    activityDeadlineExpired,
+                    injectionDeadlineExpired,
+                    procedureLocationIndex
 
+  }) {
+  const state = useTracershopState();
+  const websocket = useWebsocket();
   // This is overkill, but...
   const bookingListInit = useRef(null);
   if(bookingListInit.current === null){
@@ -91,14 +86,12 @@ function TracerCard({tracer,
   const [open, setOpen] = useState(false);
   const [bookingProgram, setBookingProgram] = useState(bookingListInit.current);
 
-
   function onClickOrder() {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MASS_ORDER);
     message[WEBSOCKET_DATA] = bookingProgram;
     websocket.send(message);
   }
 
-  const openClassName = open ? SiteStyles.rotated : "";
   const deadlineExpired = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
      activityDeadlineExpired : injectionDeadlineExpired;
 
@@ -144,11 +137,10 @@ function TracerCard({tracer,
         <Row>
         <Col>{tracer.shortname}</Col>
          <Col style={cssAlignRight}>
-            <ClickableIcon
+            <OpenCloseButton
               label={`open-tracer-${tracer.id}`}
-              className={openClassName}
-              src={"/static/images/next.svg"}
-              onClick={() => {setOpen(!open)}}
+              open={open}
+              setOpen={setOpen}
             />
          </Col>
        </Row>
@@ -183,7 +175,15 @@ function TracerCard({tracer,
        </Card.Body>
      </Collapse>
    </Card>);
-  }
+}
+
+export function FutureBooking ({active_endpoint, booking,
+  activityDeadlineExpired, injectionDeadlineExpired}) {
+  const state = useTracershopState();
+  const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
+                                                            state.location,
+                                                            active_endpoint);
+  const bookingMapping = new TracerBookingMapping(booking, procedureLocationIndex);
 
   const bookingCards = []
   let index = 0;
@@ -200,11 +200,12 @@ function TracerCard({tracer,
     } else {
       bookingCards.push(
         <TracerCard
-        key={index}
-        tracer={tracer}
-        bookings={BookingArray}
-        activityDeadlineExpired={activityDeadlineExpired}
-        injectionDeadlineExpired={injectionDeadlineExpired}
+          key={index}
+          tracer={tracer}
+          bookings={BookingArray}
+          activityDeadlineExpired={activityDeadlineExpired}
+          injectionDeadlineExpired={injectionDeadlineExpired}
+          procedureLocationIndex={procedureLocationIndex}
         />);
     }
   }

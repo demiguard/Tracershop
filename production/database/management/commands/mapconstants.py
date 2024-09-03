@@ -4,11 +4,17 @@ from enum import Enum
 from typing import Any, List
 
 # Third party packages
+from django.db.models import Field
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 # Tracershop packages
 from database.models import MODELS
 import shared_constants
+
+def serialize_field(field: Field) -> str:
+  return f"new DatabaseField({field.name})"
+
+
 
 class Command(BaseCommand):
   help="""Moves the python constants that should be used by the frontend,
@@ -77,6 +83,15 @@ class Command(BaseCommand):
           out.write("\n")
         out.write("    )\n")
         out.write("  }\n")
+        out.write("  fields(){\n")
+        out.write("    return [\n")
+        for i,field in enumerate(model._meta.fields):
+          if field.name in model.exclude:
+            continue
+
+          out.write(f"      {serialize_field(field)},\n")
+        out.write("    ];\n")
+        out.write("  }\n")
         out.write("}\n\n")
 
       out.write("export const MODELS = {\n")
@@ -90,15 +105,19 @@ class Command(BaseCommand):
       out.write(f"  /** @type {{ Number }} */ readyState\n")
 
       for key, model in MODELS.items():
-        out.write(f"  /** @type {{ Map<Number, {model.__name__}>}} */ {key}\n")
+        if key not in shared_constants.EXCLUDED_STATE_MODELS:
+          out.write(f"  /** @type {{ Map<Number, {model.__name__}>}} */ {key}\n")
 
       out.write("\n  constructor(logged_in_user, today, ")
       for key, model in MODELS.items():
-        out.write(f"{key}, ")
+        if key not in shared_constants.EXCLUDED_STATE_MODELS:
+          out.write(f"{key}, ")
       out.write("){\n    this.logged_in_user=logged_in_user\n")
       out.write("    this.today=today\n")
       out.write("   this.readyState = WebSocket.CLOSED\n")
       for key, model in MODELS.items():
+        if key in shared_constants.EXCLUDED_STATE_MODELS:
+          continue
         out.write(f"    if({key} !== undefined){{\n")
         out.write(f"      this.{key} = {key}\n")
         out.write("    } else {\n")

@@ -5,9 +5,7 @@ import { db } from "../../lib/local_storage_driver.js";
 import { ConfigSite } from "./config_site.js";
 import { ProductionSite } from "./production_site.js";
 import { ShopSite } from "./shop_site.js";
-
-import styles from "/src/css/Navbar.module.css"
-import SiteStyles from "/src/css/Site.module.css"
+import { MARGIN, NAVBAR_STYLES } from "~/lib/styles.js";
 
 /**
  * @enum
@@ -66,7 +64,11 @@ export function AdminSite({logout}) {
   const NavbarAdmin = [(
     <Col key="SiteSelector">
       <NavDropdown
-        className={styles.NavbarElement + " btn-primary " + SiteStyles.pad0tb}
+        className={"btn-primary"}
+        style={{
+          ...MARGIN.topBottom.px0,
+          ...NAVBAR_STYLES.navbarElement
+        }}
         aria-label="site-selector"
         title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}
       >

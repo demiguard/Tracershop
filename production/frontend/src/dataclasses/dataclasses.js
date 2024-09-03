@@ -20,6 +20,14 @@ export class Address {
       this.description
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(ip),
+      new DatabaseField(port),
+      new DatabaseField(description),
+    ];
+  }
 }
 
 export class ActivityOrder {
@@ -53,6 +61,58 @@ export class ActivityOrder {
       this.freed_by
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(ordered_activity),
+      new DatabaseField(delivery_date),
+      new DatabaseField(status),
+      new DatabaseField(comment),
+      new DatabaseField(ordered_time_slot),
+      new DatabaseField(moved_to_time_slot),
+      new DatabaseField(freed_datetime),
+      new DatabaseField(ordered_by),
+      new DatabaseField(freed_by),
+    ];
+  }
+}
+
+export class Booking {
+  constructor(id, status, location, procedure, accession_number, start_time, start_date, ) {
+    this.id=id
+    this.status=status
+    this.location=location
+    this.procedure=procedure
+    this.accession_number=accession_number
+    this.start_time=start_time
+    this.start_date=start_date
+  }
+
+  /**Copies the booking
+  * @returns { Booking }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.status,
+      this.location,
+      this.procedure,
+      this.accession_number,
+      this.start_time,
+      this.start_date
+    )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(status),
+      new DatabaseField(location),
+      new DatabaseField(procedure),
+      new DatabaseField(accession_number),
+      new DatabaseField(start_time),
+      new DatabaseField(start_date),
+    ];
+  }
 }
 
 export class ClosedDate {
@@ -69,6 +129,12 @@ export class ClosedDate {
       this.id,
       this.close_date
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(close_date),
+    ];
   }
 }
 
@@ -103,6 +169,20 @@ export class Customer {
       this.active_directory_code
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(short_name),
+      new DatabaseField(long_name),
+      new DatabaseField(dispenser_id),
+      new DatabaseField(billing_address),
+      new DatabaseField(billing_city),
+      new DatabaseField(billing_email),
+      new DatabaseField(billing_phone),
+      new DatabaseField(billing_zip_code),
+      new DatabaseField(active_directory_code),
+    ];
+  }
 }
 
 export class Deadline {
@@ -123,6 +203,14 @@ export class Deadline {
       this.deadline_time,
       this.deadline_day
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(deadline_type),
+      new DatabaseField(deadline_time),
+      new DatabaseField(deadline_day),
+    ];
   }
 }
 
@@ -149,6 +237,16 @@ export class ActivityDeliveryTimeSlot {
       this.expiration_date
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(weekly_repeat),
+      new DatabaseField(delivery_time),
+      new DatabaseField(destination),
+      new DatabaseField(production_run),
+      new DatabaseField(expiration_date),
+    ];
+  }
 }
 
 export class DicomEndpoint {
@@ -167,6 +265,13 @@ export class DicomEndpoint {
       this.address,
       this.ae_title
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(address),
+      new DatabaseField(ae_title),
+    ];
   }
 }
 
@@ -194,6 +299,17 @@ export class DeliveryEndpoint {
       this.name,
       this.owner
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(address),
+      new DatabaseField(city),
+      new DatabaseField(zip_code),
+      new DatabaseField(phone),
+      new DatabaseField(name),
+      new DatabaseField(owner),
+    ];
   }
 }
 
@@ -234,6 +350,23 @@ export class InjectionOrder {
       this.freed_by
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(delivery_time),
+      new DatabaseField(delivery_date),
+      new DatabaseField(injections),
+      new DatabaseField(status),
+      new DatabaseField(tracer_usage),
+      new DatabaseField(comment),
+      new DatabaseField(ordered_by),
+      new DatabaseField(endpoint),
+      new DatabaseField(tracer),
+      new DatabaseField(lot_number),
+      new DatabaseField(freed_datetime),
+      new DatabaseField(freed_by),
+    ];
+  }
 }
 
 export class Isotope {
@@ -259,6 +392,16 @@ export class Isotope {
       this.metastable
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(atomic_number),
+      new DatabaseField(atomic_mass),
+      new DatabaseField(halflife_seconds),
+      new DatabaseField(atomic_letter),
+      new DatabaseField(metastable),
+    ];
+  }
 }
 
 export class ReleaseRight {
@@ -280,6 +423,14 @@ export class ReleaseRight {
       this.product
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(expiry_date),
+      new DatabaseField(releaser),
+      new DatabaseField(product),
+    ];
+  }
 }
 
 export class LegacyProductionMember {
@@ -296,6 +447,12 @@ export class LegacyProductionMember {
       this.id,
       this.legacy_production_username
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(legacy_production_username),
+    ];
   }
 }
 
@@ -318,6 +475,14 @@ export class Location {
       this.common_name
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(location_code),
+      new DatabaseField(endpoint),
+      new DatabaseField(common_name),
+    ];
+  }
 }
 
 export class Message {
@@ -337,6 +502,13 @@ export class Message {
       this.expiration
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(message),
+      new DatabaseField(expiration),
+    ];
+  }
 }
 
 export class MessageAssignment {
@@ -355,6 +527,13 @@ export class MessageAssignment {
       this.message_id,
       this.customer_id
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(message_id),
+      new DatabaseField(customer_id),
+    ];
   }
 }
 
@@ -385,6 +564,18 @@ export class Tracer {
       this.archived
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(shortname),
+      new DatabaseField(clinical_name),
+      new DatabaseField(isotope),
+      new DatabaseField(tracer_type),
+      new DatabaseField(default_price_per_unit),
+      new DatabaseField(vial_tag),
+      new DatabaseField(archived),
+    ];
+  }
 }
 
 export class TracerCatalogPage {
@@ -407,6 +598,15 @@ export class TracerCatalogPage {
       this.max_injections,
       this.overhead_multiplier
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(endpoint),
+      new DatabaseField(tracer),
+      new DatabaseField(max_injections),
+      new DatabaseField(overhead_multiplier),
+    ];
   }
 }
 
@@ -433,6 +633,16 @@ export class Procedure {
       this.owner
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(series_description),
+      new DatabaseField(tracer_units),
+      new DatabaseField(delay_minutes),
+      new DatabaseField(tracer),
+      new DatabaseField(owner),
+    ];
+  }
 }
 
 export class ProcedureIdentifier {
@@ -453,6 +663,14 @@ export class ProcedureIdentifier {
       this.description,
       this.is_pet
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(code),
+      new DatabaseField(description),
+      new DatabaseField(is_pet),
+    ];
   }
 }
 
@@ -477,6 +695,15 @@ export class ActivityProduction {
       this.expiration_date
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(production_day),
+      new DatabaseField(tracer),
+      new DatabaseField(production_time),
+      new DatabaseField(expiration_date),
+    ];
+  }
 }
 
 export class SecondaryEmail {
@@ -495,6 +722,13 @@ export class SecondaryEmail {
       this.email,
       this.record_user
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(email),
+      new DatabaseField(record_user),
+    ];
   }
 }
 
@@ -527,6 +761,19 @@ export class ServerConfiguration {
       this.ris_dicom_endpoint
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(SMTPServer),
+      new DatabaseField(DateRange),
+      new DatabaseField(AdminPhoneNumber),
+      new DatabaseField(AdminEmail),
+      new DatabaseField(global_activity_deadline),
+      new DatabaseField(global_injection_deadline),
+      new DatabaseField(ping_service_ae_tile),
+      new DatabaseField(ris_dicom_endpoint),
+    ];
+  }
 }
 
 export class ServerLog {
@@ -547,6 +794,14 @@ export class ServerLog {
       this.message,
       this.level
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(created),
+      new DatabaseField(message),
+      new DatabaseField(level),
+    ];
   }
 }
 
@@ -571,6 +826,15 @@ export class User {
       this.active
     )
   }
+  fields(){
+    return [
+      new DatabaseField(last_login),
+      new DatabaseField(id),
+      new DatabaseField(username),
+      new DatabaseField(user_group),
+      new DatabaseField(active),
+    ];
+  }
 }
 
 export class UserAssignment {
@@ -589,6 +853,13 @@ export class UserAssignment {
       this.user,
       this.customer
     )
+  }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(user),
+      new DatabaseField(customer),
+    ];
   }
 }
 
@@ -621,11 +892,25 @@ export class Vial {
       this.owner
     )
   }
+  fields(){
+    return [
+      new DatabaseField(id),
+      new DatabaseField(tracer),
+      new DatabaseField(activity),
+      new DatabaseField(volume),
+      new DatabaseField(lot_number),
+      new DatabaseField(fill_time),
+      new DatabaseField(fill_date),
+      new DatabaseField(assigned_to),
+      new DatabaseField(owner),
+    ];
+  }
 }
 
 export const MODELS = {
   address : Address,
   activity_orders : ActivityOrder,
+  booking : Booking,
   closed_date : ClosedDate,
   customer : Customer,
   deadline : Deadline,

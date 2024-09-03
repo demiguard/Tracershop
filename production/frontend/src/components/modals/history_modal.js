@@ -8,9 +8,9 @@ import { changeState, setStateToEvent } from "~/lib/state_management";
 import propTypes from "prop-types";
 import { Select, toOptions } from "../injectable/select.js";
 
-import styles from '~/css/Site.module.css';
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "~/lib/constants.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { FONT } from "~/lib/styles.js";
 
 const Months = toOptions([
   {name : "Januar", id : 1},
@@ -156,7 +156,7 @@ export function HistoryModal({active_customer, on_close}) {
       <Modal
         onHide={on_close}
         show={true}
-        className = {styles.mariLight}
+        style={FONT.light}
       >
         <Modal.Header>
           Bestilling historik for {customer.short_name}

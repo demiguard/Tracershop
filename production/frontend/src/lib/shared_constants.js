@@ -58,6 +58,10 @@ export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
+export const EXCLUDED_STATE_MODELS = [
+  "booking",
+]
+
 export const JAVASCRIPT_VERSION = "1.2.12";
 
 export const NO_ERROR = "";
