@@ -1,6 +1,8 @@
 /**Automatically generated file by generate JavascriptDataClasses.py */
 /**Contains a mapping of the database and their fields. */
 
+import { BooleanField, CharField, DateField, DateTimeField, IntField, FloatField, ForeignField } from '~/lib/database_fields.js'
+
 export class Address {
   constructor(id, ip, port, description, ) {
     this.id=id
@@ -22,10 +24,10 @@ export class Address {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(ip),
-      new DatabaseField(port),
-      new DatabaseField(description),
+      new IntField("id"),
+      new CharField("ip"),
+      new CharField("port"),
+      new CharField("description"),
     ];
   }
 }
@@ -63,16 +65,16 @@ export class ActivityOrder {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(ordered_activity),
-      new DatabaseField(delivery_date),
-      new DatabaseField(status),
-      new DatabaseField(comment),
-      new DatabaseField(ordered_time_slot),
-      new DatabaseField(moved_to_time_slot),
-      new DatabaseField(freed_datetime),
-      new DatabaseField(ordered_by),
-      new DatabaseField(freed_by),
+      new IntField("id"),
+      new FloatField("ordered_activity"),
+      new DateField("delivery_date"),
+      new IntField("status"),
+      new CharField("comment"),
+      new ForeignField("ordered_time_slot","deliver_times"),
+      new ForeignField("moved_to_time_slot","deliver_times"),
+      new DateTimeField("freed_datetime"),
+      new ForeignField("ordered_by","user"),
+      new ForeignField("freed_by","user"),
     ];
   }
 }
@@ -104,13 +106,13 @@ export class Booking {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(status),
-      new DatabaseField(location),
-      new DatabaseField(procedure),
-      new DatabaseField(accession_number),
-      new DatabaseField(start_time),
-      new DatabaseField(start_date),
+      new IntField("id"),
+      new IntField("status"),
+      new ForeignField("location","location"),
+      new ForeignField("procedure","procedure_identifier"),
+      new CharField("accession_number"),
+      new DateField("start_time"),
+      new DateField("start_date"),
     ];
   }
 }
@@ -132,8 +134,8 @@ export class ClosedDate {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(close_date),
+      new IntField("id"),
+      new DateField("close_date"),
     ];
   }
 }
@@ -171,16 +173,16 @@ export class Customer {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(short_name),
-      new DatabaseField(long_name),
-      new DatabaseField(dispenser_id),
-      new DatabaseField(billing_address),
-      new DatabaseField(billing_city),
-      new DatabaseField(billing_email),
-      new DatabaseField(billing_phone),
-      new DatabaseField(billing_zip_code),
-      new DatabaseField(active_directory_code),
+      new IntField("id"),
+      new CharField("short_name"),
+      new CharField("long_name"),
+      new IntField("dispenser_id"),
+      new CharField("billing_address"),
+      new CharField("billing_city"),
+      new CharField("billing_email"),
+      new CharField("billing_phone"),
+      new CharField("billing_zip_code"),
+      new CharField("active_directory_code"),
     ];
   }
 }
@@ -206,10 +208,10 @@ export class Deadline {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(deadline_type),
-      new DatabaseField(deadline_time),
-      new DatabaseField(deadline_day),
+      new IntField("id"),
+      new IntField("deadline_type"),
+      new DateField("deadline_time"),
+      new IntField("deadline_day"),
     ];
   }
 }
@@ -239,12 +241,12 @@ export class ActivityDeliveryTimeSlot {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(weekly_repeat),
-      new DatabaseField(delivery_time),
-      new DatabaseField(destination),
-      new DatabaseField(production_run),
-      new DatabaseField(expiration_date),
+      new IntField("id"),
+      new IntField("weekly_repeat"),
+      new DateField("delivery_time"),
+      new ForeignField("destination","delivery_endpoint"),
+      new ForeignField("production_run","production"),
+      new DateField("expiration_date"),
     ];
   }
 }
@@ -268,9 +270,9 @@ export class DicomEndpoint {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(address),
-      new DatabaseField(ae_title),
+      new IntField("id"),
+      new ForeignField("address","address"),
+      new CharField("ae_title"),
     ];
   }
 }
@@ -302,13 +304,13 @@ export class DeliveryEndpoint {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(address),
-      new DatabaseField(city),
-      new DatabaseField(zip_code),
-      new DatabaseField(phone),
-      new DatabaseField(name),
-      new DatabaseField(owner),
+      new IntField("id"),
+      new CharField("address"),
+      new CharField("city"),
+      new CharField("zip_code"),
+      new CharField("phone"),
+      new CharField("name"),
+      new ForeignField("owner","customer"),
     ];
   }
 }
@@ -352,19 +354,19 @@ export class InjectionOrder {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(delivery_time),
-      new DatabaseField(delivery_date),
-      new DatabaseField(injections),
-      new DatabaseField(status),
-      new DatabaseField(tracer_usage),
-      new DatabaseField(comment),
-      new DatabaseField(ordered_by),
-      new DatabaseField(endpoint),
-      new DatabaseField(tracer),
-      new DatabaseField(lot_number),
-      new DatabaseField(freed_datetime),
-      new DatabaseField(freed_by),
+      new IntField("id"),
+      new DateField("delivery_time"),
+      new DateField("delivery_date"),
+      new IntField("injections"),
+      new IntField("status"),
+      new IntField("tracer_usage"),
+      new CharField("comment"),
+      new ForeignField("ordered_by","user"),
+      new ForeignField("endpoint","delivery_endpoint"),
+      new ForeignField("tracer","tracer"),
+      new CharField("lot_number"),
+      new DateTimeField("freed_datetime"),
+      new ForeignField("freed_by","user"),
     ];
   }
 }
@@ -394,12 +396,12 @@ export class Isotope {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(atomic_number),
-      new DatabaseField(atomic_mass),
-      new DatabaseField(halflife_seconds),
-      new DatabaseField(atomic_letter),
-      new DatabaseField(metastable),
+      new IntField("id"),
+      new IntField("atomic_number"),
+      new IntField("atomic_mass"),
+      new FloatField("halflife_seconds"),
+      new CharField("atomic_letter"),
+      new BooleanField("metastable"),
     ];
   }
 }
@@ -425,10 +427,10 @@ export class ReleaseRight {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(expiry_date),
-      new DatabaseField(releaser),
-      new DatabaseField(product),
+      new IntField("id"),
+      new DateField("expiry_date"),
+      new ForeignField("releaser","user"),
+      new ForeignField("product","tracer"),
     ];
   }
 }
@@ -450,8 +452,8 @@ export class LegacyProductionMember {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(legacy_production_username),
+      new IntField("id"),
+      new CharField("legacy_production_username"),
     ];
   }
 }
@@ -477,10 +479,10 @@ export class Location {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(location_code),
-      new DatabaseField(endpoint),
-      new DatabaseField(common_name),
+      new IntField("id"),
+      new CharField("location_code"),
+      new ForeignField("endpoint","delivery_endpoint"),
+      new CharField("common_name"),
     ];
   }
 }
@@ -504,9 +506,9 @@ export class Message {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(message),
-      new DatabaseField(expiration),
+      new IntField("id"),
+      new CharField("message"),
+      new DateField("expiration"),
     ];
   }
 }
@@ -530,9 +532,9 @@ export class MessageAssignment {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(message_id),
-      new DatabaseField(customer_id),
+      new IntField("id"),
+      new ForeignField("message_id","message"),
+      new ForeignField("customer_id","customer"),
     ];
   }
 }
@@ -566,14 +568,14 @@ export class Tracer {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(shortname),
-      new DatabaseField(clinical_name),
-      new DatabaseField(isotope),
-      new DatabaseField(tracer_type),
-      new DatabaseField(default_price_per_unit),
-      new DatabaseField(vial_tag),
-      new DatabaseField(archived),
+      new IntField("id"),
+      new CharField("shortname"),
+      new CharField("clinical_name"),
+      new ForeignField("isotope","isotopes"),
+      new IntField("tracer_type"),
+      new FloatField("default_price_per_unit"),
+      new CharField("vial_tag"),
+      new BooleanField("archived"),
     ];
   }
 }
@@ -601,11 +603,11 @@ export class TracerCatalogPage {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(endpoint),
-      new DatabaseField(tracer),
-      new DatabaseField(max_injections),
-      new DatabaseField(overhead_multiplier),
+      new IntField("id"),
+      new ForeignField("endpoint","delivery_endpoint"),
+      new ForeignField("tracer","tracer"),
+      new IntField("max_injections"),
+      new FloatField("overhead_multiplier"),
     ];
   }
 }
@@ -635,12 +637,12 @@ export class Procedure {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(series_description),
-      new DatabaseField(tracer_units),
-      new DatabaseField(delay_minutes),
-      new DatabaseField(tracer),
-      new DatabaseField(owner),
+      new IntField("id"),
+      new ForeignField("series_description","procedure_identifier"),
+      new FloatField("tracer_units"),
+      new FloatField("delay_minutes"),
+      new ForeignField("tracer","tracer"),
+      new ForeignField("owner","delivery_endpoint"),
     ];
   }
 }
@@ -666,10 +668,10 @@ export class ProcedureIdentifier {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(code),
-      new DatabaseField(description),
-      new DatabaseField(is_pet),
+      new IntField("id"),
+      new CharField("code"),
+      new CharField("description"),
+      new BooleanField("is_pet"),
     ];
   }
 }
@@ -697,11 +699,11 @@ export class ActivityProduction {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(production_day),
-      new DatabaseField(tracer),
-      new DatabaseField(production_time),
-      new DatabaseField(expiration_date),
+      new IntField("id"),
+      new IntField("production_day"),
+      new ForeignField("tracer","tracer"),
+      new DateField("production_time"),
+      new DateField("expiration_date"),
     ];
   }
 }
@@ -725,9 +727,9 @@ export class SecondaryEmail {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(email),
-      new DatabaseField(record_user),
+      new IntField("id"),
+      new CharField("email"),
+      new ForeignField("record_user","user"),
     ];
   }
 }
@@ -763,15 +765,15 @@ export class ServerConfiguration {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(SMTPServer),
-      new DatabaseField(DateRange),
-      new DatabaseField(AdminPhoneNumber),
-      new DatabaseField(AdminEmail),
-      new DatabaseField(global_activity_deadline),
-      new DatabaseField(global_injection_deadline),
-      new DatabaseField(ping_service_ae_tile),
-      new DatabaseField(ris_dicom_endpoint),
+      new IntField("id"),
+      new IPField("SMTPServer"),
+      new IntField("DateRange"),
+      new CharField("AdminPhoneNumber"),
+      new CharField("AdminEmail"),
+      new ForeignField("global_activity_deadline","deadline"),
+      new ForeignField("global_injection_deadline","deadline"),
+      new CharField("ping_service_ae_tile"),
+      new ForeignField("ris_dicom_endpoint","dicom_endpoint"),
     ];
   }
 }
@@ -797,10 +799,10 @@ export class ServerLog {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(created),
-      new DatabaseField(message),
-      new DatabaseField(level),
+      new IntField("id"),
+      new DateTimeField("created"),
+      new CharField("message"),
+      new IntField("level"),
     ];
   }
 }
@@ -828,11 +830,11 @@ export class User {
   }
   fields(){
     return [
-      new DatabaseField(last_login),
-      new DatabaseField(id),
-      new DatabaseField(username),
-      new DatabaseField(user_group),
-      new DatabaseField(active),
+      new DateTimeField("last_login"),
+      new IntField("id"),
+      new CharField("username"),
+      new IntField("user_group"),
+      new BooleanField("active"),
     ];
   }
 }
@@ -856,9 +858,9 @@ export class UserAssignment {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(user),
-      new DatabaseField(customer),
+      new IntField("id"),
+      new ForeignField("user","user"),
+      new ForeignField("customer","customer"),
     ];
   }
 }
@@ -894,15 +896,15 @@ export class Vial {
   }
   fields(){
     return [
-      new DatabaseField(id),
-      new DatabaseField(tracer),
-      new DatabaseField(activity),
-      new DatabaseField(volume),
-      new DatabaseField(lot_number),
-      new DatabaseField(fill_time),
-      new DatabaseField(fill_date),
-      new DatabaseField(assigned_to),
-      new DatabaseField(owner),
+      new IntField("id"),
+      new ForeignField("tracer","tracer"),
+      new FloatField("activity"),
+      new FloatField("volume"),
+      new CharField("lot_number"),
+      new DateField("fill_time"),
+      new DateField("fill_date"),
+      new ForeignField("assigned_to","activity_orders"),
+      new ForeignField("owner","customer"),
     ];
   }
 }

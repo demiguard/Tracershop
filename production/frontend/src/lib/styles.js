@@ -106,7 +106,7 @@ export const NAVBAR_STYLES = {
     marginBottom: '20px',
   },
   mainIcon : {
-    maxHeight : "100%",
-    maxWidth : "100%",
+    maxHeight : 'min(100%, 62.5px)',
+    maxWidth : '100%'
   }
 };

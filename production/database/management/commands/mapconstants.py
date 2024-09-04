@@ -4,14 +4,37 @@ from enum import Enum
 from typing import Any, List
 
 # Third party packages
-from django.db.models import Field
+from django.db.models import CharField, Field, FloatField, ForeignKey,\
+    IntegerField,DateField, DateTimeField, TimeField, BooleanField, TextField,\
+    IPAddressField, GenericIPAddressField
 from django.core.management.base import BaseCommand, CommandError, CommandParser
 
 # Tracershop packages
-from database.models import MODELS
+from database.models import MODELS, INVERTED_MODELS
 import shared_constants
 
 def serialize_field(field: Field) -> str:
+  if isinstance(field, BooleanField):
+    return f"new BooleanField(\"{field.name}\")"
+  if isinstance(field, CharField) or isinstance(field, TextField):
+    return f"new CharField(\"{field.name}\")"
+  if isinstance(field, IntegerField):
+    return f"new IntField(\"{field.name}\")"
+  if isinstance(field, FloatField):
+    return f"new FloatField(\"{field.name}\")"
+  if isinstance(field, DateTimeField):
+    return f"new DateTimeField(\"{field.name}\")"
+  if isinstance(field, DateField):
+    return f"new DateField(\"{field.name}\")"
+  if isinstance(field, TimeField):
+    return f"new DateField(\"{field.name}\")"
+  if isinstance(field, IPAddressField) or isinstance(field, GenericIPAddressField):
+    return f"new IPField(\"{field.name}\")"
+  if isinstance(field, ForeignKey):
+    other_name = INVERTED_MODELS[field.related_model]
+    return f"new ForeignField(\"{field.name}\",\"{other_name}\")"
+
+  print(field)
   return f"new DatabaseField({field.name})"
 
 
@@ -55,6 +78,7 @@ class Command(BaseCommand):
     with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
       out.write("/**Automatically generated file by generate JavascriptDataClasses.py */\n")
       out.write("/**Contains a mapping of the database and their fields. */\n\n")
+      out.write("import { BooleanField, CharField, DateField, DateTimeField, IntField, FloatField, ForeignField } from '~/lib/database_fields.js'\n\n")
 
       for model in MODELS.values():
         out.write(f"export class {model.__name__} {{\n")

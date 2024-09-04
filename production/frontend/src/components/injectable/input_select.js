@@ -1,6 +1,5 @@
 import React, {useState, useRef, useEffect} from "react";
 import { Form, InputGroup, Row } from "react-bootstrap";
-import { ClickableIcon } from "~/components/injectable/icons";
 import { Optional } from "~/components/injectable/optional";
 import { RelativeAnchor } from "~/components/injectable/relative_anchor";
 import { Option } from "~/components/injectable/select";
