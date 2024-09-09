@@ -131,4 +131,4 @@ def parse_index_header(header: Dict[str,str]) -> Tuple[UserGroups, str]:
   else:
     username = ""
 
-  return
+  return user_group, username
