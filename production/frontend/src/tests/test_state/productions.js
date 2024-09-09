@@ -47,5 +47,24 @@ export const productions = new Map([
     tracer : 1,
     production_time : "06:00:00",
     expiration_date : null,
+  }], [9, {
+    id : 9,
+    production_day : 4,
+    tracer : 3,
+    production_time : "11:30:00",
+    expiration_date : null,
+}], [ 10, {
+    id : 10,
+    production_day : 3,
+    tracer : 3,
+    production_time : "06:30:00",
+    expiration_date : null,
+  }],
+  [ 11, {
+    id : 11,
+    production_day : 3,
+    tracer : 3,
+    production_time : "11:30:00",
+    expiration_date : null,
   }]
 ]);

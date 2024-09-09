@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import React, {useContext} from "react";
+import React, { } from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { bookings } from "~/tests/test_state/bookings.js";
@@ -15,8 +15,6 @@ import { StateContextProvider, useTracershopState, WebsocketContextProvider } fr
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const websocket_module = require("../../../lib/tracer_websocket.js");
 
-
-let container = null;
 let websocket = null;
 let props = null;
 
@@ -27,7 +25,6 @@ beforeEach(async () => {
   jest.setSystemTime(now)
   delete window.location
   window.location = { href : "tracershop"}
-  container = document.createElement("div");
   websocket = websocket_module.TracerWebSocket;
   props = {
     [PROP_ACTIVE_DATE] : now,
@@ -42,8 +39,7 @@ afterEach(() => {
   cleanup();
   module.clearAllMocks();
   window.localStorage.clear();
-  if(container != null) container.remove();
-  container = null;
+
   websocket = null;
   props = null;
 });

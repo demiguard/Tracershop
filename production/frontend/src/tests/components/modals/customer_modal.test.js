@@ -3,12 +3,12 @@
  */
 
 import React from "react";
-import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, waitFor, prettyDOM } from "@testing-library/react";
 
 import { jest } from '@jest/globals'
 import { AppState, testState } from '../../app_state.js';
-import { CustomerModal } from '../../../components/modals/customer_modal.js'
-import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, cssError } from "~/lib/constants.js";
+import { CustomerModal, DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from '../../../components/modals/customer_modal.js'
+import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, WEEKLY_REPEAT_CHOICES, cssError } from "~/lib/constants.js";
 import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_TRACER_MAPPING, WEBSOCKET_DATA } from "~/lib/shared_constants.js"
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
@@ -525,6 +525,123 @@ describe("Customer modal list", () => {
 
     act(() => {
       fireEvent.change(endpointNameInput, {target : {value : "test name  "}});
+    });
+  });
+
+  it("Create Deliver time, Change DeliveryEndpoint, Change Tracer, Change Production, success", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    // Change endpoint
+    act(() => {
+      const endpointSelect = screen.getByLabelText('endpoint-select');
+      fireEvent.change(endpointSelect, {target : {value : "2"}});
+    });
+
+    // Change Tracer
+    act(() => {
+      const tracerSelect = screen.getByLabelText('active-tracer-select');
+      fireEvent.change(tracerSelect, {target : {value : "3"}});
+    });
+
+    // Change Production
+    act(() => {
+      const productionSelect = screen.getByLabelText("production-select")
+      fireEvent.change(productionSelect, {target : {value : "9"}});
+    });
+
+    // Change Delivery Time
+    act(() => {
+      const deliveryTimeInput = screen.getByLabelText("time-slot-delivery-time");
+      fireEvent.change(deliveryTimeInput, { target : {value :  "13:00"} });
+    });
+
+    // Change Weekly
+    act(() => {
+      const weeklySelect = screen.getByLabelText("weekly-select");
+      fireEvent.change(weeklySelect, { target : { value : "1"}});
     })
+
+    act(() => {
+      const createNewDeliveryTimeIcon = screen.getByLabelText("time-slot-commit");
+      fireEvent.click(createNewDeliveryTimeIcon)
+    });
+
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(
+      DATA_DELIVER_TIME,
+      expect.objectContaining({
+        delivery_time : "13:00:00",
+        destination : 2,
+        production_run : 9,
+        weekly_repeat :  WEEKLY_REPEAT_CHOICES.EVEN
+      })
+    );
+  });
+
+  it("Attempting to create invalid time slot", () =>  {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    // Change Delivery Time
+    act(() => {
+      const deliveryTimeInput = screen.getByLabelText("time-slot-delivery-time");
+      fireEvent.change(deliveryTimeInput, { target : {value :  "your mother was a hamster"} });
+    });
+
+    act(() => {
+      const createNewDeliveryTimeIcon = screen.getByLabelText("time-slot-commit");
+      fireEvent.click(createNewDeliveryTimeIcon)
+    });
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('time-slot-delivery-time')).toHaveStyle({
+      backgroundColor : ERROR_BACKGROUND_COLOR
+    });
+
+    act(() => {
+      fireEvent.mouseEnter(
+        screen.getByLabelText('time-slot-delivery-time')
+      );
+    });
+
+    expect(screen.getByText('Leverings tiden er ikke formattet som et tidspunkt'));
+  });
+
+  it("Attempting to create time slot before ", () =>  {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <CustomerModal {...props} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    // Change Delivery Time
+    act(() => {
+      const deliveryTimeInput = screen.getByLabelText("time-slot-delivery-time");
+      fireEvent.change(deliveryTimeInput, { target : {value : "01:00"} });
+    });
+
+    act(() => {
+      const createNewDeliveryTimeIcon = screen.getByLabelText("time-slot-commit");
+      fireEvent.click(createNewDeliveryTimeIcon);
+    });
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+    expect(screen.getByLabelText('time-slot-delivery-time')).toHaveStyle({
+      backgroundColor : ERROR_BACKGROUND_COLOR
+    });
+
+    act(() => {
+      fireEvent.mouseEnter(
+        screen.getByLabelText('time-slot-delivery-time')
+      );
+    });
+
+    expect(screen.getByText(DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE));
   });
 });

@@ -6,12 +6,12 @@ __author__ = "Christoffer Vilstrup Jensen"
 from datetime import date, time
 from logging import Logger
 import re
-from typing import List
+from typing import Dict, List, Tuple
 
 # Third party libraries
 
 # Tracershop packages
-from database.models import Customer, Tracer, Vial
+from database.models import Customer, Tracer, Vial, UserGroups
 
 tracer_mapping = {}
 customer_mapping = {}
@@ -116,3 +116,19 @@ def parse_val_file(file_content: List[str], logger : Logger) -> Vial:
     parserFunctions[key](val_string, vial, logger)
 
   return vial
+
+def parse_index_header(header: Dict[str,str]) -> Tuple[UserGroups, str]:
+  if 'X-Tracer-Role' in header:
+    try:
+      user_group = UserGroups(int(header['X-Tracer-Role']))
+    except ValueError:
+      user_group = UserGroups.ShopExternal
+  else:
+    user_group = UserGroups.Anon
+
+  if 'X-Tracer-User' in header:
+    username = header['X-Tracer-User']
+  else:
+    username = ""
+
+  return

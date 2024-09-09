@@ -24,5 +24,7 @@ export const locations = new Map([
   [19, new Location(19, "ROOM_CODE_19", 3, "ROOM_19" )],
   [20, new Location(20, "ROOM_CODE_20", 3, "ROOM_20" )],
   // Missing rooms
-  
+  [21, new Location(21, "ROOM_CODE_21", 1, null )],
+  [22, new Location(22, "ROOM_CODE_22", 1, null )],
+
 ])

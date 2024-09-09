@@ -19,6 +19,7 @@ from django.contrib.auth.models import AnonymousUser, AbstractBaseUser
 # Tracershop App
 from constants import ERROR_LOGGER, DEBUG_LOGGER
 from lib.formatting import toDate, toDateTime, toTime
+from lib.parsing import parse_index_header
 from lib.utils import identity
 from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   ERROR_INSUFFICIENT_DATA, ERROR_INVALID_JAVASCRIPT_VERSION,\
@@ -134,7 +135,7 @@ def validateMessage(message: Dict) -> str:
   """Checks is a message contains the correct fields to be a valid message.
   Note a valid message is returned as falsy, while a truthy indicate an error.
 
-  Note that this function should not be used 
+  Note that this function should not be used
 
   Args:
       message (Dict): The message to be validated
@@ -191,13 +192,16 @@ def authenticate_user(username: str,
 
 def login_from_header(request):
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
-    header_user_group =  UserGroups(int(request.headers['X-Tracer-Role']))
-    header_user_name  = request.headers['X-Tracer-User']
+    header_user_group, header_user_name = parse_index_header(
+      request.headers
+    )
 
     if header_user_group == UserGroups.ShopExternal:
       # Note that username is not parsed so we have to get creative
       # Also this is very insecure... ffs
       _login_from_header_external_user(request)
+    elif header_user_group == UserGroups.Anon:
+      return False
     else:
       _login_from_header_internal_user(request, header_user_group, header_user_name)
     return True

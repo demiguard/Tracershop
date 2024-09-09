@@ -91,9 +91,12 @@ function TimeColumn({TimeTableDataContainer,
         continue;
       }
       const offset = hour - TimeTableDataContainer.min_hour;
-      absoluteCells.push(<AbsoluteCell number_of_columns={number_of_columns} offset={offset} key={hour}>
-        {TimeTableDataContainer.cellFunction(objects)}
-      </AbsoluteCell>)
+      absoluteCells.push(<AbsoluteCell
+                            number_of_columns={number_of_columns}
+                            offset={offset}
+                            key={100 + hour}>
+                            {TimeTableDataContainer.cellFunction(objects)}
+                         </AbsoluteCell>);
     }
   }
 
@@ -117,16 +120,13 @@ function TimeColumn({TimeTableDataContainer,
  * }} param0
  * @returns
  */
-export function TimeTable({entries,
+export function TimeTable({
   TimeTableDataContainer,
   column_objects = new Map(),
   floating_objects = [],
   floating_key_function = (_fo) => {return null;},
-  floating_time_stamp_function = (_fo) => {return new TimeStamp(12, 0, 0)},
-  column_name_function = () => {},
-  inner_text_function = (entry) => {return <div></div>},
-  startingHour = 6,
-  stoppingHour = 14}){
+  }
+){
 
   const floatingMapping = new ArrayMap();
   const number_of_columns = column_objects.size + 1;

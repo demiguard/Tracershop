@@ -23,7 +23,6 @@ import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js
 import { compareLoosely, nullify } from "~/lib/utils.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { parseDanishPositiveNumberInput, parseStringInput, parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input.js";
-import { ErrorInput } from "../injectable/inputs/error_input.js";
 import { clone } from "~/lib/serialization.js";
 import { timeSlotsFilter, tracerTypeFilter } from "~/lib/filters.js";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
@@ -36,6 +35,8 @@ const WeeklyRepeatOptions = toOptions([
   { id : 1, name : "Lige Uger"},
   { id : 2, name : "Ulige Uger"},
 ]);
+
+export const DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE = "Der kan ikke laves en levering før den valgte produktion";
 
 function DeliveryTimeTable({tempTimeSlotID, setTempTimeSlot, timeSlots}){
   const state = useTracershopState();
@@ -425,7 +426,7 @@ export function CustomerModal({active_customer, on_close}) {
     const production = state.production.get(tempTimeSlot.production_run);
 
     if(production.production_time > deliveryTime){
-      setDeliveryTimeError("Der kan ikke laves en levering før den valgte produktion");
+      setDeliveryTimeError(DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE);
       return [false, {}];
     }
 
