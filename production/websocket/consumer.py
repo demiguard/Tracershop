@@ -111,7 +111,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, AnonymousUser):
       return
 
-
     if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_add('production', self.channel_name)
     if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:

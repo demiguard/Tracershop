@@ -84,6 +84,7 @@ function TimeColumn({TimeTableDataContainer,
     tableCells.push(<Cell key={hour}></Cell>);
   }
 
+  let i = 0;
   if(floating_objects instanceof ArrayMap){
     for(const [hour, objects] of floating_objects){
       if(!(TimeTableDataContainer.min_hour < hour && hour < TimeTableDataContainer.max_hour)){
@@ -94,9 +95,10 @@ function TimeColumn({TimeTableDataContainer,
       absoluteCells.push(<AbsoluteCell
                             number_of_columns={number_of_columns}
                             offset={offset}
-                            key={100 + hour}>
+                            key={i * 100 + hour}>
                             {TimeTableDataContainer.cellFunction(objects)}
                          </AbsoluteCell>);
+      i++;
     }
   }
 

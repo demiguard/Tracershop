@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { useTracershopState } from '~/components/tracer_shop_context';
 import { TimeStamp, calculateDeadline, compareTimeStamp, sameDate } from '~/lib/chronomancy';
 import { renderDateTime } from '~/lib/formatting';
@@ -14,9 +14,16 @@ export function DeadlineDisplay(props){
 
   const [clockDateTime, setClockDateTime] = useState(new Date())
 
-  setInterval(() => {
-    setClockDateTime(new Date());
-  }, 1000);
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setClockDateTime(new Date());
+    }, 1000);
+    return () => {
+      clearInterval(interval);
+    }
+  }, []);
+
+
 
   const deadlineDateTime = calculateDeadline(deadline, state.today);
 

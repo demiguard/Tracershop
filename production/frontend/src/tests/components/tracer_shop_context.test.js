@@ -108,6 +108,5 @@ describe("Tracershop context test", () => {
     expect(stateFunction).toHaveBeenCalled();
     expect(stateFunction.mock.calls[0][0]).toBeInstanceOf(Map);
     expect(compareMaps(stateFunction.mock.calls[0][0], closed_dates));
-
   });
 });
