@@ -374,7 +374,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       user_serialized = await self.db.serialize_dict({DATA_USER : [user]})
       if user.user_group == UserGroups.ShopExternal:
         logins = await database_sync_to_async(SuccessfulLogin.objects.filter)(user=user)
-        await logins.delete()
+        await database_sync_to_async(logins.delete)()
       return await self.respond_auth_message(message, True, user_serialized, self.scope["session"].session_key)
     elif isinstance(user, AnonymousUser):
       user = await auth.get_login()
