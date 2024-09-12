@@ -369,7 +369,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def handleWhoAmI(self, message):
     user = await get_user(self.scope)
     if isinstance(user, User):
-      logger.info(f"Who am I had session cookie with: {user}")
+      logger.info(f"WhoAmI message found: {user} from session cookie")
       await self.enterUserGroups(user)
       user_serialized = await self.db.serialize_dict({DATA_USER : [user]})
       if user.user_group == UserGroups.ShopExternal:
@@ -382,7 +382,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
       if not isinstance(user, AnonymousUser):
         await login(self.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')
         session = self.scope["session"]
-        logger.info(f"session type: {type(session)} session {session}")
         await database_sync_to_async(session.save)()
         await self.enterUserGroups(user)
         serialized_user = await self.db.serialize_dict({DATA_USER : [user]})

@@ -228,11 +228,14 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
   Args:
       request (_type_): _description_
   """
+
+  user = get_login()
+  if user:
+    login(request, user, backend="tracerauth.backend.TracershopAuthenticationBackend")
   return None
 
 
 # this is placed bad
-@database_sync_to_async
 def get_login(now=None) -> AbstractBaseUser:
   if now is None:
     now = datetime.now()
@@ -241,7 +244,7 @@ def get_login(now=None) -> AbstractBaseUser:
   valid_window_lower_bound = now - timedelta(0, window_bound_seconds)
   valid_window_upper_bound = now
 
-  debug_logger.info(f"lower:{valid_window_lower_bound}, upper: {window_bound_seconds}")
+  debug_logger.info(f"lower:{valid_window_lower_bound}, upper: {valid_window_upper_bound}")
 
   query = SuccessfulLogin.objects.filter(
     login_time__range=[valid_window_lower_bound,valid_window_upper_bound]
