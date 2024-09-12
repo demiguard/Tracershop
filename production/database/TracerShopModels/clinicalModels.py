@@ -13,7 +13,8 @@ from django.db.models import Model, DateField, BigAutoField, CharField, EmailFie
 # Tracershop Packages
 from database.TracerShopModels.authModels import User, UserGroups
 from database.TracerShopModels.baseModels import TracershopModel, Days
-from database.TracerShopModels import authModels
+
+from lib.utils import classproperty
 from tracerauth.types import AuthActions
 
 class Isotope(TracershopModel):
@@ -40,23 +41,53 @@ class Tracer(TracershopModel):
   clinical_name = CharField(max_length=256)
   isotope = ForeignKey(Isotope, on_delete=RESTRICT)
   tracer_type = SmallIntegerField(choices=TracerTypes.choices)
-  default_price_per_unit = FloatField(null=True, default=None)
   vial_tag = CharField(max_length=32)
   archived = BooleanField(default=False)
 
   def __str__(self):
     return f"{self.shortname} - {self.isotope}"
 
+  derived_properties = ['is_static_instance']
+
+  @property
+  def is_static_instance(self):
+    if self.tracer_type == TracerTypes.ActivityBased:
+      return not ActivityProduction.objects.filter(product=self).exists()
+    elif self.tracer_type == TracerTypes.InjectionBased:
+      from database.TracerShopModels import customerModels
+      return not customerModels.InjectionOrder.objects.filter(tracer=self).exists()
+    return False
+
+  def canDelete(self, user: Optional[User] = None) -> AuthActions:
+    if self.is_static_instance and user is not None:
+      return AuthActions.ACCEPT
+    else:
+      return AuthActions.REJECT_LOG
 
 class ActivityProduction(TracershopModel):
   id = BigAutoField(primary_key=True)
   production_day = SmallIntegerField(choices=Days.choices)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
-  expiration_date = DateField(null=True, default=None)
+
+  derived_properties = [
+    'is_static_instance'
+  ]
 
   def __str__(self) -> str:
     return f"Production of {self.tracer.shortname} - {Days(self.production_day).name} - {self.production_time}"
+
+  # Note the name is clashing with canDelete, witch checks if you can delete this
+  @property
+  def is_static_instance(self):
+    from database.TracerShopModels import customerModels # Gotta dodge circular imports
+    return not customerModels.ActivityDeliveryTimeSlot.objects.filter(production_run=self).exists()
+
+  def canDelete(self, user: Optional[User] = None) -> AuthActions:
+    if self.is_static_instance and user is not None:
+      return AuthActions.ACCEPT
+    else:
+      return AuthActions.REJECT_LOG
 
 class ReleaseRight(TracershopModel):
   id = BigAutoField(primary_key=True)

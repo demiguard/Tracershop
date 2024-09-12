@@ -87,11 +87,15 @@ class Command(BaseCommand):
           if field.name in model.exclude:
             continue
           out.write(f"{field.name}, ")
+        for derived_property in model.derived_properties:
+          out.write(f"{derived_property}, ")
         out.write(") {\n")
         for field in model._meta.fields:
           if field.name in model.exclude:
             continue
           out.write(f"    this.{field.name}={field.name}\n")
+        for derived_property in model.derived_properties:
+          out.write(f"    this.{derived_property}={derived_property}\n")
         out.write("  }\n\n")
         out.write(f"  /**Copies the {model.__name__.lower()}\n")
         out.write(f"  * @returns {{ {model.__name__} }}\n")
@@ -102,8 +106,13 @@ class Command(BaseCommand):
           if field.name in model.exclude:
             continue
           out.write(f"      this.{field.name}")
-          if i != len(model._meta.fields) -1: # Note there is a bug here if the last field is in exclude
+          if i != len(model._meta.fields) -1 or model.derived_properties != []: # Note there is a bug here if the last field is in exclude
             out.write(",")
+          out.write("\n")
+        for i, derived_property in enumerate(model.derived_properties):
+          out.write(f"      this.{derived_property}")
+          if i != len(model.derived_properties) - 1:
+            out.write(',')
           out.write("\n")
         out.write("    )\n")
         out.write("  }\n")
@@ -112,7 +121,6 @@ class Command(BaseCommand):
         for i,field in enumerate(model._meta.fields):
           if field.name in model.exclude:
             continue
-
           out.write(f"      {serialize_field(field)},\n")
         out.write("    ];\n")
         out.write("  }\n")

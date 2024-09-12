@@ -240,6 +240,13 @@ class ActivityOrder(TracershopModel):
   def tracer(self) -> Tracer:
     return self.ordered_time_slot.production_run.tracer
 
+  @property
+  def active_time_slot(self) -> ActivityDeliveryTimeSlot:
+    if self.moved_to_time_slot is not None:
+      return self.moved_to_time_slot
+    else:
+      return self.ordered_time_slot
+
   def canEdit(self, user: Optional[User] = None) -> AuthActions:
     if user is None:
       return AuthActions.REJECT

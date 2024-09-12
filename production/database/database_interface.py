@@ -307,10 +307,13 @@ class DatabaseInterface():
         models = Model.objects.filter(pk__in=primary_keys)
 
       serialized_models = serialize('python', models)
-      for serialized_model in serialized_models:
+      for serialized_model, model in zip(serialized_models, models):
         fields = serialized_model['fields']
         for keyword in Model.exclude: #type: ignore
           del fields[keyword]
+        for property_name in Model.derived_properties:
+          fields[property_name] = getattr(model, property_name)
+
       serialized_dict[key] = serialized_models
 
     return self.DATA_encoder.encode(serialized_dict)

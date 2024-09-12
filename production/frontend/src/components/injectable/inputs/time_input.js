@@ -4,8 +4,8 @@ import { FormControl } from "react-bootstrap"
 
 /**
  * Attempt 3 making this
- * @param {Event} event 
- * @param {String} currentInput 
+ * @param {Event} event
+ * @param {String} currentInput
  * @returns {String}
  */
 function addTimeColons(event, currentInput){
@@ -21,33 +21,27 @@ function addTimeColons(event, currentInput){
 }
 
 /**
- * 
+ *
  * @param {{
  * stateFunction : CallableFunction - function used for setting an input
  * }} props
- * @returns 
+ * @returns
  */
 export function TimeInput(props){
-  const newProps = {...props};
+  const {stateFunction, canEdit=true,  ...rest} = props;
 
   function inputFunction(event){
-    props.stateFunction(addTimeColons(event, props.value));
+    stateFunction(addTimeColons(event, props.value));
   }
 
-  delete newProps.stateFunction;
-  newProps['onChange'] = inputFunction;
+  rest['onChange'] = inputFunction;
 
-  if('canEdit' in props){
-    if(!props['canEdit']){
-      newProps['readOnly'] = true;
-      delete newProps['onChange'];
-
-    }
-    delete newProps['canEdit'];
+  if(!canEdit){
+    rest['readOnly'] = true;
+    delete rest['onChange'];
   }
 
   return <FormControl
-    {...newProps}
-    onChange={inputFunction}
+    {...rest}
   />
 }

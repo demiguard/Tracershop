@@ -5,7 +5,7 @@ handling
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
-from datetime import date
+from datetime import date, datetime, timedelta
 from logging import getLogger
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple,  Type
 
@@ -231,15 +231,24 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
   return None
 
 
-
 # this is placed bad
 @database_sync_to_async
-def get_login() -> AbstractBaseUser:
-  try:
-    successful_login = SuccessfulLogin.objects.all().order_by('login_time')[0]
+def get_login(now=None) -> AbstractBaseUser:
+  if now is None:
+    now = datetime.now()
+
+  window_bound_seconds = 5
+  valid_window_lower_bound = now - timedelta(0, window_bound_seconds)
+  valid_window_upper_bound = now
+
+  query = SuccessfulLogin.objects.filter(
+    login_time__range=[valid_window_lower_bound,valid_window_upper_bound]
+  )
+
+  if query.exists():
+    successful_login = query[0]
     user = successful_login.user
     successful_login.delete()
     return user
-  except Exception as exception:
-
+  else:
     return AnonymousUser()

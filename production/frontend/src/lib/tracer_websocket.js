@@ -98,7 +98,8 @@ export class TracerWebSocket {
     }
 
     this._ws.onerror = function(err) {
-      console.error("Socket encounter error: ", err);
+      console.log("Error code",err.code)
+      console.log("Socket encounter error: ", err);
       this._ws.close();
     }
 

@@ -93,6 +93,11 @@ export function nullify (input) {
 /**
  * Compares two object, to see if their state represents the same object, after user input.
  * The primary use case is then you copy an object and you want to check if the copy is dirty.
+ *
+ * Note this doesn't work very well for nested object for instance:
+ *
+ * compareLoosely({a : {}},{a : {}}) -> false be2
+ *
  * @param {Object} obj_1
  * @param {Object} obj_2
  * @returns {Boolean} - if the objects are equal.
@@ -110,4 +115,30 @@ export function compareLoosely(obj_1, obj_2){
     }
   }
   return eq;
+}
+
+/** Checks if two maps contain equivalent elements
+ * @template {K}
+ * @template {V}
+ * @param {Map<K,V>} map_1
+ * @param {Map<K,V>} map_2
+ */
+export function compareMaps(map_1, map_2){
+  if(map_1.size !== map_2.size){
+    return false;
+  }
+
+  for(const key of map_1.keys()){
+    if(!map_2.has(key)){
+      return false;
+    }
+    const obj_1 = map_1.get(key);
+    const obj_2 = map_2.get(key);
+
+    if(!compareLoosely(obj_1, obj_2)){
+      return false;
+    }
+  }
+
+  return true;
 }

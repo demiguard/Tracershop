@@ -42,9 +42,8 @@ class TracershopModel(Model):
   def canDelete(self, user: Optional['authModels.User'] = None) -> AuthActions:
     return AuthActions.ACCEPT
 
-  @classproperty
-  def exclude(cls) -> List[str]:
-    return []
+  derived_properties = []
+  exclude = []
 
   class Meta:
     abstract = True
@@ -141,4 +140,3 @@ class Days(IntegerChoices):
   Friday = 4
   Saturday = 5
   Sunday = 6
-

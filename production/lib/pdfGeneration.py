@@ -532,9 +532,16 @@ def DrawReleaseCertificate(filename :str,
     pivot_vial = vials[0]
   else:
     pivot_order = orders[0]
+    if pivot_order.freed_datetime is None:
+      fill_time = pivot_order.active_time_slot.delivery_time
+      date_time = pivot_order.delivery_date
+    else:
+      fill_time = pivot_order.freed_datetime.date()
+      date_time = pivot_order.freed_datetime.time()
+
     pivot_vial = Vial(
-      fill_date = pivot_order.freed_datetime.date(),
-      fill_time = pivot_order.freed_datetime.time(),
+      fill_date = fill_time,
+      fill_time = date_time,
       lot_number = "Ukendt batch nummer"
     )
 

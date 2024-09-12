@@ -10,7 +10,7 @@ export function DeadlineDisplay(props){
   }
   const state = useTracershopState();
 
-  const {deadline, deadline_name, ...rest} = props;
+  const {deadline, deadline_name: deadlineName, ...rest} = props;
 
   const [clockDateTime, setClockDateTime] = useState(new Date())
 
@@ -21,7 +21,7 @@ export function DeadlineDisplay(props){
   const deadlineDateTime = calculateDeadline(deadline, state.today);
 
   if (deadlineDateTime < clockDateTime){
-    return <div {...rest}></div>;
+    return <div {...rest}>Deadlinen for {deadlineName} er udløbet</div>;
   }
 
   const deadline_string = (() => {
@@ -37,5 +37,5 @@ export function DeadlineDisplay(props){
     }
   })()
 
-  return <div {...rest}>Deadlinen for {deadline_name} udløber {deadline_string}</div>
+  return <div {...rest}>Deadlinen for {deadlineName} udløber {deadline_string}</div>
 }

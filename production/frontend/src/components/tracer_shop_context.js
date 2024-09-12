@@ -20,11 +20,12 @@ const EXCLUDED_FROM_LOCAL_STORAGE = [
 
 function getDatabaseMap(databaseField){
   const /**@type {Map} */ dbMap = db.get(databaseField);
-  if(!dbMap){
+  if(!dbMap || !(databaseField in MODELS)){
     return new Map();
-  }
+  } else {
 
-  if(databaseField in MODELS){
+
+
     const Model = MODELS[databaseField];
     const serializedMap = new Map();
     for(const rawObject of dbMap.values()){
@@ -34,8 +35,6 @@ function getDatabaseMap(databaseField){
     }
 
     return serializedMap;
-  } else {
-    return dbMap;
   }
 }
 
@@ -130,11 +129,17 @@ export function tracershopReducer(state, action){
   throw "Unknown action";
 }
 
-export function TracerShopContext({children}){
-  let websocket = useRef(null);
-  useEffect(() => { websocket.current = new TracerWebSocket(
-    new WebSocket("ws://" + window.location.host + "/ws/"),
-    dispatch)
+export function TracerShopContext({children, websocket_url}){
+  const websocket = useRef(null);
+
+  const websocketURL = websocket_url
+    ? websocket_url : "ws://" + window.location.host + "/ws/";
+
+  useEffect(() => {
+    websocket.current = new TracerWebSocket(
+      new WebSocket(websocketURL),
+      dispatch
+    )
     return () => {
       if(websocket.current !== null){
         websocket.current.close();

@@ -111,10 +111,6 @@ export function InputSelect(props){
 
   function onFocus(){
     setIsFocused(true);
-    if(!value){
-      setUserInput("");
-      setFilterRegex("");
-    }
   }
 
   function onBlur(){
@@ -141,6 +137,8 @@ export function InputSelect(props){
   const left_padding = width - padding.left - iconSize;
   const top_padding = height - padding.bottom;
 
+  const optionButtonLabel = 'aria-label' in rest ? rest['aria-label'] + "-options" : 'options';
+
   return (
     <div
     style={{ flex : "min-content" }}
@@ -153,27 +151,30 @@ export function InputSelect(props){
         onChange={updateUserInput}
         {...rest}
       />
-      <RelativeAnchor>
-        <img
-          onClick={() => {
-            if(!isFocused){
-              ref.current.focus();
-            }
-          }}
-          src="static/images/arrow_down.svg"
-          style={{
-            height : `${iconSize}px`,
-            width :  `${iconSize}px`,
-            position : "relative",
-            left : `${left_padding}px`,
-            top : `-${top_padding}px`,
-          }}
-          />
-      </RelativeAnchor>
-      <Optional exists={isFocused}>
+      <Optional exists={canEdit}>
         <RelativeAnchor>
-          {OptionsHTML}
+          <img
+            aria-label={optionButtonLabel}
+            onClick={() => {
+              if(!isFocused && canEdit){
+                ref.current.focus();
+              }
+            }}
+            src="static/images/arrow_down.svg"
+            style={{
+              height : `${iconSize}px`,
+              width :  `${iconSize}px`,
+              position : "relative",
+              left : `${left_padding}px`,
+              top : `-${top_padding}px`,
+            }}
+            />
         </RelativeAnchor>
+        <Optional exists={isFocused}>
+          <RelativeAnchor>
+            {OptionsHTML}
+          </RelativeAnchor>
+        </Optional>
       </Optional>
   </div>);
 }

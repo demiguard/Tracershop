@@ -5,8 +5,8 @@ import { InputSelect } from "~/components/injectable/input_select";
 
 export class Option {
   constructor(value, name){
-    this.name = name;
     this.value = value;
+    this.name = name;
   }
 }
 
@@ -53,9 +53,9 @@ export function toOptionsFromEnum(obj, namingFunction){
  * @returns
  */
 export function Select(props) {
-  const {canEdit, options, ...newProps} = props;
+  const {canEdit=true, options, ...newProps} = props;
 
-  if(canEdit !== undefined && !canEdit){
+  if(!canEdit){
       newProps['disabled'] = true;
       delete newProps['onChange'];
     }

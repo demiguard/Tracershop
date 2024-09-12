@@ -4,29 +4,17 @@
 
 import React from "react";
 
-import { createRoot } from "react-dom/client";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { TracershopNavbar } from "../../../components/injectable/navbar";
 import { jest } from '@jest/globals'
 
-let container = null;
-let root = null
 beforeEach(() => {
-  container = document.createElement("div");
-  root = createRoot(container);
+
 });
 
 afterEach(() => {
-  act(() => {
-    if(root != null) root.unmount()
-  })
-
+  jest.resetAllMocks();
   cleanup()
-
-  if(container != null) container.remove();
-
-  container = null;
-  root = null;
 });
 
 const setActivePage = jest.fn(arg => arg);
@@ -38,11 +26,8 @@ const NAMES = {
   id_3 : "Final name"
 }
 
-
 describe("Navbar Render Test", () => {
-  it("Navbar Rendering Test, no Navbar Elements not authed", async () => {
-    const names = ["A_name","Another_Name", "Final_name"]
-
+  it("Navbar Rendering Test, no Navbar Elements not authed", () => {
     render(<TracershopNavbar
       logout={logout}
       Names={NAMES}
@@ -51,13 +36,13 @@ describe("Navbar Render Test", () => {
     />);
 
     for(const identifier of Object.keys(NAMES)){
-      expect(await screen.findByText(NAMES[identifier])).toBeVisible()
+      expect(screen.getByText(NAMES[identifier])).toBeVisible()
     }
     expect(screen.queryByText('logout')).toBeNull();
   });
 
-  it("Navbar Rendering Test, Navbar Elements", async () => {
-    const injectName = "Injected"
+  it("Navbar Rendering Test, Navbar Elements", () => {
+    const injectName = "Injected";
 
     render(<TracershopNavbar
       ActiveKey={NAMES[0]}
@@ -68,10 +53,10 @@ describe("Navbar Render Test", () => {
       isAuthenticated={false}
     />);
 
-    expect(await screen.findByText(injectName)).toBeVisible();
+    expect(screen.getByText(injectName)).toBeVisible();
   });
 
-  it("Navbar click Name test", async () => {
+  it("Navbar click Name test", () => {
     render(<TracershopNavbar
       logout={logout}
       Names={NAMES}
@@ -80,14 +65,14 @@ describe("Navbar Render Test", () => {
       isAuthenticated={false}
     />);
 
-    await act(async () => {
-      fireEvent(await screen.findByText(NAMES.id_1), new MouseEvent('click', {bubbles: true, cancelable: true}))
+    act(() => {
+      fireEvent(screen.getByText(NAMES.id_1), new MouseEvent('click', {bubbles: true, cancelable: true}))
     })
 
     expect(setActivePage).toHaveBeenCalledWith('id_1')
   });
 
-  it("Navbar click logout", async () => {
+  it("Navbar click logout", () => {
     render(<TracershopNavbar
       logout={logout}
       Names={NAMES}
@@ -96,8 +81,8 @@ describe("Navbar Render Test", () => {
       isAuthenticated={true}
     />);
 
-    await act(async () => {
-      fireEvent(await screen.findByText('Log ud'),
+    act(() => {
+      fireEvent(screen.getByText('Log ud'),
                 new MouseEvent('click', {bubbles: true, cancelable:  true}))
     })
     expect(logout).toHaveBeenCalled()

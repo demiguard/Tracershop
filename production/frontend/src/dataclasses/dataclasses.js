@@ -540,15 +540,15 @@ export class MessageAssignment {
 }
 
 export class Tracer {
-  constructor(id, shortname, clinical_name, isotope, tracer_type, default_price_per_unit, vial_tag, archived, ) {
+  constructor(id, shortname, clinical_name, isotope, tracer_type, vial_tag, archived, is_static_instance, ) {
     this.id=id
     this.shortname=shortname
     this.clinical_name=clinical_name
     this.isotope=isotope
     this.tracer_type=tracer_type
-    this.default_price_per_unit=default_price_per_unit
     this.vial_tag=vial_tag
     this.archived=archived
+    this.is_static_instance=is_static_instance
   }
 
   /**Copies the tracer
@@ -561,9 +561,9 @@ export class Tracer {
       this.clinical_name,
       this.isotope,
       this.tracer_type,
-      this.default_price_per_unit,
       this.vial_tag,
-      this.archived
+      this.archived,
+      this.is_static_instance
     )
   }
   fields(){
@@ -573,7 +573,6 @@ export class Tracer {
       new CharField("clinical_name"),
       new ForeignField("isotope","isotopes"),
       new IntField("tracer_type"),
-      new FloatField("default_price_per_unit"),
       new CharField("vial_tag"),
       new BooleanField("archived"),
     ];
@@ -677,12 +676,12 @@ export class ProcedureIdentifier {
 }
 
 export class ActivityProduction {
-  constructor(id, production_day, tracer, production_time, expiration_date, ) {
+  constructor(id, production_day, tracer, production_time, is_static_instance, ) {
     this.id=id
     this.production_day=production_day
     this.tracer=tracer
     this.production_time=production_time
-    this.expiration_date=expiration_date
+    this.is_static_instance=is_static_instance
   }
 
   /**Copies the activityproduction
@@ -694,7 +693,7 @@ export class ActivityProduction {
       this.production_day,
       this.tracer,
       this.production_time,
-      this.expiration_date
+      this.is_static_instance
     )
   }
   fields(){
@@ -703,7 +702,6 @@ export class ActivityProduction {
       new IntField("production_day"),
       new ForeignField("tracer","tracer"),
       new DateField("production_time"),
-      new DateField("expiration_date"),
     ];
   }
 }
