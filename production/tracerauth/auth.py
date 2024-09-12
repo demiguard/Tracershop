@@ -241,6 +241,8 @@ def get_login(now=None) -> AbstractBaseUser:
   valid_window_lower_bound = now - timedelta(0, window_bound_seconds)
   valid_window_upper_bound = now
 
+  debug_logger.info(f"lower:{valid_window_lower_bound}, upper: {window_bound_seconds}")
+
   query = SuccessfulLogin.objects.filter(
     login_time__range=[valid_window_lower_bound,valid_window_upper_bound]
   )
