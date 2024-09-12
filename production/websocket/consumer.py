@@ -369,25 +369,25 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def handleWhoAmI(self, message):
     user = await get_user(self.scope)
     if isinstance(user, User):
+      logger.info(f"Who am I had session cookie with: {user}")
       await self.enterUserGroups(user)
       user_serialized = await self.db.serialize_dict({DATA_USER : [user]})
       return await self.respond_auth_message(message, True, user_serialized, self.scope["session"].session_key)
     elif isinstance(user, AnonymousUser):
-      successful_login_exists = await database_sync_to_async(SuccessfulLogin.objects.exists)()
-      if successful_login_exists:
-        user = await auth.get_login()
-        if not isinstance(user, AnonymousUser):
-          await login(self.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')
-          session = self.scope["session"]
-          logger.info(f"session type: {type(session)} session {session}")
-          await database_sync_to_async(session.save)()
-          await self.enterUserGroups(user)
-          serialized_user = await self.db.serialize_dict({DATA_USER : [user]})
-          session_key = self.scope["session"].session_key
-          return await self.respond_auth_message(message,
-                                                 True,
-                                                 serialized_user,
-                                                 session_key)
+      user = await auth.get_login()
+      logger.info(f"Found user:{user} from external users")
+      if not isinstance(user, AnonymousUser):
+        await login(self.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')
+        session = self.scope["session"]
+        logger.info(f"session type: {type(session)} session {session}")
+        await database_sync_to_async(session.save)()
+        await self.enterUserGroups(user)
+        serialized_user = await self.db.serialize_dict({DATA_USER : [user]})
+        session_key = self.scope["session"].session_key
+        return await self.respond_auth_message(message,
+                                                True,
+                                                serialized_user,
+                                                session_key)
     await self.respond_reject_auth_message(message)
 
   async def handleLogout(self, message):
