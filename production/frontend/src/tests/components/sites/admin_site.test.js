@@ -9,7 +9,6 @@ import { AppState, testState } from "../../app_state.js";
 
 import { AdminSite } from "../../../components/sites/admin_site.js"
 import { DATABASE_ADMIN_PAGE, PROP_USER } from "../../../lib/constants.js";
-import { ANON } from "../../test_state/users.js";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

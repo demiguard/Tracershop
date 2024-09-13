@@ -24,63 +24,7 @@ export const STATUS_COLORS = {
   [ORDER_STATUS.UNAVAILABLE] : "#858585",
 }
 
-function getColorMap(
-    state,
-    bit_chain,
-    filter_activity_orders,
-    filter_injection_orders
-){
-  const colorMap = new Map();
 
-  const year = activeMonth.getFullYear();
-  const month = activeMonth.getMonth();
-
-  const server_config = state.server_config.get(1)
-  const activity_deadline = (server_config !== undefined) ?
-    state.deadline.get(server_config.global_activity_deadline) : undefined;
-  let injection_deadline = (server_config !== undefined) ?
-    state.deadline.get(server_config.global_injection_deadline) : undefined;
-
-  const dateInjectionMapping = new OrderDateMapping([...state.injection_orders.values()].filter(filter_injection_orders));
-  const dateActivityMapping = new OrderDateMapping([...state.activity_orders.values()].filter(filter_activity_orders));
-
-  const lastMondayOffset = new Date(year, month -1,  LastMondayInLastMonth(year, month - 1));
-  let pivot = lastMondayOffset;
-  const firstSundayOffset = new Date(year, month + 1,  FirstSundayInNextMonth(year, month + 1));
-
-  while(!compareDates(pivot, firstSundayOffset)){
-    const dateString = dateToDateString(pivot);
-    let activity_color_id =  ORDER_STATUS.UNAVAILABLE;
-    let injection_color_id = ORDER_STATUS.UNAVAILABLE;
-    if (bit_chain.eval(pivot) && !expiredDeadline(activity_deadline, pivot)){
-      activity_color_id = ORDER_STATUS.AVAILABLE;
-    }
-
-    if (!expiredDeadline(injection_deadline, pivot)){
-      injection_color_id = ORDER_STATUS.AVAILABLE;
-    }
-
-    if(dateActivityMapping.has_status_for_date(dateString)){
-      activity_color_id = dateActivityMapping.get_status_for_date(dateString);
-    }
-
-    if(dateInjectionMapping.has_status_for_date(dateString)){
-      injection_color_id = dateInjectionMapping.get_status_for_date(dateString);
-    }
-
-    colorMap.set(dateString, [STATUS_COLORS[activity_color_id],
-                              STATUS_COLORS[injection_color_id]]);
-
-    pivot = new Date(pivot.getFullYear(), pivot.getMonth(), pivot.getDate() + 1);
-  }
-
-  for(const closed_date of state.closed_date.values()){
-    colorMap.set(closed_date.close_date, [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
-                                          STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]);
-  }
-
-  return colorMap;
-}
 
 /** This is a calender, where stuff can be injected on date click and on month change
  *  Alot of functions are in injected into this Component.
@@ -172,7 +116,63 @@ export function Calender({calender_date,
   const dispatch = useTracershopDispatch();
   const [activeMonth, setActiveMonth] = useState(calender_date);
 
+  function getColorMap(
+      state,
+      bit_chain,
+      filter_activity_orders,
+      filter_injection_orders
+  ){
+    const colorMap = new Map();
 
+    const year = activeMonth.getFullYear();
+    const month = activeMonth.getMonth();
+
+    const server_config = state.server_config.get(1)
+    const activity_deadline = (server_config !== undefined) ?
+      state.deadline.get(server_config.global_activity_deadline) : undefined;
+    let injection_deadline = (server_config !== undefined) ?
+      state.deadline.get(server_config.global_injection_deadline) : undefined;
+
+    const dateInjectionMapping = new OrderDateMapping([...state.injection_orders.values()].filter(filter_injection_orders));
+    const dateActivityMapping = new OrderDateMapping([...state.activity_orders.values()].filter(filter_activity_orders));
+
+    const lastMondayOffset = new Date(year, month -1,  LastMondayInLastMonth(year, month - 1));
+    let pivot = lastMondayOffset;
+    const firstSundayOffset = new Date(year, month + 1,  FirstSundayInNextMonth(year, month + 1));
+
+    while(!compareDates(pivot, firstSundayOffset)){
+      const dateString = dateToDateString(pivot);
+      let activity_color_id =  ORDER_STATUS.UNAVAILABLE;
+      let injection_color_id = ORDER_STATUS.UNAVAILABLE;
+      if (bit_chain.eval(pivot) && !expiredDeadline(activity_deadline, pivot)){
+        activity_color_id = ORDER_STATUS.AVAILABLE;
+      }
+
+      if (!expiredDeadline(injection_deadline, pivot)){
+        injection_color_id = ORDER_STATUS.AVAILABLE;
+      }
+
+      if(dateActivityMapping.has_status_for_date(dateString)){
+        activity_color_id = dateActivityMapping.get_status_for_date(dateString);
+      }
+
+      if(dateInjectionMapping.has_status_for_date(dateString)){
+        injection_color_id = dateInjectionMapping.get_status_for_date(dateString);
+      }
+
+      colorMap.set(dateString, [STATUS_COLORS[activity_color_id],
+                                STATUS_COLORS[injection_color_id]]);
+
+      pivot = new Date(pivot.getFullYear(), pivot.getMonth(), pivot.getDate() + 1);
+    }
+
+    for(const closed_date of state.closed_date.values()){
+      colorMap.set(closed_date.close_date, [STATUS_COLORS[ORDER_STATUS.UNAVAILABLE],
+                                            STATUS_COLORS[ORDER_STATUS.UNAVAILABLE]]);
+    }
+
+    return colorMap;
+  }
   const colorMap = getColorMap(state, bit_chain, filter_activity_orders, filter_injection_orders);
 
   /** This function is called when the user changes the current month

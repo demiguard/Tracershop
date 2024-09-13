@@ -141,7 +141,6 @@ describe("Production Setup", () => {
         production_time : "11:22:00",
         tracer : 3,
         production_day : 4,
-        expiration_date : null,
       }));
   });
 });

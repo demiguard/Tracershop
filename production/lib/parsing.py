@@ -28,7 +28,7 @@ def update_customer_mapping():
 update_customer_mapping()
 
 def _parse_customer(string: str, vial: Vial, logger: Logger):
-  regex = re.compile("customer:\s*(\d+)\-\w+\s*")
+  regex = re.compile(r"customer:\s*(\d+)\-\w+\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     dispenser_id_str, = regex_match.groups()
@@ -41,13 +41,13 @@ def _parse_customer(string: str, vial: Vial, logger: Logger):
 
 def _parse_charge(string: str, vial: Vial, logger: Logger):
   # I could regex this correctly, but...
-  regex = re.compile("charge:\s*([\w\-]+)\s*")
+  regex = re.compile(r"charge:\s*([\w\-]+)\s*")
   regex_match = regex.match(string)
   if regex_match is None:
     return
   lot_number, = regex_match.groups()
   vial.lot_number = lot_number
-  vial_tag_regex = re.compile("(\w+)\-\d{6}\-\d+")
+  vial_tag_regex = re.compile(r"(\w+)\-\d{6}\-\d+")
   vial_tag_match = vial_tag_regex.match(lot_number)
   if vial_tag_match is None:
 
@@ -59,7 +59,7 @@ def _parse_charge(string: str, vial: Vial, logger: Logger):
 
 
 def _parse_fill_date(string: str, vial: Vial, logger: Logger):
-  regex = re.compile("filldate:\s*(\d{2}).(\d{2}).(\d{2})\s*")
+  regex = re.compile(r"filldate:\s*(\d{2}).(\d{2}).(\d{2})\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     day_str, month_str, year_str = regex_match.groups()
@@ -67,14 +67,14 @@ def _parse_fill_date(string: str, vial: Vial, logger: Logger):
 
 
 def _parse_fill_time(string: str, vial: Vial, logger: Logger):
-  regex = re.compile("filltime:\s*(\d{2}):(\d{2}):(\d{2})\s*")
+  regex = re.compile(r"filltime:\s*(\d{2}):(\d{2}):(\d{2})\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     hour_str, min_str, sec_str = regex_match.groups()
     vial.fill_time = time(int(hour_str), int(min_str), int(sec_str))
 
 def _parse_activity(string: str, vial: Vial, logger: Logger):
-  regex = re.compile("activity:\s*(\d+(\.\d+)?)\s*MBq;\s*")
+  regex = re.compile(r"activity:\s*(\d+(\.\d+)?)\s*MBq;\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     activity_str = regex_match.groups()
@@ -82,7 +82,7 @@ def _parse_activity(string: str, vial: Vial, logger: Logger):
 
 
 def _parse_volume(string: str, vial: Vial, logger: Logger):
-  regex = re.compile("volume:\s*(\d+(\.\d+)?)\s*ml\s*")
+  regex = re.compile(r"volume:\s*(\d+(\.\d+)?)\s*ml\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     volume_str = regex_match.groups()
@@ -100,7 +100,7 @@ parserFunctions = {
 
 def parse_val_file(file_content: List[str], logger : Logger) -> Vial:
   vial = Vial()
-  keyword_regex = re.compile("(\w+):")
+  keyword_regex = re.compile(r"(\w+):")
   for val_string in file_content:
     logger.debug(f"Parsing {val_string}")
     match = keyword_regex.match(val_string)

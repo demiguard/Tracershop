@@ -62,7 +62,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
 ]
 
-export const JAVASCRIPT_VERSION = "1.2.14";
+export const JAVASCRIPT_VERSION = "1.2.15";
 
 export const NO_ERROR = "";
 
