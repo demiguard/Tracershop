@@ -43,7 +43,7 @@ from database.models import ServerConfiguration, User,\
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
-from tracerauth.ldap import checkUserGroupMembership
+from tracerauth.ldap import checkUserGroupMembership, LDAPSearchResult
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
@@ -476,9 +476,12 @@ class DatabaseInterface():
       user = User.objects.get(username=username)
       user_created = False
     except ObjectDoesNotExist:
-      ldap_user_group = checkUserGroupMembership(username)
-      if ldap_user_group is None:
+      success, ldap_user_group = checkUserGroupMembership(username)
+      if success == LDAPSearchResult.USER_DOES_NOT_EXISTS:
         return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME, None, None
+
+      if success == LDAPSearchResult.MISSING_USER_GROUP:
+        return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS, None, None
 
       if ldap_user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
         user_created = True

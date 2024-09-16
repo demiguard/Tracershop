@@ -1,4 +1,5 @@
 # Python Standard Library
+from enum import Enum
 from logging import getLogger
 from typing import List, Tuple, Any, Dict, Optional
 
@@ -25,6 +26,14 @@ ldapTracershopGroups = {
 }
 
 error_logger = getLogger(ERROR_LOGGER)
+
+class LDAPSearchResult(Enum):
+  SUCCESS = 0
+  USER_DOES_NOT_EXISTS = 1
+  MISSING_USER_GROUP = 2
+
+
+
 
 class LDAPConnection: #pragma: no cover
   def __init__(self, username=LDAP_USERNAME, password=LDAP_PASSWORD) -> None:
@@ -96,7 +105,7 @@ def guess_customer_group(username: str) -> Tuple[Optional[str], List[UserAssignm
   return street_address, uas
 
 
-def checkUserGroupMembership(username: str) -> Optional[UserGroups]:
+def checkUserGroupMembership(username: str) ->  Tuple[LDAPSearchResult, Optional[UserGroups]]:
   """Queries connected LDAP system for a user's tracershop user group
   return None if the user doesn't exists
 
@@ -114,13 +123,12 @@ def checkUserGroupMembership(username: str) -> Optional[UserGroups]:
   """
   user_properties = _extract_user_properties(_query_username(username))
   if user_properties is None:
-    return None
+    return LDAPSearchResult.USER_DOES_NOT_EXISTS, None
 
   if 'memberOf' in user_properties:
     for group_bytes in user_properties['memberOf']:
       group_str = group_bytes.decode()
       for ldapTracershopGroupsName in ldapTracershopGroups.keys():
         if ldapTracershopGroupsName in group_str:
-          return ldapTracershopGroups[ldapTracershopGroupsName]
-  return None
-
+          return LDAPSearchResult.SUCCESS, ldapTracershopGroups[ldapTracershopGroupsName]
+  return LDAPSearchResult.MISSING_USER_GROUP, None

@@ -21,8 +21,11 @@ import { MARGIN } from "~/lib/styles";
 /**
  * This object is the manual ordering and review for activity based orders
  * @param {{
- *    activityDeadlineExpired : Boolean,
- *    injectionDeadlineValid : Boolean
+ *  active_date : Date,
+ *  active_endpoint : Number,
+ *  activityDeadlineValid : Boolean,
+ *  injectionDeadlineValid : Boolean,
+ *  booking : Array<Booking>
  * }} props
  * @returns Element
  */
@@ -98,12 +101,11 @@ export function OrderReview({active_endpoint,
       />);
 
   const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
-    (_injectionOrder) => {
-      const /**@type {InjectionOrder} */ injectionOrder = _injectionOrder
+    (injectionOrder) => {
       const matchingDay = injectionOrder.delivery_date === activeDateString;
       const matchingEndpoint = injectionOrder.endpoint === active_endpoint;
       return matchingDay && matchingEndpoint;
-  })
+  });
 
   const InjectionOrderCards = relevantInjectionOrders.map((injectionOrder) => {
     return (<InjectionOrderCard
@@ -121,9 +123,6 @@ export function OrderReview({active_endpoint,
   const /**@type {Deadline | undefined} */ injectionDeadline = (serverConfig !== undefined) ?
                                                                    state.deadline.get(serverConfig.global_injection_deadline)
                                                                    : undefined;
-
-
-
 
   if(injectionDeadlineValid && (availableInjectionTracers.length > 0)) {
     InjectionOrderCards.push(<InjectionOrderCard

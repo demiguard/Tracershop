@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.2.15" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.3.0" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -170,6 +170,7 @@ class SUCCESS_STATUS_CREATING_USER_ASSIGNMENT(__Enum):
   NO_LDAP_USERNAME = 1
   INCORRECT_GROUPS = 2
   MISSING_CUSTOMER = 3
+  NO_GROUPS = 4
 
 class SUCCESS_STATUS_CRUD(__Enum):
   SUCCESS = 0

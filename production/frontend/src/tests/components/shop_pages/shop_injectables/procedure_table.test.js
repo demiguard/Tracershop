@@ -10,6 +10,7 @@ import { StateContextProvider, WebsocketContextProvider,
   DispatchContextProvider } from "~/components/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
+import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
 
@@ -46,7 +47,7 @@ describe("Procedure Table test suite", () => {
     expect(screen.getByTestId("procedure-identifier--1")).toBeVisible();
     expect(screen.getByTestId("tracer--1")).toBeVisible();
     expect(screen.getByTestId("units--1")).toBeVisible();
-    expect(screen.getByLabelText("commit--1")).toBeVisible();
+    expect(screen.queryByLabelText("commit--1")).toBeNull();
 
     for(const production_identifier of testState.procedure_identifier.values()){
       // Either a pi is in a row or in the option, both visible
@@ -54,17 +55,17 @@ describe("Procedure Table test suite", () => {
     }
   });
 
-  it("Change to customer 2 and create a procedure", () => {
+  it("Change to customer 2 and create a procedure", async () => {
     const ResolvingWebsocket = {
       getMessage : jest.fn((input) => {return {
         WEBSOCKET_MESSAGE_TYPE : input
       }}),
-      send : jest.fn((message) => {return new Promise(async function(resolve) {
-        return {status : SUCCESS_STATUS_CRUD.SUCCESS};
-      })}),
-      sendCreateModel : jest.fn(() => {return new Promise(async function(resolve) {
-        return {status : SUCCESS_STATUS_CRUD.SUCCESS};
-      })})
+      send : jest.fn((message) => { return Promise.resolve(
+        {status : SUCCESS_STATUS_CRUD.SUCCESS}
+      )}),
+      sendCreateModel : jest.fn(() => {
+        return Promise.resolve({status : SUCCESS_STATUS_CRUD.SUCCESS})
+      })
     }
 
     render(<StateContextProvider value={testState}>
@@ -76,20 +77,23 @@ describe("Procedure Table test suite", () => {
     const endpointSelect = screen.getByLabelText("select-customer");
 
     act(() => {
-      fireEvent.change(endpointSelect, {target: {value: 2}});
+      fireEvent.change(endpointSelect, {target: {value: 2 }});
     })
 
     const piSelect = screen.getByTestId("procedure-identifier--1");
     const tracerSelect = screen.getByTestId("tracer--1");
     const unitsInput = screen.getByTestId("units--1");
-    const createButton = screen.getByLabelText("commit--1");
 
     act(() => {
       fireEvent.change(piSelect, {target: {value : 2}});
       fireEvent.change(tracerSelect, {target: {value : 3}});
       fireEvent.change(unitsInput, {target: {value : "2000"}});
-      fireEvent.click(createButton);
     });
+
+    await act(async () => {
+      const createButton = screen.getByLabelText("commit--1");
+      fireEvent.click(createButton);
+    })
 
     expect(ResolvingWebsocket.sendCreateModel).toHaveBeenCalledWith(DATA_PROCEDURE, expect.objectContaining({
       series_description : 2,
@@ -98,35 +102,11 @@ describe("Procedure Table test suite", () => {
       delay_minutes : 0,
       owner : 3,
     }));
-  })
 
-  it("Change to customer 2 and attempt to create a blank", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
-    const endpointSelect = screen.getByLabelText("select-customer");
-
-    act(() => {
-      fireEvent.change(endpointSelect,{target: {value: 2}});
-    })
-
-    const createButton = screen.getByLabelText("commit--1");
-
-    act(() => {
-      fireEvent.click(createButton);
-    });
-
-    act(() => {
-      const piSelect = screen.getByTestId("procedure-identifier--1").closest("div");
-      fireEvent.mouseEnter(piSelect);
-    })
-
-    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
-    expect(screen.getByText(ERROR_MISSING_SERIES_DESCRIPTION)).toBeVisible();
-  })
+    expect(screen.getByTestId("tracer--1")).toHaveValue("");
+    expect(screen.getByTestId("units--1")).toHaveValue("0")
+    expect(screen.getByTestId("procedure-identifier--1")).toHaveValue("")
+  });
 
   it("Change to customer 2 and attempt Type non sense in", () => {
     const ResolvingWebsocket = {
@@ -147,22 +127,21 @@ describe("Procedure Table test suite", () => {
     const endpointSelect = screen.getByLabelText("select-customer");
 
     act(() => {
-      fireEvent.change(endpointSelect,{target: {value: 2}});
+      fireEvent.change(endpointSelect, {target: {value: 2}});
     })
 
     const piSelect = screen.getByTestId("procedure-identifier--1");
     const unitsInput = screen.getByTestId("units--1");
 
-    const createButton = screen.getByLabelText("commit--1");
-
-
     act(() => {
       fireEvent.change(piSelect, {target: {value : 2}});
       fireEvent.change(unitsInput, {target: {value : "asdf2000"}});
-
-      fireEvent.click(createButton);
     });
 
+    act(() => {
+      const createButton = screen.getByLabelText("commit--1");
+      fireEvent.click(createButton);
+    })
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
 
 
@@ -170,7 +149,6 @@ describe("Procedure Table test suite", () => {
       const unitsInputParent = screen.getByTestId("units--1").closest("div");
       fireEvent.mouseEnter(unitsInputParent);
     })
-
 
     expect(screen.getByText("Enheder er ikke et tal")).toBeVisible();
   })
@@ -207,7 +185,7 @@ describe("Procedure Table test suite", () => {
   })
 
 
-  it("Edit procedure 1 with nonsense", () => {
+  it("Edit procedure 1 with nonsense units", () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <ProcedureTable relatedCustomer={testState.customer}/>
@@ -233,7 +211,66 @@ describe("Procedure Table test suite", () => {
     })
 
     expect(screen.getByText("Enheder er ikke et tal")).toBeVisible();
-  })
+  });
+
+  it("Edit procedure 1 with nonsense Delay", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <ProcedureTable relatedCustomer={testState.customer}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    const delayInput = screen.getByTestId("delay-1");
+
+    act(() => {
+      fireEvent.change(delayInput, {target: {value : "-5"}});
+    });
+
+    act(() => {
+      const editButton = screen.getByLabelText("commit-1");
+      fireEvent.click(editButton);
+    })
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+
+    act(() => {
+      const delayInputParent = screen.getByTestId("delay-1").closest("div");
+      fireEvent.mouseEnter(delayInputParent);
+    })
+
+    expect(screen.getByText("Forsinkelsen kan ikke være negativ")).toBeVisible();
+  });
+
+  it("Create a procedure without selecting a series description", () => {
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <ProcedureTable relatedCustomer={testState.customer}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
 
 
+    const tracerSelect = screen.getByTestId("tracer--1");
+    const unitsInput = screen.getByTestId("units--1");
+
+    act(() => {
+      fireEvent.change(tracerSelect, {target: {value : 3}});
+      fireEvent.change(unitsInput, {target: {value : "2000"}});
+    });
+
+    act(() => {
+      const createButton = screen.getByLabelText("commit--1");
+      fireEvent.click(createButton);
+    })
+
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
+
+    const piSelect = screen.getByTestId("procedure-identifier--1");
+    expect(piSelect).toHaveStyle({backgroundColor : ERROR_BACKGROUND_COLOR});
+
+    act(() => {
+      fireEvent.mouseEnter(piSelect);
+    });
+
+    expect(screen.getByText(ERROR_MISSING_SERIES_DESCRIPTION)).toBeVisible();
+  });
 });

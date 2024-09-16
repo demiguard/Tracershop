@@ -3,11 +3,13 @@
 """
 
 # Python Standard Library
+from typing import Tuple
 
 # Third party packages
 
 # Tracershop packages
 from database.models import UserGroups
+from tracerauth.ldap import LDAPSearchResult
 
 mockedUserGroups = {
   '-AAAA0000' : UserGroups.Admin,
@@ -19,6 +21,10 @@ mockedUserGroups = {
   # Note there's no user group External, since this user doesn't have a BAM ID
   # Therefore they cannot be returned from the LDAP service
 }
+
+MISSING_USER_GROUPS = [
+  'missing'
+]
 
 FAKE_LDAP_CN = 'BLA BLA BLA BLA'
 
@@ -34,7 +40,7 @@ class LDAPConnection():
 
   def __enter__(self):
     return self.FakeLDAPObject()
-  
+
   def __exit__(self, exception_type, exeception_value, traceback):
     pass
 
@@ -45,7 +51,7 @@ class EmptyLDAPConnection():
 
   def __enter__(self):
     return self.FakeLDAPObject()
-  
+
   def __exit__(self, exception_type, exeception_value, traceback):
     pass
 
@@ -62,5 +68,11 @@ class AlteredLDAPConnection:
   def __exit__(self, exception_type, exeception_value, traceback):
     pass
 
-def checkUserGroupMembership(username: str) -> UserGroups:
-  return mockedUserGroups.get(username, None)
+def checkUserGroupMembership(username: str) -> Tuple[LDAPSearchResult, UserGroups]:
+  if username not in mockedUserGroups:
+    return LDAPSearchResult.USER_DOES_NOT_EXISTS, None
+
+  if username in MISSING_USER_GROUPS:
+    return LDAPSearchResult.MISSING_USER_GROUP, None
+
+  return LDAPSearchResult.SUCCESS, mockedUserGroups.get(username, None)

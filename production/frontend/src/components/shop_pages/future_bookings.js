@@ -67,8 +67,8 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
 */
 function TracerCard({tracer,
                     bookings,
-                    activityDeadlineExpired,
-                    injectionDeadlineExpired,
+                    activityDeadlineValid,
+                    injectionDeadlineValid,
                     procedureLocationIndex
 
   }) {
@@ -92,8 +92,8 @@ function TracerCard({tracer,
     websocket.send(message);
   }
 
-  const deadlineExpired = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
-     activityDeadlineExpired : injectionDeadlineExpired;
+  const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
+    activityDeadlineValid : injectionDeadlineValid;
 
   let rows = bookings.sort(
     (booking_1, booking_2) => {
@@ -162,7 +162,7 @@ function TracerCard({tracer,
              {rows}
            </tbody>
          </Table>
-         <Optional exists={!deadlineExpired}>
+         <Optional exists={deadlineValid}>
           <Row style={{justifyContent : "right",display : "flex",}}>
             <div>
               <MarginButton
@@ -177,8 +177,21 @@ function TracerCard({tracer,
    </Card>);
 }
 
+/** Displays bookings for the active date prop and the endpoint prop. Allows the
+ * user to order bookings by tracer
+ *
+ * @param {{
+ *  active_date : Date,
+ *  active_endpoint : Number,
+ *  activityDeadlineValid : Boolean,
+ *  injectionDeadlineValid : Boolean,
+ *  booking : Array<Booking>
+ * }} props
+ *
+ * @returns {Component}
+ */
 export function FutureBooking ({active_endpoint, booking,
-  activityDeadlineExpired, injectionDeadlineExpired}) {
+  activityDeadlineValid, injectionDeadlineValid}) {
   const state = useTracershopState();
   const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
                                                             state.location,
@@ -203,8 +216,8 @@ export function FutureBooking ({active_endpoint, booking,
           key={index}
           tracer={tracer}
           bookings={BookingArray}
-          activityDeadlineExpired={activityDeadlineExpired}
-          injectionDeadlineExpired={injectionDeadlineExpired}
+          activityDeadlineValid={activityDeadlineValid}
+          injectionDeadlineValid={injectionDeadlineValid}
           procedureLocationIndex={procedureLocationIndex}
         />);
     }

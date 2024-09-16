@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { FormControl, Table } from "react-bootstrap";
 
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS } from "~/lib/shared_constants"
@@ -10,13 +10,12 @@ import { DestinationSelect } from "../../injectable/derived_injectables/destinat
 import { initialize_customer_endpoint } from "~/lib/initialization";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
-import { ClickableIcon } from "~/components/injectable/icons";
-import { parseDanishNumberInput, parseWholePositiveNumber } from "~/lib/user_input";
+import { parseDanish0OrPositiveNumberInput, parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
-import { InputSelect } from "~/components/injectable/input_select";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
+import { Optional } from "~/components/injectable/optional";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
@@ -28,7 +27,6 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
   * @returns {Element}
    */
   function ProcedureRow({procedure, tracerOptions, activeProcedures}){
-    const websocket = useWebsocket();
     const state = useTracershopState();
     const procedureIdentifier = state.procedure_identifier.get(nullParser(procedure.series_description));
 
@@ -41,6 +39,19 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
     const [errorUnits, setErrorUnits] = useState("");
     const [errorDelay, setErrorDelay] = useState("");
     const [errorSeriesDescription, setErrorSeriesDescription] = useState("");
+
+    // Refresh
+    useEffect(() => {
+      setTracer(nullParser(procedure.tracer));
+      setUnits(nullParser(procedure.tracer_units));
+      setDelay(nullParser(procedure.delay_minutes))
+    }, [procedure]);
+
+    // Note type corrosion is needed here
+    const dirtyObject = procedure.tracer != tracer
+      || procedure.delay_minutes != delay
+      || procedure.tracer_units != units
+
 
     let procedureContent = undefined;
     if(procedureIdentifier){
@@ -70,8 +81,8 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
         parsedTracer = null
       }
       const validTracer = parsedTracer !== null;
-      const [validUnits, parsedUnits] = parseWholePositiveNumber(units, "Enheder");
-      const [validDelay, parsedDelay] = parseDanishNumberInput(delay, "Forsinkelse");
+      const [validUnits, parsedUnits] = parseDanishPositiveNumberInput(units, "Enheder");
+      const [validDelay, parsedDelay] = parseDanish0OrPositiveNumberInput(delay, "Forsinkelsen");
       const validSeriesDescription = procedure.series_description !== "" || seriesDescription;
       const parsedSeriesDescription = procedure.series_description || Number(seriesDescription);
 
@@ -147,13 +158,15 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
           </ErrorInput>
         </td>
         <td>
-          <CommitButton
-            object_type={DATA_PROCEDURE}
-            temp_object={procedure}
-            label={`commit-${procedure.id}`}
-            validate={validate}
-            callback={commit_callback}
-          />
+          <Optional exists={dirtyObject}>
+            <CommitButton
+              object_type={DATA_PROCEDURE}
+              temp_object={procedure}
+              label={`commit-${procedure.id}`}
+              validate={validate}
+              callback={commit_callback}
+            />
+          </Optional>
         </td>
       </tr>);
   }
