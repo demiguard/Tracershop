@@ -19,12 +19,14 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
     taylor = User(username="TaylorTheSlow")
     frank = Customer(short_name="FrankTheCustomer")
     franks_backyard = DeliveryEndpoint(name="franks backyard", owner=frank)
-    the_secret_sauce=Tracer(shortname="secret sauce", isotope=Isotope(atomic_letter="U",
-                                                                      atomic_mass=235))
+    the_secret_sauce=Tracer(shortname="secret sauce",
+                            isotope=Isotope(atomic_letter="U",
+                                            atomic_mass=235))
     franks_basement=Location(
       location_code="asdfqwer",
       endpoint = franks_backyard,
-      common_name="franks basement")
+      common_name="franks basement"
+    )
     franks_treatment_code=ProcedureIdentifier(
       code="zxcvqwer", description="franks treatment"
     )
@@ -32,14 +34,12 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
       production_day=Days.Monday,
       tracer=the_secret_sauce,
       production_time=time(0,1,0),
-      expiration_date=None,
     )
     the_sauce_delivery=ActivityDeliveryTimeSlot(
       weekly_repeat=WeeklyRepeat.EveryWeek,
       delivery_time=time(10,00,00),
       destination=franks_backyard,
       production_run=the_sauce_production,
-      expiration_date=None,
     )
     the_sauce_order=ActivityOrder(
       ordered_activity=1e6,
@@ -151,7 +151,7 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
 
     # Access rights
 
-    
+
 
 class TransactionalCustomerModels(TransactionTestCase):
   def setUp(self) -> None:
@@ -171,14 +171,12 @@ class TransactionalCustomerModels(TransactionTestCase):
       production_day=Days.Monday,
       tracer=self.the_secret_sauce,
       production_time=time(0,1,0),
-      expiration_date=None,
     )
     self.the_sauce_delivery=ActivityDeliveryTimeSlot.objects.create(
       weekly_repeat=WeeklyRepeat.EveryWeek,
       delivery_time=time(10,00,00),
       destination=self.franks_backyard,
       production_run=self.the_sauce_production,
-      expiration_date=None,
     )
 
   def tearDown(self):

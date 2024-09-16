@@ -139,14 +139,12 @@ class PDFViewingTestCase(TestCase):
       production_day=Days.Monday,
       tracer=cls.the_secret_sauce,
       production_time=time(0,1,0),
-      expiration_date=None,
     )
     cls.the_sauce_delivery=ActivityDeliveryTimeSlot.objects.create(
       weekly_repeat=WeeklyRepeat.EveryWeek,
       delivery_time=time(10,00,00),
       destination=cls.franks_backyard,
       production_run=cls.the_sauce_production,
-      expiration_date=None,
     )
     cls.the_injection_sauce = InjectionOrder.objects.create(
       id=51132,

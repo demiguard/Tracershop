@@ -376,7 +376,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await database_sync_to_async(logins.delete)()
       return await self.respond_auth_message(message, True, user_serialized, self.scope["session"].session_key)
     elif isinstance(user, AnonymousUser):
-      user = await auth.get_login()
+      user = await database_sync_to_async(auth.get_login)()
       logger.info(f"Found user:{user} from external users")
       if not isinstance(user, AnonymousUser):
         await login(self.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')

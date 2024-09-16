@@ -52,7 +52,7 @@ class Tracer(TracershopModel):
   @property
   def is_static_instance(self):
     if self.tracer_type == TracerTypes.ActivityBased:
-      return not ActivityProduction.objects.filter(product=self).exists()
+      return not ActivityProduction.objects.filter(tracer=self).exists()
     elif self.tracer_type == TracerTypes.InjectionBased:
       from database.TracerShopModels import customerModels
       return not customerModels.InjectionOrder.objects.filter(tracer=self).exists()

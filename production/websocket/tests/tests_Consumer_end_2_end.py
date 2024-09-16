@@ -555,12 +555,13 @@ class ConsumerTestCase(TransactionTestCase):
 
   ##### Message Testing #####
   async def test_GetState(self):
-    response = await self._loginAdminSendRecieve({
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_STATE,
-      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-    })
-    self.assertEqual(self.message_id, response[WEBSOCKET_MESSAGE_ID])
+    with self.assertNoLogs(ERROR_LOGGER):
+      response = await self._loginAdminSendRecieve({
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_STATE,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+      })
+      self.assertEqual(self.message_id, response[WEBSOCKET_MESSAGE_ID])
 
 
   async def test_ModelCreate_ClosedDate(self):
@@ -573,45 +574,45 @@ class ConsumerTestCase(TransactionTestCase):
 
     comm = WebsocketCommunicator(app,"ws/")
     comm_other_user = WebsocketCommunicator(app, "ws/")
+    with self.assertNoLogs(ERROR_LOGGER):
+      await comm_other_user.connect()
+      await comm_other_user.send_json_to(self.loginShopAdminMessage)
+      login_response = await comm_other_user.receive_json_from()
+      self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 
-    await comm_other_user.connect()
-    await comm_other_user.send_json_to(self.loginShopAdminMessage)
-    login_response = await comm_other_user.receive_json_from()
-    self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+      _conn, _subprotocal = await comm.connect()
 
-    _conn, _subprotocal = await comm.connect()
+      await comm.send_json_to(self.loginAdminMessage)
+      login_response = await comm.receive_json_from()
+      self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 
-    await comm.send_json_to(self.loginAdminMessage)
-    login_response = await comm.receive_json_from()
-    self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+      await comm.send_json_to({
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        WEBSOCKET_DATATYPE : keyword,
+        WEBSOCKET_DATA : {
+          "close_date" : "2021-11-30"
+        }
+      })
 
-    await comm.send_json_to({
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
-      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      WEBSOCKET_DATATYPE : keyword,
-      WEBSOCKET_DATA : {
-        "close_date" : "2021-11-30"
-      }
-    })
+      response = await comm.receive_json_from()
+      other_response = await comm_other_user.receive_json_from()
 
-    response = await comm.receive_json_from()
-    other_response = await comm_other_user.receive_json_from()
+      self.assertEqual(response, other_response)
 
-    self.assertEqual(response, other_response)
+      await comm.disconnect()
+      await comm_other_user.disconnect()
 
-    await comm.disconnect()
-    await comm_other_user.disconnect()
+      modelBackend: ClosedDate = await database_sync_to_async(Model.objects.get)(close_date=datetime.date(2021,11,30))
+      self.assertIn(WEBSOCKET_DATA, response)
+      data = response[WEBSOCKET_DATA]
+      self.assertIn(keyword, data)
+      jsonParsed = loads(data)
+      modelFrontend = await database_sync_to_async(Model.objects.get)(pk=jsonParsed[keyword][0]['pk'])
+      self.assertEqual(modelFrontend, modelBackend)
 
-    modelBackend: ClosedDate = await database_sync_to_async(Model.objects.get)(close_date=datetime.date(2021,11,30))
-    self.assertIn(WEBSOCKET_DATA, response)
-    data = response[WEBSOCKET_DATA]
-    self.assertIn(keyword, data)
-    jsonParsed = loads(data)
-    modelFrontend = await database_sync_to_async(Model.objects.get)(pk=jsonParsed[keyword][0]['pk'])
-    self.assertEqual(modelFrontend, modelBackend)
-
-    await comm.disconnect()
+      await comm.disconnect()
 
 
   async def test_ModelEdit_Customer(self):
@@ -620,46 +621,47 @@ class ConsumerTestCase(TransactionTestCase):
     keyword = DATA_CUSTOMER
     Model = MODELS[keyword]
 
-    comm = WebsocketCommunicator(app,"ws/")
-    comm_other_user = WebsocketCommunicator(app, "ws/")
 
-    await comm_other_user.connect()
-    await comm_other_user.send_json_to(self.loginShopAdminMessage)
-    login_response = await comm_other_user.receive_json_from()
-    self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+    with self.assertNoLogs(ERROR_LOGGER):
+      comm = WebsocketCommunicator(app,"ws/")
+      comm_other_user = WebsocketCommunicator(app, "ws/")
+      await comm_other_user.connect()
+      await comm_other_user.send_json_to(self.loginShopAdminMessage)
+      login_response = await comm_other_user.receive_json_from()
+      self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 
-    _conn, _subprotocal = await comm.connect()
+      _conn, _subprotocal = await comm.connect()
 
-    await comm.send_json_to(self.loginAdminMessage)
-    login_response = await comm.receive_json_from()
-    self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+      await comm.send_json_to(self.loginAdminMessage)
+      login_response = await comm.receive_json_from()
+      self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 
-    await comm.send_json_to({
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
-      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      WEBSOCKET_DATATYPE : keyword,
-      WEBSOCKET_DATA : {
-        'id' : self.customer.id,
-        'short_name' : "new customer name"
-      }
-    })
+      await comm.send_json_to({
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        WEBSOCKET_DATATYPE : keyword,
+        WEBSOCKET_DATA : {
+          'id' : self.customer.id,
+          'short_name' : "new customer name"
+        }
+      })
 
-    response = await comm.receive_json_from()
-    other_response = await comm_other_user.receive_json_from()
+      response = await comm.receive_json_from()
+      other_response = await comm_other_user.receive_json_from()
 
-    self.assertEqual(response, other_response)
+      self.assertEqual(response, other_response)
 
-    await comm.disconnect()
-    await comm_other_user.disconnect()
+      await comm.disconnect()
+      await comm_other_user.disconnect()
 
-    await database_sync_to_async(self.customer.refresh_from_db)()
-    self.assertIn(WEBSOCKET_DATA, response)
-    data = response[WEBSOCKET_DATA]
-    self.assertIn(keyword, data)
-    jsonParsed = loads(data)
-    modelFrontend = await database_sync_to_async(Model.objects.get)(pk=jsonParsed[keyword][0]['pk'])
-    self.assertEqual(modelFrontend, self.customer)
+      await database_sync_to_async(self.customer.refresh_from_db)()
+      self.assertIn(WEBSOCKET_DATA, response)
+      data = response[WEBSOCKET_DATA]
+      self.assertIn(keyword, data)
+      jsonParsed = loads(data)
+      modelFrontend = await database_sync_to_async(Model.objects.get)(pk=jsonParsed[keyword][0]['pk'])
+      self.assertEqual(modelFrontend, self.customer)
 
 
   async def test_ModelEdit_RejectedModel(self):
@@ -671,41 +673,42 @@ class ConsumerTestCase(TransactionTestCase):
     comm = WebsocketCommunicator(app,"ws/")
     comm_other_user = WebsocketCommunicator(app, "ws/")
 
-    await comm_other_user.connect()
-    await comm_other_user.send_json_to(self.loginShopAdminMessage)
-    login_response = await comm_other_user.receive_json_from()
-    self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+    with self.assertNoLogs(ERROR_LOGGER):
+      await comm_other_user.connect()
+      await comm_other_user.send_json_to(self.loginShopAdminMessage)
+      login_response = await comm_other_user.receive_json_from()
+      self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 
-    _conn, _subprotocal = await comm.connect()
+      _conn, _subprotocal = await comm.connect()
 
-    await comm.send_json_to(self.loginProdAdminMessage)
-    login_response = await comm.receive_json_from()
-    self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+      await comm.send_json_to(self.loginProdAdminMessage)
+      login_response = await comm.receive_json_from()
+      self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 
-    await comm.send_json_to({
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
-      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      WEBSOCKET_DATATYPE : keyword,
-      WEBSOCKET_DATA : {
-        'id' : self.freed_order.id,
-        'ordered_activity' : 6118923,
-      }
-    })
+      await comm.send_json_to({
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        WEBSOCKET_DATATYPE : keyword,
+        WEBSOCKET_DATA : {
+          'id' : self.freed_order.id,
+          'ordered_activity' : 6118923,
+        }
+      })
 
-    response = await comm.receive_json_from()
-    self.assertEqual(response[WEBSOCKET_MESSAGE_STATUS],
-                     SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value)
+      response = await comm.receive_json_from()
+      self.assertEqual(response[WEBSOCKET_MESSAGE_STATUS],
+                       SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value)
 
-    with self.assertRaises(TimeoutError):
-      await comm_other_user.receive_json_from(timeout=0.25)
+      with self.assertRaises(TimeoutError):
+        await comm_other_user.receive_json_from(timeout=0.25)
 
-    await comm.disconnect()
-    await comm_other_user.disconnect()
+      await comm.disconnect()
+      await comm_other_user.disconnect()
 
-    old_activity = self.freed_order.ordered_activity
-    await database_sync_to_async(self.freed_order.refresh_from_db)()
-    self.assertEqual(old_activity, self.freed_order.ordered_activity)
+      old_activity = self.freed_order.ordered_activity
+      await database_sync_to_async(self.freed_order.refresh_from_db)()
+      self.assertEqual(old_activity, self.freed_order.ordered_activity)
 
 
   async def test_moveOrders(self):
@@ -1203,7 +1206,7 @@ class ConsumerTestCase(TransactionTestCase):
 
     self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
                      SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS.value)
-    
+
     await shop_comm_admin.disconnect()
 
   async def test_wsCreateUserAssignment_failed(self):
@@ -1225,5 +1228,5 @@ class ConsumerTestCase(TransactionTestCase):
 
     self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
                      SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME.value)
-    
+
     await shop_comm_admin.disconnect()

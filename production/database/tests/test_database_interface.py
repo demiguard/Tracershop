@@ -307,7 +307,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     )
 
     self.assigned_vial = Vial.objects.create(
-      id=781935,  
+      id=781935,
       tracer=self.tracer,
       activity=51895,
       volume=12.12,
@@ -647,4 +647,3 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     )
 
     self.assertEqual(len(bookings), 10)
-  

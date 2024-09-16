@@ -157,12 +157,16 @@ class VialFileHandler(FileSystemEventHandler):
     val_path = Path(event.src_path)
     handle_path(val_path)
 
-vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
-val_files = [f for f in vial_file_path.glob('VAL*')]
-for val_path in val_files:
-  logger.info(f"Processing file {val_path}")
-  handle_path(val_path)
-  logger.info(f"Handled Path: {val_path}")
+
+def run_cleanup():
+  vial_file_path = Path(VIAL_WATCHER_FILE_PATH)
+  val_files = [f for f in vial_file_path.glob('VAL*')]
+  for val_path in val_files:
+    logger.info(f"Processing file {val_path}")
+    handle_path(val_path)
+    logger.info(f"Handled Path: {val_path}")
+
+run_cleanup()
 
 observer = Observer()
 observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
@@ -174,9 +178,16 @@ observer.start()
 
 try:
   while True:
-    sleep(600)
+    sleep(60)
     update_tracer_mapping()
     update_customer_mapping()
+    if not observer.is_alive():
+      logger.error("Vialdog died for reason hopefully in the logs. Restarting it!")
+      observer.join()
+      run_cleanup()
+      observer = Observer()
+      observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
+      observer.start()
 finally:
   observer.stop()
   observer.join()
