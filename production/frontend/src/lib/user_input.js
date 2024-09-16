@@ -46,6 +46,21 @@ export function parseDanishPositiveNumberInput(input, header=""){
   return [true, inputNumber]
 }
 
+export function parseDanish0OrPositiveNumberInput(input, header=""){
+  const [valid, inputNumber] = parseDanishNumberInput(input, header);
+
+  if(!valid){
+    return [valid, inputNumber];
+  }
+
+  if(inputNumber < 0){
+    return [false, `${header} kan ikke være negativ`];
+  }
+
+  return [true, inputNumber]
+}
+
+
 export function parseWholePositiveNumber(input, header="") {
   const [valid, number] = parseDanishPositiveNumberInput(input, header);
   if(!valid){

@@ -11,9 +11,9 @@ import { cssCenter } from "~/lib/constants";
 import { DATA_USER_ASSIGNMENT, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
   WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
-
-export const ERROR_MESSAGE_NO_LDAP_USERNAME = "BAM ID findes ikke. Bemærk at det er"
+export const ERROR_MESSAGE_NO_LDAP_USERNAME = "BAM ID findes ikke. Bemærk at brugeren kan havde et regionalt ID, som skal benyttes istedet!"
 export const ERROR_MESSAGE_INCORRECT_GROUPS = "Brugeren har ikke korrekte CBAS rettigheder!"
+export const ERROR_MESSAGE_MISSING_RIGHTS = "Brugeren findes, men den har ingen CBAS rettigheder! Kontakt CBAS administratoren for give Tracershop rettigheder til kontoen!"
 
 function UserAssignmentRow(props){
   const {user_assignment, activeCustomer} = props;
@@ -33,7 +33,9 @@ function UserAssignmentRow(props){
       username : username,
       customer_id : activeCustomer
     }).then((data) => {
-      if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME){
+      if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS) {
+        setError(ERROR_MESSAGE_MISSING_RIGHTS)
+      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME){
         setError(ERROR_MESSAGE_NO_LDAP_USERNAME);
       } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS){
         setError(ERROR_MESSAGE_INCORRECT_GROUPS);

@@ -350,8 +350,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                                             password=password)
     if user:
       if user.user_group == UserGroups.Anon:
-        newUserGroup = checkUserGroupMembership(user.username)
-        if newUserGroup != UserGroups.Anon:
+        success, newUserGroup = checkUserGroupMembership(user.username)
+        if newUserGroup is not None or UserGroups.Anon:
           user.user_group = newUserGroup
           await database_sync_to_async(user.save)()
       await login(self.scope, user)

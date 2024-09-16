@@ -62,7 +62,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
 ]
 
-export const JAVASCRIPT_VERSION = "1.2.15";
+export const JAVASCRIPT_VERSION = "1.3.0";
 
 export const NO_ERROR = "";
 
@@ -71,6 +71,7 @@ export const SUCCESS_STATUS_CREATING_USER_ASSIGNMENT = {
   NO_LDAP_USERNAME : 1,
   INCORRECT_GROUPS : 2,
   MISSING_CUSTOMER : 3,
+  NO_GROUPS : 4,
 };
 export const SUCCESS_STATUS_CRUD = {
   SUCCESS : 0,

@@ -38,7 +38,8 @@ class LDAPTestCases(TestCase):
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.LDAPConnection)
   def test_query_username(self):
-    res = ldap._query_username("test_username") # Because of mock input username doesn't matter
+    # Because of mock input username doesn't matter
+    res = ldap._query_username("test_username")
     self.assertEqual(res[0][0], mocks_ldap.FAKE_LDAP_CN)
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.LDAPConnection)
@@ -50,7 +51,9 @@ class LDAPTestCases(TestCase):
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.LDAPConnection)
   def test_checkUserGroupMemberShip(self):
-    self.assertEqual(ldap.checkUserGroupMembership("Test"), UserGroups.Admin)
+    status, user_group = ldap.checkUserGroupMembership("Test")
+    self.assertEqual(status, ldap.LDAPSearchResult.SUCCESS)
+    self.assertEqual(user_group, UserGroups.Admin)
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.LDAPConnection)
   def test_guess_customer_group(self):
@@ -78,7 +81,8 @@ class LDAPTestCases(TestCase):
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.EmptyLDAPConnection)
   def test_checkUserGroupMembership_no_response(self):
-    self.assertIsNone(ldap.checkUserGroupMembership('test'))
+    status, user_group = ldap.checkUserGroupMembership('test')
+    self.assertIsNone(user_group)
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.AlteredLDAPConnection)
   def test_guess_customer_group_missing_keys(self):
@@ -90,4 +94,7 @@ class LDAPTestCases(TestCase):
 
   @patch('tracerauth.ldap.LDAPConnection', mocks_ldap.AlteredLDAPConnection)
   def test_checkUserGroupMembership_missing_key(self):
-    self.assertIsNone(ldap.checkUserGroupMembership('test'))
+    status, user_group = ldap.checkUserGroupMembership('test')
+
+    self.assertEqual(status, ldap.LDAPSearchResult.MISSING_USER_GROUP)
+    self.assertIsNone(user_group)

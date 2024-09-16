@@ -29,3 +29,6 @@ class RequestingNonExistingEndpoint(Exception):
 
 class UndefinedReference(Exception):
   pass
+
+class EmptyFile(Exception):
+  pass
