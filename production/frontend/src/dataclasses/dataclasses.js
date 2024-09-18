@@ -611,6 +611,38 @@ export class TracerCatalogPage {
   }
 }
 
+export class Printer {
+  constructor(id, name, ip, port, label_printer, ) {
+    this.id=id
+    this.name=name
+    this.ip=ip
+    this.port=port
+    this.label_printer=label_printer
+  }
+
+  /**Copies the printer
+  * @returns { Printer }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.name,
+      this.ip,
+      this.port,
+      this.label_printer
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new CharField("name"),
+      new IPField("ip"),
+      new IntField("port"),
+      new BooleanField("label_printer"),
+    ];
+  }
+}
+
 export class Procedure {
   constructor(id, series_description, tracer_units, delay_minutes, tracer, owner, ) {
     this.id=id
@@ -926,6 +958,7 @@ export const MODELS = {
   message_assignment : MessageAssignment,
   tracer : Tracer,
   tracer_mapping : TracerCatalogPage,
+  printer : Printer,
   procedure : Procedure,
   procedure_identifier : ProcedureIdentifier,
   production : ActivityProduction,
@@ -958,6 +991,7 @@ export class TracershopState {
   /** @type { Map<Number, MessageAssignment>} */ message_assignment
   /** @type { Map<Number, Tracer>} */ tracer
   /** @type { Map<Number, TracerCatalogPage>} */ tracer_mapping
+  /** @type { Map<Number, Printer>} */ printer
   /** @type { Map<Number, Procedure>} */ procedure
   /** @type { Map<Number, ProcedureIdentifier>} */ procedure_identifier
   /** @type { Map<Number, ActivityProduction>} */ production
@@ -968,7 +1002,7 @@ export class TracershopState {
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1056,6 +1090,11 @@ export class TracershopState {
       this.tracer_mapping = tracer_mapping
     } else {
       this.tracer_mapping = new Map()
+    }
+    if(printer !== undefined){
+      this.printer = printer
+    } else {
+      this.printer = new Map()
     }
     if(procedure !== undefined){
       this.procedure = procedure

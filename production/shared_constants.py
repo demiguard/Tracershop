@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.3.0" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.3.1" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -61,6 +61,7 @@ DATA_LOCATION = "location"
 DATA_MESSAGE = "message"
 DATA_MESSAGE_ASSIGNMENT = "message_assignment"
 DATA_ORDERS  = "orders"
+DATA_PRINTER = "printer"
 DATA_PROCEDURE = "procedure"
 DATA_PRODUCTION = "production"
 DATA_PROCEDURE_IDENTIFIER = "procedure_identifier"
@@ -104,6 +105,8 @@ WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER     = "createExternalUser"
 WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER   = "createInjectionOrder"
 WEBSOCKET_MESSAGE_DELETE_DATA_CLASS        = "deleteDataClass"
 WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT   = "createUserAssignment"
+WEBSOCKET_MESSAGE_CREATE_BOOKING           = "createBooking"
+WEBSOCKET_MESSAGE_DELETE_BOOKING           = "deleteBooking"
 WEBSOCKET_MESSAGE_ECHO                     = "echo"
 WEBSOCKET_MESSAGE_ERROR                    = "error"
 WEBSOCKET_MESSAGE_FREE_ACTIVITY            = "freeActivity"
@@ -155,6 +158,8 @@ WEBSOCKET_MESSAGE_TYPES = [
   WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
+  WEBSOCKET_MESSAGE_CREATE_BOOKING,
+  WEBSOCKET_MESSAGE_DELETE_BOOKING,
 ]
 
 class TRACER_USAGE(__Enum):

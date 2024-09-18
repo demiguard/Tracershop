@@ -21,6 +21,7 @@ export class TracerWebSocket {
   /**@type {WebSocket} */ _ws
   /**@type {Map<Number, MessageChannel> }*/ _promiseMap
   /**@type {React.Dispatch<React.ReducerAction>} */ _dispatch
+  /**@type {Map<Number, CallableFunction>} */ _listeners
 
   /**
    * This is websocket that is the primary source of communication between the front and backend
@@ -31,6 +32,8 @@ export class TracerWebSocket {
     this._promiseMap = new Map();
     this._ws = websocket;
     this._dispatch = dispatch
+    this._listerNumber = 0;
+    this._listeners = new Map();
 
     /** This function is called, when a message is received through the websocket from the server.
      *  This function handles all the different messages.
@@ -60,6 +63,8 @@ export class TracerWebSocket {
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.
       /**This is the state updating messages send by the server */
+      this.triggerListeners(message);
+
       switch(message[WEBSOCKET_MESSAGE_TYPE]) {
         case WEBSOCKET_MESSAGE_UPDATE_STATE:
           /**Assumes message is on format:
@@ -284,6 +289,25 @@ export class TracerWebSocket {
       this._dispatch(action);
     } else {
       console.log("Missed dispatch");
+    }
+  }
+
+  addListener(func){
+    const listerNumber = this._listerNumber;
+
+    this._listeners.set(listerNumber, func);
+    listerNumber++;
+
+    return listerNumber;
+  }
+
+  removeListener(listenNumber){
+    this._listeners.delete(listenNumber);
+  }
+
+  triggerListeners(data){
+    for(const func of this._listeners.values()){
+      func(data);
     }
   }
 }

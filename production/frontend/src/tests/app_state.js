@@ -31,6 +31,7 @@ import { legacy_production_members } from "./test_state/legacy_production_member
 import { messages } from "./test_state/messages"
 import { message_assignments } from "./test_state/message_assignments"
 import { secondary_emails } from "./test_state/secondary_email"
+import { printers } from "~/tests/test_state/printer.js"
 
 
 export const AppState = {}
@@ -75,6 +76,7 @@ export const testState = new TracershopState(
   message_assignments,
   tracers,
   tracer_mapping,
+  printers,
   procedures,
   procedureIdentifiers,
   productions,

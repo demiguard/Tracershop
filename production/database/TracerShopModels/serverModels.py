@@ -1,12 +1,16 @@
+# Python Standard Library
+import re
+import subprocess
 
-
-
+# Third party Packages
+from django.core.exceptions import ValidationError
 from django.db import models
+from django.db.models import Index, SET_NULL
+from django.utils.translation import gettext_lazy
+
+# Tracershop Modules
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.networkModels import DicomEndpoint
-from django.db.models import Index, SET_NULL
-
-
 
 class DeadlineTypes(models.IntegerChoices):
   daily = 0
@@ -33,6 +37,38 @@ class ServerLog(TracershopModel):
     indexes = [
       Index(fields=['created'])
     ]
+
+class Printer(TracershopModel):
+  """This class represent a printer that can be printed from
+
+  """
+  id = models.AutoField(primary_key=True)
+  name = models.CharField(max_length=48, unique=True, blank=False)
+  ip = models.GenericIPAddressField()
+  port = models.PositiveSmallIntegerField(default=9100)
+  label_printer = models.BooleanField(default=False)
+
+  valid_printer_names = re.compile(r'^[a-zA-Z0-9æøåÆØÅ]+$')
+
+  def clean(self) -> None:
+    if self.valid_printer_names.fullmatch(self.name) is None:
+      raise ValidationError(
+        {'name': gettext_lazy("Name can only consists of normal characters")}
+      )
+
+  @property
+  def installed(self):
+    from lib.printing import is_printer_installed
+    return is_printer_installed(self)
+
+  def save(self, *args, **kwargs):
+    if self.valid_printer_names.fullmatch(self.name) is None:
+      raise ValidationError(
+        {'name': gettext_lazy("Name can only consists of normal characters")}
+      )
+
+    super().save(*args, **kwargs)
+
 
 class ServerConfiguration(TracershopModel):
   """

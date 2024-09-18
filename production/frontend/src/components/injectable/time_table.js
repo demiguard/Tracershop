@@ -124,14 +124,12 @@ function TimeColumn({TimeTableDataContainer,
  */
 export function TimeTable({
   TimeTableDataContainer,
-  column_objects = new Map(),
   floating_objects = [],
-  floating_key_function = (_fo) => {return null;},
+  floating_key_function,
   }
 ){
-
   const floatingMapping = new ArrayMap();
-  const number_of_columns = column_objects.size + 1;
+  const number_of_columns = TimeTableDataContainer.columns.size + 1;
 
   for(const floating_object of floating_objects){
     floatingMapping.set(floating_key_function(floating_object),floating_object);

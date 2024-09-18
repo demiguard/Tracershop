@@ -22,9 +22,6 @@ from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Model, ForeignKey, IntegerField
 from django.db.models.query import QuerySet
 
-# Third party packages
-from pandas import DataFrame
-
 
 # Tracershop Production Packages
 from constants import ERROR_LOGGER, DEBUG_LOGGER

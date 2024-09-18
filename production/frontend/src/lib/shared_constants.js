@@ -30,6 +30,7 @@ export const DATA_LOCATION = "location";
 export const DATA_MESSAGE = "message";
 export const DATA_MESSAGE_ASSIGNMENT = "message_assignment";
 export const DATA_ORDERS = "orders";
+export const DATA_PRINTER = "printer";
 export const DATA_PROCEDURE = "procedure";
 export const DATA_PROCEDURE_IDENTIFIER = "procedure_identifier";
 export const DATA_PRODUCTION = "production";
@@ -62,7 +63,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
 ]
 
-export const JAVASCRIPT_VERSION = "1.3.0";
+export const JAVASCRIPT_VERSION = "1.3.1";
 
 export const NO_ERROR = "";
 
@@ -102,10 +103,12 @@ export const WEBSOCKET_MESSAGE_AUTH_LOGIN = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT = "logout";
 export const WEBSOCKET_MESSAGE_AUTH_WHOAMI = "whoami";
 export const WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword";
+export const WEBSOCKET_MESSAGE_CREATE_BOOKING = "createBooking";
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser";
 export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createInjectionOrder";
 export const WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT = "createUserAssignment";
+export const WEBSOCKET_MESSAGE_DELETE_BOOKING = "deleteBooking";
 export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
@@ -150,6 +153,8 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "restartVialDog",
   "changeExternalPassword",
   "createExternalUser",
+  "createBooking",
+  "deleteBooking",
 ]
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_OBJECT_DOES_NOT_EXISTS = "objectDoesNotExists";

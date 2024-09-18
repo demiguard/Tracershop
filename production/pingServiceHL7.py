@@ -21,6 +21,7 @@ import aiorun
 from channels.db import database_sync_to_async
 from channels.layers import get_channel_layer
 from django.core.exceptions import ObjectDoesNotExist
+from django.core.serializers import serialize
 from hl7 import Message, Segment
 from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
 
@@ -28,7 +29,7 @@ from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
 from constants import PING_SERVICE_LOGGER, CHANNEL_GROUP_GLOBAL
 from shared_constants import DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE,\
     WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_ID,\
-    WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_MODEL_DELETE
+    WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_CREATE_BOOKING
 from database.database_interface import DatabaseInterface
 from database.models import Booking, Location, ProcedureIdentifier, BookingStatus
 from websocket.messages import getNewMessageID
@@ -89,7 +90,9 @@ def create_booking(location, procedure_identifier, start_time, start_date, acces
 
     booking.save()
 
-    return booking
+    return serialize(
+        'json', Booking.objects.filter(id=booking.id)
+    )
 
 
 @database_sync_to_async
@@ -149,8 +152,18 @@ async def handleMessage(hl7_message: Message):
             procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
             accession_number = extract_accession_number(ORC_message_segment)
             start_date, start_time = extract_booking_time(ORC_message_segment)
-            booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
+            serialized_booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
             logger.info(f"Added booking with uid: {accession_number}")
+
+            await channel_layer.group_send(
+                    CHANNEL_GROUP_GLOBAL, {
+                        'type' : 'broadcastMessage',
+                        WEBSOCKET_MESSAGE_ID : getNewMessageID(),
+                        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+                        WEBSOCKET_DATA : ,
+                        WEBSOCKET_DATATYPE : DATA_BOOKING,
+                        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_BOOKING,
+                    })
 
         if ORC_message_segment[1][0] == 'DC' and ORC_message_segment[5][0] == 'Ended'\
             or ORC_message_segment[1][0] == 'CA':
@@ -167,7 +180,7 @@ async def handleMessage(hl7_message: Message):
                         WEBSOCKET_DATA_ID : [booking_id],
                         WEBSOCKET_DATA : True,
                         WEBSOCKET_DATATYPE : DATA_BOOKING,
-                        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+                        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_DELETE_BOOKING,
                     })
 
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):

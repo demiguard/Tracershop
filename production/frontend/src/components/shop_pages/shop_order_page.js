@@ -11,7 +11,8 @@ import { DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   USER_GROUPS,
 } from "../../lib/constants.js";
 import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
-  ServerConfiguration, Deadline, InjectionOrder } from "../../dataclasses/dataclasses.js";
+  ServerConfiguration, Deadline, InjectionOrder,
+  Booking} from "../../dataclasses/dataclasses.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
@@ -21,8 +22,9 @@ import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { Optional } from "~/components/injectable/optional.js";
-import { DATA_BOOKING, WEBSOCKET_DATA } from "~/lib/shared_constants.js";
+import { DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
 import { ParseDjangoModelJson } from "~/lib/formatting.js";
+import { bookingFilter } from "~/lib/filters.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -67,7 +69,7 @@ export function ShopOrderPage ({relatedCustomer}){
     }
 
     let viewIdentifier = db.get(DATABASE_SHOP_ORDER_PAGE);
-    if (viewIdentifier === null){
+    if (viewIdentifier === null || state.logged_in_user.user_group === USER_GROUPS.SHOP_EXTERNAL){
       viewIdentifier = "Manuel";
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
@@ -82,27 +84,67 @@ export function ShopOrderPage ({relatedCustomer}){
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
   const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
   const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
-  const [bookings, SetBookings] = useState([])
-  const activeDate = state.today
+  const [bookings, setBookings] = useState([]);
+  const activeDate = state.today;
+
+  function addBookingFromUpdate(message){
+    if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_CREATE_BOOKING){
+      const newBookings = [];
+      for(const serialized_booking of message[WEBSOCKET_DATA]){
+        const booking = new Booking();
+        Object.assign(booking, serialized_booking.fields);
+        booking.id = serialized_booking.id;
+        newBookings.push(booking);
+      }
+      const filteredBookings = bookingFilter(newBookings, {
+        state : state,
+        active_date : activeDate,
+        active_endpoint : activeEndpoint,
+      });
+
+      setBookings(oldBookings => {
+        return [...oldBookings, ...filteredBookings];
+      })
+    } else if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_DELETE_BOOKING){
+      const /**@type {Array<Number>} */ deleted_bookings = message[WEBSOCKET_DATA_ID]
+      setBookings(oldBookings =>
+        oldBookings.filter((booking) => !deleted_bookings.includes(booking.id))
+      );
+    }
+  }
+
+  useEffect(() => {
+    let listenNumber = null;
+    if(websocket){
+      listenNumber = websocket.addListener(addBookingFromUpdate);
+    }
+    return () => {
+      if(listenNumber !== null){
+        websocket.removeListener(listenNumber);
+      }
+    }
+  }, [websocket]);
+
   useEffect(() => {
     if(websocket !== null){
       websocket.sendGetBookings(
         activeDate, activeEndpoint
       ).then((data) => {
-        const newBookings = [];
+        if(data[WEBSOCKET_DATA]){
+          const newBookings = [];
 
-        for(const serialized_booking of data[WEBSOCKET_DATA]){
-          const booking = {};
-          Object.assign(booking, serialized_booking.fields);
-          booking.id = serialized_booking.id;
-          newBookings.push(booking);
+          for(const serialized_booking of data[WEBSOCKET_DATA]){
+            const booking = new Booking();
+            Object.assign(booking, serialized_booking.fields);
+            booking.id = serialized_booking.id;
+            newBookings.push(booking);
+          }
+          setBookings(bookings => newBookings);
         }
-
-        SetBookings(newBookings);
       });
     }
     return () => {
-      SetBookings([]);
+      setBookings([]);
     }
   }, [activeEndpoint, activeDate, websocket])
 

@@ -2,9 +2,9 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, DeliveryEndpoint, Location, Tracer, TracershopState } from "../dataclasses/dataclasses";
-import { getId } from "./utils";
-import { DateRange } from "~/lib/chronomancy";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, Tracer, TracershopState } from "../dataclasses/dataclasses";
+import { compareDates, getId } from "./utils";
+import { DateRange, datify } from "~/lib/chronomancy";
 
 export function dayTracerFilter(day, tracerID){
   return (production) => {
@@ -32,28 +32,95 @@ export function tracerTypeFilter(tracerType){
   return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType && !tracer.archived
 }
 
-
-/**
- * Filters booking to a date,
- * @param {String} dateString
- * @param {Map<Number, Location>} locations
- * @param {Number} activeEndpoint
- * @returns {CallableFunction}
- */
-export function bookingFilter(dateString, locations, activeEndpoint){
-  /**
-  * @param {Booking} booking
-  * @returns {Boolean}
-  */
-  const returnFunction = (booking) =>{
-    if(!locations.has(booking.location)){
-      return false;
+export function procedureFilter(container, {
+  tracerID,
+  active_endpoint
+}, ids=false){
+  const /**@type {Array<Procedure>} */ procedures = (() => {
+    if (container instanceof TracershopState){
+      return [...container.location.values()];
+    } else if (container instanceof Map){
+      return [...container.values()];
+    } else if (container instanceof Array){
+      return container;
+    } else if (container instanceof Procedure){
+      return [container];
     }
-    const location = locations.get(booking.location);
-    return booking.start_date === dateString && location.endpoint === activeEndpoint;
-  }
+      throw "Unable to construct Location array";
+    })();
 
-  return returnFunction;
+    const filteredProcedures = procedures.filter((procedure) => {
+      const tracer_condition = tracerID ? procedure.tracer === tracerID : true;
+      const endpoint_condition = active_endpoint ? procedure.owner === active_endpoint : true;
+
+      return tracer_condition && endpoint_condition;
+    });
+
+  if(ids){
+    return filteredProcedures.map(getId);
+  } else {
+    return filteredProcedures;
+  }
+}
+
+export function locationFilter(container, {
+  active_endpoint
+}, ids=false){
+  const /**@type {Array<Location>} */ locations = (() => {
+  if (container instanceof TracershopState){
+    return [...container.location.values()];
+  } else if (container instanceof Map){
+    return [...container.values()];
+  } else if (container instanceof Array){
+    return container;
+  } else if (container instanceof Location){
+    return [container];
+  }
+    throw "Unable to construct Location array";
+  })();
+
+  const filteredLocations = locations.filter((location) => {
+    const endpoint_point = active_endpoint ? active_endpoint === location.endpoint : false;
+
+    return endpoint_point;
+  });
+
+  if(ids){
+    return filteredLocations.map(getId);
+  } else {
+    return filteredLocations;
+  }
+}
+
+export function bookingFilter(container, {
+  state,
+  active_endpoint,
+  active_date,
+  tracer_id
+}){
+  const /**@type {Array<Booking>} */ bookings = (() => {
+    if (container instanceof TracershopState){
+      throw "Tracershop state doesn't contain bookings"
+    } else if (container instanceof Map){
+      return [...container.values()];
+    } else if (container instanceof Array){
+      return container;
+    } else if (container instanceof Booking){
+      return [container];
+    }
+    throw "Unable to construct booking array";
+  })();
+
+  const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
+  const procedures = state && tracer_id ? procedureFilter(state, {}, true) : undefined;
+
+
+  return bookings.filter((booking) => {
+    const endpoint_condition = locations ? locations.includes(booking.location) : true;
+    const date_condition = active_date ? compareDates(datify(active_date), datify(booking.start_date)) : true;
+
+    return endpoint_condition && date_condition;
+  });
 }
 
 export function productionDayTracerFilter(day, tracerID){

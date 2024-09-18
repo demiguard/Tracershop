@@ -16,8 +16,35 @@ TracerWebSocket.sendCreateModel = jest.fn((message) => new Promise(async functio
 TracerWebSocket.sendDeleteModel = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendChangePassword = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendCreateExternalUser = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
-TracerWebSocket.sendGetBookings = jest.fn((message) => new Promise(async function(resolve) {resolve({
+TracerWebSocket.sendGetBookings = jest.fn((message) => Promise.resolve({
   [WEBSOCKET_DATA] : []
-})}))
+}));
+
+TracerWebSocket._listeners = new Map();
+
+TracerWebSocket.addListener = jest.fn((func) => {
+  let listenNumber = TracerWebSocket._listeners.size;
+
+  TracerWebSocket._listeners.set(
+    listenNumber, func
+  );
+
+  return listenNumber
+});
+
+TracerWebSocket.removeListener = jest.fn((listenNumber) => {
+  TracerWebSocket._listeners.delete(listenNumber)
+});
+
+TracerWebSocket.triggerListeners = jest.fn((data) => {
+  for(const listener of TracerWebSocket._listeners.values()){
+    listener(data);
+  }
+})
+
+TracerWebSocket.resetListeners = function(){
+  TracerWebSocket._listeners = new Map();
+}
+
 
 module.exports = { TracerWebSocket }
