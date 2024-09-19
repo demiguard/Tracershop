@@ -1,10 +1,10 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { Select, toOptions } from '../injectable/select.js'
 import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
-import { DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
+import { DATABASE_ACTIVE_TRACER, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
   PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
@@ -22,9 +22,11 @@ import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { Optional } from "~/components/injectable/optional.js";
-import { DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
+import { DATA_BOOKING, DATA_TRACER, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
 import { ParseDjangoModelJson } from "~/lib/formatting.js";
-import { bookingFilter } from "~/lib/filters.js";
+import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
+import { TracerCatalog } from "~/lib/data_structures.js";
+import { useTracerCatalog } from "~/effects/tracerCatalog.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -37,15 +39,19 @@ export function ShopOrderPage ({relatedCustomer}){
   const dispatch = useTracershopDispatch();
   const websocket = useWebsocket();
 
+  const tracerCatalog = useTracerCatalog();
+
   const init = useRef({
     activeCustomer : null,
     activeEndpoint : null,
     viewIdentifier : null,
-  })
+    activeTracer : null
+  });
 
   if (init.current.activeCustomer === null
     || init.current.activeEndpoint === null
     || init.current.viewIdentifier === null
+    || init.current.activeTracer === null
   ){
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
 
@@ -73,17 +79,31 @@ export function ShopOrderPage ({relatedCustomer}){
       viewIdentifier = "Manuel";
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
+    const availableActivityTracers = tracerCatalog.getActivityCatalog(activeEndpoint);
+    let activeTracerInit = -1;
+    if (0 < availableActivityTracers.length){
+      activeTracerInit = availableActivityTracers[0].id;
+    }
+    const local_stored_active_tracer = db.get(DATABASE_ACTIVE_TRACER);
+    if(local_stored_active_tracer &&
+        availableActivityTracers.includes(
+          state.tracer.get(local_stored_active_tracer)
+        )){
+      activeTracerInit = local_stored_active_tracer;
+    }
 
     init.current = {
       activeCustomer : activeCustomer,
       activeEndpoint : activeEndpoint,
       viewIdentifier : viewIdentifier,
+      activeTracer : activeTracerInit,
     };
   }
 
   const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
   const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
   const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
+  const [activeTracer, setActiveTracer] = useState(init.current.activeTracer);
   const [bookings, setBookings] = useState([]);
   const activeDate = state.today;
 
@@ -200,12 +220,15 @@ export function ShopOrderPage ({relatedCustomer}){
     [PROP_ACTIVE_ENDPOINT] : activeEndpoint,
     [PROP_VALID_ACTIVITY_DEADLINE] :  !Boolean(activityDeadlineExpired),
     [PROP_VALID_INJECTION_DEADLINE] : !Boolean(injectionDeadlineExpired),
-    [DATA_BOOKING] : bookings
+    [DATA_BOOKING] : bookings,
+    activeTracer : activeTracer,
+    setActiveTracer : setActiveTracer,
   };
 
-  const calenderTimeSlots = [...state.deliver_times.values()].filter(
-    (timeSlot) => timeSlot.destination === activeEndpoint
-  );
+  const calenderTimeSlotIDs = timeSlotsFilter(state, {
+    endpointID : activeEndpoint,
+    tracerID : activeTracer,
+  });
 
   return (
   <Container style={{padding : "0px"}}>
@@ -245,7 +268,7 @@ export function ShopOrderPage ({relatedCustomer}){
               active_date={state.today}
               active_endpoint={activeEndpoint}
               on_day_click={setActiveDate}
-              time_slots={calenderTimeSlots}
+              time_slots={calenderTimeSlotIDs}
             />
           </div>
         </Row>

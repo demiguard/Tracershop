@@ -24,8 +24,6 @@ function getDatabaseMap(databaseField){
     return new Map();
   } else {
 
-
-
     const Model = MODELS[databaseField];
     const serializedMap = new Map();
     for(const rawObject of dbMap.values()){

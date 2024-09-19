@@ -16,6 +16,7 @@ import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 import { db } from "~/lib/local_storage_driver";
 import { MARGIN } from "~/lib/styles";
+import { useTracerCatalog } from "~/effects/tracerCatalog";
 
 
 /**
@@ -34,29 +35,15 @@ export function OrderReview({active_endpoint,
                              active_date,
                              injectionDeadlineValid,
                              activityDeadlineValid,
+                             activeTracer,
+                             setActiveTracer
 }){
   const state = useTracershopState();
 
-  const tracerCatalog = new TracerCatalog(state.tracer_mapping, state.tracer);
+  const tracerCatalog = useTracerCatalog();
   const availableActivityTracers  = tracerCatalog.getActivityCatalog(active_endpoint);
   const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
   const day = getDay(active_date);
-
-  // State Definitions
-  let activeTracerInit = -1;
-  if (0 < availableActivityTracers.length){
-    activeTracerInit = availableActivityTracers[0].id;
-  }
-  const local_stored_active_tracer = db.get(DATABASE_ACTIVE_TRACER);
-  if(local_stored_active_tracer &&
-      availableActivityTracers.includes(
-        state.tracer.get(local_stored_active_tracer)
-      )){
-    activeTracerInit = local_stored_active_tracer;
-  }
-
-  const [activeTracer, setActiveTracer] = useState(activeTracerInit);
-  db.set(DATABASE_ACTIVE_TRACER, activeTracer);
   const activeDateString = dateToDateString(active_date);
 
   const [, // AvailableProductions

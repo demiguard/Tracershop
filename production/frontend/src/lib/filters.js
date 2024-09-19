@@ -233,7 +233,7 @@ export function productionsFilter(state, {tracerID, day, ids = false}){
  * @param {Number} TracerID
  * @param {Array<ActivityDeliveryTimeSlot>}
  */
-export function timeSlotsFilter(state, {tracerID, day, endpointID, ids = false}){
+export function timeSlotsFilter(state, {tracerID, day, endpointID}, ids = false){
 
 
   const productionIDs = tracerID !== undefined ? productionsFilter(state, {
@@ -277,7 +277,7 @@ export function activityOrdersFilter(state, {
                                        day : timeSlotFilterArgs.day,
                                        endpointID : timeSlotFilterArgs.endpointID,
                                        tracerID: timeSlotFilterArgs.tracerID,
-                                       ids : true}) : undefined;
+                                       }, true) : undefined;
 
   const activityOrders = [];
 

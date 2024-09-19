@@ -293,12 +293,10 @@ export class TracerWebSocket {
   }
 
   addListener(func){
-    const listerNumber = this._listerNumber;
+    this._listeners.set(this._listerNumber, func);
+    this._listerNumber++;
 
-    this._listeners.set(listerNumber, func);
-    listerNumber++;
-
-    return listerNumber;
+    return this._listerNumber;
   }
 
   removeListener(listenNumber){

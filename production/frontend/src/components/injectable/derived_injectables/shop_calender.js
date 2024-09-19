@@ -1,20 +1,18 @@
 import React from 'react'
 import propTypes from 'prop-types';
 
-import { Calender, STATUS_COLORS } from '../calender'
+import { Calender } from '../calender'
 import { useTracershopState } from '~/components/tracer_shop_context'
-import { OrderDateMapping, TimeSlotBitChain } from '~/lib/data_structures';
-import { ORDER_STATUS } from '~/lib/constants';
-import { expiredDeadline } from '~/lib/chronomancy';
-import { ActivityDeliveryTimeSlot, ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses';
+import { TimeSlotBitChain } from '~/lib/data_structures';
+
 import { getId } from '~/lib/utils';
 
 /**
- * 
+ *
  * @param {{
  *  time_slots : Array<Number>
- * }} param0 
- * @returns 
+ * }} param0
+ * @returns
  */
 export function ShopCalender({active_date, on_day_click, active_endpoint, time_slots}){
   const state = useTracershopState();
