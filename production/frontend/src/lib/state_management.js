@@ -147,3 +147,40 @@ export function reset_sub_error(stateFunction, id, error_key_word){
     }
   })
 }
+
+export const TOGGLE_ACTIONS = {
+  ADD : "add",
+  REMOVE : "remove",
+}
+
+export function toggleSetState(stateFunction, id, action){
+  if(action === TOGGLE_ACTIONS.ADD){
+    return () => {
+      stateFunction(oldSet => {
+        const newSet = new Set(oldSet);
+        newSet.add(id);
+        return newSet;
+      })
+    }
+  } else if(action === TOGGLE_ACTIONS.REMOVE){
+    return () => {
+      stateFunction(oldSet => {
+        const newSet = new Set(oldSet);
+        newSet.delete(id);
+        return newSet;
+      })
+    }
+  } else {
+    return () => {
+      stateFunction(oldSet => {
+        const newSet = new Set(oldSet);
+          if(newSet.has(id)){
+            newSet.delete(id);
+          } else {
+            newSet.add(id);
+          }
+        return newSet;
+      })
+    }
+  }
+}

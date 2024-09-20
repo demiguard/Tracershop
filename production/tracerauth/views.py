@@ -1,13 +1,12 @@
 # Python standard Library
 from logging import getLogger
 from typing import Optional
-from concurrent.futures import Future
 
 # Third party Packages
 from django.views.generic import View
 from django.http import HttpResponse
 from django.core.handlers.wsgi import WSGIRequest
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
 
 # Tracershop Production packages
 from constants import DEBUG_LOGGER

@@ -4,8 +4,6 @@ import { MarginButton } from "~/components/injectable/buttons";
 
 
 export function CancelBox({show, confirm, onClose}){
-
-
   return (
     <Modal
       style={{
@@ -24,12 +22,12 @@ export function CancelBox({show, confirm, onClose}){
         <Container>
           <Row className="justify-content-around">
             <Col>
-              <MarginButton onClick={confirm}>Afvis</MarginButton>
+              <MarginButton data-testid={"CancelBoxCancel"}  onClick={confirm}>Afvis</MarginButton>
             </Col>
             <Col>
               <Row className="justify-content-end">
                 <Col md="auto">
-                  <MarginButton onClick={onClose}>Tilbage</MarginButton>
+                  <MarginButton data-testid={"CancelBoxBack"} onClick={onClose}>Tilbage</MarginButton>
                 </Col>
               </Row>
             </Col>

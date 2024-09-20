@@ -6,19 +6,27 @@ import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { ActivityModal } from '~/components/modals/activity_modal.js'
-import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_OVERHEAD_MAP, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
+import { ActivityModal, WRONG_DATE_WARNING_MESSAGE } from '~/components/modals/activity_modal.js'
+import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE,
+  PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
 } from "~/lib/constants.js";
-import { DATA_ACTIVITY_ORDER, DATA_VIAL } from "~/lib/shared_constants.js"
+import { AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_VIAL, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js"
 
-import { AppState, testState } from "../../app_state.js";
+import { testState } from "../../app_state.js";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
 import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
+import { ActivityOrder, TracershopState } from "~/dataclasses/dataclasses.js";
+import { toMapping } from "~/lib/utils.js";
+import { object } from "prop-types";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const websocket_module = require("../../../lib/tracer_websocket.js");
+
+const today_string = "2020-05-04"
+
+const nowMock = new Date(2020,4,4,10,33,26);
+
 
 const websocket = websocket_module.TracerWebSocket;
 const todays_orders = applyFilter(testState.activity_orders,
@@ -27,7 +35,7 @@ const todays_orders = applyFilter(testState.activity_orders,
                       "2020-05-04",
                       1));
 const props = {
-  [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
+  [PROP_ACTIVE_DATE] : nowMock,
   [PROP_ACTIVE_TRACER] : 1,
   [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
                                           testState.deliver_times,
@@ -37,8 +45,8 @@ const props = {
 }
 
 beforeEach(() => {
-  delete window.location;
-  window.location = { href : "tracershop"};
+  jest.useFakeTimers()
+  jest.setSystemTime(nowMock)
 });
 
 afterEach(() => {
@@ -47,9 +55,27 @@ afterEach(() => {
 });
 
 describe("Activity Modal Test", () => {
-  it.skip("Standard Render Test status 1", () => {
+  it("Standard Render Test status 1", () => {
+    const newOrders = [new ActivityOrder(
+      1, 1000, "2020-05-04", ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
+    )];
+
+    const customState = new TracershopState();
+    Object.assign(customState, testState);
+    customState.activity_orders = toMapping(newOrders);
+
+    const props = {
+      [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
+      [PROP_ACTIVE_TRACER] : 1,
+      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders,
+        customState.deliver_times,
+        customState.delivery_endpoint),
+      [PROP_TIME_SLOT_ID] : 1,
+      [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
+    }
+
     render(
-      <StateContextProvider value={testState}>
+      <StateContextProvider value={customState}>
         <WebsocketContextProvider value={websocket}>
           <ActivityModal {...props}/>
         </WebsocketContextProvider>
@@ -87,9 +113,31 @@ describe("Activity Modal Test", () => {
   });
 
 
-  it.skip("Click - Accept Order", () => {
+  it("Click - Accept Order", () => {
+    const newOrders = [new ActivityOrder(
+      1, 1000, "2020-05-04", ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
+    ), new ActivityOrder(
+      2, 1000, "2020-05-04", ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
+    ), new ActivityOrder(
+      3, 1000, "2020-05-04", ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
+    )];
+
+    const customState = new TracershopState();
+    Object.assign(customState, testState);
+    customState.activity_orders = toMapping(newOrders);
+
+    const props = {
+      [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
+      [PROP_ACTIVE_TRACER] : 1,
+      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders,
+        customState.deliver_times,
+        customState.delivery_endpoint),
+      [PROP_TIME_SLOT_ID] : 1,
+      [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
+    }
+
     render(
-      <StateContextProvider value={testState}>
+      <StateContextProvider value={customState}>
         <WebsocketContextProvider value={websocket}>
           <ActivityModal {...props}/>
         </WebsocketContextProvider>
@@ -367,7 +415,7 @@ describe("Activity Modal Test", () => {
       fireEvent.change(activityForm, {target : {value : "not activity"}})
     });
 
-    await act(() => {
+    act(() => {
       screen.getByLabelText("vial-commit-7").click()
     });
 
@@ -410,7 +458,7 @@ describe("Activity Modal Test", () => {
     expect(screen.getByRole('button', {'name' : "Godkend"})).toBeDisabled()
   })
 
-  it.skip("free an order success", async () => {
+  it("free an order success", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -451,6 +499,8 @@ describe("Activity Modal Test", () => {
       freeButton.click()
     });
 
+    expect(screen.getByText(WRONG_DATE_WARNING_MESSAGE)).toBeVisible();
+
     await act(async () => {
       const usernameInput = await screen.findByLabelText('username')
       const passwordInput = await screen.findByLabelText('password')
@@ -463,7 +513,60 @@ describe("Activity Modal Test", () => {
     });
   });
 
-  it.skip("free an order Failed", async () => {
+  it("free an order at the date", async () => {
+    const todays_orders = [new ActivityOrder(1, 10000, "2020-05-04", ORDER_STATUS.ACCEPTED, null, 1, null, null, 1, null)]
+    const newState = new TracershopState();
+    Object.assign(newState, testState);
+    newState.activity_orders = toMapping(todays_orders);
+
+    props[PROP_ACTIVE_DATE] = nowMock
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+      newState.deliver_times,
+      newState.delivery_endpoint)
+
+    const websocket = {
+      getMessage : jest.fn((input) => {return { messageType : input}}),
+      send : jest.fn(() => Promise.resolve({
+        isAuthenticated : true
+      })),
+    }
+
+    render(
+      <StateContextProvider value={newState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
+
+    const vial = newState.vial.get(9);
+
+    act(() => {
+      screen.getByLabelText('vial-usage-9').click();
+    })
+
+    expect(screen.getByTestId('allocation-col').innerHTML).toEqual(`${vial.activity} MBq`);
+
+    act(() => {
+      screen.getByRole('button', {name : "Godkend"}).click();
+    });
+
+    expect(screen.queryByText(WRONG_DATE_WARNING_MESSAGE)).toBeNull();
+
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText('username'), {target : { value : "Username"}});
+      fireEvent.change(screen.getByLabelText('password'), {target : { value : "Password"}});
+      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+    });
+
+    expect(websocket.send).toHaveBeenCalledWith(expect.objectContaining({
+      [DATA_AUTH] : expect.objectContaining({
+        [AUTH_USERNAME] : "Username",
+        [AUTH_PASSWORD] : "Password"
+      })
+    }))
+  });
+
+  it("free an order Failed", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -514,9 +617,15 @@ describe("Activity Modal Test", () => {
       const freeButton = await screen.findByRole('button', {name : "Frigiv Ordre"});
       freeButton.click()
     });
+
+    expect(websocket.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+      })
+    )
   });
 
-  it.skip("Edit an order successfully", async () => {
+  it("Edit an order successfully", async () => {
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -535,20 +644,24 @@ describe("Activity Modal Test", () => {
       </StateContextProvider>);
 
     // Start editing the order
-    await act(async () => {
-      const editIcon = await screen.findByLabelText("edit-order-activity-5")
-      editIcon.click();
-    });
+    act(() => {screen.getByLabelText("edit-order-activity-5").click()});
     // edit the order
-    await act(async () => {
-      const editForm = await screen.findByLabelText("edit-form-order-activity-5")
-      fireEvent.change(editForm,{target :{ value : "59420"}});
+    act(() => {
+      fireEvent.change(
+        screen.getByLabelText("edit-form-order-activity-5"),
+        {target :{ value : "59420"}}
+      );
     });
     // Accept the Edit
     await act(async () => {
-      const editAccept = await screen.findByLabelText("edit-accept-order-activity-5")
-      editAccept.click();
+      screen.getByLabelText("edit-accept-order-activity-5").click()
     });
+
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,
+      expect.objectContaining({
+        ordered_activity : 59420
+      })
+    );
   });
 
   it("Edit an order failed", async () => {
@@ -594,5 +707,43 @@ describe("Activity Modal Test", () => {
     });
 
     expect(screen.getByText('Aktiviteten er ikke et tal')).toBeVisible();
+  });
+
+  it("cancel, then stop canceling, then cancel that an order", () => {
+    const todays_orders = applyFilter(testState.activity_orders,
+      dailyActivityOrderFilter(testState.deliver_times,
+                               testState.production,
+                               "2020-05-11",
+                               1));
+    props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
+                      testState.deliver_times,
+                     testState.delivery_endpoint);
+    render(
+      <StateContextProvider value={testState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
+
+    act(() => {
+      screen.getByRole('button', {name : 'Afvis'}).click();
+    });
+
+    expect(screen.getByText("Vil du afvise?")).toBeVisible();
+    act(() => { screen.getByTestId("CancelBoxBack").click(); });
+    expect(screen.queryByText("Vil du afvise?")).toBeNull();
+    // Delete for real
+    act(() => {
+      screen.getByRole('button', {name : 'Afvis'}).click();
+    });
+
+    act(() => {
+      screen.getByTestId("CancelBoxCancel").click();
+    });
+
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,[
+      expect.objectContaining({status : ORDER_STATUS.CANCELLED})
+    ])
   });
 });

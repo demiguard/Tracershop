@@ -24,37 +24,21 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
-import { reset_error, setTempMapToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
+import { reset_error, setTempMapToEvent, setTempObjectToEvent, TOGGLE_ACTIONS, toggleSet, toggleSetState, toggleState } from "~/lib/state_management.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 import { CancelBox } from "~/components/injectable/cancel_box.js";
+import { vialFilter } from "~/lib/filters.js";
 import { FONT } from "~/lib/styles.js";
-
-
-/**
- * Filters out vials that is should not be displayed by the activity modal
- * @param {String} dateString
- * @param {ActivityOrderCollection} orderCollection
- * @param {Customer} customer
- * @returns {Boolean} - True if the vial should be displayed false otherwise
- */
-function vialFilterFunction(dateString, orderCollection, customer){
-  return (vial) => {
-    if(vial.fill_date !== dateString){
-      return false;
-    }
-    if(orderCollection.minimum_status === ORDER_STATUS.RELEASED){
-      return orderCollection.orderIDs.includes(vial.assigned_to)
-    } else {
-      return vial.owner === customer.id;
-    }
-  }
-}
 
 const vialErrorDefault = {
   lot_number : "",
   fill_time : "",
   volume : "",
   activity : "",
+}
+
+const orderErrorDefault = {
+  ordered_activity : ""
 }
 
 const vialRowStates = {
@@ -65,12 +49,109 @@ const vialRowStates = {
   UNSELECTABLE : 4
 };
 
-function OrderRow(){
-
+const orderRowStates = {
+  DEFAULT : 0,
+  DEFAULT_CANNOT_EDIT : 1,
+  EDITING : 2,
 }
 
+export const WRONG_DATE_WARNING_MESSAGE = "Ordren som er i gang med at blive frigivet er ikke til i dag!";
+
+function OrderRow({order, setDirtyOrders}){
+  const creating = order.id === NEW_LOCAL_ID;
+
+  // State
+  const [etherealOrder, setEtherealOrder] = useState(order);
+  const [editing, setEditing] = useState(creating);
+  const [error, setError] = useState(orderErrorDefault);
+
+  // Derived State
+  const canEdit = order.status == ORDER_STATUS.ACCEPTED
+          || order.status == ORDER_STATUS.ORDERED;
+  const orderRowState = (() => {
+      if(editing){return orderRowStates.EDITING;}
+      if(!canEdit){return orderRowStates.DEFAULT_CANNOT_EDIT;}
+      return orderRowStates.DEFAULT;
+  })();
+
+  function validate(){
+    const [valid, activityNumber] = parseDanishPositiveNumberInput(etherealOrder.ordered_activity, "Aktiviteten");
+    const newError = {ordered_activity : !valid ?  activityNumber : ""};
+    setError(newError);
+    if(!valid){ return [false, {}]; }
+
+    return [true, {...order,
+      ordered_activity : activityNumber,
+    }]
+  }
+
+  function commitCallback(){
+    setEditing(false);
+    toggleSetState(setDirtyOrders, order.id, TOGGLE_ACTIONS.REMOVE)()
+  }
+
+  return (
+    <Row key={order.id}>
+      <Col xs={3} style={{display : "block", margin: 'auto', alignItems: 'center'}}>ID:{order.id}</Col>
+      <Col>
+        <Options index={orderRowState}>
+          <div> {/** DEFAULT  */}
+            <HoverBox
+              Base={<div style={marginRows}>{`${order.ordered_activity} MBq`}</div>}
+              Hover={<div>Tryg på status Ikonet for at ændre dosis</div>}
+            />
+          </div>
+          <div style={cssCenter}> {/** DEFAULT_CANNOT_EDIT */}
+            {`${order.ordered_activity} MBq`}
+          </div>
+          <div> {/** EDITING  */}
+            <TracershopInputGroup
+              error={error.ordered_activity}
+              tail={"MBq"}
+            >
+              <FormControl
+                aria-label={`edit-form-order-activity-${order.id}`}
+                value={etherealOrder.ordered_activity}
+                onChange={setTempObjectToEvent(setEtherealOrder, 'ordered_activity')}
+              />
+            </TracershopInputGroup>
+          </div>
+
+        </Options>
+      </Col>
+      <Col xs={2} style={cssCenter}>
+        <Comment comment={order.comment}/>
+      </Col>
+      <Col xs={2} style={{
+        justifyContent : "right", display : "flex"
+      }}><Optional exists={editing} alternative={
+        <StatusIcon
+              label={`edit-order-activity-${order.id}`}
+              order={order}
+              onClick={() => {
+                if(canEdit){
+                  setEditing(true);
+                  toggleSetState(setDirtyOrders, order.id, TOGGLE_ACTIONS.ADD)()
+                }
+              }}
+        />
+      }>
+        <CommitButton
+          label={`edit-accept-order-activity-${order.id}`}
+          object_type={DATA_ACTIVITY_ORDER}
+          temp_object={order}
+          validate={validate}
+          callback={commitCallback}
+        />
+      </Optional>
+        </Col>
+    </Row>
+  );
+}
+
+
 function VialRow({
-  vial, selected, orderCollection, freeing, selectVial, stopAllocatingNewVial
+  vial, selected, orderCollection, freeing, setSelectedVials, setDirtyVials, stopAllocatingNewVial
 }){
   const creating = vial.id === NEW_LOCAL_ID;
   // State
@@ -102,15 +183,13 @@ function VialRow({
   // Vial Row functions
   function startEditing() {
     setEditing(true);
+    toggleSetState(setDirtyVials, vial.id, TOGGLE_ACTIONS.ADD)()
   }
 
   function cancelEditing() {
     setEditing(false);
+    toggleSetState(setDirtyVials, vial.id, TOGGLE_ACTIONS.REMOVE)()
     setEtherealVial({...vial});
-  }
-
-  function onSelect(){
-    selectVial(vial);
   }
 
   function validate() {
@@ -232,7 +311,7 @@ function VialRow({
             <div> {/* DEFAULT */}
               <Form.Check
                 aria-label={`vial-usage-${vial.id}`}
-                onChange={onSelect}
+                onChange={toggleSetState(setSelectedVials, vial.id)}
                 checked={selected}
               />
             </div>
@@ -252,7 +331,7 @@ function VialRow({
             <div> {/* SELECTED */}
             <Form.Check
               aria-label={`vial-usage-${vial.id}`}
-              onChange={onSelect}
+              onChange={toggleSetState(setSelectedVials, vial.id)}
               checked={selected}/>
             </div>
             <div> {/* UNSELECTABLE */}
@@ -283,7 +362,6 @@ export function ActivityModal({
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket();
-  const state_vials = state.vial;
   //
   const dateString = dateToDateString(active_date);
   const timeSlot = state.deliver_times.get(timeSlotID);
@@ -293,13 +371,14 @@ export function ActivityModal({
   const overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer);
   const tracer = state.tracer.get(active_tracer);
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
-  const orderCollection = new ActivityOrderCollection(originalOrders, state, overhead);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
+  const orderCollection = new ActivityOrderCollection(originalOrders, state, overhead);
 
   // Order State
   const /** @type {StateType<Set<Number>>} */ [selectedVials, setSelectedVials] = useState(new Set());
+  const [dirtyOrders, setDirtyOrders] = useState(new Set());
+  const [dirtyVials, setDirtyVials] = useState(new Set());
   const [addingVial, setAddingVial] = useState(false);
-
   const [errorMessage, setErrorMessage] = useState("");
   const [errorLevel, setErrorLevel] = useState("");
   const [freeing, setFreeing] = useState(false);
@@ -309,9 +388,16 @@ export function ActivityModal({
 
   // Derived State
   const canCancel = orderCollection.minimum_status === ORDER_STATUS.ACCEPTED
-                || orderCollection.minimum_status === ORDER_STATUS.ORDERED;
+  || orderCollection.minimum_status === ORDER_STATUS.ORDERED;
 
-  // Helper functions
+  const modal_vials = orderCollection.minimum_status === ORDER_STATUS.RELEASED ?
+    vialFilter(state, { orderIDs : orderCollection.orderIDs }) :
+    vialFilter(state, { active_tracer : active_tracer,
+      active_customer : orderCollection.owner.id,
+      active_date : active_date
+    });
+
+  //#region ActivityModal functions
   function allocateNewVial(){
     setAddingVial(true);
   }
@@ -320,153 +406,16 @@ export function ActivityModal({
     setAddingVial(false);
   }
 
-  function toggleVial(vial){
-    setSelectedVials(oldSelectedVials =>{
-      const newSelectedVials = new Set(oldSelectedVials);
-      if(newSelectedVials.has(vial.id)){
-        newSelectedVials.delete(vial.id)
-      } else {
-        newSelectedVials.add(vial.id)
-      }
-      return newSelectedVials
-    })
-  }
-
-  // "Subcomponents"
-  const orderRows = [...orders.values()].map((order) => {
-    const editing = editingOrders.has(order.id);
-    const canEdit = order.status == ORDER_STATUS.ACCEPTED
-            || order.status == ORDER_STATUS.ORDERED;
-    const orderRowStates = {
-      DEFAULT : 0,
-      DEFAULT_CANNOT_EDIT : 1,
-      EDITING : 2,
-    }
-    const orderRowState = (() => {
-      if(editing){return orderRowStates.EDITING;}
-      if(!canEdit){return orderRowStates.DEFAULT_CANNOT_EDIT;}
-      return orderRowStates.DEFAULT;
-    })();
-
-    const error = orderErrors.has(order.id) ? orderErrors.get(order.id) : "";
-
-    function validate(){
-      const [valid, activityNumber] = parseDanishPositiveNumberInput(order.ordered_activity, "Aktiviteten");
-      if(!valid){
-        setOrderErrors(oldErrors => {
-          const newErrors = new Map(oldErrors);
-          newErrors.set(order.id, activityNumber);
-          return newErrors;
-        });
-        return [false, {}];
-      }
-      return [true, {...order,
-        ordered_activity : activityNumber,
-      }]
-    }
-
-    function commitCallback(){
-      setEditingOrders(oldEditingOrders => {
-        const newEditingOrders = new Set(oldEditingOrders);
-        newEditingOrders.delete(order.id)
-        return newEditingOrders;
-      });
-    }
-
-    return (
-      <Row key={order.id}>
-        <Col xs={3} style={{display : "block", margin: 'auto', alignItems: 'center'}}>ID:{order.id}</Col>
-        <Col>
-          <Options index={orderRowState}>
-            <div> {/** DEFAULT  */}
-              <HoverBox
-                Base={<div style={marginRows}>{`${order.ordered_activity} MBq`}</div>}
-                Hover={<div>Tryg på status Ikonet for at ændre dosis</div>}
-              />
-            </div>
-            <div style={cssCenter}> {/** DEFAULT_CANNOT_EDIT */}
-              {`${order.ordered_activity} MBq`}
-            </div>
-            <div> {/** EDITING  */}
-
-                <TracershopInputGroup
-                  error={error}
-                  tail={"MBq"}
-                >
-                    <FormControl
-                      aria-label={`edit-form-order-activity-${order.id}`}
-                      value={order.ordered_activity}
-                      onChange={(event) => {
-                      setOrders(orders => {
-                        const newOrders = new Map(orders);
-                        const newOrder = order.copy()
-                        newOrder.ordered_activity = event.target.value;
-                        newOrders.set(order.id, newOrder);
-                          return newOrders;
-                        });
-                        reset_error(setOrderErrors, order.id);
-                      }}
-                    />
-                  </TracershopInputGroup>
-            </div>
-
-          </Options>
-        </Col>
-        <Col xs={2} style={cssCenter}>
-          <Comment comment={order.comment}/>
-        </Col>
-        <Col xs={2} style={{
-          justifyContent : "right", display : "flex"
-        }}><Optional exists={editing} alternative={
-          <StatusIcon
-                label={`edit-order-activity-${order.id}`}
-                order={order}
-                onClick={() => {
-                  if(canEdit){
-                    setEditingOrders(editingOrders => {
-                      const newEditingOrders = new Set(editingOrders)
-                      newEditingOrders.add(order.id)
-                      return newEditingOrders
-                    });
-                  }
-                }}
-          />
-        }>
-          <CommitButton
-            label={`edit-accept-order-activity-${order.id}`}
-            object_type={DATA_ACTIVITY_ORDER}
-            temp_object={order}
-            validate={validate}
-            callback={commitCallback}
-          />
-        </Optional>
-          </Col>
-      </Row>
-    );
-  });
-
-  const renderedVials = [...state_vials.values()].map( // Vial rows
-    (vial) => <VialRow
-      selected={selectedVials.has(vial.id)}
-      orderCollection={orderCollection}
-      freeing={freeing}
-      selectVial={selectVial}
-      vial={vial}
-      stopAllocatingNewVial={stopAllocatingNewVial}
-    />
-  );
-
   function startFreeing(){
     if(compareDates(active_date, new Date())){
       setFreeing(true);
     } else {
       setFreeing(true);
       setError(ERROR_LEVELS.hint,
-              "Ordren som er i gang med at blive frigivet er ikke til i dag!");
+              WRONG_DATE_WARNING_MESSAGE);
     }
   }
 
-  // Functions
   function onClickAccept(){
     const orders = order_mapping.getOrders(timeSlotID);
     for(const order of orders){
@@ -474,24 +423,26 @@ export function ActivityModal({
         order.status = ORDER_STATUS.ACCEPTED;
       }
     }
-    websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders)
+    websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders);
   }
 
   function onClickToPDF() {
-    openActivityReleasePDF(endpoint, tracer, active_date)
+    openActivityReleasePDF(endpoint, tracer, active_date);
   }
 
   function onFree(username, password){
     setLoginSpinner(true);
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
-    const data = {};
-    data[DATA_DELIVER_TIME] = timeSlotID
-    data[DATA_ACTIVITY_ORDER] = orderCollection.orderIDs
-    data[DATA_VIAL] = [...selectedVials];
+    const data = {
+      [DATA_DELIVER_TIME] : timeSlotID,
+      [DATA_ACTIVITY_ORDER] : orderCollection.orderIDs,
+      [DATA_VIAL] : [...selectedVials]
+    };
     message[WEBSOCKET_DATA] = data;
-    const auth = {};
-    auth[AUTH_USERNAME] = username;
-    auth[AUTH_PASSWORD] = password;
+    const auth = {
+      [AUTH_USERNAME] : username,
+      [AUTH_PASSWORD] : password,
+    };
     message[DATA_AUTH] = auth;
     websocket.send(message).then((data) =>{
       setLoginSpinner(false);
@@ -514,6 +465,7 @@ export function ActivityModal({
     setShowCancelBox(true);
   }
   function stopCancelOrders(){
+    console.log("This get called")
     setShowCancelBox(false);
   }
 
@@ -534,9 +486,44 @@ export function ActivityModal({
     setShowCancelBox(false);
   }
 
+  //#region ActivityModal Subcomponents
+  const orderRows = orderCollection.orders.map((order) => <OrderRow
+    key={order.id}
+    order={order}
+    setDirtyOrders={setDirtyOrders}
+  />);
+
+  const vialRows = [...modal_vials.values()].map( // Vial rows
+    (vial) => <VialRow
+      key={vial.id}
+      freeing={freeing}
+      orderCollection={orderCollection}
+      selected={selectedVials.has(vial.id)}
+      setSelectedVials={setSelectedVials}
+      setDirtyVials={setDirtyVials}
+      stopAllocatingNewVial={stopAllocatingNewVial}
+      vial={vial}
+    />
+  );
+
+  if(addingVial){
+    vialRows.push(
+      <VialRow
+      key={-1}
+      freeing={freeing}
+      orderCollection={orderCollection}
+      selected={false}
+      setSelectedVials={setSelectedVials}
+      setDirtyVials={setDirtyVials}
+      stopAllocatingNewVial={stopAllocatingNewVial}
+      vial={new Vial(-1, active_tracer, "", "", "", "", dateString, null, orderCollection.owner.id)}
+    />);
+  }
+
   // Sub elements
   // Buttons
-  const AcceptButton = editingOrders.size === 0 ?
+  const canAccept = dirtyOrders.size === 0 && dirtyVials.size === 0;
+  const AcceptButton = canAccept ?
       <MarginButton onClick={onClickAccept}>Accepter</MarginButton>
     : <HoverBox
         Base={<MarginButton disabled>Accepter</MarginButton>}
@@ -668,7 +655,7 @@ export function ActivityModal({
                 </tr>
               </thead>
             <tbody>
-              {renderedVials}
+              {vialRows}
             </tbody>
           </Table>
           <div className="flex-row-reverse d-flex">
@@ -716,11 +703,13 @@ export function ActivityModal({
       </Container>
     </Modal.Footer>
     </Modal>
-    <CancelBox
-      confirm={confirmCancel}
-      show={showCancelBox}
-      onClose={stopCancelOrders}
-    />
+    <Optional exists={showCancelBox}>
+      <CancelBox
+        confirm={confirmCancel}
+        show={showCancelBox}
+        onClose={stopCancelOrders}
+      />
+    </Optional>
     </div>
   );
 }

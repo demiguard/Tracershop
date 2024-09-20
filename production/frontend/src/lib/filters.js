@@ -2,7 +2,8 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, Tracer, TracershopState } from "../dataclasses/dataclasses";
+import { DATA_LOCATION, DATA_VIAL } from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
 
@@ -32,22 +33,43 @@ export function tracerTypeFilter(tracerType){
   return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType && !tracer.archived
 }
 
+
+/**
+ * Extracts an array from various container types.
+ *
+ * @template T
+ * @param {TracershopState|Map<any, T>|Array<T>|T} container - The container to extract from.
+ * @param {{new() : T}} type - The constructor function for type T.
+ * @param {string} typeKeyword - The key to access the desired property in TracershopState.
+ * @returns {Array<T>} The extracted array of type T.
+ * @throws {string} Throws an error message if extraction is not possible.
+ *
+ * @description
+ * This function attempts to extract an array of type T from different types of containers:
+ * - If the container is a TracershopState and has the typeKeyword property, it returns the values of that property.
+ * - If the container is a Map, it returns an array of its values.
+ * - If the container is already an Array, it returns the container itself.
+ * - If the container is an instance of the specified type, it returns an array containing the container.
+ * - If none of the above conditions are met, it throws an error.
+ */
+export function extractData(container, type, typeKeyword){
+  if(container instanceof TracershopState && typeKeyword in container){
+    return [...container[typeKeyword].values()];
+  } else if(container instanceof Map) {
+    return [...container.values()];
+  } else if(container instanceof Array){
+    return container;
+  } else if(container instanceof type){
+    return [container];
+  }
+  throw `Unable to extract ${typeKeyword}`
+}
+
 export function procedureFilter(container, {
   tracerID,
   active_endpoint
 }, ids=false){
-  const /**@type {Array<Procedure>} */ procedures = (() => {
-    if (container instanceof TracershopState){
-      return [...container.location.values()];
-    } else if (container instanceof Map){
-      return [...container.values()];
-    } else if (container instanceof Array){
-      return container;
-    } else if (container instanceof Procedure){
-      return [container];
-    }
-      throw "Unable to construct Location array";
-    })();
+  const /**@type {Array<Procedure>} */ procedures = extractData(container, Procedure, 'procedure')
 
     const filteredProcedures = procedures.filter((procedure) => {
       const tracer_condition = tracerID ? procedure.tracer === tracerID : true;
@@ -66,18 +88,9 @@ export function procedureFilter(container, {
 export function locationFilter(container, {
   active_endpoint
 }, ids=false){
-  const /**@type {Array<Location>} */ locations = (() => {
-  if (container instanceof TracershopState){
-    return [...container.location.values()];
-  } else if (container instanceof Map){
-    return [...container.values()];
-  } else if (container instanceof Array){
-    return container;
-  } else if (container instanceof Location){
-    return [container];
-  }
-    throw "Unable to construct Location array";
-  })();
+  const /**@type {Array<Location>} */ locations = extractData(
+    container, Location, DATA_LOCATION
+  );
 
   const filteredLocations = locations.filter((location) => {
     const endpoint_point = active_endpoint ? active_endpoint === location.endpoint : false;
@@ -349,3 +362,25 @@ export function injectionOrdersFilter(state, {
 
   return injectionOrders
 };
+
+export function vialFilter(container, {
+  active_date, active_tracer, orderIDs, active_customer
+}, ids){
+  const /**@type {Array<Vial>} */ vials = extractData(container, Vial, DATA_VIAL);
+
+  const filteredVials = vials.filter((vial) => {
+    const date_condition = active_date ? compareDates(datify(vial.fill_date), datify(active_date)) : true
+    const tracer_condition = active_tracer ? vial.tracer === active_tracer : true;
+    const orderIDs_condition = orderIDs ? orderIDs.includes(vial.assigned_to) : true;
+    const customer_condition = active_customer ? active_customer === vial.owner : true;
+
+    return date_condition && tracer_condition && orderIDs_condition && customer_condition;
+  });
+
+
+  if (ids){
+    return filteredVials.map(getId);
+  } else {
+    return filteredVials;
+  }
+}
