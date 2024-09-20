@@ -465,7 +465,6 @@ export function ActivityModal({
     setShowCancelBox(true);
   }
   function stopCancelOrders(){
-    console.log("This get called")
     setShowCancelBox(false);
   }
 

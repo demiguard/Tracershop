@@ -1,5 +1,5 @@
 const { Booking, Location, TracershopState, ClosedDate } = require("~/dataclasses/dataclasses");
-const { bookingFilter, extractArray } = require("~/lib/filters");
+const { bookingFilter, extractData } = require("~/lib/filters");
 const { DATA_CLOSED_DATE } = require("~/lib/shared_constants");
 const { toMapping } = require("~/lib/utils");
 
@@ -21,7 +21,7 @@ describe("Filter test suites", () => {
       toMapping(closedDates), // closedDates
     )
 
-    const returnArray = extractArray(testState, ClosedDate, DATA_CLOSED_DATE);
+    const returnArray = extractData(testState, ClosedDate, DATA_CLOSED_DATE);
 
     expect(returnArray).toHaveLength(1);
     expect(returnArray[0]).toBe(closedDates[0]);
@@ -29,7 +29,7 @@ describe("Filter test suites", () => {
 
   it("Container Extraction Closed dates, from Type", () => {
     const closedDate = new ClosedDate(1, "2024-01-02");
-    const returnArray = extractArray(closedDate, ClosedDate, DATA_CLOSED_DATE);
+    const returnArray = extractData(closedDate, ClosedDate, DATA_CLOSED_DATE);
 
     expect(returnArray).toHaveLength(1);
     expect(returnArray[0]).toBe(closedDate);
