@@ -21,6 +21,7 @@ from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import Model, ForeignKey, IntegerField
 from django.db.models.query import QuerySet
+from django.db.utils import IntegrityError
 
 
 # Tracershop Production Packages
@@ -489,8 +490,14 @@ class DatabaseInterface():
     if not user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
       return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
 
-    user_assignment = UserAssignment(user=user, customer=customer)
-    user_assignment.save(creating_user)
+    try:
+      user_assignment = UserAssignment(user=user, customer=customer)
+      created = user_assignment.save(creating_user)
+    except IntegrityError:
+      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.DUPLICATE_ASSIGNMENT, None, None
+
+    if not created:
+      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.UNABLE_TO_CREATE_USER_ASSIGNMENT, None, None
 
     if user_created:
       return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS, user_assignment, user

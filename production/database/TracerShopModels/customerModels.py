@@ -55,6 +55,17 @@ class UserAssignment(TracershopModel):
   user = ForeignKey(User, on_delete=CASCADE)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
 
+
+  def canCreate(self, user: User | None = None) -> AuthActions:
+    if user is None:
+      return AuthActions.REJECT_LOG
+
+    if user.is_shop_admin:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.REJECT_LOG
+
+
   def __str__(self) -> str:
     return f"User: {self.user} is assigned to {self.customer}"
 

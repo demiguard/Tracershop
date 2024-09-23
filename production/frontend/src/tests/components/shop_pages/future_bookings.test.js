@@ -10,6 +10,8 @@ import { testState } from "../../app_state.js";
 import { FutureBooking, missingSetupHeader } from "../../../components/shop_pages/future_bookings.js";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE } from "~/lib/constants.js";
 import { StateContextProvider, useTracershopState, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { Booking } from "~/dataclasses/dataclasses.js";
+import { BookingStatus } from "~/lib/shared_constants.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -99,5 +101,38 @@ describe("Future Bookings Test Suite", () => {
     });
 
     expect(websocket.send).toBeCalled()
+  });
+
+  it("ChangeSorting", () => {
+    const newProps = {...props}
+
+
+    newProps.booking = [
+      new Booking(1, BookingStatus.Initial, 2, 1, "B", "10:00:00"),
+      new Booking(2, BookingStatus.Initial, 1, 1, "A", "11:00:00")
+    ];
+
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <FutureBooking {...newProps}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    expect(
+      screen.getByTestId('booking-row-B').compareDocumentPosition(screen
+        .getByTestId('booking-row-A'))).toEqual(
+          Node.DOCUMENT_POSITION_FOLLOWING
+        );
+
+    act(() => {
+      screen.getByText('Accession').click()
+    })
+
+    expect(
+      screen.getByTestId('booking-row-B').compareDocumentPosition(screen
+        .getByTestId('booking-row-A'))).toEqual(
+          Node.DOCUMENT_POSITION_FOLLOWING
+        );
+
   });
 });

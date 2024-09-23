@@ -132,3 +132,6 @@ def parse_index_header(header: Dict[str,str]) -> Tuple[UserGroups, str]:
     username = ""
 
   return user_group, username
+
+def extract_deleted_accessionNumber(OBR_MESSAGE_SEGMENT):
+  return OBR_MESSAGE_SEGMENT[20][0]

@@ -9,8 +9,9 @@ import { ClickableIcon } from "~/components/injectable/icons";
 import { MarginButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
-import { Optional } from "~/components/injectable/optional";
+import { Optional, Options } from "~/components/injectable/optional";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
+import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -60,6 +61,66 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
 /**
  *
  * @param {{
+ *   booking : Booking
+ * }} param0
+ * @returns
+ */
+function BookingRow({
+  setBookingProgram,
+  booking,
+  procedureLocationIndex,
+  checked
+}){
+  const state = useTracershopState();
+
+  const procedure = procedureLocationIndex.getProcedure(booking);
+  const series_description = state.procedure_identifier.get(procedure.series_description);
+  const location = state.location.get(booking.location);
+  const locationName = (location.common_name) ? location.common_name : location.location_code;
+  const timeStamp = new TimeStamp(booking.start_time);
+  const injectionTimeStamp = new TimeStamp(
+    timeStamp.hour + Math.floor((timeStamp.minute + procedure.delay_minutes) / 60), // Hour
+    (timeStamp.minute + procedure.delay_minutes) % 60, // Minute
+    0 // Seconds
+  );
+
+  return (<tr data-testid={`booking-row-${booking.accession_number}`}>
+    <td>{booking.accession_number}</td>
+    <td>{series_description.description}</td>
+    <td>{locationName}</td>
+    <td>{booking.start_time}</td>
+    <td>{FormatDateStr(injectionTimeStamp.hour)}:{FormatDateStr(injectionTimeStamp.minute)}:{FormatDateStr(timeStamp.second)}</td>
+    <td style={cssCenter}>
+      <Options index={booking.status}>
+        <div> {/** Initial */}
+          <FormCheck
+            checked={checked}
+            data-testid={`toggle-${booking.id}`}
+            onChange={() => {
+              setBookingProgram((prevBookingProgram) => {
+                return {...prevBookingProgram, [booking.accession_number] : !checked };
+              });
+            }}
+          />
+        </div>
+        <div> {/** Ordered */}
+          ✅
+        </div>
+        <div> {/** Rejected */}
+          ❌
+        </div>
+        <div> {/** Released */}
+
+        </div>
+      </Options>
+    </td>
+  </tr>);
+}
+
+
+/**
+ *
+ * @param {{
 *   tracer : Tracer
 *   bookings : Array<Booking>
 * }} param0
@@ -83,8 +144,13 @@ function TracerCard({tracer,
     });
   }
 
+  const [sortingMethod, setSortingState] = useState(BOOKING_SORTING_METHODS.START_TIME);
   const [open, setOpen] = useState(false);
   const [bookingProgram, setBookingProgram] = useState(bookingListInit.current);
+
+  function setSortingMethod(newMethod){
+    return () => {setSortingState(newMethod)}
+  }
 
   function onClickOrder() {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MASS_ORDER);
@@ -95,40 +161,17 @@ function TracerCard({tracer,
   const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
     activityDeadlineValid : injectionDeadlineValid;
 
-  let rows = bookings.sort(
-    (booking_1, booking_2) => {
-      return booking_2.start_time < booking_1.start_time;
-    }).map(
+  const rows = bookings.sort(sortBookings(sortingMethod)).map(
       (booking, i) => {
-        const procedure = procedureLocationIndex.getProcedure(booking);
-        const series_description = state.procedure_identifier.get(procedure.series_description);
-        const location = state.location.get(booking.location);
         const checked = bookingProgram[booking.accession_number];
-        const locationName = (location.common_name) ? location.common_name : location.location_code;
-        const timeStamp = new TimeStamp(booking.start_time);
-        const injectionTimeStamp = new TimeStamp(
-          timeStamp.hour + Math.floor((timeStamp.minute + procedure.delay_minutes) / 60), // Hour
-          (timeStamp.minute + procedure.delay_minutes) % 60, // Minute
-          0 // Seconds
-        );
 
-        return (<tr key={i}>
-          <td>{booking.accession_number}</td>
-          <td>{series_description.description}</td>
-          <td>{locationName}</td>
-          <td>{booking.start_time}</td>
-          <td>{FormatDateStr(injectionTimeStamp.hour)}:{FormatDateStr(injectionTimeStamp.minute)}:{FormatDateStr(timeStamp.second)}</td>
-          <td style={cssCenter}><FormCheck
-              checked={checked}
-              data-testid={`toggle-${booking.id}`}
-              onChange={() => {
-                setBookingProgram((prevBookingProgram) => {
-                  return {...prevBookingProgram, [booking.accession_number] : !checked };
-                });
-              }}
-              />
-          </td>
-        </tr>);
+        return (<BookingRow
+                  key={i}
+                  booking={booking}
+                  procedureLocationIndex={procedureLocationIndex}
+                  setBookingProgram={setBookingProgram}
+                  checked={checked}
+        />);
   });
 
  return (
@@ -150,10 +193,10 @@ function TracerCard({tracer,
          <Table>
            <thead>
              <tr>
-               <th>Accession</th>
-               <th>Studie</th>
-               <th>Lokation</th>
-               <th>Studie tid</th>
+               <th onClick={setSortingMethod(BOOKING_SORTING_METHODS.ACCESSION_NUMBER)}>Accession</th>
+               <th onClick={setSortingMethod(BOOKING_SORTING_METHODS.SERIES_DESCRIPTION)}>Studie</th>
+               <th onClick={setSortingMethod(BOOKING_SORTING_METHODS.LOCATION)}>Lokation</th>
+               <th onClick={setSortingMethod(BOOKING_SORTING_METHODS.START_TIME)}>Studie tid</th>
                <th>Injektion tid</th>
                <th>Bestil</th>
              </tr>

@@ -103,6 +103,7 @@ def delete_booking(accession_number) -> int:
         booking.delete()
         return booking_id
     except ObjectDoesNotExist:
+        logger.error(f"UNABLE TO DELETE BOOKING WITH ID: {accession_number}")
         return 0
 
 

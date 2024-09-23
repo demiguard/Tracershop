@@ -228,7 +228,7 @@ function VialRow({
     <tr key={vial.id}>
       <td style={cssTableCenter}>
         <Optional exists={!creating} alternative={<div>Ny</div>}>
-          {vial.id}
+          <div data-testid={`vial-id-${vial.id}`}>{vial.id}</div>
         </Optional>
       </td>
       <td>

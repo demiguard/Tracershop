@@ -10,6 +10,13 @@ export const AUTH_PASSWORD = "password";
 export const AUTH_USER = "auth_user";
 export const AUTH_USERNAME = "username";
 
+export const BookingStatus = {
+  Initial : 0,
+  Ordered : 1,
+  Rejected : 2,
+  Released : 3,
+};
+
 export const DATA_ACTIVITY_ORDER = "activity_orders";
 export const DATA_ADDRESS = "address";
 export const DATA_AUTH = "auth";
@@ -63,7 +70,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
 ]
 
-export const JAVASCRIPT_VERSION = "1.3.1";
+export const JAVASCRIPT_VERSION = "1.3.2";
 
 export const NO_ERROR = "";
 
@@ -73,6 +80,8 @@ export const SUCCESS_STATUS_CREATING_USER_ASSIGNMENT = {
   INCORRECT_GROUPS : 2,
   MISSING_CUSTOMER : 3,
   NO_GROUPS : 4,
+  DUPLICATE_ASSIGNMENT : 5,
+  UNABLE_TO_CREATE_USER_ASSIGNMENT : 6,
 };
 export const SUCCESS_STATUS_CRUD = {
   SUCCESS : 0,

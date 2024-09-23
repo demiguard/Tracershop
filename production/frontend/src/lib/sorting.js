@@ -16,10 +16,10 @@ export const PROCEDURE_SORTING = {
 
 
 /**
- * 
- * @param {TracershopState} state 
- * @param {PROCEDURE_SORTING} sortingMethod 
- * @returns 
+ *
+ * @param {TracershopState} state
+ * @param {PROCEDURE_SORTING} sortingMethod
+ * @returns
  */
 export function sort_procedures(state, sortingMethod){
   return (prod_1, prod_2) => {
@@ -28,7 +28,7 @@ export function sort_procedures(state, sortingMethod){
         if (prod_1.series_description === null) return 1;
         if (prod_2.series_description === null) return -1;
         const pi_1 = state.procedure_identifier.get(prod_1.series_description);
-        const pi_2= state.procedure_identifier.get(prod_2.series_description);
+        const pi_2 = state.procedure_identifier.get(prod_2.series_description);
         return pi_1.description > pi_2.description;
       }
       case PROCEDURE_SORTING.TRACER:
@@ -47,12 +47,12 @@ export function sort_procedures(state, sortingMethod){
 
 
 /**
- * Sorts the display order of ActivityDeliveryTimeSlots such that they are 
+ * Sorts the display order of ActivityDeliveryTimeSlots such that they are
  * grouped in:
  * 1. By Customer
  * 2. By Endpoint
  * 3. Sorted by delivery time, earlier time is first
- * @param {Map<Number, DeliveryEndpoint>} endpoints 
+ * @param {Map<Number, DeliveryEndpoint>} endpoints
  * @returns {CallableFunction}
  */
 export function sortTimeSlots(endpoints){
@@ -71,4 +71,79 @@ export function sortTimeSlots(endpoints){
 
     return  timeSlot_b.delivery_time < timeSlot_a.delivery_time ? 1 : -1;
   }
+}
+
+export const BOOKING_SORTING_METHODS = {
+  START_TIME: 0, // This the default
+  ACCESSION_NUMBER : 1,
+  SERIES_DESCRIPTION : 2,
+  LOCATION : 3
+};
+
+/**
+ *
+ * @param {BOOKING_SORTING_METHODS} sortingMethod
+ * @param {TracershopState | undefined} state
+ * @returns
+ */
+export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, state=undefined){
+  function defaultBookingSort(booking_1, booking_2){
+    return booking_2.start_time < booking_1.start_time;
+  }
+
+  if(sortingMethod === BOOKING_SORTING_METHODS.ACCESSION_NUMBER){
+    return (booking_1, booking_2) =>
+      booking_2.accession_number < booking_1.accession_number
+  }
+
+  if(sortingMethod === BOOKING_SORTING_METHODS.SERIES_DESCRIPTION){
+    if(state === undefined){
+      throw "Cannot sort bookings based on Series Description without Tracershop state"
+    }
+    return (booking_1, booking_2) => {
+      const procedure_1 = state.procedure.get(booking_1.procedure);
+      const procedure_2 = state.procedure.get(booking_2.procedure);
+
+      const procedure_identifier_1 = state.procedure_identifier.get(procedure_1.series_description);
+      const procedure_identifier_2 = state.procedure_identifier.get(procedure_2.series_description);
+
+      if(!procedure_identifier_1.description){
+        return false;
+      }
+      if(!procedure_identifier_2.description){
+        return true;
+      }
+      if(procedure_identifier_1.description === procedure_identifier_2.description){
+        return defaultBookingSort;
+      }
+
+      return procedure_identifier_2.description < procedure_identifier_1.description;
+    }
+  }
+
+  if(sortingMethod === BOOKING_SORTING_METHODS.LOCATION){
+    if(state === undefined){
+      throw "Cannot sort bookings based on Series Description without Tracershop state"
+    }
+    return (booking_1, booking_2) => {
+      const location_1 = state.location.get(booking_1.location);
+      const location_2 = state.location.get(booking_2.location);
+
+      if(!location_1.common_name){
+        return false;
+      }
+      if(!location_2.common_name){
+        return true;
+      }
+      if(location_2.common_name === location_1.common_name){
+        return defaultBookingSort;
+      }
+      return location_2.common_name < location_1.common_name;
+    }
+  }
+
+  if(sortingMethod !== BOOKING_SORTING_METHODS.START_TIME){
+    console.error("Unknown input sorting method, using default!")
+  }
+  return defaultBookingSort;
 }

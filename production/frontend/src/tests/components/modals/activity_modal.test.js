@@ -16,14 +16,13 @@ import { testState } from "../../app_state.js";
 import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
 import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
-import { ActivityOrder, TracershopState } from "~/dataclasses/dataclasses.js";
+import { ActivityOrder, TracershopState, Vial } from "~/dataclasses/dataclasses.js";
 import { toMapping } from "~/lib/utils.js";
-import { object } from "prop-types";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const websocket_module = require("../../../lib/tracer_websocket.js");
 
-const today_string = "2020-05-04"
+const today_string = "2020-05-04";
 
 const nowMock = new Date(2020,4,4,10,33,26);
 
@@ -745,5 +744,62 @@ describe("Activity Modal Test", () => {
     expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,[
       expect.objectContaining({status : ORDER_STATUS.CANCELLED})
     ])
+  });
+
+  it("Update vial from state",() => {
+    const newOrders = [new ActivityOrder(
+      1, 1000, "2020-05-04", ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
+    )];
+
+    const customState = new TracershopState();
+    Object.assign(customState, testState);
+    customState.activity_orders = toMapping(newOrders);
+
+    const props = {
+      [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
+      [PROP_ACTIVE_TRACER] : 1,
+      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders,
+        customState.deliver_times,
+        customState.delivery_endpoint),
+      [PROP_TIME_SLOT_ID] : 1,
+      [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
+    }
+    const {rerender} = render(
+      <StateContextProvider value={customState}>
+        <WebsocketContextProvider value={websocket}>
+          <ActivityModal {...props}/>
+        </WebsocketContextProvider>
+      </StateContextProvider>);
+
+    const newState = new TracershopState();
+    Object.assign(newState, customState);
+
+    const newVials = [
+      new Vial(10, 1, 10000, 10.01, "TEST-200504-1", "07:43:11", today_string, null, 1),
+      new Vial(11, 1, 11000, 10.01, "TEST-200504-1", "07:43:11", today_string, null, 1),
+      new Vial(12, 1, 13000, 10.01, "TEST-200504-1", "07:43:11", today_string, null, 1),
+    ]
+
+    newState.vial = toMapping(newVials);
+
+    const updated_props = {
+      [PROP_ACTIVE_DATE] : nowMock,
+      [PROP_ACTIVE_TRACER] : 1,
+      [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
+        newState.deliver_times,
+        newState.delivery_endpoint),
+      [PROP_TIME_SLOT_ID] : 1,
+      [PROP_TRACER_CATALOG] : new TracerCatalog(newState.tracer_mapping, newState.tracer),
+    }
+
+    rerender(<StateContextProvider value={newState}>
+      <WebsocketContextProvider value={websocket}>
+        <ActivityModal {...updated_props}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    expect(screen.getByTestId("vial-id-10")).toBeVisible();
+    expect(screen.getByTestId("vial-id-11")).toBeVisible();
+    expect(screen.getByTestId("vial-id-12")).toBeVisible();
   });
 });

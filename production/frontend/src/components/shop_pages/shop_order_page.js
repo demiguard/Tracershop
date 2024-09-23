@@ -104,32 +104,40 @@ export function ShopOrderPage ({relatedCustomer}){
   const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
   const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
   const [activeTracer, setActiveTracer] = useState(init.current.activeTracer);
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings] = useState(new Map());
   const activeDate = state.today;
 
   function addBookingFromUpdate(message){
     if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_CREATE_BOOKING){
-      const newBookings = [];
-      for(const serialized_booking of message[WEBSOCKET_DATA]){
-        const booking = new Booking();
-        Object.assign(booking, serialized_booking.fields);
-        booking.id = serialized_booking.id;
-        newBookings.push(booking);
-      }
-      const filteredBookings = bookingFilter(newBookings, {
-        state : state,
-        active_date : activeDate,
-        active_endpoint : activeEndpoint,
-      });
-
       setBookings(oldBookings => {
-        return [...oldBookings, ...filteredBookings];
+        const newBookings = new Map(oldBookings);
+        for(const serialized_booking of message[WEBSOCKET_DATA]){
+          const booking = new Booking();
+          Object.assign(booking, serialized_booking.fields);
+          booking.id = serialized_booking.id;
+          newBookings.set(booking.id,booking);
+        }
+        const filteredBookings = bookingFilter(newBookings, {
+          state : state,
+          active_date : activeDate,
+          active_endpoint : activeEndpoint,
+        });
+
+        for(const booking of filteredBookings){
+          newBookings.set(booking.id, booking);
+        }
+
+        return newBookings;
       })
     } else if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_DELETE_BOOKING){
       const /**@type {Array<Number>} */ deleted_bookings = message[WEBSOCKET_DATA_ID]
-      setBookings(oldBookings =>
-        oldBookings.filter((booking) => !deleted_bookings.includes(booking.id))
-      );
+      setBookings(oldBookings => {
+        const newBookings = new Map(oldBookings);
+        for(const bookingID of deleted_bookings){
+          newBookings.delete(bookingID);
+        }
+        return newBookings
+      });
     }
   }
 
@@ -151,20 +159,20 @@ export function ShopOrderPage ({relatedCustomer}){
         activeDate, activeEndpoint
       ).then((data) => {
         if(data[WEBSOCKET_DATA]){
-          const newBookings = [];
+          const newBookings = new Map();
 
           for(const serialized_booking of data[WEBSOCKET_DATA]){
             const booking = new Booking();
             Object.assign(booking, serialized_booking.fields);
             booking.id = serialized_booking.id;
-            newBookings.push(booking);
+            newBookings.set(booking.id, booking);
           }
           setBookings(bookings => newBookings);
         }
       });
     }
     return () => {
-      setBookings([]);
+      setBookings(new Map());
     }
   }, [activeEndpoint, activeDate, websocket])
 
@@ -220,7 +228,7 @@ export function ShopOrderPage ({relatedCustomer}){
     [PROP_ACTIVE_ENDPOINT] : activeEndpoint,
     [PROP_VALID_ACTIVITY_DEADLINE] :  !Boolean(activityDeadlineExpired),
     [PROP_VALID_INJECTION_DEADLINE] : !Boolean(injectionDeadlineExpired),
-    [DATA_BOOKING] : bookings,
+    [DATA_BOOKING] : [...bookings.values()],
     activeTracer : activeTracer,
     setActiveTracer : setActiveTracer,
   };

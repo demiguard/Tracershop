@@ -8,10 +8,12 @@ from logging import getLogger, Logger, DEBUG
 
 # Third party packages
 from django.test import TestCase, TransactionTestCase
+import hl7
 
 # Tracershop packages
 from database.models import Customer, Isotope, Tracer, TracerTypes, Vial
-from lib.parsing import update_customer_mapping, update_tracer_mapping, parse_val_file, customer_mapping, tracer_mapping, _parse_customer
+from lib.parsing import update_customer_mapping, update_tracer_mapping,\
+  parse_val_file, _parse_customer, extract_deleted_accessionNumber
 
 class ParsingTestCase(TestCase):
   def setUp(self) -> None:
@@ -288,3 +290,12 @@ class ParsingTestCase(TestCase):
     self.assertEqual(vial.fill_date, date(2024,1,24))
     self.assertEqual(vial.assigned_to, None)
     self.assertEqual(vial.owner, self.hilleroed)
+
+  def test_extract_deleted_accessionNumber(self):
+    message_1 = hl7.parse("""MSH|^~\&|Sectra|Sectra RIS|IBC-606|Veenstra|20240923130613||ORM^O01|3F138A25A954424FAFD89FAD773B1687-ORM|P|2.3.1\rPID|||||||19441004|M|||Dragstrupvej 62^^Gilleleje^^3250|270|||||||||||||||||"\rPV1|||""|||||||||||||\rORC|CA|||||||||||||||||||\rOBR||DKREGH0520210461|SECTRA1518617784|WDTPSFCXX_$15[+_$15^PET/CT, NaF Knogle (+)||||||||||||||||DKREGH0023459112||||||||||||^^^^^^264751000016001\r""")
+    message_2 = hl7.parse("""MSH|^~\&|Sectra|Sectra RIS|IBC-606|Veenstra|20240923123843||ORM^O01|AA632E60419940989BACDD0E7CADF6E6-ORM|P|2.3.1\rPID|||||||19410614|M|||Humlevej 20^^Allerød^^3450|201|||||||||||||||||""\rPV1|||""|||||||||||||\rORC|CA|||||||||||||||||||\rOBR||DKREGH0520378664|SECTRA1539720570|S_WHBSS99UF_$30^Myokardieskint., fysiol. prov., Tc-99m||||||||||||||||DKREGH0023637963||||||||||||^^^^^^220691000016004\r""")
+    message_3 = hl7.parse("""MSH|^~\&|Sectra|Sectra RIS|IBC-606|Veenstra|20240923122931||ORM^O01|FC06A833F12D4F8CBBBBDD96B2A9AFA2-ORM|P|2.3.1\rPID|||||||19470929|M|||Baeshøjgårdsvej 21^^Vig^^4560|306|||||||||||||||||""\rPV1|||""|||||||||||||\rORC|CA|||||||||||||||||||\rOBR||DKREGH0520081424|SECTRA1503940345|WDTPSCUXX_$15^PET/CT, Cu-64-DOTATATE (+)||||||||||||||||DKREGH0023322206||||||||||||^^^^^^256621000016000""")
+
+    self.assertEqual(extract_deleted_accessionNumber(message_1['OBR'][0]),"DKREGH0023459112")
+    self.assertEqual(extract_deleted_accessionNumber(message_2['OBR'][0]),"DKREGH0023637963")
+    self.assertEqual(extract_deleted_accessionNumber(message_3['OBR'][0]),"DKREGH0023322206")

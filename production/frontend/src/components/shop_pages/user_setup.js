@@ -14,6 +14,8 @@ import { DATA_USER_ASSIGNMENT, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKE
 export const ERROR_MESSAGE_NO_LDAP_USERNAME = "BAM ID findes ikke. Bemærk at brugeren kan havde et regionalt ID, som skal benyttes istedet!"
 export const ERROR_MESSAGE_INCORRECT_GROUPS = "Brugeren har ikke korrekte CBAS rettigheder!"
 export const ERROR_MESSAGE_MISSING_RIGHTS = "Brugeren findes, men den har ingen CBAS rettigheder! Kontakt CBAS administratoren for give Tracershop rettigheder til kontoen!"
+export const ERROR_MESSAGE_DUPLICATE_INSTANCE = "Brugeren er allerede tildelt adgang til Tracershop"
+export const ERROR_MESSAGE_UNABLE_TO_CREATE = "Kunne ikke oprette bruger, af udvikleren af tracershop"
 
 function UserAssignmentRow(props){
   const {user_assignment, activeCustomer} = props;
@@ -33,8 +35,12 @@ function UserAssignmentRow(props){
       username : username,
       customer_id : activeCustomer
     }).then((data) => {
-      if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS) {
-        setError(ERROR_MESSAGE_MISSING_RIGHTS)
+      if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.UNABLE_TO_CREATE_USER_ASSIGNMENT){
+        setError(ERROR_MESSAGE_UNABLE_TO_CREATE);
+      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.DUPLICATE_ASSIGNMENT){
+        setError(ERROR_MESSAGE_DUPLICATE_INSTANCE);
+      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS) {
+        setError(ERROR_MESSAGE_MISSING_RIGHTS);
       } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME){
         setError(ERROR_MESSAGE_NO_LDAP_USERNAME);
       } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS){

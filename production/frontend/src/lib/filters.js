@@ -111,28 +111,19 @@ export function bookingFilter(container, {
   active_date,
   tracer_id
 }){
-  const /**@type {Array<Booking>} */ bookings = (() => {
-    if (container instanceof TracershopState){
-      throw "Tracershop state doesn't contain bookings"
-    } else if (container instanceof Map){
-      return [...container.values()];
-    } else if (container instanceof Array){
-      return container;
-    } else if (container instanceof Booking){
-      return [container];
-    }
-    throw "Unable to construct booking array";
-  })();
+  const /**@type {Array<Booking>}*/ bookings = extractData(container);
 
   const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
-  const procedures = state && tracer_id ? procedureFilter(state, {}, true) : undefined;
+  const procedures = state && tracer_id ? procedureFilter(state, {
+    tracerID : tracer_id, active_endpoint : active_endpoint
+  }, true) : undefined;
 
 
   return bookings.filter((booking) => {
     const endpoint_condition = locations ? locations.includes(booking.location) : true;
     const date_condition = active_date ? compareDates(datify(active_date), datify(booking.start_date)) : true;
-
-    return endpoint_condition && date_condition;
+    const procedure_condition = procedures ? procedures.includes(booking.procedure) : true;;
+    return endpoint_condition && date_condition && procedure_condition;
   });
 }
 
