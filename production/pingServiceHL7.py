@@ -168,7 +168,7 @@ async def handleMessage(hl7_message: Message):
         if ORC_message_segment[1][0] == 'DC' and ORC_message_segment[5][0] == 'Ended'\
             or ORC_message_segment[1][0] == 'CA':
             # Delete
-            accession_number = extract_accession_number(ORC_message_segment)
+            accession_number = extract_accession_number(OBR_message_segment)
             booking_id = await delete_booking(accession_number)
             logger.info(f"deleted booking with uid: {accession_number}")
             if 0 < booking_id:
@@ -193,18 +193,22 @@ async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7Strea
         # We're going to keep listening until the writer
         # is closed. Only writers have closed status.
         while not hl7_writer.is_closing():
-            hl7_message = await hl7_reader.readmessage()
+            try:
+                hl7_message = await hl7_reader.readmessage()
+            except ConnectionResetError:
+                logger.error("Connection Reset!")
+                continue
             logger.info(f'Received message\n {hl7_message}'.replace('\r', '\n'))
             try:
                 await handleMessage(hl7_message)
+                hl7_writer.writemessage(hl7_message.create_ack())
+                await hl7_writer.drain()
             except Exception:
                 logger.error(f"Failed To handle Message with traceback:")
                 logger.error(traceback.format_exc())
 
             # Now let's send the ACK and wait for the
             # writer to drain
-            hl7_writer.writemessage(hl7_message.create_ack())
-            await hl7_writer.drain()
     except asyncio.IncompleteReadError:
         # This expection is triggered at the end of a message
         # closed or closing, close it.
