@@ -160,7 +160,7 @@ async def handleMessage(hl7_message: Message):
                         'type' : 'broadcastMessage',
                         WEBSOCKET_MESSAGE_ID : getNewMessageID(),
                         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-                        WEBSOCKET_DATA : ,
+                        WEBSOCKET_DATA : serialized_booking,
                         WEBSOCKET_DATATYPE : DATA_BOOKING,
                         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_BOOKING,
                     })
