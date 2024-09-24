@@ -114,8 +114,8 @@ export function ShopOrderPage ({relatedCustomer}){
         for(const serialized_booking of message[WEBSOCKET_DATA]){
           const booking = new Booking();
           Object.assign(booking, serialized_booking.fields);
-          booking.id = serialized_booking.id;
-          newBookings.set(booking.id,booking);
+          booking.id = serialized_booking.pk;
+          newBookings.set(booking.id, booking);
         }
         const filteredBookings = bookingFilter(newBookings, {
           state : state,
@@ -164,10 +164,10 @@ export function ShopOrderPage ({relatedCustomer}){
           for(const serialized_booking of data[WEBSOCKET_DATA]){
             const booking = new Booking();
             Object.assign(booking, serialized_booking.fields);
-            booking.id = serialized_booking.id;
+            booking.id = serialized_booking.pk;
             newBookings.set(booking.id, booking);
           }
-          setBookings(bookings => newBookings);
+          setBookings(newBookings);
         }
       });
     }

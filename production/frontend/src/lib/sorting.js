@@ -101,8 +101,21 @@ export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, s
       throw "Cannot sort bookings based on Series Description without Tracershop state"
     }
     return (booking_1, booking_2) => {
+      if(!booking_1.procedure){
+        return false;
+      }
+      if(!booking_2.procedure){
+        return true;
+      }
+
       const procedure_1 = state.procedure.get(booking_1.procedure);
       const procedure_2 = state.procedure.get(booking_2.procedure);
+      if(!procedure_1 || !procedure_1.series_description){
+        return false;
+      }
+      if(!procedure_2 || !procedure_1.series_description){
+        return true;
+      }
 
       const procedure_identifier_1 = state.procedure_identifier.get(procedure_1.series_description);
       const procedure_identifier_2 = state.procedure_identifier.get(procedure_2.series_description);
@@ -114,7 +127,7 @@ export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, s
         return true;
       }
       if(procedure_identifier_1.description === procedure_identifier_2.description){
-        return defaultBookingSort;
+        return defaultBookingSort(booking_1, booking_2);
       }
 
       return procedure_identifier_2.description < procedure_identifier_1.description;
@@ -136,7 +149,7 @@ export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, s
         return true;
       }
       if(location_2.common_name === location_1.common_name){
-        return defaultBookingSort;
+        return defaultBookingSort(booking_1, booking_2);
       }
       return location_2.common_name < location_1.common_name;
     }

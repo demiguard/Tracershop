@@ -161,7 +161,7 @@ function TracerCard({tracer,
   const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
     activityDeadlineValid : injectionDeadlineValid;
 
-  const rows = bookings.sort(sortBookings(sortingMethod)).map(
+  const rows = [...bookings].sort(sortBookings(sortingMethod, state)).map(
       (booking, i) => {
         const checked = bookingProgram[booking.accession_number];
 
