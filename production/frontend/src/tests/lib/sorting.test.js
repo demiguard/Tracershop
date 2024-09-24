@@ -21,12 +21,29 @@ describe("Sorting Test suite", () => {
 
     const procedures = [
       new Procedure(1, 1, 1000, 0, 1, null),
-      new Procedure(2, 2, 100, 0, 1, null),
-      new Procedure(3, 1, 10, 0, 1, null),
+      new Procedure(2, 1, 20, 0, null, null),
+      new Procedure(3, 2, 500, 0, 2, null),
+      new Procedure(4, 3, 200, 0, 1, null),
+      new Procedure(5, 1, 10, 0, 1, null),
+      new Procedure(6, null, 0, null, null, null),
+      new Procedure(7, 1, 10, 0, 1, null),
     ]
 
     const sorted_procedures = [...procedures].sort(sort_procedures(state, PROCEDURE_SORTING.UNITS))
-    expect(sorted_procedures[0]).toBe(procedures[2])
+    expect(sorted_procedures[0]).toBe(procedures[5])
 
+    const sorted_tracer_procedure = [...procedures].sort(sort_procedures(state, PROCEDURE_SORTING.TRACER))
+    expect(sorted_tracer_procedure[4]).toBe(procedures[2]);
+    expect(sorted_tracer_procedure[5]).toBe(procedures[1]);
+    expect(sorted_tracer_procedure[6]).toBe(procedures[5]);
+
+    const sorted_procedure_procedures = [...procedures].sort(sort_procedures(state, PROCEDURE_SORTING.PROCEDURE_CODE));
+    expect(sorted_procedure_procedures[6]).toBe(procedures[5])
+    expect(sorted_procedure_procedures[5]).toBe(procedures[3])
+    expect(sorted_procedure_procedures[4]).toBe(procedures[2])
+
+    expect(() => {[...procedures].sort(sort_procedures(state, 12342352))}).toThrow("UNDEFINED SORTING METHOD!")
   });
+
+
 });

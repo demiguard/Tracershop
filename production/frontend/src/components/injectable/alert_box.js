@@ -81,7 +81,6 @@ export const ERROR_LEVELS = {
   error : ERROR_TYPE_ERROR
 }
 
-
 /** Stateless Box displaying an important message
  *
  */
@@ -89,10 +88,11 @@ export function AlertBox ({message = "", level = ERROR_TYPE_ERROR}) {
     return (
       <Row
         style={{
-          padding : '0px'
+          padding : '0px',
+          ...stylings[level]
         }}
-        className={stylings[level] + " justify-content-start"}>
-        <Col md={{span : 2}} className={"justify-content-start text-center " + headerStylings[level]}>{Warning_names[level]}</Col>
+        className={"justify-content-start"}>
+        <Col style={headerStylings[level]} md={{span : 2}} className={"justify-content-start text-center"}>{Warning_names[level]}</Col>
         <Col md={{span : 10}} className="p-2 justify-content-start">{message}</Col>
       </Row>
     );

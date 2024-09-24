@@ -111,13 +111,14 @@ export function ShopOrderPage ({relatedCustomer}){
     if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_CREATE_BOOKING){
       setBookings(oldBookings => {
         const newBookings = new Map(oldBookings);
+        const parsed_bookings = []
         for(const serialized_booking of message[WEBSOCKET_DATA]){
           const booking = new Booking();
           Object.assign(booking, serialized_booking.fields);
           booking.id = serialized_booking.pk;
-          newBookings.set(booking.id, booking);
+          parsed_bookings.push(booking);
         }
-        const filteredBookings = bookingFilter(newBookings, {
+        const filteredBookings = bookingFilter(parsed_bookings, {
           state : state,
           active_date : activeDate,
           active_endpoint : activeEndpoint,

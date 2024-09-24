@@ -155,7 +155,6 @@ class VialFileHandler(FileSystemEventHandler):
     val_path = Path(event.src_path)
     handle_path(val_path)
 
-
 class Command(BaseCommand):
   def handle(self, *args: Any, **options: Any) -> str | None:
 
@@ -167,15 +166,13 @@ class Command(BaseCommand):
     logger.debug(f"Started with tracer mapping: {tracer_mapping}")
     logger.debug(f"Started with customer mapping: {customer_mapping}")
     observer = Observer()
-    observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
+    observer.schedule(VialFileHandler, VIAL_WATCHER_FILE_PATH, True)
     observer.start()
 
     # Process files that might have been there earlier
     try:
       while True:
         sleep(60)
-        update_tracer_mapping()
-        update_customer_mapping()
         if not observer.is_alive():
           logger.error("Vialdog died for reason hopefully in the logs. Restarting it!")
           observer.join()

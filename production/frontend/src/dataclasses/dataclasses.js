@@ -540,7 +540,7 @@ export class MessageAssignment {
 }
 
 export class Tracer {
-  constructor(id, shortname, clinical_name, isotope, tracer_type, vial_tag, archived, is_static_instance, ) {
+  constructor(id, shortname, clinical_name, isotope, tracer_type, vial_tag, archived, marketed, is_static_instance, ) {
     this.id=id
     this.shortname=shortname
     this.clinical_name=clinical_name
@@ -548,6 +548,7 @@ export class Tracer {
     this.tracer_type=tracer_type
     this.vial_tag=vial_tag
     this.archived=archived
+    this.marketed=marketed
     this.is_static_instance=is_static_instance
   }
 
@@ -563,6 +564,7 @@ export class Tracer {
       this.tracer_type,
       this.vial_tag,
       this.archived,
+      this.marketed,
       this.is_static_instance
     )
   }
@@ -575,6 +577,7 @@ export class Tracer {
       new IntField("tracer_type"),
       new CharField("vial_tag"),
       new BooleanField("archived"),
+      new BooleanField("marketed"),
     ];
   }
 }

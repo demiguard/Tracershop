@@ -87,6 +87,7 @@ def create_booking(location, procedure_identifier, start_time, start_date, acces
     booking.procedure = procedure_identifier
     booking.start_date = start_date
     booking.start_time = start_time
+    booking.status = BookingStatus.Initial
 
     booking.save()
 

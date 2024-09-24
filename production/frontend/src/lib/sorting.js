@@ -14,7 +14,6 @@ export const PROCEDURE_SORTING = {
   DELAY : 3,
 }
 
-
 /**
  *
  * @param {TracershopState} state
@@ -24,13 +23,17 @@ export const PROCEDURE_SORTING = {
 export function sort_procedures(state, sortingMethod){
   return (prod_1, prod_2) => {
     switch (sortingMethod) {
-      case PROCEDURE_SORTING.PROCEDURE_CODE:{
-        if (prod_1.series_description === null) return 1;
-        if (prod_2.series_description === null) return -1;
+      case PROCEDURE_SORTING.PROCEDURE_CODE:
+        if (prod_1.series_description === null){
+          return 1;
+        }
+        if (prod_2.series_description === null){
+          return -1;
+        }
         const pi_1 = state.procedure_identifier.get(prod_1.series_description);
         const pi_2 = state.procedure_identifier.get(prod_2.series_description);
-        return pi_1.description > pi_2.description;
-      }
+
+        return pi_1.description > pi_2.description ? 1 : -1;
       case PROCEDURE_SORTING.TRACER:
         if (prod_1.tracer === null) return 1
         if (prod_2.tracer === null) return -1
@@ -86,14 +89,14 @@ export const BOOKING_SORTING_METHODS = {
  * @param {TracershopState | undefined} state
  * @returns
  */
-export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, state=undefined){
+export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, state=undefined, invert=1){
   function defaultBookingSort(booking_1, booking_2){
-    return booking_2.start_time < booking_1.start_time;
+    return booking_2.start_time < booking_1.start_time ? invert : -1 * invert;
   }
 
   if(sortingMethod === BOOKING_SORTING_METHODS.ACCESSION_NUMBER){
     return (booking_1, booking_2) =>
-      booking_2.accession_number < booking_1.accession_number
+      booking_2.accession_number < booking_1.accession_number ? invert : -1 * invert
   }
 
   if(sortingMethod === BOOKING_SORTING_METHODS.SERIES_DESCRIPTION){
@@ -101,36 +104,37 @@ export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, s
       throw "Cannot sort bookings based on Series Description without Tracershop state"
     }
     return (booking_1, booking_2) => {
+      if(booking_1.procedure === booking_2.procedure){
+        return defaultBookingSort(booking_1, booking_2);
+      }
+
       if(!booking_1.procedure){
-        return false;
+        return -1 * invert;
       }
       if(!booking_2.procedure){
-        return true;
+        return invert;
       }
 
       const procedure_1 = state.procedure.get(booking_1.procedure);
       const procedure_2 = state.procedure.get(booking_2.procedure);
       if(!procedure_1 || !procedure_1.series_description){
-        return false;
+        return -1 * invert;
       }
       if(!procedure_2 || !procedure_1.series_description){
-        return true;
+        return invert;
       }
 
       const procedure_identifier_1 = state.procedure_identifier.get(procedure_1.series_description);
       const procedure_identifier_2 = state.procedure_identifier.get(procedure_2.series_description);
 
       if(!procedure_identifier_1.description){
-        return false;
+        return -1 * invert;
       }
       if(!procedure_identifier_2.description){
-        return true;
-      }
-      if(procedure_identifier_1.description === procedure_identifier_2.description){
-        return defaultBookingSort(booking_1, booking_2);
+        return 1 * invert;
       }
 
-      return procedure_identifier_2.description < procedure_identifier_1.description;
+      return procedure_identifier_2.description < procedure_identifier_1.description ? invert : -1 * invert;
     }
   }
 
@@ -142,21 +146,30 @@ export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, s
       const location_1 = state.location.get(booking_1.location);
       const location_2 = state.location.get(booking_2.location);
 
-      if(!location_1.common_name){
-        return false;
+      if(location_1 === undefined){
+        return -1 * invert;
       }
-      if(!location_2.common_name){
-        return true;
+      if(location_2 === undefined){
+        return invert;
       }
-      if(location_2.common_name === location_1.common_name){
+
+      if(location_2.id === location_1.id){
         return defaultBookingSort(booking_1, booking_2);
       }
-      return location_2.common_name < location_1.common_name;
+
+      if(!location_1.common_name){
+        return -1 * invert;
+      }
+      if(!location_2.common_name){
+        return invert;
+      }
+
+      return location_2.common_name < location_1.common_name ? invert : -1 * invert;
     }
   }
 
   if(sortingMethod !== BOOKING_SORTING_METHODS.START_TIME){
-    console.error("Unknown input sorting method, using default!")
+    console.log("Unknown input sorting method, using default!")
   }
   return defaultBookingSort;
 }

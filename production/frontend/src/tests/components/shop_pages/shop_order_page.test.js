@@ -155,7 +155,7 @@ describe("Shop Order page test suite", () => {
     const websocket = {
       sendGetBookings : jest.fn(() => Promise.resolve({
         [WEBSOCKET_DATA] : [
-          { id : 1, fields : { status : 1,
+          { pk : 1, fields : { status : 1,
                                location : 1,
                                procedure : 1,
                                accession_number : "DKREGH0011223344",
@@ -225,12 +225,12 @@ describe("Shop Order page test suite", () => {
     const websocket = {
       sendGetBookings : jest.fn(() => Promise.resolve({
         [WEBSOCKET_DATA] : [
-          { id : 1, fields : { status : 1,
+          { pk : 1, fields : { status : 1,
                                location : 1,
                                procedure : 1,
                                accession_number : "DKREGH0011223344",
                                start_time : "10:00:00", start_date : "2020-05-05"}
-          }, { id : 2, fields : { status : 1,
+          }, { pk : 2, fields : { status : 1,
             location : 1,
             procedure : 2,
             accession_number : "DKREGH0011223344",
@@ -312,12 +312,12 @@ describe("Shop Order page test suite", () => {
       websocket.triggerListeners({
         [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_BOOKING,
         [WEBSOCKET_DATA] : [
-          { id : 1, fields : { status : 1,
+          { pk : 1, fields : { status : 1,
                                location : 1,
                                procedure : 1,
                                accession_number : "DKREGH0011223344",
                                start_time : "10:00:00", start_date : "2020-05-05"}
-          }, { id : 2, fields : { status : 1,
+          }, { pk : 2, fields : { status : 1,
             location : 1,
             procedure : 2,
             accession_number : "DKREGH0011223344",

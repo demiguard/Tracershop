@@ -43,6 +43,7 @@ class Tracer(TracershopModel):
   tracer_type = SmallIntegerField(choices=TracerTypes.choices)
   vial_tag = CharField(max_length=32)
   archived = BooleanField(default=False)
+  marketed = BooleanField(default=False)
 
   def __str__(self):
     return f"{self.shortname} - {self.isotope}"

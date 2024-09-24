@@ -17,6 +17,8 @@ import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
 
+const promise_resolve_timeout_ms = 150;
+
 export class TracerWebSocket {
   /**@type {WebSocket} */ _ws
   /**@type {Map<Number, MessageChannel> }*/ _promiseMap
@@ -58,7 +60,7 @@ export class TracerWebSocket {
           pipe.port1.close();
           pipe.port2.close();
           this._promiseMap.delete(message[WEBSOCKET_MESSAGE_ID]);
-        }, 150);
+        }, promise_resolve_timeout_ms);
       }
       // If this websocket isn't the author of the request, then there's no promise to update.
       // A websocket might receive a message from due to another persons update.

@@ -63,6 +63,8 @@ class TracershopModel(Model):
     """
     try:
       for key, value in modelDict.items():
+        if key in self.derived_properties:
+          continue
         field = self._meta.get_field(key) # Fails if key doesn't match a field!
         if value is None:
           self.__setattr__(key, value)

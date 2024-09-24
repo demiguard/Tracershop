@@ -19,7 +19,7 @@ import { InjectionOrderPDFUrl, compareLoosely } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { Optional } from "~/components/injectable/optional";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 
 /**
  * This is a card containing all the information on an injection order
@@ -45,6 +45,7 @@ export function InjectionOrderCard({
   const [errorInjections, setErrorInjections] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("")
   const state = useTracershopState();
+  const websocket = useWebsocket();
 
   function resetErrors(){
     setErrorInjections("");
@@ -60,6 +61,12 @@ export function InjectionOrderCard({
     setTempInjectionOrder(
       (prevState) => {return {...prevState, delivery_time : value}}
     );
+  }
+
+  function deleteOrder(){
+    if(websocket){
+      websocket.sendDeleteModel(DATA_INJECTION_ORDER, [injection_order]);
+    }
   }
 
   function validate(){
@@ -123,12 +130,9 @@ export function InjectionOrderCard({
 
   const changed = !compareLoosely(injection_order, tempInjectionOrder);
   const canEdit = injection_order.status <= 1 && valid_deadline;
-  let statusInfo = "Ny ordre";
   const orderExists = 0 < injection_order.status;
+  const statusInfo = orderExists ? `ID: ${injection_order.id}` : "Ny ordre";
 
-  if(orderExists){
-    statusInfo = `ID: ${injection_order.id}`;
-  }
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
   const ActionButton = (() => {
@@ -145,13 +149,15 @@ export function InjectionOrderCard({
       return <CommitButton
         temp_object={tempInjectionOrder}
         object_type={DATA_INJECTION_ORDER}
-        label={`commit-${injection_order.id}`}
+        label={`commit-injection-${injection_order.id}`}
         validate={validate}
       />
     }
     if(!changed && valid_deadline && orderExists){
       return <ClickableIcon
+        label={`delete-injection-${injection_order.id}`}
         src="static/images/decline.svg"
+        onClick={deleteOrder}
       />
     }
     return "";

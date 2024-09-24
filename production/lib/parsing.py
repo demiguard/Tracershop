@@ -13,19 +13,20 @@ from typing import Dict, List, Tuple
 # Tracershop packages
 from database.models import Customer, Tracer, Vial, UserGroups
 
-tracer_mapping = {}
-customer_mapping = {}
 def update_tracer_mapping():
+  tracer_mapping = {}
   for tracer in Tracer.objects.all():
     if tracer.vial_tag is not None and tracer.vial_tag != "":
       tracer_mapping[tracer.vial_tag] = tracer
-update_tracer_mapping()
+  return tracer_mapping
 
 def update_customer_mapping():
+  customer_mapping = {}
   for customer in Customer.objects.all():
     if customer.dispenser_id is not None:
       customer_mapping[customer.dispenser_id] = customer
-update_customer_mapping()
+  return customer_mapping
+
 
 def _parse_customer(string: str, vial: Vial, logger: Logger):
   regex = re.compile(r"customer:\s*(\d+)\-\w+\s*")
@@ -33,6 +34,7 @@ def _parse_customer(string: str, vial: Vial, logger: Logger):
   if regex_match is not None:
     dispenser_id_str, = regex_match.groups()
     dispenser_id = int(dispenser_id_str)
+    customer_mapping = update_customer_mapping()
     if dispenser_id in customer_mapping:
       vial.owner = customer_mapping[dispenser_id]
   else:
@@ -50,9 +52,9 @@ def _parse_charge(string: str, vial: Vial, logger: Logger):
   vial_tag_regex = re.compile(r"(\w+)\-\d{6}\-\d+")
   vial_tag_match = vial_tag_regex.match(lot_number)
   if vial_tag_match is None:
-
     return
 
+  tracer_mapping = update_tracer_mapping()
   vial_tag, = vial_tag_match.groups()
   if vial_tag in tracer_mapping:
     vial.tracer = tracer_mapping[vial_tag]

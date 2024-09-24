@@ -35,6 +35,11 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
     const rows = [...procedureIdentifierIDs].map(
       (procedureIdentifierID) => {
         const procedureIdentifier = state.procedure_identifier.get(procedureIdentifierID);
+        if(procedureIdentifier === undefined){
+          console.log(`Procedure Identifier for ${procedureIdentifierID} is undefined!`);
+          return null;
+        }
+
         return (<Row key={procedureIdentifierID}>{procedureIdentifier.description}</Row>);
       }
     )
@@ -55,7 +60,7 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
       <Collapse in={open}>
         <Card.Body>{rows}</Card.Body>
       </Collapse>
-    </Card>)
+    </Card>);
 }
 
 /**
@@ -145,6 +150,7 @@ function TracerCard({tracer,
   }
 
   const [sortingMethod, setSortingState] = useState(BOOKING_SORTING_METHODS.START_TIME);
+  const [invertedSorting, setInvertedSorting] = useState(1)
   const [open, setOpen] = useState(false);
   const [bookingProgram, setBookingProgram] = useState(bookingListInit.current);
 
@@ -161,17 +167,18 @@ function TracerCard({tracer,
   const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
     activityDeadlineValid : injectionDeadlineValid;
 
-  const rows = [...bookings].sort(sortBookings(sortingMethod, state)).map(
-      (booking, i) => {
-        const checked = bookingProgram[booking.accession_number];
 
-        return (<BookingRow
-                  key={i}
-                  booking={booking}
-                  procedureLocationIndex={procedureLocationIndex}
-                  setBookingProgram={setBookingProgram}
-                  checked={checked}
-        />);
+  const rows = [...bookings].sort(sortBookings(sortingMethod, state, invertedSorting)).map(
+    (booking, i) => {
+      const checked = bookingProgram[booking.accession_number];
+
+      return (<BookingRow
+                key={i}
+                booking={booking}
+                procedureLocationIndex={procedureLocationIndex}
+                setBookingProgram={setBookingProgram}
+                checked={checked}
+      />);
   });
 
  return (
