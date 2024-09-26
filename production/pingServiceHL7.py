@@ -146,7 +146,7 @@ async def handleMessage(hl7_message: Message):
         # This is the name given by the standard. It is really part of the
         # message type. But for some god forsaken reason, did we decide to have
         # 10 different Message types to the same code
-        if ORC_message_segment[1][0] == 'XO' and and ORC_message_segment[5][0] != 'ExamStarted':
+        if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] != 'ExamStarted':
             location_str = extract_location(OBR_message_segment)
             location = await get_or_create_location(location_str)
 
