@@ -49,11 +49,11 @@ export const missingSetupHeader = "Ikke opsatte undersøgelser";
         <Row>
           <Col>{missingSetupHeader}</Col>
           <Col style={cssAlignRight}>
-                <OpenCloseButton
-                  label="open-unset-procedures"
-                  open={open}
-                  setOpen={setOpen}
-                />
+            <OpenCloseButton
+              label="open-unset-procedures"
+              open={open}
+              setOpen={setOpen}
+            />
           </Col>
         </Row>
       </Card.Header>

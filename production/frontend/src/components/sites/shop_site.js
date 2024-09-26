@@ -8,6 +8,9 @@ import { PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constan
 import { User, UserAssignment } from "../../dataclasses/dataclasses";
 import { NoAssociatedUser } from "../shop_pages/no_associated_user";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { Button, Col } from "react-bootstrap";
+import { NAVBAR_STYLES } from "~/lib/styles";
+import { openShopManual } from "~/lib/utils";
 
 const Pages = {
   orders : ShopOrderPage,
@@ -67,13 +70,26 @@ export function ShopSite ({logout, NavbarElements}) {
     }
   })();
 
+  const manualNavBarElement = (<Col style={{
+    display : "flex",
+    alignItems : "center"
+  }} key="shop-manual">
+      <Button
+        style={NAVBAR_STYLES.navbarElement}
+        onClick={openShopManual}>
+          Manual
+        </Button>
+  </Col>);
+
+  const newNavbarElements = [manualNavBarElement, ...NavbarElements]
+
   return(<div>
     <TracershopNavbar
           ActiveKey={siteIdentifier}
           Names={availablePages}
           logout={logout}
           isAuthenticated={true}
-          NavbarElements={NavbarElements}
+          NavbarElements={newNavbarElements}
           setActivePage={setSiteIdentifier}
     />
     <Site relatedCustomer={relatedCustomer} />

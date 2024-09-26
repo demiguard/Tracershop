@@ -24,7 +24,7 @@ from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
 from database.database_interface import DatabaseInterface
 from lib.formatting import format_csv_data
 from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder
-from shared_constants import JAVASCRIPT_VERSION
+from shared_constants import JAVASCRIPT_VERSION, URL_SHOP_MANUAL
 from tracerauth.auth import login_from_header
 from tracerauth.ldap import guess_customer_group
 
@@ -150,3 +150,7 @@ def vial_csv_view(request, year: int, month: int):
   formatted_data = format_csv_data(csv_data)
 
   return FileResponse(formatted_data, filename="data.xlsx")
+
+def shop_manual_view(request):
+  filename = "frontend/static/frontend/pdfs/manuals/shop_manual.pdf"
+  return FileResponse(open(filename, 'rb'), filename="Kunde Manual.pdf")

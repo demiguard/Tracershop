@@ -4,7 +4,7 @@ import propTypes from 'prop-types';
 
 import { nullParser } from "~/lib/formatting";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-import { ClickableIcon, StatusIcon } from "../../injectable/icons";
+import { ClickableIcon, InjectionDeliveryIcon, StatusIcon } from "../../injectable/icons";
 import { Select, toOptions } from "../../injectable/select";
 import { ORDER_STATUS, cssCenter } from "~/lib/constants";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
@@ -64,9 +64,7 @@ export function InjectionOrderCard({
   }
 
   function deleteOrder(){
-    if(websocket){
-      websocket.sendDeleteModel(DATA_INJECTION_ORDER, [injection_order]);
-    }
+    websocket.sendDeleteModel(DATA_INJECTION_ORDER, [injection_order]);
   }
 
   function validate(){
@@ -137,12 +135,9 @@ export function InjectionOrderCard({
   const tracerOptions = toOptions(injection_tracers, 'shortname');
   const ActionButton = (() => {
     if(injection_order.status === ORDER_STATUS.RELEASED){
-      return <ClickableIcon
-        label={`to-delivery-${injection_order.id}`}
-        src="/static/images/delivery.svg"
-        onClick={()=>{
-          window.location = InjectionOrderPDFUrl(injection_order);
-        }}
+      return <InjectionDeliveryIcon
+        aria-label={`commit-injection-${injection_order.id}`}
+        injection_order={injection_order}
       />
     }
     if(changed && valid_deadline){
@@ -199,7 +194,7 @@ export function InjectionOrderCard({
           </div>
         </Col>
         <Col>
-          <TracershopInputGroup label="Injektioner">
+          <TracershopInputGroup label="Injektioner">3
             <ErrorInput error={errorInjections}>
               <EditableInput
                 aria-label={`injections-input-${injection_order.id}`}

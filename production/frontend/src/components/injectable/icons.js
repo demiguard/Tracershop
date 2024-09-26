@@ -116,9 +116,10 @@ export function ActivityDeliveryIcon(props){
   if(props.orderCollection.minimum_status === ORDER_STATUS.RELEASED){
     return <ClickableIcon
     src="/static/images/delivery.svg"
-    onClick={() => {openActivityReleasePDF(props.orderCollection.endpoint,
-                                           props.orderCollection.tracer,
-                                           new Date(props.orderCollection.ordered_date))}}
+    onClick={openActivityReleasePDF(props.orderCollection.endpoint,
+                                    props.orderCollection.tracer,
+                                    new Date(props.orderCollection.ordered_date))
+            }
     {...newProps} // This is here to make props overwrite default props
   />
   }
@@ -145,10 +146,10 @@ export function InjectionDeliveryIcon(props){
   const {order, ...newProps} = props;
 
   return <ClickableIcon
-  src="/static/images/delivery.svg"
-  onClick={() => window.location = InjectionOrderPDFUrl(order)}
-  {...newProps}  // This is here to make props overwrite default props
-  />
+    src="/static/images/delivery.svg"
+    onClick={openInjectionReleasePDF(order)}
+    {...newProps}  // This is here to make props overwrite default props
+  />;
 }
 
 InjectionDeliveryIcon.propTypes = {

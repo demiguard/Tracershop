@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Container, Table, FormControl, Row, Card, Collapse , Col} from "react-bootstrap";
+import { Container, Table, FormControl, Row, Card, Collapse , Col, FormCheck} from "react-bootstrap";
 
 import { TracerModal } from "../../modals/tracer_modal.js";
 import { appendNewObject, setStateToEvent, setTempMapToEvent } from "~/lib/state_management.js";
@@ -137,6 +137,17 @@ export function TracerPage(){
         />
       </td>
       <td>
+        <FormCheck
+          checked={tracer.marketed}
+          onClick={() => {
+            setTracers(oldTracer => {
+              const newTracers = new Map(oldTracer);
+              const newTracer = {...tracer, marketed : !tracer.marketed}
+            })
+          }}
+        />
+      </td>
+      <td>
         <Row>
           <Optional exists={tracer.tracer_type === TRACER_TYPE.DOSE && 0 < tracer.id}>
             <Col>
@@ -243,6 +254,9 @@ export function TracerPage(){
               Base={<div>Handlinger</div>}
               Hover={<div>Her findes knapper til forskellige handlinger</div>}
             />
+          </th>
+          <th>
+            Markedsført
           </th>
         </tr>
         </thead>

@@ -153,13 +153,10 @@ describe("Injection order card test suite", () => {
       fireEvent.change(usageInput, {target : { value : INJECTION_USAGE.other}})
     });
 
+    act(() => {
+      screen.getByLabelText('commit-injection-1').click();
+    });
 
-
-    const editIcon = screen.getByLabelText('commit-1');
-
-    await act(async () => {
-      editIcon.click();
-    })
     expect(websocket.sendEditModel).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
       tracer : 5,
       injections : 2,
@@ -202,7 +199,7 @@ describe("Injection order card test suite", () => {
         fireEvent.change(usageInput, {target : { value : INJECTION_USAGE.other}})
       })
 
-      const createIcon = screen.getByLabelText('commit--1');
+      const createIcon = screen.getByLabelText('commit-injection--1');
 
       await act(async () => {
         createIcon.click();
@@ -251,7 +248,7 @@ describe("Injection order card test suite", () => {
         fireEvent.change(usageInput, {target : { value : INJECTION_USAGE.other}})
       })
 
-      const createIcon = screen.getByLabelText('commit--1');
+      const createIcon = screen.getByLabelText('commit-injection--1');
 
       await act(async () => {
         createIcon.click();
@@ -276,7 +273,27 @@ describe("Injection order card test suite", () => {
     const deliveryNote = screen.getByLabelText('to-delivery-3')
 
     act(() => {
-      deliveryNote.click()
-    })
-  })
+      deliveryNote.click();
+    });
+  });
+
+  it("Delete an order", () => {
+    const injectionOrder = testState.injection_orders.get(1);
+
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <InjectionOrderCard
+          injection_tracers={InjectionTracers}
+          injection_order={injectionOrder}
+          valid_deadline={true}
+        />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    act(() => {
+      screen.getByLabelText('delete-injection-1').click();
+    });
+
+    expect(websocket.sendDeleteModel).toHaveBeenCalled();
+  });
 })

@@ -70,7 +70,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
 ]
 
-export const JAVASCRIPT_VERSION = "1.3.4";
+export const JAVASCRIPT_VERSION = "1.3.5";
 
 export const NO_ERROR = "";
 
@@ -99,6 +99,7 @@ export const TRACER_USAGE = {
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
 export const URL_INDEX = "";
 export const URL_INJECTION_PDF_BASE_PATH = "injection_pdfs";
+export const URL_SHOP_MANUAL = "shop_manual";
 
 export const WEBSOCKET_DATA = "data";
 export const WEBSOCKET_DATATYPE = "datatype";

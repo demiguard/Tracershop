@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.3.4" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.3.5" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -86,6 +86,7 @@ EXCLUDED_STATE_MODELS = [
 URL_INDEX = ""
 URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs"
 URL_INJECTION_PDF_BASE_PATH = "injection_pdfs"
+URL_SHOP_MANUAL = "shop_manual"
 
 
 # WEBSOCKET MESSAGES

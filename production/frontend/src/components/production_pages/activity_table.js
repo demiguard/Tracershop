@@ -19,7 +19,7 @@ import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
   WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME,
 } from "~/lib/shared_constants.js"
 
-import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
+import { ActivityDeliveryIcon, ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer,
   DeliveryEndpoint, Tracer} from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay, getTimeString
@@ -169,11 +169,8 @@ function TimeSlotRow(props){
          <Col style={cssCenter}>{fourthColumnInterior}</Col>
          <Col style={cssCenter}>
           <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !orderCollection.moved}>
-            <ClickableIcon
-              src="/static/images/delivery.svg"
-              onClick={()=>{
-                openActivityReleasePDF(endpoint, tracer, new Date(orderCollection.ordered_date));
-              }}
+            <ActivityDeliveryIcon
+              orderCollection={orderCollection}
             />
           </Optional>
           <Optional exists={canMove && !orderCollection.moved}>

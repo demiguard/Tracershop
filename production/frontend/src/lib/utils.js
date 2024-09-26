@@ -1,7 +1,7 @@
 /** This module is for library functions which doesn't belong in other  */
 
 import { DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
-import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH } from "./shared_constants.js";
+import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
 
 /**
  *
@@ -56,8 +56,16 @@ export function toMapping(objs){
  * @param {Date} date
  */
 export function openActivityReleasePDF(endpoint, tracer, date){
-  window.open(`${URL_ACTIVITY_PDF_BASE_PATH}/${endpoint.id}/${tracer.id}/${
-    date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`)
+  return () => {window.open(`${URL_ACTIVITY_PDF_BASE_PATH}/${endpoint.id}/${tracer.id}/${
+    date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`)}
+}
+
+export function openInjectionReleasePDF(order){
+  return () => {window.open(`${URL_INJECTION_PDF_BASE_PATH}/${order.id}`)}
+}
+
+export function openShopManual(){
+  window.open(URL_SHOP_MANUAL)
 }
 
 /**
