@@ -41,6 +41,8 @@ export function OrderReview({active_endpoint,
   const state = useTracershopState();
 
   const tracerCatalog = useTracerCatalog();
+
+
   const availableActivityTracers  = tracerCatalog.getActivityCatalog(active_endpoint);
   const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
   const day = getDay(active_date);

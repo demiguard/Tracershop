@@ -8,7 +8,9 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER, WEBSOCKET_MESSAGE_GET_STATE,
   WEBSOCKET_MESSAGE_GET_BOOKINGS,
-  WEBSOCKET_DATE} from "~/lib/shared_constants.js";
+  WEBSOCKET_DATE,
+  WEBSOCKET_MESSAGE_STATUS,
+  SUCCESS_STATUS_CRUD} from "~/lib/shared_constants.js";
 
 import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
@@ -78,9 +80,9 @@ export class TracerWebSocket {
             this._dispatch(new UpdateState(state, message[WEBSOCKET_REFRESH]));
           break;
         case WEBSOCKET_MESSAGE_MODEL_DELETE: {
-            if(message[WEBSOCKET_DATA]){ // if the delete was successful or not
-              this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
-            }
+          if(message[WEBSOCKET_MESSAGE_STATUS] === SUCCESS_STATUS_CRUD.SUCCESS){ // if the delete was successful or not
+            this._dispatch(new DeleteState(message[WEBSOCKET_DATATYPE], message[WEBSOCKET_DATA_ID]))
+          }
         }
         break;
         case WEBSOCKET_MESSAGE_FREE_INJECTION:

@@ -11,6 +11,9 @@ import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { ClickableIcon } from "./icons";
 import { Isotope } from "~/dataclasses/dataclasses";
 import { FONT } from "~/lib/styles";
+import { setStateToEvent } from "~/lib/state_management";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
+import { cssTableCenter } from "~/lib/constants";
 
 
 export const CALCULATOR_NEW_ACTIVITY_LABEL = "calculator-activity-new"
@@ -28,6 +31,19 @@ const CalculatorStyle = {
     ...FONT.light
   }
 };
+
+
+function CalculatorEntryRow({entry, removeEntry, index}){
+  return <tr>
+    <td>{entry.time.substring(0,5)}</td>
+    <td>{entry.activity}</td>
+    <td><ClickableIcon
+        src={"/static/images/decline.svg"}
+        onClick={removeEntry(index)}
+        label={"delete-"+index.toString()}
+      /></td>
+  </tr>
+}
 
 // Error Messages
 export const ErrorInvalidTimeFormat = "Tidspunktet er ikke læseligt af systemet"
@@ -48,28 +64,29 @@ export const ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge
  *  tracer - Object Active Tracer for the material in question
  */
 export function Calculator ({
-  initial_MBq = 0, productionTime, defaultMBq = 300, isotopes, cancel, tracer, commit
+  initial_MBq = 0, productionTime, defaultMBq_ = 300, isotopes, cancel, tracer, commit
 }) {
-  const entries = [];
+  const initial_entries = [];
 
-    if(initial_MBq !== undefined && initial_MBq > 0){
-      const hour = FormatDateStr(productionTime.getHours());
-      const minutes = FormatDateStr(productionTime.getMinutes());
-      entries.push({
-        time : `${hour}:${minutes}:00`,
-        activity : initial_MBq
-      });
-    }
-
-    const [state, setState] = useState({
-      errorMessage : "",
-      entries : entries,
-      newEntry : {
-        time : "", // Will be on the format HH:MM:SS, Note that the seconds will be ignore and not displayed.
-        activity : defaultMBq,
-      },
+  if(initial_MBq !== undefined && initial_MBq > 0){
+    const hour = FormatDateStr(productionTime.getHours());
+    const minutes = FormatDateStr(productionTime.getMinutes());
+    initial_entries.push({
+      time : `${hour}:${minutes}:00`,
+      activity : initial_MBq
     });
+  }
 
+  const [defaultMBq, setDefaultMbq] = useState(defaultMBq_);
+  const [entries, setEntries] = useState(initial_entries)
+  const [state, setState] = useState({
+    errorMessage : "",
+    entries : initial_entries,
+    newEntry : {
+      time : "", // Will be on the format HH:MM:SS, Note that the seconds will be ignore and not displayed.
+      activity : defaultMBq,
+    },
+  });
 
   function _addColon(timeStr){
     if(timeStr.length == 2){
@@ -200,26 +217,17 @@ export function Calculator ({
   }
   const isotope = isotopes.get(tracer.isotope);
   const ProductionTimeString = `${FormatDateStr(productionTime.getHours())}:${FormatDateStr(productionTime.getMinutes())}`;
+  const EntryTableRows = [];
+  let totalActivity = 0.0;
 
-  function EntryRow({entryIdx}){
-    return <tr>
-      <td>{state.entries[entryIdx].time.substring(0,5)}</td>
-      <td>{state.entries[entryIdx].activity}</td>
-      <td><ClickableIcon
-          src={"/static/images/decline.svg"}
-          onClick={removeEntry(entryIdx)}
-          label={"delete-"+entryIdx.toString()}
-        /></td>
-    </tr>
+  for(const entryIdx in state.entries){
+    EntryTableRows.push(<CalculatorEntryRow
+      key={entryIdx}
+      index={entryIdx}
+      removeEntry={removeEntry}
+      entry={state.entries[entryIdx]}
+    />);
   }
-
-
-    const EntryTableRows = [];
-    var totalActivity = 0.0;
-
-    for(const entryIdx in state.entries){
-      EntryTableRows.push(<EntryRow key={entryIdx} entryIdx={entryIdx}/>);
-    }
 
     for(const entry of state.entries){ // This list is what? 3 short, we can iterate over it twice
       // Yes as a programer that gives a big deal about effectivity, this is not a death sentense
@@ -240,17 +248,26 @@ export function Calculator ({
 
     EntryTableRows.push(
       <tr key={-1}>
-        <td><FormControl
-          aria-label={CALCULATOR_NEW_TIME_LABEL}
-          value={state.newEntry.time}
-          onChange={changeNewEntry("time")}
-        /></td>
-        <td><FormControl
-          aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
-          value={state.newEntry.activity}
-          onChange={changeNewEntry("activity")}
-        /></td>
-        <td><ClickableIcon
+        <td>
+          <TracershopInputGroup>
+            <FormControl
+              aria-label={CALCULATOR_NEW_TIME_LABEL}
+              value={state.newEntry.time}
+              onChange={changeNewEntry("time")}
+            />
+          </TracershopInputGroup>
+        </td>
+        <td>
+          <TracershopInputGroup tail={"MBq"}>
+            <FormControl
+              aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
+              value={state.newEntry.activity}
+              onChange={changeNewEntry("activity")}
+            />
+          </TracershopInputGroup>
+
+          </td>
+        <td style={cssTableCenter}><ClickableIcon
           src={"/static/images/plus.svg"}
           onClick={addEntry}
           altText={"Tilføj"}
@@ -265,10 +282,21 @@ export function Calculator ({
       </Row>
       <hr/>
       <Row>
-        <p>Tracer - {tracer.shortname}</p>
-        <p>Produktions tidpunkt - {ProductionTimeString}</p>
-        <p>Halvering tid - {isotope.halflife_seconds} s</p>
-        <p>Aktivitet som bliver Tilføjet: {totalActivity} MBq</p>
+        <Row><p>Tracer - {tracer.shortname}</p></Row>
+        <Row><p>Produktions tidpunkt - {ProductionTimeString}</p></Row>
+        <Row><p>Halvering tid - {isotope.halflife_seconds} s</p></Row>
+        <Row><p>Aktivitet som bliver Tilføjet: {totalActivity} MBq</p></Row>
+        <Row>
+          <Col>Standard MBq</Col>
+          <Col>
+            <TracershopInputGroup tail={"MBq"}>
+              <FormControl
+                value={defaultMBq}
+                onChange={setStateToEvent(setDefaultMbq)}
+              />
+            </TracershopInputGroup>
+          </Col>
+        </Row>
       </Row>
       <Row className="calculatorTables">
         <Table>
