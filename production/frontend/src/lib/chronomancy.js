@@ -330,3 +330,8 @@ export function getDateRangeForDate(input_date){
                            23, 59, 59);
   return new DateRange(startDate, endDate)
 }
+
+export function toLotDateString(dateInput){
+  const date_ = datify(dateInput);
+  return `${date_.getFullYear() - 2000}${FormatDateStr(date_.getMonth()+1)}${FormatDateStr(date_.getDate())}`
+}

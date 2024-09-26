@@ -4,7 +4,8 @@ import { Container, Table, FormControl, Row, Card, Collapse , Col, FormCheck} fr
 import { TracerModal } from "../../modals/tracer_modal.js";
 import { appendNewObject, setStateToEvent, setTempMapToEvent } from "~/lib/state_management.js";
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
-  TracerTypeOptions, cssAlignRight, TRACER_TYPE} from "~/lib/constants.js";
+  TracerTypeOptions, cssAlignRight, TRACER_TYPE,
+  cssTableCenter} from "~/lib/constants.js";
 import { Tracer } from "~/dataclasses/dataclasses.js";
 import { DATA_TRACER } from "~/lib/shared_constants.js"
 import { ClickableIcon } from "../../injectable/icons.js";
@@ -21,7 +22,7 @@ import { EditableInput } from "~/components/injectable/inputs/editable_input.js"
 
 
 function getNewTracer(){
-  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false);
+  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false, false);
 }
 
 export function TracerPage(){
@@ -136,14 +137,16 @@ export function TracerPage(){
           onChange={setTempMapToEvent(setTracers, tracer.id, 'tracer_type')}
         />
       </td>
-      <td>
+      <td style={cssTableCenter}>
         <FormCheck
           checked={tracer.marketed}
-          onClick={() => {
+          onChange={() => {
             setTracers(oldTracer => {
               const newTracers = new Map(oldTracer);
-              const newTracer = {...tracer, marketed : !tracer.marketed}
-            })
+              const newTracer = {...tracer, marketed : !tracer.marketed};
+              newTracers.set(newTracer.id, newTracer);
+              return newTracers
+            });
           }}
         />
       </td>
@@ -250,13 +253,13 @@ export function TracerPage(){
             />
           </th>
           <th>
+            Markedsført
+          </th>
+          <th>
             <HoverBox
               Base={<div>Handlinger</div>}
               Hover={<div>Her findes knapper til forskellige handlinger</div>}
             />
-          </th>
-          <th>
-            Markedsført
           </th>
         </tr>
         </thead>

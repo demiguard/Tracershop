@@ -4,7 +4,7 @@ import propTypes from 'prop-types'
 import { ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures'
 import { ORDER_STATUS } from '~/lib/constants'
-import { InjectionOrderPDFUrl, openActivityReleasePDF } from '~/lib/utils'
+import { InjectionOrderPDFUrl, openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
 import { useTracershopState } from '~/components/tracer_shop_context'
 
 export function ClickableIcon ({
@@ -144,10 +144,9 @@ delete injectionDeliveryIconInheritedPropTypes['onClick'];
 
 export function InjectionDeliveryIcon(props){
   const {order, ...newProps} = props;
-
   return <ClickableIcon
     src="/static/images/delivery.svg"
-    onClick={openInjectionReleasePDF(order)}
+    onClick={ openInjectionReleasePDF(order)}
     {...newProps}  // This is here to make props overwrite default props
   />;
 }

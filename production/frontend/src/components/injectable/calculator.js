@@ -14,6 +14,8 @@ import { FONT } from "~/lib/styles";
 import { setStateToEvent } from "~/lib/state_management";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { cssTableCenter } from "~/lib/constants";
+import { parseDanishPositiveNumberInput, parseTimeInput } from "~/lib/user_input";
+import { TimeInput } from "~/components/injectable/inputs/time_input";
 
 
 export const CALCULATOR_NEW_ACTIVITY_LABEL = "calculator-activity-new"
@@ -78,27 +80,16 @@ export function Calculator ({
   }
 
   const [defaultMBq, setDefaultMbq] = useState(defaultMBq_);
+  const [errorActivity, setErrorActivity] = useState("");
+  const [errorTime, setErrorTime] = useState("");
   const [entries, setEntries] = useState(initial_entries)
-  const [state, setState] = useState({
-    errorMessage : "",
-    entries : initial_entries,
-    newEntry : {
-      time : "", // Will be on the format HH:MM:SS, Note that the seconds will be ignore and not displayed.
-      activity : defaultMBq,
-    },
-  });
-
-  function _addColon(timeStr){
-    if(timeStr.length == 2){
-      return timeStr + ":";
-    } else {
-      return timeStr;
-    }
-  }
+  const [newEntryTime, setNewEntryTime] = useState("")
+  const [newEntryActivity, setNewEntryActivity] = useState(defaultMBq)
 
   function InputEnterPress(event){
     if (event.key == "Enter"){
-      if (state.newEntry.time === ""){
+      console.log(newEntryTime)
+      if (newEntryTime === ""){
         commit_activity();
       } else {
         addEntry();
@@ -110,34 +101,22 @@ export function Calculator ({
   useEffect(function addEnterListener() {
     window.addEventListener('keydown', InputEnterPress);
     return () => { window.removeEventListener('keydown', InputEnterPress); };
-  }, [state]);
+  }, [newEntryTime]);
 
-  function changeNewEntry(key){
-    const ReturnFunction = (event) => {
-      const newNewEntry = { // Look it's a new newEntry, I didn't make up this naming conventions.
-        // Ooh wait. I am open for feedback.
-        time : state.newEntry.time,
-        activity : state.newEntry.activity
-      };
-
-      const value = (key == "time" && event.target.value.length > newNewEntry.time.length) ? _addColon(event.target.value) : event.target.value
-
-      newNewEntry[key] = value;
-      const newState = {
-        ...state,
-        newEntry : newNewEntry
-      };
-      setState(newState);
+  function changeDefaultMBq(event){
+    if(newEntryTime === ""){
+      setNewEntryActivity(event.target.value);
     }
-    return ReturnFunction
+    setDefaultMbq(event.target.value);
   }
 
   function addEntry(){
-    const formattedTime = FormatTime(state.newEntry.time);
-    if(formattedTime === null){
-      setState({...state, errorMessage : ErrorInvalidTimeFormat });
-      return;
+    let [validTime, formattedTime] = parseTimeInput(newEntryTime);
+
+    if(!validTime){
+      setErrorTime(ErrorInvalidTimeFormat)
     }
+
     const hour = Number(formattedTime.substring(0,2));
     const min  = Number(formattedTime.substring(3,5));
     const entryDate = new Date(
@@ -147,48 +126,32 @@ export function Calculator ({
       hour,
       min
     )
-    if (entryDate < productionTime){
-      setState({...state, errorMessage : ErrorTimeAfterProduction});
+    if (validTime && entryDate < productionTime){
+      validTime = false;
+      setErrorTime(ErrorTimeAfterProduction);
+    }
+
+    const [validActivity, activity] = parseDanishPositiveNumberInput(newEntryActivity, "Aktiviten")
+    if(!validActivity){
+      setErrorActivity(activity)
+    }
+
+    if(!validActivity || !validTime){
       return;
     }
 
-    const activity = ParseDanishNumber(state.newEntry.activity)
-    if(isNaN(activity)){
-      setState({...state, errorMessage : ErrorActivityInvalidNumber});
-      return;
-    }
-    if(activity == 0){
-      setState({...state, errorMessage : ErrorActivityZero});
-      return;
-    }
-    if(activity < 0){
-      setState({...state, errorMessage : ErrorActivityNegative});
-      return;
-    }
+    setErrorActivity("")
+    setErrorTime("")
+    setNewEntryActivity(defaultMBq)
+    setNewEntryTime("")
 
-    const newEntries = [...state.entries]; // not to be confused with the newEntry
-    newEntries.push({
-      time : formattedTime,
-      activity : activity
-    });
 
-    const newState = {
-      ...state,
-      errorMessage: "",
-      entries : newEntries,
-      newEntry : {
-        time : "",
-        activity : defaultMBq,
-      }};
-    setState(newState);
+    setEntries(oldEntries => [...oldEntries, {time : formattedTime, activity : activity}]);
   }
 
   function removeEntry(index){
-    const retFunc = (_event) => {
-      const newEntries = removeIndex(state.entries, index);
-      setState({...state,
-        entries : newEntries
-      });
+    const retFunc = () => {
+      setEntries(oldEntries => removeIndex(oldEntries, index));
     }
     return retFunc;
   }
@@ -196,7 +159,7 @@ export function Calculator ({
   function commit_activity() {
     let activity = 0.0;
     const /**@type {Isotope} */ isotope = isotopes.get(tracer.isotope);
-    for(const entry of state.entries){
+    for(const entry of entries){
       const hour = Number(entry.time.substring(0,2));
       const min  = Number(entry.time.substring(3,5));
       const entryDate = new Date(
@@ -207,7 +170,7 @@ export function Calculator ({
         min
       );
       const timeDelta = CountMinutes(productionTime, entryDate);
-      activity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
+      activity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity);
     }
 
     activity = (activity < 0) ? 0 : activity;
@@ -220,16 +183,16 @@ export function Calculator ({
   const EntryTableRows = [];
   let totalActivity = 0.0;
 
-  for(const entryIdx in state.entries){
+  for(const entryIdx in entries){
     EntryTableRows.push(<CalculatorEntryRow
       key={entryIdx}
       index={entryIdx}
       removeEntry={removeEntry}
-      entry={state.entries[entryIdx]}
+      entry={entries[entryIdx]}
     />);
   }
 
-    for(const entry of state.entries){ // This list is what? 3 short, we can iterate over it twice
+    for(const entry of entries){ // This list is what? 3 short, we can iterate over it twice
       // Yes as a programer that gives a big deal about effectivity, this is not a death sentense
       const hour = Number(entry.time.substring(0,2));
       const min  = Number(entry.time.substring(3,5));
@@ -249,29 +212,30 @@ export function Calculator ({
     EntryTableRows.push(
       <tr key={-1}>
         <td>
-          <TracershopInputGroup>
-            <FormControl
+          <TracershopInputGroup error={errorTime}>
+            <TimeInput
               aria-label={CALCULATOR_NEW_TIME_LABEL}
-              value={state.newEntry.time}
-              onChange={changeNewEntry("time")}
+              value={newEntryTime}
+              stateFunction={setNewEntryTime}
             />
           </TracershopInputGroup>
         </td>
         <td>
-          <TracershopInputGroup tail={"MBq"}>
+          <TracershopInputGroup tail={"MBq"} error={errorActivity}>
             <FormControl
               aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
-              value={state.newEntry.activity}
-              onChange={changeNewEntry("activity")}
+              value={newEntryActivity}
+              onChange={setStateToEvent(setNewEntryActivity)}
             />
           </TracershopInputGroup>
-
-          </td>
-        <td style={cssTableCenter}><ClickableIcon
-          src={"/static/images/plus.svg"}
-          onClick={addEntry}
-          altText={"Tilføj"}
-        /></td>
+        </td>
+        <td style={cssTableCenter}>
+          <ClickableIcon
+            src={"/static/images/plus.svg"}
+            onClick={addEntry}
+            altText={"Tilføj"}
+          />
+        </td>
       </tr>
     );
 
@@ -292,7 +256,7 @@ export function Calculator ({
             <TracershopInputGroup tail={"MBq"}>
               <FormControl
                 value={defaultMBq}
-                onChange={setStateToEvent(setDefaultMbq)}
+                onChange={changeDefaultMBq}
               />
             </TracershopInputGroup>
           </Col>
@@ -312,10 +276,6 @@ export function Calculator ({
           </tbody>
         </Table>
       </Row>
-      {state.errorMessage ? <AlertBox
-          message={state.errorMessage}
-          level={ERROR_LEVELS.error}
-      /> : null}
       <Row>
         <Col>
           <Button className={CalculatorStyle.Button} onClick={commit_activity}>Udregn</Button>

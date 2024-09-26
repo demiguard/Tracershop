@@ -137,7 +137,7 @@ export function InjectionOrderCard({
     if(injection_order.status === ORDER_STATUS.RELEASED){
       return <InjectionDeliveryIcon
         aria-label={`commit-injection-${injection_order.id}`}
-        injection_order={injection_order}
+        order={injection_order}
       />
     }
     if(changed && valid_deadline){

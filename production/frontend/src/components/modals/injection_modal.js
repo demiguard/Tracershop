@@ -4,7 +4,7 @@ import { Col, Row, Modal, Table } from "react-bootstrap";
 
 import { Authenticate } from "../injectable/authenticate.js"
 import { setStateToEvent } from "~/lib/state_management.js";
-import { ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~/lib/constants.js";
+import { ERROR_TYPE_HINT, ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~/lib/constants.js";
 
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
   WEBSOCKET_DATA, DATA_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -14,7 +14,7 @@ import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
 import { HoverBox } from "../injectable/hover_box.js";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { compareDates, InjectionOrderPDFUrl } from "~/lib/utils.js";
-import { getToday } from "~/lib/chronomancy.js";
+import { getToday, toLotDateString } from "~/lib/chronomancy.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js";
 import { batchNumberValidator, nullParser } from "~/lib/formatting.js";
 import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
@@ -32,19 +32,21 @@ export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
   const websocket = useWebsocket();
   const order = state.injection_orders.get(modal_order);
+  const tracer = state.tracer.get(order.tracer);
+  const endpoint = state.delivery_endpoint.get(order.endpoint);
+  const customer = state.customer.get(endpoint.owner);
+  const defaultLotNumber = order.lot_number ? nullParser(order.lot_number) :
+                           tracer.vial_tag ? `${tracer.vial_tag}-${toLotDateString(order.delivery_date)}-1` : "";
 
   const [freeing, setFreeing] = useState(false);
   const [canceling, setCanceling] = useState(false);
-  const [lot_number, setLotNumber] = useState(nullParser(order.lot_number));
+  const [lot_number, setLotNumber] = useState(defaultLotNumber);
   const [error, setError] = useState("");
   const [errorLevel, setErrorLevel] = useState(ERROR_LEVELS.hint);
 
   const canEdit = !freeing && (order.status === ORDER_STATUS.ACCEPTED
         || order.status === ORDER_STATUS.ORDERED);
 
-  const endpoint = state.delivery_endpoint.get(order.endpoint);
-  const customer = state.customer.get(endpoint.owner);
-  const tracer = state.tracer.get(order.tracer);
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
@@ -190,6 +192,13 @@ export function InjectionModal ({modal_order, on_close}) {
             </Col>
             {secondaryElement ? secondaryElement : null}
           </Row>
+          <Optional>
+            <AlertBox
+              level={ERROR_TYPE_HINT}
+              message={"Traceren har ikke opsat et vial tag, derfor kan auto batch nummer ikke udfyldes"}
+            />
+          </Optional>
+
           {error != "" ? <AlertBox
             level={errorLevel}
             message={error}

@@ -427,7 +427,7 @@ export function ActivityModal({
   }
 
   function onClickToPDF() {
-    openActivityReleasePDF(endpoint, tracer, active_date);
+    openActivityReleasePDF(endpoint, tracer, active_date)();
   }
 
   function onFree(username, password){
@@ -646,11 +646,14 @@ export function ActivityModal({
                 <tr>
                   <th>ID</th>
                   <th>Batch</th>
-                  <th>Produktions Tidpunkt</th>
+                  <th>Kalibrerings Tidspunkt</th>
                   <th>Volumen</th>
                   <th>Aktivitet</th>
                   <th></th>
-                  <th>Brug</th>
+                  <Optional exists={orderCollection.minimum_status!==ORDER_STATUS.RELEASED}>
+                    <th>Brug</th>
+                  </Optional>
+
                 </tr>
               </thead>
             <tbody>

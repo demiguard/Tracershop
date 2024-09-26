@@ -526,6 +526,8 @@ def DrawReleaseCertificate(filename :str,
 
   customer = endpoint.owner
 
+
+
   formatted_date = order_date.strftime("%d:%m:%Y")
   pivot_production = productions[0]
   if len(vials):
@@ -534,16 +536,18 @@ def DrawReleaseCertificate(filename :str,
     pivot_order = orders[0]
     if pivot_order.freed_datetime is None:
       fill_time = pivot_order.active_time_slot.delivery_time
-      date_time = pivot_order.delivery_date
+      fill_date = pivot_order.delivery_date
     else:
-      fill_time = pivot_order.freed_datetime.date()
-      date_time = pivot_order.freed_datetime.time()
+      fill_time = pivot_order.freed_datetime.time()
+      fill_date = pivot_order.freed_datetime.date()
 
     pivot_vial = Vial(
-      fill_date = fill_time,
-      fill_time = date_time,
+      fill_date = fill_date,
+      fill_time = fill_time,
       lot_number = "Ukendt batch nummer"
     )
+
+
 
   production_datetime = datetime(pivot_vial.fill_date.year,
                                  pivot_vial.fill_date.month,
@@ -745,8 +749,13 @@ def DrawReleaseCertificate(filename :str,
 
   template.drawString(x_cursor, ordinate, "Det attesteres hermed, at produktet er fremstillet, analyseret og pakket på ovennævnte")
   ordinate -= template.line_height
-  template.drawString(x_cursor, ordinate, "site i fuld overensstemmelse med kravene til GMP og gældende markedsføringstilladelse.")
+  if(pivot_production.tracer.marketed):
+    template.drawString(x_cursor, ordinate, "site i fuld overensstemmelse med kravene til GMP og gældende markedsføringstilladelse.")
+  else:
+    template.drawString(x_cursor, ordinate, "site i fuld overensstemmelse med kravene til GMP.")
+
   ordinate -= template.line_height * 1.5
+
   template.drawString(x_cursor, ordinate, "Hermed frigives produktet til humant brug.")
   ordinate -= template.line_height * 2.5
   template.drawString(x_cursor, ordinate, "QP navn: Nic Gillings")
