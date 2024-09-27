@@ -526,8 +526,6 @@ def DrawReleaseCertificate(filename :str,
 
   customer = endpoint.owner
 
-
-
   formatted_date = order_date.strftime("%d:%m:%Y")
   pivot_production = productions[0]
   if len(vials):

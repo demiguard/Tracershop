@@ -66,7 +66,7 @@ export const ErrorActivityNegative = "Der kan ikke bestilles et negativt mændge
  *  tracer - Object Active Tracer for the material in question
  */
 export function Calculator ({
-  initial_MBq = 0, productionTime, defaultMBq_ = 300, isotopes, cancel, tracer, commit
+  initial_MBq = 0, productionTime, defaultMBq : defaultMBq_ = 300, isotopes, cancel, tracer, commit
 }) {
   const initial_entries = [];
 

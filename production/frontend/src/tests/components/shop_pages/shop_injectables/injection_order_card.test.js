@@ -259,6 +259,7 @@ describe("Injection order card test suite", () => {
     });
 
   it("Swtich to Delivery note", () => {
+    jest.spyOn(window, 'open')
     const injectionOrder = testState.injection_orders.get(3)
 
     render(<StateContextProvider value={testState}>
@@ -270,11 +271,13 @@ describe("Injection order card test suite", () => {
         />
       </WebsocketContextProvider>
     </StateContextProvider>);
-    const deliveryNote = screen.getByLabelText('to-delivery-3')
+    const deliveryNote = screen.getByLabelText('delivery-injection-3')
 
     act(() => {
       deliveryNote.click();
     });
+
+    expect(window.open).toHaveBeenCalled()
   });
 
   it("Delete an order", () => {

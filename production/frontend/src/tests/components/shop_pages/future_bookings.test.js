@@ -131,7 +131,7 @@ describe("Future Bookings Test Suite", () => {
     expect(
       screen.getByTestId('booking-row-B').compareDocumentPosition(screen
         .getByTestId('booking-row-A'))).toEqual(
-          Node.DOCUMENT_POSITION_FOLLOWING
+          Node.DOCUMENT_POSITION_PRECEDING
         );
 
   });

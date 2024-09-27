@@ -81,11 +81,11 @@ export function InjectionTable({active_date}) {
   }
 
   /**
-   * 
-   * @param {{ 
+   *
+   * @param {{
    *    order : InjectionOrder
-   * }} props 
-   * @returns 
+   * }} props
+   * @returns
    */
   function OrderRow({order}) {
     const tracer = state.tracer.get(order.tracer);

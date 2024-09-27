@@ -1,6 +1,6 @@
 
 import React, { useState } from "react";
-import { Row, Col, Button, Container, Card, Collapse } from 'react-bootstrap'
+import { Row, Col, Button, Container, Card, Collapse, Modal } from 'react-bootstrap'
 import { getId, openActivityReleasePDF } from "../../lib/utils.js";
 import { dateToDateString, formatTimeStamp, formatUsername, parseDateToDanishDate, renderDateTime } from "../../lib/formatting.js";
 import { CalculateProduction } from "../../lib/physics.js";
@@ -27,7 +27,7 @@ import { compareTimeStamp, getDay, getTimeString
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
   OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
-import { applyFilter, dailyActivityOrderFilter, productionDayTracerFilter, productionsFilter } from "../../lib/filters.js";
+import { activityOrdersFilter, applyFilter, dailyActivityOrderFilter, productionDayTracerFilter, productionsFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 import { Comment } from "../injectable/data_displays/comment.js";
@@ -72,13 +72,16 @@ const Modals = {
   * @param {TimeSlotMapping} props.timeSlotMapping
 * @returns
 */
-function TimeSlotRow(props){
-  const {timeSlot, setTimeSlotID, setModalIdentifier, tracer, tracerCatalog,
-    orderMapping, timeSlotMapping} = props; // desugaring
-
+function TimeSlotRow({timeSlot,
+                      setTimeSlotID,
+                      setModalIdentifier,
+                      tracer,
+                      tracerCatalog,
+                      orderMapping,
+                      timeSlotMapping
+  }){
   const state = useTracershopState();
   const websocket = useWebsocket();
-  const endpoint = state.delivery_endpoint.get(timeSlot.destination);
   const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer);
   const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
   // Prop extraction
@@ -105,14 +108,20 @@ function TimeSlotRow(props){
  // State
  const [open, setOpen] = useState(false);
 
- // Functions
- function moveOrders(){
-   const message = websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
+// Functions
+  function moveOrders(){
+    const message = websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
 
-   message[DATA_DELIVER_TIME] = firstAvailableTimeSlotID;
-   message[DATA_ACTIVITY_ORDER] = orders.map(getId);
-   websocket.send(message);
- }
+    const firstTimeSlotOrders = orderMapping.getOrders(firstAvailableTimeSlotID)
+
+    const minimum_status = firstTimeSlotOrders
+      .map((order) => order.status)
+      .reduce((x,y) => Math.min(x,y), 1000);
+
+    message[DATA_DELIVER_TIME] = firstAvailableTimeSlotID;
+    message[DATA_ACTIVITY_ORDER] = orders.map(getId);
+    websocket.send(message);
+  }
 
  function restoreOrders(){
    const message = websocket.getMessage(WEBSOCKET_MESSAGE_RESTORE_ORDERS);
@@ -154,7 +163,7 @@ function TimeSlotRow(props){
 
  return (
    <Card key={timeSlot.id}>
-     <Card.Header>
+      <Card.Header>
        <Row>
          <Col xs={1} style={cssCenter}>
             <StatusIcon
@@ -347,6 +356,7 @@ export function ActivityTable ({active_tracer, active_date}) {
                                                              state.production,
                                                              delivery_date,
                                                              active_tracer));
+
 
   const orderMapping = new OrderMapping(todays_orders,
                                         state.deliver_times,

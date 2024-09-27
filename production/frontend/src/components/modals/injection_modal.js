@@ -192,7 +192,7 @@ export function InjectionModal ({modal_order, on_close}) {
             </Col>
             {secondaryElement ? secondaryElement : null}
           </Row>
-          <Optional>
+          <Optional exists={!tracer.vial_tag}>
             <AlertBox
               level={ERROR_TYPE_HINT}
               message={"Traceren har ikke opsat et vial tag, derfor kan auto batch nummer ikke udfyldes"}

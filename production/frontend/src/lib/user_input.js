@@ -30,8 +30,6 @@ export function parseDanishNumberInput (input, header="") {
 }
 
 
-
-
 export function parseDanishPositiveNumberInput(input, header=""){
   const [valid, inputNumber] = parseDanishNumberInput(input, header);
 
@@ -39,7 +37,11 @@ export function parseDanishPositiveNumberInput(input, header=""){
     return [valid, inputNumber];
   }
 
-  if(inputNumber <= 0){
+  if(inputNumber === 0){
+    return  [false, `${header} kan ikke være nul`]
+  }
+
+  if(inputNumber < 0){
     return [false, `${header} kan ikke være negativ`];
   }
 

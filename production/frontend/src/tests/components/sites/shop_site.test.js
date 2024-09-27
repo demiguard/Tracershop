@@ -19,32 +19,12 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 const logout = jest.fn();
 
 let websocket = null;
-let container = null;
-let props = null;
-
-const now = new Date(2020,4, 4, 10, 36, 44);
-
-
-beforeEach(() => {
-  jest.useFakeTimers('modern')
-  jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
-  websocket = tracer_websocket.TracerWebSocket;
-  props = {...AppState};
-  props[PROP_USER] = users.get(1);
-});
 
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
   window.localStorage.clear()
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
-  props = null;
 });
 
 describe("Shop shop test suite", () => {
@@ -145,12 +125,14 @@ describe("Shop shop test suite", () => {
       logged_in_user : users.get(9),
     });
 
-    render(<StateContextProvider value={newState}>
-      <WebsocketContextProvider value={websocket}>
-       <ShopSite logout={logout} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    await act(async () => {
+      render(<StateContextProvider value={newState}>
+              <WebsocketContextProvider value={websocket}>
+                <ShopSite logout={logout} />
+              </WebsocketContextProvider>
+             </StateContextProvider>);
+    })
 
-    expect(await screen.findByLabelText("no-assoc-external-user-error")).toBeVisible()
+    expect(screen.getByLabelText("no-assoc-external-user-error")).toBeVisible()
   });
 })

@@ -210,8 +210,9 @@ export function MonitorPage({}) {
 
   const separator = (() => {
     if (0 < activeTracer) {
-      const orders = activityOrdersFilter(state,  {
+      const orders = activityOrdersFilter(state, {
           timeSlotFilterArgs : { tracerID : activeTracer },
+          state : state,
           status : [ORDER_STATUS.ACCEPTED, ORDER_STATUS.RELEASED],
           dateRange : dateRange
         })

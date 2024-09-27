@@ -26,7 +26,7 @@ const UserPages = {
   orders : "Bestillinger"
 }
 
-export function ShopSite ({logout, NavbarElements}) {
+export function ShopSite ({logout, NavbarElements=[]}) {
   const state = useTracershopState();
   const [siteIdentifier, setSiteIdentifier] = useState("orders");
   const Site = Pages[siteIdentifier];

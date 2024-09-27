@@ -359,6 +359,7 @@ const marginRows = {
 export function ActivityModal({
   active_date, active_tracer, order_mapping, on_close, timeSlotID, tracer_catalog
 }){
+
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket();
@@ -373,6 +374,7 @@ export function ActivityModal({
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
   const orderCollection = new ActivityOrderCollection(originalOrders, state, overhead);
+  console.log(orderCollection)
 
   // Order State
   const /** @type {StateType<Set<Number>>} */ [selectedVials, setSelectedVials] = useState(new Set());

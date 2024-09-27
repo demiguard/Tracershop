@@ -2,7 +2,7 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_LOCATION, DATA_VIAL } from "~/lib/shared_constants";
+import { DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
@@ -206,112 +206,99 @@ export function locationEndpointFilter(active_endpoint){
 /**
  *
  * @param {
- *  @param state {TracershopState}
+ *  @param container {TracershopState}
  *  @param productionFilterParams { tracerID : Number,
  *    day : Number,
  *    ids : Boolean,
  *  }} param0
  * @returns
  */
-export function productionsFilter(state, {tracerID, day, ids = false}){
-  const productions = [];
-  for(const production of state.production.values()){
-    const tracerCondition = tracerID === undefined || production.tracer === tracerID;
-    const dayCondition = day === undefined || production.day === day;
+export function productionsFilter(container, {production_id, tracerID, day}, ids=false){
+  const productions = extractData(container, ActivityProduction, DATA_PRODUCTION);
+  const filteredProductions = productions.filter(
+    (production) => {
+      const tracerCondition = tracerID ? production.tracer === tracerID : true;
+      const dayCondition = day ?  production.day === day : true;
+      const idCondition = production_id ? production.id === production_id : true;
 
-    if(tracerCondition && dayCondition){
-      if(ids){
-        productions.push(production.id);
-      } else {
-        productions.push(production);
-      }
+      return tracerCondition && dayCondition && idCondition
     }
+  )
+  if(ids){
+    return filteredProductions.map(getId);
+  } else {
+    return filteredProductions;
   }
-
-  return productions;
 }
 
 /**
  *
- * @param {TracershopState} state
+ * @param {TracershopState} container
  * @param {Number} TracerID
  * @param {Array<ActivityDeliveryTimeSlot>}
  */
-export function timeSlotsFilter(state, {tracerID, day, endpointID}, ids = false){
+export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, endpointID}, ids = false){
+  const timeSlots = extractData(container, ActivityDeliveryTimeSlot, DATA_DELIVER_TIME)
 
-
-  const productionIDs = tracerID !== undefined ? productionsFilter(state, {
+  const productionIDs = tracerID && state ? productionsFilter(state, {
                                                                     tracerID : tracerID,
                                                                     day : day,
-                                                                    ids : true,
-                                                                   }) : undefined;
-  const timeSlots = []
-  for(const timeSlot of state.deliver_times.values()){
-    const tracerCondition = productionIDs !== undefined ?
-      productionIDs.includes(timeSlot.production_run) : true;
-    const endpointCondition = endpointID !== undefined ? timeSlot.destination == endpointID : true;
+                                                                   }, true) : undefined;
+  const filteredTimeSlots = timeSlots.filter((timeSlot) => {
+    const tracerCondition = productionIDs ? productionIDs.includes(timeSlot.production_run) : true;
+    const endpointCondition = endpointID? timeSlot.destination == endpointID : true;
+    const idCondition = timeSlotId instanceof Array ? timeSlotId.includes(timeSlot.id) :
+                        timeSlotId ? timeSlotId === timeSlot.id : true;
 
-    if(tracerCondition && endpointCondition){
-      if(ids){
-        timeSlots.push(timeSlot.id)
-      } else {
-        timeSlots.push(timeSlot)
-      }
-    }
+    return tracerCondition && endpointCondition && idCondition;
+  });
+
+  if(ids){
+    return filteredTimeSlots.map(getId);
+  } else {
+    return filteredTimeSlots;
   }
-  return timeSlots
 }
-
 
 /**
  *
- * @param {TracershopState} state
+ * @param {TracershopState} container
  * @param {{
  *  timeSlotFilterArgs,
  *  dateRange : DateRange | undefined
  * }} param1
  * @returns
  */
-export function activityOrdersFilter(state, {
+export function activityOrdersFilter(container, {state,
     timeSlotFilterArgs,
     status,
     dateRange,
-    ids=false}){
-  const timeSlotIDs = timeSlotFilterArgs !== undefined ? timeSlotsFilter(state, {
-                                       day : timeSlotFilterArgs.day,
-                                       endpointID : timeSlotFilterArgs.endpointID,
-                                       tracerID: timeSlotFilterArgs.tracerID,
-                                       }, true) : undefined;
-
-  const activityOrders = [];
-
-  for(const order of state.activity_orders.values()){
-    const timeSlotCondition = timeSlotIDs !== undefined ?
+    }, ids=false){
+  const orders = extractData(container, ActivityOrder, DATA_ACTIVITY_ORDER)
+  const timeSlotIDs = timeSlotFilterArgs && state ?
+    timeSlotsFilter(state, {...timeSlotFilterArgs}, true) : undefined;
+  const filteredActivityOrders = orders.filter((order) => {
+    const timeSlotCondition = timeSlotIDs ?
       timeSlotIDs.includes(order.ordered_time_slot) : true;
     const statusCondition = (() => {
-      if(status instanceof Array){
-        return status.includes(order.status)
-      }
-      if(status !== undefined){
-        return order.status === status
-      }
-      return true;
-    })();
+        if(status instanceof Array){
+          return status.includes(order.status)
+        }
+        if(status !== undefined){
+          return order.status === status
+        }
+        return true;
+      })();
     const dateRangeCondition = dateRange !== undefined ?
       dateRange.in_range(order.delivery_date) : true
+    return timeSlotCondition && statusCondition && dateRangeCondition
+  });
 
-
-    if(timeSlotCondition && statusCondition && dateRangeCondition){
-      if(ids){
-        activityOrders.push(order.id);
-      } else {
-
-        activityOrders.push(order);
-      }
-    }
+  if(ids){
+    return filteredActivityOrders.map(getId);
+  } else {
+    return filteredActivityOrders;
   }
-
-  return activityOrders
 }
 
 /**

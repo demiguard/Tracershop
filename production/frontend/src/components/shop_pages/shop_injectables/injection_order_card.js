@@ -136,7 +136,7 @@ export function InjectionOrderCard({
   const ActionButton = (() => {
     if(injection_order.status === ORDER_STATUS.RELEASED){
       return <InjectionDeliveryIcon
-        aria-label={`commit-injection-${injection_order.id}`}
+        label={`delivery-injection-${injection_order.id}`}
         order={injection_order}
       />
     }
