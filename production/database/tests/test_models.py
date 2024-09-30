@@ -75,7 +75,8 @@ class TracershopModels(TestCase):
       'is_static_instance' : False,
       'isotope' : 1,
       'tracer_type' : TracerTypes.ActivityBased.value,
-      'vial_tag' : "test_tag"
+      'vial_tag' : "test_tag",
+      'marketed' : "",
     }
 
     tracer = Tracer()

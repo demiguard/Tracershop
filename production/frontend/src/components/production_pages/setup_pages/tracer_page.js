@@ -22,7 +22,7 @@ import { EditableInput } from "~/components/injectable/inputs/editable_input.js"
 
 
 function getNewTracer(){
-  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false, false);
+  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, "", false, false, false);
 }
 
 export function TracerPage(){
@@ -31,7 +31,7 @@ export function TracerPage(){
   const [modalTracerID, setModalTracerID] = useState(-1)
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
-  const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, null, "", false));
+  const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, "", "",false, false, false));
   const [tracers, setTracers] = useState(appendNewObject(state.tracer, getNewTracer));
   const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)

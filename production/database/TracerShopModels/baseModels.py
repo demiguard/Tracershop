@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 # Third Party
 from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
-  TimeField, DateTimeField, DateField
+  TimeField, DateTimeField, DateField, BooleanField
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 
 # Tracershop Modules
@@ -82,8 +82,11 @@ class TracershopModel(Model):
         elif isinstance(field, DateField):
           value = value[:10]
           value = datetime.strptime(value, "%Y-%m-%d").date()
+        elif isinstance(field, BooleanField):
+          value = bool(value)
         # End of assignment
         self.__setattr__(key, value)
+
     except Exception as e:
       error_logger.error(f"Caught an error in assigning {key} - {field} to {value}")
 

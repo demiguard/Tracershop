@@ -174,15 +174,22 @@ class ConsumerTestCase(TransactionTestCase):
     # user doesn't have access to order this tracer
     self.accession_number_6 = "REGH10642016"
 
-    self.isotope = Isotope(
+    self.isotope = Isotope.objects.create(
+      atomic_number=92,
+      atomic_mass=235,
+      halflife_seconds=1337, # it's more but doesn't matter,
+      atomic_letter='U'
+    )
+    self.isotope2 = Isotope.objects.create(
+      id=2,
       atomic_number=92,
       atomic_mass=235,
       halflife_seconds=1337, # it's more but doesn't matter,
       atomic_letter='U'
     )
 
-    self.isotope.save(self.user)
-    self.inj_tracer = Tracer(
+
+    self.inj_tracer = Tracer.objects.create(
       id=3,
       isotope=self.isotope,
       shortname = "tracer",
@@ -190,66 +197,55 @@ class ConsumerTestCase(TransactionTestCase):
       tracer_type=2,
       vial_tag=""
     )
-    self.inj_tracer.save(self.user)
 
-    self.act_tracer = Tracer(
+    self.act_tracer = Tracer.objects.create(
       isotope=self.isotope,
       shortname = "tracer",
       clinical_name="",
       tracer_type=1,
       vial_tag=""
     )
-    self.act_tracer.save(self.user)
 
-    self.production = ActivityProduction(
+    self.production = ActivityProduction.objects.create(
       tracer=self.act_tracer,
       production_day = Days.Tuesday,
       production_time = "07:00:00",
     )
-    self.production.save(self.user)
 
-
-    self.production_later = ActivityProduction(
+    self.production_later = ActivityProduction.objects.create(
       tracer=self.act_tracer,
       production_day = Days.Tuesday,
       production_time = "12:00:00",
     )
 
-    self.production_later.save(self.user)
-
-    self.customer = Customer(
+    self.customer = Customer.objects.create(
       id = 78453,
       short_name = "test",
       long_name = "teeest"
     )
-    self.customer.save(self.user)
-    self.endpoint = DeliveryEndpoint(
+    self.endpoint = DeliveryEndpoint.objects.create(
       id = 67,
       owner = self.customer,
       name="endpoint",
     )
 
-    self.endpoint.save(self.user)
-
-    self.timeSlot= ActivityDeliveryTimeSlot(
+    self.timeSlot= ActivityDeliveryTimeSlot.objects.create(
       id = 7,
       weekly_repeat = 0,
       delivery_time = "08:00:00",
       destination=self.endpoint,
       production_run=self.production
     )
-    self.timeSlot.save(self.user)
 
-    self.timeSlot_later = ActivityDeliveryTimeSlot(
+    self.timeSlot_later = ActivityDeliveryTimeSlot.objects.create(
       id = 8,
       weekly_repeat = 0,
       delivery_time = "18:00:00",
       destination=self.endpoint,
       production_run=self.production_later
     )
-    self.timeSlot_later.save(self.user)
 
-    self.moved_order = ActivityOrder(
+    self.moved_order = ActivityOrder.objects.create(
       id = 36,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
@@ -258,9 +254,8 @@ class ConsumerTestCase(TransactionTestCase):
       ordered_time_slot=self.timeSlot_later,
       moved_to_time_slot=self.timeSlot,
     )
-    self.moved_order.save(self.user)
 
-    self.late_order = ActivityOrder(
+    self.late_order = ActivityOrder.objects.create(
       id = 37,
       ordered_activity = 42181,
       delivery_date = "2020-06-11",
@@ -268,7 +263,6 @@ class ConsumerTestCase(TransactionTestCase):
       comment=None,
       ordered_time_slot=self.timeSlot_later,
     )
-    self.late_order.save(self.user)
 
     self.to_be_freed_order = ActivityOrder(
       id = 1245,
@@ -1230,3 +1224,39 @@ class ConsumerTestCase(TransactionTestCase):
                      SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME.value)
 
     await shop_comm_admin.disconnect()
+
+  async def test_failed_message(self):
+    failing_message = {'messageType': 'createModel',
+                       'data': {
+                          'id': -1,
+                          'shortname': 'MZ_97',
+                          'clinical_name': '',
+                          'isotope': 2,
+                          'tracer_type': 2,
+                          'vial_tag': '',
+                          'archived': '',
+                          'marketed': False,
+                          'is_static_instance': False},
+                        'datatype': 'tracer',
+                        'messageID': 415579179,
+                        'javascriptVersion': JAVASCRIPT_VERSION}
+
+    shop_comm_admin = WebsocketCommunicator(app,"ws/")
+    _conn, _subprotocal = await shop_comm_admin.connect()
+
+    await shop_comm_admin.send_json_to(self.loginShopAdminMessage)
+    await shop_comm_admin.receive_json_from()
+
+    with self.assertNoLogs(ERROR_LOGGER):
+      await shop_comm_admin.send_json_to(failing_message)
+
+      message = await shop_comm_admin.receive_json_from()
+
+    print(message)
+
+    @database_sync_to_async
+    def check_tracer():
+      tracer = Tracer.objects.get(shortname="MZ_97")
+      self.assertNotEqual(tracer.id, None)
+
+    await check_tracer()
