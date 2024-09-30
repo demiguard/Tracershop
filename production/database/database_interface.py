@@ -548,6 +548,7 @@ class DatabaseInterface():
       if not ordering:
         booking.status = BookingStatus.Rejected
         bookingUpdated.append(booking)
+        continue
 
       # Muh Turnery Operation, mate that would NOT fit in a turnery
       if tracer.tracer_type == TracerTypes.InjectionBased:
