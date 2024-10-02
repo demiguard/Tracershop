@@ -29,6 +29,7 @@ import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_grou
 import { CancelBox } from "~/components/injectable/cancel_box.js";
 import { vialFilter } from "~/lib/filters.js";
 import { FONT } from "~/lib/styles.js";
+import { DateTime } from "~/components/injectable/datetime.js";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -623,7 +624,7 @@ export function ActivityModal({
               <hr style={marginLess}/>
               <Row style={marginRows}>
                 <Col xs={3}>Frigivet tidpunktet</Col>
-                <Col>{orderCollection.freed_time}</Col>
+                <Col><DateTime dateLike={orderCollection.freed_time}/></Col>
               </Row>
               <hr style={marginLess}/>
               <Row style={marginRows}>

@@ -13,7 +13,7 @@ import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
 
 import { HoverBox } from "../injectable/hover_box.js";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
-import { compareDates, InjectionOrderPDFUrl } from "~/lib/utils.js";
+import { compareDates, InjectionOrderPDFUrl, openInjectionReleasePDF } from "~/lib/utils.js";
 import { getToday, toLotDateString } from "~/lib/chronomancy.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js";
 import { batchNumberValidator, nullParser } from "~/lib/formatting.js";
@@ -27,6 +27,7 @@ import { LotNumberHeader } from "../injectable/headers/lot_display.js";
 import { Optional } from "~/components/injectable/optional.js";
 import { CancelBox } from "~/components/injectable/cancel_box.js";
 import { FONT } from "~/lib/styles.js";
+import { DateTime } from "~/components/injectable/datetime.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -49,6 +50,15 @@ export function InjectionModal ({modal_order, on_close}) {
 
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
+
+  const released_user = (() => {
+    if(order.status === ORDER_STATUS.RELEASED){
+      const user = state.user.get(order.freed_by);
+      return user.username.toUpperCase();
+    }
+
+    return null;
+  })()
 
   function acceptOrder(){
     order.status = ORDER_STATUS.ACCEPTED;
@@ -172,11 +182,14 @@ export function InjectionModal ({modal_order, on_close}) {
                   <tr>
                     <td><div>Anvendelse:</div></td>
                     <td><InjectionUsage usage={order.tracer_usage}/></td>
-                  </tr>{
-                    order.comment ? <tr>
-                    <td>Kommentar</td>
-                    <td>{order.comment /* Note I render the comment rather than render a comment Icon */}</td>
-                  </tr> : null }{ [ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status) ?
+                  </tr>
+                  <Optional exists={!!order.comment}>
+                    <tr>
+                      <td>Kommentar</td>
+                      <td>{order.comment /* Note I render the comment rather than render a comment Icon */}</td>
+                    </tr>
+                  </Optional>
+                  <Optional exists={[ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status)}>
                     <tr>
                       <td><LotNumberHeader/></td>
                       <td>
@@ -187,7 +200,21 @@ export function InjectionModal ({modal_order, on_close}) {
                           onChange={setStateToEvent(setLotNumber)}
                           />
                       </td>
-                    </tr> : null }</tbody>
+                    </tr>
+                  </Optional>
+                  <Optional exists={order.status === ORDER_STATUS.RELEASED}>
+                    <tr>
+                      <td>Frigivet af: </td>
+                      <td>{released_user}</td>
+                    </tr>
+                  </Optional>
+                  <Optional exists={order.status === ORDER_STATUS.RELEASED}>
+                    <tr>
+                      <td>Frigivet kl: </td>
+                      <td><DateTime dateLike={order.freed_datetime}/></td>
+                    </tr>
+                  </Optional>
+                  </tbody>
               </Table>
             </Col>
             {secondaryElement ? secondaryElement : null}
@@ -215,9 +242,7 @@ export function InjectionModal ({modal_order, on_close}) {
                 {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
                 {order.status == 2 && !freeing ? freeingButton : ""}
                 {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
-                {order.status == 3 ? <MarginButton onClick={() => {
-                  window.location = InjectionOrderPDFUrl(order)}
-                }>Se følgeseddel</MarginButton> : ""}
+                {order.status == 3 ? <MarginButton onClick={openInjectionReleasePDF(order)}>Frigivelsecertifikat</MarginButton> : ""}
            </Col>
             <Col md={1}>
                 <CloseButton onClick={on_close}/>
