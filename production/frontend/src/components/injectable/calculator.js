@@ -4,7 +4,7 @@ import { Button, Col, FormControl, Row, Table } from "react-bootstrap";
 import propTypes from 'prop-types'
 
 import { FormatDateStr, FormatTime, ParseDanishNumber } from "~/lib/formatting";
-import { CalculateProduction, CountMinutes } from "~/lib/physics";
+import { calculateProduction, CountMinutes } from "~/lib/physics";
 import { removeIndex } from "~/lib/utils";
 
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
@@ -170,7 +170,7 @@ export function Calculator ({
         min
       );
       const timeDelta = CountMinutes(productionTime, entryDate);
-      activity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity);
+      activity += calculateProduction(isotope.halflife_seconds, timeDelta, entry.activity);
     }
 
     activity = (activity < 0) ? 0 : activity;
@@ -204,7 +204,7 @@ export function Calculator ({
         min
       )
       const timeDelta = CountMinutes(productionTime, entryDate);
-      totalActivity += CalculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
+      totalActivity += calculateProduction(isotope.halflife_seconds, timeDelta, entry.activity)
     }
 
     totalActivity = Math.floor(totalActivity);

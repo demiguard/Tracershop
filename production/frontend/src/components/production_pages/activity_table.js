@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { Row, Col, Button, Container, Card, Collapse, Modal } from 'react-bootstrap'
 import { getId, openActivityReleasePDF } from "../../lib/utils.js";
 import { dateToDateString, formatTimeStamp, formatUsername, parseDateToDanishDate, renderDateTime } from "../../lib/formatting.js";
-import { CalculateProduction } from "../../lib/physics.js";
+import { calculateProduction, CalculateProduction, fulfillmentActivity } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";
 import { CreateOrderModal } from "../modals/create_activity_modal.js";
 import propTypes from 'prop-types'
@@ -22,7 +22,7 @@ import {WEBSOCKET_MESSAGE_RESTORE_ORDERS,
 import { ActivityDeliveryIcon, ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Customer,
   DeliveryEndpoint, Tracer} from "../../dataclasses/dataclasses.js";
-import { compareTimeStamp, getDay, getTimeString
+import { compareTimeStamp, getDay, getTimeString, TimeStamp
   } from "../../lib/chronomancy.js";
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
   OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
@@ -42,16 +42,22 @@ const Modals = {
 /**
   * Row of an order inside of a RenderedTimeSlot
   * @param {{
-  *   order : ActivityOrder
+  *   order : ActivityOrder,
+  *   overhead : Number,
   * }} props
   * @returns { Element }
   */
-  function OrderRow({order}){
+  function OrderRow({order, overhead}){
+    const state = useTracershopState();
+    const base_activity = fulfillmentActivity(order, state);
+    const overhead_activity = base_activity * overhead;
+
     return (
     <Row>
-      <Col><StatusIcon order={order}/></Col>
+      <Col xs={1}><StatusIcon order={order}/></Col>
       <Col>Order ID: {order.id}</Col>
-      <Col>{order.ordered_activity} MBq</Col>
+      <Col>{base_activity} MBq</Col>
+      <Col>{overhead_activity} MBq</Col>
       <Col><Comment comment={order.comment}/></Col>
     </Row>);
  }
@@ -99,7 +105,7 @@ function TimeSlotRow({timeSlot,
                              || order.moved_to_time_slot === timeSlot.id
 
     if(is_originalTimeSlot){
-      OrderData.push(<OrderRow key={order.id} order={order}/>);
+      OrderData.push(<OrderRow key={order.id} order={order} overhead={overhead}/>);
     }
   }
   const canMove = firstAvailableTimeSlot.id !== timeSlot.id
@@ -203,6 +209,13 @@ function TimeSlotRow({timeSlot,
      </Card.Header>
      <Collapse in={open}>
        <Card.Body>
+          <Row>
+            <Col xs={1}></Col>
+            <Col>Ordre ID</Col>
+            <Col>uden overhead</Col>
+            <Col>Med Overhead</Col>
+            <Col></Col>
+          </Row>
           {OrderData}
           <Optional exists={!(orderCollection.moved)}>
             <Row style={{justifyContent : "end"}}>
@@ -276,7 +289,7 @@ function ProductionRow({active_production,
           }
           const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot)
           const timeDifference = compareTimeStamp(originalTimeSlot.delivery_time, production.production_time);
-          const amount = CalculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
+          const amount = calculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
 
           activity_ordered += amount;
           activity_overhead += amount * overhead;
@@ -288,7 +301,7 @@ function ProductionRow({active_production,
  return (
  <Row>
    <h4>
-     Kørsel {production.production_time} : {Math.floor(activity_ordered)} MBq / Overhead : {Math.floor(activity_overhead)} MBq
+     Kørsel {production.production_time} : <strong>{Math.floor(activity_ordered)}</strong> MBq / Overhead : <strong>{Math.floor(activity_overhead)}</strong> MBq
    </h4>
  </Row>);
  }

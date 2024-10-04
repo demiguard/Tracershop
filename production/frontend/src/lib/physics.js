@@ -1,3 +1,6 @@
+import { ActivityOrder, TracershopState } from "~/dataclasses/dataclasses";
+import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy";
+
 export function CountMinutes(past,future) {
   // It's assumed that this is the same day
   if(past.getFullYear() != future.getFullYear() || past.getMonth() != future.getMonth() || past.getDate() != future.getDate()){
@@ -15,8 +18,34 @@ export function CountMinutes(past,future) {
  * @param {Number} MBQ - The desired amount of activity after the time period.
  * @returns {Number} - MBq needed at the previous time.
  */
-export function CalculateProduction(halflife, minutes, MBQ) {
+export function calculateProduction(halflife, minutes, MBQ) {
   const hf_in_min = halflife / 60
 
   return MBQ / Math.pow(1/2,  minutes / hf_in_min)
+}
+
+/** Calculates the activity need to fulfill an order without overhead
+ *
+ * @param {ActivityOrder} order
+ * @param {TracershopState} state
+ * @returns {Number}
+ */
+export function fulfillmentActivity(order, state){
+  if(order.moved_to_time_slot == null){
+    return order.ordered_activity;
+  }
+
+  const moveTimeSlot = state.deliver_times.get(order.moved_to_time_slot);
+  const baseTimeSlot = state.deliver_times.get(order.ordered_time_slot);
+
+  const moveTimeStamp = new TimeStamp(moveTimeSlot.delivery_time);
+  const baseTimeStamp = new TimeStamp(baseTimeSlot.delivery_time);
+
+  const production = state.production.get(baseTimeSlot.production_run);
+  const tracer = state.tracer.get(production.tracer);
+  const isotope = state.isotopes.get(tracer.isotope);
+
+  const timeDifference = compareTimeStamp(moveTimeStamp, baseTimeStamp).toMinutes();
+
+  return calculateProduction(isotope.halflife_seconds, timeDifference, order.ordered_activity)
 }

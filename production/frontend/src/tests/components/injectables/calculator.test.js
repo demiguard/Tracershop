@@ -6,7 +6,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL, Calculator, ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero, ErrorInvalidTimeFormat, ErrorTimeAfterProduction } from "../../../components/injectable/calculator.js"
-import { CalculateProduction } from "../../../lib/physics.js"
+import { calculateProduction } from "../../../lib/physics.js"
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
 
 
@@ -320,8 +320,8 @@ describe("Calculator Test", () =>{
     // Act
     fireEvent.click(screen.queryByRole('button', {name: 'Udregn'}))
 
-    const targetProduction = CalculateProduction(halflife, 60, 10000)
-      + CalculateProduction(halflife, 120, 20000);
+    const targetProduction = calculateProduction(halflife, 60, 10000)
+      + calculateProduction(halflife, 120, 20000);
 
     expect(commit).toHaveBeenCalledWith(targetProduction);
   })

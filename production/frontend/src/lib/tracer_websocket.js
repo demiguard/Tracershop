@@ -10,11 +10,13 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_MESSAGE_GET_BOOKINGS,
   WEBSOCKET_DATE,
   WEBSOCKET_MESSAGE_STATUS,
-  SUCCESS_STATUS_CRUD} from "~/lib/shared_constants.js";
+  SUCCESS_STATUS_CRUD,
+  WEBSOCKET_MESSAGE_SUCCESS,
+  WEBSOCKET_MESSAGE_ERROR} from "~/lib/shared_constants.js";
 
 import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
-import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction, UpdateWebsocketConnectionState } from '~/lib/state_actions';
+import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction, UpdateWebsocketConnectionState, UpdateError } from '~/lib/state_actions';
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
@@ -55,6 +57,11 @@ export class TracerWebSocket {
      */
     this._ws.onmessage = function(messageEvent) {
       const message = JSON.parse(messageEvent.data);
+      if(message[WEBSOCKET_MESSAGE_SUCCESS] != WEBSOCKET_MESSAGE_SUCCESS){
+        dispatch(new UpdateError(message[WEBSOCKET_MESSAGE_ERROR]));
+        return;
+      }
+
       const pipe = this._promiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
       if(pipe !== undefined){
         pipe.port2.postMessage(message);

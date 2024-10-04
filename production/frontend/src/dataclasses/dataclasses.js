@@ -977,6 +977,7 @@ export class TracershopState {
   /** @type { User } */ logged_in_user
   /** @type { Date } */ today
   /** @type { Number } */ readyState
+  /** @type { string } */ error 
   /** @type { Map<Number, Address>} */ address
   /** @type { Map<Number, ActivityOrder>} */ activity_orders
   /** @type { Map<Number, ClosedDate>} */ closed_date
@@ -1144,5 +1145,6 @@ export class TracershopState {
     } else {
       this.vial = new Map()
     }
+  this.error = "";
   }
 }

@@ -57,3 +57,10 @@ export class UpdateWebsocketConnectionState extends ReducerAction {
     this.readyState = newReadyState;
   }
 }
+
+export class UpdateError extends ReducerAction {
+  constructor(error){
+    super();
+    this.error = error;
+  }
+}

@@ -11,7 +11,7 @@ import { TimeStamp, compareTimeStamp, getDay, getWeekNumber } from "./chronomanc
 import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof } from "./constants";
 import { applyFilter, bookingFilter, locationEndpointFilter, locationFilter, timeSlotOwnerFilter } from "./filters";
 import { dateToDateString } from "./formatting";
-import { CalculateProduction } from "./physics";
+import { calculateProduction } from "./physics";
 import { sortTimeSlots } from "./sorting";
 import { HoverBox } from "~/components/injectable/hover_box"
 import { TIME_TABLE_CELL_HEIGHT_PIXELS } from "~/components/injectable/time_table"
@@ -168,7 +168,7 @@ export class ActivityOrderCollection {
       } else {
         const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time,
                                            this.delivering_time_slot.delivery_time);
-        this.deliver_activity += CalculateProduction(this.isotope.halflife_seconds,
+        this.deliver_activity += calculateProduction(this.isotope.halflife_seconds,
                                                      timeDelta.hour * 60 + timeDelta.minute,
                                                      order.ordered_activity) * overhead;
       }

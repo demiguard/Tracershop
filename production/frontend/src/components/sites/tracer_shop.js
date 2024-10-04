@@ -15,9 +15,8 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_ST
 import { UpdateCurrentUser } from "~/lib/state_actions";
 import Cookies from "js-cookie";
 import { db } from "~/lib/local_storage_driver";
-import { openShopManual } from "~/lib/utils";
-import { Button, Col } from "react-bootstrap";
-import { NAVBAR_STYLES } from "~/lib/styles";
+import { Optional } from "~/components/injectable/optional";
+import { ServerErrorPage } from "~/components/error_pages/server_error_page";
 
 const SITES = {
   log_in_site : LoginSite,
@@ -25,7 +24,6 @@ const SITES = {
   shop_site : ShopSite,
   production_site : ProductionSite,
 }
-
 
 export function TracerShop() {
   /**
@@ -84,8 +82,13 @@ export function TracerShop() {
     }
   }, [websocket])
 
-  return (
+  const hasNoError = !tracershopState.error
+
+  return(
   <ErrorBoundary FallbackComponent={ErrorPage}>
-    <Site logout={logout} NavbarElements={[]}/>
+    <Optional exists={hasNoError} alt={<ServerErrorPage error={tracershopState.error}/>}>
+      <Site logout={logout} NavbarElements={[]}/>
+    </Optional>
+
   </ErrorBoundary>);
 }

@@ -18,7 +18,6 @@ jest.mock('../../../components/modals/create_activity_modal', () =>
 
 
 let websocket = tracer_websocket.TracerWebSocket;
-let container = null;
 let props = {
   [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,26,33),
   [PROP_ACTIVE_TRACER] : 1,
@@ -91,4 +90,6 @@ describe("Activity table", () => {
     });
     expect(screen.queryByTestId("activity_modal")).toBeNull();
   });
+
+
 });

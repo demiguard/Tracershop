@@ -41,8 +41,8 @@ export const injection_orders = new Map([
       1, // endpoint
       2, // tracer
       "test-200504-1", // lot_number
-      "", // freed_datetime
-      null, // freed_by
+      "2020-05-04 11:00:00", // freed_datetime
+      3, // freed_by
   )],
   [4, new InjectionOrder(
       4, // id

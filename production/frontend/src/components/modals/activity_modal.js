@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { Col, Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 
-import { Customer, ActivityOrder, Vial } from "~/dataclasses/dataclasses.js";
+import { Vial } from "~/dataclasses/dataclasses.js";
 import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 
 import { Authenticate } from "../injectable/authenticate.js";
@@ -10,12 +10,12 @@ import { CloseButton, MarginButton } from "../injectable/buttons.js";
 import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
 import { Comment } from "../injectable/data_displays/comment.js";
 
-import { ERROR_BACKGROUND_COLOR, NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants.js";
+import { NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants.js";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
-  DATA_AUTH, DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_ISOTOPE,
-  DATA_PRODUCTION, DATA_TRACER, DATA_USER, DATA_VIAL, WEBSOCKET_DATA,
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY } from "~/lib/shared_constants.js"
+  DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY
+} from "~/lib/shared_constants.js"
 import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
 import { compareDates, openActivityReleasePDF, toMapping } from "../../lib/utils.js";
@@ -24,12 +24,13 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
-import { reset_error, setTempMapToEvent, setTempObjectToEvent, TOGGLE_ACTIONS, toggleSet, toggleSetState, toggleState } from "~/lib/state_management.js";
+import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 import { CancelBox } from "~/components/injectable/cancel_box.js";
 import { vialFilter } from "~/lib/filters.js";
 import { FONT } from "~/lib/styles.js";
 import { DateTime } from "~/components/injectable/datetime.js";
+import { toLotDateString } from "~/lib/chronomancy.js";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -508,6 +509,8 @@ export function ActivityModal({
   );
 
   if(addingVial){
+    const defaultLotNumber = orderCollection.tracer.vial_tag
+      ? `${tracer.vial_tag}-${toLotDateString(orderCollection.ordered_date)}-1` : "";
     vialRows.push(
       <VialRow
       key={-1}
@@ -517,7 +520,7 @@ export function ActivityModal({
       setSelectedVials={setSelectedVials}
       setDirtyVials={setDirtyVials}
       stopAllocatingNewVial={stopAllocatingNewVial}
-      vial={new Vial(-1, active_tracer, "", "", "", "", dateString, null, orderCollection.owner.id)}
+      vial={new Vial(-1, active_tracer, "", "", defaultLotNumber, "", dateString, null, orderCollection.owner.id)}
     />);
   }
 

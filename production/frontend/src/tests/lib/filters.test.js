@@ -1,5 +1,6 @@
-const { Booking, Location, TracershopState, ClosedDate } = require("~/dataclasses/dataclasses");
-const { bookingFilter, extractData } = require("~/lib/filters");
+const { Booking, Location, TracershopState, ClosedDate, DeliveryEndpoint, Customer, Tracer, ActivityProduction, ActivityDeliveryTimeSlot } = require("~/dataclasses/dataclasses");
+const { DAYS } = require("~/lib/constants");
+const { bookingFilter, extractData, timeSlotsFilter } = require("~/lib/filters");
 const { DATA_CLOSED_DATE } = require("~/lib/shared_constants");
 const { toMapping } = require("~/lib/utils");
 
@@ -35,8 +36,6 @@ describe("Filter test suites", () => {
     expect(returnArray[0]).toBe(closedDate);
   });
 
-
-
   it("Booking Date filter", () => {
     const bookings = [
       new Booking( 1,  1,  1,  1, "asdf", "10:30:00", "2020-05-04"),
@@ -49,4 +48,41 @@ describe("Filter test suites", () => {
     expect(res[0]).toBe(bookings[0]);
     expect(res.length).toBe(2);
   });
+
+  it("Time Slot filter",() => {
+    const state = new TracershopState()
+    state.customer = toMapping([new Customer(1)])
+    state.delivery_endpoint = toMapping([
+      new DeliveryEndpoint(1, "add", "city", "zip", "phone", "Endpoint 1", 1),
+      new DeliveryEndpoint(2, "add", "city", "zip", "phone", "Endpoint 1", 1),
+      new DeliveryEndpoint(3, "add", "city", "zip", "phone", "Endpoint 1", 1)
+    ])
+
+    state.tracer = toMapping([new Tracer(1), new Tracer(2)])
+    state.production = toMapping([
+      new ActivityProduction(1, DAYS.MONDAY, 1),
+      new ActivityProduction(2, DAYS.THURSDAY, 1),
+      new ActivityProduction(3, DAYS.WENDSDAY, 1),
+      new ActivityProduction(4, DAYS.MONDAY, 2),
+      new ActivityProduction(5, DAYS.THURSDAY, 2),
+      new ActivityProduction(6, DAYS.WENDSDAY, 2),
+    ])
+
+    const timeSlots = [
+      new ActivityDeliveryTimeSlot(1, undefined, undefined, 1, 1, null),
+      new ActivityDeliveryTimeSlot(2, undefined, undefined, 2, 1, null),
+      new ActivityDeliveryTimeSlot(3, undefined, undefined, 3, 1, null),
+      new ActivityDeliveryTimeSlot(4, undefined, undefined, 1, 2, null),
+      new ActivityDeliveryTimeSlot(5, undefined, undefined, 2, 3, null),
+      new ActivityDeliveryTimeSlot(6, undefined, undefined, 3, 4, null),
+    ]
+
+    const filtered_timeSlots = timeSlotsFilter(
+      timeSlots,
+      { state : state, tracerID : 1, endpointID : 2 }, true
+    )
+
+    expect(filtered_timeSlots).toEqual([2,5]);
+  })
+
 })

@@ -39,11 +39,9 @@ export function OrderReview({active_endpoint,
                              setActiveTracer
 }){
   const state = useTracershopState();
-
   const tracerCatalog = useTracerCatalog();
-
-
   const availableActivityTracers  = tracerCatalog.getActivityCatalog(active_endpoint);
+  console.log(availableActivityTracers);
   const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);

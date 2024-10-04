@@ -88,7 +88,13 @@ export class TimeStamp {
   }
 }
 
-
+/** Does a subtration of the two timeStamps equalvivalent to
+ * timeStamp_1 - timeStamp_2
+ *
+ * @param {TimeStamp} timeStamp_1
+ * @param {TimeStamp} timeStamp_2
+ * @returns {TimeStamp}
+ */
 export function compareTimeStamp(timeStamp_1, timeStamp_2){
   timeStamp_1 = new TimeStamp(timeStamp_1);
   timeStamp_2 = new TimeStamp(timeStamp_2);

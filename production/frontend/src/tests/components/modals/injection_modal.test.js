@@ -3,7 +3,7 @@
  */
 
 import React from "react";
-import { screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
 
@@ -11,6 +11,7 @@ import { InjectionModal } from "~/components/modals/injection_modal.js"
 import { WebsocketContextProvider, StateContextProvider } from "~/components/tracer_shop_context.js";
 import { PROP_MODAL_ORDER, PROP_ON_CLOSE } from "~/lib/constants.js";
 import { AppState, testState } from "~/tests/app_state.js";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -155,15 +156,12 @@ describe("Injection modal test suite", () =>{
   it("Success Freeing Freeing Order", async () => {
     const ResolvingWebsocket = {
       getMessage : jest.fn((input) => {return {
-        WEBSOCKET_MESSAGE_TYPE : input
+        [WEBSOCKET_MESSAGE_TYPE] : input
       }}),
-      send : jest.fn((message) => {
-          return new Promise(async function(resolve) {resolve({
-            isAuthenticated : true
-          })
-        });
-      })
-    }
+      send : jest.fn((message) => Promise.resolve({
+        [AUTH_IS_AUTHENTICATED] : true
+      }))
+    };
     modalProps[PROP_MODAL_ORDER] = 2;
 
     render(<StateContextProvider value={testState}>
@@ -172,15 +170,39 @@ describe("Injection modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    fireEvent.change(await screen.findByLabelText("lot-input"), {target : {value : "test-111111-1"}});
+    act(() => {
+      fireEvent.change(screen.getByLabelText("lot-input"), {target : {value : "test-111111-1"}});
+    });
 
-    fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
-    fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
+    act(() => {
+      fireEvent.click(screen.getByRole('button', {name : "Frigiv Ordre"}));
+    });
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText("username"), {target : { value : "test_username"}})
+      fireEvent.change(screen.getByLabelText("password"), {target : { value : "test_password"}})
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', {name : "Frigiv Ordre"}));
+    });
+
+    expect(ResolvingWebsocket.send).toHaveBeenCalledWith(expect.objectContaining({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      [DATA_AUTH] : {
+        [AUTH_USERNAME] : "test_username",
+        [AUTH_PASSWORD] : "test_password",
+      },
+      [WEBSOCKET_DATA] : {
+        lot_number : "test-111111-1",
+        [WEBSOCKET_DATA_ID] : 2
+      }
+    }));
 
     expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
   });
 
-  it("Standard Render test status 3", async () => {
+  it("Standard Render test status 3", () => {
     modalProps[PROP_MODAL_ORDER] = 3;
 
     render(<StateContextProvider value={testState}>
@@ -189,10 +211,23 @@ describe("Injection modal test suite", () =>{
       </WebsocketContextProvider>
     </StateContextProvider>)
 
-    expect( screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
-    expect( screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
-    expect( screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
+    expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
+
+  it("Canceling an order", () => {
+    modalProps[PROP_MODAL_ORDER] = 2;
+
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <InjectionModal {...modalProps} />
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+
+
+  })
 
 })

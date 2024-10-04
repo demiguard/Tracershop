@@ -107,21 +107,19 @@ export function InjectionModal ({modal_order, on_close}) {
 
   function freeOrder(username, password){
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_INJECTION);
-    const auth = {};
-    auth[AUTH_USERNAME] = username;
-    auth[AUTH_PASSWORD] = password;
-    message[DATA_AUTH] = auth;
-    const data = {};
-    data[WEBSOCKET_DATA_ID] = modal_order;
-    data["lot_number"] = lot_number;
-    message[WEBSOCKET_DATA] = data;
-
+    message[DATA_AUTH] = {
+      [AUTH_USERNAME] : username,
+      [AUTH_PASSWORD] : password,
+    };
+    message[WEBSOCKET_DATA] = {
+      [WEBSOCKET_DATA_ID] : modal_order,
+      "lot_number" : lot_number,
+    };
     websocket.send(message).then((data) => {
       if(data[AUTH_IS_AUTHENTICATED]){
         // Free The order
         setError("");
         setFreeing(false);
-
       } else {
         setError("Forkert Login");
         setErrorLevel(ERROR_LEVELS.error);
@@ -149,7 +147,6 @@ export function InjectionModal ({modal_order, on_close}) {
 
     return(
       <div>
-
       <Modal
         show={true}
         size="lg"

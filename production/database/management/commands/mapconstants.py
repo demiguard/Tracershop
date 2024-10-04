@@ -135,6 +135,7 @@ class Command(BaseCommand):
       out.write(f"  /** @type {{ User }} */ logged_in_user\n")
       out.write(f"  /** @type {{ Date }} */ today\n")
       out.write(f"  /** @type {{ Number }} */ readyState\n")
+      out.write( "  /** @type { string } */ error \n")
 
       for key, model in MODELS.items():
         if key not in shared_constants.EXCLUDED_STATE_MODELS:
@@ -155,5 +156,6 @@ class Command(BaseCommand):
         out.write("    } else {\n")
         out.write(f"      this.{key} = new Map()\n")
         out.write("    }\n")
+      out.write("  this.error = \"\";\n")
       out.write("  }\n")
       out.write("}\n")
