@@ -234,7 +234,8 @@ export function ShopOrderPage ({relatedCustomer}){
     setActiveTracer : setActiveTracer,
   };
 
-  const calenderTimeSlotIDs = timeSlotsFilter(state, {
+  const calenderTimeSlots = timeSlotsFilter(state, {
+    state : state,
     endpointID : activeEndpoint,
     tracerID : activeTracer,
   });
@@ -277,7 +278,7 @@ export function ShopOrderPage ({relatedCustomer}){
               active_date={state.today}
               active_endpoint={activeEndpoint}
               on_day_click={setActiveDate}
-              time_slots={calenderTimeSlotIDs}
+              time_slots={calenderTimeSlots}
             />
           </div>
         </Row>

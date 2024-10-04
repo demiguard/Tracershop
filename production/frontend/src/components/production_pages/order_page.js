@@ -91,7 +91,7 @@ export function OrderPage() {
   return (
     <Container>
       <Row>
-        <Col>
+        <Col style={MARGIN.bottom.px30}>
           {TableSwitchButtons}
         </Col>
       </Row>
@@ -104,6 +104,7 @@ export function OrderPage() {
         <Col sm={1}></Col>
         <Col sm={3}>
           <ProductionCalender
+            activeTracer={activeTracer}
             active_date={today}
             on_day_click={setActiveDate}
           />

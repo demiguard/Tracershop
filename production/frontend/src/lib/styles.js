@@ -45,7 +45,16 @@ export const MARGIN = {
       margin : '0px'
     },
   },
+  bottom : {
+    px30 : {
+      marginBottom : '30px'
+    },
+  },
   topBottom : {
+    px50 : {
+      marginTop : '50px',
+      marginBottom : '50px',
+    },
     px15 : {
       marginTop: '15px',
       marginBottom: '15px',

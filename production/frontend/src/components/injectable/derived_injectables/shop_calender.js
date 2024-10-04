@@ -19,7 +19,7 @@ export function ShopCalender({active_date, on_day_click, active_endpoint, time_s
   const bitChain = new TimeSlotBitChain(time_slots, state.production)
   const timeSlotIDs = time_slots.map(getId);
 
-  console.log("rerendering")
+  console.log(time_slots)
 
   return <Calender
     calender_date={active_date}

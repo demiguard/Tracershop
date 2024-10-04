@@ -41,7 +41,6 @@ export function OrderReview({active_endpoint,
   const state = useTracershopState();
   const tracerCatalog = useTracerCatalog();
   const availableActivityTracers  = tracerCatalog.getActivityCatalog(active_endpoint);
-  console.log(availableActivityTracers);
   const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
@@ -61,8 +60,7 @@ export function OrderReview({active_endpoint,
     }
   }
 
-  const tracerButtons = availableActivityTracers.map((_tracer) => {
-    const /**@type {Tracer} */ tracer = _tracer;
+  const tracerButtons = availableActivityTracers.map((tracer) => {
     const underline = tracer.id === activeTracer;
 
     return (<Button
