@@ -77,10 +77,8 @@ export function TimeSlotCard({
   // Filter out irrelevant orders
   const /**@type {Array<ActivityOrder>} */ deliverableActivityOrders = activityOrders.filter((_order) => {
     const /**@type {ActivityOrder} */ order = _order
-    const orderedHere = order.ordered_time_slot === timeSlot.id && (order.moved_to_time_slot === null)
-    const movedToHere = order.moved_to_time_slot === timeSlot.id
-
-    return orderedHere || movedToHere;
+    const orderedHere = order.ordered_time_slot === timeSlot.id
+    return orderedHere;
   });
 
   // State
@@ -93,13 +91,9 @@ export function TimeSlotCard({
 
   // Effects
   useEffect(() => {
-    const /**@type {Array<ActivityOrder>} */ deliverableActivityOrders = activityOrders.filter((_order) => {
-      const /**@type {ActivityOrder} */ order = _order
-      const orderedHere = order.ordered_time_slot === timeSlot.id && (order.moved_to_time_slot === null)
-      const movedToHere = order.moved_to_time_slot === timeSlot.id
-
-      return orderedHere || movedToHere;
-    });
+    const deliverableActivityOrders = activityOrders.filter((order) =>
+      order.ordered_time_slot === timeSlot.id
+    );
     setOrders(appendNewObject(toMapping(deliverableActivityOrders), newOrderFunction))
   }, [activityOrders]); // Refresh on other users input
 

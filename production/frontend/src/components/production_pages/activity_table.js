@@ -50,7 +50,7 @@ const Modals = {
   function OrderRow({order, overhead}){
     const state = useTracershopState();
     const base_activity = fulfillmentActivity(order, state);
-    const overhead_activity = base_activity * overhead;
+    const overhead_activity = Math.floor(base_activity * overhead);
 
     return (
     <Row>

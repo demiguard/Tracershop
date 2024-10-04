@@ -105,6 +105,8 @@ def formatFrontendErrorMessage(message: Dict) -> str:
     fileName, lineNumber, index = res[0]
     return f"{fileName} at: {lineNumber}"
 
+  if raw_stack is None:
+    return "There's no Stack information!"
   raw_split_stack = raw_stack.split('\n')
   split_stack = [helper(x) for x in filter(lambda string:
     tracershop_code_regex.search(string) is not None, raw_split_stack)]

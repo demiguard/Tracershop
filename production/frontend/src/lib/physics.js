@@ -45,7 +45,7 @@ export function fulfillmentActivity(order, state){
   const tracer = state.tracer.get(production.tracer);
   const isotope = state.isotopes.get(tracer.isotope);
 
-  const timeDifference = compareTimeStamp(moveTimeStamp, baseTimeStamp).toMinutes();
+  const timeDifference = compareTimeStamp(baseTimeStamp, moveTimeStamp).toMinutes();
 
-  return calculateProduction(isotope.halflife_seconds, timeDifference, order.ordered_activity)
+  return Math.floor(calculateProduction(isotope.halflife_seconds, timeDifference, order.ordered_activity))
 }

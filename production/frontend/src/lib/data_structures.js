@@ -9,8 +9,7 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, T
 import { ArrayMap } from "./array_map";
 import { TimeStamp, compareTimeStamp, getDay, getWeekNumber } from "./chronomancy";
 import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof } from "./constants";
-import { applyFilter, bookingFilter, locationEndpointFilter, locationFilter, timeSlotOwnerFilter } from "./filters";
-import { dateToDateString } from "./formatting";
+import { applyFilter, bookingFilter, locationFilter, timeSlotOwnerFilter } from "./filters";
 import { calculateProduction } from "./physics";
 import { sortTimeSlots } from "./sorting";
 import { HoverBox } from "~/components/injectable/hover_box"
@@ -156,6 +155,7 @@ export class ActivityOrderCollection {
       } else if (this.ordered_date != order.delivery_date
               || this.delivering_time_slot.id != deliveringTimeSlotId) {
         console.log(this, order, deliveringTimeSlotId);
+        continue
         throw "Incorrect filtered orders!";
       }
       // Update internal values
