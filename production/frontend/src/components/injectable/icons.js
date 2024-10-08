@@ -116,8 +116,7 @@ export function ActivityDeliveryIcon(props){
   if(props.orderCollection.minimum_status === ORDER_STATUS.RELEASED){
     return <ClickableIcon
     src="/static/images/delivery.svg"
-    onClick={openActivityReleasePDF(props.orderCollection.endpoint,
-                                    props.orderCollection.tracer,
+    onClick={openActivityReleasePDF(props.orderCollection.delivering_time_slot.id,
                                     new Date(props.orderCollection.ordered_date))
             }
     {...newProps} // This is here to make props overwrite default props

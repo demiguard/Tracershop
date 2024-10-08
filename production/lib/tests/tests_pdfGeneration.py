@@ -139,6 +139,6 @@ class PDFsGenerationTest(TestCase):
     pdfGeneration.DrawReleaseCertificate(str(output_path),
                                          self.orderDate,
                                          self.endpoint,
-                                         [self.production_1, self.production_2],
+                                         self.production_1,
                                          [self.activity_order],
                                          [self.vial])

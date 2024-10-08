@@ -410,8 +410,14 @@ class MailTemplate(canvas.Canvas):
     else:
       freedDatetime = injectionOrder.freed_datetime.strftime("%d/%m/%Y %H:%M")
 
-    self.drawString(x_cursor, y_cursor, f"{freedDatetime} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
+    try:
+      timezone_aware = timezone.make_naive(freedDatetime)
+    except ValueError:
+      timezone_aware = freedDatetime
+    except AttributeError:
+      timezone_aware = freedDatetime
 
+    self.drawString(x_cursor, y_cursor, f"{timezone_aware} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 
     y_cursor -= self.line_height * 2
 
@@ -517,7 +523,7 @@ def DrawDeliveryNote(filename):
 def DrawReleaseCertificate(filename :str,
                            order_date : date,
                            endpoint : DeliveryEndpoint,
-                           productions : Sequence[ActivityProduction],
+                           productions : ActivityProduction,
                            orders : Sequence[ActivityOrder] ,
                            vials : Sequence[Vial],):
   template = MailTemplate(filename)
@@ -527,7 +533,7 @@ def DrawReleaseCertificate(filename :str,
   customer = endpoint.owner
 
   formatted_date = order_date.strftime("%d:%m:%Y")
-  pivot_production = productions[0]
+  pivot_production = productions
   if len(vials):
     pivot_vial = vials[0]
   else:

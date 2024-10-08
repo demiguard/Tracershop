@@ -1,7 +1,7 @@
 
 import React, { useState } from "react";
 import { Row, Col, Button, Container, Card, Collapse, Modal } from 'react-bootstrap'
-import { getId, openActivityReleasePDF } from "../../lib/utils.js";
+import { getId } from "../../lib/utils.js";
 import { dateToDateString, formatTimeStamp, formatUsername, parseDateToDanishDate, renderDateTime } from "../../lib/formatting.js";
 import { calculateProduction, CalculateProduction, fulfillmentActivity } from "../../lib/physics.js";
 import { ActivityModal } from "../modals/activity_modal.js";

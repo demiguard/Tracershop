@@ -430,7 +430,7 @@ export function ActivityModal({
   }
 
   function onClickToPDF() {
-    openActivityReleasePDF(endpoint, tracer, active_date)();
+    openActivityReleasePDF(timeSlotID, active_date)();
   }
 
   function onFree(username, password){

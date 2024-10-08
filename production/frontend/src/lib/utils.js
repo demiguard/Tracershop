@@ -55,8 +55,8 @@ export function toMapping(objs){
  * @param {Tracer} tracer
  * @param {Date} date
  */
-export function openActivityReleasePDF(endpoint, tracer, date){
-  return () => {window.open(`${URL_ACTIVITY_PDF_BASE_PATH}/${endpoint.id}/${tracer.id}/${
+export function openActivityReleasePDF(timeSlotID, date){
+  return () => {window.open(`${URL_ACTIVITY_PDF_BASE_PATH}/${timeSlotID}/${
     date.getFullYear()}/${date.getMonth() +1}/${date.getDate()}`)}
 }
 

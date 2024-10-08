@@ -53,8 +53,7 @@ def indexView(request, *args, **kwargs):
   return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
 
 def pdfView(request,
-            endpointID:int,
-            tracerID: int,
+            timeSlotID:int,
             year: int,
             month : int,
             day: int):
@@ -63,36 +62,27 @@ def pdfView(request,
   try:
     order_date = date(year, month, day)
   except ValueError:
-    debug_logger.info("URL parameter point to a none existent day")
-    debug_logger.info(f"year: {year}")
-    debug_logger.info(f"month: {month}")
-    debug_logger.info(f"day: {day}")
     return HttpResponseNotFound(request)
 
   try:
-    endpoint = DeliveryEndpoint.objects.get(pk=endpointID)
+    time_slot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
   except ObjectDoesNotExist:
-    debug_logger.info("URL parameter point to a none existent endpoint")
-    debug_logger.info(f"endpointID: {endpointID}")
     return HttpResponseNotFound(request)
 
-  productions = ActivityProduction.objects.filter(tracer__pk=tracerID,
-                                                  production_day=order_date.weekday())
-  if len(productions) == 0:
-    debug_logger.info(f"No productions could be found at {order_date}, which is a {Days(order_date.weekday()).name}")
-    return HttpResponseNotFound(request)
+  endpoint = time_slot.destination
+  production = time_slot.production_run
 
-  timeSlots = ActivityDeliveryTimeSlot.objects.filter(destination__pk=endpointID,
-                                                      production_run__in=productions)
-  if len(timeSlots) == 0:
-    debug_logger.info(f"No timeslots could be found at {order_date}")
-    return HttpResponseNotFound(request)
-
-  orders = ActivityOrder.objects.filter(status=OrderStatus.Released,
-                                        ordered_time_slot__in=timeSlots,
-                                        delivery_date=order_date,)
+  orders = [order for order in ActivityOrder.objects.filter(status=OrderStatus.Released,
+                                                            ordered_time_slot=time_slot,
+                                                            delivery_date=order_date,
+                                                            moved_to_time_slot=None)
+                        ] + [order for order in ActivityOrder.objects.filter(
+                          status=OrderStatus.Released,
+                          delivery_date=order_date,
+                          moved_to_time_slot=time_slot
+                        )]
   if len(orders) == 0:
-    debug_logger.info(f"No released orders could be found at {order_date}")
+    debug_logger.info(f"No released orders could be found at {order_date} and {timeSlotID}")
     return HttpResponseNotFound(request)
 
   vials = Vial.objects.filter(assigned_to__in=orders)
@@ -102,7 +92,7 @@ def pdfView(request,
   else:
     month_text = str(month)
 
-  filename = f"frontend/static/frontend/pdfs/{endpointID}/{tracerID}/{year}/{month_text}/{day}.pdf"
+  filename = f"frontend/static/frontend/pdfs/{timeSlotID}/{year}/{month_text}/{day}.pdf"
   pathFilename = Path(filename)
 
   dirPath = Path(os.path.dirname(pathFilename))
@@ -113,7 +103,7 @@ def pdfView(request,
     filename,
     order_date,
     endpoint,
-    [production for production in productions],
+    production,
     orders,
     [vial for vial in vials],
   )

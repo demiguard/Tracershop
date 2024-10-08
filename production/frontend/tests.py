@@ -191,8 +191,7 @@ class PDFViewingTestCase(TestCase):
     middleware.process_request(request)
 
     response = pdfView(request,
-                       self.franks_backyard.id,
-                       self.the_secret_sauce.id,
+                       self.the_sauce_delivery.id,
                        2012, 1, 2)
     self.assertEqual(response.status_code, 200)
 
@@ -201,12 +200,7 @@ class PDFViewingTestCase(TestCase):
     middleware = SessionMiddleware(request)
     middleware.process_request(request)
 
-    with self.assertLogs(DEBUG_LOGGER) as recorded_logs:
-      response = pdfView(request,
-                         self.franks_backyard.id,
-                         self.the_secret_sauce.id,
-                         2012, 99, 2)
-    self.assertEqual(recorded_logs.output[0], "INFO:DebugLogger:URL parameter point to a none existent day")
+    response = pdfView(request, self.the_sauce_delivery.id, 2012, 99, 2)
     self.assertEqual(response.status_code, 404)
 
   def test_draw_injection(self):
