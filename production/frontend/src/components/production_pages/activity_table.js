@@ -92,7 +92,7 @@ function TimeSlotRow({timeSlot,
   const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
   // Prop extraction
   const orders = orderMapping.getOrders(timeSlot.id);
-  const orderCollection = new ActivityOrderCollection(orders, state, overhead);
+  const orderCollection = new ActivityOrderCollection(orders, timeSlot, state, overhead);
 
   const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
   const /**@type {Number} */ firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
@@ -117,10 +117,10 @@ function TimeSlotRow({timeSlot,
 // Functions
   function moveOrders(){
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-
+    console.log(firstAvailableTimeSlotID)
     const firstTimeSlotOrders = orderMapping.getOrders(firstAvailableTimeSlotID)
 
-    const minimum_status = firstTimeSlotOrders
+    const minimum_status =  firstTimeSlotOrders
       .map((order) => order.status)
       .reduce((x,y) => Math.min(x,y), 1000);
 

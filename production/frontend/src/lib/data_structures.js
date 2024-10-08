@@ -121,48 +121,46 @@ export class ActivityOrderCollection {
   * One could think about an instance as the piece of paper a waiter write down a
   * group of people orders, which then gets handed to the kitchen.
   * @param {Array<ActivityOrder>} activity_orders
+  * @param {ActivityDeliveryTimeSlot}
   * @param {TracershopState} state
   */
-  constructor(activity_orders, state, overhead = 1) {
+  constructor(activity_orders, timeSlot, state, overhead = 1) {
     this.minimum_status = ORDER_STATUS.UNAVAILABLE;
+    this.delivering_time_slot = timeSlot;
+    this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
+    this.production = state.production.get(this.delivering_time_slot.production_run);
+    this.tracer = state.tracer.get(this.production.tracer);
+    this.isotope = state.isotopes.get(this.tracer.isotope);
+    this.owner = state.customer.get(this.endpoint.owner);
+
     this.ordered_date = null;
-    this.endpoint = null;
-    this.owner = null;
-    this.tracer = null;
-    this.isotope = null;
-    this.delivering_time_slot = null;
     this.freed_time = null;
     this.freed_by = null;
-    this.production = null;
-    this.moved = true;
+    this.moved = false;
     this.ordered_activity = 0;
     this.deliver_activity = 0;
     this.delivered_activity = 0;
     this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
     for(const order of activity_orders) {
-      // Guard Statements
-      const deliveringTimeSlotId = order.moved_to_time_slot ?
-        order.moved_to_time_slot : order.ordered_time_slot;
-      if(this.delivering_time_slot == null || this.ordered_date == null) {
+      if(this.ordered_date === null){
         this.ordered_date = order.delivery_date;
-        this.delivering_time_slot = state.deliver_times.get(deliveringTimeSlotId);
-        this.production = state.production.get(this.delivering_time_slot.production_run);
-        this.tracer = state.tracer.get(this.production.tracer);
-        this.isotope = state.isotopes.get(this.tracer.isotope);
-        this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
-        this.owner = state.customer.get(this.endpoint.owner);
-      } else if (this.ordered_date != order.delivery_date
-              || this.delivering_time_slot.id != deliveringTimeSlotId) {
-        console.log(this, order, deliveringTimeSlotId);
-        continue
-        throw "Incorrect filtered orders!";
       }
+
+      const orderedToTimeSlot = order.ordered_time_slot === this.delivering_time_slot.id;
+      const moveToTimeSlot = order.moved_to_time_slot === this.delivering_time_slot.id;
+      const movedToAnotherSlot = order.moved_to_time_slot && orderedToTimeSlot;
+
+      if(this.ordered_date !== order.delivery_date || (!orderedToTimeSlot && !moveToTimeSlot)){
+        continue;
+      }
+      // Guard Statements
+
       // Update internal values
-      const originalTimeSlot =  state.deliver_times.get(order.ordered_time_slot);
+      const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot);
       this.minimum_status = Math.min(this.minimum_status, order.status);
-      this.moved &= order.moved_to_time_slot !== null;
-      if(order.ordered_time_slot === deliveringTimeSlotId){
+      this.moved |= movedToAnotherSlot;
+      if(orderedToTimeSlot){
         this.ordered_activity += order.ordered_activity
         this.deliver_activity += order.ordered_activity * overhead;
       } else {
@@ -430,7 +428,7 @@ export class OrderMapping{
    * @returns {Array<ActivityOrder>}
    */
   getOrders(timeSlotID){
-    return this._orderMapping.get(timeSlotID);
+    return this._orderMapping.get(timeSlotID, []);
   }
 
   *[Symbol.iterator](){
@@ -494,7 +492,7 @@ export class EndpointsProcedures {
     if(tempMap === undefined){
       return new Map();
     } else {
-      return  tempMap;
+      return tempMap;
     }
   }
 }

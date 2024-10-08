@@ -40,6 +40,7 @@ export function TimeSlotCard({
   overhead,
   activityDeadlineValid,
 }){
+
   const state = useTracershopState();
   const websocket = useWebsocket();
 
@@ -69,24 +70,17 @@ export function TimeSlotCard({
 
   // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the
   //same endpoint and tracer (and day, but that assumption is not used here!)
-  const orderedActivityOrders = activityOrders.filter((order) =>
+  const displayActivityOrders = activityOrders.filter((order) =>
     order.ordered_time_slot === timeSlotID);
 
-  const orderCollection = new ActivityOrderCollection(orderedActivityOrders, state, overhead);
-
-  // Filter out irrelevant orders
-  const /**@type {Array<ActivityOrder>} */ deliverableActivityOrders = activityOrders.filter((_order) => {
-    const /**@type {ActivityOrder} */ order = _order
-    const orderedHere = order.ordered_time_slot === timeSlot.id
-    return orderedHere;
-  });
+  const orderCollection = new ActivityOrderCollection(activityOrders, timeSlot, state, overhead);
 
   // State
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(false);
   const [errors, setErrors] = useState(new Map());
   const [orders, setOrders] = useState(
-    appendNewObject(toMapping(deliverableActivityOrders), newOrderFunction)
+    appendNewObject(toMapping(displayActivityOrders), newOrderFunction)
   ); // I really feel like this is not very readable, but it is compose-able
 
   // Effects
@@ -220,7 +214,10 @@ export function TimeSlotCard({
 
   //  Card Content
   const [thirdColumnContent, fourthColumnContent] = (() => {
-    if(orderCollection.minimum_status == ORDER_STATUS.RELEASED){
+    if(orderCollection.moved){
+      return ["Rykket til tidligere levering", ""]
+
+    } else if(orderCollection.minimum_status == ORDER_STATUS.RELEASED){
       const freed_time = (orderCollection.freed_time != null) ?
                           renderDateTime(orderCollection.freed_time).substring(0,5)
                         : "Ukendt tidspunk!";
@@ -272,7 +269,7 @@ export function TimeSlotCard({
   <Card.Header>
     <Row>
       <Col xs={1} style={cssCenter}>
-        <Optional exists={!!orderedActivityOrders.length}>
+        <Optional exists={!!displayActivityOrders.length}>
           <StatusIcon
             label={`status-icon-time-slot-${timeSlot.id}`}
             orderCollection={orderCollection}
@@ -290,7 +287,7 @@ export function TimeSlotCard({
             onMouseDown={() => {setShowCalculator(true);}}
           />
         </Optional>
-        <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
+        <Optional exists={!(orderCollection.moved) && orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
           <ActivityDeliveryIcon
             label={`delivery-${timeSlot.id}`}
             orderCollection={orderCollection}

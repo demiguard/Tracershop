@@ -82,16 +82,31 @@ export const PADDING = {
   }
 }
 
-export const  FONT = {
+export const FONT = {
   light : {
     fontFamily: "marilight, Helvetica Neue, Helvetica, Arial, sans-serif",
+  },
+  book : {
+    fontFamily : "MariBook, Helvetica Neue, Helvetica, Arial, sans-serif"
   },
   bold : {
     fontFamily: "maribold, Helvetica Neue, Helvetica, Arial, sans-serif",
   },
   heavy : {
     fontFamily: "mariHeavy, Helvetica Neue, Helvetica, Arial, sans-serif"
-  }
+  },
+  poster : {
+    fontFamily : "MariPoster, Helvetica Neue, Helvetica, Arial, sans-serif"
+  },
+}
+
+export const FONT_SIZE = {
+  em1p5 : {
+    fontSize : "1.5em"
+  },
+  em1p25 : {
+    fontSize : "1.25em"
+  },
 }
 
 export const PADDING_TOP_BOTTOM_0PX = {

@@ -3,7 +3,7 @@
  */
 
 import { DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
 
@@ -303,43 +303,44 @@ export function activityOrdersFilter(container, {state,
 
 /**
  *
- * @param {TracershopState} state
- * @param {*} param1
- * @returns
+ * @param {TracershopState} container
+ * @param {{
+ *  status : Number | undefined
+ *  dateRange : DateRange | undefined
+ * }} param1
+ * @param {Boolean} ids - if the array should return
+ * @returns {Array<InjectionOrder> | Array<Number>}
  */
-export function injectionOrdersFilter(state, {
+export function injectionOrdersFilter(container, {
   status,
   dateRange,
-  ids
-}) {
-  const injectionOrders = [];
+}, ids=false) {
+  const injectionOrders = extractData(container);
 
-  for(const order of state.injection_orders.values()){
-    const statusCondition = (() => {
-      if(status instanceof Array){
-        return status.includes(order.status)
-      }
-      if(status !== undefined){
-        return order.status === status
-      }
+  const filteredInjectionOrders = injectionOrders.filter(() => {
+    (order) => {
+      const statusCondition = (() => {
+        if(status instanceof Array){
+          return status.includes(order.status);
+        }
+        if(status !== undefined){
+          return order.status === status;
+        }
 
-      return true;
-    })();
+        return true;
+      })();
+      const dateRangeCondition = dateRange !== undefined ? dateRange.in_range(order.delivery_date) : true;
 
-    const dateRangeCondition = dateRange !== undefined ?
-      dateRange.in_range(order.delivery_date) : true
-
-    if(statusCondition && dateRangeCondition) {
-      if(ids){
-        injectionOrders.push(order.id)
-      } else {
-        injectionOrders.push(order)
-      }
+      return statusCondition && dateRangeCondition;
     }
-  }
+  })
 
-  return injectionOrders
-};
+  if(ids){
+    return filteredInjectionOrders.map(getId);
+  } else {
+    return filteredInjectionOrders;
+  }
+}
 
 export function vialFilter(container, {
   active_date, active_tracer, orderIDs, active_customer

@@ -5,7 +5,7 @@
   border: 5px;
   border-color: blue;
   border-style: solid;
-  width: 310px;
+  width: 400px;
   text-align: center;
   border-radius: 8px;
   line-height: 20px;
@@ -14,7 +14,6 @@
 
 .calender-row {
   padding-top: 7px;
-  height: 35px;
   width: 17%;
   cursor: pointer;
   vertical-align: middle;

@@ -15,13 +15,12 @@ import { productionsFilter, timeSlotsFilter } from '~/lib/filters';
  * @returns
  */
 export function ProductionCalender({active_date, on_day_click, activeTracer}){
-  const state = useTracershopState()
+  const state = useTracershopState();
 
   const productions = 0 < activeTracer ? toMapping(productionsFilter(state, {tracerID : activeTracer})) :
-    state.production
+    state.production;
 
   const bitChain = new ProductionBitChain(productions);
-
 
   const filter_activity_function = (() => {
     if(activeTracer <= 0){
@@ -29,8 +28,8 @@ export function ProductionCalender({active_date, on_day_click, activeTracer}){
     }
     const timeSlots = timeSlotsFilter(
       state, {state : state, tracerID : activeTracer}, true
-    )
-    return (activityOrder) => timeSlots.includes(activityOrder.ordered_time_slot)
+    );
+    return (activityOrder) => timeSlots.includes(activityOrder.ordered_time_slot);
   })()
 
   return <Calender
@@ -39,5 +38,5 @@ export function ProductionCalender({active_date, on_day_click, activeTracer}){
     filter_activity_orders={filter_activity_function}
     filter_injection_orders={() => true}
     bit_chain={bitChain}
-  />
+  />;
 }

@@ -2,6 +2,7 @@ import React, { useRef, useState } from 'react';
 import { Col, Row } from 'react-bootstrap';
 import { Optional } from '~/components/injectable/optional';
 import { useContainerDimensions } from '~/effects/dimensions';
+import { FONT, MARGIN, FONT_SIZE } from '~/lib/styles';
 
 function MonthRow(props){
   const {children, style,...rest} = props;
@@ -52,9 +53,7 @@ function MonthContainer({label, children, onClick}){
   }}><div>{children}</div></Col>
 }
 
-export function MonthSelector(props) {
-  const {stateDate, setDate, callback, ...rest} = props
-
+export function MonthSelector({stateDate, setDate, callback, ...rest}) {
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [tempDate, setTempDate] = useState(stateDate);
   const monthSelectorRef = useRef(null);
@@ -150,7 +149,7 @@ export function MonthSelector(props) {
     </div>
   </div>
 
-  return (<div style={{width : "100%"}}>
+  return (<div style={{width : "100%", paddingTop : "7px"}}>
   <div style={{width : "100%"}} className='flex-row d-flex justify-content-around' ref={monthSelectorRef}>
     <div onClick={() => changeMonth(-1)}>
       <img
@@ -164,8 +163,8 @@ export function MonthSelector(props) {
       aria-label='toggle-picker'
       onClick={() => {setShowMonthPicker(b => !b)}}
     >
-      <p style={{margin : "0px"}}>{stateDate.toLocaleString('default', {month:"long"})}</p>
-      <p style={{margin : "0px"}}>{stateDate.toLocaleString('default', {year: "numeric"})}</p>
+      <p style={{...MARGIN.all.px0, ...FONT.bold, ...FONT_SIZE.em1p25 }}>{stateDate.getDate()}. {stateDate.toLocaleString('default', {month:"long"})}</p>
+      <p style={{...MARGIN.all.px0, ...FONT.bold, }}>{stateDate.toLocaleString('default', {year: "numeric"})}</p>
     </div>
       <div onClick={() => changeMonth(1)}>
         <img

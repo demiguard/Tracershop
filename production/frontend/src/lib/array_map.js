@@ -1,4 +1,3 @@
-
 /**
  * A hash map with chaining
  * Always returns an Array

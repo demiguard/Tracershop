@@ -15,6 +15,39 @@ import { dateToDateString } from "~/lib/formatting";
 import { BitChain, OrderDateMapping } from "~/lib/data_structures";
 import { MonthSelector } from "~/components/injectable/month_selector";
 import { UpdateToday } from "~/lib/state_actions";
+import { FONT_SIZE } from "~/lib/styles";
+
+
+export const CALENDER_STYLE = {
+  padding: "0px",
+  margin: "auto",
+  marginTop: "46px",
+  border: "5px",
+  borderColor: "blue",
+  borderStyle: "solid",
+  width: "100%",
+  textAlign: "center",
+  borderRadius: "8px",
+  lineHeight: "20px",
+  verticalAlign: "middle",
+};
+
+
+export const WEEK_STYLE = {
+  aspectRatio : 7
+}
+export const BASE_DAY_STYLE = {
+  display : "flex",
+  width : "17%",
+  border: "8px",
+  borderStyle: "solid",
+  borderRadius: "100%",
+  padding: "3px",
+  margin: "3px",
+  alignItems : "center",
+  justifyContent : "center",
+  ...FONT_SIZE.em1p25
+}
 
 export const STATUS_COLORS = {
   [ORDER_STATUS.AVAILABLE] : "#d6d6d6",
@@ -59,20 +92,13 @@ function Day({date, calender_date, colorMap, calender_on_day_click, activeMonth}
    const [backGroundColor, borderColor] = (colorMap.has(dateString)) ?  colorMap.get(dateString) : ["#FF00FF", "#FF00FF"];
 
    const styles = {
-       width : "17%",
-       border: "5px",
-       borderColor : borderColor,
-       borderStyle: "solid",
-       borderRadius: "100%",
-       padding: "3px",
-       margin: "3px",
-       backgroundColor : backGroundColor,
+    ...BASE_DAY_STYLE,
+    borderColor : borderColor,
+    backgroundColor : backGroundColor,
    }
-
    if (compareDates(calender_date, dateObject)){
      styles.fontFamily = "MariPoster"
-     styles.fontSize = "large";
-     styles.color = "blue";
+     styles.fontSize = "1.5em";
    }
 
    return (
@@ -92,7 +118,7 @@ function Week({activeMonth,
                calender_on_day_click
 }) {
   return(
-    <div className="d-flex weekrow">
+    <div style={WEEK_STYLE} className="d-flex">
       <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate}/>
       <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 1}/>
       <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 2}/>
@@ -200,19 +226,7 @@ export function Calender({calender_date,
   }
 
   return (
-    <div style={{
-      padding: "0px",
-      margin: "auto",
-      marginTop: "46px",
-      border: "5px",
-      borderColor: "blue",
-      borderStyle: "solid",
-      width: "300px",
-      textAlign: "center",
-      borderRadius: "8px",
-      lineHeight: "20px",
-      verticalAlign: "middle",
-    }}>
+    <div style={CALENDER_STYLE}>
       <div
         style={{
           background : COLORS.tertiaryColor3
@@ -220,7 +234,7 @@ export function Calender({calender_date,
         className="calender-header flex-row d-flex justify-content-around"
       >
         <MonthSelector
-          stateDate={activeMonth}
+          stateDate={calender_date}
           setDate={setActiveMonth}
           callback={changeMonthCallback}
           calender_on_day_click={calender_on_day_click}

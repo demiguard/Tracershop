@@ -337,6 +337,22 @@ export function getDateRangeForDate(input_date){
   return new DateRange(startDate, endDate)
 }
 
+export function getDateRangeForWeek(input_date){
+  const date = datify(input_date);
+
+  let startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0,0,0);
+  let endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0,0,0);
+
+  while(getDay(startDate.getDay()) != DAYS.MONDAY){
+    startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1 , 0,0,0);
+  }
+  while(getDay(endDate.getDay()) != DAYS.SUNDAY){
+    endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1 , 0,0,0);
+  }
+
+  return new DateRange(startDate, endDate);
+}
+
 export function toLotDateString(dateInput){
   const date_ = datify(dateInput);
   return `${date_.getFullYear() - 2000}${FormatDateStr(date_.getMonth()+1)}${FormatDateStr(date_.getDate())}`

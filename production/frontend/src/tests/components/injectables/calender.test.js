@@ -52,7 +52,7 @@ describe("Calender render Tests", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    expect(screen.getByText("June")).toBeVisible();
+    expect(screen.getByText("26. June")).toBeVisible();
     expect(screen.getByText("Man")).toBeVisible();
     expect(screen.getByText("Tir")).toBeVisible();
     expect(screen.getByText("Ons")).toBeVisible();

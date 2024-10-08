@@ -375,7 +375,7 @@ export function ActivityModal({
   const tracer = state.tracer.get(active_tracer);
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
-  const orderCollection = new ActivityOrderCollection(originalOrders, state, overhead);
+  const orderCollection = new ActivityOrderCollection(originalOrders, timeSlot, state, overhead);
 
   // Order State
   const /** @type {StateType<Set<Number>>} */ [selectedVials, setSelectedVials] = useState(new Set());

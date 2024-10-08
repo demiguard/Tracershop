@@ -241,13 +241,12 @@ export function ShopOrderPage ({relatedCustomer}){
   });
 
   return (
-  <Container style={{padding : "0px"}}>
+  <Container fluid="xxl" style={{padding : "0px"}}>
     <Row style={{margin : "0px"}}>
       <Col sm={8} style={{padding : "0px"}}>
         <Site {...siteProps} />
       </Col>
-      <Col sm={1}/>
-      <Col sm={3}>
+      <Col sm={4}>
         <Row>
           <Container>
             <DestinationSelect
