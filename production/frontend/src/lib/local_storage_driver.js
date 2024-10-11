@@ -34,22 +34,23 @@ export const db = {
 
     if (value == null) return null; // Item wasn't found
 
-    switch(true){
-      case Type === Date: {
+    switch(Type){
+      case Date: {
         const DateStr = JSON.parse(value)
         return new Date(DateStr);
       }
-      case Type === Array || Type === Object:
+      case Array:
+      case Object:
         return JSON.parse(value);
-
-      case Type === Number || Type === String:
+      case Number :
+      case String:
         return Type(value);
-      case (Type === Boolean):
+      case Boolean:
         if (value === "true") {
           return true;
         }
         return false;
-      case (Type === Map): {
+      case Map: {
         const TempObject = JSON.parse(value);
         value = new Map();
         for(const [key, val] of Object.entries(TempObject)){
@@ -62,9 +63,10 @@ export const db = {
         }
         return value
       }
+      // This code is unreachable
+      default: /* istanbul ignore next */
+        return value;
     }
-
-    return value;
 
   },
   delete(key) {
@@ -95,6 +97,3 @@ export const db = {
 for (const keyword of Object.keys(MODELS)) {
   db.types[keyword] = Map;
 }
-
-
-

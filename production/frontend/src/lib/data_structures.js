@@ -5,18 +5,21 @@
 
 import React, {useRef, useState} from 'react'
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState, User } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState, User, InjectionOrder } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
-import { TimeStamp, compareTimeStamp, getDay, getWeekNumber } from "./chronomancy";
-import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof } from "./constants";
-import { applyFilter, bookingFilter, locationFilter, timeSlotOwnerFilter } from "./filters";
+import { DateRange, TimeStamp, compareTimeStamp, datify, getDay, getWeekNumber } from "./chronomancy";
+import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof, DAYS_OBJECTS } from "./constants";
+import { activityOrdersFilter, applyFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotOwnerFilter } from "./filters";
 import { calculateProduction } from "./physics";
 import { sortTimeSlots } from "./sorting";
 import { HoverBox } from "~/components/injectable/hover_box"
 import { TIME_TABLE_CELL_HEIGHT_PIXELS } from "~/components/injectable/time_table"
-import { getId, numberfy, toMapping } from "./utils";
+import { getActiveTimeSlotID, getId, numberfy, toMapping } from "./utils";
 import { useTracershopState } from "~/components/tracer_shop_context"
 import { useOverflow } from "~/effects/overflow"
+import { HIGH_CONTRAST_ORDER_COLORS, JUSTIFY } from '~/lib/styles';
+import { AccumulatingMap } from '~/lib/accumulating_map';
+import { Col } from 'react-bootstrap';
 
 //#region ActivityOrderCollection
 /**
@@ -651,7 +654,7 @@ export class TimeSlotBitChain extends BitChain {
   }
 }
 
-
+//#region Production Bit chain
 export class ProductionBitChain extends BitChain {
   /**@type {Number} */ _chain
 
@@ -675,6 +678,7 @@ export class ProductionBitChain extends BitChain {
   }
 }
 
+//#region Order Date Mapping
 /**
  *
  * @param {Map<Number,ActivityOrder | InjectionOrder>} orders
@@ -712,6 +716,7 @@ export class OrderDateMapping {
   }
 }
 
+//#region ReleaseRightHolder
 /**
  * This is a mapping over the various release rights a Production user have.
  * To determine if a user have rights to free a tracer:
@@ -800,8 +805,6 @@ export class ITimeTableDataContainer {
     this.columnNameFunction = columnNameFunction;
     this.cellFunction = cellFunction;
   }
-
-
 }
 
 /**
@@ -856,9 +859,8 @@ function BookingCell({bookings}){
     Hover={hover}
   />;
 }
-
+//#region BookingTimeGroupLocation
 export class BookingTimeGroupLocation extends ITimeTableDataContainer {
-
   /**
    * ITimeTableDataContainer for creating an table with:
    *         | Room_1   | Room_2   | ...
@@ -904,7 +906,144 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
       }
       const locationArrayMap = this.entryMapping.get(booking.location);
       locationArrayMap.set(bookingTimeStamp.hour, booking);
-      locationArrayMap.sortEntries(bookingTimeStamp.hour, (b1, b2) => b1.start_time > b2.start_time);
+      locationArrayMap.sortEntries(bookingTimeStamp.hour, (b1, b2) => b1.start_time > b2.start_time ? 1 : -1);
     }
+  }
+}
+
+
+
+/**
+ *
+ * @param {{
+ *   orders : Array<ActivityOrder | InjectionOrder>,
+ *   state : TracershopState
+ * }} param0
+ * @returns
+ */
+function WeeklyOrderHour({orders, state}){
+  let minimum_status = ORDER_STATUS.UNAVAILABLE;
+
+  const activity_tracer_mapping = new AccumulatingMap();
+  const injection_tracer_mapping = new AccumulatingMap();
+
+  for(const order of orders){
+    minimum_status = Math.min(order.status, minimum_status);
+    if(order instanceof ActivityOrder){
+      const deliveryTime = state.deliver_times.get(getActiveTimeSlotID(order));
+      const production = state.production.get(deliveryTime.production_run);
+      activity_tracer_mapping.set(production.tracer, order.ordered_activity)
+    } else if (order instanceof InjectionOrder) {
+      injection_tracer_mapping.set(order.tracer, order.injections);
+    } else { /* istanbul ignore next */
+      throw "Type violation! order is not an Activity order or injection"
+    }
+  }
+
+  const tracerRows = [];
+
+  for(const [tracerID, amount] of activity_tracer_mapping){
+    const tracer = state.tracer.get(tracerID);
+    tracerRows.push(<p
+      style={{
+        ...JUSTIFY.center
+      }}
+      key={tracer.id}>
+        {tracer.shortname}: {amount} MBq
+      </p>);
+  }
+
+  for(const [tracerID, injections] of injection_tracer_mapping){
+    const tracer = state.tracer.get(tracerID);
+    tracerRows.push(<p
+      style={{...JUSTIFY.center}}
+      key={tracer.id}>{tracer.shortname}: {injections} injections</p>);
+  }
+
+  return <Col style={{
+    backgroundColor : HIGH_CONTRAST_ORDER_COLORS[minimum_status],
+    border : "1px",
+    borderStyle : "solid",
+    padding : "0px",
+  }}>{tracerRows}</Col>
+}
+
+//#region WeeklyOrderOverview
+export class WeeklyOrderOverview extends ITimeTableDataContainer {
+  /**
+   *
+   * @param {TracershopState} state
+   * @param {DateRange} weeklyRange
+   */
+  constructor(state, weeklyRange){
+    const /** @type {Array<ActivityOrder>} */ activityOrders = activityOrdersFilter(state, {
+      dateRange : weeklyRange,
+      state : state
+    });
+
+    const /** @type {Array<InjectionOrder>} */ injectionOrders = injectionOrdersFilter(state, {
+      state : state, dateRange : weeklyRange
+    });
+
+    function columnNameFunction(columnName){
+      return <div style={JUSTIFY.center}>{columnName}</div>
+    }
+
+    function cellFunction(orders, i){
+      return <WeeklyOrderHour key={i} orders={orders} state={state}/>
+    }
+
+    let min_hour = 24;
+    let max_hour = 0;
+
+    super(columnNameFunction, cellFunction);
+    this.columns = new Map([
+      [0, DAYS_OBJECTS[0].name],
+      [1, DAYS_OBJECTS[1].name],
+      [2, DAYS_OBJECTS[2].name],
+      [3, DAYS_OBJECTS[3].name],
+      [4, DAYS_OBJECTS[4].name],
+      [5, DAYS_OBJECTS[5].name],
+      [6, DAYS_OBJECTS[6].name],
+    ]);
+
+    for(const order of activityOrders){
+      const timeSlot = state.deliver_times.get(getActiveTimeSlotID(order))
+      const deliveryTimeStamp = new TimeStamp(timeSlot.delivery_time);
+      const orderDay = getDay(datify(order.delivery_date));
+      if(!this.entryMapping.has(orderDay)){
+        this.entryMapping.set(orderDay, new ArrayMap());
+      }
+      const dayMap = this.entryMapping.get(orderDay);
+      dayMap.set(deliveryTimeStamp.hour, order)
+      min_hour = Math.min(min_hour, deliveryTimeStamp.hour);
+      max_hour = Math.max(max_hour, deliveryTimeStamp.hour);
+    }
+
+    for(const order of injectionOrders){
+      const deliveryTimeStamp = new TimeStamp(order.delivery_time);
+      const orderDay = getDay(datify(order.delivery_date));
+      if(!this.entryMapping.has(orderDay)){
+        this.entryMapping.set(orderDay, new ArrayMap());
+      }
+      const dayMap = this.entryMapping.get(orderDay);
+      dayMap.set(deliveryTimeStamp.hour, order);
+      min_hour = Math.min(min_hour, deliveryTimeStamp.hour);
+      max_hour = Math.max(max_hour, deliveryTimeStamp.hour);
+    }
+
+  const toBeDeletedColumns = new Set();
+  for(const columnKey of this.columns.keys()){
+    if(!this.entryMapping.has(columnKey)){
+      toBeDeletedColumns.add(columnKey);
+    }
+  }
+
+  for(const key of toBeDeletedColumns){
+    this.columns.delete(key);
+  }
+
+  this.min_hour = min_hour;
+  this.max_hour = max_hour
   }
 }
