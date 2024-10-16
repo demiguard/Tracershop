@@ -219,8 +219,8 @@ class DatabaseInterface():
       raise IllegalActionAttempted()
 
     timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
-    orders = ActivityOrder.objects.filter(pk__in=orderIDs)
-    vials = Vial.objects.filter(pk__in=vialIDs)
+    orders = ActivityOrder.objects.filter(pk__in=orderIDs, status__ne=OrderStatus.Released)
+    vials = Vial.objects.filter(pk__in=vialIDs, assigned_to=None)
 
     if len(vials) == 0:
       raise UndefinedReference
