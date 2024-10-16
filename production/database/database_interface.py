@@ -219,12 +219,14 @@ class DatabaseInterface():
       raise IllegalActionAttempted()
 
     timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
-    orders = ActivityOrder.objects.filter(pk__in=orderIDs, status__ne=OrderStatus.Released)
+    orders = ActivityOrder.objects.filter(pk__in=orderIDs).exclude(status=OrderStatus.Released)
     vials = Vial.objects.filter(pk__in=vialIDs, assigned_to=None)
 
     if len(vials) == 0:
+      error_logger.error("Unable to release orders, due to no vials")
       raise UndefinedReference
     if len(orders) == 0:
+      error_logger.error("Unable to release orders, due to no orders")
       raise UndefinedReference
     pivot_order = orders[0]
 

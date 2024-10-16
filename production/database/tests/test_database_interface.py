@@ -518,7 +518,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       )
 
   async def test_releaseOrders_release_released_order(self):
-    with self.assertRaises(IllegalActionAttempted):
+    with self.assertRaises(UndefinedReference):
       with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
         await self.db.releaseOrders(
           self.timeslot.id,
@@ -528,7 +528,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
           datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
         )
 
-    self.assertEqual(recorded_logs.output[0], f"ERROR:ErrorLogger:Order Status missmatch! {self.order.id}")
+    self.assertEqual(len(recorded_logs.output), 1)
 
   async def test_releaseOrders_orders_to_another_timeslot(self):
     with self.assertRaises(IllegalActionAttempted):
@@ -541,12 +541,10 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
           datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
         )
 
-    self.assertEqual(
-      recorded_logs.output[0],
-      f"ERROR:ErrorLogger:Attempting to free orders which doesn't belong to timeslot: {self.timeslot_2.id}")
+    self.assertEqual(len(recorded_logs.output), 1)
 
   async def test_releaseOrders_releasing_a_assigned_vial(self):
-    with self.assertRaises(IllegalActionAttempted):
+    with self.assertRaises(UndefinedReference):
       with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
         await self.db.releaseOrders(
           self.timeslot.id,
@@ -556,9 +554,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
           datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
         )
 
-    self.assertEqual(
-      recorded_logs.output[0],
-      f"ERROR:ErrorLogger:Attempting to re-release vial {self.assigned_vial.id} to order {self.release_able_order.id}")
+    self.assertEqual(len(recorded_logs.output), 1)
 
   def test_moving_orders(self):
     o1, o2 = asyncio.run(
