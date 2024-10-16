@@ -1,24 +1,20 @@
 import React from 'react'
+import { RowMajorTimeTable, TimeTable } from '~/components/injectable/time_table';
 import { useTracershopState } from '~/components/tracer_shop_context'
-import { InjectionOrder } from '~/dataclasses/dataclasses';
-import { getDateRangeForWeek } from '~/lib/chronomancy';
-import { activityOrdersFilter, injectionOrdersFilter } from '~/lib/filters';
+import { datify, getDateRangeForWeek } from '~/lib/chronomancy';
+import { WeeklyOrderOverview } from '~/lib/data_structures';
 
 export function WeeklyProductionOverview({active_date}){
+  const date_ = datify(active_date)
   const state = useTracershopState();
 
-  const weeklyRange = getDateRangeForWeek(active_date)
+  const weeklyRange = getDateRangeForWeek(date_);
 
-  const /** @type {Array<InjectionOrder>} */ activityOrders = activityOrdersFilter(state, {
-    dateRange : weeklyRange,
-    state : state
-  });
-
-  const /** @type {Array<InjectionOrder>} */ injectionOrders = injectionOrdersFilter(state, {
-    state : state, dateRange : weeklyRange
-  });
+  const orderOverviewDataStructure = new WeeklyOrderOverview(state, weeklyRange)
 
   return (
-    <div></div>
+    <RowMajorTimeTable
+      timeTableDataContainer={orderOverviewDataStructure}
+    />
   )
 }

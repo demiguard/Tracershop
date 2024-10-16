@@ -1,6 +1,6 @@
 /** This module is for library functions which doesn't belong in other  */
 
-import { DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
+import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
 import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
 
 /**
@@ -149,4 +149,12 @@ export function compareMaps(map_1, map_2){
   }
 
   return true;
+}
+
+/**
+ *
+ * @param {ActivityOrder} order
+ */
+export function getActiveTimeSlotID(order){
+  return order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
 }

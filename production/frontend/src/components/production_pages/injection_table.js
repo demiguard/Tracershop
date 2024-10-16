@@ -153,7 +153,7 @@ export function InjectionTable({active_date}) {
     };
 
     return (
-      <Container>
+      <div>
         <Row>
           <Col sm={10}>Produktion - {danishDate}</Col>
           <Col sm={2}>
@@ -201,7 +201,7 @@ export function InjectionTable({active_date}) {
         <ModalState.modal
           {...modalProps}
         ></ModalState.modal> : ""}
-      </Container>
+      </div>
     );
 }
 

@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Container } from "react-bootstrap";
-import Navbar, { TracershopNavbar } from "../injectable/navbar.js";
+import { TracershopNavbar } from "../injectable/navbar.js";
 import { OrderPage } from "../production_pages/order_page.js";
 import { VialPage } from "../production_pages/vial_page.js";
 
 import { SetupShop } from "../production_pages/setup_pages/setup_shop.js"
-import { PROP_USER, USER_GROUPS } from "../../lib/constants.js";
+import { USER_GROUPS } from "../../lib/constants.js";
 import { useTracershopState } from "../tracer_shop_context.js";
 import { MonitorPage } from "~/components/production_pages/monitoring_pages/monitor_home_page.js";
 
@@ -20,7 +20,7 @@ const AdminPages = {
   orders : "Ordre",
   vial : "Hætteglas",
   setup : "Opsætning",
-  monitor : "Monitoring",
+  monitor : "Monitorering",
 }
 
 const UserPages = {
@@ -51,7 +51,7 @@ export function ProductionSite({ logout, NavbarElements }) {
           isAuthenticated={true}
           NavbarElements={NavbarElements}
         />
-        <Container>
+        <Container fluid="xxl">
           <ActivePage/>
         </Container>
       </div>);

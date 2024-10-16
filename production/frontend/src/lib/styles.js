@@ -1,5 +1,6 @@
 /** This is a glorified css file */
 import styled, {keyframes} from "styled-components"
+import { ORDER_STATUS } from "~/lib/constants";
 
 export const rotation = {
   cw : {
@@ -28,6 +29,11 @@ export const JUSTIFY = {
     display : "flex",
     justifyContent : 'space-between'
   },
+  center : {
+    display : "flex",
+    justifyContent : 'center',
+  }
+
 };
 
 export const FLEX = {
@@ -134,3 +140,10 @@ export const NAVBAR_STYLES = {
     maxWidth : '100%'
   }
 };
+
+export const HIGH_CONTRAST_ORDER_COLORS = {
+  [ORDER_STATUS.ORDERED] : "#FFD4D4",
+  [ORDER_STATUS.CANCELLED] : "#CCCCCC",
+  [ORDER_STATUS.ACCEPTED] : "#FFFAD4",
+  [ORDER_STATUS.RELEASED] : "#D3FFD8",
+}

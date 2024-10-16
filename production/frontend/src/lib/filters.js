@@ -2,7 +2,7 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_INJECTION_ORDER, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
@@ -111,7 +111,7 @@ export function bookingFilter(container, {
   active_date,
   tracer_id
 }){
-  const /**@type {Array<Booking>}*/ bookings = extractData(container);
+  const /**@type {Array<Booking>}*/ bookings = extractData(container, Booking, DATA_BOOKING);
 
   const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
   const procedures = state && tracer_id ? procedureFilter(state, {
@@ -315,9 +315,9 @@ export function injectionOrdersFilter(container, {
   status,
   dateRange,
 }, ids=false) {
-  const injectionOrders = extractData(container);
+  const injectionOrders = extractData(container, InjectionOrder, DATA_INJECTION_ORDER);
 
-  const filteredInjectionOrders = injectionOrders.filter(() => {
+  const filteredInjectionOrders = injectionOrders.filter(
     (order) => {
       const statusCondition = (() => {
         if(status instanceof Array){
@@ -333,7 +333,7 @@ export function injectionOrdersFilter(container, {
 
       return statusCondition && dateRangeCondition;
     }
-  })
+  );
 
   if(ids){
     return filteredInjectionOrders.map(getId);

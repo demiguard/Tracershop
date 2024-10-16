@@ -126,7 +126,6 @@ export function WeeklyTimeTable({day_function,
 
   return (
   <Row
-
     style={{
       ...WeeklyTimeTableStyles.WeeklyTimeTableStyle,
       position : "relative"

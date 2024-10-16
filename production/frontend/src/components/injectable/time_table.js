@@ -4,6 +4,7 @@ import { ArrayMap } from '~/lib/array_map';
 import { TimeStamp } from '~/lib/chronomancy';
 import { FormatDateStr } from '~/lib/formatting';
 import { ITimeTableDataContainer } from '~/lib/data_structures'
+import { JUSTIFY, PADDING } from '~/lib/styles';
 
 
 export const TIME_TABLE_CELL_HEIGHT = 50;
@@ -80,6 +81,7 @@ function TimeColumn({TimeTableDataContainer,
   const tableCells = [];
   const absoluteCells = [];
 
+
   for(let hour = TimeTableDataContainer.min_hour; hour <= TimeTableDataContainer.max_hour; hour++){
     tableCells.push(<Cell key={hour}></Cell>);
   }
@@ -87,7 +89,7 @@ function TimeColumn({TimeTableDataContainer,
   let i = 0;
   if(floating_objects instanceof ArrayMap){
     for(const [hour, objects] of floating_objects){
-      if(!(TimeTableDataContainer.min_hour < hour && hour < TimeTableDataContainer.max_hour)){
+      if(!(TimeTableDataContainer.min_hour <= hour && hour <= TimeTableDataContainer.max_hour)){
         // The object would be rendered
         continue;
       }
@@ -122,19 +124,8 @@ function TimeColumn({TimeTableDataContainer,
  * }} param0
  * @returns
  */
-export function TimeTable({
-  TimeTableDataContainer,
-  floating_objects = [],
-  floating_key_function,
-  }
-){
-  const floatingMapping = new ArrayMap();
+export function TimeTable({TimeTableDataContainer}){
   const number_of_columns = TimeTableDataContainer.columns.size + 1;
-
-  for(const floating_object of floating_objects){
-    floatingMapping.set(floating_key_function(floating_object),floating_object);
-  }
-
   const hourlyCells = [];
   const timeColumns = [];
 
@@ -165,4 +156,57 @@ export function TimeTable({
       </PaddingLessCol>
       {timeColumns}
     </Row>
+}
+
+function ColCell({children}){
+  return <Col style={cssCell}>
+    {children}
+  </Col>
+}
+
+/**
+ *
+ * @param {{timeTableDataContainer:ITimeTableDataContainer}} param0
+ */
+export function RowMajorTimeTable({timeTableDataContainer}){
+  const headers = [<ColCell key="0"></ColCell>].concat([...timeTableDataContainer.columns.values()].map(
+    (column, i) => {return <ColCell key={i + 1}>{timeTableDataContainer.columnNameFunction(column)}</ColCell>}
+  ));
+
+  const times = [];
+  for(let hour = timeTableDataContainer.min_hour; hour <= timeTableDataContainer.max_hour; hour++){
+    const renderedColumns = [
+      <Col
+      data-testid={`hour-row-${hour}`}
+      style={{
+        ...PADDING.all.px0,
+        ...JUSTIFY.center,
+        border : "1px",
+        borderStyle : "solid",
+      }} key={hour}>{`${FormatDateStr(hour)}:00:00`}</Col>
+    ];
+
+    for(const i of timeTableDataContainer.columns.keys()){
+      if (timeTableDataContainer.entryMapping.has(i)){
+        const entries = timeTableDataContainer.entryMapping.get(i)
+        if(entries.has(hour)){
+          const hourlyEntries = entries.get(hour)
+          renderedColumns.push(timeTableDataContainer.cellFunction(hourlyEntries, i));
+        } else {
+          renderedColumns.push(<Col style={{...PADDING.all.px0, border : "1px",
+            borderStyle : "solid"}} key={i}></Col>);
+        }
+      } else {
+        renderedColumns.push(<Col key={i}></Col>);
+      }
+    }
+
+    times.push(<Row key={hour}>{renderedColumns}</Row>);
+  }
+
+  return (
+  <Row>
+    <Row>{headers}</Row>
+    {times}
+  </Row>);
 }

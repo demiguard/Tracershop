@@ -151,7 +151,7 @@ export function VialPage(){
     });
 
   return (
-    <Container>
+    <div>
       <Row className="justify-content-center">
         <Col>
           <TracershopInputGroup label="Lot nummer Filter">
@@ -210,5 +210,5 @@ export function VialPage(){
           {VialRows}
         </tbody>
       </Table>
-    </Container>);
+  </div>);
 }

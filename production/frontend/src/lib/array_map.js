@@ -36,27 +36,27 @@ export class ArrayMap {
 
   set(key, value){
     if(this.has(key)){
-      this.get(key).push(value)
+      this.get(key).push(value);
     } else {
-      this._map.set(key, [value])
+      this._map.set(key, [value]);
     }
   }
 
   keys(){
-    return this._map.keys()
+    return this._map.keys();
   }
 
   sortEntries(key, compareFunction){
     const value = this.get(key);
     if (value !== undefined){
-      return value.sort(compareFunction)
+      return value.sort(compareFunction);
     }
     return undefined;
   }
 
   *[Symbol.iterator]() {
-    for(const [key,value] of this._map){
-      yield [key, value]
+    for(const [key,values] of this._map.entries()){
+      yield [key, values];
     }
   }
 }

@@ -339,15 +339,14 @@ export function getDateRangeForDate(input_date){
 
 export function getDateRangeForWeek(input_date){
   const date = datify(input_date);
-
   let startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0,0,0);
   let endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 0,0,0);
 
-  while(getDay(startDate.getDay()) != DAYS.MONDAY){
-    startDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() - 1 , 0,0,0);
+  while(getDay(startDate) != DAYS.MONDAY){
+    startDate = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate() - 1 , 0,0,0);
   }
-  while(getDay(endDate.getDay()) != DAYS.SUNDAY){
-    endDate = new Date(date.getFullYear(), date.getMonth(), date.getDate() + 1 , 0,0,0);
+  while(getDay(endDate) != DAYS.SUNDAY){
+    endDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate() + 1 , 0,0,0);
   }
 
   return new DateRange(startDate, endDate);

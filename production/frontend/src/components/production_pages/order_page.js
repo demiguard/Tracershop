@@ -11,10 +11,12 @@ import { ProductionCalender } from "../injectable/derived_injectables/production
 import { Optional } from "~/components/injectable/optional.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { MARGIN } from "~/lib/styles.js";
+import { WeeklyProductionOverview } from "~/components/production_pages/weekly_production_overview.js";
 
-const Tables = {
+const SubPages = {
   activity : ActivityTable,
-  injections : InjectionTable
+  injections : InjectionTable,
+  weeklyOverview : WeeklyProductionOverview,
 };
 
 export function OrderPage() {
@@ -81,15 +83,28 @@ export function OrderPage() {
           { underlineSpecial ? <u>Special</u> : "Special"}
       </Button>));
 
+    const underlineWeeklyReviewButton = activeTable === "weeklyOverview"
+    TableSwitchButtons.push((
+      <Button
+        style={MARGIN.leftRight.px15}
+        key="week-plan"
+        sz="sm"
+        onClick={() => {
+          setActiveTracer(-2)
+          setActiveTable("weeklyOverview")
+        }}
+      >{underlineWeeklyReviewButton ? <u>Uge Plan</u> : "Uge Plan"}</Button>
+    ))
+
   // Keyword setting
-  const OrderTable = Tables[activeTable];
-  const newProps = {
+  const OrderSubPage = SubPages[activeTable];
+  const SubTableProps = {
     [PROP_ACTIVE_TRACER] : activeTracer,
     [PROP_ACTIVE_DATE] : today
   }
 
   return (
-    <Container fluid="xxl">
+    <div>
       <Row>
         <Col style={MARGIN.bottom.px30}>
           {TableSwitchButtons}
@@ -97,8 +112,8 @@ export function OrderPage() {
       </Row>
       <Row>
         <Col sm={8}>
-          <OrderTable
-            {...newProps}
+          <OrderSubPage
+            {...SubTableProps}
           />
         </Col>
         <Col sm={4}>
@@ -109,6 +124,6 @@ export function OrderPage() {
           />
         </Col>
       </Row>
-    </Container>
+    </div>
   );
 }
