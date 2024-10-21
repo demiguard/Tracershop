@@ -1,3 +1,5 @@
+from datetime import time
+from typing import Optional
 
 class SecurityException(Exception):
   def __init__(self, SecurityType):
@@ -25,7 +27,10 @@ class IllegalActionAttempted(Exception):
   pass
 
 class RequestingNonExistingEndpoint(Exception):
-  pass
+  def __init__(self, booking_start_time : time, earliest_available_order_time: Optional[time], *args):
+    super().__init__(*args)
+    self.booking_start_time = booking_start_time
+    self.earliest_available_order_time = earliest_available_order_time
 
 class UndefinedReference(Exception):
   pass

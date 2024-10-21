@@ -52,6 +52,8 @@ export const DATA_USER = "user";
 export const DATA_USER_ASSIGNMENT = "user_assignment";
 export const DATA_VIAL = "vial";
 
+export const ERROR_EARLY_BOOKING_TIME = "BOOKING_TIME";
+export const ERROR_EARLY_TIME_SLOT = "EARLIEST_ORDER_TIME";
 export const ERROR_INSUFFICIENT_DATA = "InsufficientData";
 export const ERROR_INSUFFICIENT_PERMISSIONS = "InsufficientPermissions";
 export const ERROR_INVALID_AUTH = "InvalidAuth";
@@ -62,6 +64,7 @@ export const ERROR_INVALID_MESSAGE_TYPE = "InvalidMessageType";
 export const ERROR_NO_JAVASCRIPT_VERSION = "NoJavaScriptVersion";
 export const ERROR_NO_MESSAGE_ID = "NoMessageID";
 export const ERROR_NO_MESSAGE_TYPE = "NoMessageType";
+export const ERROR_NO_VALID_TIME_SLOTS = "no_valid_time_slot";
 export const ERROR_OBJECT_NOT_FOUND = "objectNotFound";
 export const ERROR_TYPE = "error_type";
 export const ERROR_UNKNOWN_FAILURE = "unknownError";
@@ -70,7 +73,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
 ]
 
-export const JAVASCRIPT_VERSION = "1.4.8";
+export const JAVASCRIPT_VERSION = "1.4.9";
 
 export const NO_ERROR = "";
 

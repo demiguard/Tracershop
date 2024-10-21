@@ -151,7 +151,7 @@ export function compareMaps(map_1, map_2){
   return true;
 }
 
-/**
+/** Return the id of the time slot
  *
  * @param {ActivityOrder} order
  */

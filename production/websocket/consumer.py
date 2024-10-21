@@ -57,13 +57,14 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_REFRESH, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
     WEBSOCKET_MESSAGE_LOG_ERROR, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
     WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,\
-    WEBSOCKET_MESSAGE_GET_BOOKINGS
+    WEBSOCKET_MESSAGE_GET_BOOKINGS, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
+    ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
       TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups,\
       UserAssignment, SuccessfulLogin
-from lib.formatting import toDateTime, formatFrontendErrorMessage, toDate
+from lib.formatting import toDateTime, formatFrontendErrorMessage, toDate, timeConverter
 from lib.ProductionJSON import encode, decode
 
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
@@ -746,8 +747,22 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     try:
       orders = await self.db.massOrder(message[WEBSOCKET_DATA], user)
-    except RequestingNonExistingEndpoint: # pragma: no cover
-      return await self.RespondWithError(message, { ERROR_TYPE : ""})
+    except RequestingNonExistingEndpoint as exception: # pragma: no cover
+      if exception.earliest_available_order_time is not None:
+        early_booking_time = timeConverter(exception.earliest_available_order_time)
+      else:
+        early_booking_time = ""
+
+      return await self.send_json({
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ERROR,
+        WEBSOCKET_ERROR : {
+          ERROR_TYPE : ERROR_NO_VALID_TIME_SLOTS,
+          ERROR_EARLY_BOOKING_TIME : timeConverter(exception.booking_start_time),
+          ERROR_EARLY_TIME_SLOT : early_booking_time,
+        }
+      })
 
     ActivityCustomerIDs = await self.db.getCustomerIDs(orders[DATA_ACTIVITY_ORDER])
     InjectionCustomerIDs = await self.db.getCustomerIDs(orders[DATA_INJECTION_ORDER])

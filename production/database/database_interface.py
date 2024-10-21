@@ -6,7 +6,7 @@ complicated database setup of tracershop.
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, time
 from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union, MutableSet
 import logging
 from functools import reduce
@@ -527,7 +527,7 @@ class DatabaseInterface():
 
       if endpoint is None:
         error_logger.error(f"Booking {booking} is being ordered, but its location: {booking.location} has no associated endpoint!")
-        raise RequestingNonExistingEndpoint
+        raise RequestingNonExistingEndpoint(booking_time.time, None)
 
       try:
         procedure = Procedure.objects.get(series_description=procedureIdentifier,
@@ -580,10 +580,18 @@ class DatabaseInterface():
         ).order_by('delivery_time').reverse()
 
         if len(timeSlots) == 0:
+          min_time = time(23,59,59)
+          for time_slot in ActivityDeliveryTimeSlot.objects.filter(
+              destination=endpoint,
+              production_run__in=productions,
+            ):
+            min_time = min(time_slot.delivery_time, min_time)
+
+
           error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_time}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day).name}")
           error_logger.error(f"Productions: {productions}")
           error_logger.error(f"Booking Time: {booking_time}")
-          raise RequestingNonExistingEndpoint
+          raise RequestingNonExistingEndpoint(booking.start_time, min_time)
         timeSlot = timeSlots[0]
         timeDelta = subtract_times(booking_time.time(), timeSlot.delivery_time)
 

@@ -2,7 +2,7 @@ import React, { Component, useRef, useState } from "react";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { FormatDateStr, dateToDateString } from "~/lib/formatting";
 import { TRACER_TYPE, cssAlignRight, cssCenter } from "../../lib/constants";
-import { WEBSOCKET_DATA, WEBSOCKET_MESSAGE_MASS_ORDER } from "~/lib/shared_constants";
+import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_DATA, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
 import { ClickableIcon } from "~/components/injectable/icons";
@@ -12,6 +12,7 @@ import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { Optional, Options } from "~/components/injectable/optional";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";
+import { AlertBox } from "~/components/injectable/alert_box";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -149,6 +150,7 @@ function TracerCard({tracer,
     });
   }
 
+  const [bookingError, setBookingError] = useState("")
   const [sortingMethod, setSortingState] = useState(BOOKING_SORTING_METHODS.START_TIME);
   const [invertedSorting, setInvertedSorting] = useState(1)
   const [open, setOpen] = useState(false);
@@ -161,7 +163,18 @@ function TracerCard({tracer,
   function onClickOrder() {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MASS_ORDER);
     message[WEBSOCKET_DATA] = bookingProgram;
-    websocket.send(message);
+    websocket.send(message).then((message) => {
+      if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_ERROR){
+        const error_info = message[WEBSOCKET_ERROR];
+        if(error_info[ERROR_EARLY_TIME_SLOT]){
+          setBookingError(`Kunne ikke oprette bookinger, da et eller flere af injektions tidspunktet: ${error_info[ERROR_EARLY_BOOKING_TIME]} er før tidligste frigivelse tidspunkt kl: ${error_info[ERROR_EARLY_TIME_SLOT]}`);
+        } else {
+          setBookingError(`Kunne ikke oprette bookinger, da der ikke findes nogle levering af ${tracer.shortname} til denne dato`);
+        }
+      } else {
+        setBookingError("");
+      }
+    });
   }
 
   const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
@@ -214,6 +227,9 @@ function TracerCard({tracer,
          </Table>
          <Optional exists={deadlineValid}>
           <Row style={{justifyContent : "right",display : "flex",}}>
+            <Optional exists={!!bookingError}>
+              <AlertBox message={bookingError}></AlertBox>
+            </Optional>
             <div>
               <MarginButton
                 data-testid={`order-button-${tracer.id}`}

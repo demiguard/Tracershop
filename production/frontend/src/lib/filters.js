@@ -276,7 +276,7 @@ export function activityOrdersFilter(container, {state,
     }, ids=false){
   const orders = extractData(container, ActivityOrder, DATA_ACTIVITY_ORDER)
   const timeSlotIDs = timeSlotFilterArgs && state ?
-    timeSlotsFilter(state, {...timeSlotFilterArgs}, true) : undefined;
+    timeSlotsFilter(state, {state : state, ...timeSlotFilterArgs}, true) : undefined;
   const filteredActivityOrders = orders.filter((order) => {
     const timeSlotCondition = timeSlotIDs ?
       timeSlotIDs.includes(order.ordered_time_slot) : true;

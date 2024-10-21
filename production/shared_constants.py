@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.4.8" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "1.4.9" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -31,6 +31,7 @@ ERROR_TYPE = "error_type"
 ERROR_INVALID_AUTH = "InvalidAuth"
 ERROR_INVALID_DATACLASS_TYPE = "NoDataClass"
 ERROR_INVALID_JAVASCRIPT_VERSION = "InvalidJavascriptVersion"
+ERROR_NO_VALID_TIME_SLOTS = "no_valid_time_slot"
 ERROR_INVALID_MESSAGE = "InvalidMessage"
 ERROR_INVALID_MESSAGE_TYPE = "InvalidMessageType"
 ERROR_OBJECT_NOT_FOUND = "objectNotFound"
@@ -41,6 +42,8 @@ ERROR_INSUFFICIENT_PERMISSIONS = "InsufficientPermissions"
 ERROR_INSUFFICIENT_DATA = "InsufficientData"
 ERROR_UNKNOWN_FAILURE = "unknownError"
 NO_ERROR = ""
+ERROR_EARLY_BOOKING_TIME = "BOOKING_TIME"
+ERROR_EARLY_TIME_SLOT = "EARLIEST_ORDER_TIME"
 
 # Data
 

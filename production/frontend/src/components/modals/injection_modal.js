@@ -1,4 +1,4 @@
-import React, { useState} from "react";
+import React, { useEffect, useState} from "react";
 import propTypes from 'prop-types'
 import { Col, Row, Modal, Table } from "react-bootstrap";
 
@@ -58,7 +58,11 @@ export function InjectionModal ({modal_order, on_close}) {
     }
 
     return null;
-  })()
+  })();
+
+  useEffect(() => {
+
+  }, [])
 
   function acceptOrder(){
     order.status = ORDER_STATUS.ACCEPTED;
