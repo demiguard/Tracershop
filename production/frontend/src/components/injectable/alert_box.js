@@ -84,9 +84,10 @@ export const ERROR_LEVELS = {
 /** Stateless Box displaying an important message
  *
  */
-export function AlertBox ({message = "", level = ERROR_TYPE_ERROR}) {
+export function AlertBox ({testId, message = "", level = ERROR_TYPE_ERROR}) {
     return (
       <Row
+        data-testid={testId}
         style={{
           padding : '0px',
           ...stylings[level]

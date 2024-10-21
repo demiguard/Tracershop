@@ -11,7 +11,7 @@ import { FutureBooking, missingSetupHeader } from "../../../components/shop_page
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE } from "~/lib/constants.js";
 import { StateContextProvider, useTracershopState, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
 import { Booking } from "~/dataclasses/dataclasses.js";
-import { BookingStatus } from "~/lib/shared_constants.js";
+import { BookingStatus, ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE } from "~/lib/shared_constants.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -75,7 +75,14 @@ describe("Future Bookings Test Suite", () => {
     expect(screen.getByText(testState.procedure_identifier.get(5).description));
   });
 
-  it("Open tracer 1, Remove booking 2 and order", () => {
+  it("Open tracer 1, Remove booking 2 and order", async () => {
+    const websocket = {
+      getMessage : jest.fn((param) => { return { [WEBSOCKET_MESSAGE_TYPE] : param } }),
+      send : jest.fn(() => Promise.resolve({
+        [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_UPDATE_STATE
+      }))
+    }
+
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <FutureBooking {...props}/>
@@ -96,16 +103,97 @@ describe("Future Bookings Test Suite", () => {
 
     const orderButton = screen.getByTestId("order-button-1")
 
-    act(() => {
+    await act(async () => {
       orderButton.click();
     });
 
     expect(websocket.send).toBeCalled()
   });
 
+  it("Open tracer 1, Remove booking 2 and order, but can't because early bookings", async () => {
+    const websocket = {
+      getMessage : jest.fn((param) => { return { [WEBSOCKET_MESSAGE_TYPE] : param } }),
+      send : jest.fn(() => Promise.resolve({
+        [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_ERROR,
+        [WEBSOCKET_ERROR] : {
+          [ERROR_EARLY_BOOKING_TIME] : "08:15:00",
+          [ERROR_EARLY_TIME_SLOT] : "08:30:00",
+        }
+      }))
+    }
+
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <FutureBooking {...props}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    const openTracer1 = screen.getByLabelText("open-tracer-1");
+
+    act(() => {
+      openTracer1.click();
+    });
+
+    const toggleBooking2Checkbox = screen.getByTestId("toggle-2");
+
+    act(() => {
+      toggleBooking2Checkbox.click();
+    });
+
+    const orderButton = screen.getByTestId("order-button-1")
+
+    await act(async () => {
+      orderButton.click();
+    });
+
+    expect(websocket.send).toBeCalled();
+    expect(screen.getByTestId("booking_error")).toBeVisible();
+  });
+
+  it("Open tracer 1, Remove booking 2 and order, but can't no time slot", async () => {
+    const websocket = {
+      getMessage : jest.fn((param) => { return { [WEBSOCKET_MESSAGE_TYPE] : param } }),
+      send : jest.fn(() => Promise.resolve({
+        [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_ERROR,
+        [WEBSOCKET_ERROR] : {
+          [ERROR_EARLY_BOOKING_TIME] : "08:15:00",
+          [ERROR_EARLY_TIME_SLOT] : null,
+        }
+      }))
+    }
+
+    render(<StateContextProvider value={testState}>
+      <WebsocketContextProvider value={websocket}>
+        <FutureBooking {...props}/>
+      </WebsocketContextProvider>
+    </StateContextProvider>);
+
+    const openTracer1 = screen.getByLabelText("open-tracer-1");
+
+    act(() => {
+      openTracer1.click();
+    });
+
+    const toggleBooking2Checkbox = screen.getByTestId("toggle-2");
+
+    act(() => {
+      toggleBooking2Checkbox.click();
+    });
+
+    const orderButton = screen.getByTestId("order-button-1")
+
+    await act(async () => {
+      orderButton.click();
+    });
+
+    expect(websocket.send).toBeCalled();
+    expect(screen.getByTestId("booking_error")).toBeVisible();
+  });
+
+
+
   it("ChangeSorting", () => {
     const newProps = {...props}
-
 
     newProps.booking = [
       new Booking(1, BookingStatus.Initial, 2, 1, "B", "10:00:00"),
