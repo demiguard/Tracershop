@@ -61,7 +61,11 @@ class CreateModelAuditEntry(AuditLogModelEntry):
         continue
       log_fields.append((field.name, str(getattr(model, field.name))))
 
-    max_field_name_length, max_new_value_length = _get_max_length(log_fields)
+    if len(log_fields) != 0:
+      max_field_name_length, _ = _get_max_length(log_fields)
+    else:
+      max_field_name_length = 0
+
 
     messages_lines = []
     if user is not None:
@@ -94,8 +98,12 @@ class DeleteModelAuditEntry(AuditLogModelEntry):
         continue
       log_fields.append((field.name, str(getattr(model, field.name))))
 
-    max_field_name_length, max_original_value_length = _get_max_length(
-      log_fields)
+    if len(log_fields) != 0:
+      max_field_name_length, max_original_value_length = _get_max_length(
+        log_fields)
+    else:
+      max_field_name_length = 0
+      max_original_value_length = 0
 
     messages_lines = []
     if user is not None:
@@ -140,8 +148,13 @@ class EditModelAuditEntry(AuditLogModelEntry):
 
       log_fields.append((field.name, str(original_value), str(new_value)))
 
-    max_field_name_length, max_original_value_length,\
-      max_new_value_length = _get_max_length(log_fields)
+    if len(log_fields) != 0:
+      max_field_name_length, max_original_value_length,\
+        max_new_value_length = _get_max_length(log_fields)
+    else:
+      max_field_name_length = 0
+      max_original_value_length = 0
+      max_new_value_length = 0
 
     messages_lines = []
     if user is not None:
