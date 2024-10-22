@@ -29,7 +29,7 @@ def update_customer_mapping():
 
 
 def _parse_customer(string: str, vial: Vial, logger: Logger):
-  regex = re.compile(r"customer:\s*(\d+)\-\w+\s*")
+  regex = re.compile(r"customer:\s*(\d+)\s*\-\w+\s*")
   regex_match = regex.match(string)
   if regex_match is not None:
     dispenser_id_str, = regex_match.groups()
