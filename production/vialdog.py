@@ -68,7 +68,6 @@ _create_customer_mapping()
 
 
 def process_path(path: Path):
-  logger = logging.getLogger(VIAL_LOGGER)
   logger.info(f"Started to process {path}")
   processed_path = False
   while not processed_path:
@@ -100,12 +99,17 @@ def handle_path(path: Path):
     logger.error(f"Stale File handle for path: {path}")
     return
   except Exception as exception:
-    logger.error(f"Unhandled exception: {exception}")
+    logger.error(f"Unhandled exception: {exception} in file extraction")
     logger.error(f"Traceback: {traceback.format_exc()}")
     return
 
   logger.debug(f"Read File {path} content: {file_content}")
-  vial = parse_val_file(file_content, logger)
+  try:
+    vial = parse_val_file(file_content, logger)
+  except Exception as exception:
+    logger.error(f"Unhandled exception: {exception} in parsing")
+    logger.error(f"Traceback: {traceback.format_exc()}")
+    return
   logger.debug(f"Parsed File to vial: {vial}")
 
   # Check if the vial exists already
