@@ -68,6 +68,7 @@ _create_customer_mapping()
 
 
 def process_path(path: Path):
+  logger = logging.getLogger(VIAL_LOGGER)
   logger.info(f"Started to process {path}")
   processed_path = False
   while not processed_path:
