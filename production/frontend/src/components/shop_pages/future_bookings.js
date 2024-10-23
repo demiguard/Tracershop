@@ -228,7 +228,7 @@ function TracerCard({tracer,
          <Optional exists={deadlineValid}>
           <Row style={{justifyContent : "right",display : "flex",}}>
             <Optional exists={!!bookingError}>
-              <AlertBox testId={"booking_error"} message={bookingError}></AlertBox>
+              <div><AlertBox testId={"booking_error"} message={bookingError}></AlertBox></div>
             </Optional>
             <div>
               <MarginButton

@@ -154,7 +154,9 @@ export class ActivityOrderCollection {
       const moveToTimeSlot = order.moved_to_time_slot === this.delivering_time_slot.id;
       const movedToAnotherSlot = order.moved_to_time_slot && orderedToTimeSlot;
 
-      if(this.ordered_date !== order.delivery_date || (!orderedToTimeSlot && !moveToTimeSlot)){
+      if(this.ordered_date !== order.delivery_date
+        || (!orderedToTimeSlot && !moveToTimeSlot)
+        || (order.status === ORDER_STATUS.CANCELLED)){
         continue;
       }
       // Guard Statements

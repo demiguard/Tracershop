@@ -276,6 +276,10 @@ function ProductionRow({active_production,
       const orders = orderMapping.getOrders(timeSlot.id);
       if(orders !== undefined) {
         for (const order of orders){
+          if(order.status === ORDER_STATUS.CANCELLED){
+            continue;
+          }
+
           const contributingTimeSlot = (() => {
             const id = order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
             return state.deliver_times.get(id);
