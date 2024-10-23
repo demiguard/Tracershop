@@ -219,7 +219,7 @@ class DatabaseInterface():
       raise IllegalActionAttempted()
 
     timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
-    orders = ActivityOrder.objects.filter(pk__in=orderIDs).exclude(status=OrderStatus.Released)
+    orders = ActivityOrder.objects.filter(pk__in=orderIDs, status=OrderStatus.Accepted)
     vials = Vial.objects.filter(pk__in=vialIDs, assigned_to=None)
 
     if len(vials) == 0:
@@ -231,9 +231,6 @@ class DatabaseInterface():
     pivot_order = orders[0]
 
     for order in orders:
-      if not order.status == OrderStatus.Accepted:
-        error_logger.error(f"Order Status missmatch! {order.id}")
-        raise IllegalActionAttempted
       if not (order.moved_to_time_slot == timeSlot or order.ordered_time_slot == timeSlot):
         error_logger.error(f"Attempting to free orders which doesn't belong to timeslot: {timeSlot.id}")
         raise IllegalActionAttempted
