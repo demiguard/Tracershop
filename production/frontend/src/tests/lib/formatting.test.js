@@ -1,9 +1,11 @@
 import { parseJSON } from "jquery";
 import { parseDate, ParseDanishNumber, parseDateToDanishDate,
   FormatTime, FormatDateStr, ParseJSONstr, ParseDjangoModelJson,
-  ParseEmail, isNotNaN, PortValidator,
-  IPValidator,
-  StringValidator
+  ParseEmail, isNotNaN, PortValidator, formatTimeStamp,
+  IPValidator, escapeInputString, batchNumberValidator,
+  StringValidator, dateToDateString, getDateName,
+  nullParser, makePassword, Capitalize, renderDateTime,
+  formatUsername
 } from "../../lib/formatting";
 import { DATA_ISOTOPE } from "~/lib/shared_constants";
 import { Isotope } from "~/dataclasses/dataclasses";
@@ -115,6 +117,18 @@ describe("FormatDateStr tests", () => {
   })
 }) // Should be named trailed space, also should check on input
 
+describe("formatTimeStamp Tests", () => {
+  const testDate = new Date(2020, 10, 11, 8, 30);
+  it("is Valid", () => {
+    expect(formatTimeStamp(testDate)).toEqual("08.30");
+    expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08.30");
+  });
+
+  it("is unknown", () =>{
+    expect(formatTimeStamp(null)).toEqual("Ukendt");
+  });
+})
+
 describe("FormatTime Tests", () => {
   const targetTime = "02:01:00"
   it("Formats", () => {
@@ -122,6 +136,8 @@ describe("FormatTime Tests", () => {
     expect(FormatTime("2:01:00")).toEqual(targetTime);
     expect(FormatTime("2:01")).toEqual(targetTime);
     expect(FormatTime("02:01")).toEqual(targetTime)
+    expect(FormatTime("2:01:")).toEqual(targetTime)
+    expect(FormatTime("02:01:")).toEqual(targetTime)
     expect(FormatTime("00:00:00")).toEqual("00:00:00");
     expect(FormatTime("23:59:59")).toEqual("23:59:59");
   });
@@ -198,7 +214,9 @@ describe("JSON parse Django Models",() => {
   ])
   it("Standard Test", () => {
     const res = ParseDjangoModelJson(input, new Map([]), DATA_ISOTOPE);
+    const res2 = ParseDjangoModelJson(input, undefined, DATA_ISOTOPE);
     expect(res.size).toEqual(2);
+    expect(res2.size).toEqual(2);
     const isotope_1 = res.get(1);
     const isotope_2 = res.get(2);
     expect(isotope_1).toBeDefined();
@@ -256,4 +274,101 @@ describe("StringValidator Tests", () => {
     expect(res.valid).toEqual(false);
     expect(res.value).toEqual(null);
   });
+})
+
+describe("batchNumberValidator Tests", () => {
+  it("is Valid", () => {
+    expect(batchNumberValidator("abcdef-123234-9")).toBeTruthy();
+    expect(batchNumberValidator("a-937232-123456")).toBeTruthy();
+    expect(batchNumberValidator("abcdef-999999-123456")).toBeTruthy();
+    expect(batchNumberValidator("a-999999-9")).toBeTruthy();
+  });
+  
+  it("is Invalid", () => {
+    expect(batchNumberValidator("not Even close")).toBeFalsy();
+    expect(batchNumberValidator("a-99999-9")).toBeFalsy();
+    expect(batchNumberValidator("a-999999")).toBeFalsy();
+    expect(batchNumberValidator("999999-9")).toBeFalsy();
+  });
+})
+
+describe("dateToDateString Tests", () => {
+  const testDate = new Date(2000,4,3);
+  it("returns Date as String", () =>{
+    expect(dateToDateString(testDate)).toEqual("2000-05-03");
+  });
+})
+
+describe("getDateName Tests", () => {
+  const monday = new Date(2023,12, 22);
+  it("is a day of the week", () => {
+    expect(getDateName(monday)).toEqual("Mandag");
+    expect(getDateName(0+1)).toEqual("Tirsdag");
+    expect(getDateName(0+2)).toEqual("Onsdag");
+    expect(getDateName(0+3)).toEqual("Torsdag");
+    expect(getDateName(0+4)).toEqual("Fredag");
+    expect(getDateName(0+5)).toEqual("Lørdag");
+    expect(getDateName(0+6)).toEqual("Søndag");
+  });
+
+  it("is unknown", () => {
+    expect(getDateName).toThrow("Unknown Day");
+  });
+})
+
+describe("nullParser Tests", () => {
+  it("returns an empty string", () =>{
+    expect(nullParser(null)).toEqual("");
+  });
+  it("returns parameter", () =>{
+    expect(nullParser("Real value")).toEqual("Real value");
+  })
+})
+
+describe("makePassword", () => {
+  it("creates passwords", () =>{
+    expect(/[a-zA-Z0-9]{5}/g.test(makePassword(5))).toBeTruthy();
+    expect(/[a-zA-Z0-9]{1}/g.test(makePassword(1))).toBeTruthy();
+    expect(/[a-zA-Z0-9]{20}/g.test(makePassword(20))).toBeTruthy();
+    expect(/[a-zA-Z0-9]{0}/g.test(makePassword(0))).toBeTruthy();
+  });
+})
+
+describe("Capitalize Tests", () =>{
+  it("capitalizes", () => {
+    expect(Capitalize("UPpeRCase")).toEqual("Uppercase");
+    expect(Capitalize("lOWERCASE WORD")).toEqual("Lowercase word");
+  });
+})
+
+describe("renderDateTime Tests", () => {
+  it("reformats to danish clock", () => {
+    expect(renderDateTime("2006-05-04T11:24")).toEqual("11:24 04/05/2006");
+  })
+})
+
+describe("formatUsername Tests", () => {
+  const user = { //mock user object for test of username formatting
+    username: 'user1'
+  }
+  it("returns user capitalized", () => {
+    expect(formatUsername(user)).toEqual("USER1");
+  });
+
+  it("returns empty on null", () => {
+    expect(formatUsername(null)).toEqual("");
+  });
+})
+
+describe("escapeInputString Tests", () => {
+  it("adds backslash", () =>  {
+    expect(escapeInputString("question?")).toEqual("question\\?");
+    expect(escapeInputString("period.")).toEqual("period\\.");
+    expect(escapeInputString("{brackets}")).toEqual("\\{brackets\\}");
+  });
+
+  it("doesn't adds backslash", () =>{
+    expect(escapeInputString("No sepecial characters")).toEqual("No sepecial characters");
+    expect(escapeInputString("Permitted Special characters!-,")).toEqual("Permitted Special characters!-,")
+  })
 })
