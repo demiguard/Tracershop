@@ -664,8 +664,8 @@ def DrawReleaseCertificate(filename :str,
 
   # Table 2 Header
   t2_abscissa_m1 = (box_abscissa_end - box_abscissa_start) * 0.125 + box_abscissa_start
-  t2_abscissa_m2 = (box_abscissa_end - box_abscissa_start) * 0.325 + box_abscissa_start
-  t2_abscissa_m3 = (box_abscissa_end - box_abscissa_start) * 0.48 + box_abscissa_start
+  t2_abscissa_m2 = (box_abscissa_end - box_abscissa_start) * 0.35 + box_abscissa_start
+  t2_abscissa_m3 = (box_abscissa_end - box_abscissa_start) * 0.5 + box_abscissa_start
   t2_abscissa_m4 = (box_abscissa_end - box_abscissa_start) * 0.65 + box_abscissa_start
   t2_abscissa_m5 = (box_abscissa_end - box_abscissa_start) * 0.775 + box_abscissa_start
 
@@ -715,7 +715,7 @@ def DrawReleaseCertificate(filename :str,
   for i in range(max_rows):
     if i < len(orders):
       order = orders[i]
-      delivery_time = f"{order.active_time_slot.delivery_time.hour}:{order.active_time_slot.delivery_time.minute}"
+      delivery_time = f"{order.ordered_time_slot.delivery_time.hour}:{order.ordered_time_slot.delivery_time.minute}"
       order_id = str(order.id)
       ordered_activity = f"{toDanishDecimalString(order.ordered_activity, 0)} MBq@{delivery_time}"
       try:

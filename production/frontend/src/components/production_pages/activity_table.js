@@ -342,7 +342,6 @@ export function ActivityTable ({active_tracer, active_date}) {
   const activeDay = getDay(active_date)
   const delivery_date = dateToDateString(active_date)
   const danishDateString = parseDateToDanishDate(delivery_date);
-[]
   const relevantProductions = productionsFilter(state, { day : activeDay, tracerID : active_tracer}, true)
 
   const timeSlotMapping = new TimeSlotMapping(

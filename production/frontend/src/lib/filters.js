@@ -188,14 +188,16 @@ export function productionsFilter(container, {production_id, tracerID, day}, ids
   const filteredProductions = productions.filter(
     (production) => {
       const tracerCondition = tracerID ? production.tracer === tracerID : true;
-      const dayCondition = day ?  production.day === day : true;
+      const dayCondition = day !== undefined ? production.production_day === day : true;
       const idCondition = production_id ? production.id === production_id : true;
+
+      console.log(production, dayCondition, day)
 
       return tracerCondition && dayCondition && idCondition
     }
   )
 
-  return ids ?  filteredProductions.map(getId) : filteredProductions
+  return ids ? filteredProductions.map(getId) : filteredProductions
 }
 
 /**
