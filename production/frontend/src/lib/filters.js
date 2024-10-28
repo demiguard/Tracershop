@@ -2,31 +2,11 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_INJECTION_ORDER, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
 
-export function dayTracerFilter(day, tracerID){
-  return (production) => {
-    return production.production_day === day && production.tracer === tracerID
-  }
-}
-
-export function timeSlotOwnerFilter(endpointID){
-  return (timeSlot) => timeSlot.destination === endpointID;
-}
-
-/** Filter function for selecting delivery endpoints with a specific
- * Customer
- *
- * @param {Number} customerID Id of the customer the endpoint should have to
- * survive the filtering
- *
- */
-export function endpointOwnerFilter(customerID){
-  return (/**@type {DeliveryEndpoint} */endpoint) => endpoint.owner === customerID
-}
 
 
 export function tracerTypeFilter(tracerType){
@@ -78,11 +58,7 @@ export function procedureFilter(container, {
       return tracer_condition && endpoint_condition;
     });
 
-  if(ids){
-    return filteredProcedures.map(getId);
-  } else {
-    return filteredProcedures;
-  }
+  return ids ? filteredProcedures.map(getId) : filteredProcedures
 }
 
 export function locationFilter(container, {
@@ -98,11 +74,7 @@ export function locationFilter(container, {
     return endpoint_point;
   });
 
-  if(ids){
-    return filteredLocations.map(getId);
-  } else {
-    return filteredLocations;
-  }
+  return ids ? filteredLocations.map(getId) : filteredLocations;
 }
 
 export function bookingFilter(container, {
@@ -110,7 +82,7 @@ export function bookingFilter(container, {
   active_endpoint,
   active_date,
   tracer_id
-}){
+}, ids=false){
   const /**@type {Array<Booking>}*/ bookings = extractData(container, Booking, DATA_BOOKING);
 
   const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
@@ -119,16 +91,14 @@ export function bookingFilter(container, {
   }, true) : undefined;
 
 
-  return bookings.filter((booking) => {
+  const filteredBookings = bookings.filter((booking) => {
     const endpoint_condition = locations ? locations.includes(booking.location) : true;
     const date_condition = active_date ? compareDates(datify(active_date), datify(booking.start_date)) : true;
     const procedure_condition = procedures ? procedures.includes(booking.procedure) : true;;
     return endpoint_condition && date_condition && procedure_condition;
   });
-}
 
-export function productionDayTracerFilter(day, tracerID){
-  return (production) => production.production_day === day && production.tracer === tracerID
+  return ids ? filteredBookings.map(getId) : filteredBookings;
 }
 
 /**
@@ -224,11 +194,8 @@ export function productionsFilter(container, {production_id, tracerID, day}, ids
       return tracerCondition && dayCondition && idCondition
     }
   )
-  if(ids){
-    return filteredProductions.map(getId);
-  } else {
-    return filteredProductions;
-  }
+
+  return ids ?  filteredProductions.map(getId) : filteredProductions
 }
 
 /**
@@ -253,11 +220,7 @@ export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, en
     return tracerCondition && endpointCondition && idCondition;
   });
 
-  if(ids){
-    return filteredTimeSlots.map(getId);
-  } else {
-    return filteredTimeSlots;
-  }
+  return ids ?  filteredTimeSlots.map(getId) : filteredTimeSlots
 }
 
 /**
@@ -294,11 +257,7 @@ export function activityOrdersFilter(container, {state,
     return timeSlotCondition && statusCondition && dateRangeCondition
   });
 
-  if(ids){
-    return filteredActivityOrders.map(getId);
-  } else {
-    return filteredActivityOrders;
-  }
+  return ids ? filteredActivityOrders.map(getId) : filteredActivityOrders
 }
 
 /**
@@ -335,16 +294,12 @@ export function injectionOrdersFilter(container, {
     }
   );
 
-  if(ids){
-    return filteredInjectionOrders.map(getId);
-  } else {
-    return filteredInjectionOrders;
-  }
+  return ids ? filteredInjectionOrders.map(getId) : filteredInjectionOrders;
 }
 
 export function vialFilter(container, {
   active_date, active_tracer, orderIDs, active_customer
-}, ids){
+}, ids=false){
   const /**@type {Array<Vial>} */ vials = extractData(container, Vial, DATA_VIAL);
 
   const filteredVials = vials.filter((vial) => {
@@ -356,10 +311,18 @@ export function vialFilter(container, {
     return date_condition && tracer_condition && orderIDs_condition && customer_condition;
   });
 
+  return ids ? filteredVials.map(getId) : filteredVials;
+}
 
-  if (ids){
-    return filteredVials.map(getId);
-  } else {
-    return filteredVials;
-  }
+export function endpointFilter(container, {
+  owner
+}, ids=false){
+  const /**@type {Array<DeliveryEndpoint>} */ endpoints = extractData(container, DeliveryEndpoint, DATA_ENDPOINT);
+
+  const filteredEndpoints = endpoints.filter((endpoint) => {
+    const owner_condition = owner ? owner === endpoint.owner : true
+    return owner_condition;
+  })
+
+  return ids ? filteredEndpoints.map(getId) : filteredEndpoints;
 }

@@ -8,8 +8,8 @@ import React, {useRef, useState} from 'react'
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState, User, InjectionOrder } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
 import { DateRange, TimeStamp, compareTimeStamp, datify, getDay, getWeekNumber } from "./chronomancy";
-import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, OrderStatus, valueof, DAYS_OBJECTS } from "./constants";
-import { activityOrdersFilter, applyFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotOwnerFilter } from "./filters";
+import { ORDER_STATUS, TRACER_TYPE, USER_GROUPS, WEEKLY_REPEAT_CHOICES, DAYS_OBJECTS } from "./constants";
+import { activityOrdersFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotsFilter } from "./filters";
 import { calculateProduction } from "./physics";
 import { sortTimeSlots } from "./sorting";
 import { HoverBox } from "~/components/injectable/hover_box"
@@ -510,7 +510,7 @@ export class EndpointsProcedures {
  * @returns {Array<ActivityDeliveryTimeSlot>}
  */
 export function getRelatedTimeSlots(timeSlots, endpointID) {
-  return applyFilter(timeSlots, timeSlotOwnerFilter(endpointID))
+  return timeSlotsFilter(timeSlots, {endpointID : endpointID});
 }
 
 

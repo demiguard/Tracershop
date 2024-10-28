@@ -27,7 +27,7 @@ import { compareTimeStamp, getDay, getTimeString, TimeStamp
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
   OrderMapping, ActivityOrderCollection } from "../../lib/data_structures.js";
 import { OpenCloseButton } from "../injectable/open_close_button.js";
-import { activityOrdersFilter, applyFilter, dailyActivityOrderFilter, productionDayTracerFilter, productionsFilter } from "../../lib/filters.js";
+import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../lib/filters.js";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
 import { Comment } from "../injectable/data_displays/comment.js";
@@ -343,10 +343,7 @@ export function ActivityTable ({active_tracer, active_date}) {
   const delivery_date = dateToDateString(active_date)
   const danishDateString = parseDateToDanishDate(delivery_date);
 []
-  const relevantProductions = applyFilter(
-    state.production,
-    productionDayTracerFilter(activeDay, active_tracer)
-  ).map(getId);
+  const relevantProductions = productionsFilter(state, { day : activeDay, tracerID : active_tracer}, true)
 
   const timeSlotMapping = new TimeSlotMapping(
     state.delivery_endpoint,

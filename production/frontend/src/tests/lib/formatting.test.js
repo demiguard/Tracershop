@@ -120,8 +120,8 @@ describe("FormatDateStr tests", () => {
 describe("formatTimeStamp Tests", () => {
   const testDate = new Date(2020, 10, 11, 8, 30);
   it("is Valid", () => {
-    expect(formatTimeStamp(testDate)).toEqual("08.30");
-    expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08.30");
+    expect(formatTimeStamp(testDate)).toEqual("08:30");:
+    expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08:30");
   });
 
   it("is unknown", () =>{
@@ -283,7 +283,7 @@ describe("batchNumberValidator Tests", () => {
     expect(batchNumberValidator("abcdef-999999-123456")).toBeTruthy();
     expect(batchNumberValidator("a-999999-9")).toBeTruthy();
   });
-  
+
   it("is Invalid", () => {
     expect(batchNumberValidator("not Even close")).toBeFalsy();
     expect(batchNumberValidator("a-99999-9")).toBeFalsy();

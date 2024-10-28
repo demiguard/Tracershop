@@ -438,10 +438,10 @@ class MailTemplate(canvas.Canvas):
 
     y_cursor -= self.line_height * 2
 
-    self.drawString(x_cursor, y_cursor, f"PET & Cyklotronenheden UK 3982")
+    self.drawString(x_cursor, y_cursor, f"Cyklotron og Radiokemi, enhed 3982")
     y_cursor -= self.line_height
 
-    self.drawString(x_cursor, y_cursor, f"Rigshospitalet")
+    self.drawString(x_cursor, y_cursor, f"Afdeling for Klinisk Fysiologi og Nuklear Medicin Rigshospitalet")
     y_cursor -= self.line_height
 
     self.drawString(x_cursor, y_cursor, f"Blegdamsvej 9")
@@ -449,9 +449,6 @@ class MailTemplate(canvas.Canvas):
 
     self.drawString(x_cursor, y_cursor, f"2100 København Ø")
     y_cursor -= self.line_height * 2
-
-    self.drawString(x_cursor, y_cursor, f"Tlf: +45 35453949")
-    y_cursor -= self.line_height
 
     return y_cursor
 
@@ -708,8 +705,8 @@ def DrawReleaseCertificate(filename :str,
   draw_table_2_row(table_row_y_top_bottom,
                    ("Ordre ID",
                     "Bestilt",
-                    "Kalibreret kl",
                     "Leveret",
+                    "Kalibreret kl",
                     "Volumen",
                     "Frigivet kl"),
                    True)
@@ -718,8 +715,9 @@ def DrawReleaseCertificate(filename :str,
   for i in range(max_rows):
     if i < len(orders):
       order = orders[i]
+      delivery_time = f"{order.active_time_slot.delivery_time.hour}:{order.active_time_slot.delivery_time.minute}"
       order_id = str(order.id)
-      ordered_activity = f"{toDanishDecimalString(order.ordered_activity, 0)} MBq"
+      ordered_activity = f"{toDanishDecimalString(order.ordered_activity, 0)} MBq@{delivery_time}"
       try:
         timezone_aware = timezone.make_naive(order.freed_datetime)
       except ValueError:
@@ -746,7 +744,7 @@ def DrawReleaseCertificate(filename :str,
       vial_activity = ""
       volume = ""
 
-    draw_table_2_row(ordinate, (order_id, ordered_activity, calibration_time, vial_activity, volume, freed))
+    draw_table_2_row(ordinate, (order_id, ordered_activity, vial_activity, calibration_time, volume, freed))
     ordinate -= template.line_height * 1.5
 
   ordinate -= template.line_height * 3

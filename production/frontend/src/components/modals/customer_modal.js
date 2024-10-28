@@ -24,7 +24,7 @@ import { compareLoosely, nullify } from "~/lib/utils.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { parseDanishPositiveNumberInput, parseStringInput, parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input.js";
 import { clone } from "~/lib/serialization.js";
-import { timeSlotsFilter, tracerTypeFilter } from "~/lib/filters.js";
+import { endpointFilter, timeSlotsFilter, tracerTypeFilter } from "~/lib/filters.js";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
 import { Optional } from "~/components/injectable/optional.js";
 import { FONT, MARGIN } from "~/lib/styles.js";
@@ -143,12 +143,9 @@ export function CustomerModal({active_customer, on_close}) {
     active_customer
   );
 
-  const endpoints = []
-  for(const endpoint of state.delivery_endpoint.values()){
-    if(endpoint.owner == customer.id){
-      endpoints.push(endpoint);
-    }
-  }
+  const endpoints = endpointFilter(
+    state, { owner : customer.id }
+  );
 
   endpoints.push(clone(
     cleanEndpoint, DATA_ENDPOINT
@@ -255,6 +252,7 @@ export function CustomerModal({active_customer, on_close}) {
   }, [activeTracer]);
 
   const availableTimeSlots = timeSlotsFilter(state, {
+    state : state,
     tracerID : activeTracer,
     endpointID : tempEndpoint.id,
   });
