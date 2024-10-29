@@ -161,13 +161,13 @@ export function WebsocketIcon(){
 
   const display = <svg
     className="animated-error"
-    width="50px"
-    height="50px"
-    viewBox="0 0 76 76"
+    width="60px"
+    height="60px"
+    viewBox="15 15 46 46"
     version="1.1"
     baseProfile="full"
     enableBackground="new 0 0 76.00 76.00"
-  >
+    >
     <path
       className="animated-error"
       fill="#000000"

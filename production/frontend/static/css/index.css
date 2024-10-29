@@ -63,7 +63,8 @@ body {
 }
 
 .animated-error path {
-  animation: colorChange 3s infinite;
+  animation: colorChange 1.5s infinite;
+  animation-timing-function: cubic-bezier(0.445, 0.05, 0.55, 0.95);
 }
 
 @keyframes colorChange {

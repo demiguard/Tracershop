@@ -161,6 +161,8 @@ export class ActivityOrderCollection {
       this.minimum_status = Math.min(this.minimum_status, order.status);
 
       if (order.status === ORDER_STATUS.CANCELLED) {
+        this.freed_by = state.user.get(order.freed_by);
+        this.freed_time = order.freed_datetime
         continue;
       }
 
