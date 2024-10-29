@@ -61,3 +61,13 @@ body {
   min-height: 100vh;
   font-family: "MariBook";
 }
+
+.animated-error path {
+  animation: colorChange 3s infinite;
+}
+
+@keyframes colorChange {
+  0% { fill: #ff6b6b; }
+  50% { fill: #2c0300; }
+  100% { fill: #ff6b6b; }
+}

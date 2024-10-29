@@ -251,6 +251,16 @@ export function CustomerModal({active_customer, on_close}) {
     });
   }, [activeTracer]);
 
+  useEffect(function refreshCustomer(){
+    setTempCustomer({...customer});
+  }, [customer]);
+
+  useEffect(function refreshEndpoint(){
+    if(0 < endpoint.id){
+      setTempEndpoint({...endpoint});
+    }
+  }, [endpoint])
+
   const availableTimeSlots = timeSlotsFilter(state, {
     state : state,
     tracerID : activeTracer,
@@ -515,8 +525,8 @@ export function CustomerModal({active_customer, on_close}) {
               <TracershopInputGroup label="Kunde post nummer">
                 <Form.Control
                   aria-label="zip-input"
-                  value={nullParser(tempCustomer.zip_code)}
-                  onChange={setTempObjectToEvent(setTempCustomer,'billing_zip_code')}
+                  value={nullParser(tempCustomer.billing_zip_code)}
+                  onChange={setTempObjectToEvent(setTempCustomer, 'billing_zip_code')}
                 />
               </TracershopInputGroup>
               <TracershopInputGroup label="Kunde Email">
@@ -537,7 +547,7 @@ export function CustomerModal({active_customer, on_close}) {
             {/* This is the endpoint configuration */}
             <Col aria-label={`active-endpoint-${tempEndpoint.id}`}>
             <Row>
-              <Col><h4>Leverings sted</h4></Col>
+              <Col><h4>Leveringssted</h4></Col>
               <Col style={{display: "flex", justifyContent: "right"}}>
                 <Optional exists={endpointDirty}>
                   <CommitButton

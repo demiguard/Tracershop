@@ -4,7 +4,7 @@
  * Also this could be turned into some monads, if I was feeling particular fancy
  */
 
-import { FormatTime, ParseDanishNumber, batchNumberValidator, parseDate } from "./formatting"
+import { FormatTime, ParseDanishNumber, batchNumberValidator, nullParser, parseDate } from "./formatting"
 
 
 /**
@@ -137,6 +137,7 @@ export function parsePortInput(input, header=""){
 }
 
 export function parseStringInput(input, header="", max_length=80, allow_empty=true){
+  input = nullParser(input);
   input = input.trim();
   if(input === "" && !allow_empty){
     return [false, `${header} er ikke tasted ind`];

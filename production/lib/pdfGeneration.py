@@ -11,6 +11,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python standard library
 from datetime import date, datetime
 from pathlib import Path
+from logging import getLogger
 from typing import Iterable, Optional, Tuple, List, Sequence
 
 # Django packages
@@ -39,12 +40,13 @@ except:
 WIDTH, HEIGHT = A4
 
 # Tracershop Production packages
-from constants import LEGACY_ENTRIES
+from constants import LEGACY_ENTRIES, ERROR_LOGGER, DEBUG_LOGGER
 from lib.formatting import dateConverter, timeConverter, mapTracerUsage,\
   toDanishDecimalString, empty_none_formatter
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
-
+debug_logger = getLogger(DEBUG_LOGGER)
+error_logger = getLogger(ERROR_LOGGER)
 
 ##### Constant declarations #####
 #Lines are on the format (x1, y1, x2, y2)
@@ -402,22 +404,15 @@ class MailTemplate(canvas.Canvas):
     tracer = injectionOrder.tracer
     isotope = tracer.isotope
 
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives Orderen {injectionOrder.id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives ordre {injectionOrder.id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
     y_cursor -= self.line_height
 
     if injectionOrder.freed_datetime is None:
-      freedDatetime = "Ukendt frigivelse tidspunkt"
+      freed_timestamp_display_string = "Ukendt frigivelse tidspunkt"
     else:
-      freedDatetime = injectionOrder.freed_datetime.strftime("%d/%m/%Y %H:%M")
+      freed_timestamp_display_string = timezone.make_naive(injectionOrder.freed_datetime).strftime("%d/%m/%Y %H:%M")
 
-    try:
-      timezone_aware = timezone.make_naive(freedDatetime)
-    except ValueError:
-      timezone_aware = freedDatetime
-    except AttributeError:
-      timezone_aware = freedDatetime
-
-    self.drawString(x_cursor, y_cursor, f"{timezone_aware} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
+    self.drawString(x_cursor, y_cursor, f"{freed_timestamp_display_string} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 
     y_cursor -= self.line_height * 2
 
@@ -425,7 +420,7 @@ class MailTemplate(canvas.Canvas):
 
 
   def ApplySender(self, x_cursor, y_cursor):
-    self.drawString(x_cursor, y_cursor, f"Venlig Hilsen")
+    self.drawString(x_cursor, y_cursor, f"Venlig hilsen")
 
     x_cursor += 15
     y_cursor -= self.line_height

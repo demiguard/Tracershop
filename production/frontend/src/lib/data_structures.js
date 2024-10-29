@@ -128,7 +128,7 @@ export class ActivityOrderCollection {
   * @param {TracershopState} state
   */
   constructor(activity_orders, timeSlot, state, overhead = 1) {
-    this.minimum_status = ORDER_STATUS.UNAVAILABLE;
+    this.minimum_status = ORDER_STATUS.CANCELLED;
     this.delivering_time_slot = timeSlot;
     this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
     this.production = state.production.get(this.delivering_time_slot.production_run);
@@ -155,15 +155,19 @@ export class ActivityOrderCollection {
       const movedToAnotherSlot = order.moved_to_time_slot && orderedToTimeSlot;
 
       if(this.ordered_date !== order.delivery_date
-        || (!orderedToTimeSlot && !moveToTimeSlot)
-        || (order.status === ORDER_STATUS.CANCELLED)){
+        || (!orderedToTimeSlot && !moveToTimeSlot)) {
+          continue;
+      }
+      this.minimum_status = Math.min(this.minimum_status, order.status);
+
+      if (order.status === ORDER_STATUS.CANCELLED) {
         continue;
       }
+
       // Guard Statements
 
       // Update internal values
       const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot);
-      this.minimum_status = Math.min(this.minimum_status, order.status);
       this.moved |= movedToAnotherSlot;
       if(orderedToTimeSlot){
         this.ordered_activity += order.ordered_activity

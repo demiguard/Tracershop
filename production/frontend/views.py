@@ -123,8 +123,8 @@ def pdfInjectionView(request, injection_order_id: int):
   if not dirPath.exists(): #pragma: no cover
     dirPath.mkdir(parents=True, exist_ok=True)
 
-  if(pathFilename.exists()): #pragma: no cover
-    return FileResponse(open(filename, 'rb'))
+  #if(pathFilename.exists()): #pragma: no cover
+  #  return FileResponse(open(filename, 'rb'))
   DrawInjectionOrder(filename, injection_order)
 
   return FileResponse(open(filename, 'rb'), filename="FrigivelsesDokument.pdf")

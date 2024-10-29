@@ -515,6 +515,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message[WEBSOCKET_DATA],
       user
     )
+
+    logger.debug(f"Updating {message[WEBSOCKET_DATATYPE]}")
+
     if updatedModels is not None:
       customerIDs = await self.db.getCustomerIDs(updatedModels)
 
@@ -529,6 +532,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_REFRESH : False
       }, customerIDs)
     else:
+      logger.debug("Edit update failed! Hopefully something else is logged somewhere")
       await self.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
