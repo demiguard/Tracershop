@@ -77,7 +77,7 @@ describe("sortTimeSlots Test Suite", () => {
   })
 
   it("sorts by delivery time", () => {
-    expect(TSsort(timeSlots[0],timeSlots[3])).toEqual(-1) //I think this should be opposite, according to documentation in sorting.js ¯\_(ツ)_/¯
+    expect(TSsort(timeSlots[0],timeSlots[3])).toEqual(-1)
     expect(TSsort(timeSlots[3],timeSlots[0])).toEqual(1)
   })
 })
