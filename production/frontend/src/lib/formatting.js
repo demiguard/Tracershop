@@ -271,7 +271,6 @@ export function formatUsername(user){
   if(user === null){
     return "";
   }
-  console.log(user)
 
   return user.username.toUpperCase();
 }

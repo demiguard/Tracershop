@@ -45,7 +45,7 @@ describe("Shop Order page test suite", () => {
     const {unmount} = render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -63,7 +63,7 @@ describe("Shop Order page test suite", () => {
       <StateContextProvider value={testState}>
         <DispatchContextProvider value={dispatchMock}>
           <WebsocketContextProvider value={websocket}>
-            <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+            <ShopOrderPage relatedCustomer={testState.customer}/>
           </WebsocketContextProvider>
         </DispatchContextProvider>
       </StateContextProvider>
@@ -84,7 +84,7 @@ describe("Shop Order page test suite", () => {
         <StateContextProvider value={testState}>
           <DispatchContextProvider value={dispatchMock}>
             <WebsocketContextProvider value={websocket}>
-              <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+              <ShopOrderPage relatedCustomer={testState.customer}/>
             </WebsocketContextProvider>
           </DispatchContextProvider>
         </StateContextProvider>);
@@ -102,7 +102,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -118,7 +118,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>
     );
@@ -136,7 +136,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 
@@ -180,7 +180,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>
     );
@@ -209,7 +209,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>
     );
@@ -261,7 +261,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>
     );
@@ -299,7 +299,7 @@ describe("Shop Order page test suite", () => {
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={[...testState.customer.values()]}/>
+          <ShopOrderPage relatedCustomer={testState.customer}/>
         </WebsocketContextProvider>
       </StateContextProvider>);
 

@@ -10,6 +10,7 @@ import { Col, Row } from "react-bootstrap";
 import { cssCenter } from "~/lib/constants";
 import { DATA_USER_ASSIGNMENT, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
   WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+import { formatUsername } from "~/lib/formatting";
 
 export const ERROR_MESSAGE_NO_LDAP_USERNAME = "BAM ID findes ikke. Bemærk at brugeren kan havde et regionalt ID, som skal benyttes istedet!"
 export const ERROR_MESSAGE_INCORRECT_GROUPS = "Brugeren har ikke korrekte CBAS rettigheder!"
@@ -23,7 +24,7 @@ function UserAssignmentRow(props){
   const websocket = useWebsocket();
   const exists = user_assignment.id !== null
   const initUserName = state.user.has(user_assignment.user)
-                     ? state.user.get(user_assignment.user).username : "";
+                     ? formatUsername(state.user.get(user_assignment.user)) : "";
   const [username, setUserName] = useState(initUserName);
   const [error, setError] = useState("");
 

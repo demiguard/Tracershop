@@ -120,7 +120,7 @@ describe("FormatDateStr tests", () => {
 describe("formatTimeStamp Tests", () => {
   const testDate = new Date(2020, 10, 11, 8, 30);
   it("is Valid", () => {
-    expect(formatTimeStamp(testDate)).toEqual("08:30");:
+    expect(formatTimeStamp(testDate)).toEqual("08:30");
     expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08:30");
   });
 

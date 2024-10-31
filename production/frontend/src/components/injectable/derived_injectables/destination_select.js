@@ -40,8 +40,7 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     (endpoint) => {return activeCustomer == endpoint.owner;}
   );
 
-  const withTimeSlots = setTimeSlot !== undefined
-                        && timeSlots !== undefined
+  const withTimeSlots = setTimeSlot !== undefined && timeSlots !== undefined;
 
   function setTimeSlotToNewEndpoint(rawEndpointID){
     if(withTimeSlots){

@@ -34,6 +34,11 @@ const Content = {
   Overview : BookingOverview,
 };
 
+/**
+ *
+ * @param {Map<Number, Customer>} param0
+ * @returns
+ */
 export function ShopOrderPage ({relatedCustomer}){
   const state = useTracershopState();
   const dispatch = useTracershopDispatch();
@@ -54,6 +59,11 @@ export function ShopOrderPage ({relatedCustomer}){
     || init.current.activeTracer === null
   ){
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
+    if(activeCustomer !== null){
+      if(!relatedCustomer.has(activeCustomer)){
+        activeCustomer = null;
+      }
+    }
 
     if(activeCustomer === null){
       for(const customer of relatedCustomer.values()){
@@ -63,7 +73,15 @@ export function ShopOrderPage ({relatedCustomer}){
       }
     }
 
-    let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT)
+    let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT);
+    // This check is here to see t
+    if(activeEndpoint !== null){
+      const endpoint = state.delivery_endpoint.get(activeEndpoint);
+      if (endpoint.owner !== activeCustomer){
+        activeEndpoint = null;
+      }
+    }
+
     if(activeEndpoint === null){
     for(const endpoint of state.delivery_endpoint.values()){
       if(endpoint.owner === activeCustomer){
@@ -153,6 +171,28 @@ export function ShopOrderPage ({relatedCustomer}){
       }
     }
   }, [websocket]);
+
+  useEffect(function changeRelatedCustomer() {
+    if(!relatedCustomer.has(activeCustomer)){
+      let newActiveCustomer = null;
+
+      for(const customer of relatedCustomer.values()){
+        newActiveCustomer = customer.id;
+        break;
+      }
+
+      let newActiveEndpoint = null;
+      for(const endpoint of state.delivery_endpoint.values()){
+        if(endpoint.owner === newActiveCustomer){
+          newActiveEndpoint = endpoint.id;
+          break;
+        }
+      }
+      setActiveCustomer(newActiveCustomer);
+      setActiveEndpoint(newActiveEndpoint);
+    }
+
+  }, [relatedCustomer])
 
   useEffect(() => {
     if(websocket !== null){
