@@ -1,10 +1,10 @@
-import { jest } from '@jest/globals'
-import { Procedure, ProcedureIdentifier, Tracer, TracershopState } from '~/dataclasses/dataclasses';
+import { describe, expect, jest } from '@jest/globals'
+import { Procedure, ProcedureIdentifier, Tracer, TracershopState, Location, Booking } from '~/dataclasses/dataclasses';
 import { TRACER_TYPE } from '~/lib/constants';
-import { PROCEDURE_SORTING, sort_procedures } from '~/lib/sorting';
+import { BOOKING_SORTING_METHODS, PROCEDURE_SORTING, sort_procedures, sortBookings } from '~/lib/sorting';
 import { toMapping } from '~/lib/utils';
 
-describe("Sorting Test suite", () => {
+describe("Sortprocedure Test suite", () => {
   it("sort procedure", () => {
     const state = new TracershopState();
 
@@ -46,4 +46,102 @@ describe("Sorting Test suite", () => {
   });
 
 
+
+
 });
+
+describe("sortBookings Test Suite", () => {
+  const locations = [
+    new Location(1, null, null, "A" ),
+    new Location(2, null, null, "B" ),
+    new Location(3, null, null, undefined) //no common_name
+  ]
+
+  const procedures = [
+    new Procedure(1, 1, null, null, null, null),
+    new Procedure(2, 2, null, null, null, null),
+    new Procedure(3, 3, null, null, null, null) //no series_description
+  ]
+
+  //Test bookings, only used fields are given value.
+  const bookings = [
+    new Booking(null, null, 1, 1, "B", "11:00:00"),
+    new Booking(null, null, 2, 2, "A", "10:00:00"),
+    new Booking(null, null, 3, 3, null, "10:00:00"),
+    new Booking(null, null, null, null, null, "10:00:00")
+  ]
+
+  const stdBooking = sortBookings(); //default
+  const std2Booking = sortBookings(BOOKING_SORTING_METHODS.length +1); //also default
+  const ascBooking = sortBookings(BOOKING_SORTING_METHODS.ACCESSION_NUMBER); //accession number
+
+  //setting up a Tracershop state
+  const state = new TracershopState();
+  state.location = toMapping(locations);
+  state.procedure = toMapping(procedures);
+  state.procedure_identifier = toMapping(
+    [new ProcedureIdentifier(1, null, "A"), 
+      new ProcedureIdentifier(2, null, "B"), 
+      new ProcedureIdentifier(3, null, undefined) //no series_description
+    ]);
+
+
+  const prcBooking = sortBookings(BOOKING_SORTING_METHODS.SERIES_DESCRIPTION, state); //Series description (procedure)
+  const locBooking = sortBookings(BOOKING_SORTING_METHODS.LOCATION, state); //location
+    
+    //Missing state
+  it("throws errors", () => {
+    expect(() => {sortBookings(2)}).toThrow("Cannot sort bookings based on Series Description without Tracershop state");
+    expect(() => {sortBookings(3)}).toThrow("Cannot sort bookings based on Series Description without Tracershop state");
+  });
+
+  //Testing for existing parameters--
+
+  it("tests default booking sorting", () => {
+    expect(stdBooking(bookings[1], bookings[0])).toEqual(-1);
+    expect(std2Booking(bookings[0], bookings[1])).toEqual(1);
+  });
+
+  it("tests accession number sorting", () => {
+    expect(ascBooking(bookings[1], bookings[0])).toEqual(-1);
+    expect(ascBooking(bookings[0], bookings[1])).toEqual(1);
+  })
+
+  it("tests series description sorting", () => {
+    expect(prcBooking(bookings[0], bookings[1])).toEqual(-1);
+    expect(prcBooking(bookings[1], bookings[0])).toEqual(1);
+  })
+
+
+  it("tests location sorting", () => {
+    expect(locBooking(bookings[0], bookings[1])).toEqual(-1);
+    expect(locBooking(bookings[1], bookings[0])).toEqual(1);
+  })
+
+  //edgecase testing--
+
+  it("Resorts to default testing", () =>{
+    //if a parameter is missing--
+    //missing series description
+    expect(prcBooking(bookings[2], bookings[0])).toEqual(-1);
+    expect(prcBooking(bookings[0], bookings[2])).toEqual(1);
+    
+    //missing common name
+    expect(locBooking(bookings[2], bookings[0])).toEqual(-1);
+    expect(locBooking(bookings[0], bookings[2])).toEqual(1);
+
+    //missing procedure
+    expect(prcBooking(bookings[3], bookings[0])).toEqual(-1);
+    expect(prcBooking(bookings[0], bookings[3])).toEqual(1);
+
+    //missing location
+    expect(locBooking(bookings[3], bookings[0])).toEqual(-1);
+    expect(locBooking(bookings[0], bookings[3])).toEqual(1);
+
+    //if they have the same sorting criteria
+    expect(prcBooking(bookings[2], bookings[2])).toEqual(-1);
+    expect(locBooking(bookings[2], bookings[2])).toEqual(-1);
+
+  })
+
+})
