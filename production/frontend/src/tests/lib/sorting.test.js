@@ -21,11 +21,11 @@ describe("Sortprocedure Test suite", () => {
 
     const procedures = [
       new Procedure(1, 1, 1000, 0, 1, null),
-      new Procedure(2, 1, 20, 0, null, null),
-      new Procedure(3, 2, 500, 0, 2, null),
-      new Procedure(4, 3, 200, 0, 1, null),
-      new Procedure(5, 1, 10, 0, 1, null),
-      new Procedure(6, null, 0, null, null, null),
+      new Procedure(2, 1, 20, 1, null, null),
+      new Procedure(3, 2, 500, 2, 2, null),
+      new Procedure(4, 3, 200, 6, 1, null),
+      new Procedure(5, 1, 10, 3, 1, null),
+      new Procedure(6, null, 0, 0, null, null),
       new Procedure(7, 1, 10, 0, 1, null),
     ]
 
@@ -38,9 +38,14 @@ describe("Sortprocedure Test suite", () => {
     expect(sorted_tracer_procedure[6]).toBe(procedures[5]);
 
     const sorted_procedure_procedures = [...procedures].sort(sort_procedures(state, PROCEDURE_SORTING.PROCEDURE_CODE));
-    expect(sorted_procedure_procedures[6]).toBe(procedures[5])
-    expect(sorted_procedure_procedures[5]).toBe(procedures[3])
-    expect(sorted_procedure_procedures[4]).toBe(procedures[2])
+    expect(sorted_procedure_procedures[6]).toBe(procedures[5]);
+    expect(sorted_procedure_procedures[5]).toBe(procedures[3]);
+    expect(sorted_procedure_procedures[4]).toBe(procedures[2]);
+
+    const sorted_prodedure_delay = [...procedures].sort(sort_procedures(state, PROCEDURE_SORTING.DELAY));
+    expect(sorted_prodedure_delay[3]).toBe(procedures[1]);
+    expect(sorted_prodedure_delay[6]).toBe(procedures[3]);
+    expect(sorted_prodedure_delay[5]).toBe(procedures[4]);
 
     expect(() => {[...procedures].sort(sort_procedures(state, 12342352))}).toThrow("UNDEFINED SORTING METHOD!")
   });
@@ -72,7 +77,7 @@ describe("sortTimeSlots Test Suite", () => {
   })
 
   it("sorts by delivery time", () => {
-    expect(TSsort(timeSlots[0],timeSlots[3])).toEqual(-1) //according to documentation in sorting.js I think this should be opposite. ¯\_(ツ)_/¯
+    expect(TSsort(timeSlots[0],timeSlots[3])).toEqual(-1) //I think this should be opposite, according to documentation in sorting.js ¯\_(ツ)_/¯
     expect(TSsort(timeSlots[3],timeSlots[0])).toEqual(1)
   })
 })
