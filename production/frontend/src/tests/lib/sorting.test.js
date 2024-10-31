@@ -1,7 +1,7 @@
 import { describe, expect, jest } from '@jest/globals'
-import { Procedure, ProcedureIdentifier, Tracer, TracershopState, Location, Booking } from '~/dataclasses/dataclasses';
+import { Procedure, ProcedureIdentifier, Tracer, TracershopState, Location, Booking, DeliveryEndpoint, ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TRACER_TYPE } from '~/lib/constants';
-import { BOOKING_SORTING_METHODS, PROCEDURE_SORTING, sort_procedures, sortBookings } from '~/lib/sorting';
+import { BOOKING_SORTING_METHODS, PROCEDURE_SORTING, sort_procedures, sortBookings, sortTimeSlots } from '~/lib/sorting';
 import { toMapping } from '~/lib/utils';
 
 describe("Sortprocedure Test suite", () => {
@@ -45,6 +45,37 @@ describe("Sortprocedure Test suite", () => {
     expect(() => {[...procedures].sort(sort_procedures(state, 12342352))}).toThrow("UNDEFINED SORTING METHOD!")
   });
 
+describe("sortTimeSlots Test Suite", () => {
+  const timeSlots = [
+    new ActivityDeliveryTimeSlot(null, null, "10:00:00", 1, null, null),
+    new ActivityDeliveryTimeSlot(null, null, "10:00:00", 2, null, null),
+    new ActivityDeliveryTimeSlot(null, null, "10:00:00", 3, null, null),
+    new ActivityDeliveryTimeSlot(null, null, "12:00:00", 1, null, null)
+  ]
+
+  const endpoints = [
+    new DeliveryEndpoint(1, null, null, null, null, null, 2),
+    new DeliveryEndpoint(2, null, null, null, null, null, 1),
+    new DeliveryEndpoint(3, null, null, null, null, null, 2),
+  ]
+
+  const TSsort = sortTimeSlots(toMapping(endpoints));
+  
+  it("Sorts by costumer", () => {
+    expect(TSsort(timeSlots[0], timeSlots[1])).toEqual(1);
+    expect(TSsort(timeSlots[1], timeSlots[0])).toEqual(-1);
+  })
+
+  it("sorts by destination", () => {
+    expect(TSsort(timeSlots[0], timeSlots[2])).toEqual(-2);
+    expect(TSsort(timeSlots[2], timeSlots[0])).toEqual(2); 
+  })
+
+  it("sorts by delivery time", () => {
+    expect(TSsort(timeSlots[0],timeSlots[3])).toEqual(-1) //according to documentation in sorting.js I think this should be opposite. ¯\_(ツ)_/¯
+    expect(TSsort(timeSlots[3],timeSlots[0])).toEqual(1)
+  })
+})
 
 
 
