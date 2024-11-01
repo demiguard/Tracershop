@@ -120,8 +120,16 @@ describe("FormatDateStr tests", () => {
 describe("formatTimeStamp Tests", () => {
   const testDate = new Date(2020, 10, 11, 8, 30);
   it("is Valid", () => {
-    expect(formatTimeStamp(testDate)).toEqual("08:30");
-    expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08:30");
+    try { //to account for either danish or english system clock.
+      expect(formatTimeStamp(testDate)).toEqual("08:30"); //english
+    } catch {
+      expect(formatTimeStamp(testDate)).toEqual("08.30"); //danish
+    }
+    try{
+      expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08:30"); //english
+    } catch {
+      expect(formatTimeStamp("2020-10-11T08:30")).toEqual("08.30"); //danish
+    }
   });
 
   it("is unknown", () =>{
