@@ -36,10 +36,10 @@ export function sort_procedures(state, sortingMethod){
         const pi_1 = state.procedure_identifier.get(prod_1.series_description);
         const pi_2 = state.procedure_identifier.get(prod_2.series_description);
 
-        return pi_1.description > pi_2.description ? LESSER : GREATER;
+        return pi_1.description > pi_2.description ? GREATER : LESSER;
       case PROCEDURE_SORTING.TRACER:
-        if (prod_1.tracer === null) return LESSER
-        if (prod_2.tracer === null) return GREATER
+        if (prod_1.tracer === null) return GREATER
+        if (prod_2.tracer === null) return LESSER
         return prod_1.tracer - prod_2.tracer;
       case PROCEDURE_SORTING.UNITS:
         return prod_1.tracer_units - prod_2.tracer_units;
