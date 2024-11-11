@@ -133,3 +133,7 @@ def format_csv_data(csv_data: Dict[str, Dict[str, List[Any]]]):
 
   excel_bytes.seek(0)
   return excel_bytes
+
+def format_time_number(num: int):
+  # Python ternaries are ugly as fuck
+  return f"0{num}" if num < 10 else str(num)

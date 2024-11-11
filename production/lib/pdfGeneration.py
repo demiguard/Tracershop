@@ -42,7 +42,7 @@ WIDTH, HEIGHT = A4
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES, ERROR_LOGGER, DEBUG_LOGGER
 from lib.formatting import dateConverter, timeConverter, mapTracerUsage,\
-  toDanishDecimalString, empty_none_formatter
+  toDanishDecimalString, empty_none_formatter, format_time_number
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
 debug_logger = getLogger(DEBUG_LOGGER)
@@ -710,7 +710,7 @@ def DrawReleaseCertificate(filename :str,
   for i in range(max_rows):
     if i < len(orders):
       order = orders[i]
-      delivery_time = f"{order.ordered_time_slot.delivery_time.hour}:{order.ordered_time_slot.delivery_time.minute}"
+      delivery_time = f"{format_time_number(order.ordered_time_slot.delivery_time.hour)}:{format_time_number(order.ordered_time_slot.delivery_time.minute)}"
       order_id = str(order.id)
       ordered_activity = f"{toDanishDecimalString(order.ordered_activity, 0)} MBq@{delivery_time}"
       try:

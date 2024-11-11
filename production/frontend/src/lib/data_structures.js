@@ -145,7 +145,19 @@ export class ActivityOrderCollection {
     this.delivered_activity = 0;
     this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
-    for(const order of activity_orders) {
+    // Yeah there is a faster way to do this, but these list are like 6 long at
+    // max
+    for(const order of activity_orders){
+      this.minimum_status = Math.min(this.minimum_status, order.status);
+    }
+    const relevant_orders = [];
+    for(const order of activity_orders){
+      if(order.status === this.minimum_status){
+        relevant_orders.push(order);
+      }
+    }
+
+    for(const order of relevant_orders) {
       if(this.ordered_date === null){
         this.ordered_date = order.delivery_date;
       }
@@ -158,7 +170,6 @@ export class ActivityOrderCollection {
         || (!orderedToTimeSlot && !moveToTimeSlot)) {
           continue;
       }
-      this.minimum_status = Math.min(this.minimum_status, order.status);
 
       if (order.status === ORDER_STATUS.CANCELLED) {
         this.freed_by = state.user.get(order.freed_by);
