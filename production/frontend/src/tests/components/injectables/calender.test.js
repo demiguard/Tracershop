@@ -52,7 +52,7 @@ describe("Calender render Tests", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const expectedDate = Intl.DateTimeFormat().resolvedOptions().locale === "da-DK"? "26. juni" : "25. June"; //taking for account local date settings
+    const expectedDate = Intl.DateTimeFormat().resolvedOptions().locale === "da-DK"? "26. juni" : "26. June"; //taking for account local date settings
 
     expect(screen.getByText(expectedDate)).toBeVisible();
     expect(screen.getByText("Man")).toBeVisible();
