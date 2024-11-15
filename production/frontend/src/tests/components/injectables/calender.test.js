@@ -52,10 +52,8 @@ describe("Calender render Tests", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    let expectedDate = "26. June"; //Test taking account for local settings used by date
-    if(Intl.DateTimeFormat().resolvedOptions().locale = "da-DK") {
-      expectedDate = "26. juni"
-    }
+    const expectedDate = Intl.DateTimeFormat().resolvedOptions().locale === "da-DK"? "26. juni" : "25. June"; //taking for account local date settings
+
     expect(screen.getByText(expectedDate)).toBeVisible();
     expect(screen.getByText("Man")).toBeVisible();
     expect(screen.getByText("Tir")).toBeVisible();
