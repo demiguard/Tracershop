@@ -86,13 +86,15 @@ function TimeSlotRow({timeSlot,
                       orderMapping,
                       timeSlotMapping
   }){
+
   const state = useTracershopState();
+  const dateString = dateToDateString(state.today);
   const websocket = useWebsocket();
   const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer);
   const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
   // Prop extraction
   const orders = orderMapping.getOrders(timeSlot.id);
-  const orderCollection = new ActivityOrderCollection(orders, timeSlot, state, overhead);
+  const orderCollection = new ActivityOrderCollection(orders, dateString, timeSlot, state, overhead);
 
   const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
   const /**@type {Number} */ firstAvailableTimeSlotID = firstAvailableTimeSlot.id;

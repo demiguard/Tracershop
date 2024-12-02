@@ -15,7 +15,7 @@ import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { setTempObjectToEvent } from "~/lib/state_management";
-import { InjectionOrderPDFUrl, compareLoosely } from "~/lib/utils";
+import { InjectionOrderPDFUrl, compareLoosely, nullify } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { Optional } from "~/components/injectable/optional";
@@ -94,6 +94,7 @@ export function InjectionOrderCard({
       delivery_time : delivery_time,
       tracer_usage : Number(tempInjectionOrder.tracer_usage),
       status : ORDER_STATUS.ORDERED,
+      comment : nullify(tempInjectionOrder.comment)
     }];
   }
 
@@ -130,7 +131,6 @@ export function InjectionOrderCard({
   const canEdit = injection_order.status <= 1 && valid_deadline;
   const orderExists = 0 < injection_order.status;
   const statusInfo = orderExists ? `ID: ${injection_order.id}` : "Ny ordre";
-
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
   const ActionButton = (() => {
@@ -220,7 +220,7 @@ export function InjectionOrderCard({
       </Row>
       <Row>
         <Col xs={1} style={cssCenter} >{statusInfo}</Col>
-        <Col>
+        <Col xs={3}>
           <TracershopInputGroup label={"Tid"}>
             <ErrorInput error={errorDeliveryTime}>
               <TimeInput
@@ -232,13 +232,25 @@ export function InjectionOrderCard({
             </ErrorInput>
           </TracershopInputGroup>
         </Col>
-        <Col>
+        <Col xs={3}>
           <TracershopInputGroup label={"Brug"}>
             <UsageSelect
               aria-label={`usage-input-${injection_order.id}`}
               onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer_usage')}
               value={tempInjectionOrder.tracer_usage}
               canEdit={canEdit}
+            />
+          </TracershopInputGroup>
+        </Col>
+        <Col>
+          <TracershopInputGroup label="Kommentar">
+            <EditableInput
+              canEdit={canEdit}
+              data-testid={`comment-${injection_order.id}`}
+              as="textarea"
+              rows={1}
+              value={nullParser(tempInjectionOrder.comment)}
+              onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
             />
           </TracershopInputGroup>
         </Col>

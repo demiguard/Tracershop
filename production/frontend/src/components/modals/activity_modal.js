@@ -375,7 +375,7 @@ export function ActivityModal({
   const tracer = state.tracer.get(active_tracer);
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
-  const orderCollection = new ActivityOrderCollection(originalOrders, timeSlot, state, overhead);
+  const orderCollection = new ActivityOrderCollection(originalOrders, dateString, timeSlot, state, overhead);
 
   // Order State
   const /** @type {StateType<Set<Number>>} */ [selectedVials, setSelectedVials] = useState(new Set());
@@ -454,7 +454,7 @@ export function ActivityModal({
         setError(null, "")
 
       } else {
-        setError(ERROR_LEVELS.error,  "Forkert login");
+        setError(ERROR_LEVELS.error, "Forkert login");
       }
     });
   }
@@ -474,7 +474,7 @@ export function ActivityModal({
   function confirmCancel(){
     const ordersToBeSend = []
     const cancelationTime = new Date();
-    const cancelationTimeString = `${cancelationTime.getFullYear()}-${cancelationTime.getMonth() + 1}-${cancelationTime.getDay()} ${cancelationTime.getHours()}:${cancelationTime.getMinutes()}:${cancelationTime.getSeconds()}`
+    const cancelationTimeString = `${cancelationTime.getFullYear()}-${cancelationTime.getMonth() + 1}-${cancelationTime.getDate()} ${cancelationTime.getHours()}:${cancelationTime.getMinutes()}:${cancelationTime.getSeconds()}`
     for(const order of orderCollection.orders){
       ordersToBeSend.push({...order,
         status : ORDER_STATUS.CANCELLED,

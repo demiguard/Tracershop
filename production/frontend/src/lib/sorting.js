@@ -14,7 +14,7 @@ export const PROCEDURE_SORTING = {
   DELAY : 3,
 }
 
-const GREATER = 1; 
+const GREATER = 1;
 const LESSER = -1;
 
 /**
@@ -175,4 +175,48 @@ export function sortBookings(sortingMethod=BOOKING_SORTING_METHODS.START_TIME, s
     console.log("Unknown input sorting method, using default!")
   }
   return defaultBookingSort;
+}
+
+export const InjectionOrderSortingMethods = {
+  STATUS : 0,
+  ORDER_ID : 1,
+  DESTINATION : 2,
+  TRACER : 3,
+  INJECTIONS : 4,
+  USAGE : 5,
+  ISOTOPE : 6,
+  ORDERED_TIME : 7
+}
+
+export function sortInjectionOrders(sortingMethod, invertedSorting, state){
+  const invert = invertedSorting ? -1 : 1;
+
+  switch(sortingMethod){
+    case InjectionOrderSortingMethods.STATUS:
+      return (injection_order_1, injection_order_2) =>
+          invert * (injection_order_2.status - injection_order_1.status)
+
+    case InjectionOrderSortingMethods.ORDER_ID:
+      return (a,b) => invertedSorting * (b.id - a.id);
+    case InjectionOrderSortingMethods.DESTINATION: return (a,b) => {
+      const aEndpoint = state.delivery_endpoint.get(a.endpoint);
+      const aCustomer = state.customer.get(aEndpoint.owner);
+      const bEndpoint = state.delivery_endpoint.get(b.endpoint);
+      const bCustomer = state.customer.get(bEndpoint.owner);
+
+      return aCustomer.id != bCustomer.id ?
+          invert * (bCustomer.id - aCustomer.id)
+        : invert * (bEndpoint.id - aEndpoint.id);
+      }
+    case InjectionOrderSortingMethods.TRACER:
+      return (a,b) => invert * (b.tracer - a.tracer);
+    case InjectionOrderSortingMethods.INJECTIONS:
+      return (a,b) => invert * (b.injections - a.injections);
+    case InjectionOrderSortingMethods.USAGE:
+      return (a,b) => invert * (b.tracer_usage - a.tracer_usage);
+    case InjectionOrderSortingMethods.ISOTOPE:
+      return (a,b) => invert * (b.isotope - a.isotope);
+    case InjectionOrderSortingMethods.ORDERED_TIME:
+      return (a,b) => invert * (b.delivery_time < a.delivery_time ? GREATER : LESSER);
+  }
 }

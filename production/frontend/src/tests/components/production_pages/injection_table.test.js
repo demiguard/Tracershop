@@ -127,9 +127,8 @@ describe("Deadline Setup tests", () => {
     // TODO: Assert
 
     // Close it again
-    const closeButton = screen.getByRole('button', {name : "Luk"});
     act(() => {
-      closeButton.click()
+      screen.getByRole('button', {name : "Luk"}).click()
     });
   });
 

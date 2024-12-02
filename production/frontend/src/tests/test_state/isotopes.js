@@ -1,24 +1,26 @@
+import { Isotope } from "~/dataclasses/dataclasses"
+
 export const isotopes = new Map([
-  [1, {
-      id :  1,
-      atomic_number :  56,
-      atomic_mass : 139,
-      halflife_seconds : 83.06 * 60,
-      atomic_letter : "Ba",
-      metastable : false,
-  }], [2,{
-      id : 2,
-      atomic_number : 92,
-      atomic_mass : 235,
-      halflife_seconds : 703800000 * 31556926, // Nuclear weapons doesn't make for good tracers
-      atomic_letter : "U",
-      metastable : false,
-  }], [ 3, {
-      id : 3,
-      atomic_number : 43,
-      atomic_mass : 99,
-      halflife_seconds : 6.0067 * 3600,
-      atomic_letter : "Tc",
-      metastable : true,
-  }],
+  [1, new Isotope(
+       1, //id
+       56, //atomic_number
+      139, //atomic_mass
+      83.06 * 60, //halflife_seconds
+      "Ba", //atomic_letter
+      false, //metastable
+  )], [2, new Isotope(
+      2, // id
+      92, // atomic_number
+      235, // atomic_mass
+      703800000 * 31556926, // Nuclear weapons doesn't make for good tracers // halflife_seconds
+      "U", // atomic_letter
+      false // metastable
+   )], [ 3, new Isotope(
+      3, //id
+      43, //atomic_number
+      99, //atomic_mass
+      6.0067 * 3600, //halflife_seconds
+      "Tc", //atomic_letter
+      true, //metastable
+  )],
 ]);

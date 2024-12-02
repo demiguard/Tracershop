@@ -11,8 +11,9 @@
         "rootPathSuffix": "./src/",
         "rootPathPrefix": "~/"
       }
-    }]
-],
+    }],
+    "@babel/plugin-transform-private-methods"
+  ],
   "env"   : {
     "test" : {
       "plugins": ["@babel/plugin-transform-modules-commonjs"]

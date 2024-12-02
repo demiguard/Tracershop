@@ -12,5 +12,9 @@ export function EndpointDisplay({endpoint}){
 
   const owner = state.customer.get(endpoint.owner);
 
+  if(owner.short_name === endpoint.name){
+    return <div>{owner.short_name}</div>
+  }
+
   return <div>{owner.short_name} - {endpoint.name}</div>
 }

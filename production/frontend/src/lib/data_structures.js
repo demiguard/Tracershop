@@ -38,6 +38,15 @@ import { Col } from 'react-bootstrap';
  * group of people orders, which then gets handed to the kitchen.
  */
 export class ActivityOrderCollection {
+  #minimum_status
+  #contributing_orders
+  #cancelled_orders
+
+  /** Storage for the property ordered_date
+   * @type{String}
+  */
+  #ordered_date
+
   /**
    * @desc Underlying collection that this class wraps, orders in this list
    * will be delivered to the same endpoint at same day.
@@ -48,15 +57,7 @@ export class ActivityOrderCollection {
    * @type {ActivityDeliveryTimeSlot}
    */ delivering_time_slot
 
-  /**
-   * @desc the minimum status among {@link orders} with the ordering:
-   * AVAILABLE < ORDERED < ACCEPTED < RELEASED < CANCELLED < UNAVAILABLE
-   * @type {ORDER_STATUS}
-   */ minimum_status
-  /**
-   * @desc Shared date between {@link orders}
-   * @type {String}
-   */ ordered_date
+
   /**
    * @desc DeliveryEndpoint for {@link delivering_time_slot}
    * @type {DeliveryEndpoint}
@@ -127,8 +128,17 @@ export class ActivityOrderCollection {
   * @param {ActivityDeliveryTimeSlot}
   * @param {TracershopState} state
   */
-  constructor(activity_orders, timeSlot, state, overhead = 1) {
-    this.minimum_status = ORDER_STATUS.CANCELLED;
+  constructor(activity_orders, ordered_date, timeSlot, state, overhead = 1) {
+    // This class really suffers from bad abstraction, as it have been the
+    // source of bugs much more frequently than other parts of the code.
+    //
+    // TBH it might because the constructor was written as a single function
+    // Rather that several simpler functions, which also forces the abstraction
+    // to become rather concrete. Because I think this class came about as
+    // display holder class. I.E. Not it's own idea
+
+    this.#ordered_date = ordered_date
+    this.#minimum_status = ORDER_STATUS.CANCELLED;
     this.delivering_time_slot = timeSlot;
     this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
     this.production = state.production.get(this.delivering_time_slot.production_run);
@@ -136,7 +146,6 @@ export class ActivityOrderCollection {
     this.isotope = state.isotopes.get(this.tracer.isotope);
     this.owner = state.customer.get(this.endpoint.owner);
 
-    this.ordered_date = null;
     this.freed_time = null;
     this.freed_by = null;
     this.moved = false;
@@ -145,44 +154,39 @@ export class ActivityOrderCollection {
     this.delivered_activity = 0;
     this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
-    // Yeah there is a faster way to do this, but these list are like 6 long at
-    // max
+
+    this.#contributing_orders = [];
+    this.#cancelled_orders = [];
+
     for(const order of activity_orders){
-      this.minimum_status = Math.min(this.minimum_status, order.status);
-    }
-    const relevant_orders = [];
-    for(const order of activity_orders){
-      if(order.status === this.minimum_status){
-        relevant_orders.push(order);
-      }
-    }
-
-    for(const order of relevant_orders) {
-      if(this.ordered_date === null){
-        this.ordered_date = order.delivery_date;
-      }
-
-      const orderedToTimeSlot = order.ordered_time_slot === this.delivering_time_slot.id;
-      const moveToTimeSlot = order.moved_to_time_slot === this.delivering_time_slot.id;
-      const movedToAnotherSlot = order.moved_to_time_slot && orderedToTimeSlot;
-
-      if(this.ordered_date !== order.delivery_date
-        || (!orderedToTimeSlot && !moveToTimeSlot)) {
-          continue;
-      }
-
-      if (order.status === ORDER_STATUS.CANCELLED) {
-        this.freed_by = state.user.get(order.freed_by);
-        this.freed_time = order.freed_datetime
+      if(this.#is_relevant_order(order)){
+        if(this.#is_contributing_order(order)){
+          this.#contributing_orders.push(order);
+        } else {
+          this.#cancelled_orders.push(order);
+        }
+      } else {
         continue;
       }
+    }
 
-      // Guard Statements
+    this.#set_minimum_status();
 
+    for(const order of this.#cancelled_orders){
+      // These Attributes will be overwritten by contributing orders if
+      // applicable.
+      this.freed_by = state.user.get(order.freed_by);
+      this.freed_time = order.freed_datetime
+      break;
+    }
+
+    let movedToAnotherSlot = false;
+    for(const order of this.#contributing_orders) {
+      const orderedToThisTimeSlot = order.ordered_time_slot === this.delivering_time_slot.id;
       // Update internal values
       const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot);
       this.moved |= movedToAnotherSlot;
-      if(orderedToTimeSlot){
+      if(orderedToThisTimeSlot){
         this.ordered_activity += order.ordered_activity
         this.deliver_activity += order.ordered_activity * overhead;
       } else {
@@ -192,10 +196,10 @@ export class ActivityOrderCollection {
                                                      timeDelta.hour * 60 + timeDelta.minute,
                                                      order.ordered_activity) * overhead;
       }
-      if(order.freed_datetime !== null && this.freed_time === null){
+      if(order.freed_datetime !== null){
         this.freed_time = order.freed_datetime;
       }
-      if(order.freed_by !== null && this.freed_by === null){
+      if(order.freed_by !== null){
         this.freed_by = state.user.get(order.freed_by);
       }
     } // End of Order for loop;
@@ -208,8 +212,71 @@ export class ActivityOrderCollection {
     }
   }
 
-  get_minimum_status () {
-    return this.minimum_status;
+  /**
+   * @desc Shared date between {@link orders}
+   * @type {String}
+   */
+  get ordered_date(){
+    return this.#ordered_date
+  }
+
+  /**
+   * @desc the minimum status among {@link orders} with the ordering:
+   * AVAILABLE < ORDERED < ACCEPTED < RELEASED < CANCELLED < UNAVAILABLE
+   * @type {ORDER_STATUS}
+   */
+  get minimum_status(){
+    return this.#minimum_status;
+  }
+
+  get relevant_orders(){
+    return this.#contributing_orders.concat(this.#cancelled_orders);
+  }
+
+  get is_cancelled(){
+    return this.#contributing_orders.length === 0;
+  }
+
+  /**Checks if an activity order is relevant for this order collection
+   *
+   * @param {ActivityOrder} order
+   * @returns {Boolean}
+   */
+  #is_relevant_order(order){
+    const belongs_to_correct_time_slot = [
+      order.moved_to_time_slot,
+      order.ordered_time_slot
+    ].includes(this.delivering_time_slot.id);
+
+    const belongs_to_correct_date = this.ordered_date === order.delivery_date;
+    return belongs_to_correct_time_slot && belongs_to_correct_date;
+  }
+
+  /** Checks if an activity order should contribute to how much
+   *
+   * @param {ActivityOrder} order
+   * @returns {Boolean}
+   */
+  #is_contributing_order(order){
+    return [
+      ORDER_STATUS.ACCEPTED,
+      ORDER_STATUS.RELEASED,
+      ORDER_STATUS.ORDERED
+    ].includes(order.status)
+  }
+
+  /** Function with side effect of setting minimum_status to
+   *
+   * @param {Array<ActivityOrder>} relevant_orders List of Orders where each for
+   * each order in relevant_orders: _is_relevant_order returns true
+   */
+  #set_minimum_status(){
+    let minimum_status = ORDER_STATUS.CANCELLED;
+    for(const order of this.relevant_orders){
+      minimum_status = Math.min(minimum_status, order.status);
+    }
+
+    this.#minimum_status = minimum_status;
   }
 }
 

@@ -15,17 +15,10 @@ import { InjectionUsage } from "../injectable/data_displays/injection_usage.js";
 import { Comment } from "../injectable/data_displays/comment.js";
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
+import { IsotopeDisplay } from "~/components/injectable/data_displays/isotope_display.js";
+import { EndpointDisplay } from "~/components/injectable/data_displays/endpoint.js";
+import { InjectionOrderSortingMethods, sortInjectionOrders } from "~/lib/sorting.js";
 
-
-const /**@Enum methods to sort the injection orders */ SortingMethods = {
-  STATUS : 0,
-  ORDER_ID : 1,
-  DESTINATION : 2,
-  TRACER : 3,
-  INJECTIONS : 4,
-  ORDERED_TIME : 5,
-  USAGE : 6,
-}
 
 /** @enum */
 const Modals  = {
@@ -44,7 +37,7 @@ export function InjectionTable({active_date}) {
     modal : Modals.NoModal,
     modalOrder : "",
   });
-  const [sortingMethod, _setSortingMethod] = useState(SortingMethods.ORDERED_TIME);
+  const [sortingMethod, _setSortingMethod] = useState(InjectionOrderSortingMethods.ORDERED_TIME);
   const [invertedSorting, setInvertedSorting] = useState(false);
 
   function openCreateOrderModal(){
@@ -89,8 +82,8 @@ export function InjectionTable({active_date}) {
    */
   function OrderRow({order}) {
     const tracer = state.tracer.get(order.tracer);
+    const isotope = state.isotopes.get(tracer.isotope);
     const endpoint = state.delivery_endpoint.get(order.endpoint)
-    const customer = state.customer.get(endpoint.owner)
 
     return (
       <tr>
@@ -100,7 +93,8 @@ export function InjectionTable({active_date}) {
               onClick={() => openOrderModal(order)}/>
         </td>
         <td>{order.id}</td>
-        <td>{customer.short_name} - {endpoint.name}</td>
+        <td><EndpointDisplay endpoint={endpoint}/></td>
+        <td><IsotopeDisplay isotope={isotope}/></td>
         <td><TracerDisplay tracer={tracer}/></td>
         <td>{order.injections}</td>
         <td><TimeDisplay time={order.delivery_time}/> </td>
@@ -119,32 +113,7 @@ export function InjectionTable({active_date}) {
       }
     }
 
-    orders.sort((a, b) => {
-      switch(sortingMethod){
-        case SortingMethods.STATUS:
-          return invertedSorting ? b.status - a.status : a.status - b.status
-        case SortingMethods.ORDER_ID:
-          return invertedSorting ? b.id - a.id : a.id - b.id
-        case SortingMethods.DESTINATION: {
-          const aEndpoint = state.delivery_endpoint.get(a.endpoint);
-          const aCustomer = state.customer.get(aEndpoint.owner);
-          const bEndpoint = state.delivery_endpoint.get(b.endpoint);
-          const bCustomer = state.customer.get(bEndpoint.owner);
-
-          if(aCustomer.id != bCustomer.id){
-            return invertedSorting ? bCustomer.id - aCustomer.id : aCustomer.id - bCustomer.id
-          } else {
-            return invertedSorting ? bEndpoint.id - aEndpoint.id : aEndpoint.id - bEndpoint.id
-          }
-        }
-        case SortingMethods.TRACER:
-          return invertedSorting ? b.tracer - a.tracer : a.tracer - b.tracer
-        case SortingMethods.INJECTIONS:
-          return invertedSorting ? b.injections - a.injections : a.injections - b.injections
-        case SortingMethods.USAGE:
-          return invertedSorting ? b.tracer_usage - a.tracer_usage : a.tracer_usage - b.tracer_usage
-      }
-    })
+    orders.sort(sortInjectionOrders(sortingMethod, invertedSorting, state))
 
     const modalProps = {
       [PROP_ACTIVE_DATE] : active_date,
@@ -164,27 +133,42 @@ export function InjectionTable({active_date}) {
         <Table>
           <thead>
             <tr>
-              <th
-                aria-label="sort-status"
-                onClick={() => {setSortingMethod(SortingMethods.STATUS)}}>Status</th>
-              <th
-                aria-label="sort-order-id"
-                onClick={() => {setSortingMethod(SortingMethods.ORDER_ID)}}>Order ID</th>
-              <th
-                aria-label="sort-destination"
-                onClick={() => {setSortingMethod(SortingMethods.DESTINATION)}}>Destination</th>
+              <th aria-label="sort-status"
+                  onClick={() => {setSortingMethod(InjectionOrderSortingMethods.STATUS)}}>
+                    Status
+              </th>
+              <th aria-label="sort-order-id"
+                  onClick={() => {setSortingMethod(InjectionOrderSortingMethods.ORDER_ID)}}>
+                    Order ID
+              </th>
+              <th aria-label="sort-destination"
+                  onClick={() => {setSortingMethod(InjectionOrderSortingMethods.DESTINATION)}}>
+                  Destination
+              </th>
+              <th aria-label="sort-isotope"
+                  onClick={() => {setSortingMethod(InjectionOrderSortingMethods.ISOTOPE)}}>
+                Isotop
+              </th>
               <th
                 aria-label="sort-tracer"
-                onClick={() => {setSortingMethod(SortingMethods.TRACER)}}>Tracer</th>
+                onClick={() => {setSortingMethod(InjectionOrderSortingMethods.TRACER)}}>
+                  Tracer
+              </th>
               <th
                 aria-label="sort-injections"
-                onClick={() => {setSortingMethod(SortingMethods.INJECTIONS)}}>Injektioner</th>
+                onClick={() => {setSortingMethod(InjectionOrderSortingMethods.INJECTIONS)}}>
+                  Injektioner
+              </th>
               <th
                 aria-label="sort-deliver-time"
-                onClick={() => {setSortingMethod(SortingMethods.ORDERED_TIME)}}>Bestilt Til</th>
+                onClick={() => {setSortingMethod(InjectionOrderSortingMethods.ORDERED_TIME)}}>
+                  Bestilt Til
+              </th>
               <th
                 aria-label="sort-usage"
-                onClick={() => {setSortingMethod(SortingMethods.USAGE)}}>Anvendelse</th>
+                onClick={() => {setSortingMethod(InjectionOrderSortingMethods.USAGE)}}>
+                  Anvendelse
+              </th>
               <th>Kommentar</th>
             </tr>
           </thead>

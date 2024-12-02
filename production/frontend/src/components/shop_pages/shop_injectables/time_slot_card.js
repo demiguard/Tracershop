@@ -45,6 +45,7 @@ export function TimeSlotCard({
   const websocket = useWebsocket();
 
   // Prop extraction
+  const dateString = dateToDateString(active_date);
   const timeSlot = state.deliver_times.get(timeSlotID);
   const production = state.production.get(timeSlot.production_run);
   const tracer = state.tracer.get(production.tracer);
@@ -73,7 +74,7 @@ export function TimeSlotCard({
   const displayActivityOrders = activityOrders.filter((order) =>
     order.ordered_time_slot === timeSlotID);
 
-  const orderCollection = new ActivityOrderCollection(activityOrders, timeSlot, state, overhead);
+  const orderCollection = new ActivityOrderCollection(activityOrders, dateString, timeSlot, state, overhead);
 
   // State
   const [collapsed, setCollapsed] = useState(false);
