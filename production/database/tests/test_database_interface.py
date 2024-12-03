@@ -24,10 +24,13 @@ from database.models import Booking, Procedure, User, Tracer, Isotope,\
   Location, BookingStatus, UserGroups, ProcedureIdentifier, Customer,\
   DeliveryEndpoint, TracerTypes, ActivityOrder, InjectionOrder,\
   ActivityDeliveryTimeSlot, ActivityProduction, Days, WeeklyRepeat,\
-  UserAssignment, OrderStatus, Vial
+  UserAssignment, OrderStatus, Vial, TracerUsage
 
 with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroupMembership):
   from database.database_interface import DatabaseInterface
+
+
+DEFAULT_TEST_ORDER_DATE = date(2020,4,15)
 
 # Create your tests here.
 class DatabaseInterFaceTestCases(TransactionTestCase):
@@ -269,7 +272,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     self.order = ActivityOrder.objects.create(
       id=1513113,
       ordered_activity=104125112.1214,
-      delivery_date=date(2020,4, 15),
+      delivery_date=DEFAULT_TEST_ORDER_DATE,
       status=OrderStatus.Released,
       ordered_time_slot=self.timeslot,
       freed_by=self.test_admin,
@@ -280,7 +283,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     self.release_able_order = ActivityOrder.objects.create(
       id=1513114,
       ordered_activity=104125112.1214,
-      delivery_date=date(2020,4, 15),
+      delivery_date=DEFAULT_TEST_ORDER_DATE,
       status=OrderStatus.Accepted,
       ordered_time_slot=self.timeslot,
       ordered_by=self.shop_admin,
@@ -302,8 +305,21 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       volume=12.12,
       lot_number="GDA-200415-1",
       fill_time=time(9,44,11),
-      fill_date=date(2020,4,15),
+      fill_date=DEFAULT_TEST_ORDER_DATE,
       owner=self.customer
+    )
+
+    self.injection_order = InjectionOrder.objects.create(
+      id=32177693,
+      delivery_time=time(11,22,33),
+      delivery_date=DEFAULT_TEST_ORDER_DATE,
+      injections=1,
+      status=OrderStatus.Released,
+      tracer_usage=TracerUsage.human,
+      endpoint=self.endpoint,
+      tracer=self.tracer_inj,
+      lot_number="Blah blah",
+      freed_datetime=datetime(2020,4,15,12,4,12, tzinfo=timezone.utc),
     )
 
     self.assigned_vial = Vial.objects.create(
@@ -313,7 +329,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       volume=12.12,
       lot_number="GDA-200415-1",
       fill_time=time(9,44,12),
-      fill_date=date(2020,4,15),
+      fill_date=DEFAULT_TEST_ORDER_DATE,
       assigned_to=self.order,
       owner=self.customer
     )
@@ -643,3 +659,8 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     )
 
     self.assertEqual(len(bookings), 10)
+
+  def test_get_csv_data(self):
+    out_data = self.db.get_csv_data(DEFAULT_TEST_ORDER_DATE)
+
+    # TODO: ASSERT DATA

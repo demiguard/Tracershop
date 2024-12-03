@@ -22,7 +22,7 @@ from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
   InjectionOrder, UserAssignment, Days
 from database.database_interface import DatabaseInterface
-from lib.formatting import format_csv_data
+from lib.formatting import format_csv_data, format_time_number
 from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder
 from shared_constants import JAVASCRIPT_VERSION, URL_SHOP_MANUAL
 from tracerauth.auth import login_from_header
@@ -139,7 +139,7 @@ def vial_csv_view(request, year: int, month: int):
   csv_data = database.get_csv_data(csv_date)
   formatted_data = format_csv_data(csv_data)
 
-  return FileResponse(formatted_data, filename="data.xlsx")
+  return FileResponse(formatted_data, filename=f"tracershop_data-{year}-{format_time_number(month)}.xlsx")
 
 def shop_manual_view(request):
   filename = "frontend/static/frontend/pdfs/manuals/shop_manual.pdf"

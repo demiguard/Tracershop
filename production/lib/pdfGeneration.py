@@ -410,7 +410,10 @@ class MailTemplate(canvas.Canvas):
     if injectionOrder.freed_datetime is None:
       freed_timestamp_display_string = "Ukendt frigivelse tidspunkt"
     else:
-      freed_timestamp_display_string = timezone.make_naive(injectionOrder.freed_datetime).strftime("%d/%m/%Y %H:%M")
+      try:
+        freed_timestamp_display_string = timezone.make_naive(injectionOrder.freed_datetime).strftime("%d/%m/%Y %H:%M")
+      except ValueError:
+        freed_timestamp_display_string = injectionOrder.freed_datetime.strftime("%d/%m/%Y %H:%M")
 
     self.drawString(x_cursor, y_cursor, f"{freed_timestamp_display_string} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 

@@ -735,17 +735,21 @@ class DatabaseInterface():
       owner = activity_order.ordered_time_slot.destination.owner
       if owner.short_name not in return_dir:
         return_dir[owner.short_name] = {
+          'Ordre id' : [],
           'Tracer' : [],
           'Dato' : [],
           'Bestilt MBq' : [],
           'Injektioner' : [],
-          'Frigivelse Tidspunkt' : [],
+          'Bestilt tidspunkt' : [],
+          'Frigivelse tidspunkt' : [],
         }
 
       owner_dict = return_dir[owner.short_name]
+      owner_dict['Ordre id'].append(f"A-{owner.id}")
       owner_dict['Tracer'].append(activity_order.ordered_time_slot.production_run.tracer.shortname)
       owner_dict['Dato'].append(activity_order.delivery_date)
       owner_dict['Bestilt MBq'].append(activity_order.ordered_activity)
+      owner_dict['Bestilt tidspunkt'].append(activity_order.ordered_time_slot.delivery_time)
       owner_dict['Injektioner'].append(0)
       if activity_order.freed_datetime is None:
         freed_datetime = "Ukendt"
@@ -754,23 +758,27 @@ class DatabaseInterface():
           ZoneInfo('Europe/Copenhagen')
         ).replace(tzinfo=None)
 
-      owner_dict['Frigivelse Tidspunkt'].append(freed_datetime)
+      owner_dict['Frigivelse tidspunkt'].append(freed_datetime)
 
     for injection_order in injection_orders:
       owner = injection_order.endpoint.owner
       if owner.short_name not in return_dir:
         return_dir[owner.short_name] = {
+          'Ordre id' : [],
           'Tracer' : [],
           'Dato' : [],
           'Bestilt MBq' : [],
           'Injektioner' : [],
-          'Frigivelse Tidspunkt' : [],
+          'Bestilt tidspunkt' : [],
+          'Frigivelse tidspunkt' : [],
         }
 
       owner_dict = return_dir[owner.short_name]
+      owner_dict['Ordre id'].append(f"I-{injection_order.id}")
       owner_dict['Tracer'].append(injection_order.tracer.shortname)
       owner_dict['Dato'].append(injection_order.delivery_date)
       owner_dict['Bestilt MBq'].append(0)
+      owner_dict['Bestilt tidspunkt'].append(injection_order.delivery_time)
       owner_dict['Injektioner'].append(injection_order.injections)
       if injection_order.freed_datetime is None:
         freed_datetime = "Ukendt"
@@ -778,7 +786,7 @@ class DatabaseInterface():
         freed_datetime = injection_order.freed_datetime.astimezone(
           ZoneInfo('Europe/Copenhagen')
         ).replace(tzinfo=None)
-      owner_dict['Frigivelse Tidspunkt'].append(freed_datetime)
+      owner_dict['Frigivelse tidspunkt'].append(freed_datetime)
 
     return_dir['Hætteglas'] = {
       'Tracer' : [],
