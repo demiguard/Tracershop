@@ -163,6 +163,7 @@ describe("ActivityOrderCollection", () => {
     expect(test_data_structure.is_cancelled).toBe(false);
     expect(test_data_structure.ordered_activity).toBe(1000);
     expect(test_data_structure.isotope).toBe(state.isotopes.get(isotope_id));
+    expect(test_data_structure.moved).toBe(false);
   });
 
 
@@ -191,6 +192,7 @@ describe("ActivityOrderCollection", () => {
     expect(test_data_structure.ordered_activity).toBe(1000);
     expect(test_data_structure.deliver_activity).toBe(1250);
     expect(test_data_structure.isotope).toBe(state.isotopes.get(isotope_id));
+    expect(test_data_structure.moved).toBe(false);
   });
 
   it("Easy tests - Status Cancelled", () => {
@@ -211,6 +213,7 @@ describe("ActivityOrderCollection", () => {
     expect(test_data_structure.freed_by).toBe(state.user.get(freeing_user_id));
     expect(test_data_structure.freed_time).toBe("2024-12-02 07:49:44");
     expect(test_data_structure.isotope).toBe(state.isotopes.get(isotope_id));
+    expect(test_data_structure.moved).toBe(false);
   });
 
   it("Isolation test from orders that could be related", () => {
@@ -227,6 +230,7 @@ describe("ActivityOrderCollection", () => {
     expect(test_data_structure.endpoint).toBe(state.delivery_endpoint.get(endpoint_id));
     expect(test_data_structure.minimum_status).toBe(ORDER_STATUS.RELEASED);
     expect(test_data_structure.isotope).toBe(state.isotopes.get(isotope_id));
+    expect(test_data_structure.moved).toBe(false);
   });
 
   it("Moved Orders and activity calculation!", () => {
@@ -245,5 +249,18 @@ describe("ActivityOrderCollection", () => {
     expect(test_data_structure.ordered_activity).toBe(1000);
     expect(test_data_structure.deliver_activity).toBe(1000 * 1.25 + 1000 * 8 * 1.25);
     expect(test_data_structure.isotope).toBe(state.isotopes.get(isotope_id));
+    expect(test_data_structure.moved).toBe(false);
   });
+
+  it("Appear moved when all is moved", () => {
+    const orders = [
+      new ActivityOrder(9, 1000, ordered_date, ORDER_STATUS.ACCEPTED, "", time_slot_2_id, time_slot_1_id, null, active_user_id, null)
+    ];
+
+    const test_data_structure = new ActivityOrderCollection(
+      orders, ordered_date,  state.deliver_times.get(time_slot_2_id), state, 1.25
+    );
+
+    expect(test_data_structure.moved).toBe(true);
+  })
 });

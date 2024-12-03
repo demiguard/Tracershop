@@ -16,5 +16,4 @@ export function IsotopeDisplay({isotope}){
   return <div>{isotopeObject.atomic_letter} - {isotopeObject.atomic_mass}{
     isotopeObject.metastable ? "m" : ""
   }</div>
-
 }

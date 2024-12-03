@@ -341,6 +341,9 @@ class DatabaseInterface():
     orders = ActivityOrder.objects.filter(pk__in=orderIDs)
     destination = ActivityDeliveryTimeSlot.objects.get(pk=destinationID)
 
+    if(len(orderIDs) == 0):
+      error_logger.error("Attempting to Move 0 orders, Frontend fucked up!")
+
     for order in orders:
       if OrderStatus(order.status) == OrderStatus.Released:
           error_logger.error("Attempted to move a released order")

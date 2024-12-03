@@ -240,7 +240,6 @@ function TimeSlotRow({timeSlot,
    </Card>);
 }
 
-
 //#region Production Row
 /**
  * Row over the actual table,with the goal of informing the user of how much

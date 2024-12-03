@@ -180,12 +180,11 @@ export class ActivityOrderCollection {
       break;
     }
 
-    let movedToAnotherSlot = false;
     for(const order of this.#contributing_orders) {
       const orderedToThisTimeSlot = order.ordered_time_slot === this.delivering_time_slot.id;
       // Update internal values
       const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot);
-      this.moved |= movedToAnotherSlot;
+      this.moved = this.moved || Boolean(orderedToThisTimeSlot && order.moved_to_time_slot);
       if(orderedToThisTimeSlot){
         this.ordered_activity += order.ordered_activity
         this.deliver_activity += order.ordered_activity * overhead;
@@ -321,7 +320,7 @@ export class TracerCatalog {
 
       const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
       if(tracer === undefined){
-        throw "Database intregrety violated!"
+        throw "Database integrity violated!"
       }
 
       if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
