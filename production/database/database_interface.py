@@ -19,7 +19,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
-from django.db.models import Model, ForeignKey, IntegerField
+from django.db.models import Sum
 from django.db.models.query import QuerySet
 from django.db.utils import IntegrityError
 
@@ -742,15 +742,24 @@ class DatabaseInterface():
           'Injektioner' : [],
           'Bestilt tidspunkt' : [],
           'Frigivelse tidspunkt' : [],
+          'Udleveret MBq' : [],
         }
 
       owner_dict = return_dir[owner.short_name]
-      owner_dict['Ordre id'].append(f"A-{owner.id}")
+      owner_dict['Ordre id'].append(f"A-{activity_order.id}")
       owner_dict['Tracer'].append(activity_order.ordered_time_slot.production_run.tracer.shortname)
       owner_dict['Dato'].append(activity_order.delivery_date)
       owner_dict['Bestilt MBq'].append(activity_order.ordered_activity)
       owner_dict['Bestilt tidspunkt'].append(activity_order.ordered_time_slot.delivery_time)
       owner_dict['Injektioner'].append(0)
+      owner_dict['Udleveret MBq'].append(
+        Vial.objects.filter(
+          assigned_to=activity_order
+        ).aggregate(Sum('activity'))['activity__sum']
+      )
+
+
+      owner_dict['Bestilt MBq'].append(0)
       if activity_order.freed_datetime is None:
         freed_datetime = "Ukendt"
       else:
@@ -771,6 +780,7 @@ class DatabaseInterface():
           'Injektioner' : [],
           'Bestilt tidspunkt' : [],
           'Frigivelse tidspunkt' : [],
+          'Udleveret MBq' : [],
         }
 
       owner_dict = return_dir[owner.short_name]
@@ -778,6 +788,7 @@ class DatabaseInterface():
       owner_dict['Tracer'].append(injection_order.tracer.shortname)
       owner_dict['Dato'].append(injection_order.delivery_date)
       owner_dict['Bestilt MBq'].append(0)
+      owner_dict['Udleveret MBq'].append(0)
       owner_dict['Bestilt tidspunkt'].append(injection_order.delivery_time)
       owner_dict['Injektioner'].append(injection_order.injections)
       if injection_order.freed_datetime is None:
