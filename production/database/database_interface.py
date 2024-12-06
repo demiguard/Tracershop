@@ -752,11 +752,14 @@ class DatabaseInterface():
       owner_dict['Bestilt MBq'].append(activity_order.ordered_activity)
       owner_dict['Bestilt tidspunkt'].append(activity_order.ordered_time_slot.delivery_time)
       owner_dict['Injektioner'].append(0)
-      owner_dict['Udleveret MBq'].append(
-        Vial.objects.filter(
+
+      assigned_mbq = Vial.objects.filter(
           assigned_to=activity_order
         ).aggregate(Sum('activity'))['activity__sum']
-      )
+
+      formatted_assigned_mbq = assigned_mbq if assigned_mbq is not None else 0
+
+      owner_dict['Udleveret MBq'].append(formatted_assigned_mbq)
 
       if activity_order.freed_datetime is None:
         freed_datetime = "Ukendt"
