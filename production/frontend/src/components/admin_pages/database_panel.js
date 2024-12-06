@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { Container, FormControl, Col, Row, FormLabel, Button } from "react-bootstrap";
+import { IdempotentButton } from "~/components/injectable/buttons";
 import { Select, toOptions } from "~/components/injectable/select";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
 import { MODELS } from "~/dataclasses/dataclasses";
 import { cssCenter } from "~/lib/constants";
 import { ForeignField } from "~/lib/database_fields";
+import { WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE } from "~/lib/shared_constants";
 import { MARGIN } from "~/lib/styles";
 
 
@@ -16,6 +18,7 @@ const modelOptions = toOptions(Object.keys(MODELS).map((name, i) => {
 }));
 
 export function DatabasePanel(){
+  const websocket = useWebsocket();
   const tsState = useTracershopState();
   const [activeModel, _setActiveModel] = useState(modelOptions[0].value)
 
@@ -57,7 +60,15 @@ export function DatabasePanel(){
         {renderedFields}
         <Row>
           <Col></Col>
-          <Col><Button>Opret</Button></Col>
+          <Col><IdempotentButton onClick={()=>{
+            return websocket.send({
+              [WEBSOCKET_MESSAGE_TYPE] : [WEBSOCKET_MESSAGE_MODEL_CREATE],
+              [WEBSOCKET_DATATYPE] : activeModel,
+              [WEBSOCKET_DATA] : newModel,
+            });
+          }}>
+            Opret
+            </IdempotentButton></Col>
         </Row>
       </Col>
       <Col></Col>

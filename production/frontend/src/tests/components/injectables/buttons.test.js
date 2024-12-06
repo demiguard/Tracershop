@@ -4,22 +4,13 @@
 
 import React from "react";
 import { act, screen, render, cleanup, fireEvent, getByTestId } from "@testing-library/react";
-import { jest } from '@jest/globals'
-import { MarginButton, CloseButton } from "../../../components/injectable/buttons.js";
+import { describe, jest } from '@jest/globals'
+import { MarginButton, CloseButton, IdempotentButton } from "../../../components/injectable/buttons.js";
 
-import styles from '../../../css/Site.module.css'
-
-let container = null;
-beforeEach(() => {
-  container = document.createElement("div");
-});
+beforeEach(() => {});
 
 afterEach(() => {
   cleanup()
-
-  if(container != null) container.remove();
-
-  container = null;
 });
 
 describe("Margin Button Test", () => {
@@ -60,3 +51,73 @@ describe("Close Button Test", () => {
     expect(style.marginLeft).toBe("10px");
   })
 })
+
+describe("IdempotentButton test suite", () => {
+  it("Double clicks - single call", async () => {
+    const onClickFunction = jest.fn(() => new Promise(() => {}));
+
+    render(
+      <IdempotentButton onClick={onClickFunction}>
+        Test button
+      </IdempotentButton>
+    );
+
+    expect(screen.getByRole('button', {name : "Test button"})).toBeVisible();
+
+    await act(async () => {
+      screen.getByRole('button', {name : "Test button"}).click();
+      screen.getByRole('button', {name : "Test button"}).click();
+    })
+
+    expect(onClickFunction).toHaveBeenCalledTimes(1)
+  });
+
+  it("Resolving Promises should reset the button", async () => {
+    let promiseResolver;
+    const mockOnClick = jest.fn(() => new Promise(
+      resolve => {promiseResolver = resolve;}
+    ));
+
+    render(
+      <IdempotentButton onClick={mockOnClick}>
+        Test button
+      </IdempotentButton>
+    );
+
+    await act(async () => {
+      screen.getByRole('button', {name : "Test button"}).click();
+    });
+
+    expect(screen.queryByRole('button', {name : "Test button"})).toBeNull();
+    expect(screen.getByTestId('idempotent-spinner')).toBeVisible();
+
+    await act(async () => {
+      promiseResolver();
+    });
+
+    expect(screen.getByRole('button', {name : "Test button"})).toBeVisible();
+    expect(screen.queryByTestId('idempotent-spinner')).toBeNull();
+  })
+
+
+  it('handles non-promise onClick and shows error', async () => {
+    const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
+    const mockOnClick = jest.fn(() => { return "Not a promise"; });
+    render(
+      <IdempotentButton onClick={mockOnClick}>
+        Test button
+      </IdempotentButton>
+    );
+
+    await act( async () => {
+      screen.getByRole('button', {name : "Test button"}).click();
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      "Idempotent Button didn't return a Promise as it should!"
+    );
+
+    consoleSpy.mockRestore();
+  });
+
+});

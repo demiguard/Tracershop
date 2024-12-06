@@ -144,17 +144,15 @@ describe("Time slot card Test Suite", () => {
     }));
   });
 
-  it("Fail to create New order", () => {
+  it("Fail to create New order", async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <TimeSlotCard {...props} />
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-  const openButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
-
   act(() => {
-    fireEvent.click(openButton);
+    screen.getByLabelText(`open-time-slot-${default_time_slot_id}`).click()
   });
 
   const activityInput = screen.getByTestId('activity--1');
@@ -164,9 +162,8 @@ describe("Time slot card Test Suite", () => {
     fireEvent.change(commentInput, {target : {value : "test comment"}})
   });
 
-  const commitButton = screen.getByLabelText('commit--1');
-  act(() => {
-    fireEvent.click(commitButton);
+  await act(async () => {
+    screen.getByLabelText('commit--1').click();
   });
 
   expect(websocket.sendCreateModel).not.toHaveBeenCalled();

@@ -414,7 +414,7 @@ describe("Activity Modal Test", () => {
       fireEvent.change(activityForm, {target : {value : "not activity"}})
     });
 
-    act(() => {
+    await act(async () => {
       screen.getByLabelText("vial-commit-7").click()
     });
 

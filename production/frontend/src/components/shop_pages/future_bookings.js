@@ -6,7 +6,7 @@ import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_DATA, WEBSOC
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
 import { ClickableIcon } from "~/components/injectable/icons";
-import { MarginButton } from "~/components/injectable/buttons";
+import { IdempotentButton, MarginButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../tracer_shop_context";
 import { Optional, Options } from "~/components/injectable/optional";
@@ -160,10 +160,10 @@ function TracerCard({tracer,
     return () => {setSortingState(newMethod)}
   }
 
-  function onClickOrder() {
+  async function onClickOrder() {
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_MASS_ORDER);
     message[WEBSOCKET_DATA] = bookingProgram;
-    websocket.send(message).then((message) => {
+    return websocket.send(message).then((message) => {
       if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_ERROR){
         const error_info = message[WEBSOCKET_ERROR];
         if(error_info[ERROR_EARLY_TIME_SLOT]){
@@ -231,10 +231,10 @@ function TracerCard({tracer,
               <div><AlertBox testId={"booking_error"} message={bookingError}></AlertBox></div>
             </Optional>
             <div>
-              <MarginButton
+              <IdempotentButton
                 data-testid={`order-button-${tracer.id}`}
                 onClick={onClickOrder}>Bestil
-              </MarginButton>
+              </IdempotentButton>
             </div>
            </Row>
          </Optional>

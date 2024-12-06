@@ -7,6 +7,7 @@ import { ORDER_STATUS } from '~/lib/constants'
 import { InjectionOrderPDFUrl, openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
 import { useTracershopState } from '~/components/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
+import { IdempotentButton } from '~/components/injectable/buttons'
 
 export function ClickableIcon ({
     altText,
@@ -195,4 +196,50 @@ export function WebsocketIcon(){
     default:
       return null
   }
+}
+
+
+export function IdempotentIcon ({
+  altText,
+  src,
+  onClick,
+  onMouseDown,
+  label,
+  className ,
+  style,
+  variant,
+}){
+
+if(style === undefined){
+  style = {
+    padding : "0px",
+    justifyContent : 'center',
+    alignItems: 'center',
+    display: 'block',
+  }
+}
+
+if(variant === undefined){
+  variant = "variant-light"
+}
+
+if (className) {
+  className = `statusIcon ${className}`;
+} else {
+  className = "statusIcon";
+}
+
+return (<IdempotentButton
+          style={style}
+          variant={variant}
+          aria-label={label}
+          onClick={onClick}
+          onMouseDown={onMouseDown}
+  >
+    <Image
+      className={className}
+      src={src}
+      alt={altText}
+    />
+  </IdempotentButton>)
 }

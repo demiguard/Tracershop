@@ -1,5 +1,5 @@
 import React from 'react'
-import { ClickableIcon } from './icons';
+import { ClickableIcon, IdempotentIcon } from './icons';
 import { useWebsocket } from '../tracer_shop_context';
 
 export function CommitButton({
@@ -24,18 +24,19 @@ export function CommitButton({
     const [valid, formattedObject] = validate();
 
     if(!valid) {
-      return;
+      return Promise.resolve();
     }
 
     const websocket_function = tempObjectExists ?
         websocket.sendEditModel.bind(websocket)
       : websocket.sendCreateModel.bind(websocket);
 
-    websocket_function(object_type, formattedObject).then(
-      (response) => { callback(response); });
+    return websocket_function(object_type, formattedObject).then(
+      (response) => { callback(response); }
+    );
   }
 
-  return <ClickableIcon
+  return <IdempotentIcon
     label={label}
     src={image_src}
     onClick={onClick}

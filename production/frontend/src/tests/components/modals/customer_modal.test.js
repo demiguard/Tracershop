@@ -183,8 +183,7 @@ describe("Customer modal list", () => {
     });
 
     await act(async () => {
-      const editButton = screen.getByLabelText("time-slot-commit");
-      fireEvent.click(editButton);
+      screen.getByLabelText("time-slot-commit").click();
     });
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
@@ -192,7 +191,7 @@ describe("Customer modal list", () => {
     //expect(screen.getByLabelText("time-slot-edit")).toBeVisible();
   });
 
-  it("Attempt to create delivery endpoint without endpoint",  () => {
+  it("Attempt to create delivery endpoint without endpoint", async () => {
     props[PROP_ACTIVE_CUSTOMER] = 4
     render(<StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -205,10 +204,8 @@ describe("Customer modal list", () => {
       fireEvent.change(timeSlotForm, {target : {value : "14:30:00"}});
     });
 
-    const timeSlotCommit = screen.getByLabelText('time-slot-commit');
-
-    act(() => {
-      timeSlotCommit.click();
+    await act(async () => {
+      screen.getByLabelText('time-slot-commit').click();
     });
 
     const endpointSelect = screen.getByLabelText('endpoint-select');
@@ -227,13 +224,10 @@ describe("Customer modal list", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const timeSlot2 =  screen.getByLabelText('time-slot-2');
-    act(() => {
-      timeSlot2.click();
-    });
+    act(() => { screen.getByLabelText('time-slot-2').click(); });
 
-    const endpointSelect = screen.getByLabelText('endpoint-select');
     act(() => {
+      const endpointSelect = screen.getByLabelText('endpoint-select');
       fireEvent.change(endpointSelect, {target: {value : "2"}});
     });
 
@@ -249,13 +243,12 @@ describe("Customer modal list", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const timeSlot2 =  screen.getByLabelText('time-slot-2');
-    act(() => {
-      timeSlot2.click();
+act(() => {
+      screen.getByLabelText('time-slot-2').click();
     });
 
-    const endpointSelect = screen.getByLabelText('endpoint-select');
     act(() => {
+      const endpointSelect = screen.getByLabelText('endpoint-select');
       fireEvent.change(endpointSelect, {target: {value : "1"}});
     });
 
@@ -271,10 +264,7 @@ describe("Customer modal list", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const timeSlot2 =  screen.getByLabelText('time-slot-2');
-    act(() => {
-      timeSlot2.click();
-    });
+    act(() => { screen.getByLabelText('time-slot-2').click(); });
 
     const activeTracerSelect = screen.getByLabelText('active-tracer-select');
     act(() => {
@@ -293,13 +283,10 @@ describe("Customer modal list", () => {
       </WebsocketContextProvider>
     </StateContextProvider>);
 
-    const timeSlot2 =  screen.getByLabelText('time-slot-2');
-    act(() => {
-      timeSlot2.click();
-    });
+    act(() => { screen.getByLabelText('time-slot-2').click(); });
 
-    const activeTracerSelect = screen.getByLabelText('active-tracer-select');
     act(() => {
+      const activeTracerSelect = screen.getByLabelText('active-tracer-select');
       fireEvent.change(activeTracerSelect, {target: {value : "3"}});
     });
 
@@ -321,11 +308,7 @@ describe("Customer modal list", () => {
       fireEvent.change(dispenserInput, {target : {value : "13"}});
     });
 
-    const customerCommit = screen.getByLabelText('customer-commit');
-
-    await act( async () => {
-      customerCommit.click();
-    });
+    await act( async () => { screen.getByLabelText('customer-commit').click(9); });
 
     expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_CUSTOMER,
       expect.objectContaining({ id : 1, dispenser_id : 13 }));
@@ -344,10 +327,8 @@ describe("Customer modal list", () => {
       fireEvent.change(dispenserInput, {target : {value : "asdf13"}});
     });
 
-    const customerCommit = screen.getByLabelText('customer-commit');
-
     await act( async () => {
-      customerCommit.click();
+      screen.getByLabelText('customer-commit').click();
     });
 
     expect(websocket.sendEditModel).not.toHaveBeenCalled();
@@ -393,11 +374,8 @@ describe("Customer modal list", () => {
     expect(screen.getByLabelText('endpoint-zip-code').value).toBe("a".repeat(129));
     expect(screen.getByLabelText('endpoint-phone').value).toBe("a".repeat(129));
 
-    const commitButton = screen.getByLabelText('commit-endpoint');
 
-    await act(async () => {
-      commitButton.click();
-    });
+    await act(async () => { screen.getByLabelText('commit-endpoint').click(); });
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
     await waitFor(() => {
@@ -449,10 +427,9 @@ describe("Customer modal list", () => {
     })
 
     expect(endpointNameInput.value).toBe("test name  ");
-    const commitButton = screen.getByLabelText('commit-endpoint');
 
     await act(async () => {
-      commitButton.click();
+      screen.getByLabelText('commit-endpoint').click();
     });
 
     expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ENDPOINT, {
@@ -466,7 +443,7 @@ describe("Customer modal list", () => {
     });
   });
 
-  it("Set Overhead Correct", () => {
+  it("Set Overhead Correct", async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerModal {...props} />
@@ -478,18 +455,19 @@ describe("Customer modal list", () => {
                        {target : { value : "44"}});
     });
 
-    act(() => {
-      fireEvent.click(screen.getByLabelText('commit-overhead'));
-    });
+    await act(async () => { screen.getByLabelText('commit-overhead').click(); });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER_MAPPING, expect.objectContaining({
-      endpoint : 1,
-      tracer : 1,
-      overhead_multiplier : 1.44
-    }));
+    expect(websocket.sendEditModel).toHaveBeenCalledWith(
+      DATA_TRACER_MAPPING,
+      expect.objectContaining({
+        endpoint : 1,
+        tracer : 1,
+        overhead_multiplier : 1.44
+      }
+    ));
   });
 
-  it("Set Overhead incorrect", () => {
+  it("Set Overhead incorrect", async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerModal {...props} />
@@ -501,8 +479,8 @@ describe("Customer modal list", () => {
       {target : { value : "4a4"}});
     });
 
-    act(() => {
-      fireEvent.click(screen.getByLabelText('commit-overhead'));
+    await act(async () => {
+      screen.getByLabelText('commit-overhead').click();
     });
 
     expect(websocket.sendEditModel).not.toHaveBeenCalled();
@@ -528,7 +506,8 @@ describe("Customer modal list", () => {
     });
   });
 
-  it("Create Deliver time, Change DeliveryEndpoint, Change Tracer, Change Production, success", () => {
+  it("Create Deliver time, Change DeliveryEndpoint, Change Tracer, Change Production, success",
+    async () => {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerModal {...props} />
@@ -565,7 +544,7 @@ describe("Customer modal list", () => {
       fireEvent.change(weeklySelect, { target : { value : "1"}});
     })
 
-    act(() => {
+    await act(async () => {
       const createNewDeliveryTimeIcon = screen.getByLabelText("time-slot-commit");
       fireEvent.click(createNewDeliveryTimeIcon)
     });
@@ -581,7 +560,7 @@ describe("Customer modal list", () => {
     );
   });
 
-  it("Attempting to create invalid time slot", () =>  {
+  it("Attempting to create invalid time slot", async () =>  {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerModal {...props} />
@@ -591,12 +570,11 @@ describe("Customer modal list", () => {
     // Change Delivery Time
     act(() => {
       const deliveryTimeInput = screen.getByLabelText("time-slot-delivery-time");
-      fireEvent.change(deliveryTimeInput, { target : {value :  "your mother was a hamster"} });
+      fireEvent.change(deliveryTimeInput, { target : {value : "your mother was a hamster"} });
     });
 
-    act(() => {
-      const createNewDeliveryTimeIcon = screen.getByLabelText("time-slot-commit");
-      fireEvent.click(createNewDeliveryTimeIcon)
+    await act(async () => {
+      screen.getByLabelText("time-slot-commit").click();
     });
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
@@ -613,7 +591,7 @@ describe("Customer modal list", () => {
     expect(screen.getByText('Leverings tiden er ikke formattet som et tidspunkt'));
   });
 
-  it("Attempting to create time slot before ", () =>  {
+  it("Attempting to create time slot before ", async () =>  {
     render(<StateContextProvider value={testState}>
       <WebsocketContextProvider value={websocket}>
         <CustomerModal {...props} />
@@ -626,7 +604,7 @@ describe("Customer modal list", () => {
       fireEvent.change(deliveryTimeInput, { target : {value : "01:00"} });
     });
 
-    act(() => {
+    await act( async () => {
       const createNewDeliveryTimeIcon = screen.getByLabelText("time-slot-commit");
       fireEvent.click(createNewDeliveryTimeIcon);
     });

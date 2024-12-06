@@ -139,6 +139,7 @@ export function TracerPage(){
       </td>
       <td style={cssTableCenter}>
         <FormCheck
+          data-testid={`marketed-${tracer.id}`}
           checked={tracer.marketed}
           onChange={() => {
             setTracers(oldTracer => {
@@ -199,8 +200,6 @@ export function TracerPage(){
     } // end else archived
   } // end if filtered
 } // end for loop
-
-
   const tracerModalProps = {
     [PROP_ACTIVE_TRACER] : modalTracerID,
     [PROP_ON_CLOSE] : closeModal,
