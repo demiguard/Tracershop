@@ -4,6 +4,8 @@ from datetime import time, date, datetime, timezone
 from logging import DEBUG, INFO, ERROR
 from unittest import skip
 from unittest.mock import patch
+from pprint import pprint
+
 
 # Mocks
 from asgiref.sync import sync_to_async
@@ -662,5 +664,7 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
 
   def test_get_csv_data(self):
     out_data = self.db.get_csv_data(DEFAULT_TEST_ORDER_DATE)
+
+    #pprint(out_data)
 
     # TODO: ASSERT DATA

@@ -758,8 +758,6 @@ class DatabaseInterface():
         ).aggregate(Sum('activity'))['activity__sum']
       )
 
-
-      owner_dict['Bestilt MBq'].append(0)
       if activity_order.freed_datetime is None:
         freed_datetime = "Ukendt"
       else:
