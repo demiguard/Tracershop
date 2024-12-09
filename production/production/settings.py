@@ -103,7 +103,8 @@ DATABASES = {
         'USER': 'tracershop',
         'PASSWORD': 'tracer',
         'HOST': 'localhost',
-        'PORT': '3306'
+        'PORT': '3306',
+        'CONN_HEALTH_CHECKS' : True
     }
 }
 
@@ -297,4 +298,3 @@ LOGGING = {
 STATIC_URL = "/static/"
 
 # Logging
-
