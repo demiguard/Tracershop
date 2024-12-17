@@ -17,7 +17,7 @@ import { compareDates, InjectionOrderPDFUrl, openInjectionReleasePDF } from "~/l
 import { getToday, toLotDateString } from "~/lib/chronomancy.js";
 import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js";
 import { batchNumberValidator, nullParser } from "~/lib/formatting.js";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context.js";
 import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage.js";
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";

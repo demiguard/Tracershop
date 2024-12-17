@@ -13,7 +13,7 @@ import { ClickableIcon } from "../../injectable/icons";
 import { makePassword, nullParser } from "~/lib/formatting";
 import { HoverBox } from "../../injectable/hover_box";
 import { CustomerSelect } from "../../injectable/derived_injectables/customer_select";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { setStateToEvent, setTempMapToEvent, setTempObjectMapToEvent } from "~/lib/state_management";
 import { ArrayMap } from "~/lib/array_map";
 import { Optional } from "~/components/injectable/optional";

@@ -5,7 +5,7 @@ import React, {StrictMode} from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { ERROR_MESSAGE_INCORRECT_GROUPS, ERROR_MESSAGE_NO_LDAP_USERNAME, UserSetup } from "~/components/shop_pages/user_setup.js";
 import { exact, object } from "prop-types";

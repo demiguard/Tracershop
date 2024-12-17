@@ -2,7 +2,7 @@ import React, { useContext, useState } from "react";
 import { Container, Button, Card, Collapse, Col, Row } from "react-bootstrap";
 
 
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { ProcedureIdentifierTable } from "~/components/admin_pages/procedure_identifier_table";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { JUSTIFY, FLEX, CENTER, MARGIN } from "~/lib/styles";

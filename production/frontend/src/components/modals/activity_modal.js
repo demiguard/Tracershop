@@ -18,10 +18,12 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDE
 } from "~/lib/shared_constants.js"
 import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-import { compareDates, openActivityReleasePDF, toMapping } from "../../lib/utils.js";
+import { compareDates, openActivityReleasePDF } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
-import { ActivityOrderCollection, OrderMapping, ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
+import { ReleaseRightHolder, TracerCatalog } from "~/lib/data_structures.js";
+import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection.js";
+import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
 import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management.js";
@@ -368,14 +370,19 @@ export function ActivityModal({
   //
   const dateString = dateToDateString(active_date);
   const timeSlot = state.deliver_times.get(timeSlotID);
-  const originalOrders = order_mapping.getOrders(timeSlot.id);
+  const orderCollection = order_mapping.getOrders(timeSlot.id);
+
+  if(orderCollection === null){
+    console.log(order_mapping, timeSlot);
+
+
+    throw "Order collection is null!"
+  }
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
   const customer = state.customer.get(endpoint.owner);
-  const overhead = tracer_catalog.getOverheadForTracer(customer.id, active_tracer);
   const tracer = state.tracer.get(active_tracer);
   const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
-  const orderCollection = new ActivityOrderCollection(originalOrders, dateString, timeSlot, state, overhead);
 
   // Order State
   const /** @type {StateType<Set<Number>>} */ [selectedVials, setSelectedVials] = useState(new Set());
@@ -420,7 +427,7 @@ export function ActivityModal({
   }
 
   function onClickAccept(){
-    const orders = order_mapping.getOrders(timeSlotID);
+    const orders = [...order_mapping.getOrders(timeSlotID)];
     for(const order of orders){
       if (order.status === ORDER_STATUS.ORDERED){
         order.status = ORDER_STATUS.ACCEPTED;

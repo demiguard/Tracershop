@@ -4,7 +4,7 @@
 
 import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { jest } from '@jest/globals'
+import { jest, test } from '@jest/globals'
 
 import { ActivityModal, WRONG_DATE_WARNING_MESSAGE } from '~/components/modals/activity_modal.js'
 import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE,
@@ -13,8 +13,9 @@ import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE,
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_VIAL, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js"
 
 import { testState } from "../../app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
-import { OrderMapping, TracerCatalog } from "~/lib/data_structures.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerCatalog } from "~/lib/data_structures.js";
+import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
 import { ActivityOrder, TracershopState, Vial } from "~/dataclasses/dataclasses.js";
 import { toMapping } from "~/lib/utils.js";
@@ -23,6 +24,8 @@ const module = jest.mock('../../../lib/tracer_websocket.js');
 const websocket_module = require("../../../lib/tracer_websocket.js");
 
 const today_string = "2020-05-04";
+const active_tracer = 1;
+const tracer_catalog = new TracerCatalog(testState.tracer_mapping, testState.tracer);
 
 const nowMock = new Date(2020,4,4,10,33,26);
 
@@ -31,16 +34,19 @@ const websocket = websocket_module.TracerWebSocket;
 const todays_orders = applyFilter(testState.activity_orders,
   dailyActivityOrderFilter(testState.deliver_times,
                       testState.production,
-                      "2020-05-04",
+                      today_string,
                       1));
 const props = {
   [PROP_ACTIVE_DATE] : nowMock,
   [PROP_ACTIVE_TRACER] : 1,
   [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
-                                          testState.deliver_times,
-                                          testState.delivery_endpoint),
+    today_string,
+    tracer_catalog,
+    active_tracer,
+    testState
+  ),
   [PROP_TIME_SLOT_ID] : 1,
-  [PROP_TRACER_CATALOG] : new TracerCatalog(testState.tracer_mapping, testState.tracer),
+  [PROP_TRACER_CATALOG] : tracer_catalog,
 }
 
 beforeEach(() => {
@@ -56,7 +62,7 @@ afterEach(() => {
 describe("Activity Modal Test", () => {
   it("Standard Render Test status 1", () => {
     const newOrders = [new ActivityOrder(
-      1, 1000, "2020-05-04", ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
+      1, 1000, today_string, ORDER_STATUS.ORDERED, "Test Comment", 1, null, null, 1, null
     )];
 
     const customState = new TracershopState();
@@ -66,9 +72,12 @@ describe("Activity Modal Test", () => {
     const props = {
       [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
       [PROP_ACTIVE_TRACER] : 1,
-      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders,
-        customState.deliver_times,
-        customState.delivery_endpoint),
+      [PROP_ORDER_MAPPING] : new OrderMapping(
+        newOrders,
+        today_string,
+        tracer_catalog,
+        active_tracer,
+        customState),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
     }
@@ -87,16 +96,16 @@ describe("Activity Modal Test", () => {
   });
 
   it("Standard Render Test status 2", () => {
+    const other_date_string = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               other_date_string,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
     props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                  testState.deliver_times,
-                                                 testState.delivery_endpoint)
-
+      other_date_string, tracer_catalog, active_tracer, testState);
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -128,9 +137,7 @@ describe("Activity Modal Test", () => {
     const props = {
       [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
       [PROP_ACTIVE_TRACER] : 1,
-      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders,
-        customState.deliver_times,
-        customState.delivery_endpoint),
+      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders, today_string, tracer_catalog, active_tracer, customState),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
     }
@@ -154,15 +161,20 @@ describe("Activity Modal Test", () => {
   });
 
   it("Use a vial", () => {
+    const status_order_date = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_order_date,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
     props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint)
+      status_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -181,15 +193,20 @@ describe("Activity Modal Test", () => {
   });
 
   it("Use a vial and stop using it ", () => {
+    const status_2_order_date = "2020-05-11";
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                           testState.production,
-                          "2020-05-11",
+                          status_2_order_date,
                           1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-      testState.deliver_times,
-      testState.delivery_endpoint),
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -214,15 +231,20 @@ describe("Activity Modal Test", () => {
   });
 
   it("start creating a new vial", async () => {
+    const status_2_order_date = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                           testState.production,
-                          "2020-05-11",
+                          status_2_order_date,
                           1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-      testState.deliver_times,
-      testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState);
 
     render(
       <StateContextProvider value={testState}>
@@ -244,15 +266,20 @@ describe("Activity Modal Test", () => {
   });
 
   it("start and stop creating a new vial", async () => {
+    const status_2_order_date = "2020-05-11";
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_2_order_date,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26);
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -278,15 +305,19 @@ describe("Activity Modal Test", () => {
   });
 
   it("Create a new vial", async () => {
+    const status_2_order_date = "2020-05-11";
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_2_order_date,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState);
 
     render(
       <StateContextProvider value={testState}>
@@ -332,15 +363,21 @@ describe("Activity Modal Test", () => {
     });
 
   it("Edit a vial success", async () => {
+    const status_2_order_date = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                           testState.production,
-                          "2020-05-11",
+                          status_2_order_date,
                           1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-      testState.deliver_times,
-      testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -381,15 +418,20 @@ describe("Activity Modal Test", () => {
   });
 
   it("edit a vial failed", async () => {
+    const status_2_order_date = "2020-05-11"
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                           testState.production,
-                          "2020-05-11",
+                          status_2_order_date,
                           1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -427,15 +469,21 @@ describe("Activity Modal Test", () => {
   });
 
   it("Select and unselect, then assert you can't free", async () => {
+    const status_2_order_date = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                                testState.production,
-                               "2020-05-11",
+                               status_2_order_date,
                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -458,15 +506,19 @@ describe("Activity Modal Test", () => {
   })
 
   it("free an order success", async () => {
+    const status_2_order_date = "2020-05-11";
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_2_order_date,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState);
 
     const websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
@@ -513,15 +565,18 @@ describe("Activity Modal Test", () => {
   });
 
   it("free an order at the date", async () => {
-    const todays_orders = [new ActivityOrder(1, 10000, "2020-05-04", ORDER_STATUS.ACCEPTED, null, 1, null, null, 1, null)]
+    const todays_orders = [new ActivityOrder(1, 10000, today_string, ORDER_STATUS.ACCEPTED, null, 1, null, null, 1, null)]
     const newState = new TracershopState();
     Object.assign(newState, testState);
     newState.activity_orders = toMapping(todays_orders);
 
     props[PROP_ACTIVE_DATE] = nowMock
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-      newState.deliver_times,
-      newState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      today_string,
+      tracer_catalog,
+      active_tracer,
+      newState);
 
     const websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
@@ -566,15 +621,21 @@ describe("Activity Modal Test", () => {
   });
 
   it("free an order Failed", async () => {
+    const status_2_order_date = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_2_order_date,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26);
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     const websocket = {
       getMessage : jest.fn((input) => {return { messageType : input}}),
@@ -625,15 +686,20 @@ describe("Activity Modal Test", () => {
   });
 
   it("Edit an order successfully", async () => {
+    const status_2_order_date = "2020-05-11";
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_2_order_date,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -664,16 +730,22 @@ describe("Activity Modal Test", () => {
   });
 
   it("Edit an order failed", async () => {
+    const status_2_order_date = "2020-05-11";
+
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
-                                                               "2020-05-11",
+                                                               status_2_order_date,
                                                                1));
 
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                                                 testState.deliver_times,
-                                                 testState.delivery_endpoint)
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      status_2_order_date,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
 
     render(
       <StateContextProvider value={testState}>
@@ -709,15 +781,21 @@ describe("Activity Modal Test", () => {
   });
 
   it("cancel, then stop canceling, then cancel that an order", () => {
+    const other_today_string = "2020-05-11";
     const todays_orders = applyFilter(testState.activity_orders,
       dailyActivityOrderFilter(testState.deliver_times,
                                testState.production,
-                               "2020-05-11",
+                               other_today_string,
                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-                      testState.deliver_times,
-                     testState.delivery_endpoint);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      other_today_string,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
+
     render(
       <StateContextProvider value={testState}>
         <WebsocketContextProvider value={websocket}>
@@ -758,9 +836,13 @@ describe("Activity Modal Test", () => {
     const props = {
       [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,33,26),
       [PROP_ACTIVE_TRACER] : 1,
-      [PROP_ORDER_MAPPING] : new OrderMapping(newOrders,
-        customState.deliver_times,
-        customState.delivery_endpoint),
+      [PROP_ORDER_MAPPING] : new OrderMapping(
+        todays_orders,
+        today_string,
+        tracer_catalog,
+        active_tracer,
+        customState
+      ),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
     }
@@ -785,9 +867,12 @@ describe("Activity Modal Test", () => {
     const updated_props = {
       [PROP_ACTIVE_DATE] : nowMock,
       [PROP_ACTIVE_TRACER] : 1,
-      [PROP_ORDER_MAPPING] : new OrderMapping(todays_orders,
-        newState.deliver_times,
-        newState.delivery_endpoint),
+      [PROP_ORDER_MAPPING] : new OrderMapping(
+        todays_orders,
+        today_string,
+        tracer_catalog,
+        active_tracer,
+        newState),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(newState.tracer_mapping, newState.tracer),
     }

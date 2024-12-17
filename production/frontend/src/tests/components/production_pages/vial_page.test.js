@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 
 import { VialPage } from "~/components/production_pages/vial_page.js"
 
-import { StateContextProvider, WebsocketContextProvider, DispatchContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider, DispatchContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";

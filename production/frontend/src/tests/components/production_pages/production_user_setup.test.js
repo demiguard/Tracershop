@@ -8,7 +8,7 @@ import { act, fireEvent, getByRole, render, screen, cleanup } from "@testing-lib
 import { AppState, testState } from "~/tests/app_state.js";
 
 import { ProductionUserSetup } from "~/components/production_pages/setup_pages/production_user_setup.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { WEBSOCKET_MESSAGE_SUCCESS } from "~/lib/shared_constants";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

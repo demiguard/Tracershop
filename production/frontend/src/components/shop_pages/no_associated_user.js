@@ -6,7 +6,7 @@
 import React from "react";
 import { Container } from "react-bootstrap";
 import { USER_GROUPS } from "../../lib/constants";
-import { useTracershopState } from "../tracer_shop_context";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
 
 export function NoAssociatedUser(props){
   const state = useTracershopState()

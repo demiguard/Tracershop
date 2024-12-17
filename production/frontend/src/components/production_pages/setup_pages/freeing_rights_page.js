@@ -12,7 +12,7 @@ import { ClickableIcon } from '../../injectable/icons';
 import { TracerWebSocket } from '../../../lib/tracer_websocket';
 import { parseDateInput } from '~/lib/user_input';
 import { HoverBox } from '../../injectable/hover_box';
-import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context';
+import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
 
 const SORTING_METHODS = {
   USER : 1,
@@ -82,12 +82,12 @@ export function FreeingRightsPage(){
 
   // Sub components
   /**
-   * 
+   *
    * @param {{
    *  releaseRight : ReleaseRight,
    *  websocket : TracerWebSocket
-   * }} param0 
-   * @returns 
+   * }} param0
+   * @returns
    */
   function ReleaseRightTableRow({releaseRight}){
     const user = state.user.get(releaseRight.releaser);
@@ -106,7 +106,7 @@ export function FreeingRightsPage(){
       <td>{tracer.shortname}</td>
       <td>{expiryDate}</td>
       <td style={cssAlignRight}>
-        <ClickableIcon 
+        <ClickableIcon
           label={`delete-release-right-${releaseRight.id}`}
           src="static/images/decline.svg"
           onClick={deleteReleaseRight}/>
@@ -211,5 +211,3 @@ export function FreeingRightsPage(){
     </Row>
   </Container>);
 }
-
-

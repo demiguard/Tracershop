@@ -7,7 +7,7 @@ import { PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constan
 
 import { User, UserAssignment } from "../../dataclasses/dataclasses";
 import { NoAssociatedUser } from "../shop_pages/no_associated_user";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { Button, Col } from "react-bootstrap";
 import { NAVBAR_STYLES } from "~/lib/styles";
 import { openShopManual } from "~/lib/utils";

@@ -7,7 +7,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 import { InjectionOrderCard } from "~/components/shop_pages/shop_injectables/injection_order_card.js";
 import { INJECTION_USAGE, ORDER_STATUS, TRACER_TYPE } from "~/lib/constants.js";

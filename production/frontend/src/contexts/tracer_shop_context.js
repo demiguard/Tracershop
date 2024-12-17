@@ -8,6 +8,7 @@ import { ParseDjangoModelJson } from '~/lib/formatting';
 import { datify } from '~/lib/chronomancy';
 import { DATA_BOOKING, EXCLUDED_STATE_MODELS, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
 import { Logs } from '~/lib/logs';
+import { DerivedContextPyramid } from '~/contexts/derived_contexts';
 
 const StateContext = createContext(new TracershopState());
 const DispatchContext = createContext({});
@@ -132,7 +133,7 @@ export function tracershopReducer(state, action){
   throw "Unknown action";
 }
 
-export function TracerShopContext({children, websocket_url}){
+export function TracerShopContextInitializer({children, websocket_url}){
   const websocket = useRef(null);
 
   const websocketURL = websocket_url
@@ -174,12 +175,30 @@ export function TracerShopContext({children, websocket_url}){
   // You have to use a useRef and a useEffect to ensure that the websocket is recreated
   // or can be refereed to, if there's a rerender.
 
-
+  // THE PYRAMID IS GROWING
   return(
-    <WebsocketContext.Provider value={websocket.current}>
-      <StateContext.Provider value={state}>
+    <TracerShopContext
+      websocket={websocket.current}
+      dispatch={dispatch}
+      tracershop_state={state}
+    >
+      {children}
+    </TracerShopContext>
+  );
+}
+
+export function TracerShopContext({
+  children, websocket, dispatch, tracershop_state
+}){
+
+  // HAIL THE GREAT PYRAMID!
+  return(
+    <WebsocketContext.Provider value={websocket}>
+      <StateContext.Provider value={tracershop_state}>
         <DispatchContext.Provider value={dispatch}>
-          {children}
+          <DerivedContextPyramid>
+            {children}
+          </DerivedContextPyramid>
         </DispatchContext.Provider>
       </StateContext.Provider>
     </WebsocketContext.Provider>

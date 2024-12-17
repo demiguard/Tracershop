@@ -7,7 +7,7 @@ import { act, screen, render, cleanup, fireEvent, waitFor, queryByAttribute } fr
 import { jest } from '@jest/globals'
 
 import { HistoryModal } from "../../../components/modals/history_modal.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { WEBSOCKET_DATA } from "~/lib/shared_constants.js";
 

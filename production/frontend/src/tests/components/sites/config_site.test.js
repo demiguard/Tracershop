@@ -11,7 +11,7 @@ import { db } from "../../../lib/local_storage_driver.js";
 import { ConfigSite } from "../../../components/sites/config_site.js"
 import { PROP_USER } from "../../../lib/constants.js";
 import { ANON } from "../../test_state/users.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

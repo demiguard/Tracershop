@@ -4,7 +4,7 @@
 
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { IsotopeSetupPage } from "~/components/production_pages/setup_pages/isotope_setup_page.js";
 

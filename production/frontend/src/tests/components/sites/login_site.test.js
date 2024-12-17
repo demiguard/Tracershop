@@ -13,7 +13,7 @@ import { WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"
 import { LoginSite } from "~/components/sites/login_site.js";
 
 import { ANON } from "../../test_state/users.js";
-import { DispatchContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { DispatchContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

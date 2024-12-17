@@ -12,7 +12,7 @@ import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE , PROP_TIME_SLOT_MA
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants"
 
 import { testState } from '~/tests/app_state.js'
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { TimeSlotMapping } from "~/lib/data_structures.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

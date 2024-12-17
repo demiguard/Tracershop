@@ -6,7 +6,7 @@ import { VialPage } from "../production_pages/vial_page.js";
 
 import { SetupShop } from "../production_pages/setup_pages/setup_shop.js"
 import { USER_GROUPS } from "../../lib/constants.js";
-import { useTracershopState } from "../tracer_shop_context.js";
+import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { MonitorPage } from "~/components/production_pages/monitoring_pages/monitor_home_page.js";
 
 const Pages = {

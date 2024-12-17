@@ -10,7 +10,7 @@ import { AppState, testState } from "../../app_state.js";
 import { TracerShop } from "../../../components/sites/tracer_shop.js"
 import { PROP_USER } from "../../../lib/constants.js";
 import { ANON, users } from "../../test_state/users.js";
-import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { TracerShopContext, DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { TracershopState } from "~/dataclasses/dataclasses.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -41,13 +41,14 @@ describe("Tracer shop test suite", () => {
       logged_in_user : ANON,
     })
 
-    render(<StateContextProvider value={newState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerShop />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext
+        tracershop_state={newState}
+        websocket={websocket}
+        dispatch={dispatchMock}>
+        <TracerShop/>
+      </TracerShopContext>
+    );
   })
 
   it("standard test Site admin", () => {
@@ -56,13 +57,11 @@ describe("Tracer shop test suite", () => {
       logged_in_user : users.get(1),
     })
 
-    render(<StateContextProvider value={newState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerShop />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={newState} websocket={websocket} dispatch={dispatchMock}>
+        <TracerShop/>
+      </TracerShopContext>
+    );
   })
 
   it("standard test Production Admin", () => {
@@ -71,14 +70,11 @@ describe("Tracer shop test suite", () => {
       logged_in_user : users.get(2),
     })
 
-
-    render(<StateContextProvider value={newState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerShop />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={newState} websocket={websocket} dispatch={dispatchMock}>
+        <TracerShop/>
+      </TracerShopContext>
+    );
   })
 
   it("standard test Production user", () => {
@@ -87,14 +83,11 @@ describe("Tracer shop test suite", () => {
       logged_in_user : users.get(3),
     })
 
-
-    render(<StateContextProvider value={newState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerShop />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={newState} websocket={websocket} dispatch={dispatchMock}>
+        <TracerShop/>
+      </TracerShopContext>
+    );
   })
 
   it("standard test Shop Admin", async () => {
@@ -105,13 +98,10 @@ describe("Tracer shop test suite", () => {
 
     await act(async () => {
       render(
-      <StateContextProvider value={newState}>
-        <DispatchContextProvider value={dispatchMock}>
-          <WebsocketContextProvider value={websocket}>
-            <TracerShop />
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-      </StateContextProvider>);
+        <TracerShopContext tracershop_state={newState} websocket={websocket} dispatch={dispatchMock}>
+          <TracerShop/>
+        </TracerShopContext>
+      );
     });
   })
 
@@ -121,13 +111,11 @@ describe("Tracer shop test suite", () => {
       logged_in_user : users.get(5),
     })
     await act(async () => {
-    render(<StateContextProvider value={newState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerShop />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      render(
+        <TracerShopContext tracershop_state={newState} websocket={websocket} dispatch={dispatchMock}>
+          <TracerShop/>
+        </TracerShopContext>
+      );
     });
   });
 
@@ -139,13 +127,10 @@ describe("Tracer shop test suite", () => {
 
     await act(async () => {
       render(
-        <StateContextProvider value={newState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerShop />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+        <TracerShopContext tracershop_state={newState} websocket={websocket} dispatch={dispatchMock}>
+          <TracerShop/>
+        </TracerShopContext>
+      );
     })
   })
 })

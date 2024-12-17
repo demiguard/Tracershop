@@ -2,15 +2,18 @@ import React, {useState} from "react"
 import { ControlPanel } from "../admin_pages/control_panel.js"
 import { TracershopNavbar } from "../injectable/navbar.js"
 import { DatabasePanel } from "~/components/admin_pages/database_panel.js"
+import { TestScrollableSite } from "~/components/admin_pages/test_scrollable_table.js"
 
 const Pages = {
   controlPanel : ControlPanel, // Danish for key since keys are displayed.
-  database : DatabasePanel
+  database : DatabasePanel,
+  scrolling : TestScrollableSite
 }
 
 const PageNames = {
   controlPanel : "Kontrol Panel",
-  database : "Database"
+  database : "Database",
+  scrolling : "Scrolling Test"
 }
 
 export function ConfigSite (props) {
@@ -21,7 +24,7 @@ export function ConfigSite (props) {
     <div>
       <TracershopNavbar
         ActiveKey={activeSite}
-       Names={PageNames}
+        Names={PageNames}
         setActivePage={setActivePage}
         logout={props.logout}
         isAuthenticated={true}

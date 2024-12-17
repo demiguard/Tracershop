@@ -1,6 +1,6 @@
 import React from "react";
 import { ClickableIcon } from "~/components/injectable/icons";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useWebsocket } from "~/contexts/tracer_shop_context";
 
 export function DeleteButton({
   dataType, data, callback=()=>{}, ...rest

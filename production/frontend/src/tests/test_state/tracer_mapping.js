@@ -44,10 +44,16 @@ export const tracer_mapping = new Map([
     null, // max_injections
     1.25 // overhead_multiplier
 )], [8, new TracerCatalogPage(
-    7, // id
+    8, // id
     3, // endpoint
     3, // tracer
     null, // max_injections
     1 // overhead_multiplier
-)],
+)], [9, new TracerCatalogPage(
+    9, // id
+    4, // endpoint,
+    1, // tracer
+    null, // max_injections
+    1.25 // overhead multiplier
+)]
 ]);

@@ -54,7 +54,15 @@ export class ArrayMap {
     return undefined;
   }
 
-  *[Symbol.iterator]() {
+  /**
+ * Implements the iterator protocol for the ArrayMap, allowing the object to be
+ * iterable. Yields key-value pairs where the value is an array.
+ *
+ * @generator
+ * @yields {[K, Array<V>]} An array containing the key of type K and an array of values of type V
+ * @returns {IteratorResult<[K, Array<V>]>} The next iteration result
+ */
+*[Symbol.iterator]() {
     for(const [key,values] of this._map.entries()){
       yield [key, values];
     }

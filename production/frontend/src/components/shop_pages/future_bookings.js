@@ -8,7 +8,7 @@ import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structu
 import { ClickableIcon } from "~/components/injectable/icons";
 import { IdempotentButton, MarginButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { Optional, Options } from "~/components/injectable/optional";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";

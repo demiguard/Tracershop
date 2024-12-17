@@ -1,5 +1,5 @@
 import React from "react";
-import { useTracershopState } from "../tracer_shop_context";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { TimeTable } from "../injectable/time_table";
 import { BookingTimeGroupLocation } from "~/lib/data_structures"
 

@@ -8,7 +8,7 @@ import { nullParser } from "~/lib/formatting";
 import { EndpointsProcedures, TracerCatalog } from "~/lib/data_structures";
 import { DestinationSelect } from "../../injectable/derived_injectables/destination_select";
 import { initialize_customer_endpoint } from "~/lib/initialization";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
 import { parseDanish0OrPositiveNumberInput, parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";

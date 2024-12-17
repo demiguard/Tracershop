@@ -11,7 +11,7 @@ import {DATA_TRACER_MAPPING, WEBSOCKET_DATA,
 import { setStateToEvent } from "~/lib/state_management";
 import { Tracer, Customer, TracerCatalogPage } from "~/dataclasses/dataclasses";
 import { CloseButton } from "../injectable/buttons";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { EndpointDisplay } from "../injectable/data_displays/endpoint";
 import { FONT } from "~/lib/styles";
 

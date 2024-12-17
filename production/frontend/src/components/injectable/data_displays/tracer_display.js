@@ -1,5 +1,5 @@
 import React from 'react'
-import { useTracershopState } from '~/components/tracer_shop_context'
+import { useTracershopState } from '~/contexts/tracer_shop_context'
 import { Tracer } from '~/dataclasses/dataclasses'
 import { HoverBox } from '../hover_box';
 

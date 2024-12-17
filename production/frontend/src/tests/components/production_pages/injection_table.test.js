@@ -10,7 +10,7 @@ import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { AppState, testState } from "../../app_state.js";
 
 import { InjectionTable } from "../../../components/production_pages/injection_table.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

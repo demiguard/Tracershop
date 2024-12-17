@@ -19,7 +19,7 @@ import { InjectionOrderPDFUrl, compareLoosely, nullify } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { Optional } from "~/components/injectable/optional";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 
 /**
  * This is a card containing all the information on an injection order

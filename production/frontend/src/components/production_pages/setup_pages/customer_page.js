@@ -6,7 +6,7 @@ import { CustomerModal } from "../../modals/customer_modal.js";
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
 import { ClickableIcon } from "../../injectable/icons.js"
 import { setStateToEvent } from "~/lib/state_management.js";
-import { useTracershopState } from "~/components/tracer_shop_context.js";
+import { useTracershopState } from "~/contexts/tracer_shop_context.js";
 
 const Modals = {
   CUSTOMER : CustomerModal,

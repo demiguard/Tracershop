@@ -12,7 +12,7 @@ import { ClickableIcon } from "../../injectable/icons.js";
 import { Select,  toOptions } from "../../injectable/select.js";
 import { HoverBox } from "../../injectable/hover_box.js";
 import { OpenCloseButton } from "../../injectable/open_close_button.js";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context.js";
 import { CommitButton } from "~/components/injectable/commit_button.js";
 import { nullParser } from "~/lib/formatting.js";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";

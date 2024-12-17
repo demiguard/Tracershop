@@ -3,7 +3,7 @@
  */
 
 import { jest, expect } from '@jest/globals'
-import { tracershopReducer } from "~/components/tracer_shop_context";
+import { tracershopReducer } from "~/contexts/tracer_shop_context";
 import { ClosedDate, TracershopState, User } from "~/dataclasses/dataclasses";
 import { DeleteState, ReducerAction, UpdateCurrentUser, UpdateState, UpdateToday } from "~/lib/state_actions";
 import { DATA_CLOSED_DATE, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";

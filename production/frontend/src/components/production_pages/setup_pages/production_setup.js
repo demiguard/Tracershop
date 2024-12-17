@@ -9,7 +9,7 @@ import { DAYS, DAYS_OBJECTS, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER,
   WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC } from "~/lib/constants";
 import { DATA_PRODUCTION } from "~/lib/shared_constants";
 import { tracerTypeFilter } from "~/lib/filters";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { Select, toOptions } from "~/components/injectable/select";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";

@@ -7,7 +7,7 @@ import { screen, render, cleanup, fireEvent, act } from "@testing-library/react"
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
 import { StateContextProvider, WebsocketContextProvider,
-  DispatchContextProvider } from "~/components/tracer_shop_context.js";
+  DispatchContextProvider } from "~/contexts/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";

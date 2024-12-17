@@ -9,7 +9,7 @@ import { bookings } from "~/tests/test_state/bookings.js";
 import { testState } from "../../app_state.js";
 import { FutureBooking, missingSetupHeader } from "../../../components/shop_pages/future_bookings.js";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE } from "~/lib/constants.js";
-import { StateContextProvider, useTracershopState, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, useTracershopState, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { Booking } from "~/dataclasses/dataclasses.js";
 import { BookingStatus, ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE } from "~/lib/shared_constants.js";
 

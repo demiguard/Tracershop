@@ -2,7 +2,7 @@ import React from "react";
 import { Navbar, Container, Button, Col, Row  } from "react-bootstrap";
 import { WebsocketIcon } from "~/components/injectable/icons";
 import { Optional } from "~/components/injectable/optional";
-import { useWebsocket } from "~/components/tracer_shop_context";
+import { useWebsocket } from "~/contexts/tracer_shop_context";
 import { FLEX, JUSTIFY, NAVBAR_STYLES } from "~/lib/styles";
 
 

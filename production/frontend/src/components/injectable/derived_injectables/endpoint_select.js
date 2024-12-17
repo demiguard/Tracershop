@@ -5,7 +5,7 @@ import { FormControl } from "react-bootstrap";
 import { Select, toOptions, Option } from "../select";
 import { Customer, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { useTracershopState } from "~/contexts/tracer_shop_context";
 
 /**
  * Provides a select for endpoints.

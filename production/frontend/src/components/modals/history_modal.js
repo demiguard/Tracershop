@@ -9,7 +9,7 @@ import propTypes from "prop-types";
 import { Select, toOptions } from "../injectable/select.js";
 
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "~/lib/constants.js";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
 import { FONT } from "~/lib/styles.js";
 
 const Months = toOptions([

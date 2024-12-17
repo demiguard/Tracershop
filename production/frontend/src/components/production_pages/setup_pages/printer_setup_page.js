@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { CommitButton } from "~/components/injectable/commit_button";
-import { useTracershopState } from "~/components/tracer_shop_context";
+import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { Printer } from "~/dataclasses/dataclasses";
 
 function PrinterRow({

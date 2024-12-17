@@ -5,7 +5,7 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { FreeingRightsPage } from "~/components/production_pages/setup_pages/freeing_rights_page";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state";
 import { USER_GROUPS } from "~/lib/constants.js";
 

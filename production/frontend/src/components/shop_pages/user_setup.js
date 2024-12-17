@@ -2,7 +2,7 @@ import React, { useRef, useState } from "react";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { setStateToEvent } from "~/lib/state_management";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { UserAssignment } from "~/dataclasses/dataclasses";
 import { EditableInput } from "../injectable/inputs/editable_input";
 import { ClickableIcon } from "../injectable/icons";

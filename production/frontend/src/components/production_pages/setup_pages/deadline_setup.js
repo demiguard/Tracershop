@@ -10,7 +10,7 @@ import { parseTimeInput } from "../../../lib/user_input";
 import { TimeInput } from "../../injectable/inputs/time_input";
 import { ErrorInput } from "../../injectable/inputs/error_input";
 import { DaysSelect } from "../../injectable/derived_injectables/days_select";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { nullParser } from "~/lib/formatting";
 import { Optional } from "~/components/injectable/optional";
 import { compareLoosely, nullify } from "~/lib/utils";

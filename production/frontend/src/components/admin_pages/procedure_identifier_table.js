@@ -1,6 +1,6 @@
 import React from 'react'
 import { FormCheck, FormControl, Table } from 'react-bootstrap';
-import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context'
+import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { ProcedureIdentifier } from '~/dataclasses/dataclasses';
 import { DATA_PROCEDURE_IDENTIFIER } from '~/lib/shared_constants';
 

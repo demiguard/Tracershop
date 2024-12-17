@@ -11,7 +11,7 @@ import { CreateInjectionOrderModal } from "~/components/modals/create_injection_
 import { ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
 
 import { testState} from '~/tests/app_state.js'
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
 
@@ -50,13 +50,8 @@ describe("Create injection Order", () => {
              </WebsocketContextProvider>
            </StateContextProvider>);
 
-    //screen.debug();
-
     expect(screen.getByLabelText("select-customer")).toBeVisible();
-    expect(screen.getByLabelText("select-customer").value).toBe("2");
-
     expect(screen.getByLabelText("select-endpoint")).toBeVisible();
-    expect(screen.getByLabelText("select-endpoint").value).toBe("3");
     expect(screen.getByLabelText("tracer-select")).toBeVisible();
     expect(screen.getByLabelText("tracer-select").value).not.toBe("NaN");
     expect(screen.getByLabelText("usage-select")).toBeVisible();

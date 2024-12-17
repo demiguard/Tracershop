@@ -10,7 +10,7 @@ import { CreateInjectionOrderModal } from "../modals/create_injection_modal.js";
 import { InjectionModal } from "../modals/injection_modal.js";
 import { StatusIcon } from "../injectable/icons.js";
 import { InjectionOrder } from "~/dataclasses/dataclasses.js";
-import { useTracershopState } from "../tracer_shop_context.js";
+import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { InjectionUsage } from "../injectable/data_displays/injection_usage.js";
 import { Comment } from "../injectable/data_displays/comment.js";
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";

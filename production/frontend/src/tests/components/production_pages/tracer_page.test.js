@@ -9,7 +9,7 @@ import { TracerPage } from "../../../components/production_pages/setup_pages/tra
 import { TRACER_TYPE } from "~/lib/constants.js";
 import { DATA_TRACER } from "~/lib/shared_constants";
 import { testState } from "../../app_state.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

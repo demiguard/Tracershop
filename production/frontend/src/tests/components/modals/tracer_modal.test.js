@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { TracerModal } from "~/components/modals/tracer_modal.js"
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants.js";
 import { DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING } from "~/lib/shared_constants.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

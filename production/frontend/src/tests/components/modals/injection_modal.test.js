@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 
 
 import { InjectionModal } from "~/components/modals/injection_modal.js"
-import { WebsocketContextProvider, StateContextProvider } from "~/components/tracer_shop_context.js";
+import { WebsocketContextProvider, StateContextProvider } from "~/contexts/tracer_shop_context.js";
 import { PROP_MODAL_ORDER, PROP_ON_CLOSE } from "~/lib/constants.js";
 import { AppState, testState } from "~/tests/app_state.js";
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";

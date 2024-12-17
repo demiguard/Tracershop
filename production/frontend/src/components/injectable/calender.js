@@ -10,7 +10,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "~/lib/shared_const
 import PropTypes from 'prop-types'
 
 import { FirstSundayInNextMonth, LastMondayInLastMonth, datify, expiredDeadline } from "~/lib/chronomancy";
-import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { dateToDateString } from "~/lib/formatting";
 import { BitChain, OrderDateMapping } from "~/lib/data_structures";
 import { MonthSelector } from "~/components/injectable/month_selector";

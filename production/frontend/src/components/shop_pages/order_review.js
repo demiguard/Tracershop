@@ -9,7 +9,7 @@ import { dateToDateString } from "~/lib/formatting";
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay } from "~/lib/chronomancy";
-import { useTracershopState } from "../tracer_shop_context";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { TracerCatalog } from "~/lib/data_structures";
 import { getRelevantActivityOrders } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";

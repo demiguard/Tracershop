@@ -11,7 +11,7 @@ import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
 import { AppState, testState } from "../../app_state.js";
 
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 
 const onClose = jest.fn()

@@ -58,6 +58,7 @@ export function sort_procedures(state, sortingMethod){
  * 1. By Customer
  * 2. By Endpoint
  * 3. Sorted by delivery time, earlier time is first
+ * and cancelled orders must be sorted last
  * @param {Map<Number, DeliveryEndpoint>} endpoints
  * @returns {CallableFunction}
  */

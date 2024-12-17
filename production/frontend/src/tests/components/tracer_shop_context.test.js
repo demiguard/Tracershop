@@ -5,7 +5,7 @@
 import React from "react";
 import { expect, jest, test } from '@jest/globals'
 import WS from "jest-websocket-mock"
-import { TracerShopContext, tracershopReducer, useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { TracerShopContextInitializer, tracershopReducer, useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { TracershopState, User } from "~/dataclasses/dataclasses";
 import { cleanup, render } from "@testing-library/react";
 import { DATA_CLOSED_DATE, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
@@ -65,9 +65,9 @@ function StateUser({stateKeyword}){
 
 describe("Tracershop context test", () => {
   it("Standard no input data", async () => {
-    render(<TracerShopContext websocket_url={'ws://localhost:1234/ws'}>
+    render(<TracerShopContextInitializer websocket_url={'ws://localhost:1234/ws'}>
       <WebsocketUser></WebsocketUser>
-    </TracerShopContext>);
+    </TracerShopContextInitializer>);
 
     await server.connected;
     expect(server).toReceiveMessage(who_am_i_message);
@@ -83,9 +83,9 @@ describe("Tracershop context test", () => {
       active : true,
     }));
 
-    render(<TracerShopContext websocket_url={'ws://localhost:1234/ws'}>
+    render(<TracerShopContextInitializer websocket_url={'ws://localhost:1234/ws'}>
       <StateUser stateKeyword={"logged_in_user"}></StateUser>
-    </TracerShopContext>);
+    </TracerShopContextInitializer>);
 
     expect(stateFunction).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -100,11 +100,11 @@ describe("Tracershop context test", () => {
   it("Closed date set in local storage", () => {
     db.set(DATA_CLOSED_DATE, closed_dates);
 
-    render(<TracerShopContext websocket_url={'ws://localhost:1234/ws'}>
+    render(<TracerShopContextInitializer websocket_url={'ws://localhost:1234/ws'}>
       <StateUser
         stateKeyword={DATA_CLOSED_DATE}
       />
-    </TracerShopContext>);
+    </TracerShopContextInitializer>);
     expect(stateFunction).toHaveBeenCalled();
     expect(stateFunction.mock.calls[0][0]).toBeInstanceOf(Map);
     expect(compareMaps(stateFunction.mock.calls[0][0], closed_dates));

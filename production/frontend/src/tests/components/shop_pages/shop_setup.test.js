@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 
 import { ShopSetup } from '../../../components/shop_pages/shop_setup'
 import { AppState } from "../../app_state.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context";
+import { WebsocketContextProvider } from "~/contexts/tracer_shop_context";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

@@ -11,7 +11,7 @@ import { DestinationSelect } from "../../../../components/injectable/derived_inj
 import { customers } from "../../../test_state/customers";
 import { deliveryEndpoints } from "../../../test_state/delivery_endpoints";
 import { activityDeliveryTimeSlots } from "../../../test_state/activity_delivery_time_slots";
-import { StateContextProvider } from "~/components/tracer_shop_context";
+import { StateContextProvider } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
 
 let container = null;

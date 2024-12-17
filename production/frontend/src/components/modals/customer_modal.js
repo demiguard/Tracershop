@@ -18,7 +18,7 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint, TracerC
 import { ParseDjangoModelJson, getDateName, nullParser } from "~/lib/formatting.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select.js";
-import { useTracershopState } from "../tracer_shop_context.js";
+import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management.js";
 import { compareLoosely, nullify } from "~/lib/utils.js";
 import { CommitButton } from "../injectable/commit_button.js";

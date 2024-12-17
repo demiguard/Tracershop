@@ -9,7 +9,7 @@ import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_grou
 import { getDay } from "~/lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { setStateToEvent } from "~/lib/state_management";
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
 import { NEW_LOCAL_ID, ORDER_STATUS } from "~/lib/constants";

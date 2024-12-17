@@ -9,7 +9,7 @@ import { setStateToEvent } from "../../lib/state_management";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
 import { DateInput } from "../injectable/inputs/date_input";
-import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { ErrorInput } from "../injectable/inputs/error_input";
 import { parseDateInput } from "~/lib/user_input";
 import { MarginButton } from "~/components/injectable/buttons";

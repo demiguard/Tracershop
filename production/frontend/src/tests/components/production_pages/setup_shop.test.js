@@ -7,7 +7,7 @@ import { act, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState } from "../../app_state.js";
 import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js";
-import { WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");

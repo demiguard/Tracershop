@@ -5,7 +5,7 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state";
 import { ProductionSetup } from "~/components/production_pages/setup_pages/production_setup.js";
 import { DATA_PRODUCTION } from "~/lib/shared_constants.js";

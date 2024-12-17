@@ -17,7 +17,7 @@ import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_grou
 import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
-import { useTracershopDispatch, useTracershopState, useWebsocket } from "../tracer_shop_context.js";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
 import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";

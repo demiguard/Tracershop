@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
 import { WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
 import {  testState } from "~/tests/app_state.js";
-import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context";
+import { DispatchContextProvider, StateContextProvider, TracerShopContext, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -43,11 +43,10 @@ afterEach(() => {
 describe("Shop Order page test suite", () => {
   it("Standard Render Test", async () => {
     const {unmount} = render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
       unmount();
 
@@ -60,13 +59,9 @@ describe("Shop Order page test suite", () => {
 
   it("Change Day", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatchMock}>
-          <WebsocketContextProvider value={websocket}>
-            <ShopOrderPage relatedCustomer={testState.customer}/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-      </StateContextProvider>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
     );
 
     await act(async () => {
@@ -80,14 +75,11 @@ describe("Shop Order page test suite", () => {
   });
 
   it("Change month", async () => {
-      render(
-        <StateContextProvider value={testState}>
-          <DispatchContextProvider value={dispatchMock}>
-            <WebsocketContextProvider value={websocket}>
-              <ShopOrderPage relatedCustomer={testState.customer}/>
-            </WebsocketContextProvider>
-          </DispatchContextProvider>
-        </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const prevMonth = screen.getByLabelText('prev-month')
@@ -100,11 +92,10 @@ describe("Shop Order page test suite", () => {
 
   it("Change Site", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const siteSelect = screen.getByLabelText('site-select')
@@ -116,11 +107,9 @@ describe("Shop Order page test suite", () => {
 
   it("Change customer", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
     );
 
     await act(async () => {
@@ -134,11 +123,10 @@ describe("Shop Order page test suite", () => {
 
   it("Change endpoint", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const endpointSelect = screen.getByLabelText('endpoint-select');
@@ -178,11 +166,9 @@ describe("Shop Order page test suite", () => {
     }
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
     );
 
     await act(async () => {
@@ -207,11 +193,9 @@ describe("Shop Order page test suite", () => {
 
   it("Booking update Malform message", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
     );
 
     await act(async () => {
@@ -259,11 +243,9 @@ describe("Shop Order page test suite", () => {
     }
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
     );
 
     await act(async () => {
@@ -297,11 +279,10 @@ describe("Shop Order page test suite", () => {
 
   it("Create booking from triggered update", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ShopOrderPage relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const siteSelect = screen.getByLabelText('site-select')

@@ -7,7 +7,7 @@ import { setTempObjectToEvent } from '../../../lib/state_management';
 import { parseDanishPositiveNumberInput } from '../../../lib/user_input';
 import { Isotope } from '../../../dataclasses/dataclasses';
 import { ErrorInput } from '../../injectable/inputs/error_input';
-import { useTracershopState, useWebsocket } from '~/components/tracer_shop_context';
+import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
 import { CommitButton } from '~/components/injectable/commit_button';
 
 
@@ -15,11 +15,11 @@ export function IsotopeSetupPage() {
   const state = useTracershopState();
 
    /**
-  * 
+  *
   * @param {{
   *   isotope : Isotope,
    * }} param0 - input props
-   * @returns 
+   * @returns
    */
   function IsotopeRow({isotope}){
     const [tempIsotope, setTempIsotope] = useState({...isotope});

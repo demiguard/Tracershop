@@ -5,11 +5,11 @@
 import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState, testState } from "../../app_state.js";
+import { testState } from "../../app_state.js";
 
 import { AdminSite } from "../../../components/sites/admin_site.js"
 import { DATABASE_ADMIN_PAGE, PROP_USER } from "../../../lib/constants.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -37,22 +37,16 @@ afterEach(() => {
 describe("Admin site test suite", () => {
   it("standard test", () => {
     render(
-    <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <AdminSite />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
-    });
+    <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <AdminSite/>
+    </TracerShopContext>)});
 
   it("standard test click on production", () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <AdminSite />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
-
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <AdminSite/>
+      </TracerShopContext>
+    );
     act(() => {
       const dropDown = screen.getByText("Produktion");
       fireEvent.click(dropDown);
@@ -65,11 +59,10 @@ describe("Admin site test suite", () => {
 
   it("Switch Site", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <AdminSite />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <AdminSite/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const dropDown = screen.getByText("Produktion")

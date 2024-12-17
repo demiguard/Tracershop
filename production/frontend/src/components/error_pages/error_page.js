@@ -2,7 +2,7 @@ import React, { } from "react";
 import { Container } from "react-bootstrap";
 // import styles from "/src/css/Errors.module.css"
 import { db } from "~/lib/local_storage_driver";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context"
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context"
 import { WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_LOG_ERROR, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
 const styles = {

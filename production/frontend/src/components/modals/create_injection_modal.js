@@ -17,7 +17,7 @@ import { TracerCatalog } from "~/lib/data_structures";
 import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 
-import { useTracershopState, useWebsocket } from "../tracer_shop_context";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 import { getId } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";

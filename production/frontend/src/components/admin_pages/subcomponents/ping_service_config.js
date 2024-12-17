@@ -8,7 +8,7 @@ import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_g
 import { ClickableIcon } from "../../injectable/icons";
 import { parseAETitleInput, parseIPInput, parsePortInput } from "../../../lib/user_input";
 import { ParseJSONstr } from "../../../lib/formatting";
-import { useTracershopState, useWebsocket } from "~/components/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 
 export function PingServiceConfig(props){
   const state = useTracershopState();

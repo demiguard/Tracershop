@@ -9,7 +9,7 @@ import { ActivityTable } from "~/components/production_pages/activity_table.js"
 
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants.js";
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/components/tracer_shop_context.js";
+import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 import { InjectionOrder, ActivityOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { separatorInjectionOrders, separatorActivityOrders } from "~/components/production_pages/monitoring_pages/monitor_home_page";
 import { object } from "prop-types";
@@ -42,7 +42,7 @@ afterEach(() => {
 });
 
 describe("InjectionOrder Separators test suite", () => {
-  
+
   it("not released", () => {
     const testData = [
       new InjectionOrder(1,
@@ -65,9 +65,9 @@ describe("InjectionOrder Separators test suite", () => {
     expect(res.releasedOnTime).toEqual(0);
     expect(res.notReleased).toEqual(1);
   })
-  
-  
-  
+
+
+
   it("On time", () => {
     const testData = [
       new InjectionOrder(1,
@@ -168,9 +168,9 @@ describe("ActivityOrders Separators test suite", () => {
     expect(res.releasedOnTime).toEqual(0);
     expect(res.notReleased).toEqual(1);
   })
-  
-  
-  
+
+
+
   it("On time", () => {
     const testData = [
       new ActivityOrder(1,
@@ -194,7 +194,7 @@ describe("ActivityOrders Separators test suite", () => {
     expect(res.releasedDelayed30Plus).toEqual(0);
   });
 
-  
+
 
   it("Delayed 15 min", () => {
     const testData = [
@@ -231,7 +231,7 @@ describe("ActivityOrders Separators test suite", () => {
                         "2016/05/05 09:15:00",
                         null,
                         null
-      )    
+      )
     ];
 
     const res = separatorActivityOrders(testData, state);
@@ -243,5 +243,3 @@ describe("ActivityOrders Separators test suite", () => {
   });
 
 })
-
-
