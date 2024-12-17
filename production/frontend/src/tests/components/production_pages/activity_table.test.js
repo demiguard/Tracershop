@@ -7,7 +7,7 @@ import { act, render, screen, cleanup } from "@testing-library/react"
 import { ActivityTable } from "~/components/production_pages/activity_table.js"
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants.js";
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 
 const module = jest.mock('~/lib/tracer_websocket.js');
@@ -30,11 +30,11 @@ afterEach(() => {
 
 describe("Activity table", () => {
   it("Standard render test", () => {
-    render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityTable {...props} />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityTable {...props} />
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText("time-slot-icon-1")).toBeVisible();
     expect(screen.getByLabelText("time-slot-icon-4")).toBeVisible();
@@ -43,11 +43,11 @@ describe("Activity table", () => {
   })
 
   it("Create a new order", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ActivityTable {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       const button = screen.getByRole('button', {name : "Opret ny ordre"})
@@ -58,38 +58,34 @@ describe("Activity table", () => {
   })
 
   it("Open time slot row", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ActivityTable {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
-    act( () => {
-      const button = screen.getByLabelText('open-time-slot-1');
-      button.click()
+    act(() => {
+      screen.getByLabelText('open-time-slot-1').click();
     });
   });
 
   it("Open Order modal", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ActivityTable {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
-      const button = screen.getByLabelText("time-slot-icon-1");
-      button.click();
+      screen.getByLabelText("time-slot-icon-1").click();
     })
 
     expect(screen.getByTestId("activity_modal")).toBeVisible();
 
     act(() => {
-      const button = screen.getByRole('button', {name : "Luk"});
-      button.click();
+      screen.getByRole('button', {name : "Luk"}).click();
     });
+
     expect(screen.queryByTestId("activity_modal")).toBeNull();
   });
-
-
 });

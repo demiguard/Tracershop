@@ -5,10 +5,11 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state";
 import { ProductionSetup } from "~/components/production_pages/setup_pages/production_setup.js";
 import { DATA_PRODUCTION } from "~/lib/shared_constants.js";
+import { tracer_mapping } from "~/tests/test_state/tracer_mapping.js";
 
 
 const module = jest.mock('../../../../lib/tracer_websocket.js');
@@ -34,12 +35,11 @@ afterEach(() => {
 
 describe("Production Setup", () => {
   it("Standard Render Test", () => {
-
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     for(const production of testState.production.values()){
       if(production.tracer === 1){
@@ -54,13 +54,13 @@ describe("Production Setup", () => {
   });
 
   it("Standard Render Test without Tracers", () => {
-    const newState = {...testState, tracer : new Map()}
+    const newState = {...testState, tracer : new Map(), tracer_mapping : new Map()}
 
-    render(<StateContextProvider value={newState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={newState} websocket={websocket}>
         <ProductionSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText('tracer-selector')).toBeVisible();
     expect(screen.getByLabelText('day-selector')).toBeVisible();
@@ -69,11 +69,11 @@ describe("Production Setup", () => {
   });
 
   it("Click on a production", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const production_weekly = screen.getByLabelText('production-3');
 
@@ -84,11 +84,11 @@ describe("Production Setup", () => {
   });
 
   it("Change Tracer", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const tracerSelector = screen.getByLabelText('tracer-selector');
 
@@ -104,11 +104,11 @@ describe("Production Setup", () => {
   });
 
   it("Add New Production", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
 
     const tracerSelector = screen.getByLabelText('tracer-selector');

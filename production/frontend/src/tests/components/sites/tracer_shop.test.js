@@ -10,7 +10,7 @@ import { AppState, testState } from "../../app_state.js";
 import { TracerShop } from "../../../components/sites/tracer_shop.js"
 import { PROP_USER } from "../../../lib/constants.js";
 import { ANON, users } from "../../test_state/users.js";
-import { TracerShopContext, DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { TracershopState } from "~/dataclasses/dataclasses.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

@@ -11,7 +11,7 @@ import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
 import { AppState, testState } from "../../app_state.js";
 
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 
 const onClose = jest.fn()
@@ -40,11 +40,11 @@ afterEach(() => {
 
 describe("Customer page tests suite", () => {
   it("Standard Render Tests", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     for(const customer of testState.customer.values()){
       expect(await screen.findByText(customer.short_name)).toBeVisible();
@@ -52,11 +52,11 @@ describe("Customer page tests suite", () => {
   });
 
   it("Filter users", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       const form = screen.getByLabelText('customer-filter')
@@ -68,11 +68,11 @@ describe("Customer page tests suite", () => {
   });
 
   it("Open & close setting", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       const settingsIcon = screen.getByLabelText('settings-3')

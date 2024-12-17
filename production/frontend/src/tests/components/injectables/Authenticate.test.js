@@ -3,30 +3,17 @@
  */
 
 import React from "react";
-import { createRoot } from "react-dom/client";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { Authenticate } from "../../../components/injectable/authenticate.js"
 
 
-let container = null;
-let root = null
-beforeEach(() => {
-  container = document.createElement("div");
-  root = createRoot(container);
-});
+
+
+beforeEach(() => {});
 
 afterEach(() => {
-  act(() => {
-    if(root != null) root.unmount()
-  })
-
   cleanup()
-
-  if(container != null) container.remove();
-
-  container = null;
-  root = null;
 });
 
 const Auth = jest.fn((val1, val2) => {})

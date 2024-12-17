@@ -9,7 +9,7 @@ import { bookings } from "~/tests/test_state/bookings.js";
 import { testState } from "../../app_state.js";
 import { FutureBooking, missingSetupHeader } from "../../../components/shop_pages/future_bookings.js";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE } from "~/lib/constants.js";
-import { StateContextProvider, useTracershopState, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { Booking } from "~/dataclasses/dataclasses.js";
 import { BookingStatus, ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE } from "~/lib/shared_constants.js";
 
@@ -48,11 +48,11 @@ afterEach(() => {
 
 describe("Future Bookings Test Suite", () => {
   it("Standard render test", () => {
-    render(<StateContextProvider value={testState}>
-            <WebsocketContextProvider value={websocket}>
-              <FutureBooking {...props}/>
-            </WebsocketContextProvider>
-          </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <FutureBooking {...props}/>
+      </TracerShopContext>
+    );
 
     expect(screen.getByText(testState.tracer.get(1).shortname));
     expect(screen.getByText(missingSetupHeader));
@@ -60,11 +60,11 @@ describe("Future Bookings Test Suite", () => {
   });
 
   it("Open procedures", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FutureBooking {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openUnsetProcedures = screen.getByLabelText("open-unset-procedures");
 
@@ -83,11 +83,11 @@ describe("Future Bookings Test Suite", () => {
       }))
     }
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FutureBooking {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openTracer1 = screen.getByLabelText("open-tracer-1");
 
@@ -122,11 +122,11 @@ describe("Future Bookings Test Suite", () => {
       }))
     }
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FutureBooking {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openTracer1 = screen.getByLabelText("open-tracer-1");
 
@@ -162,11 +162,11 @@ describe("Future Bookings Test Suite", () => {
       }))
     }
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FutureBooking {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openTracer1 = screen.getByLabelText("open-tracer-1");
 
@@ -182,9 +182,7 @@ describe("Future Bookings Test Suite", () => {
 
     const orderButton = screen.getByTestId("order-button-1")
 
-    await act(async () => {
-      orderButton.click();
-    });
+    await act(async () => { orderButton.click(); });
 
     expect(websocket.send).toBeCalled();
     expect(screen.getByTestId("booking_error")).toBeVisible();
@@ -200,11 +198,11 @@ describe("Future Bookings Test Suite", () => {
       new Booking(2, BookingStatus.Initial, 1, 1, "A", "11:00:00")
     ];
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FutureBooking {...newProps}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(
       screen.getByTestId('booking-row-B').compareDocumentPosition(screen
@@ -221,6 +219,5 @@ describe("Future Bookings Test Suite", () => {
         .getByTestId('booking-row-A'))).toEqual(
           Node.DOCUMENT_POSITION_PRECEDING
         );
-
   });
 });

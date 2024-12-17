@@ -6,8 +6,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider,
-  DispatchContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
@@ -33,13 +32,11 @@ afterEach(() => {
 
 describe("Procedure Table test suite", () => {
   it("Standard Render test", async() => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <DispatchContextProvider value={dispatch}>
-          <ProcedureTable relatedCustomer={testState.customer}/>
-        </DispatchContextProvider>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
+        <ProcedureTable relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     expect(screen.getByTestId("procedure-identifier--1")).toBeVisible();
     expect(screen.getByTestId("tracer--1")).toBeVisible();
@@ -65,11 +62,11 @@ describe("Procedure Table test suite", () => {
       })
     }
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={ResolvingWebsocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={ResolvingWebsocket} dispatch={dispatch}>
         <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const endpointSelect = screen.getByLabelText("select-customer");
 
@@ -115,11 +112,11 @@ describe("Procedure Table test suite", () => {
       })}),
       sendCreateModel : jest.fn()
     }
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={ResolvingWebsocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={ResolvingWebsocket} dispatch={dispatch}>
         <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const endpointSelect = screen.getByLabelText("select-customer");
 
@@ -151,11 +148,11 @@ describe("Procedure Table test suite", () => {
 
   //#region edit Tests
   it("Edit Procedure 1 successfully", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
         <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const tracerSelect = screen.getByTestId("tracer-1");
     const unitsInput = screen.getByTestId("units-1");
@@ -182,11 +179,11 @@ describe("Procedure Table test suite", () => {
 
 
   it("Edit procedure 1 with nonsense units", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
         <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const unitsInput = screen.getByTestId("units-1");
 
@@ -204,11 +201,11 @@ describe("Procedure Table test suite", () => {
   });
 
   it("Edit procedure 1 with nonsense Delay", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
         <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const delayInput = screen.getByTestId("delay-1");
 
@@ -229,11 +226,11 @@ describe("Procedure Table test suite", () => {
   });
 
   it("Create a procedure without selecting a series description", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
         <ProcedureTable relatedCustomer={testState.customer}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const tracerSelect = screen.getByTestId("tracer--1");
     const unitsInput = screen.getByTestId("units--1");

@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 
 import { VialPage } from "~/components/production_pages/vial_page.js"
 
-import { StateContextProvider, WebsocketContextProvider, DispatchContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
@@ -38,13 +38,10 @@ afterEach(() => {
 describe("Vial page tests suite", () => {
   it("Standard Render Tests", async () => {
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <VialPage/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     for(const vial of testState.vial.values()){
       // Note that multiple vials may have the same lot number, hence this.
@@ -54,13 +51,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - ID", () => {
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <VialPage/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const idTableHeader = screen.getByText('ID')
@@ -81,13 +75,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - double ID", () => {
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <VialPage/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const idTableHeader = screen.getByText('ID')
@@ -113,13 +104,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - Lot", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByText('Lot nummer')
@@ -131,13 +119,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - Date", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByTestId('header-DATE')
@@ -147,13 +132,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - time", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByText('Tappe tidspunkt')
@@ -163,13 +145,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - volume", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByText('Volumen')
@@ -179,13 +158,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - aktivitet", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByText('Aktivitet');
@@ -195,13 +171,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - Owner", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByText('Ejer')
@@ -211,13 +184,10 @@ describe("Vial page tests suite", () => {
 
   it("Change sorting - order", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lotTableHeader = screen.getByText('Ordre')
@@ -227,13 +197,10 @@ describe("Vial page tests suite", () => {
 
   it("Filter lot number", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lot_filter = screen.getByTestId("lot_filter")
@@ -249,13 +216,10 @@ describe("Vial page tests suite", () => {
 
   it("Filter Customer", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lot_filter = screen.getByTestId("customer-select")
@@ -271,13 +235,10 @@ describe("Vial page tests suite", () => {
 
   it("Filter Customer", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
       const lot_filter = screen.getByTestId("customer-select")
@@ -293,13 +254,10 @@ describe("Vial page tests suite", () => {
 
   it("Fetch new vials - success", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const dateInput = screen.getByTestId("date-input");
@@ -325,23 +283,19 @@ describe("Vial page tests suite", () => {
 
   it("Fetch new vials - Failure", () => {
     render(
-      <StateContextProvider value={testState}>
-        <DispatchContextProvider value={dispatch}>
-          <WebsocketContextProvider value={websocket}>
-            <VialPage/>
-          </WebsocketContextProvider>
-        </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <VialPage/>
+      </TracerShopContext>
+    );
 
     act(() => {
-      const lot_filter = screen.getByTestId("date-input")
+      const lot_filter = screen.getByTestId("date-input");
       fireEvent.change(lot_filter, {target : {value : "21019/11/04"}})
     });
 
     act(() => {
-      const lot_filter = screen.getByRole("button",{name : "Søg"})
-      fireEvent.click(lot_filter)
-    })
+      screen.getByRole("button",{name : "Søg"}).click();
+    });
 
     expect(dispatch).not.toHaveBeenCalled();
   });

@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
 import { WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
 import {  testState } from "~/tests/app_state.js";
-import { DispatchContextProvider, StateContextProvider, TracerShopContext, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import {  TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');

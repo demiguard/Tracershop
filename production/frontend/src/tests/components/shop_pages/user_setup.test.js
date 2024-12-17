@@ -5,7 +5,7 @@ import React, {StrictMode} from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { ERROR_MESSAGE_INCORRECT_GROUPS, ERROR_MESSAGE_NO_LDAP_USERNAME, UserSetup } from "~/components/shop_pages/user_setup.js";
 import { exact, object } from "prop-types";
@@ -48,13 +48,10 @@ describe("User setup test", () => {
     };
 
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <UserSetup relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
+        <UserSetup relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     for(const user_assignment of testState.user_assignment.values()){
       if(user_assignment.customer === 1){
@@ -77,13 +74,10 @@ describe("User setup test", () => {
     };
 
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <UserSetup relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <UserSetup relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText('user-assignment-new'),
@@ -110,13 +104,10 @@ describe("User setup test", () => {
     };
 
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <UserSetup relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <UserSetup relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText('user-assignment-new'),
@@ -149,13 +140,10 @@ describe("User setup test", () => {
     };
 
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <UserSetup relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <UserSetup relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText('user-assignment-new'),
@@ -190,13 +178,10 @@ describe("User setup test", () => {
     };
 
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <UserSetup relatedCustomer={testState.customer}/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <UserSetup relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
       screen.getByLabelText('user-assignment-1').click();

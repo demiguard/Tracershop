@@ -10,7 +10,7 @@ import { AppState, testState } from '../../app_state.js';
 import { CustomerModal, DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from '../../../components/modals/customer_modal.js'
 import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, WEEKLY_REPEAT_CHOICES, cssError } from "~/lib/constants.js";
 import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_TRACER_MAPPING, WEBSOCKET_DATA } from "~/lib/shared_constants.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -45,11 +45,11 @@ afterEach(() => {
 
 describe("Customer modal list", () => {
   it("Customer 1 Modal Render test", async () => {
-    render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <CustomerModal {...props} />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <CustomerModal {...props} />
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText('active-endpoint-1')).toBeVisible();
     expect(screen.getByLabelText('active-time-slot--1')).toBeVisible();
@@ -57,16 +57,15 @@ describe("Customer modal list", () => {
 
     expect(screen.getByLabelText('time-slot-1'));
     expect(screen.getByLabelText('time-slot-2'));
-
   });
 
   it("Customer 2 Modal Render test", async () => {
     props[PROP_ACTIVE_CUSTOMER] = 2
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText('active-endpoint-3')).toBeVisible();
     expect(screen.getByLabelText('active-time-slot--1')).toBeVisible();
@@ -76,11 +75,11 @@ describe("Customer modal list", () => {
 
   it("Customer 3 Modal Render test", async () => {
     props[PROP_ACTIVE_CUSTOMER] = 3
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText('active-endpoint-4')).toBeVisible();
     expect(screen.getByLabelText('active-time-slot--1')).toBeVisible();
@@ -90,11 +89,11 @@ describe("Customer modal list", () => {
 
   it("Customer no endpoint render test", async () => {
     props[PROP_ACTIVE_CUSTOMER] = 4
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText('active-endpoint--1')).toBeVisible();
     expect(screen.getByLabelText('active-time-slot--1')).toBeVisible();
@@ -102,11 +101,11 @@ describe("Customer modal list", () => {
   });
 
   it("Customer 1, click on time slot 2", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const timeSlot2 = screen.getByLabelText('time-slot-2');
 
@@ -125,11 +124,11 @@ describe("Customer modal list", () => {
   })
 
   it("Customer 1, change time slot", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const timeSlot2 = await screen.findByLabelText('time-slot-2');
     act(() => {fireEvent.click(timeSlot2);});
@@ -148,11 +147,11 @@ describe("Customer modal list", () => {
   })
 
   it("Customer 1, change time slot 2 - delivery time", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const timeSlot2 = screen.getByLabelText('time-slot-2');
     const timeSlotForm = screen.getByLabelText('time-slot-delivery-time');
@@ -168,11 +167,11 @@ describe("Customer modal list", () => {
   });
 
   it("Customer 1, edit time slot 2 - delivery time", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const timeSlot2 = screen.getByLabelText('time-slot-2');
     const timeSlotForm = screen.getByLabelText('time-slot-delivery-time');
@@ -193,11 +192,11 @@ describe("Customer modal list", () => {
 
   it("Attempt to create delivery endpoint without endpoint", async () => {
     props[PROP_ACTIVE_CUSTOMER] = 4
-    render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <CustomerModal {...props} />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <CustomerModal {...props} />
+      </TracerShopContext>
+    );
 
     const timeSlotForm = screen.getByLabelText('time-slot-delivery-time');
     act(() => {
@@ -218,11 +217,11 @@ describe("Customer modal list", () => {
   });
 
   it("Change endpoint while an Delivery Time was selected", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => { screen.getByLabelText('time-slot-2').click(); });
 
@@ -237,13 +236,13 @@ describe("Customer modal list", () => {
   });
 
   it("Change endpoint to the same endpoint while an Delivery Time was selected", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
-act(() => {
+    act(() => {
       screen.getByLabelText('time-slot-2').click();
     });
 
@@ -258,11 +257,11 @@ act(() => {
   });
 
   it("Change Tracer to the same Tracer while an Delivery Time was selected", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => { screen.getByLabelText('time-slot-2').click(); });
 
@@ -277,11 +276,11 @@ act(() => {
   });
 
   it("Change Tracer to the same Tracer while an Delivery Time was selected", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => { screen.getByLabelText('time-slot-2').click(); });
 
@@ -296,11 +295,11 @@ act(() => {
   });
 
   it("Change Dispenser ID - correct", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const dispenserInput = screen.getByLabelText('dispenser-input');
 
@@ -315,11 +314,11 @@ act(() => {
   });
 
   it("Change Dispenser ID - incorrect", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const dispenserInput = screen.getByLabelText('dispenser-input');
 
@@ -338,11 +337,12 @@ act(() => {
   });
 
   it("Create Endpoint, with all error", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     const endpointSelect = screen.getByLabelText('endpoint-select');
 
     await act(async () => {
@@ -354,8 +354,8 @@ act(() => {
     let endpointCityInput = screen.getByLabelText('endpoint-city');
     let endpointZipCodeInput = screen.getByLabelText('endpoint-zip-code');
     let endpointPhoneInput = screen.getByLabelText('endpoint-phone');
-    expect(endpointNameInput.value).toBe("Nyt");
 
+    expect(endpointNameInput.value).toBe("Nyt");
     expect(endpointNameInput).toBeVisible();
     expect(endpointAddressInput).toBeVisible();
     expect(endpointCityInput).toBeVisible();
@@ -408,11 +408,12 @@ act(() => {
       sendEditModel : jest.fn((message) => new Promise(async function(resolve) {resolve();})),
     };
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     const endpointSelect = screen.getByLabelText('endpoint-select');
 
     await act(async () => {
@@ -444,11 +445,11 @@ act(() => {
   });
 
   it("Set Overhead Correct", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText('overhead-input'),
@@ -468,11 +469,11 @@ act(() => {
   });
 
   it("Set Overhead incorrect", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText('overhead-input'),
@@ -488,11 +489,12 @@ act(() => {
   });
 
   it("Debug test", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     const endpointSelect = screen.getByLabelText('endpoint-select');
     await act(async () => {
       fireEvent.change(endpointSelect, {target : {value : "-1"}});
@@ -507,13 +509,12 @@ act(() => {
   });
 
   it("Create Deliver time, Change DeliveryEndpoint, Change Tracer, Change Production, success",
-    async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
+    async () => { // This function call belongs to the testcase and is not part of it
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CustomerModal {...props} />
+        </TracerShopContext>
+      );
     // Change endpoint
     act(() => {
       const endpointSelect = screen.getByLabelText('endpoint-select');
@@ -561,11 +562,11 @@ act(() => {
   });
 
   it("Attempting to create invalid time slot", async () =>  {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     // Change Delivery Time
     act(() => {
@@ -592,11 +593,11 @@ act(() => {
   });
 
   it("Attempting to create time slot before ", async () =>  {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CustomerModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     // Change Delivery Time
     act(() => {

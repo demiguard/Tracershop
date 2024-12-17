@@ -9,10 +9,9 @@ import { jest } from '@jest/globals'
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
-
 import { Calender } from '../../../components/injectable/calender.js'
 import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK } from "../../../lib/constants.js";
-import { StateContextProvider, WebsocketContextProvider, DispatchContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { ProductionBitChain } from "~/lib/data_structures.js";
 import { testState } from "~/tests/app_state.js";
 import { UpdateToday } from "~/lib/state_actions.js";
@@ -46,13 +45,14 @@ const calender_props = {
 
 describe("Calender render Tests", () => {
   it("Standard RenderTest", () => {
-    render( <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <Calender {...calender_props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <Calender {...calender_props}/>
+      </TracerShopContext>
+    );
 
-    const expectedDate = Intl.DateTimeFormat().resolvedOptions().locale === "da-DK"? "26. juni" : "26. June"; //taking for account local date settings
+    //taking for account local date settings
+    const expectedDate = Intl.DateTimeFormat().resolvedOptions().locale === "da-DK" ? "26. juni" : "26. June";
 
     expect(screen.getByText(expectedDate)).toBeVisible();
     expect(screen.getByText("Man")).toBeVisible();
@@ -65,44 +65,40 @@ describe("Calender render Tests", () => {
 
   });
 
-  it("Click on 15 of june", async () => {
-    render( <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <Calender {...calender_props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+  it("Click on 15 of june", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <Calender {...calender_props}/>
+      </TracerShopContext>
+    );
 
-    fireEvent(await screen.findByText("15"), new MouseEvent('click', {bubbles: true, cancelable: true}));
+    fireEvent(screen.getByText("15"), new MouseEvent('click', {bubbles: true, cancelable: true}));
     expect(onDayClick).toHaveBeenCalledWith(new Date(2012,5,15,12,0,0))
 
   });
 
   it("Increase Month", async () => {
-    render(<StateContextProvider value={testState}>
-    <DispatchContextProvider value={dispatch}>
-      <WebsocketContextProvider value={websocket}>
-        <Calender {...calender_props} />
-      </WebsocketContextProvider>
-    </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
+        <Calender {...calender_props}/>
+      </TracerShopContext>
+    );
 
     await act(async () => {
-      fireEvent(await screen.findByAltText("Næste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
+      fireEvent(screen.getByAltText("Næste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
     })
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining(new UpdateToday(new Date(2012,6,1,12,0,0), websocket)))
   });
 
   it("Decrease Month", async () => {
     render(
-    <StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatch}>
-        <WebsocketContextProvider value={websocket}>
-          <Calender {...calender_props} />
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
+        <Calender {...calender_props}/>
+      </TracerShopContext>
+    );
+
     await act(async () => {
-      fireEvent(await screen.findByAltText("Sidste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
+      fireEvent(screen.getByAltText("Sidste"), new MouseEvent('click', {bubbles: true, cancelable: true}));
     })
     expect(dispatch).toHaveBeenCalledWith(expect.objectContaining(new UpdateToday(new Date(2012,4,1,12,0,0), websocket)))
   });

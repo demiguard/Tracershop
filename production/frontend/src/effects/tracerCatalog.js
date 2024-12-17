@@ -24,14 +24,5 @@ export function TracerCatalogProvider({ children }){
 }
 
 export function useTracerCatalog(){
-  const context = useContext(TracerShopCatalogContext);
-
-  if(context === null){
-    throw {
-      error : "MISSING CONTEXT DISPATCHER"
-
-    }
-  }
-
-  return context;
+  return useContext(TracerShopCatalogContext);
 }

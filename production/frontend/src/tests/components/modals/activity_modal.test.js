@@ -13,7 +13,7 @@ import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE,
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_VIAL, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js"
 
 import { testState } from "../../app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { TracerCatalog } from "~/lib/data_structures.js";
 import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
@@ -83,14 +83,12 @@ describe("Activity Modal Test", () => {
     }
 
     render(
-      <StateContextProvider value={customState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     expect(screen.getByRole('button', {name : "Accepter"})).toBeVisible();
-
     expect(screen.queryByLabelText('vial-usage-2')).toBeNull();
     expect(screen.queryByLabelText('vial-usage-3')).toBeNull();
   });
@@ -104,14 +102,19 @@ describe("Activity Modal Test", () => {
                                                                other_date_string,
                                                                1));
     props[PROP_ACTIVE_DATE] = new Date(2020,4,11,10,33,26)
-    props[PROP_ORDER_MAPPING] = new OrderMapping(todays_orders,
-      other_date_string, tracer_catalog, active_tracer, testState);
+    props[PROP_ORDER_MAPPING] = new OrderMapping(
+      todays_orders,
+      other_date_string,
+      tracer_catalog,
+      active_tracer,
+      testState
+    );
+
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     expect(screen.queryByRole('button', {name : "Accepter"})).toBeNull()
     expect(screen.queryByLabelText('vial-usage-1')).toBeNull();
@@ -143,11 +146,10 @@ describe("Activity Modal Test", () => {
     }
 
     render(
-      <StateContextProvider value={customState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByRole('button', {name : "Accepter"}).click();
@@ -162,7 +164,6 @@ describe("Activity Modal Test", () => {
 
   it("Use a vial", () => {
     const status_order_date = "2020-05-11";
-
     const todays_orders = applyFilter(testState.activity_orders,
                                       dailyActivityOrderFilter(testState.deliver_times,
                                                                testState.production,
@@ -177,14 +178,12 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
-    const vial = testState.vial.get(4);
-
+    const vial = testState.vial.get(7);
     act(() => {
       screen.getByLabelText('vial-usage-7').click();
     })
@@ -209,11 +208,10 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     const vial = testState.vial.get(7);
 
@@ -230,7 +228,7 @@ describe("Activity Modal Test", () => {
     // To do assert this
   });
 
-  it("start creating a new vial", async () => {
+  it("start creating a new vial", () => {
     const status_2_order_date = "2020-05-11";
 
     const todays_orders = applyFilter(testState.activity_orders,
@@ -247,22 +245,21 @@ describe("Activity Modal Test", () => {
       testState);
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByLabelText("add-new-vial").click();
     });
 
-    expect(await screen.findByLabelText('lot_number--1')).toBeVisible();
-    expect(await screen.findByLabelText('fill_time--1')).toBeVisible();
-    expect(await screen.findByLabelText('volume--1')).toBeVisible();
-    expect(await screen.findByLabelText('activity--1')).toBeVisible();
-    expect(await screen.findByLabelText('vial-commit--1')).toBeVisible();
-    expect(await screen.findByLabelText('vial-edit-decline--1')).toBeVisible();
+    expect(screen.getByLabelText('lot_number--1')).toBeVisible();
+    expect(screen.getByLabelText('fill_time--1')).toBeVisible();
+    expect(screen.getByLabelText('volume--1')).toBeVisible();
+    expect(screen.getByLabelText('activity--1')).toBeVisible();
+    expect(screen.getByLabelText('vial-commit--1')).toBeVisible();
+    expect(screen.getByLabelText('vial-edit-decline--1')).toBeVisible();
   });
 
   it("start and stop creating a new vial", async () => {
@@ -282,11 +279,10 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByLabelText("add-new-vial").click();
@@ -320,28 +316,28 @@ describe("Activity Modal Test", () => {
       testState);
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
-    const vialNew = await screen.findByLabelText("add-new-vial");
+    const vialNew = screen.getByLabelText("add-new-vial");
 
-    await act(async () => {
+    act(() => {
       vialNew.click();
-    })
+    });
+
     const lotNumberInput = screen.queryByLabelText('lot_number--1');
     const fillTimeInput = screen.queryByLabelText('fill_time--1');
     const volumeInput = screen.queryByLabelText('volume--1');
     const activityInput = screen.queryByLabelText('activity--1');
 
-    await act(async () => {
+    act(() => {
       fireEvent.change(lotNumberInput, {target : { value : "fdg-200504-1"}});
       fireEvent.change(fillTimeInput, {target :{ value : "11:33:44"}});
       fireEvent.change(volumeInput, {target : {value : "13,44"}});;
       fireEvent.change(activityInput, {target : {value : "13665"}});
-    })
+    });
 
     const accept = screen.queryByLabelText('vial-commit--1');
     await act(async () => {
@@ -380,11 +376,10 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByLabelText('edit-vial-7').click();
@@ -434,17 +429,17 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
-    await act(async () => {
+
+    act(() => {
       screen.getByLabelText('edit-vial-7').click();
     });
 
-    await act(async () => {
+    act(() => {
       const lotForm = screen.getByLabelText('lot_number-7');
       const fillTimeForm = screen.getByLabelText('fill_time-7');
       const volumeForm = screen.getByLabelText('volume-7');
@@ -465,10 +460,9 @@ describe("Activity Modal Test", () => {
     expect(screen.getByLabelText('fill_time-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
     expect(screen.getByLabelText('volume-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
     expect(screen.getByLabelText('activity-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
-
   });
 
-  it("Select and unselect, then assert you can't free", async () => {
+  it("Select and unselect, then assert you can't free",() => {
     const status_2_order_date = "2020-05-11";
 
     const todays_orders = applyFilter(testState.activity_orders,
@@ -486,20 +480,20 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
+
 
     // Click
-    await act(async () => {
-      screen.queryByLabelText('vial-usage-7').click();
+    act(() => {
+      screen.getByLabelText('vial-usage-7').click();
     });
     // And click again
 
-    await act(async () => {
-      screen.queryByLabelText('vial-usage-7').click();
+    act(() => {
+      screen.getByLabelText('vial-usage-7').click();
     });
 
     expect(screen.getByRole('button', {'name' : "Godkend"})).toBeDisabled()
@@ -528,11 +522,10 @@ describe("Activity Modal Test", () => {
     }
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     const vial = testState.vial.get(7)
     const vialUsage = screen.queryByLabelText('vial-usage-7');
@@ -541,10 +534,10 @@ describe("Activity Modal Test", () => {
       vialUsage.click();
     })
 
-    const allocColumn = await screen.findByTestId('allocation-col');
+    const allocColumn = screen.getByTestId('allocation-col');
     expect(allocColumn.innerHTML).toEqual(`${vial.activity} MBq`);
 
-    const freeButton = await screen.findByRole('button', {name : "Godkend"});
+    const freeButton = screen.getByRole('button', {name : "Godkend"});
 
     act(() => {
       freeButton.click()
@@ -553,13 +546,13 @@ describe("Activity Modal Test", () => {
     expect(screen.getByText(WRONG_DATE_WARNING_MESSAGE)).toBeVisible();
 
     await act(async () => {
-      const usernameInput = await screen.findByLabelText('username')
-      const passwordInput = await screen.findByLabelText('password')
+      const usernameInput = screen.getByLabelText('username')
+      const passwordInput = screen.getByLabelText('password')
 
       fireEvent.change(usernameInput, {target : { value : "Username"}})
       fireEvent.change(passwordInput, {target : { value : "password"}})
 
-      const freeButton = await screen.findByRole('button', {name : "Frigiv Ordre"});
+      const freeButton = screen.getByRole('button', {name : "Frigiv Ordre"});
       freeButton.click()
     });
   });
@@ -586,11 +579,10 @@ describe("Activity Modal Test", () => {
     }
 
     render(
-      <StateContextProvider value={newState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     const vial = newState.vial.get(9);
 
@@ -645,11 +637,10 @@ describe("Activity Modal Test", () => {
     }
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     const vial = testState.vial.get(7);
     const vialUsage = screen.queryByLabelText('vial-usage-7');
@@ -702,13 +693,12 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
-    // Start editing the order
+    // Start editing the order -- These are some ChatGPT level comments
     act(() => {screen.getByLabelText("edit-order-activity-5").click()});
     // edit the order
     act(() => {
@@ -748,11 +738,10 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     // Start editing the order
     await act(async () => {
@@ -797,11 +786,10 @@ describe("Activity Modal Test", () => {
     );
 
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByRole('button', {name : 'Afvis'}).click();
@@ -847,11 +835,10 @@ describe("Activity Modal Test", () => {
       [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
     }
     const {rerender} = render(
-      <StateContextProvider value={customState}>
-        <WebsocketContextProvider value={websocket}>
-          <ActivityModal {...props}/>
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <ActivityModal {...props}/>
+      </TracerShopContext>
+    );
 
     const newState = new TracershopState();
     Object.assign(newState, customState);
@@ -877,11 +864,11 @@ describe("Activity Modal Test", () => {
       [PROP_TRACER_CATALOG] : new TracerCatalog(newState.tracer_mapping, newState.tracer),
     }
 
-    rerender(<StateContextProvider value={newState}>
-      <WebsocketContextProvider value={websocket}>
+    rerender(
+      <TracerShopContext tracershop_state={newState} websocket={websocket}>
         <ActivityModal {...updated_props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(screen.getByTestId("vial-id-10")).toBeVisible();
     expect(screen.getByTestId("vial-id-11")).toBeVisible();

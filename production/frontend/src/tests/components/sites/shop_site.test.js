@@ -8,7 +8,6 @@ import { act, screen, render, cleanup, fireEvent } from "@testing-library/react"
 import { jest } from '@jest/globals'
 import { AppState, testState } from "../../app_state.js";
 
-import { PROP_USER } from "../../../lib/constants.js";
 import { ShopSite } from "../../../components/sites/shop_site.js";
 import { users } from "../../test_state/users.js";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";

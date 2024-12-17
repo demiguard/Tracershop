@@ -6,7 +6,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID, PROP_VALID_ACTIVITY_DEADLINE } from "~/lib/constants.js";
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card.js";
 import { getRelevantActivityOrders } from "~/lib/filters.js";
@@ -48,11 +48,11 @@ afterEach(() => {
 
 describe("Time slot card Test Suite", () => {
   it("Standard Render Test", () => {
-    render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <TimeSlotCard {...props} />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TimeSlotCard {...props} />
+      </TracerShopContext>
+    );
 
     const timeSlot = testState.deliver_times.get(default_time_slot_id)
     expect(screen.getByText(timeSlot.delivery_time)).toBeVisible();
@@ -67,18 +67,19 @@ describe("Time slot card Test Suite", () => {
   });
 
   it("Open the card with extra order", () => {
-    render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <TimeSlotCard {...props} />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TimeSlotCard {...props} />
+      </TracerShopContext>
+    );
 
     const openButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
 
     act(() => {
       fireEvent.click(openButton);
     });
-    expect(screen.queryByLabelText('commit--1')).toBeVisible();
+
+    expect(screen.getByLabelText('commit--1')).toBeVisible();
 
     for(const order of relevantActivityOrders ){
       if(order.ordered_time_slot === 1){
@@ -89,17 +90,17 @@ describe("Time slot card Test Suite", () => {
 
   it("Open the card without extra order", () => {
     props[PROP_VALID_ACTIVITY_DEADLINE] = false;
-    render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <TimeSlotCard {...props} />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
 
-    const openButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TimeSlotCard {...props} />
+      </TracerShopContext>
+    );
 
     act(() => {
-      fireEvent.click(openButton);
+      screen.getByLabelText(`open-time-slot-${default_time_slot_id}`).click();
     });
+
     expect(screen.queryByLabelText('commit--1')).toBeNull();
 
     for(const order of relevantActivityOrders ){
@@ -111,11 +112,11 @@ describe("Time slot card Test Suite", () => {
 
 
   it("Create an New order", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TimeSlotCard {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
   const openButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
 
@@ -145,11 +146,11 @@ describe("Time slot card Test Suite", () => {
   });
 
   it("Fail to create New order", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TimeSlotCard {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
   act(() => {
     screen.getByLabelText(`open-time-slot-${default_time_slot_id}`).click()
@@ -176,11 +177,11 @@ describe("Time slot card Test Suite", () => {
   });
 
   it.skip("Open the calculator", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TimeSlotCard {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openCalculatorButton = screen.getByLabelText(`open-calculator-${default_time_slot_id}`);
 
@@ -193,11 +194,11 @@ describe("Time slot card Test Suite", () => {
   });
 
   it.skip("use the calculator", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TimeSlotCard {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openTimeSlotButton = screen.getByLabelText(`open-time-slot-${default_time_slot_id}`);
     const openCalculatorButton = screen.getByLabelText(`open-calculator-${default_time_slot_id}`);
@@ -238,11 +239,11 @@ describe("Time slot card Test Suite", () => {
 
     props['activityOrders'] = [testState.activity_orders.get(6)]
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TimeSlotCard {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openButton = screen.getByLabelText("open-time-slot-4");
 

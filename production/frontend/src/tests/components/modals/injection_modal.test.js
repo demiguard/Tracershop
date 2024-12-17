@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 
 
 import { InjectionModal } from "~/components/modals/injection_modal.js"
-import { WebsocketContextProvider, StateContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { PROP_MODAL_ORDER, PROP_ON_CLOSE } from "~/lib/constants.js";
 import { AppState, testState } from "~/tests/app_state.js";
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
@@ -48,68 +48,72 @@ afterEach(() => {
 
 
 describe("Injection modal test suite", () =>{
-  it("Standard Render test status 1", async () => {
+  it("Standard Render test status 1", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
-    expect(await screen.findByRole('button', {name : "Accepter Ordre"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Accepter Ordre"})).toBeVisible();
     expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
     expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
   it("Accept Order", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
+    await act(async () => {
+      screen.getByRole('button', {name : "Accepter Ordre"}).click()
+    });
 
-    fireEvent.click(await screen.findByRole('button', {name : "Accepter Ordre"}));
     expect(websocket.sendEditModel).toHaveBeenCalled();
   });
 
   it("Standard Render test status 2", () => {
-    modalProps[PROP_MODAL_ORDER] = 2
+    modalProps[PROP_MODAL_ORDER] = 2;
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
     expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
-    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
     expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
   it("Start freeing empty Order", async () => {
-    modalProps[PROP_MODAL_ORDER] = 2
+    modalProps[PROP_MODAL_ORDER] = 2;
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
-    fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
-    expect(await screen.findByText("Lot nummeret er ikke i det korrekte format")).toBeVisible();
-    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
+    act(() => {
+      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+    })
+
+    expect(screen.getByText("Lot nummeret er ikke i det korrekte format")).toBeVisible();
+    expect(screen.getByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
   it("Edit Freeing Order", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
     const input = await screen.findByLabelText("lot-input")
     fireEvent.change(input, {target : {value : "test-111111-1"}});
@@ -138,11 +142,11 @@ describe("Injection modal test suite", () =>{
     websocket = ResolvingWebsocket
     modalProps[PROP_MODAL_ORDER] = 2
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
     fireEvent.change(await screen.findByLabelText("lot-input"), {target : {value : "test-111111-1"}});
 
@@ -164,11 +168,11 @@ describe("Injection modal test suite", () =>{
     };
     modalProps[PROP_MODAL_ORDER] = 2;
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={ResolvingWebsocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={ResolvingWebsocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText("lot-input"), {target : {value : "test-111111-1"}});
@@ -205,11 +209,11 @@ describe("Injection modal test suite", () =>{
   it("Standard Render test status 3", () => {
     modalProps[PROP_MODAL_ORDER] = 3;
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>)
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
 
     expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
     expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
@@ -220,14 +224,10 @@ describe("Injection modal test suite", () =>{
   it("Canceling an order", () => {
     modalProps[PROP_MODAL_ORDER] = 2;
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
-        <InjectionModal {...modalProps} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
-
-
-  })
-
-})
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionModal {...modalProps}/>
+      </TracerShopContext>
+    );
+  });
+});

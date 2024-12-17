@@ -4,31 +4,15 @@
 
 import React from "react";
 
-import { createRoot } from "react-dom/client";
-import { act, screen, render, cleanup, fireEvent, getByAltText } from "@testing-library/react";
-import userEvent from '@testing-library/user-event'
-
+import { jest } from '@jest/globals'
+import { screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { ClickableIcon, StatusIcon } from "../../../components/injectable/icons.js";
 import { testState } from "~/tests/app_state.js";
 
-let container = null;
-let root = null
-beforeEach(() => {
-  container = document.createElement("div");
-  root = createRoot(container);
-});
+beforeEach(() =>  {});
 
 afterEach(() => {
-  act(() => {
-    if(root != null) root.unmount()
-  })
-
   cleanup()
-
-  if(container != null) container.remove();
-
-  container = null;
-  root = null;
 });
 
 const dummyClickable = jest.fn(() => {})

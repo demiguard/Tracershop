@@ -8,11 +8,11 @@ import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 import { DEADLINE_TYPES  } from "~/lib/constants.js";
 import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants.js";
-import { AppState, testState } from "../../app_state.js";
+import { testState } from "../../app_state.js";
 
 import { DeadlineSetup, GlobalDeadlineValuesOptions } from "~/components/production_pages/setup_pages/deadline_setup.js";
 import userEvent from "@testing-library/user-event";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
@@ -37,21 +37,20 @@ afterEach(() => {
 
 describe("Deadline Setup tests", () => {
   it("Standard render test", () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
-
+      </TracerShopContext>
+    );
   });
 
   it("Change deadline Type", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     await act(async () => {
       const input = await screen.findByLabelText('type-1')
       fireEvent.change(input, {target : {value : "1"}})
@@ -69,11 +68,12 @@ describe("Deadline Setup tests", () => {
 
   // This test is trivially ensure and kinda legacy because the confirmation method changed
   it("Change deadline Type to same value", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     await act(async () => {
       const input = await screen.findByLabelText('type-1')
       fireEvent.change(input, {target : {value : "0"}})
@@ -83,11 +83,11 @@ describe("Deadline Setup tests", () => {
   })
 
   it("Change deadline time", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const input = await screen.findByLabelText('time-1');
@@ -122,11 +122,11 @@ describe("Deadline Setup tests", () => {
 
 
   it("Change deadline not a time ", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const input = await screen.findByLabelText('time-1')
@@ -139,11 +139,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change deadline time", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const input = await screen.findByLabelText('days-2')
@@ -159,11 +159,12 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change day to same value", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     await act(async () => {
       const input = await screen.findByLabelText('days-2')
       fireEvent.change(input, {target : {value : "3"}})
@@ -173,11 +174,12 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change Deadline to Global", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     await act(async () => {
       const input = await screen.findByLabelText('global-3')
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.NO_OPTION}`}})
@@ -187,11 +189,12 @@ describe("Deadline Setup tests", () => {
   })
 
   it("Change Deadline to Global Activity deadline", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     await act(async () => {
       const input = await screen.findByLabelText('global-3')
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE}`}})
@@ -203,11 +206,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Change Deadline to Global Injection deadline", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const input = await screen.findByLabelText('global-3')
@@ -220,11 +223,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("create new deadline success", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const inputTime = await screen.findByLabelText('time--1')
@@ -239,11 +242,11 @@ describe("Deadline Setup tests", () => {
   })
 
   it("create new weekly deadline success", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const inputTime = await screen.findByLabelText('time--1')
@@ -261,11 +264,11 @@ describe("Deadline Setup tests", () => {
 
 
   it("create new deadline failure", async () => {
-    render(<StateContextProvider value={testState} >
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <DeadlineSetup/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () => {
       const inputTime = await screen.findByLabelText('time--1');

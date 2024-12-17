@@ -7,7 +7,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 import { LocationTable } from "~/components/shop_pages/shop_injectables/location_table.js";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
@@ -34,19 +34,19 @@ afterEach(() => {
 
 describe("Injection order card test suite", () => {
   it("Standard Render Test", () => {
-    render(<StateContextProvider value={testState}>
-            <WebsocketContextProvider value={websocket}>
-              <LocationTable/>
-            </WebsocketContextProvider>
-          </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <LocationTable/>
+      </TracerShopContext>
+    );
   });
 
   it("Filter to location Code 20", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <LocationTable/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const filterInput = screen.getByLabelText('filter');
 
@@ -59,11 +59,11 @@ describe("Injection order card test suite", () => {
   });
 
   it("Filter to location Code 20", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <LocationTable/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const filterInput = screen.getByLabelText('location-common-name-1');
 
@@ -76,12 +76,11 @@ describe("Injection order card test suite", () => {
   });
 
   it("Filter to location Code 20", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <LocationTable/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
-
+      </TracerShopContext>
+    );
     const filterInput = screen.getByLabelText('filter');
 
     act(() => {

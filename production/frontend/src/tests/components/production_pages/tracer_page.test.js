@@ -9,7 +9,7 @@ import { TracerPage } from "../../../components/production_pages/setup_pages/tra
 import { TRACER_TYPE } from "~/lib/constants.js";
 import { DATA_TRACER } from "~/lib/shared_constants";
 import { testState } from "../../app_state.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -30,11 +30,10 @@ afterEach(() => {
 describe("Tracer setup Page test suite", () => {
   it("Standard Render Test", () => {
     render(
-    <StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerPage />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     for(const tracer of testState.tracer.values()){
       if(!tracer.archived){
@@ -55,13 +54,12 @@ describe("Tracer setup Page test suite", () => {
 
   it("Restore Tracer", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerPage />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TracerPage />
+      </TracerShopContext>
+    );
 
-    await act(() => {
+    act(() => {
       screen.getByLabelText('open-tracer-archive').click();
     })
 
@@ -77,11 +75,10 @@ describe("Tracer setup Page test suite", () => {
 
   it("Change clinical name", async () =>{
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerPage />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TracerPage />
+      </TracerShopContext>
+    );
 
     const clinicalNameInput = screen.getByLabelText('set-clinical-name-1')
     await act(async () => {
@@ -96,11 +93,10 @@ describe("Tracer setup Page test suite", () => {
 
   it("Open and close modal", async () => {
     render(
-      <StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
-          <TracerPage />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TracerPage />
+      </TracerShopContext>
+    );
 
     const openModal = screen.getByLabelText(`open-modal-2`)
 
@@ -117,11 +113,11 @@ describe("Tracer setup Page test suite", () => {
   });
 
   it("Create a new Tracer", async () => {
-    render(<StateContextProvider value={testState}>
-             <WebsocketContextProvider value={websocket}>
-               <TracerPage />
-              </WebsocketContextProvider>
-           </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TracerPage />
+      </TracerShopContext>
+    );
 
     const shortnameInput = screen.getByLabelText('set-shortname--1');
     const clinicalNameInput = screen.getByLabelText('set-clinical-name--1');
@@ -153,11 +149,11 @@ describe("Tracer setup Page test suite", () => {
   });
 
   it("Archive tracer", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerPage />
-       </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByLabelText('archive-8').click();
@@ -170,11 +166,11 @@ describe("Tracer setup Page test suite", () => {
   });
 
   it("Filter out Tracer", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerPage />
-       </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       fireEvent.change(screen.getByLabelText('tracer-filter'), {target : { value : "test_tracer_4"}});
@@ -190,17 +186,16 @@ describe("Tracer setup Page test suite", () => {
   });
 
   it("Market a tracer", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerPage />
-       </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByTestId("marketed-4").click();
     });
 
     expect(screen.getByLabelText("commit-tracer-4")).toBeVisible();
-
-  })
+  });
 });

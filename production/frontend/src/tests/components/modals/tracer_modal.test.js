@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { TracerModal } from "~/components/modals/tracer_modal.js"
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants.js";
 import { DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING } from "~/lib/shared_constants.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -45,22 +45,23 @@ const props = {
 
 describe("Tracer Modal test suite", () => {
   it("Standard Render test", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerModal {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     // TODO : Create short hand for displaying each endpoint, that's isn't a JSX
 
   });
 
   it("Filter tests", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerModal {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     const filterInput = await screen.findByLabelText('input-filter')
     act(() => {
       fireEvent.change(filterInput, {target : {value : "2" }})
@@ -75,11 +76,11 @@ describe("Tracer Modal test suite", () => {
   });
 
   it("Add tracer to customer 4", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerModal {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const customer2CheckBox = screen.getByLabelText("check-4")
 
@@ -91,20 +92,19 @@ describe("Tracer Modal test suite", () => {
   });
 
   it("Remove tracer to customer 1", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerModal {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
-    const customer2CheckBox = screen.getByLabelText("check-1")
+    const customer2CheckBox = screen.getByLabelText("check-1");
 
     act(() => {
       fireEvent.click(customer2CheckBox);
-    })
+    });
 
     expect(websocket.send).toHaveBeenCalled();
-
   });
 
 })

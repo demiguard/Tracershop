@@ -7,7 +7,7 @@ import { jest, describe, it } from "@jest/globals"
 import { render } from "@testing-library/react";
 import { testState } from "~/tests/app_state";
 import { InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
-import { StateContextProvider } from "~/contexts/tracer_shop_context";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { WeeklyProductionOverview } from "~/components/production_pages/weekly_production_overview";
 import { toMapping } from "~/lib/utils";
 import { ORDER_STATUS } from "~/lib/constants";
@@ -28,10 +28,12 @@ describe("Weekly production overview test suite", () => {
 
 
     render(
-      <StateContextProvider value={modifiedState}>
+      <TracerShopContext tracershop_state={modifiedState}>
         <WeeklyProductionOverview active_date={active_date}/>
-      </StateContextProvider>
+      </TracerShopContext>
     );
+
+    //TODO: Assert
 
   })
 })

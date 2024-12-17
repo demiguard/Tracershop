@@ -11,7 +11,7 @@ import { CreateInjectionOrderModal } from "~/components/modals/create_injection_
 import { ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
 
 import { testState} from '~/tests/app_state.js'
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
 
@@ -43,12 +43,12 @@ afterEach(() => {
 });
 
 describe("Create injection Order", () => {
-  it("Standard Render Test", async () => {
-    render(<StateContextProvider value={testState}>
-             <WebsocketContextProvider value={websocket}>
-               <CreateInjectionOrderModal {...props} />
-             </WebsocketContextProvider>
-           </StateContextProvider>);
+  it("Standard Render Test", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <CreateInjectionOrderModal {...props} />
+      </TracerShopContext>
+    );
 
     expect(screen.getByLabelText("select-customer")).toBeVisible();
     expect(screen.getByLabelText("select-endpoint")).toBeVisible();
@@ -67,29 +67,31 @@ describe("Create injection Order", () => {
     expect(screen.getByRole('button', {name : "Opret Ordre"})).toBeVisible()
   });
 
-  it.skip("Missing Injections!", async () => {
-    render(<StateContextProvider value={testState}>
-             <WebsocketContextProvider value={websocket}>
-               <CreateInjectionOrderModal {...props} />
-            </WebsocketContextProvider>
-          </StateContextProvider>);
+  it.skip("Missing Injections!", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <CreateInjectionOrderModal {...props} />
+      </TracerShopContext>
+    );
 
 
-  await act(async () => {screen.findByRole('button',{name : "Opret Ordre"}).click()});
+    act(() => {
+      screen.getByRole('button',{name : "Opret Ordre"}).click()
+    });
 
-  await act(async () => {
-    userEvent.hover(screen.getByLabelText('injection-input'))
-  });
+    act(() => {
+      userEvent.hover(screen.getByLabelText('injection-input'))
+    });
 
-  expect(await screen.findByText("Injektioner er ikke tasted ind"))
+    expect(screen.getByText("Injektioner er ikke tasted ind"))
   });
 
   it.skip("Error - Bannans Injections", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
-     </WebsocketContextProvider>
-   </StateContextProvider>);
+      </TracerShopContext>
+    );
 
   act(() => {
     fireEvent.change(screen.getByLabelText("injection-input"), {target : {value : "a"}});
@@ -107,11 +109,11 @@ describe("Create injection Order", () => {
   });
 
   it.skip("Error - Negative Injections", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
-     </WebsocketContextProvider>
-   </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "-3"}});
@@ -124,11 +126,11 @@ describe("Create injection Order", () => {
   });
 
   it.skip("Error - half a Injections", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
-     </WebsocketContextProvider>
-   </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "2.5"}});
@@ -142,11 +144,11 @@ describe("Create injection Order", () => {
 
 
   it.skip("Error - half a Injections + plus danish numbers", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
-     </WebsocketContextProvider>
-   </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const injectionInput = await screen.findByLabelText("injection-input");
     fireEvent.change(injectionInput, {target : {value : "2,5"}});
@@ -160,11 +162,11 @@ describe("Create injection Order", () => {
 
 
   it("Error - Missing Delivery Time", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
-     </WebsocketContextProvider>
-   </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       const injectionInput = screen.getByLabelText("injection-input");
@@ -185,11 +187,11 @@ describe("Create injection Order", () => {
   });
 
   it("Success order", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
-     </WebsocketContextProvider>
-   </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       const endpointSelect = screen.getByLabelText('select-customer');

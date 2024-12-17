@@ -11,7 +11,7 @@ import { DestinationSelect } from "../../../../components/injectable/derived_inj
 import { customers } from "../../../test_state/customers";
 import { deliveryEndpoints } from "../../../test_state/delivery_endpoints";
 import { activityDeliveryTimeSlots } from "../../../test_state/activity_delivery_time_slots";
-import { StateContextProvider } from "~/contexts/tracer_shop_context";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
 
 let container = null;
@@ -34,7 +34,8 @@ const mockSetCustomer = jest.fn((val) => val);
 const mockSetEndpoint = jest.fn((val) => val);
 const mockSetTimeSlot = jest.fn((val) => val);
 
-
+// Dummy component that should hold the state as the select should only display
+// the value not own it!
 function StateHolder({
   customers, mockSetCustomer,
   endpoints, mockSetEndpoint,
@@ -58,7 +59,7 @@ function StateHolder({
   }
 
   return (
-    <StateContextProvider value={testState}>
+    <TracerShopContext tracershop_state={testState}>
       <DestinationSelect
         ariaLabelCustomer="customer-select"
         ariaLabelEndpoint="endpoint-select"
@@ -73,19 +74,19 @@ function StateHolder({
         setEndpoint={setEndpoint}
         setTimeSlot={setTimeSlot}
       />
-    </StateContextProvider>);
+    </TracerShopContext>);
 }
 
 describe("DestinationSelect", () => {
   it("Standard Render Test", () => {
     render(
-    <StateHolder
-      customers={customers}
-      endpoints={deliveryEndpoints}
-      timeSlots={activityDeliveryTimeSlots}
-      mockSetCustomer={mockSetCustomer}
-      mockSetEndpoint={mockSetEndpoint}
-      mockSetTimeSlot={mockSetTimeSlot}
+      <StateHolder
+        customers={customers}
+        endpoints={deliveryEndpoints}
+        timeSlots={activityDeliveryTimeSlots}
+        mockSetCustomer={mockSetCustomer}
+        mockSetEndpoint={mockSetEndpoint}
+        mockSetTimeSlot={mockSetTimeSlot}
       />
     );
 

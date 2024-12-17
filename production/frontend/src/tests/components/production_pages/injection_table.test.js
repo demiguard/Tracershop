@@ -10,7 +10,7 @@ import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
 import { AppState, testState } from "../../app_state.js";
 
 import { InjectionTable } from "../../../components/production_pages/injection_table.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -47,19 +47,21 @@ afterEach(() => {
 
 describe("Deadline Setup tests", () => {
   it("Standard render test", () => {
-    render(<StateContextProvider value={testState}>
-            <WebsocketContextProvider value={websocket}>
-              <InjectionTable {...props}/>
-            </WebsocketContextProvider>
-          </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <InjectionTable {...props}/>
+      </TracerShopContext>
+    );
+
+    //TODO: ADD expectations!
   });
 
   it(("Change Sorting"), () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionTable {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const sort_status = screen.getByLabelText('sort-status');
     act(() => {
@@ -112,11 +114,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Open Create injection Order Modal", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionTable {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const createNewOrderButton = screen.getByRole('button', {name : "Opret ny ordre"});
 
@@ -133,11 +135,11 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Open order modal", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionTable {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const statusIcon1 = screen.getByLabelText('status-icon-1');
 

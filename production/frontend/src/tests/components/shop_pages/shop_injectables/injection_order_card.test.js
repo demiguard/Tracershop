@@ -7,7 +7,7 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state.js";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 import { InjectionOrderCard } from "~/components/shop_pages/shop_injectables/injection_order_card.js";
 import { INJECTION_USAGE, ORDER_STATUS, TRACER_TYPE } from "~/lib/constants.js";
@@ -39,15 +39,15 @@ const InjectionTracers = [...testState.tracer.values()].filter((tracer) => trace
 
 describe("Injection order card test suite", () => {
   it("Standard Render Test - Status 1", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={testState.injection_orders.get(1)}
           valid_deadline={false}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const tracerInput       = screen.getByLabelText("tracer-input-1");
     const injectionInput    = screen.getByLabelText("injections-input-1");
@@ -66,29 +66,29 @@ describe("Injection order card test suite", () => {
   });
 
   it("Standard Render Test - Status 2", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={testState.injection_orders.get(2)}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
   });
 
   it("Standard Render Test - Status 3", () => {
     const injectionOrder = testState.injection_orders.get(3)
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={injectionOrder}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const lotNumberInput = screen.getByLabelText('lot-number-input-3')
 
@@ -96,50 +96,54 @@ describe("Injection order card test suite", () => {
   });
 
   it("Standard Render Test - Status 3, old data", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={testState.injection_orders.get(4)}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
   });
 
   it("Standard Render Test - New order", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    const injectionOrder = new InjectionOrder(
+      -1,
+      "", // Delivery TIme
+      "2020-05-04", //
+      "", // injections
+      ORDER_STATUS.AVAILABLE, // Status
+      INJECTION_USAGE.human, // tracer_usage
+      "", // comment
+      null, // ordered_by
+      1, // endpoint
+      InjectionTracers[0].id, // tracer
+      null, null , null
+    );
+
+
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
-          injection_order={new InjectionOrder(
-            -1,
-            "", // Delivery TIme
-            "2020-05-04", //
-            "", // injections
-            ORDER_STATUS.AVAILABLE, // Status
-            INJECTION_USAGE.human, // tracer_usage
-            "", // comment
-            null, // ordered_by
-            1, // endpoint
-            InjectionTracers[0].id, // tracer
-            null, null , null)}
+          injection_order={injectionOrder}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
   });
 
   it("Edit an order", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={testState.injection_orders.get(1)}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const tracerInput       = screen.getByLabelText("tracer-input-1");
     const injectionInput    = screen.getByLabelText("injections-input-1");
@@ -166,26 +170,29 @@ describe("Injection order card test suite", () => {
     });
 
     it("Create an order", async () => {
-      render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
+      const newInjectionOrder = new InjectionOrder(
+        -1,
+        "", // Delivery TIme
+        "2020-05-04", //
+        "", // injections
+        ORDER_STATUS.AVAILABLE, // Status
+        INJECTION_USAGE.human, // tracer_usage
+        "", // comment
+        null, // ordered_by
+        1, // endpoint
+        InjectionTracers[0].id, // tracer
+        null, null , null
+      );
+
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
           <InjectionOrderCard
             injection_tracers={InjectionTracers}
-            injection_order={new InjectionOrder(
-              -1,
-              "", // Delivery TIme
-              "2020-05-04", //
-              "", // injections
-              ORDER_STATUS.AVAILABLE, // Status
-              INJECTION_USAGE.human, // tracer_usage
-              "", // comment
-              null, // ordered_by
-              1, // endpoint
-              InjectionTracers[0].id, // tracer
-              null, null , null)}
+            injection_order={newInjectionOrder}
             valid_deadline={true}
           />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+        </TracerShopContext>
+      );
 
       const tracerInput  = screen.getByLabelText("tracer-input--1");
       const injectionInput  = screen.getByLabelText("injections-input--1");
@@ -215,26 +222,29 @@ describe("Injection order card test suite", () => {
     });
 
     it("fail to create an order", async () => {
-      render(<StateContextProvider value={testState}>
-        <WebsocketContextProvider value={websocket}>
+      const newInjectionOrder = new InjectionOrder(
+        -1,
+        "", // Delivery TIme
+        "2020-05-04", //
+        "", // injections
+        ORDER_STATUS.AVAILABLE, // Status
+        INJECTION_USAGE.human, // tracer_usage
+        "", // comment
+        null, // ordered_by
+        1, // endpoint
+        InjectionTracers[0].id, // tracer
+        null, null , null
+      );
+
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
           <InjectionOrderCard
             injection_tracers={InjectionTracers}
-            injection_order={new InjectionOrder(
-              -1,
-              "", // Delivery TIme
-              "2020-05-04", //
-              "", // injections
-              ORDER_STATUS.AVAILABLE, // Status
-              INJECTION_USAGE.human, // tracer_usage
-              "", // comment
-              null, // ordered_by
-              1, // endpoint
-              InjectionTracers[0].id, // tracer
-              null, null , null)}
+            injection_order={newInjectionOrder}
             valid_deadline={true}
           />
-        </WebsocketContextProvider>
-      </StateContextProvider>);
+        </TracerShopContext>
+      );
 
       const tracerInput  = screen.getByLabelText("tracer-input--1");
       const injectionInput  = screen.getByLabelText("injections-input--1");
@@ -259,18 +269,19 @@ describe("Injection order card test suite", () => {
     });
 
   it("Swtich to Delivery note", () => {
-    jest.spyOn(window, 'open')
-    const injectionOrder = testState.injection_orders.get(3)
+    jest.spyOn(window, 'open');
+    const injectionOrder = testState.injection_orders.get(3);
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={injectionOrder}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
+
     const deliveryNote = screen.getByLabelText('delivery-injection-3')
 
     act(() => {
@@ -283,15 +294,15 @@ describe("Injection order card test suite", () => {
   it("Delete an order", () => {
     const injectionOrder = testState.injection_orders.get(1);
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionOrderCard
           injection_tracers={InjectionTracers}
           injection_order={injectionOrder}
           valid_deadline={true}
         />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     act(() => {
       screen.getByLabelText('delete-injection-1').click();

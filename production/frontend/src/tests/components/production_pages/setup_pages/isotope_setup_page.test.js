@@ -4,7 +4,7 @@
 
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { IsotopeSetupPage } from "~/components/production_pages/setup_pages/isotope_setup_page.js";
 
@@ -31,11 +31,11 @@ afterEach(() => {
 
 describe("Isotope setup page", () => {
   it("Standard Render Test", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <IsotopeSetupPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     for(const isotope of testState.isotopes.values()){
       expect(screen.getByLabelText(`atomic-letter-${isotope.id}`)).toBeVisible();
@@ -50,11 +50,11 @@ describe("Isotope setup page", () => {
   });
 
   it("Create new isotope", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <IsotopeSetupPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const newLetterInput = screen.getByLabelText(`atomic-letter--1`);
     const newMassInput = screen.getByLabelText(`atomic-mass--1`);
@@ -80,24 +80,22 @@ describe("Isotope setup page", () => {
   });
 
   it("failed to new isotope", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <IsotopeSetupPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const newLetterInput = screen.getByLabelText(`atomic-letter--1`);
     const newMassInput = screen.getByLabelText(`atomic-mass--1`);
     const newNumberInput = screen.getByLabelText(`atomic-number--1`);
     const newHalflife = screen.getByLabelText(`halflife--1`);
 
-
     act(() => {
       fireEvent.change(newLetterInput, {target: {value : "O"}});
       fireEvent.change(newMassInput, {target: {value : "asd" }});
       fireEvent.change(newNumberInput, {target: {value : "asd" }});
       fireEvent.change(newHalflife, {target: {value : "asd" }});
-
     });
 
     const commitButton = screen.getByLabelText('commit--1');

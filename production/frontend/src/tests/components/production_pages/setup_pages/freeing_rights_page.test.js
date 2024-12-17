@@ -5,7 +5,7 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { FreeingRightsPage } from "~/components/production_pages/setup_pages/freeing_rights_page";
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state";
 import { USER_GROUPS } from "~/lib/constants.js";
 
@@ -32,11 +32,11 @@ afterEach(() => {
 
 describe("Freeing Rights Page test suite", () => {
   it("Standard Render Test", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FreeingRightsPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     // Test if users are there
     for(const user of testState.user.values()){
@@ -58,11 +58,11 @@ describe("Freeing Rights Page test suite", () => {
   });
 
   it("Create an a freeing Right", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FreeingRightsPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const newUserInput = screen.getByLabelText('new-user-select');
     const newTracerInput = screen.getByLabelText('new-tracer-select');
@@ -81,11 +81,11 @@ describe("Freeing Rights Page test suite", () => {
   });
 
   it("Create an a freeing Right without expiry date", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FreeingRightsPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const newUserInput = screen.getByLabelText('new-user-select');
     const newTracerInput = screen.getByLabelText('new-tracer-select');
@@ -102,11 +102,11 @@ describe("Freeing Rights Page test suite", () => {
   });
 
   it("Failed to create an a freeing Right", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FreeingRightsPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const newUserInput = screen.getByLabelText('new-user-select');
     const newTracerInput = screen.getByLabelText('new-tracer-select');
@@ -125,11 +125,11 @@ describe("Freeing Rights Page test suite", () => {
   });
 
   it("Delete Release Right", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FreeingRightsPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const openButton = screen.getByLabelText("open-existing-rights");
 
@@ -147,11 +147,11 @@ describe("Freeing Rights Page test suite", () => {
   });
 
   it("Change Sorting Methods", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <FreeingRightsPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
   const sorting_user = screen.getByLabelText('sort-user');
   const sorting_tracer = screen.getByLabelText('sort-tracer');
@@ -173,6 +173,5 @@ describe("Freeing Rights Page test suite", () => {
     sorting_expiry_date.click();
   });
   //TODO: check Sorting order
-
   });
 });

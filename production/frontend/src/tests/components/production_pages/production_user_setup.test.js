@@ -3,19 +3,17 @@
  */
 
 import React from "react";
-import { act, fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
+import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState, testState } from "~/tests/app_state.js";
 
 import { ProductionUserSetup } from "~/components/production_pages/setup_pages/production_user_setup.js"
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
-import { WEBSOCKET_MESSAGE_SUCCESS } from "~/lib/shared_constants";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
-let websocket = null;
-let container = null;
+const websocket = tracer_websocket.TracerWebSocket;
 let props = null;
 
 beforeAll(() => {
@@ -24,36 +22,30 @@ beforeAll(() => {
 })
 
 beforeEach(() => {
-    container = document.createElement("div");
-    websocket = tracer_websocket.TracerWebSocket
-    props = {...AppState};
+  props = {...AppState};
 });
 
 afterEach(() => {
   cleanup()
   window.localStorage.clear();
   module.clearAllMocks();
-
-  if(container != null) container.remove();
-  container = null;
-  props=null;
 });
 
 describe("Production User Setup tests", () => {
   it("Standard Render tests", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionUserSetup {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
   });
 
   it("Add user assignment", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionUserSetup {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const customerSelect9 = screen.getByLabelText('related-customer-9');
 
@@ -65,11 +57,11 @@ describe("Production User Setup tests", () => {
   });
 
   it("Delete user assignment", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionUserSetup {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const customerSelect6 = screen.getByLabelText('related-customer-6');
 
@@ -81,11 +73,11 @@ describe("Production User Setup tests", () => {
   });
 
   it("Change user assignment", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <ProductionUserSetup {...props}/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const customerSelect6 = screen.getByLabelText('related-customer-6');
 

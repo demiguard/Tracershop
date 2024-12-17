@@ -11,7 +11,7 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE,  
 import { AppState, testState } from "../../app_state.js";
 import { OrderPage } from "../../../components/production_pages/order_page.js";
 import { db } from "../../../lib/local_storage_driver.js";
-import { DispatchContextProvider, StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -25,45 +25,41 @@ jest.mock('../../../components/production_pages/injection_table', () =>
 
 const dispatchMock = jest.fn();
 
-let websocket = null;
+const websocket = tracer_websocket.TracerWebSocket;
 
 beforeAll(() => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(new Date(2020,4, 4, 10, 36, 44))
 })
 
-beforeEach(() => {
-    websocket = tracer_websocket.TracerWebSocket
-});
+beforeEach(() => {});
 
 afterEach(() => {
   cleanup()
   window.localStorage.clear()
   module.clearAllMocks()
-  websocket = null;
 });
 
 describe("Order Page tests", () => {
   it("Standard Render test", async () => {
-    render(<StateContextProvider value={testState}>
-            <WebsocketContextProvider value={websocket}>
-              <OrderPage/>
-            </WebsocketContextProvider>
-          </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
+        <OrderPage/>
+      </TracerShopContext>
+    );
 
-    expect(await screen.findByRole('button', {name : 'test_tracer_1'})).toBeVisible()
-    expect(await screen.findByRole('button', {name : 'test_tracer_3'})).toBeVisible()
-    expect(await screen.findByRole('button', {name : 'Special'})).toBeVisible()
-
-    expect(await screen.findByText('ActivityTableMocked')).toBeVisible()
+    expect(screen.getByRole('button', {name : 'test_tracer_1'})).toBeVisible()
+    expect(screen.getByRole('button', {name : 'test_tracer_3'})).toBeVisible()
+    expect(screen.getByRole('button', {name : 'Special'})).toBeVisible()
+    expect(screen.getByText('ActivityTableMocked')).toBeVisible()
   });
 
   it("Change to injection Table", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
         <OrderPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () =>{
        const button = await screen.findByRole('button', {name : 'Special'})
@@ -74,11 +70,11 @@ describe("Order Page tests", () => {
   })
 
   it("Change to injection Table", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
         <OrderPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     await act(async () =>{
        const button = await screen.findByRole('button', {name : 'test_tracer_3'})
@@ -89,13 +85,11 @@ describe("Order Page tests", () => {
   })
 
   it("Change day", async () => {
-    render(<StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <OrderPage/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
+        <OrderPage/>
+      </TracerShopContext>
+    );
 
     await act(async () =>{
        const div = await screen.findByLabelText('calender-day-13');
@@ -108,18 +102,16 @@ describe("Order Page tests", () => {
   })
 
   it("Change month", async () => {
-    render(<StateContextProvider value={testState}>
-      <DispatchContextProvider value={dispatchMock}>
-        <WebsocketContextProvider value={websocket}>
-          <OrderPage/>
-        </WebsocketContextProvider>
-      </DispatchContextProvider>
-    </StateContextProvider>);
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
+        <OrderPage/>
+      </TracerShopContext>
+    );
 
-    await act(async () =>{
+    await act(async () => {
        const image = await screen.findByLabelText('next-month');
        image.click();
-    })
+    });
 
     expect(dispatchMock).toHaveBeenCalledWith(expect.objectContaining(
       new UpdateToday(new Date(2020,5,1,12,0,0), websocket)
@@ -129,11 +121,11 @@ describe("Order Page tests", () => {
   it("Load saved db data", async () => {
     db.set("activeTracer", -1)
 
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
         <OrderPage/>
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     expect(await screen.findByText('InjectionTableMocked')).toBeVisible();
   });

@@ -22,37 +22,32 @@ const HOVER_BOX_CSS = {
  */
 
 
-function Hover(props){
-  const { setVisibility, hoverState } = props;
-
+function Hover({setVisibility, hoverState, children}){
   return(
     <div
-      onMouseOver={() => setVisibility(true)}
-      onMouseOut={() => setVisibility(false)}
+      onMouseEnter={() => setVisibility(true)}
+      onMouseLeave={() => setVisibility(false)}
       style={{
         ...HOVER_BOX_CSS,
         ...hoverState
-      }
-      }
+      }}
     >
-      {props.children}
+      {children}
     </div>
-  )
+  );
 }
 
-function Trigger(props){
-  const { setVisibility } = props
-  // css import?
-  return(
-    <div
-      onMouseOver={() => setVisibility(true)}
-      onMouseOut={() => setVisibility(false)}
+function Trigger({ setVisibility, triggerTestID, children }){
+  return (
+    <div data-testid={triggerTestID}
+      onMouseEnter={() => setVisibility(true)}
+      onMouseLeave={() => setVisibility(false)}
       onTouchStart={() => setVisibility(true)}
       onTouchEnd={() => setVisibility(false)}
     >
-      {props.children}
+      {children}
     </div>
-  )
+  );
 }
 
 export function HoverBox (props){
@@ -66,18 +61,17 @@ export function HoverBox (props){
   })
 
   function setVisibility (flag) {
-    let updatedStyles = null
-    if (flag) {
-      updatedStyles = { ...hoverState, display: 'block' }
-    } else {
-      updatedStyles = { ...hoverState, display: 'none' }
-    }
-    updateHoverComponentStyle(updatedStyles)
+    updateHoverComponentStyle(previousState => {
+      return {
+      ...previousState,
+      display : flag ? 'block' : 'none'
+    }});
   }
 
   return (
-    <div>
+    <div style={{position : 'relative'}}>
       <Trigger
+        triggerTestID={props.triggerTestID}
         setVisibility={setVisibility}
       >
         {props.Base}

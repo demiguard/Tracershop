@@ -12,7 +12,7 @@ import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE , PROP_TIME_SLOT_MA
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants"
 
 import { testState } from '~/tests/app_state.js'
-import { StateContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext, } from "~/contexts/tracer_shop_context.js";
 import { TimeSlotMapping } from "~/lib/data_structures.js";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -54,28 +54,27 @@ afterEach(() => {
 
 
 describe("create activity modal", () => {
-  it("standard render test", async () => {
-    render(<StateContextProvider value={testState}>
-             <WebsocketContextProvider value={websocket}>
-               <CreateOrderModal {...props} />
-             </WebsocketContextProvider>
-           </StateContextProvider>);
+  it("standard render test", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <CreateOrderModal {...props} />
+      </TracerShopContext>
+    );
 
-
-    expect(await screen.findByLabelText('customer-select')).toBeVisible();
-    expect(await screen.findByLabelText('endpoint-select')).toBeVisible();
-    expect(await screen.findByLabelText("time-slot-select")).toBeVisible();
-    expect(await screen.findByLabelText('activity-input')).toBeVisible();
-    expect(await screen.findByLabelText('customer-select')).toBeVisible();
+    expect(screen.getByLabelText('customer-select')).toBeVisible();
+    expect(screen.getByLabelText('endpoint-select')).toBeVisible();
+    expect(screen.getByLabelText("time-slot-select")).toBeVisible();
+    expect(screen.getByLabelText('activity-input')).toBeVisible();
+    expect(screen.getByLabelText('customer-select')).toBeVisible();
   });
 
 
   it.skip("Change Delivery Time", () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateOrderModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
     const timeSlotSelect = screen.getByLabelText("time-slot-select");
     const targetTimeSlot = testState.deliver_times.get(2);
@@ -86,15 +85,15 @@ describe("create activity modal", () => {
     expect(screen.getByText(targetTimeSlot.delivery_time)).toBeVisible();
   });
 
-  it("Order Default", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+  it("Order Default", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateOrderModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
-    const activityInput = await screen.findByLabelText('activity-input');
-    const orderButton = await screen.findByRole('button', {name : "Opret Ordre"});
+    const activityInput = screen.getByLabelText('activity-input');
+    const orderButton = screen.getByRole('button', {name : "Opret Ordre"});
 
     act(() => {
       fireEvent.change(activityInput, {target : { value : "300"}});
@@ -105,15 +104,14 @@ describe("create activity modal", () => {
       expect.objectContaining({ordered_activity : 300 }));
   });
 
-  it("Change to endpoint-less Customer", async () => {
-    render(<StateContextProvider value={testState}>
-      <WebsocketContextProvider value={websocket}>
+  it("Change to endpoint-less Customer", () => {
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateOrderModal {...props} />
-      </WebsocketContextProvider>
-    </StateContextProvider>);
+      </TracerShopContext>
+    );
 
-
-    const customerSelect = await screen.findByLabelText('customer-select');
+    const customerSelect = screen.getByLabelText('customer-select');
 
     act(() => {
       fireEvent.change(customerSelect, {target : {value : 2}});
