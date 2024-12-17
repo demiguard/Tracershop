@@ -2,7 +2,9 @@
  * Also Remember Currying and Closure
 */
 
+import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
 import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracershopState } from "../dataclasses/dataclasses";
+import { ORDER_STATUS } from "~/lib/constants";
 
 /**
  * @enum {Number}
@@ -220,4 +222,30 @@ export function sortInjectionOrders(sortingMethod, invertedSorting, state){
     case InjectionOrderSortingMethods.ORDERED_TIME:
       return (a,b) => invert * (b.delivery_time < a.delivery_time ? GREATER : LESSER);
   }
+}
+
+/**
+ *
+ * @param {Array<ActivityOrderCollection>} activityOrderCollections
+ * @param {TracershopState} state
+ * @returns {Array<ActivityOrderCollection>}
+ */
+export function sortActivityOrderCollections(activityOrderCollections, state){
+  return activityOrderCollections.sort(
+    (a,b) => {
+      if(a.minimum_status === ORDER_STATUS.CANCELLED ^ b.minimum_status === ORDER_STATUS.CANCELLED){
+        return a.minimum_status === ORDER_STATUS.CANCELLED ? GREATER : LESSER;
+      };
+
+      if(a.endpoint.owner !== b.endpoint.owner){
+        return a.endpoint.owner - b.endpoint.owner;
+      }
+
+      if(a.endpoint.id !== b.endpoint.id){
+        return a.endpoint.owner - b.endpoint.owner;
+      }
+
+      return  b.delivering_time_slot.delivery_time < a.delivering_time_slot.delivery_time ? GREATER : LESSER;
+    }
+  );
 }

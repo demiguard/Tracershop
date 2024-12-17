@@ -101,6 +101,11 @@ export class ActivityOrderCollection {
    * @type {User | null}
    */ freed_by
 
+  /**
+   * @desc The overhead for the time slot
+   * @type {Number}
+   */ overhead
+
 /**
   * Wraps a group of orders, for the purpose of providing a single view of the
   * group.
@@ -135,7 +140,7 @@ export class ActivityOrderCollection {
     this.tracer = state.tracer.get(this.production.tracer);
     this.isotope = state.isotopes.get(this.tracer.isotope);
     this.owner = state.customer.get(this.endpoint.owner);
-
+    this.overhead = overhead;
     this.freed_time = null;
     this.freed_by = null;
     this.moved = false;

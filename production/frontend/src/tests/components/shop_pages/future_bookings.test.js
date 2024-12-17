@@ -180,7 +180,7 @@ describe("Future Bookings Test Suite", () => {
       toggleBooking2Checkbox.click();
     });
 
-    const orderButton = screen.getByTestId("order-button-1")
+    const orderButton = screen.getByTestId("order-button-1");
 
     await act(async () => { orderButton.click(); });
 
@@ -188,10 +188,8 @@ describe("Future Bookings Test Suite", () => {
     expect(screen.getByTestId("booking_error")).toBeVisible();
   });
 
-
-
   it("ChangeSorting", () => {
-    const newProps = {...props}
+    const newProps = {...props};
 
     newProps.booking = [
       new Booking(1, BookingStatus.Initial, 2, 1, "B", "10:00:00"),

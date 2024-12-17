@@ -13,6 +13,7 @@ import { ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { fulfillmentActivity } from '~/lib/physics';
 import { formatTimeStamp, formatUsername, renderDateTime } from '~/lib/formatting';
+import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
 
 //#region Order Row
 /**
@@ -53,26 +54,18 @@ function OrderRow({order, overhead}){
 * Function for specifying it should be this time slot that should be opened
 * @param {TimeSlotMapping} props.timeSlotMapping
 * @param {OrderMapping} props.orderMapping
+* @param {ActivityOrderCollection} props.orderCollection
 * @returns
 */
 export function ProductionTimeSlot({timeSlot,
                     setTimeSlotID,
                     setModalIdentifier,
-                    tracer,
-                    tracerCatalog,
                     orderMapping,
-                    timeSlotMapping
+                    timeSlotMapping,
+                    orderCollection,
 }){
-
-const state = useTracershopState();
 const websocket = useWebsocket();
-const owner = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer);
-const overhead = tracerCatalog.getOverheadForTracer(owner.id, tracer.id);
-// Prop extraction
-const orderCollection = orderMapping.getOrders(timeSlot.id);
-
-
-const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(timeSlot);
+const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(orderCollection.delivering_time_slot);
 const /**@type {Number} */ firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
 
 const OrderData = [];

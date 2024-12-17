@@ -25,6 +25,7 @@ import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../
 import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { Optional } from "../injectable/optional.js";
 import { ProductionTimeSlot } from "~/components/injectable/production_time_slot.js";
+import { useTracerCatalog } from "~/effects/tracerCatalog.js";
 
 const Modals = {
   create_modal : CreateOrderModal,
@@ -127,10 +128,7 @@ export function ActivityTable ({active_tracer, active_date}) {
     state.deliver_times
   );
 
-  const tracerCatalog = new TracerCatalog(
-    state.tracer_mapping,
-    state.tracer
-  );
+  const tracerCatalog = useTracerCatalog()
 
   const [modalIdentifier, setModalIdentifier] = useState(null);
   const [timeSlotID, setTimeSlotID] = useState(null);
@@ -160,12 +158,11 @@ export function ActivityTable ({active_tracer, active_date}) {
   })
 
   const renderedTimeSlots = [];
-  for (const timeSlot of orderMapping){
+  for (const orderCollection of orderMapping){
       renderedTimeSlots.push(<ProductionTimeSlot
-                key={timeSlot.id}
-                timeSlot = {timeSlot}
-                tracer={tracer}
-                tracerCatalog={tracerCatalog}
+                orderCollection={orderCollection}
+                key={orderCollection.delivering_time_slot.id}
+                timeSlot = {orderCollection.delivering_time_slot}
                 orderMapping={orderMapping}
                 timeSlotMapping={timeSlotMapping}
                 setTimeSlotID={setTimeSlotID}

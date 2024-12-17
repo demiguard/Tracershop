@@ -2,7 +2,7 @@ import { ActivityOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { ArrayMap } from "~/lib/array_map";
 import { getTimeSlotOwner, TracerCatalog } from "~/lib/data_structures.js";
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
-import { sortTimeSlots } from "~/lib/sorting";
+import { sortActivityOrderCollections, sortTimeSlots } from "~/lib/sorting";
 
 
 /**
@@ -54,15 +54,14 @@ export class OrderMapping{
     return this._orderMapping.get(timeSlotID);
   }
 
-  *[Symbol.iterator](){
-    const timeSlots = [];
-    for(const timeSlotID of this._orderMapping.keys()){
-      timeSlots.push(this._state.deliver_times.get(timeSlotID));
-    }
 
-    timeSlots.sort(sortTimeSlots(this._state.delivery_endpoint));
-    for(const timeSlot of timeSlots){
-      yield timeSlot
+  *[Symbol.iterator](){
+    const orderCollections = sortActivityOrderCollections(
+      [...this._orderMapping.values()], this._state
+    );
+
+    for(const orderCollection of orderCollections){
+      yield orderCollection;
     }
   }
 }
