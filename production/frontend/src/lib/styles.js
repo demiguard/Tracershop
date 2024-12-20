@@ -36,8 +36,9 @@ export const JUSTIFY = {
 
 };
 
-export const FLEX = {
-  display : "flex"
+export const DISPLAY = {
+  INLINE_BLOCK : { display : 'inline-block'},
+  FLEX : { display : "flex" }
 };
 
 export const CENTER = {

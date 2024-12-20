@@ -5,7 +5,7 @@ import { Container, Button, Card, Collapse, Col, Row } from "react-bootstrap";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { ProcedureIdentifierTable } from "~/components/admin_pages/procedure_identifier_table";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
-import { JUSTIFY, FLEX, CENTER, MARGIN } from "~/lib/styles";
+import { JUSTIFY, CENTER, MARGIN, DISPLAY } from "~/lib/styles";
 
 export function ControlPanel(){
   const state = useTracershopState();
@@ -33,8 +33,8 @@ export function ControlPanel(){
       <Card>
         <Card.Header>
           <div style={JUSTIFY.between}>
-            <div style={{...FLEX, ...CENTER}}>Procedures</div>
-            <div style={FLEX}>
+            <div style={{...DISPLAY.FLEX, ...CENTER}}>Procedures</div>
+            <div style={DISPLAY.FLEX}>
               <OpenCloseButton
                 open={showProcedures}
                 setOpen={setShowProcedures}

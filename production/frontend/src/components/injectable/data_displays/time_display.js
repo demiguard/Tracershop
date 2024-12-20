@@ -1,27 +1,31 @@
 import React from 'react';
 import propTypes  from 'prop-types';
 
-import { FormatDateStr } from '~/lib/formatting';
+import { FormatDateStr, formatTimeStamp } from '~/lib/formatting';
 
 /**
- * Display for time stamps 
+ * Display for time stamps
  * @param {{
  * time : String | Date
- * }} param0 
- * @returns 
+ * }} param0
+ * @returns
  */
-export function TimeDisplay({time}){
-  if(time instanceof Date){
-    return <div>{FormatDateStr(time.getHours())}:{FormatDateStr(time.getMinutes())}</div>
-  }
+export function TimeDisplay(props){
+  const {time, ...rest} = props;
+  const text = (() => {
+    let fTime = time;
+    if(fTime instanceof Date) {
+      return `${FormatDateStr(fTime.getHours())}:${FormatDateStr(fTime.getMinutes())}`;
+    }
+    if(fTime.length > 8){
+      fTime = formatTimeStamp(fTime);
+    }
+    return fTime.substring(6,8) == "00" ? fTime.substring(0,5) : fTime;
+  })();
 
-  if(time.substring(6,8) == "00") {
-    return <div>{time.substring(0,5)}</div>
-  }
-
-  return <div>{time}</div>
+  return <div {...rest}>{text}</div>;
 }
 
 TimeDisplay.propType = {
-  time : propTypes.oneOf([propTypes.string.isRequired, propTypes.objectOf(Date)])
-}
+  time : propTypes.oneOf([propTypes.string.isRequired, propTypes.objectOf(Date)]).isRequired
+};
