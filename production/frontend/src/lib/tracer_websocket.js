@@ -261,7 +261,7 @@ export class TracerWebSocket {
       }
     })();
 
-    this.send({
+    return this.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
       [WEBSOCKET_DATA_ID] : ids,
       [WEBSOCKET_DATATYPE] : modelType,

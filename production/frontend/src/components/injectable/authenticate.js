@@ -67,7 +67,9 @@ export function Authenticate({ authenticate,
 
   function onSubmitFunc(event) {
     event.preventDefault();
-    authenticate(username, password);
+    if(password){
+      authenticate(username, password);
+    }
   }
 
   return (

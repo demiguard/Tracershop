@@ -9,6 +9,7 @@ import { ProductionUserSetup } from "./production_user_setup";
 import { IsotopeSetupPage } from "./isotope_setup_page";
 import { FreeingRightsPage } from "./freeing_rights_page";
 import { ProductionSetup } from "./production_setup";
+import { PrinterOverviewPage } from "~/components/production_pages/setup_pages/printer_setup_page";
 
 const sites = {
   customer   : CustomerPage,
@@ -19,6 +20,7 @@ const sites = {
   isotope    : IsotopeSetupPage,
   freed      : FreeingRightsPage,
   production : ProductionSetup,
+  printer    : PrinterOverviewPage,
 }
 
 export const siteNames = {
@@ -30,6 +32,7 @@ export const siteNames = {
   isotope : "Isotoper",
   freed : "Frigivelse rettigheder",
   production : "Produktioner",
+  printer : "Printer"
 }
 
 

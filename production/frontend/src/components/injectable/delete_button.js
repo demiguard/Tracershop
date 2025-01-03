@@ -1,5 +1,5 @@
 import React from "react";
-import { ClickableIcon } from "~/components/injectable/icons";
+import { IdempotentIcon } from "~/components/injectable/icons";
 import { useWebsocket } from "~/contexts/tracer_shop_context";
 
 export function DeleteButton({
@@ -7,13 +7,16 @@ export function DeleteButton({
 }){
   const websocket = useWebsocket();
 
+  console.log(websocket)
+
   function onClick(){
-    websocket.sendDeleteModel(dataType, data).then(
+    return websocket.sendDeleteModel(dataType, data).then(
       (data) => {callback(data)}
     );
   }
 
-  return (<ClickableIcon
+  return (<IdempotentIcon
+    src="/static/images/decline.svg"
     onClick={onClick}
     {...rest}
   />);

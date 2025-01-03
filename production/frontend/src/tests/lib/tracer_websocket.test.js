@@ -4,6 +4,7 @@
 import WS from "jest-websocket-mock"
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JAVASCRIPT_VERSION, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_DATATYPE,
   WEBSOCKET_DATA_ID, WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_ECHO,
+  WEBSOCKET_MESSAGE_ERROR,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,
   WEBSOCKET_MESSAGE_STATUS,
@@ -12,12 +13,13 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, JAVASCRIPT_VERSION
  } from "~/lib/shared_constants.js"
 import { TracerWebSocket } from "~/lib/tracer_websocket.js";
 import { MessageChannel } from 'node:worker_threads'
-import { UpdateWebsocketConnectionState } from "~/lib/state_actions";
+import { DeleteState, UpdateWebsocketConnectionState } from "~/lib/state_actions";
+import { jest } from "@jest/globals"
 
 let server = null;
 let websocket = null;
 
-let dispatch = jest.fn()
+const dispatch = jest.fn()
 
 const who_am_i_message = expect.objectContaining({
   [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_AUTH_WHOAMI
@@ -180,31 +182,38 @@ describe("tracer websocket test suite", () => {
 
   it("Send Delete Models - id", async () => {
     const dataType = "asdf"
-    await websocket.sendDeleteModel(dataType, 1);
+    websocket.sendDeleteModel(dataType, 1);
 
     await expect(server).toReceiveMessage(expect.objectContaining({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
       [WEBSOCKET_DATA_ID] : [1],
       [WEBSOCKET_DATATYPE] : dataType
     }));
-
   });
 
   it("Send Delete Models - model", async () => {
     const dataType = "asdf"
-    await websocket.sendDeleteModel(dataType, {id : 1});
+    websocket.sendDeleteModel(dataType, {id : 1});
 
-    await expect(server).toReceiveMessage(expect.objectContaining({
+    const received_message = await server.nextMessage
+
+    await server.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
-      [WEBSOCKET_DATA_ID] : [1],
-      [WEBSOCKET_DATATYPE] : dataType
-    }));
+      [WEBSOCKET_MESSAGE_ID] : received_message[WEBSOCKET_MESSAGE_ID],
+      [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS,
+      [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS
+    });
+
+    expect(dispatch).toHaveBeenCalledTimes(2);
+    const called_with = dispatch.mock.calls[1][0]
+
+    expect(called_with).toBeInstanceOf(DeleteState);
   });
 
   it("Send ChangePassword", async () => {
     websocket.sendChangePassword(1 , "new_password");
 
-    await expect(server).toReceiveMessage(expect.objectContaining({
+    expect(server).toReceiveMessage(expect.objectContaining({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
       [WEBSOCKET_DATA_ID] : 1,
       [AUTH_PASSWORD] : "new_password",
@@ -225,4 +234,14 @@ describe("tracer websocket test suite", () => {
       },
     }));
   });
+
+  it("Server returned an error", async () => {
+    server.send({
+      WEBSOCKET_MESSAGE_TYPE : "error"
+    });
+
+    expect(dispatch).toHaveBeenCalled();
+
+  })
+
 })

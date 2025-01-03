@@ -12,13 +12,14 @@ from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DAT
     DATA_SECONDARY_EMAIL, DATA_PROCEDURE, DATA_USER, DATA_USER_ASSIGNMENT,\
     DATA_MESSAGE, DATA_MESSAGE_ASSIGNMENT, DATA_DEADLINE, DATA_DICOM_ENDPOINT,\
     DATA_LEGACY_PRODUCTION_MEMBER, DATA_PROCEDURE_IDENTIFIER, DATA_RELEASE_RIGHT,\
-    DATA_SERVER_LOG, DATA_PRINTER
+    DATA_SERVER_LOG, DATA_PRINTER, DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
 from database.TracerShopModels.customerModels import *
 from database.TracerShopModels.networkModels import *
 from database.TracerShopModels.serverModels import *
+from database.TracerShopModels.telemetry_models import *
 
 MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_ADDRESS : Address,
@@ -39,6 +40,8 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_LOCATION : Location,
   DATA_MESSAGE : Message,
   DATA_MESSAGE_ASSIGNMENT : MessageAssignment,
+  DATA_TELEMETRY_RECORD : TelemetryRecord,
+  DATA_TELEMETRY_REQUEST : TelemetryRequests,
   DATA_TRACER : Tracer,
   DATA_TRACER_MAPPING : TracerCatalogPage,
   DATA_PRINTER : Printer,
@@ -64,7 +67,6 @@ TIME_SENSITIVE_FIELDS : Dict[str, str] = {
   DATA_VIAL : 'fill_date',
 
 }
-
 
 T = TypeVar('T', bound=TracershopModel)
 

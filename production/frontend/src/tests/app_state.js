@@ -33,29 +33,6 @@ import { message_assignments } from "./test_state/message_assignments"
 import { secondary_emails } from "./test_state/secondary_email"
 import { printers } from "~/tests/test_state/printer.js"
 
-
-export const AppState = {}
-
-AppState[DATA_ACTIVITY_ORDER] = activity_orders
-AppState[DATA_CUSTOMER] = customers
-AppState[DATA_DEADLINE] = deadlines
-AppState[DATA_DELIVER_TIME] = activityDeliveryTimeSlots
-AppState[DATA_ENDPOINT] = deliveryEndpoints
-AppState[DATA_LOCATION] = locations
-AppState[DATA_INJECTION_ORDER] = injection_orders
-AppState[DATA_ISOTOPE] = isotopes
-AppState[DATA_PRODUCTION] = productions
-AppState[DATA_PROCEDURE] = procedures
-AppState[DATA_PROCEDURE_IDENTIFIER] = procedureIdentifiers
-AppState[DATA_SERVER_CONFIG] =serverConfig
-AppState[DATA_TRACER] = tracers
-AppState[DATA_TRACER_MAPPING] = tracer_mapping
-AppState[DATA_VIAL] = vials
-AppState[DATA_CLOSED_DATE] = closed_dates;
-AppState[DATA_USER] = users
-AppState[DATA_USER_ASSIGNMENT] = user_assignments;
-
-
 export const testState = new TracershopState(
   users.get(1),
   new Date(2020,4,5),
@@ -74,6 +51,8 @@ export const testState = new TracershopState(
   locations,
   messages,
   message_assignments,
+  new Map(),
+  new Map(),
   tracers,
   tracer_mapping,
   printers,

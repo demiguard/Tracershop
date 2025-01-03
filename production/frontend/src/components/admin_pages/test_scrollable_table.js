@@ -1,97 +1,83 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useOverflow } from "~/effects/overflow";
+import { clamp } from "~/lib/utils";
+
+const scrollSpeed = 100;
 
 
 export function TestScrollableSite({rowHeight = 40}){
-  const divRef = useRef(null);
+  // Reference to the div that
+  const overflowDivRef = useRef(null);
   const [scrollOffset, setScrollOffset] = useState(0);
   const [heightOffset, setHeightOffset] = useState(0);
 
-  const data = ((iMax) => {
+  const data = useMemo(() => {
+    console.log("Creating data!")
+
     const out = []
-    for(let i = 0; i < iMax; i++){
+    for(let i = 0; i < 1000; i++){
       out.push(<tr style={{height : rowHeight}} key={i}>
         <td>{i}</td>
         <td>Row {i}</td>
-      </tr>)
+      </tr>);
     }
-
     return out;
-  })(1000);
+  }, []);
 
   useEffect(() => {
-    if(divRef.current){
-      console.log("Updating height!")
-      const { y } = divRef.current.getBoundingClientRect();
-
+    if(overflowDivRef.current){
+      const { y } = overflowDivRef.current.getBoundingClientRect();
       setHeightOffset(y);
     }
-  },[divRef.current])
+  },[overflowDivRef.current]);
 
     // Calculate visible rows based on scroll position
   const virtualizedData = useMemo(() => {
-    const containerRef = divRef;
-    if (!containerRef.current) return [];
-
-    const containerHeight = containerRef.current.clientHeight;
-    const visibleRowCount = Math.ceil(containerHeight / rowHeight);
-    const startIndex = Math.floor(scrollOffset / rowHeight);
-    const endIndex = Math.min(startIndex + visibleRowCount + 2, data.length);
-
-    return data.slice(startIndex, endIndex).map((item, index) => ({
-      ...item,
-      originalIndex: startIndex + index
-    }));
-  }, [data, scrollOffset, rowHeight]);
-
-
-
-  function scrollTrigger(event){
-    if(divRef.current !== null){
-      const element = divRef.current;
-      console.log({
-        getBoundingClientRect: element.getBoundingClientRect(),
-        computedStyle: window.getComputedStyle(element),
-        offsetTop: element.offsetTop,
-        offsetLeft: element.offsetLeft,
-        clientTop: element.clientTop,
-        clientLeft: element.clientLeft,
-        devicePixelRatio : window.devicePixelRatio,
-        pageXOffset : window.scrollY
-      });
-
-    } else {
-      console.log("tableRef is null :( ")
+    if (!overflowDivRef.current){
+      return [];
     }
-  }
 
-  if(divRef.current !== null){
-    const box = divRef.current.getBoundingClientRect()
-    console.log(box);
-  } else {
-    console.log("tableRef is null :( ")
-  }
+    const containerHeight = overflowDivRef.current.clientHeight;
+    const visibleRowCount = Math.ceil(containerHeight / rowHeight);
+    const startIndex = clamp(Math.floor(scrollOffset / rowHeight), 0, data.length - visibleRowCount);
+    const endIndex = Math.min(startIndex + visibleRowCount + 2, data.length);
+    return data.slice(startIndex, endIndex);
+  }, [overflowDivRef.current, data, scrollOffset, rowHeight]);
 
   const contentHeight = data.length * rowHeight;
 
 
+  function test_function(event){
+    setScrollOffset((oldOffset) => clamp(oldOffset + event.deltaY, 0, contentHeight));
+  }
+
+  useEffect(() => {
+    window.addEventListener('wheel', test_function);
+
+    return () => {
+      window.removeEventListener('wheel', test_function);
+    }
+  }, []);
+
   const height = `calc(100vh - ${heightOffset}px)`;
 
   return (
-  <div onScroll={scrollTrigger}
+  <div
     style={{
       height : height,
-      overflowY  : "scroll"
+      overflow : "auto"
     }}
-    ref={divRef}
+    ref={overflowDivRef}
   >
     <table>
+      {scrollOffset <= 100 ?
       <thead>
-        <tr>
+          <tr>
           <th>ID</th>
           <th>Name</th>
         </tr>
-      </thead>
+      </thead> : <thead/>}
+
       <tbody>
         {virtualizedData}
       </tbody>

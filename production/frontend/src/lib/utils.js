@@ -158,3 +158,8 @@ export function compareMaps(map_1, map_2){
 export function getActiveTimeSlotID(order){
   return order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
 }
+
+export function clamp(num, min, max){
+  return Math.max(Math.min(num, max), min)
+
+}

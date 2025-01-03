@@ -539,6 +539,64 @@ export class MessageAssignment {
   }
 }
 
+export class TelemetryRecord {
+  constructor(id, request_type, expire_datetime, latency_ms, status, ) {
+    this.id=id
+    this.request_type=request_type
+    this.expire_datetime=expire_datetime
+    this.latency_ms=latency_ms
+    this.status=status
+  }
+
+  /**Copies the telemetryrecord
+  * @returns { TelemetryRecord }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.request_type,
+      this.expire_datetime,
+      this.latency_ms,
+      this.status
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("request_type","telemetry_request"),
+      new DateTimeField("expire_datetime"),
+      new FloatField("latency_ms"),
+      new IntField("status"),
+    ];
+  }
+}
+
+export class TelemetryRequests {
+  constructor(id, message_key, display_name, ) {
+    this.id=id
+    this.message_key=message_key
+    this.display_name=display_name
+  }
+
+  /**Copies the telemetryrequests
+  * @returns { TelemetryRequests }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.message_key,
+      this.display_name
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new CharField("message_key"),
+      new CharField("display_name"),
+    ];
+  }
+}
+
 export class Tracer {
   constructor(id, shortname, clinical_name, isotope, tracer_type, vial_tag, archived, marketed, is_static_instance, ) {
     this.id=id
@@ -959,6 +1017,8 @@ export const MODELS = {
   location : Location,
   message : Message,
   message_assignment : MessageAssignment,
+  telemetry_record : TelemetryRecord,
+  telemetry_request : TelemetryRequests,
   tracer : Tracer,
   tracer_mapping : TracerCatalogPage,
   printer : Printer,
@@ -993,6 +1053,8 @@ export class TracershopState {
   /** @type { Map<Number, Location>} */ location
   /** @type { Map<Number, Message>} */ message
   /** @type { Map<Number, MessageAssignment>} */ message_assignment
+  /** @type { Map<Number, TelemetryRecord>} */ telemetry_record
+  /** @type { Map<Number, TelemetryRequests>} */ telemetry_request
   /** @type { Map<Number, Tracer>} */ tracer
   /** @type { Map<Number, TracerCatalogPage>} */ tracer_mapping
   /** @type { Map<Number, Printer>} */ printer
@@ -1006,7 +1068,7 @@ export class TracershopState {
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, telemetry_record, telemetry_request, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1084,6 +1146,16 @@ export class TracershopState {
       this.message_assignment = message_assignment
     } else {
       this.message_assignment = new Map()
+    }
+    if(telemetry_record !== undefined){
+      this.telemetry_record = telemetry_record
+    } else {
+      this.telemetry_record = new Map()
+    }
+    if(telemetry_request !== undefined){
+      this.telemetry_request = telemetry_request
+    } else {
+      this.telemetry_request = new Map()
     }
     if(tracer !== undefined){
       this.tracer = tracer

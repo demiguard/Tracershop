@@ -21,7 +21,16 @@ export function CommitButton({
 
   function onClick(){
     // Guard statement
-    const [valid, formattedObject] = validate();
+    const validate_output = validate();
+
+    let valid, formattedObject;
+
+    if(typeof validate_output === "boolean"){
+      valid = validate_output;
+      formattedObject = temp_object
+    } else {
+      [valid, formattedObject] = validate_output;
+    }
 
     if(!valid) {
       return Promise.resolve();

@@ -49,7 +49,11 @@ export function FreeingRightsPage(){
   const [sortingMethod, setSortingMethod] = useState(SORTING_METHODS.USER);
   const userOptions = toOptions([...state.user.values()].filter(
     (user) => [USER_GROUPS.PRODUCTION_ADMIN, USER_GROUPS.PRODUCTION_USER].includes(user.user_group) &&
-      user.id != state.logged_in_user.id), 'username', 'id')
+      user.id != state.logged_in_user.id),
+      (user) =>
+        user.user_group === USER_GROUPS.PRODUCTION_ADMIN ?
+          `${user.username} - admin` : user.username
+      , 'id')
   const initialUser = (userOptions.length) ? userOptions[0].value : -1;
   const [activeUserID, setActiveUserID] = useState(initialUser);
   const tracerOptions = toOptions([...state.tracer.values()].filter(
