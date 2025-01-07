@@ -14,6 +14,7 @@ production/frontend/coverage/
 production/database/migrations/
 production/TracerAuth/migrations
 production/pdfData/
+production/vial_labels/
 production/certs
 *.sqlite3
 main.js

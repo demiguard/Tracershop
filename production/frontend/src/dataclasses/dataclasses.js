@@ -826,7 +826,7 @@ export class SecondaryEmail {
 }
 
 export class ServerConfiguration {
-  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, ) {
+  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, active_label_printer, active_printer, ) {
     this.id=id
     this.SMTPServer=SMTPServer
     this.DateRange=DateRange
@@ -836,6 +836,8 @@ export class ServerConfiguration {
     this.global_injection_deadline=global_injection_deadline
     this.ping_service_ae_tile=ping_service_ae_tile
     this.ris_dicom_endpoint=ris_dicom_endpoint
+    this.active_label_printer=active_label_printer
+    this.active_printer=active_printer
   }
 
   /**Copies the serverconfiguration
@@ -851,7 +853,9 @@ export class ServerConfiguration {
       this.global_activity_deadline,
       this.global_injection_deadline,
       this.ping_service_ae_tile,
-      this.ris_dicom_endpoint
+      this.ris_dicom_endpoint,
+      this.active_label_printer,
+      this.active_printer
     )
   }
   fields(){
@@ -865,6 +869,8 @@ export class ServerConfiguration {
       new ForeignField("global_injection_deadline","deadline"),
       new CharField("ping_service_ae_tile"),
       new ForeignField("ris_dicom_endpoint","dicom_endpoint"),
+      new ForeignField("active_label_printer","printer"),
+      new ForeignField("active_printer","printer"),
     ];
   }
 }

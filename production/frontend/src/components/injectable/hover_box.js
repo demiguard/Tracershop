@@ -60,11 +60,13 @@ export function HoverBox (props){
     ...styleProps
   })
 
+  const displayType = props.displayType ? props.displayType : 'block'
+
   function setVisibility (flag) {
     updateHoverComponentStyle(previousState => {
       return {
       ...previousState,
-      display : flag ? 'block' : 'none'
+      display : flag ? displayType : 'none'
     }});
   }
 

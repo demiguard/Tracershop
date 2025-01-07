@@ -302,3 +302,19 @@ export function formatTimeStamp(date){
 export function escapeInputString(string){
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
+
+/**
+ *
+ * @param {String} accessionNumber - string on the form DKREGHXXXXXXXX
+ * @returns
+ */
+export function formatAccessionNumber(accessionNumber){
+  const regex = /([a-zA-Z]+)(\d+)(\d{4})/;
+  const match = accessionNumber.match(regex);
+
+  if(match.length < 4){
+    return accessionNumber
+  }
+
+  return `${match[1]}${'X'.repeat(match[2].length)}${match[3]}`;
+}

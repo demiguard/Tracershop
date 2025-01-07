@@ -7,17 +7,14 @@ export function DeleteButton({
 }){
   const websocket = useWebsocket();
 
-  console.log(websocket)
-
-  function onClick(){
-    return websocket.sendDeleteModel(dataType, data).then(
-      (data) => {callback(data)}
-    );
+  async function onClickFunction(){
+    const data = await websocket.sendDeleteModel(dataType, data);
+    callback(data);
   }
 
   return (<IdempotentIcon
     src="/static/images/decline.svg"
-    onClick={onClick}
+    onClick={onClickFunction}
     {...rest}
   />);
 }

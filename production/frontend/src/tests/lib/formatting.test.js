@@ -5,7 +5,8 @@ import { parseDate, ParseDanishNumber, parseDateToDanishDate,
   IPValidator, escapeInputString, batchNumberValidator,
   StringValidator, dateToDateString, getDateName,
   nullParser, makePassword, Capitalize, renderDateTime,
-  formatUsername
+  formatUsername,
+  formatAccessionNumber
 } from "../../lib/formatting";
 import { DATA_ISOTOPE } from "~/lib/shared_constants";
 import { Isotope } from "~/dataclasses/dataclasses";
@@ -378,5 +379,12 @@ describe("escapeInputString Tests", () => {
   it("doesn't adds backslash", () =>{
     expect(escapeInputString("No sepecial characters")).toEqual("No sepecial characters");
     expect(escapeInputString("Permitted Special characters!-,")).toEqual("Permitted Special characters!-,")
+  })
+})
+
+describe("AccessionNumberTest", () => {
+  it("Basic test", () => {
+    expect(formatAccessionNumber("REGH00001111")).toBe("REGHXXXX1111")
+    expect(formatAccessionNumber("REGH02301111")).toBe("REGHXXXX1111")
   })
 })

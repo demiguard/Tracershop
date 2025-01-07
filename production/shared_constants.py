@@ -131,9 +131,10 @@ WEBSOCKET_MESSAGE_MODEL_EDIT               = "editModel"
 WEBSOCKET_MESSAGE_MOVE_ORDERS              = "moveOrder"
 WEBSOCKET_MESSAGE_LOG_ERROR                = "logError"
 WEBSOCKET_MESSAGE_RESTORE_ORDERS           = "restoreOrders"
-WEBSOCKET_MESSAGE_RESTART_VIAL_DOG          = "restartVialDog"
+WEBSOCKET_MESSAGE_RESTART_VIAL_DOG         = "restartVialDog"
 WEBSOCKET_MESSAGE_STATUS                   = "status"
 WEBSOCKET_MESSAGE_SUCCESS                  = "success"
+WEBSOCKET_MESSAGE_TEST_PRINTER             = "testPrinter"
 WEBSOCKET_MESSAGE_TYPE                     = "messageType"
 WEBSOCKET_MESSAGE_UPDATE_STATE             = "updateState"
 WEBSOCKET_OBJECT_DOES_NOT_EXISTS           = "objectDoesNotExists"
@@ -166,6 +167,7 @@ WEBSOCKET_MESSAGE_TYPES = [
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
   WEBSOCKET_MESSAGE_CREATE_BOOKING,
   WEBSOCKET_MESSAGE_DELETE_BOOKING,
+  WEBSOCKET_MESSAGE_TEST_PRINTER,
 ]
 
 class TRACER_USAGE(__Enum):
@@ -190,6 +192,8 @@ class SUCCESS_STATUS_CRUD(__Enum):
   UNSPECIFIED_REJECT = 1
   ARCHIVED_OBJECT = 2
   MISSING_RIGHTS = 3
+  CONSTRAINTS_VIOLATED = 4
+  VALIDATION_FAILED = 5
 
 #TODO: Cleanup this duplication from customerModels.py
 class BookingStatus(__Enum):

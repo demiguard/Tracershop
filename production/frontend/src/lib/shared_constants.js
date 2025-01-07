@@ -93,6 +93,8 @@ export const SUCCESS_STATUS_CRUD = {
   UNSPECIFIED_REJECT : 1,
   ARCHIVED_OBJECT : 2,
   MISSING_RIGHTS : 3,
+  CONSTRAINTS_VIOLATED : 4,
+  VALIDATION_FAILED : 5,
 };
 
 export const TRACER_USAGE = {
@@ -146,6 +148,7 @@ export const WEBSOCKET_MESSAGE_RESTART_VIAL_DOG = "restartVialDog";
 export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
 export const WEBSOCKET_MESSAGE_STATUS = "status";
 export const WEBSOCKET_MESSAGE_SUCCESS = "success";
+export const WEBSOCKET_MESSAGE_TEST_PRINTER = "testPrinter";
 export const WEBSOCKET_MESSAGE_TYPE = "messageType";
 export const WEBSOCKET_MESSAGE_TYPES = [
   "login",
@@ -170,6 +173,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "createExternalUser",
   "createBooking",
   "deleteBooking",
+  "testPrinter",
 ]
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_OBJECT_DOES_NOT_EXISTS = "objectDoesNotExists";

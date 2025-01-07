@@ -15,6 +15,11 @@ import { parseDateInput } from "~/lib/user_input";
 import { MarginButton } from "~/components/injectable/buttons";
 import { UpdateToday } from "~/lib/state_actions";
 import { clamp } from "~/lib/utils";
+import { ClickableIcon, IdempotentIcon } from "~/components/injectable/icons";
+import { HoverBox } from "~/components/injectable/hover_box";
+import { Option, Select, toOptions } from "~/components/injectable/select";
+import { cssCenter } from "~/lib/constants";
+import { Optional } from "~/components/injectable/optional";
 
 
 const vialRowHeight = 41; // in pixels
@@ -37,11 +42,22 @@ const SortingOptions = {
 
 function VialRow({vial}){
   const state = useTracershopState();
-
+  const websocket = useWebsocket();
+  const server_config = state.server_config.get(1);
   const customer = state.customer.get(vial.owner);
   const customerName = customer === undefined ?
                                  "Ukendt ejer"
                                  : customer.short_name;
+
+  const labelPrinter = state.printer.get(server_config.active_label_printer);
+  const printer = state.printer.get(server_config.active_printer);
+
+  const labelPrinterName = labelPrinter ? labelPrinter.name : "";
+  const printerName = printer ? printer.name : ""
+
+  function printVial(){
+    return
+  }
 
   return <tr style={{ height : `${vialRowHeight}px` }} key={vial.id}>
     <td data-testid="id_field">{vial.id}</td>
@@ -52,6 +68,38 @@ function VialRow({vial}){
     <td data-testid="activity_field">{vial.activity}</td>
     <td data-testid="owner_field">{customerName}</td>
     <td data-testid="order_field">{vial.assigned_to}</td>
+    <td data-testid="print">
+      <HoverBox
+        displayType={"block ruby"}
+        Base={
+          <ClickableIcon src={"static/images/printer.svg"}/>
+        }
+        Hover={
+          <Container>
+            <Row>
+              <Optional exists={printer !== undefined} alternative={<div>Der er ingen normal printer sat op</div>}>
+                <Col>Føgleseddel - {printerName}</Col>
+                <Col xs={2}>
+                  <ClickableIcon src={"static/images/printer.svg"}/>
+                </Col>
+              </Optional>
+
+            </Row>
+            <Row>
+              <Optional exists={labelPrinter !== undefined} alternative={<div>Der er ingen label printer sat op</div>}>
+                <Col>Label - {labelPrinterName}</Col>
+                <Col xs={2}>
+                  <ClickableIcon src={"static/images/printer.svg"}/>
+                </Col>
+              </Optional>
+            </Row>
+          </Container>
+        }
+      >
+
+      </HoverBox>
+
+    </td>
   </tr>
 }
 
@@ -249,6 +297,7 @@ export function VialPage(){
               <th data-testid="header-ACTIVITY" onClick={changeSearch(SortingOptions.ACTIVITY)}>Aktivitet</th>
               <th data-testid="header-OWNER" onClick={changeSearch(SortingOptions.OWNER)}>Ejer</th>
               <th data-testid="header-ORDER" onClick={changeSearch(SortingOptions.ORDER)}>Ordre</th>
+              <th data-testid="header-print">Print</th>
             </tr>
           </thead>
           <tbody style={{overflow: "auto"}}>

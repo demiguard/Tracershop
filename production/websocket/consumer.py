@@ -30,8 +30,9 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.contrib.auth.models import AnonymousUser
 from django.core.serializers import serialize
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.conf import settings
+from django.db.utils import IntegrityError
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
@@ -58,7 +59,7 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_LOG_ERROR, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
     WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,\
     WEBSOCKET_MESSAGE_GET_BOOKINGS, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
-    ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR
+    ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_TEST_PRINTER
 from database.database_interface import DatabaseInterface
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
@@ -66,6 +67,7 @@ from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       UserAssignment, SuccessfulLogin
 from lib.formatting import toDateTime, formatFrontendErrorMessage, toDate, timeConverter
 from lib.ProductionJSON import encode, decode
+from lib.printing import create_document
 
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
@@ -484,9 +486,28 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATATYPE
     """
     user = await get_user(self.scope)
-    instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
-                                                 message[WEBSOCKET_DATA],
-                                                 user)
+    try:
+      instances = await self.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
+                                                   message[WEBSOCKET_DATA],
+                                                   user)
+    except IntegrityError as e:
+      error_message = str(e)
+      await self.send_json({
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.CONSTRAINTS_VIOLATED,
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_ERROR : error_message
+      })
+      return
+    except ValidationError as e:
+      await self.send_json({
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.VALIDATION_FAILED,
+        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_MESSAGE_ERROR : e.error_dict
+      })
+      return
+
     serialized_data = await self.db.serialize_dict({
       message[WEBSOCKET_DATATYPE] : instances
     })
@@ -921,6 +942,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_BOOKINGS,
     })
 
+  async def HandleTestPrinter(self, message):
+    pass
+
+  async def HandlePrintVial(self, message):
+    vial = await self.db.get_model(Vial, message[WEBSOCKET_DATA_ID])
+    document_path = await create_document(vial)
+
+
+
 
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,
@@ -943,4 +973,5 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : HandleChangeExternalPassword,
     WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : HandleCreateExternalUser,
     WEBSOCKET_MESSAGE_LOG_ERROR : HandleLogFrontendError,
+    WEBSOCKET_MESSAGE_TEST_PRINTER : HandleTestPrinter
   }

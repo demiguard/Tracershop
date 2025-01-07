@@ -9,11 +9,12 @@ from enum import Enum
 import json
 from typing import Dict
 
-# Thrid party Packages 
+# Thrid party Packages
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.db.models import Model
 from django.core.serializers import serialize
+from django.core.exceptions import ValidationError
 
 # Tracershop Packages
 
@@ -25,6 +26,9 @@ class ProductionJSONEncoder(DjangoJSONEncoder):
       return stuff[1:-1]
     if isinstance(o, Enum):
       return o.value
+
+    if isinstance(o, ValidationError):
+      return o.message
 
     return super().default(o)
 

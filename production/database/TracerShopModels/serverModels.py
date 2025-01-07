@@ -48,7 +48,7 @@ class Printer(TracershopModel):
   port = models.PositiveSmallIntegerField(default=9100)
   label_printer = models.BooleanField(default=False)
 
-  valid_printer_names = re.compile(r'^[a-zA-Z0-9æøåÆØÅ]+$')
+  valid_printer_names = re.compile(r'^[a-zA-Z0-9æøåÆØÅ\-]+$')
 
   def clean(self) -> None:
     if self.valid_printer_names.fullmatch(self.name) is None:
@@ -101,6 +101,8 @@ class ServerConfiguration(TracershopModel):
   ping_service_ae_tile = models.CharField(max_length=16, default="RHKFATBUK561")
   ris_dicom_endpoint = models.ForeignKey(DicomEndpoint, on_delete=SET_NULL, default=None, null=True)
 
+  active_label_printer = models.ForeignKey(Printer, on_delete=models.RESTRICT, default=None, null=True, related_name="active_label_printer")
+  active_printer = models.ForeignKey(Printer, on_delete=models.RESTRICT, default=None, null=True, related_name="active_printer")
 
   @classmethod
   def get(cls):

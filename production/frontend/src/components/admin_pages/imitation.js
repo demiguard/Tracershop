@@ -5,8 +5,7 @@ import { ImitatedTracerWebsocket } from "../../lib/imitated_tracer_websocket";
 import { Container, FormControl, InputGroup, Row } from "react-bootstrap";
 import { Select } from "../injectable/select";
 
-export {ImitationPage}
-
+export { ImitationPage }
 
 const User_group_options = {
   0 : "Anonmym Bruger",
