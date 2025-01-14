@@ -1,18 +1,18 @@
 import React, { Component, useRef, useState } from "react";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
-import { FormatDateStr, dateToDateString } from "~/lib/formatting";
+import { FormatDateStr, formatAccessionNumber } from "~/lib/formatting";
 import { TRACER_TYPE, cssAlignRight, cssCenter } from "../../lib/constants";
 import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_DATA, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
-import { ClickableIcon } from "~/components/injectable/icons";
-import { IdempotentButton, MarginButton } from "~/components/injectable/buttons";
+import { IdempotentButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { Optional, Options } from "~/components/injectable/optional";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";
 import { AlertBox } from "~/components/injectable/alert_box";
+import { useErrorState } from "~/lib/error_handling";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -90,8 +90,8 @@ function BookingRow({
     0 // Seconds
   );
 
-  return (<tr data-testid={`booking-row-${booking.accession_number}`}>
-    <td>{booking.accession_number}</td>
+  return (<tr data-testid={`booking-row-${booking.id}`}>
+    <td>{formatAccessionNumber(booking.accession_number)}</td>
     <td>{series_description.description}</td>
     <td>{locationName}</td>
     <td>{booking.start_time}</td>
@@ -150,7 +150,7 @@ function TracerCard({tracer,
     });
   }
 
-  const [bookingError, setBookingError] = useState("")
+  const [bookingError, setBookingError] = useErrorState()
   const [sortingMethod, setSortingState] = useState(BOOKING_SORTING_METHODS.START_TIME);
   const [invertedSorting, setInvertedSorting] = useState(1)
   const [open, setOpen] = useState(false);
@@ -227,9 +227,9 @@ function TracerCard({tracer,
          </Table>
          <Optional exists={deadlineValid}>
           <Row style={{justifyContent : "right",display : "flex",}}>
-            <Optional exists={!!bookingError}>
-              <div><AlertBox testId={"booking_error"} message={bookingError}></AlertBox></div>
-            </Optional>
+
+            <div><AlertBox testId={"booking_error"} error={bookingError}></AlertBox></div>
+
             <div>
               <IdempotentButton
                 data-testid={`order-button-${tracer.id}`}

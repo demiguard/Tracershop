@@ -51,8 +51,8 @@ export const testState = new TracershopState(
   locations,
   messages,
   message_assignments,
-  new Map(),
-  new Map(),
+  new Map(), // Telemetry record
+  new Map(), // Telemetry Request
   tracers,
   tracer_mapping,
   printers,
@@ -61,7 +61,7 @@ export const testState = new TracershopState(
   productions,
   secondary_emails,
   serverConfig,
-  new Map(),
+  new Map(), // Server log
   users,
   user_assignments,
   vials,

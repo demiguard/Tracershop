@@ -2,13 +2,8 @@ import React from "react";
 import { Col, Row } from "react-bootstrap";
 import propTypes from 'prop-types'
 
-import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_WARNING } from "~/lib/constants.js";
-
-const warning_levels = [
-  ERROR_TYPE_HINT,
-  ERROR_TYPE_WARNING,
-  ERROR_TYPE_ERROR
-]
+import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_NO_ERROR, ERROR_TYPE_WARNING } from "~/lib/constants.js";
+import { RecoverableError } from "~/lib/error_handling";
 
 const Warning_names = {
   hint : "Hint:",
@@ -78,28 +73,34 @@ const headerStylings = {
 export const ERROR_LEVELS = {
   hint : ERROR_TYPE_HINT,
   warning : ERROR_TYPE_WARNING,
-  error : ERROR_TYPE_ERROR
+  error : ERROR_TYPE_ERROR,
+  NO_ERROR : ERROR_TYPE_NO_ERROR
 }
 
 /** Stateless Box displaying an important message
- *
+ * @param {Object} param0
+ * @param {string | Number} param0.testId
+ * @param {RecoverableError} param0.error
  */
-export function AlertBox ({testId, message = "", level = ERROR_TYPE_ERROR}) {
-    return (
-      <Row
-        data-testid={testId}
-        style={{
-          padding : '0px',
-          ...stylings[level]
-        }}
-        className={"justify-content-start"}>
-        <Col style={headerStylings[level]} md={{span : 2}} className={"justify-content-start text-center"}>{Warning_names[level]}</Col>
-        <Col md={{span : 10}} className="p-2 justify-content-start">{message}</Col>
-      </Row>
-    );
+export function AlertBox ({testId, error}) {
+  if(error.level === ERROR_LEVELS.NO_ERROR){
+    return null
+  }
+
+  return (
+    <Row
+      data-testid={testId}
+      style={{
+        padding : '0px',
+        ...stylings[error.level]
+      }}
+      className={"justify-content-start"}>
+      <Col style={headerStylings[error.level]} md={{span : 2}} className={"justify-content-start text-center"}>{Warning_names[error.level]}</Col>
+      <Col md={{span : 10}} className="p-2 justify-content-start">{error.message}</Col>
+    </Row>
+  );
 }
 
 AlertBox.propTypes = {
-  level : propTypes.oneOf(warning_levels),
-  message : propTypes.oneOfType([propTypes.string, propTypes.element])
+  error : propTypes.instanceOf(RecoverableError),
 }

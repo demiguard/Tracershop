@@ -28,6 +28,7 @@ import { Optional } from "~/components/injectable/optional.js";
 import { CancelBox } from "~/components/injectable/cancel_box.js";
 import { FONT } from "~/lib/styles.js";
 import { DateTime } from "~/components/injectable/datetime.js";
+import { RecoverableError, useErrorState } from "~/lib/error_handling.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -42,8 +43,9 @@ export function InjectionModal ({modal_order, on_close}) {
   const [freeing, setFreeing] = useState(false);
   const [canceling, setCanceling] = useState(false);
   const [lot_number, setLotNumber] = useState(defaultLotNumber);
-  const [error, setError] = useState("");
-  const [errorLevel, setErrorLevel] = useState(ERROR_LEVELS.hint);
+  const [loginError, setLoginError] = useErrorState();
+  const [formattingError, setFormattingError] = useErrorState();
+  const [dateError, setDateError] = useErrorState();
 
   const canEdit = !freeing && (order.status === ORDER_STATUS.ACCEPTED
         || order.status === ORDER_STATUS.ORDERED);
@@ -59,10 +61,6 @@ export function InjectionModal ({modal_order, on_close}) {
 
     return null;
   })();
-
-  useEffect(() => {
-
-  }, [])
 
   function acceptOrder(){
     order.status = ORDER_STATUS.ACCEPTED;
@@ -86,20 +84,23 @@ export function InjectionModal ({modal_order, on_close}) {
 
   function startFreeing(){
     if(!batchNumberValidator(lot_number)){
-      setError("Lot nummeret er ikke i det korrekte format");
-      setErrorLevel(ERROR_LEVELS.error);
+      setFormattingError(
+        new RecoverableError(
+          "Lot nummeret er ikke i det korrekte format",
+          ERROR_LEVELS.error
+        )
+      );
+
       return;
     }
 
     const today = getToday();
     const orderDate = new Date(order.delivery_date);
     if(!compareDates(today, orderDate)){
-
-      setError("Du er i gang med at frigive en ordre som ikke er bestilt til i dag!");
-      setErrorLevel(ERROR_LEVELS.hint);
-      setFreeing(true);
-
-      return; // This return statement is there to prevent two updates instead of one
+      setDateError(new RecoverableError(
+        "Du er i gang med at frigive en ordre som ikke er bestilt til i dag!",
+        ERROR_LEVELS.hint
+      ));
     }
 
     setFreeing(true);
@@ -119,19 +120,17 @@ export function InjectionModal ({modal_order, on_close}) {
       [WEBSOCKET_DATA_ID] : modal_order,
       "lot_number" : lot_number,
     };
-    websocket.send(message).then((data) => {
+    return websocket.send(message).then((data) => {
       if(data[AUTH_IS_AUTHENTICATED]){
-        // Free The order
-        setError("");
+        setLoginError(new RecoverableError());
         setFreeing(false);
       } else {
-        setError("Forkert Login");
-        setErrorLevel(ERROR_LEVELS.error);
+        setLoginError(new RecoverableError(
+          "Forkert login"
+        ));
       }
     })
   }
-
-
   const freeingButton = RightsToFree ?
       <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton>
     : <MarginButton disabled>Frigiv Ordre</MarginButton>;
@@ -141,10 +140,12 @@ export function InjectionModal ({modal_order, on_close}) {
   if(freeing){
     secondaryElement = <Col md={6}>
           <Authenticate
+                  error={loginError}
                   fit_in={false}
                   authenticate={freeOrder}
                   headerMessage={`Frigiv Ordre - ${modal_order}`}
                   buttonMessage={`Frigiv Ordre`}
+                  setError={setLoginError}
                   />
         </Col>;
     }
@@ -222,15 +223,14 @@ export function InjectionModal ({modal_order, on_close}) {
           </Row>
           <Optional exists={!tracer.vial_tag}>
             <AlertBox
-              level={ERROR_TYPE_HINT}
-              message={"Traceren har ikke opsat et vial tag, derfor kan auto batch nummer ikke udfyldes"}
+              error={new RecoverableError(
+                "Traceren har ikke opsat et vial tag, derfor kan auto batch nummer ikke udfyldes",
+                ERROR_LEVELS.hint,
+              )}
             />
           </Optional>
-
-          {error != "" ? <AlertBox
-            level={errorLevel}
-            message={error}
-            /> : null}
+          <AlertBox error={dateError}/>
+          <AlertBox error={formattingError}/>
         </Modal.Body>
         <Modal.Footer>
           <Row style={{width : "100%"}}>
@@ -240,13 +240,21 @@ export function InjectionModal ({modal_order, on_close}) {
               </Optional>
             </Col>
             <Col md={{ span : 3, offset : 5}}>
-                {order.status == 1 ? <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton> : ""}
-                {order.status == 2 && !freeing ? freeingButton : ""}
-                {order.status == 2 && freeing ? <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton> : ""}
-                {order.status == 3 ? <MarginButton onClick={openInjectionReleasePDF(order)}>Frigivelsecertifikat</MarginButton> : ""}
-           </Col>
+              <Optional exists={order.status == ORDER_STATUS.ORDERED}>
+                <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton>
+              </Optional>
+              <Optional exists={order.status == ORDER_STATUS.ACCEPTED && !freeing}>
+                {freeingButton}
+              </Optional>
+              <Optional exists={order.status == ORDER_STATUS.ACCEPTED && freeing}>
+                <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton>
+              </Optional>
+              <Optional exists={order.status == ORDER_STATUS.RELEASED && freeing}>
+                <MarginButton onClick={openInjectionReleasePDF(order)}>Frigivelsecertifikat</MarginButton>
+              </Optional>
+            </Col>
             <Col md={1}>
-                <CloseButton onClick={on_close}/>
+              <CloseButton onClick={on_close}/>
             </Col>
           </Row>
         </Modal.Footer>

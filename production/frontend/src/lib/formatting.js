@@ -17,7 +17,7 @@ import { MODELS, User } from "~/dataclasses/dataclasses";
  *
  * @throws "Date not on known format, Date: "+inputStr if on format
  * @param {string} inputStr - a String on the valid format
- * @returns {string}
+ * @returns {string?}
  */
 export function parseDate(inputStr){
   inputStr = inputStr.trim();
@@ -27,15 +27,15 @@ export function parseDate(inputStr){
   }
 
   if (/\d{4}\/\d{2}\/\d{2}/g.test(inputStr)) {
-    return inputStr.substring(0,4)+ "-" + inputStr.substring(5,7) + "-" + inputStr.substring(8,10);
+    return `${inputStr.substring(0,4)}-${inputStr.substring(5,7)}-${inputStr.substring(8,10)}`;
   }
 
   if (/\d{2}\/\d{2}\/\d{4}/g.test(inputStr)) {
-    return inputStr.substring(6,10) + "-" + inputStr.substring(3,5) + "-" + inputStr.substring(0,2);
+    return `${inputStr.substring(6,10)}-${inputStr.substring(3,5)}-${inputStr.substring(0,2)}`;
   }
 
   if (/\d{2}-\d{2}-\d{4}/g.test(inputStr)) {
-    return inputStr.substring(6,10) + "-" + inputStr.substring(3,5) + "-" + inputStr.substring(0,2);
+    return `${inputStr.substring(6,10)}-${inputStr.substring(3,5)}-${inputStr.substring(0,2)}`;
   }
 
   //Todo add more formats
@@ -312,7 +312,7 @@ export function formatAccessionNumber(accessionNumber){
   const regex = /([a-zA-Z]+)(\d+)(\d{4})/;
   const match = accessionNumber.match(regex);
 
-  if(match.length < 4){
+  if(!match){
     return accessionNumber
   }
 

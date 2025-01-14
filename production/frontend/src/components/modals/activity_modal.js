@@ -33,6 +33,7 @@ import { vialFilter } from "~/lib/filters.js";
 import { FONT } from "~/lib/styles.js";
 import { DateTime } from "~/components/injectable/datetime.js";
 import { toLotDateString } from "~/lib/chronomancy.js";
+import { RecoverableError, useErrorState } from "~/lib/error_handling.js";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -389,11 +390,9 @@ export function ActivityModal({
   const [dirtyOrders, setDirtyOrders] = useState(new Set());
   const [dirtyVials, setDirtyVials] = useState(new Set());
   const [addingVial, setAddingVial] = useState(false);
-  const [errorMessage, setErrorMessage] = useState("");
-  const [errorLevel, setErrorLevel] = useState("");
   const [freeing, setFreeing] = useState(false);
-  const [loginMessage, setLoginMessage] = useState("");
-  const [loginSpinner, setLoginSpinner] = useState(false);
+  const [loginError, setLoginError] = useErrorState();
+  const [dateError, setDateError]  = useErrorState();
   const [showCancelBox, setShowCancelBox] = useState(false);
 
   // Derived State
@@ -421,9 +420,16 @@ export function ActivityModal({
       setFreeing(true);
     } else {
       setFreeing(true);
-      setError(ERROR_LEVELS.hint,
-              WRONG_DATE_WARNING_MESSAGE);
+      setDateError(
+        WRONG_DATE_WARNING_MESSAGE,
+        ERROR_LEVELS.hint
+      )
     }
+  }
+
+  function stopFreeing(){
+    setFreeing(false)
+    setDateError();
   }
 
   function onClickAccept(){
@@ -433,7 +439,7 @@ export function ActivityModal({
         order.status = ORDER_STATUS.ACCEPTED;
       }
     }
-    websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders);
+    return websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders);
   }
 
   function onClickToPDF() {
@@ -441,7 +447,6 @@ export function ActivityModal({
   }
 
   function onFree(username, password){
-    setLoginSpinner(true);
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_ACTIVITY);
     const data = {
       [DATA_DELIVER_TIME] : timeSlotID,
@@ -454,21 +459,14 @@ export function ActivityModal({
       [AUTH_PASSWORD] : password,
     };
     message[DATA_AUTH] = auth;
-    websocket.send(message).then((data) =>{
-      setLoginSpinner(false);
+    return websocket.send(message).then((data) =>{
       if (data[AUTH_IS_AUTHENTICATED]){
-        setFreeing(false);
-        setError(null, "")
-
+        stopFreeing();
+        setLoginError(new RecoverableError());
       } else {
-        setError(ERROR_LEVELS.error, "Forkert login");
+        setLoginError(new RecoverableError("Forkert login"));
       }
     });
-  }
-
-  function setError(level, error){
-    setErrorLevel(level)
-    setErrorMessage(<div>{error}</div>);
   }
 
   function startCancelOrders(){
@@ -545,7 +543,7 @@ export function ActivityModal({
   const ConfirmButton = canFree ?
                           <MarginButton onClick={startFreeing}>Godkend</MarginButton>
                         : <MarginButton disabled>Godkend</MarginButton>;
-  const CancelFreeButton = <MarginButton onClick={() => {setFreeing(false)}}>Rediger</MarginButton>
+  const CancelFreeButton = <MarginButton onClick={stopFreeing}>Rediger</MarginButton>
   const PDFButton = <MarginButton onClick={onClickToPDF}>Frigivelsecertifikat</MarginButton>;
 
   let sideElement = <div></div>;
@@ -554,10 +552,10 @@ export function ActivityModal({
     sideElement = (<Col md={6}>
       <Authenticate
         authenticate={onFree}
-        errorMessage={loginMessage}
+        error={loginError}
+        setError={setLoginError}
         fit_in={false}
         headerMessage={`Frigiv Ordre - ${orderCollection.orderIDs.join(', ')}`}
-        spinner={loginSpinner}
         buttonMessage={"Frigiv Ordre"}
       />
     </Col>)
@@ -647,10 +645,7 @@ export function ActivityModal({
         </Col>
           {sideElement}
         </Row>
-        {errorLevel != "" ? <AlertBox
-          level={errorLevel}
-          message={errorMessage}
-        /> : ""}
+        <AlertBox error={dateError}/>
         <Row>
           <div>
             <Table>

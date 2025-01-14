@@ -122,4 +122,21 @@ describe("Shop shop test suite", () => {
 
     expect(screen.getByLabelText("no-assoc-external-user-error")).toBeVisible()
   });
+
+  it("standard test - Some how a production member is viewing customer data", async () => {
+    const newState = Object.assign(new TracershopState(), {
+      ...testState,
+      logged_in_user : users.get(2),
+    });
+
+    await act(async () => {
+      render(
+        <TracerShopContext tracershop_state={newState} websocket={websocket}>
+          <ShopSite logout={logout}/>
+        </TracerShopContext>
+      );
+    })
+
+    expect(screen.getByLabelText("no-assoc-internal-user-error")).toBeVisible()
+  });
 })

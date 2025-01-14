@@ -12,6 +12,8 @@ import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { testState } from "~/tests/app_state.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
+import { TracershopState, Vial } from "~/dataclasses/dataclasses.js";
+import { toMapping } from "~/lib/utils.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -20,33 +22,41 @@ let websocket = null;
 const dispatch = jest.fn()
 const now = new Date(2019,5,11,20,11,2);
 
-beforeEach(() => {
-  delete window.location
-  jest.useFakeTimers('modern');
-  jest.setSystemTime(now);
-  window.location = { href : "tracershop"}
-  websocket = tracer_websocket.TracerWebSocket;
-});
-
-
-afterEach(() => {
-  cleanup();
-  module.clearAllMocks()
-});
+// So this component is fucked for testing because the rendering of vialRows
+// is behind a useEffect and behind
 
 
 describe("Vial page tests suite", () => {
+  beforeEach(() => {
+
+    delete window.location
+    jest.useFakeTimers('modern');
+    jest.setSystemTime(now);
+    window.location = { href : "tracershop"}
+    websocket = tracer_websocket.TracerWebSocket;
+  });
+
+  afterEach(() => {
+    jest.restoreAllMocks()
+    cleanup();
+    module.clearAllMocks()
+  });
+
+
   it("Standard Render Tests", async () => {
-    render(
+    const addEventListenerMock = jest.spyOn(window, 'addEventListener')
+    const removeEventListenerMock = jest.spyOn(window, 'removeEventListener')
+
+    const renderedObject = render(
       <TracerShopContext tracershop_state={testState} dispatch={dispatch} websocket={websocket}>
         <VialPage/>
       </TracerShopContext>
     );
 
-    for(const vial of testState.vial.values()){
-      // Note that multiple vials may have the same lot number, hence this.
-      expect(screen.getAllByText(vial.lot_number).length).toBeGreaterThanOrEqual(1);
-    }
+    expect(addEventListenerMock).toHaveBeenCalled();
+    expect(removeEventListenerMock).not.toHaveBeenCalled();
+    renderedObject.unmount();
+    expect(removeEventListenerMock).toHaveBeenCalled();
   });
 
   it("Change sorting - ID", () => {

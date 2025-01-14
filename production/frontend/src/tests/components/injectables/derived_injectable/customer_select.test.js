@@ -11,24 +11,14 @@ import { CustomerSelect } from "~/components/injectable/derived_injectables/cust
 import { setStateToEvent } from '~/lib/state_management';
 
 import { DATA_CUSTOMER } from "~/lib/shared_constants";
-import { AppState } from "../../../app_state";
-
-
-
-let container = null;
-let props = null;
+import { testState } from "~/tests/app_state";
 
 beforeEach(() => {
-  props = AppState
-  container = document.createElement("div");
+
 });
 
 afterEach(() => {
   cleanup();
-  window.localStorage.clear()
-  if(container != null) container.remove();
-  container = null;
-  props=null
 });
 
 const mockSetCustomer = jest.fn((val) => val);
@@ -42,7 +32,7 @@ function StateHolder(){
   }
 
   return <CustomerSelect
-    customers={props[DATA_CUSTOMER]}
+    customers={testState.customer}
     value={customer}
     onChange={setStateToEvent(setCustomer)}
   />
@@ -52,9 +42,8 @@ describe("Customer Select test suite" ,() => {
   it("Standard Render test", () => {
     render(<StateHolder/>)
 
-    for(const customer of props[DATA_CUSTOMER].values()){
+    for(const customer of testState[DATA_CUSTOMER].values()){
       expect(screen.getByText(customer.short_name));
     }
-
   })
 })

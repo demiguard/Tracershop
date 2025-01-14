@@ -203,8 +203,8 @@ describe("Future Bookings Test Suite", () => {
     );
 
     expect(
-      screen.getByTestId('booking-row-B').compareDocumentPosition(screen
-        .getByTestId('booking-row-A'))).toEqual(
+      screen.getByTestId('booking-row-1').compareDocumentPosition(screen
+        .getByTestId('booking-row-2'))).toEqual(
           Node.DOCUMENT_POSITION_FOLLOWING
         );
 
@@ -213,8 +213,8 @@ describe("Future Bookings Test Suite", () => {
     })
 
     expect(
-      screen.getByTestId('booking-row-B').compareDocumentPosition(screen
-        .getByTestId('booking-row-A'))).toEqual(
+      screen.getByTestId('booking-row-1').compareDocumentPosition(screen
+        .getByTestId('booking-row-2'))).toEqual(
           Node.DOCUMENT_POSITION_PRECEDING
         );
   });

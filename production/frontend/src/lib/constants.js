@@ -182,6 +182,7 @@ export const DATABASE_LAST_UPDATED = "lastUpdated";
 export const ERROR_TYPE_HINT = "hint";
 export const ERROR_TYPE_WARNING = "warning";
 export const ERROR_TYPE_ERROR = "error";
+export const ERROR_TYPE_NO_ERROR = "no_error"
 
 export const PROP_LOGOUT = "logout";
 export const PROP_NAVBAR_ELEMENTS = "NavbarElements";

@@ -14,6 +14,9 @@ export function TimeDisplay(props){
   const {time, ...rest} = props;
   const text = (() => {
     let fTime = time;
+    if(!fTime){
+      return "Ukendt tidspunkt";
+    }
     if(fTime instanceof Date) {
       return `${FormatDateStr(fTime.getHours())}:${FormatDateStr(fTime.getMinutes())}`;
     }

@@ -148,7 +148,7 @@ export function VialPage(){
     if(validDate){
       dispatch(new UpdateToday(date, websocket));
     } else {
-      setDateError(date)
+      setDateError(date);
     }
   }
 
@@ -226,6 +226,7 @@ export function VialPage(){
       });
   }, [state.vial, customerID, vialDay, lotNumber, sortingInverted, sortingOption]);
 
+
   const VialRows = useMemo(() => {
     if (!overflowDivRef.current){
       return [];
@@ -235,13 +236,13 @@ export function VialPage(){
     const visibleRowCount = Math.ceil(containerHeight / vialRowHeight);
     const startIndex = clamp(Math.floor(scrollOffset / vialRowHeight), 0, filteredSortedVials.length - visibleRowCount);
     const endIndex = Math.min(startIndex + visibleRowCount + 2, filteredSortedVials.length);
+
     return filteredSortedVials.slice(startIndex, endIndex).map(
       (vial, index) => <VialRow vial={vial} key={index + startIndex}/>
     );
   }, [overflowDivRef.current, filteredSortedVials, scrollOffset]);
 
   const overflowDivHeight = `calc(100vh - ${heightOffset + 4 * vialRowHeight}px)`;
-
   return (
     <div>
       <Row className="justify-content-center">

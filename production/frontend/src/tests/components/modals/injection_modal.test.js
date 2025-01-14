@@ -17,17 +17,12 @@ const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = null;
-let container = null;
 
 const onClose = jest.fn();
-
 let modalProps = null;
 
 
 beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
   websocket = tracer_websocket.TracerWebSocket;
   modalProps = {
     [PROP_MODAL_ORDER] : 1,
@@ -39,10 +34,6 @@ beforeEach(() => {
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
-
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
   modalProps = null;
 });
 
@@ -126,35 +117,39 @@ describe("Injection modal test suite", () =>{
     expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
   });
 
-  it("Failed Freeing Freeing Order", async () => {
+  it("Failed Freeing No Password Order", async () => {
     const ResolvingWebsocket = {
       getMessage : jest.fn((input) => {return {
         WEBSOCKET_MESSAGE_TYPE : input
       }}),
-      send : jest.fn((message) => {
-          return new Promise(async function(resolve) {resolve({
-            isAuthenticated : false
-          })
-        });
-      })
+
+      send : jest.fn((message) => Promise.resolve({isAuthenticated : false}))
     }
 
-    websocket = ResolvingWebsocket
     modalProps[PROP_MODAL_ORDER] = 2
 
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={ResolvingWebsocket}>
         <InjectionModal {...modalProps}/>
       </TracerShopContext>
     );
 
-    fireEvent.change(await screen.findByLabelText("lot-input"), {target : {value : "test-111111-1"}});
+    act(() => {
+      fireEvent.change(screen.getByLabelText("lot-input"), {target : {value : "test-111111-1"}});
+    });
 
-    fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
-    fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
+    act(() => { // To get the authenticate to appear
+      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+    });
 
-    expect(await screen.findByText("Forkert Login")).toBeVisible();
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
+    await act(async () => { // To get the authenticate to confirm the missing password
+      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+    });
+
+    expect(await screen.findByText("Dit kodeord er ikke tastet ind.")).toBeVisible();
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
+
+    expect(ResolvingWebsocket.send).not.toHaveBeenCalled();
   });
 
   it("Success Freeing Freeing Order", async () => {

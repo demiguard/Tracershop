@@ -5,6 +5,9 @@ import { Form, Button, Spinner } from "react-bootstrap";
 import { FONT, MARGIN } from '~/lib/styles'
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { setStateToEvent } from "~/lib/state_management";
+import { Optional } from "~/components/injectable/optional";
+import { RecoverableError } from "~/lib/error_handling";
+import { IdempotentButton } from "~/components/injectable/buttons";
 
 const styles = {
   authenticateBox : {
@@ -49,14 +52,15 @@ const styles = {
  *
  * Props:
  *  @param {CallableFunction} authenticate : Function - that takes the arguments username and password of the user to authenticate them,
- *  @param {String} ErrorMessage : String that describes the user didn't type their password correctly
+ *  @param {RecoverableError} error : String that describes the user didn't type their password correctly
  *  @param {String} login_message  : String Message to be written inside of the box that logs a user in
  *  @param {Boolean} fit_in : Boolean deciding if extra css is needed let the box in its full glory
  *
  * @author Christoffer Vilstrup Jensen
  */
 export function Authenticate({ authenticate,
-                               errorMessage = "",
+                               error=new RecoverableError(),
+                               setError=()=>{},
                                headerMessage="Log in",
                                fit_in = false,
                                spinner = false,
@@ -65,11 +69,16 @@ export function Authenticate({ authenticate,
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
-  function onSubmitFunc(event) {
-    event.preventDefault();
+  function onSubmitFunc() {
     if(password){
-      authenticate(username, password);
+      return authenticate(username, password);
+    } else {
+      setError(new RecoverableError(
+        "Dit kodeord er ikke tastet ind.",
+         ERROR_LEVELS.warning
+      ));
     }
+    return Promise.resolve();
   }
 
   return (
@@ -80,51 +89,37 @@ export function Authenticate({ authenticate,
       }} className={"text-center"}>{headerMessage}</h3>
         <hr style={MARGIN.topBottom.px0}/>
         <div>
-          <Form onSubmit={onSubmitFunc}>
-            <div className={"form-group"} style={styles.formRow}>
-              <label htmlFor="username">Bruger navn</label>
-              <input
-                type="text"
-                className="form-control"
-                id="username"
-                name="username"
-                aria-label="username"
-                autoComplete="new-password"
-                value={username}
-                onChange={setStateToEvent(setUsername)}
-              />
-            </div>
-            <div className={"form-group"} style={styles.formRow}>
-              <label htmlFor="username">Kodeord</label>
-              <input type="password"
-                     className="form-control"
-                     id="password"
-                     autoComplete="new-password"
-                     name="password"
-                     aria-label="password"
-                     value={password}
-                     onChange={setStateToEvent(setPassword)}/>
-            </div>
-            {errorMessage ?
-              <AlertBox
-                level={ERROR_LEVELS.error}
-                message={errorMessage}
-              /> : null
-            }
-            <div className={"form-group"} style={styles.formRow}>
-              { spinner ?
-                  <Spinner
-                    animation="border"
-                    variant="primary"
-                  /> :
-                  <Button
-                    type="submit"
-                    className="btn btn-primary">
-                      {buttonMessage}
-                  </Button>
-              }
-            </div>
-          </Form>
+          <div className={"form-group"} style={styles.formRow}>
+            <label htmlFor="username">Bruger navn</label>
+            <input
+              type="text"
+              className="form-control"
+              id="username"
+              name="username"
+              aria-label="username"
+              autoComplete="new-password"
+              value={username}
+              onChange={setStateToEvent(setUsername)}
+            />
+          </div>
+          <div className={"form-group"} style={styles.formRow}>
+            <label htmlFor="username">Kodeord</label>
+            <input type="password"
+                    className="form-control"
+                    id="password"
+                    autoComplete="new-password"
+                    name="password"
+                    aria-label="password"
+                    value={password}
+                    onChange={setStateToEvent(setPassword)}/>
+          </div>
+          {/* Note that Alert box doesn't render on no error */}
+          <AlertBox
+            error={error}
+          />
+          <div className={"form-group"} style={styles.formRow}>
+            <IdempotentButton onClick={onSubmitFunc}>{buttonMessage}</IdempotentButton>
+          </div>
         </div>
       </div>
   );
@@ -132,7 +127,7 @@ export function Authenticate({ authenticate,
 
 Authenticate.propTypes = {
   authenticate : propTypes.func.isRequired,
-  errorMessage : propTypes.string,
+  error : propTypes.instanceOf(RecoverableError),
   headerMessage : propTypes.string,
   fit_in : propTypes.bool,
   spinner : propTypes.bool,

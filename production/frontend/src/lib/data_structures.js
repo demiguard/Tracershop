@@ -20,6 +20,7 @@ import { useOverflow } from "~/effects/overflow"
 import { HIGH_CONTRAST_ORDER_COLORS, JUSTIFY } from '~/lib/styles';
 import { AccumulatingMap } from '~/lib/accumulating_map';
 import { Col } from 'react-bootstrap';
+import { formatAccessionNumber } from '~/lib/formatting';
 
 
 //#region EndpointCatalog
@@ -619,7 +620,7 @@ function BookingCell({bookings}){
     }}>
       <div>{procedureIdentifier.description}</div>
       <div>{booking.start_time}</div>
-      <div>{booking.accession_number}</div>
+      <div>{formatAccessionNumber(booking.accession_number)}</div>
     </div>;}
   );
 
