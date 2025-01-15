@@ -14,7 +14,7 @@ import { AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_VIAL
 
 import { testState } from "../../app_state.js";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { TracerCatalog } from "~/lib/data_structures.js";
+import { TracerCatalog } from '~/effects/tracerCatalog.js';
 import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { applyFilter, dailyActivityOrderFilter } from "~/lib/filters.js";
 import { ActivityOrder, TracershopState, Vial } from "~/dataclasses/dataclasses.js";

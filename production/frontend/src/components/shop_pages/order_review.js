@@ -10,7 +10,7 @@ import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
-import { TracerCatalog } from "~/lib/data_structures";
+import { TracerCatalog } from '~/effects/tracerCatalog';
 import { getRelevantActivityOrders } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";

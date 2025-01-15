@@ -2,11 +2,19 @@ import React from "react";
 import { InputGroup } from "react-bootstrap";
 import { Optional } from "~/components/injectable/optional";
 import { HoverBox } from "~/components/injectable/hover_box";
-import { cssError } from "~/lib/constants";
+import { cssError, cssHintColor, cssWarningColor } from "~/lib/constants";
+import { ERROR_LEVELS } from "~/components/injectable/alert_box";
+import { RecoverableError } from "~/lib/error_handling";
 
-
+/**
+ *
+ * Also for the love of god, do not put complex components in here.
+ *
+ * @param {*} param0
+ * @returns
+ */
 export function TracershopInputGroup({children, label, error, tail}) {
-  if(error === "" || error === undefined){
+  if(error === "" || error === undefined || error.level === ERROR_LEVELS.NO_ERROR){
     return (
       <InputGroup
       style={{
@@ -14,9 +22,9 @@ export function TracershopInputGroup({children, label, error, tail}) {
         marginBottom : '5px',
       }}
       >
-      <Optional exists={label !== undefined}><InputGroup.Text>{label}</InputGroup.Text></Optional>
-        {children}
-      <Optional exists={tail !== undefined}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
+        <Optional exists={label !== undefined}><InputGroup.Text>{label}</InputGroup.Text></Optional>
+          {children}
+        <Optional exists={tail !== undefined}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
       </InputGroup>
     );
   } else {
@@ -26,10 +34,26 @@ export function TracershopInputGroup({children, label, error, tail}) {
     } catch {
       /* istanbul ignore next */
     }
+
+    const style = (() => {
+      if(error instanceof RecoverableError){
+        if(error.level === ERROR_LEVELS.hint){
+          return cssHintColor;
+        }
+        if(error.level === ERROR_LEVELS.warning){
+          return cssWarningColor;
+        }
+        // NO error is eliminated from initial if statement and error is covered
+        // by fallthrough.
+      }
+
+      return cssError;
+    })()
+
     const newComps = React.Children.map(children,(child) =>
       React.cloneElement(child, {
         ...child.props,
-        style : {...child.props.style, ...cssError}
+        style : {...child.props.style, ...style}
       })
     );
 

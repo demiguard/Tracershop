@@ -130,6 +130,16 @@ export const INJECTION_USAGE = {
 
 export const ERROR_BACKGROUND_COLOR = "#FF3333";
 export const ERROR_MARGIN_COLOR = "#FF0000";
+
+export const WARNING_BACKGROUND_COLOR = "#ccbb88"
+export const WARNING_MARGIN_COLOR = "#FFbb00"
+
+export const HINT_BACKGROUND_COLOR = "#FFFFFF"
+export const HINT_MARGIN_COLOR = COLORS.tertiaryColor1
+
+
+
+
 export const cssCenter = {
   display : "block",
   margin: 'auto',
@@ -157,6 +167,17 @@ export const cssError = {
   background : ERROR_BACKGROUND_COLOR,
   marginColor : ERROR_MARGIN_COLOR,
 }
+
+export const cssWarningColor = {
+  background : WARNING_BACKGROUND_COLOR,
+  marginColor : WARNING_MARGIN_COLOR
+}
+
+export const cssHintColor = {
+  background : HINT_BACKGROUND_COLOR,
+  marginColor : HINT_MARGIN_COLOR
+}
+
 
 export const cssTableCenter = {
   textAlign : "center",

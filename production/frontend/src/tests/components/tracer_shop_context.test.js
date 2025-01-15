@@ -2,7 +2,7 @@
  * @jest-environment jsdom
  */
 
-import React from "react";
+import React, { createContext, useContext, useMemo, useRef } from "react";
 import { expect, jest, test } from '@jest/globals'
 import WS from "jest-websocket-mock"
 import { TracerShopContextInitializer, tracershopReducer, useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
@@ -14,6 +14,7 @@ import { DATABASE_CURRENT_USER, USER_GROUPS } from "~/lib/constants";
 import { db } from "~/lib/local_storage_driver";
 import { closed_dates } from "~/tests/test_state/close_dates";
 import { compareMaps } from "~/lib/utils";
+import { describe } from "node:test";
 
 let server = null
 
@@ -110,3 +111,411 @@ describe("Tracershop context test", () => {
     expect(compareMaps(stateFunction.mock.calls[0][0], closed_dates));
   });
 });
+
+
+/**
+ * These testcases are not testing tracershop code, instead, they are an
+ * exploration of the react rendering engine.
+ *
+ * The goal is create a memories value, that is created lazily and memorized.
+ */
+
+describe("Context proof of concept test cases", () => {
+  const expensive_object_to_construct = {};
+  const expensive_object_to_construct_reconstructed = {};
+  const expensive_to_call = jest.fn(() => expensive_object_to_construct);
+  const context = createContext(null);
+  const derived_context = createContext(null);
+
+  //#region USE Function
+  function useExpensive(){
+    return useContext(context);
+  }
+
+  function useDerived(){
+    return useContext(derived_context);
+  }
+
+  function useDerivedMemo(){
+    const expensive = useExpensive();
+    return useMemo(() => {
+      return expensive_to_call();
+    }, [expensive]);
+  }
+
+  function useDerivedRef(){
+    const expensive = useExpensive()
+    const ref = useDerived();
+
+    if(ref.current === null){
+      ref.current = useMemo(() => {
+        return expensive_to_call()
+      }, [expensive])
+    }
+
+    return ref.current;
+  }
+
+  function useDerivedFunction(){
+    const ref_func = useDerived();
+    return ref_func();
+  }
+
+  function useClaude(){
+    const { source_data, ref } = useDerived();
+
+    return useMemo(() => {
+      if(ref.current === null){
+        ref.current = expensive_to_call(source_data)
+      }
+      return ref.current
+    }, [source_data]);
+  }
+
+
+  //#region Provider
+  function DerivedRefProvider({children}){
+    const ref = useRef(null)
+    return <derived_context.Provider value={ref}>
+      {children}
+    </derived_context.Provider>
+  }
+
+
+  /** The simplest example, recalculated at each rerender, even if the value is
+   *  not used.
+   *
+   */
+  function StandardProvider({children}){
+    const expensive = expensive_to_call();
+
+    return <context.Provider value={expensive}>
+      {children}
+    </context.Provider>
+  }
+
+
+  /** The wrapping the value in a 'useMemo' example. The value is always
+   * calculated, but is never recalculated
+   */
+  function MemoProvider({children}){
+    const expensive = useMemo(() => { return expensive_to_call();}, [])
+
+    return <context.Provider value={expensive}>
+      {children}
+    </context.Provider>
+  }
+
+
+  function ValueProvider({children, value}){
+    return <context.Provider value={value}>
+      {children}
+    </context.Provider>
+  }
+
+  function DerivedProvider({children}){
+    const context = useExpensive()
+
+    const value = useMemo(() => { return expensive_to_call() }, [context])
+
+    return <derived_context.Provider value={value}>
+      {children}
+    </derived_context.Provider>
+  }
+
+  function DerivedFunctionRefProvider({children}){
+    const expensive = useExpensive()
+
+    const ref = () => {return useMemo(() => {return expensive_to_call() }, [expensive])}
+
+    return <derived_context.Provider value={ref}>
+      {children}
+    </derived_context.Provider>
+  }
+
+  function DerivedFunctionceptionRefProvider({children}){
+    const expensive = useExpensive()
+
+    const ref = useMemo(() => () => {return expensive_to_call()}, [expensive])
+
+    return <derived_context.Provider value={ref}>
+      {children}
+    </derived_context.Provider>
+  }
+
+  function DerivedClaudeProvider({children}){
+    const source_data = useExpensive();
+    const ref = useRef(null);
+
+    const contextValue = useMemo(() => {
+      ref.current = null;
+
+      return {
+        source_data, ref
+      }
+    }, [source_data])
+
+    return <derived_context.Provider value={contextValue}>
+      {children}
+    </derived_context.Provider>
+  }
+
+  //#region Context Using Components
+  /** A standard component, that is using the default context
+   *
+   * @param {Object} param0
+   * @param {Object} param0.prop_value - Dummy value, used to trigger a rerender
+   * @returns
+   */
+  function Comp({prop_value, contextFunction}){
+    if(typeof contextFunction === "function"){
+      const expensive = contextFunction();
+      expect(Object.is(expensive, expensive_object_to_construct)).toBe(true);
+    }
+
+    return <div>Hello world</div>
+  }
+
+  function ClaudeComp({prop_value, use_context}){
+    if(use_context){
+      const expensive = useClaude();
+      expect(Object.is(expensive, expensive_object_to_construct)).toBe(true);
+    }
+
+    return <div>Hello world</div>;
+  }
+
+
+
+  //#region Composite Components
+  /** A render test case, where the provider calls the mock
+   *
+   * @param {Object} param0
+   * @param {Object} param0.prop_value - Dummy value, used to trigger a rerender
+   * @returns
+   */
+  function StandardApp({prop_value}){
+    return (
+      <StandardProvider>
+        <Comp prop_value={prop_value} contextFunction={useExpensive}/>
+        <Comp prop_value={prop_value} contextFunction={useExpensive}/>
+      </StandardProvider>
+    )
+  }
+
+  function StandardNotUsingApp({prop_value}){
+    return (
+      <StandardProvider>
+        <Comp prop_value={prop_value}/>
+        <Comp prop_value={prop_value}/>
+      </StandardProvider>
+    )
+  }
+
+  function MemoApp({prop_value}){
+    return (
+      <MemoProvider>
+        <Comp prop_value={prop_value} contextFunction={useExpensive}/>
+        <Comp prop_value={prop_value} contextFunction={useExpensive}/>
+      </MemoProvider>
+    )
+  }
+
+  function MemoNotUsingApp({prop_value}){
+    return (
+      <MemoProvider>
+        <Comp prop_value={prop_value}/>
+        <Comp prop_value={prop_value}/>
+      </MemoProvider>
+    )
+  }
+
+  /** The first realistic component */
+  function DerivedApp({contextValue, prop_value}){
+    return (
+      <ValueProvider value={contextValue}>
+        <DerivedProvider>
+          <Comp prop_value={prop_value} contextFunction={useDerived}/>
+          <Comp prop_value={prop_value} contextFunction={useDerived}/>
+        </DerivedProvider>
+      </ValueProvider>
+    );
+  }
+
+  /** The first realistic component - not using the context */
+  function DerivedNotUsedApp({contextValue, prop_value}){
+    return (
+      <ValueProvider value={contextValue}>
+        <DerivedProvider>
+          <Comp prop_value={prop_value}/>
+          <Comp prop_value={prop_value}/>
+        </DerivedProvider>
+      </ValueProvider>
+    );
+  }
+
+  /** Context wrapping Component where the calculation is done in the "use"
+   * call */
+  function DerivedCompMemoApp({contextValue, prop_value}){
+    return (
+      <ValueProvider value={contextValue}>
+        <Comp prop_value={prop_value} contextFunction={useDerivedMemo}/>
+        <Comp prop_value={prop_value} contextFunction={useDerivedMemo}/>
+      </ValueProvider>
+    );
+  }
+
+  function DerivedRefApp({contextValue, prop_value}){
+    return(
+      <ValueProvider value={contextValue}>
+        <DerivedRefProvider>
+          <Comp prop_value={prop_value} contextFunction={useDerivedRef}/>
+          <Comp prop_value={prop_value} contextFunction={useDerivedRef}/>
+        </DerivedRefProvider>
+      </ValueProvider>
+    )
+  }
+
+  function DerivedFunctionExperimentApp({contextValue, prop_value}){
+    return(
+      <ValueProvider value={contextValue}>
+        <DerivedFunctionRefProvider>
+          <Comp prop_value={prop_value} contextFunction={useDerivedFunction}/>
+          <Comp prop_value={prop_value} contextFunction={useDerivedFunction}/>
+        </DerivedFunctionRefProvider>
+      </ValueProvider>
+    )
+  }
+
+  function DoubleMemoExperimentApp({contextValue, prop_value}){
+    return(
+      <ValueProvider value={contextValue}>
+        <DerivedFunctionceptionRefProvider>
+          <Comp prop_value={prop_value} contextFunction={useDerivedFunction}/>
+          <Comp prop_value={prop_value} contextFunction={useDerivedFunction}/>
+        </DerivedFunctionceptionRefProvider>
+      </ValueProvider>
+    )
+  }
+
+  function ClaudeApp({contextValue, prop_value, use_context=true}){
+    return(
+      <ValueProvider value={contextValue}>
+        <DerivedClaudeProvider>
+          <ClaudeComp prop_value={prop_value} use_context={use_context} contextFunction={useClaude}/>
+          <ClaudeComp prop_value={prop_value} use_context={use_context} contextFunction={useClaude}/>
+        </DerivedClaudeProvider>
+      </ValueProvider>
+    )
+  }
+
+  //#region Testcases
+  it("Can I use jest", () => {
+    expect(Object.is(expensive_object_to_construct, expensive_to_call())).toBe(true);
+  })
+
+  it("Standard value test, calls twice", () => {
+    const {rerender} = render(<StandardApp prop_value={1}/>);
+    rerender(<StandardApp prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2)
+  })
+
+  it("Standard value test, not using still calls twice", () => {
+    const {rerender} = render(<StandardNotUsingApp prop_value={1}/>);
+    rerender(<StandardNotUsingApp prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2)
+  })
+
+  it("useMemo reduces calls to 1", () => {
+    const { rerender } = render(<MemoApp prop_value={1}/>)
+    rerender(<MemoApp prop_value={2}/>)
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+  })
+
+  it("useMemo Still calls once even when value is not used", () => {
+    const { rerender } = render(<MemoNotUsingApp prop_value={1}/>)
+    rerender(<MemoNotUsingApp prop_value={2}/>)
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+  });
+
+  it("Derived Context perform similar to useMemo Context, but can rerender on updated contest", () => {
+    const { rerender } = render(<DerivedApp contextValue={1} prop_value={1}/>);
+    rerender(<DerivedApp contextValue={1} prop_value={2}/>);
+
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<DerivedApp contextValue={2} prop_value={3}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+  });
+
+  it("Not using Derived context, perform identical to using", () => {
+    const { rerender } = render(<DerivedNotUsedApp contextValue={1} prop_value={1}/>);
+    rerender(<DerivedNotUsedApp contextValue={1} prop_value={2}/>);
+
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<DerivedNotUsedApp contextValue={2} prop_value={3}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+  });
+
+  it("Offloading useMemo to the use call causes component duplication", () => {
+    const { rerender } = render(<DerivedCompMemoApp contextValue={1} prop_value={1}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+    rerender(<DerivedCompMemoApp contextValue={1} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2); // No calls
+    rerender(<DerivedCompMemoApp contextValue={2} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(4);
+  });
+
+  it("Derived Component passes a ref", () => {
+    const { rerender } = render(<DerivedRefApp contextValue={1} prop_value={1}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<DerivedRefApp contextValue={1} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<DerivedRefApp contextValue={2} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    // Note that this is a huge problem because it means the useMemo is not updated
+  });
+
+  it("Wrapping it in a function doesn't change anything", () => {
+    const { rerender } = render(<DerivedFunctionExperimentApp contextValue={1} prop_value={1}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+    rerender(<DerivedFunctionExperimentApp contextValue={1} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+    rerender(<DerivedFunctionExperimentApp contextValue={2} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(4);
+    // Note that this is a huge problem because it means the useMemo is not updated
+  });
+
+  it("Functions in functions attempt", () => {
+    const { rerender } = render(<DoubleMemoExperimentApp contextValue={1} prop_value={1}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+    rerender(<DoubleMemoExperimentApp contextValue={1} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(4);
+    rerender(<DoubleMemoExperimentApp contextValue={2} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(6);
+    // Note that this is a huge problem because it means the useMemo is not updated
+  });
+
+  it("Claude attempt", () => {
+    const { rerender } = render(<ClaudeApp contextValue={1} prop_value={1}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<ClaudeApp contextValue={1} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<ClaudeApp contextValue={2} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+    // WELL WELL WELL AI to the rescue.
+    // It provided the idea, i fixed it's bugs
+  });
+
+  it("Claude attempt without renders", () => {
+    const { rerender } = render(<ClaudeApp contextValue={1} prop_value={1} use_context={false}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(0);
+    rerender(<ClaudeApp contextValue={1} prop_value={2} use_context={false}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(0);
+    rerender(<ClaudeApp contextValue={2} prop_value={2} use_context={false}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(0);
+    // WELL WELL WELL AI to the rescue.
+    // It provided the idea, i fixed it's bugs
+  });
+
+
+})

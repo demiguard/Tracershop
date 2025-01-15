@@ -22,6 +22,10 @@ export class RecoverableError {
   is_error(){
     return this.level !== ERROR_LEVELS.NO_ERROR
   }
+
+  [Symbol.toPrimitive](hint){
+    return this.message;
+  }
 }
 
 /**

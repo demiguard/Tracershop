@@ -10,14 +10,13 @@ import propTypes from 'prop-types'
 
 import {PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
-  PROP_TRACER_CATALOG, ORDER_STATUS,
-  DAYS_OBJECTS
+  PROP_TRACER_CATALOG,  DAYS_OBJECTS
 } from "../../lib/constants.js";
 
 import { ActivityProduction } from "../../dataclasses/dataclasses.js";
 import { compareTimeStamp, getDay
   } from "../../lib/chronomancy.js";
-import { ProductionTimeSlotOwnerShip, TimeSlotMapping, TracerCatalog,
+import { ProductionTimeSlotOwnerShip, TimeSlotMapping,
   getTimeSlotOwner} from "../../lib/data_structures.js";
 import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 

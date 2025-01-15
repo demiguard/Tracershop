@@ -25,7 +25,7 @@ import { Optional } from "~/components/injectable/optional.js";
 import { DATA_BOOKING, DATA_TRACER, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
 import { ParseDjangoModelJson } from "~/lib/formatting.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
-import { TracerCatalog } from "~/lib/data_structures.js";
+import { TracerCatalog } from '~/effects/tracerCatalog.js';
 import { useTracerCatalog } from "~/effects/tracerCatalog.js";
 
 const Content = {
