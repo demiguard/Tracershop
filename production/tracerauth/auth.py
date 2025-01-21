@@ -5,12 +5,12 @@ handling
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
-from datetime import date, datetime, timedelta
+from datetime import datetime, timedelta
 from logging import getLogger
-from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple,  Type
+from typing import Any, Dict, Optional, Tuple,  Type
 
 # Third party Libraries
-from channels.db import database_sync_to_async
+from django.core.signing import Signer, BadSignature
 from django.core.exceptions import ObjectDoesNotExist
 from django.http.request import HttpRequest
 from django.contrib.auth import authenticate, login
@@ -18,7 +18,7 @@ from django.contrib.auth.models import AnonymousUser, AbstractBaseUser
 
 # Tracershop App
 from constants import ERROR_LOGGER, DEBUG_LOGGER
-from lib.formatting import toDate, toDateTime, toTime
+from lib.formatting import toDate
 from lib.parsing import parse_index_header
 from lib.utils import identity
 from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
@@ -191,7 +191,27 @@ def authenticate_user(username: str,
   else:
     return AuthenticationResult.INVALID_PASSWORD, None
 
-def login_from_header(request):
+def login_from_header(request: HttpRequest) -> bool:
+  """Login the user from the http header
+
+  Args:
+      request (django.http.HttpRequest): The http request generated for the
+      index view
+
+  Returns:
+      bool: if authentication was successful.
+  """
+  """ I kinda want to explain how this works.
+  At the time this function gets called, the user have already been verified by
+  the F5. So they send a username and a user-group with 1-5, or Nothing.
+
+  Nothing appears if the F5 didn't authorize the user, but tracershop did.
+
+  The way this happens is that when an external user successfully authenticate
+  itself, a database record of the event is created. The IP address of
+  the user is not forwarded, only the IP address of the F5, which is useless.
+  """
+
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
     header_user_group, header_user_name = parse_index_header(
       request.headers
@@ -227,8 +247,18 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
   message send by websocket on login.
 
   Args:
-      request (_type_): _description_
+      request (HttpRequest): _description_
   """
+
+  if 'auth' in request.COOKIES:
+    signer = Signer()
+    try:
+      username = signer.unsign(request.COOKIES.get('auth'))
+      user = User.objects.get(username=username)
+      login(request, user, backend="tracerauth.backend.TracershopAuthenticationBackend")
+      return
+    except BadSignature:
+      pass
 
   user = get_login()
   if user:

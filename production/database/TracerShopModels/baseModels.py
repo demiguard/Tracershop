@@ -13,6 +13,7 @@ from constants import ERROR_LOGGER
 from database.TracerShopModels import authModels
 from tracerauth.audit_logging import CreateModelAuditEntry, DeleteModelAuditEntry, EditModelAuditEntry
 from tracerauth.types import AuthActions
+from lib import formatting
 from lib.utils import classproperty
 
 error_logger = getLogger(ERROR_LOGGER)
@@ -78,7 +79,7 @@ class TracershopModel(Model):
           dt = datetime.strptime(f"1970-01-01 {value}", "%Y-%m-%d %H:%M:%S")
           value = dt.time()
         elif isinstance(field, DateTimeField):
-          value = datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+          value = formatting.toDateTime(value)
         elif isinstance(field, DateField):
           value = value[:10]
           value = datetime.strptime(value, "%Y-%m-%d").date()

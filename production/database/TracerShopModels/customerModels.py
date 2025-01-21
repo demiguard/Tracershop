@@ -305,6 +305,14 @@ class TracerUsage(IntegerChoices):
   animal = 1
   other = 2
 
+  def __str__(self):
+    if self == TracerUsage.human:
+      return "humant"
+    if self == TracerUsage.animal:
+      return "dyr"
+    if self == TracerUsage.other:
+      return "andet"
+
 class InjectionOrder(TracershopModel):
   id = BigAutoField(primary_key=True)
   delivery_time = TimeField()

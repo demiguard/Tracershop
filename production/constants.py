@@ -1,4 +1,5 @@
 from datetime import date
+import re
 ##### Python Specific constants #####
 # These constants are note shared with the frontend
 
@@ -7,13 +8,14 @@ EMAIL_SENDER_ADDRESS = "no-reply-production@regionh.dk"
 DATE_FORMAT = "%Y-%m-%d"
 TIME_FORMAT = "%H:%M:%S"
 DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
-DATA_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}"
+DATA_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}Z"
 
-TIME_REGULAR_EXPRESSION = r"(2[0-3]|[01]?[0-9]):([0-5][0-9]):([0-5][0-9])"
-DATE_REGULAR_EXPRESSION = r"\d{4}-(1[0-2]|0[1-9])-(0[1-9]|[12][0-9]|3[01])"
+TIME_PATTERN = r"(2[0-3]|[01]?[0-9])[^\d]?([0-5][0-9])[^\d]?([0-5][0-9])"
+DATE_PATTERN = r"(\d{4})[^\d]?(1[0-2]|0[1-9])[^\d]?(0[1-9]|[12][0-9]|3[01])"
 
-DATETIME_REGULAR_EXPRESSION = f"{DATE_REGULAR_EXPRESSION} {TIME_REGULAR_EXPRESSION}"
-DATETIME_REGULAR_EXPRESSION_JS = f"{DATE_REGULAR_EXPRESSION}T{TIME_REGULAR_EXPRESSION}"
+DATETIME_REGULAR_EXPRESSION = re.compile(f"{DATE_PATTERN}[^\d]?{TIME_PATTERN}.*")
+DATE_REGULAR_EXPRESSION = re.compile(DATE_FORMAT)
+TIME_REGULAR_EXPRESSION = re.compile(TIME_PATTERN)
 
 SQL_TABLE_REGULAR_EXPRESSION = r"^[A-z0-9]+(\.[A-z0-9]+)?$"
 

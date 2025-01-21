@@ -67,44 +67,6 @@ def _extract_user_properties(query) -> Dict[str, Any]:
     return query[0][1]
   return None
 
-def _extract_UserAssignments(user, user_properties):
-  street_address = None
-  uas = []
-
-  if 'streetAddress' in user_properties:
-    binary_street_address = user_properties['streetAddress'][0]
-    street_address = binary_street_address.decode()
-    for customer in Customer.objects.all():
-      if(customer.billing_address == street_address):
-        ua = UserAssignment(user=user, customer=customer)
-        ua.save()
-        uas.append(ua)
-  else:
-    error_logger.error(f"user properties for {user.username} doesn't contain a street address")
-
-  return street_address, uas
-
-def guess_customer_group(username: str) -> Tuple[Optional[str], List[UserAssignment]]:
-  user_properties = _extract_user_properties(_query_username(username))
-  if user_properties is None:
-    return None, []
-
-  try:
-    user = User.objects.get(username=username)
-  except ObjectDoesNotExist:
-    # just make it?
-    error_logger.error(f"user {username} doesn't exists!")
-    return None, []
-  except MultipleObjectsReturned: #pragma no cover
-    # This is a database integrity violation
-    error_logger.error(f"user {username} returns multiple objects!")
-    return None, []
-
-  street_address, uas = _extract_UserAssignments(user, user_properties)
-
-  return street_address, uas
-
-
 def checkUserGroupMembership(username: str) ->  Tuple[LDAPSearchResult, Optional[UserGroups]]:
   """Queries connected LDAP system for a user's tracershop user group
   return None if the user doesn't exists

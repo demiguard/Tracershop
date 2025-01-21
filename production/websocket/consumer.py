@@ -19,6 +19,7 @@ from subprocess import call
 import logging
 from pprint import pformat
 import traceback
+import time
 from typing import Any, Dict, List, Callable, Optional, Tuple
 
 # Django packages
@@ -61,6 +62,8 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_GET_BOOKINGS, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
     ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_TEST_PRINTER
 from database.database_interface import DatabaseInterface
+from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
+from database.telemetry import create_telemetry_record
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
       OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
       TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups,\
@@ -225,6 +228,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
+    time_start_ns = time.monotonic_ns()
     try:
       error = auth.validateMessage(message)
       if error != NO_ERROR:
@@ -249,11 +253,19 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.RespondWithError(message, {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
       else:
         await handler(self, message)
+        time_end_ns = time.monotonic_ns()
+        latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
+        await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.SUCCESS)
+
+
     except IllegalActionAttempted:
       error_logger.critical(pformat(f"""user: {user} send the message {pformat(message)} which contains an action witch the system detected as Illegal, either we got a pen tester, a bad actor or a frontend error."""))
     except Exception as E: # pragma: no cover
       # Very broad catch here, to prevent a hanging message on the client side
       await self.HandleUnknownError(E, message)
+      time_end_ns = time.monotonic_ns()
+      latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
+      await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.FAILURE)
 
   ### Error handling ###
   async def HandleUnknownError(self,
@@ -737,7 +749,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                                   WEBSOCKET_DATE - Central date
     """
     user = await get_user(self.scope)
-    client_date = toDateTime(message[WEBSOCKET_DATE][:19], Format=DATA_DATETIME_FORMAT)
+    client_date = toDateTime(message[WEBSOCKET_DATE][:19])
     data = await self.db.serialize_dict(
       await self.db.getTimeSensitiveData(client_date, user)
     )
@@ -948,7 +960,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def HandlePrintVial(self, message):
     vial = await self.db.get_model(Vial, message[WEBSOCKET_DATA_ID])
     document_path = await create_document(vial)
-
 
 
 

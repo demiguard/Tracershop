@@ -5,6 +5,7 @@ from typing import Optional
 # Third party Packages
 from django.views.generic import View
 from django.http import HttpResponse
+from django.core.signing import Signer
 from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth import authenticate
 
@@ -35,7 +36,17 @@ class ExternalLoginView(View):
       logger.info("Authentication failed with requested user having incorrect user group")
       return HttpResponse(status=403)
     #login(request, user, TracershopAuthenticationBackend)
+    logger.info(f"Successful external authentication headers: {request.headers}")
+
+
     status_login = SuccessfulLogin(user=user)
     status_login.save()
 
-    return HttpResponse(status=200)
+    returnResponse = HttpResponse(status=200)
+    signer = Signer()
+
+    signed_username = signer.sign(user.username)
+
+    returnResponse.set_cookie("auth", signed_username) # If this works
+
+    return returnResponse

@@ -19,10 +19,6 @@ from database.models import User, UserGroups, UserAssignment, Customer,\
 from frontend.views import indexView, pdfView, pdfInjectionView
 
 
-mock_guess_customer_group = Mock(return_value=("Street",[UserAssignment()]))
-mock_guess_customer_group_fail = Mock(return_value=("Not_Street",[]))
-mock_guess_customer_group_boom = Mock(return_value=("Street",[]), side_effect=Exception)
-
 # Create your tests here.
 class ViewTestCase(TestCase):
   def setUp(self) -> None:
@@ -39,7 +35,7 @@ class ViewTestCase(TestCase):
   def test_indexView(self):
     request = self.factory.get("/")
     request.user = AnonymousUser()
-    with self.assertLogs(DEBUG_LOGGER, DEBUG):
+    with self.assertNoLogs(DEBUG_LOGGER, DEBUG):
       response = indexView(request)
     self.assertEqual(response.status_code, 200)
 
@@ -56,7 +52,6 @@ class ViewTestCase(TestCase):
     self.assertEqual(response.status_code, 200)
     self.assertEqual(request.user, User.objects.get(username="testuser"))
 
-  @patch('frontend.views.guess_customer_group', mock_guess_customer_group)
   def test_index_shop_user_with_assignment(self):
     request = self.factory.get("/")
     middleware = SessionMiddleware(request)
@@ -69,9 +64,7 @@ class ViewTestCase(TestCase):
     response = indexView(request)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(request.user, User.objects.get(username="shop_user"))
-    mock_guess_customer_group.assert_not_called()
 
-  @patch('frontend.views.guess_customer_group', mock_guess_customer_group)
   def test_index_shop_user_without_assignment_success(self):
     request = self.factory.get("/")
     middleware = SessionMiddleware(request)
@@ -85,9 +78,7 @@ class ViewTestCase(TestCase):
     self.assertEqual(response.status_code, 200)
     self.assertEqual(request.user,
                      User.objects.get(username="new_shop_user"))
-    mock_guess_customer_group.assert_called_once()
 
-  @patch('frontend.views.guess_customer_group', mock_guess_customer_group_boom)
   def test_index_shop_user_without_assignment_boom(self):
     request = self.factory.get("/")
     middleware = SessionMiddleware(request)
@@ -96,13 +87,12 @@ class ViewTestCase(TestCase):
     request.META['HTTP_X_TRACER_USER'] = 'new_shop_user'
     request.META['HTTP_X_TRACER_ROLE'] = 5
     request.user = AnonymousUser()
-    with self.assertLogs(ERROR_LOGGER) as log_records:
+    with self.assertNoLogs(ERROR_LOGGER) as log_records:
       response = indexView(request)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(request.user,
                      User.objects.get(username="new_shop_user"))
 
-  @patch('frontend.views.guess_customer_group', mock_guess_customer_group_fail)
   def test_index_shop_user_without_assignment_fail(self):
     request = self.factory.get("/")
     middleware = SessionMiddleware(request)
@@ -111,7 +101,7 @@ class ViewTestCase(TestCase):
     request.META['HTTP_X_TRACER_USER'] = 'new_shop_user'
     request.META['HTTP_X_TRACER_ROLE'] = 5
     request.user = AnonymousUser()
-    with self.assertLogs(DEBUG_LOGGER) as log_records:
+    with self.assertNoLogs(DEBUG_LOGGER) as log_records:
       response = indexView(request)
     self.assertEqual(response.status_code, 200)
     self.assertEqual(request.user,
@@ -186,9 +176,10 @@ class PDFViewingTestCase(TestCase):
     )
 
   def test_draw_activity(self):
-    request = self.factory.get(f"/{URL_ACTIVITY_PDF_BASE_PATH}")
+    request = self.factory.get(f"/{URL_ACTIVITY_PDF_BASE_PATH}", user=self.taylor)
     middleware = SessionMiddleware(request)
     middleware.process_request(request)
+    request.user = self.taylor
 
     response = pdfView(request,
                        self.the_sauce_delivery.id,
@@ -199,6 +190,7 @@ class PDFViewingTestCase(TestCase):
     request = self.factory.get(f"/{URL_ACTIVITY_PDF_BASE_PATH}")
     middleware = SessionMiddleware(request)
     middleware.process_request(request)
+    request.user = self.taylor
 
     response = pdfView(request, self.the_sauce_delivery.id, 2012, 99, 2)
     self.assertEqual(response.status_code, 404)
@@ -207,6 +199,8 @@ class PDFViewingTestCase(TestCase):
     request = self.factory.get(f"/{URL_ACTIVITY_PDF_BASE_PATH}")
     middleware = SessionMiddleware(request)
     middleware.process_request(request)
+    request.user = self.taylor
+
     p = Path('frontend/static/frontend/pdfs/injection_orders/injection_order_51132.pdf')
     if p.exists():
       p.unlink()
@@ -217,6 +211,7 @@ class PDFViewingTestCase(TestCase):
     request = self.factory.get(f"/{URL_ACTIVITY_PDF_BASE_PATH}")
     middleware = SessionMiddleware(request)
     middleware.process_request(request)
+    request.user = self.taylor
 
     response = pdfInjectionView(request, 51133)
 

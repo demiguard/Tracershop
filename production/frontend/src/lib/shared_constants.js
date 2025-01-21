@@ -108,6 +108,8 @@ export const URL_INDEX = "";
 export const URL_INJECTION_PDF_BASE_PATH = "injection_pdfs";
 export const URL_SHOP_MANUAL = "shop_manual";
 
+export const WARNING_DUPLICATED_BOOKINGS = "duplicated_bookings";
+
 export const WEBSOCKET_DATA = "data";
 export const WEBSOCKET_DATATYPE = "datatype";
 export const WEBSOCKET_DATA_ID = "dataID";

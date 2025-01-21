@@ -40,8 +40,8 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_LOCATION : Location,
   DATA_MESSAGE : Message,
   DATA_MESSAGE_ASSIGNMENT : MessageAssignment,
-  DATA_TELEMETRY_RECORD : TelemetryRecord,
-  DATA_TELEMETRY_REQUEST : TelemetryRequests,
+  DATA_TELEMETRY_RECORD : TelemetryRecord, # Not visible in the state
+  DATA_TELEMETRY_REQUEST : TelemetryRequests, # Not visible in the state
   DATA_TRACER : Tracer,
   DATA_TRACER_MAPPING : TracerCatalogPage,
   DATA_PRINTER : Printer,

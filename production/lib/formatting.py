@@ -10,21 +10,13 @@ from typing import Any, Dict, List, Optional
 # Third Party modules
 from pandas import DataFrame, ExcelWriter
 
-
 # Tracershop Packages
-from constants import DATETIME_REGULAR_EXPRESSION, DATETIME_REGULAR_EXPRESSION_JS, SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT, DATETIME_FORMAT
+from constants import DATETIME_REGULAR_EXPRESSION,\
+  SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT,\
+  DATETIME_FORMAT, TIME_REGULAR_EXPRESSION
 from database import models
 
-
-def FormatDateTimeJStoSQL(datetime_string : str) -> str:
-  if re.match(DATETIME_REGULAR_EXPRESSION_JS, datetime_string):
-    return datetime_string.replace("T", " ")
-  if re.match(DATETIME_REGULAR_EXPRESSION, datetime_string):
-    return datetime_string
-  else: #
-    raise ValueError("Input is not datetime format")
-
-def dateConverter(Date : date, Format: str=DATE_FORMAT) -> str:
+def dateConverter(date_: date, format_: str=DATE_FORMAT) -> str:
   """
     Extracts date on the string format for the database
     Args:
@@ -36,25 +28,46 @@ def dateConverter(Date : date, Format: str=DATE_FORMAT) -> str:
     Returns:
       string - ready for the database
   """
-  return Date.strftime(Format)
+  return date_.strftime(format_)
 
-def timeConverter(time_ : time, Format: str=TIME_FORMAT) -> str:
-  return time_.strftime(Format)
+def timeConverter(time_ : time, format_: str=TIME_FORMAT) -> str:
+  return time_.strftime(format_)
 
-def datetimeConverter(date_time : datetime, Format: str=DATETIME_FORMAT ) -> str:
-  return date_time.strftime(Format)
+def datetimeConverter(date_time : datetime, format_: str=DATETIME_FORMAT) -> str:
+  return date_time.strftime(format_)
 
-def toTime(TimeStr : str, Format: str=TIME_FORMAT) -> time:
-  # Since time doesn't have a strptime, you have to take advantage of datetimes
-  DummyTime = toDateTime("1993-11-20 "+ TimeStr, Format="%Y-%m-%d " + Format)
-  return DummyTime.time()
+def toTime(time_str : str) -> time:
+  m = TIME_REGULAR_EXPRESSION.search(time_str)
+  if m is None:
+    raise ValueError(f"Could not convert {time_str}")
 
-def toDateTime(DateTimeStr : str , Format: str=DATETIME_FORMAT) -> datetime:
-  return datetime.strptime(DateTimeStr, Format)
+  hour, minute, second = (int(value) for value in m.groups())
+  return time(hour, minute, second)
 
-def toDate(DateStr : str, Format: str=DATE_FORMAT) -> date:
+def toDateTime(date_time_str: str) -> datetime:
+  """Produces a datetime from a string. Using the regex such that
+
+  Args:
+      date_time_str (str): _description_
+
+  Raises:
+      ValueError: _description_
+
+  Returns:
+      datetime: _description_
+  """
+  m = DATETIME_REGULAR_EXPRESSION.search(date_time_str)
+
+  if m is None:
+    raise ValueError(f"Could not convert {date_time_str} to a datetime object")
+
+  year, month, day, hour, minute, second = (int(value) for value in m.groups())
+  return datetime(year, month, day, hour, minute, second)
+
+
+def toDate(date_str: str, Format: str=DATE_FORMAT) -> date:
   # Since date doesn't have a strptime, you have to take advantage of datetimes
-  DummyTime = datetime.strptime(DateStr, Format)
+  DummyTime = datetime.strptime(date_str, Format)
   return DummyTime.date()
 
 def mergeDateAndTime(Date : date, Time: time) -> datetime:
@@ -86,14 +99,6 @@ def ParseSQLField(SQL_Field : str) -> str:
   else:
     ID = SQL_Field
   return ID
-
-def mapTracerUsage(tracerUsage: models.TracerUsage):
-  if tracerUsage == models.TracerUsage.human:
-    return "humant"
-  if tracerUsage == models.TracerUsage.animal:
-    return "dyr"
-  if tracerUsage == models.TracerUsage.other:
-    return "andet"
 
 def formatFrontendErrorMessage(message: Dict) -> str:
   raw_error_message = message.get("message", "Unknown error")
@@ -134,6 +139,6 @@ def format_csv_data(csv_data: Dict[str, Dict[str, List[Any]]]):
   excel_bytes.seek(0)
   return excel_bytes
 
-def format_time_number(num: int):
+def format_time_number(num: int) -> str:
   # Python ternaries are ugly as fuck
   return f"0{num}" if num < 10 else str(num)

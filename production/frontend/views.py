@@ -10,9 +10,10 @@ from traceback import format_tb
 import os.path
 
 # Third party Packages
+from django.conf import settings
 from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
-from django.http import FileResponse, HttpResponseNotFound
+from django.http import FileResponse, HttpResponseNotFound, HttpResponseForbidden, HttpRequest
 from django.shortcuts import render
 from django.views.decorators.csrf import ensure_csrf_cookie
 
@@ -26,7 +27,6 @@ from lib.formatting import format_csv_data, format_time_number
 from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder
 from shared_constants import JAVASCRIPT_VERSION, URL_SHOP_MANUAL
 from tracerauth.auth import login_from_header
-from tracerauth.ldap import guess_customer_group
 
 debug_logger = getLogger(DEBUG_LOGGER)
 error_logger = getLogger(ERROR_LOGGER)
@@ -34,29 +34,41 @@ error_logger = getLogger(ERROR_LOGGER)
 # This is an (almost) single page application
 @ensure_csrf_cookie
 def indexView(request, *args, **kwargs):
-  success = login_from_header(request)
-  if success:
-      user = request.user
-      if isinstance(user, User):
-        if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
-          if not UserAssignment.objects.filter(user=user).exists():
-            try:
-              mStreetAddress, user_assignments = guess_customer_group(user.username)
-              if mStreetAddress is not None and len(user_assignments) == 0:
-                debug_logger.error(f"Create a notification that {mStreetAddress} doens't map to a customer")
-            except Exception as E:
-              error_logger.error("Assignment of user group threw an unhandled exception")
-              error_logger.error(format_tb(E.__traceback__))
-  else:
+  success = login_from_header(request) # There's login at the page
+
+  if settings.DEBUG:
     debug_logger.info(request.headers)
 
   return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
 
-def pdfView(request,
+@ensure_csrf_cookie
+def pdfView(request: HttpRequest,
             timeSlotID:int,
             year: int,
             month : int,
-            day: int):
+            day: int) -> HttpResponseForbidden | HttpResponseNotFound | FileResponse:
+  """Generates the release document for an order, and returns the response.
+  This view does't cache, as updates to way to much stuff might causes cache
+  invalidation.
+
+  Args:
+      request (HttpRequest): The django generated user request. The user is logged in.
+      timeSlotID (int): The time slot, that user request information about
+      year (int): The year the user request a release document for
+      month (int): The month the user request a release document for
+      day (int): The day the user request a release document for
+
+  Returns:
+      FileResponse | HttpResponseForbidden | HttpResponseNotFound :
+        returns a File response if the server was able to create a release
+        document.
+        Returns a forbidden response if the user is not logged in.
+        Returns a NotFound if the server is unable to create a release document
+        from the args.
+
+  """
+  if not request.user:
+    return HttpResponseForbidden(request)
   # Get data to construct the PDF, if you fail to fetch the needed data 404
   # There should be some logging if you request an address outside
   try:
@@ -110,7 +122,10 @@ def pdfView(request,
 
   return FileResponse(open(filename, 'rb'), filename="FrigivelsesDokument.pdf")
 
+@ensure_csrf_cookie
 def pdfInjectionView(request, injection_order_id: int):
+  if not request.user:
+    return HttpResponseForbidden(request)
   try:
     injection_order = InjectionOrder.objects.get(pk=injection_order_id, status=OrderStatus.Released);
   except ObjectDoesNotExist:
@@ -130,6 +145,9 @@ def pdfInjectionView(request, injection_order_id: int):
   return FileResponse(open(filename, 'rb'), filename="FrigivelsesDokument.pdf")
 
 def vial_csv_view(request, year: int, month: int):
+  if not request.user:
+    return HttpResponseForbidden(request)
+
   try:
     csv_date = date(year, month, 1)
   except ValueError:
@@ -141,6 +159,7 @@ def vial_csv_view(request, year: int, month: int):
 
   return FileResponse(formatted_data, filename=f"tracershop_data-{year}-{format_time_number(month)}.xlsx")
 
+@ensure_csrf_cookie
 def shop_manual_view(request):
   filename = "frontend/static/frontend/pdfs/manuals/shop_manual.pdf"
   return FileResponse(open(filename, 'rb'), filename="Kunde Manual.pdf")

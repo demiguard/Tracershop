@@ -84,7 +84,7 @@ def handle_path(path: Path):
 
   # Check if the vial exists already
   if Vial.objects.filter(fill_date=vial.fill_date, fill_time=vial.fill_time).exists():
-    logger.info(f"Vial Exists at {path}")
+    logger.info(f"Vial at {path} is a duplicate, removing file at {path}")
     path.unlink()
     return
 

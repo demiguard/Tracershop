@@ -9,8 +9,7 @@ MAX_TELEMETRY_AGE_DAYS = 60
 
 class TelemetryRecordStatus(models.IntegerChoices):
   SUCCESS = 0
-  IN_PROGRESS = 1
-  FAILURE = 2
+  FAILURE = 1
 
 class TelemetryRequests(TracershopModel):
   id = models.BigAutoField(primary_key=True)
@@ -23,8 +22,7 @@ class TelemetryRecord(TracershopModel):
   expire_datetime = models.DateTimeField(
     default= now() + timedelta(days=MAX_TELEMETRY_AGE_DAYS)
   )
-  latency_ms = models.FloatField()
+  latency_ms = models.FloatField(default=None, null=True)
   status = models.IntegerField(
-    default= TelemetryRecordStatus.IN_PROGRESS,
     choices=TelemetryRecordStatus.choices
   )

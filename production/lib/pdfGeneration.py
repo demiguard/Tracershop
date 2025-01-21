@@ -41,7 +41,7 @@ WIDTH, HEIGHT = A4
 
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES, ERROR_LOGGER, DEBUG_LOGGER
-from lib.formatting import dateConverter, timeConverter, mapTracerUsage,\
+from lib.formatting import dateConverter, timeConverter,\
   toDanishDecimalString, empty_none_formatter, format_time_number
 from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
 
@@ -404,7 +404,7 @@ class MailTemplate(canvas.Canvas):
     tracer = injectionOrder.tracer
     isotope = tracer.isotope
 
-    self.drawString(x_cursor, y_cursor, f"Hermed frigives ordre {injectionOrder.id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {mapTracerUsage(TracerUsage(injectionOrder.tracer_usage))} brug.")
+    self.drawString(x_cursor, y_cursor, f"Hermed frigives ordre {injectionOrder.id} - {tracer.clinical_name} - {isotope.atomic_letter}-{isotope.atomic_mass} Injektion til {TracerUsage(injectionOrder.tracer_usage)} brug.")
     y_cursor -= self.line_height
 
     if injectionOrder.freed_datetime is None:

@@ -2,7 +2,7 @@ import React, { Component, useRef, useState } from "react";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { FormatDateStr, formatAccessionNumber } from "~/lib/formatting";
 import { TRACER_TYPE, cssAlignRight, cssCenter } from "../../lib/constants";
-import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WEBSOCKET_DATA, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WARNING_DUPLICATED_BOOKINGS, WEBSOCKET_DATA, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
 import { IdempotentButton } from "~/components/injectable/buttons";
@@ -11,8 +11,8 @@ import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_con
 import { Optional, Options } from "~/components/injectable/optional";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";
-import { AlertBox } from "~/components/injectable/alert_box";
-import { useErrorState } from "~/lib/error_handling";
+import { AlertBox, ERROR_LEVELS } from "~/components/injectable/alert_box";
+import { RecoverableError, useErrorState } from "~/lib/error_handling";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -172,6 +172,9 @@ function TracerCard({tracer,
           setBookingError(`Kunne ikke oprette bookinger, da der ikke findes nogle levering af ${tracer.shortname} til denne dato`);
         }
       } else {
+        if(message[WEBSOCKET_ERROR] === WARNING_DUPLICATED_BOOKINGS){
+          setBookingError(new RecoverableError("Der var allerede nogle ordre, du bedes doubelt checke at ordre er korrekte.", ERROR_LEVELS.warning))
+        }
         setBookingError("");
       }
     });
