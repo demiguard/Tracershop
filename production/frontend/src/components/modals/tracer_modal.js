@@ -120,7 +120,7 @@ export function TracerModal ({active_tracer, on_close}) {
       </Modal.Body>
       <Modal.Footer>
         <CloseButton onClick={on_close} />
-        </Modal.Footer>
+      </Modal.Footer>
       </Modal>
     );
 }

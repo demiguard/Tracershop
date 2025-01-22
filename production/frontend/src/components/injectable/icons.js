@@ -5,9 +5,10 @@ import { ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection.js'
 import { ORDER_STATUS } from '~/lib/constants'
 import { InjectionOrderPDFUrl, openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
-import { useTracershopState } from '~/contexts/tracer_shop_context'
+import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton } from '~/components/injectable/buttons'
+import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER } from '~/lib/shared_constants'
 
 export function ClickableIcon ({
     altText,
@@ -242,4 +243,60 @@ return (<IdempotentButton
       alt={altText}
     />
   </IdempotentButton>)
+}
+
+
+
+/**
+ *
+ * @param {{
+ *  orders : Array<InjectionOrder>
+ * }} param0
+ */
+export function AcceptIconInjection({orders}){
+  const websocket = useWebsocket();
+
+  function acceptOrders(){
+    const filtered_orders = orders.filter(
+      order => order.status === ORDER_STATUS.ORDERED
+    );
+    const updated_orders = filtered_orders.map(
+      order => ({...order, status : ORDER_STATUS.ACCEPTED})
+    );
+
+    return websocket.sendEditModel(
+      DATA_INJECTION_ORDER, updated_orders
+    );
+  }
+
+  return <IdempotentIcon src="/static/images/thumb-up-add.svg" onClick={acceptOrders}/>;
+}
+
+/**
+ *
+ * @param {{
+*  orders : Array<ActivityOrder>
+* }} param0
+*/
+export function AcceptIconActivity({orders}){
+  const websocket = useWebsocket();
+
+  function acceptOrders(){
+    const filtered_orders = orders.filter(
+      order => order.status === ORDER_STATUS.ORDERED
+    );
+    const updated_orders = filtered_orders.map(
+      order => ({...order, status : ORDER_STATUS.ACCEPTED})
+    );
+
+    return websocket.sendEditModel(
+      DATA_ACTIVITY_ORDER, updated_orders
+    );
+  }
+
+ return <IdempotentIcon
+            src="/static/images/thumb-up-add.svg"
+            onClick={acceptOrders}
+        />;
+
 }

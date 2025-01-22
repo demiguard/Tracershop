@@ -63,7 +63,6 @@ export function Authenticate({ authenticate,
                                setError=()=>{},
                                headerMessage="Log in",
                                fit_in = false,
-                               spinner = false,
                                buttonMessage = "Log in"
                             }){
   const [username, setUsername] = useState("");

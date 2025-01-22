@@ -23,7 +23,7 @@ import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../lib/filters.js";
 import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { Optional } from "../injectable/optional.js";
-import { ProductionTimeSlot } from "~/components/injectable/production_time_slot.js";
+import { ProductionTimeSlot } from "~/components/injectable/production_injectionable/production_time_slot.js";
 import { useTracerCatalog } from "~/effects/tracerCatalog.js";
 
 const Modals = {

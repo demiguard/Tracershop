@@ -227,6 +227,7 @@ export const PROP_VALID_INJECTION_DEADLINE = 'injectionDeadlineValid';
 export const PROP_ASSOCIATED_TIME_SLOTS = "associated_time_slots";
 export const PROP_ASSOCIATED_ORDERS = "associated_orders";
 export const PROP_TRACER_CATALOG = "tracer_catalog";
+export const PROP_SELECTED = "selected";
 export const PROP_RELATED_CUSTOMER = "relatedCustomer";
 export const PROP_COMMIT = "commit";
 
