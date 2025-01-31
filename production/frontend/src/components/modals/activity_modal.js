@@ -21,9 +21,7 @@ import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput }
 import { compareDates, openActivityReleasePDF } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
-import { ReleaseRightHolder } from "~/lib/data_structures.js";
-import { TracerCatalog } from '~/effects/tracerCatalog.js';
-import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection.js";
+import { TracerCatalog } from '~/contexts/tracerCatalog.js';
 import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
@@ -35,6 +33,7 @@ import { FONT } from "~/lib/styles.js";
 import { DateTime } from "~/components/injectable/datetime.js";
 import { toLotDateString } from "~/lib/chronomancy.js";
 import { RecoverableError, useErrorState } from "~/lib/error_handling.js";
+import { useUserReleaseRights } from "~/contexts/user_release_right.js";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -383,7 +382,7 @@ export function ActivityModal({
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
   const customer = state.customer.get(endpoint.owner);
   const tracer = state.tracer.get(active_tracer);
-  const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
+  const releaseRightHolder = useUserReleaseRights()
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
   // Order State

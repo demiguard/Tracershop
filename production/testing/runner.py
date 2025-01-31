@@ -16,9 +16,6 @@ class CustomRunner(DiscoverRunner):
 
 
   def run_tests(self, test_labels: list[str]) -> int:
-    #self.setup_databases()
-
     result = super().run_tests(test_labels)
-    #self.teardown_databases()
 
     return result

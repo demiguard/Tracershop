@@ -6,7 +6,7 @@ import { Customer, Procedure } from "~/dataclasses/dataclasses";
 import { Select, toOptions, Option } from "../../injectable/select";
 import { nullParser } from "~/lib/formatting";
 import { EndpointsProcedures } from "~/lib/data_structures";
-import { TracerCatalog } from '~/effects/tracerCatalog';
+import { TracerCatalog } from '~/contexts/tracerCatalog';
 import { DestinationSelect } from "../../injectable/derived_injectables/destination_select";
 import { initialize_customer_endpoint } from "~/lib/initialization";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";

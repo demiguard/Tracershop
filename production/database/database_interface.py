@@ -42,6 +42,7 @@ from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
 from tracerauth.ldap import checkUserGroupMembership, LDAPSearchResult
+from tracerauth.audit_logging import logFreeInjectionOrder
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
@@ -250,6 +251,23 @@ class DatabaseInterface():
     ActivityOrder.objects.bulk_update(orders, ['status', 'freed_by', 'freed_datetime'])
 
     return orders, vials
+
+  @database_sync_to_async
+  def release_many_injections_orders(self, order_ids, lot_number: str,release_time: datetime,user: User):
+    if not user.is_production_member:
+      raise IllegalActionAttempted
+
+    orders = InjectionOrder.objects.filter(id__in = order_ids, status=OrderStatus.Accepted)
+
+    for order in orders:
+      order.status = OrderStatus.Released
+      order.freed_datetime = release_time
+      order.freed_by = user
+      order.lot_number = lot_number
+      logFreeInjectionOrder(user, order)
+      order.save(user) # This is to trigger audit log
+
+    return orders
 
   def __timeUserSensitiveFilter(self, model_identifier: str):
     model = MODELS[model_identifier]

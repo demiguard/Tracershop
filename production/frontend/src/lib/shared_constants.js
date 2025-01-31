@@ -73,6 +73,8 @@ export const ERROR_UNKNOWN_FAILURE = "unknownError";
 
 export const EXCLUDED_STATE_MODELS = [
   "booking",
+  "telemetry_record",
+  "telemetry_request",
 ]
 
 export const JAVASCRIPT_VERSION = "1.5.5";
@@ -146,6 +148,7 @@ export const WEBSOCKET_MESSAGE_MODEL_DELETE = "deleteModel";
 export const WEBSOCKET_MESSAGE_MODEL_EDIT = "editModel";
 export const WEBSOCKET_MESSAGE_MOVE_ORDERS = "moveOrder";
 export const WEBSOCKET_MESSAGE_ORDER_INJECTION = "OrderInjection";
+export const WEBSOCKET_MESSAGE_RELEASE_MULTI = "releaseMulti";
 export const WEBSOCKET_MESSAGE_RESTART_VIAL_DOG = "restartVialDog";
 export const WEBSOCKET_MESSAGE_RESTORE_ORDERS = "restoreOrders";
 export const WEBSOCKET_MESSAGE_STATUS = "status";
@@ -176,6 +179,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "createBooking",
   "deleteBooking",
   "testPrinter",
+  "releaseMulti",
 ]
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_OBJECT_DOES_NOT_EXISTS = "objectDoesNotExists";

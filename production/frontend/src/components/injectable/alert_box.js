@@ -4,6 +4,7 @@ import propTypes from 'prop-types'
 
 import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_NO_ERROR, ERROR_TYPE_WARNING } from "~/lib/constants.js";
 import { RecoverableError } from "~/lib/error_handling";
+import { PADDING } from "~/lib/styles";
 
 const Warning_names = {
   hint : "Hint:",
@@ -91,8 +92,9 @@ export function AlertBox ({testId, error}) {
     <Row
       data-testid={testId}
       style={{
-        padding : '0px',
-        ...stylings[error.level]
+        ...PADDING.all.px0,
+        ...stylings[error.level],
+        flexShrink : 'inherit'
       }}
       className={"justify-content-start"}>
       <Col style={headerStylings[error.level]} md={{span : 2}} className={"justify-content-start text-center"}>{Warning_names[error.level]}</Col>

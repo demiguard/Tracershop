@@ -34,6 +34,7 @@ from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist, ValidationError
 from django.conf import settings
 from django.db.utils import IntegrityError
+from django.utils import timezone
 
 # Tracershop Production packages
 from core.side_effect_injection import DateTimeNow
@@ -60,7 +61,8 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_LOG_ERROR, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
     WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,\
     WEBSOCKET_MESSAGE_GET_BOOKINGS, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
-    ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_TEST_PRINTER
+    ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_TEST_PRINTER,\
+    WEBSOCKET_MESSAGE_RELEASE_MULTI
 from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
 from database.telemetry import create_telemetry_record
@@ -381,6 +383,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   # This is a mess
   async def handleWhoAmI(self, message):
+    now = self.datetimeNow.now()
+
     user = await get_user(self.scope)
     if isinstance(user, User):
       logger.info(f"WhoAmI message found: {user} from session cookie")
@@ -391,7 +395,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await database_sync_to_async(logins.delete)()
       return await self.respond_auth_message(message, True, user_serialized, self.scope["session"].session_key)
     elif isinstance(user, AnonymousUser):
-      user = await database_sync_to_async(auth.get_login)()
+      user = await database_sync_to_async(auth.get_login)(now)
       logger.info(f"Found user:{user} from external users")
       if not isinstance(user, AnonymousUser):
         await login(self.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')
@@ -430,9 +434,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if(WEBSOCKET_DATE in message):
       try:
         now = datetime.strptime(message[WEBSOCKET_DATE][:10], '%Y-%m-%d')
+        now = datetime.astimezone(now, timezone.now())
       except ValueError:
         pass
-
 
     # Assumed to have no Field in the message since it can use the user in scope
 
@@ -682,7 +686,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     logFreeInjectionOrder(user, order)
 
     # Step 3 Broadcast it
-    newState = await self.db.serialize_dict({
+    released_orders = await self.db.serialize_dict({
         DATA_INJECTION_ORDER : [order],
     })
 
@@ -692,7 +696,35 @@ class Consumer(AsyncJsonWebsocketConsumer):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_DATA : newState,
+        WEBSOCKET_DATA : released_orders,
+    })
+
+  async def HandleReleaseMultiInjection(self, message):
+    result, user = await self.__authenticateFreeing(message)
+
+    if result != AuthenticationResult.SUCCESS:
+      return await self.__RejectFreeing(message)
+
+    if not user.is_production_member:
+      return await self.__RejectFreeing(message)
+
+    release_time = self.datetimeNow.now()
+
+    orders = await self.db.release_many_injections_orders(
+      message[WEBSOCKET_DATA_ID], message[WEBSOCKET_DATA], release_time, user
+    )
+
+    updated_orders = await self.db.serialize_dict({
+      DATA_INJECTION_ORDER : orders
+    })
+
+    return await self.__broadcastProduction({
+      AUTH_IS_AUTHENTICATED : True,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : updated_orders
     })
 
   async def HandleMoveOrders(self, message : Dict):
@@ -929,7 +961,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if user.is_production_member:
       try:
         call(['sudo', 'systemctl', 'restart', 'vialdog'], timeout=1.0)
-      except:
+      except Exception:
         error_logger.error("Web service is not setup in sudoers!")
       audit_logger.info(f"user: {user.username} restarted the vial dog")
 
@@ -984,5 +1016,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : HandleChangeExternalPassword,
     WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : HandleCreateExternalUser,
     WEBSOCKET_MESSAGE_LOG_ERROR : HandleLogFrontendError,
-    WEBSOCKET_MESSAGE_TEST_PRINTER : HandleTestPrinter
+    WEBSOCKET_MESSAGE_TEST_PRINTER : HandleTestPrinter,
+    WEBSOCKET_MESSAGE_RELEASE_MULTI : HandleReleaseMultiInjection
   }

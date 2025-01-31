@@ -21,7 +21,6 @@ import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context
 import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage.js";
 import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
 import { TimeDisplay } from "../injectable/data_displays/time_display.js";
-import { ReleaseRightHolder } from "~/lib/data_structures.js";
 import { EditableInput } from "../injectable/inputs/editable_input.js";
 import { LotNumberHeader } from "../injectable/headers/lot_display.js";
 import { Optional } from "~/components/injectable/optional.js";
@@ -29,6 +28,7 @@ import { CancelBox } from "~/components/injectable/cancel_box.js";
 import { FONT } from "~/lib/styles.js";
 import { DateTime } from "~/components/injectable/datetime.js";
 import { RecoverableError, useErrorState } from "~/lib/error_handling.js";
+import { useUserReleaseRights } from "~/contexts/user_release_right.js";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -50,7 +50,7 @@ export function InjectionModal ({modal_order, on_close}) {
   const canEdit = !freeing && (order.status === ORDER_STATUS.ACCEPTED
         || order.status === ORDER_STATUS.ORDERED);
 
-  const releaseRightHolder = new ReleaseRightHolder(state.logged_in_user, state.release_right);
+  const releaseRightHolder = useUserReleaseRights();
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
   const released_user = (() => {

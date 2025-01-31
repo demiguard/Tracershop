@@ -1,11 +1,13 @@
 import React, {} from "react";
-import { TracerCatalogProvider } from "~/effects/tracerCatalog";
-
+import { TracerCatalogProvider } from "~/contexts/tracerCatalog";
+import { UserReleaseRightProvider } from "~/contexts/user_release_right";
 
 export function DerivedContextPyramid({children}){
   return (
-    <TracerCatalogProvider>
-      {children}
-    </TracerCatalogProvider>
+    <UserReleaseRightProvider>
+      <TracerCatalogProvider>
+        {children}
+      </TracerCatalogProvider>
+    </UserReleaseRightProvider>
   );
 }

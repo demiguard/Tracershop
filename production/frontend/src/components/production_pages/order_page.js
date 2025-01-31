@@ -13,11 +13,37 @@ import { UpdateToday } from "~/lib/state_actions.js";
 import { MARGIN } from "~/lib/styles.js";
 import { WeeklyProductionOverview } from "~/components/production_pages/weekly_production_overview.js";
 
+const SUBPAGE_ACTIVITY = "activity"
+const SUBPAGE_INJECTION = "injection"
+const SUBPAGE_WEEKLYOVERVIEW = "weeklyOverview"
+
 const SubPages = {
-  activity : ActivityTable,
-  injections : InjectionTable,
-  weeklyOverview : WeeklyProductionOverview,
+  [SUBPAGE_ACTIVITY] : ActivityTable,
+  [SUBPAGE_INJECTION] : InjectionTable,
+  [SUBPAGE_WEEKLYOVERVIEW] : WeeklyProductionOverview,
 };
+
+/**
+ *
+ * @param {Object} param0
+ * @param {Tracer} param0.tracer
+ * @returns
+ */
+function TableSwitchButton({is_active_tracer, tracer, onClick}) {
+  const underline = is_active_tracer;
+  return (
+    <Button
+      style={MARGIN.leftRight.px15}
+      key={tracer.shortname}
+      sz="sm"
+      onClick={onClick}
+    >
+      <Optional exists={underline} alternative={<div>{tracer.shortname}</div>}>
+        <u>{tracer.shortname}</u>
+      </Optional>
+    </Button>
+  );
+}
 
 export function OrderPage() {
   const state = useTracershopState();
@@ -35,71 +61,82 @@ export function OrderPage() {
     db.set(DATABASE_ACTIVE_TRACER, activeTracerInit);
   }
 
-  const activeTableInit = (activeTracerInit == -1) ? "injections" : "activity";
-  const [activeTracer, setActiveTracer] = useState(activeTracerInit);
-  const [activeTable, setActiveTable] = useState(activeTableInit);
+  const activeTableInit = (activeTracerInit == -1) ? SUBPAGE_INJECTION : SUBPAGE_ACTIVITY;
+  const [activeView, setActiveView] = useState({
+    activeTracer : activeTracerInit,
+    activeTable :  activeTableInit
+  });
 
   // Calender functions
   function setActiveDate(newDate) {
     dispatch(new UpdateToday(newDate, websocket));
   }
 
-  // ##### Render functions ##### //
 
-  function renderTableSwitchButton(tracer) {
-    const underline = tracer.id === activeTracer;
-    return (
-      <Button style={MARGIN.leftRight.px15} key={tracer.shortname} sz="sm" onClick={() => {
-        db.set("activeTracer", tracer.id);
-        setActiveTracer(tracer.id)
-        setActiveTable("activity")
-        }}
-      >
-        <Optional exists={underline} alternative={<div>{tracer.shortname}</div>}>
-          <u>{tracer.shortname}</u>
-        </Optional>
-      </Button>
-    );
+  function setActivityTable(tracer){
+    return () => {
+      db.set(DATABASE_ACTIVE_TRACER, tracer.id);
+      setActiveView({
+        activeTracer : tracer.id,
+        activeTable : SUBPAGE_ACTIVITY,
+      })
+    }
   }
 
-  const TableSwitchButtons = []
-  for (const tracer of state.tracer.values()){
-    if(tracer.tracer_type === TRACER_TYPE.ACTIVITY)
-      TableSwitchButtons.push(renderTableSwitchButton(tracer));
-    }
+  function setInjectionTable(){
+    db.set(DATABASE_ACTIVE_TRACER, -1);
+    setActiveView({
+      activeTable : SUBPAGE_INJECTION,
+      activeTracer : -1
+    })
+  }
 
-    const underlineSpecial = activeTracer === -1;
+  function setWeeklyView(){
+    setActiveView({
+      activeTable : SUBPAGE_WEEKLYOVERVIEW,
+      activeTracer : -2
+    })
+  }
+
+  const TableSwitchButtons = [];
+  for (const tracer of state.tracer.values()){
+    if(tracer.tracer_type === TRACER_TYPE.ACTIVITY){
+      const is_active = activeView.activeTracer === tracer.id;
+      TableSwitchButtons.push(
+        <TableSwitchButton
+          key={tracer.id}
+          is_active_tracer={is_active}
+          tracer={tracer}
+          onClick={setActivityTable(tracer)}
+        />);
+    }
+  }
+
+    const underlineSpecial = activeView.activeTracer === -1;
 
     TableSwitchButtons.push((
       <Button
         style={MARGIN.leftRight.px15}
         key="special"
         sz="sm"
-        onClick={() => {db.set("activeTracer", -1);
-                        setActiveTracer(-1)
-                        setActiveTable("injections")
-                       }}
+        onClick={setInjectionTable}
       >
           { underlineSpecial ? <u>Special</u> : "Special"}
       </Button>));
 
-    const underlineWeeklyReviewButton = activeTable === "weeklyOverview"
+    const underlineWeeklyReviewButton = activeView.activeTable === "weeklyOverview";
     TableSwitchButtons.push((
       <Button
         style={MARGIN.leftRight.px15}
         key="week-plan"
         sz="sm"
-        onClick={() => {
-          setActiveTracer(-2)
-          setActiveTable("weeklyOverview")
-        }}
+        onClick={setWeeklyView}
       >{underlineWeeklyReviewButton ? <u>Uge Plan</u> : "Uge Plan"}</Button>
-    ))
-
+    ));
   // Keyword setting
-  const OrderSubPage = SubPages[activeTable];
+  const OrderSubPage = SubPages[activeView.activeTable];
   const SubTableProps = {
-    [PROP_ACTIVE_TRACER] : activeTracer,
+    [PROP_ACTIVE_TRACER] : activeView.activeTracer,
     [PROP_ACTIVE_DATE] : today
   }
 
@@ -118,7 +155,7 @@ export function OrderPage() {
         </Col>
         <Col sm={4}>
           <ProductionCalender
-            activeTracer={activeTracer}
+            activeTracer={activeView.activeTracer}
             active_date={today}
             on_day_click={setActiveDate}
           />

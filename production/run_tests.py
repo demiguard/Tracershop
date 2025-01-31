@@ -1,6 +1,6 @@
 # Setup Django
 from os import environ
-environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.test_settings')
+environ.setdefault('DJANGO_SETTINGS_MODULE', 'testing.test_settings')
 
 from django import setup
 setup()
@@ -10,7 +10,7 @@ from django.test.utils import get_runner, setup_databases
 
 # Note that the test setup sets the following things:
 # * Test Runner found in tests.runner
-# * Database to sqlite 
+# * Database to sqlite
 # * Channels in memory layer
 # * Backend to tests.backend
 
@@ -51,9 +51,8 @@ if __name__ == "__main__":
   if args.test_label is not None:
     labels = [args.test_label]
   else:
-    labels = ['database','tests', 'frontend', 'lib', 'tracerauth', 'websocket']
+    labels = ['database','testing', 'frontend', 'lib', 'tracerauth', 'websocket']
 
   failures = test_runner.run_tests(test_labels=labels)
 
   sys.exit(bool(failures))
-

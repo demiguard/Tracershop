@@ -2,7 +2,7 @@ import React, { useMemo, useContext, createContext, useRef } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
-import { EndpointCatalog, undefined } from "~/lib/data_structures";
+import { EndpointCatalog } from "~/lib/data_structures";
 import { numberfy } from "~/lib/utils";
 
 /**
@@ -45,7 +45,7 @@ export class TracerCatalog {
 
   /**
    * Gets the entire catalog for a customer
-   * @param {Number} endpointID - the ID of the customer in question
+   * @param {Number} endpointIDcatalogContext = - the ID of the customer in question
    * @returns {EndpointCatalog}
    */
   getCatalog(endpointID) {
@@ -95,7 +95,7 @@ export class TracerCatalog {
   }
 }
 
-const TracerShopCatalogContext = createContext(null);
+const TracerShopCatalogContext = createContext(new TracerCatalog(new Map(), new Map()));
 
 /**
  *
@@ -103,35 +103,16 @@ const TracerShopCatalogContext = createContext(null);
  * @returns
  */
 export function TracerCatalogProvider({ children }){
-  const ref = useRef(null);
-
   const state = useTracershopState();
-  const tracer_catalog_constructor = useMemo(() => {
-    ref.current = null;
-
-    return  {ref, tracerShopState: state}
-  }, [state.tracer_mapping, state.tracer]);
+  const tracer_catalog = new TracerCatalog(state.tracer_mapping, state.tracer);
 
   return (
-    <TracerShopCatalogContext.Provider value={tracer_catalog_constructor}>
+    <TracerShopCatalogContext.Provider value={tracer_catalog}>
       {children}
     </TracerShopCatalogContext.Provider>
   )
 }
 
 export function useTracerCatalog(){
-  const catalogContext = useContext(TracerShopCatalogContext);
-  if(catalogContext === null){
-    return new TracerCatalog(new Map(), new Map());
-  }
-
-  const {ref, tracerShopState} = catalogContext
-
-  return useMemo(() => {
-    if(ref.current === null){
-      ref.current = new TracerCatalog(tracerShopState.tracer_mapping, tracerShopState.tracer);
-    }
-
-    return ref.current;
-  }, [tracerShopState.tracer_mapping, tracerShopState.tracer]);
+  return useContext(TracerShopCatalogContext);
 }

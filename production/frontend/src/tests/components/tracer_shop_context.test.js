@@ -118,6 +118,12 @@ describe("Tracershop context test", () => {
  * exploration of the react rendering engine.
  *
  * The goal is create a memories value, that is created lazily and memorized.
+ *
+ * Okay so very interestingly I changed the build step to include the react
+ * compiler. The primary thing that the react compiler does is makes
+ * memoization, so dumb programmers like myself doesn't have to make really
+ * really convoluted, solutions, where you use two memorization and a reference
+ * in order to get good performance.
  */
 
 describe("Context proof of concept test cases", () => {
@@ -139,17 +145,18 @@ describe("Context proof of concept test cases", () => {
   function useDerivedMemo(){
     const expensive = useExpensive();
     return useMemo(() => {
-      return expensive_to_call();
+      return expensive_to_call(expensive);
     }, [expensive]);
   }
 
   function useDerivedRef(){
-    const expensive = useExpensive()
+    const expensive = useExpensive();
     const ref = useDerived();
 
     if(ref.current === null){
+      // This becomes illegal, because the hook useMemo doesn't get called again
       ref.current = useMemo(() => {
-        return expensive_to_call()
+        return expensive_to_call(expensive)
       }, [expensive])
     }
 
@@ -174,13 +181,6 @@ describe("Context proof of concept test cases", () => {
 
 
   //#region Provider
-  function DerivedRefProvider({children}){
-    const ref = useRef(null)
-    return <derived_context.Provider value={ref}>
-      {children}
-    </derived_context.Provider>
-  }
-
 
   /** The simplest example, recalculated at each rerender, even if the value is
    *  not used.
@@ -214,11 +214,28 @@ describe("Context proof of concept test cases", () => {
   }
 
   function DerivedProvider({children}){
-    const context = useExpensive()
+    const expensive = useExpensive()
 
-    const value = useMemo(() => { return expensive_to_call() }, [context])
+    const value = useMemo(() => { return expensive_to_call(expensive) }, [expensive])
 
     return <derived_context.Provider value={value}>
+      {children}
+    </derived_context.Provider>
+  }
+
+  function DerivedNoMemoProvider({children}){
+    const expensive = useExpensive()
+
+    const value = expensive_to_call(expensive);
+
+    return <derived_context.Provider value={value}>
+      {children}
+    </derived_context.Provider>
+  }
+
+  function DerivedRefProvider({children}){
+    const ref = useRef(null);
+    return <derived_context.Provider value={ref}>
       {children}
     </derived_context.Provider>
   }
@@ -226,7 +243,7 @@ describe("Context proof of concept test cases", () => {
   function DerivedFunctionRefProvider({children}){
     const expensive = useExpensive()
 
-    const ref = () => {return useMemo(() => {return expensive_to_call() }, [expensive])}
+    const ref = () => {return useMemo(() => {return expensive_to_call(expensive) }, [expensive])}
 
     return <derived_context.Provider value={ref}>
       {children}
@@ -236,9 +253,9 @@ describe("Context proof of concept test cases", () => {
   function DerivedFunctionceptionRefProvider({children}){
     const expensive = useExpensive()
 
-    const ref = useMemo(() => () => {return expensive_to_call()}, [expensive])
+    const functionCeption = useMemo(() => () => {return expensive_to_call(expensive)}, [expensive])
 
-    return <derived_context.Provider value={ref}>
+    return <derived_context.Provider value={functionCeption}>
       {children}
     </derived_context.Provider>
   }
@@ -273,7 +290,7 @@ describe("Context proof of concept test cases", () => {
       expect(Object.is(expensive, expensive_object_to_construct)).toBe(true);
     }
 
-    return <div>Hello world</div>
+    return <div key={prop_value}>Hello world</div>
   }
 
   function ClaudeComp({prop_value, use_context}){
@@ -290,6 +307,7 @@ describe("Context proof of concept test cases", () => {
   //#region Composite Components
   /** A render test case, where the provider calls the mock
    *
+   * This is doesn't fulfill the requirements
    * @param {Object} param0
    * @param {Object} param0.prop_value - Dummy value, used to trigger a rerender
    * @returns
@@ -338,6 +356,20 @@ describe("Context proof of concept test cases", () => {
           <Comp prop_value={prop_value} contextFunction={useDerived}/>
           <Comp prop_value={prop_value} contextFunction={useDerived}/>
         </DerivedProvider>
+      </ValueProvider>
+    );
+  }
+
+  /** The realistic component */
+  // This is the simplest component that fulfil the requirement and simplest to
+  // write. Note that this only works because of the react compiler!!!
+  function DerivedNoMemoApp({contextValue, prop_value}){
+    return (
+      <ValueProvider value={contextValue}>
+        <DerivedNoMemoProvider>
+          <Comp prop_value={prop_value} contextFunction={useDerived}/>
+          <Comp prop_value={prop_value} contextFunction={useDerived}/>
+        </DerivedNoMemoProvider>
       </ValueProvider>
     );
   }
@@ -410,6 +442,7 @@ describe("Context proof of concept test cases", () => {
   }
 
   //#region Testcases
+
   it("Can I use jest", () => {
     expect(Object.is(expensive_object_to_construct, expensive_to_call())).toBe(true);
   })
@@ -417,13 +450,13 @@ describe("Context proof of concept test cases", () => {
   it("Standard value test, calls twice", () => {
     const {rerender} = render(<StandardApp prop_value={1}/>);
     rerender(<StandardApp prop_value={2}/>);
-    expect(expensive_to_call).toHaveBeenCalledTimes(2)
+    expect(expensive_to_call).toHaveBeenCalledTimes(1) // 2 without react compiler!
   })
 
   it("Standard value test, not using still calls twice", () => {
     const {rerender} = render(<StandardNotUsingApp prop_value={1}/>);
     rerender(<StandardNotUsingApp prop_value={2}/>);
-    expect(expensive_to_call).toHaveBeenCalledTimes(2)
+    expect(expensive_to_call).toHaveBeenCalledTimes(1) // 2 without the react compiler
   })
 
   it("useMemo reduces calls to 1", () => {
@@ -439,11 +472,22 @@ describe("Context proof of concept test cases", () => {
   });
 
   it("Derived Context perform similar to useMemo Context, but can rerender on updated contest", () => {
+    // This test case should be updated, the react compiler is too smart there
     const { rerender } = render(<DerivedApp contextValue={1} prop_value={1}/>);
     rerender(<DerivedApp contextValue={1} prop_value={2}/>);
 
     expect(expensive_to_call).toHaveBeenCalledTimes(1);
     rerender(<DerivedApp contextValue={2} prop_value={3}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
+  });
+
+  it("Derived Context without any use Memo calls, fully relying on the compiler", () => {
+    // This test case should be updated, the react compiler is too smart there
+    const { rerender } = render(<DerivedNoMemoApp contextValue={1} prop_value={1}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<DerivedNoMemoApp contextValue={1} prop_value={2}/>);
+    expect(expensive_to_call).toHaveBeenCalledTimes(1);
+    rerender(<DerivedNoMemoApp contextValue={2} prop_value={3}/>);
     expect(expensive_to_call).toHaveBeenCalledTimes(2);
   });
 
@@ -465,7 +509,10 @@ describe("Context proof of concept test cases", () => {
     expect(expensive_to_call).toHaveBeenCalledTimes(4);
   });
 
-  it("Derived Component passes a ref", () => {
+
+  // The thing is after the react compiler, this becomes illegal, because on
+  // of the useMemo calls is hidden.
+  it.skip("Derived Component passes a ref", () => {
     const { rerender } = render(<DerivedRefApp contextValue={1} prop_value={1}/>);
     expect(expensive_to_call).toHaveBeenCalledTimes(1);
     rerender(<DerivedRefApp contextValue={1} prop_value={2}/>);
@@ -482,16 +529,16 @@ describe("Context proof of concept test cases", () => {
     expect(expensive_to_call).toHaveBeenCalledTimes(2);
     rerender(<DerivedFunctionExperimentApp contextValue={2} prop_value={2}/>);
     expect(expensive_to_call).toHaveBeenCalledTimes(4);
-    // Note that this is a huge problem because it means the useMemo is not updated
+    // This is unusable because you have 1 call for each use call
   });
 
   it("Functions in functions attempt", () => {
     const { rerender } = render(<DoubleMemoExperimentApp contextValue={1} prop_value={1}/>);
     expect(expensive_to_call).toHaveBeenCalledTimes(2);
     rerender(<DoubleMemoExperimentApp contextValue={1} prop_value={2}/>);
-    expect(expensive_to_call).toHaveBeenCalledTimes(4);
+    expect(expensive_to_call).toHaveBeenCalledTimes(2);
     rerender(<DoubleMemoExperimentApp contextValue={2} prop_value={2}/>);
-    expect(expensive_to_call).toHaveBeenCalledTimes(6);
+    expect(expensive_to_call).toHaveBeenCalledTimes(4);
     // Note that this is a huge problem because it means the useMemo is not updated
   });
 

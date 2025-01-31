@@ -155,10 +155,10 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
 
 class TransactionalCustomerModels(TransactionTestCase):
   def setUp(self) -> None:
-    self.taylor = User.objects.create(username="TaylorTheSlow", user_group=UserGroups.ShopUser)
-    self.mr_gaga = User.objects.create(username="Mr gaga",      user_group=UserGroups.Admin)
-    self.prof_dre = User.objects.create(username="Prof Dre",    user_group=UserGroups.ProductionAdmin)
-    self.scoop_cat = User.objects.create(username="Scoop cat",  user_group=UserGroups.ProductionUser)
+    self.shop_user = User.objects.create(username="TaylorTheSlow", user_group=UserGroups.ShopUser)
+    self.site_admin = User.objects.create(username="Mr gaga",      user_group=UserGroups.Admin)
+    self.prod_admin = User.objects.create(username="Prof Dre",    user_group=UserGroups.ProductionAdmin)
+    self.prod_user = User.objects.create(username="Scoop cat",  user_group=UserGroups.ProductionUser)
     self.frank = Customer.objects.create(short_name="FrankTheCustomer")
     self.franks_backyard = DeliveryEndpoint.objects.create(name="franks backyard", owner=self.frank)
     self.the_secret = Isotope.objects.create(atomic_letter="U", atomic_mass=235, atomic_number=92, halflife_seconds=57122)
@@ -204,7 +204,7 @@ class TransactionalCustomerModels(TransactionTestCase):
       status=OrderStatus.Ordered,
       comment=None,
       ordered_time_slot=self.the_sauce_delivery,
-      ordered_by=self.taylor,
+      ordered_by=self.shop_user,
     )
 
     the_sauce_order=ActivityOrder.objects.create(
@@ -213,13 +213,13 @@ class TransactionalCustomerModels(TransactionTestCase):
       status=OrderStatus.Accepted,
       comment=None,
       ordered_time_slot=self.the_sauce_delivery,
-      ordered_by=self.taylor,
+      ordered_by=self.shop_user,
     )
     # This is mostly just to capture the logs
     with self.assertLogs(AUDIT_LOGGER) as release_right_logs:
-      self.rights = ReleaseRight(releaser=self.scoop_cat,
+      self.rights = ReleaseRight(releaser=self.prod_user,
                                product=self.the_secret_sauce)
-      self.rights.save(self.mr_gaga) # since you can't just create a right
+      self.rights.save(self.site_admin) # since you can't just create a right
     self.assertEqual(len(release_right_logs.output),1)
 
     the_finished_sauce_order=ActivityOrder.objects.create(
@@ -228,40 +228,40 @@ class TransactionalCustomerModels(TransactionTestCase):
       status=OrderStatus.Released,
       comment=None,
       ordered_time_slot=self.the_sauce_delivery,
-      ordered_by=self.taylor,
-      freed_by=self.scoop_cat,
+      ordered_by=self.shop_user,
+      freed_by=self.prod_user,
       freed_datetime=datetime(2020,1,12,4,20,0, tzinfo=timezone.utc)
     )
 
     # Edit
-    self.assertEqual(the_ordered_sauce_order.canEdit(self.taylor), AuthActions.ACCEPT)
+    self.assertEqual(the_ordered_sauce_order.canEdit(self.shop_user), AuthActions.ACCEPT)
     self.assertEqual(the_sauce_order.canEdit(), AuthActions.REJECT)
-    self.assertEqual(the_sauce_order.canEdit(self.taylor), AuthActions.REJECT_LOG)
-    self.assertEqual(the_sauce_order.canEdit(self.mr_gaga), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canEdit(self.prof_dre), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canEdit(self.scoop_cat), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canEdit(self.shop_user), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.site_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_user), AuthActions.ACCEPT)
     the_sauce_order.status = OrderStatus.Released
-    self.assertEqual(the_sauce_order.canEdit(self.mr_gaga), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_sauce_order.canEdit(self.prof_dre), AuthActions.REJECT_LOG)
-    self.assertEqual(the_sauce_order.canEdit(self.scoop_cat), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_admin), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_user), AuthActions.ACCEPT_LOG)
     the_finished_sauce_order.status = OrderStatus.Accepted
-    self.assertEqual(the_finished_sauce_order.canEdit(self.mr_gaga), AuthActions.ACCEPT)
-    self.assertEqual(the_finished_sauce_order.canEdit(self.prof_dre), AuthActions.REJECT_LOG)
-    self.assertEqual(the_finished_sauce_order.canEdit(self.scoop_cat), AuthActions.REJECT_LOG)
+    self.assertEqual(the_finished_sauce_order.canEdit(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_finished_sauce_order.canEdit(self.prod_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_finished_sauce_order.canEdit(self.prod_user), AuthActions.ACCEPT_LOG)
 
     # Create
     self.assertEqual(the_sauce_order.canCreate(), AuthActions.ACCEPT)
 
     # Delete
-    self.assertEqual(the_ordered_sauce_order.canDelete(self.taylor), AuthActions.ACCEPT)
+    self.assertEqual(the_ordered_sauce_order.canDelete(self.shop_user), AuthActions.ACCEPT)
     self.assertEqual(the_sauce_order.canDelete(), AuthActions.REJECT)
-    self.assertEqual(the_sauce_order.canDelete(self.taylor), AuthActions.REJECT_LOG)
-    self.assertEqual(the_sauce_order.canDelete(self.mr_gaga), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canDelete(self.prof_dre), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canDelete(self.scoop_cat), AuthActions.ACCEPT)
-    self.assertEqual(the_finished_sauce_order.canDelete(self.mr_gaga), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_finished_sauce_order.canDelete(self.prof_dre), AuthActions.REJECT_LOG)
-    self.assertEqual(the_finished_sauce_order.canDelete(self.scoop_cat), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canDelete(self.shop_user), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canDelete(self.site_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canDelete(self.prod_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canDelete(self.prod_user), AuthActions.ACCEPT)
+    self.assertEqual(the_finished_sauce_order.canDelete(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_finished_sauce_order.canDelete(self.prod_admin), AuthActions.REJECT_LOG)
+    self.assertEqual(the_finished_sauce_order.canDelete(self.prod_user), AuthActions.REJECT_LOG)
 
 
   def test_InjectionOrder_can_xxx(self):
@@ -272,7 +272,7 @@ class TransactionalCustomerModels(TransactionTestCase):
       status=OrderStatus.Ordered,
       tracer_usage=TracerUsage.human,
       comment="",
-      ordered_by=self.taylor,
+      ordered_by=self.shop_user,
       endpoint=self.franks_backyard,
       tracer=self.the_secret_sauce,
     )
@@ -284,7 +284,7 @@ class TransactionalCustomerModels(TransactionTestCase):
       status=OrderStatus.Accepted,
       tracer_usage=TracerUsage.human,
       comment="",
-      ordered_by=self.taylor,
+      ordered_by=self.shop_user,
       endpoint=self.franks_backyard,
       tracer=self.the_secret_sauce,
     )
@@ -296,50 +296,50 @@ class TransactionalCustomerModels(TransactionTestCase):
       status=OrderStatus.Released,
       tracer_usage=TracerUsage.human,
       comment="",
-      ordered_by=self.taylor,
+      ordered_by=self.shop_user,
       endpoint=self.franks_backyard,
       tracer=self.the_secret_sauce,
       lot_number="FUN-200401-1",
       freed_datetime=datetime(2020,4,1,1,2,3,tzinfo=timezone.utc),
-      freed_by=self.scoop_cat,
+      freed_by=self.prod_user,
     )
 
     # This is mostly just to capture the logs
     with self.assertLogs(AUDIT_LOGGER) as release_right_logs:
-      self.rights = ReleaseRight(releaser=self.scoop_cat,
+      self.rights = ReleaseRight(releaser=self.prod_user,
                                product=self.the_secret_sauce)
-      self.rights.save(self.mr_gaga) # since you can't just create a right
+      self.rights.save(self.site_admin) # since you can't just create a right
     self.assertEqual(len(release_right_logs.output),1)
 
     # Edit
-    self.assertEqual(the_ordered_sauce_order.canEdit(self.taylor), AuthActions.ACCEPT)
+    self.assertEqual(the_ordered_sauce_order.canEdit(self.shop_user), AuthActions.ACCEPT)
     self.assertEqual(the_sauce_order.canEdit(), AuthActions.REJECT)
-    self.assertEqual(the_sauce_order.canEdit(self.taylor), AuthActions.REJECT_LOG)
-    self.assertEqual(the_sauce_order.canEdit(self.mr_gaga), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canEdit(self.prof_dre), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canEdit(self.scoop_cat), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canEdit(self.shop_user), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.site_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_user), AuthActions.ACCEPT)
     the_sauce_order.status = OrderStatus.Released
-    self.assertEqual(the_sauce_order.canEdit(self.mr_gaga), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_sauce_order.canEdit(self.prof_dre), AuthActions.REJECT_LOG)
-    self.assertEqual(the_sauce_order.canEdit(self.scoop_cat), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_admin), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canEdit(self.prod_user), AuthActions.ACCEPT_LOG)
     the_finished_sauce_order.status = OrderStatus.Accepted
-    self.assertEqual(the_finished_sauce_order.canEdit(self.mr_gaga), AuthActions.ACCEPT)
-    self.assertEqual(the_finished_sauce_order.canEdit(self.prof_dre), AuthActions.REJECT_LOG)
-    self.assertEqual(the_finished_sauce_order.canEdit(self.scoop_cat), AuthActions.REJECT_LOG)
+    self.assertEqual(the_finished_sauce_order.canEdit(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_finished_sauce_order.canEdit(self.prod_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_finished_sauce_order.canEdit(self.prod_user), AuthActions.ACCEPT_LOG)
 
     # Create
     self.assertEqual(the_sauce_order.canCreate(), AuthActions.ACCEPT)
 
     # Delete
     self.assertEqual(the_sauce_order.canDelete(), AuthActions.REJECT)
-    self.assertEqual(the_ordered_sauce_order.canDelete(self.taylor), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canDelete(self.taylor), AuthActions.REJECT_LOG)
-    self.assertEqual(the_sauce_order.canDelete(self.mr_gaga), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canDelete(self.prof_dre), AuthActions.ACCEPT)
-    self.assertEqual(the_sauce_order.canDelete(self.scoop_cat), AuthActions.ACCEPT)
-    self.assertEqual(the_finished_sauce_order.canDelete(self.mr_gaga), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_finished_sauce_order.canDelete(self.prof_dre), AuthActions.REJECT_LOG)
-    self.assertEqual(the_finished_sauce_order.canDelete(self.scoop_cat), AuthActions.REJECT_LOG)
+    self.assertEqual(the_ordered_sauce_order.canDelete(self.shop_user), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canDelete(self.shop_user), AuthActions.REJECT_LOG)
+    self.assertEqual(the_sauce_order.canDelete(self.site_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canDelete(self.prod_admin), AuthActions.ACCEPT)
+    self.assertEqual(the_sauce_order.canDelete(self.prod_user), AuthActions.ACCEPT)
+    self.assertEqual(the_finished_sauce_order.canDelete(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_finished_sauce_order.canDelete(self.prod_admin), AuthActions.REJECT_LOG)
+    self.assertEqual(the_finished_sauce_order.canDelete(self.prod_user), AuthActions.REJECT_LOG)
 
   def test_vial_can_XXXX(self):
     the_sauce_container = Vial()
@@ -348,12 +348,12 @@ class TransactionalCustomerModels(TransactionTestCase):
     self.assertEqual(the_sauce_container.canDelete(), AuthActions.REJECT)
     self.assertEqual(the_sauce_container.canEdit(), AuthActions.REJECT)
 
-    self.assertEqual(the_sauce_container.canDelete(self.taylor), AuthActions.REJECT)
-    self.assertEqual(the_sauce_container.canDelete(self.mr_gaga), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_sauce_container.canDelete(self.prof_dre), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_sauce_container.canDelete(self.scoop_cat), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_container.canDelete(self.shop_user), AuthActions.REJECT)
+    self.assertEqual(the_sauce_container.canDelete(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_container.canDelete(self.prod_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_container.canDelete(self.prod_user), AuthActions.ACCEPT_LOG)
 
-    self.assertEqual(the_sauce_container.canEdit(self.taylor), AuthActions.REJECT)
-    self.assertEqual(the_sauce_container.canEdit(self.mr_gaga), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_sauce_container.canEdit(self.prof_dre), AuthActions.ACCEPT_LOG)
-    self.assertEqual(the_sauce_container.canEdit(self.scoop_cat), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_container.canEdit(self.shop_user), AuthActions.REJECT)
+    self.assertEqual(the_sauce_container.canEdit(self.site_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_container.canEdit(self.prod_admin), AuthActions.ACCEPT_LOG)
+    self.assertEqual(the_sauce_container.canEdit(self.prod_user), AuthActions.ACCEPT_LOG)

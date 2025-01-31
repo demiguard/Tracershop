@@ -18,6 +18,7 @@ mockedUserGroups = {
   '-AAAA0003' : UserGroups.ShopAdmin,
   '-AAAA0004' : UserGroups.ShopUser,
   '-AAAA0005' : UserGroups.Anon,
+  'missing'   : UserGroups.ShopUser
   # Note there's no user group External, since this user doesn't have a BAM ID
   # Therefore they cannot be returned from the LDAP service
 }

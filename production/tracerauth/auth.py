@@ -267,7 +267,7 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
 
 
 # this is placed bad
-def get_login(now=None) -> AbstractBaseUser:
+def get_login(now=None ) -> AbstractBaseUser:
   if now is None:
     now = datetime.now()
 

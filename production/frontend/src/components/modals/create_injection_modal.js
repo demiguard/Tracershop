@@ -13,7 +13,7 @@ import { TimeInput } from "../injectable/inputs/time_input";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { UsageSelect } from "../injectable/derived_injectables/usage_select";
-import { TracerCatalog } from '~/effects/tracerCatalog';
+import { TracerCatalog } from '~/contexts/tracerCatalog';
 import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 

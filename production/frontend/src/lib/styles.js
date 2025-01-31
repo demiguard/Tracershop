@@ -85,7 +85,8 @@ export const MARGIN = {
 
 export const PADDING = {
   all : {
-    px0 : { padding : "0px" }
+    px0 : { padding : "0px" },
+    px25 : { padding : "25px"},
   }
 }
 

@@ -200,16 +200,19 @@ export function WebsocketIcon(){
 }
 
 
-export function IdempotentIcon ({
-  altText,
-  src,
-  onClick,
-  onMouseDown,
-  label,
-  className ,
-  style,
-  variant,
-}){
+export function IdempotentIcon (props){
+
+  let {
+    altText,
+    src,
+    onClick,
+    onMouseDown,
+    label,
+    className ,
+    style,
+    variant,
+    ...rest
+  } = props
 
 if(style === undefined){
   style = {
@@ -231,6 +234,7 @@ if (className) {
 }
 
 return (<IdempotentButton
+          {...rest}
           style={style}
           variant={variant}
           aria-label={label}
@@ -253,8 +257,10 @@ return (<IdempotentButton
  *  orders : Array<InjectionOrder>
  * }} param0
  */
-export function AcceptIconInjection({orders}){
+export function AcceptIconInjection(props){
   const websocket = useWebsocket();
+
+  const {orders, ...rest} = props;
 
   function acceptOrders(){
     const filtered_orders = orders.filter(
@@ -269,7 +275,7 @@ export function AcceptIconInjection({orders}){
     );
   }
 
-  return <IdempotentIcon src="/static/images/thumb-up-add.svg" onClick={acceptOrders}/>;
+  return <IdempotentIcon {...rest} src="/static/images/thumb-up-add.svg" onClick={acceptOrders}/>;
 }
 
 /**

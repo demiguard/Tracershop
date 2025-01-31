@@ -42,7 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'channels',
     'database.apps.DatabaseConfig',
-    'tests.apps.TestConfig',
+    'testing.apps.TestConfig',
     'frontend.apps.FrontendConfig',
     'lib.apps.LibConfig',
     'tracerauth.apps.AuthConfig',
@@ -61,7 +61,7 @@ MIDDLEWARE = [
 
 ROOT_URLCONF = 'production.urls'
 
-TEST_RUNNER = "tests.runner.CustomRunner"
+TEST_RUNNER = "testing.runner.CustomRunner"
 
 TEMPLATES = [
     {
@@ -247,4 +247,3 @@ LOGGING = {
 STATIC_URL = '/static/'
 
 # Logging
-

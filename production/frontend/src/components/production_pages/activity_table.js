@@ -24,7 +24,7 @@ import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../
 import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { Optional } from "../injectable/optional.js";
 import { ProductionTimeSlot } from "~/components/injectable/production_injectionable/production_time_slot.js";
-import { useTracerCatalog } from "~/effects/tracerCatalog.js";
+import { useTracerCatalog } from "~/contexts/tracerCatalog.js";
 
 const Modals = {
   create_modal : CreateOrderModal,

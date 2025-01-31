@@ -6,7 +6,7 @@ export function EndpointDisplay({endpoint}){
   const state = useTracershopState();
 
   // type cose to DeliveryTimeEndpoint
-  if(endpoint instanceof Number){
+  if(typeof(endpoint) === 'number'){
     endpoint = state.delivery_endpoint.get(endpoint);
   }
 

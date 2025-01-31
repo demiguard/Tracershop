@@ -1059,8 +1059,6 @@ export class TracershopState {
   /** @type { Map<Number, Location>} */ location
   /** @type { Map<Number, Message>} */ message
   /** @type { Map<Number, MessageAssignment>} */ message_assignment
-  /** @type { Map<Number, TelemetryRecord>} */ telemetry_record
-  /** @type { Map<Number, TelemetryRequests>} */ telemetry_request
   /** @type { Map<Number, Tracer>} */ tracer
   /** @type { Map<Number, TracerCatalogPage>} */ tracer_mapping
   /** @type { Map<Number, Printer>} */ printer
@@ -1074,7 +1072,7 @@ export class TracershopState {
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, telemetry_record, telemetry_request, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1152,16 +1150,6 @@ export class TracershopState {
       this.message_assignment = message_assignment
     } else {
       this.message_assignment = new Map()
-    }
-    if(telemetry_record !== undefined){
-      this.telemetry_record = telemetry_record
-    } else {
-      this.telemetry_record = new Map()
-    }
-    if(telemetry_request !== undefined){
-      this.telemetry_request = telemetry_request
-    } else {
-      this.telemetry_request = new Map()
     }
     if(tracer !== undefined){
       this.tracer = tracer

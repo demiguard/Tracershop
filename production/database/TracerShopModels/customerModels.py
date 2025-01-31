@@ -259,8 +259,11 @@ class ActivityOrder(TracershopModel):
 
     database_self = self.__class__.objects.get(pk=self.pk)
 
-    if database_self.status == OrderStatus.Released and not user.is_server_admin:
-      return AuthActions.REJECT_LOG
+    if database_self.status == OrderStatus.Released:
+      if self.status == OrderStatus.Accepted and user.is_production_member:
+        return AuthActions.ACCEPT_LOG
+      else:
+        return AuthActions.REJECT_LOG
 
     if self.status == OrderStatus.Released:
       if (user.is_server_admin or ReleaseRight.objects.filter(
@@ -342,11 +345,13 @@ class InjectionOrder(TracershopModel):
         return AuthActions.ACCEPT
       else:
         return AuthActions.REJECT_LOG
-
     database_self = self.__class__.objects.get(pk=self.pk)
 
-    if database_self.status == OrderStatus.Released and not user.is_server_admin:
-      return AuthActions.REJECT_LOG
+    if database_self.status == OrderStatus.Released:
+      if self.status == OrderStatus.Accepted and user.is_production_member:
+        return AuthActions.ACCEPT_LOG
+      else:
+        return AuthActions.REJECT_LOG
 
     if self.status == OrderStatus.Released:
       if (user.is_server_admin or ReleaseRight.objects.filter(

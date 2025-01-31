@@ -51,8 +51,6 @@ export const testState = new TracershopState(
   locations,
   messages,
   message_assignments,
-  new Map(), // Telemetry record
-  new Map(), // Telemetry Request
   tracers,
   tracer_mapping,
   printers,

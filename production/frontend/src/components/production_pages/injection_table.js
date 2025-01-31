@@ -21,11 +21,13 @@ import { InjectionOrderSortingMethods, sortInjectionOrders } from "~/lib/sorting
 import { Optional } from "~/components/injectable/optional.js";
 import { ReleaseManyInjectionOrdersModal } from "~/components/modals/release_many_injections_orders.js";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
+import { DISPLAY, MARGIN } from "~/lib/styles.js";
+import { useUserReleaseRights } from "~/contexts/user_release_right.js";
 
 
 /** @enum */
 const Modals  = {
-  NoModal : null,
+  NoModal : "",
   CreateOrder : CreateInjectionOrderModal,
   InjectionStatus : InjectionModal,
   FreeManyInjection : ReleaseManyInjectionOrdersModal,
@@ -52,13 +54,13 @@ function InjectionOrderRow({order, isSelected, onSelect,disabled, openOrderModal
   const actionButton = (() => {
     switch (order.status){
       case ORDER_STATUS.ORDERED:
-        return <AcceptIconInjection orders={[order]}/>
+        return <AcceptIconInjection data-testid={`accept-${order.id}`} orders={[order]}/>
       case ORDER_STATUS.ACCEPTED:
-        return <FormCheck disabled={disabled} checked={isSelected} onClick={onSelect}/>
+        return <FormCheck data-testid={`check-${order.id}`} disabled={disabled} checked={isSelected} onChange={onSelect}/>
       case ORDER_STATUS.RELEASED:
-        return <InjectionDeliveryIcon order={order}/>
+        return <InjectionDeliveryIcon data-testid={`delivery-${order.id}`} order={order}/>
       default:
-        return null;
+        return "";
     }
   })();
 
@@ -90,6 +92,8 @@ function InjectionOrderRow({order, isSelected, onSelect,disabled, openOrderModal
  */
 export function InjectionTable({active_date}) {
   const state = useTracershopState();
+  const userReleaseRight = useUserReleaseRights();
+
   const danishDate = parseDateToDanishDate(dateToDateString(active_date))
 
   const /**@type {Array<InjectionOrder>} */ orders = useMemo(
@@ -105,7 +109,7 @@ export function InjectionTable({active_date}) {
 
       return orders;
 
-    }, active_date, state.injection_orders
+    }, [active_date, state.injection_orders]
   );
 
   const [ModalState, setModalState] = useState({
@@ -137,9 +141,10 @@ export function InjectionTable({active_date}) {
   }
 
   function releaseMultipleOrdersButtonPressed(){
-    setModalState({
+    setModalState(old => ({
+      ...old,
       modal : Modals.FreeManyInjection,
-    })
+    }));
   }
 
   function setSortingMethod(newMethod){
@@ -166,18 +171,21 @@ export function InjectionTable({active_date}) {
 
   const sorted_orders = useMemo(() => {
     return [...orders].sort(sortInjectionOrders(sortingMethod, invertedSorting, state))
-  }, [sortingMethod, invertedSorting, state]);
+  }, [orders, sortingMethod, invertedSorting]);
 
   const renderInjectedOrders = sorted_orders.map(order => {
     const isSelected = selection.selected.has(order.id);
-    const disabled = selection.acceptingTracer ? order.tracer !== selection.acceptingTracer : false;
+    const canRelease = userReleaseRight.permissionForTracer(order.tracer);
+
+    const disabled = canRelease && selection.acceptingTracer ? order.tracer !== selection.acceptingTracer : false;
     function onSelect(){
       // I Don't even care if this is guaranteed by the runtime, it's a free check
-      if(!disabled){ return; }
+      if(disabled){ return; }
+
       if(isSelected){
         setSelection(oldSelection => {
           const newSelection = {...oldSelection,
-            selected : new Set(oldSelection.oldSet)
+            selected : new Set(oldSelection.selected)
           };
 
           if(oldSelection.selected.size === 1){
@@ -191,10 +199,9 @@ export function InjectionTable({active_date}) {
       } else {
         setSelection(oldSelection => {
           const newSelection = {
-            selected : new Set(oldSelection.oldSet),
+            selected : new Set(oldSelection.selected),
             acceptingTracer : order.tracer
           };
-
           newSelection.selected.add(order.id);
           return newSelection;
         })
@@ -225,20 +232,28 @@ export function InjectionTable({active_date}) {
     </div>
   );
 
+  const modalExists = !!ModalState.modal;
+
+  //console.log(modalExists, ModalState.modal, selection.selected);
+
   return (
     <div>
       <Row>
-        <Col sm={10}>Produktion - {danishDate}</Col>
-        <Col sm={2}>
-          <Button onClick={openCreateOrderModal}>Opret ny ordre</Button>
+        <Col sm={6}>Produktion - {danishDate}</Col>
+        <Col style={{...DISPLAY.FLEX}} className="flex-row-reverse flex" sm={6}>
+          <Row style={MARGIN.leftRight.px15}>
+            <Button onClick={openCreateOrderModal}>Opret ny ordre</Button>
+          </Row>
           <Optional exists={0 < selection.selected.size}>
-            <Button onMouseDown={releaseMultipleOrdersButtonPressed}>
-              Frigiv Flere ordre
-            </Button>
+            <Row style={MARGIN.leftRight.px15}>
+              <Button onClick={releaseMultipleOrdersButtonPressed}>
+                Frigiv flere ordre
+              </Button>
+            </Row>
           </Optional>
         </Col>
       </Row>
-      <Optional exists={orders} alternative={noOrdersHTML}>
+      <Optional exists={0 < orders.length} alternative={noOrdersHTML}>
       <Table>
         <thead>
           <tr>
@@ -287,7 +302,7 @@ export function InjectionTable({active_date}) {
         </tbody>
       </Table>
     </Optional>
-    <Optional exists={ModalState.modal}>
+    <Optional exists={modalExists}>
       <ModalState.modal {...modalProps}/>
     </Optional>
     </div>
