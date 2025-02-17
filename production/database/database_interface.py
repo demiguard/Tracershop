@@ -7,7 +7,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
 from datetime import datetime, date, timedelta, time
-from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union, MutableSet
+from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union, MutableSet, TypedDict
 import logging
 from functools import reduce
 from math import floor
@@ -30,14 +30,15 @@ from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
-    SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, EXCLUDED_STATE_MODELS
+    SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, EXCLUDED_STATE_MODELS,\
+    DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
     TracerUsage, ActivityProduction, Customer, Procedure, Days,\
-    Location
+    Location, TelemetryRecord, TelemetryRequests
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -303,7 +304,7 @@ class DatabaseInterface():
     }
 
   @database_sync_to_async
-  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> str:
+  def async_serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> str:
     """Transforms some models to a string representation of those models.
     It removes any fields that should not be broadcast such a passwords
 
@@ -313,6 +314,9 @@ class DatabaseInterface():
     Returns:
         _type_: _description_
     """
+    return self.serialize_dict(instances)
+
+  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> str:
     serialized_dict = {}
 
     for key, models in instances.items():
@@ -845,3 +849,18 @@ class DatabaseInterface():
         vial_dir['Ejer'].append(vial.owner.short_name)
 
     return return_dir
+
+  @database_sync_to_async
+  def get_telemetry_data(self):
+    """Get all the telemetry data
+
+    Returns:
+        str: JSON string of all the telemetry data
+    """
+    records = TelemetryRecord.objects.all()
+    requests = TelemetryRequests.objects.all()
+
+    return self.serialize_dict({
+      DATA_TELEMETRY_RECORD : records,
+      DATA_TELEMETRY_REQUEST : requests
+    })

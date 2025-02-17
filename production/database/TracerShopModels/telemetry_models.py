@@ -19,10 +19,20 @@ class TelemetryRequests(TracershopModel):
 class TelemetryRecord(TracershopModel):
   id = models.BigAutoField(primary_key=True)
   request_type = models.ForeignKey(TelemetryRequests, on_delete=models.RESTRICT)
-  expire_datetime = models.DateTimeField(
-    default= now() + timedelta(days=MAX_TELEMETRY_AGE_DAYS)
-  )
+  created = models.DateTimeField(auto_now_add=True)
   latency_ms = models.FloatField(default=None, null=True)
-  status = models.IntegerField(
-    choices=TelemetryRecordStatus.choices
-  )
+  status = models.IntegerField(choices=TelemetryRecordStatus.choices)
+
+  @property
+  def expire_datetime(self):
+    return self.created + timedelta(days=MAX_TELEMETRY_AGE_DAYS)
+
+  class Meta:
+    indexes = [
+      models.Index(
+        fields=[
+          'request_type',
+          'created'
+        ]
+      )
+    ]

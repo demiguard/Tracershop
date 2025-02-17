@@ -1,0 +1,47 @@
+# Python Standard library
+from datetime import datetime
+
+# Django / Channels Imports
+from channels.auth import get_user
+
+from django.utils import timezone
+
+# Tracershop imports
+
+from shared_constants import WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_DATE,\
+  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
+  WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD,\
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_REFRESH
+
+from websocket.consumer import Consumer
+from websocket.handler_base import HandlerBase
+
+class HandleGetState(HandlerBase):
+  @property
+  def message_type(self):
+    return WEBSOCKET_MESSAGE_GET_STATE
+
+  async def __call__(self, consumer: Consumer, message):
+    now = consumer.datetimeNow.now()
+
+    if(WEBSOCKET_DATE in message):
+      try:
+        now = datetime.strptime(message[WEBSOCKET_DATE][:10], '%Y-%m-%d')
+        now = datetime.astimezone(now, timezone.now().tzinfo)
+      except ValueError:
+        pass
+
+    # Assumed to have no Field in the message since it can use the user in scope
+
+    instances = await consumer.db.getState(now,
+                                       await get_user(consumer.scope))
+    state = await consumer.db.async_serialize_dict(instances)
+
+    await consumer.send_json({
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : state,
+      WEBSOCKET_REFRESH : True,
+    })

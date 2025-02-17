@@ -128,7 +128,7 @@ def handle_path(path: Path):
 
   logger.info("Vial doesn't exists saving!")
 
-  data = async_to_sync(dbi.serialize_dict)({
+  data = async_to_sync(dbi.async_serialize_dict)({
     DATA_VIAL : [vial]
   })
   logger.debug(f"Serialized dict to {data}")

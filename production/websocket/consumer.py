@@ -62,23 +62,22 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
     WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,\
     WEBSOCKET_MESSAGE_GET_BOOKINGS, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
     ERROR_EARLY_TIME_SLOT, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_TEST_PRINTER,\
-    WEBSOCKET_MESSAGE_RELEASE_MULTI
+    WEBSOCKET_MESSAGE_RELEASE_MULTI, WEBSOCKET_MESSAGE_GET_TELEMETRY
 from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
 from database.telemetry import create_telemetry_record
-from database.models import ActivityOrder, ActivityDeliveryTimeSlot,\
-      OrderStatus, Vial, InjectionOrder, Booking, BookingStatus,\
-      TracerTypes, DeliveryEndpoint, ActivityProduction, User, UserGroups,\
-      UserAssignment, SuccessfulLogin
+from database.models import OrderStatus, Vial, InjectionOrder,\
+      User, UserGroups, UserAssignment, SuccessfulLogin
 from lib.formatting import toDateTime, formatFrontendErrorMessage, toDate, timeConverter
 from lib.ProductionJSON import encode, decode
 from lib.printing import create_document
 
 from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
-from tracerauth.backend import TracershopAuthenticationBackend
 from tracerauth.ldap import checkUserGroupMembership
 from tracerauth.types import AuthenticationResult
+
+from websocket.handler import MessageHandler
 
 logger = logging.getLogger(DEBUG_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
@@ -102,7 +101,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
     super().__init__()
-
+    self.handler = MessageHandler()
     self.db = db
     self.datetimeNow = datetimeNow
 
@@ -154,7 +153,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     logger.debug(f"{user} disconnected!")
 
 
-  def __prepBroadcastMessage(self, message: Dict[str, Any]) -> None:
+  def _prepBroadcastMessage(self, message: Dict[str, Any]) -> None:
     if 'type' not in message:
       message['type'] = "broadcastMessage" # This is needed to point it to the send place
 
@@ -166,33 +165,33 @@ class Consumer(AsyncJsonWebsocketConsumer):
         message[key] = value.value
 
 
-  async def __broadcastGlobal(self, message: Dict):
+  async def _broadcastGlobal(self, message: Dict):
     """Broadcast a message to all connected users
 
     Args:
         message (Dict): Message to be broadcast
     """
-    self.__prepBroadcastMessage(message)
+    self._prepBroadcastMessage(message)
     await self.channel_layer.group_send(self.global_group, message) #
 
 
-  async def __broadcastProduction(self, message: Dict):
+  async def _broadcastProduction(self, message: Dict):
     """Broadcast only to the group production
 
     Args:
         message (Dict): Message to be send
     """
-    self.__prepBroadcastMessage(message)
+    self._prepBroadcastMessage(message)
     await self.channel_layer.group_send('production', message) #
 
 
-  async def __broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
-    self.__prepBroadcastMessage(message)
+  async def _broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
+    self._prepBroadcastMessage(message)
     if customerIDs is None:
-      await self.__broadcastGlobal(message)
+      await self._broadcastGlobal(message)
       return
 
-    await self.__broadcastProduction(message)
+    await self._broadcastProduction(message)
     for customerID in customerIDs:
       await self.channel_layer.group_send(f'customer_{customerID}', message)
 
@@ -201,7 +200,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """WARNING: IS THIS A PRIVATE HELPER FUNCTION THAT YOU SHOULDN'T CALL IN
     HANDLER FUNCTIONS. Use __broadcastGlobal instead!
 
-    Send the event to each subscriber to the websocket.
+    Send the event to each subscriber of the websocket channel.
     Note this function gets call for each websocket connected to the group
 
     This function is called by __broadcast
@@ -246,19 +245,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.RespondWithError(message, {ERROR_TYPE : ERROR_INSUFFICIENT_PERMISSIONS})
         return
 
-      handler = self.Handlers.get(message[WEBSOCKET_MESSAGE_TYPE])
-      if handler is None: # pragma no cover
-        # This should be impossible to reach, since the validateMessage should throw an error.
-        # The only case this should happen is when a message type have been added but a handler have been made
-        # I.E It's a NOT implemented case.
-        logger.critical(f"Missing handler for {message[WEBSOCKET_MESSAGE_TYPE]}")
-        await self.RespondWithError(message, {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
-      else:
-        await handler(self, message)
-        time_end_ns = time.monotonic_ns()
-        latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
-        await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.SUCCESS)
+      await self.handler(self, message)
 
+      time_end_ns = time.monotonic_ns()
+      latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
+      await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.SUCCESS)
 
     except IllegalActionAttempted:
       error_logger.critical(pformat(f"""user: {user} send the message {pformat(message)} which contains an action witch the system detected as Illegal, either we got a pen tester, a bad actor or a frontend error."""))
@@ -299,12 +290,15 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   async def RespondWithError(self, message: Dict, error: Dict):
-    """Informs the client of an exceptional error(s)
+    """Informs the client of a programmatic error(s)
+    This is only called in an emergency, ie it should be impossible to reach
+    with normal operation.
 
     Args:
         message (Dict): The Original Message
         error (Dict): An Dictionary with errors codes to inform the frontend
     """
+    # While I appreciate the idea to classify errors: all i have to say is: Wut?
     # An exceptional error is an error that shouldn't be able to happen.
     # An exceptional error is a reference to an non existing database object
     # An exceptional error is a order to an non existing destination
@@ -374,7 +368,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       await login(self.scope, user)
       await sync_to_async(self.scope["session"].save)()
       await self.enterUserGroups(user)
-      serialized_user = await self.db.serialize_dict({DATA_USER : [user]})
+      serialized_user = await self.db.async_serialize_dict({DATA_USER : [user]})
       return await self.respond_auth_message(message,
                                              True,
                                              serialized_user,
@@ -389,7 +383,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if isinstance(user, User):
       logger.info(f"WhoAmI message found: {user} from session cookie")
       await self.enterUserGroups(user)
-      user_serialized = await self.db.serialize_dict({DATA_USER : [user]})
+      user_serialized = await self.db.async_serialize_dict({DATA_USER : [user]})
       if user.user_group == UserGroups.ShopExternal:
         logins = await database_sync_to_async(SuccessfulLogin.objects.filter)(user=user)
         await database_sync_to_async(logins.delete)()
@@ -402,7 +396,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         session = self.scope["session"]
         await database_sync_to_async(session.save)()
         await self.enterUserGroups(user)
-        serialized_user = await self.db.serialize_dict({DATA_USER : [user]})
+        serialized_user = await self.db.async_serialize_dict({DATA_USER : [user]})
         session_key = self.scope["session"].session_key
         return await self.respond_auth_message(message,
                                                 True,
@@ -434,7 +428,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if(WEBSOCKET_DATE in message):
       try:
         now = datetime.strptime(message[WEBSOCKET_DATE][:10], '%Y-%m-%d')
-        now = datetime.astimezone(now, timezone.now())
+        now = datetime.astimezone(now, timezone.now().tzinfo)
       except ValueError:
         pass
 
@@ -442,7 +436,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
     instances = await self.db.getState(now,
                                        await get_user(self.scope))
-    state = await self.db.serialize_dict(instances)
+    state = await self.db.async_serialize_dict(instances)
 
     await self.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
@@ -471,7 +465,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
     if success:
-      await self.__broadcastGlobal({
+      await self._broadcastGlobal({
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
         WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
@@ -524,10 +518,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
       })
       return
 
-    serialized_data = await self.db.serialize_dict({
+    serialized_data = await self.db.async_serialize_dict({
       message[WEBSOCKET_DATATYPE] : instances
     })
-    await self.__broadcastGlobal({
+    await self._broadcastGlobal({
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : serialized_data,
@@ -558,10 +552,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if updatedModels is not None:
       customerIDs = await self.db.getCustomerIDs(updatedModels)
 
-      serialized_data = await self.db.serialize_dict({
+      serialized_data = await self.db.async_serialize_dict({
         message[WEBSOCKET_DATATYPE] : updatedModels
       })
-      await self.__broadcastCustomer({
+      await self._broadcastCustomer({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_DATA : serialized_data,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
@@ -579,7 +573,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ### End Model Primitives
   # Order functions
-  async def __RejectFreeing(self, message : Dict) -> None:
+  async def _RejectFreeing(self, message : Dict) -> None:
     await self.send_json({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -587,7 +581,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
 
-  async def __authenticateFreeing(self, message):
+  async def _authenticateFreeing(self, message):
     Auth = message[DATA_AUTH]
     user: User = await get_user(self.scope)
     authentication_result: Tuple[AuthenticationResult,
@@ -621,10 +615,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # 4. Broadcast to users
 
     # Turn this into a function
-    result, user = await self.__authenticateFreeing(message)
+    result, user = await self._authenticateFreeing(message)
 
     if result != AuthenticationResult.SUCCESS:
-      return await self.__RejectFreeing(message)
+      return await self._RejectFreeing(message)
 
 
     # Authentication successful update
@@ -637,12 +631,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
     logFreeActivityOrders(user, orders, vials)
     customerIDs = await self.db.getCustomerIDs(orders)
 
-    newState = await self.db.serialize_dict({
+    newState = await self.db.async_serialize_dict({
       DATA_ACTIVITY_ORDER : orders,
       DATA_VIAL : vials
     })
 
-    await self.__broadcastCustomer({
+    await self._broadcastCustomer({
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
@@ -670,10 +664,10 @@ class Consumer(AsyncJsonWebsocketConsumer):
     # 3. Broadcast to users
 
     # Step 1: Determine the user credentials are valid
-    result, user = await self.__authenticateFreeing(message)
+    result, user = await self._authenticateFreeing(message)
 
     if result != AuthenticationResult.SUCCESS:
-      return await self.__RejectFreeing(message)
+      return await self._RejectFreeing(message)
 
     # Step 2
     order: InjectionOrder = await self.db.getModel(InjectionOrder, message[WEBSOCKET_DATA][WEBSOCKET_DATA_ID])
@@ -686,11 +680,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     logFreeInjectionOrder(user, order)
 
     # Step 3 Broadcast it
-    released_orders = await self.db.serialize_dict({
+    released_orders = await self.db.async_serialize_dict({
         DATA_INJECTION_ORDER : [order],
     })
 
-    await self.__broadcastProduction({
+    await self._broadcastProduction({
         AUTH_IS_AUTHENTICATED : True,
         WEBSOCKET_REFRESH : False,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -700,13 +694,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   async def HandleReleaseMultiInjection(self, message):
-    result, user = await self.__authenticateFreeing(message)
+    result, user = await self._authenticateFreeing(message)
 
     if result != AuthenticationResult.SUCCESS:
-      return await self.__RejectFreeing(message)
+      return await self._RejectFreeing(message)
 
     if not user.is_production_member:
-      return await self.__RejectFreeing(message)
+      return await self._RejectFreeing(message)
 
     release_time = self.datetimeNow.now()
 
@@ -714,11 +708,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
       message[WEBSOCKET_DATA_ID], message[WEBSOCKET_DATA], release_time, user
     )
 
-    updated_orders = await self.db.serialize_dict({
+    updated_orders = await self.db.async_serialize_dict({
       DATA_INJECTION_ORDER : orders
     })
 
-    return await self.__broadcastProduction({
+    return await self._broadcastProduction({
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -738,9 +732,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     orders = await self.db.moveOrders(message[DATA_ACTIVITY_ORDER], message[DATA_DELIVER_TIME])
     customerIDs = await self.db.getCustomerIDs(orders)
-    data = await self.db.serialize_dict({DATA_ACTIVITY_ORDER : orders,})
+    data = await self.db.async_serialize_dict({DATA_ACTIVITY_ORDER : orders,})
 
-    await self.__broadcastCustomer({
+    await self._broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : data,
@@ -760,11 +754,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     orders = await self.db.restoreDestinations(message[DATA_ACTIVITY_ORDER])
     customerIDs = await self.db.getCustomerIDs(orders)
-    data = await self.db.serialize_dict({
+    data = await self.db.async_serialize_dict({
       DATA_ACTIVITY_ORDER : orders,
     })
 
-    await self.__broadcastCustomer({
+    await self._broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : data,
@@ -782,7 +776,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     user = await get_user(self.scope)
     client_date = toDateTime(message[WEBSOCKET_DATE][:19])
-    data = await self.db.serialize_dict(
+    data = await self.db.async_serialize_dict(
       await self.db.getTimeSensitiveData(client_date, user)
     )
 
@@ -839,8 +833,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
     customerIDs = [customerID for customerID in customerIDset]
 
-    data =  await self.db.serialize_dict(orders)
-    await self.__broadcastCustomer({
+    data =  await self.db.async_serialize_dict(orders)
+    await self._broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : data,
@@ -886,11 +880,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
     newUser, newUserAssignment = await self.db.createExternalUser(message[WEBSOCKET_DATA])
 
     if newUserAssignment is not None:
-      data = await self.db.serialize_dict({DATA_USER : [newUser], DATA_USER_ASSIGNMENT : [newUserAssignment]})
+      data = await self.db.async_serialize_dict({DATA_USER : [newUser], DATA_USER_ASSIGNMENT : [newUserAssignment]})
     else:
-      data = await self.db.serialize_dict({DATA_USER : [newUser]})
+      data = await self.db.async_serialize_dict({DATA_USER : [newUser]})
 
-    await self.__broadcastProduction({
+    await self._broadcastProduction({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : data,
@@ -925,9 +919,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if new_user is not None:
       returnDict[DATA_USER] = [new_user]
 
-    serializedReturnDict = await self.db.serialize_dict(returnDict)
+    serializedReturnDict = await self.db.async_serialize_dict(returnDict)
 
-    return await self.__broadcastGlobal({
+    return await self._broadcastGlobal({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_STATUS : success.value,
@@ -978,7 +972,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
     await self.send_json({
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
       WEBSOCKET_DATA : bookings,
@@ -993,7 +987,20 @@ class Consumer(AsyncJsonWebsocketConsumer):
     vial = await self.db.get_model(Vial, message[WEBSOCKET_DATA_ID])
     document_path = await create_document(vial)
 
+  async def HandleGetTelemetry(self, message):
+    user: User = await get_user(self.scope)
 
+    if not user.is_server_admin:
+      raise IllegalActionAttempted()
+
+    serialized_data = await self.db.get_telemetry_data()
+
+    await self.send_json({
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : serialized_data,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_TELEMETRY
+    })
 
   Handlers: Dict[str, Callable[['Consumer', Dict], None]] = {
     WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : HandleCreateUserAssignment,
@@ -1017,5 +1024,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : HandleCreateExternalUser,
     WEBSOCKET_MESSAGE_LOG_ERROR : HandleLogFrontendError,
     WEBSOCKET_MESSAGE_TEST_PRINTER : HandleTestPrinter,
-    WEBSOCKET_MESSAGE_RELEASE_MULTI : HandleReleaseMultiInjection
+    WEBSOCKET_MESSAGE_RELEASE_MULTI : HandleReleaseMultiInjection,
+    WEBSOCKET_MESSAGE_GET_TELEMETRY : HandleGetTelemetry
   }

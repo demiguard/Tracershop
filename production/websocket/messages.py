@@ -4,6 +4,11 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
 from random import randint
+from typing import TypedDict
+
+class Message(TypedDict, total=False):
+  message_id : int
+  message_type : str
 
 
 def getNewMessageID() -> int:
