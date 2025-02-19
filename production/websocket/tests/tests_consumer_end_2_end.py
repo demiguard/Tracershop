@@ -52,7 +52,8 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   ERROR_TYPE, AUTH_USER, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_STATUS,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
-  SUCCESS_STATUS_CREATING_USER_ASSIGNMENT
+  SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_RELEASE_MULTI
+
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from database.database_interface import DatabaseInterface
 from database.models import ClosedDate, User, UserGroups, MODELS,\
@@ -297,7 +298,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     )
     self.vial.save(self.user)
 
-    self.injection_order = InjectionOrder(
+    self.injection_order = InjectionOrder.objects.create(
       id = 481,
       delivery_time="09:07:45",
       delivery_date="2020-06-11",
@@ -312,23 +313,18 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       freed_by=None,
     )
 
-    self.injection_order.save(self.user)
-
-    self.location = Location(
+    self.location = Location.objects.create(
       location_code="BLA30BLA",
       endpoint=self.endpoint,
       common_name="Bla bla",
     )
-    self.location.save()
 
-    self.procedure_identifier = ProcedureIdentifier(
+    self.procedure_identifier = ProcedureIdentifier.objects.create(
       code="asdfgkljqwer",
       description="test_procedure"
     )
 
-    self.procedure_identifier.save()
-
-    self.procedure = Procedure(
+    self.procedure = Procedure.objects.create(
       id=5687920,
       series_description = self.procedure_identifier,
       tracer=self.act_tracer,
@@ -336,8 +332,6 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       delay_minutes=30,
       owner=self.endpoint
     )
-    self.procedure.save()
-
 
     bookingDate = datetime.date(2020,6,11)
     Booking(
@@ -393,6 +387,36 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         start_time=datetime.time(13,15,0),
         start_date=datetime.date(2020,6,11),
       ).save()
+
+    self.injection_order_2_1 = InjectionOrder.objects.create(
+      id = 4811,
+      delivery_time="09:07:45",
+      delivery_date="2020-06-11",
+      injections=1,
+      status=OrderStatus.Accepted,
+      tracer_usage=1,
+      comment=None,
+      endpoint=self.endpoint,
+      tracer=self.inj_tracer,
+      lot_number=None,
+      freed_datetime=None,
+      freed_by=None,
+    )
+
+    self.injection_order_2_2 = InjectionOrder.objects.create(
+      id = 4812,
+      delivery_time="09:07:45",
+      delivery_date="2020-06-11",
+      injections=1,
+      status=OrderStatus.Accepted,
+      tracer_usage=1,
+      comment=None,
+      endpoint=self.endpoint,
+      tracer=self.inj_tracer,
+      lot_number=None,
+      freed_datetime=None,
+      freed_by=None,
+    )
 
   def tearDown(self):
     Booking.objects.all().delete()
@@ -693,10 +717,9 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     """Test of the model backend that allows other to update
     """
     keyword = DATA_ACTIVITY_ORDER
-    Model = MODELS[keyword]
 
     with self.assertLogs(DEBUG_LOGGER):
-      with self.assertNoLogs(ERROR_LOGGER):
+      with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
         comm = WebsocketCommunicator(app,"ws/")
         comm_other_user = WebsocketCommunicator(app, "ws/")
         await comm_other_user.connect()
@@ -731,9 +754,9 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         await comm.disconnect()
         await comm_other_user.disconnect()
 
-        old_activity = self.freed_order.ordered_activity
-        await database_sync_to_async(self.freed_order.refresh_from_db)()
-        self.assertEqual(old_activity, self.freed_order.ordered_activity)
+    old_activity = self.freed_order.ordered_activity
+    await database_sync_to_async(self.freed_order.refresh_from_db)()
+    self.assertEqual(old_activity, self.freed_order.ordered_activity)
 
 
   async def test_moveOrders(self):
@@ -1033,26 +1056,27 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       long_name = "teeest"
     )
 
-    with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
-      with self.assertNoLogs(AUDIT_LOGGER) as captured_audit_logs:
-        await database_sync_to_async(customer_2.save)()
-        comm_admin = WebsocketCommunicator(app,"ws/")
-        _conn, _subprotocal = await comm_admin.connect()
+    with self.assertLogs(DEBUG_LOGGER):
+      with self.assertLogs(ERROR_LOGGER) as captured_debug_logs:
+        with self.assertNoLogs(AUDIT_LOGGER) as captured_audit_logs:
+          await database_sync_to_async(customer_2.save)()
+          comm_admin = WebsocketCommunicator(app,"ws/")
+          _conn, _subprotocal = await comm_admin.connect()
 
-        await comm_admin.send_json_to(self.loginProdAdminMessage)
-        admin_login_message = await comm_admin.receive_json_from()
+          await comm_admin.send_json_to(self.loginProdAdminMessage)
+          admin_login_message = await comm_admin.receive_json_from()
 
-        await comm_admin.send_json_to({
-          WEBSOCKET_DATA_ID : [self.freed_order.id],
-          WEBSOCKET_DATATYPE : DATA_ACTIVITY_ORDER,
-          WEBSOCKET_MESSAGE_ID : 69230481,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
-          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        })
-        message = await comm_admin.receive_json_from()
-        self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                         SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value)
-        await comm_admin.disconnect()
+          await comm_admin.send_json_to({
+            WEBSOCKET_DATA_ID : [self.freed_order.id],
+            WEBSOCKET_DATATYPE : DATA_ACTIVITY_ORDER,
+            WEBSOCKET_MESSAGE_ID : 69230481,
+            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+            WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          })
+          message = await comm_admin.receive_json_from()
+          self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
+                           SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value)
+          await comm_admin.disconnect()
 
     self.assertRegexIn(f"admin_prod_username attempted to delete activity_orders", captured_debug_logs.output)
 
@@ -1393,3 +1417,84 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       self.assertNotEqual(tracer.id, None)
 
     await check_tracer()
+
+  async def test_release_multiple_injections(self):
+    with self.assertLogs(DEBUG_LOGGER):
+      with self.assertLogs(AUDIT_LOGGER) as captured_audit:
+        communicator = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await communicator.connect()
+
+        await communicator.send_json_to(self.loginAdminMessage)
+        admin_login_message = await communicator.receive_json_from()
+
+        await communicator.send_json_to({
+          DATA_AUTH : {
+            AUTH_USERNAME : TEST_ADMIN_USERNAME,
+            AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+          },
+          WEBSOCKET_DATA : "asdf-211122-1",
+          WEBSOCKET_DATA_ID : [4811, 4812],
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
+          WEBSOCKET_MESSAGE_ID : 657901284,
+        })
+
+        message = await communicator.receive_json_from()
+
+        self.assertEqual(message[WEBSOCKET_MESSAGE_SUCCESS],
+                         WEBSOCKET_MESSAGE_SUCCESS)
+        self.assertTrue(message[AUTH_IS_AUTHENTICATED])
+        await communicator.disconnect()
+
+  async def test_release_multiple_injections_missing_orders(self):
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      with self.assertLogs(DEBUG_LOGGER):
+        communicator = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await communicator.connect()
+
+        await communicator.send_json_to(self.loginAdminMessage)
+        admin_login_message = await communicator.receive_json_from()
+
+        await communicator.send_json_to({
+          DATA_AUTH : {
+            AUTH_USERNAME : TEST_ADMIN_USERNAME,
+            AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+          },
+          WEBSOCKET_DATA : "asdf-211122-1",
+          WEBSOCKET_DATA_ID : [14811, 14812],
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
+          WEBSOCKET_MESSAGE_ID : 657901284,
+        })
+
+        message = await communicator.receive_json_from()
+
+        await communicator.disconnect()
+    self.assertRegexIn("ValueError: There's a missmatch", captured_error_logs.output)
+
+  async def test_release_multiple_injections_shop_user(self):
+    with self.assertLogs(DEBUG_LOGGER):
+      communicator = WebsocketCommunicator(app,"ws/")
+      _conn, _subprotocal = await communicator.connect()
+
+      await communicator.send_json_to(self.loginShopAdminMessage)
+      admin_login_message = await communicator.receive_json_from()
+
+      await communicator.send_json_to({
+        DATA_AUTH : {
+          AUTH_USERNAME : TEST_SHOP_ADMIN_USERNAME,
+          AUTH_PASSWORD : TEST_SHOP_ADMIN_PASSWORD,
+        },
+        WEBSOCKET_DATA : "asdf-211122-1",
+        WEBSOCKET_DATA_ID : [4811, 4812],
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
+        WEBSOCKET_MESSAGE_ID : 657901284,
+      })
+
+      message = await communicator.receive_json_from()
+
+      self.assertEqual(message[WEBSOCKET_MESSAGE_SUCCESS],
+                        WEBSOCKET_MESSAGE_SUCCESS)
+      self.assertFalse(message[AUTH_IS_AUTHENTICATED])
+      await communicator.disconnect()

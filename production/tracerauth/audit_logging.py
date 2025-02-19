@@ -28,7 +28,7 @@ def _get_max_length(tuples: List[Tuple])-> Tuple:
   return tuple(max_len for max_len in max_lengths)
 
 
-class AuditLogModelEntry(ABC):
+class AuditLogModelEntry(ABC): # pragma: no cover
   @classmethod
   @abstractmethod
   def _get_accept_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
@@ -37,7 +37,7 @@ class AuditLogModelEntry(ABC):
   @classmethod
   @abstractmethod
   def _get_reject_message(cls, user: Optional['models.User'], model: 'models.TracershopModel') -> str:
-    raise NotImplementedError("Derived must overwrite") # pragma no cover
+    raise NotImplementedError("Derived must overwrite")
 
   @classmethod
   def log(cls, user: Optional['models.User'], model: 'models.TracershopModel', action : AuthActions):
@@ -65,7 +65,6 @@ class CreateModelAuditEntry(AuditLogModelEntry):
       max_field_name_length, _ = _get_max_length(log_fields)
     else:
       max_field_name_length = 0
-
 
     messages_lines = []
     if user is not None:

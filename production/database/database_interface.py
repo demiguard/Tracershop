@@ -25,7 +25,7 @@ from django.db.utils import IntegrityError
 
 
 # Tracershop Production Packages
-from constants import ERROR_LOGGER, DEBUG_LOGGER
+from constants import AUDIT_LOGGER, ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
@@ -46,6 +46,7 @@ from tracerauth.ldap import checkUserGroupMembership, LDAPSearchResult
 from tracerauth.audit_logging import logFreeInjectionOrder
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
+audit_logger = logging.getLogger(AUDIT_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
 
 class DatabaseInterface():
@@ -191,13 +192,6 @@ class DatabaseInterface():
     model.save(user)
 
   @database_sync_to_async
-  def saveModels(self,
-                 model: Type[TracershopModel],
-                 models: List[TracershopModel],
-                 tags: List[str]):
-    model.objects.bulk_update(models, fields=tags)
-
-  @database_sync_to_async
   def releaseOrders(self,
                     timeSlotID: int,
                     orderIDs: List[int],
@@ -218,6 +212,8 @@ class DatabaseInterface():
     """
     ##### User check, can free
     if user.user_group not in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
+      audit_logger.error(f"User: {user} attempted to release orders, "
+                         "but they have no rights!")
       raise IllegalActionAttempted()
 
     timeSlot = ActivityDeliveryTimeSlot.objects.get(pk=timeSlotID)
@@ -242,11 +238,8 @@ class DatabaseInterface():
       order.freed_datetime = now
 
     for vial in vials:
-      if vial.assigned_to is not None:
-        error_logger.error(f"Attempting to re-release vial {vial.id} to order {pivot_order.id}")
-        raise IllegalActionAttempted
-
       vial.assigned_to = pivot_order
+
     # Commit!
     Vial.objects.bulk_update(vials, ['assigned_to'])
     ActivityOrder.objects.bulk_update(orders, ['status', 'freed_by', 'freed_datetime'])
@@ -255,10 +248,14 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def release_many_injections_orders(self, order_ids, lot_number: str,release_time: datetime,user: User):
-    if not user.is_production_member:
+    if not user.is_production_member: #pragma: no cover
+      # This is covered by checks in higher up
       raise IllegalActionAttempted
 
     orders = InjectionOrder.objects.filter(id__in = order_ids, status=OrderStatus.Accepted)
+
+    if len(order_ids) != len(orders):
+      raise ValueError(f"There's a missmatch between desired released orders and the database")
 
     for order in orders:
       order.status = OrderStatus.Released

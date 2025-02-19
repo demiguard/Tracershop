@@ -14,6 +14,11 @@ class SQLInjectionException(SecurityException):
     super().__init__("SQL Injection Detected")
 
 
+class ContractBroken(Exception):
+  """This error indicates there have been a regression, which introduces a
+     contract violation!
+  """
+
 class DatabaseNotSetupException(Exception):
   pass
 

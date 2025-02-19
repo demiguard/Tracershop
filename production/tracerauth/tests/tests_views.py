@@ -4,10 +4,12 @@
 from django.test import RequestFactory, TransactionTestCase
 
 # Tracershop Production
+from testing import TransactionTracershopTestCase
+from constants import ERROR_LOGGER
 from database.models import User, UserGroups
 from tracerauth.views import ExternalLoginView
 
-class ExternalLoginTestCase(TransactionTestCase):
+class ExternalLoginTestCase(TransactionTracershopTestCase):
   def setUp(self) -> None:
     self.factory = RequestFactory()
     self.view = ExternalLoginView()
@@ -38,65 +40,68 @@ class ExternalLoginTestCase(TransactionTestCase):
     self.ProductionUser.save()
 
   def tearDown(self) -> None:
-    self.AdminUser.delete()
-    self.ShopExternalUser.delete()
-    self.ShopInternalUser.delete()
-    self.ShopAdminUser.delete()
-    self.ProductionAdmin.delete()
-    self.ProductionUser.delete()
+    User.objects.all().delete()
 
 
   def test_empty(self):
-    request = self.factory.get('/external')
+    with self.assertLogs(ERROR_LOGGER):
+      request = self.factory.get('/external')
 
-    response = self.view.get(request)
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)
 
   def test_shop_external_success(self):
-    request = self.factory.get('/external',
-                               {'username' : "ShopExternal",
-                                'password': "ShopExternal_password"})
-    response = self.view.get(request)
+    with self.assertNoLogs(ERROR_LOGGER):
+      request = self.factory.get('/external',
+                                 {'username' : "ShopExternal",
+                                  'password': "ShopExternal_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 200)
 
   def test_shop_external_failure(self):
-    request = self.factory.get('/external',
-                               {'username' : "ShopExternal",
-                                'password': "not_ShopExternal_password"})
-    response = self.view.get(request)
+    with self.assertLogs(ERROR_LOGGER):
+      request = self.factory.get('/external',
+                                 {'username' : "ShopExternal",
+                                  'password': "not_ShopExternal_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)
 
   def test_admin_rejected(self):
-    request = self.factory.get('/external',
-                               {'username' : "Admin",
-                                'password': "Admin_password"})
-    response = self.view.get(request)
+    with self.assertLogs(ERROR_LOGGER):
+      request = self.factory.get('/external',
+                                 {'username' : "Admin",
+                                  'password': "Admin_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)
 
   def test_shop_admin_rejected(self):
-    request = self.factory.get('/external',
-                               {'username' : "ShopAdmin",
-                                'password': "ShopAdmin_password"})
-    response = self.view.get(request)
+    with self.assertLogs(ERROR_LOGGER):
+      request = self.factory.get('/external',
+                                 {'username' : "ShopAdmin",
+                                  'password': "ShopAdmin_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)
 
   def test_production_admin_rejected(self):
-    request = self.factory.get('/external',
-                               {'username' : "ProductionAdmin",
-                                'password': "ProductionAdmin_password"})
-    response = self.view.get(request)
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      request = self.factory.get('/external',
+                                 {'username' : "ProductionAdmin",
+                                  'password': "ProductionAdmin_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)
 
   def test_production_user_rejected(self):
-    request = self.factory.get('/external',
-                               {'username' : "ProductionUser",
-                                'password': "ProductionUser_password"})
-    response = self.view.get(request)
+    with self.assertLogs(ERROR_LOGGER):
+      request = self.factory.get('/external',
+                                 {'username' : "ProductionUser",
+                                  'password': "ProductionUser_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)
 
   def test_shop_internal_rejected(self):
-    request = self.factory.get('/external',
-                               {'username' : "ShopInternal",
-                                'password': "ShopInternal_password"})
-    response = self.view.get(request)
+    with self.assertLogs(ERROR_LOGGER):
+      request = self.factory.get('/external',
+                                 {'username' : "ShopInternal",
+                                  'password': "ShopInternal_password"})
+      response = self.view.get(request)
     self.assertEqual(response.status_code, 403)

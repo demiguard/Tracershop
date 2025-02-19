@@ -17,7 +17,8 @@ class HandleGetBooking(HandlerBase):
   message_type = WEBSOCKET_MESSAGE_GET_BOOKINGS
 
   async def __call__(self, consumer, message):
-    """This is mostly here because Bookings ended up being 10 mb data
+    """This is mostly here because Bookings ended up being 10 mb data, so
+    there's a specific endpoint, there should also be a filter for
 
     Args:
         message (Dict[str, Any]): _description_

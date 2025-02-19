@@ -10,12 +10,12 @@ from django.core.handlers.wsgi import WSGIRequest
 from django.contrib.auth import authenticate
 
 # Tracershop Production packages
-from constants import DEBUG_LOGGER
+from constants import ERROR_LOGGER
 from database.models import User, UserGroups, SuccessfulLogin
 
 from tracerauth.backend import TracershopAuthenticationBackend
 
-logger = getLogger(DEBUG_LOGGER)
+logger = getLogger(ERROR_LOGGER)
 
 
 class ExternalLoginView(View):
@@ -36,7 +36,7 @@ class ExternalLoginView(View):
       logger.info("Authentication failed with requested user having incorrect user group")
       return HttpResponse(status=403)
     #login(request, user, TracershopAuthenticationBackend)
-    logger.info(f"Successful external authentication headers: {request.headers}")
+    #logger.info(f"Successful external authentication headers: {request.headers}")
 
 
     status_login = SuccessfulLogin(user=user)

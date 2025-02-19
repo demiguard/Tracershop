@@ -177,6 +177,7 @@ class Booking(TracershopModel):
 
   class Meta:
     indexes = [
+      Index(fields=['location', 'start_date']),
       Index(fields=['accession_number']),
       Index(fields=['start_date', 'start_time'])
     ]

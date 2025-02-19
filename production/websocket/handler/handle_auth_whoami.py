@@ -34,7 +34,7 @@ class HandleAuthWhoAmI(HandlerBase):
       if user.user_group == UserGroups.ShopExternal:
         logins = await database_sync_to_async(SuccessfulLogin.objects.filter)(user=user)
         await database_sync_to_async(logins.delete)()
-      return await consumer.respond_auth_message(message, True, user_serialized, self.scope["session"].session_key)
+      return await consumer.respond_auth_message(message, True, user_serialized, consumer.scope["session"].session_key)
     elif isinstance(user, AnonymousUser):
       user = await database_sync_to_async(auth.get_login)(now)
       logger.info(f"Found user:{user} from external users")

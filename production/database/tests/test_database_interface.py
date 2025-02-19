@@ -14,11 +14,11 @@ from tracerauth.tests.mocks import mocks_ldap
 # Third party package
 from django.core.serializers import serialize
 from django.test import TransactionTestCase
-from django.db.models import CharField
 from django.contrib.auth import authenticate
 
 # Tracershop Modules
-from constants import ERROR_LOGGER, DEBUG_LOGGER
+from testing import TransactionTracershopTestCase
+from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from core.exceptions import IllegalActionAttempted, UndefinedReference
 from shared_constants import SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
   DATA_ACTIVITY_ORDER, DATA_ISOTOPE
@@ -35,7 +35,7 @@ with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroup
 DEFAULT_TEST_ORDER_DATE = date(2020,4,15)
 
 # Create your tests here.
-class DatabaseInterFaceTestCases(TransactionTestCase):
+class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
 
   def setUp(self) -> None:
     self.db = DatabaseInterface()
@@ -477,7 +477,15 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
       ],
       self.test_admin
     )
-    x,y = await sync_to_async(list)(response_a)
+    x, y = await sync_to_async(list)(response_a)
+
+    # This say is just a fancy way, that the lsp understands that x and y are
+    # Isotopes
+    if not isinstance(x, Isotope):
+      raise AssertionError
+
+    if not isinstance(y, Isotope):
+      raise AssertionError
 
     self.assertEqual(x.atomic_number, 9)
     self.assertEqual(x.atomic_mass, 18)
@@ -490,50 +498,56 @@ class DatabaseInterFaceTestCases(TransactionTestCase):
     self.assertEqual(y.halflife_seconds, 125121.2)
 
   async def test_releaseOrders_no_rights(self):
-    with self.assertRaises(IllegalActionAttempted):
-      await self.db.releaseOrders(
-        self.timeslot.id,
-        [self.order.id],
-        [],
-        self.shop_admin,
-        datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
-      )
+    with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+      with self.assertRaises(IllegalActionAttempted):
+        await self.db.releaseOrders(
+          self.timeslot.id,
+          [self.order.id],
+          [],
+          self.shop_admin,
+          datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
+        )
+
+    self.assertRegexIn(self.shop_admin.username, captured_audit_logs.output)
 
   async def test_releaseOrders_missing_orders_vials(self):
     """This test is kinda just silly but I wanna make sure these things yell
     """
-    with self.assertRaises(UndefinedReference):
-      await self.db.releaseOrders(
-        self.timeslot.id,
-        [],
-        [],
-        self.test_admin,
-        datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
-      )
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      with self.assertRaises(UndefinedReference):
+        await self.db.releaseOrders(
+          self.timeslot.id,
+          [],
+          [],
+          self.test_admin,
+          datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
+        )
 
   async def test_releaseOrders_missing_vials(self):
     """This test is kinda just silly but I wanna make sure these things yell
     """
-    with self.assertRaises(UndefinedReference):
-      await self.db.releaseOrders(
-        self.timeslot.id,
-        [self.order.id],
-        [],
-        self.test_admin,
-        datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
-      )
+    with self.assertLogs(ERROR_LOGGER):
+      with self.assertRaises(UndefinedReference):
+        await self.db.releaseOrders(
+          self.timeslot.id,
+          [self.order.id],
+          [],
+          self.test_admin,
+          datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
+        )
 
   async def test_releaseOrders_missing_order(self):
     """This test is kinda just silly but I wanna make sure these things yell
     """
-    with self.assertRaises(UndefinedReference):
-      await self.db.releaseOrders(
-        self.timeslot.id,
-        [],
-        [self.vial.id],
-        self.test_admin,
-        datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
-      )
+    with self.assertLogs(ERROR_LOGGER):
+      with self.assertRaises(UndefinedReference):
+        await self.db.releaseOrders(
+          self.timeslot.id,
+          [],
+          [self.vial.id],
+          self.test_admin,
+          datetime(2020,5,11,13,53,12, tzinfo=timezone.utc)
+        )
 
   async def test_releaseOrders_release_released_order(self):
     with self.assertRaises(UndefinedReference):

@@ -1,4 +1,9 @@
-# Python Standard Librar
+"""Module for the message handler, which dynamically loads all handlers in the
+folder
+
+"""
+
+# Python Standard Library
 from logging import getLogger
 from importlib import import_module
 from inspect import getmembers, isclass
@@ -6,11 +11,12 @@ from pathlib import Path
 from typing import Dict
 
 # Tracershop Modules
+from core.exceptions import ContractBroken
 from constants import DEBUG_LOGGER
 from shared_constants import WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES
 
+from websocket import handler_base
 from websocket import consumer
-from websocket.handler_base import HandlerBase, BASE_MESSAGE_TYPE
 
 debug_logger = getLogger(DEBUG_LOGGER)
 
@@ -23,7 +29,7 @@ class MessageHandler():
   Dynamically loads all handler in the websocket.handler directory
   """
   def __init__(self):
-    self._handlers: Dict[str, HandlerBase] = {}
+    self._handlers: Dict[str, 'handler_base.HandlerBase'] = {}
     messageHandlerDir =  Path(__file__).parent
 
 
@@ -34,20 +40,20 @@ class MessageHandler():
       module = import_module(f"websocket.handler.{file_name.name[:-3]}", "")
 
       for class_name, obj in getmembers(module, isclass):
-        if obj is HandlerBase:
+        if obj is handler_base.HandlerBase:
           continue
 
-        if issubclass(obj, HandlerBase):
+        if issubclass(obj, handler_base.HandlerBase):
           try:
             instance = obj()
-          except TypeError:
-            raise ValueError(f"{class_name} has abstract method __call__ and can't be created!")
+          except TypeError: #pragma: no cover
+            raise ContractBroken(f"{class_name} has abstract method __call__ and can't be created!")
 
-          if instance.message_type == BASE_MESSAGE_TYPE:
-            raise ValueError(f"{class_name} has the default message type!")
+          if instance.message_type == handler_base.BASE_MESSAGE_TYPE: # pragma: no cover
+            raise ContractBroken(f"{class_name} has the default message type!")
 
-          if instance.message_type in self._handlers:
-            raise ValueError(f"Duplicate handler for {instance.message_type}!")
+          if instance.message_type in self._handlers: # pragma: no cover
+            raise ContractBroken(f"Duplicate handler for {instance.message_type}!")
 
           self._handlers[instance.message_type] = instance
     missing_message_types = [ mt for mt in WEBSOCKET_MESSAGE_TYPES if mt not in self._handlers]
@@ -55,16 +61,16 @@ class MessageHandler():
     if missing_message_types: # pragma: no cover
       raise ValueError(f"Message Handler is missing {missing_message_types}")
 
-  def __str__(self):
+  def __str__(self): #pragma: no cover
     return f"MessageHandler with keys {[k for k in self._handlers]} created"
 
   async def __call__(self, consumer: 'consumer.Consumer', message):
-    if WEBSOCKET_MESSAGE_TYPE not in message:
-      raise Exception
+    if WEBSOCKET_MESSAGE_TYPE not in message: # pragma: no cover
+      raise ContractBroken()
 
     message_type = message[WEBSOCKET_MESSAGE_TYPE]
-    if message_type not in self._handlers:
-      raise Exception
+    if message_type not in self._handlers: # pragma: no cover
+      raise ContractBroken()
 
     handler = self._handlers[message_type]
 
