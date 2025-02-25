@@ -52,15 +52,18 @@ class Tracer(TracershopModel):
 
   @property
   def is_static_instance(self):
-    if self.tracer_type == TracerTypes.ActivityBased:
-      return not ActivityProduction.objects.filter(tracer=self).exists()
-    elif self.tracer_type == TracerTypes.InjectionBased:
-      from database.TracerShopModels import customerModels
-      return not customerModels.InjectionOrder.objects.filter(tracer=self).exists()
-    return False
+    match self.tracer_type:
+      case TracerTypes.ActivityBased:
+        return ActivityProduction.objects.filter(tracer=self).exists()
+      case TracerTypes.InjectionBased:
+        from database.TracerShopModels import customerModels
+        return customerModels.InjectionOrder.objects.filter(tracer=self).exists()
+      case _ : # pragma: no cover
+        raise NotImplemented("There is only two Tracer types")
+
 
   def canDelete(self, user: Optional[User] = None) -> AuthActions:
-    if self.is_static_instance and user is not None:
+    if not self.is_static_instance and user is not None:
       return AuthActions.ACCEPT
     else:
       return AuthActions.REJECT_LOG
@@ -82,10 +85,10 @@ class ActivityProduction(TracershopModel):
   @property
   def is_static_instance(self):
     from database.TracerShopModels import customerModels # Gotta dodge circular imports
-    return not customerModels.ActivityDeliveryTimeSlot.objects.filter(production_run=self).exists()
+    return customerModels.ActivityDeliveryTimeSlot.objects.filter(production_run=self).exists()
 
   def canDelete(self, user: Optional[User] = None) -> AuthActions:
-    if self.is_static_instance and user is not None:
+    if not self.is_static_instance and user is not None:
       return AuthActions.ACCEPT
     else:
       return AuthActions.REJECT_LOG

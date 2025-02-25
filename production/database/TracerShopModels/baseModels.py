@@ -44,7 +44,10 @@ class TracershopModel(Model):
     return AuthActions.ACCEPT
 
   derived_properties = []
-  exclude = []
+
+  @classproperty
+  def exclude(cls):
+    return []
 
   class Meta:
     abstract = True
@@ -87,10 +90,8 @@ class TracershopModel(Model):
           value = bool(value)
         # End of assignment
         self.__setattr__(key, value)
-
     except Exception as e:
       error_logger.error(f"Caught an error in assigning {key} - {field} to {value}")
-
       raise e
 
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool:

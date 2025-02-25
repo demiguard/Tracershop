@@ -1,19 +1,6 @@
 from datetime import time
 from typing import Optional
 
-class SecurityException(Exception):
-  def __init__(self, SecurityType):
-
-    self.message = f"Security Issue encountered: {SecurityType}"
-
-    super().__init__(self.message)
-
-
-class SQLInjectionException(SecurityException):
-  def __init__(self):
-    super().__init__("SQL Injection Detected")
-
-
 class ContractBroken(Exception):
   """This error indicates there have been a regression, which introduces a
      contract violation!

@@ -64,7 +64,9 @@ class User(AbstractBaseUser, TracershopModel):
                                UserGroups.ShopUser,
                                UserGroups.ShopExternal]
 
-  exclude = ['password']
+  @classproperty
+  def exclude(cls):
+    return ['password']
 
   def __str__(self):
     return self.username

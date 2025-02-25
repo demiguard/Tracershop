@@ -2,18 +2,19 @@ import React, {useState} from "react"
 import { ControlPanel } from "../admin_pages/control_panel.js"
 import { TracershopNavbar } from "../injectable/navbar.js"
 import { DatabasePanel } from "~/components/admin_pages/database_panel.js"
-import { TestScrollableSite } from "~/components/admin_pages/test_scrollable_table.js"
+import { TelemetryVisualizer } from "~/components/admin_pages/telemetry_visualizer.js"
+
 
 const Pages = {
   controlPanel : ControlPanel, // Danish for key since keys are displayed.
   database : DatabasePanel,
-  scrolling : TestScrollableSite
+  telemetry : TelemetryVisualizer
 }
 
 const PageNames = {
   controlPanel : "Kontrol Panel",
   database : "Database",
-  scrolling : "Scrolling Test"
+  telemetry : "Telemetri"
 }
 
 export function ConfigSite (props) {

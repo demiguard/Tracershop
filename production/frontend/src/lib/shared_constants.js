@@ -124,12 +124,12 @@ export const WEBSOCKET_MESSAGE_AUTH_LOGIN = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT = "logout";
 export const WEBSOCKET_MESSAGE_AUTH_WHOAMI = "whoami";
 export const WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword";
-export const WEBSOCKET_MESSAGE_CREATE_BOOKING = "createBooking";
+export const WEBSOCKET_MESSAGE_CREATE_BOOKING = "delete_booking";
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser";
 export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createInjectionOrder";
 export const WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT = "createUserAssignment";
-export const WEBSOCKET_MESSAGE_DELETE_BOOKING = "deleteBooking";
+export const WEBSOCKET_MESSAGE_DELETE_BOOKING = "create_booking";
 export const WEBSOCKET_MESSAGE_DELETE_DATA_CLASS = "deleteDataClass";
 export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
@@ -139,7 +139,7 @@ export const WEBSOCKET_MESSAGE_GET_BOOKINGS = "getBookings";
 export const WEBSOCKET_MESSAGE_GET_HISTORY = "history";
 export const WEBSOCKET_MESSAGE_GET_ORDERS = "getOrders";
 export const WEBSOCKET_MESSAGE_GET_STATE = "getState";
-export const WEBSOCKET_MESSAGE_GREAT_STATE = "getGREATState";
+export const WEBSOCKET_MESSAGE_GET_TELEMETRY = "getTelemetry";
 export const WEBSOCKET_MESSAGE_ID = "messageID";
 export const WEBSOCKET_MESSAGE_LOG_ERROR = "logError";
 export const WEBSOCKET_MESSAGE_MASS_ORDER = "massOrder";
@@ -170,14 +170,13 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "editModel",
   "massOrder",
   "getBookings",
+  "getTelemetry",
   "moveOrder",
   "restoreOrders",
   "logError",
   "restartVialDog",
   "changeExternalPassword",
   "createExternalUser",
-  "createBooking",
-  "deleteBooking",
   "testPrinter",
   "releaseMulti",
 ]

@@ -115,7 +115,8 @@ WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER     = "createExternalUser"
 WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER   = "createInjectionOrder"
 WEBSOCKET_MESSAGE_DELETE_DATA_CLASS        = "deleteDataClass"
 WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT   = "createUserAssignment"
-
+WEBSOCKET_MESSAGE_DELETE_BOOKING           = "create_booking" # used by pingServiceHL7.py
+WEBSOCKET_MESSAGE_CREATE_BOOKING           = "delete_booking" # used by pingServiceHL7.py
 WEBSOCKET_MESSAGE_ECHO                     = "echo"
 WEBSOCKET_MESSAGE_ERROR                    = "error"
 WEBSOCKET_MESSAGE_FREE_ACTIVITY            = "freeActivity"

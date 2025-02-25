@@ -153,6 +153,7 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
 
 
 
+
 class TransactionalCustomerModels(TransactionTestCase):
   def setUp(self) -> None:
     self.shop_user = User.objects.create(username="TaylorTheSlow", user_group=UserGroups.ShopUser)
@@ -357,3 +358,79 @@ class TransactionalCustomerModels(TransactionTestCase):
     self.assertEqual(the_sauce_container.canEdit(self.site_admin), AuthActions.ACCEPT_LOG)
     self.assertEqual(the_sauce_container.canEdit(self.prod_admin), AuthActions.ACCEPT_LOG)
     self.assertEqual(the_sauce_container.canEdit(self.prod_user), AuthActions.ACCEPT_LOG)
+
+  def test_to_edit_injection_must_unrelease_it_first(self):
+    inj = InjectionOrder.objects.create(
+      id=690328,
+      delivery_time=time(10,3,44),
+      delivery_date=date(2011,7,11),
+      injections=2,
+      status=OrderStatus.Released,
+      tracer_usage=TracerUsage.animal,
+      comment="",
+      ordered_by=self.shop_user,
+      endpoint=self.franks_backyard,
+      tracer=self.the_secret_sauce,
+      lot_number="SECT-110711-1",
+      freed_datetime=datetime(2011,7,11,9,55,11, tzinfo=timezone.utc),
+      freed_by=self.prod_user,
+    )
+
+    inj.injections = 4
+    with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+      self.assertFalse(inj.save(self.site_admin))
+
+    inj.status = OrderStatus.Accepted
+
+    with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+      self.assertTrue(inj.save(self.site_admin))
+
+  def test_shop_users_cant_delete_injection_orders(self):
+    inj = InjectionOrder.objects.create(
+      id=690328,
+      delivery_time=time(10,3,44),
+      delivery_date=date(2011,7,11),
+      injections=2,
+      status=OrderStatus.Released,
+      tracer_usage=TracerUsage.animal,
+      comment="",
+      ordered_by=self.shop_user,
+      endpoint=self.franks_backyard,
+      tracer=self.the_secret_sauce,
+      lot_number="SECT-110711-1",
+      freed_datetime=datetime(2011,7,11,9,55,11, tzinfo=timezone.utc),
+      freed_by=self.prod_user,
+    )
+
+    with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+      self.assertFalse(inj.delete(self.shop_user))
+
+  def test_cant_delete_tracers_with_assigned_orders(self):
+    with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+      self.assertFalse(self.the_secret_sauce.delete(self.site_admin))
+
+    # But we can delete fresh ones
+
+    tracer = Tracer.objects.create(
+      shortname="I have so much to live for",
+      clinical_name="OOh noo, I just had my first kiss",
+      isotope=self.the_secret,
+      tracer_type=TracerTypes.InjectionBased,
+      vial_tag=""
+    )
+
+    with self.assertNoLogs(AUDIT_LOGGER):
+      self.assertTrue(tracer.delete(self.site_admin))
+
+  def test_deleting_activity_production(self):
+    with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+      self.assertFalse(self.the_sauce_production.delete(self.site_admin))
+
+    production = ActivityProduction.objects.create(
+      production_day=Days.Friday,
+      tracer=self.the_secret_sauce,
+      production_time=time(11,00,00),
+    )
+
+    with self.assertNoLogs(AUDIT_LOGGER):
+      self.assertTrue(production.delete(self.site_admin))

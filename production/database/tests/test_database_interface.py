@@ -12,14 +12,15 @@ from asgiref.sync import sync_to_async
 from tracerauth.tests.mocks import mocks_ldap
 
 # Third party package
-from django.core.serializers import serialize
+from django.core.serializers import serialize, deserialize, json
 from django.test import TransactionTestCase
 from django.contrib.auth import authenticate
 
 # Tracershop Modules
 from testing import TransactionTracershopTestCase
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
-from core.exceptions import IllegalActionAttempted, UndefinedReference
+from core.exceptions import IllegalActionAttempted, UndefinedReference,\
+  RequestingNonExistingEndpoint
 from shared_constants import SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
   DATA_ACTIVITY_ORDER, DATA_ISOTOPE
 from database.models import Booking, Procedure, User, Tracer, Isotope,\
@@ -27,6 +28,8 @@ from database.models import Booking, Procedure, User, Tracer, Isotope,\
   DeliveryEndpoint, TracerTypes, ActivityOrder, InjectionOrder,\
   ActivityDeliveryTimeSlot, ActivityProduction, Days, WeeklyRepeat,\
   UserAssignment, OrderStatus, Vial, TracerUsage
+
+from lib.ProductionJSON import decode
 
 with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroupMembership):
   from database.database_interface import DatabaseInterface
@@ -102,6 +105,12 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       common_name="Bla bla",
     )
 
+    self.location_unknown_endpoint = Location.objects.create(
+      location_code="missing_endpoint",
+      endpoint=None,
+      common_name="Missing endpoint",
+    )
+
     self.procedure_identifier = ProcedureIdentifier.objects.create(
       code="asdfgkljqwer",
       description="test_procedure"
@@ -121,6 +130,11 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       description="test_procedure_inj"
     )
 
+    self.procedure_identifier_missing = ProcedureIdentifier.objects.create(
+      code="Missing",
+      description="Missing",
+    )
+
     self.procedure_inj = Procedure.objects.create(
       id=56879125,
       series_description = self.procedure_identifier_inj,
@@ -129,6 +143,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       delay_minutes=0,
       owner=self.endpoint
     )
+
 
     # Extra data accessed by the function
     self.production = ActivityProduction.objects.create(
@@ -179,7 +194,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
 
 
     # 2018-03-12 is a monday
-    self.bookingDate = date(2018,3, 12)
+    self.booking_date = date(2018, 3, 12)
 
     Booking.objects.create(
       status=BookingStatus.Initial,
@@ -187,7 +202,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_1,
       start_time=time(9,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -196,7 +211,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_2,
       start_time=time(10,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -205,7 +220,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_3,
       start_time=time(11,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -214,7 +229,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_4,
       start_time=time(12,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -223,7 +238,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier,
       accession_number=self.accession_number_5,
       start_time=time(13,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -232,7 +247,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_1,
       start_time=time(9,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -241,7 +256,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_2,
       start_time=time(10,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -250,7 +265,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_3,
       start_time=time(11,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -259,7 +274,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_4,
       start_time=time(12,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
     )
 
     Booking.objects.create(
@@ -268,7 +283,34 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       procedure=self.procedure_identifier_inj,
       accession_number=self.inj_accession_number_5,
       start_time=time(13,15,0),
-      start_date=self.bookingDate,
+      start_date=self.booking_date,
+    )
+
+    self.booking_missing_procedure = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location=self.location,
+      procedure=self.procedure_identifier_missing,
+      accession_number="Missing",
+      start_time=time(13,15,00),
+      start_date=date(2011,12,11)
+    )
+
+    self.booking_missing_endpoint = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location=self.location_unknown_endpoint,
+      procedure=self.procedure_identifier,
+      accession_number="missing_location",
+      start_time=time(12,11,44),
+      start_date=date(2033,11,12)
+    )
+
+    self.booking_missing_time_slot = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location=self.location,
+      procedure=self.procedure_identifier,
+      accession_number="missing_time_slot",
+      start_time=time(0,0,0),
+      start_date=self.booking_date,
     )
 
     self.order = ActivityOrder.objects.create(
@@ -374,6 +416,26 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     for booking in bookings:
       self.assertEqual(booking.status, BookingStatus.Ordered)
 
+  def test_reject_all_of_the_orders(self):
+    with self.assertLogs(DEBUG_LOGGER, DEBUG) as recorded_logs:
+      asyncio.run(self.db.massOrder({
+        self.accession_number_1 : False,
+        self.accession_number_2 : False,
+        self.accession_number_3 : False,
+        self.accession_number_4 : False,
+        self.accession_number_5 : False,
+      }, self.test_admin))
+
+    bookings = Booking.objects.filter(accession_number__in=[
+      self.accession_number_1,
+      self.accession_number_2,
+      self.accession_number_3,
+      self.accession_number_4,
+      self.accession_number_5
+    ])
+
+    for booking in bookings:
+      self.assertEqual(booking.status, BookingStatus.Rejected)
 
   def test_database_interface_mass_order_injection(self):
     with self.assertLogs(DEBUG_LOGGER, DEBUG):
@@ -395,6 +457,43 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
 
     for booking in bookings:
       self.assertEqual(booking.status, BookingStatus.Ordered)
+
+  async def test_nonexistent_booking(self):
+    with self.assertLogs(DEBUG_LOGGER, DEBUG):
+      with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+        await self.db.massOrder({
+          "asdfqwer" : True,
+        }, self.shop_admin)
+
+      self.assertRegexIn("asdfqwer", captured_error_logs.output)
+
+  async def test_order_booking_with_missing_procedure(self):
+    with self.assertLogs(DEBUG_LOGGER, DEBUG):
+      with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+        await self.db.massOrder({
+          "Missing" : True,
+        }, self.shop_admin)
+
+    self.assertRegexIn("for Booking Missing", captured_error_logs.output)
+
+  async def test_order_booking_with_missing_endpoint(self):
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      with self.assertRaises(RequestingNonExistingEndpoint):
+        await self.db.massOrder({
+          "missing_location" : True,
+        }, self.shop_admin)
+
+    self.assertRegexIn("has no associated endpoint!", captured_error_logs.output)
+
+
+  async def test_order_missing_time_slot(self):
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      with self.assertRaises(RequestingNonExistingEndpoint):
+        await self.db.massOrder({
+          "missing_time_slot" : True,
+        }, self.shop_admin)
+
+    self.assertRegexIn("that endpoint doesn't have any ActivityDeliveryTimeSlots", captured_error_logs.output)
 
 
   async def test_createUserAssignment_existingUser(self):
@@ -596,6 +695,18 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       )
     )
 
+  def test_moving_orders_with_no_orders(self):
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      orders = asyncio.run(
+        self.db.moveOrders(
+          [],
+          self.timeslot.id
+        )
+      )
+    self.assertEqual(len(orders), 0)
+    self.assertRegexIn("Attempting to move 0 orders",captured_error_logs.output)
+
+
   def test_moving_orders_moving_released_order(self):
     with self.assertRaises(IllegalActionAttempted):
       with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
@@ -669,12 +780,16 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
       )
 
   async def test_get_bookings(self):
-    bookings = await self.db.get_bookings(
-      self.bookingDate,
+    booking_serialized = await self.db.get_bookings(
+      self.booking_date,
       self.endpoint.id
     )
 
-    self.assertEqual(len(bookings), 10)
+    data = decode(booking_serialized)
+    data = deserialize('python', data['booking'])
+
+    bookings = [ booking for booking in data]
+    self.assertEqual(len(bookings), 11)
 
   def test_get_csv_data(self):
     out_data = self.db.get_csv_data(DEFAULT_TEST_ORDER_DATE)

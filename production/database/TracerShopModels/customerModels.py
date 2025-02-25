@@ -297,7 +297,7 @@ class ActivityOrder(TracershopModel):
   def save(self, user: Optional['authModels.User'] = None, *args, **kwargs):
     if(self.id is not None and self.id < 1): #pragma no cover
       self.id = None
-    super().save(user, *args, **kwargs)
+    return super().save(user, *args, **kwargs)
 
   class Meta:
     indexes = [
@@ -349,7 +349,7 @@ class InjectionOrder(TracershopModel):
     database_self = self.__class__.objects.get(pk=self.pk)
 
     if database_self.status == OrderStatus.Released:
-      if self.status == OrderStatus.Accepted and user.is_production_member:
+      if self.status == OrderStatus.Accepted:
         return AuthActions.ACCEPT_LOG
       else:
         return AuthActions.REJECT_LOG
@@ -386,7 +386,7 @@ class InjectionOrder(TracershopModel):
     if(self.id is not None and self.id < 1): #pragma no cover
       self.id = None
 
-    super().save(user, *args, **kwargs)
+    return super().save(user, *args, **kwargs)
 
 class Vial(TracershopModel):
   id = BigAutoField(primary_key=True)

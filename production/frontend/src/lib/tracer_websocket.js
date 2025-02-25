@@ -12,7 +12,8 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_MESSAGE_STATUS,
   SUCCESS_STATUS_CRUD,
   WEBSOCKET_MESSAGE_SUCCESS,
-  WEBSOCKET_MESSAGE_ERROR} from "~/lib/shared_constants.js";
+  WEBSOCKET_MESSAGE_ERROR,
+  WEBSOCKET_MESSAGE_GET_TELEMETRY} from "~/lib/shared_constants.js";
 
 import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
@@ -289,6 +290,12 @@ export class TracerWebSocket {
       [WEBSOCKET_DATE] : date,
       [WEBSOCKET_DATA_ID] : activeEndpoint,
     })
+  }
+
+  sendGetTelemetry(){
+    return this.send({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_GET_TELEMETRY
+    });
   }
 
   /**

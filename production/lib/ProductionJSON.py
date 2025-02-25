@@ -13,7 +13,7 @@ from typing import Dict
 from django.core.serializers.json import DjangoJSONEncoder
 from django.http import JsonResponse
 from django.db.models import Model
-from django.core.serializers import serialize
+from django.core.serializers import serialize, deserialize as django_deserialize
 from django.core.exceptions import ValidationError
 
 # Tracershop Packages

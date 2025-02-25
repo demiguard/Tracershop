@@ -10,7 +10,6 @@ import datetime
 
 # Tracershop Modules
 
-
 class DateTimeNow():
-  def now(self) -> datetime.datetime:
+  def now(self) -> datetime.datetime: # pragma: no cover
     return datetime.datetime.now()

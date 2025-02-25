@@ -5,6 +5,7 @@ import { HoverBox } from "~/components/injectable/hover_box";
 import { cssError, cssHintColor, cssWarningColor } from "~/lib/constants";
 import { ERROR_LEVELS } from "~/components/injectable/alert_box";
 import { RecoverableError } from "~/lib/error_handling";
+import  propTypes  from "prop-types";
 
 /**
  *
@@ -14,6 +15,10 @@ import { RecoverableError } from "~/lib/error_handling";
  * @returns
  */
 export function TracershopInputGroup({children, label, error, tail}) {
+  const showLabel = !!label;
+  const showTail = !!tail;
+
+
   if(error === "" || error === undefined || error.level === ERROR_LEVELS.NO_ERROR){
     return (
       <InputGroup
@@ -22,9 +27,9 @@ export function TracershopInputGroup({children, label, error, tail}) {
         marginBottom : '5px',
       }}
       >
-        <Optional exists={label !== undefined}><InputGroup.Text>{label}</InputGroup.Text></Optional>
+        <Optional exists={showLabel}><InputGroup.Text>{label}</InputGroup.Text></Optional>
           {children}
-        <Optional exists={tail !== undefined}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
+        <Optional exists={showTail}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
       </InputGroup>
     );
   } else {
@@ -65,12 +70,16 @@ export function TracershopInputGroup({children, label, error, tail}) {
             marginBottom : '5px',
           }}
         >
-          <Optional exists={label !== undefined}><InputGroup.Text>{label}</InputGroup.Text></Optional>
+          <Optional exists={showLabel}><InputGroup.Text>{label}</InputGroup.Text></Optional>
             {newComps}
-          <Optional exists={tail !== undefined}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
+          <Optional exists={showTail}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
         </InputGroup>
         }
       Hover={<p>{error}</p>}
     />;
   }
+}
+
+TracershopInputGroup.propTypes = {
+
 }

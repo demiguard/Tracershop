@@ -10,8 +10,10 @@ from typing import Dict
 from django.db import models
 from django.http import HttpResponse, JsonResponse
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 
 # Tracershop Production Package
+from database.models import Days
 from lib import ProductionJSON as PJSON
 
 
@@ -60,3 +62,15 @@ class ProductionJSONResponseTestCase(TestCase):
 
     self.assertEqual(PJSON.encode(tm), '\"{\\\"model\\\": \\\"lib.testmodel\\\", \\\"pk\\\": 3, \\\"fields\\\": {}}\"')
 
+  def test_encoding_enums(self):
+    encoder = PJSON.ProductionJSONEncoder()
+
+    self.assertEqual(encoder.default(Days.Monday), 0)
+
+  def test_encoding_errors(self):
+    encoder = PJSON.ProductionJSONEncoder()
+
+    self.assertEqual("You fucked up",
+                     encoder.default(
+                       ValidationError("You fucked up", "big time",
+                                       params={'param_1' : "value_1"})))

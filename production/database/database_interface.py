@@ -6,6 +6,7 @@ complicated database setup of tracershop.
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
+from calendar import monthrange
 from datetime import datetime, date, timedelta, time
 from typing import Any, Callable, Dict, List, Iterable, Optional, Tuple, Type, Union, MutableSet, TypedDict
 import logging
@@ -19,6 +20,7 @@ from django.apps import apps
 from django.conf import settings
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
+from django.db import connection
 from django.db.models import Sum
 from django.db.models.query import QuerySet
 from django.db.utils import IntegrityError
@@ -27,18 +29,19 @@ from django.db.utils import IntegrityError
 # Tracershop Production Packages
 from constants import AUDIT_LOGGER, ERROR_LOGGER, DEBUG_LOGGER
 from core.side_effect_injection import DateTimeNow
-from core.exceptions import IllegalActionAttempted, RequestingNonExistingEndpoint, UndefinedReference
+from core.exceptions import IllegalActionAttempted,\
+  RequestingNonExistingEndpoint, UndefinedReference, ContractBroken
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
     SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, EXCLUDED_STATE_MODELS,\
-    DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST
+    DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST, DATA_BOOKING
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
     TracerUsage, ActivityProduction, Customer, Procedure, Days,\
-    Location, TelemetryRecord, TelemetryRequests
+    Location, TelemetryRecord, TelemetryRequest
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -313,7 +316,7 @@ class DatabaseInterface():
     """
     return self.serialize_dict(instances)
 
-  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> str:
+  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> Dict:
     serialized_dict = {}
 
     for key, models in instances.items():
@@ -332,7 +335,7 @@ class DatabaseInterface():
 
       serialized_dict[key] = serialized_models
 
-    return self.DATA_encoder.encode(serialized_dict)
+    return serialized_dict
 
   def getModels(self, user: User) -> List[Type[TracershopModel]]:
     return [model for model in apps.get_app_config('database').get_models()
@@ -361,7 +364,7 @@ class DatabaseInterface():
     destination = ActivityDeliveryTimeSlot.objects.get(pk=destinationID)
 
     if(len(orderIDs) == 0):
-      error_logger.error("Attempting to Move 0 orders, Frontend fucked up!")
+      error_logger.error("Attempting to move 0 orders. Frontend fucked up!")
 
     for order in orders:
       if OrderStatus(order.status) == OrderStatus.Released:
@@ -539,7 +542,10 @@ class DatabaseInterface():
       try:
         booking = Booking.objects.get(accession_number=accessionNumber)
       except ObjectDoesNotExist:
-        debug_logger.error(f"Booking for accession number: {accessionNumber} have no matching backend copy")
+        # This is a silent error!
+        #
+        # So how can this happen?
+        error_logger.error(f"Booking for accession number: {accessionNumber} have no matching backend copy")
         continue
 
       bookingDate = booking.start_date
@@ -548,23 +554,25 @@ class DatabaseInterface():
 
       if endpoint is None:
         error_logger.error(f"Booking {booking} is being ordered, but its location: {booking.location} has no associated endpoint!")
-        raise RequestingNonExistingEndpoint(booking_time.time, None)
+        raise RequestingNonExistingEndpoint(booking.start_time, None)
 
       try:
         procedure = Procedure.objects.get(series_description=procedureIdentifier,
                                           owner=endpoint)
       except ObjectDoesNotExist:
-        error_logger.error(f"Could not find a matching procedure for DeliveryEndpoint: {endpoint} and series description: {procedureIdentifier}")
-      except MultipleObjectsReturned:
-        # There's a unique_together that prevents this line from being relevant
-        error_logger.critical(f"Database corruption! Multiple Procedures are associated with DeliveryEndpoint: {endpoint} and series description: {procedureIdentifier}")
+        error_logger.error(f"for Booking {booking.accession_number} Could not "
+                           "find a matching procedure for DeliveryEndpoint: "
+                           f"{endpoint} and series description: {procedureIdentifier}")
         continue
+      except MultipleObjectsReturned: # pragma: no cover
+        # There's a unique_together that prevents this line from being relevant
+        error_message = "Database corruption! Multiple Procedures are "\
+                       f"associated with DeliveryEndpoint: {endpoint} "\
+                       f"and series description: {procedureIdentifier}"
+        error_logger.critical(error_message)
+        raise ContractBroken(error_message)
 
       tracer = procedure.tracer
-
-      if tracer is None:
-        error_logger.error(f"Booking for Accession number {accessionNumber} is missing either tracer: {tracer}")
-        continue
 
       if not ordering:
         booking.status = BookingStatus.Rejected
@@ -651,11 +659,21 @@ class DatabaseInterface():
       DATA_INJECTION_ORDER : injectionsOrders
     }
 
-  @staticmethod
+
   @database_sync_to_async
   def get_bookings(
+    self,
     date_: date, delivery_endpoint_id: int
-  ):
+  ) -> str:
+    """_summary_
+
+    Args:
+        date_ (date): _description_
+        delivery_endpoint_id (int): _description_
+
+    Returns:
+        str: A serialized_string
+    """
     locations = Location.objects.filter(
       endpoint__id=delivery_endpoint_id,
     )
@@ -664,13 +682,9 @@ class DatabaseInterface():
       start_date=date_
     )
 
-    bookings_models = serialize('python', bookings)
-    for serialized_model in bookings_models:
-      fields = serialized_model['fields']
-      for keyword in Booking.exclude: #type: ignore
-        del fields[keyword]
-
-    return bookings_models
+    return self.serialize_dict({
+      DATA_BOOKING : bookings
+    })
 
   @database_sync_to_async
   def createExternalUser(self, userSkeleton: Dict[str, Any]):
@@ -717,11 +731,10 @@ class DatabaseInterface():
     externalUser.save()
 
   def get_csv_data(self, csv_date: date):
+    _, end_date_num = monthrange(csv_date.year, csv_date.month)
+
     start_date = date(csv_date.year, csv_date.month, 1)
-    try:
-      end_date = date(csv_date.year, csv_date.month + 1, 1) - timedelta(days=1)
-    except ValueError:
-      end_date = date(csv_date.year + 1, 1, 1)
+    end_date = date(csv_date.year, csv_date.month, end_date_num)
 
     activity_orders = ActivityOrder.objects.filter(
       delivery_date__gte=start_date,
@@ -854,10 +867,23 @@ class DatabaseInterface():
     Returns:
         str: JSON string of all the telemetry data
     """
-    records = TelemetryRecord.objects.all()
-    requests = TelemetryRequests.objects.all()
 
-    return self.serialize_dict({
-      DATA_TELEMETRY_RECORD : records,
+    with connection.cursor() as cursor:
+      cursor.execute("""
+        SELECT
+          request_type_id,COUNT(latency_ms), AVG(latency_ms), STD(latency_ms)
+        FROM
+          database_telemetryrecord
+        GROUP BY request_type_id
+      """)
+      records = cursor.fetchall()
+
+    requests = TelemetryRequest.objects.all()
+
+    return_dict = self.serialize_dict({
       DATA_TELEMETRY_REQUEST : requests
     })
+
+    return_dict[DATA_TELEMETRY_RECORD] = records
+
+    return return_dict

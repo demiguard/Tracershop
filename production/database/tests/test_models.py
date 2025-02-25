@@ -1,13 +1,16 @@
 """Test cases for models"""
 
 # Python Standard Library
+from datetime import time
 
 # Third Party Packages
 from django.test import TransactionTestCase, TestCase
 
 # Tracershop Packages
+from constants import ERROR_LOGGER
+
 from database.models import User, UserGroups, Vial, TracerTypes, Tracer,\
-  Isotope, InjectionOrder, Days
+  Isotope, InjectionOrder, Days, Booking
 
 class AuthModelTestCase(TransactionTestCase):
   def test_user_groups(self):
@@ -58,7 +61,7 @@ class CustomerModels(TransactionTestCase):
   def test_model_strings(self):
     vial = Vial()
 
-class TracershopModels(TestCase):
+class TracershopModelsTests(TestCase):
   def setUp(self) -> None:
     self.isotope = Isotope.objects.create(
       id=1,
@@ -111,3 +114,21 @@ class TracershopModels(TestCase):
 
     with self.assertRaises(KeyError):
       tracer['is_static_instance'] = False
+
+  def test_assigning_time_to_booking(self):
+    booking = Booking()
+
+    booking.assignDict({
+      "start_time" : "11:00:00"
+    })
+
+    self.assertEqual(booking.start_time, time(11,00,00))
+
+  def test_exception_gets_logged(self):
+    booking = Booking()
+
+    with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
+      with self.assertRaises(Exception):
+        booking.assignDict({
+          "start_time" : "99:00:00"
+        })

@@ -14,7 +14,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python standard library
 from asyncio.exceptions import TimeoutError
 import datetime
-from json import loads
+
 from logging import ERROR, CRITICAL, DEBUG
 from pprint import pprint
 import time
@@ -657,8 +657,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         self.assertIn(WEBSOCKET_DATA, response)
         data = response[WEBSOCKET_DATA]
         self.assertIn(keyword, data)
-        jsonParsed = loads(data)
-        modelFrontend = await database_sync_to_async(Model.objects.get)(pk=jsonParsed[keyword][0]['pk'])
+
+        modelFrontend = await database_sync_to_async(Model.objects.get)(pk=data[keyword][0]['pk'])
         self.assertEqual(modelFrontend, modelBackend)
 
         await comm.disconnect()
@@ -708,8 +708,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         self.assertIn(WEBSOCKET_DATA, response)
         data = response[WEBSOCKET_DATA]
         self.assertIn(keyword, data)
-        jsonParsed = loads(data)
-        modelFrontend = await database_sync_to_async(Model.objects.get)(pk=jsonParsed[keyword][0]['pk'])
+
+        modelFrontend = await database_sync_to_async(Model.objects.get)(pk=data[keyword][0]['pk'])
         self.assertEqual(modelFrontend, self.customer)
     self.assertRegexIn(f'{self.message_id} - {WEBSOCKET_MESSAGE_MODEL_EDIT}', captured_debug_logs.output)
 
@@ -1107,7 +1107,6 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       })
 
       message = await comm_admin.receive_json_from()
-      data = loads(message[WEBSOCKET_DATA])
       await comm_admin.disconnect()
 
     self.assertRegexIn(self.accession_number_1, captured_debug_logs.output)
@@ -1118,8 +1117,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
     self.assertEqual(message[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_UPDATE_STATE)
     self.assertEqual(message[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
-    self.assertIn(DATA_ACTIVITY_ORDER, data)
-    self.assertEqual(len(data[DATA_ACTIVITY_ORDER]), 1)
+    self.assertIn(DATA_ACTIVITY_ORDER, message[WEBSOCKET_DATA])
+    self.assertEqual(len(message[WEBSOCKET_DATA][DATA_ACTIVITY_ORDER]), 1)
 
 
   async def test_mass_orders_missing_setup(self):
@@ -1190,7 +1189,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       message = await comm_admin.receive_json_from()
       self.assertIn(WEBSOCKET_DATA, message)
 
-      response_data = loads(message[WEBSOCKET_DATA])
+      response_data = message[WEBSOCKET_DATA]
 
       self.assertIn(DATA_USER, response_data)
       self.assertIn(DATA_USER_ASSIGNMENT, response_data)
@@ -1238,7 +1237,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       message = await comm_admin.receive_json_from()
       self.assertIn(WEBSOCKET_DATA, message)
 
-      response_data = loads(message[WEBSOCKET_DATA])
+      response_data = message[WEBSOCKET_DATA]
 
       self.assertIn(DATA_USER, response_data)
       self.assertNotIn(DATA_USER_ASSIGNMENT, response_data)
@@ -1444,6 +1443,34 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         self.assertEqual(message[WEBSOCKET_MESSAGE_SUCCESS],
                          WEBSOCKET_MESSAGE_SUCCESS)
         self.assertTrue(message[AUTH_IS_AUTHENTICATED])
+        await communicator.disconnect()
+
+  async def test_release_multiple_injections_wrong_password(self):
+    with self.assertLogs(DEBUG_LOGGER):
+      with self.assertNoLogs(AUDIT_LOGGER):
+        communicator = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await communicator.connect()
+
+        await communicator.send_json_to(self.loginAdminMessage)
+        admin_login_message = await communicator.receive_json_from()
+
+        await communicator.send_json_to({
+          DATA_AUTH : {
+            AUTH_USERNAME : TEST_ADMIN_USERNAME,
+            AUTH_PASSWORD : "NOT ADMIN PASSWORD!",
+          },
+          WEBSOCKET_DATA : "asdf-211122-1",
+          WEBSOCKET_DATA_ID : [4811, 4812],
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
+          WEBSOCKET_MESSAGE_ID : 657901284,
+        })
+
+        message = await communicator.receive_json_from()
+
+        self.assertEqual(message[WEBSOCKET_MESSAGE_SUCCESS],
+                         WEBSOCKET_MESSAGE_SUCCESS)
+        self.assertFalse(message[AUTH_IS_AUTHENTICATED])
         await communicator.disconnect()
 
   async def test_release_multiple_injections_missing_orders(self):

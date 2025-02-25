@@ -57,7 +57,7 @@ class Printer(TracershopModel):
       )
 
   @property
-  def installed(self):
+  def installed(self): #pragma: no cover
     from lib.printing import is_printer_installed
     return is_printer_installed(self)
 
@@ -100,7 +100,7 @@ class ServerConfiguration(TracershopModel):
                                                 related_name="global_injection_deadline")
   ping_service_ae_tile = models.CharField(max_length=16, default="RHKFATBUK561")
   ris_dicom_endpoint = models.ForeignKey(DicomEndpoint, on_delete=SET_NULL, default=None, null=True)
-
+  record_telemetry = models.BooleanField(default=False)
   active_label_printer = models.ForeignKey(Printer, on_delete=models.RESTRICT, default=None, null=True, related_name="active_label_printer")
   active_printer = models.ForeignKey(Printer, on_delete=models.RESTRICT, default=None, null=True, related_name="active_printer")
 

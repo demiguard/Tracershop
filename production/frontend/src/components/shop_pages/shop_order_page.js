@@ -5,14 +5,12 @@ import { FutureBooking } from "./future_bookings.js";
 import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
 import { DATABASE_ACTIVE_TRACER, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
-  DATABASE_SHOP_ORDER_PAGE, DATABASE_TODAY,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE,
+  DATABASE_SHOP_ORDER_PAGE,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
+  PROP_ACTIVE_ENDPOINT,
   PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
   USER_GROUPS,
 } from "../../lib/constants.js";
-import { ActivityOrder, ActivityDeliveryTimeSlot, DeliveryEndpoint,
-  ServerConfiguration, Deadline, InjectionOrder,
-  Booking} from "../../dataclasses/dataclasses.js";
+import { ServerConfiguration, Deadline, Booking} from "../../dataclasses/dataclasses.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
 import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
 import { getId } from "../../lib/utils.js";
@@ -22,7 +20,7 @@ import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { Optional } from "~/components/injectable/optional.js";
-import { DATA_BOOKING, DATA_TRACER, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
+import { DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
 import { ParseDjangoModelJson } from "~/lib/formatting.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
 import { TracerCatalog } from '~/contexts/tracerCatalog.js';
@@ -201,8 +199,7 @@ export function ShopOrderPage ({relatedCustomer}){
       ).then((data) => {
         if(data[WEBSOCKET_DATA]){
           const newBookings = new Map();
-
-          for(const serialized_booking of data[WEBSOCKET_DATA]){
+          for(const serialized_booking of data[WEBSOCKET_DATA][DATA_BOOKING]){
             const booking = new Booking();
             Object.assign(booking, serialized_booking.fields);
             booking.id = serialized_booking.pk;

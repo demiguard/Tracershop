@@ -540,12 +540,13 @@ export class MessageAssignment {
 }
 
 export class TelemetryRecord {
-  constructor(id, request_type, expire_datetime, latency_ms, status, ) {
+  constructor(id, request_type, created, latency_ms, status, expire_datetime, ) {
     this.id=id
     this.request_type=request_type
-    this.expire_datetime=expire_datetime
+    this.created=created
     this.latency_ms=latency_ms
     this.status=status
+    this.expire_datetime=expire_datetime
   }
 
   /**Copies the telemetryrecord
@@ -555,31 +556,32 @@ export class TelemetryRecord {
     return new this.constructor(
       this.id,
       this.request_type,
-      this.expire_datetime,
+      this.created,
       this.latency_ms,
-      this.status
+      this.status,
+      this.expire_datetime
     )
   }
   fields(){
     return [
       new IntField("id"),
       new ForeignField("request_type","telemetry_request"),
-      new DateTimeField("expire_datetime"),
+      new DateTimeField("created"),
       new FloatField("latency_ms"),
       new IntField("status"),
     ];
   }
 }
 
-export class TelemetryRequests {
+export class TelemetryRequest {
   constructor(id, message_key, display_name, ) {
     this.id=id
     this.message_key=message_key
     this.display_name=display_name
   }
 
-  /**Copies the telemetryrequests
-  * @returns { TelemetryRequests }
+  /**Copies the telemetryrequest
+  * @returns { TelemetryRequest }
    */
   copy(){
     return new this.constructor(
@@ -826,7 +828,7 @@ export class SecondaryEmail {
 }
 
 export class ServerConfiguration {
-  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, active_label_printer, active_printer, ) {
+  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, record_telemetry, active_label_printer, active_printer, ) {
     this.id=id
     this.SMTPServer=SMTPServer
     this.DateRange=DateRange
@@ -836,6 +838,7 @@ export class ServerConfiguration {
     this.global_injection_deadline=global_injection_deadline
     this.ping_service_ae_tile=ping_service_ae_tile
     this.ris_dicom_endpoint=ris_dicom_endpoint
+    this.record_telemetry=record_telemetry
     this.active_label_printer=active_label_printer
     this.active_printer=active_printer
   }
@@ -854,6 +857,7 @@ export class ServerConfiguration {
       this.global_injection_deadline,
       this.ping_service_ae_tile,
       this.ris_dicom_endpoint,
+      this.record_telemetry,
       this.active_label_printer,
       this.active_printer
     )
@@ -869,6 +873,7 @@ export class ServerConfiguration {
       new ForeignField("global_injection_deadline","deadline"),
       new CharField("ping_service_ae_tile"),
       new ForeignField("ris_dicom_endpoint","dicom_endpoint"),
+      new BooleanField("record_telemetry"),
       new ForeignField("active_label_printer","printer"),
       new ForeignField("active_printer","printer"),
     ];
@@ -1024,7 +1029,7 @@ export const MODELS = {
   message : Message,
   message_assignment : MessageAssignment,
   telemetry_record : TelemetryRecord,
-  telemetry_request : TelemetryRequests,
+  telemetry_request : TelemetryRequest,
   tracer : Tracer,
   tracer_mapping : TracerCatalogPage,
   printer : Printer,
