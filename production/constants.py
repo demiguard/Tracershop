@@ -10,7 +10,7 @@ TIME_FORMAT = "%H:%M:%S"
 DATETIME_FORMAT = f"{DATE_FORMAT} {TIME_FORMAT}"
 DATA_DATETIME_FORMAT =f"{DATE_FORMAT}T{TIME_FORMAT}Z"
 
-TIME_PATTERN = r"(2[0-3]|[01]?[0-9])[^\d]?([0-5][0-9])[^\d]?([0-5][0-9])"
+TIME_PATTERN = r"(2[0-3]|[01][0-9]).?([0-5][0-9]).?([0-5][0-9])"
 DATE_PATTERN = r"(\d{4})[^\d]?(1[0-2]|0[1-9])[^\d]?(0[1-9]|[12][0-9]|3[01])"
 
 DATETIME_REGULAR_EXPRESSION = re.compile(f"{DATE_PATTERN}[^\d]?{TIME_PATTERN}.*")

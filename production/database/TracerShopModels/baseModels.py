@@ -79,13 +79,11 @@ class TracershopModel(Model):
         elif isinstance(field, IntegerField):
           value = int(value)
         elif isinstance(field, TimeField):
-          dt = datetime.strptime(f"1970-01-01 {value}", "%Y-%m-%d %H:%M:%S")
-          value = dt.time()
+          value = formatting.toTime(value)
         elif isinstance(field, DateTimeField):
           value = formatting.toDateTime(value)
         elif isinstance(field, DateField):
-          value = value[:10]
-          value = datetime.strptime(value, "%Y-%m-%d").date()
+          value = formatting.toDate(value)
         elif isinstance(field, BooleanField):
           value = bool(value)
         # End of assignment

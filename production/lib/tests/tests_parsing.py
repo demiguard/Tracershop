@@ -11,9 +11,12 @@ from django.test import TestCase, TransactionTestCase
 import hl7
 
 # Tracershop packages
-from database.models import Customer, Isotope, Tracer, TracerTypes, Vial
+from constants import DEBUG_LOGGER
+from database.models import Customer, Isotope, Tracer, TracerTypes, Vial,\
+  UserGroups
 from lib.parsing import update_customer_mapping, update_tracer_mapping,\
-  parse_val_file, _parse_customer, extract_deleted_accessionNumber
+  parse_val_file, _parse_customer, extract_deleted_accessionNumber,\
+  parse_index_header
 
 class ParsingTestCase(TestCase):
   def setUp(self) -> None:
@@ -299,3 +302,79 @@ class ParsingTestCase(TestCase):
     self.assertEqual(extract_deleted_accessionNumber(message_1['OBR'][0]),"DKREGH0023459112")
     self.assertEqual(extract_deleted_accessionNumber(message_2['OBR'][0]),"DKREGH0023637963")
     self.assertEqual(extract_deleted_accessionNumber(message_3['OBR'][0]),"DKREGH0023322206")
+
+  def test_cannot_parse_nonsense(self):
+    not_a_val_file = [
+      "today is a good day to die"
+    ]
+
+    logger = getLogger(DEBUG_LOGGER)
+
+    with self.assertLogs(DEBUG_LOGGER):
+      vial = parse_val_file(not_a_val_file, logger)
+
+  def test_empty_file(self):
+    not_a_val_file = [
+      "customer:   ",
+      "part:       ",
+      "charge:     ",
+      "depotpos:   ",
+      "filldate:   ",
+      "filltime:   ",
+      "activity:   ",
+      "volume:     ",
+      "gros:       ",
+      "tare:       ",
+      "net:        ",
+      "product:    ",
+      "use_before: ",
+      "dispenser:  ",
+    ]
+
+    logger = getLogger(DEBUG_LOGGER)
+
+    with self.assertLogs(DEBUG_LOGGER):
+      vial = parse_val_file(not_a_val_file, logger)
+
+
+  def test_not_a_lot_number_file(self):
+    not_a_val_file = [
+      "customer:   ",
+      "part:       ",
+      "charge:     test",
+      "depotpos:   ",
+      "filldate:   ",
+      "filltime:   ",
+      "activity:   ",
+      "volume:     ",
+      "gros:       ",
+      "tare:       ",
+      "net:        ",
+      "product:    ",
+      "use_before: ",
+      "dispenser:  ",
+    ]
+
+    logger = getLogger(DEBUG_LOGGER)
+
+    with self.assertLogs(DEBUG_LOGGER):
+      vial = parse_val_file(not_a_val_file, logger)
+
+
+  def test_header_defaults_on_empty_values(self):
+    bogus_header = { }
+
+    user_group, username = parse_index_header(bogus_header)
+
+    self.assertEqual(user_group, UserGroups.Anon)
+    self.assertEqual(username, "")
+
+  def test_header_defaults_on_empty_header(self):
+    bogus_header = {
+      'X-Tracer-Role' : ""
+    }
+
+    user_group, username = parse_index_header(bogus_header)
+
+    self.assertEqual(user_group, UserGroups.ShopExternal)
+    self.assertEqual(username, "")

@@ -580,10 +580,10 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
 
     # This say is just a fancy way, that the lsp understands that x and y are
     # Isotopes
-    if not isinstance(x, Isotope):
+    if not isinstance(x, Isotope): # pragma: no cover
       raise AssertionError
 
-    if not isinstance(y, Isotope):
+    if not isinstance(y, Isotope): # pragma: no cover
       raise AssertionError
 
     self.assertEqual(x.atomic_number, 9)

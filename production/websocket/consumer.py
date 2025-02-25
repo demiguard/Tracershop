@@ -20,11 +20,11 @@ import logging
 from pprint import pformat
 import traceback
 import time
-from typing import Any, Dict, List, Callable, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 # Django packages
 from channels.db import database_sync_to_async
-from channels.auth import login, get_user, logout
+from channels.auth import get_user
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
 from django.contrib.auth.models import AnonymousUser
@@ -44,15 +44,9 @@ from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AU
 from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
 from database.telemetry import create_telemetry_record
-from database.models import OrderStatus, Vial, InjectionOrder,\
-      User, UserGroups, UserAssignment, SuccessfulLogin
-from lib.formatting import toDateTime, formatFrontendErrorMessage, toDate, timeConverter
+from database.models import User, UserGroups
 from lib.ProductionJSON import encode, decode
-from lib.printing import create_document
-
-from tracerauth.audit_logging import logFreeActivityOrders, logFreeInjectionOrder
 from tracerauth import auth
-from tracerauth.ldap import checkUserGroupMembership
 from tracerauth.types import AuthenticationResult
 
 from websocket import handler

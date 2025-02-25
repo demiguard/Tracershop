@@ -33,9 +33,6 @@ def dateConverter(date_: date, format_: str=DATE_FORMAT) -> str:
 def timeConverter(time_ : time, format_: str=TIME_FORMAT) -> str:
   return time_.strftime(format_)
 
-def datetimeConverter(date_time : datetime, format_: str=DATETIME_FORMAT) -> str:
-  return date_time.strftime(format_)
-
 def toTime(time_str : str) -> time:
   m = TIME_REGULAR_EXPRESSION.search(time_str)
   if m is None:
@@ -77,28 +74,6 @@ def mergeDateAndTime(Date : date, Time: time) -> datetime:
                   Time.hour,
                   Time.minute,
                   Time.second)
-
-def ParseSQLField(SQL_Field : str) -> str:
-  """Extracts the Field name from a composite field
-
-  Args:
-      SQL_Field (str): The string on the format <table>.<name>
-
-  Returns:
-      str: <name>
-  """
-  # Some dataclasses are compositions of multiple tables.
-  # So their field name is <table>.<name>, which is not a valid python attribute value
-  # This Functions extract the correct name
-
-  if not re.match(SQL_TABLE_REGULAR_EXPRESSION, SQL_Field):
-    raise ValueError("Input is not on correct format")
-
-  if '.' in SQL_Field:
-    _ , ID = SQL_Field.split(".")
-  else:
-    ID = SQL_Field
-  return ID
 
 def formatFrontendErrorMessage(message: Dict) -> str:
   raw_error_message = message.get("message", "Unknown error")

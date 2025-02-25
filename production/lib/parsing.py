@@ -46,12 +46,14 @@ def _parse_charge(string: str, vial: Vial, logger: Logger):
   regex = re.compile(r"charge:\s*([\w\-]+)\s*")
   regex_match = regex.match(string)
   if regex_match is None:
+    logger.error("Charge is empty! invalid file!")
     return
   lot_number, = regex_match.groups()
   vial.lot_number = lot_number
   vial_tag_regex = re.compile(r"(\w+)\-\d{6}\-\d+")
   vial_tag_match = vial_tag_regex.match(lot_number)
   if vial_tag_match is None:
+    logger.error("Lot number is not on lot number format!")
     return
 
   tracer_mapping = update_tracer_mapping()
@@ -100,7 +102,7 @@ parserFunctions = {
   'volume': _parse_volume,
 }
 
-def parse_val_file(file_content: List[str], logger : Logger) -> Vial:
+def parse_val_file(file_content: List[str], logger: Logger) -> Vial:
   vial = Vial()
   keyword_regex = re.compile(r"(\w+):")
   for val_string in file_content:
