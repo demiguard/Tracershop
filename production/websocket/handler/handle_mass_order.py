@@ -65,11 +65,10 @@ class HandleMassOrders(HandlerBase):
     customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
     customerIDs = [customerID for customerID in customerIDset]
 
-    data =  await consumer.db.async_serialize_dict(orders)
     await consumer._broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_DATA : data,
+      WEBSOCKET_DATA : orders,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,

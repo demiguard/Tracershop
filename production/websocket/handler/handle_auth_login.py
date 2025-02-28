@@ -33,9 +33,8 @@ class HandleAuthLogin(HandlerBase):
       await login(consumer.scope, user)
       await sync_to_async(consumer.scope["session"].save)()
       await consumer.enterUserGroups(user)
-      serialized_user = await consumer.db.async_serialize_dict({DATA_USER : [user]})
       return await consumer.respond_auth_message(message,
                                              True,
-                                             serialized_user,
+                                             {DATA_USER : [user]},
                                              consumer.scope["session"].session_key)
     return await consumer.respond_reject_auth_message(message)

@@ -77,7 +77,7 @@ export const EXCLUDED_STATE_MODELS = [
   "telemetry_request",
 ]
 
-export const JAVASCRIPT_VERSION = "1.5.5";
+export const JAVASCRIPT_VERSION = "2.0.0";
 
 export const NO_ERROR = "";
 
@@ -124,6 +124,7 @@ export const WEBSOCKET_MESSAGE_AUTH_LOGIN = "login";
 export const WEBSOCKET_MESSAGE_AUTH_LOGOUT = "logout";
 export const WEBSOCKET_MESSAGE_AUTH_WHOAMI = "whoami";
 export const WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword";
+export const WEBSOCKET_MESSAGE_CORRECT_ORDER = "correctOrder";
 export const WEBSOCKET_MESSAGE_CREATE_BOOKING = "delete_booking";
 export const WEBSOCKET_MESSAGE_CREATE_DATA_CLASS = "createDataClass";
 export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser";
@@ -179,6 +180,7 @@ export const WEBSOCKET_MESSAGE_TYPES = [
   "createExternalUser",
   "testPrinter",
   "releaseMulti",
+  "correctOrder",
 ]
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_OBJECT_DOES_NOT_EXISTS = "objectDoesNotExists";

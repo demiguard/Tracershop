@@ -25,16 +25,14 @@ class HandleAuthWhoAmI(HandlerBase):
 
   async def __call__(self, consumer, message):
     now = consumer.datetimeNow.now()
-
     user = await get_user(consumer.scope)
     if isinstance(user, User):
       logger.info(f"WhoAmI message found: {user} from session cookie")
       await consumer.enterUserGroups(user)
-      user_serialized = await consumer.db.async_serialize_dict({DATA_USER : [user]})
       if user.user_group == UserGroups.ShopExternal:
         logins = await database_sync_to_async(SuccessfulLogin.objects.filter)(user=user)
         await database_sync_to_async(logins.delete)()
-      return await consumer.respond_auth_message(message, True, user_serialized, consumer.scope["session"].session_key)
+      return await consumer.respond_auth_message(message, True, {DATA_USER : [user]}, consumer.scope["session"].session_key)
     elif isinstance(user, AnonymousUser):
       user = await database_sync_to_async(auth.get_login)(now)
       logger.info(f"Found user:{user} from external users")
@@ -43,10 +41,9 @@ class HandleAuthWhoAmI(HandlerBase):
         session = consumer.scope["session"]
         await database_sync_to_async(session.save)()
         await consumer.enterUserGroups(user)
-        serialized_user = await consumer.db.async_serialize_dict({DATA_USER : [user]})
         session_key = consumer.scope["session"].session_key
         return await consumer.respond_auth_message(message,
                                                 True,
-                                                serialized_user,
+                                                {DATA_USER : [user]},
                                                 session_key)
     await consumer.respond_reject_auth_message(message)

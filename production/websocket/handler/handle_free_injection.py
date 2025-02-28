@@ -52,9 +52,6 @@ class HandleFreeInjection(HandlerBase):
     logFreeInjectionOrder(user, order)
 
     # Step 3 Broadcast it
-    released_orders = await consumer.db.async_serialize_dict({
-        DATA_INJECTION_ORDER : [order],
-    })
 
     await consumer._broadcastProduction({
         AUTH_IS_AUTHENTICATED : True,
@@ -62,5 +59,7 @@ class HandleFreeInjection(HandlerBase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_DATA : released_orders,
+        WEBSOCKET_DATA : {
+          DATA_INJECTION_ORDER : [order],
+        },
     })

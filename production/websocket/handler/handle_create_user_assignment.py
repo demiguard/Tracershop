@@ -42,19 +42,19 @@ class HandleCreateUserAssignment(HandlerBase):
     if user_assignment is None: # pragma no cover
       error_logger.critical("Somebody somewhere fucked up a contract...")
 
-    returnDict = {
+    data_dict = {
       DATA_USER_ASSIGNMENT : [user_assignment],
     }
-    if new_user is not None:
-      returnDict[DATA_USER] = [new_user]
 
-    serializedReturnDict = await consumer.db.async_serialize_dict(returnDict)
+    if new_user is not None:
+      data_dict[DATA_USER] = [new_user]
+
 
     return await consumer._broadcastGlobal({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_STATUS : success.value,
-      WEBSOCKET_DATA : serializedReturnDict,
+      WEBSOCKET_DATA : data_dict,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
     })

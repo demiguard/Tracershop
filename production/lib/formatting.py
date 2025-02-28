@@ -12,9 +12,8 @@ from pandas import DataFrame, ExcelWriter
 
 # Tracershop Packages
 from constants import DATETIME_REGULAR_EXPRESSION,\
-  SQL_TABLE_REGULAR_EXPRESSION, TIME_FORMAT, DATE_FORMAT,\
-  DATETIME_FORMAT, TIME_REGULAR_EXPRESSION
-from database import models
+  TIME_FORMAT, DATE_FORMAT, TIME_REGULAR_EXPRESSION
+
 
 def dateConverter(date_: date, format_: str=DATE_FORMAT) -> str:
   """

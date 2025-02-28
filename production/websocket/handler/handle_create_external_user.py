@@ -32,10 +32,12 @@ class HandleCreateExternalUser(HandlerBase):
     )
 
     if newUserAssignment is not None:
-      data = await consumer.db.async_serialize_dict({
-        DATA_USER : [newUser], DATA_USER_ASSIGNMENT : [newUserAssignment]})
+      data = {
+        DATA_USER : [newUser],
+        DATA_USER_ASSIGNMENT : [newUserAssignment]
+      }
     else:
-      data = await consumer.db.async_serialize_dict({DATA_USER : [newUser]})
+      data = {DATA_USER : [newUser]}
 
     await consumer._broadcastProduction({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],

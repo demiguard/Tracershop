@@ -34,9 +34,9 @@ from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
   WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_RESTORE_ORDERS,\
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,\
   WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI, WEBSOCKET_MESSAGE_ECHO,\
-  WEBSOCKET_MESSAGE_CREATE_DATA_CLASS, WEBSOCKET_MESSAGE_FREE_ACTIVITY,\
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_CORRECT_ORDER,\
   WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,\
-  WEBSOCKET_MESSAGE_DELETE_DATA_CLASS, WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
+  WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
 from database.models import User, UserGroups, SuccessfulLogin
 
 from tracerauth.types import MessageType, MessageField, MessageObjectField,\
@@ -84,6 +84,17 @@ MESSAGE_TYPES = {
   WEBSOCKET_MESSAGE_RESTORE_ORDERS : MessageType(WEBSOCKET_MESSAGE_RESTORE_ORDERS, []),
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : MessageType(WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, []),
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : MessageType(WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, []),
+  WEBSOCKET_MESSAGE_CORRECT_ORDER : MessageType(
+    WEBSOCKET_MESSAGE_CORRECT_ORDER, [
+      MessageObjectField(DATA_AUTH, [
+        MessageField(AUTH_USERNAME, str),
+        MessageField(AUTH_PASSWORD, str),
+      ]),
+      MessageObjectField(WEBSOCKET_DATA, [
+
+      ])
+    ]
+  )
 }
 
 requiredDataFields = {
@@ -157,8 +168,8 @@ def validateMessage(message: Dict) -> str:
 
   message_type = message[WEBSOCKET_MESSAGE_TYPE]
 
-  if message_type not in requiredMessageFields:
-    error_logger.warning(f"Message type: {message_type} is not in Require Message Fields")
+  #if message_type not in requiredMessageFields:
+  #  error_logger.warning(f"Message type: {message_type} is not in Require Message Fields")
 
   for field in requiredMessageFields.get(message_type, []):
     if field not in message:
@@ -267,8 +278,8 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
 
 
 # this is placed bad
-def get_login(now=None ) -> AbstractBaseUser:
-  if now is None:
+def get_login(now=None) -> AbstractBaseUser:
+  if now is None: # pragma: no cover
     now = datetime.now()
 
   window_bound_seconds = 5

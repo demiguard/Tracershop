@@ -52,7 +52,8 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   ERROR_TYPE, AUTH_USER, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_STATUS,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
-  SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_RELEASE_MULTI
+  SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_RELEASE_MULTI,\
+  DATA_INJECTION_ORDER, DATA_TRACER
 
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from database.database_interface import DatabaseInterface
@@ -661,8 +662,56 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         modelFrontend = await database_sync_to_async(Model.objects.get)(pk=data[keyword][0]['pk'])
         self.assertEqual(modelFrontend, modelBackend)
 
-        await comm.disconnect()
+  async def test_ModelCreate_create_injectionOrder(self):
+    "Can i create an injection order?"
+    keyword = DATA_INJECTION_ORDER
+    Model = MODELS[keyword]
+    with self.assertLogs(DEBUG_LOGGER):
+      with self.assertNoLogs(ERROR_LOGGER):
+        comm = WebsocketCommunicator(app,"ws/")
+        comm_other_user = WebsocketCommunicator(app, "ws/")
 
+        await comm_other_user.connect()
+        await comm_other_user.send_json_to(self.loginShopAdminMessage)
+        login_response = await comm_other_user.receive_json_from()
+        self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+
+        _conn, _subprotocal = await comm.connect()
+
+        await comm.send_json_to(self.loginAdminMessage)
+        login_response = await comm.receive_json_from()
+        self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
+
+        await comm.send_json_to({
+          WEBSOCKET_MESSAGE_ID : self.message_id,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_DATATYPE : keyword,
+          WEBSOCKET_DATA : { 'delivery_time' : '22:33:00',
+                              'delivery_date': '2025-03-03',
+                              'injections': 1,
+                              'status': 1,
+                              'tracer_usage': 0,
+                              'comment': '',
+                              'ordered_by': self.user_prod_admin.id,
+                              'endpoint': self.endpoint.id,
+                              'tracer': self.inj_tracer.id,
+                              'lot_number': None,
+                              'freed_datetime': "2025-03-03T11:33:44.00000+05",
+                              'freed_by': None
+                            }
+        })
+
+        response = await comm.receive_json_from()
+
+        self.assertIn(WEBSOCKET_MESSAGE_STATUS, response)
+        self.assertEqual(response[WEBSOCKET_MESSAGE_STATUS],SUCCESS_STATUS_CRUD.SUCCESS.value)
+        self.assertIn(WEBSOCKET_DATA, response)
+        other_response = await comm_other_user.receive_json_from()
+
+        self.assertEqual(response, other_response)
+        await comm.disconnect()
+        await comm_other_user.disconnect()
 
   async def test_ModelEdit_Customer(self):
     """Test of the model backend that allows other to update
@@ -1236,7 +1285,6 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       })
       message = await comm_admin.receive_json_from()
       self.assertIn(WEBSOCKET_DATA, message)
-
       response_data = message[WEBSOCKET_DATA]
 
       self.assertIn(DATA_USER, response_data)
@@ -1354,26 +1402,27 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
   async def test_wsCreateUserAssignment_missing_customer_group(self):
     with self.assertLogs(DEBUG_LOGGER):
-      shop_comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await shop_comm_admin.connect()
+      with self.assertNoLogs(ERROR_LOGGER):
+        shop_comm_admin = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await shop_comm_admin.connect()
 
-      await shop_comm_admin.send_json_to(self.loginShopAdminMessage)
-      admin_login_message = await shop_comm_admin.receive_json_from()
+        await shop_comm_admin.send_json_to(self.loginShopAdminMessage)
+        admin_login_message = await shop_comm_admin.receive_json_from()
 
-      await shop_comm_admin.send_json_to({
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
-        WEBSOCKET_MESSAGE_ID : 657901284,
-        'username' : 'missing',
-        'customer_id' : self.customer.id,
-      })
+        await shop_comm_admin.send_json_to({
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
+          WEBSOCKET_MESSAGE_ID : 657901284,
+          'username' : 'missing',
+          'customer_id' : self.customer.id,
+        })
 
-      message = await shop_comm_admin.receive_json_from()
+        message = await shop_comm_admin.receive_json_from()
 
-      self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                       SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS.value)
+        self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
+                         SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS.value)
 
-      await shop_comm_admin.disconnect()
+        await shop_comm_admin.disconnect()
 
   async def test_failed_message(self):
     failing_message = {'messageType': 'createModel',
@@ -1387,7 +1436,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                           'archived': '',
                           'marketed': False,
                           'is_static_instance': False},
-                        'datatype': 'tracer',
+                        'datatype': DATA_TRACER,
                         'messageID': 415579179,
                         'javascriptVersion': JAVASCRIPT_VERSION}
 

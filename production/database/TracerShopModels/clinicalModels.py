@@ -48,7 +48,9 @@ class Tracer(TracershopModel):
   def __str__(self):
     return f"{self.shortname} - {self.isotope}"
 
-  derived_properties = ['is_static_instance']
+  @classproperty
+  def derived_properties(cls):
+    return ['is_static_instance']
 
   @property
   def is_static_instance(self):
@@ -74,9 +76,9 @@ class ActivityProduction(TracershopModel):
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
 
-  derived_properties = [
-    'is_static_instance'
-  ]
+  @classproperty
+  def derived_properties(cls):
+    return [ 'is_static_instance' ]
 
   def __str__(self) -> str:
     return f"Production of {self.tracer.shortname} - {Days(self.production_day).name} - {self.production_time}"

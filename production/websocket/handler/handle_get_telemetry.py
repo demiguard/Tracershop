@@ -23,11 +23,11 @@ class HandleGetTelemetry(HandlerBase):
     if not user.is_server_admin:
       raise IllegalActionAttempted()
 
-    serialized_data = await consumer.db.get_telemetry_data()
+    telemetry_data = await consumer.db.get_telemetry_data()
 
     await consumer.send_json({
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : serialized_data,
+      WEBSOCKET_DATA : telemetry_data,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_TELEMETRY
     })

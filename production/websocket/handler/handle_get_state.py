@@ -37,9 +37,8 @@ class HandleGetState(HandlerBase):
 
     # Assumed to have no Field in the message since it can use the user in scope
 
-    instances = await consumer.db.getState(now,
+    state = await consumer.db.getState(now,
                                        await get_user(consumer.scope))
-    state = await consumer.db.async_serialize_dict(instances)
 
     await consumer.send_json({
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,

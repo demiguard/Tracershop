@@ -19,20 +19,8 @@ from lib import ProductionJSON as PJSON
 
 # Very lackluster testing :(
 
-class ProductionJSONResponseTestCase(TestCase):
+class JSONTests(TestCase):
   DATA_kw_1 = "kw_1"
-
-  def setUp(self):
-    pass
-
-  def test_createEmptyJsonResponse(self):
-    response = PJSON.ProductionJSONResponse({})
-    self.assertTrue(True) # Trivial assertion since what we test if the create the Response
-
-  def test_CorrectSubClassAssignment(self):
-    self.assertTrue(issubclass(PJSON.ProductionJSONResponse, JsonResponse))
-    self.assertTrue(issubclass(PJSON.ProductionJSONResponse, HttpResponse))
-
 
   def test_DecodingToDict(self):
     jsonStr = "\"{\\n  \\\"day\\\": 1,\\n  \\\"ptime\\\": \\\"11:33:22\\\",\\n  \\\"run\\\": 1,\\n  \\\"PTID\\\": 123\\n}\""

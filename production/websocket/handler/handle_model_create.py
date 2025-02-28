@@ -41,13 +41,12 @@ class HandleModelCreate(HandlerBase):
       })
       return
 
-    serialized_data = await consumer.db.async_serialize_dict({
-      message[WEBSOCKET_DATATYPE] : instances
-    })
     await consumer._broadcastGlobal({
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : serialized_data,
+      WEBSOCKET_DATA : {
+        message[WEBSOCKET_DATATYPE] : instances
+      },
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
       WEBSOCKET_REFRESH : False,

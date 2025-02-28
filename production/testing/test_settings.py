@@ -30,6 +30,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.189.163', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk"]
 
+SETTING_NAME = "TEST"
 
 # Application definition
 

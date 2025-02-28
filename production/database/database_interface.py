@@ -270,6 +270,13 @@ class DatabaseInterface():
 
     return orders
 
+  @database_sync_to_async
+  def correct_order(self, data: Dict, user: User):
+    if DATA_ACTIVITY_ORDER in data:
+      pass
+    if DATA_INJECTION_ORDER in data:
+      pass
+
   def __timeUserSensitiveFilter(self, model_identifier: str):
     model = MODELS[model_identifier]
     timeField = TIME_SENSITIVE_FIELDS[model_identifier]
@@ -316,7 +323,8 @@ class DatabaseInterface():
     """
     return self.serialize_dict(instances)
 
-  def serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> Dict:
+  @staticmethod
+  def serialize_dict(instances: Dict[str, Iterable[TracershopModel]]) -> Dict:
     serialized_dict = {}
 
     for key, models in instances.items():
@@ -682,9 +690,9 @@ class DatabaseInterface():
       start_date=date_
     )
 
-    return self.serialize_dict({
+    return {
       DATA_BOOKING : bookings
-    })
+    }
 
   @database_sync_to_async
   def createExternalUser(self, userSkeleton: Dict[str, Any]):

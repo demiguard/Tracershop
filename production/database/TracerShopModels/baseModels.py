@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
   TimeField, DateTimeField, DateField, BooleanField
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
+from django.utils import timezone
 
 # Tracershop Modules
 from constants import ERROR_LOGGER
@@ -43,7 +44,9 @@ class TracershopModel(Model):
   def canDelete(self, user: Optional['authModels.User'] = None) -> AuthActions:
     return AuthActions.ACCEPT
 
-  derived_properties = []
+  @classproperty
+  def derived_properties(cls):
+    return []
 
   @classproperty
   def exclude(cls):
@@ -82,6 +85,7 @@ class TracershopModel(Model):
           value = formatting.toTime(value)
         elif isinstance(field, DateTimeField):
           value = formatting.toDateTime(value)
+          value = timezone.make_aware(value)
         elif isinstance(field, DateField):
           value = formatting.toDate(value)
         elif isinstance(field, BooleanField):

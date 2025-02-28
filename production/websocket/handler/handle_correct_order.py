@@ -1,0 +1,31 @@
+from websocket.handler_base import HandlerBase
+
+from tracerauth.types import AuthenticationResult
+
+from shared_constants import WEBSOCKET_MESSAGE_CORRECT_ORDER,\
+  AUTH_IS_AUTHENTICATED, WEBSOCKET_REFRESH,\
+  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
+  WEBSOCKET_DATA, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID
+
+
+class HandleCorrectOrder(HandlerBase):
+  message_type = WEBSOCKET_MESSAGE_CORRECT_ORDER
+
+  async def __call__(self, consumer, message):
+    result, user = await consumer._authenticateFreeing(message)
+
+    if result != AuthenticationResult.SUCCESS:
+      return await consumer._RejectFreeing(message)
+
+    corrected_orders = consumer.db.correct_order(
+      message[WEBSOCKET_DATA], user
+    )
+
+    await consumer._broadcastProduction({
+      AUTH_IS_AUTHENTICATED : True,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : corrected_orders,
+    })

@@ -13,13 +13,12 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from asgiref.sync import sync_to_async
-from datetime import datetime, date
 from enum import Enum
 from subprocess import call
 import logging
 from pprint import pformat
 import traceback
-import time
+import time as time_module
 from typing import Any, Dict, List, Optional, Tuple
 
 # Django packages
@@ -34,7 +33,8 @@ from django.conf import settings
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from constants import DEBUG_LOGGER, ERROR_LOGGER,\
-    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER
+    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER, DATE_FORMAT, TIME_FORMAT, DATETIME_FORMAT
+
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS,ERROR_UNKNOWN_FAILURE, ERROR_TYPE, NO_ERROR,\
     DATA_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_ECHO,\
@@ -45,6 +45,7 @@ from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
 from database.telemetry import create_telemetry_record
 from database.models import User, UserGroups
+from lib.serialization import a_serialize_redis
 from lib.ProductionJSON import encode, decode
 from tracerauth import auth
 from tracerauth.types import AuthenticationResult
@@ -80,7 +81,9 @@ class Consumer(AsyncJsonWebsocketConsumer):
   ### --- JSON methods --- ###
   @classmethod
   async def encode_json(cls, text_data: Dict) -> str:
-    return encode(text_data)
+    data = await a_serialize_redis(text_data)
+
+    return encode(data)
 
   @classmethod
   async def decode_json(cls, content: str) -> Dict:
@@ -125,16 +128,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
     logger.debug(f"{user} disconnected!")
 
 
-  def _prepBroadcastMessage(self, message: Dict[str, Any]) -> None:
+  async def _prepBroadcastMessage(self, message: Dict[str, Any]) -> None:
     if 'type' not in message:
       message['type'] = "broadcastMessage" # This is needed to point it to the send place
 
     if WEBSOCKET_MESSAGE_SUCCESS not in message:
       message[WEBSOCKET_MESSAGE_SUCCESS] = WEBSOCKET_MESSAGE_SUCCESS
 
-    for key, value in message.items():
-      if isinstance(value, Enum):
-        message[key] = value.value
+    return await a_serialize_redis(message)
 
 
   async def _broadcastGlobal(self, message: Dict):
@@ -143,8 +144,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
         message (Dict): Message to be broadcast
     """
-    self._prepBroadcastMessage(message)
-    await self.channel_layer.group_send(self.global_group, message) #
+    message = await self._prepBroadcastMessage(message)
+    await self.channel_layer.group_send(self.global_group, message)
 
 
   async def _broadcastProduction(self, message: Dict):
@@ -153,12 +154,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
     Args:
         message (Dict): Message to be send
     """
-    self._prepBroadcastMessage(message)
+    message = await self._prepBroadcastMessage(message)
     await self.channel_layer.group_send('production', message) #
 
 
   async def _broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
-    self._prepBroadcastMessage(message)
+    message = await self._prepBroadcastMessage(message)
     if customerIDs is None:
       await self._broadcastGlobal(message)
       return
@@ -170,12 +171,12 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   async def broadcastMessage(self, message: Dict):
     """WARNING: IS THIS A PRIVATE HELPER FUNCTION THAT YOU SHOULDN'T CALL IN
-    HANDLER FUNCTIONS. Use __broadcastGlobal instead!
+    HANDLER FUNCTIONS. Use _broadcastGlobal instead!
 
     Send the event to each subscriber of the websocket channel.
     Note this function gets call for each websocket connected to the group
 
-    This function is called by __broadcast
+    This function is called by _broadcast
 
     Note that this function CANNOT be named with leading underscore due to
     constraints made by channels
@@ -201,7 +202,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          It has the a message type field and also additional fields
                          needed to handle that message
     """
-    time_start_ns = time.monotonic_ns()
+    time_start_ns = time_module.monotonic_ns()
     try:
       error = auth.validateMessage(message)
       if error != NO_ERROR:
@@ -218,8 +219,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
         return
 
       await self.handler(self, message)
-
-      time_end_ns = time.monotonic_ns()
+      time_end_ns = time_module.monotonic_ns()
       latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
       await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.SUCCESS)
 
@@ -232,7 +232,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     except Exception as E: # pragma: no cover
       # Very broad catch here, to prevent a hanging message on the client side
       await self.HandleUnknownError(E, message)
-      time_end_ns = time.monotonic_ns()
+      time_end_ns = time_module.monotonic_ns()
       latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
       await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.FAILURE)
 

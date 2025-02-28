@@ -8,7 +8,7 @@ import { ERROR_TYPE_HINT, ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~
 
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
   WEBSOCKET_DATA, DATA_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION,
-  WEBSOCKET_DATA_ID
+  WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CORRECT_ORDER
 } from "~/lib/shared_constants.js"
 
 import { HoverBox } from "../injectable/hover_box.js";
@@ -42,6 +42,7 @@ export function InjectionModal ({modal_order, on_close}) {
 
   const [freeing, setFreeing] = useState(false);
   const [canceling, setCanceling] = useState(false);
+  const [showCorrectAuth, setShowCorrectAuth] = useState(false);
   const [lot_number, setLotNumber] = useState(defaultLotNumber);
   const [loginError, setLoginError] = useErrorState();
   const [formattingError, setFormattingError] = useErrorState();
@@ -131,11 +132,36 @@ export function InjectionModal ({modal_order, on_close}) {
       }
     })
   }
+
+  function correctOrder(username, password) {
+    const message = {
+      [DATA_AUTH] : {
+        [AUTH_USERNAME] : username,
+        [AUTH_PASSWORD] : password
+      },
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CORRECT_ORDER,
+      [WEBSOCKET_DATATYPE] : DATA_INJECTION_ORDER,
+      [WEBSOCKET_DATA] : modal_order
+    };
+
+    return websocket.send(message).then((data) => {
+      if(data[AUTH_IS_AUTHENTICATED]){
+        setLoginError(new RecoverableError());
+        setShowCorrectAuth(false);
+      } else {
+        setLoginError(new RecoverableError(
+          "Forkert login"
+        ));
+      }
+      }
+    )
+  }
+
   const freeingButton = RightsToFree ?
       <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton>
     : <MarginButton disabled>Frigiv Ordre</MarginButton>;
 
-  const colWidth = (freeing) ? 6 : 12;
+  const colWidth = (freeing || showCorrectAuth) ? 6 : 12;
   let secondaryElement = null; // Remember to wrap this is a <Col md={6}>
   if(freeing){
     secondaryElement = <Col md={6}>
@@ -143,11 +169,23 @@ export function InjectionModal ({modal_order, on_close}) {
                   error={loginError}
                   fit_in={false}
                   authenticate={freeOrder}
-                  headerMessage={`Frigiv Ordre - ${modal_order}`}
-                  buttonMessage={`Frigiv Ordre`}
+                  headerMessage={`Frigiv ordre - ${modal_order}`}
+                  buttonMessage={`Frigiv ordre`}
                   setError={setLoginError}
-                  />
+          />
         </Col>;
+    } else if(showCorrectAuth){
+      secondaryElement = <Col md={6}>
+          <Authenticate
+                  error={loginError}
+                  fit_in={false}
+                  authenticate={correctOrder}
+                  headerMessage={`Ret ordre - ${modal_order}`}
+                  buttonMessage={`Ret ordre`}
+                  setError={setLoginError}
+          />
+        </Col>
+
     }
 
     return(
@@ -238,19 +276,25 @@ export function InjectionModal ({modal_order, on_close}) {
               <Optional exists={canEdit}>
                 <MarginButton onClick={startCanceling}>Afvis ordre</MarginButton>
               </Optional>
+              <Optional exists={order.status == ORDER_STATUS.RELEASED && !showCorrectAuth}>
+                <MarginButton onClick={() => {setShowCorrectAuth(true)}}>Ret ordre</MarginButton>
+              </Optional>
             </Col>
             <Col md={{ span : 3, offset : 5}}>
               <Optional exists={order.status == ORDER_STATUS.ORDERED}>
-                <MarginButton onClick={acceptOrder}>Accepter Ordre</MarginButton>
+                <MarginButton onClick={acceptOrder}>Accepter ordre</MarginButton>
               </Optional>
               <Optional exists={order.status == ORDER_STATUS.ACCEPTED && !freeing}>
                 {freeingButton}
               </Optional>
               <Optional exists={order.status == ORDER_STATUS.ACCEPTED && freeing}>
-                <MarginButton onClick={cancelFreeing}>Rediger Ordre</MarginButton>
+                <MarginButton onClick={cancelFreeing}>Rediger ordre</MarginButton>
               </Optional>
               <Optional exists={order.status == ORDER_STATUS.RELEASED && freeing}>
                 <MarginButton onClick={openInjectionReleasePDF(order)}>Frigivelsecertifikat</MarginButton>
+              </Optional>
+              <Optional exists={showCorrectAuth}>
+                <MarginButton onClick={() => {setShowCorrectAuth(false)}}>Tilbage</MarginButton>
               </Optional>
             </Col>
             <Col md={1}>

@@ -31,15 +31,13 @@ class HandleFreeMultiInjection(HandlerBase):
       message[WEBSOCKET_DATA_ID], message[WEBSOCKET_DATA], release_time, user
     )
 
-    updated_orders = await consumer.db.async_serialize_dict({
-      DATA_INJECTION_ORDER : orders
-    })
-
     return await consumer._broadcastProduction({
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : updated_orders
+      WEBSOCKET_DATA : {
+        DATA_INJECTION_ORDER : orders
+      }
     })

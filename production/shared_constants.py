@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "1.5.5" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "2.0.0" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -110,10 +110,8 @@ WEBSOCKET_MESSAGE_AUTH_LOGIN               = "login"
 WEBSOCKET_MESSAGE_AUTH_LOGOUT              = "logout"
 WEBSOCKET_MESSAGE_AUTH_WHOAMI              = "whoami"
 WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD = "changeExternalPassword"
-WEBSOCKET_MESSAGE_CREATE_DATA_CLASS        = "createDataClass"
 WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER     = "createExternalUser"
 WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER   = "createInjectionOrder"
-WEBSOCKET_MESSAGE_DELETE_DATA_CLASS        = "deleteDataClass"
 WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT   = "createUserAssignment"
 WEBSOCKET_MESSAGE_DELETE_BOOKING           = "create_booking" # used by pingServiceHL7.py
 WEBSOCKET_MESSAGE_CREATE_BOOKING           = "delete_booking" # used by pingServiceHL7.py
@@ -142,6 +140,7 @@ WEBSOCKET_MESSAGE_TEST_PRINTER             = "testPrinter"
 WEBSOCKET_MESSAGE_TYPE                     = "messageType"
 WEBSOCKET_MESSAGE_UPDATE_STATE             = "updateState"
 WEBSOCKET_MESSAGE_RELEASE_MULTI            = "releaseMulti"
+WEBSOCKET_MESSAGE_CORRECT_ORDER            = "correctOrder"
 WEBSOCKET_OBJECT_DOES_NOT_EXISTS           = "objectDoesNotExists"
 WEBSOCKET_REFRESH                          = "refresh"
 WEBSOCKET_SEND_EVENT                       = "sendEvent"
@@ -172,7 +171,8 @@ WEBSOCKET_MESSAGE_TYPES = [
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
   WEBSOCKET_MESSAGE_TEST_PRINTER,
-  WEBSOCKET_MESSAGE_RELEASE_MULTI
+  WEBSOCKET_MESSAGE_RELEASE_MULTI,
+  WEBSOCKET_MESSAGE_CORRECT_ORDER
 ]
 
 class TRACER_USAGE(__Enum):

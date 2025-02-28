@@ -23,9 +23,7 @@ class HandleGetTimeSensitiveData(HandlerBase):
   async def __call__(self, consumer, message):
     user: User = await get_user(consumer.scope)
     client_date = toDateTime(message[WEBSOCKET_DATE][:19])
-    data = await consumer.db.async_serialize_dict(
-      await consumer.db.getTimeSensitiveData(client_date, user)
-    )
+    data = await consumer.db.getTimeSensitiveData(client_date, user)
 
     await consumer.send_json({
       WEBSOCKET_DATA : data,

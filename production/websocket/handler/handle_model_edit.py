@@ -40,13 +40,9 @@ class HandleModelEdit(HandlerBase):
 
     if updatedModels is not None:
       customerIDs = await consumer.db.getCustomerIDs(updatedModels)
-
-      serialized_data = await consumer.db.async_serialize_dict({
-        message[WEBSOCKET_DATATYPE] : updatedModels
-      })
       await consumer._broadcastCustomer({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_DATA : serialized_data,
+        WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : updatedModels},
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_REFRESH : False

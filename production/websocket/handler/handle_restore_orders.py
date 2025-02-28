@@ -23,14 +23,13 @@ class HandleRestoreOrders(HandlerBase):
   async def __call__(self, consumer, message):
     orders = await consumer.db.restoreDestinations(message[DATA_ACTIVITY_ORDER])
     customerIDs = await consumer.db.getCustomerIDs(orders)
-    data = await consumer.db.async_serialize_dict({
-      DATA_ACTIVITY_ORDER : orders,
-    })
 
     await consumer._broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_DATA : data,
+      WEBSOCKET_DATA : {
+        DATA_ACTIVITY_ORDER : orders,
+      },
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,

@@ -38,9 +38,7 @@ argparser.add_argument("-k", '--test_name_patterns', help="bla", nargs='*', requ
 args = argparser.parse_args()
 
 if __name__ == "__main__":
-  #cov = Coverage(config_file='.coveragerc')
-  #cov.start()
-
+  print(f"using {settings.SETTING_NAME} settings")
 
   TestRunner = get_runner(settings)
   test_runner = TestRunner(

@@ -44,23 +44,20 @@ class HandleFreeActivity(HandlerBase):
     # Authentication successful update
     data = message[WEBSOCKET_DATA]
     orders, vials = await consumer.db.releaseOrders(data[DATA_DELIVER_TIME],
-                                                data[DATA_ACTIVITY_ORDER],
-                                                data[DATA_VIAL],
-                                                user,
-                                                consumer.datetimeNow.now())
+                                                    data[DATA_ACTIVITY_ORDER],
+                                                    data[DATA_VIAL],
+                                                    user,
+                                                    consumer.datetimeNow.now())
     logFreeActivityOrders(user, orders, vials)
     customerIDs = await consumer.db.getCustomerIDs(orders)
-
-    newState = await consumer.db.async_serialize_dict({
-      DATA_ACTIVITY_ORDER : orders,
-      DATA_VIAL : vials
-    })
-
     await consumer._broadcastCustomer({
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : newState,
+      WEBSOCKET_DATA : {
+        DATA_ACTIVITY_ORDER : orders,
+        DATA_VIAL : vials
+      },
     }, customerIDs)
