@@ -356,13 +356,12 @@ const marginRows = {
 /**
  *
  * @param {{
- *  tracer_catalog : TracerCatalog
  *  order_mapping : OrderMapping,
  * }} param0
  * @returns
  */
 export function ActivityModal({
-  active_date, active_tracer, order_mapping, on_close, timeSlotID, tracer_catalog
+  active_date, active_tracer, order_mapping, on_close, timeSlotID
 }){
 
   // State extraction

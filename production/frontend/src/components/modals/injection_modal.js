@@ -158,8 +158,8 @@ export function InjectionModal ({modal_order, on_close}) {
   }
 
   const freeingButton = RightsToFree ?
-      <MarginButton onClick={startFreeing}>Frigiv Ordre</MarginButton>
-    : <MarginButton disabled>Frigiv Ordre</MarginButton>;
+      <MarginButton onClick={startFreeing}>Frigiv ordre</MarginButton>
+    : <MarginButton disabled>Frigiv ordre</MarginButton>;
 
   const colWidth = (freeing || showCorrectAuth) ? 6 : 12;
   let secondaryElement = null; // Remember to wrap this is a <Col md={6}>

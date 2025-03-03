@@ -107,4 +107,21 @@ describe("Tracer Modal test suite", () => {
     expect(websocket.send).toHaveBeenCalled();
   });
 
-})
+  it("You can close the modal by pressing the close button", () => {
+    const on_close = jest.fn();
+
+    const newProps = {...props, on_close : on_close}
+
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <TracerModal {...newProps}/>
+      </TracerShopContext>
+    );
+
+    act(() => {
+      screen.getByRole('button', { name : "Luk"}).click();
+    });
+
+    expect(on_close).toHaveBeenCalledTimes(1);
+  });
+});

@@ -43,12 +43,19 @@ describe("Margin Button Test", () => {
 
 describe("Close Button Test", () => {
   it("Render Base test", () =>{
-    render(<CloseButton data-testid="test"/>)
+    const mockf = jest.fn(() => {})
+    render(<CloseButton onClick={mockf} data-testid="test"/>)
     const button = screen.getByTestId("test")
     expect(screen.queryByText("Luk")).toBeVisible();
     const style = getComputedStyle(button);
     expect(style.marginRight).toBe("10px");
     expect(style.marginLeft).toBe("10px");
+
+    act(() => {
+      screen.getByRole('button', {"name" : "Luk"}).click()
+    });
+
+    expect(mockf).toHaveBeenCalledTimes(1);
   })
 })
 

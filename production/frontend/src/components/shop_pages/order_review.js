@@ -131,6 +131,7 @@ export function OrderReview({active_endpoint,
 
   return (
   <Row>
+    <Row>Ordre for den. {active_date.toLocaleDateString()}</Row>
     <Row>
       <Col>
         <DeadlineDisplay

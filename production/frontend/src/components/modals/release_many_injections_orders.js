@@ -164,7 +164,7 @@ export function ReleaseManyInjectionOrdersModal({orders, on_close, selected}){
         </Row>
       </Container>
       <Modal.Footer>
-        <CloseButton></CloseButton>
+        <CloseButton onClick={on_close}/>
       </Modal.Footer>
     </Modal>
   );

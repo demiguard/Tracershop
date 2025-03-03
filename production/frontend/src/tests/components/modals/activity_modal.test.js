@@ -4,13 +4,17 @@
 
 import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { jest, test } from '@jest/globals'
+import { jest } from '@jest/globals'
 
-import { ActivityModal, WRONG_DATE_WARNING_MESSAGE } from '~/components/modals/activity_modal.js'
+import {
+  ActivityModal, WRONG_DATE_WARNING_MESSAGE
+} from '~/components/modals/activity_modal.js'
 import {  ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_TRACER, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
+  PROP_ACTIVE_TRACER, PROP_ON_CLOSE, PROP_ORDER_MAPPING, PROP_TIME_SLOT_ID, PROP_TRACER_CATALOG
 } from "~/lib/constants.js";
-import { AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER, DATA_AUTH, DATA_VIAL, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js"
+import { AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER, DATA_AUTH,
+  DATA_VIAL, WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_TYPE
+} from "~/lib/shared_constants.js"
 
 import { testState } from "../../app_state.js";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
@@ -29,6 +33,7 @@ const tracer_catalog = new TracerCatalog(testState.tracer_mapping, testState.tra
 
 const nowMock = new Date(2020,4,4,10,33,26);
 
+const on_close_mock = jest.fn(() => {});
 
 const websocket = websocket_module.TracerWebSocket;
 const todays_orders = applyFilter(testState.activity_orders,
@@ -47,6 +52,7 @@ const props = {
   ),
   [PROP_TIME_SLOT_ID] : 1,
   [PROP_TRACER_CATALOG] : tracer_catalog,
+  [PROP_ON_CLOSE] : on_close_mock
 }
 
 beforeEach(() => {
@@ -80,6 +86,7 @@ describe("Activity Modal Test", () => {
         customState),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
+      [PROP_ON_CLOSE] : on_close_mock
     }
 
     render(
@@ -142,7 +149,7 @@ describe("Activity Modal Test", () => {
       [PROP_ACTIVE_TRACER] : 1,
       [PROP_ORDER_MAPPING] : new OrderMapping(newOrders, today_string, tracer_catalog, active_tracer, customState),
       [PROP_TIME_SLOT_ID] : 1,
-      [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
+      [PROP_ON_CLOSE] : on_close_mock
     }
 
     render(
@@ -381,9 +388,7 @@ describe("Activity Modal Test", () => {
       </TracerShopContext>
     );
 
-    act(() => {
-      screen.getByLabelText('edit-vial-7').click();
-    })
+    act(() => { screen.getByLabelText('edit-vial-7').click(); })
 
     act(() => {
       const lotForm = screen.getByLabelText('lot_number-7');
@@ -833,6 +838,7 @@ describe("Activity Modal Test", () => {
       ),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(customState.tracer_mapping, customState.tracer),
+      [PROP_ON_CLOSE] : on_close_mock,
     }
     const {rerender} = render(
       <TracerShopContext tracershop_state={customState} websocket={websocket}>
@@ -862,6 +868,7 @@ describe("Activity Modal Test", () => {
         newState),
       [PROP_TIME_SLOT_ID] : 1,
       [PROP_TRACER_CATALOG] : new TracerCatalog(newState.tracer_mapping, newState.tracer),
+      [PROP_ON_CLOSE] : on_close_mock
     }
 
     rerender(

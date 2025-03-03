@@ -25,6 +25,11 @@ import { ParseDjangoModelJson } from "~/lib/formatting.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
 import { TracerCatalog } from '~/contexts/tracerCatalog.js';
 import { useTracerCatalog } from "~/contexts/tracerCatalog.js";
+import { deserialize_list, deserialize_map } from "~/lib/serialization.js";
+
+function get_raw_bookings_from_message(message){
+  return message[WEBSOCKET_DATA][DATA_BOOKING];
+}
 
 const Content = {
   Manuel : OrderReview,
@@ -126,14 +131,9 @@ export function ShopOrderPage ({relatedCustomer}){
   function addBookingFromUpdate(message){
     if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_CREATE_BOOKING){
       setBookings(oldBookings => {
+        const raw_bookings = get_raw_bookings_from_message(message)
         const newBookings = new Map(oldBookings);
-        const parsed_bookings = []
-        for(const serialized_booking of message[WEBSOCKET_DATA]){
-          const booking = new Booking();
-          Object.assign(booking, serialized_booking.fields);
-          booking.id = serialized_booking.pk;
-          parsed_bookings.push(booking);
-        }
+        const parsed_bookings = deserialize_list(Booking, raw_bookings)
         const filteredBookings = bookingFilter(parsed_bookings, {
           state : state,
           active_date : activeDate,
@@ -192,19 +192,13 @@ export function ShopOrderPage ({relatedCustomer}){
 
   }, [relatedCustomer])
 
-  useEffect(() => {
+  useEffect(function getBookings () {
     if(websocket !== null){
-      websocket.sendGetBookings(
-        activeDate, activeEndpoint
-      ).then((data) => {
-        if(data[WEBSOCKET_DATA]){
-          const newBookings = new Map();
-          for(const serialized_booking of data[WEBSOCKET_DATA][DATA_BOOKING]){
-            const booking = new Booking();
-            Object.assign(booking, serialized_booking.fields);
-            booking.id = serialized_booking.pk;
-            newBookings.set(booking.id, booking);
-          }
+      websocket.sendGetBookings(activeDate, activeEndpoint).then((message) => {
+        if(message[WEBSOCKET_DATA]){
+          const raw_bookings = get_raw_bookings_from_message(message)
+
+          const newBookings = deserialize_map(Booking, raw_bookings);
           setBookings(newBookings);
         }
       });

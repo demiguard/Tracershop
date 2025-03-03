@@ -1,10 +1,10 @@
 import { MODELS } from "../dataclasses/dataclasses";
 import { ParseJSONstr } from "./formatting";
 
-function __deserialize_single(modelType, modelList){
+export function deserialize_list(modelType, models){
   const serializedList = [];
 
-  for(const model of modelList){
+  for(const model of models){
     const newModel = new modelType();
     newModel.id = model.pk;
     Object.assign(newModel, model.fields);
@@ -13,13 +13,25 @@ function __deserialize_single(modelType, modelList){
 
   return serializedList;
 }
+export function deserialize_map(modelType, models, oldMap){
+  const newMap = new Map(oldMap);
+
+  for(const model of models){
+    const newModel = new modelType();
+    newModel.id = model.pk;
+    Object.assign(newModel, model.fields);
+    newMap.set(newModel.id, newModel);
+  }
+
+  return newMap
+}
 
 export function deserialize(inputJSON){
   const parsedJSON = ParseJSONstr(inputJSON);
   const returnObject = {};
 
   for(const modelTypeIdentifier of Object.keys(parsedJSON)){
-    returnObject[modelTypeIdentifier] = __deserialize_single(
+    returnObject[modelTypeIdentifier] = deserialize_list(
       MODELS[modelTypeIdentifier],
       parsedJSON[modelTypeIdentifier]
     );
@@ -27,11 +39,12 @@ export function deserialize(inputJSON){
   return returnObject;
 }
 
+
 export function deserialize_single(inputJSON){
   const parsedJSON = ParseJSONstr(inputJSON)
 
   for(const modelTypeIdentifier of Object.keys(parsedJSON)){
-    return __deserialize_single(MODELS[modelTypeIdentifier], parsedJSON[modelTypeIdentifier])[0];
+    return deserialize_list(MODELS[modelTypeIdentifier], parsedJSON[modelTypeIdentifier])[0];
     }
 }
 

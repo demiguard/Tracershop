@@ -21,7 +21,6 @@ let websocket = null;
 const onClose = jest.fn();
 let modalProps = null;
 
-
 beforeEach(() => {
   websocket = tracer_websocket.TracerWebSocket;
   modalProps = {
@@ -29,7 +28,6 @@ beforeEach(() => {
     [PROP_ON_CLOSE] : onClose,
   };
 });
-
 
 afterEach(() => {
   cleanup();
@@ -46,9 +44,9 @@ describe("Injection modal test suite", () =>{
       </TracerShopContext>
     );
 
-    expect(screen.getByRole('button', {name : "Accepter Ordre"})).toBeVisible();
-    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
-    expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
+    expect(screen.getByRole('button', {name : "Accepter ordre"})).toBeVisible();
+    expect(screen.queryByRole('button', {name : "Frigiv ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Rediger ordre"})).toBeNull();
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
@@ -60,7 +58,7 @@ describe("Injection modal test suite", () =>{
     );
 
     await act(async () => {
-      screen.getByRole('button', {name : "Accepter Ordre"}).click()
+      screen.getByRole('button', {name : "Accepter ordre"}).click()
     });
 
     expect(websocket.sendEditModel).toHaveBeenCalled();
@@ -75,9 +73,9 @@ describe("Injection modal test suite", () =>{
       </TracerShopContext>
     );
 
-    expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
-    expect(screen.getByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
-    expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Accepter ordre"})).toBeNull();
+    expect(screen.getByRole('button', {name : "Frigiv ordre"})).toBeVisible();
+    expect(screen.queryByRole('button', {name : "Rediger ordre"})).toBeNull();
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
@@ -91,30 +89,30 @@ describe("Injection modal test suite", () =>{
     );
 
     act(() => {
-      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+      screen.getByRole('button', {name : "Frigiv ordre"}).click();
     })
 
     expect(screen.getByText("Lot nummeret er ikke i det korrekte format")).toBeVisible();
-    expect(screen.getByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Frigiv ordre"})).toBeVisible();
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
-  it("Edit Freeing Order", async () => {
+  it("Edit Freeing Order", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <InjectionModal {...modalProps}/>
       </TracerShopContext>
     );
 
-    const input = await screen.findByLabelText("lot-input")
+    const input = screen.getByLabelText("lot-input");
     fireEvent.change(input, {target : {value : "test-111111-1"}});
 
     expect(input.value).toBe("test-111111-1");
 
-    fireEvent.click(screen.queryByRole('button', {name : "Frigiv Ordre"}));
-    fireEvent.click(screen.queryByRole('button', {name : "Rediger Ordre"}));
-    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeVisible();
-    expect(await screen.findByRole('button', {name : "Luk"})).toBeVisible();
+    fireEvent.click(screen.getByRole('button', {name : "Frigiv ordre"}));
+    fireEvent.click(screen.getByRole('button', {name : "Rediger ordre"}));
+    expect(screen.getByRole('button', {name : "Frigiv ordre"})).toBeVisible();
+    expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 
   it("Failed Freeing No Password Order", async () => {
@@ -139,11 +137,11 @@ describe("Injection modal test suite", () =>{
     });
 
     act(() => { // To get the authenticate to appear
-      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+      screen.getByRole('button', {name : "Frigiv ordre"}).click();
     });
 
     await act(async () => { // To get the authenticate to confirm the missing password
-      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+      screen.getByRole('button', {name : "Frigiv ordre"}).click();
     });
 
     expect(await screen.findByText("Dit kodeord er ikke tastet ind.")).toBeVisible();
@@ -174,7 +172,7 @@ describe("Injection modal test suite", () =>{
     });
 
     act(() => {
-      fireEvent.click(screen.getByRole('button', {name : "Frigiv Ordre"}));
+      fireEvent.click(screen.getByRole('button', {name : "Frigiv ordre"}));
     });
 
     act(() => {
@@ -183,7 +181,7 @@ describe("Injection modal test suite", () =>{
     });
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', {name : "Frigiv Ordre"}));
+      fireEvent.click(screen.getByRole('button', {name : "Frigiv ordre"}));
     });
 
     expect(ResolvingWebsocket.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -210,9 +208,9 @@ describe("Injection modal test suite", () =>{
       </TracerShopContext>
     );
 
-    expect(screen.queryByRole('button', {name : "Accepter Ordre"})).toBeNull();
-    expect(screen.queryByRole('button', {name : "Frigiv Ordre"})).toBeNull();
-    expect(screen.queryByRole('button', {name : "Rediger Ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Accepter ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Frigiv ordre"})).toBeNull();
+    expect(screen.queryByRole('button', {name : "Rediger ordre"})).toBeNull();
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
   });
 

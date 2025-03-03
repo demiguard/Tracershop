@@ -1,3 +1,4 @@
+import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react'
 import { Button, Spinner } from 'react-bootstrap'
 import { useWebsocket } from '~/contexts/tracer_shop_context';
@@ -23,6 +24,10 @@ function MarginButton (props) {
 
 function CloseButton (props) {
   return (<MarginButton {...props}>Luk</MarginButton>);
+}
+
+CloseButton.propTypes = {
+  onClick : PropTypes.func.isRequired
 }
 
 

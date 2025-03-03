@@ -7,7 +7,7 @@ import { act, screen, render, cleanup, fireEvent } from "@testing-library/react"
 import { jest } from '@jest/globals'
 
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
-import { WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
+import { DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
 import {  testState } from "~/tests/app_state.js";
 import {  TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { UpdateToday } from "~/lib/state_actions.js";
@@ -142,14 +142,17 @@ describe("Shop Order page test suite", () => {
 
     const websocket = {
       sendGetBookings : jest.fn(() => Promise.resolve({
-        [WEBSOCKET_DATA] : [
-          { pk : 1, fields : { status : 1,
-                               location : 1,
-                               procedure : 1,
-                               accession_number : "DKREGH0011223344",
-                               start_time : "10:00:00", start_date : "2020-05-05"}
-          },
-        ]
+        [WEBSOCKET_DATA] : {
+          [DATA_BOOKING] : [
+            { pk : 1, fields : { status : 1,
+              location : 1,
+              procedure : 1,
+              accession_number : "DKREGH0011223344",
+              start_time : "10:00:00", start_date : "2020-05-05"}
+            },
+          ]
+        }
+
       })),
       addListener : jest.fn((func) => {
         let listenNumber = listeners.size;
@@ -208,7 +211,7 @@ describe("Shop Order page test suite", () => {
 
     const websocket = {
       sendGetBookings : jest.fn(() => Promise.resolve({
-        [WEBSOCKET_DATA] : [
+        [WEBSOCKET_DATA] : { [DATA_BOOKING] : [
           { pk : 1, fields : { status : 1,
                                location : 1,
                                procedure : 1,
@@ -220,7 +223,7 @@ describe("Shop Order page test suite", () => {
             accession_number : "DKREGH0011223344",
             start_time : "11:00:00", start_date : "2020-05-05"}
 },
-        ]
+        ]}
       })),
       addListener : jest.fn((func) => {
         let listenNumber = listeners.size;
@@ -292,7 +295,7 @@ describe("Shop Order page test suite", () => {
     await act(async () => {
       websocket.triggerListeners({
         [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_BOOKING,
-        [WEBSOCKET_DATA] : [
+        [WEBSOCKET_DATA] : { [DATA_BOOKING] : [
           { pk : 1, fields : { status : 1,
                                location : 1,
                                procedure : 1,
@@ -304,7 +307,7 @@ describe("Shop Order page test suite", () => {
             accession_number : "DKREGH0011223344",
             start_time : "11:00:00", start_date : "2020-05-05"}
           },
-        ],
+        ]},
       });
     });
 
