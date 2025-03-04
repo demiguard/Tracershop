@@ -25,7 +25,7 @@ import { ParseDjangoModelJson } from "~/lib/formatting.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
 import { TracerCatalog } from '~/contexts/tracerCatalog.js';
 import { useTracerCatalog } from "~/contexts/tracerCatalog.js";
-import { deserialize_list, deserialize_map, deserialize_single } from "~/lib/serialization.js";
+import { deserialize_list, deserialize_map, deserialize_single, deserialize } from "~/lib/serialization.js";
 
 function get_raw_bookings_from_message(message){
   return message[WEBSOCKET_DATA][DATA_BOOKING];

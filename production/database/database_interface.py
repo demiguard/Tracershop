@@ -46,7 +46,7 @@ from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
 from tracerauth.ldap import checkUserGroupMembership, LDAPSearchResult
-from tracerauth.audit_logging import logFreeInjectionOrder
+from tracerauth.audit_logging import logFreeInjectionOrder, logCorrectOrder
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 audit_logger = logging.getLogger(AUDIT_LOGGER)
@@ -272,10 +272,43 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def correct_order(self, data: Dict, user: User):
+    return_dict = {
+      DATA_ACTIVITY_ORDER : [],
+      DATA_INJECTION_ORDER : [],
+      DATA_VIAL : []
+    }
+
     if DATA_ACTIVITY_ORDER in data:
-      pass
+      orders = ActivityOrder.objects.filter(
+        id__in=data[DATA_ACTIVITY_ORDER],
+        status=OrderStatus.Released
+      )
+
+      if(len(orders) != data[DATA_ACTIVITY_ORDER]):
+        raise Exception("Not all requested orders are updated")
+      orders.update(status=OrderStatus.Accepted)
+      return_dict[DATA_ACTIVITY_ORDER] = [o for o in orders]
     if DATA_INJECTION_ORDER in data:
-      pass
+      orders = InjectionOrder.objects.filter(
+        id__in=data[DATA_INJECTION_ORDER],
+        status=OrderStatus.Released
+      )
+
+      if(len(orders) != data[DATA_INJECTION_ORDER]):
+        raise Exception("Not all requested orders are updated")
+      orders.update(status=OrderStatus.Accepted)
+      return_dict[DATA_INJECTION_ORDER] = [o for o in orders]
+
+    if DATA_VIAL in data:
+      vials = Vial.objects.filter(id__in=data[DATA_VIAL])
+
+      vials.update(assigned_to=None)
+
+      return_dict[DATA_VIAL] = []
+
+    logCorrectOrder(user, data)
+
+    return return_dict
 
   def __timeUserSensitiveFilter(self, model_identifier: str):
     model = MODELS[model_identifier]
@@ -768,6 +801,8 @@ class DatabaseInterface():
     ).order_by(
       'fill_date', 'fill_time'
     )
+
+
 
     return_dir: Dict[str, Dict[str, List[Any]]] = {}
 

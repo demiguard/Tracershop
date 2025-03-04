@@ -4,7 +4,8 @@ direct call to the audit logger."""
 # Python Standard library
 from abc import ABC, abstractmethod
 import logging
-from typing import List, Iterable, Optional, Tuple
+from pprint import pformat
+from typing import Dict, List, Iterable, Optional, Tuple
 
 # Third party packages
 from django.db.models import ManyToManyRel, ManyToOneRel
@@ -190,4 +191,9 @@ def logFreeActivityOrders(user: 'models.User',
 def logFreeInjectionOrder(user: 'models.User', order: 'models.InjectionOrder'):
   message = f"\nUser: {user.username} is releasing the following injection order:\n"
   message += f"  Injection order lot number: {order.lot_number}\n"
+  logger.info(message)
+
+def logCorrectOrder(user: 'models.User', data: Dict[str, List[int]]):
+  message = f"User: {user.username} is unreleasing the following data:\n"
+  message += pformat(data)
   logger.info(message)

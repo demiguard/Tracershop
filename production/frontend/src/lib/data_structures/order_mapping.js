@@ -12,7 +12,7 @@ import { sortActivityOrderCollections, sortTimeSlots } from "~/lib/sorting";
  *
  */
 export class OrderMapping{
-  /**@type {Map<Number, ActivityOrder>} */ _orderMapping
+  /**@type {Map<Number, ActivityOrderCollection>} */ _orderMapping
   /**@type {TracershopState} */ _state
 
   /**
@@ -24,7 +24,8 @@ export class OrderMapping{
    */
   constructor(orders, ordered_date, tracerCatalog, active_tracer, state){
     this._orderMapping = new Map();
-    this._state = state
+    this._state = state;
+    this._ordered_date = ordered_date;
 
     const /**@type {ArrayMap<Number, ActivityOrder>} */ orderMapping = new ArrayMap()
 
@@ -49,10 +50,16 @@ export class OrderMapping{
   /**
    *
    * @param {Number} timeSlotID
-   * @returns {ActivityOrderCollection | undefined}
+   * @returns {ActivityOrderCollection}
    */
   getOrders(timeSlotID){
-    return this._orderMapping.get(timeSlotID);
+    const returnValue = this._orderMapping.get(timeSlotID);
+
+    if(returnValue){
+      return returnValue;
+    }
+
+    return new ActivityOrderCollection([], this._ordered_date, timeSlotID, this._state, 1);
   }
 
 

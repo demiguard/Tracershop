@@ -106,6 +106,12 @@ export class ActivityOrderCollection {
    * @type {Number}
    */ overhead
 
+  /**
+   * @desc vials that were allocated to this order collection for fulfilling the
+   * orders
+   * @type {Array<Vial>}
+   */ vials
+
 /**
   * Wraps a group of orders, for the purpose of providing a single view of the
   * group.
@@ -134,7 +140,7 @@ export class ActivityOrderCollection {
 
     this.#ordered_date = ordered_date
     this.#minimum_status = ORDER_STATUS.CANCELLED;
-    this.delivering_time_slot = timeSlot;
+    this.delivering_time_slot = (timeSlot instanceof ActivityDeliveryTimeSlot) ? timeSlot : state.deliver_times.get(timeSlot);
     this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
     this.production = state.production.get(this.delivering_time_slot.production_run);
     this.tracer = state.tracer.get(this.production.tracer);
@@ -149,6 +155,7 @@ export class ActivityOrderCollection {
     this.delivered_activity = 0;
     this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
+    this.vial = [];
 
     this.#contributing_orders = [];
     this.#cancelled_orders = [];
@@ -201,6 +208,7 @@ export class ActivityOrderCollection {
       for(const vial of state.vial.values()){
         if (this.orderIDs.includes(vial.assigned_to)){
           this.delivered_activity += vial.activity;
+          this.vials.push(vial);
         }
       }
     }

@@ -43,6 +43,13 @@ export class RecoverableError {
 export function useErrorState(){
   const [error, innerSetError] = useState(new RecoverableError())
 
+  /**
+   * Sets the error to the argument:
+   *   Falsy - resets the error
+   *   Function - similar behavior to react state with function arguments
+   *   Truthy - Sets the error to a recoverable error
+   * @param {Any} newError
+   */
   function setError(newError){
     if(typeof newError === "function"){
       innerSetError(

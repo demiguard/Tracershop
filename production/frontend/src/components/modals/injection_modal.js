@@ -8,7 +8,8 @@ import { ERROR_TYPE_HINT, ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~
 
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
   WEBSOCKET_DATA, DATA_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION,
-  WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CORRECT_ORDER
+  WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CORRECT_ORDER,
+  WEBSOCKET_MESSAGE_TYPE
 } from "~/lib/shared_constants.js"
 
 import { HoverBox } from "../injectable/hover_box.js";
@@ -140,8 +141,9 @@ export function InjectionModal ({modal_order, on_close}) {
         [AUTH_PASSWORD] : password
       },
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CORRECT_ORDER,
-      [WEBSOCKET_DATATYPE] : DATA_INJECTION_ORDER,
-      [WEBSOCKET_DATA] : modal_order
+      [WEBSOCKET_DATA] : {
+         DATA_INJECTION_ORDER : [modal_order]
+      }
     };
 
     return websocket.send(message).then((data) => {

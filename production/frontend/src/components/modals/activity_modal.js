@@ -12,16 +12,16 @@ import { Comment } from "../injectable/data_displays/comment.js";
 
 import { NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants.js";
 
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
   DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA,
+  WEBSOCKET_MESSAGE_CORRECT_ORDER,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY
 } from "~/lib/shared_constants.js"
 import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-import { compareDates, openActivityReleasePDF } from "../../lib/utils.js";
+import { compareDates, getId, openActivityReleasePDF } from "../../lib/utils.js";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
-import { TracerCatalog } from '~/contexts/tracerCatalog.js';
 import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
 import { CommitButton } from "../injectable/commit_button.js";
 import { Optional, Options } from "../injectable/optional.js";
@@ -372,12 +372,6 @@ export function ActivityModal({
   const timeSlot = state.deliver_times.get(timeSlotID);
   const orderCollection = order_mapping.getOrders(timeSlot.id);
 
-  if(orderCollection === null){
-    console.log(order_mapping, timeSlot);
-
-
-    throw "Order collection is null!"
-  }
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
   const customer = state.customer.get(endpoint.owner);
   const tracer = state.tracer.get(active_tracer);
@@ -393,6 +387,7 @@ export function ActivityModal({
   const [loginError, setLoginError] = useErrorState();
   const [dateError, setDateError]  = useErrorState();
   const [showCancelBox, setShowCancelBox] = useState(false);
+  const [correctingOrder, setCorrectingOrder] = useState(false);
 
   // Derived State
   const canCancel = orderCollection.minimum_status === ORDER_STATUS.ACCEPTED
@@ -431,6 +426,14 @@ export function ActivityModal({
     setDateError();
   }
 
+  function startCorrectingOrder(){
+    setCorrectingOrder(true);
+  }
+
+  function stopCorrectingOrder(){
+    setCorrectingOrder(true);
+  }
+
   function onClickAccept(){
     const orders = [...order_mapping.getOrders(timeSlotID)];
     for(const order of orders){
@@ -466,6 +469,31 @@ export function ActivityModal({
         setLoginError(new RecoverableError("Forkert login"));
       }
     });
+  }
+
+  function onCorrect(username, password){
+    const message = {
+      [DATA_AUTH] : {
+        [AUTH_USER] : username,
+        [AUTH_PASSWORD] : password
+      },
+      [WEBSOCKET_DATA] : {
+        [DATA_VIAL] : orderCollection.vials.map(getId),
+        [DATA_ACTIVITY_ORDER] : orderCollection.orderIDs,
+      },
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CORRECT_ORDER,
+    };
+
+    return websocket.send(message).then(
+      (message) => {
+        if (message[AUTH_IS_AUTHENTICATED]){
+          stopCorrectingOrder();
+          setLoginError();
+        } else {
+          setLoginError(new RecoverableError("Forkert login"));
+        }
+      }
+    )
   }
 
   function startCancelOrders(){
@@ -545,20 +573,43 @@ export function ActivityModal({
   const CancelFreeButton = <MarginButton onClick={stopFreeing}>Rediger</MarginButton>
   const PDFButton = <MarginButton onClick={onClickToPDF}>Frigivelsecertifikat</MarginButton>;
 
-  let sideElement = <div></div>;
+  /**
+   * This is the element that might be displayed if
+   */
+  const sideElement = (() => {
+    if(freeing){
+      return (
+        <Col md={6}>
+          <Authenticate
+            authenticate={onFree}
+            error={loginError}
+            setError={setLoginError}
+            fit_in={false}
+            headerMessage={`Frigiv ordre - ${orderCollection.orderIDs.join(', ')}`}
+            buttonMessage={"Frigiv ordre"}
+          />
+        </Col>
+      );
+    }
 
-  if (freeing){
-    sideElement = (<Col md={6}>
-      <Authenticate
-        authenticate={onFree}
-        error={loginError}
-        setError={setLoginError}
-        fit_in={false}
-        headerMessage={`Frigiv Ordre - ${orderCollection.orderIDs.join(', ')}`}
-        buttonMessage={"Frigiv Ordre"}
-      />
-    </Col>)
-  }
+    if(correctingOrder){
+      return (
+        <div>
+          <Authenticate
+            authenticate={onCorrect}
+            error={loginError}
+            setError={setLoginError}
+            fit_in={false}
+            headerMessage={`Ret ordre - ${orderCollection.orderIDs.join(', ')}`}
+            buttonMessage={"Ret ordre"}
+          />
+        </div>
+      );
+    }
+    return <div></div>;
+
+  })()
+
 
   const destinationHover = <HoverBox
     Base={<div>Destination:</div>}
@@ -594,7 +645,7 @@ export function ActivityModal({
     </Modal.Header>
     <Modal.Body>
         <Row>
-          <Col md={freeing ? 6 : 12}>
+          <Col md={(freeing || correctingOrder) ? 6 : 12}>
           <Row>
             <Row style={marginRows}>
               <Col xs={3}>{destinationHover}</Col>
@@ -662,18 +713,19 @@ export function ActivityModal({
 
                 </tr>
               </thead>
-            <tbody>
-              {vialRows}
-            </tbody>
-          </Table>
-          <div className="flex-row-reverse d-flex">
-            {(addingVial || freeing) ? "" :
-              <div>
-                <ClickableIcon
-                  label="add-new-vial"
-                  src="/static/images/plus.svg"
-                  onClick={allocateNewVial}/>
-              </div>}
+              <tbody>
+                {vialRows}
+              </tbody>
+            </Table>
+            <div className="flex-row-reverse d-flex">
+              <Optional exists={addingVial || freeing}>
+                <div>
+                  <ClickableIcon
+                    label="add-new-vial"
+                    src="/static/images/plus.svg"
+                    onClick={allocateNewVial}/>
+                </div>
+              </Optional>
             </div>
           </div>
         </Row>
@@ -685,6 +737,11 @@ export function ActivityModal({
           <Optional exists={canCancel}>
             <Col md="auto">
               <MarginButton onClick={startCancelOrders}>Afvis</MarginButton>
+            </Col>
+          </Optional>
+          <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !correctingOrder}>
+            <Col md="auto">
+              <MarginButton onClick={startCorrectingOrder}>Ret ordre</MarginButton>
             </Col>
           </Optional>
         </Col>
