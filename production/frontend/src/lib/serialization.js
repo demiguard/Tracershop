@@ -1,10 +1,7 @@
-import { MODELS } from "../dataclasses/dataclasses";
+import { Booking, MODELS } from "../dataclasses/dataclasses";
 import { ParseJSONstr } from "./formatting";
 
 export function deserialize_list(modelType, models){
-  if(typeof models === "string"){
-    models = ParseJSONstr(models)
-  }
   const serializedList = [];
 
   for(const model of models){
@@ -29,6 +26,11 @@ export function deserialize_map(modelType, models, oldMap){
   return newMap
 }
 
+export function deserialize_booking(data){
+  const parsedJSON = ParseJSONstr(inputJSON);
+  return deserialize_list(Booking, parsedJSON);
+
+}
 export function deserialize(inputJSON){
   const parsedJSON = ParseJSONstr(inputJSON);
   const returnObject = {};
