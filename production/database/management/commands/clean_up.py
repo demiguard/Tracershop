@@ -5,6 +5,7 @@ from time import sleep
 # Third Party Packages
 
 # Django packages
+from django.utils import timezone
 from django.core.management.base import BaseCommand
 
 # Tracershop modules
@@ -29,7 +30,7 @@ def next_clean_date(now: datetime):
 class Command(BaseCommand):
   def handle(self, *args, **options):
     while True:
-      now = datetime.now()
+      now = timezone.now()
 
       bookings = get_expired_bookings(now)
       bookings.delete()

@@ -25,7 +25,7 @@ import { ParseDjangoModelJson } from "~/lib/formatting.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
 import { TracerCatalog } from '~/contexts/tracerCatalog.js';
 import { useTracerCatalog } from "~/contexts/tracerCatalog.js";
-import { deserialize_list, deserialize_map } from "~/lib/serialization.js";
+import { deserialize_list, deserialize_map, deserialize_single } from "~/lib/serialization.js";
 
 function get_raw_bookings_from_message(message){
   return message[WEBSOCKET_DATA][DATA_BOOKING];
@@ -131,9 +131,12 @@ export function ShopOrderPage ({relatedCustomer}){
   function addBookingFromUpdate(message){
     if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_CREATE_BOOKING){
       setBookings(oldBookings => {
+        console.log(message)
+
         const raw_bookings = get_raw_bookings_from_message(message)
         const newBookings = new Map(oldBookings);
-        const parsed_bookings = deserialize_list(Booking, raw_bookings)
+
+        const parsed_bookings = deserialize(Booking, raw_bookings)
         const filteredBookings = bookingFilter(parsed_bookings, {
           state : state,
           active_date : activeDate,
