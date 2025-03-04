@@ -9,7 +9,7 @@ from django.db.models import QuerySet
 from channels.db import database_sync_to_async
 
 # Tracershop packages
-from constants import DATE_FORMAT, DATETIME_FORMAT, TIME_FORMAT
+from constants import DATE_FORMAT, DATETIMEZONE_FORMAT, TIME_FORMAT
 from database.models import TracershopModel
 
 def serialize_value(value: Any) -> Any:
@@ -42,7 +42,7 @@ def serialize_value(value: Any) -> Any:
     case Enum():
       return value.value
     case datetime():
-      return value.strftime(DATETIME_FORMAT)
+      return value.strftime(DATETIMEZONE_FORMAT)
     case date():
       return value.strftime(DATE_FORMAT)
     case time():

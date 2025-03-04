@@ -18,7 +18,7 @@ export function TimeDisplay(props){
       return "Ukendt tidspunkt";
     }
     if(fTime instanceof Date) {
-      return `${FormatDateStr(fTime.getHours())}:${FormatDateStr(fTime.getMinutes())}`;
+      return fTime.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit"});
     }
     if(fTime.length > 8){
       fTime = formatTimeStamp(fTime);
