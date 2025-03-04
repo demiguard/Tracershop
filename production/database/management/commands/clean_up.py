@@ -25,7 +25,7 @@ def get_expired_telemetry(now: datetime):
 
 def next_clean_date(now: datetime):
   tomorrow = now + timedelta(days=1)
-  return datetime(tomorrow.year, tomorrow.month, tomorrow.day,0,1,0)
+  return timezone.make_aware(datetime(tomorrow.year, tomorrow.month, tomorrow.day,0,1,0))
 
 class Command(BaseCommand):
   def handle(self, *args, **options):
