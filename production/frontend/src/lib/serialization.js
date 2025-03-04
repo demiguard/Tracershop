@@ -2,6 +2,9 @@ import { MODELS } from "../dataclasses/dataclasses";
 import { ParseJSONstr } from "./formatting";
 
 export function deserialize_list(modelType, models){
+  if(typeof models === "string"){
+    models = ParseJSONstr(models)
+  }
   const serializedList = [];
 
   for(const model of models){
