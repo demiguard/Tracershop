@@ -557,7 +557,7 @@ describe("Activity Modal Test", () => {
       fireEvent.change(usernameInput, {target : { value : "Username"}})
       fireEvent.change(passwordInput, {target : { value : "password"}})
 
-      const freeButton = screen.getByRole('button', {name : "Frigiv Ordre"});
+      const freeButton = screen.getByRole('button', {name : "Frigiv ordre"});
       freeButton.click()
     });
   });
@@ -606,7 +606,7 @@ describe("Activity Modal Test", () => {
     await act(async () => {
       fireEvent.change(screen.getByLabelText('username'), {target : { value : "Username"}});
       fireEvent.change(screen.getByLabelText('password'), {target : { value : "Password"}});
-      screen.getByRole('button', {name : "Frigiv Ordre"}).click();
+      screen.getByRole('button', {name : "Frigiv ordre"}).click();
     });
 
     expect(websocket.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -670,7 +670,7 @@ describe("Activity Modal Test", () => {
       fireEvent.change(usernameInput, {target : { value : "Username"}})
       fireEvent.change(passwordInput, {target : { value : "password"}})
 
-      const freeButton = await screen.findByRole('button', {name : "Frigiv Ordre"});
+      const freeButton = await screen.findByRole('button', {name : "Frigiv ordre"});
       freeButton.click()
     });
 
