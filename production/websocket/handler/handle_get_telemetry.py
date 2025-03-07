@@ -15,7 +15,7 @@ from shared_constants import WEBSOCKET_MESSAGE_GET_TELEMETRY, WEBSOCKET_MESSAGE_
 from websocket.handler_base import HandlerBase
 
 class HandleGetTelemetry(HandlerBase):
-  @classmethod
+  @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_GET_TELEMETRY
 

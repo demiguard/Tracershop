@@ -37,6 +37,10 @@ def serialize_field(field: Field) -> str:
   print(field)
   return f"new DatabaseField({field.name})"
 
+def serialize_value(val):
+  if(isinstance(val, str)):
+    return f"\"{val}\""
+  return val
 
 
 class Command(BaseCommand):
@@ -67,7 +71,7 @@ class Command(BaseCommand):
         if isinstance(value, type) and issubclass(value, Enum):
           out.write(f"export const {key} = {{\n")
           for val in value:
-            out.write(f"  {val.name} : {val.value},\n")
+            out.write(f"  {val.name} : {(serialize_value(val.value))},\n")
           out.write(f"}};\n")
         if isinstance(value, List):
           out.write(f"export const {key} = [\n")

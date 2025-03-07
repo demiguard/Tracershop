@@ -22,7 +22,6 @@ class HandlerBase(ABC):
   * __call__  method: the message handling function
 
   """
-  @abstractmethod
   @classproperty
   def message_type(cls) -> WEBSOCKET_MESSAGE_TYPES:
     raise NotImplemented
@@ -30,6 +29,5 @@ class HandlerBase(ABC):
   """The message that the handler handles, cannot be ABSTRACT"""
 
   @abstractmethod
-
   async def __call__(self, consumer: 'consumer.Consumer', message):
     return super().__call__(consumer, message) #pragma: no cover

@@ -40,7 +40,7 @@ from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_ID,\
-  JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_ECHO,\
+  JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_LOGIN,\
   WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_AUTH_LOGOUT,\
   WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_SUCCESS, ERROR_NO_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_GET_STATE, ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE,\
@@ -446,20 +446,6 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       self.assertTrue(conn)
       await comm.disconnect()
 
-  async def test_echo(self):
-
-    with self.assertLogs(DEBUG_LOGGER) as captured_logs:
-      comm = WebsocketCommunicator(app,"ws/")
-      conn, subprotocal = await comm.connect()
-      response = await self._sendReceive(comm, {
-          WEBSOCKET_MESSAGE_ID : self.message_id,
-          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO
-      })
-      await comm.disconnect()
-
-    self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
-    self.assertEqual(response[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_ECHO)
 
   ##### Auth #####
 

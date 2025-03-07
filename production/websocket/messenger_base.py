@@ -53,7 +53,6 @@ class MessengerBase(ABC):
   """
 
   @classproperty
-  @abstractmethod
   def message_type(cls) -> str:
     raise NotImplemented
 
