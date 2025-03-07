@@ -4,17 +4,20 @@
 
 # Tracershop modules
 from lib.formatting import toDate
-
+from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_GET_BOOKINGS, WEBSOCKET_DATE,\
   WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS,\
   WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES
 
 
 from websocket.handler_base import HandlerBase
 
 class HandleGetBooking(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_GET_BOOKINGS
+
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_GET_BOOKINGS
 
   async def __call__(self, consumer, message):
     """This is mostly here because Bookings ended up being 10 mb data, so

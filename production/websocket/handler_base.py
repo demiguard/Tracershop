@@ -8,6 +8,9 @@ It really is just an interface for the handlers in websocket
 from abc import ABC, abstractmethod
 
 # Tracershop modules
+from shared_constants import WEBSOCKET_MESSAGE_TYPES
+from lib.utils import classproperty
+
 from websocket import consumer
 
 BASE_MESSAGE_TYPE = "ABSTRACT"
@@ -19,9 +22,14 @@ class HandlerBase(ABC):
   * __call__  method: the message handling function
 
   """
-  message_type = BASE_MESSAGE_TYPE
+  @abstractmethod
+  @classproperty
+  def message_type(cls) -> WEBSOCKET_MESSAGE_TYPES:
+    raise NotImplemented
+
   """The message that the handler handles, cannot be ABSTRACT"""
 
   @abstractmethod
+
   async def __call__(self, consumer: 'consumer.Consumer', message):
     return super().__call__(consumer, message) #pragma: no cover

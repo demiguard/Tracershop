@@ -9,19 +9,21 @@ from channels.auth import get_user
 from core.exceptions import IllegalActionAttempted
 from database.models import User, UserAssignment
 from constants import ERROR_LOGGER
-
-from shared_constants import WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,\
-  DATA_USER, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
+from lib.utils import classproperty
+from shared_constants import DATA_USER, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
   WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE,\
-  WEBSOCKET_MESSAGE_UPDATE_STATE
+  WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES
 
 from websocket.handler_base import HandlerBase
 
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleCreateExternalUser(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER
+
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER
 
   async def __call__(self, consumer, message):
     user: User = await get_user(consumer.scope)
@@ -39,7 +41,7 @@ class HandleCreateExternalUser(HandlerBase):
     else:
       data = {DATA_USER : [newUser]}
 
-    await consumer._broadcastProduction({
+    await consumer.broadcastProduction({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : data,

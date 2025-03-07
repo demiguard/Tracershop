@@ -9,22 +9,18 @@ from channels.auth import get_user
 
 # Tracershop modules
 from constants import AUDIT_LOGGER, ERROR_LOGGER
-
+from lib.utils import classproperty
 from database.models import User
-from shared_constants import WEBSOCKET_MESSAGE_RESTART_VIAL_DOG,\
-  WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
-  WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
-  WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_REFRESH
-
+from shared_constants import WEBSOCKET_MESSAGE_TYPES
 from websocket.handler_base import HandlerBase
 
 error_logger = getLogger(ERROR_LOGGER)
 audit_logger = getLogger(AUDIT_LOGGER)
 
-
 class HandleRestartVials(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_RESTART_VIAL_DOG
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_RESTART_VIAL_DOG
 
   async def __call__(self, consumer, message):
     user: User = await get_user(consumer.scope)

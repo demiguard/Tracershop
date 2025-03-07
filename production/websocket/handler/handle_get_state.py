@@ -9,11 +9,11 @@ from django.utils import timezone
 
 # Tracershop imports
 from constants import ERROR_LOGGER
-
+from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_DATE,\
   WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD,\
-  WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_REFRESH
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES
 
 from websocket.consumer import Consumer
 from websocket.handler_base import HandlerBase
@@ -21,9 +21,9 @@ from websocket.handler_base import HandlerBase
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleGetState(HandlerBase):
-  @property
+  @classproperty
   def message_type(self):
-    return WEBSOCKET_MESSAGE_GET_STATE
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_GET_STATE
 
   async def __call__(self, consumer: Consumer, message):
     now = consumer.datetimeNow.now()

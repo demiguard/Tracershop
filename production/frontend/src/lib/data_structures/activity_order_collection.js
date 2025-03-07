@@ -155,7 +155,7 @@ export class ActivityOrderCollection {
     this.delivered_activity = 0;
     this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
-    this.vial = [];
+    this.vials = [];
 
     this.#contributing_orders = [];
     this.#cancelled_orders = [];

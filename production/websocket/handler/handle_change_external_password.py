@@ -10,8 +10,8 @@ from django.core.exceptions import ObjectDoesNotExist
 from constants import ERROR_LOGGER
 from core.exceptions import IllegalActionAttempted
 from database.models import User
-
-from shared_constants import WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,\
+from lib.utils import classproperty
+from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
   AUTH_PASSWORD, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_DATA_ID,\
   WEBSOCKET_OBJECT_DOES_NOT_EXISTS, WEBSOCKET_MESSAGE_TYPE
@@ -21,7 +21,9 @@ from websocket.handler_base import HandlerBase
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleChangeExternalPassword(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD
 
   async def __call__(self, consumer, message):
     user: User = await get_user(consumer.scope)
@@ -38,9 +40,9 @@ class HandleChangeExternalPassword(HandlerBase):
     except ObjectDoesNotExist:
       return await consumer.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_OBJECT_DOES_NOT_EXISTS,
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT,
       })
     except IllegalActionAttempted:
       error_logger.error("Somehow an illegal action was attempted!")
@@ -48,7 +50,7 @@ class HandleChangeExternalPassword(HandlerBase):
     # Success return message
     await consumer.send_json({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS
     })

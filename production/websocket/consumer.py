@@ -12,9 +12,8 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 
 # Python standard Library
-from asgiref.sync import sync_to_async
 from enum import Enum
-from subprocess import call
+
 import logging
 from pprint import pformat
 import traceback
@@ -33,11 +32,11 @@ from django.conf import settings
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from constants import DEBUG_LOGGER, ERROR_LOGGER,\
-    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER, DATE_FORMAT, TIME_FORMAT, DATETIME_FORMAT
+    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER
 
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS,ERROR_UNKNOWN_FAILURE, ERROR_TYPE, NO_ERROR,\
-    DATA_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_ECHO,\
+    DATA_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN, \
     WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_SUCCESS,\
     WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_SESSION_ID
 
@@ -138,7 +137,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     return await a_serialize_redis(message)
 
 
-  async def _broadcastGlobal(self, message: Dict):
+  async def broadcastGlobal(self, message: Dict):
     """Broadcast a message to all connected users
 
     Args:
@@ -148,7 +147,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.channel_layer.group_send(self.global_group, message)
 
 
-  async def _broadcastProduction(self, message: Dict):
+  async def broadcastProduction(self, message: Dict):
     """Broadcast only to the group production
 
     Args:
@@ -158,13 +157,13 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.channel_layer.group_send('production', message) #
 
 
-  async def _broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
+  async def broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
     message = await self._prepBroadcastMessage(message)
     if customerIDs is None:
-      await self._broadcastGlobal(message)
+      await self.broadcastGlobal(message)
       return
 
-    await self._broadcastProduction(message)
+    await self.broadcastProduction(message)
     for customerID in customerIDs:
       await self.channel_layer.group_send(f'customer_{customerID}', message)
 
@@ -289,15 +288,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
       WEBSOCKET_MESSAGE_ID : message_id,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_ERROR,
       WEBSOCKET_MESSAGE_ERROR : error,
-    })
-
-  ##### Handlers #####
-  # Universal Handlers
-  async def HandleEcho(self, message : Dict):
-    await self.send_json({ #pragma: no cover
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ERROR
     })
 
   ##### AUTH METHODS #####

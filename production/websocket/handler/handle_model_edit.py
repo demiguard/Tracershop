@@ -8,19 +8,21 @@ from channels.auth import get_user
 
 # Tracershop modules
 from constants import ERROR_LOGGER
-
+from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_EDIT,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_REFRESH
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES
 
 from websocket.handler_base import HandlerBase
 
 logger = getLogger(ERROR_LOGGER)
 
 class HandleModelEdit(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_MODEL_EDIT
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_EDIT
 
   async def __call__(self, consumer, message):
     """Primitive endpoint for editing a model
@@ -40,7 +42,7 @@ class HandleModelEdit(HandlerBase):
 
     if updatedModels is not None:
       customerIDs = await consumer.db.getCustomerIDs(updatedModels)
-      await consumer._broadcastCustomer({
+      await consumer.broadcastCustomer({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : updatedModels},
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,

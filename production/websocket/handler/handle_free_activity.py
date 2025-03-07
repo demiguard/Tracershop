@@ -6,15 +6,17 @@
 from shared_constants import WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_DATA,\
   DATA_DELIVER_TIME, DATA_ACTIVITY_ORDER, DATA_VIAL, AUTH_IS_AUTHENTICATED,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_SUCCESS,\
-  WEBSOCKET_MESSAGE_ID
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES
 
 from tracerauth.types import AuthenticationResult
 from tracerauth.audit_logging import logFreeActivityOrders
-
+from lib.utils import classproperty
 from websocket.handler_base import HandlerBase
 
 class HandleFreeActivity(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_FREE_ACTIVITY
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_FREE_ACTIVITY
 
   async def __call__(self, consumer, message):
     """Handler for freeing an activity order
@@ -50,10 +52,10 @@ class HandleFreeActivity(HandlerBase):
                                                     consumer.datetimeNow.now())
     logFreeActivityOrders(user, orders, vials)
     customerIDs = await consumer.db.getCustomerIDs(orders)
-    await consumer._broadcastCustomer({
+    await consumer.broadcastCustomer({
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ACTIVITY,
+      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : {

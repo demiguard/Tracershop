@@ -9,15 +9,18 @@ from django.contrib.auth import aauthenticate
 # Tracershop imports
 from database.models import User, UserGroups
 
-from shared_constants import WEBSOCKET_MESSAGE_AUTH_LOGIN,\
+from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
   DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD, DATA_USER
 
+from lib.utils import classproperty
 from tracerauth.ldap import checkUserGroupMembership
 
 from websocket.handler_base import HandlerBase
 
 class HandleAuthLogin(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_AUTH_LOGIN
+  @classproperty
+  def message_type(cls):
+   return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_AUTH_LOGIN
 
   async def __call__(self, consumer, message):
     auth = message[DATA_AUTH]

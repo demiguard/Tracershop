@@ -8,18 +8,22 @@ from channels.auth import get_user
 from core.exceptions import RequestingNonExistingEndpoint
 from constants import ERROR_LOGGER
 from lib.formatting import timeConverter
+from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_MASS_ORDER,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_ERROR,\
   ERROR_TYPE, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
   ERROR_EARLY_TIME_SLOT, DATA_INJECTION_ORDER, DATA_ACTIVITY_ORDER,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS
+  SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPES
 
 from websocket.handler_base import HandlerBase
 
 class HandleMassOrders(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_MASS_ORDER
+
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MASS_ORDER
 
   async def __call__(self, consumer, message):
     """Handler function for the WEBSOCKET_MESSAGE_MASS_ORDER messages.
@@ -65,7 +69,7 @@ class HandleMassOrders(HandlerBase):
     customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
     customerIDs = [customerID for customerID in customerIDset]
 
-    await consumer._broadcastCustomer({
+    await consumer.broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : orders,

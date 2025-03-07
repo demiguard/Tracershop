@@ -6,16 +6,20 @@ from django.db.utils import IntegrityError
 from channels.auth import get_user
 
 # Tracershop modules
+from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_REFRESH
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES
 
 from websocket.handler_base import HandlerBase
 
 class HandleModelCreate(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_MODEL_CREATE
+
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_CREATE
 
   async def __call__(self, consumer, message):
     user = await get_user(consumer.scope)
@@ -41,7 +45,7 @@ class HandleModelCreate(HandlerBase):
       })
       return
 
-    await consumer._broadcastGlobal({
+    await consumer.broadcastGlobal({
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : {

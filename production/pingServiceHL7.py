@@ -32,7 +32,7 @@ from shared_constants import DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WE
     WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_CREATE_BOOKING
 from database.database_interface import DatabaseInterface
 from database.models import Booking, Location, ProcedureIdentifier, BookingStatus
-from websocket.messages import getNewMessageID
+from websocket.messenger_base import getNewMessageID
 logger = logging.getLogger(PING_SERVICE_LOGGER)
 
 database_interface = DatabaseInterface()

@@ -600,11 +600,11 @@ export class WeeklyOrderOverview extends ITimeTableDataContainer {
     const /** @type {Array<ActivityOrder>} */ activityOrders = activityOrdersFilter(state, {
       dateRange : weeklyRange,
       state : state
-    });
+    }).filter((order) => order.status != ORDER_STATUS.CANCELLED );
 
     const /** @type {Array<InjectionOrder>} */ injectionOrders = injectionOrdersFilter(state, {
       state : state, dateRange : weeklyRange
-    });
+    }).filter((order) => order.status != ORDER_STATUS.CANCELLED );
 
     function columnNameFunction(columnName){
       return <div style={JUSTIFY.center}>{columnName}</div>

@@ -27,7 +27,7 @@ from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS, WE
 from database.database_interface import DatabaseInterface
 from database.models import Vial, Tracer, Customer, User
 from lib.parsing import parse_val_file, update_customer_mapping, update_tracer_mapping
-from websocket.messages import getNewMessageID
+from websocket.messenger_base import getNewMessageID
 
 dbi = DatabaseInterface()
 

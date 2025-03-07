@@ -8,19 +8,20 @@ from channels.auth import get_user
 # Tracershop imports
 from database.models import User, UserAssignment
 from constants import ERROR_LOGGER
-
-from shared_constants import WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
-  DATA_USER, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_ID,\
+from lib.utils import classproperty
+from shared_constants import DATA_USER, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
   WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE,\
-  WEBSOCKET_MESSAGE_UPDATE_STATE
+  WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES
 
 from websocket.handler_base import HandlerBase
 
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleCreateUserAssignment(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT
 
   async def __call__(self, consumer, message):
     user = await get_user(consumer.scope)
@@ -50,7 +51,7 @@ class HandleCreateUserAssignment(HandlerBase):
       data_dict[DATA_USER] = [new_user]
 
 
-    return await consumer._broadcastGlobal({
+    return await consumer.broadcastGlobal({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_STATUS : success.value,

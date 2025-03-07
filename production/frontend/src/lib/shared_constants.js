@@ -130,7 +130,6 @@ export const WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER = "createExternalUser";
 export const WEBSOCKET_MESSAGE_CREATE_INJECTION_ORDER = "createInjectionOrder";
 export const WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT = "createUserAssignment";
 export const WEBSOCKET_MESSAGE_DELETE_BOOKING = "create_booking";
-export const WEBSOCKET_MESSAGE_ECHO = "echo";
 export const WEBSOCKET_MESSAGE_ERROR = "error";
 export const WEBSOCKET_MESSAGE_FREE_ACTIVITY = "freeActivity";
 export const WEBSOCKET_MESSAGE_FREE_INJECTION = "freeInjection";
@@ -154,35 +153,44 @@ export const WEBSOCKET_MESSAGE_STATUS = "status";
 export const WEBSOCKET_MESSAGE_SUCCESS = "success";
 export const WEBSOCKET_MESSAGE_TEST_PRINTER = "testPrinter";
 export const WEBSOCKET_MESSAGE_TYPE = "messageType";
-export const WEBSOCKET_MESSAGE_TYPES = [
-  "login",
-  "logout",
-  "whoami",
-  "createUserAssignment",
-  "echo",
-  "getOrders",
-  "getState",
-  "freeActivity",
-  "freeInjection",
-  "createModel",
-  "deleteModel",
-  "editModel",
-  "massOrder",
-  "getBookings",
-  "getTelemetry",
-  "moveOrder",
-  "restoreOrders",
-  "logError",
-  "restartVialDog",
-  "changeExternalPassword",
-  "createExternalUser",
-  "testPrinter",
-  "releaseMulti",
-  "correctOrder",
-]
+export const WEBSOCKET_MESSAGE_TYPES = {
+  WEBSOCKET_MESSAGE_AUTH_LOGIN : login,
+  WEBSOCKET_MESSAGE_AUTH_LOGOUT : logout,
+  WEBSOCKET_MESSAGE_AUTH_WHOAMI : whoami,
+  WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : createUserAssignment,
+  WEBSOCKET_MESSAGE_GET_ORDERS : getOrders,
+  WEBSOCKET_MESSAGE_GET_STATE : getState,
+  WEBSOCKET_MESSAGE_FREE_ACTIVITY : freeActivity,
+  WEBSOCKET_MESSAGE_FREE_INJECTION : freeInjection,
+  WEBSOCKET_MESSAGE_MODEL_CREATE : createModel,
+  WEBSOCKET_MESSAGE_MODEL_DELETE : deleteModel,
+  WEBSOCKET_MESSAGE_MODEL_EDIT : editModel,
+  WEBSOCKET_MESSAGE_MASS_ORDER : massOrder,
+  WEBSOCKET_MESSAGE_GET_BOOKINGS : getBookings,
+  WEBSOCKET_MESSAGE_GET_TELEMETRY : getTelemetry,
+  WEBSOCKET_MESSAGE_MOVE_ORDERS : moveOrder,
+  WEBSOCKET_MESSAGE_RESTORE_ORDERS : restoreOrders,
+  WEBSOCKET_MESSAGE_LOG_ERROR : logError,
+  WEBSOCKET_MESSAGE_RESTART_VIAL_DOG : restartVialDog,
+  WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : changeExternalPassword,
+  WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : createExternalUser,
+  WEBSOCKET_MESSAGE_TEST_PRINTER : testPrinter,
+  WEBSOCKET_MESSAGE_RELEASE_MULTI : releaseMulti,
+  WEBSOCKET_MESSAGE_CORRECT_ORDER : correctOrder,
+};
 export const WEBSOCKET_MESSAGE_UPDATE_STATE = "updateState";
 export const WEBSOCKET_OBJECT_DOES_NOT_EXISTS = "objectDoesNotExists";
 export const WEBSOCKET_REFRESH = "refresh";
 export const WEBSOCKET_SEND_EVENT = "sendEvent";
+export const WEBSOCKET_SERVER_MESSAGES = {
+  WEBSOCKET_MESSAGE_CREATE_BOOKING : delete_booking,
+  WEBSOCKET_MESSAGE_DELETE_BOOKING : create_booking,
+  WEBSOCKET_MESSAGE_AUTH_LOGIN : login,
+  WEBSOCKET_MESSAGE_AUTH_LOGOUT : logout,
+  WEBSOCKET_MESSAGE_ERROR : error,
+  WEBSOCKET_MESSAGE_UPDATE_STATE : updateState,
+  WEBSOCKET_MESSAGE_GET_TELEMETRY : getTelemetry,
+  WEBSOCKET_MESSAGE_GET_BOOKINGS : getBookings,
+};
 export const WEBSOCKET_SESSION_ID = "sessionid";
 export const WEBSOCKET_UPDATE_SERVER_CONFIG = "updateServerConfig";

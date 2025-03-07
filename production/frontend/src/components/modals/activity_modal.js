@@ -171,9 +171,7 @@ function VialRow({
     && !freeing;
 
   //Effects
-  useEffect(() => {
-    setEtherealVial({...vial});
-  },[vial]);
+  useEffect(() => { if(vial.id != -1){ setEtherealVial({...vial}); } },[vial]);
 
   const vialRowState = (() => {
     if(editing) {return vialRowStates.EDITING;}
@@ -718,7 +716,7 @@ export function ActivityModal({
               </tbody>
             </Table>
             <div className="flex-row-reverse d-flex">
-              <Optional exists={addingVial || freeing}>
+              <Optional exists={!(addingVial || freeing)}>
                 <div>
                   <ClickableIcon
                     label="add-new-vial"

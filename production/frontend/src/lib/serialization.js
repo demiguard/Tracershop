@@ -27,7 +27,7 @@ export function deserialize_map(modelType, models, oldMap){
 }
 
 export function deserialize_booking(data){
-  const parsedJSON = ParseJSONstr(inputJSON);
+  const parsedJSON = ParseJSONstr(data);
   return deserialize_list(Booking, parsedJSON);
 
 }

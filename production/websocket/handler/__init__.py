@@ -21,7 +21,7 @@ from websocket import consumer
 debug_logger = getLogger(DEBUG_LOGGER)
 
 
-handler_file_glop_pattern = "*.py"
+PYTHON_FILE_GLOB_PATTERN = "*.py"
 
 class MessageHandler():
   """Container for handling of all the websocket messages
@@ -29,11 +29,11 @@ class MessageHandler():
   Dynamically loads all handler in the websocket.handler directory
   """
   def __init__(self):
-    self._handlers: Dict[str, 'handler_base.HandlerBase'] = {}
+    self._handlers: Dict[WEBSOCKET_MESSAGE_TYPES, 'handler_base.HandlerBase'] = {}
     messageHandlerDir =  Path(__file__).parent
 
 
-    for file_name in messageHandlerDir.glob(handler_file_glop_pattern):
+    for file_name in messageHandlerDir.glob(PYTHON_FILE_GLOB_PATTERN):
       if file_name.name == '__init__.py':
         continue
 
@@ -49,9 +49,6 @@ class MessageHandler():
           except TypeError: #pragma: no cover
             raise ContractBroken(f"{class_name} has abstract method __call__ and can't be created!")
 
-          if instance.message_type == handler_base.BASE_MESSAGE_TYPE: # pragma: no cover
-            raise ContractBroken(f"{class_name} has the default message type!")
-
           if instance.message_type in self._handlers: # pragma: no cover
             raise ContractBroken(f"Duplicate handler for {instance.message_type}!")
 
@@ -65,10 +62,7 @@ class MessageHandler():
     return f"MessageHandler with keys {[k for k in self._handlers]} created"
 
   async def __call__(self, consumer: 'consumer.Consumer', message):
-    if WEBSOCKET_MESSAGE_TYPE not in message: # pragma: no cover
-      raise ContractBroken()
-
-    message_type = message[WEBSOCKET_MESSAGE_TYPE]
+    message_type = WEBSOCKET_MESSAGE_TYPES(message[WEBSOCKET_MESSAGE_TYPE])
     if message_type not in self._handlers: # pragma: no cover
       raise ContractBroken()
 

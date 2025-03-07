@@ -9,8 +9,8 @@ from constants import ERROR_LOGGER
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_DELETE,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
-  WEBSOCKET_MESSAGE_TYPE
-
+  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES
+from lib.utils import classproperty
 from database.models import User
 
 from websocket.handler_base import HandlerBase
@@ -18,7 +18,9 @@ from websocket.handler_base import HandlerBase
 logger = getLogger(ERROR_LOGGER)
 
 class HandleModelDelete(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_MODEL_DELETE
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_DELETE
 
   async def __call__(self, consumer, message):
     user: User = await get_user(consumer.scope)
@@ -29,7 +31,7 @@ class HandleModelDelete(HandlerBase):
     )
 
     if success:
-      await consumer._broadcastGlobal({
+      await consumer.broadcastGlobal({
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
         WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],

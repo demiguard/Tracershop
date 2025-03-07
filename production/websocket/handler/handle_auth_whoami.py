@@ -11,8 +11,8 @@ from django.contrib.auth.models import AnonymousUser
 # Tracershop imports
 from database.models import User, UserGroups, SuccessfulLogin
 from constants import DEBUG_LOGGER
-
-from shared_constants import WEBSOCKET_MESSAGE_AUTH_WHOAMI,\
+from lib.utils import classproperty
+from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
   DATA_USER
 
 from tracerauth import auth
@@ -21,7 +21,9 @@ from websocket.handler_base import HandlerBase
 logger = getLogger(DEBUG_LOGGER)
 
 class HandleAuthWhoAmI(HandlerBase):
-  message_type = WEBSOCKET_MESSAGE_AUTH_WHOAMI
+  @classproperty
+  def message_type(cls):
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_AUTH_WHOAMI
 
   async def __call__(self, consumer, message):
     now = consumer.datetimeNow.now()
