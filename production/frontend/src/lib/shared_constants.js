@@ -77,7 +77,7 @@ export const EXCLUDED_STATE_MODELS = [
   "telemetry_request",
 ]
 
-export const JAVASCRIPT_VERSION = "2.0.2";
+export const JAVASCRIPT_VERSION = "2.0.3";
 
 export const NO_ERROR = "";
 
