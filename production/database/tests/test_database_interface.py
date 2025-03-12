@@ -22,7 +22,7 @@ from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from core.exceptions import IllegalActionAttempted, UndefinedReference,\
   RequestingNonExistingEndpoint
 from shared_constants import SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
-  DATA_ACTIVITY_ORDER, DATA_ISOTOPE
+  DATA_ACTIVITY_ORDER, DATA_ISOTOPE, DATA_BOOKING
 from database.models import Booking, Procedure, User, Tracer, Isotope,\
   Location, BookingStatus, UserGroups, ProcedureIdentifier, Customer,\
   DeliveryEndpoint, TracerTypes, ActivityOrder, InjectionOrder,\
@@ -31,8 +31,7 @@ from database.models import Booking, Procedure, User, Tracer, Isotope,\
 
 from lib.ProductionJSON import decode
 
-with patch('tracerauth.ldap.checkUserGroupMembership', mocks_ldap.checkUserGroupMembership):
-  from database.database_interface import DatabaseInterface
+from database.database_interface import DatabaseInterface
 
 
 DEFAULT_TEST_ORDER_DATE = date(2020,4,15)
@@ -779,16 +778,15 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
         )
       )
 
-  async def test_get_bookings(self):
-    booking_serialized = await self.db.get_bookings(
-      self.booking_date,
-      self.endpoint.id
+  def test_get_bookings(self):
+    data = asyncio.run(
+      self.db.get_bookings(
+        self.booking_date,
+        self.endpoint.id
+      )
     )
+    bookings = [ booking for booking in data[DATA_BOOKING] ]
 
-    data = decode(booking_serialized)
-    data = deserialize('python', data['booking'])
-
-    bookings = [ booking for booking in data]
     self.assertEqual(len(bookings), 11)
 
   def test_get_csv_data(self):

@@ -26,29 +26,27 @@ class Messenger:
   def __init__(self):
     self._messengers: Dict[WEBSOCKET_SERVER_MESSAGES, MessengerBase] = {}
 
-    messageHandlerDir =  Path(__file__).parent
+    messengerDir =  Path(__file__).parent
 
-
-    for file_name in messageHandlerDir.glob(PYTHON_FILE_GLOB_PATTERN):
+    for file_name in messengerDir.glob(PYTHON_FILE_GLOB_PATTERN):
       if file_name.name == '__init__.py':
         continue
 
-      module = import_module(f"websocket.handler.{file_name.name[:-3]}", "")
+      module = import_module(f"websocket.messenger.{file_name.name[:-3]}", "")
 
       for class_name, obj in getmembers(module, isclass):
-        if obj is MessengerBase:
+        if obj is MessengerBase or not issubclass(obj, MessengerBase):
           continue
 
-        if issubclass(obj, MessengerBase):
-          try:
-            instance = obj()
-          except TypeError: #pragma: no cover
-            raise ContractBroken(f"{class_name} has abstract method __call__ and can't be created!")
+        try:
+          instance = obj()
+        except TypeError: #pragma: no cover
+          raise ContractBroken(f"{class_name} has abstract method __call__ and can't be created!")
 
-          if instance.message_type in self._messengers: # pragma: no cover
-            raise ContractBroken(f"Duplicate handler for {instance.message_type}!")
+        if instance.message_type in self._messengers: # pragma: no cover
+          raise ContractBroken(f"Duplicate messenger for {instance.message_type}!")
 
-          self._messengers[instance.message_type] = instance
+        self._messengers[instance.message_type] = instance
 
 
     missing_message_types = [
@@ -56,10 +54,13 @@ class Messenger:
     ]
 
     if missing_message_types: # pragma: no cover
-      raise ContractBroken(f"Messenger handler missing for {missing_message_types}")
+      raise ContractBroken(f"Messenger messenger missing for {missing_message_types}")
 
   def getMessageArgs(self, message_type: str) -> Type[MessengerBase.MessageArgs]:
     return self._messengers[message_type].getMessageArgs()
 
-  async def __call__ (self, message_type: str, args: MessengerBase.MessageArgs):
+  async def __call__ (self, message_type: str, dict_args: Dict):
+    Args = self._messengers[message_type].getMessageArgs()
+    args = Args(**dict_args)
+
     await self._messengers[message_type](args)

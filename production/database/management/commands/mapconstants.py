@@ -71,7 +71,10 @@ class Command(BaseCommand):
         if isinstance(value, type) and issubclass(value, Enum):
           out.write(f"export const {key} = {{\n")
           for val in value:
-            out.write(f"  {val.name} : {(serialize_value(val.value))},\n")
+            if isinstance(val.value, str):
+              out.write(f"  {val.name} : {val.name},\n")
+            else:
+              out.write(f"  {val.name} : {(serialize_value(val.value))},\n")
           out.write(f"}};\n")
         if isinstance(value, List):
           out.write(f"export const {key} = [\n")

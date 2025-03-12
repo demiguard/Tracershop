@@ -6,7 +6,7 @@ from django import setup
 setup()
 
 from django.conf import settings
-from django.test.utils import get_runner, setup_databases
+from django.test.utils import get_runner
 
 # Note that the test setup sets the following things:
 # * Test Runner found in tests.runner

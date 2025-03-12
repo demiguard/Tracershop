@@ -100,3 +100,8 @@ class MessageType:
 class Message:
   def __init__(self, messageType: MessageType, skeleton: Dict[str, Any]) -> None:
     pass
+
+class LDAPSearchResult(Enum):
+  SUCCESS = 0
+  USER_DOES_NOT_EXISTS = 1
+  MISSING_USER_GROUP = 2

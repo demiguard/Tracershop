@@ -3,11 +3,11 @@ from websocket.handler_base import HandlerBase
 from lib.utils import classproperty
 from tracerauth.types import AuthenticationResult
 
-from shared_constants import WEBSOCKET_MESSAGE_CORRECT_ORDER,\
+from shared_constants import SUCCESS_STATUS_CRUD,\
   AUTH_IS_AUTHENTICATED, WEBSOCKET_REFRESH,\
   WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_DATA, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID,\
-  WEBSOCKET_MESSAGE_TYPES
+  WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 
 
 class HandleCorrectOrder(HandlerBase):
@@ -28,11 +28,11 @@ class HandleCorrectOrder(HandlerBase):
       message[WEBSOCKET_DATA], user
     )
 
-    await consumer.broadcastProduction({
-      AUTH_IS_AUTHENTICATED : True,
-      WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : corrected_state,
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, {
+      "consumer" : self,
+      "message_id" : message[WEBSOCKET_MESSAGE_ID],
+      "is_auth" : True,
+      "status" : SUCCESS_STATUS_CRUD.SUCCESS,
+      "data" : corrected_state,
+      "refresh" : False,
     })

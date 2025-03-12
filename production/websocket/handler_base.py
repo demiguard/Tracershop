@@ -23,7 +23,7 @@ class HandlerBase(ABC):
 
   """
   @classproperty
-  def message_type(cls) -> WEBSOCKET_MESSAGE_TYPES:
+  def message_type(cls) -> WEBSOCKET_MESSAGE_TYPES: #pragma: no cover
     raise NotImplemented
 
   """The message that the handler handles, cannot be ABSTRACT"""

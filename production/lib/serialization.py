@@ -1,7 +1,7 @@
 # Python standard library
-from enum import Enum
 from datetime import date, datetime, time
-from typing import Any, List, Dict
+from enum import Enum
+from typing import Any, Dict
 
 # Third party Library
 from django.core.serializers import serialize

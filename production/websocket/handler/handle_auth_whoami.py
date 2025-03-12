@@ -45,7 +45,7 @@ class HandleAuthWhoAmI(HandlerBase):
         await consumer.enterUserGroups(user)
         session_key = consumer.scope["session"].session_key
         return await consumer.respond_auth_message(message,
-                                                True,
-                                                {DATA_USER : [user]},
-                                                session_key)
+                                                   True,
+                                                   {DATA_USER : [user]},
+                                                   session_key)
     await consumer.respond_reject_auth_message(message)

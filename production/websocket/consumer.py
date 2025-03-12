@@ -12,8 +12,6 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 
 # Python standard Library
-from enum import Enum
-
 import logging
 from pprint import pformat
 import traceback
@@ -36,9 +34,9 @@ from constants import DEBUG_LOGGER, ERROR_LOGGER,\
 
 from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS,ERROR_UNKNOWN_FAILURE, ERROR_TYPE, NO_ERROR,\
-    DATA_AUTH, WEBSOCKET_MESSAGE_AUTH_LOGIN, \
+    DATA_AUTH, WEBSOCKET_SESSION_ID, \
     WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_SUCCESS,\
-    WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_SESSION_ID
+    WEBSOCKET_MESSAGE_TYPE, SUCCESS_STATUS_CRUD, WEBSOCKET_SERVER_MESSAGES
 
 from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
@@ -48,7 +46,7 @@ from lib.serialization import a_serialize_redis
 from lib.ProductionJSON import encode, decode
 from tracerauth import auth
 from tracerauth.types import AuthenticationResult
-
+from websocket import messenger
 from websocket import handler
 
 logger = logging.getLogger(DEBUG_LOGGER)
@@ -74,6 +72,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
     super().__init__()
     self.handler = handler.MessageHandler()
+    self.messenger = messenger.Messenger()
     self.db = db
     self.datetimeNow = datetimeNow
 
@@ -292,34 +291,40 @@ class Consumer(AsyncJsonWebsocketConsumer):
     })
 
   ##### AUTH METHODS #####
-  async def respond_auth_message(self, message: Dict[str, Any], isAuth, serialized_user, session_id):
-    await self.send_json({
-      AUTH_IS_AUTHENTICATED : isAuth,
-      AUTH_USER : serialized_user,
-      WEBSOCKET_SESSION_ID : session_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    })
+  async def respond_auth_message(self, message: Dict[str, Any], isAuth, user, session_id):
+    await self.messenger(
+      WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_RESPONSE, {
+        "consumer" : self,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_SESSION_ID : session_id,
+        AUTH_IS_AUTHENTICATED : isAuth,
+        "user" : user
+      }
+    )
+
 
   async def respond_reject_auth_message(self, message: Dict[str, Any]):
-    await self.send_json({
-      AUTH_IS_AUTHENTICATED : False,
-      AUTH_USER : {},
-      WEBSOCKET_SESSION_ID : "",
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    })
+    await self.messenger(
+      WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_RESPONSE, {
+        "consumer" : self,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+        WEBSOCKET_SESSION_ID : "",
+        AUTH_IS_AUTHENTICATED : False,
+        "user" : None
+      }
+    )
 
 
   ### End Model Primitives
   # Order functions
-  async def _RejectFreeing(self, message : Dict) -> None:
-    await self.send_json({
+  async def _RejectFreeing(self, message: Dict) -> None:
+    await self.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, {
+      "consumer" : self,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      AUTH_IS_AUTHENTICATED : False
+      AUTH_IS_AUTHENTICATED : False,
+      "status" : SUCCESS_STATUS_CRUD.SUCCESS,
+      "data" : {},
+      "refresh" : False,
     })
 
 

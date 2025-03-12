@@ -45,7 +45,8 @@ from database.models import ServerConfiguration, User,\
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
-from tracerauth.ldap import checkUserGroupMembership, LDAPSearchResult
+from tracerauth.types import LDAPSearchResult
+from tracerauth import tracer_ldap
 from tracerauth.audit_logging import logFreeInjectionOrder, logCorrectOrder
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
@@ -539,7 +540,7 @@ class DatabaseInterface():
       user = User.objects.get(username=username)
       user_created = False
     except ObjectDoesNotExist:
-      success, ldap_user_group = checkUserGroupMembership(username)
+      success, ldap_user_group = tracer_ldap.checkUserGroupMembership(username)
       if success == LDAPSearchResult.USER_DOES_NOT_EXISTS:
         return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME, None, None
 

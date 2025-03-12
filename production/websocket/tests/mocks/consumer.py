@@ -1,6 +1,6 @@
-from unittest.mock import Mock
+from unittest.mock import MagicMock
 
 
 from websocket.consumer import Consumer
 
-mockConsumer = Mock(Consumer)
+mockConsumer = MagicMock(Consumer)

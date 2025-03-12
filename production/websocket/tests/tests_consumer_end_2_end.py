@@ -43,7 +43,7 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_LOGIN,\
   WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_AUTH_LOGOUT,\
   WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_SUCCESS, ERROR_NO_MESSAGE_ID,\
-  WEBSOCKET_MESSAGE_GET_STATE, ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE,\
+  WEBSOCKET_MESSAGE_READ_STATE, ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE,\
   ERROR_INVALID_JAVASCRIPT_VERSION, DATA_CLOSED_DATE, DATA_USER, DATA_USER_ASSIGNMENT,\
   WEBSOCKET_DATA, DATA_ACTIVITY_ORDER, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS,\
   DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_CUSTOMER, WEBSOCKET_MESSAGE_MODEL_DELETE,\
@@ -56,7 +56,6 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   DATA_INJECTION_ORDER, DATA_TRACER
 
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
-from database.database_interface import DatabaseInterface
 from database.models import ClosedDate, User, UserGroups, MODELS,\
     ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
     Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder,\
@@ -65,9 +64,8 @@ from database.models import ClosedDate, User, UserGroups, MODELS,\
 from testing import TransactionTracershopTestCase
 from tracerauth.tests.mocks import mocks_ldap
 
-with patch('production.SECRET_KEY'):
-  with patch('tracerauth.ldap', mocks_ldap):
-    from websocket import consumer
+from database.database_interface import DatabaseInterface
+from websocket import consumer
 
 # Testing library
 
@@ -496,7 +494,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       })
 
       self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-      self.assertEqual(whoAmIMessage[AUTH_USER], {})
+      self.assertEqual(whoAmIMessage[AUTH_USER], None)
 
     self.assertRegexIn(f"{self.message_id} - {WEBSOCKET_MESSAGE_AUTH_LOGIN}", captured_debug_logs.output)
     self.assertRegexIn(f"{self.message_id} - {WEBSOCKET_MESSAGE_AUTH_LOGOUT}", captured_debug_logs.output)
@@ -529,7 +527,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       await comm.disconnect()
 
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmIMessage[AUTH_USER], {})
+    self.assertEqual(whoAmIMessage[AUTH_USER], None)
 
 
   ##### Error handling #####
@@ -564,8 +562,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
       self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
       self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
-
-      self.assertRegexIn(ERROR_INVALID_MESSAGE_TYPE, captured_error_logs.output)
+    self.assertRegexIn(ERROR_INVALID_MESSAGE_TYPE, captured_error_logs.output)
 
 
   async def test_InvalidJavascript(self):
@@ -577,7 +574,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         response = await self._sendReceive(comm, {
           WEBSOCKET_MESSAGE_ID : self.message_id,
           WEBSOCKET_JAVASCRIPT_VERSION : '1.0.0',
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ECHO,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_READ_STATE,
         })
         await comm.disconnect()
 
@@ -592,12 +589,12 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       with self.assertNoLogs(ERROR_LOGGER):
         response = await self._loginAdminSendRecieve({
           WEBSOCKET_MESSAGE_ID : self.message_id,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_STATE,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_READ_STATE,
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
         })
         self.assertEqual(self.message_id, response[WEBSOCKET_MESSAGE_ID])
 
-    self.assertRegexIn(fr"{self.message_id} - {WEBSOCKET_MESSAGE_GET_STATE}", captured_logs.output)
+    self.assertRegexIn(fr"{self.message_id} - {WEBSOCKET_MESSAGE_READ_STATE}", captured_logs.output)
 
 
   async def test_ModelCreate_ClosedDate(self):
@@ -1404,6 +1401,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         })
 
         message = await shop_comm_admin.receive_json_from()
+        if message[WEBSOCKET_MESSAGE_STATUS] != SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS.value:
+          print()
 
         self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
                          SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS.value)

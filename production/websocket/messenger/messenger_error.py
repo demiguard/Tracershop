@@ -11,7 +11,7 @@ from lib.utils import classproperty
 from websocket.messenger_base import MessengerBase
 from websocket import consumer
 
-class MessengerCreateBooking(MessengerBase):
+class MessengerError(MessengerBase):
   @classproperty
   def message_type(cls):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR
@@ -25,10 +25,6 @@ class MessengerCreateBooking(MessengerBase):
     return cls.Args
 
   @classmethod
-  async def __call__(cls, consumer: 'consumer.Consumer', args):
+  async def __call__(cls, args):
     if not isinstance(args, cls.Args):
       raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
-
-    await consumer.broadcastGlobal({
-
-    })

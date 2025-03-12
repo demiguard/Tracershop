@@ -21,6 +21,8 @@ class HandleRestoreOrders(HandlerBase):
     orders = await consumer.db.restoreDestinations(message[DATA_ACTIVITY_ORDER])
     customerIDs = await consumer.db.getCustomerIDs(orders)
 
+
+
     await consumer.broadcastCustomer({
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,

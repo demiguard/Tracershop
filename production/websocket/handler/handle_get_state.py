@@ -10,17 +10,16 @@ from django.utils import timezone
 # Tracershop imports
 from constants import ERROR_LOGGER
 from lib.utils import classproperty
-from shared_constants import WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_DATE,\
-  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD,\
-  WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES
+from shared_constants import WEBSOCKET_DATE,\
+  SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPES,\
+  WEBSOCKET_SERVER_MESSAGES
 
 from websocket.consumer import Consumer
 from websocket.handler_base import HandlerBase
 
 error_logger = getLogger(ERROR_LOGGER)
 
-class HandleGetState(HandlerBase):
+class HandleReadState(HandlerBase):
   @classproperty
   def message_type(self):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_GET_STATE
@@ -40,11 +39,12 @@ class HandleGetState(HandlerBase):
     state = await consumer.db.getState(now,
                                        await get_user(consumer.scope))
 
-    await consumer.send_json({
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : state,
-      WEBSOCKET_REFRESH : True,
-    })
+    await consumer.messenger(
+      WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+        "consumer" : consumer,
+        "message_id" : message[WEBSOCKET_MESSAGE_ID],
+        "status" : SUCCESS_STATUS_CRUD.SUCCESS,
+        "data" : state,
+        "refresh" : True,
+      }
+    )

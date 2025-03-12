@@ -9,7 +9,7 @@ from typing import Tuple
 
 # Tracershop packages
 from database.models import UserGroups
-from tracerauth.ldap import LDAPSearchResult
+from tracerauth.types import LDAPSearchResult
 
 mockedUserGroups = {
   '-AAAA0000' : UserGroups.Admin,
@@ -77,3 +77,6 @@ def checkUserGroupMembership(username: str) -> Tuple[LDAPSearchResult, UserGroup
     return LDAPSearchResult.MISSING_USER_GROUP, None
 
   return LDAPSearchResult.SUCCESS, mockedUserGroups.get(username, None)
+
+def _query_username(username, conn=None):
+  return

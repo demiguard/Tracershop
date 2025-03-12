@@ -13,7 +13,7 @@ from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
   DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD, DATA_USER
 
 from lib.utils import classproperty
-from tracerauth.ldap import checkUserGroupMembership
+from tracerauth.tracer_ldap import checkUserGroupMembership
 
 from websocket.handler_base import HandlerBase
 

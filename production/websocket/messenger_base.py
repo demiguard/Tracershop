@@ -4,22 +4,15 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
 from abc import ABC, abstractmethod
+from copy import deepcopy
 from dataclasses import dataclass
 from random import randint
-from typing import Dict, Type, TypedDict, TypeVar
+from typing import Any,Callable, Dict, Type
 
 
 # Tracershop modules
-
-from shared_constants import WEBSOCKET_SERVER_MESSAGES
 from lib.utils import classproperty
-
-from websocket import consumer
-
-class Message(TypedDict, total=False):
-  message_id : int
-  message_type : str
-
+from lib.serialization import a_serialize_redis
 
 def getNewMessageID() -> int:
   """Gets a random message ID
@@ -31,7 +24,7 @@ def getNewMessageID() -> int:
   Returns:
       int : A random number from [0, 2147483648]
   """
-  return randint(0, 1 << 32 - 1)
+  return randint(0, 1 << 32 - 1) # this would have been ub if it was C
 
 
 class MessengerBase(ABC):
@@ -46,15 +39,11 @@ class MessengerBase(ABC):
     async __call__ - Call operator, which takes the websocket.consumer and an
                      instance of the MessageArgs, which must send the message
                      to the client
-
-
-
-
   """
 
   @classproperty
   def message_type(cls) -> str:
-    raise NotImplemented
+    raise NotImplementedError
 
   @dataclass
   class MessageArgs:
@@ -63,14 +52,46 @@ class MessengerBase(ABC):
   @classmethod
   @abstractmethod
   def getMessageArgs(cls) -> Type[MessageArgs]:
-    raise NotImplemented
+    raise NotImplementedError
 
   @classmethod
   @abstractmethod
-  async def __call__(cls, consumer: 'consumer.Consumer', args: MessageArgs):
-    raise NotImplemented
+  async def __call__(cls, args: MessageArgs):
+    raise NotImplementedError
 
   #@classmethod
   #@abstractmethod
   #def generateExampleMessage(cls) -> str:
   #  raise NotImplemented
+
+class MessageField:
+  def __init__(self, generator: Callable[[], Any]):
+    self.generator=generator
+
+class MessageDataField():
+  def __init__(self):
+    pass
+
+
+class MessageBlueprint:
+  """Class describing a message in or out of the system
+
+  Note that something similar is found in tracerauth, but it should be moved
+  to this module
+  """
+
+  def __init__(self, skeleton: Dict[str, Any]):
+    self.skeleton = skeleton
+
+  async def serialize(self, data):
+    clone = deepcopy(self.skeleton)
+
+    # Note that we iterate over the skeleton, and not the clone, to circumvent
+    # indexing into an object that we are modifying
+    for key, value in self.skeleton.items():
+      if isinstance(value, MessageField):
+        clone[key] = value.generator()
+      if isinstance(value, MessageDataField):
+        clone[key] = data[key]
+
+    return await a_serialize_redis(clone)
