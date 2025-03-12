@@ -1,5 +1,5 @@
 # Python standard library
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, make_dataclass
 from typing import List
 
 # Third party model
@@ -8,7 +8,7 @@ from channels_redis.core import RedisChannelLayer
 
 # Tracershop modules
 from constants import CHANNEL_GROUP_GLOBAL, CHANNEL_TARGET_KEYWORD,\
-  CHANNEL_TARGET_BROADCAST_FUNCTION
+  CHANNEL_TARGET_BROADCAST_FUNCTION, MESSENGER_CONSUMER
 from lib.utils import classproperty
 from websocket import consumer
 from shared_constants import WEBSOCKET_SERVER_MESSAGES,\
@@ -34,35 +34,28 @@ class MessengerDeleteState(MessengerBase):
   def message_type(cls):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_DELETE_STATE
 
-  @dataclass(slots=True)
-  class Args(MessengerBase.MessageArgs):
-    consumer: consumer.Consumer
-    message_id : int
-    status: SUCCESS_STATUS_CRUD
-    datatype : str
-    data_ids: List[int] = field(default_factory=list)
+  Args = make_dataclass('Args', fields=[
+    (MESSENGER_CONSUMER, consumer.Consumer),
+    (WEBSOCKET_MESSAGE_ID, int),
+    (WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD),
+    (WEBSOCKET_DATATYPE, str),
+    (WEBSOCKET_DATA_ID, List[int], field(default_factory=list))
+  ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod
   def getMessageArgs(cls):
     return cls.Args
 
   @classmethod
-  async def __call__(cls, args: 'MessengerDeleteState.Args'):
-    if args.status == SUCCESS_STATUS_CRUD.SUCCESS:
-      response = await cls.message_blueprint.serialize({
-        WEBSOCKET_MESSAGE_STATUS : args.status,
-        WEBSOCKET_DATA_ID : args.data_ids,
-        WEBSOCKET_DATATYPE : args.datatype,
-        WEBSOCKET_MESSAGE_ID : args.message_id,
-      })
-      channel_layer: RedisChannelLayer = get_channel_layer()
+  async def __call__(cls, args):
+    if not isinstance(args, cls.Args): # pragma: no cover
+      raise TypeError("You passed an MessageArgs from another class and got this bonehead exception!")
+
+    consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
+    response = await cls.message_blueprint.serialize(args)
+
+    if args[WEBSOCKET_MESSAGE_STATUS] == SUCCESS_STATUS_CRUD.SUCCESS:
+      channel_layer: RedisChannelLayer = get_channel_layer() # type: ignore
       await channel_layer.group_send(CHANNEL_GROUP_GLOBAL, response)
     else:
-      response = await cls.message_blueprint.serialize({
-        WEBSOCKET_MESSAGE_STATUS : args.status,
-        WEBSOCKET_DATA_ID : [],
-        WEBSOCKET_DATATYPE : "",
-        WEBSOCKET_MESSAGE_ID : args.message_id,
-      })
-
-      await args.consumer.send_json(response)
+      await consumer_.send_json(response)

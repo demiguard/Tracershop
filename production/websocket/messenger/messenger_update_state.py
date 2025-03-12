@@ -1,6 +1,6 @@
 # Python Standard Library
-from dataclasses import dataclass, field
-from typing import Any, Dict
+from dataclasses import dataclass, field, make_dataclass
+from typing import Any, Dict, List
 
 # Third party packages
 from channels.layers import get_channel_layer
@@ -8,12 +8,12 @@ from channels_redis.core import RedisChannelLayer
 
 # Tracershop Packages
 from constants import CHANNEL_TARGET_KEYWORD, CHANNEL_TARGET_BROADCAST_FUNCTION,\
-  CHANNEL_GROUP_GLOBAL
-
+  CHANNEL_GROUP_GLOBAL, MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
   WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_SUCCESS
 from lib.utils import classproperty
+from database.models import TracershopModel
 from websocket.messenger_base import MessengerBase, MessageBlueprint, MessageDataField
 from websocket import consumer
 
@@ -33,17 +33,17 @@ class MessengerCreateBooking(MessengerBase):
   def message_type(cls):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE
 
-  @dataclass
-  class Args(MessengerBase.MessageArgs):
-    consumer: consumer.Consumer
-    message_id: int
-    status: SUCCESS_STATUS_CRUD
-    data: Dict[str, Any] = field(default_factory=dict)
-    refresh: bool = False
+  Args = make_dataclass("Args", [
+    (MESSENGER_CONSUMER, consumer.Consumer),
+    (WEBSOCKET_MESSAGE_ID, int),
+    (WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD),
+    (WEBSOCKET_DATA, Dict[str, List[TracershopModel]], field(default_factory=dict)),
+    (WEBSOCKET_REFRESH, bool, field(default=False))
+  ], slots=True, bases=(MessengerBase.MessageArgs,))
 
-    @classmethod
-    def get_group(cls):
-      return CHANNEL_GROUP_GLOBAL
+  @classmethod
+  def get_group(cls):
+    return CHANNEL_GROUP_GLOBAL
 
   @classmethod
   def getMessageArgs(cls):
@@ -51,18 +51,13 @@ class MessengerCreateBooking(MessengerBase):
 
   @classmethod
   async def __call__(cls, args):
-    if not isinstance(args, cls.Args):
+    if not isinstance(args, cls.Args): # pragma: no cover
       raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
 
     # There's a whole great issue figuring out where to send what.
-    LAYER: RedisChannelLayer = get_channel_layer()
-
+    LAYER: RedisChannelLayer = get_channel_layer() # type: ignore
 
     await LAYER.group_send(
-      args.get_group(),
-      await cls.message_blueprint.serialize({
-        WEBSOCKET_MESSAGE_ID : args.message_id,
-        WEBSOCKET_DATA : args.data,
-        WEBSOCKET_REFRESH : args.refresh,
-      })
+      cls.get_group(),
+      await cls.message_blueprint.serialize(args)
     )

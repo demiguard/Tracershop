@@ -30,13 +30,14 @@ from django.conf import settings
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from constants import DEBUG_LOGGER, ERROR_LOGGER,\
-    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER
+    CHANNEL_GROUP_GLOBAL, AUDIT_LOGGER, MESSENGER_CONSUMER
 
-from shared_constants import AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
+from shared_constants import AUTH_PASSWORD, DATA_USER, AUTH_USERNAME, AUTH_IS_AUTHENTICATED, \
     ERROR_INSUFFICIENT_PERMISSIONS,ERROR_UNKNOWN_FAILURE, ERROR_TYPE, NO_ERROR,\
-    DATA_AUTH, WEBSOCKET_SESSION_ID, \
+    DATA_AUTH, WEBSOCKET_SESSION_ID,WEBSOCKET_MESSAGE_STATUS, \
     WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_SUCCESS,\
-    WEBSOCKET_MESSAGE_TYPE, SUCCESS_STATUS_CRUD, WEBSOCKET_SERVER_MESSAGES
+    WEBSOCKET_MESSAGE_TYPE, SUCCESS_STATUS_CRUD, WEBSOCKET_SERVER_MESSAGES,\
+    WEBSOCKET_DATA, WEBSOCKET_REFRESH
 
 from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
@@ -78,14 +79,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   ### --- JSON methods --- ###
   @classmethod
-  async def encode_json(cls, text_data: Dict) -> str:
-    data = await a_serialize_redis(text_data)
+  async def encode_json(cls, content: Dict) -> str:
+    data = await a_serialize_redis(content)
 
     return encode(data)
 
   @classmethod
-  async def decode_json(cls, content: str) -> Dict:
-    return decode(content)
+  async def decode_json(cls, text_data: str) -> Dict:
+    return decode(text_data)
 
   async def enterUserGroups(self, user: User):
     if isinstance(user, AnonymousUser):
@@ -119,14 +120,14 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.accept()
     logger.debug(f"{user} connected!")
 
-  async def disconnect(self, close_code):
+  async def disconnect(self, code):
     user = await get_user(self.scope)
     await self.leaveUserGroups(user)
     await self.channel_layer.group_discard(self.global_group, self.channel_name)
     logger.debug(f"{user} disconnected!")
 
 
-  async def _prepBroadcastMessage(self, message: Dict[str, Any]) -> None:
+  async def _prepBroadcastMessage(self, message: Dict[str, Any]) -> Dict:
     if 'type' not in message:
       message['type'] = "broadcastMessage" # This is needed to point it to the send place
 
@@ -183,7 +184,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
 
   #Receive data from Websocket
-  async def receive_json(self, message: Dict) -> None:
+  async def receive_json(self, content: Dict, **kwargs) -> None:
     """This is the server side handler for new message.
     This function should be handler that just Detects the message and then proceeds
     to hand the function to Another handler function.
@@ -201,38 +202,38 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          needed to handle that message
     """
     time_start_ns = time_module.monotonic_ns()
+    user: User = await get_user(self.scope)
     try:
-      error = auth.validateMessage(message)
+      error = auth.validateMessage(content)
       if error != NO_ERROR:
-        error_logger.error(f"Handling an invalid message {message}")
+        error_logger.error(f"Handling an invalid message {content}")
         error_logger.error(f"With error code: {error}")
-        await self.RespondWithError(message, {ERROR_TYPE : error})
+        await self.RespondWithError(content, {ERROR_TYPE : error})
         return
 
-      logger.info(f"Websocket received message: {message[WEBSOCKET_MESSAGE_ID]} - {message[WEBSOCKET_MESSAGE_TYPE]}")
-      user = await get_user(self.scope)
-      if not auth.AuthMessage(user, message): #pragma: no cover
+      logger.info(f"Websocket received message: {content[WEBSOCKET_MESSAGE_ID]} - {content[WEBSOCKET_MESSAGE_TYPE]}")
+      if not auth.AuthMessage(user, content): #pragma: no cover
         logger.info(f"Insufficient Rights for {user}!")
-        await self.RespondWithError(message, {ERROR_TYPE : ERROR_INSUFFICIENT_PERMISSIONS})
+        await self.RespondWithError(content, {ERROR_TYPE : ERROR_INSUFFICIENT_PERMISSIONS})
         return
 
-      await self.handler(self, message)
+      await self.handler(self, content)
       time_end_ns = time_module.monotonic_ns()
       latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
-      await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.SUCCESS)
+      await create_telemetry_record(content[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.SUCCESS)
 
     except IllegalActionAttempted: #pragma: no cover
       error_logger.critical(pformat(
-        f"user: {user} send the message {pformat(message)} which contains an "
+        f"user: {user} send the message {pformat(content)} which contains an "
          "action witch the system detected as Illegal, either we got a pen "
          "tester, a bad actor or a frontend error."
         ))
     except Exception as E: # pragma: no cover
       # Very broad catch here, to prevent a hanging message on the client side
-      await self.HandleUnknownError(E, message)
+      await self.HandleUnknownError(E, content)
       time_end_ns = time_module.monotonic_ns()
       latency_ms = (time_end_ns - time_start_ns) / 1_000_000 # factor a million between ms and ns
-      await create_telemetry_record(message[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.FAILURE)
+      await create_telemetry_record(content[WEBSOCKET_MESSAGE_TYPE], latency_ms, TelemetryRecordStatus.FAILURE)
 
   ### Error handling ###
   async def HandleUnknownError(self,
@@ -294,11 +295,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def respond_auth_message(self, message: Dict[str, Any], isAuth, user, session_id):
     await self.messenger(
       WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_RESPONSE, {
-        "consumer" : self,
+        MESSENGER_CONSUMER : self,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_SESSION_ID : session_id,
         AUTH_IS_AUTHENTICATED : isAuth,
-        "user" : user
+        DATA_USER : user
       }
     )
 
@@ -306,11 +307,11 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def respond_reject_auth_message(self, message: Dict[str, Any]):
     await self.messenger(
       WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_RESPONSE, {
-        "consumer" : self,
+        MESSENGER_CONSUMER : self,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_SESSION_ID : "",
         AUTH_IS_AUTHENTICATED : False,
-        "user" : None
+        DATA_USER : None
       }
     )
 
@@ -319,16 +320,16 @@ class Consumer(AsyncJsonWebsocketConsumer):
   # Order functions
   async def _RejectFreeing(self, message: Dict) -> None:
     await self.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, {
-      "consumer" : self,
+      MESSENGER_CONSUMER : self,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       AUTH_IS_AUTHENTICATED : False,
-      "status" : SUCCESS_STATUS_CRUD.SUCCESS,
-      "data" : {},
-      "refresh" : False,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+      WEBSOCKET_DATA : {},
+      WEBSOCKET_REFRESH : False,
     })
 
 
-  async def _authenticateFreeing(self, message):
+  async def authenticate_from_auth(self, message):
     Auth = message[DATA_AUTH]
     user: User = await get_user(self.scope)
     authentication_result: Tuple[AuthenticationResult,

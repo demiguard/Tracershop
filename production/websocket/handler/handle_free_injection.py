@@ -38,7 +38,7 @@ class HandleFreeInjection(HandlerBase):
     # 3. Broadcast to users
 
     # Step 1: Determine the user credentials are valid
-    result, user = await consumer._authenticateFreeing(message)
+    result, user = await consumer.authenticate_from_auth(message)
 
     if result != AuthenticationResult.SUCCESS:
       return await consumer._RejectFreeing(message)

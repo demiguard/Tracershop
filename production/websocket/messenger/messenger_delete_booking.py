@@ -1,5 +1,6 @@
 # Python standard library
-from dataclasses import dataclass
+from dataclasses import make_dataclass, field
+from typing import List
 
 # Third party model
 from channels.layers import get_channel_layer
@@ -30,18 +31,19 @@ class MessengerDeleteBooking(MessengerBase):
   def message_type(cls):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_DELETE_BOOKING
 
-  @dataclass
-  class Args(MessengerBase.MessageArgs):
-    booking_id: int
+  Args = make_dataclass('Args', fields=[
+    (WEBSOCKET_DATA_ID, List[int])
+  ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod
   def getMessageArgs(cls):
     return cls.Args
 
   @classmethod
-  async def __call__(cls, args: 'MessengerDeleteBooking.Args'):
-    channel_layer: RedisChannelLayer = get_channel_layer()
+  async def __call__(cls, args):
+    if not isinstance(args, cls.Args):
+      raise TypeError("You passed another Messenger's arguments to this class, and now you get a bonehead exception!")
+
+    channel_layer: RedisChannelLayer = get_channel_layer() # type: ignore
     await channel_layer.group_send(CHANNEL_GROUP_GLOBAL,
-                                   await cls.message_blueprint.serialize({
-                                     WEBSOCKET_DATA_ID : [args.booking_id]
-                                   }))
+                                   await cls.message_blueprint.serialize(args))

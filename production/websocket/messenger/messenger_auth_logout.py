@@ -4,7 +4,7 @@ from dataclasses import dataclass, make_dataclass
 # Third party packages
 
 # Tracershop Packages
-#from constants import *
+from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_SERVER_MESSAGES,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPE
 
@@ -25,9 +25,9 @@ class MessengerAuthLogout(MessengerBase):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_LOGOUT
 
   Args = make_dataclass("Args", fields=[
-    ('consumer', consumer.Consumer),
+    (MESSENGER_CONSUMER, consumer.Consumer),
     (WEBSOCKET_MESSAGE_ID, int),
-  ], slots=True, bases=[MessengerBase.MessageArgs])
+  ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod
   def getMessageArgs(cls):
@@ -38,8 +38,8 @@ class MessengerAuthLogout(MessengerBase):
     if not isinstance(args, cls.Args):
       raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
 
-    await args.consumer.send_json(
-      await cls.message_blueprint.serialize({
-        WEBSOCKET_MESSAGE_ID : getattr(args, WEBSOCKET_MESSAGE_ID)
-      })
+    consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
+
+    await consumer_.send_json(
+      await cls.message_blueprint.serialize(args)
     )

@@ -104,7 +104,7 @@ class authTestCase(TransactionTestCase):
   def test_validateMessage_RealCase_1(self):
     self.assertEqual(validateMessage(
       {'messageType': 'whoami',
-      'messageID': 900288973,
+      WEBSOCKET_MESSAGE_ID: 900288973,
       'javascriptVersion': '1.0.0'}), ERROR_INVALID_JAVASCRIPT_VERSION
     )
 

@@ -34,7 +34,7 @@ error_logger = getLogger(ERROR_LOGGER)
 
 
 class LDAPConnection: #pragma: no cover
-  def __init__(self, username=settings.AUTH_LDAP_BIND_DN, password=settings.AUTH_LDAP_BIND_PASSWORD) -> None:
+  def __init__(self, username: str=settings.AUTH_LDAP_BIND_DN, password: str=settings.AUTH_LDAP_BIND_PASSWORD) -> None:
     self.username = username
     self.password = password
 

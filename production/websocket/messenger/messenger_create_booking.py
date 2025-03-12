@@ -1,7 +1,7 @@
 
 # Python Standard Library
-from dataclasses import dataclass, field, make_dataclass
-from typing import List
+from dataclasses import field, make_dataclass
+from typing import Dict
 
 # Third party packages
 from channels.layers import get_channel_layer
@@ -26,7 +26,6 @@ class MessengerCreateBooking(MessengerBase):
     WEBSOCKET_MESSAGE_ID : MessageField(getNewMessageID),
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     WEBSOCKET_DATA : MessageDataField(),
-    WEBSOCKET_DATATYPE : DATA_BOOKING,
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_CREATE_BOOKING,
   })
 
@@ -37,8 +36,8 @@ class MessengerCreateBooking(MessengerBase):
   # This is just a fancy way of generating Classes, that ensures I can use
   # constants for creating the class
   Args = make_dataclass("Args", [
-    (DATA_BOOKING, List[int], field(default_factory=list))
-  ], slots=True, bases=[MessengerBase.MessageArgs])
+    (DATA_BOOKING, Dict[str, Booking])
+  ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod
   def getMessageArgs(cls):
@@ -49,10 +48,8 @@ class MessengerCreateBooking(MessengerBase):
     if not isinstance(args, cls.Args):
       raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
 
-    channel_layer: RedisChannelLayer = get_channel_layer()
+    channel_layer: RedisChannelLayer = get_channel_layer() # type: ignore
 
     await channel_layer.group_send(
-      CHANNEL_GROUP_GLOBAL, await cls.message_blueprint.serialize({
-        WEBSOCKET_DATA : getattr(args, DATA_BOOKING)
-      })
+      CHANNEL_GROUP_GLOBAL, await cls.message_blueprint.serialize(args)
     )

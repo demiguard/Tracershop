@@ -1,5 +1,6 @@
 # Python Standard library
 from asgiref.sync import sync_to_async
+from typing import Any, Dict
 
 # Django / Channels Imports
 from channels.auth import login
@@ -14,7 +15,7 @@ from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
 
 from lib.utils import classproperty
 from tracerauth.tracer_ldap import checkUserGroupMembership
-
+from websocket import consumer
 from websocket.handler_base import HandlerBase
 
 class HandleAuthLogin(HandlerBase):
@@ -22,15 +23,15 @@ class HandleAuthLogin(HandlerBase):
   def message_type(cls):
    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_AUTH_LOGIN
 
-  async def __call__(self, consumer, message):
+  async def __call__(self, consumer: consumer.Consumer, message: Dict[str, Any]):
     auth = message[DATA_AUTH]
     username = auth[AUTH_USERNAME]
     password = auth[AUTH_PASSWORD]
-    user: User = await aauthenticate(username=username, password=password)
-    if user:
+    user = await aauthenticate(username=username, password=password)
+    if isinstance(user, User):
       if user.user_group == UserGroups.Anon:
         success, newUserGroup = checkUserGroupMembership(user.username)
-        if newUserGroup is not None or UserGroups.Anon:
+        if newUserGroup is not None:
           user.user_group = newUserGroup
           await database_sync_to_async(user.save)()
       await login(consumer.scope, user)

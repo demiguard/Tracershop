@@ -8,7 +8,7 @@ from logging import getLogger
 from importlib import import_module
 from inspect import getmembers, isclass
 from pathlib import Path
-from typing import Dict
+from typing import Any, Dict
 
 # Tracershop Modules
 from core.exceptions import ContractBroken
@@ -61,7 +61,7 @@ class MessageHandler():
   def __str__(self): #pragma: no cover
     return f"MessageHandler with keys {[k for k in self._handlers]} created"
 
-  async def __call__(self, consumer: 'consumer.Consumer', message):
+  async def __call__(self, consumer: 'consumer.Consumer', message: Dict[str, Any]):
     message_type = WEBSOCKET_MESSAGE_TYPES(message[WEBSOCKET_MESSAGE_TYPE])
     if message_type not in self._handlers: # pragma: no cover
       raise ContractBroken()

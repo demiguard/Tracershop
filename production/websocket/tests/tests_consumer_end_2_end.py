@@ -53,7 +53,7 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
   SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_RELEASE_MULTI,\
-  DATA_INJECTION_ORDER, DATA_TRACER
+  DATA_INJECTION_ORDER, DATA_TRACER, WEBSOCKET_SESSION_ID
 
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from database.models import ClosedDate, User, UserGroups, MODELS,\
@@ -452,7 +452,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       comm = WebsocketCommunicator(app,"ws/", headers=b'')
       _conn, _subprotocol = await comm.connect()
       response = await self._sendReceive(comm, self.loginAdminMessage)
-      sessionID = response['sessionid']
+      sessionID = response[WEBSOCKET_SESSION_ID]
       await comm.disconnect()
 
       sessionCookie = "sessionid=" + sessionID
@@ -494,7 +494,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       })
 
       self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-      self.assertEqual(whoAmIMessage[AUTH_USER], None)
+      self.assertEqual(whoAmIMessage[DATA_USER], None)
 
     self.assertRegexIn(f"{self.message_id} - {WEBSOCKET_MESSAGE_AUTH_LOGIN}", captured_debug_logs.output)
     self.assertRegexIn(f"{self.message_id} - {WEBSOCKET_MESSAGE_AUTH_LOGOUT}", captured_debug_logs.output)
@@ -527,7 +527,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       await comm.disconnect()
 
     self.assertFalse(whoAmIMessage[AUTH_IS_AUTHENTICATED])
-    self.assertEqual(whoAmIMessage[AUTH_USER], None)
+    self.assertEqual(whoAmIMessage[DATA_USER], None)
 
 
   ##### Error handling #####
@@ -781,7 +781,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                          SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value)
 
         with self.assertRaises(TimeoutError):
-          await comm_other_user.receive_json_from(timeout=0.25)
+          await comm_other_user.receive_json_from(timeout=1)
 
         await comm.disconnect()
         await comm_other_user.disconnect()
@@ -1422,7 +1422,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                           'marketed': False,
                           'is_static_instance': False},
                         'datatype': DATA_TRACER,
-                        'messageID': 415579179,
+                        WEBSOCKET_MESSAGE_ID : 415579179,
                         'javascriptVersion': JAVASCRIPT_VERSION}
 
     with self.assertLogs(DEBUG_LOGGER):

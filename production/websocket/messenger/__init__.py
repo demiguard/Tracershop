@@ -48,7 +48,6 @@ class Messenger:
 
         self._messengers[instance.message_type] = instance
 
-
     missing_message_types = [
       mt for mt in WEBSOCKET_SERVER_MESSAGES if mt not in self._messengers
     ]
@@ -56,10 +55,10 @@ class Messenger:
     if missing_message_types: # pragma: no cover
       raise ContractBroken(f"Messenger messenger missing for {missing_message_types}")
 
-  def getMessageArgs(self, message_type: str) -> Type[MessengerBase.MessageArgs]:
+  def getMessageArgs(self, message_type: WEBSOCKET_SERVER_MESSAGES) -> Type[MessengerBase.MessageArgs]:
     return self._messengers[message_type].getMessageArgs()
 
-  async def __call__ (self, message_type: str, dict_args: Dict):
+  async def __call__ (self, message_type: WEBSOCKET_SERVER_MESSAGES, dict_args: Dict) -> None:
     Args = self._messengers[message_type].getMessageArgs()
     args = Args(**dict_args)
 

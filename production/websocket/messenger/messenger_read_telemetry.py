@@ -1,10 +1,11 @@
 # Python Standard Library
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, make_dataclass
 from typing import Any, Dict
 
 # Third party packages
 
 # Tracershop Packages
+from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_SUCCESS,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPE
 from lib.utils import classproperty
@@ -23,11 +24,11 @@ class MessengerReadTelemetry(MessengerBase):
   def message_type(cls):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_TELEMETRY
 
-  @dataclass
-  class Args(MessengerBase.MessageArgs):
-    consumer: consumer.Consumer
-    message_id : int
-    telemetry_data: Dict[str, Any] = field(default_factory=dict)
+  Args = make_dataclass('Args', fields=[
+    (MESSENGER_CONSUMER, consumer.Consumer),
+    (WEBSOCKET_MESSAGE_ID, int),
+    (WEBSOCKET_DATA, Dict[str, Any], field(default_factory=dict))
+  ])
 
   @classmethod
   def getMessageArgs(cls):
@@ -35,10 +36,9 @@ class MessengerReadTelemetry(MessengerBase):
 
   @classmethod
   async def __call__(cls, args):
-    if not isinstance(args, cls.Args):
+    if not isinstance(args, cls.Args): # pragma: no cover
       raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
 
-    args.consumer.send_json(await MessageBlueprint.serialize({
-      WEBSOCKET_MESSAGE_ID : args.message_id,
-      WEBSOCKET_DATA : args.telemetry_data
-    }))
+    consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
+
+    await consumer_.send_json(await cls.messenger_blueprint.serialize(args))

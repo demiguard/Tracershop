@@ -21,14 +21,14 @@ error_logger = getLogger(ERROR_LOGGER)
 
 class TracershopModel(Model):
   #The main point about this class is allowing you go: model[fieldName] for reading data
-  def __getitem__(self, name):
+  def __getitem__(self, name: str):
       try:
         self._meta.get_field(name)
         return getattr(self, name)
       except FieldDoesNotExist:
         raise KeyError("This is not valid Field")
 
-  def __setitem__(self, name, value):
+  def __setitem__(self, name: str, value: Any):
     try:
       self._meta.get_field(name)
       setattr(self, name, value)
@@ -45,11 +45,11 @@ class TracershopModel(Model):
     return AuthActions.ACCEPT
 
   @classproperty
-  def derived_properties(cls):
+  def derived_properties(cls) -> List[str]:
     return []
 
   @classproperty
-  def exclude(cls):
+  def exclude(cls) -> List[str]:
     return []
 
   class Meta:

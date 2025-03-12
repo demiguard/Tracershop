@@ -38,7 +38,7 @@ class HandleFreeActivity(HandlerBase):
     # 4. Broadcast to users
 
     # Turn this into a function
-    result, user = await consumer._authenticateFreeing(message)
+    result, user = await consumer.authenticate_from_auth(message)
 
     if result != AuthenticationResult.SUCCESS:
       return await consumer._RejectFreeing(message)

@@ -11,6 +11,7 @@ from typing import Any,Callable, Dict, Type
 
 
 # Tracershop modules
+from shared_constants import WEBSOCKET_SERVER_MESSAGES
 from lib.utils import classproperty
 from lib.serialization import a_serialize_redis
 
@@ -42,12 +43,13 @@ class MessengerBase(ABC):
   """
 
   @classproperty
-  def message_type(cls) -> str:
+  def message_type(cls) -> WEBSOCKET_SERVER_MESSAGES:
     raise NotImplementedError
 
   @dataclass
   class MessageArgs:
-    pass
+    def __getitem__(self, key: str):
+      return getattr(self, key)
 
   @classmethod
   @abstractmethod
@@ -56,7 +58,7 @@ class MessengerBase(ABC):
 
   @classmethod
   @abstractmethod
-  async def __call__(cls, args: MessageArgs):
+  async def __call__(cls, args: MessageArgs) -> None:
     raise NotImplementedError
 
   #@classmethod
@@ -83,7 +85,7 @@ class MessageBlueprint:
   def __init__(self, skeleton: Dict[str, Any]):
     self.skeleton = skeleton
 
-  async def serialize(self, data):
+  async def serialize(self, data: MessengerBase.MessageArgs) -> Dict[str, Any]:
     clone = deepcopy(self.skeleton)
 
     # Note that we iterate over the skeleton, and not the clone, to circumvent

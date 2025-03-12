@@ -16,7 +16,7 @@ class HandleCorrectOrder(HandlerBase):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CORRECT_ORDER
 
   async def __call__(self, consumer, message):
-    result, user = await consumer._authenticateFreeing(message)
+    result, user = await consumer.authenticate_from_auth(message)
 
     if not user.is_production_member:
       return await consumer._RejectFreeing(message)

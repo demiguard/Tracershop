@@ -10,6 +10,7 @@ from core.exceptions import IllegalActionAttempted
 from database.models import User, UserAssignment
 from constants import ERROR_LOGGER
 from lib.utils import classproperty
+from constants import MESSENGER_CONSUMER
 from shared_constants import DATA_USER, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
   WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE,\
@@ -42,7 +43,9 @@ class HandleCreateExternalUser(HandlerBase):
       data = {DATA_USER : [newUser]}
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+      MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_DATA : data,
       WEBSOCKET_REFRESH : False,
     })
