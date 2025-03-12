@@ -30,4 +30,4 @@ class HandlerBase(ABC):
 
   @abstractmethod
   async def __call__(self, consumer: 'consumer.Consumer', message):
-    return super().__call__(consumer, message) #pragma: no cover
+    raise NotImplemented #pragma: no cover

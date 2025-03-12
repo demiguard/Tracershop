@@ -11,7 +11,7 @@ from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 
 from websocket.handler_base import HandlerBase
 
@@ -25,8 +25,8 @@ class HandleModelCreate(HandlerBase):
     user = await get_user(consumer.scope)
     try:
       instances = await consumer.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
-                                                   message[WEBSOCKET_DATA],
-                                                   user)
+                                                       message[WEBSOCKET_DATA],
+                                                       user)
     except IntegrityError as e:
       error_message = str(e)
       await consumer.send_json({
@@ -45,13 +45,11 @@ class HandleModelCreate(HandlerBase):
       })
       return
 
-    await consumer.broadcastGlobal({
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : {
         message[WEBSOCKET_DATATYPE] : instances
       },
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
       WEBSOCKET_REFRESH : False,
     })

@@ -13,7 +13,7 @@ from shared_constants import WEBSOCKET_MESSAGE_MODEL_EDIT,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 
 from websocket.handler_base import HandlerBase
 
@@ -40,20 +40,17 @@ class HandleModelEdit(HandlerBase):
       user
     )
 
-    if updatedModels is not None:
-      customerIDs = await consumer.db.getCustomerIDs(updatedModels)
-      await consumer.broadcastCustomer({
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : updatedModels},
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-        WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
-        WEBSOCKET_REFRESH : False
-      }, customerIDs)
-    else:
+    if updatedModels is None:
+      updatedModels = {}
       logger.error(f"Edit update failed from message: {message} by {user}")
-      await consumer.send_json({
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
-      })
+      success = SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT
+    else:
+      success = SUCCESS_STATUS_CRUD.SUCCESS
+
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE,{
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : updatedModels},
+      WEBSOCKET_MESSAGE_STATUS : success,
+      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
+      WEBSOCKET_REFRESH : False
+    })
