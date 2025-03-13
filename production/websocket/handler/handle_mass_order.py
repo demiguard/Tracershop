@@ -6,10 +6,10 @@ from channels.auth import get_user
 
 # Tracershop modules
 from core.exceptions import RequestingNonExistingEndpoint
-from constants import ERROR_LOGGER
+from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.formatting import timeConverter
 from lib.utils import classproperty
-from shared_constants import WEBSOCKET_MESSAGE_MASS_ORDER,\
+from shared_constants import WEBSOCKET_SERVER_MESSAGES,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_ERROR,\
   ERROR_TYPE, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
@@ -69,11 +69,16 @@ class HandleMassOrders(HandlerBase):
     customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
     customerIDs = [customerID for customerID in customerIDset]
 
-    await consumer.broadcastCustomer({
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+      MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_DATA : orders,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+
+    })
+
+    await consumer.broadcastCustomer({
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_REFRESH : False,
       WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     }, customerIDs)

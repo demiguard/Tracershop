@@ -1,11 +1,13 @@
+
+# Tracershop modules
 from websocket.handler_base import HandlerBase
 
 from lib.utils import classproperty
 from tracerauth.types import AuthenticationResult
-
+from constants import MESSENGER_CONSUMER
 from shared_constants import SUCCESS_STATUS_CRUD,\
   AUTH_IS_AUTHENTICATED, WEBSOCKET_REFRESH,\
-  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
+  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_DATA, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 
@@ -29,10 +31,9 @@ class HandleCorrectOrder(HandlerBase):
     )
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, {
-      "consumer" : self,
-      "message_id" : message[WEBSOCKET_MESSAGE_ID],
-      "is_auth" : True,
-      "status" : SUCCESS_STATUS_CRUD.SUCCESS,
-      "data" : corrected_state,
-      "refresh" : False,
+      MESSENGER_CONSUMER : consumer,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      AUTH_IS_AUTHENTICATED : True,
+      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+      WEBSOCKET_DATA : corrected_state,
     })

@@ -3,7 +3,8 @@
 # Third party packages
 
 # Tracershop packages
-from shared_constants import WEBSOCKET_MESSAGE_RELEASE_MULTI,\
+from constants import MESSENGER_CONSUMER
+from shared_constants import WEBSOCKET_SERVER_MESSAGES,\
   WEBSOCKET_DATA_ID, WEBSOCKET_DATA, DATA_INJECTION_ORDER,\
   AUTH_IS_AUTHENTICATED, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,\
@@ -33,11 +34,10 @@ class HandleFreeMultiInjection(HandlerBase):
       message[WEBSOCKET_DATA_ID], message[WEBSOCKET_DATA], release_time, user
     )
 
-    return await consumer.broadcastProduction({
+    return await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE,{
+      MESSENGER_CONSUMER : consumer,
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : {
         DATA_INJECTION_ORDER : orders

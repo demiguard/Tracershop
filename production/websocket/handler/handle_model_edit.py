@@ -47,7 +47,7 @@ class HandleModelEdit(HandlerBase):
     else:
       success = SUCCESS_STATUS_CRUD.SUCCESS
 
-    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE,{
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : updatedModels},
       WEBSOCKET_MESSAGE_STATUS : success,

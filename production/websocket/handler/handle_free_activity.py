@@ -3,7 +3,8 @@
 # Third Party Module
 
 # Tracershop Modules
-from shared_constants import WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_DATA,\
+from constants import MESSENGER_CONSUMER
+from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_DATA,\
   DATA_DELIVER_TIME, DATA_ACTIVITY_ORDER, DATA_VIAL, AUTH_IS_AUTHENTICATED,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_SUCCESS,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES
@@ -51,15 +52,14 @@ class HandleFreeActivity(HandlerBase):
                                                     user,
                                                     consumer.datetimeNow.now())
     logFreeActivityOrders(user, orders, vials)
-    customerIDs = await consumer.db.getCustomerIDs(orders)
-    await consumer.broadcastCustomer({
+
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, {
+      MESSENGER_CONSUMER : consumer,
       AUTH_IS_AUTHENTICATED : True,
       WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : {
         DATA_ACTIVITY_ORDER : orders,
         DATA_VIAL : vials
       },
-    }, customerIDs)
+    })

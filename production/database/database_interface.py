@@ -251,7 +251,13 @@ class DatabaseInterface():
     return orders, vials
 
   @database_sync_to_async
-  def release_many_injections_orders(self, order_ids, lot_number: str,release_time: datetime,user: User):
+  def release_many_injections_orders(
+      self,
+      order_ids: List[int],
+      lot_number: str,
+      release_time: datetime,
+      user: User
+    ) -> QuerySet[InjectionOrder]:
     if not user.is_production_member: #pragma: no cover
       # This is covered by checks in higher up
       raise IllegalActionAttempted
@@ -272,7 +278,7 @@ class DatabaseInterface():
     return orders
 
   @database_sync_to_async
-  def correct_order(self, data: Dict, user: User):
+  def correct_order(self, data: Dict, user: User) -> Dict[str, List[TracershopModel]]:
     return_dict = {
       DATA_ACTIVITY_ORDER : [],
       DATA_INJECTION_ORDER : [],
@@ -706,7 +712,7 @@ class DatabaseInterface():
   def get_bookings(
     self,
     date_: date, delivery_endpoint_id: int
-  ) -> str:
+  ) -> Dict[str, List[Booking]]:
     """_summary_
 
     Args:
@@ -725,7 +731,7 @@ class DatabaseInterface():
     )
 
     return {
-      DATA_BOOKING : bookings
+      DATA_BOOKING : [b for b in bookings]
     }
 
   @database_sync_to_async

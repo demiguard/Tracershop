@@ -40,7 +40,7 @@ class HandleCreateExternalUser(HandlerBase):
         DATA_USER_ASSIGNMENT : [newUserAssignment]
       }
     else:
-      data = {DATA_USER : [newUser]}
+      data = { DATA_USER : [newUser]}
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
       MESSENGER_CONSUMER : consumer,

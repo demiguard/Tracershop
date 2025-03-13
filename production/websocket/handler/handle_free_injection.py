@@ -3,9 +3,10 @@
 # Third Party Module
 
 # Tracershop Modules
+from constants import MESSENGER_CONSUMER
 from database.models import InjectionOrder, OrderStatus
 from lib.utils import classproperty
-from shared_constants import WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_DATA,\
+from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_DATA,\
   WEBSOCKET_DATA_ID, DATA_INJECTION_ORDER, AUTH_IS_AUTHENTICATED,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_SUCCESS,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES
@@ -55,13 +56,13 @@ class HandleFreeInjection(HandlerBase):
 
     # Step 3 Broadcast it
 
-    await consumer.broadcastProduction({
-        AUTH_IS_AUTHENTICATED : True,
-        WEBSOCKET_REFRESH : False,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_DATA : {
-          DATA_INJECTION_ORDER : [order],
-        },
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE,{
+      MESSENGER_CONSUMER : consumer,
+      AUTH_IS_AUTHENTICATED : True,
+      WEBSOCKET_REFRESH : False,
+      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+      WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      WEBSOCKET_DATA : {
+        DATA_INJECTION_ORDER : [order],
+      },
     })

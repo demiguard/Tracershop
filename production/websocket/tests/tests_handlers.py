@@ -33,7 +33,7 @@ async def mock_get_user(scope):
 
 with mock.patch('channels.auth.get_user', mock_get_user):
   from websocket.handler.handle_get_telemetry import HandleReadTelemetry
-  from websocket.handler.handle_get_state import HandleReadState
+  from production.websocket.handler.handle_read_state import HandleReadState
 
 class ReadHandlersTestCases(TransactionTracershopTestCase):
   def setUp(self):

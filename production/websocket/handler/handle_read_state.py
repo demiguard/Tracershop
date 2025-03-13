@@ -28,6 +28,7 @@ class HandleReadState(HandlerBase):
 
   async def __call__(self, consumer: Consumer, message):
     now = consumer.datetimeNow.now()
+    user = await get_user(consumer.scope)
 
     if WEBSOCKET_DATE in message:
       try:
@@ -38,8 +39,7 @@ class HandleReadState(HandlerBase):
 
     # Assumed to have no Field in the message since it can use the user in scope
 
-    state = await consumer.db.getState(now,
-                                       await get_user(consumer.scope))
+    state = await consumer.db.getState(now, user)
 
     await consumer.messenger(
       WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_STATE, {

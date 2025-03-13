@@ -25,12 +25,11 @@ class HandleMoveOrders(HandlerBase):
 
   async def __call__(self, consumer, message):
     orders = await consumer.db.moveOrders(message[DATA_ACTIVITY_ORDER], message[DATA_DELIVER_TIME])
-    customerIDs = await consumer.db.getCustomerIDs(orders)
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE,{
       MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : {DATA_ACTIVITY_ORDER : orders, },
+      WEBSOCKET_DATA : { DATA_ACTIVITY_ORDER : orders },
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_REFRESH : False,
     })

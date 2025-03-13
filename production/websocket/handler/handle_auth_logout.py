@@ -5,7 +5,7 @@ from asgiref.sync import sync_to_async
 from channels.auth import get_user, logout
 # Tracershop imports
 from lib.utils import classproperty
-
+from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_MESSAGE_AUTH_LOGOUT,\
   WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
@@ -24,6 +24,6 @@ class HandleLogOut(HandlerBase):
     await sync_to_async(consumer.scope['session'].save)()
     await consumer.messenger(
       WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_LOGOUT, {
-        "consumer" : consumer,
-        "message_id" : message[WEBSOCKET_MESSAGE_ID],
+        MESSENGER_CONSUMER : consumer,
+        WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       })
