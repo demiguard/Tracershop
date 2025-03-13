@@ -114,6 +114,7 @@ class DatabaseInterface():
     if None in updateModels:
       return None
 
+
     [model.save(user) for model in updateModels if model is not None] # if statement is just their to make the type checker happy
     return updateModels # type: ignore # type checker is stupid
 

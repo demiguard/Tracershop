@@ -7,6 +7,7 @@ from channels.auth import get_user
 
 # Tracershop modules
 from lib.utils import classproperty
+from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
@@ -46,10 +47,9 @@ class HandleModelCreate(HandlerBase):
       return
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+      MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_DATA : {
-        message[WEBSOCKET_DATATYPE] : instances
-      },
+      WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : instances  },
       WEBSOCKET_REFRESH : False,
     })

@@ -21,7 +21,7 @@ class MessengerCreateBooking(MessengerBase):
   message_blueprint = MessageBlueprint({
     CHANNEL_TARGET_KEYWORD : CHANNEL_TARGET_BROADCAST_FUNCTION,
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+    WEBSOCKET_MESSAGE_STATUS : MessageDataField(),
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE,
     WEBSOCKET_MESSAGE_ID : MessageDataField(),
     WEBSOCKET_DATA : MessageDataField(),
@@ -56,8 +56,11 @@ class MessengerCreateBooking(MessengerBase):
 
     # There's a whole great issue figuring out where to send what.
     LAYER: RedisChannelLayer = get_channel_layer() # type: ignore
-
-    await LAYER.group_send(
-      cls.get_group(),
-      await cls.message_blueprint.serialize(args)
-    )
+    if args[WEBSOCKET_MESSAGE_STATUS] == SUCCESS_STATUS_CRUD.SUCCESS:
+      await LAYER.group_send(
+        cls.get_group(),
+        await cls.message_blueprint.serialize(args)
+      )
+    else:
+      consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
+      await consumer_.send_json(await cls.message_blueprint.serialize(args))

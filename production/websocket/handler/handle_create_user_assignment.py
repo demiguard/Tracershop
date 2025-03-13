@@ -7,7 +7,7 @@ from channels.auth import get_user
 
 # Tracershop imports
 from database.models import User, UserAssignment
-from constants import ERROR_LOGGER
+from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.utils import classproperty
 from shared_constants import DATA_USER, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
@@ -52,6 +52,7 @@ class HandleCreateUserAssignment(HandlerBase):
       data_dict[DATA_USER] = [new_user]
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+      MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_MESSAGE_STATUS : success,
       WEBSOCKET_DATA : data_dict,

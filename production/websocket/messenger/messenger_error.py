@@ -8,10 +8,12 @@ from channels_redis.core import RedisChannelLayer
 # Tracershop Packages
 from shared_constants import WEBSOCKET_SERVER_MESSAGES
 from lib.utils import classproperty
-from websocket.messenger_base import MessengerBase
+from websocket.messenger_base import MessengerBase, MessageBlueprint
 from websocket import consumer
 
 class MessengerError(MessengerBase):
+  message_blueprint = MessageBlueprint({})
+
   @classproperty
   def message_type(cls):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR
@@ -26,5 +28,5 @@ class MessengerError(MessengerBase):
 
   @classmethod
   async def __call__(cls, args):
-    if not isinstance(args, cls.Args):
-      raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
+    if not isinstance(args, cls.Args): # pragma no cover
+      raise TypeError("MessengerError call must be of type MessengerError.Args")

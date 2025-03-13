@@ -7,7 +7,7 @@ from django.db.utils import IntegrityError
 from channels.auth import get_user
 
 # Tracershop modules
-from constants import ERROR_LOGGER
+from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_EDIT,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
@@ -48,9 +48,9 @@ class HandleModelEdit(HandlerBase):
       success = SUCCESS_STATUS_CRUD.SUCCESS
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+      MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : { message[WEBSOCKET_DATATYPE] : updatedModels},
       WEBSOCKET_MESSAGE_STATUS : success,
-      WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
       WEBSOCKET_REFRESH : False
     })

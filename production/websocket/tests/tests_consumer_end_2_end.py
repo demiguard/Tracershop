@@ -761,7 +761,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
         _conn, _subprotocal = await comm.connect()
 
-        await comm.send_json_to(self.loginProdAdminMessage)
+        await comm.send_json_to(self.loginShopAdminMessage)
         login_response = await comm.receive_json_from()
         self.assertTrue(login_response[AUTH_IS_AUTHENTICATED])
 

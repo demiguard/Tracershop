@@ -74,11 +74,4 @@ class HandleMassOrders(HandlerBase):
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
       WEBSOCKET_DATA : orders,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
-
     })
-
-    await consumer.broadcastCustomer({
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-    }, customerIDs)

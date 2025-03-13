@@ -5,14 +5,12 @@ from logging import getLogger
 from channels.auth import get_user
 
 # Tracershop modules
-from constants import ERROR_LOGGER
-from shared_constants import WEBSOCKET_MESSAGE_MODEL_DELETE,\
-  WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, SUCCESS_STATUS_CRUD,\
-  WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
-  WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
+from constants import ERROR_LOGGER, MESSENGER_CONSUMER
+from shared_constants import WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, SUCCESS_STATUS_CRUD,\
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
+  WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 from lib.utils import classproperty
 from database.models import User
-
 from websocket.handler_base import HandlerBase
 
 logger = getLogger(ERROR_LOGGER)
@@ -32,11 +30,11 @@ class HandleModelDelete(HandlerBase):
 
     if success:
       await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_DELETE_STATE, {
+        MESSENGER_CONSUMER : consumer,
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
         WEBSOCKET_DATA_ID : message[WEBSOCKET_DATA_ID],
         WEBSOCKET_DATATYPE : message[WEBSOCKET_DATATYPE],
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-
       })
     else:
       logger.error(f"""
@@ -45,10 +43,9 @@ class HandleModelDelete(HandlerBase):
         """)
 
       await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_DELETE_STATE, {
+        MESSENGER_CONSUMER : consumer,
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_DATA_ID : [],
         WEBSOCKET_DATATYPE : "",
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
       })

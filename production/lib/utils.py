@@ -17,7 +17,7 @@ def LFILTER(func, List):
   return list(filter(func, List))
 
 class classproperty(property):
-  def __get__(self, owner_self, owner_cls):
+  def __get__(self, owner_self, owner_cls=None):
     return self.fget(owner_cls) # type: ignore
 
 def identity(val: T) -> T:
