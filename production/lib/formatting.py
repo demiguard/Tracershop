@@ -1,7 +1,7 @@
 """This module converts objects to their desired string form"""
 
 # Python standard modules
-from datetime import date, time, datetime
+from datetime import date, time, datetime, timezone
 from pprint import pprint
 from io import BytesIO
 import re
@@ -58,7 +58,8 @@ def toDateTime(date_time_str: str) -> datetime:
     raise ValueError(f"Could not convert {date_time_str} to a datetime object")
 
   year, month, day, hour, minute, second = (int(value) for value in m.groups())
-  return datetime(year, month, day, hour, minute, second)
+  # Javascript automatically converts to utc
+  return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
 
 
 def toDate(date_str: str, Format: str=DATE_FORMAT) -> date:
@@ -116,3 +117,8 @@ def format_csv_data(csv_data: Dict[str, Dict[str, List[Any]]]):
 def format_time_number(num: int) -> str:
   # Python ternaries are ugly as fuck
   return f"0{num}" if num < 10 else str(num)
+
+
+def format_message_name(message_name: str):
+    name_splits = message_name.split('_')
+    return '_'.join(name_splits[1:])

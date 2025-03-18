@@ -15,11 +15,11 @@ from websocket import consumer
 
 class MessengerAuthResponse(MessengerBase):
   message_blueprint = MessageBlueprint({
-    AUTH_IS_AUTHENTICATED : MessageDataField(),
-    DATA_USER : MessageDataField(),
-    WEBSOCKET_SESSION_ID : MessageDataField(),
+    AUTH_IS_AUTHENTICATED : MessageDataField(bool),
+    DATA_USER : MessageDataField(Optional[User]),
+    WEBSOCKET_SESSION_ID : MessageDataField(str),
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_RESPONSE,
-    WEBSOCKET_MESSAGE_ID : MessageDataField(),
+    WEBSOCKET_MESSAGE_ID : MessageDataField(int),
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
   })
 

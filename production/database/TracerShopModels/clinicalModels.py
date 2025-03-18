@@ -61,7 +61,7 @@ class Tracer(TracershopModel):
         from database.TracerShopModels import customerModels
         return customerModels.InjectionOrder.objects.filter(tracer=self).exists()
       case _ : # pragma: no cover
-        raise NotImplemented("There is only two Tracer types")
+        raise NotImplementedError("There is only 2 Tracer types")
 
 
   def canDelete(self, user: Optional[User] = None) -> AuthActions:

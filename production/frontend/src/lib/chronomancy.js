@@ -7,8 +7,6 @@ import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
 import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
 
-
-
 /**
  * Function to get today, mainly here to make testing easier as this can be mocked
  * @returns {Date}
@@ -297,8 +295,21 @@ export class DateRange {
     this.startDate = datify(startDate)
     this.endDate = datify(endDate);
 
-    if(isNaN(this.startDate) || isNaN(this.endDate)){
-      throw "Invalid input date";
+    // sorry for the verbose errors, but hopefully it's useful to some
+    if(isNaN(this.startDate) && isNaN(this.endDate)){
+      throw {
+        error : `Unable to convert ${startDate} and ${endDate} to Date objects`
+      }
+    }
+    if(isNaN(this.startDate)){
+      throw {
+        error : `Unable to convert ${startDate} to Date objects`
+      }
+    }
+    if(isNaN(this.endDate)){
+      throw {
+        error : `Unable to convert ${endDate} to Date objects`
+      }
     }
   }
 
@@ -306,7 +317,9 @@ export class DateRange {
     const date = datify(test_date);
 
     if(isNaN(date)){
-      throw "Invalid input date";
+      throw {
+        error : `Unable to convert ${test_date} to a Date object`
+      };
     }
     return this.startDate < date && date < this.endDate;
   }

@@ -9,15 +9,13 @@ from channels_redis.core import RedisChannelLayer
 # Tracershop Packages
 from constants import CHANNEL_TARGET_KEYWORD, CHANNEL_TARGET_BROADCAST_FUNCTION,\
   CHANNEL_GROUP_GLOBAL, MESSENGER_CONSUMER
-
 from shared_constants import WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
   WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_SUCCESS,\
   AUTH_IS_AUTHENTICATED
-
-from database. models import TracershopModel
 from lib.utils import classproperty
-from websocket.messenger_base import MessengerBase, MessageBlueprint, MessageDataField
+from websocket.messenger_base import MessengerBase, MessageBlueprint,\
+  MessageDataField, MessageDataType
 from websocket import consumer
 
 class MessengerCreateBooking(MessengerBase):
@@ -27,7 +25,7 @@ class MessengerCreateBooking(MessengerBase):
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     WEBSOCKET_MESSAGE_ID : MessageDataField(),
-    WEBSOCKET_DATA : MessageDataField(),
+    WEBSOCKET_DATA : MessageDataField(MessageDataType.STATE),
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE,
     WEBSOCKET_REFRESH : MessageDataField(),
   })
@@ -41,7 +39,7 @@ class MessengerCreateBooking(MessengerBase):
     (WEBSOCKET_MESSAGE_ID, int),
     (AUTH_IS_AUTHENTICATED, bool),
     (WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD),
-    (WEBSOCKET_DATA, Dict[str, List[TracershopModel]], field(default_factory=dict)),
+    (WEBSOCKET_DATA, MessageDataType.STATE, field(default_factory=dict)),
     (WEBSOCKET_REFRESH, bool, field(default=False))
   ], slots=True, bases=(MessengerBase.MessageArgs,))
 

@@ -6,7 +6,8 @@ import { TracershopNavbar } from "../injectable/navbar";
 import { Authenticate } from "../injectable/authenticate";
 import { DATABASE_CURRENT_USER, PROP_SET_USER } from "~/lib/constants";
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, AUTH_USER, DATA_AUTH,
-  WEBSOCKET_MESSAGE_GET_STATE, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "../../lib/shared_constants.js"
+  WEBSOCKET_MESSAGE_READ_STATE, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_LOGIN,
+  DATA_USER} from "../../lib/shared_constants.js"
 
 import { deserialize_single } from "~/lib/serialization";
 import { useWebsocket, useTracershopDispatch } from "../../contexts/tracer_shop_context";
@@ -32,11 +33,11 @@ export function LoginSite(props) {
     return websocket.send(message).then((data) => {
       if (data[AUTH_IS_AUTHENTICATED]){
         setLoginError();
-        const user = deserialize_single(data[AUTH_USER])
+        const user = deserialize_single(data[DATA_USER])
         db.set(DATABASE_CURRENT_USER, user);
         dispatch(new UpdateCurrentUser(user));
         Cookies.set('sessionid', data[WEBSOCKET_SESSION_ID], {sameSite : 'strict'});
-        websocket.send(websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE)); // Refreshes the state
+        websocket.send(websocket.getMessage(WEBSOCKET_MESSAGE_READ_STATE)); // Refreshes the state
       } else {
         setLoginError("Forkert login.")
       }

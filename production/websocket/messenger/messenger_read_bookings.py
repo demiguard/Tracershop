@@ -12,15 +12,16 @@ from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_STATUS
 
 from database.models import Booking
 from lib.utils import classproperty
-from websocket.messenger_base import MessengerBase, MessageBlueprint, MessageDataField
+from websocket.messenger_base import MessengerBase, MessageBlueprint,\
+  MessageDataField, TracershopState
 from websocket import consumer
 
 class MessengerReadBooking(MessengerBase):
   message_blueprint = MessageBlueprint({
-    WEBSOCKET_MESSAGE_ID : MessageDataField(),
+    WEBSOCKET_MESSAGE_ID : MessageDataField(int),
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
-    WEBSOCKET_DATA : MessageDataField(),
+    WEBSOCKET_DATA : MessageDataField(TracershopState),
     WEBSOCKET_REFRESH : False,
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_BOOKINGS,
   })

@@ -17,7 +17,7 @@ class HandleReadBooking(HandlerBase):
 
   @classproperty
   def message_type(cls):
-    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_GET_BOOKINGS
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_READ_BOOKINGS
 
   async def __call__(self, consumer, message):
     """This is mostly here because Bookings ended up being 10 mb data, so

@@ -18,7 +18,7 @@ from websocket.handler_base import HandlerBase
 class HandleReadTelemetry(HandlerBase):
   @classproperty
   def message_type(cls):
-    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_GET_TELEMETRY
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_READ_TELEMETRY
 
   async def __call__(self, consumer, message):
     user: User = await get_user(consumer.scope)

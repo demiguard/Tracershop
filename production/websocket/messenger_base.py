@@ -5,15 +5,28 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 from abc import ABC, abstractmethod
 from copy import deepcopy
+from enum import Enum
 from dataclasses import dataclass
 from random import randint
-from typing import Any,Callable, Dict, Type
+from typing import Any, Callable, Dict, List, Type, TypeAlias
 
 
 # Tracershop modules
 from shared_constants import WEBSOCKET_SERVER_MESSAGES
+from database.models import TracershopModel
+from lib.formatting import format_message_name
 from lib.utils import classproperty
 from lib.serialization import a_serialize_redis
+
+TracershopState: TypeAlias = Dict[str, List[TracershopModel]]
+
+class MessageDataType(Enum):
+  """This is to target specific type structures, because there needs to be a
+  behavior which does something specific on the frontend
+
+  """
+  STATE = TracershopState
+
 
 def getNewMessageID() -> int:
   """Gets a random message ID
@@ -41,6 +54,8 @@ class MessengerBase(ABC):
                      instance of the MessageArgs, which must send the message
                      to the client
   """
+
+  message_blueprint: 'MessageBlueprint'
 
   @classproperty
   def message_type(cls) -> WEBSOCKET_SERVER_MESSAGES:
@@ -71,8 +86,8 @@ class MessageField:
     self.generator=generator
 
 class MessageDataField():
-  def __init__(self):
-    pass
+  def __init__(self, key=None):
+    self.key = key
 
 
 class MessageBlueprint:
@@ -97,3 +112,25 @@ class MessageBlueprint:
         clone[key] = data[key]
 
     return await a_serialize_redis(clone)
+
+  def to_javascript(self, message_type: WEBSOCKET_SERVER_MESSAGES) -> str:
+    name = format_message_name(message_type.name)
+    keys = [key for key in self.skeleton]
+
+    javascript = f"export class {name} {{\n"\
+                  "  constructor(message){\n"
+
+    for key in keys:
+      field = self.skeleton[key]
+      if isinstance(field, MessageDataField) and field.key == MessageDataType.STATE:
+        javascript += f"    this.{key} = deserialize(message[\"{key}\"])\n"
+        continue
+
+
+      javascript += f"    this.{key} = message[\"{key}\"]\n"
+
+    javascript += "  }\n"
+
+    javascript += f"}}\n"
+
+    return javascript

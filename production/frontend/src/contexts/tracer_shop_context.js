@@ -77,18 +77,17 @@ export function tracershopReducer(state, action){
   // Note that switch statements here do not work because the typing checker
   if(action instanceof UpdateCurrentUser){
     newState.logged_in_user = action.newUser;
-
     return newState;
   }
 
-  if(action instanceof UpdateState ){
+  if(action instanceof UpdateState){
     for (const key of Object.keys(action.newState)){
-      let oldStateMap = newState[key];
-      if(action.refresh){
-        oldStateMap = null;
+      const modelMap = action.refresh ? new Map() : new Map(newState[key])
+      for(const model of action.newState[key]){
+        modelMap.set(model.id, model);
       }
-      const modelMap = ParseDjangoModelJson(action.newState[key], oldStateMap, key);
       newState[key] = modelMap;
+
       if(!EXCLUDED_FROM_LOCAL_STORAGE.includes(key)){
         db.set(key, modelMap);
       }

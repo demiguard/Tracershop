@@ -6,12 +6,12 @@ import { LoginSite } from "./login_site";
 import { AdminSite } from "./admin_site";
 import { ShopSite } from "./shop_site";
 import { ProductionSite } from "./production_site";
-import { DATABASE_CURRENT_USER, DATABASE_TODAY, USER_GROUPS} from "~/lib/constants";
+import { DATABASE_CURRENT_USER, USER_GROUPS} from "~/lib/constants";
 import { ErrorPage } from "../error_pages/error_page";
 import { User } from "~/dataclasses/dataclasses";
 import { ErrorBoundary } from "react-error-boundary";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_GET_STATE } from "~/lib/shared_constants";
+import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_READ_STATE } from "~/lib/shared_constants";
 import { UpdateCurrentUser } from "~/lib/state_actions";
 import Cookies from "js-cookie";
 import { db } from "~/lib/local_storage_driver";
@@ -76,7 +76,7 @@ export function TracerShop() {
   const Site = get_site_from_user(tracershopState.logged_in_user);
   useEffect(() => {
     if(websocket !== null){
-      const message = websocket.getMessage(WEBSOCKET_MESSAGE_GET_STATE);
+      const message = websocket.getMessage(WEBSOCKET_MESSAGE_READ_STATE);
       message[WEBSOCKET_DATE] = tracershopState.today;
       websocket.send(message);
     }

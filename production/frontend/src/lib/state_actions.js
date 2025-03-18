@@ -1,10 +1,9 @@
 import { TracerWebSocket } from "~/lib/tracer_websocket";
 
+/** Empty base class / interface for typing  */
 export class ReducerAction {}
 
-/**
- * An action to update the global state with
- */
+/** Message for updating the active user using the site */
 export class UpdateCurrentUser extends ReducerAction {
   /** @type {User} */ newUser
 
@@ -14,13 +13,14 @@ export class UpdateCurrentUser extends ReducerAction {
   }
 }
 
+/** Message for making a local update to the TracershopState */
 export class UpdateState extends ReducerAction {
-  newState
-  /** @type {Boolean} */refresh
+  /** @type {Object} Object with a DATA_XXX and a list of those objects */ newState
+  /** @type {Boolean} Flag indicating to discard old data */ refresh
 
   /**
    * An action to update the global tracershop state
-   * @param {Any} newState - the new state
+   * @param {Object} newState - the new state
    * @param {Boolean} refresh - if
    */
   constructor(newState, refresh){
@@ -30,7 +30,15 @@ export class UpdateState extends ReducerAction {
   }
 }
 
+/** Message for deleting instances in the Tracershop State  */
 export class DeleteState extends ReducerAction {
+  /** @type {String} @desc DATA_XXXX keyword for determining which type of object to delete */ dataType
+
+  /**
+   *
+   * @param {String} dataType
+   * @param {Array<Number>} element_id
+   */
   constructor(dataType, element_id){
     super();
     this.dataType = dataType;

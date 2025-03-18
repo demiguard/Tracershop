@@ -503,13 +503,13 @@ export function ActivityModal({
 
   function confirmCancel(){
     const ordersToBeSend = []
-    const cancelationTime = new Date();
-    const cancelationTimeString = `${cancelationTime.getFullYear()}-${cancelationTime.getMonth() + 1}-${cancelationTime.getDate()} ${cancelationTime.getHours()}:${cancelationTime.getMinutes()}:${cancelationTime.getSeconds()}`
+    const cancellationTime = new Date();
+
     for(const order of orderCollection.orders){
       ordersToBeSend.push({...order,
         status : ORDER_STATUS.CANCELLED,
         freed_by : state.logged_in_user.id,
-        freed_datetime : cancelationTimeString,
+        freed_datetime : cancellationTime,
       });
     }
     if(ordersToBeSend.length){

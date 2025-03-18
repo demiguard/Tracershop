@@ -2,6 +2,7 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, ClosedDate, Deadline } fr
 import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, TimeStamp, getTimeString, datify, getToday, DateRange } from "../../lib/chronomancy"
 import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants"
 
+import { jest, expect } from '@jest/globals'
 
 
 
@@ -192,7 +193,9 @@ describe("Chronomancy test suit", () => {
   });
 
   it("DateRange, invalid construction", () => {
-    expect(() => {new DateRange()}).toThrow("Invalid input date");
+    expect(() => {new DateRange()}).toThrow(expect.objectContaining({
+      error : "Unable to convert undefined and undefined to Date objects"
+    }));
   });
 
   it("in range test", () => {

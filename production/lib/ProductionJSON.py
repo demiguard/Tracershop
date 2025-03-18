@@ -51,5 +51,7 @@ def decode(content: str) -> Dict:
     decoding_count += 1
   if decoding_count > 1: # pragma no cover
     error_logger.warning(f"Unnecessary encoding detected of {content}")
-  if type(iteratorContent) == dict:
+  if isinstance(iteratorContent, Dict):
     return iteratorContent
+  else:
+    raise ValueError(f"Unable to convert \"{content}\" to a json object")

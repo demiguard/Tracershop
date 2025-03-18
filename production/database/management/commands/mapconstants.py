@@ -12,6 +12,7 @@ from django.core.management.base import BaseCommand, CommandError, CommandParser
 # Tracershop packages
 from database.models import MODELS, INVERTED_MODELS
 import shared_constants
+from lib.formatting import format_message_name
 
 def serialize_field(field: Field) -> str:
   if isinstance(field, BooleanField):
@@ -42,6 +43,34 @@ def serialize_value(val):
     return f"\"{val}\""
   return val
 
+def serial_messengers() -> str:
+  from websocket.messenger import Messenger
+
+  grand_messenger = Messenger()
+
+  file_content = """/* GENERATED FILE by python3 manage.py mapconstants, DO NOT EDIT!
+This file consist of messages coming from the server. */
+import { deserialize } from \"~/lib/serialization.js\"
+import {
+"""
+  for message_type in grand_messenger._messengers:
+    file_content += f"  {message_type.name},\n"
+
+  file_content += "} from \"~/lib/shared_constants.js\"\n\n"
+
+
+  for message_type, messenger in grand_messenger._messengers.items():
+    blueprint = messenger.message_blueprint
+
+    file_content += blueprint.to_javascript(message_type)
+    file_content += "\n"
+
+  file_content += "export const MESSAGES = {\n"
+  for message_type in grand_messenger._messengers:
+    file_content += f"  [{message_type.name}] : {format_message_name(message_name=message_type.name)},\n"
+  file_content += "}\n"
+
+  return file_content
 
 class Command(BaseCommand):
   help="""Moves the python constants that should be used by the frontend,
@@ -51,6 +80,9 @@ class Command(BaseCommand):
     key_group = ""
     constants = [(key, value) for (key,value) in shared_constants.__dict__.items() if not key.startswith('__')]
     constants.sort(key=lambda t1: t1[0])
+
+    with open('frontend/src/lib/incoming_messages.js', 'w') as messages:
+      messages.write(serial_messengers())
 
     with open('frontend/src/lib/shared_constants.js', 'w') as out:
       out.write("/* GENERATED FILE, DO NOT EDIT, if this file needs to be changed edit\n")

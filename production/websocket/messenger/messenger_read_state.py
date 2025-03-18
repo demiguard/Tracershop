@@ -1,10 +1,7 @@
 # Python Standard Library
-from dataclasses import dataclass, field, make_dataclass
-from typing import Any, Dict, List
+from dataclasses import field, make_dataclass
 
 # Third party packages
-from channels.layers import get_channel_layer
-from channels_redis.core import RedisChannelLayer
 
 # Tracershop Packages
 from constants import MESSENGER_CONSUMER
@@ -13,18 +10,17 @@ from shared_constants import WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
   WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_SUCCESS
 from lib.utils import classproperty
-from database.models import TracershopModel
-
-from websocket.messenger_base import MessengerBase, MessageBlueprint, MessageDataField
+from websocket.messenger_base import MessengerBase, MessageBlueprint,\
+  MessageDataField, TracershopState, MessageDataType
 from websocket import consumer
 
 class MessengerReadState(MessengerBase):
   message_blueprint = MessageBlueprint({
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
-    WEBSOCKET_MESSAGE_ID : MessageDataField(),
-    WEBSOCKET_DATA : MessageDataField(),
-    WEBSOCKET_REFRESH : MessageDataField(),
+    WEBSOCKET_MESSAGE_ID : MessageDataField(int),
+    WEBSOCKET_DATA : MessageDataField(MessageDataType.STATE),
+    WEBSOCKET_REFRESH : MessageDataField(bool),
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_STATE,
   })
 
@@ -36,7 +32,7 @@ class MessengerReadState(MessengerBase):
     (MESSENGER_CONSUMER, consumer.Consumer),
     (WEBSOCKET_MESSAGE_ID, int),
     (WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD),
-    (WEBSOCKET_DATA, Dict[str, List[TracershopModel]], field(default_factory=dict)),
+    (WEBSOCKET_DATA, TracershopState, field(default_factory=dict)),
     (WEBSOCKET_REFRESH, bool, field(default=False))
   ], slots=True, bases=(MessengerBase.MessageArgs,))
 

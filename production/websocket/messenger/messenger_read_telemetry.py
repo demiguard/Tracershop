@@ -13,7 +13,7 @@ from websocket.messenger_base import MessengerBase, MessageBlueprint, MessageDat
 from websocket import consumer
 
 class MessengerReadTelemetry(MessengerBase):
-  messenger_blueprint = MessageBlueprint({
+  message_blueprint = MessageBlueprint({
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
     WEBSOCKET_MESSAGE_ID : MessageDataField(),
     WEBSOCKET_DATA : MessageDataField(),
@@ -41,4 +41,4 @@ class MessengerReadTelemetry(MessengerBase):
 
     consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
 
-    await consumer_.send_json(await cls.messenger_blueprint.serialize(args))
+    await consumer_.send_json(await cls.message_blueprint.serialize(args))

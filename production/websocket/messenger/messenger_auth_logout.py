@@ -1,5 +1,5 @@
 # Python Standard Library
-from dataclasses import dataclass, make_dataclass
+from dataclasses import make_dataclass
 
 # Third party packages
 
@@ -16,7 +16,7 @@ from websocket import consumer
 class MessengerAuthLogout(MessengerBase):
   message_blueprint = MessageBlueprint({
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_AUTH_LOGOUT,
-    WEBSOCKET_MESSAGE_ID : MessageDataField(),
+    WEBSOCKET_MESSAGE_ID : MessageDataField(int),
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
   })
 
