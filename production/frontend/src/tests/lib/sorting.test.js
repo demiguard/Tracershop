@@ -1,4 +1,4 @@
-import { describe, expect, jest } from '@jest/globals'
+import { jest } from '@jest/globals'
 import { Procedure, ProcedureIdentifier, Tracer, TracershopState, Location, Booking, DeliveryEndpoint, ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TRACER_TYPE } from '~/lib/constants';
 import { BOOKING_SORTING_METHODS, PROCEDURE_SORTING, sort_procedures, sortBookings, sortTimeSlots } from '~/lib/sorting';
@@ -65,7 +65,7 @@ describe("sortTimeSlots Test Suite", () => {
   ]
 
   const TSsort = sortTimeSlots(toMapping(endpoints));
-  
+
   it("Sorts by costumer", () => {
     expect(TSsort(timeSlots[0], timeSlots[1])).toEqual(1);
     expect(TSsort(timeSlots[1], timeSlots[0])).toEqual(-1);
@@ -73,7 +73,7 @@ describe("sortTimeSlots Test Suite", () => {
 
   it("sorts by destination", () => {
     expect(TSsort(timeSlots[0], timeSlots[2])).toEqual(-2);
-    expect(TSsort(timeSlots[2], timeSlots[0])).toEqual(2); 
+    expect(TSsort(timeSlots[2], timeSlots[0])).toEqual(2);
   })
 
   it("sorts by delivery time", () => {
@@ -116,15 +116,15 @@ describe("sortBookings Test Suite", () => {
   state.location = toMapping(locations);
   state.procedure = toMapping(procedures);
   state.procedure_identifier = toMapping(
-    [new ProcedureIdentifier(1, null, "A"), 
-      new ProcedureIdentifier(2, null, "B"), 
+    [new ProcedureIdentifier(1, null, "A"),
+      new ProcedureIdentifier(2, null, "B"),
       new ProcedureIdentifier(3, null, undefined) //no series_description
     ]);
 
 
   const prcBooking = sortBookings(BOOKING_SORTING_METHODS.SERIES_DESCRIPTION, state); //Series description (procedure)
   const locBooking = sortBookings(BOOKING_SORTING_METHODS.LOCATION, state); //location
-    
+
     //Missing state
   it("throws errors", () => {
     expect(() => {sortBookings(2)}).toThrow("Cannot sort bookings based on Series Description without Tracershop state");
@@ -161,7 +161,7 @@ describe("sortBookings Test Suite", () => {
     //missing series description
     expect(prcBooking(bookings[2], bookings[0])).toEqual(-1);
     expect(prcBooking(bookings[0], bookings[2])).toEqual(1);
-    
+
     //missing common name
     expect(locBooking(bookings[2], bookings[0])).toEqual(-1);
     expect(locBooking(bookings[0], bookings[2])).toEqual(1);

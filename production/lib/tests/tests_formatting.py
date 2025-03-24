@@ -2,7 +2,7 @@ from django.test import TestCase
 
 from lib import formatting
 
-from datetime import datetime, date, time
+from datetime import datetime, date, time, timezone
 
 
 class ProductionFormattingUnitTests(TestCase):
@@ -34,11 +34,11 @@ class ProductionFormattingUnitTests(TestCase):
     self.assertEqual(formatting.toTime("121134"), time(12,11,34))
 
   def test_toDatetime_success(self):
-    self.assertEqual(formatting.toDateTime("20250121082111"), datetime(2025,1,21,8,21,11))
-    self.assertEqual(formatting.toDateTime("2025-01-21 08:21:11"), datetime(2025,1,21,8,21,11))
-    self.assertEqual(formatting.toDateTime("2025/01/21 08:21:11"), datetime(2025,1,21,8,21,11))
-    self.assertEqual(formatting.toDateTime("2025/01/21 082111"), datetime(2025,1,21,8,21,11))
-    self.assertEqual(formatting.toDateTime("2025/01/2108:21:11"), datetime(2025,1,21,8,21,11))
+    self.assertEqual(formatting.toDateTime("20250121082111"), datetime(2025,1,21,8,21,11, tzinfo=timezone.utc))
+    self.assertEqual(formatting.toDateTime("2025-01-21 08:21:11"), datetime(2025,1,21,8,21,11, tzinfo=timezone.utc))
+    self.assertEqual(formatting.toDateTime("2025/01/21 08:21:11"), datetime(2025,1,21,8,21,11, tzinfo=timezone.utc))
+    self.assertEqual(formatting.toDateTime("2025/01/21 082111"), datetime(2025,1,21,8,21,11, tzinfo=timezone.utc))
+    self.assertEqual(formatting.toDateTime("2025/01/2108:21:11"), datetime(2025,1,21,8,21,11, tzinfo=timezone.utc))
 
   def test_toDatetime_failure(self):
     self.assertRaises(ValueError, formatting.toDateTime, "225-01-21 08:21:11")

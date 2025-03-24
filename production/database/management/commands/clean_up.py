@@ -1,4 +1,14 @@
+"""This file is a small scripts that clean up old models instances
+
+Now this is simple enough, but when this gets too complicated, just write a
+clean_up method on TracershopModel, which returns all the models to be deleted
+
+Also please name the service tracershop_clean_up
+
+"""
+
 # Python Standard library
+from logging import getLogger
 from datetime import datetime, timedelta
 from time import sleep
 
@@ -9,18 +19,17 @@ from django.utils import timezone
 from django.core.management.base import BaseCommand
 
 # Tracershop modules
+from constants import CLEAN_UP_LOGGER
 from database.TracerShopModels.telemetry_models import MAX_TELEMETRY_AGE_DAYS,\
   TelemetryRecord
 from database.models import Booking
 
 def get_expired_bookings(now: datetime):
   deadline = now - timedelta(days=7)
-
   return Booking.objects.filter(start_date__lte=deadline.date())
 
 def get_expired_telemetry(now: datetime):
   deadline = now - timedelta(days=MAX_TELEMETRY_AGE_DAYS)
-
   return TelemetryRecord.objects.filter(created__lte=deadline)
 
 def next_clean_date(now: datetime):
@@ -29,13 +38,19 @@ def next_clean_date(now: datetime):
 
 class Command(BaseCommand):
   def handle(self, *args, **options):
+    logger = getLogger(CLEAN_UP_LOGGER)
+    logger.info("Starting Clean up strip!")
     while True:
       now = timezone.now()
 
+      # Bookings have person identifiable information, hence must be deleted!
       bookings = get_expired_bookings(now)
+      logger.info(f"Deleting {len(bookings)} Bookings")
       bookings.delete()
 
+      # Old records don't give an up to date information on the performance of
       records = get_expired_telemetry(now)
+      logger.info(f"Deleting {len(bookings)} Telemetry records!")
       records.delete()
 
       sleep_time = next_clean_date(now) - now

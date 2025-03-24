@@ -1,3 +1,5 @@
+"""This module generates the javascript files, """
+
 # Python Standard library
 from pathlib import Path
 from enum import Enum
@@ -50,6 +52,7 @@ def serial_messengers() -> str:
 
   file_content = """/* GENERATED FILE by python3 manage.py mapconstants, DO NOT EDIT!
 This file consist of messages coming from the server. */
+import { WEBSOCKET_MESSAGE_TYPE } from \"~/lib/shared_constants.js\"
 import { deserialize } from \"~/lib/serialization.js\"
 import {
 """
@@ -69,6 +72,12 @@ import {
   for message_type in grand_messenger._messengers:
     file_content += f"  [{message_type.name}] : {format_message_name(message_name=message_type.name)},\n"
   file_content += "}\n"
+
+  file_content += """
+export function createMessage(valid_message){
+  return new MESSAGES[valid_message[WEBSOCKET_MESSAGE_TYPE]](valid_message);
+}
+"""
 
   return file_content
 
@@ -126,14 +135,14 @@ class Command(BaseCommand):
           if field.name in model.exclude:
             continue
           out.write(f"{field.name}, ")
-        for derived_property in model.derived_properties:
+        for derived_property in model.derived_properties: # type: ignore
           out.write(f"{derived_property}, ")
         out.write(") {\n")
         for field in model._meta.fields:
           if field.name in model.exclude:
             continue
           out.write(f"    this.{field.name}={field.name}\n")
-        for derived_property in model.derived_properties:
+        for derived_property in model.derived_properties: # type: ignore
           out.write(f"    this.{derived_property}={derived_property}\n")
         out.write("  }\n\n")
         out.write(f"  /**Copies the {model.__name__.lower()}\n")
@@ -148,9 +157,9 @@ class Command(BaseCommand):
           if i != len(model._meta.fields) -1 or model.derived_properties != []: # Note there is a bug here if the last field is in exclude
             out.write(",")
           out.write("\n")
-        for i, derived_property in enumerate(model.derived_properties):
+        for i, derived_property in enumerate(model.derived_properties): # type: ignore
           out.write(f"      this.{derived_property}")
-          if i != len(model.derived_properties) - 1:
+          if i != len(model.derived_properties) - 1: # type: ignore
             out.write(',')
           out.write("\n")
         out.write("    )\n")

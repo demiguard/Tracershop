@@ -22,7 +22,7 @@ class Address(TracershopModel):
     if self.description:
       return self.description
     else:
-      return self.ip + ':' + self.port
+      return str(self.ip) + ':' + str(self.port)
 
 class DicomEndpoint(TracershopModel):
   id = BigAutoField(primary_key=True)

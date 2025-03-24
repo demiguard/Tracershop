@@ -14,41 +14,30 @@ from typing import Any, List
 # Third party packages
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.core.management.base import BaseCommand, CommandError, CommandParser
+from channels_redis.core import RedisChannelLayer
+from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 from watchdog.observers.polling import PollingObserver as Observer
-from watchdog.events import FileSystemEventHandler, FileSystemEvent, FileCreatedEvent
+from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 # Tracershop packages:
 from core.exceptions import EmptyFile
-from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV, CHANNEL_GROUP_GLOBAL
-from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_DATA,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, DATA_VIAL, WEBSOCKET_MESSAGE_UPDATE_STATE
+
+from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV, MESSENGER_CONSUMER
+from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
+  WEBSOCKET_REFRESH, DATA_VIAL, WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
+  WEBSOCKET_MESSAGE_STATUS
 from database.database_interface import DatabaseInterface
-from database.models import Vial, Tracer, Customer, User
+from database.models import Vial
 from lib.parsing import parse_val_file, update_customer_mapping, update_tracer_mapping
+from websocket.messenger import Messenger
 from websocket.messenger_base import getNewMessageID
 
 dbi = DatabaseInterface()
+messenger = Messenger()
 
 VIAL_WATCHER_FILE_PATH = os.environ[VIAL_WATCHER_FILE_PATH_ENV]
 logger = logging.getLogger(VIAL_LOGGER)
-
-def _create_tracer_mapping():
-  tracer_mapping = {}
-  for tracer in Tracer.objects.all():
-    if tracer.vial_tag is not None and tracer.vial_tag != "":
-      tracer_mapping[tracer.vial_tag] = tracer
-
-  return tracer_mapping
-
-def _create_customer_mapping():
-  customer_mapping = {}
-  for customer in Customer.objects.all():
-    if customer.dispenser_id is not None:
-      customer_mapping[customer.dispenser_id] = customer
-
-  return customer_mapping
 
 def _get_file_contents(path: Path):
   if path.stat().st_size == 0:
@@ -57,12 +46,15 @@ def _get_file_contents(path: Path):
   with io.open(path, "r", encoding="iso-8859-1") as fp:
     data = fp.readlines()
 
+  if len(data) == 0:
+    raise EmptyFile
+
   return data
 
 
 def handle_path(path: Path):
   logger.debug("Aquiring channel Layer")
-  channel_layer = get_channel_layer()
+  channel_layer: RedisChannelLayer = get_channel_layer() # type: ignore
   logger.debug("Aquired channel Layer")
 
   try:
@@ -95,22 +87,15 @@ def handle_path(path: Path):
     return
   except Exception as e:
     logger.error(f"Unknown exception of {e} encountered!")
-
   logger.info("Vial doesn't exists saving!")
 
-  data = async_to_sync(dbi.async_serialize_dict)({
-    DATA_VIAL : [vial]
+  async_to_sync(messenger)(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+    WEBSOCKET_MESSAGE_ID : getNewMessageID(),
+    MESSENGER_CONSUMER : None,
+    WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+    WEBSOCKET_REFRESH : False,
+    WEBSOCKET_DATA : { DATA_VIAL : [vial]}
   })
-  logger.debug(f"Serialized dict to {data}")
-  async_to_sync(channel_layer.group_send)(
-            CHANNEL_GROUP_GLOBAL, {
-                WEBSOCKET_MESSAGE_ID : getNewMessageID(),
-                WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-                WEBSOCKET_DATA : data,
-                WEBSOCKET_REFRESH : False,
-                WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_UPDATE_STATE,
-                'type' : 'broadcastMessage',
-            })
   logger.info(f"Send vial to service, Deleting file: {path}")
   path.unlink()
 
@@ -142,13 +127,13 @@ class VialFileHandler(FileSystemEventHandler):
   def on_any_event(self, event: FileSystemEvent):
     logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
 
-  def on_created(self, event: FileCreatedEvent):
+  def on_created(self, event: FileSystemEvent):
     logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
     val_path = Path(event.src_path)
     val_thread = Thread(target=process_path, args=[val_path])
     val_thread.run()
 
-  def on_modified(self, event: FileCreatedEvent):
+  def on_modified(self, event: FileSystemEvent):
     if event.is_directory:
       return
 
@@ -158,8 +143,8 @@ class VialFileHandler(FileSystemEventHandler):
 class Command(BaseCommand):
   def handle(self, *args: Any, **options: Any) -> str | None:
 
-    tracer_mapping = _create_tracer_mapping()
-    customer_mapping = _create_customer_mapping()
+    tracer_mapping = update_tracer_mapping()
+    customer_mapping = update_customer_mapping()
 
     run_cleanup()
 

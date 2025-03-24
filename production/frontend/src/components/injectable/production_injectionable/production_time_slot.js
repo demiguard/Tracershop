@@ -11,7 +11,7 @@ import { ActivityDeliveryIcon, ClickableIcon, IdempotentIcon, StatusIcon } from 
 import { Comment } from '~/components/injectable/data_displays/comment';
 import { ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
-import { fulfillmentActivity } from '~/lib/physics';
+import { calculateProduction, fulfillmentActivity } from '~/lib/physics';
 import { formatTimeStamp, formatUsername, renderDateTime } from '~/lib/formatting';
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
 import { EndpointDisplay } from '~/components/injectable/data_displays/endpoint';
@@ -21,6 +21,7 @@ import { MBqDisplay } from '~/components/injectable/data_displays/mbq_display';
 import { UserDisplay } from '~/components/injectable/data_displays/user_display';
 import { DatetimeDisplay } from '~/components/injectable/data_displays/datetime_display';
 import { HoverBox } from '~/components/injectable/hover_box';
+import { compareTimeStamp, TimeStamp } from '~/lib/chronomancy';
 
 //#region Order Row
 /**
@@ -43,6 +44,42 @@ function OrderRow({order, overhead}){
     <Col>{base_activity} MBq</Col>
     <Col>{overhead_activity} MBq</Col>
     <Col><Comment comment={order.comment}/></Col>
+  </Row>);
+}
+
+/**
+ *
+ * @param {Object} param0
+ * @param {Vial} param0.vial
+ * @param {ActivityOrderCollection}  param0.orderCollection
+ */
+function VialRow({vial, orderCollection}){
+  const timeSlot = orderCollection.delivering_time_slot
+  const timeStampTimeSlot = new TimeStamp(timeSlot.delivery_time);
+  const timeStampVial = new TimeStamp(vial.fill_time);
+  const comparedTimeSlot = compareTimeStamp(timeStampVial, timeStampTimeSlot)
+
+  const minutesBetweenVialAndTimeSlot = comparedTimeSlot.toMinutes();
+
+  const correctedActivity = calculateProduction(
+    orderCollection.isotope.halflife_seconds,
+    minutesBetweenVialAndTimeSlot,
+    vial.activity
+  );
+
+  const base_time = <div>Kl: {vial.fill_time}</div>;
+  const hover_time = <div>Dispenseringstidspunkt</div>;
+  const base_activity = <div>{vial.activity} MBq</div>;
+  const hover_activity = <div>Aktivitet ved dispensering</div>;
+  const base_corrected = <div>{Math.floor(correctedActivity)} MBq</div>;
+  const hover_corrected = <div>Aktivitet ved kl: {timeSlot.delivery_time}</div>
+
+  return (<Row>
+    <Col xs={1}><ClickableIcon src={"/static/images/vial.svg"}/></Col>
+    <Col><HoverBox Base={base_time} Hover={hover_time}></HoverBox></Col>
+    <Col><HoverBox Base={base_activity} Hover={hover_activity}/></Col>
+    <Col><HoverBox Base={base_corrected} Hover={hover_corrected}/></Col>
+    <Col></Col>
   </Row>);
 }
 
@@ -153,6 +190,7 @@ function ProductionInnerContentStatusACCEPTED({
   </Row>
 }
 
+
 /**
  *
  * @param {object} props
@@ -160,6 +198,15 @@ function ProductionInnerContentStatusACCEPTED({
  * @returns
  */
 function ProductionInnerContentStatusRELEASED({orderCollection}){
+  const releasedBase = <div>
+        <div>Udleveret:</div>
+        <MBqDisplay activity={orderCollection.delivered_activity}/>
+  </div>;
+  const releasedHover = <div>
+    Korrigeret til kl: {orderCollection.delivering_time_slot.delivery_time}
+  </div>
+
+
   return (
     <Row>
       <Col style={cssCenter}>
@@ -167,8 +214,7 @@ function ProductionInnerContentStatusRELEASED({orderCollection}){
         <MBqDisplay activity={orderCollection.deliver_activity}/>
       </Col>
       <Col style={cssCenter}>
-        <div>Udleveret:</div>
-        <MBqDisplay activity={orderCollection.delivered_activity}/>
+        <HoverBox Base={releasedBase} Hover={releasedHover}/>
       </Col>
       <Col style={cssCenter}>
         <div>Frigivet kl: <TimeDisplay time={orderCollection.freed_time}/></div>
@@ -179,6 +225,7 @@ function ProductionInnerContentStatusRELEASED({orderCollection}){
     </Row>
   );
 }
+
 
 function ProductionInnerContentStatusCANCELED({orderCollection}){
   return (
@@ -195,7 +242,6 @@ function ProductionInnerContentStatusCANCELED({orderCollection}){
     </Row>
   );
 }
-
 
 
 function ProductionInnerContent({
@@ -272,7 +318,8 @@ const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(orderCollection.
 const /**@type {Number} */ firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
 
 const orders = [...orderCollection.relevant_orders]
-const OrderData = [];
+const orderData = [];
+const vialData = [];
 
 for(const order of orders){
   const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id
@@ -280,9 +327,14 @@ for(const order of orders){
                            || order.moved_to_time_slot === timeSlot.id
 
   if(is_originalTimeSlot){
-    OrderData.push(<OrderRow key={order.id} order={order} overhead={orderCollection.overhead}/>);
+    orderData.push(<OrderRow key={order.id} order={order} overhead={orderCollection.overhead}/>);
   }
 }
+
+for(const vial of orderCollection.vials){
+  vialData.push(<VialRow key={vial.id} vial={vial} orderCollection={orderCollection}/>);
+}
+
 const canMove = firstAvailableTimeSlot.id !== timeSlot.id
              && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
 
@@ -364,7 +416,8 @@ return (
           <Col>Med overhead</Col>
           <Col></Col>
         </Row>
-        {OrderData}
+        {orderData}
+        {vialData}
         <Optional exists={!(orderCollection.moved)}>
           <Row style={{justifyContent : "end"}}>
             <Col xs={1}>

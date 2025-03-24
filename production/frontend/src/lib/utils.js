@@ -161,5 +161,8 @@ export function getActiveTimeSlotID(order){
 
 export function clamp(num, min, max){
   return Math.max(Math.min(num, max), min)
+}
 
+export function getWebsocketUrl(){
+  return `ws://${window.location.host}/ws/`
 }

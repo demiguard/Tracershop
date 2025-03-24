@@ -40,8 +40,7 @@ describe("Reducer test actions", () => {
 
   it("Update default state remove old state", () => {
     const newState = tracershopReducer(defaultState, new UpdateState({
-      [DATA_CLOSED_DATE] : JSON.stringify([
-        { pk : 2, fields : { closed_date : "2024-11-06"}}])
+      [DATA_CLOSED_DATE] : [ new ClosedDate(2, "2024-11-05") ]
     }, true));
 
     expect(newState.closed_date).toBeInstanceOf(Map)
@@ -52,8 +51,7 @@ describe("Reducer test actions", () => {
 
   it("Update default state keep old state", () => {
     const newState = tracershopReducer(defaultState, new UpdateState({
-      [DATA_CLOSED_DATE] : JSON.stringify([
-        { pk : 2, fields : { closed_date : "2024-11-06"}}])
+      [DATA_CLOSED_DATE] : [ new ClosedDate(2, "2024-11-05") ]
     }, false));
 
     expect(newState.closed_date).toBeInstanceOf(Map)

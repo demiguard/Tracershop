@@ -8,12 +8,13 @@ import re
 from typing import Any, Dict, List, Optional
 
 # Third Party modules
+from django.db.utils import IntegrityError
 from pandas import DataFrame, ExcelWriter
 
 # Tracershop Packages
 from constants import DATETIME_REGULAR_EXPRESSION,\
   TIME_FORMAT, DATE_FORMAT, TIME_REGULAR_EXPRESSION
-
+from database import models
 
 def dateConverter(date_: date, format_: str=DATE_FORMAT) -> str:
   """
@@ -118,7 +119,25 @@ def format_time_number(num: int) -> str:
   # Python ternaries are ugly as fuck
   return f"0{num}" if num < 10 else str(num)
 
+def camelcase_to_readable(text: str) -> str:
+  result = ""
+  for char in text:
+    result += f" {char}" if char.isupper() else char
+  return result.strip()
 
 def format_message_name(message_name: str):
-    name_splits = message_name.split('_')
-    return '_'.join(name_splits[1:])
+  name_splits = message_name.split('_')
+  return '_'.join(name_splits[1:])
+
+def format_error_with_datatype(error: Exception, datatype: str):
+  model = models.MODELS[datatype]
+  if isinstance(error, IntegrityError):
+    code, _message = error.args
+
+    if code == 1062:
+      return f"Der findes allerede en tilsvarende {model.display_name}, benyt den i stedet."
+
+
+
+
+  return str(error)

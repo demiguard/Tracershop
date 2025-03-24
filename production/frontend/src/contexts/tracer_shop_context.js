@@ -9,6 +9,7 @@ import { datify } from '~/lib/chronomancy';
 import { DATA_BOOKING, EXCLUDED_STATE_MODELS, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from '~/lib/shared_constants';
 import { Logs } from '~/lib/logs';
 import { DerivedContextPyramid } from '~/contexts/derived_contexts';
+import { getWebsocketUrl } from '~/lib/utils';
 
 const StateContext = createContext(new TracershopState());
 const DispatchContext = createContext({});
@@ -45,6 +46,23 @@ export function DispatchContextProvider({children, value}) {
 }
 export const WebsocketContextProvider = ({children, value}) => {
   return (<WebsocketContext.Provider value={value}>{children}</WebsocketContext.Provider>);
+}
+
+export function TracerShopContext({
+  children, websocket, dispatch, tracershop_state
+}){
+  // HAIL THE GREAT PYRAMID!
+  return(
+    <WebsocketContext.Provider value={websocket}>
+      <StateContext.Provider value={tracershop_state}>
+        <DispatchContext.Provider value={dispatch}>
+          <DerivedContextPyramid>
+            {children}
+          </DerivedContextPyramid>
+        </DispatchContext.Provider>
+      </StateContext.Provider>
+    </WebsocketContext.Provider>
+  );
 }
 
 /**
@@ -133,12 +151,31 @@ export function tracershopReducer(state, action){
 }
 
 export function TracerShopContextInitializer({children, websocket_url}){
+  const today = new Date();
+  const user = (
+    () => {
+      const init_user = db.get(DATABASE_CURRENT_USER);
+      if(init_user && !(init_user instanceof User)){
+        return new User(init_user, init_user.id ,init_user.username, init_user.user_group, init_user.active);
+      } else {
+        return new User();
+      }
+    }
+  )();
+  const initial_state = new TracershopState(user, today);
+  for(const keyword of Object.keys(MODELS)){
+    if(EXCLUDED_STATE_MODELS.includes(keyword)){
+      continue;
+    }
+    initial_state[keyword] = getDatabaseMap(keyword);
+  }
+  const [state, dispatch] = useReducer(tracershopReducer, initial_state);
   const websocket = useRef(null);
 
-  const websocketURL = websocket_url
-    ? websocket_url : "ws://" + window.location.host + "/ws/";
+  const websocketURL = websocket_url ? websocket_url : getWebsocketUrl();
 
-  useEffect(() => {
+  // The websocket connection must be inside of code that only run once
+  useEffect(function initializeWebsocket() {
     websocket.current = new TracerWebSocket(
       new WebSocket(websocketURL),
       dispatch
@@ -151,55 +188,13 @@ export function TracerShopContextInitializer({children, websocket_url}){
     }
   },[]);
 
-  const user = (
-    () => {
-      const init_user = db.get(DATABASE_CURRENT_USER);
-      if(init_user && !(init_user instanceof User)){
-        return new User(init_user, init_user.id ,init_user.username, init_user.user_group, init_user.active);
-      } else {
-        return new User();
-      }
-    }
-  )();
-  const today = new Date();
-  const initial_state = new TracershopState(user, today);
-
-  for(const keyword of Object.keys(MODELS)){
-    if(EXCLUDED_STATE_MODELS.includes(keyword)){
-      continue;
-    }
-    initial_state[keyword] = getDatabaseMap(keyword);
-  }
-  const [state, dispatch] = useReducer(tracershopReducer, initial_state);
-  // You have to use a useRef and a useEffect to ensure that the websocket is recreated
-  // or can be refereed to, if there's a rerender.
-
-  // THE PYRAMID IS GROWING
   return(
     <TracerShopContext
       websocket={websocket.current}
       dispatch={dispatch}
       tracershop_state={state}
-    >
+      >
       {children}
     </TracerShopContext>
-  );
-}
-
-export function TracerShopContext({
-  children, websocket, dispatch, tracershop_state
-}){
-
-  // HAIL THE GREAT PYRAMID!
-  return(
-    <WebsocketContext.Provider value={websocket}>
-      <StateContext.Provider value={tracershop_state}>
-        <DispatchContext.Provider value={dispatch}>
-          <DerivedContextPyramid>
-            {children}
-          </DerivedContextPyramid>
-        </DispatchContext.Provider>
-      </StateContext.Provider>
-    </WebsocketContext.Provider>
   );
 }

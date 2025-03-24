@@ -1,7 +1,7 @@
 
 # Python Standard Library
 from dataclasses import field, make_dataclass
-from typing import Dict
+from typing import Dict, List
 
 # Third party packages
 from channels.layers import get_channel_layer
@@ -17,7 +17,7 @@ from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_ID,\
 
 from lib.utils import classproperty
 from websocket.messenger_base import MessengerBase, getNewMessageID,\
-  MessageBlueprint, MessageField, MessageDataField
+  MessageBlueprint, MessageField, MessageDataField, MessageDataType
 
 
 class MessengerCreateBooking(MessengerBase):
@@ -25,7 +25,7 @@ class MessengerCreateBooking(MessengerBase):
     CHANNEL_TARGET_KEYWORD : CHANNEL_TARGET_BROADCAST_FUNCTION,
     WEBSOCKET_MESSAGE_ID : MessageField(getNewMessageID),
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-    WEBSOCKET_DATA : MessageDataField(),
+    WEBSOCKET_DATA : MessageDataField(MessageDataType.STATE),
     WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_CREATE_BOOKING,
   })
 
@@ -36,7 +36,7 @@ class MessengerCreateBooking(MessengerBase):
   # This is just a fancy way of generating Classes, that ensures I can use
   # constants for creating the class
   Args = make_dataclass("Args", [
-    (DATA_BOOKING, Dict[str, Booking])
+    (DATA_BOOKING, MessageDataType.STATE)
   ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod

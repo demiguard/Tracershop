@@ -44,12 +44,15 @@ logger = logging.getLogger(VIAL_LOGGER)
 class ExceptionEmptyFile(Exception):
   pass
 
-def _get_file_contents(path: Path):
+def _get_file_contents(path: Path) -> List[str]:
   if path.stat().st_size == 0 or not path.exists():
     raise ExceptionEmptyFile
 
   with io.open(path, "r", encoding="iso-8859-1") as fp:
     data = fp.readlines()
+
+  if len(data) == 0:
+    raise ExceptionEmptyFile
 
   return data
 

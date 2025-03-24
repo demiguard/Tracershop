@@ -14,9 +14,9 @@ import os
 from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME,\
       LDAP_PASSWORD
 from production.config import debug_file_log, error_file_log,\
-      audit_file_log, pingService_file_log, vialLogger_file_log
+      audit_file_log, pingService_file_log, vialLogger_file_log, clean_up_log_file
 from constants import DEBUG_LOGGER, ERROR_LOGGER, AUDIT_LOGGER,\
-      PING_SERVICE_LOGGER, VIAL_LOGGER
+      PING_SERVICE_LOGGER, VIAL_LOGGER, CLEAN_UP_LOGGER
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 import ldap
@@ -257,7 +257,15 @@ LOGGING = {
             'when' : 'D',
             'backupCount' : 4,
             'formatter' : 'vial.formatter'
-        }
+        },
+        "CleanUpServiceHandler" : {
+           'level' : 'DEBUG',
+           'class' : 'logging.handlers.TimedRotatingFileHandler',
+           'filename' : clean_up_log_file,
+           'when' : 'D',
+           'backupCount' : 4,
+           'formatter' : 'django.server'
+        },
     },
     'loggers': {
         'django': {
@@ -288,8 +296,11 @@ LOGGING = {
         VIAL_LOGGER : {
           "level" : "DEBUG",
           "handlers" : ["vialServiceHandler"]
-        }
-
+        },
+        CLEAN_UP_LOGGER : {
+          "level" : "DEBUG",
+          "handlers" : ["CleanUpServiceHandler"]
+        },
     }
 }
 

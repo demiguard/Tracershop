@@ -10,13 +10,13 @@ import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
-import { TracerCatalog } from '~/contexts/tracerCatalog';
+import { TracerCatalog } from '~/contexts/tracer_catalog';
 import { getRelevantActivityOrders } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 import { db } from "~/lib/local_storage_driver";
 import { MARGIN } from "~/lib/styles";
-import { useTracerCatalog } from "~/contexts/tracerCatalog";
+import { useTracerCatalog } from "~/contexts/tracer_catalog";
 
 
 /**

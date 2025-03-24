@@ -1,5 +1,6 @@
 # Python Standard Library
 from dataclasses import field, make_dataclass
+from typing import Optional
 
 # Third party packages
 from channels.layers import get_channel_layer
@@ -33,7 +34,7 @@ class MessengerCreateBooking(MessengerBase):
     return WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE
 
   Args = make_dataclass("Args", [
-    (MESSENGER_CONSUMER, consumer.Consumer),
+    (MESSENGER_CONSUMER, Optional[consumer.Consumer]),
     (WEBSOCKET_MESSAGE_ID, int),
     (WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD),
     (WEBSOCKET_DATA, MessageDataType.STATE, field(default_factory=dict)),
@@ -61,5 +62,6 @@ class MessengerCreateBooking(MessengerBase):
         await cls.message_blueprint.serialize(args)
       )
     else:
-      consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
-      await consumer_.send_json(await cls.message_blueprint.serialize(args))
+      if args[MESSENGER_CONSUMER] is not None:
+        consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
+        await consumer_.send_json(await cls.message_blueprint.serialize(args))

@@ -52,6 +52,10 @@ class TracershopModel(Model):
   def exclude(cls) -> List[str]:
     return []
 
+  @classproperty
+  def display_name(cls) -> str:
+    return formatting.camelcase_to_readable(cls.__class__.__name__)
+
   class Meta:
     abstract = True
 
@@ -85,7 +89,6 @@ class TracershopModel(Model):
           value = formatting.toTime(value)
         elif isinstance(field, DateTimeField):
           value = formatting.toDateTime(value)
-          value = timezone.make_aware(value)
         elif isinstance(field, DateField):
           value = formatting.toDate(value)
         elif isinstance(field, BooleanField):
@@ -129,13 +132,6 @@ class TracershopModel(Model):
       super().delete(*args, **kwargs)
       return True
     return False
-
-
-#class DateIndexableModel(TracershopModel):
-#  @classmethod
-#  def date_index(cls, date_from, date_to):
-#    raise NotImplemented
-
 
 
 class Days(IntegerChoices):

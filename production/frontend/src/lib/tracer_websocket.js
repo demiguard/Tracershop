@@ -2,22 +2,20 @@ import React from "react";
 import Cookies from "js-cookie";
 
 import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
-  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE,
+  WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID,
   WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT,
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_REFRESH,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER,
-  WEBSOCKET_MESSAGE_READ_BOOKINGS, WEBSOCKET_DATE,  WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_SUCCESS,
+  WEBSOCKET_MESSAGE_READ_BOOKINGS, WEBSOCKET_DATE,   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_SUCCESS,
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_READ_TELEMETRY,
   DATA_USER} from "~/lib/shared_constants.js";
 
-import { ParseJSONstr } from "~/lib/formatting.js";
 import { User } from "~/dataclasses/dataclasses.js";
 import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction, UpdateWebsocketConnectionState, UpdateError } from '~/lib/state_actions';
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
-import { MESSAGE_AUTH_LOGOUT, MESSAGE_AUTH_RESPONSE, MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_DELETE_STATE, MESSAGE_ERROR, MESSAGE_READ_BOOKINGS, MESSAGE_READ_STATE, MESSAGE_READ_TELEMETRY, MESSAGE_UPDATE_PRIVILEGED_STATE, MESSAGE_UPDATE_STATE, MESSAGES } from "~/lib/incoming_messages";
+import { createMessage, MESSAGE_AUTH_LOGOUT, MESSAGE_AUTH_RESPONSE, MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_DELETE_STATE, MESSAGE_ERROR, MESSAGE_READ_BOOKINGS, MESSAGE_READ_STATE, MESSAGE_READ_TELEMETRY, MESSAGE_UPDATE_PRIVILEGED_STATE, MESSAGE_UPDATE_STATE, MESSAGES } from "~/lib/incoming_messages";
 
 const promise_resolve_timeout_ms = 150;
 
@@ -36,7 +34,7 @@ export class TracerWebSocket {
   constructor(websocket, dispatch){
     this.#promiseMap = new Map();
     this.#listeners = new Map();
-    this.#listerNumber = 0;
+    this.#listerNumber = 1; // Gotta start at 1 otherwise if conditions fails
     this.#dispatch = dispatch
     this.initializeWebsocket(websocket) // sets .#ws
   }
@@ -64,7 +62,9 @@ export class TracerWebSocket {
         while(iter < 10 && websocket.readyState === WebSocket.CONNECTING){
           await new Promise(r => setTimeout(r, 100));
         }
+        /* istanbul ignore if */
         if(websocket.readyState !== WebSocket.OPEN){
+          /* istanbul ignore next */
           throw {
             columnNumber : "",
             fileName : "",
@@ -77,6 +77,7 @@ export class TracerWebSocket {
       case WebSocket.OPEN:
         websocket.send(JSON.stringify(message));
         break;
+      /* istanbul ignore next */
       default:
         throw {
           columnNumber : "",
@@ -111,7 +112,7 @@ export class TracerWebSocket {
       data[WEBSOCKET_JAVASCRIPT_VERSION] = JAVASCRIPT_VERSION
     }
 
-
+    /* istanbul ignore if */
     if(this.#ws.readyState === WebSocket.CLOSING ||
        this.#ws.readyState === WebSocket.CLOSED
      ) {
@@ -126,7 +127,9 @@ export class TracerWebSocket {
     const promise = new Promise(async function (resolve) {
       const pipe = new MessageChannel();
       pipe.port1.onmessage = function (messageEvent) {
-        resolve(messageEvent.data);
+        // NO FUCKING CLUE WHY WE THROW AWAY CLASSES HERE???
+        // Might be because it's a copy of the original data
+        resolve(createMessage(messageEvent.data));
       }
       promiseMap.set(messageID, pipe);
     }.bind(this));
@@ -202,11 +205,7 @@ export class TracerWebSocket {
    * @param {ReducerAction} action
    */
   dispatch(action){
-    if(this.#dispatch !== undefined){
-      this.#dispatch(action);
-    } else {
-      console.log("Missed dispatch");
-    }
+    this.#dispatch(action);
   }
 
   addListener(func){
@@ -233,14 +232,23 @@ export class TracerWebSocket {
       this.dispatch(new UpdateError(message_raw[WEBSOCKET_MESSAGE_ERROR]));
       return;
     }
-
-    if (!WEBSOCKET_MESSAGE_TYPE in message_raw){
-      console.error("Malform message received:", message_raw)
+    if (!(WEBSOCKET_MESSAGE_TYPE in message_raw)){
+      console.error("Missing message type", message_raw)
+      return;
     }
-    const message = new MESSAGES[message_raw[WEBSOCKET_MESSAGE_TYPE]](message_raw);
+    if(!(message_raw[WEBSOCKET_MESSAGE_TYPE] in MESSAGES)){
+      console.error("Invalid message type message", message_raw)
+      return;
+    }
+
+    const message = createMessage(message_raw)
+
+
     const pipe = this.#promiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
     if(pipe !== undefined){
-      pipe.port2.postMessage(message);
+      // So the class information doesn't get passed, so we have to reconstruct
+      // on the other side of this port.
+      pipe.port2.postMessage(message_raw);
       setTimeout(() => {
         pipe.port1.close();
         pipe.port2.close();
@@ -274,9 +282,10 @@ export class TracerWebSocket {
         }
         break;
       case message instanceof MESSAGE_DELETE_STATE:
-        if(message.success === SUCCESS_STATUS_CRUD.SUCCESS){
+        if(message.status === SUCCESS_STATUS_CRUD.SUCCESS){
           this.dispatch(new DeleteState(message.datatype, message.dataID))
         }
+        break;
       case message instanceof MESSAGE_ERROR:
         break;
       case message instanceof MESSAGE_AUTH_LOGOUT:
@@ -311,7 +320,7 @@ export class TracerWebSocket {
   onOpen(){
     this.dispatch(new UpdateWebsocketConnectionState(WebSocket.OPEN));
     const message = this.getMessage(WEBSOCKET_MESSAGE_AUTH_WHOAMI);
-    this.send(message).then((data) => {
+    this._initializationPromise = this.send(message).then((data) => {
       const user = data[AUTH_IS_AUTHENTICATED] ? deserialize_single(data[DATA_USER]) : new User();
       db.set(DATABASE_CURRENT_USER, user);
       this.dispatch(new UpdateCurrentUser(user));
@@ -322,6 +331,7 @@ export class TracerWebSocket {
   }
 
   initializeWebsocket(websocket){
+    this._initializationPromise = null;
     this.#ws = websocket;
     this.#ws.onmessage = this.onMessage.bind(this)
     this.#ws.onopen = this.onOpen.bind(this)

@@ -7,16 +7,17 @@ import { act, screen, render, cleanup, fireEvent } from "@testing-library/react"
 import { jest } from '@jest/globals'
 
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
-import { DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
+import { BookingStatus, DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_READ_BOOKINGS, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_REFRESH } from "~/lib/shared_constants"
 import {  testState } from "~/tests/app_state.js";
 import {  TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { UpdateToday } from "~/lib/state_actions.js";
+import { Booking } from "~/dataclasses/dataclasses.js";
+import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
-const websocket = tracer_websocket.TracerWebSocket;;
-let container = null;
+const websocket = tracer_websocket.TracerWebSocket;
 
 jest.useFakeTimers('modern')
 const now = new Date(2020,4, 4, 10, 36, 44)
@@ -141,21 +142,19 @@ describe("Shop Order page test suite", () => {
     const listeners = new Map()
 
     const websocket = {
-      sendGetBookings : jest.fn(() => Promise.resolve({
-        [WEBSOCKET_DATA] : {
-          [DATA_BOOKING] : [
-            { pk : 1, fields : { status : 1,
-              location : 1,
-              procedure : 1,
-              accession_number : "DKREGH0011223344",
-              start_time : "10:00:00", start_date : "2020-05-05"}
-            },
-          ]
-        }
-
-      })),
+      sendGetBookings : jest.fn(() => Promise.resolve( new MESSAGE_READ_BOOKINGS({
+          [WEBSOCKET_MESSAGE_ID] : 689238541,
+          [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS,
+          [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
+          [WEBSOCKET_DATA] : {
+            [DATA_BOOKING] : [
+              new Booking(1, BookingStatus.Initial, 1, 1, "REGH00000000", "10:00:00", "2020-05-05"),
+            ]
+          },
+          [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_READ_BOOKINGS,
+        }))),
       addListener : jest.fn((func) => {
-        let listenNumber = listeners.size;
+        const listenNumber = listeners.size;
 
         listeners.set(
           listenNumber, func
@@ -165,8 +164,8 @@ describe("Shop Order page test suite", () => {
       }),
       removeListener : jest.fn((listenNumber) => {
         listeners.delete(listenNumber)
-      })
-    }
+      }),
+    };
 
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
@@ -210,28 +209,21 @@ describe("Shop Order page test suite", () => {
     const listeners = new Map()
 
     const websocket = {
-      sendGetBookings : jest.fn(() => Promise.resolve({
-        [WEBSOCKET_DATA] : { [DATA_BOOKING] : [
-          { pk : 1, fields : { status : 1,
-                               location : 1,
-                               procedure : 1,
-                               accession_number : "DKREGH0011223344",
-                               start_time : "10:00:00", start_date : "2020-05-05"}
-          }, { pk : 2, fields : { status : 1,
-            location : 1,
-            procedure : 2,
-            accession_number : "DKREGH0011223344",
-            start_time : "11:00:00", start_date : "2020-05-05"}
-},
-        ]}
-      })),
+      sendGetBookings : jest.fn(() => Promise.resolve(new MESSAGE_READ_BOOKINGS({
+        [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS,
+        [WEBSOCKET_REFRESH] : false,
+        [WEBSOCKET_DATA] : {
+            [DATA_BOOKING] : [
+          new Booking(1,1, 1, 1, "REGH00113344", "10:00:00", "2020-05-05"),
+          new Booking(2,1, 1, 2, "REGH00113344", "10:00:00", "2020-05-05"),
+        ]},
+        [WEBSOCKET_MESSAGE_ID] : 3123,
+          [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
+          [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_READ_BOOKINGS,
+      }))),
       addListener : jest.fn((func) => {
-        let listenNumber = listeners.size;
-
-        listeners.set(
-          listenNumber, func
-        );
-
+        const listenNumber = listeners.size;
+        listeners.set(listenNumber, func);
         return listenNumber
       }),
       removeListener : jest.fn((listenNumber) => {
@@ -272,10 +264,13 @@ describe("Shop Order page test suite", () => {
     expect(screen.getAllByText(procedureIdentifier2.description)[1]).not.toBeVisible();
 
     await act(async () => {
-      websocket.triggerListeners({
+      websocket.triggerListeners(new MESSAGE_DELETE_BOOKING({
         [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_DELETE_BOOKING,
         [WEBSOCKET_DATA_ID] : [1],
-      });
+        [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
+        [WEBSOCKET_DATATYPE] : DATA_BOOKING,
+        [WEBSOCKET_MESSAGE_ID] : 16879023,
+      }));
     });
     expect(screen.queryByText(procedureIdentifier.description)).toBeNull();
   });
@@ -293,22 +288,17 @@ describe("Shop Order page test suite", () => {
     });
 
     await act(async () => {
-      websocket.triggerListeners({
-        [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_BOOKING,
-        [WEBSOCKET_DATA] : { [DATA_BOOKING] : [
-          { pk : 1, fields : { status : 1,
-                               location : 1,
-                               procedure : 1,
-                               accession_number : "DKREGH0011223344",
-                               start_time : "10:00:00", start_date : "2020-05-05"}
-          }, { pk : 2, fields : { status : 1,
-            location : 1,
-            procedure : 2,
-            accession_number : "DKREGH0011223344",
-            start_time : "11:00:00", start_date : "2020-05-05"}
-          },
-        ]},
-      });
+      websocket.triggerListeners(
+        new MESSAGE_CREATE_BOOKING({
+          [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
+          [WEBSOCKET_MESSAGE_ID] : 16879023,
+          [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_BOOKING,
+          [WEBSOCKET_DATA] : { [DATA_BOOKING] : [
+            new Booking(1, 1, 1, 1, "DKREGH0011223344", "11:00:00", "2020-05-05"),
+            new Booking(2, 1, 1, 2, "DKREGH0011223366", "11:00:00", "2020-05-05"),
+          ]},
+        })
+      );
     });
 
     const procedure = testState.procedure.get(1);
@@ -316,7 +306,6 @@ describe("Shop Order page test suite", () => {
     const procedureIdentifier = testState.procedure_identifier.get(procedure.series_description);
     expect(screen.getAllByText(procedureIdentifier.description)[0]).toBeVisible();
     expect(screen.getAllByText(procedureIdentifier.description)[1]).not.toBeVisible();
-
 
     const procedure2 = testState.procedure.get(2);
     expect(procedure2).toBeDefined();

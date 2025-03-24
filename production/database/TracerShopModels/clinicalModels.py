@@ -95,6 +95,15 @@ class ActivityProduction(TracershopModel):
     else:
       return AuthActions.REJECT_LOG
 
+  @classproperty
+  def display_name(cls):
+    return "aktivitets produktion"
+
+  class Meta: # type: ignore
+    unique_together = [
+      ['production_time', 'production_day', 'tracer']
+    ]
+
 class ReleaseRight(TracershopModel):
   id = BigAutoField(primary_key=True)
   expiry_date = DateField(null=True, default=None)

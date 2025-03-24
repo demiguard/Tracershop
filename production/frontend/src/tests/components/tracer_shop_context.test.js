@@ -14,7 +14,6 @@ import { DATABASE_CURRENT_USER, USER_GROUPS } from "~/lib/constants";
 import { db } from "~/lib/local_storage_driver";
 import { closed_dates } from "~/tests/test_state/close_dates";
 import { compareMaps } from "~/lib/utils";
-import { describe } from "node:test";
 
 let server = null
 
@@ -33,7 +32,6 @@ beforeEach(async () => {
 })
 
 afterEach(async() => {
-
   server.close();
   WS.clean();
   cleanup();

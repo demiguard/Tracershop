@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { AppState } from "../../app_state.js";
 
 import { PROP_SET_USER, PROP_USER, USER_GROUPS  } from "~/lib/constants.js";
-import { WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"
+import { AUTH_IS_AUTHENTICATED, DATA_USER, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"
 import { LoginSite } from "~/components/sites/login_site.js";
 
 import { ANON } from "../../test_state/users.js";
@@ -50,28 +50,28 @@ afterEach(() => {
 });
 
 describe("Login shop test suite", () => {
-  it("standard test", async () => {
+  it("standard test", () => {
     render(
     <WebsocketContextProvider value={websocket}>
       <LoginSite {...props}/>
     </WebsocketContextProvider>);
-    expect(await screen.findByLabelText('username')).toBeVisible();
-    expect(await screen.findByLabelText('password')).toBeVisible();
+    expect(screen.getByLabelText('username')).toBeVisible();
+    expect(screen.getByLabelText('password')).toBeVisible();
   });
 
   it("Login test success", async () => {
     const getMessageMock = jest.fn((kw) => ({messageType : kw}))
     const sendMock = jest.fn( () => Promise.resolve({
-          isAuthenticated : true,
-          auth_user : JSON.stringify({ user : [{
+          [AUTH_IS_AUTHENTICATED] : true,
+          [DATA_USER] : { user : [{
             pk : 1,
             fields : {
               username : "username",
               user_group : USER_GROUPS.ADMIN,
               active : true,
             }
-          }]})
-        })); // There just so many parentheses...
+          }]}})
+        ); // There just so many parentheses...
 
     websocket = {
       getMessage : getMessageMock,

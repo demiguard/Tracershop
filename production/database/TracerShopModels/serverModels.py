@@ -33,7 +33,7 @@ class ServerLog(TracershopModel):
   message = models.CharField(max_length=1024)
   level = models.SmallIntegerField(choices=ServerLogLevels.choices)
 
-  class Meta:
+  class Meta: # type: ignore
     indexes = [
       Index(fields=['created'])
     ]

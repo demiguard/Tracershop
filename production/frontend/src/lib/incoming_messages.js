@@ -1,5 +1,6 @@
 /* GENERATED FILE by python3 manage.py mapconstants, DO NOT EDIT!
 This file consist of messages coming from the server. */
+import { WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js"
 import { deserialize } from "~/lib/serialization.js"
 import {
   WEBSOCKET_MESSAGE_READ_STATE,
@@ -28,6 +29,11 @@ export class MESSAGE_READ_STATE {
 
 export class MESSAGE_ERROR {
   constructor(message){
+    this.message_id = message["message_id"]
+    this.success = message["success"]
+    this.error = message["error"]
+    this.status = message["status"]
+    this.messageType = message["messageType"]
   }
 }
 
@@ -37,7 +43,6 @@ export class MESSAGE_DELETE_BOOKING {
     this.message_id = message["message_id"]
     this.success = message["success"]
     this.dataID = message["dataID"]
-    this.data = message["data"]
     this.datatype = message["datatype"]
     this.messageType = message["messageType"]
   }
@@ -115,7 +120,7 @@ export class MESSAGE_CREATE_BOOKING {
     this.type = message["type"]
     this.message_id = message["message_id"]
     this.success = message["success"]
-    this.data = message["data"]
+    this.data = deserialize(message["data"])
     this.messageType = message["messageType"]
   }
 }
@@ -141,4 +146,8 @@ export const MESSAGES = {
   [WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE] : MESSAGE_UPDATE_PRIVILEGED_STATE,
   [WEBSOCKET_MESSAGE_CREATE_BOOKING] : MESSAGE_CREATE_BOOKING,
   [WEBSOCKET_MESSAGE_READ_TELEMETRY] : MESSAGE_READ_TELEMETRY,
+}
+
+export function createMessage(valid_message){
+  return new MESSAGES[valid_message[WEBSOCKET_MESSAGE_TYPE]](valid_message);
 }

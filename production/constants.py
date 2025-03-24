@@ -24,7 +24,7 @@ SQL_TABLE_REGULAR_EXPRESSION = r"^[A-z0-9]+(\.[A-z0-9]+)?$"
 LEGACY_ENTRIES = date(2023,11 ,20)
 
 # Loggers
-
+CLEAN_UP_LOGGER = "CleanUpLogger"
 DEBUG_LOGGER = "DebugLogger"
 ERROR_LOGGER = "ErrorLogger"
 AUDIT_LOGGER = "AuditLogger"

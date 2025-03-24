@@ -1,8 +1,10 @@
 /*
  * This module resolves around time and deadlines
  * It also partly exists to offload formatting
+ *
+ * It's also the most powerful module of all!
 */
-import { db } from "~/lib/local_storage_driver";
+
 import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
 import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";

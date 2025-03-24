@@ -1,7 +1,7 @@
 import { ActivityOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { ArrayMap } from "~/lib/array_map";
 import { getTimeSlotOwner } from "~/lib/data_structures.js";
-import { TracerCatalog } from '~/contexts/tracerCatalog';
+import { TracerCatalog } from '~/contexts/tracer_catalog';
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
 import { sortActivityOrderCollections, sortTimeSlots } from "~/lib/sorting";
 

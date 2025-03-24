@@ -1,6 +1,6 @@
 import { jest } from '@jest/globals'
-import { DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPE } from '../shared_constants.js';
-import { bookings } from '~/tests/test_state/bookings.js';
+import { DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPE } from '../shared_constants.js';
+import { MESSAGE_READ_BOOKINGS } from '~/lib/incoming_messages.js';
 
 const tracer_websocket = jest.createMockFromModule('../tracer_websocket.js');
 
@@ -16,11 +16,12 @@ TracerWebSocket.sendCreateModel = jest.fn((message) => new Promise(async functio
 TracerWebSocket.sendDeleteModel = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendChangePassword = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendCreateExternalUser = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
-TracerWebSocket.sendGetBookings = jest.fn((message) => Promise.resolve({
+TracerWebSocket.sendGetBookings = jest.fn((message) => Promise.resolve(new MESSAGE_READ_BOOKINGS({
+  [WEBSOCKET_MESSAGE_ID] : 69420,
   [WEBSOCKET_DATA] : {
     [DATA_BOOKING] : []
   }
-}));
+})));
 
 TracerWebSocket._listeners = new Map();
 

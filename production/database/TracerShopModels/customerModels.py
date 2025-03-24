@@ -14,6 +14,7 @@ from django.db.models import DateField, BigAutoField, CharField, EmailField,\
     SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
 
 # Tracershop Packages
+from lib.utils import classproperty
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
 from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer, ReleaseRight
@@ -28,7 +29,7 @@ class ClosedDate(TracershopModel):
   def __str__(self) -> str:
     return f"Closed day at {self.close_date}"
 
-  class Meta:
+  class Meta: # type: ignore
     indexes = [
       Index(fields=['close_date'])
     ]
@@ -58,7 +59,11 @@ class UserAssignment(TracershopModel):
   def __str__(self) -> str:
     return f"User: {self.user} is assigned to {self.customer}"
 
-  class Meta:
+  @classproperty
+  def display_name(cls):
+    return "bruger rettighed"
+
+  class Meta: # type: ignore
     unique_together = ('user', 'customer')
 
 
@@ -99,7 +104,9 @@ class TracerCatalogPage(TracershopModel):
   def __str__(self) -> str:
     return f"{self.endpoint} catalog {self.tracer}"
 
-  class Meta:
+  @classproperty
+
+  class Meta: # type: ignore
     unique_together = ('endpoint', 'tracer')
 
 
@@ -131,7 +138,7 @@ class ProcedureIdentifier(TracershopModel):
     if self.description is not None:
       return baseString + self.description
     else:
-      return baseString + self.code
+      return baseString + str(self.code)
 
 
 class Procedure(TracershopModel):
@@ -199,6 +206,13 @@ class ActivityDeliveryTimeSlot(TracershopModel):
 
   def __str__(self) -> str:
     return f"ActivityDeliveryTimeSlot at {Days(self.production_run.production_day).name} - {self.delivery_time} to {self.destination.owner.short_name}"
+
+  class Meta:
+    unique_together = [
+      'destination',
+      'delivery_time',
+      'production_run'
+    ]
 
 class OrderStatus(IntegerChoices):
   Ordered = 1
@@ -422,7 +436,7 @@ class Vial(TracershopModel):
 
     return AuthActions.REJECT
 
-  class Meta:
+  class Meta: # type: ignore
     indexes = [
       Index(fields=['fill_date', 'fill_time'])
     ]

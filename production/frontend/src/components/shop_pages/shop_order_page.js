@@ -6,30 +6,23 @@ import { OrderReview } from "./order_review.js";
 import { db } from "../../lib/local_storage_driver.js";
 import { DATABASE_ACTIVE_TRACER, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   DATABASE_SHOP_ORDER_PAGE,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
-  PROP_ACTIVE_ENDPOINT,
-  PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
+  PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
   USER_GROUPS,
 } from "../../lib/constants.js";
 import { ServerConfiguration, Deadline, Booking} from "../../dataclasses/dataclasses.js";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
-import { expiredDeadline, getBitChain } from "../../lib/chronomancy.js";
-import { getId } from "../../lib/utils.js";
+import { expiredDeadline } from "../../lib/chronomancy.js";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
 import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
 import { BookingOverview } from "./booking_overview.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { Optional } from "~/components/injectable/optional.js";
-import { DATA_BOOKING, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CREATE_BOOKING, WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
-import { ParseDjangoModelJson } from "~/lib/formatting.js";
+import { DATA_BOOKING } from "~/lib/shared_constants.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
-import { TracerCatalog } from '~/contexts/tracerCatalog.js';
-import { useTracerCatalog } from "~/contexts/tracerCatalog.js";
-import { deserialize_list, deserialize_map, deserialize_single, deserialize, deserialize_booking } from "~/lib/serialization.js";
-
-function get_raw_bookings_from_message(message){
-  return message[WEBSOCKET_DATA][DATA_BOOKING];
-}
+import { useTracerCatalog } from "~/contexts/tracer_catalog.js";
+import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages.js";
+import { toMapping } from "~/lib/utils.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -129,12 +122,11 @@ export function ShopOrderPage ({relatedCustomer}){
   const activeDate = state.today;
 
   function addBookingFromUpdate(message){
-    if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_CREATE_BOOKING){
+    if(message instanceof MESSAGE_CREATE_BOOKING){
       setBookings(oldBookings => {
-        console.log(message)
         const newBookings = new Map(oldBookings);
 
-        const parsed_bookings = deserialize_booking(message[WEBSOCKET_DATA])
+        const parsed_bookings = message.data[DATA_BOOKING]
         const filteredBookings = bookingFilter(parsed_bookings, {
           state : state,
           active_date : activeDate,
@@ -147,8 +139,8 @@ export function ShopOrderPage ({relatedCustomer}){
 
         return newBookings;
       })
-    } else if(message[WEBSOCKET_MESSAGE_TYPE] === WEBSOCKET_MESSAGE_DELETE_BOOKING){
-      const /**@type {Array<Number>} */ deleted_bookings = message[WEBSOCKET_DATA_ID]
+    } else if(message instanceof MESSAGE_DELETE_BOOKING){
+      const /**@type {Array<Number>} */ deleted_bookings = message.dataID
       setBookings(oldBookings => {
         const newBookings = new Map(oldBookings);
         for(const bookingID of deleted_bookings){
@@ -160,10 +152,7 @@ export function ShopOrderPage ({relatedCustomer}){
   }
 
   useEffect(() => {
-    let listenNumber = null;
-    if(websocket){
-      listenNumber = websocket.addListener(addBookingFromUpdate);
-    }
+    const listenNumber = websocket ? websocket.addListener(addBookingFromUpdate) : null;
     return () => {
       if(listenNumber !== null){
         websocket.removeListener(listenNumber);
@@ -196,12 +185,12 @@ export function ShopOrderPage ({relatedCustomer}){
   useEffect(function getBookings () {
     if(websocket !== null){
       websocket.sendGetBookings(activeDate, activeEndpoint).then((message) => {
-        if(message[WEBSOCKET_DATA]){
-          const raw_bookings = get_raw_bookings_from_message(message)
-
-          const newBookings = deserialize_map(Booking, raw_bookings);
-          setBookings(newBookings);
+        if(message instanceof MESSAGE_READ_BOOKINGS){
+          setBookings(toMapping(message.data[DATA_BOOKING]));
+        } else {
+          console.error("Server error?")
         }
+
       });
     }
     return () => {

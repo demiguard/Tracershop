@@ -6,6 +6,7 @@ from django.db.utils import IntegrityError
 from channels.auth import get_user
 
 # Tracershop modules
+from lib.formatting import format_error_with_datatype
 from lib.utils import classproperty
 from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
@@ -17,7 +18,6 @@ from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
 from websocket.handler_base import HandlerBase
 
 class HandleModelCreate(HandlerBase):
-
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_CREATE
@@ -29,21 +29,25 @@ class HandleModelCreate(HandlerBase):
                                                        message[WEBSOCKET_DATA],
                                                        user)
     except IntegrityError as e:
-      error_message = str(e)
-      await consumer.send_json({
+      error_message = format_error_with_datatype(e, message[WEBSOCKET_DATATYPE])
+
+      await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR, {
+        MESSENGER_CONSUMER : consumer,
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.CONSTRAINTS_VIOLATED,
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_ERROR : error_message
+        WEBSOCKET_MESSAGE_ERROR : error_message,
       })
+
       return
     except ValidationError as e:
-      await consumer.send_json({
-        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.VALIDATION_FAILED,
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
+
+      await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR, {
+        MESSENGER_CONSUMER : consumer,
+        WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.CONSTRAINTS_VIOLATED,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_ERROR : e.error_dict
+        WEBSOCKET_MESSAGE_ERROR : e.error_dict,
       })
+
       return
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {

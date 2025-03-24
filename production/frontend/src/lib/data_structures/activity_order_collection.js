@@ -5,7 +5,7 @@
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction,
   Customer, DeliveryEndpoint, Isotope, Tracer,
   TracershopState } from "~/dataclasses/dataclasses"
-import { compareTimeStamp } from "~/lib/chronomancy"
+import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy"
 import { ORDER_STATUS } from "~/lib/constants"
 import { calculateProduction } from "~/lib/physics"
 import { getId } from "~/lib/utils"
@@ -207,7 +207,20 @@ export class ActivityOrderCollection {
     if(this.minimum_status === ORDER_STATUS.RELEASED){
       for(const vial of state.vial.values()){
         if (this.orderIDs.includes(vial.assigned_to)){
-          this.delivered_activity += vial.activity;
+          const timeSlot = this.delivering_time_slot
+          const timeStampTimeSlot = new TimeStamp(timeSlot.delivery_time);
+          const timeStampVial = new TimeStamp(vial.fill_time);
+          const comparedTimeSlot = compareTimeStamp(timeStampVial, timeStampTimeSlot);
+
+          const minutesBetweenVialAndTimeSlot = comparedTimeSlot.toMinutes();
+
+          const correctedActivity = calculateProduction(
+            this.isotope.halflife_seconds,
+            minutesBetweenVialAndTimeSlot,
+            vial.activity
+          );
+
+          this.delivered_activity += correctedActivity;
           this.vials.push(vial);
         }
       }
