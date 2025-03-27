@@ -1,29 +1,31 @@
 import { Booking, MODELS } from "../dataclasses/dataclasses";
 import { ParseJSONstr } from "./formatting";
 
+function serialize_instance(modelType, skeleton){
+  // So the idea here is that all of the key will be initialized with
+  // undefined then will be overwritten in the function.
+  const newModel = new modelType();
+  if (!('pk' in skeleton)){
+    console.error("Missing Primary key in: ", skeleton)
+    console.error("Did you pass an object of the type?")
+  }
+  newModel.id = skeleton.pk;
+  if (!('fields' in skeleton)){
+    console.error("Missing Fields key in: ", skeleton)
+  }
+  Object.assign(newModel, skeleton.fields);
+  return newModel;
+}
+
 export function deserialize_list(modelType, models){
   const serializedList = [];
 
   for(const model of models){
-    const newModel = new modelType();
-    newModel.id = model.pk;
-    Object.assign(newModel, model.fields);
+    const newModel = serialize_instance(modelType, model)
     serializedList.push(newModel);
   }
 
   return serializedList;
-}
-export function deserialize_map(modelType, models, oldMap){
-  const newMap = new Map(oldMap);
-
-  for(const model of models){
-    const newModel = new modelType();
-    newModel.id = model.pk;
-    Object.assign(newModel, model.fields);
-    newMap.set(newModel.id, newModel);
-  }
-
-  return newMap
 }
 
 export function deserialize_booking(data){
@@ -41,6 +43,7 @@ export function deserialize(inputJSON){
       parsedJSON[modelTypeIdentifier]
     );
   }
+
   return returnObject;
 }
 

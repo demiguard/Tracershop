@@ -352,7 +352,7 @@ class DatabaseInterface():
     }
 
   @database_sync_to_async
-  def async_serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> str:
+  def async_serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> Dict[str,Any]:
     """Transforms some models to a string representation of those models.
     It removes any fields that should not be broadcast such a passwords
 
@@ -365,7 +365,7 @@ class DatabaseInterface():
     return self.serialize_dict(instances)
 
   @staticmethod
-  def serialize_dict(instances: Dict[str, Iterable[TracershopModel]]) -> Dict:
+  def serialize_dict(instances: Dict[str, Iterable[TracershopModel]]) -> Dict[str, Any]:
     serialized_dict = {}
 
     for key, models in instances.items():
@@ -379,7 +379,7 @@ class DatabaseInterface():
         fields = serialized_model['fields']
         for keyword in Model.exclude: #type: ignore
           del fields[keyword]
-        for property_name in Model.derived_properties:
+        for property_name in Model.derived_properties: # type: ignore
           fields[property_name] = getattr(model, property_name)
 
       serialized_dict[key] = serialized_models
@@ -779,7 +779,13 @@ class DatabaseInterface():
     externalUser.set_password(externalNewPassword)
     externalUser.save()
 
-  def get_csv_data(self, csv_date: date):
+  def get_csv_data(self, csv_date: date) -> Dict[str, Dict[str, List[Any]]]:
+    """Extracts data from Database regarding orders and vials completed the
+    month of the csv_date argument.
+
+    Args:
+    """
+
     _, end_date_num = monthrange(csv_date.year, csv_date.month)
 
     start_date = date(csv_date.year, csv_date.month, 1)

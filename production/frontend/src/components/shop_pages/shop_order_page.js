@@ -125,9 +125,8 @@ export function ShopOrderPage ({relatedCustomer}){
     if(message instanceof MESSAGE_CREATE_BOOKING){
       setBookings(oldBookings => {
         const newBookings = new Map(oldBookings);
-
-        const parsed_bookings = message.data[DATA_BOOKING]
-        const filteredBookings = bookingFilter(parsed_bookings, {
+        const incomingBookings = message.data[DATA_BOOKING]
+        const filteredBookings = bookingFilter(incomingBookings, {
           state : state,
           active_date : activeDate,
           active_endpoint : activeEndpoint,
@@ -136,7 +135,6 @@ export function ShopOrderPage ({relatedCustomer}){
         for(const booking of filteredBookings){
           newBookings.set(booking.id, booking);
         }
-
         return newBookings;
       })
     } else if(message instanceof MESSAGE_DELETE_BOOKING){

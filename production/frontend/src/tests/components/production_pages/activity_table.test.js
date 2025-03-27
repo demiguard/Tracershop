@@ -88,4 +88,9 @@ describe("Activity table", () => {
 
     expect(screen.queryByTestId("activity_modal")).toBeNull();
   });
+
+  it("", () => {
+
+  });
+
 });

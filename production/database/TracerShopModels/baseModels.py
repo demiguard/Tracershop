@@ -96,10 +96,13 @@ class TracershopModel(Model):
         # End of assignment
         self.__setattr__(key, value)
     except Exception as e:
-      error_logger.error(f"Caught an error in assigning {key} - {field} to {value}")
+      locals_ = locals()
+
+      if 'key' in locals_ and 'field' in locals_ and 'value' in locals_:
+        error_logger.error(f"Caught an error in assigning {key} - {field} to {value}")
       raise e
 
-  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool:
+  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool: # type ignore
     # Something important to note is that if you have query set and that updates
     # Then .save is not called, in other words it's possible to change the
     # database without logging.
@@ -124,7 +127,7 @@ class TracershopModel(Model):
       return True
     return False
 
-  def delete(self, user: Optional['authModels.User'] = None, *args, **kwargs):
+  def delete(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool:
     action = self.canDelete(user)
     DeleteModelAuditEntry.log(user, self, action)
 

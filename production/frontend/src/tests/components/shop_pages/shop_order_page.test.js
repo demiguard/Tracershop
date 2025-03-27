@@ -293,9 +293,27 @@ describe("Shop Order page test suite", () => {
           [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
           [WEBSOCKET_MESSAGE_ID] : 16879023,
           [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_BOOKING,
-          [WEBSOCKET_DATA] : { [DATA_BOOKING] : [
-            new Booking(1, 1, 1, 1, "DKREGH0011223344", "11:00:00", "2020-05-05"),
-            new Booking(2, 1, 1, 2, "DKREGH0011223366", "11:00:00", "2020-05-05"),
+          [WEBSOCKET_DATA] : { [DATA_BOOKING] : [{ // Serialization happens inside of constructor
+            pk : 1,
+            fields : {
+              status : 1,
+              location : 1,
+              procedure : 1,
+              accession_number : "TEST",
+              start_time : "10:00:00",
+              start_date : "2020-05-05",
+            }
+            }, {
+              pk : 2,
+              fields : {
+                status : 1,
+                location : 1,
+                procedure : 2,
+                accession_number : "TEST",
+                start_time : "10:00:00",
+                start_date : "2020-05-05",
+              }
+            }
           ]},
         })
       );

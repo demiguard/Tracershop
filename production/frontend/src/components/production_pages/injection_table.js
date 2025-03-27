@@ -44,7 +44,7 @@ const Modals  = {
 * }} props
 * @returns
 */
-function InjectionOrderRow({order, isSelected, onSelect,disabled, openOrderModal}) {
+function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModal}) {
   const state = useTracershopState();
 
   const tracer = state.tracer.get(order.tracer);
@@ -90,8 +90,10 @@ function InjectionOrderRow({order, isSelected, onSelect,disabled, openOrderModal
  *  active_date: str
  * }}
  */
-export function InjectionTable({active_date}) {
+export function InjectionTable() {
+
   const state = useTracershopState();
+  const active_date = state.today
   const userReleaseRight = useUserReleaseRights();
 
   const danishDate = parseDateToDanishDate(dateToDateString(active_date))
@@ -307,8 +309,4 @@ export function InjectionTable({active_date}) {
     </Optional>
     </div>
   );
-}
-
-InjectionTable.propTypes = {
-  [PROP_ACTIVE_DATE] : propTypes.objectOf(Date),
 }

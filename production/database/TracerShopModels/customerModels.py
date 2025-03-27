@@ -105,6 +105,8 @@ class TracerCatalogPage(TracershopModel):
     return f"{self.endpoint} catalog {self.tracer}"
 
   @classproperty
+  def display_name(cls) -> str:
+    return "Tracer Katalog Side"
 
   class Meta: # type: ignore
     unique_together = ('endpoint', 'tracer')
@@ -160,7 +162,7 @@ class Procedure(TracershopModel):
 
     return f"Procedure: {series_description} for {owner}"
 
-  class Meta:
+  class Meta: # type: ignore
     unique_together = ('series_description', 'owner')
 
 
@@ -182,7 +184,7 @@ class Booking(TracershopModel):
   def __str__(self) -> str:
     return f"Booking: {self.accession_number}"
 
-  class Meta:
+  class Meta: #type: ignore
     indexes = [
       Index(fields=['location', 'start_date']),
       Index(fields=['accession_number']),
@@ -206,6 +208,10 @@ class ActivityDeliveryTimeSlot(TracershopModel):
 
   def __str__(self) -> str:
     return f"ActivityDeliveryTimeSlot at {Days(self.production_run.production_day).name} - {self.delivery_time} to {self.destination.owner.short_name}"
+
+  @classproperty
+  def display_name(cls):
+    return "Aktivitets Levering"
 
   class Meta:
     unique_together = [
@@ -313,7 +319,7 @@ class ActivityOrder(TracershopModel):
       self.id = None
     return super().save(user, *args, **kwargs)
 
-  class Meta:
+  class Meta: # type: ignore
     indexes = [
       Index(fields=['delivery_date'])
     ]
@@ -346,7 +352,7 @@ class InjectionOrder(TracershopModel):
   freed_datetime = DateTimeField(null=True, default=None)
   freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by")
 
-  class Meta:
+  class Meta: # type: ignore
     indexes = [
       Index(fields=['delivery_date'])
     ]

@@ -129,7 +129,7 @@ class VialFileHandler(FileSystemEventHandler):
 
   def on_created(self, event: FileSystemEvent):
     logger.info(f"Got a file event: {event.__class__.__name__} at {event.src_path}")
-    val_path = Path(event.src_path)
+    val_path = Path(str(event.src_path))
     val_thread = Thread(target=process_path, args=[val_path])
     val_thread.run()
 
@@ -137,7 +137,7 @@ class VialFileHandler(FileSystemEventHandler):
     if event.is_directory:
       return
 
-    val_path = Path(event.src_path)
+    val_path = Path(str(event.src_path))
     handle_path(val_path)
 
 class Command(BaseCommand):
@@ -151,7 +151,7 @@ class Command(BaseCommand):
     logger.debug(f"Started with tracer mapping: {tracer_mapping}")
     logger.debug(f"Started with customer mapping: {customer_mapping}")
     observer = Observer()
-    observer.schedule(VialFileHandler, VIAL_WATCHER_FILE_PATH, True)
+    observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, recursive=True)
     observer.start()
 
     # Process files that might have been there earlier
@@ -163,7 +163,7 @@ class Command(BaseCommand):
           observer.join()
           run_cleanup()
           observer = Observer()
-          observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, True)
+          observer.schedule(VialFileHandler(), VIAL_WATCHER_FILE_PATH, recursive=True)
           observer.start()
     finally:
       observer.stop()

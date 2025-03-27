@@ -13,7 +13,7 @@ import { Comment } from "../injectable/data_displays/comment.js";
 import { NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants.js";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
-  DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA,
+  DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPE,
   WEBSOCKET_MESSAGE_CORRECT_ORDER,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY
 } from "~/lib/shared_constants.js"

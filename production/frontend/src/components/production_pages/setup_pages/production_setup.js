@@ -184,9 +184,7 @@ export function ProductionSetup(){
         </Row>
       </Col>
     </Row>
-    <Optional exists={!!creationError}>
-      <AlertBox error={creationError}/>
-    </Optional>
+    <AlertBox error={creationError}/>
     <Row>
       <WeeklyTimeTable
         {...weeklyTimeTableProps}

@@ -91,10 +91,7 @@ def create_booking(location, procedure_identifier, start_time, start_date, acces
 
     booking.save()
 
-    return serialize(
-        'json', Booking.objects.filter(id=booking.id)
-    )
-
+    return booking
 
 @database_sync_to_async
 def delete_booking(accession_number) -> int:
@@ -154,7 +151,7 @@ async def handleMessage(hl7_message: Message):
             procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
             accession_number = extract_accession_number(ORC_message_segment)
             start_date, start_time = extract_booking_time(ORC_message_segment)
-            serialized_booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
+            booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
             logger.info(f"Added booking with uid: {accession_number}")
 
             await channel_layer.group_send(
@@ -162,8 +159,9 @@ async def handleMessage(hl7_message: Message):
                         'type' : 'broadcastMessage',
                         WEBSOCKET_MESSAGE_ID : getNewMessageID(),
                         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-                        WEBSOCKET_DATA : serialized_booking,
-                        WEBSOCKET_DATATYPE : DATA_BOOKING,
+                        WEBSOCKET_DATA : {
+                            DATA_BOOKING : [booking]
+                        },
                         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_BOOKING,
                     })
 

@@ -17,18 +17,22 @@ from time import sleep
 # Django packages
 from django.utils import timezone
 from django.core.management.base import BaseCommand
+from django.db.models import BaseManager
 
 # Tracershop modules
 from constants import CLEAN_UP_LOGGER
 from database.TracerShopModels.telemetry_models import MAX_TELEMETRY_AGE_DAYS,\
   TelemetryRecord
 from database.models import Booking
+from database.utils import retryDecorator
 
-def get_expired_bookings(now: datetime):
+@retryDecorator
+def get_expired_bookings(now: datetime) -> BaseManager[Booking]:
   deadline = now - timedelta(days=7)
   return Booking.objects.filter(start_date__lte=deadline.date())
 
-def get_expired_telemetry(now: datetime):
+@retryDecorator
+def get_expired_telemetry(now: datetime) -> BaseManager[TelemetryRecord]:
   deadline = now - timedelta(days=MAX_TELEMETRY_AGE_DAYS)
   return TelemetryRecord.objects.filter(created__lte=deadline)
 
@@ -44,12 +48,12 @@ class Command(BaseCommand):
       now = timezone.now()
 
       # Bookings have person identifiable information, hence must be deleted!
-      bookings = get_expired_bookings(now)
+      bookings: BaseManager[Booking] = get_expired_bookings(now)
       logger.info(f"Deleting {len(bookings)} Bookings")
       bookings.delete()
 
       # Old records don't give an up to date information on the performance of
-      records = get_expired_telemetry(now)
+      records: BaseManager[TelemetryRecord] = get_expired_telemetry(now)
       logger.info(f"Deleting {len(bookings)} Telemetry records!")
       records.delete()
 

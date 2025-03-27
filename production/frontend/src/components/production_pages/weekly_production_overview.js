@@ -4,9 +4,9 @@ import { useTracershopState } from '~/contexts/tracer_shop_context'
 import { datify, getDateRangeForWeek } from '~/lib/chronomancy';
 import { WeeklyOrderOverview } from '~/lib/data_structures';
 
-export function WeeklyProductionOverview({active_date}){
-  const date_ = datify(active_date)
+export function WeeklyProductionOverview(){
   const state = useTracershopState();
+  const date_ = datify(state.today)
 
   const weeklyRange = getDateRangeForWeek(date_);
 

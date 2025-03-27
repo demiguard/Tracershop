@@ -7,3 +7,5 @@ django_auth_ldap
 mysqlclient
 aiorun
 hl7
+openpyxl
+reportlab

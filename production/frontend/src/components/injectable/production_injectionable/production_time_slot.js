@@ -1,7 +1,6 @@
 import React, { useState } from 'react'
 import { Card, Row, Col, Collapse, Button } from 'react-bootstrap';
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
-import { getTimeSlotOwner } from '~/lib/data_structures';
 import { getId } from '~/lib/utils';
 import { OrderMapping } from '~/lib/data_structures/order_mapping';
 import { ORDER_STATUS, cssCenter } from '~/lib/constants';
@@ -12,10 +11,9 @@ import { Comment } from '~/components/injectable/data_displays/comment';
 import { ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { calculateProduction, fulfillmentActivity } from '~/lib/physics';
-import { formatTimeStamp, formatUsername, renderDateTime } from '~/lib/formatting';
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
 import { EndpointDisplay } from '~/components/injectable/data_displays/endpoint';
-import { CENTER, DISPLAY, JUSTIFY } from '~/lib/styles';
+import { DISPLAY, JUSTIFY } from '~/lib/styles';
 import { DATA_ACTIVITY_ORDER, DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_RESTORE_ORDERS } from '~/lib/shared_constants';
 import { MBqDisplay } from '~/components/injectable/data_displays/mbq_display';
 import { UserDisplay } from '~/components/injectable/data_displays/user_display';

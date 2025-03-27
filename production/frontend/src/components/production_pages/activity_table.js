@@ -108,11 +108,11 @@ function ProductionRow({active_production,
  * }} props
  * @returns {Element}
  */
-export function ActivityTable ({active_tracer, active_date}) {
+export function ActivityTable ({active_tracer}) {
   const state = useTracershopState();
   const tracer = state.tracer.get(active_tracer);
-  const activeDay = getDay(active_date)
-  const delivery_date = dateToDateString(active_date)
+  const activeDay = getDay(state.today)
+  const delivery_date = dateToDateString(state.today)
   const danishDateString = parseDateToDanishDate(delivery_date);
   const relevantProductions = productionsFilter(state, { day : activeDay, tracerID : active_tracer}, true)
 
@@ -171,7 +171,7 @@ export function ActivityTable ({active_tracer, active_date}) {
 
   const modalProps = {
     [PROP_ACTIVE_TRACER] : active_tracer,
-    [PROP_ACTIVE_DATE] : active_date,
+    [PROP_ACTIVE_DATE] : state.today,
     [PROP_ORDER_MAPPING] : timeSlotMapping,
     [PROP_ON_CLOSE] : () => {
       setModalIdentifier(null)
@@ -235,5 +235,4 @@ export function ActivityTable ({active_tracer, active_date}) {
 
 ActivityTable.propType = {
   [PROP_ACTIVE_TRACER] : propTypes.number.isRequired,
-  [PROP_ACTIVE_DATE] : propTypes.objectOf(Date),
 }

@@ -1,6 +1,6 @@
 import React from "react";
 import { Col, Row } from "react-bootstrap";
-import propTypes from 'prop-types'
+import PropTypes from 'prop-types'
 
 import { ERROR_TYPE_ERROR, ERROR_TYPE_HINT, ERROR_TYPE_NO_ERROR, ERROR_TYPE_WARNING } from "~/lib/constants.js";
 import { RecoverableError } from "~/lib/error_handling";
@@ -85,8 +85,9 @@ export const ERROR_LEVELS = {
  */
 export function AlertBox ({testId, error}) {
   if(error.level === ERROR_LEVELS.NO_ERROR){
-    return null
+    return null;
   }
+
 
   return (
     <Row
@@ -101,8 +102,4 @@ export function AlertBox ({testId, error}) {
       <Col md={{span : 10}} className="p-2 justify-content-start">{error.message}</Col>
     </Row>
   );
-}
-
-AlertBox.propTypes = {
-  error : propTypes.instanceOf(RecoverableError),
 }
