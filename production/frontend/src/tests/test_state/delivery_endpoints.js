@@ -43,4 +43,14 @@ export const deliveryEndpoints = new Map([
       3, // owner :
     )],
 
+    [6, new DeliveryEndpoint(
+      6, // id :
+      "Should NOT have any tracer assigned!", // address :
+      "Imagine stand", // city :
+      "9999", // zip_code :
+      "phone", // phone :
+      "endpoint_1_c4", // name :
+      3, // owner :
+    )],
+
 ])

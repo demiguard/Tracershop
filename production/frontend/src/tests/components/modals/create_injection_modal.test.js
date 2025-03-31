@@ -1,54 +1,44 @@
-  /**
+/**
  * @jest-environment jsdom
  */
 
 import React from "react";
-import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { jest } from '@jest/globals'
+import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { jest, expect, it } from '@jest/globals'
 import userEvent from "@testing-library/user-event";
 
 import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
-import { ERROR_BACKGROUND_COLOR, ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_USER } from "~/lib/constants.js";
+import { ORDER_STATUS, PROP_ON_CLOSE } from "~/lib/constants.js";
 
 import { testState} from '~/tests/app_state.js'
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
+import { TracershopState } from "~/dataclasses/dataclasses.js";
 
 const onClose = jest.fn()
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
-
-let websocket = null;
-let props = null;
-
-beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-
-  websocket = tracer_websocket.TracerWebSocket;
-  props = {
-    [PROP_ACTIVE_DATE] : new Date(2020,3,5),
-    [PROP_ON_CLOSE] : onClose,
-  };
-});
-
-
-afterEach(() => {
-  cleanup();
-  module.clearAllMocks();
-  props = null;
-  websocket = null;
-});
+const websocket = {
+  sendCreateModel : jest.fn(() => Promise.resolve({}))
+};
+const props = { [PROP_ON_CLOSE] : onClose };;
 
 describe("Create injection Order", () => {
-  it("Standard Render Test", () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
+  beforeEach(() => {});
+
+  afterEach(() => {
+    cleanup();
+
+  });
+
+  it("Standard Render Test", async () => {
+    await waitFor(async() => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    })
 
     expect(screen.getByLabelText("select-customer")).toBeVisible();
     expect(screen.getByLabelText("select-endpoint")).toBeVisible();
@@ -64,134 +54,169 @@ describe("Create injection Order", () => {
     expect(screen.getByLabelText("comment-input").value).toBe("");
     // Buttons
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible()
-    expect(screen.getByRole('button', {name : "Opret Ordre"})).toBeVisible()
+    expect(screen.getByRole('button', {name : "Opret ordre"})).toBeVisible()
+    expect(screen.getByRole('button', {name : "Opret ordre"})).not.toBeDisabled()
   });
 
-  it.skip("Missing Injections!", () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+  it("Missing Injections!", async () => {
+    await waitFor(async () => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <CreateInjectionOrderModal {...props} />
       </TracerShopContext>
     );
+    })
 
+    expect(screen.getByRole('button', { name : "Opret ordre"})).not.toBeDisabled();
 
-    act(() => {
-      screen.getByRole('button',{name : "Opret Ordre"}).click()
-    });
+    act(() => {screen.getByRole('button', {name : "Opret ordre"}).click(); });
 
-    act(() => {
+    await act(async () => {
       userEvent.hover(screen.getByLabelText('injection-input'))
     });
 
-    expect(screen.getByText("Injektioner er ikke tasted ind"))
+    expect(screen.getByText("Injektioner er ikke tasted ind"));
+
+    expect(screen.getByRole('button', {name : "Opret ordre"})).toBeVisible()
   });
 
-  it.skip("Error - Bannans Injections", async () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
+  it("Error - Bannans Injections", async () => {
+    await waitFor(async () => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    });
 
-  act(() => {
-    fireEvent.change(screen.getByLabelText("injection-input"), {target : {value : "a"}});
-  })
+    await act(async () => {
+      fireEvent.change(screen.getByLabelText("injection-input"), {target : {value : "a"}});
+    });
 
-  act(() => {screen.getByRole('button',{name : "Opret Ordre"}).click()});
+    expect(screen.getByRole('button', { name : "Opret ordre"})).not.toBeDisabled();
+
+    await act(async () => {(await screen.findByRole('button', {name : "Opret ordre"})).click();});
+
+    await act(async () => {
+      fireEvent(await screen.findByTestId('injection-input-group'), new MouseEvent('enter', {
+        bubbles : true,
+        cancelable : true,
+      }))
+      //userEvent.hover(screen.getByLabelText('injection-input'));
+    });
+
+    //expect(screen.getByRole('button', {name : "Opret ordre"})).toBeVisible()
+    //expect(screen.getByText("Injektioner er ikke et tal")).toBeVisible();
 
 
-  await act(async () => {
-    userEvent.hover(screen.getByLabelText('injection-input'));
   });
 
-  expect(screen.getByText("Injektioner er ikke et tal")).toBeVisible()
+  it("Error - Negative Injections", async () => {
+    await waitFor(() => {
+        render(
+          <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    });
 
+    act(() => {
+      const injectionInput = screen.getByLabelText("injection-input");
+      fireEvent.change(injectionInput, {target : {value : "-3"}});
+    })
+
+    await act(async () => {screen.getByRole('button', {name : "Opret ordre"}).click()});
+    expect(await screen.findByText("Injektioner kan ikke være negativ"));
+    expect(screen.getByRole('button', {name : "Opret ordre"})).toBeVisible();
   });
 
-  it.skip("Error - Negative Injections", async () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
+  it("Error - half a Injections", async () => {
+    await waitFor(async () => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    })
 
-    const injectionInput = await screen.findByLabelText("injection-input");
-    fireEvent.change(injectionInput, {target : {value : "-3"}});
-    const createOrderButton = await screen.findByRole('button',
-                                                      {name : "Opret Ordre"});
-    act(() => {createOrderButton.click()});
+    act(() => {
+      fireEvent.change(screen.getByLabelText("injection-input"), {target : {value : "2.5"}});
+    })
 
+    expect(screen.getByRole('button', { name : "Opret ordre"})).not.toBeDisabled();
 
-    expect(screen.getByText("Injektioner kan ikke være negativ"))
-  });
+    await act(async () => {screen.getByRole('button', {name : "Opret ordre"}).click();});
 
-  it.skip("Error - half a Injections", async () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
+    await act(async () => {
+      userEvent.hover(screen.getByLabelText('injection-input'));
+    });
 
-    const injectionInput = await screen.findByLabelText("injection-input");
-    fireEvent.change(injectionInput, {target : {value : "2.5"}});
-
-    const createOrderButton = await screen.findByRole('button',
-                                                      {name : "Opret Ordre"});
-    act(() => {createOrderButton.click();});
-
-    expect(screen.getByText("Injektioner er ikke et helt tal"));
-  });
-
-
-  it.skip("Error - half a Injections + plus danish numbers", async () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
-
-    const injectionInput = await screen.findByLabelText("injection-input");
-    fireEvent.change(injectionInput, {target : {value : "2,5"}});
-
-    const createOrderButton = await screen.findByRole('button',
-                                                      {name : "Opret Ordre"});
-    act(() => {createOrderButton.click();});
-
-    expect(await screen.findByText("Injektioner er ikke et helt tal"))
+    expect(await screen.findByText("Injektioner er ikke et helt tal")).toBeVisible();  // These need to be find
+    expect(screen.getByRole('button', {name : "Opret ordre"})).toBeVisible();
   });
 
 
-  it("Error - Missing Delivery Time", () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
+  it("Error - half a Injections + plus danish numbers", async () => {
+    await waitFor(() => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    });
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText("injection-input"), {target : {value : "2,5"}});
+    })
+
+    await act(async () => {screen.getByRole('button', {name : "Opret ordre"}).click();});
+
+    await act(async () => {
+      userEvent.hover(screen.getByLabelText('injection-input'));
+    });
+
+    expect(await screen.findByText("Injektioner er ikke et helt tal"));
+    expect(screen.getByRole('button', {name : "Opret ordre"})).toBeVisible()
+  });
+
+
+  it("Error - Missing Delivery Time", async () => {
+    await waitFor(async () => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    });
 
     act(() => {
       const injectionInput = screen.getByLabelText("injection-input");
       fireEvent.change(injectionInput, {target : {value : "4"}});
     })
 
-    act(() => { screen.getByRole('button', {name : "Opret Ordre"}).click(); });
+    await act(async () => { screen.getByRole('button', {name : "Opret ordre"}).click(); });
 
-    act(() => {
-      userEvent.hover(screen.getByLabelText("injection-input"));
-    });
+    act(() => { userEvent.hover(screen.getByLabelText("delivery-time-input")); });
 
-    //expect(screen.getByText("Leverings tid er ikke tasted ind")).toBeVisible();
-    //expect(screen.getByLabelText("injection-input")).toHaveStyle('background: rgb(255, 51, 51);');
-    //expect(await screen.findByText("Leverings tid er ikke tasted ind"))
+    expect(screen.getByLabelText("delivery-time-input")).toHaveStyle('background: rgb(255, 51, 51);');
+    expect(await screen.findByText("Leverings tid er ikke tasted ind")).toBeVisible();
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
   });
 
   it("Success order", async () => {
-    render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <CreateInjectionOrderModal {...props} />
-      </TracerShopContext>
-    );
+    const test_state = new TracershopState()
+    Object.assign(test_state, testState)
+
+    test_state.today = new Date(2020, 3, 5, 12, 0, 0);
+
+    await waitFor(async () => {
+      render(
+        <TracerShopContext tracershop_state={test_state} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    });
 
     act(() => {
       const endpointSelect = screen.getByLabelText('select-customer');
@@ -214,7 +239,7 @@ describe("Create injection Order", () => {
       fireEvent.change(deliveryTimeInput, {target : {value : "11:33:55"}});
     })
 
-    await act(async () => {screen.getByRole('button',{name : "Opret Ordre"}).click();});
+    await act(async () => {screen.getByRole('button',{name : "Opret ordre"}).click();});
 
     expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
       injections : 4,
@@ -226,4 +251,23 @@ describe("Create injection Order", () => {
 
     expect(onClose).toHaveBeenCalled()
   });
+
+  it("Update Tracer to empty endpoint disables button", async () => {
+
+    await waitFor(() => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <CreateInjectionOrderModal {...props} />
+        </TracerShopContext>
+      );
+    })
+
+    await act(async () => {
+      const endpointSelect = screen.getByLabelText('select-endpoint')
+      // test endpoint with id 6 should have no tracers assigned!
+      fireEvent.change(endpointSelect, { target : { value : "6" }})
+    });
+
+    expect(screen.getByRole('button', { name : "Opret ordre"})).toBeDisabled()
+  })
 });

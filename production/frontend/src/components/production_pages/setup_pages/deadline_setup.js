@@ -17,10 +17,8 @@ import { compareLoosely, nullify } from "~/lib/utils";
 import { CommitButton } from "~/components/injectable/commit_button";
 
 
-
-
 /**
- * @enum
+ * @enum The possible values for the select of
  */
 export const GlobalDeadlineValuesOptions = {
   NO_OPTION : 1,

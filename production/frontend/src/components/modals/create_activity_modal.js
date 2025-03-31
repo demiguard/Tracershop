@@ -17,8 +17,9 @@ import { Optional } from "~/components/injectable/optional";
 import { FONT, MARGIN } from "~/lib/styles";
 import { timeSlotsFilter } from "~/lib/filters";
 
-export function CreateOrderModal({active_date, active_tracer, on_close, timeSlotMapping}) {
+export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}) {
   const state = useTracershopState();
+  const active_date = state.today;
   const websocket = useWebsocket();
   const init = useRef({
     active_customer : null,

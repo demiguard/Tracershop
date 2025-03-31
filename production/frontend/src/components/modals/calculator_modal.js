@@ -18,10 +18,9 @@ export function CalculatorModal(props){
         cancel={props[PROP_ON_CLOSE]}
         isotopes={props[DATA_ISOTOPE]}
         tracer={props[PROP_ACTIVE_TRACER]}
-        productionTime={props[PROP_ACTIVE_DATE]}
+        productionTime={props[PROP_ACTIVE_DATE] /* I am sorry but wtf naming? */}
         commit={props[PROP_COMMIT]}
       />
     </Modal.Body>
   </Modal>);
   }
-

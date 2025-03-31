@@ -14,10 +14,9 @@ import  propTypes  from "prop-types";
  * @param {*} param0
  * @returns
  */
-export function TracershopInputGroup({children, label, error, tail}) {
+export function TracershopInputGroup({children, label, error, tail, ...extra_props}) {
   const showLabel = !!label;
   const showTail = !!tail;
-
 
   if(error === "" || error === undefined || error.level === ERROR_LEVELS.NO_ERROR){
     return (
@@ -62,7 +61,10 @@ export function TracershopInputGroup({children, label, error, tail}) {
       })
     );
 
+    const error_message = error instanceof RecoverableError ? error.message : error;
+
     return <HoverBox
+      {...extra_props}
       Base={
         <InputGroup
           style={{
@@ -75,11 +77,7 @@ export function TracershopInputGroup({children, label, error, tail}) {
           <Optional exists={showTail}><InputGroup.Text>{tail}</InputGroup.Text></Optional>
         </InputGroup>
         }
-      Hover={<p>{error}</p>}
+      Hover={<p>{error_message}</p>}
     />;
   }
-}
-
-TracershopInputGroup.propTypes = {
-
 }

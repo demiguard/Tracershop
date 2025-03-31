@@ -1,7 +1,9 @@
 /** This module exists to provide consistent initialization of various fields */
 
+import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { Customer, DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses";
 import { numberfy } from "./utils";
+import { TRACER_TYPE } from "~/lib/constants";
 
 /**
  *
@@ -47,9 +49,10 @@ export function initialize_customer_endpoint(
  *
  * @example initialize_customer_endpoint_tracer_from_tracerCatalog(props[DATA_ENDPOINT], props[DATA_TRACER_MAPPING])
  */
-export function initialize_customer_endpoint_tracer_from_tracerCatalog(
-  endpoints, tracerCatalogPages,
+export function initialize_injection_customer_from_catalog(
+  endpoints, tracerCatalogPages, state
 ){
+
   let /**@type {Number | String} */ customerInit = "";
   let /**@type {Number | String} */ endpointInit = "";
   let /**@type {Number | String} */ tracerInit = "";
@@ -58,6 +61,10 @@ export function initialize_customer_endpoint_tracer_from_tracerCatalog(
     endpointInit = tracerCatalogPage.endpoint;
     tracerInit = tracerCatalogPage.tracer;
     customerInit = endpoints.get(endpointInit).owner;
+    const tracer = state.tracer.get(tracerInit)
+    if(tracer.tracer_type === TRACER_TYPE.DOSE){
+      break;
+    }
   }
 
   customerInit = numberfy(customerInit);

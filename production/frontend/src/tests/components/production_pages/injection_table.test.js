@@ -7,7 +7,7 @@ import { act, fireEvent, getByRole, render, screen, cleanup } from "@testing-lib
 import { jest, expect } from '@jest/globals'
 
 import { ORDER_STATUS, PROP_ACTIVE_DATE } from "../../../lib/constants.js";
-import { testState } from "../../app_state.js";
+import { getModifiedTestState, testState } from "../../app_state.js";
 
 import { InjectionTable } from "../../../components/production_pages/injection_table.js";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
@@ -24,9 +24,6 @@ const websocket = {
 
 const today = new Date(2020,4, 4, 10, 36, 44)
 
-const props = {
-  [PROP_ACTIVE_DATE] : today
-};
 
 beforeAll(() => {
   jest.useFakeTimers('modern')
@@ -48,7 +45,7 @@ describe("Deadline Setup tests", () => {
   it("Standard render test", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <InjectionTable {...props}/>
+        <InjectionTable/>
       </TracerShopContext>
     );
 
@@ -56,21 +53,26 @@ describe("Deadline Setup tests", () => {
   });
 
   it(("Change Sorting"), () => {
+    const customState = getModifiedTestState({
+      today : new Date(2020,4, 4, 10, 36, 44),
+    })
+
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <InjectionTable {...props}/>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <InjectionTable/>
       </TracerShopContext>
     );
 
-    const sort_status = screen.getByLabelText('sort-status');
     act(() => {
-      sort_status.click();
+      screen.getByLabelText('sort-status').click();
+
     });
     // TODO: Assert sort
 
     // Invert The Sort
     act(() => {
-      sort_status.click();
+      screen.getByLabelText('sort-status').click();
     });
     // TODO: Assert Sort
 
@@ -115,7 +117,7 @@ describe("Deadline Setup tests", () => {
   it("Open Create injection Order Modal", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <InjectionTable {...props}/>
+        <InjectionTable/>
       </TracerShopContext>
     );
 
@@ -134,9 +136,13 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Open order modal", () => {
+    const customState = getModifiedTestState({
+      today : today,
+    })
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <InjectionTable {...props}/>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <InjectionTable/>
       </TracerShopContext>
     );
 
@@ -148,23 +154,23 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Display cancelled Order", async () => {
-    const newState = new TracershopState();
-    Object.assign(newState, testState);
+    const customState = getModifiedTestState({
+      [DATA_INJECTION_ORDER] : toMapping([
+        new InjectionOrder(
+          1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.CANCELLED, TRACER_USAGE.human, null, "AAAA0000", 1, 1, null, null, null
+        ),
+        new InjectionOrder(
+          2, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 1, null, null, null
+        )
+      ]),
+      today : today
+    })
 
-    newState.injection_orders = toMapping([
-      new InjectionOrder(
-        1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.CANCELLED, TRACER_USAGE.human, null, "AAAA0000", 1, 1, null, null, null
-      ),
-      new InjectionOrder(
-        2, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 1, null, null, null
-      )
-    ]);
 
-    testState.today = today;
 
     render(
-      <TracerShopContext tracershop_state={newState} websocket={websocket}>
-        <InjectionTable {...props}/>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <InjectionTable/>
       </TracerShopContext>
     );
 
@@ -175,16 +181,17 @@ describe("Deadline Setup tests", () => {
 
 
   it("Accept an order from the table", async () => {
-    const newState = new TracershopState();
-    Object.assign(newState, testState);
+    const customState = getModifiedTestState({
+      [DATA_INJECTION_ORDER] : toMapping([new InjectionOrder(
+        1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 1, null, null, null
+      )]),
+      today : today,
+    })
 
-    newState.injection_orders = toMapping([new InjectionOrder(
-      1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 1, null, null, null
-    )]);
 
     render(
-      <TracerShopContext tracershop_state={newState} websocket={websocket}>
-        <InjectionTable {...props}/>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <InjectionTable/>
       </TracerShopContext>
     );
 
@@ -198,8 +205,28 @@ describe("Deadline Setup tests", () => {
   });
 
   it("Release many orders", async () => {
-    const newState = new TracershopState();
-    Object.assign(newState, testState);
+    const customState = getModifiedTestState({
+      [DATA_INJECTION_ORDER] : toMapping([
+        new InjectionOrder(
+          1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          2, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          3, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          4, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          5, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          6, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 4, null, null, null
+        )]),
+        today : today
+    })
 
 
     const websocket = {
@@ -207,30 +234,9 @@ describe("Deadline Setup tests", () => {
         [AUTH_IS_AUTHENTICATED] : true
       }))
     }
-
-    newState.injection_orders = toMapping([
-      new InjectionOrder(
-        1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
-      ),
-      new InjectionOrder(
-        2, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
-      ),
-      new InjectionOrder(
-        3, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
-      ),
-      new InjectionOrder(
-        4, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
-      ),
-      new InjectionOrder(
-        5, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
-      ),
-      new InjectionOrder(
-        6, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 4, null, null, null
-      )]);
-
     const { } = render(
-      <TracerShopContext tracershop_state={newState} websocket={websocket}>
-        <InjectionTable {...props}/>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
+        <InjectionTable/>
       </TracerShopContext>
     );
 

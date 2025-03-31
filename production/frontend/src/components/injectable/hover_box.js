@@ -20,9 +20,8 @@ const HOVER_BOX_CSS = {
 /**
  * Box that is displayed in a Hover
  */
-
-
 function Hover({setVisibility, hoverState, children}){
+
   return(
     <div
       onMouseEnter={() => setVisibility(true)}
@@ -61,6 +60,7 @@ export function HoverBox (props){
   })
 
   const displayType = props.displayType ? props.displayType : 'block'
+  const test_id = props['data-testid'] ? props['data-testid'] : undefined;
 
   function setVisibility (flag) {
     updateHoverComponentStyle(previousState => {
@@ -71,7 +71,7 @@ export function HoverBox (props){
   }
 
   return (
-    <div style={{position : 'relative'}}>
+    <div style={{position : 'relative'}} data-testid={test_id}>
       <Trigger
         triggerTestID={props.triggerTestID}
         setVisibility={setVisibility}

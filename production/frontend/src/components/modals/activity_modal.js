@@ -359,13 +359,13 @@ const marginRows = {
  * @returns
  */
 export function ActivityModal({
-  active_date, active_tracer, order_mapping, on_close, timeSlotID
+  active_tracer, order_mapping, on_close, timeSlotID
 }){
 
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket();
-  //
+  const active_date = state.today;
   const dateString = dateToDateString(active_date);
   const timeSlot = state.deliver_times.get(timeSlotID);
   const orderCollection = order_mapping.getOrders(timeSlot.id);

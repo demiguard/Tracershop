@@ -6,7 +6,7 @@ import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
 import { ActivityTable } from "~/components/production_pages/activity_table.js"
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants.js";
-import { testState } from "~/tests/app_state.js";
+import { getModifiedTestState, testState } from "~/tests/app_state.js";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 
@@ -17,9 +17,8 @@ jest.mock('../../../components/modals/create_activity_modal', () =>
   ({CreateOrderModal : () => <div>CreateModalMocked</div>}))
 
 
-let websocket = tracer_websocket.TracerWebSocket;
-let props = {
-  [PROP_ACTIVE_DATE] : new Date(2020,4,4,10,26,33),
+const websocket = tracer_websocket.TracerWebSocket;
+const props = {
   [PROP_ACTIVE_TRACER] : 1,
 };
 
@@ -30,8 +29,13 @@ afterEach(() => {
 
 describe("Activity table", () => {
   it("Standard render test", () => {
+    const customState = getModifiedTestState({
+      today : new Date(2020,4,4,10,26,33)
+    })
+
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
         <ActivityTable {...props} />
       </TracerShopContext>
     );
@@ -58,8 +62,12 @@ describe("Activity table", () => {
   })
 
   it("Open time slot row", () => {
+    const customState = getModifiedTestState({
+      today : new Date(2020,4,4,10,26,33)
+    })
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
         <ActivityTable {...props} />
       </TracerShopContext>
     );
@@ -70,8 +78,13 @@ describe("Activity table", () => {
   });
 
   it("Open Order modal", () => {
+    const customState = getModifiedTestState({
+      today : new Date(2020,4,4,10,26,33)
+    })
+
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={customState} websocket={websocket}>
         <ActivityTable {...props} />
       </TracerShopContext>
     );
@@ -88,9 +101,4 @@ describe("Activity table", () => {
 
     expect(screen.queryByTestId("activity_modal")).toBeNull();
   });
-
-  it("", () => {
-
-  });
-
 });

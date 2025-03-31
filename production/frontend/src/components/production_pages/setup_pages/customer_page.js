@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
 
-import { HistoryModal } from "../../modals/history_modal.js";
 import { CustomerModal } from "../../modals/customer_modal.js";
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
 import { ClickableIcon } from "../../injectable/icons.js"
@@ -10,7 +9,6 @@ import { useTracershopState } from "~/contexts/tracer_shop_context.js";
 
 const Modals = {
   CUSTOMER : CustomerModal,
-  HISTORY  : HistoryModal,
 }
 
 export function CustomerPage () {
@@ -34,7 +32,8 @@ export function CustomerPage () {
   }
 
   function CustomerRow({customer}){
-    return <tr>
+    return (
+    <tr>
       <td>
         <Container>
           <Row className="justify-content-between">
@@ -51,7 +50,7 @@ export function CustomerPage () {
           </Row>
         </Container>
       </td>
-    </tr>
+    </tr>);
   }
 
   const /**@type {Array<Element>} */ customerRows = [];

@@ -57,3 +57,13 @@ export const testState = new TracershopState(
   user_assignments,
   vials,
 )
+
+export function getModifiedTestState(modifications) {
+  const customState = new TracershopState();
+  Object.assign(customState, testState);
+  if(modifications){
+    Object.assign(customState, modifications);
+  }
+
+  return customState
+}

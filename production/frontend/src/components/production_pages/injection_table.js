@@ -91,7 +91,6 @@ function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModa
  * }}
  */
 export function InjectionTable() {
-
   const state = useTracershopState();
   const active_date = state.today
   const userReleaseRight = useUserReleaseRights();

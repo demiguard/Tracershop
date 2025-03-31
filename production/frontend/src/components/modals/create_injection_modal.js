@@ -1,20 +1,20 @@
 
 import React, { useEffect, useRef, useState } from "react";
 import { Button, Form, Modal, ModalBody, Row } from "react-bootstrap";
-import propTypes from "prop-types";
+import propTypes, { number } from "prop-types";
 
 import { dateToDateString } from "~/lib/formatting";
 import { PROP_ON_CLOSE, PROP_ACTIVE_DATE, ORDER_STATUS } from "~/lib/constants";
 import { Select, toOptions } from "../injectable/select";
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { InjectionOrder } from "~/dataclasses/dataclasses";
-import { CloseButton, MarginButton } from "../injectable/buttons";
+import { CloseButton, IdempotentButton, MarginButton } from "../injectable/buttons";
 import { TimeInput } from "../injectable/inputs/time_input";
 import { setStateToEvent } from "../../lib/state_management";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
 import { UsageSelect } from "../injectable/derived_injectables/usage_select";
-import { TracerCatalog } from '~/contexts/tracer_catalog';
-import { initialize_customer_endpoint_tracer_from_tracerCatalog } from "~/lib/initialization";
+import { TracerCatalog, useTracerCatalog } from '~/contexts/tracer_catalog';
+import { initialize_injection_customer_from_catalog } from "~/lib/initialization";
 import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
@@ -22,48 +22,33 @@ import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 import { getId } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";
 import { FONT } from "~/lib/styles";
+import { useErrorState } from "~/lib/error_handling";
 
 
-export function CreateInjectionOrderModal({active_date, on_close}){
+export function CreateInjectionOrderModal({on_close}){
   const state = useTracershopState();
+  const active_date = state.today;
   const websocket = useWebsocket();
-  // Initialize select
+  const tracerCatalog = useTracerCatalog();
 
-  const initialization = useRef({
-    customer : null,
-    endpoint : null,
-    tracer : null,
-  });
-
-  if(initialization.current.customer === null
-      || initialization.current.endpoint === null
-      || initialization.current.tracer === null
-    ){
-    initialization.current = initialize_customer_endpoint_tracer_from_tracerCatalog(
-      state.delivery_endpoint, state.tracer_mapping
-    );
-  }
-
-  const tracerCatalog = new TracerCatalog(
-    state.tracer_mapping,
-    state.tracer,
+  const initialization = initialize_injection_customer_from_catalog(
+    state.delivery_endpoint, state.tracer_mapping, state
   );
 
-  const [customerID, setCustomer] = useState(initialization.current.customer);
-  const [endpointID, setEndpoint] = useState(initialization.current.endpoint)
-  const [tracerID, setTracer] = useState(initialization.current.tracer);
+  const [customerID, setCustomer] = useState(initialization.customer);
+  const [endpointID, setEndpoint] = useState(initialization.endpoint)
+  const [tracerID, setTracer] = useState(initialization.tracer);
   const [usage, setUsage] = useState(0);
   const [injections, setInjections] = useState("");
   const [deliverTime, setDeliveryTime] = useState("")
   const [comment, setComment] = useState("")
-  const [errorInjection, setErrorInjection] = useState("")
-  const [errorDeliveryTime, setErrorDeliveryTime] = useState("");
+  const [errorInjection, setErrorInjection] = useErrorState()
+  const [errorDeliveryTime, setErrorDeliveryTime] = useErrorState();
 
   // Can send
   const canOrder = !!endpointID && !!tracerID;
 
-
-  function SubmitOrder(_event){
+  function SubmitOrder(){
     //Validation
     const [validInjections, numberInjections] = parseWholePositiveNumber(injections, "Injektioner")
     const [validDeliveryTime, formattedDeliveryTime] = parseTimeInput(deliverTime, "Leverings tid")
@@ -74,6 +59,7 @@ export function CreateInjectionOrderModal({active_date, on_close}){
     if(!validDeliveryTime){
       setErrorDeliveryTime(formattedDeliveryTime)
     }
+
     if(validDeliveryTime && validInjections){
       websocket.sendCreateModel(
         DATA_INJECTION_ORDER,
@@ -148,7 +134,11 @@ export function CreateInjectionOrderModal({active_date, on_close}){
               value={usage}
             />
           </TracershopInputGroup>
-          <TracershopInputGroup label={"Injektioner"} error={errorInjection}>
+          <TracershopInputGroup
+              label={"Injektioner"}
+              error={errorInjection}
+              data-testid={"injection-input-group"}
+          >
             <Form.Control
               aria-label="injection-input"
               value={injections}
@@ -172,8 +162,8 @@ export function CreateInjectionOrderModal({active_date, on_close}){
         </Row>
       </ModalBody>
       <Modal.Footer>
-        <Optional exists={canOrder} alternative={<Button disabled={true}>Opret Ordre</Button>}>
-          <Button onClick={SubmitOrder}>Opret Ordre</Button>
+        <Optional exists={canOrder} alternative={<Button disabled={true}>Opret ordre</Button>}>
+          <Button onClick={SubmitOrder}>Opret ordre</Button>
         </Optional>
         <CloseButton onClick={on_close}/>
       </Modal.Footer>
@@ -182,5 +172,4 @@ export function CreateInjectionOrderModal({active_date, on_close}){
 
 CreateInjectionOrderModal.propTypes = {
   [PROP_ON_CLOSE] : propTypes.func.isRequired,
-  [PROP_ACTIVE_DATE] : propTypes.objectOf(Date),
 }
