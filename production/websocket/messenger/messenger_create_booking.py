@@ -36,7 +36,7 @@ class MessengerCreateBooking(MessengerBase):
   # This is just a fancy way of generating Classes, that ensures I can use
   # constants for creating the class
   Args = make_dataclass("Args", [
-    (DATA_BOOKING, MessageDataType.STATE)
+    (WEBSOCKET_DATA, MessageDataType.STATE)
   ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod

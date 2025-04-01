@@ -27,7 +27,8 @@ from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
 
 # Tracershop Packages
 from constants import PING_SERVICE_LOGGER
-from shared_constants import DATA_BOOKING, WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_DATA_ID
+from shared_constants import DATA_BOOKING, WEBSOCKET_SERVER_MESSAGES,\
+  WEBSOCKET_DATA_ID, WEBSOCKET_DATA
 from database.database_interface import DatabaseInterface
 from database.models import Booking, Location, ProcedureIdentifier, BookingStatus
 from websocket.messenger import Messenger
@@ -140,7 +141,9 @@ async def handle_create_booking_message(ORC_message_segment: Segment, OBR_messag
   logger.info(f"Added booking with uid: {accession_number}")
 
   await messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_CREATE_BOOKING, {
-      DATA_BOOKING : [booking]
+      WEBSOCKET_DATA : {
+         DATA_BOOKING : [booking]
+      }
   })
 
 async def handle_delete_booking(ORC_message_segment: Segment,
