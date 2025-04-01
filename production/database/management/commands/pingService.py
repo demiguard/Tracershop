@@ -27,7 +27,7 @@ from hl7.mllp import start_hl7_server, HL7StreamReader, HL7StreamWriter
 
 # Tracershop Packages
 from constants import PING_SERVICE_LOGGER
-from shared_constants import DATA_BOOKING, WEBSOCKET_SERVER_MESSAGES
+from shared_constants import DATA_BOOKING, WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_DATA_ID
 from database.database_interface import DatabaseInterface
 from database.models import Booking, Location, ProcedureIdentifier, BookingStatus
 from websocket.messenger import Messenger
@@ -150,7 +150,7 @@ async def handle_delete_booking(ORC_message_segment: Segment,
   logger.info(f"deleted booking with uid: {accession_number}")
   if 0 < booking_id:
     await messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_DELETE_BOOKING, {
-
+      WEBSOCKET_DATA_ID : [booking_id]
     })
 
 
