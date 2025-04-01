@@ -31,8 +31,7 @@ describe("Activity table", () => {
   it("Standard render test", () => {
     const customState = getModifiedTestState({
       today : new Date(2020,4,4,10,26,33)
-    })
-
+    });
 
     render(
       <TracerShopContext tracershop_state={customState} websocket={websocket}>
@@ -80,8 +79,7 @@ describe("Activity table", () => {
   it("Open Order modal", () => {
     const customState = getModifiedTestState({
       today : new Date(2020,4,4,10,26,33)
-    })
-
+    });
 
     render(
       <TracerShopContext tracershop_state={customState} websocket={websocket}>

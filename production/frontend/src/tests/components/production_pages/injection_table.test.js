@@ -64,53 +64,35 @@ describe("Deadline Setup tests", () => {
       </TracerShopContext>
     );
 
-    act(() => {
-      screen.getByLabelText('sort-status').click();
-
-    });
+    act(() => { screen.getByLabelText('sort-status').click(); });
     // TODO: Assert sort
 
     // Invert The Sort
-    act(() => {
-      screen.getByLabelText('sort-status').click();
-    });
+    act(() => { screen.getByLabelText('sort-status').click(); });
     // TODO: Assert Sort
 
-
     const sort_order_id = screen.getByLabelText('sort-order-id');
-    act(() => {
-      sort_order_id.click();
-    });
+    act(() => {  sort_order_id.click(); });
     // TODO: Assert sort
 
     const sort_destination = screen.getByLabelText('sort-destination');
-    act(() => {
-      sort_destination.click();
-    });
+    act(() => { sort_destination.click(); });
     // TODO: Assert sort
 
     const sort_tracer = screen.getByLabelText('sort-tracer');
-    act(() => {
-      sort_tracer.click();
-    });
+    act(() => { sort_tracer.click(); });
     // TODO: Assert sort
 
     const sort_injections = screen.getByLabelText('sort-injections');
-    act(() => {
-      sort_injections.click();
-    });
+    act(() => { sort_injections.click(); });
     // TODO: Assert sort
 
     const sort_deliver_time = screen.getByLabelText('sort-deliver-time');
-    act(() => {
-      sort_deliver_time.click();
-    });
+    act(() => { sort_deliver_time.click(); });
     // TODO: Assert sort
 
     const sort_usage = screen.getByLabelText('sort-usage');
-    act(() => {
-      sort_usage.click();
-    });
+    act(() => { sort_usage.click(); });
     // TODO: Assert sort
   });
 
@@ -121,24 +103,16 @@ describe("Deadline Setup tests", () => {
       </TracerShopContext>
     );
 
-    const createNewOrderButton = screen.getByRole('button', {name : "Opret ny ordre"});
-
-    act(() => {
-      createNewOrderButton.click();
-    });
+    act(() => { screen.getByRole('button', {name : "Opret ny ordre"}).click(); });
 
     // TODO: Assert
 
     // Close it again
-    act(() => {
-      screen.getByRole('button', {name : "Luk"}).click()
-    });
+    act(() => { screen.getByRole('button', {name : "Luk"}).click() });
   });
 
   it("Open order modal", () => {
-    const customState = getModifiedTestState({
-      today : today,
-    })
+    const customState = getModifiedTestState({ today : today, })
 
     render(
       <TracerShopContext tracershop_state={customState} websocket={websocket}>
@@ -148,9 +122,7 @@ describe("Deadline Setup tests", () => {
 
     const statusIcon1 = screen.getByLabelText('status-icon-1');
 
-    act(() => {
-      statusIcon1.click();
-    })
+    act(() => { statusIcon1.click(); });
   });
 
   it("Display cancelled Order", async () => {
@@ -164,9 +136,7 @@ describe("Deadline Setup tests", () => {
         )
       ]),
       today : today
-    })
-
-
+    });
 
     render(
       <TracerShopContext tracershop_state={customState} websocket={websocket}>
@@ -307,4 +277,45 @@ describe("Deadline Setup tests", () => {
     // expect modal to close after success
     expect(screen.queryByTestId('release_many_injections')).toBeNull();
   });
+
+  it("Can accept orders with a press of button on injection tables", async () => {
+    const customState = getModifiedTestState({
+      [DATA_INJECTION_ORDER] : toMapping([
+        new InjectionOrder(
+          1, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          2, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ACCEPTED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          3, "11:00:00", "2020-05-04", 1, ORDER_STATUS.RELEASED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          4, "11:00:00", "2020-05-04", 1, ORDER_STATUS.CANCELLED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          5, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 2, null, null, null
+        ),
+        new InjectionOrder(
+          6, "11:00:00", "2020-05-04", 1, ORDER_STATUS.ORDERED, TRACER_USAGE.human, null, "AAAA0000", 1, 4, null, null, null
+        )]),
+        today : today
+    });
+
+    render(<TracerShopContext tracershop_state={customState} websocket={websocket}>
+      <InjectionTable/>
+    </TracerShopContext>);
+
+    expect(screen.queryByTestId("accept-1")).not.toBeNull();
+    expect(screen.queryByTestId("accept-2")).toBeNull();
+    expect(screen.queryByTestId("accept-3")).toBeNull();
+    expect(screen.queryByTestId("accept-4")).toBeNull();
+
+    await act(async () => {
+      screen.getByTestId("accept-1").click();
+    });
+
+    expect(websocket.sendEditModel).toHaveBeenCalled();
+  });
+
 });

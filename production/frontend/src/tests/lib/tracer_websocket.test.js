@@ -12,6 +12,9 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME,
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE,
    WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, WEBSOCKET_MESSAGE_UPDATE_STATE,
    WEBSOCKET_SERVER_MESSAGES,
+   WEBSOCKET_MESSAGE_READ_STATE,
+   DATA_CUSTOMER,
+   DATA_ISOTOPE,
 
  } from "~/lib/shared_constants.js"
 import { TracerWebSocket } from "~/lib/tracer_websocket.js";
@@ -20,7 +23,7 @@ import { DeleteState, UpdateWebsocketConnectionState } from "~/lib/state_actions
 import { jest } from "@jest/globals"
 import { User } from "~/dataclasses/dataclasses";
 
-let server = null;
+let /** @type { WS } */ server = null;
 let websocket = null;
 let internal_ws = null
 
@@ -73,6 +76,45 @@ describe("tracer websocket test suite", () => {
       [WEBSOCKET_DATA] : data,
     }
     server.send(message);
+
+    expect(dispatch).toHaveBeenCalled();
+  });
+
+  it("Handle Read State message", async () => {
+    server.send({
+      [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_READ_STATE,
+      [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS,
+      [WEBSOCKET_MESSAGE_ID] : 2311503,
+      [WEBSOCKET_REFRESH] : false,
+      [WEBSOCKET_DATA] : {
+        [DATA_CUSTOMER] : [
+          {pk : 100, fields : {
+            ordered_activity : 1000,
+            delivery_date : "2023-01-23",
+            status : 1,
+            comment : null,
+            ordered_time_slot : 1,
+            moved_to_time_slot : 2,
+            freed_datetime : null,
+            ordered_by : 2,
+            freed_by : null,
+          }},
+          {pk : 101, fields : {
+            ordered_activity : 500,
+            delivery_date : "2023-01-23",
+            status : 2,
+            comment : null,
+            ordered_time_slot : 1,
+            moved_to_time_slot : 2,
+            freed_datetime : null,
+            ordered_by : 2,
+            freed_by : null,
+          }}
+        ],
+        [DATA_ISOTOPE] : [],
+      }
+    });
 
     expect(dispatch).toHaveBeenCalled();
   });
