@@ -76,7 +76,7 @@ export class MESSAGE_READ_BOOKINGS {
     this.message_id = message["message_id"]
     this.success = message["success"]
     this.status = message["status"]
-    this.data = message["data"]
+    this.data = deserialize(message["data"])
     this.refresh = message["refresh"]
     this.messageType = message["messageType"]
   }

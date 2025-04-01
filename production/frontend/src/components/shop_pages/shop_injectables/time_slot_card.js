@@ -223,17 +223,17 @@ export function TimeSlotCard({
                           renderDateTime(orderCollection.freed_time).substring(0,5)
                         : "Ukendt tidspunk!";
       return [
-        `Udleveret ${orderCollection.delivered_activity} MBq`,
+        `Udleveret ${Math.floor(orderCollection.delivered_activity)} MBq`,
         `Frigivet kl: ${freed_time}`,
       ]
     } else if (canOrder) {
       return [
-        `Bestilt: ${orderCollection.ordered_activity} MBq`,
+        `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
         `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
       ]
       } else {
         return [
-          `Bestilt: ${orderCollection.ordered_activity} MBq`,
+          `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
           `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
         ];
       }

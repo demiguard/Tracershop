@@ -259,6 +259,8 @@ export function ShopOrderPage ({relatedCustomer}){
     tracerID : activeTracer,
   });
 
+  console.log(bookings)
+
   return (
   <Container fluid="xxl" style={{padding : "0px"}}>
     <Row style={{margin : "0px"}}>
