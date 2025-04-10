@@ -136,7 +136,11 @@ async def handle_create_booking_message(ORC_message_segment: Segment, OBR_messag
   study_code, study_description = extract_procedure_identifier(OBR_message_segment)
   procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
   accession_number = extract_accession_number(ORC_message_segment)
-  start_date, start_time = extract_booking_time(ORC_message_segment)
+  try:
+    start_date, start_time = extract_booking_time(ORC_message_segment)
+  except ValueError:
+    logger.error(f"Booking {accession_number} has no booking time, aborting!")
+    return
   booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
   logger.info(f"Added booking with uid: {accession_number}")
 
