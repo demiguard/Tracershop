@@ -6,7 +6,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from enum import Enum
-from typing import Any, Callable, Dict, List, TypeVar
+from typing import Any, Callable, Dict, List, TypeVar, Type
 
 T = TypeVar('T')
 P = TypeVar('P')
@@ -57,7 +57,7 @@ class AuthenticationResult(Enum):
 class MessageField:
   __slots__ = ('_required', '_name', '_type')
 
-  def __init__(self, name: str, field_type: Callable[[P], T], required=True) -> None:
+  def __init__(self, name: str, field_type: Callable[[P],T], required=True) -> None:
     self._name = name
     self._type = field_type
     # Note that this doesn't have to be a type, this is very useful when such

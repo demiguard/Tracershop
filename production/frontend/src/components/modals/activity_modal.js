@@ -472,7 +472,7 @@ export function ActivityModal({
   function onCorrect(username, password){
     const message = {
       [DATA_AUTH] : {
-        [AUTH_USER] : username,
+        [AUTH_USERNAME] : username,
         [AUTH_PASSWORD] : password
       },
       [WEBSOCKET_DATA] : {
@@ -592,7 +592,7 @@ export function ActivityModal({
 
     if(correctingOrder){
       return (
-        <div>
+        <Col md={6}>
           <Authenticate
             authenticate={onCorrect}
             error={loginError}
@@ -601,7 +601,7 @@ export function ActivityModal({
             headerMessage={`Ret ordre - ${orderCollection.orderIDs.join(', ')}`}
             buttonMessage={"Ret ordre"}
           />
-        </div>
+        </Col>
       );
     }
     return <div></div>;

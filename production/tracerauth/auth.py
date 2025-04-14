@@ -113,7 +113,15 @@ def ValidateAuthObject(AuthObj: Dict) -> bool:
       bool: Validity of Auth object
   """
   # Auth object should always contain a username and a password
-  return AUTH_USERNAME in AuthObj and AUTH_PASSWORD in AuthObj
+  username_in_obj = AUTH_USERNAME in AuthObj
+  password_in_obj = AUTH_PASSWORD in AuthObj
+
+  if not username_in_obj:
+    error_logger.error(f"AUTH_USERNAME is missing from Auth object: {AuthObj}")
+  if not password_in_obj:
+    error_logger.error(f"AUTH_PASSWORD is missing from Auth object: {AuthObj}")
+
+  return username_in_obj and password_in_obj
 
 def ValidateType(value : Any, targetType: Type) -> bool:
   """Checks if a value is of a certain type

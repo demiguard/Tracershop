@@ -9,10 +9,11 @@ from channels.auth import get_user
 from database.models import User, UserAssignment
 from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.utils import classproperty
-from shared_constants import DATA_USER, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_ID,\
+from shared_constants import DATA_USER, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
-  WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE,\
-  WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
+  WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_ERROR,\
+  WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES,\
+  WEBSOCKET_SERVER_MESSAGES
 
 
 from websocket.handler_base import HandlerBase
@@ -29,17 +30,20 @@ class HandleCreateUserAssignment(HandlerBase):
     username = message['username']
     customerID = message['customer_id']
 
-    temp_res: Tuple[SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,
+    temp_res: Tuple[SUCCESS_STATUS_CRUD,
                     Optional[UserAssignment],
                     Optional[User]] = await consumer.db.createUserAssignment(username, customerID, user)
     success, user_assignment, new_user = temp_res
 
-    if success != SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS:
-      return await consumer.send_json({
+    if success != SUCCESS_STATUS_CRUD.SUCCESS:
+      await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR, {
+        MESSENGER_CONSUMER : consumer,
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-        WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-        WEBSOCKET_MESSAGE_STATUS : success.value,
+        WEBSOCKET_ERROR : "",
+        WEBSOCKET_MESSAGE_STATUS : success,
       })
+
+      return
 
     if user_assignment is None: # pragma no cover
       error_logger.critical("Somebody somewhere fucked up a contract...")

@@ -52,7 +52,7 @@ class HandleMassOrders(HandlerBase):
       else:
         early_booking_time = ""
 
-      return await consumer.send_json({
+      await consumer.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
         WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_ERROR,
@@ -62,6 +62,8 @@ class HandleMassOrders(HandlerBase):
           ERROR_EARLY_TIME_SLOT : early_booking_time,
         }
       })
+
+      return
 
     ActivityCustomerIDs = await consumer.db.getCustomerIDs(orders[DATA_ACTIVITY_ORDER])
     InjectionCustomerIDs = await consumer.db.getCustomerIDs(orders[DATA_INJECTION_ORDER])

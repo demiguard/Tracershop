@@ -10,7 +10,7 @@ from enum import Enum as __Enum
 # This is the variable the version of the javascript that server matches with
 # This is used ensure that users get newer javascripts version and doesn't
 # Work on older (And maybe bug prone) versions
-JAVASCRIPT_VERSION = "2.1.0" # Remember to update this to catch bugs
+JAVASCRIPT_VERSION = "2.2.0" # Remember to update this to catch bugs
 
 # The Auth key words are members in a Auth data object with is parsed back and
 # forth regrading authentication. This object is placed in the root message with
@@ -196,18 +196,6 @@ class TRACER_USAGE(__Enum):
   animal = 1
   other = 2
 
-
-# Note for shared enums it very important that a value is assigned, to ensure
-# a consistent view
-class SUCCESS_STATUS_CREATING_USER_ASSIGNMENT(__Enum):
-  SUCCESS = 0
-  NO_LDAP_USERNAME = 1
-  INCORRECT_GROUPS = 2
-  MISSING_CUSTOMER = 3
-  NO_GROUPS = 4
-  DUPLICATE_ASSIGNMENT = 5
-  UNABLE_TO_CREATE_USER_ASSIGNMENT = 6
-
 class SUCCESS_STATUS_CRUD(__Enum):
   SUCCESS = 0
   UNSPECIFIED_REJECT = 1
@@ -215,6 +203,12 @@ class SUCCESS_STATUS_CRUD(__Enum):
   MISSING_RIGHTS = 3
   CONSTRAINTS_VIOLATED = 4
   VALIDATION_FAILED = 5
+  NO_LDAP_USERNAME = 6
+  INCORRECT_GROUPS = 7
+  MISSING_CUSTOMER = 8
+  NO_GROUPS = 9
+  DUPLICATE_ASSIGNMENT = 10
+  UNABLE_TO_CREATE_USER_ASSIGNMENT = 11
 
 #TODO: Cleanup this duplication from customerModels.py
 class BookingStatus(__Enum):

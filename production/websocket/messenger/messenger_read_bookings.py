@@ -33,7 +33,7 @@ class MessengerReadBooking(MessengerBase):
   Args = make_dataclass('Args', fields=[
     (MESSENGER_CONSUMER, consumer.Consumer),
     (WEBSOCKET_MESSAGE_ID, int),
-    (WEBSOCKET_DATA, Dict[str, List[Booking]])
+    (WEBSOCKET_DATA, MessageDataType.STATE)
   ], slots=True, bases=(MessengerBase.MessageArgs,))
 
   @classmethod

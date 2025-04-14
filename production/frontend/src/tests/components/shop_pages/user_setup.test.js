@@ -69,7 +69,7 @@ describe("User setup test", () => {
         WEBSOCKET_MESSAGE_TYPE : input
       }}),
       send : jest.fn((message) => Promise.resolve(
-        {status : SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS}
+        {status : SUCCESS_STATUS_CRUD.SUCCESS}
       ))
     };
 
@@ -99,7 +99,7 @@ describe("User setup test", () => {
         WEBSOCKET_MESSAGE_TYPE : input
       }}),
       send : jest.fn((message) => Promise.resolve(
-        {status : SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME}
+        {status : SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME}
       ))
     };
 
@@ -135,7 +135,7 @@ describe("User setup test", () => {
         WEBSOCKET_MESSAGE_TYPE : input
       }}),
       send : jest.fn((message) => Promise.resolve(
-        {status : SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS}
+        {status : SUCCESS_STATUS_CRUD.INCORRECT_GROUPS}
       ))
     };
 
@@ -172,7 +172,7 @@ describe("User setup test", () => {
         WEBSOCKET_MESSAGE_TYPE : input
       }}),
       send : jest.fn(() => Promise.resolve(
-        {status : SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS}
+        {status : SUCCESS_STATUS_CRUD.SUCCESS}
       )),
       sendDeleteModel : jest.fn(() => {})
     };

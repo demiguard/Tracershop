@@ -1,16 +1,16 @@
 # Python Standard Library
+from typing import Dict, List
 
 # Third party packages
 
 # Tracershop modules
+from constants import MESSENGER_CONSUMER
+from database.models import Booking
 from lib.formatting import toDate
 from lib.utils import classproperty
-from shared_constants import WEBSOCKET_MESSAGE_READ_BOOKINGS, WEBSOCKET_DATE,\
-  WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_SUCCESS,\
-  WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES
-
-
+from shared_constants import WEBSOCKET_DATE, WEBSOCKET_DATA_ID,\
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPES,\
+  WEBSOCKET_SERVER_MESSAGES
 from websocket.handler_base import HandlerBase
 
 class HandleReadBooking(HandlerBase):
@@ -27,16 +27,14 @@ class HandleReadBooking(HandlerBase):
         message (Dict[str, Any]): _description_
     """
     booking_date = toDate(message[WEBSOCKET_DATE][:10])
-    bookings = await consumer.db.get_bookings(
+    bookings: Dict[str, List[Booking]] = await consumer.db.get_bookings(
       booking_date,
       message[WEBSOCKET_DATA_ID]
     )
 
-    await consumer.send_json({
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_BOOKINGS, {
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value,
       WEBSOCKET_DATA : bookings,
-      WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_READ_BOOKINGS,
+      MESSENGER_CONSUMER : consumer
     })
+    return

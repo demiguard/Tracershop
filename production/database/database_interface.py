@@ -33,8 +33,8 @@ from core.exceptions import IllegalActionAttempted,\
   RequestingNonExistingEndpoint, UndefinedReference, ContractBroken
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
-    SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, EXCLUDED_STATE_MODELS,\
-    DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST, DATA_BOOKING
+    EXCLUDED_STATE_MODELS, DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST,\
+    DATA_BOOKING, SUCCESS_STATUS_CRUD
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
@@ -279,7 +279,7 @@ class DatabaseInterface():
     return orders
 
   @database_sync_to_async
-  def correct_order(self, data: Dict, user: User) -> Dict[str, List[TracershopModel]]:
+  def correct_order(self, data: Dict[str, List[int]], user: User) -> Dict[str, List[TracershopModel]]:
     return_dict = {
       DATA_ACTIVITY_ORDER : [],
       DATA_INJECTION_ORDER : [],
@@ -292,27 +292,43 @@ class DatabaseInterface():
         status=OrderStatus.Released
       )
 
-      if(len(orders) != data[DATA_ACTIVITY_ORDER]):
+      if(len(orders) != len(data[DATA_ACTIVITY_ORDER])):
+        error_logger.error(f"Got IDs: {orders}, while only found {len(orders)} Activity Orders")
         raise Exception("Not all requested orders are updated")
       orders.update(status=OrderStatus.Accepted)
-      return_dict[DATA_ACTIVITY_ORDER] = [o for o in orders]
+      # We have to make a new query here because (I think) we invalidate the
+      # query by updating the Manager
+      return_dict[DATA_ACTIVITY_ORDER] = [o for o in ActivityOrder.objects.filter(
+        id__in=data[DATA_ACTIVITY_ORDER]
+      )]
+
     if DATA_INJECTION_ORDER in data:
       orders = InjectionOrder.objects.filter(
-        id__in=data[DATA_INJECTION_ORDER],
+        id__in=data[DATA_ACTIVITY_ORDER],
         status=OrderStatus.Released
       )
 
-      if(len(orders) != data[DATA_INJECTION_ORDER]):
+      if(len(orders) != len(data[DATA_INJECTION_ORDER])):
+        error_logger.error(f"Got IDs: {orders}, while only found {len(orders)} Injection orders")
         raise Exception("Not all requested orders are updated")
       orders.update(status=OrderStatus.Accepted)
-      return_dict[DATA_INJECTION_ORDER] = [o for o in orders]
+      # We have to make a new query here because (I think) we invalidate the
+      # query by updating the Manager
+      return_dict[DATA_INJECTION_ORDER] = [o for o in InjectionOrder.objects.filter(
+        id__in=data[DATA_INJECTION_ORDER]
+      )]
 
     if DATA_VIAL in data:
       vials = Vial.objects.filter(id__in=data[DATA_VIAL])
+      if(len(vials) != len(data[DATA_VIAL])):
+        error_logger.error(f"Got IDs: {vials}, while only found {len(vials)} Vials")
+        raise Exception("Not all requested orders are updated")
 
       vials.update(assigned_to=None)
+      # We have to make a new query here because (I think) we invalidate the
+      # query by updating the Manager
 
-      return_dict[DATA_VIAL] = []
+      return_dict[DATA_VIAL] = [vial for vial in Vial.objects.filter(id__in=data[DATA_VIAL])]
 
     logCorrectOrder(user, data)
 
@@ -533,14 +549,14 @@ class DatabaseInterface():
   def createUserAssignment(self,
                            username : str,
                            customer_id : int,
-                           creating_user) -> Tuple[SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,
+                           creating_user) -> Tuple[SUCCESS_STATUS_CRUD,
                                                    Optional[UserAssignment],
                                                    Optional[User]]:
     try:
       customer = Customer.objects.get(pk=customer_id)
     except ObjectDoesNotExist:
       error_logger.info(f"User {creating_user} tried to create an association between {username} and a non-existent customer")
-      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.MISSING_CUSTOMER, None, None
+      return SUCCESS_STATUS_CRUD.MISSING_CUSTOMER, None, None
 
     user = None
     try:
@@ -549,33 +565,33 @@ class DatabaseInterface():
     except ObjectDoesNotExist:
       success, ldap_user_group = tracer_ldap.checkUserGroupMembership(username)
       if success == LDAPSearchResult.USER_DOES_NOT_EXISTS:
-        return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME, None, None
+        return SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME, None, None
 
       if success == LDAPSearchResult.MISSING_USER_GROUP:
-        return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS, None, None
+        return SUCCESS_STATUS_CRUD.NO_GROUPS, None, None
 
       if ldap_user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
         user_created = True
         user = User.objects.create(username=username.upper(), user_group=ldap_user_group)
       else:
-        return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
+        return SUCCESS_STATUS_CRUD.INCORRECT_GROUPS, None, None
 
     if not user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
-      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS, None, None
+      return SUCCESS_STATUS_CRUD.INCORRECT_GROUPS, None, None
 
     try:
       user_assignment = UserAssignment(user=user, customer=customer)
       created = user_assignment.save(creating_user)
     except IntegrityError:
-      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.DUPLICATE_ASSIGNMENT, None, None
+      return SUCCESS_STATUS_CRUD.DUPLICATE_ASSIGNMENT, None, None
 
     if not created:
-      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.UNABLE_TO_CREATE_USER_ASSIGNMENT, None, None
+      return SUCCESS_STATUS_CRUD.UNABLE_TO_CREATE_USER_ASSIGNMENT, None, None
 
     if user_created:
-      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS, user_assignment, user
+      return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, user
     else:
-      return SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS, user_assignment, None
+      return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, None
 
 
   @database_sync_to_async

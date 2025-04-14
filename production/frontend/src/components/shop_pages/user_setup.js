@@ -8,8 +8,8 @@ import { EditableInput } from "../injectable/inputs/editable_input";
 import { ClickableIcon } from "../injectable/icons";
 import { Col, Row } from "react-bootstrap";
 import { cssCenter } from "~/lib/constants";
-import { DATA_USER_ASSIGNMENT, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
-  WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+import { DATA_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
+  WEBSOCKET_MESSAGE_TYPE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants";
 import { formatUsername } from "~/lib/formatting";
 
 export const ERROR_MESSAGE_NO_LDAP_USERNAME = "BAM ID findes ikke. Bemærk at brugeren kan havde et regionalt ID, som skal benyttes istedet!"
@@ -36,17 +36,17 @@ function UserAssignmentRow(props){
       username : username,
       customer_id : activeCustomer
     }).then((data) => {
-      if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.UNABLE_TO_CREATE_USER_ASSIGNMENT){
+      if(data.status === SUCCESS_STATUS_CRUD.UNABLE_TO_CREATE_USER_ASSIGNMENT){
         setError(ERROR_MESSAGE_UNABLE_TO_CREATE);
-      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.DUPLICATE_ASSIGNMENT){
+      } else if(data.status === SUCCESS_STATUS_CRUD.DUPLICATE_ASSIGNMENT){
         setError(ERROR_MESSAGE_DUPLICATE_INSTANCE);
-      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS) {
+      } else if(data.status === SUCCESS_STATUS_CRUD.NO_GROUPS) {
         setError(ERROR_MESSAGE_MISSING_RIGHTS);
-      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME){
+      } else if(data.status === SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME){
         setError(ERROR_MESSAGE_NO_LDAP_USERNAME);
-      } else if(data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS){
+      } else if(data.status === SUCCESS_STATUS_CRUD.INCORRECT_GROUPS){
         setError(ERROR_MESSAGE_INCORRECT_GROUPS);
-      } else if (data.status === SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS){
+      } else if (data.status === SUCCESS_STATUS_CRUD.SUCCESS){
         setUserName("");
         setError("")
       }

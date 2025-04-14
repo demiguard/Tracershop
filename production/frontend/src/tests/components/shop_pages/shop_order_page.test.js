@@ -147,9 +147,17 @@ describe("Shop Order page test suite", () => {
           [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS,
           [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
           [WEBSOCKET_DATA] : {
-            [DATA_BOOKING] : [
-              new Booking(1, BookingStatus.Initial, 1, 1, "REGH00000000", "10:00:00", "2020-05-05"),
-            ]
+            [DATA_BOOKING] : [{
+              pk : 1,
+              fields : {
+                status : BookingStatus.Initial,
+                location : 1,
+                procedure : 1,
+                accession_number : "REGH00000000",
+                start_time : "10:00:00",
+                start_date : "2020-05-05"
+              }
+            }]
           },
           [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_READ_BOOKINGS,
         }))),
@@ -213,10 +221,28 @@ describe("Shop Order page test suite", () => {
         [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS,
         [WEBSOCKET_REFRESH] : false,
         [WEBSOCKET_DATA] : {
-            [DATA_BOOKING] : [
-          new Booking(1,1, 1, 1, "REGH00113344", "10:00:00", "2020-05-05"),
-          new Booking(2,1, 1, 2, "REGH00113344", "10:00:00", "2020-05-05"),
-        ]},
+              [DATA_BOOKING] : [{
+                pk : 1,
+                fields : {
+                  status : BookingStatus.Initial,
+                  location : 1,
+                  procedure : 1,
+                  accession_number : "REGH00000000",
+                  start_time : "10:00:00",
+                  start_date : "2020-05-05"
+                }
+              },{
+                pk : 2,
+                fields : {
+                  status : BookingStatus.Initial,
+                  location : 1,
+                  procedure : 2,
+                  accession_number : "REGH00000000",
+                  start_time : "10:00:00",
+                  start_date : "2020-05-05"
+                }
+              }]
+            },
         [WEBSOCKET_MESSAGE_ID] : 3123,
           [WEBSOCKET_MESSAGE_SUCCESS] : WEBSOCKET_MESSAGE_SUCCESS,
           [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_READ_BOOKINGS,
