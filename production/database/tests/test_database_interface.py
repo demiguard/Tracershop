@@ -21,7 +21,7 @@ from testing import TransactionTracershopTestCase
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from core.exceptions import IllegalActionAttempted, UndefinedReference,\
   RequestingNonExistingEndpoint
-from shared_constants import SUCCESS_STATUS_CREATING_USER_ASSIGNMENT,\
+from shared_constants import SUCCESS_STATUS_CRUD,\
   DATA_ACTIVITY_ORDER, DATA_ISOTOPE, DATA_BOOKING
 from database.models import Booking, Procedure, User, Tracer, Isotope,\
   Location, BookingStatus, UserGroups, ProcedureIdentifier, Customer,\
@@ -499,7 +499,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     username = self.shop_admin.username
     status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
 
-    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS)
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.SUCCESS)
     self.assertIsNotNone(userAssignment)
     self.assertIsNone(user)
 
@@ -508,7 +508,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     username = "-AAAA0003"
     status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
 
-    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS)
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.SUCCESS)
     self.assertIsNotNone(userAssignment)
     self.assertIsNotNone(user)
     self.assertEqual(user.user_group, mocks_ldap.mockedUserGroups[user.username])
@@ -517,7 +517,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     username = "not a username"
     status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
 
-    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME)
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME)
     self.assertIsNone(userAssignment)
     self.assertIsNone(user)
 
@@ -525,7 +525,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     username = "-AAAA0000"
     status, userAssignment, user = await self.db.createUserAssignment(username, self.customer.id, self.test_admin)
 
-    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.INCORRECT_GROUPS)
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.INCORRECT_GROUPS)
     self.assertIsNone(userAssignment)
     self.assertIsNone(user)
 
@@ -533,7 +533,7 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     username = "-AAAA0003"
     status, userAssignment, user = await self.db.createUserAssignment(username, 189508160918, self.test_admin)
 
-    self.assertEqual(status, SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.MISSING_CUSTOMER)
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.MISSING_CUSTOMER)
     self.assertIsNone(userAssignment)
     self.assertIsNone(user)
 
@@ -648,8 +648,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
         )
 
   async def test_releaseOrders_release_released_order(self):
-    with self.assertRaises(UndefinedReference):
-      with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
+      with self.assertRaises(UndefinedReference):
         await self.db.releaseOrders(
           self.timeslot.id,
           [self.order.id],
@@ -661,8 +661,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     self.assertEqual(len(recorded_logs.output), 1)
 
   async def test_releaseOrders_orders_to_another_timeslot(self):
-    with self.assertRaises(IllegalActionAttempted):
-      with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
+      with self.assertRaises(IllegalActionAttempted):
         await self.db.releaseOrders(
           self.timeslot_2.id,
           [self.release_able_order.id],
@@ -674,8 +674,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     self.assertEqual(len(recorded_logs.output), 1)
 
   async def test_releaseOrders_releasing_a_assigned_vial(self):
-    with self.assertRaises(UndefinedReference):
-      with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER, ERROR) as recorded_logs:
+      with self.assertRaises(UndefinedReference):
         await self.db.releaseOrders(
           self.timeslot.id,
           [self.release_able_order.id],
@@ -707,8 +707,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
 
 
   def test_moving_orders_moving_released_order(self):
-    with self.assertRaises(IllegalActionAttempted):
-      with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+      with self.assertRaises(IllegalActionAttempted):
         asyncio.run(
           self.db.moveOrders(
             [self.order.id],
@@ -719,8 +719,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
                     "ERROR:ErrorLogger:Attempted to move a released order")
 
   def test_moving_orders_moving_to_another_destination(self):
-    with self.assertRaises(IllegalActionAttempted):
-      with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+      with self.assertRaises(IllegalActionAttempted):
         asyncio.run(
           self.db.moveOrders(
             [self.moveable_order.id],
@@ -733,8 +733,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     )
 
   def test_moving_orders_moving_to_another_day(self):
-    with self.assertRaises(IllegalActionAttempted):
-      with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+      with self.assertRaises(IllegalActionAttempted):
         asyncio.run(
           self.db.moveOrders(
             [self.moveable_order.id],
@@ -747,8 +747,8 @@ class DatabaseInterFaceTestCases(TransactionTracershopTestCase):
     )
 
   def test_moving_orders_moving_to_after_delivery(self):
-    with self.assertRaises(IllegalActionAttempted):
-      with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+    with self.assertLogs(ERROR_LOGGER,ERROR) as recorded_logs:
+      with self.assertRaises(IllegalActionAttempted):
         asyncio.run(
           self.db.moveOrders(
             [self.release_able_order.id],

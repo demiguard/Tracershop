@@ -11,7 +11,7 @@ import { TimeSlotCard } from "./shop_injectables/time_slot_card";
 import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { TracerCatalog } from '~/contexts/tracer_catalog';
-import { getRelevantActivityOrders } from "~/lib/filters";
+import { activityOrderFilter, getRelevantActivityOrders, timeSlotsFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 import { db } from "~/lib/local_storage_driver";
@@ -45,13 +45,20 @@ export function OrderReview({active_endpoint,
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
 
-  const [, // AvailableProductions
-         availableTimeSlots,
-         relevantActivityOrders] = getRelevantActivityOrders(state,
-                                                             day,
-                                                             activeTracer,
-                                                             active_endpoint,
-                                                             activeDateString);
+
+  const availableTimeSlots = timeSlotsFilter(state, {
+    state : state,
+    day : day,
+    tracerID : activeTracer,
+    endpointID : active_endpoint
+  });
+
+  const relevantActivityOrders = activityOrderFilter(
+    state, {
+      timeSlots : availableTimeSlots,
+      delivery_date : activeDateString
+    }
+  )
 
   function setTracer(tracer){
     return () => {
@@ -76,14 +83,19 @@ export function OrderReview({active_endpoint,
   const overhead = tracerCatalog.getOverheadForTracer(active_customer, activeTracer)
 
   // If activeTracer is -1, then availableTimeSlot should be [], hence no bugs
-  const timeSlotsCards = availableTimeSlots.map((timeSlotID) => <TimeSlotCard
-      key={timeSlotID}
-      timeSlotID={timeSlotID}
+  const timeSlotsCards = availableTimeSlots.map((timeSlot) => {
+    const timeSlot_orders = activityOrderFilter(relevantActivityOrders, {
+      timeSlots : [timeSlot]
+    });
+
+    return <TimeSlotCard
+      key={timeSlot.id}
+      timeSlotID={timeSlot.id}
       active_date={active_date}
-      activityOrders={relevantActivityOrders}
+      activityOrders={timeSlot_orders}
       overhead={overhead}
       activityDeadlineValid={activityDeadlineValid}
-      />);
+      />;});
 
   const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
     (injectionOrder) => {

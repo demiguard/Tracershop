@@ -215,7 +215,7 @@ export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, en
     const endpointCondition = endpointID? timeSlot.destination == endpointID : true;
     const idCondition = timeSlotId instanceof Array ? timeSlotId.includes(timeSlot.id) :
                         timeSlotId ? timeSlotId === timeSlot.id : true;
-
+{}
     return tracerCondition && endpointCondition && idCondition;
   });
 
@@ -231,17 +231,26 @@ export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, en
  * }} param1
  * @returns
  */
-export function activityOrdersFilter(container, {state,
+export function activityOrderFilter(container, {state,
     timeSlotFilterArgs,
+    timeSlots,
     status,
+    delivery_date,
     dateRange,
     }, ids=false){
   const orders = extractData(container, ActivityOrder, DATA_ACTIVITY_ORDER)
-  const timeSlotIDs = timeSlotFilterArgs && state ?
-    timeSlotsFilter(state, {state : state, ...timeSlotFilterArgs}, true) : undefined;
+
+  const timeSlotIDs =
+    timeSlots !== undefined ? timeSlots.map(getId) : // If passed TimeSlots we use those
+    timeSlotFilterArgs && state ? // Otherwise we can get the timesslots
+      timeSlotsFilter(state, {state : state, ...timeSlotFilterArgs}, true)
+    : undefined; // Otherwise No filter over time slots
+
   const filteredActivityOrders = orders.filter((order) => {
+
     const timeSlotCondition = timeSlotIDs ?
       timeSlotIDs.includes(order.ordered_time_slot) : true;
+
     const statusCondition = (() => {
         if(status instanceof Array){
           return status.includes(order.status)
@@ -251,8 +260,11 @@ export function activityOrdersFilter(container, {state,
         }
         return true;
       })();
-    const dateRangeCondition = dateRange !== undefined ?
-      dateRange.in_range(order.delivery_date) : true
+
+    const dateRangeCondition =
+      dateRange !== undefined ? dateRange.in_range(order.delivery_date) :
+        delivery_date ? delivery_date === order.delivery_date : true;
+
     return timeSlotCondition && statusCondition && dateRangeCondition
   });
 

@@ -139,7 +139,7 @@ export class ActivityOrderCollection {
     // display holder class. I.E. Not it's own idea
 
     this.#ordered_date = ordered_date
-    this.#minimum_status = ORDER_STATUS.CANCELLED;
+    this.#minimum_status = ORDER_STATUS.EMPTY;
     this.delivering_time_slot = (timeSlot instanceof ActivityDeliveryTimeSlot) ? timeSlot : state.deliver_times.get(timeSlot);
     this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
     this.production = state.production.get(this.delivering_time_slot.production_run);
@@ -227,6 +227,8 @@ export class ActivityOrderCollection {
     }
   }
 
+
+
   /**
    * @desc Shared date between {@link orders}
    * @type {String}
@@ -292,7 +294,7 @@ export class ActivityOrderCollection {
    * each order in relevant_orders: _is_relevant_order returns true
    */
   #set_minimum_status(){
-    let minimum_status = ORDER_STATUS.CANCELLED;
+    let minimum_status = ORDER_STATUS.EMPTY;
     for(const order of this.relevant_orders){
       minimum_status = Math.min(minimum_status, order.status);
     }

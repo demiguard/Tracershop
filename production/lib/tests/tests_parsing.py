@@ -3,12 +3,14 @@
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
+import io
 from datetime import date, time
 from logging import getLogger, Logger, DEBUG
 
 # Third party packages
 from django.test import TestCase, TransactionTestCase
 import hl7
+from pandas import read_csv
 
 # Tracershop packages
 from constants import DEBUG_LOGGER
@@ -16,7 +18,7 @@ from database.models import Customer, Isotope, Tracer, TracerTypes, Vial,\
   UserGroups
 from lib.parsing import update_customer_mapping, update_tracer_mapping,\
   parse_val_file, _parse_customer, extract_deleted_accessionNumber,\
-  parse_index_header
+  parse_index_header, parse_data_frame_row_to_vial
 
 class ParsingTestCase(TestCase):
   def setUp(self) -> None:
@@ -28,6 +30,7 @@ class ParsingTestCase(TestCase):
 
     self.fdg = Tracer.objects.create(id=1, isotope=self.isotope, shortname="FDG", clinical_name="FDG_C", tracer_type=TracerTypes.ActivityBased, vial_tag="FDGF")
     self.fet = Tracer.objects.create(id=2, isotope=self.isotope, shortname="FET", clinical_name="FET_C", tracer_type=TracerTypes.ActivityBased, vial_tag="FET")
+    self.pe2i = Tracer.objects.create(id=3, isotope=self.isotope, shortname="PE2I", clinical_name="PE2I_C", tracer_type=TracerTypes.ActivityBased, vial_tag="PE2I")
 
     self.fling = Customer.objects.create(id=1, short_name="fling", long_name="Flemming Andersen", dispenser_id=None)
     self.test_kunde = Customer.objects.create(id=2, short_name="test_kunde", long_name="Flemming Andersen", dispenser_id=1015)
@@ -378,3 +381,32 @@ class ParsingTestCase(TestCase):
 
     self.assertEqual(user_group, UserGroups.ShopExternal)
     self.assertEqual(username, "")
+
+  def tests_pe2i_csv_file_test(self):
+    file_content = \
+"""BatchReference,Customer,CustomerAddress,DateTimeStamp,DispensedDose,DoseName,Name,RadVolumeDispensed,Status,Value,ValueType,ValueUnits,VariableName
+"PE2I-250410-11","bispebjerg","Klinisk Fysiologi/
+Nuklearmedicinsk Afd.
+Bispebjerg Hospital
+Bispebjerg Bakke 23, 2400 Københvan NV","11-04-2025 11:00:51","1885","Dose 1","Dose 1","2","Instrument","1885","DoseCalibrator","MBq","Dose1"
+"PE2I-250410-11","Glostrup","Afdeling for Klinisk Fysiologi
+& Nuklearmedicin
+Indgang 3, MB 222
+Rigshospitalet, 2600 Glostrup","11-04-2025 11:00:51","1885","Dose 2","Dose 2","2","Instrument","1885","DoseCalibrator","MBq","Dose2"
+"PE2I-250410-11","kf","Rigshospitalet KF
+Blegdamsvej 9
+2100 København Ø","16-04-2025 13:29:37","3000","Dose 3","Dose 3","3,8","Keyboard","3000","DoseCalibrator","MBq","Dose3"
+"PE2I-250410-11","petrh","Rigshospitalet PET
+Blegdamsvej 9
+2100 København Ø","16-04-2025 13:29:45","4000","Dose 4","Dose 4","4,8","Keyboard","4000","DoseCalibrator","MBq","Dose4\""""
+    text = io.StringIO()
+    text.write(file_content)
+    text.seek(0)
+
+    data_frame = read_csv(text)
+
+    vials = parse_data_frame_row_to_vial(data_frame)
+
+    self.assertEqual(len(vials), 4)
+
+    text.close()

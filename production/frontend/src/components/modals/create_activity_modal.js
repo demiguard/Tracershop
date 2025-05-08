@@ -4,7 +4,7 @@ import { Modal, Button, FormControl, Row, Container } from "react-bootstrap";
 import { Calculator } from "../injectable/calculator";
 import { dateToDateString } from "~/lib/formatting";
 import { ActivityOrder } from "~/dataclasses/dataclasses";
-import { ClickableIcon } from "../injectable/icons";
+import { CalculatorIcon, ClickableIcon } from "../injectable/icons";
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { getDay } from "~/lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
@@ -155,9 +155,9 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}) {
             <Button onClick={createOrder}>Opret Ordre</Button>
           </Optional>
           <Optional exists={canCalculator && !showCalculator}>
-            <ClickableIcon
-              onClick={(_event) => {setShowCalculator(true);}}
-              src="/static/images/calculator.svg"
+            <CalculatorIcon
+              openCalculator={(_event) => {setShowCalculator(true);}}
+
             />
           </Optional>
           <Button onClick={on_close}>Luk</Button>

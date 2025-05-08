@@ -9,7 +9,7 @@ import { ActivityOrder, InjectionOrder, TracershopState } from "~/dataclasses/da
 import { TimeStamp, compareTimeStamp, datify, getDateRangeForMonth, getSiteDate, setSiteDate } from "~/lib/chronomancy";
 import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
 import { useContainerDimensions } from "~/effects/dimensions";
-import { activityOrdersFilter, injectionOrdersFilter } from "~/lib/filters";
+import { activityOrderFilter, injectionOrdersFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { HoverBox } from "~/components/injectable/hover_box";
 import { MonthSelector } from "~/components/injectable/month_selector";
@@ -210,7 +210,7 @@ export function MonitorPage({}) {
 
   const separator = (() => {
     if (0 < activeTracer) {
-      const orders = activityOrdersFilter(state, {
+      const orders = activityOrderFilter(state, {
           timeSlotFilterArgs : { tracerID : activeTracer },
           state : state,
           status : [ORDER_STATUS.ACCEPTED, ORDER_STATUS.RELEASED],

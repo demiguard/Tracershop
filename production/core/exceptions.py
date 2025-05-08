@@ -29,3 +29,9 @@ class UndefinedReference(Exception):
 
 class EmptyFile(Exception):
   pass
+
+class InvalidCSVFile(Exception):
+  pass
+
+class UnknownUnit(Exception):
+  pass

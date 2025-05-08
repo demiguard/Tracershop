@@ -3,15 +3,21 @@
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
-from datetime import date, time
+from datetime import date, time, datetime
 from logging import Logger
 import re
 from typing import Dict, List, Tuple
 
 # Third party libraries
+from pandas import DataFrame
 
 # Tracershop packages
+from core.exceptions import InvalidCSVFile, UnknownUnit
 from database.models import Customer, Tracer, Vial, UserGroups
+
+vial_tracer_tag_regex = re.compile(r"(\w+)\-\d{6}\-\d+")
+
+
 
 def update_tracer_mapping():
   tracer_mapping = {}
@@ -50,8 +56,7 @@ def _parse_charge(string: str, vial: Vial, logger: Logger):
     return
   lot_number, = regex_match.groups()
   vial.lot_number = lot_number
-  vial_tag_regex = re.compile(r"(\w+)\-\d{6}\-\d+")
-  vial_tag_match = vial_tag_regex.match(lot_number)
+  vial_tag_match = vial_tracer_tag_regex.match(lot_number)
   if vial_tag_match is None:
     logger.error("Lot number is not on lot number format!")
     return
@@ -120,6 +125,67 @@ def parse_val_file(file_content: List[str], logger: Logger) -> Vial:
     parserFunctions[key](val_string, vial, logger)
 
   return vial
+
+
+def parse_data_frame_row_to_vial(data_frame: DataFrame) -> List[Vial]:
+  vials: List[Vial] = []
+  valid_data_frame = 'BatchReference' in data_frame\
+                 and 'Customer' in data_frame\
+                 and 'DateTimeStamp' in data_frame\
+                 and 'DispensedDose' in data_frame\
+                 and 'RadVolumeDispensed' in data_frame\
+                 and 'ValueUnits' in data_frame
+  if not valid_data_frame:
+    raise InvalidCSVFile()
+
+  for i, data_row in data_frame.iterrows():
+    # Raises Value Error
+    vial_tap_timestamp_string = str(data_row['DateTimeStamp'])
+
+    vial_tap_timestamp = datetime.strptime(vial_tap_timestamp_string.strip(), '%d-%m-%Y %H:%M:%S')
+
+    units = str(data_row['ValueUnits']).lower().strip()
+
+    if units == 'mbq':
+      factor = 1
+    elif units == 'gbq':
+      factor = 1000
+    elif units == 'kbq':
+      factor = 0.001
+    else:
+      raise UnknownUnit(f"Unknown Bq unit:{data_row['ValueUnits']}, units: {units}")
+
+    batch_number = str(data_row['BatchReference'])
+
+    tracer_tag_match = vial_tracer_tag_regex.search(batch_number)
+
+    if tracer_tag_match is None:
+      raise Exception
+
+    tracer_key, = tracer_tag_match.groups()
+
+    tracer = Tracer.objects.get(vial_tag=tracer_key)
+
+    activity = factor * data_row['DispensedDose']
+    volume = data_row['RadVolumeDispensed'] # Assumed to ml
+
+    customer = Customer.objects.get(short_name__iexact=data_row['Customer'])
+
+    vial = Vial(
+      tracer=tracer,
+      activity=activity,
+      volume=volume,
+      lot_number=data_frame['BatchReference'],
+      fill_time=vial_tap_timestamp.time(),
+      fill_date=vial_tap_timestamp.date(),
+      owner=customer
+    )
+
+    vials.append(vial)
+
+  return vials
+
+
 
 def parse_index_header(header: Dict[str,str]) -> Tuple[UserGroups, str]:
   if 'X-Tracer-Role' in header:

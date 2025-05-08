@@ -41,11 +41,16 @@ def toTime(time_str : str) -> time:
   hour, minute, second = (int(value) for value in m.groups())
   return time(hour, minute, second)
 
-def toDateTime(date_time_str: str) -> datetime:
+def toDateTime(
+    date_time_str: str,
+    timezone_=timezone.utc
+  ) -> datetime:
   """Produces a datetime from a string. Using the regex such that
 
   Args:
       date_time_str (str): _description_
+  Kwargs:
+
 
   Raises:
       ValueError: _description_
@@ -60,7 +65,7 @@ def toDateTime(date_time_str: str) -> datetime:
 
   year, month, day, hour, minute, second = (int(value) for value in m.groups())
   # Javascript automatically converts to utc
-  return datetime(year, month, day, hour, minute, second, tzinfo=timezone.utc)
+  return datetime(year, month, day, hour, minute, second, tzinfo=timezone_)
 
 
 def toDate(date_str: str, Format: str=DATE_FORMAT) -> date:

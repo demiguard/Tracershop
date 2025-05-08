@@ -107,7 +107,8 @@ export const ORDER_STATUS = {
   ACCEPTED : 2,
   RELEASED : 3,
   CANCELLED : 4,
-  UNAVAILABLE : 5,
+  RISOE : 5,
+  EMPTY : 6,
 }
 
 

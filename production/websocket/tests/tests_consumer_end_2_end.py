@@ -52,8 +52,7 @@ from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   ERROR_TYPE, AUTH_USER, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_STATUS,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
-  SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_RELEASE_MULTI,\
-  DATA_INJECTION_ORDER, DATA_TRACER, WEBSOCKET_SESSION_ID
+  WEBSOCKET_MESSAGE_RELEASE_MULTI, DATA_INJECTION_ORDER, DATA_TRACER, WEBSOCKET_SESSION_ID
 
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from database.models import ClosedDate, User, UserGroups, MODELS,\
@@ -1310,7 +1309,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
             }
           })
         with self.assertRaises(TimeoutError):
-          await comm_shop_admin.receive_json_from(timeout=0.2)
+          await comm_shop_admin.receive_json_from(timeout=1)
 
       self.assertEqual(len(cm.output),1)
       self.assertIn(TEST_SHOP_ADMIN_USERNAME, cm.output[0])
@@ -1353,7 +1352,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       message = await shop_comm_admin.receive_json_from()
 
       self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                       SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.SUCCESS.value)
+                       SUCCESS_STATUS_CRUD.SUCCESS.value)
 
       await shop_comm_admin.disconnect()
 
@@ -1378,7 +1377,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       message = await shop_comm_admin.receive_json_from()
 
       self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                       SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_LDAP_USERNAME.value)
+                       SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME.value)
 
       await shop_comm_admin.disconnect()
 
@@ -1401,11 +1400,11 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         })
 
         message = await shop_comm_admin.receive_json_from()
-        if message[WEBSOCKET_MESSAGE_STATUS] != SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS.value:
+        if message[WEBSOCKET_MESSAGE_STATUS] != SUCCESS_STATUS_CRUD.NO_GROUPS.value:
           print()
 
         self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                         SUCCESS_STATUS_CREATING_USER_ASSIGNMENT.NO_GROUPS.value)
+                         SUCCESS_STATUS_CRUD.NO_GROUPS.value)
 
         await shop_comm_admin.disconnect()
 

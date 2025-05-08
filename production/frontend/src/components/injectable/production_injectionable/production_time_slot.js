@@ -415,6 +415,14 @@ return (
           <Col></Col>
         </Row>
         {orderData}
+        <Optional exists={vialData.length > 0}>
+          <Row>
+            <Col xs={1}>{/* NOTHING */}</Col>
+            <Col>Productions tidpunkt</Col>
+            <Col>Aktivitet ved dispensering</Col>
+            <Col>Aktivitet ved levering</Col>
+          </Row>
+        </Optional>
         {vialData}
         <Optional exists={!(orderCollection.moved)}>
           <Row style={{justifyContent : "end"}}>

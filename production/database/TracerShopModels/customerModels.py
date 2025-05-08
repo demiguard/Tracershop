@@ -19,6 +19,7 @@ from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
 from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer, ReleaseRight
 from database.TracerShopModels import authModels
+from database.utils import can_be_saved
 from tracerauth.types import AuthActions
 
 
@@ -78,7 +79,7 @@ class MessageAssignment(TracershopModel):
   message_id = ForeignKey(Message, on_delete=CASCADE)
   customer_id = ForeignKey(Customer, on_delete=RESTRICT)
 
-  class Meta:
+  class Meta: #type: ignore
     unique_together = ('message_id', 'customer_id')
 
 
@@ -213,7 +214,7 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   def display_name(cls):
     return "Aktivitets Levering"
 
-  class Meta:
+  class Meta: # type: ignore
     unique_together = [
       'destination',
       'delivery_time',
@@ -418,6 +419,15 @@ class Vial(TracershopModel):
   fill_date = DateField()
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
+
+  def is_duplicate (self) -> bool:
+    return Vial.objects.filter(
+      activity=self.activity,
+      lot_number=self.lot_number,
+      volume=self.volume,
+      fill_date=self.fill_date,
+      fill_time=self.fill_time
+    ).exists() and can_be_saved(self)
 
   def __str__(self) -> str:
     customerString = "(Missing)"

@@ -9,7 +9,7 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, T
 import { ArrayMap } from "./array_map";
 import { DateRange, TimeStamp, compareTimeStamp, datify, getDay, getWeekNumber } from "./chronomancy";
 import { ORDER_STATUS, USER_GROUPS, WEEKLY_REPEAT_CHOICES, DAYS_OBJECTS } from "./constants";
-import { activityOrdersFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotsFilter } from "./filters";
+import { activityOrderFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotsFilter } from "./filters";
 import { HoverBox } from "~/components/injectable/hover_box"
 import { TIME_TABLE_CELL_HEIGHT_PIXELS } from "~/components/injectable/time_table"
 import { getActiveTimeSlotID, getId, toMapping } from "./utils";
@@ -597,7 +597,7 @@ export class WeeklyOrderOverview extends ITimeTableDataContainer {
    * @param {DateRange} weeklyRange
    */
   constructor(state, weeklyRange){
-    const /** @type {Array<ActivityOrder>} */ activityOrders = activityOrdersFilter(state, {
+    const /** @type {Array<ActivityOrder>} */ activityOrders = activityOrderFilter(state, {
       dateRange : weeklyRange,
       state : state
     }).filter((order) => order.status != ORDER_STATUS.CANCELLED );

@@ -6,7 +6,7 @@ import { dateToDateString, nullParser, renderDateTime } from "../../../lib/forma
 
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
-import { ActivityDeliveryIcon, ClickableIcon, StatusIcon } from "../../injectable/icons";
+import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from "../../injectable/icons";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 
 import { CalculatorModal } from "../../modals/calculator_modal";
@@ -20,6 +20,135 @@ import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_co
 import { Optional } from "~/components/injectable/optional";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { appendNewObject, reset_error, setTempMapToEvent, set_state_error } from "~/lib/state_management";
+
+function TimeSlotCardHeaderMoved(){
+  return(
+    <Row>
+      <Col>Rykket til tidligere levering</Col>
+    </Row>
+  );
+}
+
+/**
+ *
+ * @param {{
+ *   orderCollection : ActivityOrderCollection
+ * }} props
+ * @returns
+ */
+function TimeSlotCardHeaderCancelled({}){
+  return (
+    <Row>
+      <Col>Ordren er Afvist</Col>
+    </Row>
+  )
+}
+
+function TimeSlotCardHeaderEmpty({canOrder, openCalculator}){
+  if(canOrder){
+    return <Row >
+      <Col>Der er ikke bestilt sporestof</Col>
+      <Col style={{
+        flex : "0 0 fit-content"
+      }}>
+        <CalculatorIcon openCalculator={openCalculator}/>
+      </Col>
+    </Row>
+  }
+
+  return (
+    <Row>
+      <Col>Der er ikke bestilt sporestof og deadlinen er overskredet</Col>
+    </Row>
+  );
+}
+
+/**
+ *
+ * @param {{
+ *   orderCollection : ActivityOrderCollection,
+ *   openCalculator : CallableFunction
+ * }} props
+ * @returns
+ */
+function TimeSlotCardHeaderOrdered({orderCollection, openCalculator}){
+  return (
+    <Row>
+      <Col>Bestilt: {orderCollection.ordered_activity} MBq</Col>
+      <Col style={{ flex : "0 0 fit-content" }}>
+        <CalculatorIcon openCalculator={openCalculator}/>
+      </Col>
+    </Row>
+  );
+}
+
+/**
+ *
+ * @param {{
+ *   orderCollection : ActivityOrderCollection
+ * }} param0
+ * @returns
+ */
+function TimeSlotCardHeaderAccepted({orderCollection}){
+  return (
+    <Row>
+      <Col>Bestilt: {orderCollection.ordered_activity} MBq</Col>
+    </Row>
+  );
+}
+
+/**
+ * The inner html of the time slot card when the order collection is released.
+ * +-------------------------------------+
+ * |                                     |
+ * |            THIS COMPONENT           |
+ * |                                     |
+ * +-------------------------------------+
+ * there's an assumption that this will only be rendered if
+ * orderCollection.minimum_status == RELEASED
+ * @param {{
+ *  orderCollection : ActivityOrderCollection
+ *
+ * }} props
+ * @returns
+ */
+export function TimeSlotCardHeaderReleased({
+  orderCollection
+}){
+  let uncorrected_activity = 0;
+  for(const vial of orderCollection.vials){
+    uncorrected_activity += vial.activity;
+  }
+
+  const displayable_uncorrected_activity = Math.floor(uncorrected_activity);
+  const displayable_release_time_stamp = (orderCollection.freed_time != null) ?
+      renderDateTime(orderCollection.freed_time).substring(0,5)
+    : "Ukendt tidspunk!";
+
+
+  return (
+    <Row>
+      <Col>Udleveret: {displayable_uncorrected_activity} MBq</Col>
+      <Col>Frigivet kl: {displayable_release_time_stamp}</Col>
+      <Col style={{ flex : "0 0 fit-content" }}>
+        <Optional exists={!orderCollection.moved}>
+          <ActivityDeliveryIcon
+            label={`delivery-${orderCollection.delivering_time_slot.id}`}
+            orderCollection={orderCollection}
+          />
+        </Optional>
+      </Col>
+    </Row>
+  );
+}
+
+function ActivityOrderRow(props){
+  return (
+    <div></div>
+  );
+}
+
+
 
 /**
 * This is a card, representing the users view of ActivityDeliveryTimeSlot
@@ -140,13 +269,10 @@ export function TimeSlotCard({
                         : true;
 
     const statusIcon = (() => {
-      if(order.moved_to_time_slot){
-        return (<ClickableIcon src="static/images/move_top.svg"/>);
-      } else if (ordered) {
-        return (<StatusIcon order={order}/>);
-      } else {
-        return <div/>
-      };
+      if(orderCollection.minimum_status == ORDER_STATUS.EMPTY){
+        return <div></div>
+      }
+      return <StatusIcon orderCollection={orderCollection}/>
     })()
 
     const statusInfo = (() => {
@@ -213,31 +339,9 @@ export function TimeSlotCard({
   });
   //#region End of sub-component
 
-  //  Card Content
-  const [thirdColumnContent, fourthColumnContent] = (() => {
-    if(orderCollection.moved){
-      return ["Rykket til tidligere levering", ""]
-
-    } else if(orderCollection.minimum_status == ORDER_STATUS.RELEASED){
-      const freed_time = (orderCollection.freed_time != null) ?
-                          renderDateTime(orderCollection.freed_time).substring(0,5)
-                        : "Ukendt tidspunk!";
-      return [
-        `Udleveret ${Math.floor(orderCollection.delivered_activity)} MBq`,
-        `Frigivet kl: ${freed_time}`,
-      ]
-    } else if (canOrder) {
-      return [
-        `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
-        `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
-      ]
-      } else {
-        return [
-          `Bestilt: ${Math.floor(orderCollection.ordered_activity)} MBq`,
-          `Til Udlevering: ${Math.floor(orderCollection.deliver_activity)} MBq`,
-        ];
-      }
-    })();
+  function openCalculator(){
+    setShowCalculator(true)
+  }
 
   const calculatorProps = {
     [PROP_ACTIVE_DATE] : combineDateAndTimeStamp(active_date,
@@ -262,6 +366,28 @@ export function TimeSlotCard({
     initial_MBq : 300,
   };
 
+  const header = (() => {
+    if(orderCollection.moved){
+      return <TimeSlotCardHeaderMoved/>
+    }
+    switch (orderCollection.minimum_status) {
+      case ORDER_STATUS.RELEASED:
+        return <TimeSlotCardHeaderReleased orderCollection={orderCollection}/>;
+      case ORDER_STATUS.CANCELLED:
+        return <TimeSlotCardHeaderCancelled orderCollection={orderCollection}/>;
+      case ORDER_STATUS.ACCEPTED:
+        return <TimeSlotCardHeaderAccepted orderCollection={orderCollection}/>;
+      case ORDER_STATUS.ORDERED:
+        return <TimeSlotCardHeaderOrdered orderCollection={orderCollection} openCalculator={openCalculator}/>;
+      case ORDER_STATUS.EMPTY:
+        return <TimeSlotCardHeaderEmpty canOrder={canOrder} openCalculator={openCalculator}/>;
+      default:
+        console.error("Unhandled header type");
+        return <div>Something should be here, but due to an error it's not</div>
+    }
+
+  })();
+
   return (
   <Card style={{padding : '0px'}}>
     <Optional exists={showCalculator}>
@@ -278,24 +404,10 @@ export function TimeSlotCard({
         </Optional>
       </Col>
       <Col xs={2} style={cssCenter}>{timeSlot.delivery_time}</Col>
-      <Col xs={3} style={cssCenter}>{thirdColumnContent}</Col>
-      <Col xs={3} style={cssCenter}>{fourthColumnContent}</Col>
-      <Col style={cssCenter}>
-        <Optional exists={canOrder}>
-          <ClickableIcon
-            label={`open-calculator-${timeSlot.id}`}
-            src="/static/images/calculator.svg"
-            onMouseDown={() => {setShowCalculator(true);}}
-          />
-        </Optional>
-        <Optional exists={!(orderCollection.moved) && orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
-          <ActivityDeliveryIcon
-            label={`delivery-${timeSlot.id}`}
-            orderCollection={orderCollection}
-          />
-        </Optional>
+      <Col>
+        {header}
       </Col>
-        <Col style={{
+      <Col xs={1} style={{
          justifyContent : 'right',
          display : 'flex',
        }}>

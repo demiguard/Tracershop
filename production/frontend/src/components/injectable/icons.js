@@ -75,12 +75,25 @@ ClickableIcon.propTypes = {
 export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
 
   function statusImages(status) {
-    if (status == ORDER_STATUS.ORDERED) {return "/static/images/clipboard1.svg";}
-    if (status == ORDER_STATUS.ACCEPTED) {return "/static/images/clipboard2.svg";}
-    if (status == ORDER_STATUS.RELEASED) {return "/static/images/clipboard3.svg";}
-    if (status == ORDER_STATUS.CANCELLED) {return "/static/images/clipboard0.svg";}
-    if (status == ORDER_STATUS.AVAILABLE) {return "/static/images/clipboard0.svg";}
-    throw `Unknown status: ${status}`;
+    switch (status){
+      case ORDER_STATUS.ORDERED:
+        return "/static/images/clipboard1.svg";
+      case ORDER_STATUS.ACCEPTED:
+        return "/static/images/clipboard2.svg";
+      case ORDER_STATUS.RELEASED:
+        return "/static/images/clipboard3.svg";
+      case ORDER_STATUS.CANCELLED:
+        return "/static/images/clipboard0.svg";
+      case ORDER_STATUS.EMPTY:
+        return "/static/images/clipboard0.svg";
+      case ORDER_STATUS.AVAILABLE:
+        return "/static/images/clipboard0.svg";
+      case ORDER_STATUS.RISOE:
+        return "/static/images/clipboard0.svg";
+      default:
+        console.error("Unknown status encountered", status)
+        return "/static/images/clipboard0.svg";
+    }
   }
 
   const statusImagePath = (() => {
@@ -96,6 +109,7 @@ export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
     }
     return statusImages(order.status);
   })()
+
     return <ClickableIcon
       altText={altText}
       onClick={onClick}
@@ -304,5 +318,14 @@ export function AcceptIconActivity({orders}){
             src="/static/images/thumb-up-add.svg"
             onClick={acceptOrders}
         />;
+}
 
+export function CalculatorIcon(props){
+  const { openCalculator, ...rest } = props;
+
+  return <ClickableIcon
+    onClick={openCalculator}
+    src="/static/images/calculator.svg"
+    {...rest}
+  />;
 }

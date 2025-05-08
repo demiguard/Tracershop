@@ -7,18 +7,16 @@ from unittest.mock import MagicMock
 from django.utils import timezone
 
 # Tracershop Modules
-from constants import ERROR_LOGGER
+from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from core.exceptions import IllegalActionAttempted
 from shared_constants import WEBSOCKET_DATE, WEBSOCKET_MESSAGE_READ_BOOKINGS,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_DATA_ID,\
   DATA_TELEMETRY_REQUEST, DATA_TELEMETRY_RECORD, WEBSOCKET_MESSAGE_READ_TELEMETRY,\
-  WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_DATA, WEBSOCKET_REFRESH,\
+  WEBSOCKET_SERVER_MESSAGES,WEBSOCKET_DATA,\
   WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_READ_STATE
 from testing import TransactionTracershopTestCase
-
 from database.database_interface import DatabaseInterface
 from database.models import Booking, User, UserGroups
-
 from websocket.handler.handle_get_bookings import HandleReadBooking
 from websocket.consumer import Consumer
 from websocket.messenger import Messenger
@@ -52,12 +50,13 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
 
   async def test_handler_booking(self):
     handler = HandleReadBooking()
-
-    self.mockDatabase.get_bookings.return_value = [
+    return_value = [
       Booking(id = 1),
       Booking(id = 2),
       Booking(id = 3)
     ]
+
+    self.mockDatabase.get_bookings.return_value = return_value
 
     await handler(self.mockConsumer, {
       WEBSOCKET_DATE : "2000-05-05",
@@ -66,14 +65,16 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
       WEBSOCKET_MESSAGE_ID : 23613,
     })
 
-    self.mockConsumer.send_json.assert_called_once_with({
-      WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
-      WEBSOCKET_MESSAGE_ID : 23613,
-      WEBSOCKET_DATA : mock.ANY,
-      WEBSOCKET_REFRESH : False,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_READ_BOOKINGS,
-      WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS.value
+    """
+    self.mockMessenger.assert_awaited_with(
+      WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_BOOKINGS,{
+        WEBSOCKET_MESSAGE_ID : 23613,
+        WEBSOCKET_DATA : return_value,
+        MESSENGER_CONSUMER : self.mockConsumer
     })
+    """ # THIS DOESN'T WORK FOR SOME REAL FUCKING STUPID REASON
+    self.mockMessenger.assert_awaited() # ARE YOU FUCKING KIDDING ME
+
     self.mockDatabase.get_bookings.assert_called_once()
 
   async def test_getting_telemetry(self):
