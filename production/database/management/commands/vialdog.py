@@ -113,7 +113,11 @@ def handle_xlsx_file(path: Path):
 
 def handle_data_frame(data_frame: DataFrame, path: Path):
   vials = parse_data_frame_row_to_vial(data_frame)
-  vials_filtered_for_duplicates = [vial for vial in filter(Vial.is_duplicate, vials)]
+  vials_filtered_for_duplicates: List[Vial] = []
+
+  for vial in vials:
+    if not vial.is_duplicate():
+      vials_filtered_for_duplicates.append(vial)
 
   for vial in vials_filtered_for_duplicates:
     vial.save()

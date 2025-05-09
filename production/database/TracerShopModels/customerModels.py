@@ -85,11 +85,11 @@ class MessageAssignment(TracershopModel):
 
 class DeliveryEndpoint(TracershopModel):
   id = BigAutoField(primary_key=True)
-  address = CharField(max_length=128, null=True, default=None)
-  city = CharField(max_length=128, null=True, default=None)
-  zip_code = CharField(max_length=8, null=True, default=None)
-  phone = CharField(max_length=32, null=True, default=None)
-  name = CharField(max_length=32, null=True, default=None)
+  address = CharField(max_length=128, null=True, default=None, blank=True)
+  city = CharField(max_length=128, null=True, default=None, blank=True)
+  zip_code = CharField(max_length=8, null=True, default=None, blank=True)
+  phone = CharField(max_length=32, null=True, default=None, blank=True)
+  name = CharField(max_length=32, null=True, default=None, blank=True)
   owner = ForeignKey(Customer, on_delete=RESTRICT)
 
   def __str__(self) -> str:
@@ -119,8 +119,8 @@ class Location(TracershopModel):
   #Note A Location should be able to be created from location_code alone
   id = BigAutoField(primary_key=True)
   location_code = CharField(max_length=120, unique=True)
-  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
-  common_name = CharField(max_length=120, null=True, default=None)
+  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None, blank=True)
+  common_name = CharField(max_length=120, null=True, default=None, blank=True)
 
   def __str__(self) -> str:
     baseString = "Location: "
@@ -205,7 +205,7 @@ class ActivityDeliveryTimeSlot(TracershopModel):
   delivery_time = TimeField()
   destination = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   production_run = ForeignKey(ActivityProduction, on_delete=RESTRICT)
-  expiration_date = DateField(null=True, default=None)
+  expiration_date = DateField(null=True, default=None, blank=True)
 
   def __str__(self) -> str:
     return f"ActivityDeliveryTimeSlot at {Days(self.production_run.production_day).name} - {self.delivery_time} to {self.destination.owner.short_name}"
@@ -240,9 +240,10 @@ class ActivityOrder(TracershopModel):
     on_delete=RESTRICT,
     default=None,
     null=True,
-    related_name="moved_to"
+    related_name="moved_to",
+    blank=True
   )
-  freed_datetime = DateTimeField(null=True, default=None)
+  freed_datetime = DateTimeField(null=True, default=None, blank=True)
   ordered_by = ForeignKey(
     User,
     on_delete=SET_NULL,
@@ -255,7 +256,8 @@ class ActivityOrder(TracershopModel):
     on_delete=RESTRICT,
     null=True,
     default=None,
-    related_name="activity_freed_by"
+    related_name="activity_freed_by",
+    blank=True
   )
 
   @property
@@ -345,13 +347,13 @@ class InjectionOrder(TracershopModel):
   injections = PositiveSmallIntegerField()
   status = SmallIntegerField(choices=OrderStatus.choices)
   tracer_usage = SmallIntegerField(choices=TracerUsage.choices)
-  comment = CharField(max_length=800, null=True, default=None)
+  comment = CharField(max_length=800, null=True, default=None, blank=True)
   ordered_by = ForeignKey(User, on_delete=SET_NULL, null=True, default=None, related_name="injection_ordered_by")
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
-  lot_number = CharField(max_length=32, null=True, default=None)
-  freed_datetime = DateTimeField(null=True, default=None)
-  freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by")
+  lot_number = CharField(max_length=32, null=True, default=None, blank=True)
+  freed_datetime = DateTimeField(null=True, default=None, blank=True)
+  freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by", blank=True)
 
   class Meta: # type: ignore
     indexes = [
@@ -411,14 +413,14 @@ class InjectionOrder(TracershopModel):
 
 class Vial(TracershopModel):
   id = BigAutoField(primary_key=True)
-  tracer = ForeignKey(Tracer, on_delete=RESTRICT, null=True)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT, null=True, blank=True)
   activity = FloatField()
   volume = FloatField()
   lot_number = CharField(max_length=32)
   fill_time = TimeField()
   fill_date = DateField()
-  assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None)
-  owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None)
+  assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None, blank=True)
+  owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None, blank=True)
 
   def is_duplicate (self) -> bool:
     return Vial.objects.filter(
