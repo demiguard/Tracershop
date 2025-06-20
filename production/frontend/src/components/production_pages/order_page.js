@@ -12,6 +12,8 @@ import { Optional } from "~/components/injectable/optional.js";
 import { UpdateToday } from "~/lib/state_actions.js";
 import { MARGIN } from "~/lib/styles.js";
 import { WeeklyProductionOverview } from "~/components/production_pages/weekly_production_overview.js";
+import { ButtonRow } from "~/components/injectable/button_row.js";
+import { SpecialTracerButton, WeeklyViewButton } from "~/components/injectable/buttons.js";
 
 const SUBPAGE_ACTIVITY = "activity"
 const SUBPAGE_INJECTION = "injection"
@@ -112,27 +114,8 @@ export function OrderPage() {
     }
   }
 
-    const underlineSpecial = activeView.activeTracer === -1;
-
-    TableSwitchButtons.push((
-      <Button
-        style={MARGIN.leftRight.px15}
-        key="special"
-        sz="sm"
-        onClick={setInjectionTable}
-      >
-          { underlineSpecial ? <u>Special</u> : "Special"}
-      </Button>));
-
-    const underlineWeeklyReviewButton = activeView.activeTable === "weeklyOverview";
-    TableSwitchButtons.push((
-      <Button
-        style={MARGIN.leftRight.px15}
-        key="week-plan"
-        sz="sm"
-        onClick={setWeeklyView}
-      >{underlineWeeklyReviewButton ? <u>Uge Plan</u> : "Uge Plan"}</Button>
-    ));
+  const underlineSpecial = activeView.activeTracer === -1;
+  const underlineWeeklyReviewButton = activeView.activeTable === "weeklyOverview";
   // Keyword setting
   const OrderSubPage = SubPages[activeView.activeTable];
   const SubTableProps = {
@@ -142,11 +125,17 @@ export function OrderPage() {
 
   return (
     <div>
-      <Row>
-        <Col style={MARGIN.bottom.px30}>
-          {TableSwitchButtons}
-        </Col>
-      </Row>
+      <ButtonRow>
+        {TableSwitchButtons}
+        <SpecialTracerButton
+          is_active={underlineSpecial}
+          onClick={setInjectionTable}
+        />
+        <WeeklyViewButton
+          is_active={underlineWeeklyReviewButton}
+          onClick={setWeeklyView}
+        />
+      </ButtonRow>
       <Row>
         <Col sm={8}>
           <OrderSubPage

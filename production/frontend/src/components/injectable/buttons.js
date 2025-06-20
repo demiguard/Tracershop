@@ -2,6 +2,7 @@ import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react'
 import { Button, Spinner } from 'react-bootstrap'
 import { useWebsocket } from '~/contexts/tracer_shop_context';
+import { MARGIN } from '~/lib/styles';
 
 export {MarginButton, CloseButton}
 
@@ -60,4 +61,34 @@ export function IdempotentButton(props){
   return <Button onClick={wrappedOnClick} {...rest}>
     {children}
   </Button>
+}
+
+export function WeeklyViewButton({is_active, onClick}){
+  const buttonMessage = is_active ? <u>Uge plan</u> : <div>Uge plan</div>;
+
+  return (
+    <Button
+      key="week-plan"
+      style={MARGIN.leftRight.px15}
+      sz="sm"
+      onClick={onClick}
+    >
+      {buttonMessage}
+    </Button>
+  );
+}
+
+export function SpecialTracerButton({is_active, onClick}){
+  const buttonMessage = is_active ? <u>Special</u> : <div>Special</div>;
+
+  return (
+    <Button
+      style={MARGIN.leftRight.px15}
+      key="Special"
+      sm="sm"
+      onClick={onClick}
+    >
+      {buttonMessage}
+    </Button>
+  );
 }
