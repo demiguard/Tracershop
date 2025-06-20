@@ -17,7 +17,8 @@ from django.db.models import DateField, BigAutoField, CharField, EmailField,\
 from lib.utils import classproperty
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
-from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer, ReleaseRight
+from database.TracerShopModels.clinicalModels import ActivityProduction, Tracer,\
+  ReleaseRight, IsotopeProduction, Isotope
 from database.TracerShopModels import authModels
 from database.utils import can_be_saved
 from tracerauth.types import AuthActions
@@ -474,3 +475,43 @@ class LegacyActivityOrder(TracershopModel):
   legacy_freed_id = ForeignKey(LegacyProductionMember, on_delete=RESTRICT)
   legacy_freed_amount = FloatField(null=True, default=None)
   legacy_lot_number = CharField(max_length=32)
+
+# Isotope - shop
+class IsotopeDelivery(TracershopModel):
+  id = BigAutoField(primary_key=True)
+  production = ForeignKey(IsotopeProduction, on_delete=RESTRICT)
+  delivery_endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+  delivery_time = TimeField()
+
+
+class IsotopeOrder(TracershopModel):
+  id = BigAutoField(primary_key=True)
+  status = SmallIntegerField(choices=OrderStatus.choices, default=OrderStatus.Ordered)
+  order_by = ForeignKey(User, on_delete=RESTRICT)
+  ordered_activity_MBq = FloatField()
+  destination = ForeignKey(IsotopeDelivery, on_delete=RESTRICT)
+  delivery_date = DateField()
+  freed_by = ForeignKey(
+    User, blank=True, null=True, default=None, on_delete=RESTRICT
+  )
+  freed_datetime = DateTimeField(default=None, blank=True, null=True)
+
+  class Meta: #type: ignore
+    indexes = [
+      (Index(fields=('delivery_date')))
+    ]
+
+
+class IsotopeVial(TracershopModel):
+  id = BigAutoField(primary_key=True)
+  batch_nr = CharField(max_length=128)
+  delivery_with = ForeignKey(IsotopeOrder, on_delete=RESTRICT)
+  volume = FloatField()
+  calibration_datetime = DateTimeField()
+  vial_activity = FloatField()
+  isotope = ForeignKey(Isotope, on_delete=RESTRICT)
+
+  class Meta: #type: ignore
+    indexes = [
+      Index(fields=('calibration_datetime'))
+    ]

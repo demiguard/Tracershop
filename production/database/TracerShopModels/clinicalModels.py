@@ -149,3 +149,16 @@ class ReleaseRight(TracershopModel):
     if self.expiry_date is not None:
       baseString += f" expiring: {self.expiry_date}"
     return baseString
+
+class IsotopeProduction(TracershopModel):
+  """This represent production of standalone isotopes"""
+  id = BigAutoField(primary_key=True)
+  isotope = ForeignKey(Isotope, on_delete=RESTRICT)
+  production_day = SmallIntegerField(choices=Days.choices)
+  ready_time = TimeField()
+  expiry_time = DateField(default=None, blank=True, null=True)
+
+  def __str__(self) -> str:
+    baseString = f"Isotope production at {Days(self.production_day).name} - {self.ready_time}"
+
+    return baseString

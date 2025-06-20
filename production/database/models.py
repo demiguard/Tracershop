@@ -12,7 +12,8 @@ from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DAT
     DATA_SECONDARY_EMAIL, DATA_PROCEDURE, DATA_USER, DATA_USER_ASSIGNMENT,\
     DATA_MESSAGE, DATA_MESSAGE_ASSIGNMENT, DATA_DEADLINE, DATA_DICOM_ENDPOINT,\
     DATA_LEGACY_PRODUCTION_MEMBER, DATA_PROCEDURE_IDENTIFIER, DATA_RELEASE_RIGHT,\
-    DATA_SERVER_LOG, DATA_PRINTER, DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST
+    DATA_SERVER_LOG, DATA_PRINTER, DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST,\
+    DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -33,6 +34,10 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_ENDPOINT : DeliveryEndpoint,
   DATA_INJECTION_ORDER : InjectionOrder,
   DATA_ISOTOPE : Isotope,
+  DATA_ISOTOPE_DELIVERY : IsotopeDelivery,
+  DATA_ISOTOPE_ORDER : IsotopeOrder,
+  DATA_ISOTOPE_PRODUCTION : IsotopeProduction,
+  DATA_ISOTOPE_VIAL : IsotopeVial,
   DATA_RELEASE_RIGHT : ReleaseRight,
   #DATA_LEGACY_ACTIVITY_ORDER : LegacyActivityOrder, # We shouldn't need these in frontend
   #DATA_LEGACY_INJECTION_ORDER : LegacyInjectionOrder, # We shouldn't need these in frontend
