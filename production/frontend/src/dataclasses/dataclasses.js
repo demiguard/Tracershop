@@ -406,6 +406,146 @@ export class Isotope {
   }
 }
 
+export class IsotopeDelivery {
+  constructor(id, production, delivery_endpoint, delivery_time, ) {
+    this.id=id
+    this.production=production
+    this.delivery_endpoint=delivery_endpoint
+    this.delivery_time=delivery_time
+  }
+
+  /**Copies the isotopedelivery
+  * @returns { IsotopeDelivery }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.production,
+      this.delivery_endpoint,
+      this.delivery_time
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("production","isotope_production"),
+      new ForeignField("delivery_endpoint","delivery_endpoint"),
+      new DateField("delivery_time"),
+    ];
+  }
+}
+
+export class IsotopeOrder {
+  constructor(id, status, order_by, ordered_activity_MBq, destination, delivery_date, freed_by, freed_datetime, ) {
+    this.id=id
+    this.status=status
+    this.order_by=order_by
+    this.ordered_activity_MBq=ordered_activity_MBq
+    this.destination=destination
+    this.delivery_date=delivery_date
+    this.freed_by=freed_by
+    this.freed_datetime=freed_datetime
+  }
+
+  /**Copies the isotopeorder
+  * @returns { IsotopeOrder }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.status,
+      this.order_by,
+      this.ordered_activity_MBq,
+      this.destination,
+      this.delivery_date,
+      this.freed_by,
+      this.freed_datetime
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new IntField("status"),
+      new ForeignField("order_by","user"),
+      new FloatField("ordered_activity_MBq"),
+      new ForeignField("destination","isotope_delivery"),
+      new DateField("delivery_date"),
+      new ForeignField("freed_by","user"),
+      new DateTimeField("freed_datetime"),
+    ];
+  }
+}
+
+export class IsotopeProduction {
+  constructor(id, isotope, production_day, ready_time, expiry_time, ) {
+    this.id=id
+    this.isotope=isotope
+    this.production_day=production_day
+    this.ready_time=ready_time
+    this.expiry_time=expiry_time
+  }
+
+  /**Copies the isotopeproduction
+  * @returns { IsotopeProduction }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.isotope,
+      this.production_day,
+      this.ready_time,
+      this.expiry_time
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("isotope","isotopes"),
+      new IntField("production_day"),
+      new DateField("ready_time"),
+      new DateField("expiry_time"),
+    ];
+  }
+}
+
+export class IsotopeVial {
+  constructor(id, batch_nr, delivery_with, volume, calibration_datetime, vial_activity, isotope, ) {
+    this.id=id
+    this.batch_nr=batch_nr
+    this.delivery_with=delivery_with
+    this.volume=volume
+    this.calibration_datetime=calibration_datetime
+    this.vial_activity=vial_activity
+    this.isotope=isotope
+  }
+
+  /**Copies the isotopevial
+  * @returns { IsotopeVial }
+   */
+  copy(){
+    return new this.constructor(
+      this.id,
+      this.batch_nr,
+      this.delivery_with,
+      this.volume,
+      this.calibration_datetime,
+      this.vial_activity,
+      this.isotope
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new CharField("batch_nr"),
+      new ForeignField("delivery_with","isotope_order"),
+      new FloatField("volume"),
+      new DateTimeField("calibration_datetime"),
+      new FloatField("vial_activity"),
+      new ForeignField("isotope","isotopes"),
+    ];
+  }
+}
+
 export class ReleaseRight {
   constructor(id, expiry_date, releaser, product, ) {
     this.id=id
@@ -828,7 +968,7 @@ export class SecondaryEmail {
 }
 
 export class ServerConfiguration {
-  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, record_telemetry, active_label_printer, active_printer, ) {
+  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, record_telemetry, active_label_printer, active_printer, weekly_close_days, ) {
     this.id=id
     this.SMTPServer=SMTPServer
     this.DateRange=DateRange
@@ -841,6 +981,7 @@ export class ServerConfiguration {
     this.record_telemetry=record_telemetry
     this.active_label_printer=active_label_printer
     this.active_printer=active_printer
+    this.weekly_close_days=weekly_close_days
   }
 
   /**Copies the serverconfiguration
@@ -859,7 +1000,8 @@ export class ServerConfiguration {
       this.ris_dicom_endpoint,
       this.record_telemetry,
       this.active_label_printer,
-      this.active_printer
+      this.active_printer,
+      this.weekly_close_days
     )
   }
   fields(){
@@ -876,6 +1018,7 @@ export class ServerConfiguration {
       new BooleanField("record_telemetry"),
       new ForeignField("active_label_printer","printer"),
       new ForeignField("active_printer","printer"),
+      new IntField("weekly_close_days"),
     ];
   }
 }
@@ -1023,6 +1166,10 @@ export const MODELS = {
   delivery_endpoint : DeliveryEndpoint,
   injection_orders : InjectionOrder,
   isotopes : Isotope,
+  isotope_delivery : IsotopeDelivery,
+  isotope_order : IsotopeOrder,
+  isotope_production : IsotopeProduction,
+  isotope_vial : IsotopeVial,
   release_right : ReleaseRight,
   legacy_production_member : LegacyProductionMember,
   location : Location,
@@ -1059,6 +1206,10 @@ export class TracershopState {
   /** @type { Map<Number, DeliveryEndpoint>} */ delivery_endpoint
   /** @type { Map<Number, InjectionOrder>} */ injection_orders
   /** @type { Map<Number, Isotope>} */ isotopes
+  /** @type { Map<Number, IsotopeDelivery>} */ isotope_delivery
+  /** @type { Map<Number, IsotopeOrder>} */ isotope_order
+  /** @type { Map<Number, IsotopeProduction>} */ isotope_production
+  /** @type { Map<Number, IsotopeVial>} */ isotope_vial
   /** @type { Map<Number, ReleaseRight>} */ release_right
   /** @type { Map<Number, LegacyProductionMember>} */ legacy_production_member
   /** @type { Map<Number, Location>} */ location
@@ -1077,7 +1228,7 @@ export class TracershopState {
   /** @type { Map<Number, UserAssignment>} */ user_assignment
   /** @type { Map<Number, Vial>} */ vial
 
-  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, isotope_delivery, isotope_order, isotope_production, isotope_vial, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1130,6 +1281,26 @@ export class TracershopState {
       this.isotopes = isotopes
     } else {
       this.isotopes = new Map()
+    }
+    if(isotope_delivery !== undefined){
+      this.isotope_delivery = isotope_delivery
+    } else {
+      this.isotope_delivery = new Map()
+    }
+    if(isotope_order !== undefined){
+      this.isotope_order = isotope_order
+    } else {
+      this.isotope_order = new Map()
+    }
+    if(isotope_production !== undefined){
+      this.isotope_production = isotope_production
+    } else {
+      this.isotope_production = new Map()
+    }
+    if(isotope_vial !== undefined){
+      this.isotope_vial = isotope_vial
+    } else {
+      this.isotope_vial = new Map()
     }
     if(release_right !== undefined){
       this.release_right = release_right

@@ -125,8 +125,7 @@ export function OrderPage() {
 
   return (
     <div>
-      <ButtonRow>
-        {TableSwitchButtons}
+      <ButtonRow before_c_buttons={TableSwitchButtons} style={MARGIN.bottom.px30}>
         <SpecialTracerButton
           is_active={underlineSpecial}
           onClick={setInjectionTable}

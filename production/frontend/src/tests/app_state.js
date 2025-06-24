@@ -39,6 +39,10 @@ export const testState = new TracershopState(
   deliveryEndpoints,
   injection_orders,
   isotopes,
+  new Map(), // Isotope Delivery
+  new Map(), // Isotope Order
+  new Map(), // Isotope production
+  new Map(), // Isotope Vial
   release_rights,
   legacy_production_members,
   locations,

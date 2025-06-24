@@ -542,8 +542,8 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
  * }} param0
  * @returns
  */
-function WeeklyOrderHour({orders, state}){
-  let minimum_status = ORDER_STATUS.UNAVAILABLE;
+function WeeklyOrderHour({orders, state, testid}){
+  let minimum_status = ORDER_STATUS.EMPTY;
 
   const activity_tracer_mapping = new AccumulatingMap();
   const injection_tracer_mapping = new AccumulatingMap();
@@ -565,10 +565,9 @@ function WeeklyOrderHour({orders, state}){
 
   for(const [tracerID, amount] of activity_tracer_mapping){
     const tracer = state.tracer.get(tracerID);
+
     tracerRows.push(<p
-      style={{
-        ...JUSTIFY.center
-      }}
+      style={{...JUSTIFY.center }}
       key={tracer.id}>
         {tracer.shortname}: {Math.floor(amount)} MBq
       </p>);
@@ -577,11 +576,14 @@ function WeeklyOrderHour({orders, state}){
   for(const [tracerID, injections] of injection_tracer_mapping){
     const tracer = state.tracer.get(tracerID);
     tracerRows.push(<p
+      data-testid={`paragraph-${tracer.id}`}
       style={{...JUSTIFY.center}}
       key={tracer.id}>{tracer.shortname}: {injections} injektioner</p>);
   }
 
-  return <Col style={{
+  return <Col
+  data-testid={`Cell-${testid}`}
+  style={{
     backgroundColor : HIGH_CONTRAST_ORDER_COLORS[minimum_status],
     border : "1px",
     borderStyle : "solid",
@@ -611,7 +613,7 @@ export class WeeklyOrderOverview extends ITimeTableDataContainer {
     }
 
     function cellFunction(orders, i){
-      return <WeeklyOrderHour key={i} orders={orders} state={state}/>
+      return <WeeklyOrderHour key={i} orders={orders} state={state} testid={i}/>
     }
 
     let min_hour = 24;

@@ -32,8 +32,11 @@ export const JUSTIFY = {
   center : {
     display : "flex",
     justifyContent : 'center',
+  },
+  left : {
+    display : "flex",
+    justifyContent : "left"
   }
-
 };
 
 export const DISPLAY = {

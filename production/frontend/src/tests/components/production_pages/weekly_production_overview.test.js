@@ -4,7 +4,7 @@
 
 import React from "react";
 import { jest, describe, it } from "@jest/globals"
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { testState } from "~/tests/app_state";
 import { InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
@@ -23,7 +23,7 @@ describe("Weekly production overview test suite", () => {
 
     modifiedState[DATA_INJECTION_ORDER] = toMapping([
       new InjectionOrder(1, "11:00:00", "2020-05-05", 1, ORDER_STATUS.ACCEPTED, undefined, undefined, undefined, undefined, 2),
-      new InjectionOrder(2, "11:30:00", "2020-05-05", 1, ORDER_STATUS.ORDERED,undefined, undefined, undefined, undefined, 2),
+      new InjectionOrder(2, "11:30:00", "2020-05-05", 1, ORDER_STATUS.ORDERED, undefined, undefined, undefined, undefined, 2),
     ]);
 
 
@@ -33,7 +33,22 @@ describe("Weekly production overview test suite", () => {
       </TracerShopContext>
     );
 
-    //TODO: Assert
+
+    const paragraph = screen.getByTestId("paragraph-2");
+
+    expect(paragraph.innerHTML).toBe("test_tracer_2: 2 injektioner");
+
+    const cells = screen.getAllByTestId("Cell-1")
+
+    let has_color = false;
+    for(const cell of cells){
+      if('background' in cell.style && cell.style['background'] != "#FFFFFF"){
+        has_color = true;
+      }
+    }
+
+    expect(has_color).toBe(true);
+
 
   })
 })

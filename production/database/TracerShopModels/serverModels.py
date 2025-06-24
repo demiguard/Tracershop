@@ -103,7 +103,7 @@ class ServerConfiguration(TracershopModel):
   record_telemetry = models.BooleanField(default=False)
   active_label_printer = models.ForeignKey(Printer, on_delete=models.RESTRICT, default=None, null=True, related_name="active_label_printer")
   active_printer = models.ForeignKey(Printer, on_delete=models.RESTRICT, default=None, null=True, related_name="active_printer")
-  weekly_close_days = models.SmallIntegerField(db_comment="Bit fields for weekly days where tracershop is close first bit is monday and so forth.")
+  weekly_close_days = models.SmallIntegerField(default=0, db_comment="Bit fields for weekly days where tracershop is close first bit is monday and so forth.")
 
   @classmethod
   def get(cls):

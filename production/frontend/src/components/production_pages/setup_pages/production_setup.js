@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, FormControl } from "react-bootstrap";
 
-import { ActivityProduction } from "../../../dataclasses/dataclasses";
+import { ActivityProduction, IsotopeProduction, TracershopState } from "../../../dataclasses/dataclasses";
 import { WeeklyTimeTable } from "~/components/injectable/weekly_time_table";
 import { DAYS, DAYS_OBJECTS, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER,
   WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR,
   WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
   WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC } from "~/lib/constants";
-import { DATA_PRODUCTION, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS } from "~/lib/shared_constants";
+import { DATA_ISOTOPE, DATA_ISOTOPE_PRODUCTION, DATA_PRODUCTION, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS } from "~/lib/shared_constants";
 import { tracerTypeFilter } from "~/lib/filters";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { Select, toOptions } from "~/components/injectable/select";
@@ -23,12 +23,141 @@ import { MESSAGE_ERROR } from "~/lib/incoming_messages";
 import { useErrorState } from "~/lib/error_handling";
 import { AlertBox } from "~/components/injectable/alert_box";
 
+/**
+ * @enum
+ */
+const PRODUCTION_TYPES = {
+  ISOTOPE_PRODUCTION : DATA_ISOTOPE_PRODUCTION,
+  PRODUCTION : DATA_PRODUCTION,
+  EMPTY : "EMPTY"
+};
+
+/**
+ * Class that unionizes the types of tracer and
+ */
+class ProductionReference {
+  constructor(id, type){
+    this.product_id = id;
+    if(Object.values(PRODUCTION_TYPES).includes(type)){
+      this.type = type
+    } else {
+      throw {error : "Unknown production type"}
+    }
+  }
+}
+
+/** Gets a reference to the production that is active from a blank state
+ *
+ * @param {Array<Tracer | Isotope>} options
+ * @returns {ProductionReference}
+ */
+function initializeProductionReference(options){
+  const initial_production = options.at(0);
+
+  if(initial_production === undefined){
+    return new ProductionReference(-1, PRODUCTION_TYPES.EMPTY);
+  }
+
+  if (initial_production instanceof Isotope){
+    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.ISOTOPE_PRODUCTION);
+  } else if (initial_production instanceof Tracer) {
+    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.PRODUCTION);
+  }
+
+  throw TypeError("Initialization array is not type safe!")
+}
+
+/** From a production,
+ *
+ * @param {ProductionReference} productionReference
+ * @param {TracershopState} state
+ * @returns
+ */
+function filterProduction(productionReference, state){
+  switch (productionReference.type) {
+    case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+      return [...state.isotope_production.values()].filter(
+        (ip) => ip.isotope === productionReference.product_id
+      );
+    case PRODUCTION_TYPES.PRODUCTION:
+      return [...state.production.values()].filter(
+        (ap) => ap.tracer === productionReference.product_id
+      );
+    default:
+      return [];
+  }
+}
+
+/**weekly time table functions */
+/**
+ * Called when the weekly time table needs to determine the hour of the entry
+  * @param {ActivityProduction} production
+  * @returns {Number}
+  */
+function weeklyTimeTableDayGetter(production){
+  return production.production_day;
+}
+
+/**
+ * Called when the weekly time table determine the color of an entry
+  * @param {ActivityDeliveryTimeSlot} entry -
+  * @returns {string}
+  */
+
+function weeklyTimeTableEntryColor(tempObject){
+  return (entry) => {
+    if(entry.id == tempObject.id){
+    return 'orange';
+  }
+
+  return 'lightgreen';
+  }
+}
+
+/**
+   * Called when the weekly time table needs to determine the hour of the entry
+   * @param {ActivityProduction} production
+   * @returns {Number}
+*/
+function weeklyTimeTableHourGetter(production) {
+  const hour = Number(production.production_time.substring(0,2));
+  const minutes = Number(production.production_time.substring(3,5));
+  return hour + minutes / 60;
+}
+
+/**
+ *
+  * @param {ActivityProduction} activityProduction
+  */
+function weeklyTimeTableEntryOnClick(activityProduction){
+  setTempProduction({...activityProduction});
+}
+
+function weeklyTimeTableInnerText(entry){
+  return (<div aria-label={`production-${entry.id}`}>{entry.production_time}</div>)
+}
+
+function ActivityTracerProductionView(){
+
+}
+
+function IsotopeProductionView(){
+
+}
+
+
 export function ProductionSetup(){
   const state = useTracershopState();
 
   const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
   );
+
+  const isotopes = [...state.isotopes.values()];
+
+  const productionOptions = [...activityTracers, ...isotopes];
+  const initialProductReference = initializeProductionReference(productionOptions);
+  const [productionReference, setProductionReference] = useState(initialProductReference);
 
   const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id;
   const [tracerID, setTracer] = useState(tracerInit);
@@ -40,6 +169,9 @@ export function ProductionSetup(){
 
   const productions = [...state.production.values()].filter((production) =>
     production.tracer === NumberTracerID);
+
+  const displayProductions = filterProduction(productionReference, state);
+
 
   function setNewProduction(){
     const default_production = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", null);
@@ -77,51 +209,6 @@ export function ProductionSetup(){
     }
   }
 
-  /**weekly time table functions */
-  /**
-   * Called when the weekly time table needs to determine the hour of the entry
-   * @param {ActivityProduction} production
-   * @returns {Number}
-   */
-  function weeklyTimeTableDayGetter(production){
-    return production.production_day;
-  }
-
-  /**
-   * Called when the weekly time table needs to determine the hour of the entry
-   * @param {ActivityProduction} production
-   * @returns {Number}
-   */
-  function weeklyTimeTableHourGetter(production) {
-    const hour = Number(production.production_time.substring(0,2));
-    const minutes = Number(production.production_time.substring(3,5));
-    return hour + minutes / 60;
-  }
-
-  /**
-   * Called when the weekly time table determine the color of an entry
-   * @param {ActivityDeliveryTimeSlot} entry -
-   * @returns {string}
-   */
-  function weeklyTimeTableEntryColor(entry){
-    if(entry.id == tempProduction.id){
-      return 'orange';
-    }
-
-    return 'lightgreen';
-  }
-
-  /**
-   *
-   * @param {ActivityProduction} activityProduction
-   */
-  function weeklyTimeTableEntryOnClick(activityProduction){
-    setTempProduction({...activityProduction});
-  }
-
-  function weeklyTimeTableInnerText(entry){
-    return (<div aria-label={`production-${entry.id}`}>{entry.production_time}</div>)
-  }
 
   /**
    *

@@ -487,18 +487,19 @@ class IsotopeDelivery(TracershopModel):
 class IsotopeOrder(TracershopModel):
   id = BigAutoField(primary_key=True)
   status = SmallIntegerField(choices=OrderStatus.choices, default=OrderStatus.Ordered)
-  order_by = ForeignKey(User, on_delete=RESTRICT)
+  order_by = ForeignKey(User, on_delete=RESTRICT, related_name="ordered_by")
   ordered_activity_MBq = FloatField()
   destination = ForeignKey(IsotopeDelivery, on_delete=RESTRICT)
   delivery_date = DateField()
   freed_by = ForeignKey(
-    User, blank=True, null=True, default=None, on_delete=RESTRICT
+    User, blank=True, null=True, default=None, on_delete=RESTRICT,
+    related_name="freed_by"
   )
   freed_datetime = DateTimeField(default=None, blank=True, null=True)
 
   class Meta: #type: ignore
     indexes = [
-      (Index(fields=('delivery_date')))
+      Index(fields=['delivery_date'])
     ]
 
 
@@ -513,5 +514,5 @@ class IsotopeVial(TracershopModel):
 
   class Meta: #type: ignore
     indexes = [
-      Index(fields=('calibration_datetime'))
+      Index(fields=['calibration_datetime'])
     ]
