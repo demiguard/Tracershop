@@ -3,7 +3,17 @@ import { Form } from "react-bootstrap";
 import propTypes from 'prop-types'
 import { InputSelect } from "~/components/injectable/input_select";
 
+/**
+ * Class representing an option in a HTML Select where this object is converted
+ * to: \<option value={this.value}\>{this.name}\<option/\>
+ *
+ * @param {*} value
+ * @param {*} name
+ */
 export class Option {
+  /**
+   *
+   */
   constructor(value, name){
     this.value = value;
     this.name = name;

@@ -1,9 +1,10 @@
 /** This module exists to provide consistent initialization of various fields */
 
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { Customer, DeliveryEndpoint, TracerCatalogPage } from "../dataclasses/dataclasses";
+import { Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalogPage, TracershopState } from "../dataclasses/dataclasses";
 import { numberfy } from "./utils";
 import { TRACER_TYPE } from "~/lib/constants";
+import { PRODUCTION_TYPES, ProductionReference } from "~/dataclasses/product_reference";
 
 /**
  *
@@ -76,4 +77,64 @@ export function initialize_injection_customer_from_catalog(
     endpoint : endpointInit,
     tracer : tracerInit
   };
+}
+
+/**
+ * Select the first production of the tracer in the week. Returns an Id reference
+ * @param {TracershopState} state
+ * @param {Number | String} activity_tracer
+ * @returns  {Number | String} -
+ */
+export function initializeProductionRun(state, activity_tracer) {
+  /**
+   * Compares two activity production to find the better default
+    * @param {ActivityProduction | null} prod_1
+    * @param {ActivityProduction} prod_2
+    * @returns {ActivityProduction}
+    */
+  function compare_productions(prod_1, prod_2){
+    if(prod_1 === null){
+      return prod_2;
+    }
+    if(prod_1.production_day < prod_2.production_day){
+      return prod_1;
+    }
+    if(prod_1.production_day > prod_2.production_day){
+      return prod_2;
+    }
+    if(prod_1.production_time < prod_2.production_time){
+      return prod_1;
+    } else {
+      return prod_2;
+    }
+  }
+
+  let prod = null;
+  for(const production of state.production.values()){
+    if(production.tracer === Number(activity_tracer)){
+      prod = compare_productions(prod, production);
+    }
+  }
+  return prod ? prod.id : "";
+}
+
+/** Gets a reference to the production that is active from a blank state
+ *
+ * @param {Array<Tracer | Isotope>} options
+ * @returns {ProductionReference}
+ */
+export function initializeProductionReference(options){
+  const initial_production = options.at(0);
+
+  if(initial_production === undefined){
+    return new ProductionReference(-1, PRODUCTION_TYPES.EMPTY);
+  }
+
+  if (initial_production instanceof Isotope){
+    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.ISOTOPE_PRODUCTION);
+  } else if (initial_production instanceof Tracer) {
+    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.PRODUCTION);
+  }
+
+  throw TypeError("Initialization array is not type safe!")
 }

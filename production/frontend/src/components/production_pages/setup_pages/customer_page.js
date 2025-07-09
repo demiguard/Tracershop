@@ -1,29 +1,57 @@
 import React, { useState } from "react";
-import { Row, FormControl, Table, Container, Col } from "react-bootstrap"
+import { Row, FormControl, Table, Container, Col, InputGroup } from "react-bootstrap"
 
 import { CustomerModal } from "../../modals/customer_modal.js";
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
-import { ClickableIcon } from "../../injectable/icons.js"
+import { ClickableIcon, IdempotentIcon } from "../../injectable/icons.js"
 import { setStateToEvent } from "~/lib/state_management.js";
-import { useTracershopState } from "~/contexts/tracer_shop_context.js";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context.js";
+import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants.js";
+import { MESSAGE_UPDATE_STATE } from "~/lib/incoming_messages.js";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
+import { IdempotentButton } from "~/components/injectable/buttons.js";
+import { Customer } from "~/dataclasses/dataclasses.js";
+import { Optional } from "~/components/injectable/optional.js";
 
 const Modals = {
   CUSTOMER : CustomerModal,
 }
 
+function CustomerRow({customer, activateModal}){
+  return (
+  <tr>
+    <td>
+      <Container>
+        <Row className="justify-content-between">
+          <Col xs={3}>{customer.short_name}</Col>
+          <Col xs={2} style={{
+            display : "flex"
+          }}>
+            <ClickableIcon
+              label={`settings-${customer.id}`}
+              src={'/static/images/setting.png'}
+              onClick={activateModal(customer.id, "CUSTOMER")}
+            />
+          </Col>
+        </Row>
+      </Container>
+    </td>
+  </tr>);
+}
+
 export function CustomerPage () {
   const state = useTracershopState();
+  const websocket = useWebsocket();
   const [filter, setFilter] = useState("");
   const [modalIdentifier, setModalIdentifier] = useState("");
   const [active_customer, setActiveCustomer] = useState("");
-
 
   function closeModal() {
     setModalIdentifier("");
     setActiveCustomer("");
   }
 
-  function ActivateModal(key, modalIdentifier) {
+  function activateModal(key, modalIdentifier) {
     const retFunc = () => {
       setModalIdentifier(modalIdentifier);
       setActiveCustomer(key);
@@ -31,33 +59,36 @@ export function CustomerPage () {
     return retFunc;
   }
 
-  function CustomerRow({customer}){
-    return (
-    <tr>
-      <td>
-        <Container>
-          <Row className="justify-content-between">
-            <Col xs={3}>{customer.short_name}</Col>
-            <Col xs={2} style={{
-              display : "flex"
-            }}>
-              <ClickableIcon
-                label={`settings-${customer.id}`}
-                src={'/static/images/setting.png'}
-                onClick={ActivateModal(customer.id, "CUSTOMER")}
-              />
-            </Col>
-          </Row>
-        </Container>
-      </td>
-    </tr>);
+  function createCustomer(){
+    let customerID;
+
+    return websocket.sendCreateModel(DATA_CUSTOMER, {
+      id : -1,
+      short_name : filter
+    }).then((response_message) => {
+      if(response_message instanceof MESSAGE_UPDATE_STATE){
+        const /**@type {Customer} */ new_customer = response_message.data[DATA_CUSTOMER][0]
+        customerID = new_customer.id
+
+        return websocket.sendCreateModel(DATA_ENDPOINT, {
+          id : -1,
+          name : filter,
+          owner : customerID,
+        });
+      }
+    }).then(
+      () => {
+        activateModal(customerID, "CUSTOMER");
+        return Promise.resolve();
+      }
+    )
   }
 
   const /**@type {Array<Element>} */ customerRows = [];
   const FilterRegEx = new RegExp(filter,'g')
   for (const customer of state.customer.values()) {
     if (FilterRegEx.test(customer.short_name)) {
-      customerRows.push(<CustomerRow key={customer.id} customer={customer}/>);
+      customerRows.push(<CustomerRow key={customer.id} customer={customer} activateModal={activateModal}/>);
     }
   }
 
@@ -67,15 +98,29 @@ export function CustomerPage () {
     [PROP_ON_CLOSE] : closeModal,
   };
 
+  const displayCreateButton = filter.length > 1 &&
+    !([...state.customer.values()].map((c) => c.short_name).includes(filter));
+
   return (
     <Container>
       <Row>
-        <FormControl
-          aria-label="customer-filter"
-          onChange={setStateToEvent(setFilter)}
-          value={filter}
-          placeholder="Kunde Filter"
-        />
+        <TracershopInputGroup>
+          <FormControl
+            aria-label="customer-filter"
+            onChange={setStateToEvent(setFilter)}
+            value={filter}
+            placeholder="Kunde Filter"
+          />
+          <Optional exists={displayCreateButton}>
+            <InputGroup.Text>
+              <IdempotentIcon
+                altText="Opret Kunde"
+                src="/static/images/plus.svg"
+                onClick={createCustomer}
+              />
+            </InputGroup.Text>
+          </Optional>
+        </TracershopInputGroup>
       </Row>
       <Row>
         <Table>

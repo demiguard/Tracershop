@@ -32,7 +32,6 @@ class MessageHandler():
     self._handlers: Dict[WEBSOCKET_MESSAGE_TYPES, 'handler_base.HandlerBase'] = {}
     messageHandlerDir =  Path(__file__).parent
 
-
     for file_name in messageHandlerDir.glob(PYTHON_FILE_GLOB_PATTERN):
       if file_name.name == '__init__.py':
         continue

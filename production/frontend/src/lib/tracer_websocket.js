@@ -128,7 +128,8 @@ export class TracerWebSocket {
       const pipe = new MessageChannel();
       pipe.port1.onmessage = function (messageEvent) {
         // NO FUCKING CLUE WHY WE THROW AWAY CLASSES HERE???
-        // Might be because it's a copy of the original data
+        // Might be because it's a copy of the original data and the meta data
+        // such as the .__proto__ isn't copied
         resolve(createMessage(messageEvent.data));
       }
       promiseMap.set(messageID, pipe);
@@ -146,11 +147,13 @@ export class TracerWebSocket {
   }
 
   sendCreateModel(modelType, models){
-    return this.send({
+    const message_to_send = {
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_CREATE,
       [WEBSOCKET_DATA] : models,
       [WEBSOCKET_DATATYPE] : modelType,
-    });
+    };
+
+    return this.send(message_to_send);
   }
 
   sendDeleteModel(modelType, models){
@@ -261,7 +264,6 @@ export class TracerWebSocket {
     // This is the state updating messages send by the server
     this.triggerListeners(message);
 
-    // I am not sure this scales?
     switch(true) {
       case message instanceof MESSAGE_READ_STATE:
         // Even though it's "UpdateState" it's just a update of the local

@@ -203,6 +203,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     """
     time_start_ns = time_module.monotonic_ns()
     user: User = await get_user(self.scope)
+
     try:
       error = auth.validateMessage(content)
       if error != NO_ERROR:

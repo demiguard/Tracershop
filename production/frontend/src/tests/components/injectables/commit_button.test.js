@@ -58,7 +58,7 @@ describe("Commit button tests", () => {
           object_type={data_type}
           validate={
             () => {
-              modified_object = {...temp_object}
+              modified_object = { id : 1 };
 
               return [true, modified_object]}
           }

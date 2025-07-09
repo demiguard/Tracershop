@@ -155,10 +155,10 @@ class IsotopeProduction(TracershopModel):
   id = BigAutoField(primary_key=True)
   isotope = ForeignKey(Isotope, on_delete=RESTRICT)
   production_day = SmallIntegerField(choices=Days.choices)
-  ready_time = TimeField()
+  production_time = TimeField()
   expiry_time = DateField(default=None, blank=True, null=True)
 
   def __str__(self) -> str:
-    baseString = f"Isotope production at {Days(self.production_day).name} - {self.ready_time}"
+    baseString = f"Isotope production at {Days(self.production_day).name} - {self.production_time}"
 
     return baseString

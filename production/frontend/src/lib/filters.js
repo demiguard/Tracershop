@@ -2,8 +2,8 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
 
@@ -43,6 +43,35 @@ export function extractData(container, type, typeKeyword){
     return [container];
   }
   throw `Unable to extract ${typeKeyword}`
+}
+
+export function isotopeFilter(
+  container, {
+    producible,
+    state,
+  }, ids=false
+) {
+  const /**@type {Array<Isotope>} */ isotopes = extractData(container, Isotope, DATA_ISOTOPE);
+  const is_producible = (() => {
+      if(state instanceof TracershopState && producible !== undefined){
+        const producibleIsotopes = new Set();
+        for(const isotopeProduction of state.isotope_production.values() ){
+          producibleIsotopes.add(isotopeProduction.isotope);
+        }
+
+        return (isotope) => producibleIsotopes.has(isotope.id);
+      }
+
+      return () => true;
+    })()
+
+  const filteredIsotopes = isotopes.filter((isotope) => {
+    const producibleCondition = is_producible(isotope);
+
+    return producibleCondition;
+  });
+
+  return ids ? filteredIsotopes.map(getId) : filteredIsotopes
 }
 
 export function procedureFilter(container, {
@@ -199,8 +228,14 @@ export function productionsFilter(container, {production_id, tracerID, day}, ids
 
 /**
  *
- * @param {TracershopState} container
- * @param {Number} TracerID
+ * @param {TracershopState | Array<ActivityDeliveryTimeSlot> | Map<any, ActivityDeliveryTimeSlot>} container - Container that holds
+ * @param { Object } filterParams
+ * @param {TracershopState} filterParams.state
+ * @param {Number} filterParams.timeSlotId - BE WARNED INCONSISTENT NAMING
+ * @param {Number} filterParams.tracerID - Returned ActivityDeliveryTimeSlots will produce tracer with this ID
+ * @param {Number} filterParams.endpointID
+ * @param {Number} filterParams.day
+ * @param {boolean} ids
  * @param {Array<ActivityDeliveryTimeSlot>}
  */
 export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, endpointID}, ids = false){
@@ -220,6 +255,42 @@ export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, en
   });
 
   return ids ?  filteredTimeSlots.map(getId) : filteredTimeSlots
+}
+
+/**
+ *
+ * @param {*} container
+ * @param {*} filterParam
+ * @param {boolean} ids
+ * @returns
+ */
+export function isotopeDeliveryFilter(container, { state, endpointID, isotopeID }, ids=false){
+  const /**@type {Array<IsotopeDelivery>} */ isotopeDeliveries = extractData(container, IsotopeDelivery, DATA_ISOTOPE_DELIVERY);
+
+  const is_targeted_isotope = (() => {
+    if(state instanceof TracershopState && isotopeID !== undefined ){
+      const /**@type {Set<Number>} */ isotopeProductionIDs = new Set();
+
+      for(const isotopeProduction of state.isotope_production.values()){
+        if(isotopeProduction.isotope == isotopeID){
+          isotopeProductionIDs.add(isotopeProduction.id);
+        }
+      }
+
+      return /**@type {(isoDev: IsotopeDelivery) => boolean} */ (isoDev) => isotopeProductionIDs.has(isoDev.production);
+    }
+
+    return (_) => true;
+  })()
+
+  const filteredIsotopeDeliveries = isotopeDeliveries.filter((isotopeDelivery) => {
+    const deliveryCondition = endpointID ? isotopeDelivery.delivery_endpoint === endpointID : true;
+    const productionCondition = is_targeted_isotope(isotopeDelivery);
+
+    return deliveryCondition && productionCondition;
+  })
+
+  return ids ? filteredIsotopeDeliveries.map(getId) : filteredIsotopeDeliveries;
 }
 
 /**

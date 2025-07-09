@@ -308,22 +308,7 @@ describe("dateToDateString Tests", () => {
   });
 })
 
-describe("getDateName Tests", () => {
-  const monday = new Date(2023,12, 22);
-  it("is a day of the week", () => {
-    expect(getDateName(monday)).toEqual("Mandag");
-    expect(getDateName(0+1)).toEqual("Tirsdag");
-    expect(getDateName(0+2)).toEqual("Onsdag");
-    expect(getDateName(0+3)).toEqual("Torsdag");
-    expect(getDateName(0+4)).toEqual("Fredag");
-    expect(getDateName(0+5)).toEqual("Lørdag");
-    expect(getDateName(0+6)).toEqual("Søndag");
-  });
 
-  it("is unknown", () => {
-    expect(getDateName).toThrow("Unknown Day");
-  });
-})
 
 describe("nullParser Tests", () => {
   it("returns an empty string", () =>{

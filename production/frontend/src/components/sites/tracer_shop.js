@@ -84,11 +84,15 @@ export function TracerShop() {
 
   const hasNoError = !tracershopState.error
 
-  return(
-  <ErrorBoundary FallbackComponent={ErrorPage}>
-    <Optional exists={hasNoError} alt={<ServerErrorPage error={tracershopState.error}/>}>
-      <Site logout={logout} NavbarElements={[]}/>
-    </Optional>
-
-  </ErrorBoundary>);
+  return (
+    <ErrorBoundary FallbackComponent={ErrorPage}>
+      <Optional
+        exists={hasNoError}
+        alternative={<ServerErrorPage
+          error={tracershopState.error}
+        />}>
+          <Site logout={logout} NavbarElements={[]}/>
+      </Optional>
+    </ErrorBoundary>
+  );
 }

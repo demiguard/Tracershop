@@ -8,6 +8,7 @@ import React from "react";
  * @typedef {[T, React.Dispatch<T>]} StateType<T>
  * @template T
  */
+export const /** @type {STATE_TYPE} */ STATE_TYPE = ({});
 
 export const COLORS = {
   primaryColor: "#009ce8",

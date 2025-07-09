@@ -1,92 +1,29 @@
 import React, { useEffect, useState } from "react";
 import { Container, Row, Col, FormControl } from "react-bootstrap";
 
-import { ActivityProduction, IsotopeProduction, TracershopState } from "../../../dataclasses/dataclasses";
+import { ActivityProduction, IsotopeProduction, TracershopState, Isotope, Tracer } from "../../../dataclasses/dataclasses";
 import { WeeklyTimeTable } from "~/components/injectable/weekly_time_table";
 import { DAYS, DAYS_OBJECTS, TRACER_TYPE, WEEKLY_TIME_TABLE_PROP_DAY_GETTER,
   WEEKLY_TIME_TABLE_PROP_ENTRIES, WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR,
   WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
   WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC } from "~/lib/constants";
-import { DATA_ISOTOPE, DATA_ISOTOPE_PRODUCTION, DATA_PRODUCTION, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS } from "~/lib/shared_constants";
+import { DATA_ISOTOPE_PRODUCTION, DATA_PRODUCTION, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS } from "~/lib/shared_constants";
 import { tracerTypeFilter } from "~/lib/filters";
-import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
-import { Select, toOptions } from "~/components/injectable/select";
+import { useTracershopState } from "~/contexts/tracer_shop_context";
+import { Option, Select, toOptions } from "~/components/injectable/select";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { parseTimeInput } from "~/lib/user_input";
 import { CommitButton } from "~/components/injectable/commit_button";
-import { ClickableIcon } from "~/components/injectable/icons";
 import { numberfy } from "~/lib/utils";
-import { Optional } from "~/components/injectable/optional";
+import { Options } from "~/components/injectable/optional";
 import { MESSAGE_ERROR } from "~/lib/incoming_messages";
 import { useErrorState } from "~/lib/error_handling";
 import { AlertBox } from "~/components/injectable/alert_box";
+import { initializeProductionReference } from "~/lib/initialization";
+import { productToReferenceOption, ProductionReference, PRODUCTION_TYPES } from "~/dataclasses/product_reference";
 
-/**
- * @enum
- */
-const PRODUCTION_TYPES = {
-  ISOTOPE_PRODUCTION : DATA_ISOTOPE_PRODUCTION,
-  PRODUCTION : DATA_PRODUCTION,
-  EMPTY : "EMPTY"
-};
-
-/**
- * Class that unionizes the types of tracer and
- */
-class ProductionReference {
-  constructor(id, type){
-    this.product_id = id;
-    if(Object.values(PRODUCTION_TYPES).includes(type)){
-      this.type = type
-    } else {
-      throw {error : "Unknown production type"}
-    }
-  }
-}
-
-/** Gets a reference to the production that is active from a blank state
- *
- * @param {Array<Tracer | Isotope>} options
- * @returns {ProductionReference}
- */
-function initializeProductionReference(options){
-  const initial_production = options.at(0);
-
-  if(initial_production === undefined){
-    return new ProductionReference(-1, PRODUCTION_TYPES.EMPTY);
-  }
-
-  if (initial_production instanceof Isotope){
-    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.ISOTOPE_PRODUCTION);
-  } else if (initial_production instanceof Tracer) {
-    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.PRODUCTION);
-  }
-
-  throw TypeError("Initialization array is not type safe!")
-}
-
-/** From a production,
- *
- * @param {ProductionReference} productionReference
- * @param {TracershopState} state
- * @returns
- */
-function filterProduction(productionReference, state){
-  switch (productionReference.type) {
-    case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
-      return [...state.isotope_production.values()].filter(
-        (ip) => ip.isotope === productionReference.product_id
-      );
-    case PRODUCTION_TYPES.PRODUCTION:
-      return [...state.production.values()].filter(
-        (ap) => ap.tracer === productionReference.product_id
-      );
-    default:
-      return [];
-  }
-}
 
 /**weekly time table functions */
 /**
@@ -125,23 +62,82 @@ function weeklyTimeTableHourGetter(production) {
   return hour + minutes / 60;
 }
 
-/**
- *
-  * @param {ActivityProduction} activityProduction
-  */
-function weeklyTimeTableEntryOnClick(activityProduction){
-  setTempProduction({...activityProduction});
-}
+
+  /**
+   *
+   * @param {ActivityProduction} activityProduction
+   * @returns
+   */
+  function weeklyTimeTableLabelFunction(activityProduction){
+    return `activity-production-${activityProduction.id}`;
+  }
+
 
 function weeklyTimeTableInnerText(entry){
-  return (<div aria-label={`production-${entry.id}`}>{entry.production_time}</div>)
+  return (
+    <div style={{textAlign : "center"}} aria-label={`production-${entry.id}`}>
+      {entry.production_time}
+    </div>);
 }
 
-function ActivityTracerProductionView(){
+function ActivityTracerProductionView({
+  tempProduction,
+  productions,
+  setTempProduction
+}){
+  /**
+  *
+  * @param {ActivityProduction} activityProduction
+  */
+  function weeklyTimeTableEntryOnClick(activityProduction){
+    setTempProduction({...activityProduction});
+  }
 
+
+  const weeklyTimeTableProps = {
+    [WEEKLY_TIME_TABLE_PROP_ENTRIES] : productions,
+    [WEEKLY_TIME_TABLE_PROP_DAY_GETTER] : weeklyTimeTableDayGetter,
+    [WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] : weeklyTimeTableHourGetter,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] : weeklyTimeTableEntryOnClick,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] : weeklyTimeTableEntryColor(tempProduction),
+    [WEEKLY_TIME_TABLE_PROP_INNER_TEXT] : weeklyTimeTableInnerText,
+    [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
+  };
+
+  return (<WeeklyTimeTable
+        {...weeklyTimeTableProps}
+      />);
 }
 
-function IsotopeProductionView(){
+function IsotopeProductionView({
+  tempProduction,
+  productions,
+  setTempProduction
+}){
+
+  /**
+  *
+  * @param {ActivityProduction} activityProduction
+  */
+  function weeklyTimeTableEntryOnClick(activityProduction){
+    setTempProduction({...activityProduction});
+  }
+
+  const weeklyTimeTableProps = {
+    [WEEKLY_TIME_TABLE_PROP_ENTRIES] : productions,
+    [WEEKLY_TIME_TABLE_PROP_DAY_GETTER] : weeklyTimeTableDayGetter,
+    [WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] : weeklyTimeTableHourGetter,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] : weeklyTimeTableEntryOnClick,
+    [WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] : weeklyTimeTableEntryColor(tempProduction),
+    [WEEKLY_TIME_TABLE_PROP_INNER_TEXT] : weeklyTimeTableInnerText,
+    [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
+  };
+
+  return (
+    <WeeklyTimeTable
+      {...weeklyTimeTableProps}
+    />
+  );
 
 }
 
@@ -152,37 +148,36 @@ export function ProductionSetup(){
   const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
   );
-
   const isotopes = [...state.isotopes.values()];
 
-  const productionOptions = [...activityTracers, ...isotopes];
-  const initialProductReference = initializeProductionReference(productionOptions);
-  const [productionReference, setProductionReference] = useState(initialProductReference);
+  const valid_products = [...activityTracers, ...isotopes];
 
-  const tracerInit = (activityTracers.length === 0) ? "" : activityTracers[0].id;
-  const [tracerID, setTracer] = useState(tracerInit);
-  const NumberTracerID = numberfy(tracerID);
-  const tempProductionInit = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", "", "")
-  const [tempProduction, setTempProduction] = useState(tempProductionInit);
+  const initialProductReference = initializeProductionReference(valid_products);
+  const [productionReference, setProductionReference] = useState(initialProductReference);
+  const [tempProduction, setTempProduction] = useState({
+    id : -1,
+    production_day : DAYS.MONDAY,
+    production_time : "",
+  });
   const [errorTime, setTimeError] = useState("");
   const [creationError, setCreationError] = useErrorState();
 
-  const productions = [...state.production.values()].filter((production) =>
-    production.tracer === NumberTracerID);
+  const productionOptions = valid_products.map(productToReferenceOption);
 
-  const displayProductions = filterProduction(productionReference, state);
+  const displayProductions = productionReference.filterProduction(state);
 
+  function selectNewProduct(event){
+    const newProductionReference = ProductionReference.fromValue(event.target.value);
 
-  function setNewProduction(){
-    const default_production = new ActivityProduction(null, DAYS.MONDAY, NumberTracerID, "", null);
-    setTempProduction(default_production);
-  }
-
-  useEffect(() => {
-    if(NumberTracerID !== tempProduction.tracer){
-      setNewProduction();
+    if(productionReference.not_equal(newProductionReference)){
+      setProductionReference(newProductionReference);
+      setTempProduction((old) => ({
+        id : -1,
+        production_time : old.production_time,
+        production_day : old.production_day
+      }));
     }
-  },[tracerID])
+  }
 
   function setProductionTime(newValue){
     setTempProduction(tempProduction =>  {return {...tempProduction, production_time : newValue}})
@@ -196,11 +191,22 @@ export function ProductionSetup(){
       return [false, {}];
     }
 
-    return [validTime, {...tempProduction,
-                        production_time : formattedTime,
-                        tracer : NumberTracerID,
-                        production_day : numberfy(tempProduction.production_day),
-                      }];
+    const production = (productionReference.type == PRODUCTION_TYPES.PRODUCTION) ?
+      {
+        id : tempProduction.id,
+        tracer : productionReference.product_id,
+        production_time : formattedTime,
+        production_day : numberfy(tempProduction.production_day),
+      } : {
+        id : tempProduction.id,
+        isotope : productionReference.product_id,
+        production_time : formattedTime,
+        production_day : numberfy(tempProduction.production_day),
+      };
+
+    console.log(production)
+
+    return [validTime, production];
   }
 
   function validateCallback(response){
@@ -209,25 +215,17 @@ export function ProductionSetup(){
     }
   }
 
+  const optionIndex = (() => {
+    switch (productionReference.type){
+      case PRODUCTION_TYPES.PRODUCTION:
+        return 0;
+      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+        return 1;
+      default:
+        return 2
+    }
+  })();
 
-  /**
-   *
-   * @param {ActivityProduction} activityProduction
-   * @returns
-   */
-  function weeklyTimeTableLabelFunction(activityProduction){
-    return `activity-production-${activityProduction.id}`;
-  }
-
-  const weeklyTimeTableProps = {
-    [WEEKLY_TIME_TABLE_PROP_ENTRIES] : productions,
-    [WEEKLY_TIME_TABLE_PROP_DAY_GETTER] : weeklyTimeTableDayGetter,
-    [WEEKLY_TIME_TABLE_PROP_HOUR_GETTER] : weeklyTimeTableHourGetter,
-    [WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK] : weeklyTimeTableEntryOnClick,
-    [WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR] : weeklyTimeTableEntryColor,
-    [WEEKLY_TIME_TABLE_PROP_INNER_TEXT] : weeklyTimeTableInnerText,
-    [WEEKLY_TIME_TABLE_PROP_LABEL_FUNC] : weeklyTimeTableLabelFunction,
-  };
 
   return (<Container>
     <Row
@@ -235,9 +233,9 @@ export function ProductionSetup(){
       <Col>
         <Select
           aria-label="tracer-selector"
-          options={toOptions(activityTracers, 'shortname')}
-          value={tracerID}
-          onChange={setStateToEvent(setTracer)}
+          options={productionOptions}
+          value={productionReference.to_value()}
+          onChange={selectNewProduct}
         />
       </Col>
       <Col>
@@ -263,7 +261,7 @@ export function ProductionSetup(){
             <CommitButton
               temp_object={tempProduction}
               validate={validate}
-              object_type={DATA_PRODUCTION}
+              object_type={productionReference.type}
               label="commit-active-production"
               callback={validateCallback}
             />
@@ -273,9 +271,19 @@ export function ProductionSetup(){
     </Row>
     <AlertBox error={creationError}/>
     <Row>
-      <WeeklyTimeTable
-        {...weeklyTimeTableProps}
-      />
+      <Options index={optionIndex}>
+        <ActivityTracerProductionView
+          tempProduction={tempProduction}
+          productions={displayProductions}
+          setTempProduction={setTempProduction}
+        />
+        <IsotopeProductionView
+          tempProduction={tempProduction}
+          productions={displayProductions}
+          setTempProduction={setTempProduction}
+        />
+        <div></div>
+      </Options>
     </Row>
   </Container>)
 }

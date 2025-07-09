@@ -407,9 +407,10 @@ export class Isotope {
 }
 
 export class IsotopeDelivery {
-  constructor(id, production, delivery_endpoint, delivery_time, ) {
+  constructor(id, production, weekly_repeat, delivery_endpoint, delivery_time, ) {
     this.id=id
     this.production=production
+    this.weekly_repeat=weekly_repeat
     this.delivery_endpoint=delivery_endpoint
     this.delivery_time=delivery_time
   }
@@ -421,6 +422,7 @@ export class IsotopeDelivery {
     return new this.constructor(
       this.id,
       this.production,
+      this.weekly_repeat,
       this.delivery_endpoint,
       this.delivery_time
     )
@@ -429,6 +431,7 @@ export class IsotopeDelivery {
     return [
       new IntField("id"),
       new ForeignField("production","isotope_production"),
+      new IntField("weekly_repeat"),
       new ForeignField("delivery_endpoint","delivery_endpoint"),
       new DateField("delivery_time"),
     ];
@@ -477,11 +480,11 @@ export class IsotopeOrder {
 }
 
 export class IsotopeProduction {
-  constructor(id, isotope, production_day, ready_time, expiry_time, ) {
+  constructor(id, isotope, production_day, production_time, expiry_time, ) {
     this.id=id
     this.isotope=isotope
     this.production_day=production_day
-    this.ready_time=ready_time
+    this.production_time=production_time
     this.expiry_time=expiry_time
   }
 
@@ -493,7 +496,7 @@ export class IsotopeProduction {
       this.id,
       this.isotope,
       this.production_day,
-      this.ready_time,
+      this.production_time,
       this.expiry_time
     )
   }
@@ -502,7 +505,7 @@ export class IsotopeProduction {
       new IntField("id"),
       new ForeignField("isotope","isotopes"),
       new IntField("production_day"),
-      new DateField("ready_time"),
+      new DateField("production_time"),
       new DateField("expiry_time"),
     ];
   }

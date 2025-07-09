@@ -403,13 +403,14 @@ export class OrderDateMapping {
 }
 
 /**
- * @template T,U
+ * @template T - Type of Generator element for the name of columns
+ * @template U -
  */
 export class ITimeTableDataContainer {
   /** @type {Map<Number, ArrayMap<Number, U>>}*/ entryMapping
   /** @type {Map<Number, T>}*/ columns
   /** @type {(T) => Element} */ columnNameFunction
-  /** @type {([U]) => Element} */ cellFunction
+  /** @type {([U], Number) => Element} */ cellFunction
   /** @type {Number} The starting hour of the Time Table */ min_hour
   /** @type {Number} The stopping hour of the Time Table */ max_hour
 
@@ -497,7 +498,7 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
    */
   constructor(all_bookings, tracershopState, active_endpoint, active_date){
     function cellFunction(bookings){
-      return <BookingCell bookings={bookings}>;</BookingCell>
+      return <BookingCell bookings={bookings}/>
     }
 
     function columnNameFunction(location) {
@@ -531,7 +532,6 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
     }
   }
 }
-
 
 
 /**

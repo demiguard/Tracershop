@@ -85,7 +85,8 @@ export function WeeklyTimeTable({day_function,
                                  color_function = (_entry) => {return 'lightblue'},
                                  label_function = (_entry) => {return ""},
                                  startingHour = 6,
-                                 stoppingHour = 14}){
+                                 stoppingHour = 14,
+                                 week_days = 127}){
   const entries = [];
 
   if (!(startingHour <= stoppingHour)){

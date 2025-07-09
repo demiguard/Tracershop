@@ -10,7 +10,6 @@ import { JUSTIFY, PADDING } from '~/lib/styles';
 export const TIME_TABLE_CELL_HEIGHT = 50;
 export const TIME_TABLE_CELL_HEIGHT_PIXELS = `${TIME_TABLE_CELL_HEIGHT}px`;
 
-
 const cssWeeklyTimeTable = {
   borderRadius: "1px",
   position : "relative",
@@ -170,7 +169,7 @@ function ColCell({children}){
  */
 export function RowMajorTimeTable({timeTableDataContainer}){
   const headers = [<ColCell key="0"></ColCell>].concat([...timeTableDataContainer.columns.values()].map(
-    (column, i) => {return <ColCell key={i + 1}>{timeTableDataContainer.columnNameFunction(column)}</ColCell>}
+      (column, i) => {return <ColCell key={i + 1}>{timeTableDataContainer.columnNameFunction(column)}</ColCell>}
   ));
 
   const times = [];
@@ -189,6 +188,7 @@ export function RowMajorTimeTable({timeTableDataContainer}){
     for(const i of timeTableDataContainer.columns.keys()){
       if (timeTableDataContainer.entryMapping.has(i)){
         const entries = timeTableDataContainer.entryMapping.get(i)
+
         if(entries.has(hour)){
           const hourlyEntries = entries.get(hour)
           renderedColumns.push(timeTableDataContainer.cellFunction(hourlyEntries, i));

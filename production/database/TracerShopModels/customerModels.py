@@ -480,6 +480,7 @@ class LegacyActivityOrder(TracershopModel):
 class IsotopeDelivery(TracershopModel):
   id = BigAutoField(primary_key=True)
   production = ForeignKey(IsotopeProduction, on_delete=RESTRICT)
+  weekly_repeat = SmallIntegerField(choices=WeeklyRepeat.choices, default=WeeklyRepeat.EveryWeek)
   delivery_endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   delivery_time = TimeField()
 
