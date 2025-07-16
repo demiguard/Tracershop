@@ -95,7 +95,6 @@ export const WEEKLY_REPEAT_CHOICES = {
   ODD : 2,
 }
 
-
 /**
  * @constant
  * @typedef {Number} OrderStatus
@@ -138,9 +137,6 @@ export const WARNING_MARGIN_COLOR = "#FFbb00"
 
 export const HINT_BACKGROUND_COLOR = "#FFFFFF"
 export const HINT_MARGIN_COLOR = COLORS.tertiaryColor1
-
-
-
 
 export const cssCenter = {
   display : "block",

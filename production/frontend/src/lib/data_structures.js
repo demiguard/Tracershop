@@ -21,18 +21,6 @@ import { Col } from 'react-bootstrap';
 import { formatAccessionNumber } from '~/lib/formatting';
 
 
-//#region EndpointCatalog
-export class EndpointCatalog {
-  /**@type {Array<Tracer>} */ tracerCatalogActivity
-  /**@type {Array<Tracer>} */ tracerCatalogInjections
-  /**@type {Map<Number, Number>} */ overheadMap
-
-  constructor() {
-    this.tracerCatalogActivity = [];
-    this.tracerCatalogInjections = [];
-    this.overheadMap = new Map();
-  }
-}
 
 
 //#region TimeSlotMapping

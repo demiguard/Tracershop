@@ -9,6 +9,7 @@ import { Option } from "~/components/injectable/select";
 import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint,
   Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracershopState
 } from "~/dataclasses/dataclasses";
+import { WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
 import { isotopeDeliveryFilter, timeSlotsFilter } from "~/lib/filters";
 import { DATA_DELIVER_TIME, DATA_ISOTOPE_PRODUCTION, DATA_PRODUCTION } from "~/lib/shared_constants";
 
@@ -65,6 +66,25 @@ export class ProductionReference {
 
   is_tracer(){
     return this.type === PRODUCTION_TYPES.PRODUCTION;
+  }
+
+  /** Gets a delivery initialized
+   *
+   * @param {Number} endpoint_id
+   * @param {Array<ActivityProduction> | Array<IsotopeProduction>} productions
+   * @returns
+   */
+  get_empty_delivery(endpoint_id, productions){
+    const productionID = productions.length > 0 ? productions.at(0).id : -1;
+
+    switch (this.type) {
+      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+        return new IsotopeDelivery(-1, productionID, WEEKLY_REPEAT_CHOICES.ALL, endpoint_id, "");
+      case PRODUCTION_TYPES.PRODUCTION:
+        return new ActivityDeliveryTimeSlot(-1,  WEEKLY_REPEAT_CHOICES.ALL, "", endpoint_id, productionID);
+      default:
+        return {};
+    }
   }
 
   /** Check if two product references refer to the same product

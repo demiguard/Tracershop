@@ -61,6 +61,10 @@ export class TimeStamp {
     }
   }
 
+  /**
+   *
+   * @returns The number of minutes between this timestamp and 00:00:00
+   */
   toMinutes(){
     return this.hour * 60 + this.minute + Math.floor(this.second / 60);
   }

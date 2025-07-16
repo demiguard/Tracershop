@@ -50,7 +50,6 @@ describe("Customer modal list", () => {
         <CustomerModal {...props} />
       </TracerShopContext>
     );
-
     expect(screen.getByLabelText('active-endpoint-1')).toBeVisible();
     expect(screen.getByLabelText('active-time-slot--1')).toBeVisible();
     expect(screen.queryByLabelText("time-slot-initialize")).toBeNull();
@@ -265,9 +264,9 @@ describe("Customer modal list", () => {
 
     act(() => { screen.getByLabelText('time-slot-2').click(); });
 
-    const activeTracerSelect = screen.getByLabelText('active-tracer-select');
+    const activeTracerSelect = screen.getByLabelText('active-product');
     act(() => {
-      fireEvent.change(activeTracerSelect, {target: {value : "1"}});
+      fireEvent.change(activeTracerSelect, {target: {value : "t-1"}});
     });
 
     expect(screen.getByLabelText('active-time-slot-2')).toBeVisible();
@@ -285,8 +284,8 @@ describe("Customer modal list", () => {
     act(() => { screen.getByLabelText('time-slot-2').click(); });
 
     act(() => {
-      const activeTracerSelect = screen.getByLabelText('active-tracer-select');
-      fireEvent.change(activeTracerSelect, {target: {value : "3"}});
+      const activeTracerSelect = screen.getByLabelText('active-product');
+      fireEvent.change(activeTracerSelect, {target: {value : "t-3"}});
     });
 
     expect(screen.getByLabelText('active-time-slot--1')).toBeVisible();
@@ -523,8 +522,8 @@ describe("Customer modal list", () => {
 
     // Change Tracer
     act(() => {
-      const tracerSelect = screen.getByLabelText('active-tracer-select');
-      fireEvent.change(tracerSelect, {target : {value : "3"}});
+      const tracerSelect = screen.getByLabelText('active-product');
+      fireEvent.change(tracerSelect, {target : {value : "t-3"}});
     });
 
     // Change Production

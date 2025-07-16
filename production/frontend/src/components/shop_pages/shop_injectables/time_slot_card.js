@@ -20,6 +20,7 @@ import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_co
 import { Optional } from "~/components/injectable/optional";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { appendNewObject, reset_error, setTempMapToEvent, set_state_error } from "~/lib/state_management";
+import { useUpdatingEffect } from "~/effects/updating_effect";
 
 function TimeSlotCardHeaderMoved(){
   return(
@@ -214,7 +215,7 @@ export function TimeSlotCard({
   ); // I really feel like this is not very readable, but it is compose-able
 
   // Effects
-  useEffect(() => {
+  useUpdatingEffect(() => {
     const deliverableActivityOrders = activityOrders.filter((order) =>
       order.ordered_time_slot === timeSlot.id
     );

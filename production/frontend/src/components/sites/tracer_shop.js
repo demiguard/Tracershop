@@ -52,7 +52,6 @@ export function TracerShop() {
    * @returns {Element}
    */
   function get_site_from_user(user) {
-
     if(user.user_group == USER_GROUPS.ANON || user.user_group === undefined){
       return SITES.log_in_site;
     }

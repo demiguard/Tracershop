@@ -7,8 +7,9 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction,
   TracershopState } from "~/dataclasses/dataclasses"
 import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy"
 import { ORDER_STATUS } from "~/lib/constants"
-import { calculateProduction } from "~/lib/physics"
+import { calculateProduction, correctVialActivityToTime } from "~/lib/physics"
 import { getId } from "~/lib/utils"
+import { Vial } from "~/dataclasses/dataclasses"
 
 /**
  * Wraps a group of orders, for the purpose of providing a single view of the
@@ -112,6 +113,11 @@ export class ActivityOrderCollection {
    * @type {Array<Vial>}
    */ vials
 
+  /**
+   * @desc Vials that is or could be used to fulfill this order collection
+   * @type {Array<Vial>}
+   */ unassigned_vials
+
 /**
   * Wraps a group of orders, for the purpose of providing a single view of the
   * group.
@@ -156,6 +162,7 @@ export class ActivityOrderCollection {
     this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
     this.vials = [];
+    this.unassigned_vials = []
 
     this.#contributing_orders = [];
     this.#cancelled_orders = [];
@@ -206,23 +213,21 @@ export class ActivityOrderCollection {
     } // End of Order for loop;
     if(this.minimum_status === ORDER_STATUS.RELEASED){
       for(const vial of state.vial.values()){
+      console.log(vial)
         if (this.orderIDs.includes(vial.assigned_to)){
-          const timeSlot = this.delivering_time_slot
-          const timeStampTimeSlot = new TimeStamp(timeSlot.delivery_time);
-          const timeStampVial = new TimeStamp(vial.fill_time);
-          const comparedTimeSlot = compareTimeStamp(timeStampVial, timeStampTimeSlot);
-
-          const minutesBetweenVialAndTimeSlot = comparedTimeSlot.toMinutes();
-
-          const correctedActivity = calculateProduction(
+          this.delivered_activity += correctVialActivityToTime(
+            vial,
+            this.delivering_time_slot.delivery_time,
             this.isotope.halflife_seconds,
-            minutesBetweenVialAndTimeSlot,
-            vial.activity
           );
 
-          this.delivered_activity += correctedActivity;
           this.vials.push(vial);
         }
+        if(vial.delivery_date === this.#ordered_date
+            && vial.owner === this.customer.id
+            && vial.assigned_to === null){
+          this.unassigned_vials.push(vial);
+        };
       }
     }
   }

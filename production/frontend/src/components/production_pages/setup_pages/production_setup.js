@@ -23,6 +23,8 @@ import { useErrorState } from "~/lib/error_handling";
 import { AlertBox } from "~/components/injectable/alert_box";
 import { initializeProductionReference } from "~/lib/initialization";
 import { productToReferenceOption, ProductionReference, PRODUCTION_TYPES } from "~/dataclasses/product_reference";
+import { useOnEnter } from "~/effects/on_enter";
+import { useCommitObject } from "~/effects/commit_object";
 
 
 /**weekly time table functions */
@@ -145,6 +147,7 @@ function IsotopeProductionView({
 export function ProductionSetup(){
   const state = useTracershopState();
 
+
   const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
   );
@@ -153,7 +156,7 @@ export function ProductionSetup(){
   const valid_products = [...activityTracers, ...isotopes];
 
   const initialProductReference = initializeProductionReference(valid_products);
-  const [productionReference, setProductionReference] = useState(initialProductReference);
+  const [product, setProductionReference] = useState(initialProductReference);
   const [tempProduction, setTempProduction] = useState({
     id : -1,
     production_day : DAYS.MONDAY,
@@ -164,12 +167,12 @@ export function ProductionSetup(){
 
   const productionOptions = valid_products.map(productToReferenceOption);
 
-  const displayProductions = productionReference.filterProduction(state);
+  const displayProductions = product.filterProduction(state);
 
   function selectNewProduct(event){
     const newProductionReference = ProductionReference.fromValue(event.target.value);
 
-    if(productionReference.not_equal(newProductionReference)){
+    if(product.not_equal(newProductionReference)){
       setProductionReference(newProductionReference);
       setTempProduction((old) => ({
         id : -1,
@@ -180,6 +183,8 @@ export function ProductionSetup(){
   }
 
   function setProductionTime(newValue){
+    setTimeError("");
+
     setTempProduction(tempProduction =>  {return {...tempProduction, production_time : newValue}})
   }
 
@@ -191,20 +196,18 @@ export function ProductionSetup(){
       return [false, {}];
     }
 
-    const production = (productionReference.type == PRODUCTION_TYPES.PRODUCTION) ?
+    const production = (product.type == PRODUCTION_TYPES.PRODUCTION) ?
       {
         id : tempProduction.id,
-        tracer : productionReference.product_id,
+        tracer : product.product_id,
         production_time : formattedTime,
         production_day : numberfy(tempProduction.production_day),
       } : {
         id : tempProduction.id,
-        isotope : productionReference.product_id,
+        isotope : product.product_id,
         production_time : formattedTime,
         production_day : numberfy(tempProduction.production_day),
       };
-
-    console.log(production)
 
     return [validTime, production];
   }
@@ -216,7 +219,7 @@ export function ProductionSetup(){
   }
 
   const optionIndex = (() => {
-    switch (productionReference.type){
+    switch (product.type){
       case PRODUCTION_TYPES.PRODUCTION:
         return 0;
       case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
@@ -226,15 +229,22 @@ export function ProductionSetup(){
     }
   })();
 
+  useCommitObject({
+    validate : validate,
+    temp_object : tempProduction,
+    object_type : product.type,
+    callback : validateCallback
+  });
+
 
   return (<Container>
     <Row
       style={{ margin : "15px" }}>
       <Col>
         <Select
-          aria-label="tracer-selector"
+          aria-label="product-selector"
           options={productionOptions}
-          value={productionReference.to_value()}
+          value={product.to_value()}
           onChange={selectNewProduct}
         />
       </Col>
@@ -261,7 +271,7 @@ export function ProductionSetup(){
             <CommitButton
               temp_object={tempProduction}
               validate={validate}
-              object_type={productionReference.type}
+              object_type={product.type}
               label="commit-active-production"
               callback={validateCallback}
             />

@@ -17,6 +17,7 @@ import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";
+import { useUpdatingEffect } from "~/effects/updating_effect";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
@@ -42,7 +43,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
     const [errorSeriesDescription, setErrorSeriesDescription] = useState("");
 
     // Refresh
-    useEffect(() => {
+    useUpdatingEffect(() => {
       setTracer(nullParser(procedure.tracer));
       setUnits(nullParser(procedure.tracer_units));
       setDelay(nullParser(procedure.delay_minutes))

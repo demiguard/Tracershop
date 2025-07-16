@@ -1,4 +1,4 @@
-import { ActivityOrder, TracershopState } from "~/dataclasses/dataclasses";
+import { ActivityOrder, TracershopState, Vial } from "~/dataclasses/dataclasses";
 import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy";
 
 export function CountMinutes(past,future) {
@@ -48,4 +48,22 @@ export function fulfillmentActivity(order, state){
   const timeDifference = compareTimeStamp(baseTimeStamp, moveTimeStamp).toMinutes();
 
   return Math.floor(calculateProduction(isotope.halflife_seconds, timeDifference, order.ordered_activity))
+}
+
+/**
+ *
+ * @param {Vial} vial
+ * @param {any} time
+ */
+export function correctVialActivityToTime(vial, time, halflife_seconds){
+  const timeStamp = new TimeStamp(time)
+  const vialTimeStamp = new TimeStamp(vial.fill_time);
+
+  const diffTimeStamp = compareTimeStamp(timeStamp, vialTimeStamp);
+
+  const minutes_delay = diffTimeStamp.toMinutes()
+
+  return 0 < minutes_delay ?
+      calculateProduction(halflife_seconds, minutes_delay, vial.activity)
+    : vial.activity;
 }

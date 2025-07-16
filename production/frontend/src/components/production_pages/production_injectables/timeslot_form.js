@@ -14,8 +14,10 @@ import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { parseDanishPositiveNumberInput, parseTimeInput } from "~/lib/user_input";
 
 import {StateType, WEEKLY_REPEAT_CHOICES} from '~/lib/constants.js';
-import { ActivityProduction, IsotopeProduction, TracershopState } from "~/dataclasses/dataclasses";
+import { ActivityProduction, DeliveryEndpoint, IsotopeProduction, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { presentName, presentOptionName } from "~/lib/presentation";
+import { TracerCatalog, useTracerCatalog } from "~/contexts/tracer_catalog";
+import { useUpdatingEffect } from "~/effects/updating_effect";
 
 const WeeklyRepeatOptions = toOptions([
   { id : 0, name : "Alle Uger"},
@@ -23,50 +25,63 @@ const WeeklyRepeatOptions = toOptions([
   { id : 2, name : "Ulige Uger"},
 ]);
 
+
 /**
  *
- * @param {Number} endpointID
- * @param {Number} tracerID
- * @param {TracershopState} state
- * @returns
+ * @param {TracerCatalogPage} page
  */
-function initializeOverhead(endpointID, tracerID, state){
-  for(const tracerCatalogPage of state.tracer_mapping.values()){
-    if(tracerCatalogPage.endpoint === endpointID &&
-        tracerCatalogPage.tracer === tracerID){
-        return [tracerCatalogPage.id, String(Math.round((tracerCatalogPage.overhead_multiplier - 1) * 100))];
-      }
-  }
-  return [null, "0"];
-}
+function getOverheadString(page) {
+  const percentage = Math.round((page.overhead_multiplier - 1) * 100);
 
+  return String(percentage)
+}
 
 /**
  *
  * @param {Object} props
  * @param {StateType<ProductionReference>} props.productState
+ * @param {DeliveryEndpoint} props.selectedEndpoint - The endpoint that is currently being operated on
  */
 export function TimeSlotForm({
   timeSlotDirty,
   timeSlotState,
   selectedEndpoint,
   initializeNewTimeSlot,
-  tracerCatalogPage,
-  overheadState, initialOverhead,
+  initialOverhead,
   setEndpointReferenceError,
   productState,
   products
 }){
   const state = useTracershopState();
+  const tracerCatalog = useTracerCatalog();
+  const [product, setProduct_] = productState;
+  const [tempTimeSlot, setTempTimeSlot] = timeSlotState;
+  const endpointCatalog = tracerCatalog.getCatalog(selectedEndpoint.id);
+
+  function setCatalogPage(product){
+    if (product.is_tracer()) {
+      if (endpointCatalog.pages.has(product.product_id)) {
+        return endpointCatalog.pages.get(product.product_id);
+      } else {
+        return new TracerCatalogPage(-1, selectedEndpoint.id, product.product_id, -1, 1);
+      }
+    }
+    return {
+      overhead_multiplier : ""
+    };
+  }
+
+  const tracerCatalogPage = setCatalogPage(product);
 
   const [deliveryTimeError, setDeliveryTimeError] = useState("");
+
+  const [overhead, setOverhead] = useState(() => {
+    if(tracerCatalogPage instanceof TracerCatalogPage){
+      return getOverheadString(tracerCatalogPage);
+    }
+    return "";
+  });
   const [overheadError, setOverheadError] = useState("");
-  const [product, setProduct_] = productState;
-  const productReferenceOptions = products.map(productToReferenceOption);
-
-
-  const [tempTimeSlot, setTempTimeSlot] = timeSlotState;
-  const [overhead, setOverhead]         = overheadState;
 
   const DATA_TYPE = product.is_tracer() ? DATA_DELIVER_TIME : DATA_ISOTOPE_DELIVERY;
 
@@ -84,6 +99,11 @@ export function TimeSlotForm({
     }
 
     // Update overhead
+    if(productReference.is_tracer()){
+      const newProductPage = setCatalogPage(productReference);
+
+      setOverhead(getOverheadString(newProductPage));
+    }
     // Reset temp
     const new_productions = productReference.filterProduction(state);
     switch (productReference.type) {
@@ -96,36 +116,41 @@ export function TimeSlotForm({
           delivery_endpoint : selectedEndpoint.id
         });
         break;
-      case PRODUCTION_TYPES.PRODUCTION:
-        setTempTimeSlot({
-          id : -1,
-          production_run : new_productions[0].id,
-          weekly_repeat : WEEKLY_REPEAT_CHOICES.ALL,
-          delivery_time : "",
-          destination : selectedEndpoint.id
-        });
-        break;
+        case PRODUCTION_TYPES.PRODUCTION:
+          setTempTimeSlot({
+            id : -1,
+            production_run : new_productions[0].id,
+            weekly_repeat : WEEKLY_REPEAT_CHOICES.ALL,
+            delivery_time : "",
+            destination : selectedEndpoint.id
+          });
+          break;
+        }
+
+    setProduct_(productReference);
+  }
+
+  useUpdatingEffect(function updateOverheadToNewEndpoint() {
+    let overheadString = "";
+
+    if (product.is_tracer()) {
+      if (endpointCatalog.pages.has(product.product_id)) {
+        const tcp = endpointCatalog.pages.get(product.product_id);
+        overheadString = (String((tcp.overhead_multiplier - 1) * 100));
+      }
     }
-
-    setProduct_(productReference)
-  }
-
-  function getOverheadForEndpoint(newEndpointID, tracerID){
-    const [, overhead] = initializeOverhead(newEndpointID, tracerID);
-
-
-
-    setOverhead(overhead);
-  }
+    setOverhead(overheadString);
+    return () => {};
+  },[selectedEndpoint]);
 
   /**
    * Function called in response to the user clicking accept key on timeslots
-    *
-    * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
-    */
-  function validateTimeSlot(){
-    const endpointID = selectedEndpoint.id;
-    if(endpointID === -1){ // database indexes are 1 index therefore always return true on valid endpoint
+  *
+  * Should update the TimeSlot or create a new time slot if activeTimeSlot is undefined
+  */
+ function validateTimeSlot(){
+   const endpointID = selectedEndpoint.id;
+   if(endpointID === -1){ // database indexes are 1 index therefore always return true on valid endpoint
       setEndpointReferenceError("Man skal oprette et leveringstedet før man kan lave leverings tidspunnkter");
       return [false, {}];
     }
@@ -176,7 +201,7 @@ export function TimeSlotForm({
       }
       default:
         return [false, {}];
-    }
+      }
   }
 
   function validateOverhead(){
@@ -189,24 +214,27 @@ export function TimeSlotForm({
 
     setOverheadError("");
 
-    return [true, {...tracerCatalogPage, overhead_multiplier : parsedOverhead / 100 + 1}];
+    return [true, { ...tracerCatalogPage, overhead_multiplier : parsedOverhead / 100 + 1 }];
   }
 
   function setProduction(){
     switch (product.type){
       case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
         return setTempObjectToEvent(setTempTimeSlot, 'production', Number);
-      case PRODUCTION_TYPES.PRODUCTION:
-        return setTempObjectToEvent(setTempTimeSlot, 'production_run', Number)
+        case PRODUCTION_TYPES.PRODUCTION:
+          return setTempObjectToEvent(setTempTimeSlot, 'production_run', Number)
       default:
         return () => {}
+      }
     }
-  }
 
-  function clearTime(){
-    setTempTimeSlot(old => ({...old, delivery_time : ""}));
-  }
+    function clearTime(){
+      setTempTimeSlot(old => ({...old, delivery_time : ""}));
+    }
 
+  // These are the options of products
+  const productReferenceOptions = products.map(productToReferenceOption);
+  // These are the productions of said products
   const productionOptions = product.filterProduction(state).map(
     (prod) => {
       return new Option(prod.id, presentOptionName(prod));

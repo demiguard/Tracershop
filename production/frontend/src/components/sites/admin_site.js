@@ -40,7 +40,14 @@ export function AdminSite({logout}) {
     init.current.activeSite = activeSite
   }
 
-  const [activeSite, setActiveSite] = useState(init.current.activeSite);
+  const [activeSite, setActiveSite] = useState(() => {
+    let /**@type {string} */ activeSite = db.get(DATABASE_ADMIN_PAGE);
+    if (activeSite === undefined || activeSite === null){
+      db.set(DATABASE_ADMIN_PAGE, SITE_NAMES.production);
+      return SITE_NAMES.production
+    }
+    return activeSite;
+  });
 
   function changeSite(identifier){
     return () => {

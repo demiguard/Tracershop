@@ -10,7 +10,7 @@ import { ActivityDeliveryIcon, ClickableIcon, IdempotentIcon, StatusIcon } from 
 import { Comment } from '~/components/injectable/data_displays/comment';
 import { ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
-import { calculateProduction, fulfillmentActivity } from '~/lib/physics';
+import { calculateProduction, correctVialActivityToTime, fulfillmentActivity } from '~/lib/physics';
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
 import { EndpointDisplay } from '~/components/injectable/data_displays/endpoint';
 import { DISPLAY, JUSTIFY } from '~/lib/styles';
@@ -113,6 +113,7 @@ function ProductionInnerContentStatusORDERED({orderCollection, firstAvailableTim
   const canMove = firstAvailableTimeSlot.id !== orderCollection.delivering_time_slot.id;
   const websocket = useWebsocket();
 
+
   function acceptOrders(){
     const acceptedOrders = orderCollection.relevant_orders.filter(
       (order) => order.status === ORDER_STATUS.ORDERED
@@ -131,6 +132,7 @@ function ProductionInnerContentStatusORDERED({orderCollection, firstAvailableTim
       <div>Bestilt:</div>
       <MBqDisplay activity={orderCollection.ordered_activity}/>
     </Col>
+
     <Col xs={3} style={cssCenter}>
       <div>Til udlevering:</div>
       <MBqDisplay activity={orderCollection.deliver_activity}/>
@@ -164,10 +166,23 @@ function ProductionInnerContentStatusACCEPTED({
 }){
   const canMove = firstAvailableTimeSlot.id !== orderCollection.delivering_time_slot.id;
 
+  const vialActivity = 0;
+  for(const vial of orderCollection.unassigned_vials){
+    vialActivity += correctVialActivityToTime(
+      vial,
+      orderCollection.delivering_time_slot.delivery_time,
+      orderCollection.isotope.halflife_seconds
+    );
+  }
+
   return <Row>
     <Col xs={3} style={cssCenter}>
       <div>Bestilt:</div>
       <MBqDisplay activity={orderCollection.ordered_activity}/>
+    </Col>
+    <Col>
+      <div>Dispenseret:</div>
+      <MBqDisplay activity={vialActivity}/>
     </Col>
     <Col xs={3} style={cssCenter}>
       <div>Til udlevering:</div>

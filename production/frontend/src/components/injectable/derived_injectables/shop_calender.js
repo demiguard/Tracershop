@@ -14,13 +14,13 @@ import { getId } from '~/lib/utils';
  * }} param0
  * @returns
  */
-export function ShopCalender({active_date, on_day_click, active_endpoint, time_slots}){
+export function ShopCalender({on_day_click, active_endpoint, time_slots}){
   const state = useTracershopState();
   const bitChain = new TimeSlotBitChain(time_slots, state.production)
   const timeSlotIDs = time_slots.map(getId);
 
   return <Calender
-    calender_date={active_date}
+    calender_date={state.today}
     calender_on_day_click={on_day_click}
     filter_activity_orders={(ao) => timeSlotIDs.includes(ao.ordered_time_slot)}
     filter_injection_orders={(io) => io.endpoint === active_endpoint}
@@ -29,7 +29,6 @@ export function ShopCalender({active_date, on_day_click, active_endpoint, time_s
 }
 
 ShopCalender.propTypes = {
-  active_date : propTypes.objectOf(Date).isRequired,
   on_day_click : propTypes.func.isRequired,
   time_slots : propTypes.arrayOf(Number).isRequired,
 }

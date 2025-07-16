@@ -14,6 +14,6 @@ describe("getDateName Tests", () => {
   });
 
   it("is unknown", () => {
-    expect(getDateName).toThrow("Unknown Day");
+    expect(() => (presentDateName())).toThrow("Unknown Day");
   });
 })

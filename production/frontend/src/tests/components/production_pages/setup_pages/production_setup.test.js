@@ -47,7 +47,7 @@ describe("Production Setup", () => {
       }
     }
 
-    expect(screen.getByLabelText('tracer-selector')).toBeVisible();
+    expect(screen.getByLabelText('product-selector')).toBeVisible();
     expect(screen.getByLabelText('day-selector')).toBeVisible();
     expect(screen.getByLabelText('production-time')).toBeVisible();
     expect(screen.getByLabelText('commit-active-production')).toBeVisible();
@@ -62,7 +62,7 @@ describe("Production Setup", () => {
       </TracerShopContext>
     );
 
-    expect(screen.getByLabelText('tracer-selector')).toBeVisible();
+    expect(screen.getByLabelText('product-selector')).toBeVisible();
     expect(screen.getByLabelText('day-selector')).toBeVisible();
     expect(screen.getByLabelText('production-time')).toBeVisible();
     expect(screen.getByLabelText('commit-active-production')).toBeVisible();
@@ -90,10 +90,10 @@ describe("Production Setup", () => {
       </TracerShopContext>
     );
 
-    const tracerSelector = screen.getByLabelText('tracer-selector');
+    const tracerSelector = screen.getByLabelText('product-selector');
 
     act(() => {
-      fireEvent.change(tracerSelector, {target : {value : "3"}})
+      fireEvent.change(tracerSelector, {target : {value : "t-3"}})
     });
 
     for(const production of testState.production.values()){
@@ -111,12 +111,12 @@ describe("Production Setup", () => {
     );
 
 
-    const tracerSelector = screen.getByLabelText('tracer-selector');
+    const tracerSelector = screen.getByLabelText('product-selector');
     const daySelector = screen.getByLabelText('day-selector');
     const timeInput = screen.getByLabelText('production-time');
 
     act(() => {
-      fireEvent.change(tracerSelector, {target : {value : "3"}});
+      fireEvent.change(tracerSelector, {target : {value : "t-3"}});
       fireEvent.change(daySelector, {target : {value : "4"}});
       fireEvent.change(timeInput, {target : {value : "1"}});
       fireEvent.change(timeInput, {target : {value : "11"}});
@@ -137,7 +137,7 @@ describe("Production Setup", () => {
 
     expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_PRODUCTION,
       expect.objectContaining({
-        id : null,
+        id : -1,
         production_time : "11:22:00",
         tracer : 3,
         production_day : 4,

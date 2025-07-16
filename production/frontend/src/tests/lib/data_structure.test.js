@@ -5,8 +5,8 @@ import { jest } from '@jest/globals'
 
 const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage, TracershopState, Isotope, Customer, DeliveryEndpoint, ActivityOrder, User, Vial } = require("~/dataclasses/dataclasses");
 const { WEEKLY_REPEAT_CHOICES, TRACER_TYPE, DAYS, ORDER_STATUS, USER_GROUPS } = require("~/lib/constants");
-const { TimeSlotBitChain, CustomerCatalog, EndpointCatalog, ActivityOrderCollection } = require("~/lib/data_structures");
-const { TracerCatalog } = require('~/contexts/tracer_catalog');
+const { TimeSlotBitChain, CustomerCatalog, ActivityOrderCollection } = require("~/lib/data_structures");
+const { TracerCatalog, EndpointCatalog } = require('~/contexts/tracer_catalog');
 
 
 
@@ -53,7 +53,6 @@ describe("Bit chains test sweep", () => {
 describe("Tracer catalog Tests", () => {
   it("Empty Tracer catalog", () => {
     const tracerCatalog = new TracerCatalog(new Map(), new Map());
-    const consoleMock = jest.spyOn(console, 'log').mockImplementation(() => {});
     const empty_endpoint_catalog = tracerCatalog.getCatalog(1)
 
     expect(empty_endpoint_catalog).toBeInstanceOf(EndpointCatalog);
@@ -61,9 +60,7 @@ describe("Tracer catalog Tests", () => {
     expect(empty_endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
     expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([]);
     expect(tracerCatalog.getInjectionCatalog(1)).toStrictEqual([]);
-    expect(consoleMock).toHaveBeenCalledWith("Undefined endpoint referenced");
 
-    consoleMock.mockRestore();
   });
 
   it("My Own Test data", () =>  {

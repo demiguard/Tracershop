@@ -132,6 +132,7 @@ function entryJsxDecorator(onClick, JSXprops={}){
         })()
 
         return <div
+                  aria-label={`time-slot-${entry.id}`}
                   key={i}
                   style={{
                     ...JUSTIFY.center,
@@ -146,12 +147,13 @@ function entryJsxDecorator(onClick, JSXprops={}){
 
     return (
       <div
+        aria-label={`time-slot-${entry.id}`}
         style={{
           ...JUSTIFY.center,
           flex : "1 0 0"
         }}
         key={i}
-        onClick={onClick(entry)}
+        onClick={() => onClick(entry)}
       >
         {presentName(entry)}
       </div>

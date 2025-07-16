@@ -23,6 +23,8 @@ import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
 import { useTracerCatalog } from "~/contexts/tracer_catalog.js";
 import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages.js";
 import { toMapping } from "~/lib/utils.js";
+import { useUpdatingEffect } from "~/effects/updating_effect.js";
+
 
 const Content = {
   Manuel : OrderReview,
@@ -41,19 +43,7 @@ export function ShopOrderPage ({relatedCustomer}){
   const websocket = useWebsocket();
 
   const tracerCatalog = useTracerCatalog();
-
-  const init = useRef({
-    activeCustomer : null,
-    activeEndpoint : null,
-    viewIdentifier : null,
-    activeTracer : null
-  });
-
-  if (init.current.activeCustomer === null
-    || init.current.activeEndpoint === null
-    || init.current.viewIdentifier === null
-    || init.current.activeTracer === null
-  ){
+  const [activeCustomer, _setActiveCustomer] = useState(() => {
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
     if(activeCustomer !== null){
       if(!relatedCustomer.has(activeCustomer)){
@@ -69,6 +59,10 @@ export function ShopOrderPage ({relatedCustomer}){
       }
     }
 
+    return activeCustomer;
+  });
+
+  const [activeEndpoint, _setActiveEndpoint] = useState(() => {
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT);
     // This check is here to see t
     if(activeEndpoint !== null){
@@ -87,12 +81,20 @@ export function ShopOrderPage ({relatedCustomer}){
         }
       }
     }
+    return activeEndpoint
+  });
 
+  const [viewIdentifier, setViewIdentifier] = useState(() => {
     let viewIdentifier = db.get(DATABASE_SHOP_ORDER_PAGE);
     if (viewIdentifier === null || state.logged_in_user.user_group === USER_GROUPS.SHOP_EXTERNAL){
       viewIdentifier = "Manuel";
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
+    return viewIdentifier;
+
+  });
+
+  const [activeTracer, setActiveTracer] = useState(() => {
     const availableActivityTracers = tracerCatalog.getActivityCatalog(activeEndpoint);
     let activeTracerInit = -1;
     if (0 < availableActivityTracers.length){
@@ -105,19 +107,9 @@ export function ShopOrderPage ({relatedCustomer}){
         )){
       activeTracerInit = local_stored_active_tracer;
     }
+    return activeTracerInit
+  });
 
-    init.current = {
-      activeCustomer : activeCustomer,
-      activeEndpoint : activeEndpoint,
-      viewIdentifier : viewIdentifier,
-      activeTracer : activeTracerInit,
-    };
-  }
-
-  const [activeCustomer, _setActiveCustomer] = useState(init.current.activeCustomer);
-  const [activeEndpoint, _setActiveEndpoint] = useState(init.current.activeEndpoint);
-  const [viewIdentifier, setViewIdentifier] = useState(init.current.viewIdentifier);
-  const [activeTracer, setActiveTracer] = useState(init.current.activeTracer);
   const [bookings, setBookings] = useState(new Map());
   const activeDate = state.today;
 
@@ -158,7 +150,7 @@ export function ShopOrderPage ({relatedCustomer}){
     }
   }, [websocket]);
 
-  useEffect(function changeRelatedCustomer() {
+  useUpdatingEffect(function changeRelatedCustomer() {
     if(!relatedCustomer.has(activeCustomer)){
       let newActiveCustomer = null;
 

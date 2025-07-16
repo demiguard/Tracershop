@@ -1,9 +1,29 @@
-import React, { useMemo, useContext, createContext, useRef } from "react";
+import React, { useContext, createContext } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
-import { EndpointCatalog } from "~/lib/data_structures";
 import { numberfy } from "~/lib/utils";
+
+//#region EndpointCatalog
+export class EndpointCatalog {
+  /**@type {Array<Tracer>} @desc A list of tracers activity available to this endpoint */ tracerCatalogActivity
+  /**@type {Array<Tracer>} @desc A list of tracers injection available to this endpoint */ tracerCatalogInjections
+  /**@type {Map<Number, Number>} @desc  A Tracer to overhead percentage, so if a tracer with id 10 have 25 % overhead, this map will have 10 -> 1.25  */ overheadMap
+  /**@type {Map<Number, TracerCatalogPage>} @desc A mapping of tracer id to the page */ pages
+
+  /**
+   * Catalog of product that a single endpoint
+   * * @property {Map<Number, TracerCatalogPage>} pages
+   */
+  constructor() {
+    this.tracerCatalogActivity = [];
+    this.tracerCatalogInjections = [];
+    this.isotopeCatalog = [];
+    this.overheadMap = new Map();
+    this.pages = new Map();
+  }
+}
+
 
 /**
  * Data structure containing information about which tracers a customer have access to
@@ -19,7 +39,7 @@ export class TracerCatalog {
    * The Collection of mappings of customer to tracer, where an entry implies the customer is allowed to order
    * @param {Map<Number, Tracer>} tracers The Collection of all tracers
    */
-  constructor(tracerCatalogPages, tracers) {
+  constructor(tracerCatalogPages, tracers, isotopes=[]) {
     this._endpointCatalogs = new Map();
 
     for (const tracerCatalogPage of tracerCatalogPages.values()) {
@@ -28,6 +48,7 @@ export class TracerCatalog {
       }
 
       const endpoint_catalog = this._endpointCatalogs.get(tracerCatalogPage.endpoint);
+      endpoint_catalog.pages.set(tracerCatalogPage.tracer, tracerCatalogPage);
 
       const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
       if (tracer === undefined) {
@@ -55,7 +76,7 @@ export class TracerCatalog {
     if (endpoint_catalog !== undefined) {
       return endpoint_catalog;
     }
-    console.log("Undefined endpoint referenced");
+
     return new EndpointCatalog();
   }
 

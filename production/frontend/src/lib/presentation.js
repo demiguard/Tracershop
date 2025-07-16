@@ -5,8 +5,8 @@
 
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ActivityDeliveryTimeSlot, ActivityProduction, Customer, DeliveryEndpoint, Isotope, IsotopeDelivery, IsotopeProduction, Tracer } from "~/dataclasses/dataclasses";
-import { datify, getDay } from "~/lib/chronomancy";
-import { getDateName } from "~/lib/formatting";
+import { getDay } from "~/lib/chronomancy";
+
 
 const DAY_NAMES = [
   "Mandag",
@@ -21,6 +21,9 @@ const DAY_NAMES = [
 export function presentDateName(day){
   if(day instanceof Date){
     day = getDay(day);
+  }
+  if(!(day in DAY_NAMES)){
+    throw "Unknown Day";
   }
 
   return DAY_NAMES[day];
