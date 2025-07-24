@@ -1,15 +1,26 @@
 import React from 'react'
 import {Image, Button, Col, Row} from 'react-bootstrap'
 import propTypes from 'prop-types'
-import { ActivityOrder, InjectionOrder } from '~/dataclasses/dataclasses'
-import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection.js'
+import { ActivityOrder, InjectionOrder, IsotopeOrder } from '~/dataclasses/dataclasses'
+import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection'
 import { ORDER_STATUS } from '~/lib/constants'
-import { InjectionOrderPDFUrl, openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
+import { openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
-import { IdempotentButton } from '~/components/injectable/buttons'
+import { IdempotentButton } from './buttons'
 import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER } from '~/lib/shared_constants'
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
+
+interface ClickableIconProps {
+  altText? : string,
+  src : string,
+  onClick? : any,
+  onMouseDown? : any,
+  label? : string,
+  className? : string,
+  style? : Object,
+  variant? : string,
+}
 
 export function ClickableIcon ({
     altText,
@@ -20,7 +31,7 @@ export function ClickableIcon ({
     className ,
     style,
     variant,
-  }){
+  } : ClickableIconProps){
 
   if(style === undefined){
     style = {
@@ -84,6 +95,14 @@ function statusImages(status) {
   }
 }
 
+interface StatusIconArgs {
+  altText? : string,
+  label? : string,
+  onClick? : () => {};
+  order? : ActivityOrder | InjectionOrder | IsotopeOrder
+  orderCollection? : ActivityOrderCollection | IsotopeOrderCollection
+}
+
 /**
  *
  * @param {{
@@ -95,7 +114,7 @@ function statusImages(status) {
  * }} param0
  * @returns
  */
-export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
+export function StatusIcon ({onClick, label, order, orderCollection, altText} : StatusIconArgs) {
   const statusImagePath = (() => {
     if (orderCollection) {
       if(orderCollection instanceof ActivityOrderCollection && orderCollection.moved) {
@@ -111,18 +130,16 @@ export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
     return statusImages(order.status);
   })();
 
-  console.log(statusImagePath, orderCollection);
   if(statusImagePath === ""){
     return <div></div>;
   }
 
-
-    return <ClickableIcon
-      altText={altText}
-      onClick={onClick}
-      label={label}
-      src={statusImagePath}
-    />;
+  return <ClickableIcon
+    altText={altText}
+    onClick={onClick}
+    label={label}
+    src={statusImagePath}
+  />;
 }
 
 StatusIcon.propTypes = {
@@ -153,19 +170,7 @@ export function ActivityDeliveryIcon(props){
 }
 
 // I feel dirty
-const ActivityDeliveryIconInheritedPropTypes = {...ClickableIcon.propTypes};
-delete ActivityDeliveryIconInheritedPropTypes['src'];
-delete ActivityDeliveryIconInheritedPropTypes['onClick'];
 
-ActivityDeliveryIcon.propTypes = {
-  ...ActivityDeliveryIconInheritedPropTypes,
-  orderCollection : propTypes.instanceOf(ActivityOrderCollection),
-}
-
-// I feel dirty
-const injectionDeliveryIconInheritedPropTypes = {...ClickableIcon.propTypes};
-delete injectionDeliveryIconInheritedPropTypes['src'];
-delete injectionDeliveryIconInheritedPropTypes['onClick'];
 
 
 export function InjectionDeliveryIcon(props){
@@ -175,11 +180,6 @@ export function InjectionDeliveryIcon(props){
     onClick={ openInjectionReleasePDF(order)}
     {...newProps}  // This is here to make props overwrite default props
   />;
-}
-
-InjectionDeliveryIcon.propTypes = {
-  ...injectionDeliveryIconInheritedPropTypes,
-  order: propTypes.instanceOf(InjectionOrder).isRequired
 }
 
 export function WebsocketIcon(){
@@ -279,7 +279,7 @@ return (<IdempotentButton
  *
  * @param {{
  *  orders : Array<InjectionOrder>
- * }} param0
+ * }} props
  */
 export function AcceptIconInjection(props){
   const websocket = useWebsocket();
@@ -287,6 +287,10 @@ export function AcceptIconInjection(props){
   const {orders, ...rest} = props;
 
   function acceptOrders(){
+    if (!websocket){
+      return Promise.resolve();
+    }
+
     const filtered_orders = orders.filter(
       order => order.status === ORDER_STATUS.ORDERED
     );
@@ -302,16 +306,14 @@ export function AcceptIconInjection(props){
   return <IdempotentIcon {...rest} src="/static/images/thumb-up-add.svg" onClick={acceptOrders}/>;
 }
 
-/**
- *
- * @param {{
-*  orders : Array<ActivityOrder>
-* }} param0
-*/
-export function AcceptIconActivity({orders}){
+export function AcceptIconActivity (props: {orders : Array<ActivityOrder>}){
+  const {orders} = props;
   const websocket = useWebsocket();
 
   function acceptOrders(){
+    if(!websocket){
+      return Promise.resolve();
+    }
     const filtered_orders = orders.filter(
       order => order.status === ORDER_STATUS.ORDERED
     );

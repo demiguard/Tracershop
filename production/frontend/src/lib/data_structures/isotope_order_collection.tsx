@@ -1,18 +1,16 @@
+import React from 'react';
 import { IsotopeDelivery, IsotopeOrder, TracershopState } from "~/dataclasses/dataclasses";
+import { IsotopeOrderReference } from "~/dataclasses/references/isotope_order_reference";
 import { ORDER_STATUS } from "~/lib/constants";
 
-
 export class IsotopeOrderCollection {
-  #minimum_status // Minimum status of all the orders
-  delivery
+  #minimum_status : ORDER_STATUS // Minimum status of all the orders
+  delivery : IsotopeDelivery
 
   /** A collection of Isotope orders, that
    *
-   * @param {Array<IsotopeOrder>} orders
-   * @param {IsotopeDelivery} delivery
-   * @param {TracershopState} state
    */
-  constructor(orders, delivery, state){
+  constructor(orders: Array<IsotopeOrderReference>, delivery: IsotopeDelivery, state : TracershopState){
     this.#minimum_status = ORDER_STATUS.EMPTY;
     this.delivery = delivery;
 

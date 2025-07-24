@@ -4,24 +4,22 @@ import { Modal, Row, Container } from "react-bootstrap";
 import {  TRACER_TYPE,
   WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES,
   WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
-   WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants.js";
+   WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants";
 import { DATA_ENDPOINT } from "~/lib/shared_constants.js"
 import { CloseButton } from "../injectable/buttons.js";
 import { toOptions } from "../injectable/select.js"
-import { ClickableIcon } from "../injectable/icons.js";
-import { WeeklyTimeTable } from "../injectable/weekly_time_table.js"
-import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses.js";
-import { useTracershopState } from "../../contexts/tracer_shop_context.js";
-import { compareLoosely } from "~/lib/utils.js";
-import { clone } from "~/lib/serialization.js";
-import { endpointFilter, isotopeFilter, tracerTypeFilter } from "~/lib/filters.js";
+import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
+import { compareLoosely } from "~/lib/utils";
+import { clone } from "~/lib/serialization";
+import { endpointFilter, isotopeFilter, tracerTypeFilter } from "~/lib/filters";
 import { FONT, MARGIN } from "~/lib/styles.js";
 import { initializeProductReference } from "~/lib/initialization.js";
-import { CustomerForm } from "~/components/production_pages/production_injectables/customer_form.js";
-import { EndpointForm } from "~/components/production_pages/production_injectables/endpoint_form.js";
-import { TimeSlotForm } from "~/components/production_pages/production_injectables/timeslot_form.js";
-import { DataClassTimeTable } from "~/components/injectable/dataclass_time_table.js";
-import { useUpdatingEffect } from "~/effects/updating_effect.js";
+import { CustomerForm } from "~/components/production_pages/production_injectables/customer_form";
+import { EndpointForm } from "~/components/production_pages/production_injectables/endpoint_form";
+import { TimeSlotForm } from "~/components/production_pages/production_injectables/timeslot_form";
+import { DataClassTimeTable } from "~/components/injectable/dataclass_time_table";
+import { useUpdatingEffect } from "~/effects/updating_effect";
 
 export const DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE = "Der kan ikke laves en levering før den valgte produktion";
 

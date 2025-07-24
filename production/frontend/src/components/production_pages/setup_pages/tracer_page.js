@@ -8,14 +8,14 @@ import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
   cssTableCenter} from "~/lib/constants.js";
 import { Tracer } from "~/dataclasses/dataclasses.js";
 import { DATA_TRACER } from "~/lib/shared_constants.js"
-import { ClickableIcon } from "../../injectable/icons.js";
-import { Select,  toOptions } from "../../injectable/select.js";
-import { HoverBox } from "../../injectable/hover_box.js";
-import { OpenCloseButton } from "../../injectable/open_close_button.js";
-import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context.js";
+import { ClickableIcon } from "~/components/injectable/icons";
+import { Select,  toOptions } from "~/components/injectable/select.js";
+import { HoverBox } from "~/components/injectable/hover_box.js";
+import { OpenCloseButton } from "~/components/injectable/open_close_button";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { CommitButton } from "~/components/injectable/commit_button.js";
-import { nullParser } from "~/lib/formatting.js";
-import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
+import { nullParser } from "~/lib/formatting";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { compareLoosely } from "~/lib/utils.js";
 import { Optional } from "~/components/injectable/optional.js";
 import { EditableInput } from "~/components/injectable/inputs/editable_input.js";

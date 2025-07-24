@@ -1,14 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Collapse, Col, Row } from "react-bootstrap";
-
 import { ActivityOrder } from "../../../dataclasses/dataclasses";
 import { dateToDateString, nullParser, renderDateTime } from "../../../lib/formatting";
-
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
-import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from "../../injectable/icons";
+import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from "~/components/injectable/icons.tsx"
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
-
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp } from "~/lib/chronomancy";
 import { compareLoosely, nullify, toMapping } from "~/lib/utils";

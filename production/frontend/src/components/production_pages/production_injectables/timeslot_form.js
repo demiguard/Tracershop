@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { CommitButton } from "~/components/injectable/commit_button";
-import { ClickableIcon } from "~/components/injectable/icons";
+import { ClickableIcon } from "~/components/injectable/icons.tsx";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";

@@ -7,19 +7,18 @@ import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
 import { Authenticate } from "../injectable/authenticate.js";
 import { HoverBox } from "../injectable/hover_box";
 import { CloseButton, MarginButton } from "../injectable/buttons.js";
-import { ClickableIcon, StatusIcon } from "../injectable/icons.js";
+import { ClickableIcon, StatusIcon } from "~/components/injectable/icons";
 import { Comment } from "../injectable/data_displays/comment.js";
-
-import { NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants.js";
+import { NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
   DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPE,
   WEBSOCKET_MESSAGE_CORRECT_ORDER,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY
-} from "~/lib/shared_constants.js"
+} from "~/lib/shared_constants"
 import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
-import { compareDates, getId, openActivityReleasePDF } from "../../lib/utils.js";
+import { compareDates, getId, openActivityReleasePDF } from "~/lib/utils";
 import { TimeInput } from "../injectable/inputs/time_input.js";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
 import { OrderMapping } from "~/lib/data_structures/order_mapping.js";

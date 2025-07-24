@@ -3,7 +3,7 @@ import { Col, Container, FormCheck, FormControl, Row } from "react-bootstrap";
 import { IdempotentButton } from "~/components/injectable/buttons";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { DeleteButton } from "~/components/injectable/delete_button";
-import { IdempotentIcon } from "~/components/injectable/icons";
+import { IdempotentIcon } from "~/components/injectable/icons.tsx";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";
 import { Option, Select, toOptions } from "~/components/injectable/select";

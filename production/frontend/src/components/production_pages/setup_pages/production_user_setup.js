@@ -5,20 +5,19 @@ import React, { useEffect, useRef, useState } from "react";
 import { Card, Col, Container, Form, FormControl, InputGroup, Row } from "react-bootstrap";
 import {  USER_GROUPS, cssCenter } from "~/lib/constants";
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_CUSTOMER,
-  DATA_USER,
-  DATA_USER_ASSIGNMENT, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
+  DATA_USER_ASSIGNMENT, WEBSOCKET_DATA, WEBSOCKET_DATA_ID,
+  WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,
+  WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants"
 import { User, UserAssignment } from "~/dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
-import { ClickableIcon } from "../../injectable/icons";
-import { makePassword, nullParser } from "~/lib/formatting";
-import { HoverBox } from "../../injectable/hover_box";
+import { ClickableIcon } from "../../injectable/icons.tsx";
+import { nullParser } from "~/lib/formatting";
 import { CustomerSelect } from "../../injectable/derived_injectables/customer_select";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { setStateToEvent, setTempMapToEvent, setTempObjectMapToEvent } from "~/lib/state_management";
 import { ArrayMap } from "~/lib/array_map";
-import { Optional } from "~/components/injectable/optional";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
-import { CommitButton } from "~/components/injectable/commit_button";
+
 import { nullify } from "~/lib/utils";
 
 export function ProductionUserSetup(){

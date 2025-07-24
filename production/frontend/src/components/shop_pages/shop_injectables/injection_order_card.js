@@ -4,7 +4,7 @@ import propTypes from 'prop-types';
 
 import { nullParser } from "~/lib/formatting";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-import { ClickableIcon, InjectionDeliveryIcon, StatusIcon } from "../../injectable/icons";
+import { ClickableIcon, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons.tsx";
 import { Select, toOptions } from "../../injectable/select";
 import { ORDER_STATUS, cssCenter } from "~/lib/constants";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";

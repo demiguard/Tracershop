@@ -2,7 +2,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
 
-//
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
 import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
 import { setStateToEvent } from "../../lib/state_management";
@@ -10,15 +9,13 @@ import { CustomerSelect } from "../injectable/derived_injectables/customer_selec
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
 import { DateInput } from "../injectable/inputs/date_input";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
-import { ErrorInput } from "../injectable/inputs/error_input";
 import { parseDateInput } from "~/lib/user_input";
 import { MarginButton } from "~/components/injectable/buttons";
 import { UpdateToday } from "~/lib/state_actions";
 import { clamp } from "~/lib/utils";
-import { ClickableIcon, IdempotentIcon } from "~/components/injectable/icons";
+import { ClickableIcon } from "~/components/injectable/icons.tsx";
 import { HoverBox } from "~/components/injectable/hover_box";
-import { Option, Select, toOptions } from "~/components/injectable/select";
-import { cssCenter } from "~/lib/constants";
+
 import { Optional } from "~/components/injectable/optional";
 
 
@@ -42,7 +39,6 @@ const SortingOptions = {
 
 function VialRow({vial}){
   const state = useTracershopState();
-  const websocket = useWebsocket();
   const server_config = state.server_config.get(1);
   const customer = state.customer.get(vial.owner);
   const customerName = customer === undefined ?

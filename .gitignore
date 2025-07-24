@@ -56,3 +56,4 @@ test_printing/
 data/
 tsconfig.tsbuildinfo
 chunk-manifest.json
+dist/

@@ -21,7 +21,13 @@ const RotatedDiv = styled.div`
   transform : rotate(90deg)
 `
 
-export function OpenCloseButton({open, setOpen, label}) {
+interface OpenCloseButtonArgs {
+  open : boolean,
+  setOpen : (a: (a: boolean) => boolean ) => undefined
+  label? : string,
+}
+
+export function OpenCloseButton({open, setOpen, label}: OpenCloseButtonArgs) {
   const [rotated, setRotated] = useState(open);
   const [rotating, setRotating] = useState(false);
 
@@ -50,7 +56,8 @@ export function OpenCloseButton({open, setOpen, label}) {
       } else {
         rotateClockwise();
       }
-      setOpen(open => !open);
+
+      setOpen((open) => !open);
     }}
   />
 

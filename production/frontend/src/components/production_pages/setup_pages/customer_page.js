@@ -3,13 +3,12 @@ import { Row, FormControl, Table, Container, Col, InputGroup } from "react-boots
 
 import { CustomerModal } from "../../modals/customer_modal.js";
 import { PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE } from "../../../lib/constants.js";
-import { ClickableIcon, IdempotentIcon } from "../../injectable/icons.js"
+import { ClickableIcon, IdempotentIcon } from "../../injectable/icons.tsx"
 import { setStateToEvent } from "~/lib/state_management.js";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context.js";
 import { DATA_CUSTOMER, DATA_ENDPOINT } from "~/lib/shared_constants.js";
 import { MESSAGE_UPDATE_STATE } from "~/lib/incoming_messages.js";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group.js";
-import { IdempotentButton } from "~/components/injectable/buttons.js";
 import { Customer } from "~/dataclasses/dataclasses.js";
 import { Optional } from "~/components/injectable/optional.js";
 

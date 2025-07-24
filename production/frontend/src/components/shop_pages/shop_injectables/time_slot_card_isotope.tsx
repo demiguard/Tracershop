@@ -8,15 +8,8 @@ import { IsotopeOrderCollection } from "~/lib/data_structures/isotope_order_coll
 import { CENTER, JUSTIFY, PADDING } from "~/lib/styles";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
 import { isDirty } from "~/lib/utils";
+import { IsotopeOrderReference } from "~/dataclasses/references/isotope_order_reference";
 
-
-function OrderButton ({order, isDirty}){
-  if(order.status === ORDER_STATUS.RELEASED){
-    return <ReleaseButton order={order}/>
-  }
-
-  return
-}
 
 /**
  *
@@ -34,8 +27,11 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
         <Col xs={1} style={JUSTIFY.center}>
           <StatusIcon orderCollection={isotopeOrderCollection}/>
         </Col>
-        <Col xs={2} style={{...CENTER, display : "flex"}}>{isotopeOrderCollection.delivery.delivery_time}</Col>
-
+        <Col xs={2} style={{
+          alignItems: 'center',
+          textAlign: 'center',
+          display : "flex"
+          }}>{isotopeOrderCollection.delivery.delivery_time}</Col>
         <Col xs={1} style={{
           justifyContent : 'right',
           display : "flex"
@@ -50,6 +46,11 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
   )
 }
 
+interface OrderRowProps {
+  order : IsotopeOrderReference,
+  deadlineValid : Boolean,
+}
+
 /** Row that displays the order
  *
  * @param {Object} props
@@ -57,9 +58,14 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
  * @param {Boolean} props.canEdit - If the user should be able to edit the order
  * @returns
  */
-function OrderRow({order, deadlineValid}){
+function OrderRow({order, deadlineValid}: OrderRowProps){
   const canEdit = deadlineValid && [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(order.status);
 
+  console.log("Hello world")
+
+  function validate(){
+    return true;
+  }
 
   const [tempOrder, setTempOrder] =  useState(order);
 
@@ -67,29 +73,34 @@ function OrderRow({order, deadlineValid}){
 
   return <Row>
     <Col>
-
+      hello world
     </Col>
     <Col>
 
     </Col>
     <Col xs={1}>
-
+      {order.shopActionButton({
+        validate : validate,
+        is_dirty : orderDirty,
+        canEdit : canEdit,
+      })}
     </Col>
   </Row>
 }
 
-/**
- *
- * @param {Object} props
- * @param {IsotopeDelivery} props.timeSlot - This is the time slot that the card
- * should render
- * @param {Array<IsotopeOrder>} orders - The orders that have been place here
- */
+
+interface TimeSlotCardIsotopeArgs {
+  timeSlot : IsotopeDelivery,
+  orders : Array<IsotopeOrderReference>,
+  deadlineValid : Boolean
+}
+
+
 export function TimeSlotCardIsotope({
   timeSlot,
   orders,
   deadlineValid,
-}){
+}: TimeSlotCardIsotopeArgs){
   const state = useTracershopState();
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(deadlineValid);
@@ -98,18 +109,26 @@ export function TimeSlotCardIsotope({
 
   const renderedOrders = orders.map(
     (order) => {
-      return <OrderRow key={order.id} order={order}/>
+      return <OrderRow key={order.order.id} order={order} deadlineValid={deadlineValid}/>
     });
 
   if(deadlineValid){
     renderedOrders.push(
-      <OrderRow key={-1} order={new IsotopeOrder(-1, ORDER_STATUS.AVAILABLE)}/>
+      <OrderRow key={-1}
+      order={
+        new IsotopeOrderReference(
+          new IsotopeOrder(-1, ORDER_STATUS.AVAILABLE)
+        )
+      }
+      deadlineValid={deadlineValid}
+      />
     )
   }
 
+  console.log(deadlineValid)
+
   return (
     <Card style={PADDING.all.px0}>
-
       <CardHeader
         isotopeOrderCollection={isotopeOrderCollection}
         collapsedState={[collapsed, setCollapsed]}

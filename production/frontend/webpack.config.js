@@ -16,12 +16,12 @@ export default {
     chunkFilename: `[name]_${JAVASCRIPT_VERSION}_[contenthash].chunk.js`,
   },
   resolve : {
-    extensions : ['.js', '.jsx']
+    extensions : ['.js', '.jsx', '.tsx', '.ts']
   },
   module: {
     rules: [
       {
-        test: /\.js|.jsx$/,
+        test: /\.js|\.jsx|\.ts|\.tsx$/,
         exclude: /node_modules/,
         use: "babel-loader",
         resolve : {

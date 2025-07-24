@@ -3,12 +3,12 @@ import React, { useMemo, useState } from "react";
 import { Row, Col, Table, Button, Container, FormCheck } from 'react-bootstrap';
 import propTypes from "prop-types"
 
-import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, ORDER_STATUS, PROP_SELECTED } from "../../lib/constants.js";
-import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting.js";
-import { compareDates } from "../../lib/utils.js";
-import { CreateInjectionOrderModal } from "../modals/create_injection_modal.js";
-import { InjectionModal } from "../modals/injection_modal.js";
-import { AcceptIconInjection, InjectionDeliveryIcon, StatusIcon } from "../injectable/icons.js";
+import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, ORDER_STATUS, PROP_SELECTED } from "~/lib/constants";
+import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting";
+import { compareDates } from "~/lib/utils";
+import { CreateInjectionOrderModal } from "../modals/create_injection_modal";
+import { InjectionModal } from "../modals/injection_modal";
+import { AcceptIconInjection, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons";
 import { InjectionOrder } from "~/dataclasses/dataclasses.js";
 import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { InjectionUsage } from "../injectable/data_displays/injection_usage.js";
