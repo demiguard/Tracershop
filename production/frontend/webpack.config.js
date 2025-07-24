@@ -3,11 +3,17 @@ import webpack from "webpack";
 
 import { JAVASCRIPT_VERSION } from './src/lib/shared_constants.js';
 
+import { WebpackManifestPlugin } from 'webpack-manifest-plugin'
+import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer'
+
+
 export default {
+  mode: 'development',
   entry: "./src/index.js",
   output: {
     path: resolve("./static/frontend"),
     filename: `[name]_${JAVASCRIPT_VERSION}.js`,
+    chunkFilename: `[name]_${JAVASCRIPT_VERSION}_[contenthash].chunk.js`,
   },
   resolve : {
     extensions : ['.js', '.jsx']
@@ -29,31 +35,53 @@ export default {
       },
       {
         test: /\.(png|jpe?g|gif)$/i,
-        use: [
-          {
-            loader: 'file-loader',
-          },
-        ],
+        type: 'asset/resource',
+        generator: {
+          filename : 'images/[name].[contenthash][ext]'
+        }
       },
       {
         test: /\.svg$/,
-        use: [
-          {
-            loader: 'svg-url-loader',
-            options: {
-              limit: 10000,
-            },
+        type: 'asset/inline',
+        parser:{
+          parser: {
+            dataUrlCondition: {
+              maxSize: 10000,
+            }
           }
-        ],
+        }
       }
     ],
   },
   optimization: {
     minimize: true,
+    chunkIds : 'natural',
+    splitChunks : {
+      cacheGroups : {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+        }
+      }
+    }
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env.NODE_ENV' : JSON.stringify('development')
+      'process.env.NODE_ENV' : JSON.stringify( process.env.NODE_ENV || 'development')
     }),
+    //new BundleAnalyzerPlugin(),
+    new WebpackManifestPlugin({
+      fileName : 'chunk-manifest.json',
+      publicPath : '/static/frontend/',
+      generate: (seed, files) => {
+        const manifest = {};
+        files.forEach(file => {
+          manifest[file.name] = file.path
+        });
+
+        return manifest;
+      }
+    })
   ],
 };

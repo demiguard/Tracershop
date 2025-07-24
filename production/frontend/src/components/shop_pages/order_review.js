@@ -1,22 +1,22 @@
-import React, { useState } from "react";
+import React, { useRef } from "react";
 import { Row, Col, Button } from "react-bootstrap";
 
 import { DATABASE_ACTIVE_TRACER, INJECTION_USAGE, ORDER_STATUS } from "~/lib/constants";
-import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-
+import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { dateToDateString } from "~/lib/formatting";
-
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
-import { TimeSlotCard } from "./shop_injectables/time_slot_card";
+import { TimeSlotCardActivity } from "./shop_injectables/time_slot_card_activity";
 import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
-import { TracerCatalog } from '~/contexts/tracer_catalog';
-import { activityOrderFilter, getRelevantActivityOrders, timeSlotsFilter } from "~/lib/filters";
+import { activityOrderFilter, timeSlotsFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 import { db } from "~/lib/local_storage_driver";
 import { MARGIN } from "~/lib/styles";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
+import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
+import { presentName } from "~/lib/presentation";
+import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card";
 
 
 /**
@@ -26,7 +26,8 @@ import { useTracerCatalog } from "~/contexts/tracer_catalog";
  *  active_endpoint : Number,
  *  activityDeadlineValid : Boolean,
  *  injectionDeadlineValid : Boolean,
- *  booking : Array<Booking>
+ *  booking : Array<Booking>,
+ *  productState : [ProductReference, React.SetStateAction<ProductReference>]
  * }} props
  * @returns Element
  */
@@ -35,67 +36,67 @@ export function OrderReview({active_endpoint,
                              active_date,
                              injectionDeadlineValid,
                              activityDeadlineValid,
-                             activeTracer,
-                             setActiveTracer
+                             productState,
 }){
   const state = useTracershopState();
   const tracerCatalog = useTracerCatalog();
-  const availableActivityTracers  = tracerCatalog.getActivityCatalog(active_endpoint);
-  const availableInjectionTracers = tracerCatalog.getInjectionCatalog(active_endpoint);
+  const endpointCatalog = tracerCatalog.getCatalog(active_endpoint);
+
+  const [product, setActiveProduct] = productState;
+  const availableProducts = [...endpointCatalog.tracerCatalogActivity, ...endpointCatalog.isotopeCatalog];
+
+  const availableInjectionTracers = endpointCatalog.tracerCatalogInjections;
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
 
+  const availableDelveries = product.filterDeliveries(state, active_endpoint, day);
+  const availableOrders = product.filterOrders(state, {
+    timeslots : availableDelveries,
+    delivery_date : activeDateString
+  })
 
-  const availableTimeSlots = timeSlotsFilter(state, {
-    state : state,
-    day : day,
-    tracerID : activeTracer,
-    endpointID : active_endpoint
-  });
-
-  const relevantActivityOrders = activityOrderFilter(
+  const relevantOrders = activityOrderFilter(
     state, {
-      timeSlots : availableTimeSlots,
+      timeSlots : availableDelveries,
       delivery_date : activeDateString
     }
   )
 
-  function setTracer(tracer){
+  function setProduct(tracer){
     return () => {
-      db.set(DATABASE_ACTIVE_TRACER, tracer.id);
-      setActiveTracer(tracer.id);
+      setActiveProduct(tracer);
     }
   }
 
-  const tracerButtons = availableActivityTracers.map((tracer) => {
-    const underline = tracer.id === activeTracer;
+  const tracerButtons = availableProducts.map((product_) => {
+    const productRef = ProductReference.fromProduct(product_)
+    const underline = product.equal(productRef)
 
     return (<Button
       style={MARGIN.leftRight.px15}
-      key={tracer.id}
-      onClick={setTracer(tracer)}
+      key={productRef.to_value()}
+      onClick={setProduct(product_)}
       sz="sm"
     >
-      {underline ? <u>{tracer.shortname}</u> : tracer.shortname}
+      {underline ? <u>{presentName(product_)}</u> : presentName(product_)}
     </Button>)
   })
 
-  const overhead = tracerCatalog.getOverheadForTracer(active_customer, activeTracer)
+  const overhead = tracerCatalog.getOverheadForTracer(active_customer, product.product_id);
 
-  // If activeTracer is -1, then availableTimeSlot should be [], hence no bugs
-  const timeSlotsCards = availableTimeSlots.map((timeSlot) => {
-    const timeSlot_orders = activityOrderFilter(relevantActivityOrders, {
+  const timeSlotsCards = availableDelveries.map((timeSlot) => {
+    const timeSlot_orders = activityOrderFilter(relevantOrders, {
       timeSlots : [timeSlot]
     });
 
     return <TimeSlotCard
       key={timeSlot.id}
-      timeSlotID={timeSlot.id}
-      active_date={active_date}
-      activityOrders={timeSlot_orders}
+      type={product.type}
+      timeSlot={timeSlot}
+      orders={timeSlot_orders}
       overhead={overhead}
-      activityDeadlineValid={activityDeadlineValid}
-      />;});
+      deadlineValid={activityDeadlineValid}
+    />;});
 
   const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
     (injectionOrder) => {
@@ -108,18 +109,18 @@ export function OrderReview({active_endpoint,
     return (<InjectionOrderCard
       key={injectionOrder.id}
       injection_order={injectionOrder}
-      injection_tracers = {availableInjectionTracers}
+      injection_tracers={availableInjectionTracers}
       valid_deadline={injectionDeadlineValid}
     />);
   });
 
-  const /**@type {ServerConfiguration | undefined} */ serverConfig = state.server_config.get(1);
-  const /**@type {Deadline | undefined} */ activityDeadline = (serverConfig !== undefined) ?
-                                                                  state.deadline.get(serverConfig.global_activity_deadline)
-                                                                  : undefined;
-  const /**@type {Deadline | undefined} */ injectionDeadline = (serverConfig !== undefined) ?
-                                                                   state.deadline.get(serverConfig.global_injection_deadline)
-                                                                   : undefined;
+  const serverConfig = state.server_config.get(1);
+  const activityDeadline = (serverConfig !== undefined) ?
+      state.deadline.get(serverConfig.global_activity_deadline)
+    : undefined;
+  const injectionDeadline = (serverConfig !== undefined) ?
+      state.deadline.get(serverConfig.global_injection_deadline)
+    : undefined;
 
   if(injectionDeadlineValid && (availableInjectionTracers.length > 0)) {
     InjectionOrderCards.push(<InjectionOrderCard
@@ -162,7 +163,7 @@ export function OrderReview({active_endpoint,
       <Col>{tracerButtons}</Col>
     </Row>
     <Row>
-      {activeTracer !== -1 ? timeSlotsCards : <h3>
+      {product.type !== PRODUCT_TYPES.EMPTY ? timeSlotsCards : <h3>
         Der ikke valgt en aktivitets tracer, klik på en af dem for at bestille den.
       </h3>}
     </Row>

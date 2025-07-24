@@ -10,26 +10,35 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint,
   Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracershopState
 } from "~/dataclasses/dataclasses";
 import { WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
-import { isotopeDeliveryFilter, timeSlotsFilter } from "~/lib/filters";
-import { DATA_DELIVER_TIME, DATA_ISOTOPE_PRODUCTION, DATA_PRODUCTION } from "~/lib/shared_constants";
+import { activityOrderFilter, isotopeDeliveryFilter, isotopeOrderFilter, timeSlotsFilter } from "~/lib/filters";
+import { DATA_ISOTOPE, DATA_TRACER } from "~/lib/shared_constants";
 
 
 /**
+ * @typedef {Object} ProductTypes
+ * @property {typeof DATA_ISOTOPE} ISOTOPE
+ * @property {typeof DATA_TRACER} ACTIVITY
+ * @property {"EMPTY"} EMPTY
+ */
+
+/**
+ *
+ * @type {ProductTypes}
  * @enum
  */
-export const PRODUCTION_TYPES = {
-  ISOTOPE_PRODUCTION : DATA_ISOTOPE_PRODUCTION,
-  PRODUCTION : DATA_PRODUCTION,
+export const PRODUCT_TYPES = {
+  ISOTOPE : DATA_ISOTOPE,
+  ACTIVITY : DATA_TRACER,
   EMPTY : "EMPTY"
 };
 
 /**
  * Class that unionizes the types of tracer and istope
  */
-export class ProductionReference {
+export class ProductReference {
   constructor(id, type){
     this.product_id = id;
-    if(Object.values(PRODUCTION_TYPES).includes(type)){
+    if(Object.values(PRODUCT_TYPES).includes(type)){
       this.type = type
     } else {
       throw {error : "Unknown production type"}
@@ -45,27 +54,52 @@ export class ProductionReference {
     }
 
     return is_tracer ?
-      new ProductionReference(productID, PRODUCTION_TYPES.PRODUCTION) :
-      new ProductionReference(productID, PRODUCTION_TYPES.ISOTOPE_PRODUCTION);
+      new ProductReference(productID, PRODUCT_TYPES.ACTIVITY) :
+      new ProductReference(productID, PRODUCT_TYPES.ISOTOPE);
+  }
+
+  static fromProduct(product){
+    switch(true){
+      case product instanceof Tracer:
+        return new ProductReference(product.id, PRODUCT_TYPES.ACTIVITY);
+      case product instanceof Isotope:
+        return new ProductReference(product.id, PRODUCT_TYPES.ISOTOPE);
+      default:
+        return new ProductReference(-1, PRODUCT_TYPES.EMPTY);
+    }
   }
 
   to_value(){
     switch(this.type) {
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+      case PRODUCT_TYPES.ISOTOPE:
         return `i-${this.product_id}`;
-      case PRODUCTION_TYPES.PRODUCTION:
+      case PRODUCT_TYPES.ACTIVITY:
         return `t-${this.product_id}`;
       default:
         return "";
     }
   }
 
+  /**
+   *
+   * @param {TracershopState} state
+   */
+  to_product(state){
+    switch(this.type){
+      case PRODUCT_TYPES.ISOTOPE:
+        return state.isotopes.get(this.product_id)
+      case PRODUCT_TYPES.ACTIVITY:
+        return state.tracer.get(this.product_id)
+    }
+
+  }
+
   is_isotope(){
-    return this.type === PRODUCTION_TYPES.ISOTOPE_PRODUCTION;
+    return this.type === PRODUCT_TYPES.ISOTOPE;
   }
 
   is_tracer(){
-    return this.type === PRODUCTION_TYPES.PRODUCTION;
+    return this.type === PRODUCT_TYPES.ACTIVITY;
   }
 
   /** Gets a delivery initialized
@@ -78,9 +112,9 @@ export class ProductionReference {
     const productionID = productions.length > 0 ? productions.at(0).id : -1;
 
     switch (this.type) {
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+      case PRODUCT_TYPES.ISOTOPE:
         return new IsotopeDelivery(-1, productionID, WEEKLY_REPEAT_CHOICES.ALL, endpoint_id, "");
-      case PRODUCTION_TYPES.PRODUCTION:
+      case PRODUCT_TYPES.ACTIVITY:
         return new ActivityDeliveryTimeSlot(-1,  WEEKLY_REPEAT_CHOICES.ALL, "", endpoint_id, productionID);
       default:
         return {};
@@ -89,7 +123,7 @@ export class ProductionReference {
 
   /** Check if two product references refer to the same product
    *
-   * @param {ProductionReference} prod_ref
+   * @param {ProductReference} prod_ref
    * @returns {Boolean}
    */
 
@@ -99,7 +133,7 @@ export class ProductionReference {
 
   /** Check if two product references refer to the different product
    *
-   * @param {ProductionReference} prod_ref
+   * @param {ProductReference} prod_ref
    * @returns {Boolean}
    */
   not_equal(prod_ref){
@@ -113,13 +147,13 @@ export class ProductionReference {
     */
   filterProduction(state){
     switch (this.type) {
-    case PRODUCTION_TYPES.ISOTOPE_PRODUCTION: { // Note this scope is here to reuse prods variable
+    case PRODUCT_TYPES.ISOTOPE: { // Note this scope is here to reuse prods variable
       return [...state.isotope_production.values()].filter(
         (ip) => ip.isotope === this.product_id
       );
 
     }
-    case PRODUCTION_TYPES.PRODUCTION: {
+    case PRODUCT_TYPES.ACTIVITY: {
       return [...state.production.values()].filter(
         (ap) => ap.tracer === this.product_id
       );
@@ -130,35 +164,64 @@ export class ProductionReference {
   }
 
 
-  /**
+  /** Filters the deliveries in the state such that you get the deliveries,
+   * from this
    *
    * @param {TracershopState} state
    * @param {Number | DeliveryEndpoint} endpointRef
    * @returns {Array<IsotopeDelivery> | Array<ActivityDeliveryTimeSlot>}
    */
-  filterDeliveries(state, endpointRef) {
+  filterDeliveries(state, endpointRef, day) {
     const endpointID = endpointRef instanceof DeliveryEndpoint ?
         endpointRef.id
       : endpointRef;
 
     switch (this.type) {
-      case PRODUCTION_TYPES.PRODUCTION: {
+      case PRODUCT_TYPES.ACTIVITY: {
         return timeSlotsFilter(state, {
           state: state,
           tracerID : this.product_id,
-          endpointID : endpointID
+          endpointID : endpointID,
+          day : day,
         });
       }
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION: {
+      case PRODUCT_TYPES.ISOTOPE: {
         return isotopeDeliveryFilter(state, {
           state : state,
           isotopeID : this.product_id,
-          endpointID : endpointID
+          endpointID : endpointID,
+          day : day,
         });
       }
 
       default:
         return [];
+    }
+  }
+
+  /**
+   *
+   * @param {TracershopState} state
+   * @param {Object} filterArguments
+   * @returns
+   */
+  filterOrders(state, {
+    timeSlots
+  }) {
+    switch (this.type){
+      case PRODUCT_TYPES.ACTIVITY:
+        return activityOrderFilter(
+          state, {
+            state : state,
+            timeSlots : timeSlots
+          }
+        );
+      case PRODUCT_TYPES.ISOTOPE:
+        return isotopeOrderFilter(state, {
+          state : state,
+          timeSlots : timeSlots,
+        });
+
     }
   }
 }

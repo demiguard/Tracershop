@@ -77,7 +77,7 @@ export const db = {
   types : {
     today : Date, // DATABASE_TODAY
     lastUpdated : Date, //DATABASE_LAST_UPDATED
-    activeTracer : Number, //DATABASE_ACTIVE_TRACER
+    activeTracer : String, //DATABASE_ACTIVE_TRACER
     isAuth : Boolean, //DATABASE_IS_AUTH
     server_config : Object, //DATABASE_SERVER_CONFIG
     current_user : Object, //DATABASE_USER

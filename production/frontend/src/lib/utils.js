@@ -125,6 +125,10 @@ export function compareLoosely(obj_1, obj_2){
   return eq;
 }
 
+export function isDirty(source,temporary){
+  return compareLoosely(source, temporary)
+}
+
 /** Checks if two maps contain equivalent elements
  * @template {K}
  * @template {V}

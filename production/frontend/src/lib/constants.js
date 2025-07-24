@@ -98,8 +98,6 @@ export const WEEKLY_REPEAT_CHOICES = {
 /**
  * @constant
  * @typedef {Number} OrderStatus
-
-
  * @enum {OrderStatus} */
 export const ORDER_STATUS = {
   AVAILABLE : 0,
@@ -111,7 +109,14 @@ export const ORDER_STATUS = {
   EMPTY : 6,
 }
 
-
+/** Enum that holds all the different "types" of orders. Each type
+ * @enum
+ */
+export const ORDER_TYPE = {
+  ACTIVITY : 0,
+  INJECTION : 1,
+  ISOTOPE : 2,
+}
 
 /**
  * Enum describing options of an Injections order usage field

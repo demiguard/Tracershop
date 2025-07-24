@@ -9,6 +9,7 @@ import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context
 import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton } from '~/components/injectable/buttons'
 import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER } from '~/lib/shared_constants'
+import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
 
 export function ClickableIcon ({
     altText,
@@ -61,6 +62,28 @@ ClickableIcon.propTypes = {
   onClick : propTypes.func
 }
 
+function statusImages(status) {
+  switch (status){
+    case ORDER_STATUS.ORDERED:
+      return "/static/images/clipboard1.svg";
+    case ORDER_STATUS.ACCEPTED:
+      return "/static/images/clipboard2.svg";
+    case ORDER_STATUS.RELEASED:
+      return "/static/images/clipboard3.svg";
+    case ORDER_STATUS.CANCELLED:
+      return "/static/images/clipboard0.svg";
+    case ORDER_STATUS.EMPTY:
+      return "";
+    case ORDER_STATUS.AVAILABLE:
+      return "/static/images/clipboard0.svg";
+    case ORDER_STATUS.RISOE:
+      return "/static/images/clipboard0.svg";
+    default:
+      console.error("Unknown status encountered", status)
+      return "/static/images/clipboard0.svg";
+  }
+}
+
 /**
  *
  * @param {{
@@ -68,37 +91,14 @@ ClickableIcon.propTypes = {
  *  onClick : Callable
  *  label : String
  *  order : {ActivityOrder, InjectionOrder}
- *  orderCollection : ActivityOrderCollection
+ *  orderCollection : ActivityOrderCollection | IsotopeOrderCollection
  * }} param0
  * @returns
  */
 export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
-
-  function statusImages(status) {
-    switch (status){
-      case ORDER_STATUS.ORDERED:
-        return "/static/images/clipboard1.svg";
-      case ORDER_STATUS.ACCEPTED:
-        return "/static/images/clipboard2.svg";
-      case ORDER_STATUS.RELEASED:
-        return "/static/images/clipboard3.svg";
-      case ORDER_STATUS.CANCELLED:
-        return "/static/images/clipboard0.svg";
-      case ORDER_STATUS.EMPTY:
-        return "/static/images/clipboard0.svg";
-      case ORDER_STATUS.AVAILABLE:
-        return "/static/images/clipboard0.svg";
-      case ORDER_STATUS.RISOE:
-        return "/static/images/clipboard0.svg";
-      default:
-        console.error("Unknown status encountered", status)
-        return "/static/images/clipboard0.svg";
-    }
-  }
-
   const statusImagePath = (() => {
     if (orderCollection) {
-      if(orderCollection.moved) {
+      if(orderCollection instanceof ActivityOrderCollection && orderCollection.moved) {
         return "/static/images/move_top.svg";
       } else {
         return statusImages(orderCollection.minimum_status);
@@ -107,8 +107,15 @@ export function StatusIcon ({onClick, label, order, orderCollection, altText}) {
     if(order instanceof ActivityOrder && !!order.moved_to_time_slot){
       return "/static/images/move_top.svg";
     }
+
     return statusImages(order.status);
-  })()
+  })();
+
+  console.log(statusImagePath, orderCollection);
+  if(statusImagePath === ""){
+    return <div></div>;
+  }
+
 
     return <ClickableIcon
       altText={altText}
@@ -124,7 +131,10 @@ StatusIcon.propTypes = {
   order: propTypes.oneOfType([
     propTypes.instanceOf(ActivityOrder),
     propTypes.instanceOf(InjectionOrder)]),
-  orderCollection : propTypes.instanceOf(ActivityOrderCollection),
+  orderCollection : propTypes.oneOfType([
+    propTypes.instanceOf(ActivityOrderCollection),
+    propTypes.instanceOf(IsotopeOrderCollection)
+  ]),
 };
 
 export function ActivityDeliveryIcon(props){

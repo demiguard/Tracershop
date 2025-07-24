@@ -1,6 +1,6 @@
 import React, { useContext, createContext } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
+import { Isotope, IsotopeDelivery, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
 import { numberfy } from "~/lib/utils";
 
@@ -8,6 +8,7 @@ import { numberfy } from "~/lib/utils";
 export class EndpointCatalog {
   /**@type {Array<Tracer>} @desc A list of tracers activity available to this endpoint */ tracerCatalogActivity
   /**@type {Array<Tracer>} @desc A list of tracers injection available to this endpoint */ tracerCatalogInjections
+  /**@type {Array<Isotope>} @desc A list of tracers injection available to this endpoint */ isotopeCatalog
   /**@type {Map<Number, Number>} @desc  A Tracer to overhead percentage, so if a tracer with id 10 have 25 % overhead, this map will have 10 -> 1.25  */ overheadMap
   /**@type {Map<Number, TracerCatalogPage>} @desc A mapping of tracer id to the page */ pages
 
@@ -35,22 +36,16 @@ export class TracerCatalog {
   /**
    * Data structure containing information about which tracers a customer have access to
    * Each instance is unique to a customer.
-   * @param {Map<Number, TracerCatalogPage>} tracerCatalogPages
-   * The Collection of mappings of customer to tracer, where an entry implies the customer is allowed to order
-   * @param {Map<Number, Tracer>} tracers The Collection of all tracers
+   * @param {TracershopState} state
    */
-  constructor(tracerCatalogPages, tracers, isotopes=[]) {
+  constructor(state) {
     this._endpointCatalogs = new Map();
 
-    for (const tracerCatalogPage of tracerCatalogPages.values()) {
-      if (!this._endpointCatalogs.has(tracerCatalogPage.endpoint)) {
-        this._endpointCatalogs.set(tracerCatalogPage.endpoint, new EndpointCatalog());
-      }
-
-      const endpoint_catalog = this._endpointCatalogs.get(tracerCatalogPage.endpoint);
+    for (const tracerCatalogPage of state.tracer_mapping.values()) {
+      const endpoint_catalog = this.getCatalog(tracerCatalogPage.endpoint);
       endpoint_catalog.pages.set(tracerCatalogPage.tracer, tracerCatalogPage);
 
-      const /**@type {Tracer} */ tracer = tracers.get(tracerCatalogPage.tracer);
+      const tracer = state.tracer.get(tracerCatalogPage.tracer);
       if (tracer === undefined) {
         throw "Database integrity violated!";
       }
@@ -62,22 +57,29 @@ export class TracerCatalog {
         endpoint_catalog.tracerCatalogInjections.push(tracer);
       }
     }
+
+    for(const isotopeDelivery of state.isotope_delivery.values()){
+      const endpointCatalog = this.getCatalog(isotopeDelivery.delivery_endpoint);
+      const production = state.isotope_production.get(isotopeDelivery.production);
+      const isotope = state.isotopes.get(production.isotope);
+      endpointCatalog.isotopeCatalog.push(isotope);
+    }
   }
 
   /**
-   * Gets the entire catalog for a customer
-   * @param {Number} endpointIDcatalogContext = - the ID of the customer in question
+   * Gets the entire catalog for a customer, construct an empty if not there
+   * @param {Number} endpointID = - the ID of the customer in question
    * @returns {EndpointCatalog}
    */
   getCatalog(endpointID) {
     const index = numberfy(endpointID);
-
-    const endpoint_catalog = this._endpointCatalogs.get(index);
-    if (endpoint_catalog !== undefined) {
-      return endpoint_catalog;
+    if(this._endpointCatalogs.has(index)){
+      return this._endpointCatalogs.get(index);
     }
 
-    return new EndpointCatalog();
+    const endpointCatalog = new EndpointCatalog();
+    this._endpointCatalogs.set(index, endpointCatalog);
+    return endpointCatalog;
   }
 
   getActivityCatalog(customerID) {
@@ -116,7 +118,7 @@ export class TracerCatalog {
   }
 }
 
-const TracerShopCatalogContext = createContext(new TracerCatalog(new Map(), new Map()));
+const TracerShopCatalogContext = createContext(new TracerCatalog(new TracershopState()));
 
 /**
  *
@@ -125,7 +127,7 @@ const TracerShopCatalogContext = createContext(new TracerCatalog(new Map(), new 
  */
 export function TracerCatalogProvider({ children }){
   const state = useTracershopState();
-  const tracer_catalog = new TracerCatalog(state.tracer_mapping, state.tracer);
+  const tracer_catalog = new TracerCatalog(state);
 
   return (
     <TracerShopCatalogContext.Provider value={tracer_catalog}>

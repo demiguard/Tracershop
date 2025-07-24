@@ -4,7 +4,7 @@ import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { Customer, DeliveryEndpoint, Isotope, Tracer, TracerCatalogPage, TracershopState } from "../dataclasses/dataclasses";
 import { numberfy } from "./utils";
 import { TRACER_TYPE } from "~/lib/constants";
-import { PRODUCTION_TYPES, ProductionReference } from "~/dataclasses/product_reference";
+import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 
 /**
  *
@@ -121,20 +121,14 @@ export function initializeProductionRun(state, activity_tracer) {
 /** Gets a reference to the production that is active from a blank state
  *
  * @param {Array<Tracer | Isotope>} options
- * @returns {ProductionReference}
+ * @returns {ProductReference}
  */
-export function initializeProductionReference(options){
+export function initializeProductReference(options){
   const initial_production = options.at(0);
 
   if(initial_production === undefined){
-    return new ProductionReference(-1, PRODUCTION_TYPES.EMPTY);
+    return new ProductReference(-1, PRODUCT_TYPES.EMPTY);
   }
 
-  if (initial_production instanceof Isotope){
-    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.ISOTOPE_PRODUCTION);
-  } else if (initial_production instanceof Tracer) {
-    return new ProductionReference(initial_production.id, PRODUCTION_TYPES.PRODUCTION);
-  }
-
-  throw TypeError("Initialization array is not type safe!")
+  return ProductReference.fromProduct(initial_production);
 }

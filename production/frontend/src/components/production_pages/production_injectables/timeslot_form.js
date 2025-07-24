@@ -8,7 +8,7 @@ import { Optional } from "~/components/injectable/optional";
 import { Option, Select, toOptions } from "~/components/injectable/select";
 import { DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from "~/components/modals/customer_modal";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { PRODUCTION_TYPES, ProductionReference, productToReferenceOption } from "~/dataclasses/product_reference";
+import { PRODUCT_TYPES, ProductReference, productToReferenceOption } from "~/dataclasses/references/product_reference";
 import { DATA_DELIVER_TIME, DATA_ISOTOPE_DELIVERY, DATA_TRACER_MAPPING } from "~/lib/shared_constants";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { parseDanishPositiveNumberInput, parseTimeInput } from "~/lib/user_input";
@@ -39,7 +39,7 @@ function getOverheadString(page) {
 /**
  *
  * @param {Object} props
- * @param {StateType<ProductionReference>} props.productState
+ * @param {StateType<ProductReference>} props.productState
  * @param {DeliveryEndpoint} props.selectedEndpoint - The endpoint that is currently being operated on
  */
 export function TimeSlotForm({
@@ -92,7 +92,7 @@ export function TimeSlotForm({
   }
 
   function setProduct(event){
-    const productReference = ProductionReference.fromValue(event.target.value);
+    const productReference = ProductReference.fromValue(event.target.value);
 
     if(productReference.equal(product)){
       return;
@@ -107,7 +107,7 @@ export function TimeSlotForm({
     // Reset temp
     const new_productions = productReference.filterProduction(state);
     switch (productReference.type) {
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+      case PRODUCT_TYPES.ISOTOPE:
         setTempTimeSlot({
           id : -1,
           production : new_productions[0].id,
@@ -116,7 +116,7 @@ export function TimeSlotForm({
           delivery_endpoint : selectedEndpoint.id
         });
         break;
-        case PRODUCTION_TYPES.PRODUCTION:
+        case PRODUCT_TYPES.ACTIVITY:
           setTempTimeSlot({
             id : -1,
             production_run : new_productions[0].id,
@@ -165,7 +165,7 @@ export function TimeSlotForm({
     }
 
     switch(product.type){
-      case PRODUCTION_TYPES.PRODUCTION: {
+      case PRODUCT_TYPES.ACTIVITY: {
         const production = state.production.get(tempTimeSlot.production_run);
 
         if(production.production_time > deliveryTime){
@@ -182,7 +182,7 @@ export function TimeSlotForm({
           expiration_date : null,
         }];
       }
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION: {
+      case PRODUCT_TYPES.ISOTOPE: {
         const isotope_production = state.isotope_production.get(tempTimeSlot.production);
 
         if(isotope_production.production_time > deliveryTime){
@@ -219,9 +219,9 @@ export function TimeSlotForm({
 
   function setProduction(){
     switch (product.type){
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+      case PRODUCT_TYPES.ISOTOPE:
         return setTempObjectToEvent(setTempTimeSlot, 'production', Number);
-        case PRODUCTION_TYPES.PRODUCTION:
+        case PRODUCT_TYPES.ACTIVITY:
           return setTempObjectToEvent(setTempTimeSlot, 'production_run', Number)
       default:
         return () => {}

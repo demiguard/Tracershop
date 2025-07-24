@@ -5,7 +5,7 @@
 
 import React, {useRef, useState} from 'react'
 
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState, User, InjectionOrder } from "../dataclasses/dataclasses"
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, Tracer, DeliveryEndpoint, Location, Procedure, ProcedureIdentifier, TracerCatalogPage, Customer, ReleaseRight, Isotope, TracershopState, User, InjectionOrder, IsotopeDelivery } from "../dataclasses/dataclasses"
 import { ArrayMap } from "./array_map";
 import { DateRange, TimeStamp, compareTimeStamp, datify, getDay, getWeekNumber } from "./chronomancy";
 import { ORDER_STATUS, USER_GROUPS, WEEKLY_REPEAT_CHOICES, DAYS_OBJECTS } from "./constants";
@@ -293,29 +293,41 @@ export class BitChain {
 }
 
 export class TimeSlotBitChain extends BitChain {
-  /**@type {Number} */ _chain
+  /**@type {Number} */ #chain
 
   /**
    * A data structure for evaluating if you can order at a date determined by
    * time slots.
-   * @param {Array<ActivityDeliveryTimeSlot>} timeSlots - Time Slots determining
+   * @param {Array<ActivityDeliveryTimeSlot, IsotopeDelivery>} timeSlots - Time Slots determining
    * the bit chains
-   * @param {Map<Number, ActivityProduction>} production - All productions as
+   * @param {TracershopState} state - All productions as
    * time slot refer to a production.
    */
-  constructor(timeSlots, productions){
+  constructor(timeSlots, state){
     super();
-    this._chain = 0;
+    this.#chain = 0;
 
+    // this doesn't scale...
     for(const timeSlot of timeSlots){
-      const production = productions.get(timeSlot.production_run);
+      if(timeSlot instanceof ActivityDeliveryTimeSlot){
+        const production = state.production.get(timeSlot.production_run);
 
-      if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
-        this._chain = this._chain | (1 << production.production_day);
-      }
+        if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
+          this.#add_odd_weekday(production.production_day);
+        }
 
-      if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
-        this._chain = this._chain | (1 << production.production_day + 7);
+        if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
+          this.#add_even_weekday(production.production_day);
+        }
+      } else if(timeSlot instanceof IsotopeDelivery){
+        const production = state.isotope_production.get(timeSlot.production);
+
+        if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
+          this.#add_odd_weekday(production.production_day);
+        }
+        if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.EVEN){
+          this.#add_even_weekday(production.production_day);
+        }
       }
     }
   }
@@ -324,7 +336,15 @@ export class TimeSlotBitChain extends BitChain {
     const oddWeekNumber = (getWeekNumber(date) % 2) == 1
     const day = getDay(date);
 
-    return this._chain & (1 << (day + Number(oddWeekNumber) * 7))
+    return this.#chain & (1 << (day + Number(oddWeekNumber) * 7))
+  }
+
+  #add_even_weekday(day){
+    this.#chain = this.#chain | (1 << day + 7);
+  }
+
+  #add_odd_weekday(day){
+    this.#chain = this.#chain | (1 << day);
   }
 }
 

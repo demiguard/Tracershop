@@ -16,7 +16,7 @@ import { compareLoosely } from "~/lib/utils.js";
 import { clone } from "~/lib/serialization.js";
 import { endpointFilter, isotopeFilter, tracerTypeFilter } from "~/lib/filters.js";
 import { FONT, MARGIN } from "~/lib/styles.js";
-import { initializeProductionReference } from "~/lib/initialization.js";
+import { initializeProductReference } from "~/lib/initialization.js";
 import { CustomerForm } from "~/components/production_pages/production_injectables/customer_form.js";
 import { EndpointForm } from "~/components/production_pages/production_injectables/endpoint_form.js";
 import { TimeSlotForm } from "~/components/production_pages/production_injectables/timeslot_form.js";
@@ -58,7 +58,7 @@ export function CustomerModal({active_customer, on_close}) {
   const producibleIsotopes = isotopeFilter(state.isotopes, {producible : true , state});
   const products = [...activity_tracers, ...producibleIsotopes];
 
-  const productState = useState(() => initializeProductionReference(products));
+  const productState = useState(() => initializeProductReference(products));
   const [product, _] = productState;
 
   const productions = product.filterDeliveries(state, tempEndpoint.id);

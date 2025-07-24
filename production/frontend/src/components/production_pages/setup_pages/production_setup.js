@@ -21,8 +21,8 @@ import { Options } from "~/components/injectable/optional";
 import { MESSAGE_ERROR } from "~/lib/incoming_messages";
 import { useErrorState } from "~/lib/error_handling";
 import { AlertBox } from "~/components/injectable/alert_box";
-import { initializeProductionReference } from "~/lib/initialization";
-import { productToReferenceOption, ProductionReference, PRODUCTION_TYPES } from "~/dataclasses/product_reference";
+import { initializeProductReference } from "~/lib/initialization";
+import { productToReferenceOption, ProductReference, PRODUCT_TYPES } from "~/dataclasses/references/product_reference";
 import { useOnEnter } from "~/effects/on_enter";
 import { useCommitObject } from "~/effects/commit_object";
 
@@ -147,7 +147,6 @@ function IsotopeProductionView({
 export function ProductionSetup(){
   const state = useTracershopState();
 
-
   const activityTracers = [...state.tracer.values()].filter(
     tracerTypeFilter(TRACER_TYPE.ACTIVITY)
   );
@@ -155,7 +154,7 @@ export function ProductionSetup(){
 
   const valid_products = [...activityTracers, ...isotopes];
 
-  const initialProductReference = initializeProductionReference(valid_products);
+  const initialProductReference = initializeProductReference(valid_products);
   const [product, setProductionReference] = useState(initialProductReference);
   const [tempProduction, setTempProduction] = useState({
     id : -1,
@@ -170,7 +169,7 @@ export function ProductionSetup(){
   const displayProductions = product.filterProduction(state);
 
   function selectNewProduct(event){
-    const newProductionReference = ProductionReference.fromValue(event.target.value);
+    const newProductionReference = ProductReference.fromValue(event.target.value);
 
     if(product.not_equal(newProductionReference)){
       setProductionReference(newProductionReference);
@@ -196,7 +195,7 @@ export function ProductionSetup(){
       return [false, {}];
     }
 
-    const production = (product.type == PRODUCTION_TYPES.PRODUCTION) ?
+    const production = (product.type == PRODUCT_TYPES.ACTIVITY) ?
       {
         id : tempProduction.id,
         tracer : product.product_id,
@@ -220,9 +219,9 @@ export function ProductionSetup(){
 
   const optionIndex = (() => {
     switch (product.type){
-      case PRODUCTION_TYPES.PRODUCTION:
+      case PRODUCT_TYPES.ACTIVITY:
         return 0;
-      case PRODUCTION_TYPES.ISOTOPE_PRODUCTION:
+      case PRODUCT_TYPES.ISOTOPE:
         return 1;
       default:
         return 2

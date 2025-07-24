@@ -14,9 +14,9 @@ import { getId } from '~/lib/utils';
  * }} param0
  * @returns
  */
-export function ShopCalender({on_day_click, active_endpoint, time_slots}){
+export function ShopCalender({ on_day_click, active_endpoint, time_slots }){
   const state = useTracershopState();
-  const bitChain = new TimeSlotBitChain(time_slots, state.production)
+  const bitChain = new TimeSlotBitChain(time_slots, state);
   const timeSlotIDs = time_slots.map(getId);
 
   return <Calender

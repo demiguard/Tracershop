@@ -6,12 +6,10 @@ __author__ = "Christoffer Vilstrup Jensen"
 from datetime import date
 from pathlib import Path
 from logging import getLogger
-from traceback import format_tb
 import os.path
 
 # Third party Packages
 from django.conf import settings
-from django.contrib.auth import login
 from django.core.exceptions import PermissionDenied, ObjectDoesNotExist
 from django.http import FileResponse, HttpResponseNotFound, HttpResponseForbidden, HttpRequest
 from django.shortcuts import render
@@ -20,8 +18,7 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 # Tracershop Production
 from constants import DEBUG_LOGGER, ERROR_LOGGER
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
-  ActivityProduction, DeliveryEndpoint, OrderStatus, Vial, User, UserGroups,\
-  InjectionOrder, UserAssignment, Days
+  OrderStatus, Vial, InjectionOrder
 from database.database_interface import DatabaseInterface
 from lib.formatting import format_csv_data, format_time_number
 from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder

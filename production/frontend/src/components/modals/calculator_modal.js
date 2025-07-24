@@ -8,18 +8,27 @@ import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE } from
 import { DATA_ISOTOPE } from "~/lib/shared_constants"
 import { Calculator } from "../injectable/calculator";
 
-export function CalculatorModal(props){
+/**
+ *
+ * @param {Object} props
+ * @param {on_close}
+ * @returns
+ */
+
+export function CalculatorModal({
+  on_close, isotopes, active_tracer, active_date, commit
+}){
   return (<Modal
     show={true}
-    onHide={props[PROP_ON_CLOSE]}
+    onHide={on_close}
   >
     <Modal.Body>
       <Calculator
-        cancel={props[PROP_ON_CLOSE]}
-        isotopes={props[DATA_ISOTOPE]}
-        tracer={props[PROP_ACTIVE_TRACER]}
-        productionTime={props[PROP_ACTIVE_DATE] /* I am sorry but wtf naming? */}
-        commit={props[PROP_COMMIT]}
+        cancel={on_close}
+        isotopes={isotopes}
+        tracer={active_tracer}
+        productionTime={active_date /* I am sorry but wtf naming? */}
+        commit={commit}
       />
     </Modal.Body>
   </Modal>);

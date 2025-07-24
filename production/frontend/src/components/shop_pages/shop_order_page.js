@@ -22,9 +22,10 @@ import { DATA_BOOKING } from "~/lib/shared_constants.js";
 import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
 import { useTracerCatalog } from "~/contexts/tracer_catalog.js";
 import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages.js";
-import { toMapping } from "~/lib/utils.js";
+import { numberfy, toMapping } from "~/lib/utils.js";
 import { useUpdatingEffect } from "~/effects/updating_effect.js";
-
+import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference.js";
+import { StateType } from "~/lib/constants.js";
 
 const Content = {
   Manuel : OrderReview,
@@ -41,9 +42,9 @@ export function ShopOrderPage ({relatedCustomer}){
   const state = useTracershopState();
   const dispatch = useTracershopDispatch();
   const websocket = useWebsocket();
-
   const tracerCatalog = useTracerCatalog();
-  const [activeCustomer, _setActiveCustomer] = useState(() => {
+
+  const /** @type {StateType<Number>} */ [activeCustomer, _setActiveCustomer] = useState(() => {
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
     if(activeCustomer !== null){
       if(!relatedCustomer.has(activeCustomer)){
@@ -62,7 +63,7 @@ export function ShopOrderPage ({relatedCustomer}){
     return activeCustomer;
   });
 
-  const [activeEndpoint, _setActiveEndpoint] = useState(() => {
+  const /** @type {StateType<Number>} */ [activeEndpoint, _setActiveEndpoint] = useState(() => {
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT);
     // This check is here to see t
     if(activeEndpoint !== null){
@@ -93,21 +94,19 @@ export function ShopOrderPage ({relatedCustomer}){
     return viewIdentifier;
 
   });
+  const catalog = tracerCatalog.getCatalog(activeEndpoint);
+  const availableProducts = [...catalog.tracerCatalogActivity, ...catalog.isotopeCatalog];
 
-  const [activeTracer, setActiveTracer] = useState(() => {
-    const availableActivityTracers = tracerCatalog.getActivityCatalog(activeEndpoint);
-    let activeTracerInit = -1;
-    if (0 < availableActivityTracers.length){
-      activeTracerInit = availableActivityTracers[0].id;
-    }
+  const [activeProduct, _setActiveProduct] = useState(() => {
     const local_stored_active_tracer = db.get(DATABASE_ACTIVE_TRACER);
-    if(local_stored_active_tracer &&
-        availableActivityTracers.includes(
-          state.tracer.get(local_stored_active_tracer)
-        )){
-      activeTracerInit = local_stored_active_tracer;
+
+    if(local_stored_active_tracer === null){
+      return ProductReference.fromProduct(availableProducts[0]);
     }
-    return activeTracerInit
+    if(/.\-\d+/.test(local_stored_active_tracer)){
+      return ProductReference.fromValue(local_stored_active_tracer);
+    }
+    return ProductReference.fromProduct(availableProducts[0])
   });
 
   const [bookings, setBookings] = useState(new Map());
@@ -207,6 +206,12 @@ export function ShopOrderPage ({relatedCustomer}){
     _setActiveEndpoint(newEndpoint);
   }
 
+  function setActiveProduct(product){
+    const productReference = ProductReference.fromProduct(product);
+    db.set(DATABASE_ACTIVE_TRACER, productReference.to_value());
+    _setActiveProduct(productReference);
+  }
+
   // End of function declarations
   const /**@type {ServerConfiguration | undefined} */ serverConfig = state.server_config.get(1);
   const /**@type {Deadline | undefined} */ activityDeadline = (serverConfig !== undefined) ?
@@ -241,15 +246,10 @@ export function ShopOrderPage ({relatedCustomer}){
     [PROP_VALID_ACTIVITY_DEADLINE] :  !Boolean(activityDeadlineExpired),
     [PROP_VALID_INJECTION_DEADLINE] : !Boolean(injectionDeadlineExpired),
     [DATA_BOOKING] : [...bookings.values()],
-    activeTracer : activeTracer,
-    setActiveTracer : setActiveTracer,
+    productState : [activeProduct, setActiveProduct],
   };
 
-  const calenderTimeSlots = timeSlotsFilter(state, {
-    state : state,
-    endpointID : activeEndpoint,
-    tracerID : activeTracer,
-  });
+  const calenderTimeSlots = activeProduct.filterDeliveries(state, activeEndpoint);
 
   return (
   <Container fluid="xxl" style={{padding : "0px"}}>

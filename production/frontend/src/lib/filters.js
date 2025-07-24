@@ -2,8 +2,8 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
 
@@ -13,12 +13,11 @@ export function tracerTypeFilter(tracerType){
   return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType && !tracer.archived
 }
 
-
 /**
  * Extracts an array from various container types.
  *
  * @template T
- * @param {TracershopState|Map<any, T>|Array<T>|T} container - The container to extract from.
+ * @param {TracershopState | Map<any, T> | Array<T> | T} container - The container to extract from.
  * @param {{new() : T}} type - The constructor function for type T.
  * @param {string} typeKeyword - The key to access the desired property in TracershopState.
  * @returns {Array<T>} The extracted array of type T.
@@ -292,6 +291,37 @@ export function isotopeDeliveryFilter(container, { state, endpointID, isotopeID 
 
   return ids ? filteredIsotopeDeliveries.map(getId) : filteredIsotopeDeliveries;
 }
+
+/**
+ *
+ * @param {*} container
+ * @param {Object} FilterParams
+ * @param {*} ids
+ */
+export function isotopeOrderFilter(
+  container, {
+    state,
+    timeSlots,
+    timeSlotFilterArgs,
+  }, ids=false){
+  const /**@type {Array<IsotopeOrder>} */ isotopeOrders = extractData(container, IsotopeOrder, DATA_ISOTOPE_ORDER);
+  const timeSlotIDs =
+    timeSlots !== undefined ? timeSlots.map(getId) : // If passed TimeSlots we use those
+    timeSlotFilterArgs && state ? // Otherwise we can get the timesslots
+      timeSlotsFilter(state, {state : state, ...timeSlotFilterArgs}, true)
+    : undefined; // Otherwise No filter over time slots
+
+  const filteredIsotopeOrders = isotopeOrders.filter(
+    (io) => {
+      const timeSlotCondition = timeSlotIDs ? timeSlotIDs.includes(io.destination) : true;
+
+      return timeSlotCondition;
+    }
+  )
+
+  return ids ? filteredIsotopeOrders.map(getId) : filteredIsotopeOrders;
+}
+
 
 /**
  *

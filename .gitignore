@@ -19,6 +19,7 @@ production/certs
 *.sqlite3
 main.js
 main*.js*
+vendors*.js*
 SECRET_KEY.py
 test_pdfs/
 test_pdf/
@@ -53,3 +54,5 @@ settings.json
 *.sqlite3
 test_printing/
 data/
+tsconfig.tsbuildinfo
+chunk-manifest.json
