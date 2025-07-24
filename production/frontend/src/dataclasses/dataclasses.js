@@ -439,13 +439,14 @@ export class IsotopeDelivery {
 }
 
 export class IsotopeOrder {
-  constructor(id, status, order_by, ordered_activity_MBq, destination, delivery_date, freed_by, freed_datetime, ) {
+  constructor(id, status, order_by, ordered_activity_MBq, destination, delivery_date, comment, freed_by, freed_datetime, ) {
     this.id=id
     this.status=status
     this.order_by=order_by
     this.ordered_activity_MBq=ordered_activity_MBq
     this.destination=destination
     this.delivery_date=delivery_date
+    this.comment=comment
     this.freed_by=freed_by
     this.freed_datetime=freed_datetime
   }
@@ -461,6 +462,7 @@ export class IsotopeOrder {
       this.ordered_activity_MBq,
       this.destination,
       this.delivery_date,
+      this.comment,
       this.freed_by,
       this.freed_datetime
     )
@@ -473,6 +475,7 @@ export class IsotopeOrder {
       new FloatField("ordered_activity_MBq"),
       new ForeignField("destination","isotope_delivery"),
       new DateField("delivery_date"),
+      new CharField("comment"),
       new ForeignField("freed_by","user"),
       new DateTimeField("freed_datetime"),
     ];

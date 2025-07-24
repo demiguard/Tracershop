@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Card, Col, Collapse, Row } from "react-bootstrap";
+import { Card, Col, Collapse, Form, FormText, Row } from "react-bootstrap";
 import { StatusIcon } from "~/components/injectable/icons";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
@@ -9,6 +9,8 @@ import { CENTER, JUSTIFY, PADDING } from "~/lib/styles";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
 import { isDirty } from "~/lib/utils";
 import { IsotopeOrderReference } from "~/dataclasses/references/isotope_order_reference";
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
+import { setTempObjectToEvent } from "~/lib/state_management";
 
 
 /**
@@ -67,16 +69,30 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
     return true;
   }
 
-  const [tempOrder, setTempOrder] =  useState(order);
+  const [tempOrder, setTempOrder] =  useState(order.order);
 
   const orderDirty = isDirty(order, tempOrder);
 
   return <Row>
     <Col>
-      hello world
+      <TracershopInputGroup tail={"MBq"}>
+        <Form.Control
+          //@ts-ignore
+          onChange={setTempObjectToEvent(setTempOrder, 'ordered_activity_MBq')}
+          value={tempOrder.ordered_activity_MBq}
+        />
+      </TracershopInputGroup>
     </Col>
     <Col>
-
+      <TracershopInputGroup tail={"Kommentar"}>
+        <Form.Control
+          as="textarea"
+          rows={1}
+          value={tempOrder.comment}
+          //@ts-ignore
+          onChange={setTempObjectToEvent(setTempOrder, 'comment')}
+        />
+      </TracershopInputGroup>
     </Col>
     <Col xs={1}>
       {order.shopActionButton({

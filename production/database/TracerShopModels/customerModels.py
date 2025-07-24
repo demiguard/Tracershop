@@ -492,6 +492,7 @@ class IsotopeOrder(TracershopModel):
   ordered_activity_MBq = FloatField()
   destination = ForeignKey(IsotopeDelivery, on_delete=RESTRICT)
   delivery_date = DateField()
+  comment = TextField(max_length=500, default="")
   freed_by = ForeignKey(
     User, blank=True, null=True, default=None, on_delete=RESTRICT,
     related_name="freed_by"

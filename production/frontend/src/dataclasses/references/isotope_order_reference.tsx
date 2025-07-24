@@ -17,41 +17,4 @@ export class IsotopeOrderReference extends Order<IsotopeOrder> {
   get datatype(): string {
     return DATA_ISOTOPE_ORDER;
   }
-
-  shopActionButton({
-    label, canEdit, is_dirty, validate, callback
-  }: ShopActionButtonArgs): JSX.Element {
-    switch (this.status) {
-      case ORDER_STATUS.RELEASED:
-        return <ClickableIcon
-          label={label}
-          src="/static/images/delivery.svg"
-          onClick={() => {}}
-        />
-      case ORDER_STATUS.ORDERED:
-        if(!canEdit){
-          return (<div aria-label={label}></div>)
-        }
-        if(!is_dirty){
-          return (<DeleteButton
-            label={label}
-            object={this.order}
-            object_type={DATA_ISOTOPE_ORDER}
-          />);
-        }
-      // DELIBERATE FALL THROUGH!
-      case ORDER_STATUS.AVAILABLE:
-        return <CommitButton
-          label={label}
-          validate={validate}
-          callback={callback}
-          temp_object={this.order}
-          object_type={DATA_ISOTOPE_ORDER}
-          add_image="/static/images/cart.svg"
-        />
-      default:
-        return (<div aria-label={label}></div>);
-    }
-  }
-
 }
