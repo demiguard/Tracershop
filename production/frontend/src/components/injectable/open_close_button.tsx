@@ -23,7 +23,7 @@ const RotatedDiv = styled.div`
 
 interface OpenCloseButtonArgs {
   open : boolean,
-  setOpen : (a: (a: boolean) => boolean ) => undefined
+  setOpen : React.Dispatch<React.SetStateAction<boolean>>
   label? : string,
 }
 

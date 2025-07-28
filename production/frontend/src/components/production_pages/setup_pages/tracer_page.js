@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from "react";
 import { Container, Table, FormControl, Row, Card, Collapse , Col, FormCheck} from "react-bootstrap";
 
-import { TracerModal } from "../../modals/tracer_modal.js";
-import { appendNewObject, setStateToEvent, setTempMapToEvent } from "~/lib/state_management.js";
+import { TracerModal } from "../../modals/tracer_modal";
+import { appendNewObject, setStateToEvent, setTempMapToEvent } from "~/lib/state_management";
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
-  TracerTypeOptions, cssAlignRight, TRACER_TYPE,
-  cssTableCenter} from "~/lib/constants.js";
-import { Tracer } from "~/dataclasses/dataclasses.js";
-import { DATA_TRACER } from "~/lib/shared_constants.js"
+  TracerTypeOptions, TRACER_TYPE} from "~/lib/constants";
+import { cssAlignRight, cssTableCenter } from "~/lib/styles";
+import { Tracer } from "~/dataclasses/dataclasses";
+import { DATA_TRACER } from "~/lib/shared_constants"
 import { ClickableIcon } from "~/components/injectable/icons";
-import { Select,  toOptions } from "~/components/injectable/select.js";
-import { HoverBox } from "~/components/injectable/hover_box.js";
+import { Select,  toOptions } from "~/components/injectable/select";
+import { HoverBox } from "~/components/injectable/hover_box";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
-import { CommitButton } from "~/components/injectable/commit_button.js";
+import { CommitButton } from "~/components/injectable/commit_button";
 import { nullParser } from "~/lib/formatting";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
-import { compareLoosely } from "~/lib/utils.js";
-import { Optional } from "~/components/injectable/optional.js";
-import { EditableInput } from "~/components/injectable/inputs/editable_input.js";
+import { compareLoosely } from "~/lib/utils";
+import { Optional } from "~/components/injectable/optional";
+import { EditableInput } from "~/components/injectable/inputs/editable_input";
 
 
 function getNewTracer(){

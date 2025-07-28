@@ -1,38 +1,39 @@
 import React, { useEffect, useState } from "react";
 import { Col, Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 
-import { Vial } from "~/dataclasses/dataclasses.js";
-import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box.js";
+import { Vial } from "~/dataclasses/dataclasses";
+import { ERROR_LEVELS, AlertBox } from "../injectable/alert_box";
 
-import { Authenticate } from "../injectable/authenticate.js";
+import { Authenticate } from "../injectable/authenticate";
 import { HoverBox } from "../injectable/hover_box";
-import { CloseButton, MarginButton } from "../injectable/buttons.js";
+import { CloseButton, MarginButton } from "../injectable/buttons";
 import { ClickableIcon, StatusIcon } from "~/components/injectable/icons";
-import { Comment } from "../injectable/data_displays/comment.js";
-import { NEW_LOCAL_ID, ORDER_STATUS, StateType, cssCenter, cssTableCenter, marginLess } from "~/lib/constants";
+import { Comment } from "../injectable/data_displays/comment";
+import { NEW_LOCAL_ID, ORDER_STATUS, StateType } from "~/lib/constants";
+import { cssCenter, cssTableCenter, marginLess } from "~/lib/styles";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
   DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPE,
   WEBSOCKET_MESSAGE_CORRECT_ORDER,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY
 } from "~/lib/shared_constants"
-import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting.js";
-import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input.js";
+import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting";
+import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input";
 import { compareDates, getId, openActivityReleasePDF } from "~/lib/utils";
-import { TimeInput } from "../injectable/inputs/time_input.js";
-import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
-import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
-import { CommitButton } from "../injectable/commit_button.js";
-import { Optional, Options } from "../injectable/optional.js";
-import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management.js";
-import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
-import { CancelBox } from "~/components/injectable/cancel_box.js";
-import { vialFilter } from "~/lib/filters.js";
-import { FONT } from "~/lib/styles.js";
-import { DateTime } from "~/components/injectable/datetime.js";
-import { toLotDateString } from "~/lib/chronomancy.js";
-import { RecoverableError, useErrorState } from "~/lib/error_handling.js";
-import { useUserReleaseRights } from "~/contexts/user_release_right.js";
+import { TimeInput } from "../injectable/inputs/time_input";
+import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
+import { OrderMapping } from "~/lib/data_structures/order_mapping";
+import { CommitButton } from "../injectable/commit_button";
+import { Optional, Options } from "../injectable/optional";
+import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management";
+import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
+import { CancelBox } from "~/components/injectable/cancel_box";
+import { vialFilter } from "~/lib/filters";
+import { FONT } from "~/lib/styles";
+import { DateTime } from "~/components/injectable/datetime";
+import { toLotDateString } from "~/lib/chronomancy";
+import { RecoverableError, useErrorState } from "~/lib/error_handling";
+import { useUserReleaseRights } from "~/contexts/user_release_right";
 
 const vialErrorDefault = {
   lot_number : "",

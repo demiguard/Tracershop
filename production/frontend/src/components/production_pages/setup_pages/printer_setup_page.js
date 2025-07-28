@@ -9,7 +9,7 @@ import { Optional } from "~/components/injectable/optional";
 import { Option, Select, toOptions } from "~/components/injectable/select";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { Printer } from "~/dataclasses/dataclasses";
-import { cssCenter } from "~/lib/constants";
+import { cssCenter } from "~/lib/styles";
 import { nullParser } from "~/lib/formatting";
 import { DATA_PRINTER, DATA_SERVER_CONFIG, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TEST_PRINTER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { setTempObjectToEvent } from "~/lib/state_management";

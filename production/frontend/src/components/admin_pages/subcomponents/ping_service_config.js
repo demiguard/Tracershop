@@ -1,7 +1,7 @@
 import React, {useState} from "react";
 import {Row, Col, FormControl} from "react-bootstrap"
 
-import { cssCenter, cssError } from "~/lib/constants";
+import { cssCenter, cssError } from "~/lib/styles";
 import { DATA_ADDRESS, DATA_DICOM_ENDPOINT, DATA_SERVER_CONFIG, WEBSOCKET_DATA } from "~/lib/shared_constants"
 import { Address, DicomEndpoint, ServerConfiguration } from "../../../dataclasses/dataclasses";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";

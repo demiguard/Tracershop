@@ -3,7 +3,8 @@
   */
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Col, Container, Form, FormControl, InputGroup, Row } from "react-bootstrap";
-import {  USER_GROUPS, cssCenter } from "~/lib/constants";
+import {  USER_GROUPS } from "~/lib/constants";
+import { cssCenter } from "~/lib/styles";
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_CUSTOMER,
   DATA_USER_ASSIGNMENT, WEBSOCKET_DATA, WEBSOCKET_DATA_ID,
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,

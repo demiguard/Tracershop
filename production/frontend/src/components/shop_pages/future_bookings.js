@@ -1,7 +1,8 @@
 import React, { Component, useRef, useState } from "react";
 import { Card, Col, Collapse, FormCheck, Row, Table } from "react-bootstrap";
 import { FormatDateStr, formatAccessionNumber } from "~/lib/formatting";
-import { TRACER_TYPE, cssAlignRight, cssCenter } from "../../lib/constants";
+import { TRACER_TYPE } from "../../lib/constants";
+import { cssAlignRight, cssCenter } from "~/lib/styles";
 import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WARNING_DUPLICATED_BOOKINGS, WEBSOCKET_DATA, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";

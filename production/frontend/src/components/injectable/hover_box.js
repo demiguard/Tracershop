@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react'
-import { cssCenter } from '~/lib/constants';
+import { cssCenter } from "~/lib/styles";
 
 const HOVER_BOX_CSS = {
   maxWidth: '350px',

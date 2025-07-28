@@ -1,7 +1,7 @@
 import React from "react";
 import { Container } from "react-bootstrap";
 import { InvalidVersionPage } from "~/components/error_pages/invalid_version_page";
-import { ERROR_CONTAINER_CSS } from "~/lib/constants";
+import { ERROR_CONTAINER_CSS } from "~/lib/styles";
 import { ERROR_INVALID_JAVASCRIPT_VERSION } from "~/lib/shared_constants";
 
 export function ServerErrorPage({error}){

@@ -10,6 +10,7 @@ import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton } from './buttons'
 import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER } from '~/lib/shared_constants'
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
+import { Order } from '~/dataclasses/references/order'
 
 interface ClickableIconProps {
   altText? : string,
@@ -86,7 +87,7 @@ function statusImages(status) {
     case ORDER_STATUS.EMPTY:
       return "";
     case ORDER_STATUS.AVAILABLE:
-      return "/static/images/clipboard0.svg";
+      return "";
     case ORDER_STATUS.RISOE:
       return "/static/images/clipboard0.svg";
     default:
@@ -99,21 +100,10 @@ interface StatusIconArgs {
   altText? : string,
   label? : string,
   onClick? : () => {};
-  order? : ActivityOrder | InjectionOrder | IsotopeOrder
+  order? : ActivityOrder | InjectionOrder | IsotopeOrder | Order
   orderCollection? : ActivityOrderCollection | IsotopeOrderCollection
 }
 
-/**
- *
- * @param {{
- *  altText : String
- *  onClick : Callable
- *  label : String
- *  order : {ActivityOrder, InjectionOrder}
- *  orderCollection : ActivityOrderCollection | IsotopeOrderCollection
- * }} param0
- * @returns
- */
 export function StatusIcon ({onClick, label, order, orderCollection, altText} : StatusIconArgs) {
   const statusImagePath = (() => {
     if (orderCollection) {
@@ -141,18 +131,6 @@ export function StatusIcon ({onClick, label, order, orderCollection, altText} : 
     src={statusImagePath}
   />;
 }
-
-StatusIcon.propTypes = {
-  onClick : propTypes.func,
-  label: propTypes.string,
-  order: propTypes.oneOfType([
-    propTypes.instanceOf(ActivityOrder),
-    propTypes.instanceOf(InjectionOrder)]),
-  orderCollection : propTypes.oneOfType([
-    propTypes.instanceOf(ActivityOrderCollection),
-    propTypes.instanceOf(IsotopeOrderCollection)
-  ]),
-};
 
 export function ActivityDeliveryIcon(props){
   const newProps = {...props};

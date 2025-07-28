@@ -1,30 +1,27 @@
 
 import React, { useState } from "react";
-import { Row, Col, Button, Container } from 'react-bootstrap'
-import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting.js";
-import { calculateProduction } from "../../lib/physics.js";
-import { ActivityModal } from "../modals/activity_modal.js";
-import { CreateOrderModal } from "../modals/create_activity_modal.js";
 import propTypes from 'prop-types'
-
-
+import { Row, Col, Button, Container } from 'react-bootstrap'
+import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
+import { calculateProduction } from "../../lib/physics";
+import { ActivityModal } from "../modals/activity_modal";
+import { CreateOrderModal } from "../modals/create_activity_modal";
 import {PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
   PROP_TRACER_CATALOG,  DAYS_OBJECTS
-} from "../../lib/constants.js";
-
-import { ActivityProduction } from "../../dataclasses/dataclasses.js";
+} from "../../lib/constants";
+import { ActivityProduction } from "~/dataclasses/dataclasses";
 import { compareTimeStamp, getDay
-  } from "../../lib/chronomancy.js";
+  } from "../../lib/chronomancy";
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping,
-  getTimeSlotOwner} from "../../lib/data_structures.js";
-import { OrderMapping } from "~/lib/data_structures/order_mapping.js";
+  getTimeSlotOwner} from "../../lib/data_structures";
+import { OrderMapping } from "~/lib/data_structures/order_mapping";
 
-import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../lib/filters.js";
-import { useTracershopState } from "../../contexts/tracer_shop_context.js";
-import { Optional } from "../injectable/optional.js";
-import { ProductionTimeSlot } from "~/components/injectable/production_injectionable/production_time_slot.js";
-import { useTracerCatalog } from "~/contexts/tracer_catalog.js";
+import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../lib/filters";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
+import { Optional } from "../injectable/optional";
+import { ProductionTimeSlot } from "~/components/injectable/production_injectionable/production_time_slot";
+import { useTracerCatalog } from "~/contexts/tracer_catalog";
 
 const Modals = {
   create_modal : CreateOrderModal,

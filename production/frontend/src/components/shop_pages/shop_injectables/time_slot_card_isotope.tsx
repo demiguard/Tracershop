@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Col, Collapse, Form, FormText, Row } from "react-bootstrap";
 import { StatusIcon } from "~/components/injectable/icons";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
@@ -8,18 +8,16 @@ import { IsotopeOrderCollection } from "~/lib/data_structures/isotope_order_coll
 import { CENTER, JUSTIFY, PADDING } from "~/lib/styles";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
 import { isDirty } from "~/lib/utils";
-import { IsotopeOrderReference } from "~/dataclasses/references/isotope_order_reference";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { setTempObjectToEvent } from "~/lib/state_management";
+import { parseStringInput, parseWholePositiveNumber } from "~/lib/user_input";
+import { useErrorState } from "~/lib/error_handling";
+
+import { makeBlankIsotopeOrder, makeBlankIsotopeOrderReference } from "~/lib/blanks";
+import { useUpdatingEffect } from "~/effects/updating_effect";
+import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
 
 
-/**
- *
- * @param {Object} props
- * @param {IsotopeOrderCollection} props.isotopeOrderCollection
- * @param {StateType<Boolean>} props.collapsedState
- * @returns
- */
 function CardHeader({isotopeOrderCollection, collapsedState}){
   const [collapsed, setCollapsed] = collapsedState
 
@@ -29,14 +27,11 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
         <Col xs={1} style={JUSTIFY.center}>
           <StatusIcon orderCollection={isotopeOrderCollection}/>
         </Col>
-        <Col xs={2} style={{
-          alignItems: 'center',
-          textAlign: 'center',
-          display : "flex"
-          }}>{isotopeOrderCollection.delivery.delivery_time}</Col>
+        <Col xs={2} style={{...CENTER }}>
+          {isotopeOrderCollection.delivery.delivery_time}
+        </Col>
         <Col xs={1} style={{
-          justifyContent : 'right',
-          display : "flex"
+          ...JUSTIFY.left
         }}>
           <OpenCloseButton
             open={collapsed}
@@ -49,31 +44,49 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
 }
 
 interface OrderRowProps {
-  order : IsotopeOrderReference,
+  order : IsotopeOrder,
   deadlineValid : Boolean,
 }
 
-/** Row that displays the order
- *
- * @param {Object} props
- * @param {IsotopeOrder} props.order - The order to be rendered
- * @param {Boolean} props.canEdit - If the user should be able to edit the order
- * @returns
- */
 function OrderRow({order, deadlineValid}: OrderRowProps){
+  const state = useTracershopState();
   const canEdit = deadlineValid && [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(order.status);
+  const [tempOrder, setTempOrder] =  useState(order);
+  const [errorActivity, setErrorActivity] = useErrorState();
+  const [errorComment, setErrorComment] = useErrorState();
 
-  console.log("Hello world")
+  useUpdatingEffect(() => {
+    setTempOrder((old) => {
+      const newTempOrder = old.copy();
 
-  function validate(){
-    return true;
+      newTempOrder.destination = order.destination;
+      newTempOrder.delivery_date = order.delivery_date;
+
+      return newTempOrder;
+    })
+  }, [order])
+
+  function validate() : [boolean, any] {
+    const [validActivity, activity] = parseWholePositiveNumber(tempOrder.ordered_activity_MBq);
+    const [validComment, comment] = parseStringInput(tempOrder.comment);
+
+    if (!validActivity || !validComment) {
+      return [false, {}];
+    }
+
+    return [true, {...tempOrder, status : ORDER_STATUS.ORDERED,  ordered_activity_MBq : activity,  comment : comment}];
   }
 
-  const [tempOrder, setTempOrder] =  useState(order.order);
+  function callback(data){
+    console.log(data);
+  }
 
   const orderDirty = isDirty(order, tempOrder);
 
   return <Row>
+    <Col xs={1}>
+      <StatusIcon order={order}/>
+    </Col>
     <Col>
       <TracershopInputGroup tail={"MBq"}>
         <Form.Control
@@ -94,12 +107,15 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
         />
       </TracershopInputGroup>
     </Col>
-    <Col xs={1}>
-      {order.shopActionButton({
-        validate : validate,
-        is_dirty : orderDirty,
-        canEdit : canEdit,
-      })}
+    <Col style={{
+      ...CENTER
+    }} xs={1}>
+      <ShopActionButton
+        order={order}
+        validate={validate}
+        isDirty={orderDirty}
+        canEdit={canEdit}
+      />
     </Col>
   </Row>
 }
@@ -107,10 +123,9 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
 
 interface TimeSlotCardIsotopeArgs {
   timeSlot : IsotopeDelivery,
-  orders : Array<IsotopeOrderReference>,
+  orders : Array<IsotopeOrder>,
   deadlineValid : Boolean
 }
-
 
 export function TimeSlotCardIsotope({
   timeSlot,
@@ -118,6 +133,7 @@ export function TimeSlotCardIsotope({
   deadlineValid,
 }: TimeSlotCardIsotopeArgs){
   const state = useTracershopState();
+
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(deadlineValid);
 
@@ -125,23 +141,21 @@ export function TimeSlotCardIsotope({
 
   const renderedOrders = orders.map(
     (order) => {
-      return <OrderRow key={order.order.id} order={order} deadlineValid={deadlineValid}/>
+      return <OrderRow key={order.id} order={order} deadlineValid={deadlineValid}/>
     });
+
+  const blankOrder = makeBlankIsotopeOrder(timeSlot, state);
+
+  console.log(blankOrder);
 
   if(deadlineValid){
     renderedOrders.push(
       <OrderRow key={-1}
-      order={
-        new IsotopeOrderReference(
-          new IsotopeOrder(-1, ORDER_STATUS.AVAILABLE)
-        )
-      }
-      deadlineValid={deadlineValid}
+        order={ blankOrder }
+        deadlineValid={deadlineValid}
       />
     )
   }
-
-  console.log(deadlineValid)
 
   return (
     <Card style={PADDING.all.px0}>

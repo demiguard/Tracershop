@@ -1,28 +1,25 @@
 
 import React, { useMemo, useState } from "react";
 import { Row, Col, Table, Button, Container, FormCheck } from 'react-bootstrap';
-import propTypes from "prop-types"
-
 import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, ORDER_STATUS, PROP_SELECTED } from "~/lib/constants";
 import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting";
 import { compareDates } from "~/lib/utils";
 import { CreateInjectionOrderModal } from "../modals/create_injection_modal";
 import { InjectionModal } from "../modals/injection_modal";
 import { AcceptIconInjection, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons";
-import { InjectionOrder } from "~/dataclasses/dataclasses.js";
-import { useTracershopState } from "../../contexts/tracer_shop_context.js";
-import { InjectionUsage } from "../injectable/data_displays/injection_usage.js";
-import { Comment } from "../injectable/data_displays/comment.js";
-import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
-import { TimeDisplay } from "../injectable/data_displays/time_display.js";
-import { IsotopeDisplay } from "~/components/injectable/data_displays/isotope_display.js";
-import { EndpointDisplay } from "~/components/injectable/data_displays/endpoint.js";
-import { InjectionOrderSortingMethods, sortInjectionOrders } from "~/lib/sorting.js";
-import { Optional } from "~/components/injectable/optional.js";
-import { ReleaseManyInjectionOrdersModal } from "~/components/modals/release_many_injections_orders.js";
-import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
-import { DISPLAY, MARGIN } from "~/lib/styles.js";
-import { useUserReleaseRights } from "~/contexts/user_release_right.js";
+import { InjectionOrder } from "~/dataclasses/dataclasses";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
+import { InjectionUsage } from "../injectable/data_displays/injection_usage";
+import { Comment } from "../injectable/data_displays/comment";
+import { TracerDisplay } from "../injectable/data_displays/tracer_display";
+import { TimeDisplay } from "../injectable/data_displays/time_display";
+import { IsotopeDisplay } from "~/components/injectable/data_displays/isotope_display";
+import { EndpointDisplay } from "~/components/injectable/data_displays/endpoint";
+import { InjectionOrderSortingMethods, sortInjectionOrders } from "~/lib/sorting";
+import { Optional } from "~/components/injectable/optional";
+import { ReleaseManyInjectionOrdersModal } from "~/components/modals/release_many_injections_orders";
+import { DISPLAY, MARGIN } from "~/lib/styles";
+import { useUserReleaseRights } from "~/contexts/user_release_right";
 
 
 /** @enum */

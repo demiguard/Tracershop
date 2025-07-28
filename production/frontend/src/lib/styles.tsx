@@ -1,6 +1,7 @@
 /** This is a glorified css file */
+import React from "react";
 import styled, {keyframes} from "styled-components"
-import { ORDER_STATUS } from "~/lib/constants";
+import { ERROR_BACKGROUND_COLOR, ERROR_MARGIN_COLOR, HINT_BACKGROUND_COLOR, HINT_MARGIN_COLOR, ORDER_STATUS, WARNING_BACKGROUND_COLOR, WARNING_MARGIN_COLOR } from "~/lib/constants";
 
 export const rotation = {
   cw : {
@@ -24,7 +25,12 @@ export const rotation = {
   `}
 };
 
-export const JUSTIFY = {
+
+export const JUSTIFY : {
+  between : React.CSSProperties,
+  center : React.CSSProperties,
+  left : React.CSSProperties
+} = {
   between : {
     display : "flex",
     justifyContent : 'space-between'
@@ -39,12 +45,15 @@ export const JUSTIFY = {
   }
 };
 
-export const DISPLAY = {
+export const DISPLAY : {
+  INLINE_BLOCK : React.CSSProperties,
+  FLEX : React.CSSProperties
+} = {
   INLINE_BLOCK : { display : 'inline-block'},
   FLEX : { display : "flex" }
 };
 
-export const CENTER = {
+export const CENTER : React.CSSProperties = {
   alignItems: 'center',
   textAlign: 'center'
 };
@@ -151,4 +160,51 @@ export const HIGH_CONTRAST_ORDER_COLORS = {
   [ORDER_STATUS.CANCELLED] : "#CCCCCC",
   [ORDER_STATUS.ACCEPTED] : "#FFFAD4",
   [ORDER_STATUS.RELEASED] : "#D3FFD8",
-}
+};
+export const cssCenter : React.CSSProperties = {
+  display: "block",
+  margin: 'auto',
+  alignItems: 'center',
+  textAlign: 'center'
+};
+
+export const ERROR_CONTAINER_CSS: React.CSSProperties = {
+  borderStyle: 'solid',
+  borderColor: 'black',
+  borderLeft: '2px',
+  borderRight: '2px',
+  borderTop: '0px',
+  borderBottom: '0px',
+  minHeight: '100vh',
+  boxShadow: '3px 3px 6px 6px #888888',
+};
+
+export const cssAlignRight : React.CSSProperties = {
+  justifyContent: 'right',
+  display: 'flex'
+};
+
+export const cssError : React.CSSProperties = {
+  background: ERROR_BACKGROUND_COLOR,
+  borderColor: ERROR_MARGIN_COLOR,
+};
+
+export const cssWarningColor : React.CSSProperties = {
+  background: WARNING_BACKGROUND_COLOR,
+  borderColor: WARNING_MARGIN_COLOR
+};
+
+export const cssHintColor : React.CSSProperties = {
+  background: HINT_BACKGROUND_COLOR,
+  borderColor: HINT_MARGIN_COLOR
+};
+
+
+export const cssTableCenter : React.CSSProperties = {
+  textAlign: "center",
+  verticalAlign: "middle",
+};
+
+export const marginLess : React.CSSProperties = {
+  margin: "0px"
+};

@@ -15,7 +15,7 @@ import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
 import { NEW_LOCAL_ID, ORDER_STATUS } from "~/lib/constants";
 import { Optional } from "~/components/injectable/optional";
 import { FONT, MARGIN } from "~/lib/styles";
-import { timeSlotsFilter } from "~/lib/filters";
+import { timeSlotFilter } from "~/lib/filters";
 
 export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}) {
   const state = useTracershopState();
@@ -90,7 +90,7 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}) {
   }
 
   const day = getDay(active_date);
-  const filteredTimeSlots = timeSlotsFilter(state, {
+  const filteredTimeSlots = timeSlotFilter(state, {
     state : state,
     tracerID : active_tracer,
     day : day

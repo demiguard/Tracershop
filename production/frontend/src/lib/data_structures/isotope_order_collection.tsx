@@ -10,7 +10,7 @@ export class IsotopeOrderCollection {
   /** A collection of Isotope orders, that
    *
    */
-  constructor(orders: Array<IsotopeOrderReference>, delivery: IsotopeDelivery, state : TracershopState){
+  constructor(orders: Array<IsotopeOrder>, delivery: IsotopeDelivery, state : TracershopState){
     this.#minimum_status = ORDER_STATUS.EMPTY;
     this.delivery = delivery;
 

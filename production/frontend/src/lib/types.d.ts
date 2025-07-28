@@ -3,10 +3,10 @@ import { ActivityOrder, InjectionOrder, IsotopeOrder } from "~/dataclasses/datac
 
 export interface ShopActionButtonArgs {
   label?: string,
-  validate: () => Boolean | [ Boolean | any ],
-  callback?: () => any,
-  canEdit: Boolean = false,
-  is_dirty: Boolean
+  validate: () => boolean | [ boolean, any ],
+  callback?: (any) => void,
+  canEdit: boolean = false,
+  is_dirty: boolean
 }
 
 export type OrderType = IsotopeOrder | ActivityOrder | InjectionOrder

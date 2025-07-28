@@ -1,6 +1,6 @@
 import React from "react";
 import { Container } from "react-bootstrap";
-import { ERROR_CONTAINER_CSS } from "~/lib/constants";
+import { ERROR_CONTAINER_CSS } from "~/lib/styles";
 
 
 

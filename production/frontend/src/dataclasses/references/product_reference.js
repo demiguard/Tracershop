@@ -10,7 +10,7 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint,
   Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracershopState
 } from "~/dataclasses/dataclasses";
 import { WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
-import { activityOrderFilter, isotopeDeliveryFilter, isotopeOrderFilter, timeSlotsFilter } from "~/lib/filters";
+import { activityOrderFilter, isotopeDeliveryFilter, isotopeOrderFilter, timeSlotFilter } from "~/lib/filters";
 import { DATA_ISOTOPE, DATA_TRACER } from "~/lib/shared_constants";
 
 
@@ -178,7 +178,7 @@ export class ProductReference {
 
     switch (this.type) {
       case PRODUCT_TYPES.ACTIVITY: {
-        return timeSlotsFilter(state, {
+        return timeSlotFilter(state, {
           state: state,
           tracerID : this.product_id,
           endpointID : endpointID,
@@ -206,25 +206,32 @@ export class ProductReference {
    * @returns
    */
   filterOrders(state, {
-    timeSlots
+    timeSlots,
+    delivery_date,
   }) {
-    switch (this.type){
-      case PRODUCT_TYPES.ACTIVITY:
-        return activityOrderFilter(
-          state, {
-            state : state,
-            timeSlots : timeSlots
+    const raw_orders = (() => {
+      switch (this.type){
+        case PRODUCT_TYPES.ACTIVITY:
+          return activityOrderFilter(
+            state, {
+              state : state,
+              timeSlots : timeSlots,
+              delivery_date : delivery_date
+            }
+          );
+          case PRODUCT_TYPES.ISOTOPE:
+            return isotopeOrderFilter(state, {
+              state : state,
+              timeSlots : timeSlots,
+              delivery_date : delivery_date,
+            });
           }
-        );
-      case PRODUCT_TYPES.ISOTOPE:
-        return isotopeOrderFilter(state, {
-          state : state,
-          timeSlots : timeSlots,
-        });
+    })();
 
-    }
+    return raw_orders;
   }
 }
+
 
 /**
  *

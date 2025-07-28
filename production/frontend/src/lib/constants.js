@@ -101,9 +101,9 @@ export const WEEKLY_REPEAT_CHOICES = {
  * @enum {OrderStatus} */
 export const ORDER_STATUS = {
   AVAILABLE : 0,
-  ORDERED : 1,
-  ACCEPTED : 2,
-  RELEASED : 3,
+  ORDERED : 1, // The value associated with red
+  ACCEPTED : 2, // The value associated with yellow
+  RELEASED : 3, // The value associated with green
   CANCELLED : 4,
   RISOE : 5,
   EMPTY : 6,
@@ -142,54 +142,6 @@ export const WARNING_MARGIN_COLOR = "#FFbb00"
 
 export const HINT_BACKGROUND_COLOR = "#FFFFFF"
 export const HINT_MARGIN_COLOR = COLORS.tertiaryColor1
-
-export const cssCenter = {
-  display : "block",
-  margin: 'auto',
-  alignItems: 'center',
-  textAlign: 'center'
-}
-
-export const ERROR_CONTAINER_CSS = {
-  borderStyle : 'solid',
-  borderColor : 'black',
-  borderLeft: '2px',
-  borderRight: '2px',
-  borderTop: '0px',
-  borderBottom: '0px',
-  minHeight: '100vh',
-  boxShadow: '3px 3px 6px 6px #888888',
-};
-
-export const cssAlignRight = {
-          justifyContent : 'right',
-          display : 'flex'
-        };
-
-export const cssError = {
-  background : ERROR_BACKGROUND_COLOR,
-  marginColor : ERROR_MARGIN_COLOR,
-}
-
-export const cssWarningColor = {
-  background : WARNING_BACKGROUND_COLOR,
-  marginColor : WARNING_MARGIN_COLOR
-}
-
-export const cssHintColor = {
-  background : HINT_BACKGROUND_COLOR,
-  marginColor : HINT_MARGIN_COLOR
-}
-
-
-export const cssTableCenter = {
-  textAlign : "center",
-  verticalAlign : "middle",
-}
-
-export const marginLess = {
-  margin : "0px"
-}
 
 export const NEW_LOCAL_ID = -1;
 

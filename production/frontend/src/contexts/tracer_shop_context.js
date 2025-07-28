@@ -128,6 +128,7 @@ export function tracershopReducer(state, action){
   }
 
   if(action instanceof UpdateToday){
+    console.log("updating to ", action.updatedToday)
     newState.today = datify(action.updatedToday);
     if(action.websocket){
       action.websocket.send({

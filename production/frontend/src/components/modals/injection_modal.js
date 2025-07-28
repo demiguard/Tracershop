@@ -1,35 +1,32 @@
 import React, { useEffect, useState} from "react";
 import propTypes from 'prop-types'
 import { Col, Row, Modal, Table } from "react-bootstrap";
-
-import { Authenticate } from "../injectable/authenticate.js"
-import { setStateToEvent } from "~/lib/state_management.js";
-import { ERROR_TYPE_HINT, ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~/lib/constants.js";
-
+import { Authenticate } from "../injectable/authenticate"
+import { setStateToEvent } from "~/lib/state_management";
+import { ERROR_TYPE_HINT, ORDER_STATUS, PROP_MODAL_ORDER, PROP_ON_CLOSE} from "~/lib/constants";
 import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, AUTH_IS_AUTHENTICATED,
   WEBSOCKET_DATA, DATA_INJECTION_ORDER, WEBSOCKET_MESSAGE_FREE_INJECTION,
   WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CORRECT_ORDER,
   WEBSOCKET_MESSAGE_TYPE
-} from "~/lib/shared_constants.js"
-
-import { HoverBox } from "../injectable/hover_box.js";
-import { CloseButton, MarginButton } from "../injectable/buttons.js";
-import { compareDates, InjectionOrderPDFUrl, openInjectionReleasePDF } from "~/lib/utils.js";
-import { getToday, toLotDateString } from "~/lib/chronomancy.js";
-import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box.js";
-import { batchNumberValidator, nullParser } from "~/lib/formatting.js";
-import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context.js";
-import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage.js";
-import { TracerDisplay } from "../injectable/data_displays/tracer_display.js";
-import { TimeDisplay } from "../injectable/data_displays/time_display.js";
-import { EditableInput } from "../injectable/inputs/editable_input.js";
-import { LotNumberHeader } from "../injectable/headers/lot_display.js";
-import { Optional } from "~/components/injectable/optional.js";
-import { CancelBox } from "~/components/injectable/cancel_box.js";
-import { FONT } from "~/lib/styles.js";
-import { DateTime } from "~/components/injectable/datetime.js";
-import { RecoverableError, useErrorState } from "~/lib/error_handling.js";
-import { useUserReleaseRights } from "~/contexts/user_release_right.js";
+} from "~/lib/shared_constants"
+import { HoverBox } from "../injectable/hover_box";
+import { CloseButton, MarginButton } from "../injectable/buttons";
+import { compareDates, InjectionOrderPDFUrl, openInjectionReleasePDF } from "~/lib/utils";
+import { getToday, toLotDateString } from "~/lib/chronomancy";
+import { AlertBox, ERROR_LEVELS } from "../injectable/alert_box";
+import { batchNumberValidator, nullParser } from "~/lib/formatting";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
+import { InjectionUsage } from "~/components/injectable/data_displays/injection_usage";
+import { TracerDisplay } from "../injectable/data_displays/tracer_display";
+import { TimeDisplay } from "../injectable/data_displays/time_display";
+import { EditableInput } from "../injectable/inputs/editable_input";
+import { LotNumberHeader } from "../injectable/headers/lot_display";
+import { Optional } from "~/components/injectable/optional";
+import { CancelBox } from "~/components/injectable/cancel_box";
+import { FONT } from "~/lib/styles";
+import { DateTime } from "~/components/injectable/datetime";
+import { RecoverableError, useErrorState } from "~/lib/error_handling";
+import { useUserReleaseRights } from "~/contexts/user_release_right";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();

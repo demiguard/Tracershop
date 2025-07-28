@@ -13,7 +13,7 @@ import { Isotope } from "~/dataclasses/dataclasses";
 import { FONT } from "~/lib/styles";
 import { setStateToEvent } from "~/lib/state_management";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
-import { cssTableCenter } from "~/lib/constants";
+import { cssTableCenter } from "~/lib/styles";
 import { parseDanishPositiveNumberInput, parseTimeInput } from "~/lib/user_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 

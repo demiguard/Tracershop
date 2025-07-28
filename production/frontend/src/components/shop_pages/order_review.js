@@ -8,7 +8,7 @@ import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { TimeSlotCardActivity } from "./shop_injectables/time_slot_card_activity";
 import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
-import { activityOrderFilter, timeSlotsFilter } from "~/lib/filters";
+import { activityOrderFilter, timeSlotFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
 import { db } from "~/lib/local_storage_driver";
@@ -17,6 +17,7 @@ import { useTracerCatalog } from "~/contexts/tracer_catalog";
 import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 import { presentName } from "~/lib/presentation";
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card";
+import { makeBlankInjectionOrder, makeBlankTracer } from "~/lib/blanks";
 
 
 /**
@@ -40,6 +41,7 @@ export function OrderReview({active_endpoint,
 }){
   const state = useTracershopState();
   const tracerCatalog = useTracerCatalog();
+  const endpoint = state.delivery_endpoint.get(active_endpoint);
   const endpointCatalog = tracerCatalog.getCatalog(active_endpoint);
 
   const [product, setActiveProduct] = productState;
@@ -49,18 +51,12 @@ export function OrderReview({active_endpoint,
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
 
-  const availableDelveries = product.filterDeliveries(state, active_endpoint, day);
+  const availableDeliveries = product.filterDeliveries(state, active_endpoint, day);
   const availableOrders = product.filterOrders(state, {
-    timeslots : availableDelveries,
+    timeslots : availableDeliveries,
     delivery_date : activeDateString
-  })
+  });
 
-  const relevantOrders = activityOrderFilter(
-    state, {
-      timeSlots : availableDelveries,
-      delivery_date : activeDateString
-    }
-  )
 
   function setProduct(tracer){
     return () => {
@@ -84,19 +80,16 @@ export function OrderReview({active_endpoint,
 
   const overhead = tracerCatalog.getOverheadForTracer(active_customer, product.product_id);
 
-  const timeSlotsCards = availableDelveries.map((timeSlot) => {
-    const timeSlot_orders = activityOrderFilter(relevantOrders, {
-      timeSlots : [timeSlot]
-    });
-
+  const timeSlotsCards = availableDeliveries.map((timeSlot) => {
     return <TimeSlotCard
       key={timeSlot.id}
       type={product.type}
       timeSlot={timeSlot}
-      orders={timeSlot_orders}
+      orders={availableOrders}
       overhead={overhead}
       deadlineValid={activityDeadlineValid}
-    />;});
+    />;
+  });
 
   const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
     (injectionOrder) => {
@@ -122,21 +115,17 @@ export function OrderReview({active_endpoint,
       state.deadline.get(serverConfig.global_injection_deadline)
     : undefined;
 
+  const defaultInjectionTracer = availableInjectionTracers.length ?
+      availableInjectionTracers[0]
+    : makeBlankTracer();
+
+
+  const blankInjectionOrder = makeBlankInjectionOrder(endpoint, defaultInjectionTracer)
+
   if(injectionDeadlineValid && (availableInjectionTracers.length > 0)) {
     InjectionOrderCards.push(<InjectionOrderCard
                                 key={-1}
-                                injection_order={new InjectionOrder(
-                                  -1,
-                                  "", // Delivery TIme
-                                  activeDateString, //
-                                  "", // injections
-                                  ORDER_STATUS.AVAILABLE, // Status
-                                  INJECTION_USAGE.human, // tracer_usage
-                                  "", // comment
-                                  null, // ordered_by
-                                  active_endpoint, // endpoint
-                                  availableInjectionTracers[0].id, // tracer
-                                  null, null , null)}
+                                injection_order={blankInjectionOrder}
                                 injection_tracers = {availableInjectionTracers}
                                 valid_deadline={injectionDeadlineValid}
                               />);

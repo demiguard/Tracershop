@@ -7,7 +7,7 @@ import { UserAssignment } from "~/dataclasses/dataclasses";
 import { EditableInput } from "../injectable/inputs/editable_input";
 import { ClickableIcon } from "~/components/injectable/icons.tsx";
 import { Col, Row } from "react-bootstrap";
-import { cssCenter } from "~/lib/constants";
+import { cssCenter } from "~/lib/styles";
 import { DATA_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
   WEBSOCKET_MESSAGE_TYPE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants";
 import { formatUsername } from "~/lib/formatting";

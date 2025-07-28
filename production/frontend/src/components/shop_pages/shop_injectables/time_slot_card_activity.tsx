@@ -1,10 +1,11 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Collapse, Col, Row } from "react-bootstrap";
-import { ActivityOrder } from "../../../dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder } from "../../../dataclasses/dataclasses";
 import { dateToDateString, nullParser, renderDateTime } from "../../../lib/formatting";
-import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE, cssAlignRight, cssCenter } from "../../../lib/constants";
+import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE } from "../../../lib/constants";
+import { cssAlignRight, cssCenter } from "~/lib/styles";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
-import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from "~/components/injectable/icons.tsx"
+import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from "~/components/injectable/icons"
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp } from "~/lib/chronomancy";
@@ -18,6 +19,8 @@ import { Optional } from "~/components/injectable/optional";
 import { CommitButton } from "~/components/injectable/commit_button";
 import { appendNewObject, reset_error, setTempMapToEvent, set_state_error } from "~/lib/state_management";
 import { useUpdatingEffect } from "~/effects/updating_effect";
+import { makeBlankActivityOrder } from "~/lib/blanks";
+
 
 function TimeSlotCardHeaderMoved(){
   return(
@@ -152,14 +155,14 @@ function ActivityOrderRow(props){
 * This is a card, representing the users view of ActivityDeliveryTimeSlot
 * It contains all ordered
 * @param {{
-*  timeSlot : ActivityProduction,
-*  active_date : Date
-*  overhead : Number
+*  timeSlot : ActivityDeliveryTimeSlot,
+*  overhead : number
 *  activityOrders: Array<ActivityOrder>,
 *  activityDeadlineValid : Boolean
 * }} props - Input props
 * @returns {Element}
 */
+
 export function TimeSlotCardActivity({
   timeSlot,
   activityOrders,
@@ -176,20 +179,12 @@ export function TimeSlotCardActivity({
   const production = state.production.get(timeSlot.production_run);
   const tracer = state.tracer.get(production.tracer);
   const canOrder = activityDeadlineValid;
+
+  const blankOrder = makeBlankActivityOrder(timeSlot)
+
   function newOrderFunction(){
     if(canOrder){
-      return new ActivityOrder(
-        -1,
-        "",
-        dateToDateString(active_date),
-        ORDER_STATUS.AVAILABLE,
-        "",
-        timeSlot.id,
-        null,
-        null,
-        null,
-        null
-      );
+      return blankOrder;
     } else {
       return null;
     }
@@ -298,6 +293,7 @@ export function TimeSlotCardActivity({
               canEdit={canEdit}
               data-testid={`activity-${order.id}`}
               value={order.ordered_activity}
+              //@ts-ignore
               onChange={setTempMapToEvent(setOrders, order.id, 'ordered_activity')}
             />
           </TracershopInputGroup>
@@ -310,6 +306,7 @@ export function TimeSlotCardActivity({
             as="textarea"
             rows={1}
             value={nullParser(order.comment)}
+            //@ts-ignore
             onChange={setTempMapToEvent(setOrders, order.id, 'comment')}
           />
           </TracershopInputGroup></Col>
@@ -371,7 +368,7 @@ export function TimeSlotCardActivity({
       case ORDER_STATUS.RELEASED:
         return <TimeSlotCardHeaderReleased orderCollection={orderCollection}/>;
       case ORDER_STATUS.CANCELLED:
-        return <TimeSlotCardHeaderCancelled orderCollection={orderCollection}/>;
+        return <TimeSlotCardHeaderCancelled/>;
       case ORDER_STATUS.ACCEPTED:
         return <TimeSlotCardHeaderAccepted orderCollection={orderCollection}/>;
       case ORDER_STATUS.ORDERED:

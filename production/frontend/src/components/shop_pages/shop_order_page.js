@@ -9,23 +9,23 @@ import { DATABASE_ACTIVE_TRACER, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CU
   PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
   USER_GROUPS,
 } from "../../lib/constants.js";
-import { ServerConfiguration, Deadline, Booking} from "../../dataclasses/dataclasses.js";
-import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group.js";
-import { expiredDeadline } from "../../lib/chronomancy.js";
-import { DestinationSelect } from "../injectable/derived_injectables/destination_select.js";
-import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context.js";
-import { ShopCalender } from "../injectable/derived_injectables/shop_calender.js";
-import { BookingOverview } from "./booking_overview.js";
-import { UpdateToday } from "~/lib/state_actions.js";
-import { Optional } from "~/components/injectable/optional.js";
-import { DATA_BOOKING } from "~/lib/shared_constants.js";
-import { bookingFilter, timeSlotsFilter } from "~/lib/filters.js";
-import { useTracerCatalog } from "~/contexts/tracer_catalog.js";
-import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages.js";
-import { numberfy, toMapping } from "~/lib/utils.js";
-import { useUpdatingEffect } from "~/effects/updating_effect.js";
-import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference.js";
-import { StateType } from "~/lib/constants.js";
+import { ServerConfiguration, Deadline, } from "~/dataclasses/dataclasses";
+import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
+import { expiredDeadline } from "../../lib/chronomancy";
+import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
+import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
+import { ShopCalender } from "../injectable/derived_injectables/shop_calender";
+import { BookingOverview } from "./booking_overview";
+import { UpdateToday } from "~/lib/state_actions";
+import { Optional } from "~/components/injectable/optional";
+import { DATA_BOOKING } from "~/lib/shared_constants";
+import { bookingFilter, timeSlotFilter } from "~/lib/filters";
+import { useTracerCatalog } from "~/contexts/tracer_catalog";
+import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages";
+import { numberfy, toMapping } from "~/lib/utils";
+import { useUpdatingEffect } from "~/effects/updating_effect";
+import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
+import { StateType } from "~/lib/constants";
 
 const Content = {
   Manuel : OrderReview,

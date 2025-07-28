@@ -9,7 +9,7 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, T
 import { ArrayMap } from "./array_map";
 import { DateRange, TimeStamp, compareTimeStamp, datify, getDay, getWeekNumber } from "./chronomancy";
 import { ORDER_STATUS, USER_GROUPS, WEEKLY_REPEAT_CHOICES, DAYS_OBJECTS } from "./constants";
-import { activityOrderFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotsFilter } from "./filters";
+import { activityOrderFilter, bookingFilter, injectionOrdersFilter, locationFilter, timeSlotFilter } from "./filters";
 import { HoverBox } from "~/components/injectable/hover_box"
 import { TIME_TABLE_CELL_HEIGHT_PIXELS } from "~/components/injectable/time_table"
 import { getActiveTimeSlotID, getId, toMapping } from "./utils";
@@ -182,7 +182,7 @@ export class EndpointsProcedures {
  * @returns {Array<ActivityDeliveryTimeSlot>}
  */
 export function getRelatedTimeSlots(timeSlots, endpointID) {
-  return timeSlotsFilter(timeSlots, {endpointID : endpointID});
+  return timeSlotFilter(timeSlots, {endpointID : endpointID});
 }
 
 

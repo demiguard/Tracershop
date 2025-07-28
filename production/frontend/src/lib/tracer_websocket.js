@@ -276,6 +276,8 @@ export class TracerWebSocket {
         // Also
         if(message.status === SUCCESS_STATUS_CRUD.SUCCESS) {
           this.dispatch(new UpdateState(message.data, message.refresh));
+        } else {
+          console.error("A message wasn't proper:", message_raw)
         }
         break;
       case message instanceof MESSAGE_UPDATE_PRIVILEGED_STATE:

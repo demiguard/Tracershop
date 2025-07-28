@@ -6,12 +6,15 @@ import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DA
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
+import { ORDER_STATUS } from "~/lib/constants";
 
 
 
 export function tracerTypeFilter(tracerType){
   return (/** @type {Tracer} */ tracer) => tracer.tracer_type === tracerType && !tracer.archived
 }
+
+type ContainerType<T> = TracershopState | Map<any, T> | Array<T> | T
 
 /**
  * Extracts an array from various container types.
@@ -31,7 +34,7 @@ export function tracerTypeFilter(tracerType){
  * - If the container is an instance of the specified type, it returns an array containing the container.
  * - If none of the above conditions are met, it throws an error.
  */
-export function extractData(container, type, typeKeyword){
+export function extractData<T> (container: ContainerType<T>, type: {new() : T}, typeKeyword: string) : Array<T> {
   if(container instanceof TracershopState && typeKeyword in container){
     return [...container[typeKeyword].values()];
   } else if(container instanceof Map) {
@@ -44,13 +47,21 @@ export function extractData(container, type, typeKeyword){
   throw `Unable to extract ${typeKeyword}`
 }
 
+type IsotopeFilterArgs = {
+  state? : TracershopState,
+  producible? : boolean,
+}
+
+export function isotopeFilter(container: ContainerType<Isotope>, filterArgs: IsotopeFilterArgs): Isotope[];
+export function isotopeFilter(container: ContainerType<Isotope>, filterArgs: IsotopeFilterArgs, ids: true): number[];
+
 export function isotopeFilter(
-  container, {
+  container: ContainerType<Isotope>, {
     producible,
     state,
-  }, ids=false
+  } : IsotopeFilterArgs, ids = false
 ) {
-  const /**@type {Array<Isotope>} */ isotopes = extractData(container, Isotope, DATA_ISOTOPE);
+  const isotopes = extractData(container, Isotope, DATA_ISOTOPE);
   const is_producible = (() => {
       if(state instanceof TracershopState && producible !== undefined){
         const producibleIsotopes = new Set();
@@ -58,7 +69,7 @@ export function isotopeFilter(
           producibleIsotopes.add(isotopeProduction.isotope);
         }
 
-        return (isotope) => producibleIsotopes.has(isotope.id);
+        return (isotope: Isotope) => producibleIsotopes.has(isotope.id);
       }
 
       return () => true;
@@ -70,14 +81,19 @@ export function isotopeFilter(
     return producibleCondition;
   });
 
-  return ids ? filteredIsotopes.map(getId) : filteredIsotopes
+  return ids ? filteredIsotopes.map(getId) :  filteredIsotopes;
 }
 
-export function procedureFilter(container, {
+
+
+export function procedureFilter(container: ContainerType<Procedure>, filterArgs: any) : Procedure[];
+export function procedureFilter(container: ContainerType<Procedure>, filterArgs: any, ids: true) : number[];
+
+export function procedureFilter(container : ContainerType<Procedure>, {
   tracerID,
   active_endpoint
 }, ids=false){
-  const /**@type {Array<Procedure>} */ procedures = extractData(container, Procedure, 'procedure')
+  const procedures = extractData(container, Procedure, 'procedure')
 
     const filteredProcedures = procedures.filter((procedure) => {
       const tracer_condition = tracerID ? procedure.tracer === tracerID : true;
@@ -89,10 +105,13 @@ export function procedureFilter(container, {
   return ids ? filteredProcedures.map(getId) : filteredProcedures
 }
 
-export function locationFilter(container, {
+export function locationFilter(container: ContainerType<Location>, filterArgs: any): Location[]
+export function locationFilter(container: ContainerType<Location>, filterArgs: any, ids: true): number[]
+
+export function locationFilter(container: ContainerType<Location>, {
   active_endpoint
 }, ids=false){
-  const /**@type {Array<Location>} */ locations = extractData(
+  const locations = extractData(
     container, Location, DATA_LOCATION
   );
 
@@ -105,19 +124,21 @@ export function locationFilter(container, {
   return ids ? filteredLocations.map(getId) : filteredLocations;
 }
 
-export function bookingFilter(container, {
+export function bookingFilter(container: ContainerType<Booking>, filterArgs: any): Booking[]
+export function bookingFilter(container: ContainerType<Booking>, filterArgs: any, ids: true): number[]
+
+export function bookingFilter(container: ContainerType<Booking>, {
   state,
   active_endpoint,
   active_date,
   tracer_id
 }, ids=false){
-  const /**@type {Array<Booking>}*/ bookings = extractData(container, Booking, DATA_BOOKING);
+  const bookings = extractData(container, Booking, DATA_BOOKING);
 
   const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
   const procedures = state && tracer_id ? procedureFilter(state, {
     tracerID : tracer_id, active_endpoint : active_endpoint
   }, true) : undefined;
-
 
   const filteredBookings = bookings.filter((booking) => {
     const endpoint_condition = locations ? locations.includes(booking.location) : true;
@@ -148,7 +169,7 @@ export function dailyActivityOrderFilter(timeSlots, productions, delivery_date, 
   return (order) => {
     const timeSlot = timeSlots.get(order.ordered_time_slot);
     if (timeSlot === undefined){
-      console.log(state, order)
+
     }
     const production = productions.get(timeSlot.production_run);
 
@@ -201,17 +222,11 @@ export function locationEndpointFilter(active_endpoint){
   }
 }
 
-/**
- *
- * @param {
- *  @param container {TracershopState}
- *  @param productionFilterParams { tracerID : Number,
- *    day : Number,
- *    ids : Boolean,
- *  }} param0
- * @returns
- */
-export function productionsFilter(container, {production_id, tracerID, day}, ids=false){
+export function productionsFilter(container: ContainerType<ActivityProduction>, filterArgs: any) : ActivityProduction[]
+export function productionsFilter(container: ContainerType<ActivityProduction>, filterArgs: any, ids: true) : number[]
+
+
+export function productionsFilter(container: ContainerType<ActivityProduction>, {production_id, tracerID, day}, ids=false){
   const productions = extractData(container, ActivityProduction, DATA_PRODUCTION);
   const filteredProductions = productions.filter(
     (production) => {
@@ -225,19 +240,15 @@ export function productionsFilter(container, {production_id, tracerID, day}, ids
   return ids ? filteredProductions.map(getId) : filteredProductions
 }
 
-/**
- *
- * @param {TracershopState | Array<ActivityDeliveryTimeSlot> | Map<any, ActivityDeliveryTimeSlot>} container - Container that holds
- * @param { Object } filterParams
- * @param {TracershopState} filterParams.state
- * @param {Number} filterParams.timeSlotId - BE WARNED INCONSISTENT NAMING
- * @param {Number} filterParams.tracerID - Returned ActivityDeliveryTimeSlots will produce tracer with this ID
- * @param {Number} filterParams.endpointID
- * @param {Number} filterParams.day
- * @param {boolean} ids
- * @param {Array<ActivityDeliveryTimeSlot>}
- */
-export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, endpointID}, ids = false){
+
+export function timeSlotFilter(container: ContainerType<ActivityDeliveryTimeSlot>, filterArgs: any): ActivityDeliveryTimeSlot[]
+export function timeSlotFilter(container: ContainerType<ActivityDeliveryTimeSlot>, filterArgs: any, ids : true): number[]
+
+export function timeSlotFilter(
+    container: ContainerType<ActivityDeliveryTimeSlot>,
+    {state, timeSlotId, tracerID, day, endpointID},
+    ids = false
+  ){
   const timeSlots = extractData(container, ActivityDeliveryTimeSlot, DATA_DELIVER_TIME)
 
   const productionIDs = tracerID && state ? productionsFilter(state, {
@@ -253,22 +264,24 @@ export function timeSlotsFilter(container, {state, timeSlotId, tracerID, day, en
     return tracerCondition && endpointCondition && idCondition;
   });
 
-  return ids ?  filteredTimeSlots.map(getId) : filteredTimeSlots
+  return ids ? filteredTimeSlots.map(getId) : filteredTimeSlots
 }
 
-/**
- *
- * @param {*} container
- * @param {*} filterParam
- * @param {boolean} ids
- * @returns
- */
-export function isotopeDeliveryFilter(container, { state, endpointID, isotopeID }, ids=false){
-  const /**@type {Array<IsotopeDelivery>} */ isotopeDeliveries = extractData(container, IsotopeDelivery, DATA_ISOTOPE_DELIVERY);
+type IsotopeDeliveryFilterArgs = {
+  isotopeID? : number,
+  endpointID? : number,
+  state? : TracershopState
+};
+
+export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, filterArgs: IsotopeDeliveryFilterArgs) : IsotopeDelivery[]
+export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, filterArgs: IsotopeDeliveryFilterArgs, ids: true) : number[]
+
+export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, { state, endpointID, isotopeID } : IsotopeDeliveryFilterArgs, ids=false){
+  const isotopeDeliveries = extractData(container, IsotopeDelivery, DATA_ISOTOPE_DELIVERY);
 
   const is_targeted_isotope = (() => {
     if(state instanceof TracershopState && isotopeID !== undefined ){
-      const /**@type {Set<Number>} */ isotopeProductionIDs = new Set();
+      const isotopeProductionIDs = new Set<Number>();
 
       for(const isotopeProduction of state.isotope_production.values()){
         if(isotopeProduction.isotope == isotopeID){
@@ -276,10 +289,10 @@ export function isotopeDeliveryFilter(container, { state, endpointID, isotopeID 
         }
       }
 
-      return /**@type {(isoDev: IsotopeDelivery) => boolean} */ (isoDev) => isotopeProductionIDs.has(isoDev.production);
+      return (isoDev: IsotopeDelivery) => isotopeProductionIDs.has(isoDev.production);
     }
 
-    return (_) => true;
+    return (_: IsotopeDelivery) => true;
   })()
 
   const filteredIsotopeDeliveries = isotopeDeliveries.filter((isotopeDelivery) => {
@@ -292,59 +305,67 @@ export function isotopeDeliveryFilter(container, { state, endpointID, isotopeID 
   return ids ? filteredIsotopeDeliveries.map(getId) : filteredIsotopeDeliveries;
 }
 
-/**
- *
- * @param {*} container
- * @param {Object} FilterParams
- * @param {*} ids
- */
+type IsotopeOrderFilterArgs = {
+  state? : TracershopState,
+  timeSlots? : Array<IsotopeDelivery>,
+  delivery_date? : string,
+  timeSlotFilterArgs? : IsotopeDeliveryFilterArgs,
+};
+
+export function isotopeOrderFilter(container: ContainerType<IsotopeOrder>, filterArgs: IsotopeOrderFilterArgs) : IsotopeOrder[]
+export function isotopeOrderFilter(container: ContainerType<IsotopeOrder>, filterArgs: IsotopeOrderFilterArgs, ids: true) : number[]
+
 export function isotopeOrderFilter(
-  container, {
+  container: ContainerType<IsotopeOrder>, {
     state,
     timeSlots,
     timeSlotFilterArgs,
-  }, ids=false){
-  const /**@type {Array<IsotopeOrder>} */ isotopeOrders = extractData(container, IsotopeOrder, DATA_ISOTOPE_ORDER);
+    delivery_date
+  } : IsotopeOrderFilterArgs, ids=false){
+  const isotopeOrders = extractData(container, IsotopeOrder, DATA_ISOTOPE_ORDER);
   const timeSlotIDs =
     timeSlots !== undefined ? timeSlots.map(getId) : // If passed TimeSlots we use those
     timeSlotFilterArgs && state ? // Otherwise we can get the timesslots
-      timeSlotsFilter(state, {state : state, ...timeSlotFilterArgs}, true)
+      timeSlotFilter(state, {state : state, ...timeSlotFilterArgs}, true)
     : undefined; // Otherwise No filter over time slots
 
   const filteredIsotopeOrders = isotopeOrders.filter(
     (io) => {
       const timeSlotCondition = timeSlotIDs ? timeSlotIDs.includes(io.destination) : true;
+      const deliveryDateCondition = delivery_date ?  io.delivery_date === delivery_date : true;
 
-      return timeSlotCondition;
+      return timeSlotCondition && deliveryDateCondition;
     }
   )
 
   return ids ? filteredIsotopeOrders.map(getId) : filteredIsotopeOrders;
 }
 
+type ActivityOrderFilterArgs = {
+  state? : TracershopState,
+  timeSlotFilterArgs? : any,
+  timeSlots? : Array<ActivityDeliveryTimeSlot>,
+  status? : ORDER_STATUS | Array<ORDER_STATUS>,
+  delivery_date? : string,
+  dateRange? : DateRange,
+};
 
-/**
- *
- * @param {TracershopState} container
- * @param {{
- *  timeSlotFilterArgs,
- *  dateRange : DateRange | undefined
- * }} param1
- * @returns
- */
-export function activityOrderFilter(container, {state,
+export function activityOrderFilter(container: ContainerType<ActivityOrder>, filterArgs: ActivityOrderFilterArgs): ActivityOrder[]
+export function activityOrderFilter(container: ContainerType<ActivityOrder>, filterArgs: ActivityOrderFilterArgs, ids: true): number[]
+
+export function activityOrderFilter(container: ContainerType<ActivityOrder>, {state,
     timeSlotFilterArgs,
     timeSlots,
     status,
     delivery_date,
     dateRange,
-    }, ids=false){
+    }: ActivityOrderFilterArgs, ids=false){
   const orders = extractData(container, ActivityOrder, DATA_ACTIVITY_ORDER)
 
   const timeSlotIDs =
     timeSlots !== undefined ? timeSlots.map(getId) : // If passed TimeSlots we use those
     timeSlotFilterArgs && state ? // Otherwise we can get the timesslots
-      timeSlotsFilter(state, {state : state, ...timeSlotFilterArgs}, true)
+      timeSlotFilter(state, { state : state, ...timeSlotFilterArgs }, true)
     : undefined; // Otherwise No filter over time slots
 
   const filteredActivityOrders = orders.filter((order) => {
@@ -372,20 +393,10 @@ export function activityOrderFilter(container, {state,
   return ids ? filteredActivityOrders.map(getId) : filteredActivityOrders
 }
 
-/**
- *
- * @param {TracershopState} container
- * @param {{
- *  status : Number | undefined
- *  dateRange : DateRange | undefined
- * }} param1
- * @param {Boolean} ids - if the array should return
- * @returns {Array<InjectionOrder> | Array<Number>}
- */
-export function injectionOrdersFilter(container, {
-  status,
-  dateRange,
-}, ids=false) {
+export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, filterArgs: any): InjectionOrder[];
+export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, filterArgs: any, ids: true): number[];
+
+export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, { status, dateRange }, ids=false) {
   const injectionOrders = extractData(container, InjectionOrder, DATA_INJECTION_ORDER);
 
   const filteredInjectionOrders = injectionOrders.filter(
@@ -409,10 +420,13 @@ export function injectionOrdersFilter(container, {
   return ids ? filteredInjectionOrders.map(getId) : filteredInjectionOrders;
 }
 
-export function vialFilter(container, {
+export function vialFilter(container: ContainerType<Vial>, filterArgs: any) : Vial[]
+export function vialFilter(container: ContainerType<Vial>, filterArgs: any, ids: true) : number[]
+
+export function vialFilter(container: ContainerType<Vial>, {
   active_date, active_tracer, orderIDs, active_customer
 }, ids=false){
-  const /**@type {Array<Vial>} */ vials = extractData(container, Vial, DATA_VIAL);
+  const vials = extractData(container, Vial, DATA_VIAL);
 
   const filteredVials = vials.filter((vial) => {
     const date_condition = active_date ? compareDates(datify(vial.fill_date), datify(active_date)) : true
@@ -426,10 +440,13 @@ export function vialFilter(container, {
   return ids ? filteredVials.map(getId) : filteredVials;
 }
 
-export function endpointFilter(container, {
+export function endpointFilter(container: ContainerType<DeliveryEndpoint>, filterArgs: any): DeliveryEndpoint[]
+export function endpointFilter(container: ContainerType<DeliveryEndpoint>, filterArgs: any, ids: true): number[]
+
+export function endpointFilter(container: ContainerType<DeliveryEndpoint>, {
   owner
 }, ids=false){
-  const /**@type {Array<DeliveryEndpoint>} */ endpoints = extractData(container, DeliveryEndpoint, DATA_ENDPOINT);
+  const endpoints = extractData(container, DeliveryEndpoint, DATA_ENDPOINT);
 
   const filteredEndpoints = endpoints.filter((endpoint) => {
     const owner_condition = owner ? owner === endpoint.owner : true

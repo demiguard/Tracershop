@@ -7,7 +7,7 @@ export function CommitButton({
   validate,
   object_type,
   label="",
-  callback=()=>{},
+  callback=(arg)=>{},
   edit_image="/static/images/update.svg",
   add_image="/static/images/plus.svg",
 }){

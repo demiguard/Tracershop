@@ -1,11 +1,11 @@
 import React, { useRef, useState } from "react";
 import { Col, NavDropdown } from "react-bootstrap";
-import { DATABASE_ADMIN_PAGE } from "../../lib/constants.js";
-import { db } from "../../lib/local_storage_driver.js";
-import { ConfigSite } from "./config_site.js";
-import { ProductionSite } from "./production_site.js";
-import { ShopSite } from "./shop_site.js";
-import { MARGIN, NAVBAR_STYLES } from "~/lib/styles.js";
+import { DATABASE_ADMIN_PAGE } from "~/lib/constants";
+import { db } from "~/lib/local_storage_driver";
+import { ConfigSite } from "./config_site";
+import { ProductionSite } from "./production_site";
+import { ShopSite } from "./shop_site";
+import { MARGIN, NAVBAR_STYLES } from "~/lib/styles";
 
 /**
  * @enum

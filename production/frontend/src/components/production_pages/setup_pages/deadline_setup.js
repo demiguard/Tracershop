@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Button, Col, Container, Row } from "react-bootstrap";
 
-import { DAYS, DEADLINE_TYPES, cssCenter, cssError } from "../../../lib/constants";
+import { DAYS, DEADLINE_TYPES } from "../../../lib/constants";
+import { cssCenter, cssError } from "~/lib/styles";
 import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants";
 import { Deadline, ServerConfiguration } from "../../../dataclasses/dataclasses";
 import { Select, toOptions } from "../../injectable/select";

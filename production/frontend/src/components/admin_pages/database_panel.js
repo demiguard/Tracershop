@@ -4,7 +4,7 @@ import { IdempotentButton } from "~/components/injectable/buttons";
 import { Select, toOptions } from "~/components/injectable/select";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { MODELS } from "~/dataclasses/dataclasses";
-import { cssCenter } from "~/lib/constants";
+import { cssCenter } from "~/lib/styles";
 import { ForeignField } from "~/lib/database_fields";
 import { WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_MODEL_CREATE } from "~/lib/shared_constants";
 import { MARGIN } from "~/lib/styles";

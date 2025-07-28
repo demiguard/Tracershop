@@ -1,19 +1,19 @@
 import React, { useState } from "react";
 import { Button, Container, Row, Col } from 'react-bootstrap';
-import { InjectionTable } from './injection_table.js';
-import { ActivityTable } from './activity_table.js';
+import { InjectionTable } from './injection_table';
+import { ActivityTable } from './activity_table';
 import { TRACER_TYPE, PROP_ACTIVE_TRACER, PROP_ACTIVE_DATE,
-  DATABASE_ACTIVE_TRACER } from "~/lib/constants.js";
-import { db } from "~/lib/local_storage_driver.js";
+  DATABASE_ACTIVE_TRACER } from "~/lib/constants";
+import { db } from "~/lib/local_storage_driver";
 
-import { useTracershopState, useWebsocket, useTracershopDispatch} from "../../contexts/tracer_shop_context.js";
-import { ProductionCalender } from "../injectable/derived_injectables/production_calender.js";
-import { Optional } from "~/components/injectable/optional.js";
-import { UpdateToday } from "~/lib/state_actions.js";
-import { MARGIN } from "~/lib/styles.js";
-import { WeeklyProductionOverview } from "~/components/production_pages/weekly_production_overview.js";
-import { ButtonRow } from "~/components/injectable/button_row.js";
-import { SpecialTracerButton, WeeklyViewButton } from "~/components/injectable/buttons.js";
+import { useTracershopState, useWebsocket, useTracershopDispatch} from "~/contexts/tracer_shop_context";
+import { ProductionCalender } from "~/components/injectable/derived_injectables/production_calender";
+import { Optional } from "~/components/injectable/optional";
+import { UpdateToday } from "~/lib/state_actions";
+import { MARGIN } from "~/lib/styles";
+import { WeeklyProductionOverview } from "~/components/production_pages/weekly_production_overview";
+import { ButtonRow } from "~/components/injectable/button_row";
+import { SpecialTracerButton, WeeklyViewButton } from "~/components/injectable/buttons";
 
 const SUBPAGE_ACTIVITY = "activity"
 const SUBPAGE_INJECTION = "injection"

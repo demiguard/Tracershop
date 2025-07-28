@@ -2,7 +2,7 @@ import React from "react";
 import { InputGroup } from "react-bootstrap";
 import { Optional } from "~/components/injectable/optional";
 import { HoverBox } from "~/components/injectable/hover_box";
-import { cssError, cssHintColor, cssWarningColor } from "~/lib/constants";
+import { cssError, cssHintColor, cssWarningColor } from "~/lib/styles";
 import { ERROR_LEVELS } from "~/components/injectable/alert_box";
 import { RecoverableError } from "~/lib/error_handling";
 import  propTypes  from "prop-types";

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Card, Row, Col, Collapse, Container, Table } from 'react-bootstrap';
-import { USER_GROUPS, cssAlignRight, cssCenter, cssError } from '~/lib/constants';
+import { USER_GROUPS } from '~/lib/constants';
+import { cssAlignRight, cssCenter, cssError } from "~/lib/styles";
 import { DATA_RELEASE_RIGHT, DATA_TRACER, DATA_USER } from '~/lib/shared_constants';
 
 import { OpenCloseButton } from '../../injectable/open_close_button';
