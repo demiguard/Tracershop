@@ -1,21 +1,71 @@
-import React, { useEffect, useState } from "react";
+import React, { act, useEffect, useState } from "react";
 import { Card, Col, Collapse, Form, FormText, Row } from "react-bootstrap";
 import { StatusIcon } from "~/components/injectable/icons";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { IsotopeDelivery, IsotopeOrder } from "~/dataclasses/dataclasses";
 import { IsotopeOrderCollection } from "~/lib/data_structures/isotope_order_collection";
-import { CENTER, JUSTIFY, PADDING } from "~/lib/styles";
+import { CENTER, ExpandAndCenter, JUSTIFY, PADDING } from "~/lib/styles";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
 import { isDirty } from "~/lib/utils";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
-import { setTempObjectToEvent } from "~/lib/state_management";
+import { setTempClassToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { parseStringInput, parseWholePositiveNumber } from "~/lib/user_input";
-import { useErrorState } from "~/lib/error_handling";
+import { RecoverableError, useErrorState } from "~/lib/error_handling";
 
-import { makeBlankIsotopeOrder, makeBlankIsotopeOrderReference } from "~/lib/blanks";
+import { makeBlankIsotopeOrder } from "~/lib/blanks";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
+import { TimeDisplay } from "~/components/injectable/data_displays/time_display";
+import { SUCCESS_STATUS_CRUD } from "~/lib/shared_constants";
+
+type  CardHeaderDescriptionArgs = {
+  isotopeOrderCollection: IsotopeOrderCollection
+}
+
+function CardHeaderDescription({isotopeOrderCollection} : CardHeaderDescriptionArgs){
+  switch (isotopeOrderCollection.minimum_status){
+    case ORDER_STATUS.EMPTY:
+      return (
+        <Col>
+          <Row style={ExpandAndCenter}>
+            <Col style={ExpandAndCenter} xs={2}><TimeDisplay style={ExpandAndCenter} time={isotopeOrderCollection.delivery.delivery_time}/></Col>
+            <Col xs={8} style={ExpandAndCenter}>Der er ikke bestilt isotope til denne levering</Col>
+          </Row>
+        </Col>
+      );
+    case ORDER_STATUS.ORDERED:
+      return (
+        <Col>
+          <Row style={ExpandAndCenter}>
+            <Col style={ExpandAndCenter} xs={2}>
+              <TimeDisplay
+                style={ExpandAndCenter}
+                time={isotopeOrderCollection.delivery.delivery_time}
+              />
+            </Col>
+            <Col
+              xs={8}
+              style={ExpandAndCenter}>
+                Der er bestilt: {isotopeOrderCollection.ordered_activity} MBq
+            </Col>
+          </Row>
+        </Col>
+      )
+    default:
+      console.log(isotopeOrderCollection.minimum_status);
+
+      return (
+      <Col>
+        <Col style={ExpandAndCenter} xs={2}>
+          <TimeDisplay
+            time={isotopeOrderCollection.delivery.delivery_time}
+            style={ExpandAndCenter}
+          />
+        </Col>
+      </Col>)
+  }
+}
 
 
 function CardHeader({isotopeOrderCollection, collapsedState}){
@@ -27,9 +77,7 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
         <Col xs={1} style={JUSTIFY.center}>
           <StatusIcon orderCollection={isotopeOrderCollection}/>
         </Col>
-        <Col xs={2} style={{...CENTER }}>
-          {isotopeOrderCollection.delivery.delivery_time}
-        </Col>
+        <CardHeaderDescription isotopeOrderCollection={isotopeOrderCollection}/>
         <Col xs={1} style={{
           ...JUSTIFY.left
         }}>
@@ -67,8 +115,16 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
   }, [order])
 
   function validate() : [boolean, any] {
-    const [validActivity, activity] = parseWholePositiveNumber(tempOrder.ordered_activity_MBq);
-    const [validComment, comment] = parseStringInput(tempOrder.comment);
+    const [validActivity, activity] = parseWholePositiveNumber(tempOrder.ordered_activity_MBq, "Aktiviten");
+    const [validComment, comment] = parseStringInput(tempOrder.comment, "Kommentaren", 500);
+
+    if(!validActivity){
+      setErrorActivity(activity);
+    }
+
+    if(!validComment){
+      setErrorComment(comment);
+    }
 
     if (!validActivity || !validComment) {
       return [false, {}];
@@ -77,21 +133,34 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
     return [true, {...tempOrder, status : ORDER_STATUS.ORDERED,  ordered_activity_MBq : activity,  comment : comment}];
   }
 
-  function callback(data){
-    console.log(data);
+  function callback(data: any){
+    if(data.status === SUCCESS_STATUS_CRUD.SUCCESS){
+      setTempOrder((old) => {
+        const copy = old.copy();
+        copy.ordered_activity_MBq = "";
+        copy.comment = "";
+
+        return copy;
+      });
+    } else {
+      console.log(data);
+    }
   }
 
   const orderDirty = isDirty(order, tempOrder);
 
   return <Row>
-    <Col xs={1}>
+    <Col xs={1} style={JUSTIFY.center}>
       <StatusIcon order={order}/>
     </Col>
     <Col>
       <TracershopInputGroup tail={"MBq"}>
         <Form.Control
-          //@ts-ignore
-          onChange={setTempObjectToEvent(setTempOrder, 'ordered_activity_MBq')}
+          onChange={setTempClassToEvent<IsotopeOrder>({
+            stateFunction : setTempOrder,
+            keyword : "ordered_activity_MBq",
+            errorFunction : setErrorActivity
+          })}
           value={tempOrder.ordered_activity_MBq}
         />
       </TracershopInputGroup>
@@ -102,17 +171,21 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
           as="textarea"
           rows={1}
           value={tempOrder.comment}
-          //@ts-ignore
-          onChange={setTempObjectToEvent(setTempOrder, 'comment')}
+          onChange={setTempClassToEvent<IsotopeOrder>({
+            stateFunction : setTempOrder,
+            keyword : "comment",
+            errorFunction : setErrorActivity
+          })}
         />
       </TracershopInputGroup>
     </Col>
-    <Col style={{
-      ...CENTER
-    }} xs={1}>
+    <Col style={
+      JUSTIFY.center
+    } xs={1}>
       <ShopActionButton
         order={order}
         validate={validate}
+        callback={callback}
         isDirty={orderDirty}
         canEdit={canEdit}
       />

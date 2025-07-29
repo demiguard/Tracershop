@@ -1,3 +1,7 @@
+import { RecoverableError } from "~/lib/error_handling";
+import { TracershopDataClass } from "~/lib/types";
+
+
 
 export function changeState(stateKeyWord, This){
   const returnFunction = (event) => {
@@ -40,16 +44,42 @@ export function setStateToEvent(stateFunction, formatFunction){
 /**
  * Shorthand for (event) => {stateFunction({...obj, [keyword] : event.target.value})}
  * Useful for setting objects
- * @param {CallableFunction} stateFunction
- * @param {String} keyword - The keyword this function should write to
- * @param {CallableFunction | undefined} formatFunction
- * @returns {CallableFunction}
  */
-export function setTempObjectToEvent(stateFunction, keyword, formatFunction){
-  return (event) => {
+export function setTempObjectToEvent(stateFunction: React.Dispatch<React.SetStateAction<object>>, keyword : string, formatFunction?: (a: any) => any){
+  return (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
     stateFunction(obj => {return {...obj, [keyword] : value}});
   }
+}
+
+
+type SetTempClassToEventArgs<T extends TracershopDataClass> = {
+  stateFunction : React.Dispatch<React.SetStateAction<T>>
+  keyword : string,
+  formatFunction? : (arg : string) => any,
+  errorFunction? : React.Dispatch<React.SetStateAction<RecoverableError>>
+}
+
+export function setTempClassToEvent<T extends TracershopDataClass>({
+  stateFunction,
+  keyword,
+  formatFunction = (arg) => arg,
+  errorFunction = (arg) => {}
+} : SetTempClassToEventArgs<T>){
+  return (event: React.ChangeEvent<HTMLInputElement>) => {
+    const value = formatFunction(event.target.value);
+
+    stateFunction(old => {
+      const copy = old.copy();
+
+      copy[keyword] = value;
+
+      return copy
+    });
+
+    errorFunction(new RecoverableError());
+  }
+
 }
 
 /**

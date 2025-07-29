@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Container } from "react-bootstrap";
-import { TracershopNavbar } from "../injectable/navbar.js";
-import { OrderPage } from "../production_pages/order_page.js";
-import { VialPage } from "../production_pages/vial_page.js";
+import { TracershopNavbar } from "../injectable/navbar";
+import { OrderPage } from "../production_pages/order_page";
+import { VialPage } from "../production_pages/vial_page";
 
-import { SetupShop } from "../production_pages/setup_pages/setup_shop.js"
-import { USER_GROUPS } from "../../lib/constants.js";
-import { useTracershopState } from "../../contexts/tracer_shop_context.js";
-import { MonitorPage } from "~/components/production_pages/monitoring_pages/monitor_home_page.js";
+import { SetupShop } from "../production_pages/setup_pages/setup_shop"
+import { USER_GROUPS } from "../../lib/constants";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
+import { MonitorPage } from "~/components/production_pages/monitoring_pages/monitor_home_page";
 
 const Pages = {
   orders : OrderPage,

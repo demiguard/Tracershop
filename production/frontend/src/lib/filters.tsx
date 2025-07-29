@@ -2,8 +2,8 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, IsotopeProduction, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
 import { DateRange, datify } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
@@ -267,24 +267,57 @@ export function timeSlotFilter(
   return ids ? filteredTimeSlots.map(getId) : filteredTimeSlots
 }
 
+type IsotopeProductionFilterArgs = {
+  day? : number,
+  produces? : number
+}
+
+export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, filterArgs: IsotopeDeliveryFilterArgs) : IsotopeProduction[]
+export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, filterArgs: IsotopeDeliveryFilterArgs, ids: true) : number[]
+
+export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, {day, produces} : IsotopeProductionFilterArgs,ids=false) {
+  const productions = extractData(container, IsotopeProduction, DATA_ISOTOPE_PRODUCTION);
+
+  const filteredProductions = productions.filter((prod) => {
+    const dayCondition = day !== undefined ? prod.production_day === day : true
+    const productCondition = produces !== undefined ? prod.isotope === produces : true
+
+    return dayCondition && productCondition;
+  })
+
+
+  return ids ? filteredProductions.map(getId) : filteredProductions;
+}
+
+
 type IsotopeDeliveryFilterArgs = {
   isotopeID? : number,
   endpointID? : number,
-  state? : TracershopState
+  state? : TracershopState,
+  day? : number
 };
 
 export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, filterArgs: IsotopeDeliveryFilterArgs) : IsotopeDelivery[]
 export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, filterArgs: IsotopeDeliveryFilterArgs, ids: true) : number[]
 
-export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, { state, endpointID, isotopeID } : IsotopeDeliveryFilterArgs, ids=false){
+export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, { state, endpointID, isotopeID, day } : IsotopeDeliveryFilterArgs, ids=false){
   const isotopeDeliveries = extractData(container, IsotopeDelivery, DATA_ISOTOPE_DELIVERY);
 
-  const is_targeted_isotope = (() => {
-    if(state instanceof TracershopState && isotopeID !== undefined ){
+  const is_accepted_production = (() => {
+    if(state instanceof TracershopState){
+      const matchID = isotopeID ? (ip: IsotopeProduction) => {
+        return ip.isotope === isotopeID
+      } : () => true;
+
+      const matchDay = day !== undefined ? (ip : IsotopeProduction) => {
+        return ip.production_day === day
+      } : () => true;
+
+
       const isotopeProductionIDs = new Set<Number>();
 
       for(const isotopeProduction of state.isotope_production.values()){
-        if(isotopeProduction.isotope == isotopeID){
+        if(matchID(isotopeProduction) && matchDay(isotopeProduction)){
           isotopeProductionIDs.add(isotopeProduction.id);
         }
       }
@@ -293,11 +326,11 @@ export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>,
     }
 
     return (_: IsotopeDelivery) => true;
-  })()
+  })();
 
   const filteredIsotopeDeliveries = isotopeDeliveries.filter((isotopeDelivery) => {
     const deliveryCondition = endpointID ? isotopeDelivery.delivery_endpoint === endpointID : true;
-    const productionCondition = is_targeted_isotope(isotopeDelivery);
+    const productionCondition = is_accepted_production(isotopeDelivery);
 
     return deliveryCondition && productionCondition;
   })

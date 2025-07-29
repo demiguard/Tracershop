@@ -9,12 +9,15 @@ import { ERROR_LEVELS } from "~/components/injectable/alert_box";
  *  * Missing connection to the server
  */
 export class RecoverableError {
+  message : string
+  level : ERROR_LEVELS
+
   /**
    *
    * @param {string | React.ReactElement | undefined} message
    * @param {ERROR_LEVELS | undefined} level
    */
-  constructor(message, level){
+  constructor(message? : string, level? : ERROR_LEVELS){
     this.message = message ? message : "";
     this.level = level ? level : message ? ERROR_LEVELS.error : ERROR_LEVELS.NO_ERROR;
   }
@@ -23,7 +26,7 @@ export class RecoverableError {
     return this.level !== ERROR_LEVELS.NO_ERROR
   }
 
-  [Symbol.toPrimitive](hint){
+  [Symbol.toPrimitive](hint: any){
     return this.message;
   }
 }
@@ -40,7 +43,7 @@ export class RecoverableError {
  *   - The current error state (always a RecoverableError instance)
   *   - A setter function that accepts either a direct value or an updater function
  */
-export function useErrorState(){
+export function useErrorState(): [RecoverableError, (arg: any) => void]{
   const [error, innerSetError] = useState(new RecoverableError())
 
   /**
@@ -50,7 +53,7 @@ export function useErrorState(){
    *   Truthy - Sets the error to a recoverable error
    * @param {Any} newError
    */
-  function setError(newError){
+  function setError(newError : any){
     if(typeof newError === "function"){
       innerSetError(
         (oldError) => {

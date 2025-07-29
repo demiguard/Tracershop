@@ -10,10 +10,10 @@ import { CommitButton } from "~/components/injectable/commit_button";
 import { DeleteButton } from "~/components/injectable/delete_button";
 import { ClickableIcon } from "~/components/injectable/icons";
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from "~/dataclasses/dataclasses";
-import { Order } from "~/dataclasses/references/order";
 import { datify } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
 import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE_ORDER } from "~/lib/shared_constants";
+import { OrderType } from "~/lib/types";
 import { openActivityReleasePDF } from "~/lib/utils";
 
 function BaseActionButton({
@@ -99,7 +99,7 @@ function ActivityActionButton({order, label, validate, callback, isDirty, canEdi
 
 
 type ShopActionButtonProps = {
-  order : InjectionOrder | ActivityOrder | IsotopeOrder | Order,
+  order : OrderType
   label? : any,
   validate : any,
   callback? : any,
@@ -114,9 +114,6 @@ export function ShopActionButton({order,
     callback = () => {},
     canEdit = false,
   } : ShopActionButtonProps) {
-  if(order instanceof Order){
-    order = order.order;
-  }
 
   switch (true) {
     case order instanceof IsotopeOrder: {

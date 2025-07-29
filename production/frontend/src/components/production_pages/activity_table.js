@@ -100,10 +100,8 @@ function ProductionRow({active_production,
 /** This is the main row block of content
  *
  * @param {{
- *  active_tracer : Number,
- *  active_date : Date
+ *  active_tracer : Number
  * }} props
- * @returns {Element}
  */
 export function ActivityTable ({active_tracer}) {
   const state = useTracershopState();
@@ -228,8 +226,4 @@ export function ActivityTable ({active_tracer}) {
       { modalIdentifier != null ? Modal : null}
     </div>
   );
-}
-
-ActivityTable.propType = {
-  [PROP_ACTIVE_TRACER] : propTypes.number.isRequired,
 }

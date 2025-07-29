@@ -8,7 +8,8 @@
 
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ActivityDeliveryTimeSlot, ActivityOrder, DeliveryEndpoint, InjectionOrder, IsotopeDelivery, IsotopeOrder, Tracer, TracershopState } from "~/dataclasses/dataclasses";
-import { IsotopeOrderReference } from "~/dataclasses/references/isotope_order_reference";
+import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
+
 import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
 import { dateToDateString } from "~/lib/formatting";
 import { TRACER_USAGE } from "~/lib/shared_constants";
@@ -25,16 +26,6 @@ export function makeBlankIsotopeOrder(timeSlot : IsotopeDelivery, state: Tracers
     null,
     null
   );
-
-  return blank_order;
-}
-
-export function makeBlankIsotopeOrderReference(timeSlot : IsotopeDelivery, state: TracershopState){
-  const blank_order = new IsotopeOrderReference(
-    makeBlankIsotopeOrder(timeSlot)
-  );
-
-  console.log(blank_order);
 
   return blank_order;
 }
@@ -75,4 +66,8 @@ export function makeBlankActivityOrder(timeSlot: ActivityDeliveryTimeSlot){
                            null,
                            state.logged_in_user.id,
                            null);
+}
+
+export function makeBlankProductReference(){
+  return new ProductReference(-1, PRODUCT_TYPES.EMPTY);
 }

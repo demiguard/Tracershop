@@ -12,7 +12,7 @@ import { DerivedContextPyramid } from '~/contexts/derived_contexts';
 import { getWebsocketUrl } from '~/lib/utils';
 
 const StateContext = createContext(new TracershopState());
-const DispatchContext = createContext({});
+const DispatchContext = createContext((arg) => {});
 const WebsocketContext = createContext(TracerWebSocket);
 const LogsContext = createContext(new Logs())
 
@@ -128,7 +128,6 @@ export function tracershopReducer(state, action){
   }
 
   if(action instanceof UpdateToday){
-    console.log("updating to ", action.updatedToday)
     newState.today = datify(action.updatedToday);
     if(action.websocket){
       action.websocket.send({

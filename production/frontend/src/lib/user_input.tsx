@@ -6,16 +6,13 @@
 
 import { FormatTime, ParseDanishNumber, batchNumberValidator, nullParser, parseDate } from "./formatting"
 
+type ValidNumber = [true, number] | [false, string]
 
 /**
  * Parses a string, which should contain a danish number. If it doesn't, returns
  * false, and a description why it's faulty.
- * @param {string} input
- * @param {string} header - Incase of an error the header will be put in first
- * describing the error
- * @returns {[Boolean, string | Number]}
  */
-export function parseDanishNumberInput (input, header="") {
+export function parseDanishNumberInput (input: string , header="") : ValidNumber {
   const inputNumber = ParseDanishNumber(input);
 
   if(input === ""){ // Because Number("") == 0 for some javascript reason...
@@ -30,13 +27,15 @@ export function parseDanishNumberInput (input, header="") {
 }
 
 
-export function parseDanishPositiveNumberInput(input, header=""){
+export function parseDanishPositiveNumberInput(input: string, header="") : ValidNumber {
   const [valid, inputNumber] = parseDanishNumberInput(input, header);
 
   if(!valid){
-    return [valid, inputNumber];
+    // Type checker isn't smart enough to figure out that this a string
+    return [false , inputNumber as string ];
   }
 
+  // But can here ????
   if(inputNumber === 0){
     return  [false, `${header} kan ikke være nul`]
   }
@@ -48,25 +47,26 @@ export function parseDanishPositiveNumberInput(input, header=""){
   return [true, inputNumber]
 }
 
-export function parseDanish0OrPositiveNumberInput(input, header=""){
+export function parseDanish0OrPositiveNumberInput(input: string, header="") : ValidNumber{
   const [valid, inputNumber] = parseDanishNumberInput(input, header);
 
   if(!valid){
-    return [valid, inputNumber];
+    return [false, inputNumber as string];
   }
 
   if(inputNumber < 0){
     return [false, `${header} kan ikke være negativ`];
   }
 
-  return [true, inputNumber]
+  return [true, inputNumber];
 }
 
 
-export function parseWholePositiveNumber(input, header="") {
+
+export function parseWholePositiveNumber(input: string, header="") : ValidNumber {
   const [valid, number] = parseDanishPositiveNumberInput(input, header);
   if(!valid){
-    return [valid, number];
+    return [false, number as string];
   }
 
   if (number !== Math.floor(number)){
@@ -77,7 +77,7 @@ export function parseWholePositiveNumber(input, header="") {
 }
 
 
-export function parseTimeInput(input, header=""){
+export function parseTimeInput(input : string, header="") : [boolean, string]{
   if(input === ""){
     return [false, `${header} er ikke tasted ind`];
   }
@@ -90,7 +90,7 @@ export function parseTimeInput(input, header=""){
   return [true, time]
 }
 
-export function parseBatchNumberInput(input, header=""){
+export function parseBatchNumberInput(input: string, header="") : [boolean, string] {
   if(input === ""){
     return [false, `${header} er ikke tasted ind`];
   }
@@ -102,7 +102,7 @@ export function parseBatchNumberInput(input, header=""){
   return [true, input]
 }
 
-export function parseIPInput(input, header=""){
+export function parseIPInput(input: string, header=""): [boolean, string]{
   const valid = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/.test(input);
   if(!valid){
     return [false, `${header} er ikke formatteret som en IP addresse`];
@@ -111,12 +111,8 @@ export function parseIPInput(input, header=""){
 }
 
 /** Checks if a string is a valid port number
- *
- *
- * @param {string} input - User input from field
- * @returns {Object} - Object with attribute valid : bool and value : int
  */
-export function parsePortInput(input, header=""){
+export function parsePortInput(input: string, header=""): ValidNumber{
   const numberPort = Number(input);
   if(isNaN(numberPort) || !/^\d+$/.test(input)){
     return [false, `${header} er ikke et helt positivt tal.`]
@@ -136,7 +132,7 @@ export function parsePortInput(input, header=""){
   return [true, numberPort]
 }
 
-export function parseStringInput(input, header="", max_length=80, allow_empty=true){
+export function parseStringInput(input: string, header="", max_length=80, allow_empty=true) : [boolean, string]{
   input = nullParser(input);
   input = input.trim();
   if(input === "" && !allow_empty){
@@ -150,7 +146,7 @@ export function parseStringInput(input, header="", max_length=80, allow_empty=tr
   return [true, input];
 }
 
-export function parseAETitleInput(input, header=""){
+export function parseAETitleInput(input: string, header=""): [boolean, string]{
   if(input === ""){
     return [false, `${header} er ikke tasted ind`];
   }
@@ -161,15 +157,7 @@ export function parseAETitleInput(input, header=""){
   return [true, input]
 }
 
-
-/**
- *
- * @param {Array<String>} errorList - Container for the error messages
- * @param {Boolean} valid true if error
- * @param {String | any} errorMessage string if error otherwise any
- * @returns
- */
-export function concatErrors(errorList, valid, errorMessage){
+export function concatErrors(errorList: Array<string>, valid: boolean, errorMessage: string){
   if(!valid) {
     errorList.push(errorMessage)
   }
@@ -182,14 +170,14 @@ export function concatErrors(errorList, valid, errorMessage){
  * @param {*} header
  * @returns
  */
-export function parseDateInput(input, header=""){
+export function parseDateInput(input: string, header=""): [true, Date] | [false, string]{
   const dateString = parseDate(input);
   if (dateString === null){
     return [false, `${header} er ikke på dato format`]
   }
 
   const date = new Date(dateString);
-  if(isNaN(date)){
+  if(isNaN(date.valueOf())){
     return [false, `${header} er ikke en valid dato`]
   }
   return [true, date];

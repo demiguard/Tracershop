@@ -58,6 +58,13 @@ export const CENTER : React.CSSProperties = {
   textAlign: 'center'
 };
 
+export const ExpandAndCenter : React.CSSProperties = {
+  alignItems : 'center',
+  textAlign : 'center',
+  height : "100%",
+  display : 'flex',
+}
+
 export const MARGIN = {
   all : {
     px0 : {
