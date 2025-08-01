@@ -10,7 +10,7 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint,
   Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracershopState
 } from "~/dataclasses/dataclasses";
 import { WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
-import { activityOrderFilter, isotopeDeliveryFilter, isotopeOrderFilter, timeSlotFilter } from "~/lib/filters";
+import { activityOrderFilter, isotopeDeliveryFilter, isotopeOrderFilter, isotopeProductionFilter, productionsFilter, timeSlotFilter } from "~/lib/filters";
 import { DATA_ISOTOPE, DATA_TRACER } from "~/lib/shared_constants";
 import { ProductType } from "~/lib/types";
 
@@ -32,6 +32,12 @@ export const PRODUCT_TYPES = {
   ACTIVITY : DATA_TRACER,
   EMPTY : "EMPTY"
 };
+
+
+type filterDeliveryArgs = {
+  endpoint_id? : number,
+  day? : number
+}
 
 /**
  * Class that unionizes the types of tracer and istope
@@ -133,18 +139,17 @@ export class ProductReference {
   }
 
   /** Gets existing the production options for the product */
-  filterProduction(state: TracershopState){
+  filterProduction(state: TracershopState, filterArgs = {}){
     switch (this.type) {
     case PRODUCT_TYPES.ISOTOPE: { // Note this scope is here to reuse prods variable
-      return [...state.isotope_production.values()].filter(
-        (ip) => ip.isotope === this.product_id
-      );
+      return isotopeProductionFilter(state, { ...filterArgs, produces : this.product_id } )
 
     }
     case PRODUCT_TYPES.ACTIVITY: {
-      return [...state.production.values()].filter(
-        (ap) => ap.tracer === this.product_id
-      );
+      return productionsFilter(state, {
+        ...filterArgs,
+        tracerID : this.product_id
+      })
     }
     default:
       return [];
@@ -152,21 +157,18 @@ export class ProductReference {
   }
 
 
-  /** Filters the deliveries in the state such that you get the deliveries,
-   * from this
-   *
-   */
-  filterDeliveries(state: TracershopState, endpointRef : DeliveryEndpoint | number, day : number) {
-    const endpointID = endpointRef instanceof DeliveryEndpoint ?
-        endpointRef.id
-      : endpointRef;
+
+  filterDeliveries(state: TracershopState, {
+    endpoint_id,
+    day,
+  } : filterDeliveryArgs) {
 
     switch (this.type) {
       case PRODUCT_TYPES.ACTIVITY: {
         return timeSlotFilter(state, {
           state: state,
           tracerID : this.product_id,
-          endpointID : endpointID,
+          endpointID : endpoint_id,
           day : day,
         });
       }
@@ -174,7 +176,7 @@ export class ProductReference {
         return isotopeDeliveryFilter(state, {
           state : state,
           isotopeID : this.product_id,
-          endpointID : endpointID,
+          endpointID : endpoint_id,
           day : day,
         });
       }
@@ -184,13 +186,8 @@ export class ProductReference {
     }
   }
 
-  /**
-   *
-   * @param {TracershopState} state
-   * @param {Object} filterArguments
-   * @returns
-   */
-  filterOrders(state, {
+
+  filterOrders(state: TracershopState, {
     timeSlots,
     delivery_date,
   }) {

@@ -29,7 +29,9 @@ function CardHeaderDescription({isotopeOrderCollection} : CardHeaderDescriptionA
       return (
         <Col>
           <Row style={ExpandAndCenter}>
-            <Col style={ExpandAndCenter} xs={2}><TimeDisplay style={ExpandAndCenter} time={isotopeOrderCollection.delivery.delivery_time}/></Col>
+            <Col style={ExpandAndCenter} xs={2}>
+              <TimeDisplay time={isotopeOrderCollection.delivery.delivery_time}/>
+            </Col>
             <Col xs={8} style={ExpandAndCenter}>Der er ikke bestilt isotope til denne levering</Col>
           </Row>
         </Col>
@@ -40,7 +42,6 @@ function CardHeaderDescription({isotopeOrderCollection} : CardHeaderDescriptionA
           <Row style={ExpandAndCenter}>
             <Col style={ExpandAndCenter} xs={2}>
               <TimeDisplay
-                style={ExpandAndCenter}
                 time={isotopeOrderCollection.delivery.delivery_time}
               />
             </Col>
@@ -60,7 +61,6 @@ function CardHeaderDescription({isotopeOrderCollection} : CardHeaderDescriptionA
         <Col style={ExpandAndCenter} xs={2}>
           <TimeDisplay
             time={isotopeOrderCollection.delivery.delivery_time}
-            style={ExpandAndCenter}
           />
         </Col>
       </Col>)

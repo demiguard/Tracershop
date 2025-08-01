@@ -3,15 +3,11 @@ import propTypes  from 'prop-types';
 
 import { FormatDateStr, formatTimeStamp } from '~/lib/formatting';
 
-/**
- * Display for time stamps
- * @param {{
- * time : String | Date
- * }} param0
- * @returns
- */
-export function TimeDisplay(props){
-  const {time, ...rest} = props;
+type TimeDisplayProps = {
+  time : Date | string
+}
+
+export function TimeDisplay({time}: TimeDisplayProps){
   const text = (() => {
     let fTime = time;
     if(!fTime){
@@ -26,9 +22,5 @@ export function TimeDisplay(props){
     return fTime.substring(6,8) == "00" ? fTime.substring(0,5) : fTime;
   })();
 
-  return <div {...rest}>{text}</div>;
+  return text;
 }
-
-TimeDisplay.propType = {
-  time : propTypes.oneOf([propTypes.string.isRequired, propTypes.objectOf(Date)]).isRequired
-};

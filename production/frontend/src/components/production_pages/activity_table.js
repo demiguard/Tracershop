@@ -1,6 +1,5 @@
 
 import React, { useState } from "react";
-import propTypes from 'prop-types'
 import { Row, Col, Button, Container } from 'react-bootstrap'
 import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
 import { calculateProduction } from "../../lib/physics";
@@ -9,18 +8,18 @@ import { CreateOrderModal } from "../modals/create_activity_modal";
 import {PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
   PROP_ORDER_MAPPING, PROP_ON_CLOSE, PROP_TIME_SLOT_ID, PROP_TIME_SLOT_MAPPING,
   PROP_TRACER_CATALOG,  DAYS_OBJECTS
-} from "../../lib/constants";
+} from "~/lib/constants";
 import { ActivityProduction } from "~/dataclasses/dataclasses";
 import { compareTimeStamp, getDay
-  } from "../../lib/chronomancy";
+  } from "~/lib/chronomancy";
 import { ProductionTimeSlotOwnerShip, TimeSlotMapping,
-  getTimeSlotOwner} from "../../lib/data_structures";
+  getTimeSlotOwner} from "~/lib/data_structures";
 import { OrderMapping } from "~/lib/data_structures/order_mapping";
 
-import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "../../lib/filters";
+import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "~/lib/filters";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { Optional } from "../injectable/optional";
-import { ProductionTimeSlot } from "~/components/injectable/production_injectionable/production_time_slot";
+import { ProductionTimeSlot } from "~/components/production_pages/production_injectables/production_time_slot";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
 
 const Modals = {

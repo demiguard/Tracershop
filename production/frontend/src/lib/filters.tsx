@@ -222,11 +222,18 @@ export function locationEndpointFilter(active_endpoint){
   }
 }
 
-export function productionsFilter(container: ContainerType<ActivityProduction>, filterArgs: any) : ActivityProduction[]
-export function productionsFilter(container: ContainerType<ActivityProduction>, filterArgs: any, ids: true) : number[]
+type productionFilterArgs = {
+  production_id? : number,
+  tracerID? : number,
+  day? : number
+};
 
 
-export function productionsFilter(container: ContainerType<ActivityProduction>, {production_id, tracerID, day}, ids=false){
+export function productionsFilter(container: ContainerType<ActivityProduction>, filterArgs: productionFilterArgs) : ActivityProduction[]
+export function productionsFilter(container: ContainerType<ActivityProduction>, filterArgs: productionFilterArgs, ids: true) : number[]
+
+
+export function productionsFilter(container: ContainerType<ActivityProduction>, {production_id, tracerID, day}: productionFilterArgs, ids=false){
   const productions = extractData(container, ActivityProduction, DATA_PRODUCTION);
   const filteredProductions = productions.filter(
     (production) => {
@@ -267,13 +274,13 @@ export function timeSlotFilter(
   return ids ? filteredTimeSlots.map(getId) : filteredTimeSlots
 }
 
-type IsotopeProductionFilterArgs = {
+export type IsotopeProductionFilterArgs = {
   day? : number,
   produces? : number
 }
 
-export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, filterArgs: IsotopeDeliveryFilterArgs) : IsotopeProduction[]
-export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, filterArgs: IsotopeDeliveryFilterArgs, ids: true) : number[]
+export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, filterArgs: IsotopeProductionFilterArgs) : IsotopeProduction[]
+export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, filterArgs: IsotopeProductionFilterArgs, ids: true) : number[]
 
 export function isotopeProductionFilter(container: ContainerType<IsotopeProduction>, {day, produces} : IsotopeProductionFilterArgs,ids=false) {
   const productions = extractData(container, IsotopeProduction, DATA_ISOTOPE_PRODUCTION);
@@ -294,13 +301,18 @@ type IsotopeDeliveryFilterArgs = {
   isotopeID? : number,
   endpointID? : number,
   state? : TracershopState,
-  day? : number
+  day? : number,
+  production_id? : number
 };
 
 export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, filterArgs: IsotopeDeliveryFilterArgs) : IsotopeDelivery[]
 export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, filterArgs: IsotopeDeliveryFilterArgs, ids: true) : number[]
 
-export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>, { state, endpointID, isotopeID, day } : IsotopeDeliveryFilterArgs, ids=false){
+export function isotopeDeliveryFilter(
+    container: ContainerType<IsotopeDelivery>,
+    { state, endpointID, isotopeID, day, production_id } : IsotopeDeliveryFilterArgs,
+    ids=false
+  ){
   const isotopeDeliveries = extractData(container, IsotopeDelivery, DATA_ISOTOPE_DELIVERY);
 
   const is_accepted_production = (() => {
@@ -331,8 +343,9 @@ export function isotopeDeliveryFilter(container: ContainerType<IsotopeDelivery>,
   const filteredIsotopeDeliveries = isotopeDeliveries.filter((isotopeDelivery) => {
     const deliveryCondition = endpointID ? isotopeDelivery.delivery_endpoint === endpointID : true;
     const productionCondition = is_accepted_production(isotopeDelivery);
+    const is_specific_production = production_id ? isotopeDelivery.production === production_id : true
 
-    return deliveryCondition && productionCondition;
+    return deliveryCondition && productionCondition && is_specific_production;
   })
 
   return ids ? filteredIsotopeDeliveries.map(getId) : filteredIsotopeDeliveries;
@@ -353,7 +366,7 @@ export function isotopeOrderFilter(
     state,
     timeSlots,
     timeSlotFilterArgs,
-    delivery_date
+    delivery_date,
   } : IsotopeOrderFilterArgs, ids=false){
   const isotopeOrders = extractData(container, IsotopeOrder, DATA_ISOTOPE_ORDER);
   const timeSlotIDs =

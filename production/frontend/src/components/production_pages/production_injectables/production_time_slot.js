@@ -99,7 +99,7 @@ function ProductionInnerContentMoved({orderCollection, firstAvailableTimeSlot}){
   */
   return (
     <Row style={{...cssCenter, ...JUSTIFY.center, marginTop: '3.1666px', marginBottom: '3.1666px'}}>
-      <div style={{width : 'fit-content'}}>Rykket til: <TimeDisplay style={{display : 'inline-block'}} time={firstAvailableTimeSlot.delivery_time}/>
+      <div style={{width : 'fit-content'}}>Rykket til: <TimeDisplay time={firstAvailableTimeSlot.delivery_time}/>
       </div>
     </Row>);
 }
