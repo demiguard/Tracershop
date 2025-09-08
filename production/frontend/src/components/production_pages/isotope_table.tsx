@@ -11,6 +11,7 @@ import { getDay } from '~/lib/chronomancy';
 import { IsotopeOrderMapping } from '~/lib/data_structures/isotope_order_mapping';
 import { isotopeOrderFilter } from '~/lib/filters';
 import { dateToDateString } from '~/lib/formatting';
+import { IsotopeDisplay } from '../injectable/data_displays/isotope_display';
 
 
 type IsotopeTableArgs = {
@@ -67,7 +68,7 @@ export function IsotopeTable({product}: IsotopeTableArgs){
   return (
     <div>
       <Row>
-        <h2> Produktion - <DateDisplay date={state.today}/> </h2>
+        <h2> Produktion - <IsotopeDisplay isotope={product.product_id}/> - <DateDisplay date={state.today}/> </h2>
       </Row>
       {renderedProductions}
       <Row>

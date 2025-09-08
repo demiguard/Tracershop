@@ -1,5 +1,5 @@
-import React from 'react'
-import {Image, Button, Col, Row} from 'react-bootstrap'
+import React, { CSSProperties } from 'react'
+import { Button, Col, Row} from 'react-bootstrap'
 import propTypes from 'prop-types'
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection'
@@ -10,7 +10,7 @@ import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton } from './buttons'
 import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER } from '~/lib/shared_constants'
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
-import { Order } from '~/dataclasses/references/order'
+import { Image } from './image'
 
 interface ClickableIconProps {
   altText? : string,
@@ -21,6 +21,7 @@ interface ClickableIconProps {
   className? : string,
   style? : Object,
   variant? : string,
+  beforeInjection? : (svg: SVGSVGElement) => undefined
 }
 
 export function ClickableIcon ({
@@ -32,6 +33,7 @@ export function ClickableIcon ({
     className ,
     style,
     variant,
+    beforeInjection,
   } : ClickableIconProps){
 
   if(style === undefined){
@@ -61,6 +63,11 @@ export function ClickableIcon ({
             onMouseDown={onMouseDown}
     >
       <Image
+        beforeInjection={beforeInjection}
+        style={{
+          width : '24px',
+          height : '24px'
+        }}
         className={className}
         src={src}
         alt={altText}
@@ -100,12 +107,13 @@ interface StatusIconArgs {
   altText? : string,
   label? : string,
   onClick? : () => {};
-  order? : ActivityOrder | InjectionOrder | IsotopeOrder | Order
+  order? : ActivityOrder | InjectionOrder | IsotopeOrder
   orderCollection? : ActivityOrderCollection | IsotopeOrderCollection
 }
 
 export function StatusIcon ({onClick, label, order, orderCollection, altText} : StatusIconArgs) {
   const statusImagePath = (() => {
+
     if (orderCollection) {
       if(orderCollection instanceof ActivityOrderCollection && orderCollection.moved) {
         return "/static/images/move_top.svg";
@@ -201,8 +209,20 @@ export function WebsocketIcon(){
   }
 }
 
+type IdempotentIconProps = {
+  altText? : string,
+  src : string,
+  onClick? : (() => void) | (() => Promise<any>),
+  onMouseDown? : () => void,
+  label? : string,
+  className? : string,
+  style? : CSSProperties
+  variant? : string
+  [key: string] : any
 
-export function IdempotentIcon (props){
+}
+
+export function IdempotentIcon (props: IdempotentIconProps){
 
   let {
     altText,
@@ -213,6 +233,7 @@ export function IdempotentIcon (props){
     className ,
     style,
     variant,
+    beforeInjection,
     ...rest
   } = props
 
@@ -244,6 +265,11 @@ return (<IdempotentButton
           onMouseDown={onMouseDown}
   >
     <Image
+      style={{
+          width : '24px',
+          height : '24px'
+        }}
+      beforeInjection={beforeInjection}
       className={className}
       src={src}
       alt={altText}
@@ -318,4 +344,23 @@ export function CalculatorIcon(props){
     src="/static/images/calculator.svg"
     {...rest}
   />;
+}
+
+type CancelIconProps = {
+  onClick : (() => void) | (() => Promise<any>)
+};
+
+
+export function CancelIcon({onClick} : CancelIconProps){
+  return <IdempotentIcon
+    src={"static/images/x-circle-fill.svg"}
+    onClick={onClick}
+    beforeInjection={
+      (svg: SVGSVGElement) => {
+        svg.setAttribute('fill', 'red')
+        svg.setAttribute('width', '24')
+        svg.setAttribute('height', '24')
+      }
+    }
+  />
 }

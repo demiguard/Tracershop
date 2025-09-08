@@ -248,12 +248,21 @@ export function productionsFilter(container: ContainerType<ActivityProduction>, 
 }
 
 
-export function timeSlotFilter(container: ContainerType<ActivityDeliveryTimeSlot>, filterArgs: any): ActivityDeliveryTimeSlot[]
-export function timeSlotFilter(container: ContainerType<ActivityDeliveryTimeSlot>, filterArgs: any, ids : true): number[]
+export type TimeSlotFilterArgs = {
+  state? : TracershopState,
+  timeSlotId? : number | Array<number>,
+  tracerID? : number, // Inconsistent naming :(
+  day? : number,
+  endpointID? : number
+
+}
+
+export function timeSlotFilter(container: ContainerType<ActivityDeliveryTimeSlot>, filterArgs: TimeSlotFilterArgs): ActivityDeliveryTimeSlot[]
+export function timeSlotFilter(container: ContainerType<ActivityDeliveryTimeSlot>, filterArgs: TimeSlotFilterArgs, ids : true): number[]
 
 export function timeSlotFilter(
     container: ContainerType<ActivityDeliveryTimeSlot>,
-    {state, timeSlotId, tracerID, day, endpointID},
+    {state, timeSlotId, tracerID, day, endpointID} : TimeSlotFilterArgs,
     ids = false
   ){
   const timeSlots = extractData(container, ActivityDeliveryTimeSlot, DATA_DELIVER_TIME)
@@ -264,7 +273,7 @@ export function timeSlotFilter(
                                                                    }, true) : undefined;
   const filteredTimeSlots = timeSlots.filter((timeSlot) => {
     const tracerCondition = productionIDs ? productionIDs.includes(timeSlot.production_run) : true;
-    const endpointCondition = endpointID? timeSlot.destination == endpointID : true;
+    const endpointCondition = endpointID ? timeSlot.destination == endpointID : true;
     const idCondition = timeSlotId instanceof Array ? timeSlotId.includes(timeSlot.id) :
                         timeSlotId ? timeSlotId === timeSlot.id : true;
 {}

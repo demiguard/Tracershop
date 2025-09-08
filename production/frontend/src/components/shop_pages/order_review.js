@@ -51,7 +51,10 @@ export function OrderReview({active_endpoint,
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
 
-  const availableDeliveries = product.filterDeliveries(state, active_endpoint, day);
+  const availableDeliveries = product.filterDeliveries(state, {
+    endpoint_id : active_endpoint, day : day
+  });
+
   const availableOrders = product.filterOrders(state, {
     timeslots : availableDeliveries,
     delivery_date : activeDateString
