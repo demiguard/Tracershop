@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
 import { Card, Col, Collapse, Row } from 'react-bootstrap'
-import { CancelBox } from '~/components/injectable/cancel_box';
+
 import { EndpointDisplay } from '~/components/injectable/data_displays/endpoint';
 import { MBqDisplay } from '~/components/injectable/data_displays/mbq_display';
-import { CancelIcon, StatusIcon } from '~/components/injectable/icons';
+import { AcceptIcon, CancelIcon, StatusIcon } from '~/components/injectable/icons';
 import { OpenCloseButton } from '~/components/injectable/open_close_button';
 import { Optional } from '~/components/injectable/optional';
-import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
+import { useTracershopState } from '~/contexts/tracer_shop_context';
 import { IsotopeDelivery, IsotopeOrder } from '~/dataclasses/dataclasses'
 import { ORDER_STATUS, StateType } from '~/lib/constants';
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection';
@@ -28,7 +28,13 @@ function CardHeader({openState, collection} : CardHeaderProps){
         <Col xs={1}><StatusIcon orderCollection={collection}/></Col>
         <Col><EndpointDisplay endpoint={collection.endpoint}/></Col>
         <Col><TimeDisplay time={collection.delivery.delivery_time} /></Col>
-        <Col><MBqDisplay activity={collection.ordered_activity}/> </Col>
+        <Col>Bestilt: <MBqDisplay activity={collection.ordered_activity}/></Col>
+        <Col>Udleveret: <MBqDisplay activity={collection.delivered_activity}/></Col>
+        <Optional exists={collection.minimum_status === ORDER_STATUS.ORDERED}>
+          <Col xs={1}>
+            <AcceptIcon orders={collection.orders}/>
+          </Col>
+        </Optional>
         <Col xs={1} style={{
           justifyContent : 'right',
           display : 'flex',
@@ -47,14 +53,6 @@ type OrderRowProps = {
 function OrderRow ({
   order
 }: OrderRowProps) {
-  const websocket = useWebsocket();
-  const [isCanceling, setIsCanceling] = useState(false);
-
-  function cancelOrder(){
-
-  }
-
-
 
   return (
   <Row>
@@ -64,7 +62,7 @@ function OrderRow ({
       <Col xs={1}><Comment comment={order.comment}/></Col>
     </Optional>
     <Optional exists={[ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)}>
-      <Col xs={1}><CancelIcon onClick={cancelOrder}/></Col>
+      <Col xs={1}><CancelIcon order={order}/></Col>
     </Optional>
   </Row>)
 }
@@ -80,11 +78,8 @@ export function ProductionIsotopeTimeSlot({
   const state = useTracershopState();
   const collection = new IsotopeOrderCollection(orders, timeSlot, state);
 
-
   const orderRows = [];
-
   const [open, setOpen] = useState(false);
-
 
   for(const order of orders){
     orderRows.push(

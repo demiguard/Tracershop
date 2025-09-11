@@ -7,11 +7,7 @@ export function Comment({comment}){
   if(comment){
     return <HoverBox
       Base={<ClickableIcon
-        src="/static/images/comment.svg"
-        beforeInjection={(svg) => {
-          svg.setAttribute('height', '24');
-          svg.setAttribute('width', '24');
-        }}
+          src="/static/images/comment.svg"
       />}
       Hover={<div>{comment}</div>}
     />

@@ -1,20 +1,22 @@
 import React from 'react'
 import { Image as BTImage } from 'react-bootstrap'
-import { ReactSVG } from 'react-svg'
+import { SVG } from './svg'
 
 
 type ImageProps = {
   src : string,
-  beforeInjection : (svg: SVGSVGElement) => undefined
+  beforeInjection : (svg: SVGSVGElement) => void
   [key: string] : any
 }
 
 export function Image(props: ImageProps){
-  const {src} = props
+  const {src, beforeInjection, ...rest} = props
 
   if(src.endsWith('.svg')){
-    return <ReactSVG {...props}/>
+
+    return <SVG {...props}/>
   } else {
-    return <BTImage {...props}/>
+    // remove the BeforeInjection
+    return <BTImage src={src} {...rest}/>
   }
 }

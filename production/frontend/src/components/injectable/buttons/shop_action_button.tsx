@@ -48,7 +48,6 @@ function BaseActionButton({
       // DELIBERATE FALL THROUGH!
     case ORDER_STATUS.AVAILABLE:
       return <CommitButton
-
         label={label}
         validate={validate}
         callback={callback}

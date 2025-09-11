@@ -8,6 +8,7 @@ export class IsotopeOrderCollection {
   ordered_activity: number
   delivered_activity: number
   endpoint : DeliveryEndpoint
+  orders : Array<IsotopeOrder>
 
   /** A collection of Isotope orders, that
    *
@@ -15,6 +16,7 @@ export class IsotopeOrderCollection {
   constructor(orders: Array<IsotopeOrder>, delivery: IsotopeDelivery, state : TracershopState){
     this.#minimum_status = ORDER_STATUS.EMPTY;
     this.delivery = delivery;
+    this.orders = orders;
     this.ordered_activity = 0;
     this.delivered_activity = 0;
     this.endpoint = state.delivery_endpoint.get(delivery.delivery_endpoint);

@@ -1,4 +1,4 @@
-import React, { CSSProperties } from 'react'
+import React, { CSSProperties, useState } from 'react'
 import { Button, Col, Row} from 'react-bootstrap'
 import propTypes from 'prop-types'
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from '~/dataclasses/dataclasses'
@@ -8,9 +8,11 @@ import { openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton } from './buttons'
-import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER } from '~/lib/shared_constants'
+import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_ORDER } from '~/lib/shared_constants'
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
 import { Image } from './image'
+import { OrdersType, OrderType, getOrderType } from '~/lib/types'
+import { CancelBox } from './cancel_box'
 
 interface ClickableIconProps {
   altText? : string,
@@ -21,7 +23,7 @@ interface ClickableIconProps {
   className? : string,
   style? : Object,
   variant? : string,
-  beforeInjection? : (svg: SVGSVGElement) => undefined
+  beforeInjection? : (svg: SVGSVGElement) => void
 }
 
 export function ClickableIcon ({
@@ -68,6 +70,8 @@ export function ClickableIcon ({
           width : '24px',
           height : '24px'
         }}
+        width="24"
+        height="24"
         className={className}
         src={src}
         alt={altText}
@@ -212,6 +216,7 @@ export function WebsocketIcon(){
 type IdempotentIconProps = {
   altText? : string,
   src : string,
+  beforeInjection? : (svg: SVGSVGElement) => undefined,
   onClick? : (() => void) | (() => Promise<any>),
   onMouseDown? : () => void,
   label? : string,
@@ -256,6 +261,8 @@ if (className) {
   className = "statusIcon";
 }
 
+
+
 return (<IdempotentButton
           {...rest}
           style={style}
@@ -269,12 +276,51 @@ return (<IdempotentButton
           width : '24px',
           height : '24px'
         }}
+      width = '24'
+      height = '24'
       beforeInjection={beforeInjection}
       className={className}
       src={src}
       alt={altText}
     />
   </IdempotentButton>)
+}
+
+
+
+export function AcceptIcon(props : {orders : OrdersType }){
+  const {orders, ...rest} = props;
+
+  const websocket = useWebsocket();
+
+  const order_type = getOrderType({orders : orders})
+
+  if(order_type === undefined){
+    return <div></div>;
+  }
+
+  function acceptOrders(){
+    if(!websocket){
+      return Promise.resolve();
+    }
+
+    const filtered_orders = orders.filter(
+      order => order.status === ORDER_STATUS.ORDERED
+    );
+    const updated_orders = filtered_orders.map(
+      (order) => ({...order, status : ORDER_STATUS.ACCEPTED})
+    );
+
+    return websocket.sendEditModel(
+      order_type, updated_orders
+    );
+  }
+
+  return <IdempotentIcon
+    src="/static/images/thumb-up-add.svg"
+    onClick={acceptOrders}
+    {...rest}
+  />
 }
 
 
@@ -347,20 +393,47 @@ export function CalculatorIcon(props){
 }
 
 type CancelIconProps = {
-  onClick : (() => void) | (() => Promise<any>)
+  order? : OrderType,
+  orders? : OrdersType,
+  [key: string] : any,
 };
 
 
-export function CancelIcon({onClick} : CancelIconProps){
-  return <IdempotentIcon
+export function CancelIcon(props : CancelIconProps){
+  const {order, orders, ...rest} = props;
+  const websocket = useWebsocket();
+  const [showCancelBox, setShowCancelBox] = useState(false);
+
+  function cancelOrder(){
+    const order_array = orders ? orders : [order] as OrdersType;
+    const order_type = getOrderType({orders : order_array});
+
+    const filtered_orders = order_array.filter(
+      (order) => !([ORDER_STATUS.RELEASED, ORDER_STATUS.CANCELLED].includes(order.status)))
+
+    const updated_orders = filtered_orders.map((order) => (
+      { ...order, status : ORDER_STATUS.CANCELLED }
+    ));
+
+    websocket.sendEditModel(order_type, updated_orders);
+  }
+
+  return <div>
+    <CancelBox
+      show={showCancelBox}
+      onClose={() => {setShowCancelBox(false);}}
+      confirm={cancelOrder}
+    />
+
+  <ClickableIcon
+    {...rest}
     src={"static/images/x-circle-fill.svg"}
-    onClick={onClick}
+    onClick={() => {setShowCancelBox(true);}}
     beforeInjection={
       (svg: SVGSVGElement) => {
         svg.setAttribute('fill', 'red')
-        svg.setAttribute('width', '24')
-        svg.setAttribute('height', '24')
       }
     }
   />
+  </div>
 }

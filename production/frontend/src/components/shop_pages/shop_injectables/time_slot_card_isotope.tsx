@@ -236,13 +236,11 @@ export function TimeSlotCardIsotope({
         isotopeOrderCollection={isotopeOrderCollection}
         collapsedState={[collapsed, setCollapsed]}
       />
-
       <Collapse in={collapsed}>
         <Card.Body>
           {renderedOrders}
         </Card.Body>
       </Collapse>
     </Card>
-
   );
 }

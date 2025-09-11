@@ -3,7 +3,14 @@ import { Container, Modal, Row, Col } from "react-bootstrap";
 import { MarginButton } from "~/components/injectable/buttons";
 
 
-export function CancelBox({show, confirm, onClose}){
+type CancelBoxProps = {
+  show : boolean,
+  confirm : () => void
+  onClose : () => void
+  cancelMessage? : string
+}
+
+export function CancelBox({show, confirm, onClose, cancelMessage="Vil du afvise?"}: CancelBoxProps){
   return (
     <Modal
       style={{
@@ -14,7 +21,7 @@ export function CancelBox({show, confirm, onClose}){
       <Modal.Body>
         <Container>
           <Row className="justify-content-center">
-            <Col md="auto">Vil du afvise?</Col>
+            <Col md="auto">{cancelMessage}</Col>
           </Row>
         </Container>
       </Modal.Body>

@@ -134,7 +134,7 @@ export function ProductionUserSetup(){
 
     const image_src = userExists ?
               "/static/images/update.svg"
-            : "/static/images/plus.svg"
+            : "/static/images/plus.svg";
 
       return (
         <Card key={user.id}>

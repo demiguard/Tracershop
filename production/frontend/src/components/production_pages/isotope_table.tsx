@@ -1,7 +1,7 @@
 import React from 'react'
 import { Row } from 'react-bootstrap';
 import { DateDisplay } from '~/components/injectable/data_displays/date_display';
-import { IsotopeProductionDisplay } from '~/components/production_pages/production_injectables/isotopeProductionDisplay';
+import { IsotopeProductionDisplay } from '~/components/production_pages/production_injectables/isotope_production_display';
 import { ProductionIsotopeTimeSlot } from '~/components/production_pages/production_injectables/production_isotope_time_slot';
 import { useTracershopState } from '~/contexts/tracer_shop_context'
 import { IsotopeDelivery, IsotopeOrder, IsotopeProduction } from '~/dataclasses/dataclasses';
