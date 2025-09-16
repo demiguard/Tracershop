@@ -13,7 +13,9 @@ from pandas import DataFrame, ExcelWriter
 
 # Tracershop Packages
 from constants import DATETIME_REGULAR_EXPRESSION,\
-  TIME_FORMAT, DATE_FORMAT, TIME_REGULAR_EXPRESSION
+  TIME_FORMAT, DATE_FORMAT, TIME_REGULAR_EXPRESSION,\
+  DATETIME_RE_UTC, DATETIME_RE_WITH_MICRO
+
 from database import models
 
 def dateConverter(date_: date, format_: str=DATE_FORMAT) -> str:
@@ -41,6 +43,7 @@ def toTime(time_str : str) -> time:
   hour, minute, second = (int(value) for value in m.groups())
   return time(hour, minute, second)
 
+
 def toDateTime(
     date_time_str: str,
     timezone_=timezone.utc
@@ -58,6 +61,7 @@ def toDateTime(
   Returns:
       datetime: _description_
   """
+
   m = DATETIME_REGULAR_EXPRESSION.search(date_time_str)
 
   if m is None:
@@ -73,13 +77,6 @@ def toDate(date_str: str, Format: str=DATE_FORMAT) -> date:
   DummyTime = datetime.strptime(date_str, Format)
   return DummyTime.date()
 
-def mergeDateAndTime(Date : date, Time: time) -> datetime:
-  return datetime(Date.year,
-                  Date.month,
-                  Date.day,
-                  Time.hour,
-                  Time.minute,
-                  Time.second)
 
 def formatFrontendErrorMessage(message: Dict) -> str:
   raw_error_message = message.get("message", "Unknown error")
@@ -135,12 +132,15 @@ def format_message_name(message_name: str):
   return '_'.join(name_splits[1:])
 
 def format_error_with_datatype(error: Exception, datatype: str):
-  model = models.MODELS[datatype]
-  if isinstance(error, IntegrityError):
-    code, _message = error.args
+  if datatype in models.MODELS:
+    model = models.MODELS[datatype]
+    if isinstance(error, IntegrityError):
+      code, _message = error.args
 
-    if code == 1062:
-      return f"Der findes allerede en tilsvarende {model.display_name}, benyt den i stedet."
+      if code == 1062:
+        return f"Der findes allerede en tilsvarende {model.display_name}, benyt den i stedet."
+  else:
+    return "Invalid Message, datatype is not a known model?!"
 
 
 

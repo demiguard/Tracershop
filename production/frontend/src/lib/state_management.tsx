@@ -34,7 +34,7 @@ export function toggleState(stateKeyWord, This){
  * @param {CallableFunction} stateFunction - the setState function related to variable
  * @returns {CallableFunction}
  */
-export function setStateToEvent(stateFunction, formatFunction){
+export function setStateToEvent(stateFunction, formatFunction=undefined){
   return (event) => {
     const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
     stateFunction(value);

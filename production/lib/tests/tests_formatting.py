@@ -14,15 +14,6 @@ class ProductionFormattingUnitTests(TestCase):
     self.test_DatetimeStrJS = "1993-11-20T09:41:20"
     self.test_DatetimeStr = "1993-11-20 09:41:20"
 
-  def test_mergeDateAndTime(self):
-    mergedDateAndTime = formatting.mergeDateAndTime(self.test_date, self.test_time)
-    self.assertEqual(self.test_datetime.year, mergedDateAndTime.year)
-    self.assertEqual(self.test_datetime.month, mergedDateAndTime.month)
-    self.assertEqual(self.test_datetime.day, mergedDateAndTime.day)
-    self.assertEqual(self.test_datetime.hour, mergedDateAndTime.hour)
-    self.assertEqual(self.test_datetime.minute, mergedDateAndTime.minute)
-    self.assertEqual(self.test_datetime.second, mergedDateAndTime.second)
-
   def test_dateConverter(self):
     self.assertEqual(formatting.dateConverter(self.test_date), "1993-11-20")
     self.assertEqual(formatting.dateConverter(self.test_date, format_="%Y/%m/%d"), "1993/11/20")

@@ -62,3 +62,14 @@ class JSONTests(TestCase):
                      encoder.default(
                        ValidationError("You fucked up", "big time",
                                        params={'param_1' : "value_1"})))
+
+
+  def test_empty_json_input_raises(self):
+    self.assertRaises(ValueError, PJSON.decode, "1")
+
+
+  def test_default_gets_forwarded(self):
+    ### I Swear I don't get why this functionality is this way...
+    encoder = PJSON.ProductionJSONEncoder()
+    # Fall through raises
+    self.assertRaises(TypeError, encoder.default,"{ \"hello\" : \"world\"}")

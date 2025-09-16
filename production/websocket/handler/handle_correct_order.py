@@ -20,11 +20,12 @@ class HandleCorrectOrder(HandlerBase):
   async def __call__(self, consumer, message):
     result, user = await consumer.authenticate_from_auth(message)
 
-    if not user.is_production_member:
-      return await consumer._RejectFreeing(message)
-
     if result != AuthenticationResult.SUCCESS:
       return await consumer._RejectFreeing(message)
+
+    if user is None or not user.is_production_member:
+      return await consumer._RejectFreeing(message)
+
 
     corrected_state = await consumer.db.correct_order(
       message[WEBSOCKET_DATA], user

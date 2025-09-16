@@ -1,9 +1,10 @@
 """Test cases for models"""
 
 # Python Standard Library
-from datetime import time
+from datetime import time, datetime, timezone
+from zoneinfo import ZoneInfo
 
-# Third Party Packages
+# Third party packages
 from django.test import TransactionTestCase, TestCase
 
 # Tracershop Packages
@@ -94,14 +95,45 @@ class TracershopModelsTests(TestCase):
 
 
   def test_injection_order_assignment(self):
+    admin_user = User(username="Admin", user_group=UserGroups.Admin)
+
     injection_dict = {
       "freed_by" : None,
       "freed_datetime" : "2024-11-30 10:00:00"
     }
 
-    injection_order = InjectionOrder()
+    injection_order = InjectionOrder(freed_by=admin_user)
 
     injection_order.assignDict(injection_dict)
+
+    self.assertIsNone(injection_order.freed_by)
+    self.assertEqual(injection_order.freed_datetime, datetime(
+      2024,11,30,9,00,00, tzinfo=timezone.utc))
+
+  def test_injection_weird_datetimes(self):
+    injection_order = InjectionOrder()
+
+    datetimes_strings = [
+      "2024-11-30 10:00:00",
+      "2024-11-30T10:00:00",
+      "2024-11-30T10:00:00Z",
+    ]
+
+    for dt_string in datetimes_strings:
+      injection_dict = {
+        "freed_datetime" : dt_string # Normal
+      }
+
+      injection_order.assignDict(injection_dict)
+
+    injection_order.assignDict({
+      "freed_datetime" : "2024-11-30T11:00:00.123"
+    })
+
+    self.assertEqual(injection_order.freed_datetime, datetime(
+        2024,11,30,10,00,00,123, tzinfo=timezone.utc)
+    )
+
 
   def test_tracershop_model_set_get(self):
     tracer = Tracer()
@@ -132,3 +164,10 @@ class TracershopModelsTests(TestCase):
         booking.assignDict({
           "start_time" : "99:00:00"
         })
+
+  def test_base_class_get_display_name(self):
+    self.assertEqual(Booking.display_name, "Booking")
+
+    booking = Booking()
+
+    self.assertEqual(booking.display_name, "Booking")

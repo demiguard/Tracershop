@@ -2,10 +2,10 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, IsotopeProduction, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, IsotopeProduction, IsotopeVial, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId } from "./utils";
-import { DateRange, datify } from "~/lib/chronomancy";
+import { DateRange, datify, sameDate } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
 
 
@@ -509,4 +509,39 @@ export function endpointFilter(container: ContainerType<DeliveryEndpoint>, {
   })
 
   return ids ? filteredEndpoints.map(getId) : filteredEndpoints;
+}
+
+type IsotopeVialFilterArgs = {
+  date? : Date
+  dateRange? : DateRange,
+  isotopeID? : Number
+  isEmpty? : true,
+  deliveredTo? : Array<number>
+};
+
+export function isotopeVialFilter(container: ContainerType<IsotopeVial>, filterArgs: IsotopeVialFilterArgs) : IsotopeVial[]
+export function isotopeVialFilter(container: ContainerType<IsotopeVial>, filterArgs: IsotopeVialFilterArgs, ids: true) : number[]
+
+export function isotopeVialFilter(
+  container: ContainerType<IsotopeVial>,
+  { date, dateRange, isotopeID, isEmpty, deliveredTo }: IsotopeVialFilterArgs,
+  ids=false
+){
+  const isotopeVials = extractData(container, IsotopeVial, DATA_ISOTOPE_VIAL);
+
+  const filteredVials = isotopeVials.filter((isotopeVial) => {
+    const dateCondition = date ? sameDate(date, datify(isotopeVial.calibration_datetime)) : true;
+    const dateRangeCondition = dateRange ? dateRange.in_range(isotopeVial.calibration_datetime) : true;
+
+    const isotopeCondition = isotopeID ? isotopeVial.isotope === isotopeID : true;
+    // delivery_with with should be a fk, null or undefined,
+    const isEmptyCondition = isEmpty ? !(isotopeVial.delivery_with) : true;
+    const deliveredToCondition = deliveredTo ? deliveredTo.includes(isotopeVial.delivery_with) : true;
+
+
+    return dateCondition && dateRangeCondition && isotopeCondition && isEmptyCondition && deliveredToCondition;
+  });
+
+
+  return ids ? filteredVials.map(getId) : filteredVials;
 }

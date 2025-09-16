@@ -1,6 +1,6 @@
 # Python standard Library
 from logging import getLogger
-from datetime import datetime, date, time
+from datetime import timezone as pTimeZone
 from typing import Any, Dict, List, Optional
 
 # Third Party
@@ -15,6 +15,7 @@ from database.TracerShopModels import authModels
 from tracerauth.audit_logging import CreateModelAuditEntry, DeleteModelAuditEntry, EditModelAuditEntry
 from tracerauth.types import AuthActions
 from lib import formatting
+from lib import parsing
 from lib.utils import classproperty
 
 error_logger = getLogger(ERROR_LOGGER)
@@ -54,7 +55,7 @@ class TracershopModel(Model):
 
   @classproperty
   def display_name(cls) -> str:
-    return formatting.camelcase_to_readable(cls.__class__.__name__)
+    return formatting.camelcase_to_readable(cls.__name__)
 
   class Meta:
     abstract = True
@@ -88,7 +89,7 @@ class TracershopModel(Model):
         elif isinstance(field, TimeField):
           value = formatting.toTime(value)
         elif isinstance(field, DateTimeField):
-          value = formatting.toDateTime(value)
+          value = parsing.toDatetime(value).astimezone(pTimeZone.utc)
         elif isinstance(field, DateField):
           value = formatting.toDate(value)
         elif isinstance(field, BooleanField):
@@ -99,10 +100,10 @@ class TracershopModel(Model):
       locals_ = locals()
 
       if 'key' in locals_ and 'field' in locals_ and 'value' in locals_:
-        error_logger.error(f"Caught an error in assigning {key} - {field} to {value}")
+        error_logger.error(f"Caught an error in assigning {key} - {field} to {value}") # type: ignore
       raise e
 
-  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool: # type ignore
+  def save(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool: # type: ignore
     # Something important to note is that if you have query set and that updates
     # Then .save is not called, in other words it's possible to change the
     # database without logging.
@@ -127,7 +128,7 @@ class TracershopModel(Model):
       return True
     return False
 
-  def delete(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool:
+  def delete(self, user: Optional['authModels.User'] = None, *args, **kwargs) -> bool: #type: ignore
     action = self.canDelete(user)
     DeleteModelAuditEntry.log(user, self, action)
 

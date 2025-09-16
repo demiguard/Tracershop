@@ -13,19 +13,21 @@ import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_coll
 import { JUSTIFY, PADDING } from '~/lib/styles';
 import { Comment } from '~/components/injectable/data_displays/comment';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
+import { IsotopeOrderModal } from '~/components/modals/isotope_order_modal';
 
 type CardHeaderProps = {
   openState : StateType<boolean>,
-  collection : IsotopeOrderCollection
+  collection : IsotopeOrderCollection,
+  showModal : () => void,
 }
 
-function CardHeader({openState, collection} : CardHeaderProps){
+function CardHeader({openState, collection, showModal} : CardHeaderProps){
   const [open, setOpen] = openState;
 
   return (
     <Card.Header>
       <Row style={JUSTIFY.left}>
-        <Col xs={1}><StatusIcon orderCollection={collection}/></Col>
+        <Col xs={1}><StatusIcon orderCollection={collection} onClick={showModal}/></Col>
         <Col><EndpointDisplay endpoint={collection.endpoint}/></Col>
         <Col><TimeDisplay time={collection.delivery.delivery_time} /></Col>
         <Col>Bestilt: <MBqDisplay activity={collection.ordered_activity}/></Col>
@@ -58,7 +60,7 @@ function OrderRow ({
   <Row>
     <Col xs={1}><StatusIcon order={order}/></Col>
     <Col>Bestilt : <MBqDisplay activity={order.ordered_activity_MBq}/></Col>
-    <Optional exists={order.comment}>
+    <Optional exists={!!(order.comment)}>
       <Col xs={1}><Comment comment={order.comment}/></Col>
     </Optional>
     <Optional exists={[ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)}>
@@ -77,6 +79,11 @@ export function ProductionIsotopeTimeSlot({
 } : ProductionIsotopeTimeSlotProps) {
   const state = useTracershopState();
   const collection = new IsotopeOrderCollection(orders, timeSlot, state);
+  const [showingModal, setShowingModal] = useState(false);
+
+  const showModal = () => { setShowingModal(true);};
+  const hideModal = () => { setShowingModal(false);};
+
 
   const orderRows = [];
   const [open, setOpen] = useState(false);
@@ -89,12 +96,17 @@ export function ProductionIsotopeTimeSlot({
 
   return (
     <Card style={PADDING.all.px0}>
-      <CardHeader openState={[open, setOpen]} collection={collection}/>
+      <CardHeader openState={[open, setOpen]} collection={collection} showModal={showModal}/>
       <Collapse in={open}>
         <Card.Body>
           {orderRows}
         </Card.Body>
       </Collapse>
+      <Optional exists={showingModal}>
+        <IsotopeOrderModal
+          collection={collection}
+          onClose={hideModal}/>
+      </Optional>
     </Card>
   );
 }

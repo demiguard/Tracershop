@@ -59,7 +59,7 @@ from database.models import ClosedDate, User, UserGroups, MODELS,\
     ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
     Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder,\
     OrderStatus, Booking, Procedure, ProcedureIdentifier, Location,\
-    BookingStatus, Days, UserAssignment
+    BookingStatus, Days, UserAssignment, SuccessfulLogin
 from testing import TransactionTracershopTestCase
 from tracerauth.tests.mocks import mocks_ldap
 
@@ -163,6 +163,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     self.user_2 = User(username=TEST_SHOP_ADMIN_USERNAME, user_group=UserGroups.ShopAdmin)
     self.user_2.set_password(TEST_SHOP_ADMIN_PASSWORD)
     self.user_2.save()
+
+
 
     self.accession_number_1 = "REGH10642011"
     self.accession_number_2 = "REGH10642012"
@@ -679,7 +681,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                               'endpoint': self.endpoint.id,
                               'tracer': self.inj_tracer.id,
                               'lot_number': None,
-                              'freed_datetime': "2025-03-03T11:33:44.00000+05",
+                              'freed_datetime': "2025-03-03T11:33:44.00000+0500",
                               'freed_by': None
                             }
         })
@@ -1558,3 +1560,92 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                         WEBSOCKET_MESSAGE_SUCCESS)
       self.assertFalse(message[AUTH_IS_AUTHENTICATED])
       await communicator.disconnect()
+
+  @patch("django.utils.timezone.now")
+  async def test_login_external_user_success(self, mock_now):
+    fakeDT = FakeDatetime()
+    mock_now.return_value = fakeDT.now()
+
+    def create():
+      user = User.objects.create(
+        username="external_test_user",
+        user_group=UserGroups.ShopExternal
+      )
+
+      sl = SuccessfulLogin.objects.create(
+        user=user
+      )
+
+      sl.login_time = fakeDT.now() - datetime.timedelta(seconds=1)
+      sl.save()
+
+      return user
+
+    user = await database_sync_to_async(
+      create
+    )()
+
+    with self.assertLogs(DEBUG_LOGGER):
+      communicator = WebsocketCommunicator(app,"ws/")
+      _conn, _subprotocal = await communicator.connect()
+
+      await communicator.send_json_to({
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+        WEBSOCKET_MESSAGE_ID : 13865901,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION
+      })
+
+      who_am_i_response = await communicator.receive_json_from()
+
+      self.assertTrue(who_am_i_response[AUTH_IS_AUTHENTICATED])
+
+      await communicator.send_json_to({
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+        WEBSOCKET_MESSAGE_ID : 13865902,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION
+      })
+
+      who_am_i_response = await communicator.receive_json_from()
+      print(who_am_i_response)
+
+    def cleanup():
+      user.delete()
+      SuccessfulLogin.objects.all().delete()
+
+    await database_sync_to_async(cleanup)()
+
+  @patch("django.utils.timezone.now")
+  async def test_login_external_user_large_time_delta(self, mock_now):
+    mock_now.return_value = FakeDatetime().now() + datetime.timedelta(minutes=1)
+    def create():
+      user = User.objects.create(
+        username="external_test_user",
+        user_group=UserGroups.ShopExternal
+      )
+      SuccessfulLogin.objects.create(user=user)
+      return user
+
+    user = await database_sync_to_async(
+      create
+    )()
+
+    with self.assertLogs(DEBUG_LOGGER):
+      ### Yeah I know
+      communicator = WebsocketCommunicator(app,"ws/")
+      _conn, _subprotocal = await communicator.connect()
+
+      await communicator.send_json_to({
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
+        WEBSOCKET_MESSAGE_ID : 13865901,
+        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION
+      })
+
+      who_am_i_response = await communicator.receive_json_from()
+
+      self.assertFalse(who_am_i_response[AUTH_IS_AUTHENTICATED])
+
+    def cleanup():
+      user.delete()
+      SuccessfulLogin.objects.all().delete()
+
+    await database_sync_to_async(cleanup)()

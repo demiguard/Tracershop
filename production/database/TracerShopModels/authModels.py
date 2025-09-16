@@ -82,7 +82,10 @@ class SuccessfulLogin(TracershopModel):
   login_time = DateTimeField(auto_now=True)
   user = ForeignKey(User, CASCADE)
 
-  class Meta:
+  def __str__(self) -> str:
+    return f"{self.user} - {self.login_time}"
+
+  class Meta: #type: ignore
     indexes = [
       Index(fields=["login_time"])
     ]

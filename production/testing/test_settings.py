@@ -146,7 +146,7 @@ SESSION_ENGINE =  "django.contrib.sessions.backends.cached_db"
 
 LANGUAGE_CODE = 'en-us'
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = 'Europe/Copenhagen'
 
 USE_I18N = True
 

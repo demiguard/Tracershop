@@ -289,12 +289,12 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
 
 
 # this is placed bad
-def get_login(now=None) -> AbstractBaseUser:
+def get_login(now=None) -> Optional[AbstractBaseUser] :
   if now is None: # pragma: no cover
     now = datetime.now()
 
   window_bound_seconds = 5
-  valid_window_lower_bound = now - timedelta(0, window_bound_seconds)
+  valid_window_lower_bound = now - timedelta(0, seconds=window_bound_seconds)
   valid_window_upper_bound = now
 
   debug_logger.info(f"lower:{valid_window_lower_bound}, upper: {valid_window_upper_bound}")
@@ -309,4 +309,4 @@ def get_login(now=None) -> AbstractBaseUser:
     successful_login.delete()
     return user
   else:
-    return AnonymousUser()
+    return None

@@ -110,7 +110,7 @@ function statusImages(status) {
 interface StatusIconArgs {
   altText? : string,
   label? : string,
-  onClick? : () => {};
+  onClick? : () => void;
   order? : ActivityOrder | InjectionOrder | IsotopeOrder
   orderCollection? : ActivityOrderCollection | IsotopeOrderCollection
 }

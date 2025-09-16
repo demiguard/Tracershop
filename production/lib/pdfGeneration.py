@@ -34,10 +34,10 @@ try: #pragma: no cover
   pdfmetrics.registerFont(TTFont('Mari_Light',  f'{settings.BASE_DIR}/pdfData/Mari_Light.ttf'))
   pdfmetrics.registerFont(TTFont('Mari_Poster', f'{settings.BASE_DIR}/pdfData/Mari_Poster.ttf'))
   fonts = True
-except:
-  fonts = False # pragma: no cover
+except: #pragma: no cover
+  fonts = False
 
-WIDTH, HEIGHT = A4
+WIDTH, HEIGHT = (int(x) for x in A4)
 
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES, ERROR_LOGGER, DEBUG_LOGGER
@@ -62,7 +62,7 @@ defaultFontSize = 13
 
 LINE_WIDTH = 500
 
-start_x_cursor = (WIDTH - 500) / 2
+start_x_cursor = int((WIDTH - 500) / 2)
 start_y_cursor = 780
 
 
@@ -137,7 +137,7 @@ class MailTemplate(canvas.Canvas):
     """
     if fonts: #pragma: no cover
       self.setFont('Mari_Bold', bold_font_size)
-    else:
+    else: #pragma: no cover
       self.setFont('Helvetica', bold_font_size)
     self.drawString(abscissa, ordinate, string_to_bold)
     self.resetFont()
@@ -277,7 +277,7 @@ class MailTemplate(canvas.Canvas):
     if len(vials):
       y_cursor = self.drawTable(x_cursor, y_cursor, self._table_width, tableContent)
     else:
-      self.drawString(x_cursor, y_cursor, "Der er ingen vials")
+      self.drawString(x_cursor, y_cursor, "Der er ingen hætteglas")
       y_cursor -= self.line_height
 
     return y_cursor
@@ -561,48 +561,52 @@ def DrawReleaseCertificate(filename :str,
   title = "FRIGIVELSESCERTIFIKAT"
   if fonts: #pragma: no cover
     bold_font = 'Mari_Bold'
-  else:
+  else: #pragma: no cover
     bold_font = 'Helvetica'
 
   title_width = template.stringWidth(title, bold_font, 22)
 
-  title_abscissa = ((WIDTH) - title_width) / 2
+  title_abscissa = int((WIDTH - title_width) / 2)
   template.drawBoldString(title_abscissa, 750, title, bold_font_size=22)
 
   table_row_y_top_1 = 730
-  table_row_y_top_2 = table_row_y_top_1 - template.line_height * 1.5
-  table_row_y_top_3 = table_row_y_top_1 - template.line_height * 3.0
-  table_row_y_top_4 = table_row_y_top_1 - template.line_height * 4.5
-  table_row_y_top_5 = table_row_y_top_1 - template.line_height * 6
-  table_row_y_top_bottom = table_row_y_top_1 - template.line_height * 11.5
+  table_row_y_top_2 = int(table_row_y_top_1 - template.line_height * 1.5)
+  table_row_y_top_3 = int(table_row_y_top_1 - template.line_height * 3.0)
+  table_row_y_top_4 = int(table_row_y_top_1 - template.line_height * 4.5)
+  table_row_y_top_5 = int(table_row_y_top_1 - template.line_height * 6)
+  table_row_y_top_bottom = int(table_row_y_top_1 - template.line_height * 11.5)
 
+  table_row_y_top_1_end = int(table_row_y_top_1 - template.line_height * 1.5)
+  table_row_y_top_2_end = int(table_row_y_top_2 - template.line_height * 1.5)
+  table_row_y_top_3_end = int(table_row_y_top_3 - template.line_height * 1.5)
 
   # First line of the first table
   box_abscissa_start = start_x_cursor
   box_abscissa_end = WIDTH - start_x_cursor
-  box_abscissa_middle_1 = (box_abscissa_end - box_abscissa_start) * 0.4
-  box_abscissa_middle_2 = (box_abscissa_end - box_abscissa_start) * 0.5
+  box_abscissa_middle_1 = int((box_abscissa_end - box_abscissa_start) * 0.4)
+  box_abscissa_middle_2 = int((box_abscissa_end - box_abscissa_start) * 0.5)
+
   # Box 1
   template.p_drawBox((box_abscissa_start,    table_row_y_top_1),
-                     (box_abscissa_middle_1, table_row_y_top_1 - template.line_height * 1.5))
+                     (box_abscissa_middle_1, table_row_y_top_1_end))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_1),
-                     (box_abscissa_middle_2, table_row_y_top_1 - template.line_height * 1.5))
+                     (box_abscissa_middle_2, table_row_y_top_1_end))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_1),
-                     (box_abscissa_end,      table_row_y_top_1 - template.line_height * 1.5))
+                     (box_abscissa_end,      table_row_y_top_1_end))
   # Box 2
   template.p_drawBox((box_abscissa_start,    table_row_y_top_2),
-                     (box_abscissa_middle_1, table_row_y_top_2 - template.line_height * 1.5))
+                     (box_abscissa_middle_1, table_row_y_top_2_end))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_2),
-                     (box_abscissa_middle_2, table_row_y_top_2 - template.line_height * 1.5))
+                     (box_abscissa_middle_2, table_row_y_top_2_end))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_2),
-                     (box_abscissa_end,      table_row_y_top_2 - template.line_height * 1.5))
+                     (box_abscissa_end,      table_row_y_top_2_end))
   # Box 3
   template.p_drawBox((box_abscissa_start,    table_row_y_top_3),
-                     (box_abscissa_middle_1, table_row_y_top_3 - template.line_height * 1.5))
+                     (box_abscissa_middle_1, table_row_y_top_3_end))
   template.p_drawBox((box_abscissa_middle_1, table_row_y_top_3),
-                     (box_abscissa_middle_2, table_row_y_top_3 - template.line_height * 1.5))
+                     (box_abscissa_middle_2, table_row_y_top_3_end))
   template.p_drawBox((box_abscissa_middle_2, table_row_y_top_3),
-                     (box_abscissa_end,      table_row_y_top_3 - template.line_height * 1.5))
+                     (box_abscissa_end,      table_row_y_top_3_end))
   # Box 4
   template.p_drawBox((box_abscissa_start,    table_row_y_top_4),
                      (box_abscissa_middle_1, table_row_y_top_5))
@@ -661,11 +665,11 @@ def DrawReleaseCertificate(filename :str,
                       "2100 København Ø")
 
   # Table 2 Header
-  t2_abscissa_m1 = (box_abscissa_end - box_abscissa_start) * 0.125 + box_abscissa_start
-  t2_abscissa_m2 = (box_abscissa_end - box_abscissa_start) * 0.35 + box_abscissa_start
-  t2_abscissa_m3 = (box_abscissa_end - box_abscissa_start) * 0.5 + box_abscissa_start
-  t2_abscissa_m4 = (box_abscissa_end - box_abscissa_start) * 0.65 + box_abscissa_start
-  t2_abscissa_m5 = (box_abscissa_end - box_abscissa_start) * 0.775 + box_abscissa_start
+  t2_abscissa_m1 = int((box_abscissa_end - box_abscissa_start) * 0.125 + box_abscissa_start)
+  t2_abscissa_m2 = int((box_abscissa_end - box_abscissa_start) * 0.35 + box_abscissa_start)
+  t2_abscissa_m3 = int((box_abscissa_end - box_abscissa_start) * 0.5 + box_abscissa_start)
+  t2_abscissa_m4 = int((box_abscissa_end - box_abscissa_start) * 0.65 + box_abscissa_start)
+  t2_abscissa_m5 = int((box_abscissa_end - box_abscissa_start) * 0.775 + box_abscissa_start)
 
   def draw_table_2_row(ordinate, texts: Tuple[str, str, str, str,str, str], bold=False):
     template.p_drawBox((box_abscissa_start, ordinate),
@@ -720,8 +724,8 @@ def DrawReleaseCertificate(filename :str,
         timezone_aware = timezone.make_naive(order.freed_datetime)
       except ValueError:
         timezone_aware = order.freed_datetime
-      except AttributeError:
-        timezone_aware = order.freed_datetime
+      else:
+        timezone_aware = None
 
       if timezone_aware is not None:
         freed = timezone_aware.strftime('%H:%M %d/%m/%Y')

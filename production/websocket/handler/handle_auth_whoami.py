@@ -38,7 +38,7 @@ class HandleAuthWhoAmI(HandlerBase):
     elif isinstance(user, AnonymousUser):
       user = await database_sync_to_async(auth.get_login)(now)
       logger.info(f"Found user:{user} from external users")
-      if not isinstance(user, AnonymousUser):
+      if user is not None and not isinstance(user, AnonymousUser):
         await login(consumer.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend')
         session = consumer.scope["session"]
         await database_sync_to_async(session.save)()

@@ -1,4 +1,5 @@
 # Python standard library
+import logging
 
 # Third party modules
 from django.core.exceptions import ValidationError
@@ -9,6 +10,7 @@ from channels.auth import get_user
 from lib.formatting import format_error_with_datatype
 from lib.utils import classproperty
 from constants import MESSENGER_CONSUMER
+from constants import ERROR_LOGGER
 from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
@@ -16,6 +18,8 @@ from shared_constants import WEBSOCKET_MESSAGE_MODEL_CREATE,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 
 from websocket.handler_base import HandlerBase
+
+error_logger = logging.getLogger(ERROR_LOGGER)
 
 class HandleModelCreate(HandlerBase):
   @classproperty
@@ -30,7 +34,7 @@ class HandleModelCreate(HandlerBase):
                                                        user)
     except IntegrityError as e:
       error_message = format_error_with_datatype(e, message[WEBSOCKET_DATATYPE])
-
+      error_logger.error(f"Message: {message[WEBSOCKET_MESSAGE_ID]} - encountered: {error_message}")
       await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR, {
         MESSENGER_CONSUMER : consumer,
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.CONSTRAINTS_VIOLATED,
@@ -40,7 +44,7 @@ class HandleModelCreate(HandlerBase):
 
       return
     except ValidationError as e:
-
+      error_logger.error(f"Message: {message[WEBSOCKET_MESSAGE_ID]} - encountered a Validation error!")
       await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_ERROR, {
         MESSENGER_CONSUMER : consumer,
         WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.CONSTRAINTS_VIOLATED,

@@ -4,7 +4,9 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard library
 import io
-from datetime import date, time
+from datetime import date, time, datetime, timezone
+
+from zoneinfo import ZoneInfo
 from logging import getLogger, Logger, DEBUG
 
 # Third party packages
@@ -18,7 +20,7 @@ from database.models import Customer, Isotope, Tracer, TracerTypes, Vial,\
   UserGroups
 from lib.parsing import update_customer_mapping, update_tracer_mapping,\
   parse_val_file, _parse_customer, extract_deleted_accessionNumber,\
-  parse_index_header, parse_data_frame_row_to_vial
+  parse_index_header, parse_data_frame_row_to_vial, toDatetime
 
 class ParsingTestCase(TestCase):
   def setUp(self) -> None:
@@ -410,3 +412,49 @@ Blegdamsvej 9
     self.assertEqual(len(vials), 4)
 
     text.close()
+
+
+class DateTimeParsing(TestCase):
+  def test_parse(self):
+    self.assertEqual(
+      toDatetime("20240101102030Z"),
+      datetime(2024,1,1,10,20,30, tzinfo=timezone.utc)
+    )
+
+    self.assertEqual(
+      toDatetime("2024/01/01 10:20:30Z"),
+      datetime(2024,1,1,10,20,30, tzinfo=timezone.utc)
+    )
+
+    self.assertEqual(
+      toDatetime("2024/01/01 10:20:30"),
+      datetime(2024,1,1,10,20,30, tzinfo=ZoneInfo('Europe/Copenhagen'))
+    )
+
+    self.assertEqual(
+      toDatetime("20240101102030.40"),
+      datetime(2024,1,1,10,20,30,40, tzinfo=ZoneInfo('Europe/Copenhagen'))
+    )
+
+    self.assertEqual(
+      toDatetime("20240101102030.4000+04:00").astimezone(timezone.utc),
+      datetime(2024,1,1,6,20,30,4000, tzinfo=timezone.utc)
+    )
+
+
+    self.assertEqual(
+      toDatetime("20240101102030.4000+0400").astimezone(timezone.utc),
+      datetime(2024,1,1,6,20,30,4000, tzinfo=timezone.utc)
+    )
+
+    self.assertEqual(
+      toDatetime("20240101102030.4000-0400").astimezone(timezone.utc),
+      datetime(2024,1,1,14,20,30,4000, tzinfo=timezone.utc)
+    )
+
+    self.assertEqual(
+      toDatetime("2025-03-03T11:33:44.00000+0500").astimezone(timezone.utc),
+      datetime(2025,3,3,6,33,44,0,timezone.utc)
+    )
+
+    self.assertRaises(ValueError,toDatetime, "asdkfjasoifjhg")
