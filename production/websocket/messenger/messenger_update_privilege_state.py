@@ -53,7 +53,7 @@ class MessengerCreateBooking(MessengerBase):
 
   @classmethod
   async def __call__(cls, args):
-    if not isinstance(args, cls.Args):
+    if not isinstance(args, cls.Args): # pragma: no cover
       raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
 
     consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]

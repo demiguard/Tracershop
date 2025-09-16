@@ -21,9 +21,9 @@ def LFILTER(func: Callable[[T], bool], List: List[T]):
 class classproperty(property):
   def __get__(self, owner_self, owner_cls=None):
     if owner_cls is None or self is None:
-      raise ValueError("You have class error without class???")
+      raise ValueError("You have class error without class???") # pragma: no cover
     if self.fget is None:
-      raise ValueError("Somehow fget is None?")
+      raise ValueError("Somehow fget is None?") # pragma: no cover
     return self.fget(owner_cls)
 
 def identity(val: T) -> T:

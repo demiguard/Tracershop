@@ -27,7 +27,6 @@ class MessageDataType(Enum):
   """
   STATE = TracershopState
 
-
 def getNewMessageID() -> int:
   """Gets a random message ID
 
@@ -38,7 +37,8 @@ def getNewMessageID() -> int:
   Returns:
       int : A random number from [0, 2147483648]
   """
-  return randint(0, 1 << 32 - 1) # this would have been ub if it was C
+  return randint(0, 1 << 32 - 1) # pragma: no cover
+  # this would have been ub if it was C and it was 32 bit int
 
 
 class MessengerBase(ABC):
@@ -59,7 +59,7 @@ class MessengerBase(ABC):
 
   @classproperty
   def message_type(cls) -> WEBSOCKET_SERVER_MESSAGES:
-    raise NotImplementedError
+    raise NotImplementedError # pragma: no cover
 
   @dataclass
   class MessageArgs:
@@ -69,12 +69,12 @@ class MessengerBase(ABC):
   @classmethod
   @abstractmethod
   def getMessageArgs(cls) -> Type[MessageArgs]:
-    raise NotImplementedError
+    raise NotImplementedError # pragma: no cover
 
   @classmethod
   @abstractmethod
   async def __call__(cls, args: MessageArgs) -> None:
-    raise NotImplementedError
+    raise NotImplementedError # pragma: no cover
 
   #@classmethod
   #@abstractmethod
@@ -113,7 +113,15 @@ class MessageBlueprint:
 
     return await a_serialize_redis(clone)
 
-  def to_javascript(self, message_type: WEBSOCKET_SERVER_MESSAGES) -> str:
+  def to_javascript(self, message_type: WEBSOCKET_SERVER_MESSAGES) -> str: #pragma no cover
+    """Function for building javascript that we need for this message
+
+    Args:
+      message_type (WEBSOCKET_SERVER_MESSAGES): The message type
+
+    Returns:
+        str: _description_
+    """
     name = format_message_name(message_type.name)
     keys = [key for key in self.skeleton]
 

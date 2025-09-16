@@ -1566,9 +1566,11 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     fakeDT = FakeDatetime()
     mock_now.return_value = fakeDT.now()
 
+    username = "external_test_user"
+
     def create():
       user = User.objects.create(
-        username="external_test_user",
+        username=username,
         user_group=UserGroups.ShopExternal
       )
 
@@ -1598,6 +1600,12 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       who_am_i_response = await communicator.receive_json_from()
 
       self.assertTrue(who_am_i_response[AUTH_IS_AUTHENTICATED])
+      self.assertIn('user', who_am_i_response)
+      state = who_am_i_response['user'] # yeah this is because of serialization!
+      self.assertIn(DATA_USER, state)
+      self.assertEqual(len(state[DATA_USER]), 1)
+      user_serialized = state[DATA_USER][0]
+      self.assertEqual(user_serialized['fields']['username'], username)
 
       await communicator.send_json_to({
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
@@ -1606,7 +1614,14 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       })
 
       who_am_i_response = await communicator.receive_json_from()
-      print(who_am_i_response)
+
+      self.assertTrue(who_am_i_response[AUTH_IS_AUTHENTICATED])
+      self.assertIn('user', who_am_i_response)
+      state = who_am_i_response['user'] # yeah this is because of serialization!
+      self.assertIn(DATA_USER, state)
+      self.assertEqual(len(state[DATA_USER]), 1)
+      user_serialized = state[DATA_USER][0]
+      self.assertEqual(user_serialized['fields']['username'], username)
 
     def cleanup():
       user.delete()
