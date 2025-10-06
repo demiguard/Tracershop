@@ -6,17 +6,17 @@ import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { CustomerPage } from "../../../components/production_pages/setup_pages/customer_page.js"
-import { PROP_ACTIVE_DATE } from "../../../lib/constants.js";
-import { DATA_CUSTOMER } from "~/lib/shared_constants.js";
-import { AppState, testState } from "../../app_state.js";
+import { CustomerPage } from "../../../components/production_pages/setup_pages/customer_page"
+import { PROP_ACTIVE_DATE } from "../../../lib/constants";
 
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { AppState, testState } from "../../app_state";
+
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 
 
 const onClose = jest.fn()
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 let websocket = null;
 let container = null;
 let props = null;

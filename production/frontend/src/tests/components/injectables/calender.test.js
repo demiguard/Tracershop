@@ -6,15 +6,15 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('~/lib/tracer_websocket');
+const tracer_websocket = require("~/lib/tracer_websocket");
 
-import { Calender } from '../../../components/injectable/calender.js'
-import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK } from "../../../lib/constants.js";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { ProductionBitChain } from "~/lib/data_structures.js";
-import { testState } from "~/tests/app_state.js";
-import { UpdateToday } from "~/lib/state_actions.js";
+import { Calender } from '~/components/injectable/calender'
+import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK } from "~/lib/constants";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { ProductionBitChain } from "~/lib/data_structures";
+import { testState } from "~/tests/app_state";
+import { UpdateToday } from "~/lib/state_actions";
 
 let websocket = null
 

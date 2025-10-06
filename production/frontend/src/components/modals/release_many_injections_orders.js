@@ -10,7 +10,10 @@ import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
 import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
 import { RecoverableError, useErrorState } from "~/lib/error_handling";
 import { FormatDateStr } from "~/lib/formatting";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, TRACER_USAGE, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_RELEASE_MULTI, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH,
+  TRACER_USAGE, WEBSOCKET_DATA, WEBSOCKET_DATA_ID,
+  WEBSOCKET_MESSAGE_RELEASE_MULTI, WEBSOCKET_MESSAGE_TYPE
+} from "~/lib/shared_constants";
 import { setStateToEvent } from "~/lib/state_management";
 import { FONT, MARGIN, PADDING } from "~/lib/styles";
 import { parseBatchNumberInput } from "~/lib/user_input";

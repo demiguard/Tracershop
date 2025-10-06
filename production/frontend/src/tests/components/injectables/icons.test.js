@@ -6,16 +6,20 @@ import React from "react";
 
 import { jest } from '@jest/globals'
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { ClickableIcon, StatusIcon } from "../../../components/injectable/icons.js";
-import { testState } from "~/tests/app_state.js";
+import { ClickableIcon, StatusIcon } from "../../../components/injectable/icons";
+import { testState } from "~/tests/app_state";
+import { ActivityOrder } from "~/dataclasses/dataclasses";
+import { ORDER_STATUS } from "~/lib/constants";
 
-beforeEach(() =>  {});
+beforeEach(() => {});
 
 afterEach(() => {
   cleanup()
 });
 
 const dummyClickable = jest.fn(() => {})
+
+const testOrder = new ActivityOrder(123, 1000, "irrelvant", ORDER_STATUS.ACCEPTED);
 
 describe("Clickable icon tests", () => {
   it("Black Block render test", () => {
@@ -51,29 +55,24 @@ describe("Clickable icon tests", () => {
 
 describe("Status icon tests", () => {
   it("Black Block render test", () => {
-    const url = "/static/images/clipboard1.svg"
-    const altText = "altDummy";
+    const url = "/static/images/clipboard2.svg"
+
     render(<StatusIcon
-      order={testState.activity_orders.get(1)}
-      altText={altText}
+      order={testOrder}
       onClick={dummyClickable}
       label={"label"}
-    />)
-    const image = screen.getByAltText(altText);
-
-    expect(image).toHaveAttribute("src", url)
+    />);
+    screen.getByLabelText("SVG-/static/images/clipboard2.svg");
   });
 
   it("Black Block render click", () => {
-    const url = "dummy/url"
-    const altText = "altDummy";
+
     render(<StatusIcon
-      order={testState.activity_orders.get(1)}
-      altText={altText}
+      order={testOrder}
       onClick={dummyClickable}
       label={"label"}
     />)
-    const image = screen.getByAltText(altText);
+    const image = screen.getByLabelText("label");
 
     fireEvent(image, new MouseEvent('click', {bubbles: true, cancelable: true}));
 

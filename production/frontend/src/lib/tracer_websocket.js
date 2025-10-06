@@ -10,7 +10,7 @@ import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_READ_TELEMETRY,
   DATA_USER} from "~/lib/shared_constants.js";
 
-import { User } from "~/dataclasses/dataclasses.js";
+import { User } from "~/dataclasses/dataclasses";
 import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction, UpdateWebsocketConnectionState, UpdateError } from '~/lib/state_actions';
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";

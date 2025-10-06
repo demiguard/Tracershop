@@ -93,6 +93,15 @@ export class TimeSlotMapping {
     const destinationMap = this._timeSlotMapping.get(endpoint.owner)
     return destinationMap.get(endpoint.id)[0];
   }
+
+  /**
+   *
+   * @param {DeliveryEndpoint} endpoint
+   * @returns {ActivityDeliveryTimeSlot[]}
+   */
+  getTimeSlots(endpoint){
+    return this._timeSlotMapping.get(endpoint.owner).get(endpoint.id)
+  }
 }
 
 

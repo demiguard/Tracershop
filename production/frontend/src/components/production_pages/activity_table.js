@@ -19,7 +19,7 @@ import { OrderMapping } from "~/lib/data_structures/order_mapping";
 import { applyFilter, dailyActivityOrderFilter, productionsFilter } from "~/lib/filters";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { Optional } from "../injectable/optional";
-import { ProductionTimeSlot } from "~/components/production_pages/production_injectables/production_time_slot";
+import { ProductionActivityTimeSlot } from "~/components/production_pages/production_injectables/production_activity_time_slot";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
 
 const Modals = {
@@ -152,7 +152,7 @@ export function ActivityTable ({active_tracer}) {
 
   const renderedTimeSlots = [];
   for (const orderCollection of orderMapping){
-      renderedTimeSlots.push(<ProductionTimeSlot
+      renderedTimeSlots.push(<ProductionActivityTimeSlot
                 orderCollection={orderCollection}
                 key={orderCollection.delivering_time_slot.id}
                 timeSlot = {orderCollection.delivering_time_slot}

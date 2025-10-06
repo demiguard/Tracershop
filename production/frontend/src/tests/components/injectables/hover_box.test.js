@@ -6,7 +6,7 @@ import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import userEvent from '@testing-library/user-event'
 
-import { HoverBox } from "../../../components/injectable/hover_box.js"
+import { HoverBox } from "~/components/injectable/hover_box"
 
 beforeEach(() => {});
 

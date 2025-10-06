@@ -10,14 +10,11 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME,
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
   WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE,
-   WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, WEBSOCKET_MESSAGE_UPDATE_STATE,
-   WEBSOCKET_SERVER_MESSAGES,
-   WEBSOCKET_MESSAGE_READ_STATE,
-   DATA_CUSTOMER,
-   DATA_ISOTOPE,
-
- } from "~/lib/shared_constants.js"
-import { TracerWebSocket } from "~/lib/tracer_websocket.js";
+  WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, WEBSOCKET_MESSAGE_UPDATE_STATE,
+  WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_READ_STATE, DATA_CUSTOMER,
+  DATA_ISOTOPE,
+} from "~/lib/shared_constants"
+import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { MessageChannel } from 'node:worker_threads'
 import { DeleteState, UpdateWebsocketConnectionState } from "~/lib/state_actions";
 import { jest } from "@jest/globals"
@@ -27,7 +24,7 @@ let /** @type { WS } */ server = null;
 let websocket = null;
 let internal_ws = null
 
-jest.mock('../../lib/utils.js', () => {
+jest.mock('../../lib/utils', () => {
   return {
     getWebsocketUrl : () => "ws://localhost:1234"
   }

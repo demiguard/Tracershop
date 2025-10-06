@@ -1,6 +1,6 @@
 const { Booking, Location, TracershopState, ClosedDate, DeliveryEndpoint, Customer, Tracer, ActivityProduction, ActivityDeliveryTimeSlot } = require("~/dataclasses/dataclasses");
 const { DAYS } = require("~/lib/constants");
-const { bookingFilter, extractData, timeSlotsFilter } = require("~/lib/filters");
+const { bookingFilter, extractData, timeSlotFilter } = require("~/lib/filters");
 const { DATA_CLOSED_DATE } = require("~/lib/shared_constants");
 const { toMapping } = require("~/lib/utils");
 
@@ -77,7 +77,7 @@ describe("Filter test suites", () => {
       new ActivityDeliveryTimeSlot(6, undefined, undefined, 3, 4, null),
     ]
 
-    const filtered_timeSlots = timeSlotsFilter(
+    const filtered_timeSlots = timeSlotFilter(
       timeSlots,
       { state : state, tracerID : 1, endpointID : 2 }, true
     )

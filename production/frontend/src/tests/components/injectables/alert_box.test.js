@@ -5,8 +5,8 @@
 import React from "react";
 import { screen, render, cleanup } from "@testing-library/react";
 
-import { AlertBox, ERROR_LEVELS } from "../../../components/injectable/alert_box.js"
-import { RecoverableError } from "~/lib/error_handling.js";
+import { AlertBox, ERROR_LEVELS } from "../../../components/injectable/alert_box"
+import { RecoverableError } from "~/lib/error_handling";
 
 
 beforeEach(() => {});

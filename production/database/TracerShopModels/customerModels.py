@@ -508,7 +508,7 @@ class IsotopeOrder(TracershopModel):
 class IsotopeVial(TracershopModel):
   id = BigAutoField(primary_key=True)
   batch_nr = CharField(max_length=128)
-  delivery_with = ForeignKey(IsotopeOrder, on_delete=RESTRICT)
+  delivery_with = ForeignKey(IsotopeOrder, on_delete=RESTRICT, default=None, null=True, blank=True)
   volume = FloatField()
   calibration_datetime = DateTimeField()
   vial_activity = FloatField()

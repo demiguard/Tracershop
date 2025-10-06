@@ -29,7 +29,8 @@ export const rotation = {
 export const JUSTIFY : {
   between : React.CSSProperties,
   center : React.CSSProperties,
-  left : React.CSSProperties
+  left : React.CSSProperties,
+  right : React.CSSProperties
 } = {
   between : {
     display : "flex",
@@ -42,6 +43,10 @@ export const JUSTIFY : {
   left : {
     display : "flex",
     justifyContent : "left"
+  },
+  right : {
+    display : "flex",
+    justifyContent : "right"
   }
 };
 

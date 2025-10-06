@@ -5,11 +5,8 @@
 import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { Authenticate } from "../../../components/injectable/authenticate.js"
-import { RecoverableError } from "~/lib/error_handling.js";
-
-
-
+import { Authenticate } from "../../../components/injectable/authenticate"
+import { RecoverableError } from "~/lib/error_handling";
 
 beforeEach(() => {});
 

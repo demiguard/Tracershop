@@ -8,13 +8,13 @@ import { jest } from '@jest/globals'
 import { bookings } from "~/tests/test_state/bookings";
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_ENDPOINT, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_EXPIRED_INJECTION_DEADLINE } from "~/lib/constants";
 import { BookingOverview } from "~/components/shop_pages/booking_overview";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { testState } from "~/tests/app_state.js";
-import { locations } from "~/tests/test_state/locations.js";
-import { compareDates } from "~/lib/utils.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { testState } from "~/tests/app_state";
+import { locations } from "~/tests/test_state/locations";
+import { compareDates } from "~/lib/utils";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const websocket_module = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const websocket_module = require("../../../lib/tracer_websocket");
 
 let websocket = null;
 let props = null;

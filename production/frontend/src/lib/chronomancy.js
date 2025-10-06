@@ -5,6 +5,7 @@
  * It's also the most powerful module of all!
 */
 
+import { properModulo } from "~/lib/utils";
 import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
 import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
 import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
@@ -89,6 +90,43 @@ export class TimeStamp {
 
   toDisplayString(){
     return `${FormatDateStr(this.hour)}:${FormatDateStr(this.minute)}:${FormatDateStr(this.second)}`;
+  }
+
+  addMinutes(minutes){
+    this.minute += minutes;
+
+    if(60 < this.minute){
+      this.hour = (this.hour + Math.floor(this.minute / 60)) % 24
+      this.minute = this.minute % 60;
+    } else if(this.minute < 0) {
+      const mod_hours = -Math.floor(this.minute / 60) + 1;
+      this.hour = properModulo(this.hour - mod_hours, 24);
+      this.minute = properModulo(this.minute, 60);
+    }
+  }
+
+  /**
+   *
+   * @param {TimeStamp} other
+   */
+  lessThan(other){
+    if(this.hour < other.hour){
+      return true;
+    } else if(other.hour < this.hour){
+      return false;
+    }
+
+    if(this.minute < other.minute){
+      return true;
+    } else if(other.minute < this.minute){
+      return false;
+    }
+
+    if(this.second < other.second){
+      return true;
+    } else {
+      return false;
+    }
   }
 }
 

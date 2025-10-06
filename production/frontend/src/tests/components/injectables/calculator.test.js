@@ -5,9 +5,12 @@
 import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL, Calculator, ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero, ErrorInvalidTimeFormat, ErrorTimeAfterProduction } from "../../../components/injectable/calculator.js"
-import { calculateProduction } from "../../../lib/physics.js"
-import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
+import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL, Calculator,
+  ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero,
+  ErrorInvalidTimeFormat, ErrorTimeAfterProduction
+} from "~/components/injectable/calculator"
+import { calculateProduction } from "~/lib/physics"
+import { ERROR_BACKGROUND_COLOR } from "~/lib/constants";
 
 
 beforeEach(() => {

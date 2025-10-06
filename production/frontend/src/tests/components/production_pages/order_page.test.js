@@ -7,15 +7,14 @@ import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
 
 
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_TYPE,  } from "~/lib/shared_constants.js";
-import { AppState, testState } from "../../app_state.js";
-import { OrderPage } from "../../../components/production_pages/order_page.js";
-import { db } from "../../../lib/local_storage_driver.js";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { UpdateToday } from "~/lib/state_actions.js";
+import { testState } from "../../app_state";
+import { OrderPage } from "../../../components/production_pages/order_page";
+import { db } from "../../../lib/local_storage_driver";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { UpdateToday } from "~/lib/state_actions";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 jest.mock('../../../components/production_pages/activity_table', () =>
   ({ActivityTable : () => <div>ActivityTableMocked</div>}))

@@ -7,14 +7,17 @@ import { screen, render, cleanup, fireEvent, act } from "@testing-library/react"
 import { jest } from '@jest/globals'
 
 
-import { InjectionModal } from "~/components/modals/injection_modal.js"
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { PROP_MODAL_ORDER, PROP_ON_CLOSE } from "~/lib/constants.js";
-import { AppState, testState } from "~/tests/app_state.js";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
+import { InjectionModal } from "~/components/modals/injection_modal"
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { PROP_MODAL_ORDER, PROP_ON_CLOSE } from "~/lib/constants";
+import { AppState, testState } from "~/tests/app_state";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH,
+  WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_FREE_INJECTION,
+  WEBSOCKET_MESSAGE_TYPE
+} from "~/lib/shared_constants";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 let websocket = null;
 

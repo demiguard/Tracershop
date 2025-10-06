@@ -102,21 +102,22 @@ class authTestCase(TransactionTestCase):
     }), ERROR_INVALID_JAVASCRIPT_VERSION)
 
   def test_validateMessage_FreeInjectionOrder_Missing_AUTH(self):
-    self.assertEqual(validateMessage(
-      {
-      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-      WEBSOCKET_DATA : {
-        'lot_number' : "messageBatchNumber",
-        WEBSOCKET_DATA_ID : 6631
-      },
-      DATA_AUTH : {
-        AUTH_USERNAME : TEST_ADMIN_USERNAME,
-      #  AUTH_PASSWORD : TEST_ADMIN_PASSWORD
+    with self.assertLogs(ERROR_LOGGER):
+      self.assertEqual(validateMessage(
+        {
+        WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+        WEBSOCKET_DATA : {
+          'lot_number' : "messageBatchNumber",
+          WEBSOCKET_DATA_ID : 6631
+        },
+        DATA_AUTH : {
+          AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        #  AUTH_PASSWORD : TEST_ADMIN_PASSWORD
+        }
       }
-    }
-    ), ERROR_INVALID_AUTH)
+      ), ERROR_INVALID_AUTH)
 
   def test_validateMessage_FreeInjectionOrder_Missing_DATA(self):
     self.assertEqual(validateMessage(

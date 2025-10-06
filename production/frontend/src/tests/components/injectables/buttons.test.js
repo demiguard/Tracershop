@@ -5,7 +5,7 @@
 import React from "react";
 import { act, screen, render, cleanup, fireEvent, getByTestId } from "@testing-library/react";
 import { describe, jest } from '@jest/globals'
-import { MarginButton, CloseButton, IdempotentButton } from "../../../components/injectable/buttons.js";
+import { MarginButton, CloseButton, IdempotentButton } from "~/components/injectable/buttons";
 
 beforeEach(() => {});
 

@@ -1,10 +1,23 @@
 /**Automatically generated file by generate JavascriptDataClasses.py */
 /**Contains a mapping of the database and their fields. */
 
-import { BooleanField, CharField, DateField, DateTimeField, IntField, FloatField, ForeignField } from '~/lib/database_fields.js'
+import { DatabaseField, BooleanField, CharField, IPField, DateField, DateTimeField, IntField, FloatField, ForeignField } from '~/lib/database_fields.js'
 
-export class Address {
+export class Dataclass {
+  constructor(){}
+  copy(){}
+  fields() : Array<DatabaseField> {
+    return []
+  }
+}
+export class Address extends Dataclass {
+  id
+  ip
+  port
+  description
+
   constructor(id, ip, port, description, ) {
+    super()
     this.id=id
     this.ip=ip
     this.port=port
@@ -14,8 +27,8 @@ export class Address {
   /**Copies the address
   * @returns { Address }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Address {
+    return new Address(
       this.id,
       this.ip,
       this.port,
@@ -32,8 +45,20 @@ export class Address {
   }
 }
 
-export class ActivityOrder {
+export class ActivityOrder extends Dataclass {
+  id
+  ordered_activity
+  delivery_date
+  status
+  comment
+  ordered_time_slot
+  moved_to_time_slot
+  freed_datetime
+  ordered_by
+  freed_by
+
   constructor(id, ordered_activity, delivery_date, status, comment, ordered_time_slot, moved_to_time_slot, freed_datetime, ordered_by, freed_by, ) {
+    super()
     this.id=id
     this.ordered_activity=ordered_activity
     this.delivery_date=delivery_date
@@ -49,8 +74,8 @@ export class ActivityOrder {
   /**Copies the activityorder
   * @returns { ActivityOrder }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ActivityOrder {
+    return new ActivityOrder(
       this.id,
       this.ordered_activity,
       this.delivery_date,
@@ -79,8 +104,17 @@ export class ActivityOrder {
   }
 }
 
-export class Booking {
+export class Booking extends Dataclass {
+  id
+  status
+  location
+  procedure
+  accession_number
+  start_time
+  start_date
+
   constructor(id, status, location, procedure, accession_number, start_time, start_date, ) {
+    super()
     this.id=id
     this.status=status
     this.location=location
@@ -93,8 +127,8 @@ export class Booking {
   /**Copies the booking
   * @returns { Booking }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Booking {
+    return new Booking(
       this.id,
       this.status,
       this.location,
@@ -117,8 +151,12 @@ export class Booking {
   }
 }
 
-export class ClosedDate {
+export class ClosedDate extends Dataclass {
+  id
+  close_date
+
   constructor(id, close_date, ) {
+    super()
     this.id=id
     this.close_date=close_date
   }
@@ -126,8 +164,8 @@ export class ClosedDate {
   /**Copies the closeddate
   * @returns { ClosedDate }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ClosedDate {
+    return new ClosedDate(
       this.id,
       this.close_date
     )
@@ -140,8 +178,20 @@ export class ClosedDate {
   }
 }
 
-export class Customer {
+export class Customer extends Dataclass {
+  id
+  short_name
+  long_name
+  dispenser_id
+  billing_address
+  billing_city
+  billing_email
+  billing_phone
+  billing_zip_code
+  active_directory_code
+
   constructor(id, short_name, long_name, dispenser_id, billing_address, billing_city, billing_email, billing_phone, billing_zip_code, active_directory_code, ) {
+    super()
     this.id=id
     this.short_name=short_name
     this.long_name=long_name
@@ -157,8 +207,8 @@ export class Customer {
   /**Copies the customer
   * @returns { Customer }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Customer {
+    return new Customer(
       this.id,
       this.short_name,
       this.long_name,
@@ -187,8 +237,14 @@ export class Customer {
   }
 }
 
-export class Deadline {
+export class Deadline extends Dataclass {
+  id
+  deadline_type
+  deadline_time
+  deadline_day
+
   constructor(id, deadline_type, deadline_time, deadline_day, ) {
+    super()
     this.id=id
     this.deadline_type=deadline_type
     this.deadline_time=deadline_time
@@ -198,8 +254,8 @@ export class Deadline {
   /**Copies the deadline
   * @returns { Deadline }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Deadline {
+    return new Deadline(
       this.id,
       this.deadline_type,
       this.deadline_time,
@@ -216,8 +272,16 @@ export class Deadline {
   }
 }
 
-export class ActivityDeliveryTimeSlot {
+export class ActivityDeliveryTimeSlot extends Dataclass {
+  id
+  weekly_repeat
+  delivery_time
+  destination
+  production_run
+  expiration_date
+
   constructor(id, weekly_repeat, delivery_time, destination, production_run, expiration_date, ) {
+    super()
     this.id=id
     this.weekly_repeat=weekly_repeat
     this.delivery_time=delivery_time
@@ -229,8 +293,8 @@ export class ActivityDeliveryTimeSlot {
   /**Copies the activitydeliverytimeslot
   * @returns { ActivityDeliveryTimeSlot }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ActivityDeliveryTimeSlot {
+    return new ActivityDeliveryTimeSlot(
       this.id,
       this.weekly_repeat,
       this.delivery_time,
@@ -251,8 +315,13 @@ export class ActivityDeliveryTimeSlot {
   }
 }
 
-export class DicomEndpoint {
+export class DicomEndpoint extends Dataclass {
+  id
+  address
+  ae_title
+
   constructor(id, address, ae_title, ) {
+    super()
     this.id=id
     this.address=address
     this.ae_title=ae_title
@@ -261,8 +330,8 @@ export class DicomEndpoint {
   /**Copies the dicomendpoint
   * @returns { DicomEndpoint }
    */
-  copy(){
-    return new this.constructor(
+  copy() : DicomEndpoint {
+    return new DicomEndpoint(
       this.id,
       this.address,
       this.ae_title
@@ -277,8 +346,17 @@ export class DicomEndpoint {
   }
 }
 
-export class DeliveryEndpoint {
+export class DeliveryEndpoint extends Dataclass {
+  id
+  address
+  city
+  zip_code
+  phone
+  name
+  owner
+
   constructor(id, address, city, zip_code, phone, name, owner, ) {
+    super()
     this.id=id
     this.address=address
     this.city=city
@@ -291,8 +369,8 @@ export class DeliveryEndpoint {
   /**Copies the deliveryendpoint
   * @returns { DeliveryEndpoint }
    */
-  copy(){
-    return new this.constructor(
+  copy() : DeliveryEndpoint {
+    return new DeliveryEndpoint(
       this.id,
       this.address,
       this.city,
@@ -315,8 +393,23 @@ export class DeliveryEndpoint {
   }
 }
 
-export class InjectionOrder {
+export class InjectionOrder extends Dataclass {
+  id
+  delivery_time
+  delivery_date
+  injections
+  status
+  tracer_usage
+  comment
+  ordered_by
+  endpoint
+  tracer
+  lot_number
+  freed_datetime
+  freed_by
+
   constructor(id, delivery_time, delivery_date, injections, status, tracer_usage, comment, ordered_by, endpoint, tracer, lot_number, freed_datetime, freed_by, ) {
+    super()
     this.id=id
     this.delivery_time=delivery_time
     this.delivery_date=delivery_date
@@ -335,8 +428,8 @@ export class InjectionOrder {
   /**Copies the injectionorder
   * @returns { InjectionOrder }
    */
-  copy(){
-    return new this.constructor(
+  copy() : InjectionOrder {
+    return new InjectionOrder(
       this.id,
       this.delivery_time,
       this.delivery_date,
@@ -371,8 +464,16 @@ export class InjectionOrder {
   }
 }
 
-export class Isotope {
+export class Isotope extends Dataclass {
+  id
+  atomic_number
+  atomic_mass
+  halflife_seconds
+  atomic_letter
+  metastable
+
   constructor(id, atomic_number, atomic_mass, halflife_seconds, atomic_letter, metastable, ) {
+    super()
     this.id=id
     this.atomic_number=atomic_number
     this.atomic_mass=atomic_mass
@@ -384,8 +485,8 @@ export class Isotope {
   /**Copies the isotope
   * @returns { Isotope }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Isotope {
+    return new Isotope(
       this.id,
       this.atomic_number,
       this.atomic_mass,
@@ -406,8 +507,15 @@ export class Isotope {
   }
 }
 
-export class IsotopeDelivery {
+export class IsotopeDelivery extends Dataclass {
+  id
+  production
+  weekly_repeat
+  delivery_endpoint
+  delivery_time
+
   constructor(id, production, weekly_repeat, delivery_endpoint, delivery_time, ) {
+    super()
     this.id=id
     this.production=production
     this.weekly_repeat=weekly_repeat
@@ -418,8 +526,8 @@ export class IsotopeDelivery {
   /**Copies the isotopedelivery
   * @returns { IsotopeDelivery }
    */
-  copy(){
-    return new this.constructor(
+  copy() : IsotopeDelivery {
+    return new IsotopeDelivery(
       this.id,
       this.production,
       this.weekly_repeat,
@@ -438,8 +546,19 @@ export class IsotopeDelivery {
   }
 }
 
-export class IsotopeOrder {
+export class IsotopeOrder extends Dataclass {
+  id
+  status
+  order_by
+  ordered_activity_MBq
+  destination
+  delivery_date
+  comment
+  freed_by
+  freed_datetime
+
   constructor(id, status, order_by, ordered_activity_MBq, destination, delivery_date, comment, freed_by, freed_datetime, ) {
+    super()
     this.id=id
     this.status=status
     this.order_by=order_by
@@ -454,8 +573,8 @@ export class IsotopeOrder {
   /**Copies the isotopeorder
   * @returns { IsotopeOrder }
    */
-  copy(){
-    return new this.constructor(
+  copy() : IsotopeOrder {
+    return new IsotopeOrder(
       this.id,
       this.status,
       this.order_by,
@@ -482,8 +601,15 @@ export class IsotopeOrder {
   }
 }
 
-export class IsotopeProduction {
+export class IsotopeProduction extends Dataclass {
+  id
+  isotope
+  production_day
+  production_time
+  expiry_time
+
   constructor(id, isotope, production_day, production_time, expiry_time, ) {
+    super()
     this.id=id
     this.isotope=isotope
     this.production_day=production_day
@@ -494,8 +620,8 @@ export class IsotopeProduction {
   /**Copies the isotopeproduction
   * @returns { IsotopeProduction }
    */
-  copy(){
-    return new this.constructor(
+  copy() : IsotopeProduction {
+    return new IsotopeProduction(
       this.id,
       this.isotope,
       this.production_day,
@@ -514,8 +640,17 @@ export class IsotopeProduction {
   }
 }
 
-export class IsotopeVial {
+export class IsotopeVial extends Dataclass {
+  id
+  batch_nr
+  delivery_with
+  volume
+  calibration_datetime
+  vial_activity
+  isotope
+
   constructor(id, batch_nr, delivery_with, volume, calibration_datetime, vial_activity, isotope, ) {
+    super()
     this.id=id
     this.batch_nr=batch_nr
     this.delivery_with=delivery_with
@@ -528,8 +663,8 @@ export class IsotopeVial {
   /**Copies the isotopevial
   * @returns { IsotopeVial }
    */
-  copy(){
-    return new this.constructor(
+  copy() : IsotopeVial {
+    return new IsotopeVial(
       this.id,
       this.batch_nr,
       this.delivery_with,
@@ -552,8 +687,14 @@ export class IsotopeVial {
   }
 }
 
-export class ReleaseRight {
+export class ReleaseRight extends Dataclass {
+  id
+  expiry_date
+  releaser
+  product
+
   constructor(id, expiry_date, releaser, product, ) {
+    super()
     this.id=id
     this.expiry_date=expiry_date
     this.releaser=releaser
@@ -563,8 +704,8 @@ export class ReleaseRight {
   /**Copies the releaseright
   * @returns { ReleaseRight }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ReleaseRight {
+    return new ReleaseRight(
       this.id,
       this.expiry_date,
       this.releaser,
@@ -581,8 +722,12 @@ export class ReleaseRight {
   }
 }
 
-export class LegacyProductionMember {
+export class LegacyProductionMember extends Dataclass {
+  id
+  legacy_production_username
+
   constructor(id, legacy_production_username, ) {
+    super()
     this.id=id
     this.legacy_production_username=legacy_production_username
   }
@@ -590,8 +735,8 @@ export class LegacyProductionMember {
   /**Copies the legacyproductionmember
   * @returns { LegacyProductionMember }
    */
-  copy(){
-    return new this.constructor(
+  copy() : LegacyProductionMember {
+    return new LegacyProductionMember(
       this.id,
       this.legacy_production_username
     )
@@ -604,8 +749,14 @@ export class LegacyProductionMember {
   }
 }
 
-export class Location {
+export class Location extends Dataclass {
+  id
+  location_code
+  endpoint
+  common_name
+
   constructor(id, location_code, endpoint, common_name, ) {
+    super()
     this.id=id
     this.location_code=location_code
     this.endpoint=endpoint
@@ -615,8 +766,8 @@ export class Location {
   /**Copies the location
   * @returns { Location }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Location {
+    return new Location(
       this.id,
       this.location_code,
       this.endpoint,
@@ -633,8 +784,13 @@ export class Location {
   }
 }
 
-export class Message {
+export class Message extends Dataclass {
+  id
+  message
+  expiration
+
   constructor(id, message, expiration, ) {
+    super()
     this.id=id
     this.message=message
     this.expiration=expiration
@@ -643,8 +799,8 @@ export class Message {
   /**Copies the message
   * @returns { Message }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Message {
+    return new Message(
       this.id,
       this.message,
       this.expiration
@@ -659,8 +815,13 @@ export class Message {
   }
 }
 
-export class MessageAssignment {
+export class MessageAssignment extends Dataclass {
+  id
+  message_id
+  customer_id
+
   constructor(id, message_id, customer_id, ) {
+    super()
     this.id=id
     this.message_id=message_id
     this.customer_id=customer_id
@@ -669,8 +830,8 @@ export class MessageAssignment {
   /**Copies the messageassignment
   * @returns { MessageAssignment }
    */
-  copy(){
-    return new this.constructor(
+  copy() : MessageAssignment {
+    return new MessageAssignment(
       this.id,
       this.message_id,
       this.customer_id
@@ -685,8 +846,16 @@ export class MessageAssignment {
   }
 }
 
-export class TelemetryRecord {
+export class TelemetryRecord extends Dataclass {
+  id
+  request_type
+  created
+  latency_ms
+  status
+  expire_datetime
+
   constructor(id, request_type, created, latency_ms, status, expire_datetime, ) {
+    super()
     this.id=id
     this.request_type=request_type
     this.created=created
@@ -698,8 +867,8 @@ export class TelemetryRecord {
   /**Copies the telemetryrecord
   * @returns { TelemetryRecord }
    */
-  copy(){
-    return new this.constructor(
+  copy() : TelemetryRecord {
+    return new TelemetryRecord(
       this.id,
       this.request_type,
       this.created,
@@ -719,8 +888,13 @@ export class TelemetryRecord {
   }
 }
 
-export class TelemetryRequest {
+export class TelemetryRequest extends Dataclass {
+  id
+  message_key
+  display_name
+
   constructor(id, message_key, display_name, ) {
+    super()
     this.id=id
     this.message_key=message_key
     this.display_name=display_name
@@ -729,8 +903,8 @@ export class TelemetryRequest {
   /**Copies the telemetryrequest
   * @returns { TelemetryRequest }
    */
-  copy(){
-    return new this.constructor(
+  copy() : TelemetryRequest {
+    return new TelemetryRequest(
       this.id,
       this.message_key,
       this.display_name
@@ -745,8 +919,19 @@ export class TelemetryRequest {
   }
 }
 
-export class Tracer {
+export class Tracer extends Dataclass {
+  id
+  shortname
+  clinical_name
+  isotope
+  tracer_type
+  vial_tag
+  archived
+  marketed
+  is_static_instance
+
   constructor(id, shortname, clinical_name, isotope, tracer_type, vial_tag, archived, marketed, is_static_instance, ) {
+    super()
     this.id=id
     this.shortname=shortname
     this.clinical_name=clinical_name
@@ -761,8 +946,8 @@ export class Tracer {
   /**Copies the tracer
   * @returns { Tracer }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Tracer {
+    return new Tracer(
       this.id,
       this.shortname,
       this.clinical_name,
@@ -788,8 +973,15 @@ export class Tracer {
   }
 }
 
-export class TracerCatalogPage {
+export class TracerCatalogPage extends Dataclass {
+  id
+  endpoint
+  tracer
+  max_injections
+  overhead_multiplier
+
   constructor(id, endpoint, tracer, max_injections, overhead_multiplier, ) {
+    super()
     this.id=id
     this.endpoint=endpoint
     this.tracer=tracer
@@ -800,8 +992,8 @@ export class TracerCatalogPage {
   /**Copies the tracercatalogpage
   * @returns { TracerCatalogPage }
    */
-  copy(){
-    return new this.constructor(
+  copy() : TracerCatalogPage {
+    return new TracerCatalogPage(
       this.id,
       this.endpoint,
       this.tracer,
@@ -820,8 +1012,15 @@ export class TracerCatalogPage {
   }
 }
 
-export class Printer {
+export class Printer extends Dataclass {
+  id
+  name
+  ip
+  port
+  label_printer
+
   constructor(id, name, ip, port, label_printer, ) {
+    super()
     this.id=id
     this.name=name
     this.ip=ip
@@ -832,8 +1031,8 @@ export class Printer {
   /**Copies the printer
   * @returns { Printer }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Printer {
+    return new Printer(
       this.id,
       this.name,
       this.ip,
@@ -852,8 +1051,16 @@ export class Printer {
   }
 }
 
-export class Procedure {
+export class Procedure extends Dataclass {
+  id
+  series_description
+  tracer_units
+  delay_minutes
+  tracer
+  owner
+
   constructor(id, series_description, tracer_units, delay_minutes, tracer, owner, ) {
+    super()
     this.id=id
     this.series_description=series_description
     this.tracer_units=tracer_units
@@ -865,8 +1072,8 @@ export class Procedure {
   /**Copies the procedure
   * @returns { Procedure }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Procedure {
+    return new Procedure(
       this.id,
       this.series_description,
       this.tracer_units,
@@ -887,8 +1094,14 @@ export class Procedure {
   }
 }
 
-export class ProcedureIdentifier {
+export class ProcedureIdentifier extends Dataclass {
+  id
+  code
+  description
+  is_pet
+
   constructor(id, code, description, is_pet, ) {
+    super()
     this.id=id
     this.code=code
     this.description=description
@@ -898,8 +1111,8 @@ export class ProcedureIdentifier {
   /**Copies the procedureidentifier
   * @returns { ProcedureIdentifier }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ProcedureIdentifier {
+    return new ProcedureIdentifier(
       this.id,
       this.code,
       this.description,
@@ -916,8 +1129,15 @@ export class ProcedureIdentifier {
   }
 }
 
-export class ActivityProduction {
+export class ActivityProduction extends Dataclass {
+  id
+  production_day
+  tracer
+  production_time
+  is_static_instance
+
   constructor(id, production_day, tracer, production_time, is_static_instance, ) {
+    super()
     this.id=id
     this.production_day=production_day
     this.tracer=tracer
@@ -928,8 +1148,8 @@ export class ActivityProduction {
   /**Copies the activityproduction
   * @returns { ActivityProduction }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ActivityProduction {
+    return new ActivityProduction(
       this.id,
       this.production_day,
       this.tracer,
@@ -947,8 +1167,13 @@ export class ActivityProduction {
   }
 }
 
-export class SecondaryEmail {
+export class SecondaryEmail extends Dataclass {
+  id
+  email
+  record_user
+
   constructor(id, email, record_user, ) {
+    super()
     this.id=id
     this.email=email
     this.record_user=record_user
@@ -957,8 +1182,8 @@ export class SecondaryEmail {
   /**Copies the secondaryemail
   * @returns { SecondaryEmail }
    */
-  copy(){
-    return new this.constructor(
+  copy() : SecondaryEmail {
+    return new SecondaryEmail(
       this.id,
       this.email,
       this.record_user
@@ -973,8 +1198,23 @@ export class SecondaryEmail {
   }
 }
 
-export class ServerConfiguration {
+export class ServerConfiguration extends Dataclass {
+  id
+  SMTPServer
+  DateRange
+  AdminPhoneNumber
+  AdminEmail
+  global_activity_deadline
+  global_injection_deadline
+  ping_service_ae_tile
+  ris_dicom_endpoint
+  record_telemetry
+  active_label_printer
+  active_printer
+  weekly_close_days
+
   constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, record_telemetry, active_label_printer, active_printer, weekly_close_days, ) {
+    super()
     this.id=id
     this.SMTPServer=SMTPServer
     this.DateRange=DateRange
@@ -993,8 +1233,8 @@ export class ServerConfiguration {
   /**Copies the serverconfiguration
   * @returns { ServerConfiguration }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ServerConfiguration {
+    return new ServerConfiguration(
       this.id,
       this.SMTPServer,
       this.DateRange,
@@ -1029,8 +1269,14 @@ export class ServerConfiguration {
   }
 }
 
-export class ServerLog {
+export class ServerLog extends Dataclass {
+  id
+  created
+  message
+  level
+
   constructor(id, created, message, level, ) {
+    super()
     this.id=id
     this.created=created
     this.message=message
@@ -1040,8 +1286,8 @@ export class ServerLog {
   /**Copies the serverlog
   * @returns { ServerLog }
    */
-  copy(){
-    return new this.constructor(
+  copy() : ServerLog {
+    return new ServerLog(
       this.id,
       this.created,
       this.message,
@@ -1058,8 +1304,15 @@ export class ServerLog {
   }
 }
 
-export class User {
+export class User extends Dataclass {
+  last_login
+  id
+  username
+  user_group
+  active
+
   constructor(last_login, id, username, user_group, active, ) {
+    super()
     this.last_login=last_login
     this.id=id
     this.username=username
@@ -1070,8 +1323,8 @@ export class User {
   /**Copies the user
   * @returns { User }
    */
-  copy(){
-    return new this.constructor(
+  copy() : User {
+    return new User(
       this.last_login,
       this.id,
       this.username,
@@ -1090,8 +1343,13 @@ export class User {
   }
 }
 
-export class UserAssignment {
+export class UserAssignment extends Dataclass {
+  id
+  user
+  customer
+
   constructor(id, user, customer, ) {
+    super()
     this.id=id
     this.user=user
     this.customer=customer
@@ -1100,8 +1358,8 @@ export class UserAssignment {
   /**Copies the userassignment
   * @returns { UserAssignment }
    */
-  copy(){
-    return new this.constructor(
+  copy() : UserAssignment {
+    return new UserAssignment(
       this.id,
       this.user,
       this.customer
@@ -1116,8 +1374,19 @@ export class UserAssignment {
   }
 }
 
-export class Vial {
+export class Vial extends Dataclass {
+  id
+  tracer
+  activity
+  volume
+  lot_number
+  fill_time
+  fill_date
+  assigned_to
+  owner
+
   constructor(id, tracer, activity, volume, lot_number, fill_time, fill_date, assigned_to, owner, ) {
+    super()
     this.id=id
     this.tracer=tracer
     this.activity=activity
@@ -1132,8 +1401,8 @@ export class Vial {
   /**Copies the vial
   * @returns { Vial }
    */
-  copy(){
-    return new this.constructor(
+  copy() : Vial {
+    return new Vial(
       this.id,
       this.tracer,
       this.activity,
@@ -1198,41 +1467,41 @@ export const MODELS = {
 }
 
 export class TracershopState {
-  /** @type { User } */ logged_in_user
-  /** @type { Date } */ today
-  /** @type { Number } */ readyState
-  /** @type { string } */ error 
-  /** @type { Map<Number, Address>} */ address
-  /** @type { Map<Number, ActivityOrder>} */ activity_orders
-  /** @type { Map<Number, ClosedDate>} */ closed_date
-  /** @type { Map<Number, Customer>} */ customer
-  /** @type { Map<Number, Deadline>} */ deadline
-  /** @type { Map<Number, ActivityDeliveryTimeSlot>} */ deliver_times
-  /** @type { Map<Number, DicomEndpoint>} */ dicom_endpoint
-  /** @type { Map<Number, DeliveryEndpoint>} */ delivery_endpoint
-  /** @type { Map<Number, InjectionOrder>} */ injection_orders
-  /** @type { Map<Number, Isotope>} */ isotopes
-  /** @type { Map<Number, IsotopeDelivery>} */ isotope_delivery
-  /** @type { Map<Number, IsotopeOrder>} */ isotope_order
-  /** @type { Map<Number, IsotopeProduction>} */ isotope_production
-  /** @type { Map<Number, IsotopeVial>} */ isotope_vial
-  /** @type { Map<Number, ReleaseRight>} */ release_right
-  /** @type { Map<Number, LegacyProductionMember>} */ legacy_production_member
-  /** @type { Map<Number, Location>} */ location
-  /** @type { Map<Number, Message>} */ message
-  /** @type { Map<Number, MessageAssignment>} */ message_assignment
-  /** @type { Map<Number, Tracer>} */ tracer
-  /** @type { Map<Number, TracerCatalogPage>} */ tracer_mapping
-  /** @type { Map<Number, Printer>} */ printer
-  /** @type { Map<Number, Procedure>} */ procedure
-  /** @type { Map<Number, ProcedureIdentifier>} */ procedure_identifier
-  /** @type { Map<Number, ActivityProduction>} */ production
-  /** @type { Map<Number, SecondaryEmail>} */ secondary_email
-  /** @type { Map<Number, ServerConfiguration>} */ server_config
-  /** @type { Map<Number, ServerLog>} */ server_log
-  /** @type { Map<Number, User>} */ user
-  /** @type { Map<Number, UserAssignment>} */ user_assignment
-  /** @type { Map<Number, Vial>} */ vial
+  logged_in_user :  User
+  today: Date
+  readyState: number
+  error: string 
+  address : Map<number, Address>
+  activity_orders : Map<number, ActivityOrder>
+  closed_date : Map<number, ClosedDate>
+  customer : Map<number, Customer>
+  deadline : Map<number, Deadline>
+  deliver_times : Map<number, ActivityDeliveryTimeSlot>
+  dicom_endpoint : Map<number, DicomEndpoint>
+  delivery_endpoint : Map<number, DeliveryEndpoint>
+  injection_orders : Map<number, InjectionOrder>
+  isotopes : Map<number, Isotope>
+  isotope_delivery : Map<number, IsotopeDelivery>
+  isotope_order : Map<number, IsotopeOrder>
+  isotope_production : Map<number, IsotopeProduction>
+  isotope_vial : Map<number, IsotopeVial>
+  release_right : Map<number, ReleaseRight>
+  legacy_production_member : Map<number, LegacyProductionMember>
+  location : Map<number, Location>
+  message : Map<number, Message>
+  message_assignment : Map<number, MessageAssignment>
+  tracer : Map<number, Tracer>
+  tracer_mapping : Map<number, TracerCatalogPage>
+  printer : Map<number, Printer>
+  procedure : Map<number, Procedure>
+  procedure_identifier : Map<number, ProcedureIdentifier>
+  production : Map<number, ActivityProduction>
+  secondary_email : Map<number, SecondaryEmail>
+  server_config : Map<number, ServerConfiguration>
+  server_log : Map<number, ServerLog>
+  user : Map<number, User>
+  user_assignment : Map<number, UserAssignment>
+  vial : Map<number, Vial>
 
   constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, isotope_delivery, isotope_order, isotope_production, isotope_vial, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
     this.logged_in_user=logged_in_user

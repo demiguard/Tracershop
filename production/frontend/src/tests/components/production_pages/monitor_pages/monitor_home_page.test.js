@@ -5,13 +5,13 @@
 import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
 
-import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants.js";
-import { testState } from "~/tests/app_state.js";
+import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants";
+import { testState } from "~/tests/app_state";
 import { InjectionOrder, ActivityOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { separatorInjectionOrders, separatorActivityOrders } from "~/components/production_pages/monitoring_pages/monitor_home_page";
 
-const module = jest.mock('~/lib/tracer_websocket.js');
-const tracer_websocket = require("~/lib/tracer_websocket.js");
+const module = jest.mock('~/lib/tracer_websocket');
+const tracer_websocket = require("~/lib/tracer_websocket");
 
 
 let websocket = null;

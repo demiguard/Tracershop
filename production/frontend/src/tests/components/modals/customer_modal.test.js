@@ -6,15 +6,15 @@ import React from "react";
 import { act, screen, render, cleanup, fireEvent, waitFor, prettyDOM } from "@testing-library/react";
 
 import { jest } from '@jest/globals'
-import { AppState, testState } from '../../app_state.js';
-import { CustomerModal, DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from '../../../components/modals/customer_modal.js'
-import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, WEEKLY_REPEAT_CHOICES } from "~/lib/constants.js";
-import { cssError } from "~/lib/styles.js";
-import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_TRACER_MAPPING, WEBSOCKET_DATA } from "~/lib/shared_constants.js"
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { AppState, testState } from '~/tests/app_state';
+import { CustomerModal, DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from '~/components/modals/customer_modal'
+import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+import { DATA_CUSTOMER, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_TRACER_MAPPING, WEBSOCKET_DATA } from "~/lib/shared_constants"
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 const onClose = jest.fn();
 

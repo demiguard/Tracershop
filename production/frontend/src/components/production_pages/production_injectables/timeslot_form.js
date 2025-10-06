@@ -258,7 +258,7 @@ export function TimeSlotForm({
           <Optional exists={tempTimeSlot.id != -1}>
             <ClickableIcon
               label="time-slot-initialize"
-              src={"static/images/plus.svg"}
+              src={"static/images/plus2.svg"}
               onClick={initializeNewTimeSlot}
             />
           </Optional>

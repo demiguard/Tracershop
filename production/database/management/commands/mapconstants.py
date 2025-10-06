@@ -123,13 +123,33 @@ class Command(BaseCommand):
             out.write(f"  \"{val}\",\n")
           out.write("]\n")
 
-    with open('frontend/src/dataclasses/dataclasses.js', 'w') as out:
+    with open('frontend/src/dataclasses/dataclasses.tsx', 'w') as out:
       out.write("/**Automatically generated file by generate JavascriptDataClasses.py */\n")
       out.write("/**Contains a mapping of the database and their fields. */\n\n")
-      out.write("import { BooleanField, CharField, DateField, DateTimeField, IntField, FloatField, ForeignField } from '~/lib/database_fields.js'\n\n")
+      out.write("import { DatabaseField, BooleanField, CharField, IPField, DateField, DateTimeField, IntField, FloatField, ForeignField } from '~/lib/database_fields.js'\n\n")
+
+
+      out.write("export class Dataclass {\n")
+      out.write("  constructor(){}\n")
+      out.write("  copy(){}\n")
+      out.write("  fields() : Array<DatabaseField> {\n")
+      out.write("    return []\n")
+      out.write("  }\n")
+      out.write("}\n")
 
       for model in MODELS.values():
-        out.write(f"export class {model.__name__} {{\n")
+        out.write(f"export class {model.__name__} extends Dataclass {{\n")
+        for field in model._meta.fields:
+          if field.name in model.exclude:
+            continue
+          out.write(f"  {field.name}\n")
+
+        for prop in model.derived_properties: #type: ignore
+          out.write(f"  {prop}\n")
+
+        out.write("\n")
+
+
         out.write("  constructor(")
         for field in model._meta.fields:
           if field.name in model.exclude:
@@ -138,6 +158,7 @@ class Command(BaseCommand):
         for derived_property in model.derived_properties: # type: ignore
           out.write(f"{derived_property}, ")
         out.write(") {\n")
+        out.write("    super()\n")
         for field in model._meta.fields:
           if field.name in model.exclude:
             continue
@@ -148,8 +169,8 @@ class Command(BaseCommand):
         out.write(f"  /**Copies the {model.__name__.lower()}\n")
         out.write(f"  * @returns {{ {model.__name__} }}\n")
         out.write("   */\n")
-        out.write("  copy(){\n")
-        out.write("    return new this.constructor(\n")
+        out.write(f"  copy() : {model.__name__} {{\n")
+        out.write(f"    return new {model.__name__}(\n")
         for i,field in enumerate(model._meta.fields):
           if field.name in model.exclude:
             continue
@@ -180,14 +201,14 @@ class Command(BaseCommand):
       out.write("}\n")
 
       out.write("\nexport class TracershopState {\n")
-      out.write(f"  /** @type {{ User }} */ logged_in_user\n")
-      out.write(f"  /** @type {{ Date }} */ today\n")
-      out.write(f"  /** @type {{ Number }} */ readyState\n")
-      out.write( "  /** @type { string } */ error \n")
+      out.write(f"  logged_in_user :  User\n")
+      out.write(f"  today: Date\n")
+      out.write(f"  readyState: number\n")
+      out.write( "  error: string \n")
 
       for key, model in MODELS.items():
         if key not in shared_constants.EXCLUDED_STATE_MODELS:
-          out.write(f"  /** @type {{ Map<Number, {model.__name__}>}} */ {key}\n")
+          out.write(f"  {key} : Map<number, {model.__name__}>\n")
 
       out.write("\n  constructor(logged_in_user, today, ")
       for key, model in MODELS.items():

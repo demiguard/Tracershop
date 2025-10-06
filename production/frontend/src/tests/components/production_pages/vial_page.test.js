@@ -6,17 +6,14 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, waitFor, queryByAttribute, act } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { VialPage } from "~/components/production_pages/vial_page.js"
+import { VialPage } from "~/components/production_pages/vial_page"
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { testState } from "~/tests/app_state";
+import { UpdateToday } from "~/lib/state_actions";
+import { ERROR_BACKGROUND_COLOR } from "~/lib/constants";
 
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { testState } from "~/tests/app_state.js";
-import { UpdateToday } from "~/lib/state_actions.js";
-import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
-import { TracershopState, Vial } from "~/dataclasses/dataclasses.js";
-import { toMapping } from "~/lib/utils.js";
-
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 let websocket = null;
 const dispatch = jest.fn()

@@ -1,8 +1,10 @@
 import { jest } from '@jest/globals'
-import { DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPE } from '../shared_constants.js';
-import { MESSAGE_READ_BOOKINGS } from '~/lib/incoming_messages.js';
+import { DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPE
+} from '~/lib/shared_constants';
+import { MESSAGE_READ_BOOKINGS } from '~/lib/incoming_messages';
 
-const tracer_websocket = jest.createMockFromModule('../tracer_websocket.js');
+const tracer_websocket = jest.createMockFromModule('../tracer_websocket');
 
 const TracerWebSocket = jest.fn();
 TracerWebSocket.getMessage = jest.fn((kw) => {return {[WEBSOCKET_MESSAGE_TYPE] : kw}});

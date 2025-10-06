@@ -5,7 +5,7 @@
 import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { TracershopNavbar } from "../../../components/injectable/navbar";
+import { TracershopNavbar } from "~/components/injectable/navbar";
 import { jest } from '@jest/globals'
 
 beforeEach(() => {

@@ -14,18 +14,34 @@ import { TimeSlotSelect } from "./timeslot_select";
 import { getRelatedTimeSlots } from '../../../lib/data_structures';
 import propType from 'prop-types'
 
+type DestinationSelectProps = {
+  activeCustomer : number,
+  activeEndpoint : number,
+  activeTimeSlot? : number,
+  ariaLabelCustomer? : string ,
+  ariaLabelEndpoint? : string ,
+  ariaLabelTimeSlot? : string ,
+  customers : Map<number, Customer>,
+  endpoints : Map<number, DeliveryEndpoint>,
+  timeSlots? : Map<number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot>,
+  setCustomer :  (id : number) => void,
+  setEndpoint :  (id : number) => void,
+  setTimeSlot? : (id : number) => void
+}
+
+
 /**
  *
  * @param {{
  * ariaLabelCustomer : String | undefined,
  * ariaLabelEndpoint : String | undefined,
  * ariaLabelTimeSlot : String | undefined,
- * activeCustomer : Number,
- * activeEndpoint : Number,
- * activeTimeSlot : Number | undefined,
- * customer : Map<Number, Customer>,
- * endpoints : Map<Number, DeliveryEndpoint>,
- * timeSlots : Map<Number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot> | undefined,
+ * activeCustomer : number,
+ * activeEndpoint : number,
+ * activeTimeSlot : number | undefined,
+ * customer : Map<number, Customer>,
+ * endpoints : Map<number, DeliveryEndpoint>,
+ * timeSlots : Map<number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot> | undefined,
  * setCustomer : Callable,
  * setEndpoint : Callable,
  * setTimeSlot : Callable | undefined,
@@ -44,7 +60,7 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
 
   function setTimeSlotToNewEndpoint(rawEndpointID){
     if(withTimeSlots){
-      const newEndpointID = (rawEndpointID !== "") ? Number(rawEndpointID) : "";
+      const newEndpointID = (rawEndpointID !== "") ? Number(rawEndpointID) : 0;
       const newTimeSlots = getRelatedTimeSlots(timeSlots, newEndpointID);
       if(newTimeSlots.length === 0){
         setTimeSlot("");
@@ -77,7 +93,7 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     setTimeSlotToNewEndpoint(newEndpointID);
   }
 
-  let thirdColumn = "";
+  let thirdColumn = <div></div>;
   if(withTimeSlots){
     function onChangeTimeSlot(event){
       const timeSlotID = (event.target.value === "") ? "" : Number(event.target.value)
@@ -115,19 +131,4 @@ export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlo
     </TracershopInputGroup>
     {thirdColumn}
   </div>)
-}
-
-DestinationSelect.propType = {
-  ariaLabelCustomer : propType.string,
-  ariaLabelEndpoint :  propType.string,
-  ariaLabelTimeSlot :  propType.string,
-  activeCustomer :  propType.number.isRequired,
-  activeEndpoint : propType.number.isRequired,
-  activeTimeSlot : propType.number,
-  customers : propType.instanceOf(Map).isRequired,
-  endpoints : propType.instanceOf(Map).isRequired,
-  timeSlots : propType.oneOfType([Map, propType.arrayOf(ActivityDeliveryTimeSlot)]),
-  setCustomer : propType.func.isRequired,
-  setEndpoint : propType.func.isRequired,
-  setTimeSlot : propType.func,
 }

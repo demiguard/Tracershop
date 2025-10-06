@@ -213,7 +213,6 @@ export class ActivityOrderCollection {
     } // End of Order for loop;
     if(this.minimum_status === ORDER_STATUS.RELEASED){
       for(const vial of state.vial.values()){
-      console.log(vial)
         if (this.orderIDs.includes(vial.assigned_to)){
           this.delivered_activity += correctVialActivityToTime(
             vial,

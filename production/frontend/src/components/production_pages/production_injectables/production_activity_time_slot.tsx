@@ -21,30 +21,7 @@ import { UserDisplay } from '~/components/injectable/data_displays/user_display'
 import { DatetimeDisplay } from '~/components/injectable/data_displays/datetime_display';
 import { HoverBox } from '~/components/injectable/hover_box';
 import { compareTimeStamp, TimeStamp } from '~/lib/chronomancy';
-
-//#region Order Row
-/**
-  * Row of an order inside of a RenderedTimeSlot
-  * @param {{
-*   order : ActivityOrder,
-*   overhead : Number,
-* }} props
-* @returns { Element }
-*/
-function OrderRow({order, overhead}){
-  const state = useTracershopState();
-  const base_activity = fulfillmentActivity(order, state);
-  const overhead_activity = Math.floor(base_activity * overhead);
-
-  return (
-  <Row>
-    <Col xs={1}><StatusIcon order={order}/></Col>
-    <Col>Order ID: {order.id}</Col>
-    <Col>{base_activity} MBq</Col>
-    <Col>{overhead_activity} MBq</Col>
-    <Col><Comment comment={order.comment}/></Col>
-  </Row>);
-}
+import { ActivityOrderRow } from './activity_order_row';
 
 /**
  *
@@ -88,7 +65,7 @@ function VialRow({vial, orderCollection}){
  * @param {ActivityOrderCollection} props.orderCollection
  * @returns
  */
-function ProductionInnerContentMoved({orderCollection, firstAvailableTimeSlot}){
+function ProductionInnerContentMoved({orderCollection, firstAvailableTimeSlot, moveOrders}){
   /* inline-block fits the block inside of the html:
   <div>foo<div>bar</div></div> ->
   foo
@@ -167,7 +144,7 @@ function ProductionInnerContentStatusACCEPTED({
 }){
   const canMove = firstAvailableTimeSlot.id !== orderCollection.delivering_time_slot.id;
 
-  const vialActivity = 0;
+  let vialActivity = 0;
   for(const vial of orderCollection.unassigned_vials){
     vialActivity += correctVialActivityToTime(
       vial,
@@ -211,7 +188,7 @@ function ProductionInnerContentStatusACCEPTED({
  * @param {ActivityOrderCollection} props.orderCollection
  * @returns
  */
-function ProductionInnerContentStatusRELEASED({orderCollection}){
+function ProductionInnerContentStatusRELEASED({orderCollection, moveOrders, firstAvailableTimeSlot}){
   const releasedBase = <div>
         <div>Udleveret:</div>
         <MBqDisplay activity={orderCollection.delivered_activity}/>
@@ -241,7 +218,7 @@ function ProductionInnerContentStatusRELEASED({orderCollection}){
 }
 
 
-function ProductionInnerContentStatusCANCELED({orderCollection}){
+function ProductionInnerContentStatusCANCELED({orderCollection, moveOrders, firstAvailableTimeSlot}){
   return (
     <Row>
       <Col style={{...JUSTIFY.center, marginTop: '3.1666px', marginBottom: '3.1666px'}}>
@@ -320,7 +297,7 @@ function ProductionInnerContent({
 * @param {ActivityOrderCollection} props.orderCollection
 * @returns
 */
-export function ProductionTimeSlot({timeSlot,
+export function ProductionActivityTimeSlot({timeSlot,
                     setTimeSlotID,
                     setModalIdentifier,
                     orderMapping,
@@ -341,7 +318,12 @@ for(const order of orders){
                            || order.moved_to_time_slot === timeSlot.id
 
   if(is_originalTimeSlot){
-    orderData.push(<OrderRow key={order.id} order={order} overhead={orderCollection.overhead}/>);
+    orderData.push(
+      <ActivityOrderRow
+        key={order.id}
+        order={order}
+        overhead={orderCollection.overhead}
+      />);
   }
 }
 

@@ -231,7 +231,7 @@ export function Calculator ({
         </td>
         <td style={cssTableCenter}>
           <ClickableIcon
-            src={"/static/images/plus.svg"}
+            src={"/static/images/plus2.svg"}
             onClick={addEntry}
             altText={"Tilføj"}
           />

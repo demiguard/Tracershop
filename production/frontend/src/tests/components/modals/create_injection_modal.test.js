@@ -7,28 +7,27 @@ import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-libra
 import { jest, expect, it } from '@jest/globals'
 import userEvent from "@testing-library/user-event";
 
-import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal.js"
-import { ORDER_STATUS, PROP_ON_CLOSE } from "~/lib/constants.js";
+import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal"
+import { ORDER_STATUS, PROP_ON_CLOSE } from "~/lib/constants";
 
-import { testState} from '~/tests/app_state.js'
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { testState} from '~/tests/app_state'
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 
-import { DATA_INJECTION_ORDER } from "~/lib/shared_constants.js";
-import { TracershopState } from "~/dataclasses/dataclasses.js";
+import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
+import { TracershopState } from "~/dataclasses/dataclasses";
 
-const onClose = jest.fn()
+const onClose = jest.fn();
 
 const websocket = {
   sendCreateModel : jest.fn(() => Promise.resolve({}))
 };
-const props = { [PROP_ON_CLOSE] : onClose };;
+const props = { [PROP_ON_CLOSE] : onClose };
 
 describe("Create injection Order", () => {
   beforeEach(() => {});
 
   afterEach(() => {
     cleanup();
-
   });
 
   it("Standard Render Test", async () => {

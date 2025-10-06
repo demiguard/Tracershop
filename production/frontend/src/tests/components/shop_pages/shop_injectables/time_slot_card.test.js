@@ -5,15 +5,15 @@
 import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
-import { testState } from "~/tests/app_state.js";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID, PROP_VALID_ACTIVITY_DEADLINE } from "~/lib/constants.js";
-import { TimeSlotCardActivity } from "~/components/shop_pages/shop_injectables/time_slot_card_activity.js";
-import { getRelevantActivityOrders } from "~/lib/filters.js";
-import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL } from "~/components/injectable/calculator.js";
-import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants.js";
-const module = jest.mock('../../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../../lib/tracer_websocket.js");
+import { testState } from "~/tests/app_state";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID, PROP_VALID_ACTIVITY_DEADLINE } from "~/lib/constants";
+import { TimeSlotCardActivity } from "~/components/shop_pages/shop_injectables/time_slot_card_activity";
+import { getRelevantActivityOrders } from "~/lib/filters";
+import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL } from "~/components/injectable/calculator";
+import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
+const module = jest.mock('../../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../../lib/tracer_websocket");
 
 let websocket = null;
 let props = {}
@@ -22,7 +22,7 @@ const now = new Date(2020,4, 4, 10, 36, 44);
 const default_time_slot_id = 1
 const overhead = 1.5;
 
-const [,,relevantActivityOrders] = getRelevantActivityOrders(testState, 0, 1, 1, "2020-05-04" )
+const [,,relevantActivityOrders] = getRelevantActivityOrders(testState, 0, 1, 1, "2020-05-04")
 
 beforeEach(async () => {
   jest.useFakeTimers('modern')

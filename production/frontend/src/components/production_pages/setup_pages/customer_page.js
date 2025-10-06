@@ -114,7 +114,7 @@ export function CustomerPage () {
             <InputGroup.Text>
               <IdempotentIcon
                 altText="Opret Kunde"
-                src="/static/images/plus.svg"
+                src="/static/images/plus2.svg"
                 onClick={createCustomer}
               />
             </InputGroup.Text>

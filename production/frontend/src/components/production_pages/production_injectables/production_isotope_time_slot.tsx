@@ -14,6 +14,7 @@ import { JUSTIFY, PADDING } from '~/lib/styles';
 import { Comment } from '~/components/injectable/data_displays/comment';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { IsotopeOrderModal } from '~/components/modals/isotope_order_modal';
+import { IsotopeOrderRow } from './isotope_order_row';
 
 type CardHeaderProps = {
   openState : StateType<boolean>,
@@ -48,27 +49,6 @@ function CardHeader({openState, collection, showModal} : CardHeaderProps){
   )
 }
 
-type OrderRowProps = {
-  order : IsotopeOrder
-}
-
-function OrderRow ({
-  order
-}: OrderRowProps) {
-
-  return (
-  <Row>
-    <Col xs={1}><StatusIcon order={order}/></Col>
-    <Col>Bestilt : <MBqDisplay activity={order.ordered_activity_MBq}/></Col>
-    <Optional exists={!!(order.comment)}>
-      <Col xs={1}><Comment comment={order.comment}/></Col>
-    </Optional>
-    <Optional exists={[ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)}>
-      <Col xs={1}><CancelIcon order={order}/></Col>
-    </Optional>
-  </Row>)
-}
-
 type ProductionIsotopeTimeSlotProps = {
   orders : IsotopeOrder[],
   timeSlot : IsotopeDelivery
@@ -90,7 +70,7 @@ export function ProductionIsotopeTimeSlot({
 
   for(const order of orders){
     orderRows.push(
-      <OrderRow key={order.id} order={order}/>
+      <IsotopeOrderRow key={order.id} order={order}/>
     )
   }
 

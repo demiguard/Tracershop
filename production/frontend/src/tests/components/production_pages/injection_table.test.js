@@ -6,17 +6,20 @@ import React from "react";
 import { act, fireEvent, getByRole, render, screen, cleanup } from "@testing-library/react"
 import { jest, expect } from '@jest/globals'
 
-import { ORDER_STATUS, PROP_ACTIVE_DATE } from "../../../lib/constants.js";
-import { getModifiedTestState, testState } from "../../app_state.js";
+import { ORDER_STATUS, PROP_ACTIVE_DATE } from "~/lib/constants";
+import { getModifiedTestState, testState } from "~/tests/app_state";
 
-import { InjectionTable } from "../../../components/production_pages/injection_table.js";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { InjectionOrder, TracershopState } from "~/dataclasses/dataclasses.js";
-import { toMapping } from "~/lib/utils.js";
-import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, DATA_INJECTION_ORDER, TRACER_USAGE, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_RELEASE_MULTI, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
+import { InjectionTable } from "~/components/production_pages/injection_table";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
+import { toMapping } from "~/lib/utils";
+import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH,
+  DATA_INJECTION_ORDER, TRACER_USAGE, WEBSOCKET_DATA, WEBSOCKET_DATA_ID,
+  WEBSOCKET_MESSAGE_RELEASE_MULTI, WEBSOCKET_MESSAGE_TYPE
+} from "~/lib/shared_constants";
 
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
+const module = jest.mock('../../../lib/tracer_websocket');
 const websocket = {
   send : jest.fn(() => Promise.resolve()),
   sendEditModel : jest.fn(() => Promise.resolve())

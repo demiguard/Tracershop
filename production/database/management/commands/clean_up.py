@@ -17,7 +17,7 @@ from time import sleep
 # Django packages
 from django.utils import timezone
 from django.core.management.base import BaseCommand
-from django.db.models import BaseManager
+from django.db.models.manager import BaseManager
 
 # Tracershop modules
 from constants import CLEAN_UP_LOGGER

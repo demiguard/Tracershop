@@ -6,14 +6,13 @@ import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { TracerModal } from "~/components/modals/tracer_modal.js"
-import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants.js";
-import { DATA_CUSTOMER, DATA_TRACER, DATA_TRACER_MAPPING } from "~/lib/shared_constants.js"
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { TracerModal } from "~/components/modals/tracer_modal"
+import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 const onClose = jest.fn();
 

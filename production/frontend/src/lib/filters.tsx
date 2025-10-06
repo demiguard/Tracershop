@@ -34,7 +34,7 @@ type ContainerType<T> = TracershopState | Map<any, T> | Array<T> | T
  * - If the container is an instance of the specified type, it returns an array containing the container.
  * - If none of the above conditions are met, it throws an error.
  */
-export function extractData<T> (container: ContainerType<T>, type: {new() : T}, typeKeyword: string) : Array<T> {
+export function extractData<T> (container: ContainerType<T>, type: {new(...args) : T}, typeKeyword: string) : Array<T> {
   if(container instanceof TracershopState && typeKeyword in container){
     return [...container[typeKeyword].values()];
   } else if(container instanceof Map) {

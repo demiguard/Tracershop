@@ -65,7 +65,7 @@ function UserAssignmentRow(props){
   /> : <ClickableIcon
     altText={"Tilføj tildeling"}
     onMouseDown={create_user_assignment}
-    src="/static/images/plus.svg"
+    src="/static/images/plus2.svg"
   />;
 
   const label = exists ?

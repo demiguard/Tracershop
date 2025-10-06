@@ -720,7 +720,7 @@ export function ActivityModal({
                 <div>
                   <ClickableIcon
                     label="add-new-vial"
-                    src="/static/images/plus.svg"
+                    src="/static/images/plus2.svg"
                     onClick={allocateNewVial}/>
                 </div>
               </Optional>

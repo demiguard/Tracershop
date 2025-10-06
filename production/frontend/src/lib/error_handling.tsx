@@ -71,3 +71,7 @@ export function useErrorState(): [RecoverableError, (arg: any) => void]{
 
   return [error, setError];
 }
+
+export function setError(valid: boolean, errorStateFunction, messageOrValue){
+  if(!valid){ errorStateFunction(messageOrValue); }
+}

@@ -8,7 +8,11 @@ export class DatabaseField {
   }
 
   jsx(value, setter){
-    return <FormControl/>;
+    return <FormControl value={value} onChange={setter}/>;
+  }
+
+  format(value){
+    return value
   }
 };
 
@@ -17,13 +21,21 @@ export class DateField extends DatabaseField { }
 export class DateTimeField extends DatabaseField { }
 export class TimeField extends DatabaseField { }
 export class BooleanField extends DatabaseField { }
-export class IntField extends DatabaseField { }
+export class IntField extends DatabaseField {
+  format(value) {
+    return Math.min(Number(value));
+  }
+}
 export class FloatField extends DatabaseField { }
 export class IPField extends DatabaseField { }
 export class ForeignField extends DatabaseField {
   constructor(name, related_to){
     super(name);
     this.related_to = related_to;
+  }
+
+  format(value) {
+    return Math.min(Number(value));
   }
 
   jsx(value, setter, rawOptions){
@@ -42,6 +54,7 @@ export class ForeignField extends DatabaseField {
     return <Select
       options={options}
       value={value}
+      onChange={setter}
     />
 
   }

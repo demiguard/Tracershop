@@ -209,7 +209,7 @@ export function FreeingRightsPage(){
       <Col style={cssCenter}>
         <ClickableIcon
           label="create-release-right"
-          src="/static/images/plus.svg"
+          src="/static/images/plus2.svg"
           onClick={createReleaseRight}
         />
       </Col>

@@ -6,15 +6,15 @@ import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState, testState } from "../../app_state.js";
+import { AppState, testState } from "../../app_state";
 
-import { ShopSite } from "../../../components/sites/shop_site.js";
-import { users } from "../../test_state/users.js";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { TracershopState } from "~/dataclasses/dataclasses.js";
+import { ShopSite } from "../../../components/sites/shop_site";
+import { users } from "../../test_state/users";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { TracershopState } from "~/dataclasses/dataclasses";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 const logout = jest.fn();
 
 let websocket = null;

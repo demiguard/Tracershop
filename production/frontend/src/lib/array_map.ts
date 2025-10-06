@@ -52,7 +52,7 @@ export class ArrayMap<K,V> {
  * iterable. Yields key-value pairs where the value is an array.
  *
  */
-*[Symbol.iterator]() {
+*[Symbol.iterator](): Generator<[K, V[]]> {
     for(const [key,values] of this.#map.entries()){
       yield [key, values];
     }

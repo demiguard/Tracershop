@@ -179,7 +179,6 @@ export function ShopOrderPage ({relatedCustomer}){
         } else {
           console.error("Server error?")
         }
-
       });
     }
     return () => {

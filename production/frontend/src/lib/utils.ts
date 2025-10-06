@@ -1,5 +1,6 @@
 /** This module is for library functions which doesn't belong in other  */
 
+import { ORDER_STATUS } from "~/lib/constants";
 import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
 import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
 
@@ -160,14 +161,52 @@ export function compareMaps(map_1, map_2){
  * @param {ActivityOrder} order
  * @returns {Number}
  */
-export function getActiveTimeSlotID(order){
+export function getActiveTimeSlotID(order : ActivityOrder){
   return order.moved_to_time_slot ? order.moved_to_time_slot : order.ordered_time_slot;
 }
 
-export function clamp(num, min, max){
+export function clamp(num: number, min : number, max : number){
   return Math.max(Math.min(num, max), min)
 }
 
 export function getWebsocketUrl(){
   return `ws://${window.location.host}/ws/`
+}
+
+export function dataClassExists(dc){
+  return 0 < dc.id;
+}
+
+export function canBeCancelled(order){
+  return [ORDER_STATUS.ORDERED,ORDER_STATUS.ACCEPTED].includes(order.status);
+}
+
+export function getConstructorArgs(Class){
+  return Class.length
+}
+
+export function constructBlankArgsArray(Class) : Array<string>{
+  const args = [];
+  for(let i = 0; i < getConstructorArgs(Class); i++){
+    args.push("");
+  }
+
+  return args
+}
+
+
+export function* reverse<T>(arr: Array<T>){
+  for(let i = arr.length - 1; 0 <= i; i--){
+    yield arr[i];
+  }
+}
+
+/**
+ * This is one of those funny times when being a mathematician annoys you.
+ * In the group Z mod n, minus -1.., -(n - 1) doesn't exists...
+ * THIS SHOULD BE NAMED THE REMAINDER OPERATOR NOT MODULUS!
+ */
+export function properModulo(a: number, n: number){
+  const r = a % n;
+  return r < 0 ? r + n : r;
 }

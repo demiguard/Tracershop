@@ -3,7 +3,7 @@ import { Button, Col, Row} from 'react-bootstrap'
 import propTypes from 'prop-types'
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection'
-import { ORDER_STATUS } from '~/lib/constants'
+import { ORDER_STATUS, StateType } from '~/lib/constants'
 import { openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
@@ -13,6 +13,7 @@ import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_coll
 import { Image } from './image'
 import { OrdersType, OrderType, getOrderType } from '~/lib/types'
 import { CancelBox } from './cancel_box'
+import { Optional } from './optional'
 
 interface ClickableIconProps {
   altText? : string,
@@ -436,4 +437,29 @@ export function CancelIcon(props : CancelIconProps){
     }
   />
   </div>
+}
+
+type EtherealIconProps = {
+  showState : StateType<boolean>
+}
+
+export function EtherealIcon(props : EtherealIconProps){
+  const { showState } = props
+
+  const [show, setShow] = showState
+
+  const showIcon = <ClickableIcon
+                      src="/static/images/plus2.svg"
+                      onClick={() => {setShow(true)}}
+                      beforeInjection={(svg) => { svg.setAttribute('fill', 'green') }}
+                    />
+  const hideIcon = <ClickableIcon
+                      src="/static/images/plus2.svg"
+                      onClick={() => {setShow(false)}}
+                      beforeInjection={(svg) => { svg.setAttribute('fill', 'red') }}
+                    />
+
+  return <Optional exists={show} alternative={showIcon}>
+    {hideIcon}
+  </Optional>
 }

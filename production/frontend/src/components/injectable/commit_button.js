@@ -9,7 +9,7 @@ export function CommitButton({
   label="",
   callback=(arg)=>{},
   edit_image="/static/images/update.svg",
-  add_image="/static/images/plus.svg",
+  add_image="/static/images/plus2.svg",
 }){
   const websocket = useWebsocket();
 
@@ -48,6 +48,9 @@ export function CommitButton({
   return <IdempotentIcon
     label={label}
     src={image_src}
+    beforeInjection={(svg) => {
+      svg.setAttribute('fill', 'green');
+    }}
     onClick={onClick}
   />
 }

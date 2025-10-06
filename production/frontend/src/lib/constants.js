@@ -5,7 +5,7 @@ import React from "react";
  */
 
 /**
- * @typedef {[T, React.Dispatch<T>]} StateType<T>
+ * @typedef {[T, React.Dispatch<React.SetStateAction<T>>]} StateType<T>
  * @template T
  */
 export const /** @type {STATE_TYPE} */ STATE_TYPE = ({});

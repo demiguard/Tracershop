@@ -14,7 +14,7 @@ export function Image(props: ImageProps){
 
   if(src.endsWith('.svg')){
 
-    return <SVG {...props}/>
+    return <SVG {...props} aria-label={`SVG-${src}`}/>
   } else {
     // remove the BeforeInjection
     return <BTImage src={src} {...rest}/>

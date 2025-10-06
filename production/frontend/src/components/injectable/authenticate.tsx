@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import propTypes from 'prop-types'
 import { Form, Button, Spinner } from "react-bootstrap";
 //import styles from "../../css/Authenticate.module.css"
@@ -45,26 +45,30 @@ const styles = {
   }
 }
 
+type AuthenticateProps = {
+  fit_in? : boolean,
+  login_message? : string,
+  authenticate : (username: string, password: string) => void,
+  error? : RecoverableError
+  setError? : (err: RecoverableError | string) => void
+  buttonMessage? : string,
+  headerMessage? : string
+}
+
 /**
  * This class is for the authentication box
  * This class should have all the code injected into it and as a result should be VERY Small
  * IE this class doesn't perform any networking
- *
- * Props:
- *  @param {CallableFunction} authenticate : Function - that takes the arguments username and password of the user to authenticate them,
- *  @param {RecoverableError} error : String that describes the user didn't type their password correctly
- *  @param {String} login_message  : String Message to be written inside of the box that logs a user in
- *  @param {Boolean} fit_in : Boolean deciding if extra css is needed let the box in its full glory
- *
+ **
  * @author Christoffer Vilstrup Jensen
  */
 export function Authenticate({ authenticate,
                                error=new RecoverableError(),
-                               setError=()=>{},
+                               setError=(error)=>{},
                                headerMessage="Log in",
                                fit_in = false,
                                buttonMessage = "Log in"
-                            }){
+                            }: AuthenticateProps){
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
 
@@ -79,6 +83,23 @@ export function Authenticate({ authenticate,
     }
     return Promise.resolve();
   }
+
+  function onEnterSubmit(event : KeyboardEvent){
+    if(event.key === "Enter"){
+      onSubmitFunc();
+    }
+  }
+
+  useEffect(() => {
+    document.addEventListener('keydown', onEnterSubmit);
+
+    return () => {
+      document.removeEventListener(
+        'keydown', onEnterSubmit
+      );
+    }
+  }, [])
+
 
   return (
     <div style={fit_in ? styles.authenticateBox : styles.authenticationBoxNoFit}>
@@ -114,6 +135,7 @@ export function Authenticate({ authenticate,
           </div>
           {/* Note that Alert box doesn't render on no error */}
           <AlertBox
+            testId={"Authenticate-alterbox"}
             error={error}
           />
           <div className={"form-group"} style={styles.formRow}>

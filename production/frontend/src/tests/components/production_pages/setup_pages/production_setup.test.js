@@ -5,15 +5,15 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
-import { ProductionSetup } from "~/components/production_pages/setup_pages/production_setup.js";
-import { DATA_PRODUCTION } from "~/lib/shared_constants.js";
-import { tracer_mapping } from "~/tests/test_state/tracer_mapping.js";
+import { ProductionSetup } from "~/components/production_pages/setup_pages/production_setup";
+import { DATA_PRODUCTION } from "~/lib/shared_constants";
 
 
-const module = jest.mock('../../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../../lib/tracer_websocket.js");
+
+const module = jest.mock('../../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../../lib/tracer_websocket");
 
 let websocket = null;
 

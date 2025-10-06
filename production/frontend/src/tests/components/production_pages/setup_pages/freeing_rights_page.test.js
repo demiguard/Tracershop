@@ -5,9 +5,9 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { FreeingRightsPage } from "~/components/production_pages/setup_pages/freeing_rights_page";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
-import { USER_GROUPS } from "~/lib/constants.js";
+import { USER_GROUPS } from "~/lib/constants";
 
 
 const module = jest.mock('../../../../lib/tracer_websocket.js');

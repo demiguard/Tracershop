@@ -6,16 +6,16 @@ import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-import { CreateOrderModal } from '~/components/modals/create_activity_modal.js'
+import { CreateOrderModal } from '~/components/modals/create_activity_modal'
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_ON_CLOSE , PROP_TIME_SLOT_MAPPING
-  } from "~/lib/constants.js";
+  } from "~/lib/constants";
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants"
 
-import { testState } from '~/tests/app_state.js'
-import { TracerShopContext, } from "~/contexts/tracer_shop_context.js";
-import { TimeSlotMapping } from "~/lib/data_structures.js";
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+import { testState } from '~/tests/app_state'
+import { TracerShopContext, } from "~/contexts/tracer_shop_context";
+import { TimeSlotMapping } from "~/lib/data_structures";
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 const onClose = jest.fn()
 
@@ -117,4 +117,7 @@ describe("create activity modal", () => {
       fireEvent.change(customerSelect, {target : {value : 2}});
     })
   });
+
+
+
 });
