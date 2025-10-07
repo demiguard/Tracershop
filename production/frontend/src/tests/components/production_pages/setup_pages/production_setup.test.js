@@ -6,9 +6,9 @@ import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
-import { testState } from "~/tests/app_state";
+import { getModifiedTestState, testState } from "~/tests/app_state";
 import { ProductionSetup } from "~/components/production_pages/setup_pages/production_setup";
-import { DATA_PRODUCTION } from "~/lib/shared_constants";
+import { DATA_PRODUCTION, DATA_TRACER, DATA_TRACER_MAPPING } from "~/lib/shared_constants";
 
 
 
@@ -54,7 +54,10 @@ describe("Production Setup", () => {
   });
 
   it("Standard Render Test without Tracers", () => {
-    const newState = {...testState, tracer : new Map(), tracer_mapping : new Map()}
+    const newState = getModifiedTestState({
+      [DATA_TRACER] : new Map(),
+      [DATA_TRACER_MAPPING] : new Map()
+    });
 
     render(
       <TracerShopContext tracershop_state={newState} websocket={websocket}>

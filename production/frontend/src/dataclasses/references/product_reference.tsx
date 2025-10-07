@@ -11,7 +11,7 @@ import { ActivityDeliveryTimeSlot, ActivityProduction, DeliveryEndpoint,
 } from "~/dataclasses/dataclasses";
 import { WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
 import { activityOrderFilter, isotopeDeliveryFilter, isotopeOrderFilter, isotopeProductionFilter, productionsFilter, timeSlotFilter } from "~/lib/filters";
-import { DATA_ISOTOPE, DATA_TRACER } from "~/lib/shared_constants";
+import { DATA_ISOTOPE, DATA_ISOTOPE_PRODUCTION, DATA_PRODUCTION, DATA_TRACER } from "~/lib/shared_constants";
 import { ProductType } from "~/lib/types";
 
 
@@ -122,7 +122,7 @@ export class ProductReference {
       case PRODUCT_TYPES.ISOTOPE:
         return new IsotopeDelivery(-1, productionID, WEEKLY_REPEAT_CHOICES.ALL, endpoint_id, "");
       case PRODUCT_TYPES.ACTIVITY:
-        return new ActivityDeliveryTimeSlot(-1,  WEEKLY_REPEAT_CHOICES.ALL, "", endpoint_id, productionID);
+        return new ActivityDeliveryTimeSlot(-1,  WEEKLY_REPEAT_CHOICES.ALL, "", endpoint_id, productionID, null);
       default:
         return {};
     }
@@ -141,18 +141,17 @@ export class ProductReference {
   /** Gets existing the production options for the product */
   filterProduction(state: TracershopState, filterArgs = {}){
     switch (this.type) {
-    case PRODUCT_TYPES.ISOTOPE: { // Note this scope is here to reuse prods variable
-      return isotopeProductionFilter(state, { ...filterArgs, produces : this.product_id } )
-
-    }
-    case PRODUCT_TYPES.ACTIVITY: {
-      return productionsFilter(state, {
-        ...filterArgs,
-        tracerID : this.product_id
-      })
-    }
-    default:
-      return [];
+      case PRODUCT_TYPES.ISOTOPE: { // Note this scope is here to reuse prods variable
+        return isotopeProductionFilter(state, { ...filterArgs, produces : this.product_id } )
+      }
+      case PRODUCT_TYPES.ACTIVITY: {
+        return productionsFilter(state, {
+          ...filterArgs,
+          tracerID : this.product_id
+        })
+      }
+      default:
+        return [];
     }
   }
 
@@ -220,7 +219,7 @@ export class ProductReference {
  * @param {Tracer | Isotope} product
  * @returns {Option}
  */
-export function productToReferenceOption(product){
+export function productToReferenceOption(product: Tracer | Isotope){
       if (product instanceof Tracer){
       return new Option(`t-${product.id}`, product.shortname)
     } else if (product instanceof Isotope) {
@@ -234,4 +233,16 @@ export function productToReferenceOption(product){
         "Somehow a none isotope or activity tracer ended up as a valid product without a method to be converted to a valid option"
       };
     }
+}
+
+export function getProductionKW(pRef: ProductReference){
+  switch(pRef.type){
+    case PRODUCT_TYPES.ACTIVITY:
+      return DATA_PRODUCTION;
+    case PRODUCT_TYPES.ISOTOPE:
+      return DATA_ISOTOPE_PRODUCTION;
+    default:
+      console.log(pRef);
+      return PRODUCT_TYPES.EMPTY;
+  }
 }

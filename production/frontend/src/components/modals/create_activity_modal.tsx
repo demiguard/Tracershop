@@ -3,7 +3,7 @@ import { Modal, Button, FormControl, Row, Container } from "react-bootstrap";
 
 import { Calculator } from "../injectable/calculator";
 import { dateToDateString } from "~/lib/formatting";
-import { ActivityOrder, Booking, DeliveryEndpoint, TracershopState } from "~/dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder, Booking, DeliveryEndpoint, TracershopState } from "~/dataclasses/dataclasses";
 import { CalculatorIcon, ClickableIcon } from "../injectable/icons";
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group'
 import { compareTimeStamp, getDay, TimeStamp } from "~/lib/chronomancy";
@@ -22,25 +22,37 @@ import { ArrayMap } from "~/lib/array_map";
 import { reverse } from "~/lib/utils";
 
 
+function selectTimeSlot(timeSlots: Array<ActivityDeliveryTimeSlot>, booking: Booking, state: TracershopState){
+  const procedure = state.procedure.get(booking.procedure);
+  const bookingTimeStamp = new TimeStamp(booking.start_time);
+  bookingTimeStamp.addMinutes(procedure.delay_minutes)
+  for(const timeSlot of reverse(timeSlots)){
+    const timeSlotTimeStamp = new TimeStamp(timeSlot.delivery_time);
+    if(bookingTimeStamp.lessThan(timeSlotTimeStamp)){
+      continue;
+    }
+
+    return timeSlot;
+  }
+
+  return null;
+}
+
 export function buildBookingMap(
   timeSlotMapping : TimeSlotMapping,
   endpoint: DeliveryEndpoint,
-  relevantBookings : Array<Booking>,
+  bookings : Array<Booking>,
   state : TracershopState
 ){
   const bookingMap = new ArrayMap<number, Booking>();
 
   const timeSlots = timeSlotMapping.getTimeSlots(endpoint);
 
-  for(const relevantBooking of relevantBookings){
-    const procedure = state.procedure.get(relevantBooking.procedure);
-    const bookingTimeStamp = new TimeStamp(relevantBooking.start_time);
-    bookingTimeStamp.addMinutes(procedure.delay_minutes)
-    // Note that inner loop is 2 max, and they are already sorted
-    for(const timeSlot of reverse(timeSlots)){
-      if(bookingTimeStamp.lessThan(new TimeStamp(timeSlot.delivery_time))){
-        continue
-      }
+  for(const booking of bookings){
+    const timeSlot = selectTimeSlot(timeSlots, booking, state)
+
+    if(timeSlot !== null){
+      bookingMap.set(timeSlot.id, booking);
     }
   }
 

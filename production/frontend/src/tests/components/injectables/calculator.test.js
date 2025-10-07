@@ -92,7 +92,7 @@ describe("Calculator Test", () =>{
     })
 
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"))
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"))
     })
 
     expect(screen.getByText("09:15")).toBeVisible()
@@ -124,7 +124,7 @@ describe("Calculator Test", () =>{
     });
 
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"))
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"))
     });
 
     expect(screen.getByLabelText(CALCULATOR_NEW_TIME_LABEL)).toHaveStyle(
@@ -154,7 +154,7 @@ describe("Calculator Test", () =>{
       fireEvent.change(ActivityInput, {target : {value : "10000"}});
     })
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"));
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"));
     })
 
     expect(screen.getByLabelText(CALCULATOR_NEW_TIME_LABEL)).toHaveStyle(
@@ -185,7 +185,7 @@ describe("Calculator Test", () =>{
     })
 
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"));
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"));
     })
   });
 
@@ -206,7 +206,7 @@ describe("Calculator Test", () =>{
 
     })
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"));
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"));
     });
 
     act(() => {
@@ -234,7 +234,7 @@ describe("Calculator Test", () =>{
     });
 
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"))
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"))
     });
 
     act(() => {
@@ -262,7 +262,7 @@ describe("Calculator Test", () =>{
     });
 
     act(() => {
-      fireEvent.click(screen.getByAltText("Tilføj"));
+      fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"));
     })
 
     act(() => {
@@ -291,7 +291,7 @@ describe("Calculator Test", () =>{
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
     const ActivityInput = screen.getByLabelText(CALCULATOR_NEW_ACTIVITY_LABEL)
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
-    fireEvent.click(screen.getByAltText("Tilføj"))
+    fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"))
     fireEvent.click(screen.getByLabelText("delete-0"));
 
     expect(screen.queryByText("09:15:00")).toBeNull()
@@ -314,11 +314,11 @@ describe("Calculator Test", () =>{
     // Sample 1
     fireEvent.change(TimeInput, {target : {value : "09:15"}})
     fireEvent.change(ActivityInput, {target : {value : "10000"}});
-    fireEvent.click(screen.getByAltText("Tilføj"));
+    fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"));
     // Sample 2
     fireEvent.change(TimeInput, {target : {value : "10:15"}})
     fireEvent.change(ActivityInput, {target : {value : "20000"}});
-    fireEvent.click(screen.getByAltText("Tilføj"))
+    fireEvent.click(screen.getByLabelText("SVG-/static/images/plus2.svg"))
 
     // Act
     fireEvent.click(screen.queryByRole('button', {name: 'Udregn'}))

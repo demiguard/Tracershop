@@ -302,7 +302,7 @@ export class BitChain {
 }
 
 export class TimeSlotBitChain extends BitChain {
-  /**@type {Number} */ #chain
+  /**@type {Number} 0000000 - 0000000 first seven bits are the days in odd  */ #chain
 
   /**
    * A data structure for evaluating if you can order at a date determined by
@@ -319,6 +319,7 @@ export class TimeSlotBitChain extends BitChain {
     // this doesn't scale...
     for(const timeSlot of timeSlots){
       if(timeSlot instanceof ActivityDeliveryTimeSlot){
+
         const production = state.production.get(timeSlot.production_run);
 
         if(timeSlot.weekly_repeat != WEEKLY_REPEAT_CHOICES.ODD){
@@ -355,6 +356,14 @@ export class TimeSlotBitChain extends BitChain {
   #add_odd_weekday(day){
     this.#chain = this.#chain | (1 << day);
   }
+
+  get chain() {
+    return this.#chain
+  }
+
+  set chain(newChain) {
+    this.#chain = newChain
+  }
 }
 
 //#region Production Bit chain
@@ -367,17 +376,17 @@ export class ProductionBitChain extends BitChain {
    */
   constructor(productions){
     super()
-    this._chain = 0;
+
 
     for(const production of productions.values()){
-      this._chain = this._chain | (1 << production.production_day);
+      this.chain = this.chain | (1 << production.production_day);
     }
   }
 
   eval(date){
     const day = getDay(date);
 
-    return this._chain & (1 << day)
+    return this.chain & (1 << day)
   }
 }
 

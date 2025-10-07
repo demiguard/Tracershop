@@ -36,7 +36,7 @@ export const activityDeliveryTimeSlots = new Map([
     5, // id
     WEEKLY_REPEAT_CHOICES.EVEN, // weekly_repeat
     "15:15:00", // delivery_time
-    1, // destination
+    1, // destinationq
     7, // Tracer 1, Wednesday, 6 // production_run
     null, // expiration_date
   )],[6, new ActivityDeliveryTimeSlot(
@@ -45,6 +45,14 @@ export const activityDeliveryTimeSlots = new Map([
     "15:15:00", // delivery_time
     1, // destination
     8, // Tracer 1, Thursday, 6 // production_run
+    null, // expiration_date
+  )],
+  [7, new ActivityDeliveryTimeSlot(
+    7, // id
+    WEEKLY_REPEAT_CHOICES.ALL, // weekly_repeat
+    "15:15:00", // delivery_time
+    1, // destination
+    12, // Tracer 1, Thursday, 6 // production_run
     null, // expiration_date
   )],
 ]);

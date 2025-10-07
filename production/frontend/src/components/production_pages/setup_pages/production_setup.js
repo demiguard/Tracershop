@@ -22,7 +22,7 @@ import { MESSAGE_ERROR } from "~/lib/incoming_messages";
 import { useErrorState } from "~/lib/error_handling";
 import { AlertBox } from "~/components/injectable/alert_box";
 import { initializeProductReference } from "~/lib/initialization";
-import { productToReferenceOption, ProductReference, PRODUCT_TYPES } from "~/dataclasses/references/product_reference";
+import { productToReferenceOption, ProductReference, PRODUCT_TYPES, getProductionKW } from "~/dataclasses/references/product_reference";
 import { useOnEnter } from "~/effects/on_enter";
 import { useCommitObject } from "~/effects/commit_object";
 
@@ -165,7 +165,6 @@ export function ProductionSetup(){
   const [creationError, setCreationError] = useErrorState();
 
   const productionOptions = valid_products.map(productToReferenceOption);
-
   const displayProductions = product.filterProduction(state);
 
   function selectNewProduct(event){
@@ -270,7 +269,7 @@ export function ProductionSetup(){
             <CommitButton
               temp_object={tempProduction}
               validate={validate}
-              object_type={product.type}
+              object_type={getProductionKW(product)}
               label="commit-active-production"
               callback={validateCallback}
             />

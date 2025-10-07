@@ -15,6 +15,10 @@ export class ArrayMap<K,V> {
     }
   }
 
+  get size(){
+    return this.#map.size;
+  }
+
   has(key: K){
     return this.#map.has(key);
   }

@@ -1,70 +1,80 @@
+import { ActivityProduction } from "~/dataclasses/dataclasses";
+import { DAYS } from "~/lib/constants";
+
 export const productions = new Map([
-  [1, {
-      id : 1,
-      production_day : 0,
-      tracer : 1,
-      production_time : "06:00:00",
-      expiration_date : null,
-  }], [2, {
-      id : 2,
-      production_day : 0,
-      tracer : 1,
-      production_time : "10:30:00",
-      expiration_date : null,
-  }], [3, {
-      id : 3,
-      production_day : 1,
-      tracer : 1,
-      production_time : "06:00:00",
-      expiration_date : null,
-  }], [4, {
-      id : 4,
-      production_day : 1,
-      tracer : 1,
-      production_time : "10:30:00",
-      expiration_date : null,
-  }], [5, {
-      id : 5,
-      production_day : 0,
-      tracer : 3,
-      production_time : "07:00:00",
-      expiration_date : null,
-  }], [6, {
-      id : 6,
-      production_day : 0,
-      tracer : 3,
-      production_time : "11:30:00",
-      expiration_date : null,
-  }], [7, {
-    id : 7,
-    production_day : 2,
-    tracer : 1,
-    production_time : "06:00:00",
-    expiration_date : null,
-  }], [8, {
-    id : 8,
-    production_day : 3,
-    tracer : 1,
-    production_time : "06:00:00",
-    expiration_date : null,
-  }], [9, {
-    id : 9,
-    production_day : 4,
-    tracer : 3,
-    production_time : "11:30:00",
-    expiration_date : null,
-}], [ 10, {
-    id : 10,
-    production_day : 3,
-    tracer : 3,
-    production_time : "06:30:00",
-    expiration_date : null,
-  }],
-  [ 11, {
-    id : 11,
-    production_day : 3,
-    tracer : 3,
-    production_time : "11:30:00",
-    expiration_date : null,
-  }]
+  [1, new ActivityProduction(
+    1, // id
+    DAYS.MONDAY, // production_day
+    1, // tracer
+    "06:00:00", // production_time
+    null, // expiration_date
+  )], [2, new ActivityProduction(
+    2, // id
+    DAYS.MONDAY, // production_day
+    1, // tracer
+    "10:30:00", // production_time
+    null, // expiration_date
+  )], [3, new ActivityProduction(
+    3, // id
+    DAYS.TUESDAY, // production_day
+    1, // tracer
+    "06:00:00", // production_time
+    null, // expiration_date
+  )], [4, new ActivityProduction(
+    4, // id
+    DAYS.TUESDAY, // production_day
+    1, // tracer
+    "10:30:00", // production_time
+    null, // expiration_date
+  )], [5, new ActivityProduction(
+    5, // id
+    DAYS.MONDAY, // production_day
+    3, // tracer
+    "07:00:00", // production_time
+    null, // expiration_date
+  )], [6, new ActivityProduction(
+    6, // id
+    DAYS.MONDAY, // production_day
+    3, // tracer
+    "11:30:00", // production_time
+    null, // expiration_date
+  )], [7, new ActivityProduction(
+    7, // id
+    DAYS.WENDSDAY, // production_day
+    1, // tracer
+    "06:00:00", // production_time
+    null, // expiration_date
+  )], [8, new ActivityProduction(
+    8, //   id
+    DAYS.THURSDAY, //   production_day
+    1, //   tracer
+    "06:00:00", //   production_time
+    null, //   expiration_date
+  )], [9, new ActivityProduction(
+    9, // id
+    4, // production_day
+    3, // tracer
+    "11:30:00", // production_time
+    null, // expiration_date
+  )], [ 10, new ActivityProduction(
+    10, // id
+    3, // production_day
+    3, // tracer
+    "06:30:00", // production_time
+    null, // expiration_date
+  )],
+  [ 11, new ActivityProduction(
+    11, //   id
+    3, //   production_day
+    3, //   tracer
+    "11:30:00", //   production_time
+    null, //   expiration_date
+  )],
+  [ 12, new ActivityProduction(
+    12, //   id
+    DAYS.TUESDAY, //   production_day
+    1, //   tracer
+    "06:30:00", //   production_time
+    null, //   expiration_date
+  )]
 ]);

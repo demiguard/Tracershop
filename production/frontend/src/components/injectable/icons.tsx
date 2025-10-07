@@ -27,36 +27,26 @@ interface ClickableIconProps {
   beforeInjection? : (svg: SVGSVGElement) => void
 }
 
-export function ClickableIcon ({
+export function ClickableIcon (props : ClickableIconProps){
+  const {
     altText,
     src,
     onClick,
     onMouseDown,
     label,
     className ,
-    style,
-    variant,
-    beforeInjection,
-  } : ClickableIconProps){
-
-  if(style === undefined){
-    style = {
+    style={
       padding : "0px",
       justifyContent : 'center',
       alignItems: 'center',
       display: 'block',
-    }
-  }
+    },
+    variant="variant-light",
+    beforeInjection,
+    ...rest
+  } = props
 
-  if(variant === undefined){
-    variant = "variant-light"
-  }
-
-  if (className) {
-    className = `statusIcon ${className}`;
-  } else {
-    className = "statusIcon";
-  }
+  const PassedClassName = className ? `statusIcon ${className}` : "statusIcon";
 
   return (<Button
             style={style}
@@ -73,9 +63,10 @@ export function ClickableIcon ({
         }}
         width="24"
         height="24"
-        className={className}
+        className={PassedClassName}
         src={src}
         alt={altText}
+        {...rest}
       />
     </Button>)
 }

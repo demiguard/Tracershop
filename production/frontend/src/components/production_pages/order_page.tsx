@@ -71,6 +71,8 @@ export function OrderPage() {
           break;
         }
       }
+    } else if(SavedActiveProduct === "-1") {
+      // Special Tracer is selected
     } else {
       product = ProductReference.fromValue(SavedActiveProduct)
     }

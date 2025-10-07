@@ -10,6 +10,7 @@ import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
+import { TracerCatalogProvider } from "~/contexts/tracer_catalog.js";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
 
@@ -34,7 +35,9 @@ describe("Procedure Table test suite", () => {
   it("Standard Render test", async() => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
+        <TracerCatalogProvider>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </TracerCatalogProvider>
       </TracerShopContext>
     );
 
@@ -64,7 +67,9 @@ describe("Procedure Table test suite", () => {
 
     render(
       <TracerShopContext tracershop_state={testState} websocket={ResolvingWebsocket} dispatch={dispatch}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
+        <TracerCatalogProvider>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </TracerCatalogProvider>
       </TracerShopContext>
     );
 
@@ -114,7 +119,9 @@ describe("Procedure Table test suite", () => {
     }
     render(
       <TracerShopContext tracershop_state={testState} websocket={ResolvingWebsocket} dispatch={dispatch}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
+        <TracerCatalogProvider>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </TracerCatalogProvider>
       </TracerShopContext>
     );
 
@@ -181,7 +188,9 @@ describe("Procedure Table test suite", () => {
   it("Edit procedure 1 with nonsense units", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
+        <TracerCatalogProvider>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </TracerCatalogProvider>
       </TracerShopContext>
     );
 
@@ -203,7 +212,9 @@ describe("Procedure Table test suite", () => {
   it("Edit procedure 1 with nonsense Delay", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
+        <TracerCatalogProvider>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </TracerCatalogProvider>
       </TracerShopContext>
     );
 
@@ -228,7 +239,9 @@ describe("Procedure Table test suite", () => {
   it("Create a procedure without selecting a series description", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
-        <ProcedureTable relatedCustomer={testState.customer}/>
+        <TracerCatalogProvider>
+          <ProcedureTable relatedCustomer={testState.customer}/>
+        </TracerCatalogProvider>
       </TracerShopContext>
     );
 

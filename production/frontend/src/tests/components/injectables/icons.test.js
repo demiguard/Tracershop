@@ -4,9 +4,9 @@
 
 import React from "react";
 
-import { jest } from '@jest/globals'
+import { jest, expect } from '@jest/globals'
 import { screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { ClickableIcon, StatusIcon } from "../../../components/injectable/icons";
+import { CalculatorIcon, ClickableIcon, StatusIcon } from "../../../components/injectable/icons";
 import { testState } from "~/tests/app_state";
 import { ActivityOrder } from "~/dataclasses/dataclasses";
 import { ORDER_STATUS } from "~/lib/constants";
@@ -51,6 +51,17 @@ describe("Clickable icon tests", () => {
 
     expect(dummyClickable).toHaveBeenCalled();
   });
+
+  it("We can find an icon with test_id", () => {
+    render(<ClickableIcon src="dummy" data-testid="HelloWorld"/>)
+    expect(screen.queryByTestId("HelloWorld")).not.toBeNull();
+  });
+
+  it("We can find Calculator Icon with test_id", () => {
+    render(<CalculatorIcon data-testid="HelloWorld"/>)
+    expect(screen.queryByTestId("HelloWorld")).not.toBeNull();
+  })
+
 })
 
 describe("Status icon tests", () => {

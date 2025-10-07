@@ -9,7 +9,7 @@ import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from 
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { CalculatorModal } from "../../modals/calculator_modal";
 import { combineDateAndTimeStamp } from "~/lib/chronomancy";
-import { compareLoosely, nullify, toMapping } from "~/lib/utils";
+import { compareLoosely, dataClassExists, nullify, toMapping } from "~/lib/utils";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
@@ -17,10 +17,154 @@ import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
 import { Optional } from "~/components/injectable/optional";
 import { CommitButton } from "~/components/injectable/commit_button";
-import { appendNewObject, reset_error, setTempMapToEvent, set_state_error } from "~/lib/state_management";
+import { setStateToEvent } from "~/lib/state_management";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { makeBlankActivityOrder } from "~/lib/blanks";
+import { useErrorState } from "~/lib/error_handling";
 
+
+type ShowOrderRowProps = {
+  order : ActivityOrder,
+  calculatorActivity : number
+}
+
+function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
+  const websocket = useWebsocket();
+  const state = useTracershopState();
+
+  const [displayActivity, setDisplayActivity] = useState(() => {
+    if (dataClassExists(order)){
+      return String(order.ordered_activity);
+    }
+
+    return String(calculatorActivity);
+  });
+  const [displayComment, setDisplayComment] = useState(() => {
+    if(dataClassExists(order)){
+      return nullParser(order.comment);
+    }
+
+    return "";
+  });
+
+  const [activityError, setActivityError] = useErrorState();
+    // Functions
+  function validate(){
+    const [validActivity, numberActivity] = parseDanishPositiveNumberInput(displayActivity, "Aktiviten");
+
+    if(!validActivity){
+      setActivityError(numberActivity);
+      return [false, {}];
+    }
+    setActivityError("");
+
+    return [true, {
+      ...order,
+      ordered_activity : numberActivity,
+      comment : nullify(displayComment),
+      status : ORDER_STATUS.ORDERED,
+    }];
+  }
+
+  function deleteOrder(){
+    websocket.sendDeleteModel(DATA_ACTIVITY_ORDER, [order]);
+  }
+
+  // Rewrite
+  function commitCallBack(){
+    setDisplayActivity("0");
+    setDisplayComment("");
+  }
+
+  useUpdatingEffect(function RefreshOrder(){
+    if(dataClassExists(order)){
+      setDisplayActivity(order.ordered_activity);
+      setDisplayComment(nullParser(order.comment));
+    } else {
+      setDisplayActivity(String(calculatorActivity));
+    }
+  }, [calculatorActivity, order]);
+
+  const ordered = order.status > 0;
+  const canEdit = order.status <= 1;
+  const changedTemp = state.activity_orders.has(order.id) ?
+                        String(order.ordered_activity) === displayActivity
+                      : true;
+
+  const statusIcon = (() => {
+    if(!dataClassExists(order)){
+      return <div></div>
+    }
+    return <StatusIcon order={order}/>
+  })()
+
+  const statusInfo = (() => {
+    if (order.moved_to_time_slot){
+      const movedTimeSlot = state.deliver_times.get(order.moved_to_time_slot)
+      return `Rykket til ${movedTimeSlot.delivery_time}`;
+    } else if (ordered) {
+      return `ID: ${order.id}`;
+    } else {
+      return "Ny ordre";
+    }
+  })();
+
+  return (
+    <Row>
+      <Col xs={1} style={cssCenter}>
+        {statusIcon}
+      </Col>
+      <Col style={cssCenter} xs={1}>
+        {statusInfo}
+      </Col>
+      <Col>
+        <TracershopInputGroup label="Aktivitet" error={activityError} tail={"MBq"}>
+          <EditableInput
+            canEdit={canEdit}
+            data-testid={`activity-${order.id}`}
+            value={displayActivity}
+            onChange={setStateToEvent(setDisplayActivity)}
+          />
+        </TracershopInputGroup>
+      </Col>
+      <Col>
+        <TracershopInputGroup label="Kommentar">
+        <EditableInput
+          canEdit={canEdit}
+          data-testid={`comment-${order.id}`}
+          as="textarea"
+          rows={1}
+          value={displayComment}
+          onChange={(setStateToEvent(setDisplayComment))}
+        />
+        </TracershopInputGroup></Col>
+      <Col xs={1} style={cssAlignRight}>
+        <Optional exists={canEdit && changedTemp}>
+          <CommitButton
+            label={`commit-${order.id}`}
+            temp_object={order}
+            validate={validate}
+            callback={commitCallBack}
+            add_image="/static/images/cart.svg"
+            object_type={DATA_ACTIVITY_ORDER}
+          />
+        </Optional>
+        <Optional exists={canEdit && !changedTemp && ordered}>
+          <ClickableIcon
+            src={"static/images/decline.svg"}
+            onClick={deleteOrder}
+            label={`delete-order-${order.id}`}
+          />
+        </Optional>
+      </Col>
+    </Row>);
+}
+
+type CardProps = {
+  orderCollection? : ActivityOrderCollection,
+  openCalculator? : () => void,
+  canOrder? : boolean
+}
 
 function TimeSlotCardHeaderMoved(){
   return(
@@ -45,14 +189,14 @@ function TimeSlotCardHeaderCancelled({}){
   )
 }
 
-function TimeSlotCardHeaderEmpty({canOrder, openCalculator}){
+function TimeSlotCardHeaderEmpty({canOrder, openCalculator, orderCollection}){
   if(canOrder){
     return <Row >
       <Col>Der er ikke bestilt sporestof</Col>
       <Col style={{
         flex : "0 0 fit-content"
       }}>
-        <CalculatorIcon openCalculator={openCalculator}/>
+        <CalculatorIcon data-testid={`open-calculator-${orderCollection.delivering_time_slot.id}`} openCalculator={openCalculator}/>
       </Col>
     </Row>
   }
@@ -72,12 +216,12 @@ function TimeSlotCardHeaderEmpty({canOrder, openCalculator}){
  * }} props
  * @returns
  */
-function TimeSlotCardHeaderOrdered({orderCollection, openCalculator}){
+function TimeSlotCardHeaderOrdered({orderCollection, openCalculator}: CardProps){
   return (
     <Row>
       <Col>Bestilt: {orderCollection.ordered_activity} MBq</Col>
       <Col style={{ flex : "0 0 fit-content" }}>
-        <CalculatorIcon openCalculator={openCalculator}/>
+        <CalculatorIcon data-testid={`open-calculator-${orderCollection.delivering_time_slot.id}`} openCalculator={openCalculator}/>
       </Col>
     </Row>
   );
@@ -126,7 +270,6 @@ export function TimeSlotCardHeaderReleased({
       renderDateTime(orderCollection.freed_time).substring(0,5)
     : "Ukendt tidspunk!";
 
-
   return (
     <Row>
       <Col>Udleveret: {displayable_uncorrected_activity} MBq</Col>
@@ -134,7 +277,7 @@ export function TimeSlotCardHeaderReleased({
       <Col style={{ flex : "0 0 fit-content" }}>
         <Optional exists={!orderCollection.moved}>
           <ActivityDeliveryIcon
-            label={`delivery-${orderCollection.delivering_time_slot.id}`}
+            data-testid={`delivery-${orderCollection.delivering_time_slot.id}`}
             orderCollection={orderCollection}
           />
         </Optional>
@@ -143,195 +286,59 @@ export function TimeSlotCardHeaderReleased({
   );
 }
 
-function ActivityOrderRow(props){
-  return (
-    <div></div>
-  );
-}
 
+type TimeSlotCardActivityProps = {
+  timeSlot : ActivityDeliveryTimeSlot,
+  overhead : number,
+  activityDeadlineValid : Boolean,
+  activityOrders : Array<ActivityOrder>
+};
 
 
 /**
 * This is a card, representing the users view of ActivityDeliveryTimeSlot
 * It contains all ordered
-* @param {{
-*  timeSlot : ActivityDeliveryTimeSlot,
-*  overhead : number
-*  activityOrders: Array<ActivityOrder>,
-*  activityDeadlineValid : Boolean
-* }} props - Input props
-* @returns {Element}
 */
-
 export function TimeSlotCardActivity({
   timeSlot,
   activityOrders,
   overhead,
   activityDeadlineValid,
-}){
+} : TimeSlotCardActivityProps){
+  // State
+  const [collapsed, setCollapsed] = useState(false);
+  const [showCalculator, setShowCalculator] = useState(false);
+  const [calculatorActivity, setCalculatorActivity] = useState(0);
+
+  // Contexts
   const state = useTracershopState();
-  const active_date = state.today;
-  const websocket = useWebsocket();
 
   // Prop extraction
+  const active_date = state.today;
   const dateString = dateToDateString(active_date);
-
   const production = state.production.get(timeSlot.production_run);
   const tracer = state.tracer.get(production.tracer);
   const canOrder = activityDeadlineValid;
 
   const blankOrder = makeBlankActivityOrder(timeSlot)
 
-  function newOrderFunction(){
-    if(canOrder){
-      return blankOrder;
-    } else {
-      return null;
-    }
-  }
-
   // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the
   //same endpoint and tracer (and day, but that assumption is not used here!)
   const displayActivityOrders = activityOrders.filter((order) =>
-    order.ordered_time_slot === timeSlot.ID);
+    order.ordered_time_slot === timeSlot.id);
 
   const orderCollection = new ActivityOrderCollection(activityOrders, dateString, timeSlot, state, overhead);
 
-  // State
-  const [collapsed, setCollapsed] = useState(false);
-  const [showCalculator, setShowCalculator] = useState(false);
-  const [errors, setErrors] = useState(new Map());
-  const [orders, setOrders] = useState(
-    appendNewObject(toMapping(displayActivityOrders), newOrderFunction)
-  ); // I really feel like this is not very readable, but it is compose-able
-
-  // Effects
-  useUpdatingEffect(() => {
-    const deliverableActivityOrders = activityOrders.filter((order) =>
-      order.ordered_time_slot === timeSlot.id
-    );
-    setOrders(appendNewObject(toMapping(deliverableActivityOrders), newOrderFunction))
-  }, [activityOrders]); // Refresh on other users input
 
   // This Component displays all order in their original positions
-  const orderRows = [...orders.values()].map((order, i) => {
-    //#region Sub component
-    // This is a kind of sub-component, that if this way due to the react engine
-    // The prettier thing is probably to move this out as a private module
-    //function
-    // Functions
-    function validate(){
-      const [validActivity, numberActivity] = parseDanishPositiveNumberInput(order.ordered_activity, "Aktiviten");
-      if(!validActivity){
-        set_state_error(setErrors, order.id, numberActivity);
-        return [false, {}];
-      }
+  const orderRows = displayActivityOrders.map((order, i) =>
+    <ShopOrderRow order={order} key={i} calculatorActivity={calculatorActivity}/>);
 
-      reset_error(setErrors, order.id);
-
-      return [true, {
-        ...order,
-        ordered_activity : numberActivity,
-        comment : nullify(order.comment),
-        status : ORDER_STATUS.ORDERED,
-      }];
-    }
-
-    function deleteOrder(){
-      websocket.sendDeleteModel(DATA_ACTIVITY_ORDER, [order]);
-    }
-
-    // Rewrite
-    function commitCallBack(){
-      setOrders(old => {
-        const newOrders = new Map(old);
-        const newOrder = order.copy();
-        newOrder.ordered_activity = "";
-        newOrder.comment = "";
-        newOrders.set(order.id, order);
-        return newOrders;
-      })
-    }
-
-    const error = errors.has(order.id) ? errors.get(order.id) : ""
-    const ordered = order.status > 0;
-    const canEdit = order.status <= 1;
-    const changedTemp = state.activity_orders.has(order.id) ?
-                          !compareLoosely(order, state.activity_orders.get(order.id))
-                        : true;
-
-    const statusIcon = (() => {
-      if(orderCollection.minimum_status == ORDER_STATUS.EMPTY){
-        return <div></div>
-      }
-      return <StatusIcon orderCollection={orderCollection}/>
-    })()
-
-    const statusInfo = (() => {
-      if (order.moved_to_time_slot){
-        const movedTimeSlot = state.deliver_times.get(order.moved_to_time_slot)
-        return `Rykket til ${movedTimeSlot.delivery_time}`;
-      } else if (ordered) {
-        return `ID: ${order.id}`;
-      } else {
-        return "Ny ordre";
-      }
-    })();
-
-
-    return (
-      <Row key={i}>
-        <Col xs={1} style={cssCenter}>
-          {statusIcon}
-        </Col>
-        <Col style={cssCenter} xs={1}>
-          {statusInfo}
-        </Col>
-        <Col>
-          <TracershopInputGroup label="Aktivitet" error={error} tail={"MBq"}>
-            <EditableInput
-              canEdit={canEdit}
-              data-testid={`activity-${order.id}`}
-              value={order.ordered_activity}
-              //@ts-ignore
-              onChange={setTempMapToEvent(setOrders, order.id, 'ordered_activity')}
-            />
-          </TracershopInputGroup>
-        </Col>
-        <Col>
-          <TracershopInputGroup label="Kommentar">
-          <EditableInput
-            canEdit={canEdit}
-            data-testid={`comment-${order.id}`}
-            as="textarea"
-            rows={1}
-            value={nullParser(order.comment)}
-            //@ts-ignore
-            onChange={setTempMapToEvent(setOrders, order.id, 'comment')}
-          />
-          </TracershopInputGroup></Col>
-        <Col xs={1} style={cssAlignRight}>
-          <Optional exists={canEdit && changedTemp}>
-            <CommitButton
-              label={`commit-${order.id}`}
-              temp_object={order}
-              validate={validate}
-              callback={commitCallBack}
-              add_image="/static/images/cart.svg"
-              object_type={DATA_ACTIVITY_ORDER}
-            />
-          </Optional>
-          <Optional exists={canEdit && !changedTemp && ordered}>
-            <ClickableIcon
-              src={"static/images/decline.svg"}
-              onClick={deleteOrder}
-              label={`delete-order-${order.id}`}
-            />
-          </Optional>
-        </Col>
-      </Row>);
-  });
-  //#region End of sub-component
+  if(canOrder){
+    orderRows.push(
+      <ShopOrderRow order={blankOrder} key={-1} calculatorActivity={calculatorActivity}/>
+    );
+  }
 
   function openCalculator(){
     setShowCalculator(true)
@@ -343,20 +350,14 @@ export function TimeSlotCardActivity({
     [DATA_ISOTOPE] : state.isotopes,
     [PROP_ON_CLOSE] : () => {setShowCalculator(false);},
     [PROP_ACTIVE_TRACER] : tracer,
-    [PROP_COMMIT] : (activity) => {
-      if(orders.has(-1)){
-        const order = orders.get(-1).copy();
-        order.ordered_activity = Math.floor(activity);
-        setOrders(old => {
-          const newOrders = new Map(old);
-          newOrders.set(-1, order);
-          return newOrders;
-        })
-      }
+    [PROP_COMMIT] : (activity : number) => {
+        setCalculatorActivity(
+          Math.floor(activity)
+        );
 
-      setShowCalculator(false);
-      setCollapsed(true);
-    },
+        setShowCalculator(false);
+        setCollapsed(true);
+      },
     initial_MBq : 300,
   };
 
@@ -374,7 +375,7 @@ export function TimeSlotCardActivity({
       case ORDER_STATUS.ORDERED:
         return <TimeSlotCardHeaderOrdered orderCollection={orderCollection} openCalculator={openCalculator}/>;
       case ORDER_STATUS.EMPTY:
-        return <TimeSlotCardHeaderEmpty canOrder={canOrder} openCalculator={openCalculator}/>;
+        return <TimeSlotCardHeaderEmpty orderCollection={orderCollection} canOrder={canOrder} openCalculator={openCalculator}/>;
       default:
         console.error("Unhandled header type");
         return <div>Something should be here, but due to an error it's not</div>

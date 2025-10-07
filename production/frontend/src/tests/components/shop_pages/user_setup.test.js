@@ -5,11 +5,10 @@ import React, {StrictMode} from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { testState } from "~/tests/app_state.js";
-import { ERROR_MESSAGE_INCORRECT_GROUPS, ERROR_MESSAGE_NO_LDAP_USERNAME, UserSetup } from "~/components/shop_pages/user_setup.js";
-import { exact, object } from "prop-types";
-import { SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { testState } from "~/tests/app_state";
+import { ERROR_MESSAGE_INCORRECT_GROUPS, ERROR_MESSAGE_NO_LDAP_USERNAME, UserSetup } from "~/components/shop_pages/user_setup";
+import { SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -60,7 +59,7 @@ describe("User setup test", () => {
     }
 
     expect(screen.getByLabelText('user-assignment-new')).toBeVisible();
-    expect(screen.getByAltText('Tilføj tildeling')).toBeVisible();
+    expect(screen.getByLabelText('SVG-/static/images/plus2.svg')).toBeVisible();
   });
 
   it("Create user_assignment", async () => {
@@ -85,7 +84,7 @@ describe("User setup test", () => {
     });
 
     await act(async () => {
-      fireEvent.mouseDown(screen.getByAltText('Tilføj tildeling'))
+      fireEvent.mouseDown(screen.getByLabelText('SVG-/static/images/plus2.svg'))
     })
 
     expect(websocket.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -115,7 +114,7 @@ describe("User setup test", () => {
     });
 
     await act(async () => {
-      fireEvent.mouseDown(screen.getByAltText('Tilføj tildeling'))
+      fireEvent.mouseDown(screen.getByLabelText('SVG-/static/images/plus2.svg'))
     })
 
     expect(websocket.send).toHaveBeenCalledWith(expect.objectContaining({
@@ -151,7 +150,7 @@ describe("User setup test", () => {
     });
 
     await act(async () => {
-      fireEvent.mouseDown(screen.getByAltText('Tilføj tildeling'))
+      fireEvent.mouseDown(screen.getByLabelText('SVG-/static/images/plus2.svg'))
     })
 
     expect(websocket.send).toHaveBeenCalledWith(expect.objectContaining({

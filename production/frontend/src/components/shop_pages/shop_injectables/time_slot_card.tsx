@@ -1,5 +1,5 @@
 import React from "react";
-import { ProductTypes, PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
+import { ProductReference } from "~/dataclasses/references/product_reference";
 import { ActivityDeliveryTimeSlot, ActivityOrder, IsotopeDelivery, IsotopeOrder } from "~/dataclasses/dataclasses";
 import { DATA_ISOTOPE, DATA_TRACER } from "~/lib/shared_constants";
 import { TimeSlotCardIsotope } from "~/components/shop_pages/shop_injectables/time_slot_card_isotope";
@@ -10,7 +10,7 @@ type TimeSlotCardArgs = {
    product : ProductReference,
    timeSlot : ActivityDeliveryTimeSlot
    orders : ActivityOrder[]
-   overhead : Number,
+   overhead : number,
    deadlineValid : boolean
 } | {
    type : typeof DATA_ISOTOPE,
