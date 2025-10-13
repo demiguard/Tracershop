@@ -36,19 +36,33 @@ function getOverheadString(page) {
   return String(percentage)
 }
 
+
 /**
+ * In the customer modal:
+ * ```
+ * ----------------------------------------------
+ * |              |              |              |
+ * | CustomerForm | EndpointForm | TimeslotForm |
+ * |              |              |              |
+ * ----------------------------------------------
+ * |                                            |
+ * |             TimeslotsTimeTable             |
+ * |                                            |
+ * ----------------------------------------------
+ * ```
+ * This is timeslotForm. It's responiblity is to allow users to modify
+ * deliveries, Meaning ActivityDeliveryTimeSlot and IsotopeDelivery
  *
- * @param {Object} props
- * @param {StateType<ProductReference>} props.productState
- * @param {DeliveryEndpoint} props.selectedEndpoint - The endpoint that is currently being operated on
+ *
  */
 export function TimeSlotForm({
   timeSlotDirty,
   timeSlotState,
   selectedEndpoint,
   initializeNewTimeSlot,
-  initialOverhead,
+  initialOverhead=1,
   setEndpointReferenceError,
+  activityTracersOptions,
   productState,
   products
 }){

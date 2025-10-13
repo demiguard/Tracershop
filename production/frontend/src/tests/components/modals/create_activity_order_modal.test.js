@@ -17,6 +17,7 @@ import { TimeSlotMapping } from "~/lib/data_structures";
 import { toMapping } from "~/lib/utils";
 import { ActivityDeliveryTimeSlot, Booking, DeliveryEndpoint } from "~/dataclasses/dataclasses";
 import { dateToDateString } from "~/lib/formatting";
+import { ProcedureContext, ProcedureFinder } from "~/contexts/procedure_context";
 const module = jest.mock('../../../lib/tracer_websocket');
 const tracer_websocket = require("../../../lib/tracer_websocket");
 
@@ -54,14 +55,14 @@ afterEach(() => {
   props = null;
 });
 
-
-
 describe("create activity modal", () => {
   it("standard render test", async () => {
     await act( async () => {
       render(
         <TracerShopContext tracershop_state={testState} websocket={websocket}>
-          <CreateOrderModal {...props} />
+          <ProcedureContext>
+            <CreateOrderModal {...props} />
+          </ProcedureContext>
         </TracerShopContext>
       );
     })
@@ -78,7 +79,9 @@ describe("create activity modal", () => {
     await act(async () => {
       render(
         <TracerShopContext tracershop_state={testState} websocket={websocket}>
-          <CreateOrderModal {...props} />
+          <ProcedureContext>
+            <CreateOrderModal {...props} />
+          </ProcedureContext>
         </TracerShopContext>
       );
     })
@@ -96,7 +99,9 @@ describe("create activity modal", () => {
     await act(async () => {
       render(
         <TracerShopContext tracershop_state={testState} websocket={websocket}>
-          <CreateOrderModal {...props} />
+          <ProcedureContext>
+            <CreateOrderModal {...props} />
+          </ProcedureContext>
         </TracerShopContext>
       );
     });
@@ -117,7 +122,9 @@ describe("create activity modal", () => {
     await act(async () => {
       render(
         <TracerShopContext tracershop_state={testState} websocket={websocket}>
-          <CreateOrderModal {...props} />
+          <ProcedureContext>
+            <CreateOrderModal {...props} />
+          </ProcedureContext>
         </TracerShopContext>
       );
     })
@@ -167,8 +174,9 @@ describe("create activity modal", () => {
 
     // State modification
     const [timeSlotMapping, deliveryEndpoints, modState] = getBookingMapTestProps();
+    const procedureFinder = new ProcedureFinder(modState);
 
-    const bookingMap = buildBookingMap(timeSlotMapping, deliveryEndpoints.get(1), bookings, modState);
+    const bookingMap = buildBookingMap(timeSlotMapping, deliveryEndpoints.get(1), bookings, procedureFinder);
     expect(bookingMap.size).toBe(0);
   });
 
@@ -182,12 +190,14 @@ describe("create activity modal", () => {
 
     // State modification
     const [timeSlotMapping, deliveryEndpoints, modState] = getBookingMapTestProps();
-    const bookingMap = buildBookingMap(timeSlotMapping, deliveryEndpoints.get(1), bookings, modState);
+    const procedureFinder = new ProcedureFinder(modState);
+
+    const bookingMap = buildBookingMap(timeSlotMapping, deliveryEndpoints.get(1), bookings, procedureFinder);
 
     expect(bookingMap.size).toBe(3);
 
-    expect(bookingMap.get(TIME_SLOT_ID_1).length).toBe(2)
-    expect(bookingMap.get(TIME_SLOT_ID_2).length).toBe(1)
-    expect(bookingMap.get(TIME_SLOT_ID_3).length).toBe(1)
+    expect(bookingMap.get(TIME_SLOT_ID_1).length).toBe(2);
+    expect(bookingMap.get(TIME_SLOT_ID_2).length).toBe(1);
+    expect(bookingMap.get(TIME_SLOT_ID_3).length).toBe(1);
   });
 });

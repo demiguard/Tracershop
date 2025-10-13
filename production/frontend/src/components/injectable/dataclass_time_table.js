@@ -132,6 +132,7 @@ function entryJsxDecorator(onClick, JSXprops={}){
         })()
 
         return <div
+                  data-testid={`time-slot-${entry.id}`}
                   aria-label={`time-slot-${entry.id}`}
                   key={i}
                   style={{
@@ -218,19 +219,10 @@ class DataClassTimeTableDataContainer extends ITimeTableDataContainer {
   }
 }
 
-
-/**
- *
- * @param {Object} props
- * @param {(TimeTableIndexable) => undefined} props.onClick
- * @param {items}
- *
- * @returns
- */
 export function DataClassTimeTable({
-  min_hour,
-  max_hour,
-  onClick=()=>{},
+  min_hour=0,
+  max_hour=23,
+  onClick=(entry)=>{},
   items = [],
   weekly_days=127,
   JSXprops = {},

@@ -14,7 +14,7 @@ import { useTracershopState } from "~/contexts/tracer_shop_context";
 export function EndpointSelect(props){
   const state = useTracershopState();
   function namingEndpoint(endpoint){
-    const/**@type {Customer} */ customer = state.customer.get(endpoint.owner);
+    const customer = state.customer.get(endpoint.owner);
 
     return `${customer.short_name} - ${endpoint.name}`;
   }

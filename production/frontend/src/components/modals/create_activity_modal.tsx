@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Modal, Button, FormControl, Row, Container } from "react-bootstrap";
+import { Modal, Button, FormControl, Row, Container, Col } from "react-bootstrap";
 
 import { Calculator } from "../injectable/calculator";
 import { dateToDateString } from "~/lib/formatting";
@@ -14,16 +14,59 @@ import { setStateToEvent } from "~/lib/state_management";
 import { BookingStatus, DATA_ACTIVITY_ORDER, DATA_BOOKING } from "~/lib/shared_constants";
 import { NEW_LOCAL_ID, ORDER_STATUS } from "~/lib/constants";
 import { Optional } from "~/components/injectable/optional";
-import { FONT, MARGIN } from "~/lib/styles";
+import { FONT, JUSTIFY, MARGIN } from "~/lib/styles";
 import { timeSlotFilter } from "~/lib/filters";
 import { MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages";
 import { TimeSlotMapping } from "~/lib/data_structures";
 import { ArrayMap } from "~/lib/array_map";
 import { reverse } from "~/lib/utils";
+import { TimeDisplay } from "../injectable/data_displays/time_display";
+import { MBqDisplay } from "../injectable/data_displays/mbq_display";
+import { ProcedureFinder, useProcedureFinder } from "~/contexts/procedure_context";
+import { decayCorrect } from "~/lib/physics";
+import { DateDisplay } from "../injectable/data_displays/date_display";
 
 
-function selectTimeSlot(timeSlots: Array<ActivityDeliveryTimeSlot>, booking: Booking, state: TracershopState){
-  const procedure = state.procedure.get(booking.procedure);
+type ActivityTimeSlotProps = {
+  timeSlot : ActivityDeliveryTimeSlot,
+  bookings : Array<Booking>,
+  halflife : number
+}
+
+function ActivityTimeSlot({timeSlot, bookings, halflife}: ActivityTimeSlotProps){
+  const procedureFinder = useProcedureFinder();
+  let activity = 0;
+
+  const timeSlotTimeStamp = new TimeStamp(timeSlot.delivery_time);
+
+  for(const booking of bookings){
+    const procedure = procedureFinder.find(booking);
+
+    if(procedure === null){
+      console.log("Didn't find the procedure!");
+      continue;
+    }
+
+    const bookingTime = new TimeStamp(booking.start_time)
+    bookingTime.addMinutes(procedure.delay_minutes);
+
+    const decay_minutes = compareTimeStamp(bookingTime, timeSlotTimeStamp).toMinutes();
+
+    activity += decayCorrect(halflife, decay_minutes,procedure.tracer_units)
+  }
+
+  return (<Row>
+    <Container>
+      <TimeDisplay time={timeSlot.delivery_time} /> - <MBqDisplay activity={activity}/>
+    </Container>
+  </Row>);
+}
+
+function selectTimeSlot(timeSlots: Array<ActivityDeliveryTimeSlot>,
+  booking: Booking,
+  procedureFinder : ProcedureFinder
+){
+  const procedure = procedureFinder.find(booking);
   const bookingTimeStamp = new TimeStamp(booking.start_time);
   bookingTimeStamp.addMinutes(procedure.delay_minutes)
   for(const timeSlot of reverse(timeSlots)){
@@ -42,14 +85,14 @@ export function buildBookingMap(
   timeSlotMapping : TimeSlotMapping,
   endpoint: DeliveryEndpoint,
   bookings : Array<Booking>,
-  state : TracershopState
+  procedureFinder : ProcedureFinder
 ){
   const bookingMap = new ArrayMap<number, Booking>();
 
   const timeSlots = timeSlotMapping.getTimeSlots(endpoint);
 
   for(const booking of bookings){
-    const timeSlot = selectTimeSlot(timeSlots, booking, state)
+    const timeSlot = selectTimeSlot(timeSlots, booking, procedureFinder )
 
     if(timeSlot !== null){
       bookingMap.set(timeSlot.id, booking);
@@ -67,6 +110,8 @@ type CreateOrderModalProps = {
 
 export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: CreateOrderModalProps) {
   const state = useTracershopState();
+  const procedureFinder = useProcedureFinder();
+
   const active_date = state.today;
   const websocket = useWebsocket();
   const init = useRef({
@@ -125,7 +170,7 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
   }, [activeEndpoint]);
 
 
-  function createOrder(_event){
+  function createOrder(){
     const [valid, amountNumber] = parseDanishPositiveNumberInput(amount, "Aktiviteten")
 
     if(!valid){
@@ -148,8 +193,6 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
     on_close();
   }
 
-
-
   function commitCalculator(activity){
     setAmount(activity);
     setShowCalculator(false);
@@ -157,15 +200,16 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
 
   const day = getDay(active_date);
   const filteredTimeSlots = timeSlotFilter(state, {
-    state : state,
-    tracerID : active_tracer,
-    day : day
-  }
+      state : state,
+      tracerID : active_tracer,
+      day : day
+    }
   );
 
   const endpoint = state.delivery_endpoint.get(activeEndpoint);
   const canCreate = !((!!activeCustomer) && (!!activeEndpoint) && (!!activeTimeSlot) && (!showCalculator) && (!!amount));
-  const Tracer = state.tracer.get(active_tracer);
+  const tracer = state.tracer.get(active_tracer);
+  const isotope = state.isotopes.get(tracer.isotope)
   const dateString = dateToDateString(active_date)
   const deliveryTimeSlot = state.deliver_times.get(activeTimeSlot);
   const deliveryTime = deliveryTimeSlot ? new Date(`${dateString} ${deliveryTimeSlot.delivery_time}`) : NaN;
@@ -173,7 +217,11 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
 
   // Booking Filters
   const relevantBookings = bookings.filter((booking) => {
-    const procedure = state.procedure.get(booking.procedure);
+    const procedure = procedureFinder.find(booking);
+
+    if(procedure === null){
+      return false;
+    }
 
     return procedure.tracer === active_tracer && booking.status === BookingStatus.Initial;
   });
@@ -182,10 +230,22 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
     timeSlotMapping,
     endpoint,
     relevantBookings,
-    state
+    procedureFinder
   )
 
+  const renderedTimeSlots = timeSlotMapping.getTimeSlots(endpoint).map(
+    (timeSlot, i) => {
+      const bookings = bookingMap.has(timeSlot.id) ? bookingMap.get(timeSlot.id) : [];
+      return <ActivityTimeSlot
+                key={i}
+                timeSlot={timeSlot}
+                bookings={bookings}
+                halflife={isotope.halflife_seconds}
+              />;
+    }
+  );
 
+  const bookingExplainerString = `Der er ${relevantBookings.length} ubestilte bookinger:`
 
   return (
       <Modal
@@ -193,12 +253,20 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
         onHide={on_close}
         style={FONT.light}
       >
-        <Modal.Header> Opret Order </Modal.Header>
+        <Modal.Header>
+          <Row style={JUSTIFY.center}>
+            <Col>
+              <h2>
+                Opret Order til <DateDisplay date={state.today}/>
+              </h2>
+            </Col>
+          </Row>
+        </Modal.Header>
         <Modal.Body>
           { showCalculator ?
           <Calculator
             isotopes={state.isotopes}
-            tracer={Tracer}
+            tracer={tracer}
             productionTime={deliveryTime}
             defaultMBq={300}
             cancel={() => {setShowCalculator(false);}}
@@ -228,7 +296,12 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
                 />
               </TracershopInputGroup>
             </Row>
-            <Row>There's {relevantBookings.length} Bookings</Row>
+            <Optional exists={!!relevantBookings.length}>
+              <Container>
+                <Row> {bookingExplainerString}</Row>
+                {renderedTimeSlots}
+              </Container>
+            </Optional>
           </Container>
           }
 
@@ -240,8 +313,8 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
           </Optional>
           <Optional exists={canCalculator && !showCalculator}>
             <CalculatorIcon
-              openCalculator={(_event) => {setShowCalculator(true);}}
-
+              data-testid="open-calculator"
+              openCalculator={() => {setShowCalculator(true);}}
             />
           </Optional>
           <Button onClick={on_close}>Luk</Button>

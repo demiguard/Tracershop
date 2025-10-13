@@ -9,7 +9,7 @@ import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL, Calculator,
   ErrorActivityInvalidNumber, ErrorActivityNegative, ErrorActivityZero,
   ErrorInvalidTimeFormat, ErrorTimeAfterProduction
 } from "~/components/injectable/calculator"
-import { calculateProduction } from "~/lib/physics"
+import { decayCorrect } from "~/lib/physics"
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants";
 
 
@@ -323,8 +323,8 @@ describe("Calculator Test", () =>{
     // Act
     fireEvent.click(screen.queryByRole('button', {name: 'Udregn'}))
 
-    const targetProduction = calculateProduction(halflife, 60, 10000)
-      + calculateProduction(halflife, 120, 20000);
+    const targetProduction = decayCorrect(halflife, 60, 10000)
+      + decayCorrect(halflife, 120, 20000);
 
     expect(commit).toHaveBeenCalledWith(targetProduction);
   })

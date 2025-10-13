@@ -11,7 +11,7 @@ import { ActivityDeliveryIcon, ClickableIcon, IdempotentIcon, StatusIcon } from 
 import { Comment } from '~/components/injectable/data_displays/comment';
 import { ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
-import { calculateProduction, correctVialActivityToTime, fulfillmentActivity } from '~/lib/physics';
+import { decayCorrect, correctVialActivityToTime, fulfillmentActivity } from '~/lib/physics';
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
 import { EndpointDisplay } from '~/components/injectable/data_displays/endpoint';
 import { DISPLAY, JUSTIFY } from '~/lib/styles';
@@ -37,7 +37,7 @@ function VialRow({vial, orderCollection}){
 
   const minutesBetweenVialAndTimeSlot = comparedTimeSlot.toMinutes();
 
-  const correctedActivity = calculateProduction(
+  const correctedActivity = decayCorrect(
     orderCollection.isotope.halflife_seconds,
     minutesBetweenVialAndTimeSlot,
     vial.activity

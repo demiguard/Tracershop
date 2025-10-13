@@ -124,7 +124,7 @@ export class ProductReference {
       case PRODUCT_TYPES.ACTIVITY:
         return new ActivityDeliveryTimeSlot(-1,  WEEKLY_REPEAT_CHOICES.ALL, "", endpoint_id, productionID, null);
       default:
-        return {};
+        return { id : -1};
     }
   }
 
@@ -154,8 +154,6 @@ export class ProductReference {
         return [];
     }
   }
-
-
 
   filterDeliveries(state: TracershopState, {
     endpoint_id,

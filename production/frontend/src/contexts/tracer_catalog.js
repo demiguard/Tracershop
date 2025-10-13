@@ -1,4 +1,4 @@
-import React, { useContext, createContext } from "react";
+import React, { useContext, createContext, useMemo } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { Isotope, IsotopeDelivery, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
@@ -24,7 +24,6 @@ export class EndpointCatalog {
     this.pages = new Map();
   }
 }
-
 
 /**
  * Data structure containing information about which tracers a customer have access to
@@ -127,7 +126,11 @@ const TracerShopCatalogContext = createContext(new TracerCatalog(new TracershopS
  */
 export function TracerCatalogProvider({ children }){
   const state = useTracershopState();
-  const tracer_catalog = new TracerCatalog(state);
+
+  // Note that this component is memorized by the react compiler.
+  const tracer_catalog = useMemo(() => {
+    return new TracerCatalog(state);
+  }, [state.tracer_mapping, state.tracer, state.isotope_delivery, state.isotope_production, state.isotopes])
 
   return (
     <TracerShopCatalogContext.Provider value={tracer_catalog}>

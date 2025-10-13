@@ -7,7 +7,7 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction,
   TracershopState } from "~/dataclasses/dataclasses"
 import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy"
 import { ORDER_STATUS } from "~/lib/constants"
-import { calculateProduction, correctVialActivityToTime } from "~/lib/physics"
+import { decayCorrect, correctVialActivityToTime } from "~/lib/physics"
 import { getId } from "~/lib/utils"
 import { Vial } from "~/dataclasses/dataclasses"
 
@@ -200,7 +200,7 @@ export class ActivityOrderCollection {
       } else {
         const timeDelta = compareTimeStamp(originalTimeSlot.delivery_time,
                                            this.delivering_time_slot.delivery_time);
-        this.deliver_activity += calculateProduction(this.isotope.halflife_seconds,
+        this.deliver_activity += decayCorrect(this.isotope.halflife_seconds,
                                                      timeDelta.hour * 60 + timeDelta.minute,
                                                      order.ordered_activity) * overhead;
       }

@@ -18,7 +18,7 @@ export function CountMinutes(past,future) {
  * @param {Number} MBQ - The desired amount of activity after the time period.
  * @returns {Number} - MBq needed at the previous time.
  */
-export function calculateProduction(halflife, minutes, MBQ) {
+export function decayCorrect(halflife, minutes, MBQ) {
   const hf_in_min = halflife / 60
 
   return MBQ / Math.pow(1/2,  minutes / hf_in_min)
@@ -47,7 +47,7 @@ export function fulfillmentActivity(order, state){
 
   const timeDifference = compareTimeStamp(baseTimeStamp, moveTimeStamp).toMinutes();
 
-  return Math.floor(calculateProduction(isotope.halflife_seconds, timeDifference, order.ordered_activity))
+  return Math.floor(decayCorrect(isotope.halflife_seconds, timeDifference, order.ordered_activity))
 }
 
 /**
@@ -64,6 +64,6 @@ export function correctVialActivityToTime(vial, time, halflife_seconds){
   const minutes_delay = diffTimeStamp.toMinutes()
 
   return 0 < minutes_delay ?
-      calculateProduction(halflife_seconds, minutes_delay, vial.activity)
+      decayCorrect(halflife_seconds, minutes_delay, vial.activity)
     : vial.activity;
 }

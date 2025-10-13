@@ -3,9 +3,9 @@
  */
 
 import React from "react";
-import { act, screen, render, cleanup, fireEvent, waitFor, prettyDOM } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 
-import { jest } from '@jest/globals'
+import { jest, expect } from '@jest/globals'
 import { AppState, testState } from '~/tests/app_state';
 import { CustomerModal, DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from '~/components/modals/customer_modal'
 import { ERROR_BACKGROUND_COLOR, PROP_ACTIVE_CUSTOMER, PROP_ON_CLOSE, WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
@@ -623,4 +623,40 @@ describe("Customer modal list", () => {
 
     expect(screen.getByText(DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE));
   });
+
+  it("TimeSlots from other users are hidden", async () => {
+    // This test is just to ensure the correct filtering
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <CustomerModal {...props} />
+      </TracerShopContext>
+    );
+
+    expect(screen.queryByTestId("time-slot-1")).not.toBeNull();
+    expect(screen.queryByTestId("time-slot-2")).not.toBeNull();
+    expect(screen.queryByTestId("time-slot-3")).toBeNull();
+    expect(screen.queryByTestId("time-slot-4")).toBeNull();
+    expect(screen.queryByTestId("time-slot-5")).not.toBeNull();
+    expect(screen.queryByTestId("time-slot-6")).not.toBeNull();
+    expect(screen.queryByTestId("time-slot-7")).not.toBeNull();
+    expect(screen.queryByTestId("time-slot-8")).toBeNull();
+
+    act(() => {
+      fireEvent.change(
+        screen.getByLabelText("active-product"),
+        { target : { value : "t-3" }}
+      )
+    });
+
+    expect(screen.queryByTestId("time-slot-1")).toBeNull();
+    expect(screen.queryByTestId("time-slot-2")).toBeNull();
+    expect(screen.queryByTestId("time-slot-3")).toBeNull();
+    expect(screen.queryByTestId("time-slot-4")).toBeNull();
+    expect(screen.queryByTestId("time-slot-5")).toBeNull();
+    expect(screen.queryByTestId("time-slot-6")).toBeNull();
+    expect(screen.queryByTestId("time-slot-7")).toBeNull();
+    expect(screen.queryByTestId("time-slot-8")).not.toBeNull();
+
+  })
+
 });

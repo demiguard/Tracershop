@@ -1,4 +1,4 @@
-import { CountMinutes, calculateProduction } from "../../lib/physics.js"
+import { CountMinutes, decayCorrect } from "../../lib/physics.js"
 
 
 test("CountMinutes: Counting minutes between 07:00 and 08:30", () => {
@@ -35,18 +35,18 @@ test("CountMinutes: Day is irrelevant for this function", () => {
 
 // You don't need this much precisions
 test("CalculateProduction: 1 hour dosis", () => {
-  expect(calculateProduction(6584, 60, 300)).toBeCloseTo(438.24650136544807)
+  expect(decayCorrect(6584, 60, 300)).toBeCloseTo(438.24650136544807)
 });
 
 test("CalculateProduction: 0 hour dosis", () => {
-  expect(calculateProduction(6584, 0, 300)).toBeCloseTo(300)
+  expect(decayCorrect(6584, 0, 300)).toBeCloseTo(300)
 });
 
 
 test("CalculateProduction: Splitting calls doesn't matter", () => {
-  const oneHourDecay     = calculateProduction(6584, 60, 300)
-  const AnotherHourDecay = calculateProduction(6584, 60, oneHourDecay)
-  const TwoHoursDecay    = calculateProduction(6584, 120, 300)
+  const oneHourDecay     = decayCorrect(6584, 60, 300)
+  const AnotherHourDecay = decayCorrect(6584, 60, oneHourDecay)
+  const TwoHoursDecay    = decayCorrect(6584, 120, 300)
 
   expect(AnotherHourDecay).toBeCloseTo(TwoHoursDecay) // Note rounding here is fucking things quite up
 });
@@ -54,7 +54,7 @@ test("CalculateProduction: Splitting calls doesn't matter", () => {
 // this test was taken from 2021/08/03 production
 test("Integration test 1: Real Life example 1", () => {
   const min = CountMinutes(new Date(1993,11,20,8,15), new Date(1993,11,20,11,30))
-  const production = calculateProduction(6584, min, 1319)
+  const production = decayCorrect(6584, min, 1319)
 
   expect(production + 3653).toBeCloseTo(8171,-1)
 })

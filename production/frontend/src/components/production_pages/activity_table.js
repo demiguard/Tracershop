@@ -2,7 +2,7 @@
 import React, { useState } from "react";
 import { Row, Col, Button, Container } from 'react-bootstrap'
 import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
-import { calculateProduction } from "../../lib/physics";
+import { decayCorrect } from "../../lib/physics";
 import { ActivityModal } from "../modals/activity_modal";
 import { CreateOrderModal } from "../modals/create_activity_modal";
 import {PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
@@ -78,7 +78,7 @@ function ProductionRow({active_production,
           }
           const originalTimeSlot = state.deliver_times.get(order.ordered_time_slot)
           const timeDifference = compareTimeStamp(originalTimeSlot.delivery_time, production.production_time);
-          const amount = calculateProduction(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
+          const amount = decayCorrect(isotope.halflife_seconds, timeDifference.hour * 60 + timeDifference.minute, order.ordered_activity);
 
           activity_ordered += amount;
           activity_overhead += amount * overhead;

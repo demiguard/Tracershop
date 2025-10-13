@@ -6,7 +6,7 @@ import { HoverBox } from "../hover_box";
 import { cssError } from "~/lib/styles";
 
 export function ErrorInput({error, children}){
-  if (error === ""){
+  if(error === ""){
     return children;
   }
   try {

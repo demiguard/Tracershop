@@ -9,7 +9,7 @@ import { DATA_ENDPOINT } from "~/lib/shared_constants.js"
 import { CloseButton } from "../injectable/buttons.js";
 import { toOptions } from "../injectable/select.js"
 import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses";
-import { useTracershopState } from "../../contexts/tracer_shop_context";
+import { useTracershopState } from "../../contexts/tracer_shop_context.js";
 import { compareLoosely } from "~/lib/utils";
 import { clone } from "~/lib/serialization";
 import { endpointFilter, isotopeFilter, tracerTypeFilter } from "~/lib/filters";
@@ -59,7 +59,8 @@ export function CustomerModal({active_customer, on_close}) {
   const productState = useState(() => initializeProductReference(products));
   const [product, _] = productState;
 
-  const productions = product.filterDeliveries(state, tempEndpoint.id);
+  const deliveries = product.filterDeliveries(state, {endpoint_id : tempEndpoint.id});
+  const productions = product.filterProduction(state, {});
 
   const [endpointReferenceError, setEndpointReferenceError] = useState("");
 
@@ -141,7 +142,7 @@ export function CustomerModal({active_customer, on_close}) {
           <hr/>
           <Row style={MARGIN.all.px0}>
             <DataClassTimeTable
-              items={productions}
+              items={deliveries}
               onClick={(entry) => {setTempTimeSlot({...entry})}}
               JSXprops={{
                 active_object : tempTimeSlot.id

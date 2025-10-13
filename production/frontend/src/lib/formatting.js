@@ -244,6 +244,14 @@ export function makePassword(len){
  * @returns {String}
  */
 export function Capitalize(str){
+  if(str.length === 0){
+    return "";
+  }
+
+  if(str.length === 1){
+    return str.toLocaleUpperCase();
+  }
+
   return str[0].toLocaleUpperCase() + str.slice(1).toLocaleLowerCase();
 }
 

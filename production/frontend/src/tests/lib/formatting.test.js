@@ -333,12 +333,16 @@ describe("Capitalize Tests", () =>{
     expect(Capitalize("UPpeRCase")).toEqual("Uppercase");
     expect(Capitalize("lOWERCASE WORD")).toEqual("Lowercase word");
   });
+
+  it("Capitalize empty string", () => {
+    expect(Capitalize("")).toEqual("");
+  })
 })
 
 describe("renderDateTime Tests", () => {
   it("reformats to danish clock", () => {
     expect(renderDateTime("2006-05-04T11:24")).toEqual("11:24 04/05/2006");
-  })
+  });
 })
 
 describe("formatUsername Tests", () => {

@@ -55,4 +55,12 @@ export const activityDeliveryTimeSlots = new Map([
     12, // Tracer 1, Thursday, 6 // production_run
     null, // expiration_date
   )],
+  [8, new ActivityDeliveryTimeSlot(
+    8, // id
+    WEEKLY_REPEAT_CHOICES.ALL, // weekly_repeat
+    "15:15:00", // delivery_time
+    1, // destination
+    11, // Tracer 3, Thursday, 6 // production_run
+    null, // expiration_date
+  )],
 ]);

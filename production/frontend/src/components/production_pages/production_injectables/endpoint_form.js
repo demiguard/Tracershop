@@ -18,7 +18,6 @@ export function EndpointForm({
   endpoints,
   endpointReferenceError,
   tempEndpointState,
-  endpointErrorState,
   setActiveEndpoint
 }){
   const [tempEndpoint, setTempEndpoint] = tempEndpointState;

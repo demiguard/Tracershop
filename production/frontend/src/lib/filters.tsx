@@ -307,8 +307,8 @@ export function isotopeProductionFilter(container: ContainerType<IsotopeProducti
 
 
 type IsotopeDeliveryFilterArgs = {
-  isotopeID? : number,
-  endpointID? : number,
+  isotopeID? : number | string, // Note that a string, is equivalent to a full filter
+  endpointID? : number | string,
   state? : TracershopState,
   day? : number,
   production_id? : number
@@ -381,7 +381,7 @@ export function isotopeOrderFilter(
   const timeSlotIDs =
     timeSlots !== undefined ? timeSlots.map(getId) : // If passed TimeSlots we use those
     timeSlotFilterArgs && state ? // Otherwise we can get the timesslots
-      timeSlotFilter(state, {state : state, ...timeSlotFilterArgs}, true)
+      isotopeDeliveryFilter(state, {state : state, ...timeSlotFilterArgs}, true)
     : undefined; // Otherwise No filter over time slots
 
   const filteredIsotopeOrders = isotopeOrders.filter(
@@ -505,6 +505,7 @@ export function endpointFilter(container: ContainerType<DeliveryEndpoint>, {
 
   const filteredEndpoints = endpoints.filter((endpoint) => {
     const owner_condition = owner ? owner === endpoint.owner : true
+
     return owner_condition;
   })
 
