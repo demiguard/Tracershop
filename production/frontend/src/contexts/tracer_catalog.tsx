@@ -1,25 +1,25 @@
 import React, { useContext, createContext, useMemo } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { Isotope, IsotopeDelivery, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
+import { Isotope, IsotopeDelivery, Tracer, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
 import { numberfy } from "~/lib/utils";
 
 //#region EndpointCatalog
 export class EndpointCatalog {
-  /**@type {Array<Tracer>} @desc A list of tracers activity available to this endpoint */ tracerCatalogActivity
-  /**@type {Array<Tracer>} @desc A list of tracers injection available to this endpoint */ tracerCatalogInjections
-  /**@type {Array<Isotope>} @desc A list of tracers injection available to this endpoint */ isotopeCatalog
-  /**@type {Map<Number, Number>} @desc  A Tracer to overhead percentage, so if a tracer with id 10 have 25 % overhead, this map will have 10 -> 1.25  */ overheadMap
-  /**@type {Map<Number, TracerCatalogPage>} @desc A mapping of tracer id to the page */ pages
+  /** @desc A list of tracers activity available to this endpoint */ tracerCatalogActivity : Set<number>
+  /** @desc A list of tracers injection available to this endpoint */ tracerCatalogInjections : Set<number>
+  /** @desc A list of tracers injection available to this endpoint */ isotopeCatalog : Set<number>
+  /** @desc  A Tracer to overhead percentage, so if a tracer with id 10 have 25 % overhead, this map will have 10 -> 1.25  */ overheadMap : Map<number,number>
+  /** @desc A mapping of tracer id to the page */ pages : Map<Number, TracerCatalogPage>
 
   /**
    * Catalog of product that a single endpoint
    * * @property {Map<Number, TracerCatalogPage>} pages
    */
   constructor() {
-    this.tracerCatalogActivity = [];
-    this.tracerCatalogInjections = [];
-    this.isotopeCatalog = [];
+    this.tracerCatalogActivity = new Set();
+    this.tracerCatalogInjections = new Set();
+    this.isotopeCatalog = new Set();
     this.overheadMap = new Map();
     this.pages = new Map();
   }
@@ -30,14 +30,13 @@ export class EndpointCatalog {
  * Each instance is unique to a customer.
  */
 export class TracerCatalog {
-  /**@type {Map<Number, EndpointCatalog } */ _endpointCatalogs;
+  _endpointCatalogs: Map<Number, EndpointCatalog>;
 
   /**
    * Data structure containing information about which tracers a customer have access to
    * Each instance is unique to a customer.
-   * @param {TracershopState} state
    */
-  constructor(state) {
+  constructor(state: TracershopState) {
     this._endpointCatalogs = new Map();
 
     for (const tracerCatalogPage of state.tracer_mapping.values()) {
@@ -51,9 +50,9 @@ export class TracerCatalog {
 
       if (tracer.tracer_type === TRACER_TYPE.ACTIVITY) {
         endpoint_catalog.overheadMap.set(tracerCatalogPage.tracer, tracerCatalogPage.overhead_multiplier);
-        endpoint_catalog.tracerCatalogActivity.push(tracer);
+        endpoint_catalog.tracerCatalogActivity.add(tracer.id);
       } else if (tracer.tracer_type === TRACER_TYPE.DOSE) {
-        endpoint_catalog.tracerCatalogInjections.push(tracer);
+        endpoint_catalog.tracerCatalogInjections.add(tracer.id);
       }
     }
 
@@ -61,17 +60,20 @@ export class TracerCatalog {
       const endpointCatalog = this.getCatalog(isotopeDelivery.delivery_endpoint);
       const production = state.isotope_production.get(isotopeDelivery.production);
       const isotope = state.isotopes.get(production.isotope);
-      endpointCatalog.isotopeCatalog.push(isotope);
+      endpointCatalog.isotopeCatalog.add(isotope.id);
     }
   }
 
   /**
    * Gets the entire catalog for a customer, construct an empty if not there
-   * @param {Number} endpointID = - the ID of the customer in question
-   * @returns {EndpointCatalog}
+   * @param endpointID = - the ID of the customer in question
    */
-  getCatalog(endpointID) {
+  getCatalog(endpointID: number | string) {
     const index = numberfy(endpointID);
+    if(index === ""){
+      return new EndpointCatalog();
+    }
+
     if(this._endpointCatalogs.has(index)){
       return this._endpointCatalogs.get(index);
     }
@@ -81,32 +83,44 @@ export class TracerCatalog {
     return endpointCatalog;
   }
 
-  getActivityCatalog(customerID) {
+  getActivityCatalog(customerID: number | string) {
     const index = numberfy(customerID);
+    if(index === ""){
+      return new Set();
+    }
+
     const endpoint_catalog = this._endpointCatalogs.get(index);
     if (endpoint_catalog !== undefined) {
       return endpoint_catalog.tracerCatalogActivity;
     }
-    return [];
+    return new Set();
   }
 
   /**
    * Gets the injections tracers a customer can order
    * @param {Number} endpointID
-   * @returns {Array<Tracer>}
    */
-  getInjectionCatalog(endpointID) {
+  getInjectionCatalog(endpointID : number | string) {
     const index = numberfy(endpointID);
+    if(index === ""){
+      return new Set();
+    }
+
     const endpoint_catalog = this._endpointCatalogs.get(index);
     if (endpoint_catalog !== undefined) {
       return endpoint_catalog.tracerCatalogInjections;
     }
-    return [];
+    return new Set();
   }
 
-  getOverheadForTracer(endpointID, tracerID) {
+  getOverheadForTracer(endpointID : number | string, tracerID : number | string) {
     const endpoint_index = numberfy(endpointID);
     const tracer_index = numberfy(tracerID);
+    if(endpoint_index === "" || tracer_index === ""){
+      console.log(`Undefined customer - ${endpointID}, tracer ${tracerID} referenced`);
+      return 1;
+    }
+
     const endpoint_catalog = this._endpointCatalogs.get(endpoint_index);
     if (endpoint_catalog !== undefined) {
       return endpoint_catalog.overheadMap.get(tracer_index);
@@ -117,12 +131,12 @@ export class TracerCatalog {
   }
 }
 
+//@ts-ignore
 const TracerShopCatalogContext = createContext(new TracerCatalog(new TracershopState()));
 
 /**
  *
  * @param {TracershopState} state
- * @returns
  */
 export function TracerCatalogProvider({ children }){
   const state = useTracershopState();

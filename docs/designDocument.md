@@ -4,27 +4,54 @@
 
 This document describes much of software engineering that have gone into
 Tracershop. It assumes the reader experienced in software engineering and some
-familiar with Tracershop.
-
-Bracket cursive text such as *[bla bla bla]* is bad design that I may have done
-something to and therefore no longer applies.
+familiarity with Tracershop and it's products.
 
 Before you start reading this. I am opinionated man, that isn't paid enough to
 keep a professional tone, therefore expect jokes and other stupid comments to
 litter in this document.
 
-## Components Overview
+## Requirements and solution
 
-The up-to-date components are found in the production site.
+Tracershop is a shop that sells radioactive PET tracers to Hospitals and
+universities near Copenhagen. It's a user group of < 1000 user in total and
+realistic ~ max 100 daily user. It's unrealistic to assume this number to grow.
 
-### The main website
+The users can be split in the following groups:
+
+* Users that view the status of orders
+* Users that places orders
+* Users that release the orders
+
+The two primary requirements are:
+
+* Users can place orders a limited selection of PET tracers.
+* The radiochemist can release (In terms of GMP) the PET tracer.
+
+Secondary requirements are:
+
+* Provide statistics of produced tracers.
+* Have a simple user interface as the target user assumes a mouse means a rodent
+and computers used to come with cup holders.
+
+These requirements translates the following properties:
+
+* When an order is released, it should be immediately be available to all users.
+It's unacceptable for users to view stale data.
+* It should limit user inputs, as a source of error.
+* The system should be resilient to failed subsystems.
+
+
+## The main website
 
 This is a Django, Channels ASGI backend service. The site is developed as one
 site react app, which uses a websocket for most of its communication.
 
 * `production/settings.py` - Django Settings for the site
 * `frontend/views.py` - The entry point for the website
-* `frontend/consumer.py` - The entry point for the consumer
+* `frontend/consumer.py` - The entry point for the consumer aka Websocket.
+
+The simplified view is User -> tracershop.regionh.dk (F5) ->
+plnxtshop01.unix.regionh.top.local (httpd) -> < same server > (daphne)
 
 The system is deployed with a Httpd frontend, which serves static files and
 filters out packages that doesn't come from CIMT's F5 WAF solution. Requests
@@ -44,12 +71,43 @@ external user. The user groups are:
 * `RGH-B-SE Tracershop Shop-User` - 5
 * `"Shop-External"` - 6
 
-Design and code will be discussed later.
+Note that, I *superduper* promised to filter all IP's that wasn't from F5 away,
+but then TDC decided to change servers a day without giving any notice. New
+Servers new IPs, and everything gets filtered out. No range have ever been given
+on this.
+
+If you ever need to figure out the incoming IP addresses, just look at the
+request log of httpd.
+
+The deployment is at `/var/www/html/Tracershop´ which is pretty bad, as if
+something goes wrong, files might leak. It should really be moved to some other
+folder. I have seen '/usr/local/Tracershop' as a suggestion.
+
+The main stopgap for this is, that the current solution works, this service only
+have a single computer, and therefore a single point of failure. Tickling this
+single point of failure should be considered scary.
+
+Any-who, It should be still be done and a group for editing the files should be
+created as right now, all of it is under apache:apache.
+
+The services you need to be able to restart is:
+
+* sudo systemctl restart tracershop - This is the daphne webserver
+* sudo systemctl restart pingService
+* sudo systemctl restart vialdog
+* sudo systemctl restart clean_up - Name might be wrong.
+
+In addition the following services are used
+
+* sudo systemctl restart httpd
+* sudo systemctl restart redis *(We should move to valkey but w/e)*
+* sudo systemctl restart mariaDB
 
 ### MariaDB
 
-Django comes naturally with a ORM to multiple databases. Here it's a preference
-from CIMT side, that we use MariaDB, so that is the logic behind that choice.
+Django comes naturally with a ORM to multiple databases, and we use this to
+fullest ability. Note that we are not doing anything fancy here, and for the
+love of god keep it that way.
 
 Note that CIMT places the socket at `/data.madb/p3306/mysql3306.sock` meaning
 that you have add `--socket /data.madb/p3306/mysql3306.sock` to any `mariadb`
@@ -238,3 +296,8 @@ The TracershopState is just a collection of maps, where you have know how the
 data is related. Sometimes it is very obvious, others there's some complicated
 groupings, these groups could be made into a javascript class inside of:
 `lib/data_structures.js`
+
+
+## To do
+
+* Better Telemetry

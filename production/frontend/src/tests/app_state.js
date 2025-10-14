@@ -25,10 +25,14 @@ import { messages } from "./test_state/messages"
 import { message_assignments } from "./test_state/message_assignments"
 import { secondary_emails } from "./test_state/secondary_email"
 import { printers } from "~/tests/test_state/printer"
+import { isotopeDeliveries } from "~/tests/test_state/isotope_deliveries"
+import { IsotopeProductions } from "~/tests/test_state/isotope_production"
+
+export const testStateToday = new Date(2020,4,5,12,0,0,0);
 
 export const testState = new TracershopState(
   users.get(1),
-  new Date(2020,4,5,12,0,0,0),
+  testStateToday,
   address,
   activity_orders,
   closed_dates,
@@ -39,9 +43,9 @@ export const testState = new TracershopState(
   deliveryEndpoints,
   injection_orders,
   isotopes,
-  new Map(), // Isotope Delivery
+  isotopeDeliveries, // Isotope Delivery
   new Map(), // Isotope Order
-  new Map(), // Isotope production
+  IsotopeProductions, // Isotope production
   new Map(), // Isotope Vial
   release_rights,
   legacy_production_members,

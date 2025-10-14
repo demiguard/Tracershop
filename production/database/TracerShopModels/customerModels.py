@@ -508,10 +508,14 @@ class IsotopeOrder(TracershopModel):
 class IsotopeVial(TracershopModel):
   id = BigAutoField(primary_key=True)
   batch_nr = CharField(max_length=128)
-  delivery_with = ForeignKey(IsotopeOrder, on_delete=RESTRICT, default=None, null=True, blank=True)
+  delivery_with = ForeignKey(IsotopeOrder, # I kinda wanna say this is a bad name
+                             on_delete=RESTRICT, # Because I was confused by it myself
+                             default=None,
+                             null=True,
+                             blank=True)
   volume = FloatField()
   calibration_datetime = DateTimeField()
-  vial_activity = FloatField()
+  vial_activity = FloatField() # In MBq
   isotope = ForeignKey(Isotope, on_delete=RESTRICT)
 
   class Meta: #type: ignore

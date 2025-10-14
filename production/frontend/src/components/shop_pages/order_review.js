@@ -18,6 +18,7 @@ import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/produc
 import { presentName } from "~/lib/presentation";
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card";
 import { makeBlankInjectionOrder, makeBlankTracer } from "~/lib/blanks";
+import { getObjects } from "~/lib/utils";
 
 
 /**
@@ -45,7 +46,10 @@ export function OrderReview({active_endpoint,
   const endpointCatalog = tracerCatalog.getCatalog(active_endpoint);
 
   const [product, setActiveProduct] = productState;
-  const availableProducts = [...endpointCatalog.tracerCatalogActivity, ...endpointCatalog.isotopeCatalog];
+  const availableTracers = [...endpointCatalog.tracerCatalogActivity].map(getObjects(state.tracer))
+  const availableIsotopes = [...endpointCatalog.isotopeCatalog].map(getObjects(state.isotopes))
+
+  const availableProducts = [...availableTracers, ...availableIsotopes];
 
   const availableInjectionTracers = endpointCatalog.tracerCatalogInjections;
   const day = getDay(active_date);
@@ -66,6 +70,8 @@ export function OrderReview({active_endpoint,
       setActiveProduct(tracer);
     }
   }
+
+  console.log(availableProducts);
 
   const tracerButtons = availableProducts.map((product_) => {
     const productRef = ProductReference.fromProduct(product_)

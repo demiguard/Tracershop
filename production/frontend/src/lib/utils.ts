@@ -3,6 +3,7 @@
 import { ORDER_STATUS } from "~/lib/constants";
 import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
 import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
+import { template } from "@babel/core";
 
 /**
  *
@@ -40,6 +41,11 @@ export function removeIndex(arr, index){
  */
 export function getId(obj){
   return obj.id
+}
+
+
+export function getObjects<K, V>(map: Map<K,V>){
+  return (id: K) => map.get(id);
 }
 
 export function toMapping(objs){
@@ -193,7 +199,6 @@ export function constructBlankArgsArray(Class) : Array<string>{
 
   return args
 }
-
 
 export function* reverse<T>(arr: Array<T>){
   for(let i = arr.length - 1; 0 <= i; i--){
