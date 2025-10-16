@@ -31,7 +31,7 @@ type ColumnProps = {
 
 function StatusOrderColumn({order} : ColumnProps){
   return (
-    <FlexMinimizer xs={1}>
+    <FlexMinimizer>
       <StatusIcon order={order} />
     </FlexMinimizer>
   )

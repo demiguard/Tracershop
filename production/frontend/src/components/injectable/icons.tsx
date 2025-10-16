@@ -393,28 +393,14 @@ type CancelIconProps = {
 
 export function CancelIcon(props : CancelIconProps){
   const {order, orders, ...rest} = props;
-  const websocket = useWebsocket();
   const [showCancelBox, setShowCancelBox] = useState(false);
-
-  function cancelOrder(){
-    const order_array = orders ? orders : [order] as OrdersType;
-    const order_type = getOrderType({orders : order_array});
-
-    const filtered_orders = order_array.filter(
-      (order) => !([ORDER_STATUS.RELEASED, ORDER_STATUS.CANCELLED].includes(order.status)))
-
-    const updated_orders = filtered_orders.map((order) => (
-      { ...order, status : ORDER_STATUS.CANCELLED }
-    ));
-
-    websocket.sendEditModel(order_type, updated_orders);
-  }
 
   return <div>
     <CancelBox
       show={showCancelBox}
       onClose={() => {setShowCancelBox(false);}}
-      confirm={cancelOrder}
+      orders={orders}
+      order={order}
     />
 
   <ClickableIcon

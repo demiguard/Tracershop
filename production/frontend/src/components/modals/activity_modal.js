@@ -34,6 +34,7 @@ import { DateTime } from "~/components/injectable/datetime";
 import { toLotDateString } from "~/lib/chronomancy";
 import { RecoverableError, useErrorState } from "~/lib/error_handling";
 import { useUserReleaseRights } from "~/contexts/user_release_right";
+import { CancelButton } from "~/components/injectable/cancel_button";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -384,7 +385,6 @@ export function ActivityModal({
   const [freeing, setFreeing] = useState(false);
   const [loginError, setLoginError] = useErrorState();
   const [dateError, setDateError]  = useErrorState();
-  const [showCancelBox, setShowCancelBox] = useState(false);
   const [correctingOrder, setCorrectingOrder] = useState(false);
 
   // Derived State
@@ -492,30 +492,6 @@ export function ActivityModal({
         }
       }
     )
-  }
-
-  function startCancelOrders(){
-    setShowCancelBox(true);
-  }
-  function stopCancelOrders(){
-    setShowCancelBox(false);
-  }
-
-  function confirmCancel(){
-    const ordersToBeSend = []
-    const cancellationTime = new Date();
-
-    for(const order of orderCollection.orders){
-      ordersToBeSend.push({...order,
-        status : ORDER_STATUS.CANCELLED,
-        freed_by : state.logged_in_user.id,
-        freed_datetime : cancellationTime,
-      });
-    }
-    if(ordersToBeSend.length){
-      websocket.sendEditModel(DATA_ACTIVITY_ORDER, ordersToBeSend);
-    }
-    setShowCancelBox(false);
   }
 
   //#region ActivityModal Subcomponents
@@ -734,7 +710,7 @@ export function ActivityModal({
         <Col>
           <Optional exists={canCancel}>
             <Col md="auto">
-              <MarginButton onClick={startCancelOrders}>Afvis</MarginButton>
+              <CancelButton orders={orderCollection.orders}/>
             </Col>
           </Optional>
           <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !correctingOrder}>
@@ -766,13 +742,6 @@ export function ActivityModal({
       </Container>
     </Modal.Footer>
     </Modal>
-    <Optional exists={showCancelBox}>
-      <CancelBox
-        confirm={confirmCancel}
-        show={showCancelBox}
-        onClose={stopCancelOrders}
-      />
-    </Optional>
     </div>
   );
 }

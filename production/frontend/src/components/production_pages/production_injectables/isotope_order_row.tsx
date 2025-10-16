@@ -6,7 +6,7 @@ import { Comment } from "~/components/injectable/data_displays/comment";
 
 import { FlexMinimizer } from "~/components/injectable/flexMinimizer";
 import { CancelIcon, StatusIcon } from "~/components/injectable/icons";
-import { ActivityInput } from "~/components/injectable/inputs/activity_inpunt";
+import { ActivityInput } from "~/components/injectable/inputs/activity_input";
 
 import { Optional } from "~/components/injectable/optional";
 import { IsotopeOrder } from "~/dataclasses/dataclasses";
@@ -52,21 +52,22 @@ export function IsotopeOrderRow ({
 
   return (
   <Row>
-    <FlexMinimizer>
+    <FlexMinimizer style={{ justifyContent : "center" }}>
       <StatusIcon order={order} onClick={toggleState(setEditing)}/>
     </FlexMinimizer>
     <ActivityInput
+      style={{ margin : "auto" }}
       error={error}
       displayState={[displayActivity, setDisplayActivity]}
       displayStatus={displayStatus}
     />
     <Optional exists={!!(order.comment)}>
-      <FlexMinimizer>
+      <FlexMinimizer style={{justifyContent : "center" }}>
         <Comment comment={order.comment}/>
       </FlexMinimizer>
     </Optional>
     <Optional exists={[ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)}>
-      <FlexMinimizer>
+      <FlexMinimizer style={{ justifyContent : "center" }}>
         <CommandProductionIcon
           displayStatus={displayStatus}
           temp_object={order}

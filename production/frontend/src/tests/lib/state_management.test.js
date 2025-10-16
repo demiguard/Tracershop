@@ -1,3 +1,5 @@
+import { jest, expect, it, describe } from '@jest/globals'
+
 import { changeState, toggleState } from "../../lib/state_management";
 
 describe("State manegement Test Suite", () => {
@@ -26,13 +28,13 @@ describe("State manegement Test Suite", () => {
   });
 
   it("Test ToggleState", () => {
-    const toggleFunction = toggleState("dummy_toggle", DummyStateHolder);
-    toggleFunction({});
-    expect(DummyStateHolder.state.dummy_toggle).toEqual(true);
-    toggleFunction({});
-    expect(DummyStateHolder.state.dummy_toggle).toEqual(false);
-    toggleFunction({});
-    expect(DummyStateHolder.state.dummy_toggle).toEqual(true);
+    let x = false;
+
+    const toggleFunction = toggleState(old => {x = old(x)});
+    toggleFunction(x)
+    expect(x).toBeTruthy();
+    toggleFunction(x)
+    expect(x).toBeFalsy();
   });
 
 })

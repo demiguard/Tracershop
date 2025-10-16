@@ -10,7 +10,7 @@ import { useTracershopState } from '~/contexts/tracer_shop_context';
 import { IsotopeDelivery, IsotopeOrder } from '~/dataclasses/dataclasses'
 import { ORDER_STATUS, StateType } from '~/lib/constants';
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection';
-import { JUSTIFY, PADDING } from '~/lib/styles';
+import { ExpandAndCenter, JUSTIFY, PADDING } from '~/lib/styles';
 import { Comment } from '~/components/injectable/data_displays/comment';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { IsotopeOrderModal } from '~/components/modals/isotope_order_modal';
@@ -28,13 +28,23 @@ function CardHeader({openState, collection, showModal} : CardHeaderProps){
   return (
     <Card.Header>
       <Row style={JUSTIFY.left}>
-        <Col xs={1}><StatusIcon orderCollection={collection} onClick={showModal}/></Col>
-        <Col><EndpointDisplay endpoint={collection.endpoint}/></Col>
-        <Col><TimeDisplay time={collection.delivery.delivery_time} /></Col>
-        <Col>Bestilt: <MBqDisplay activity={collection.ordered_activity}/></Col>
-        <Col>Udleveret: <MBqDisplay activity={collection.delivered_activity}/></Col>
+        <Col style={ExpandAndCenter} xs={1}>
+          <StatusIcon orderCollection={collection} onClick={showModal}/>
+        </Col>
+        <Col style={ExpandAndCenter}>
+          <EndpointDisplay endpoint={collection.endpoint}/>
+        </Col>
+        <Col style={ExpandAndCenter}>
+          <TimeDisplay time={collection.delivery.delivery_time} />
+        </Col>
+        <Col style={ExpandAndCenter}>
+          Bestilt: <MBqDisplay activity={collection.ordered_activity}/>
+        </Col>
+        <Col style={ExpandAndCenter}>
+          Udleveret: <MBqDisplay activity={collection.delivered_activity}/>
+        </Col>
         <Optional exists={collection.minimum_status === ORDER_STATUS.ORDERED}>
-          <Col xs={1}>
+          <Col style={ExpandAndCenter} xs={1}>
             <AcceptIcon orders={collection.orders}/>
           </Col>
         </Optional>

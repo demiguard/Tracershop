@@ -27,6 +27,7 @@ import { FONT } from "~/lib/styles";
 import { DateTime } from "~/components/injectable/datetime";
 import { RecoverableError, useErrorState } from "~/lib/error_handling";
 import { useUserReleaseRights } from "~/contexts/user_release_right";
+import { CancelButton } from "~/components/injectable/cancel_button";
 
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
@@ -39,7 +40,6 @@ export function InjectionModal ({modal_order, on_close}) {
                            tracer.vial_tag ? `${tracer.vial_tag}-${toLotDateString(order.delivery_date)}-1` : "";
 
   const [freeing, setFreeing] = useState(false);
-  const [canceling, setCanceling] = useState(false);
   const [showCorrectAuth, setShowCorrectAuth] = useState(false);
   const [lot_number, setLotNumber] = useState(defaultLotNumber);
   const [loginError, setLoginError] = useErrorState();
@@ -64,21 +64,6 @@ export function InjectionModal ({modal_order, on_close}) {
   function acceptOrder(){
     order.status = ORDER_STATUS.ACCEPTED;
     websocket.sendEditModel(DATA_INJECTION_ORDER, [order]);
-  }
-
-  function startCanceling(){
-    setCanceling(true);
-  }
-
-  function stopCanceling(){
-    setCanceling(false);
-  }
-
-  function commitCanceling(){
-    const cancelingOrder = {...order};
-    cancelingOrder.status = ORDER_STATUS.CANCELLED;
-    websocket.sendEditModel(DATA_INJECTION_ORDER, [cancelingOrder]);
-    stopCanceling();
   }
 
   function startFreeing(){
@@ -273,7 +258,7 @@ export function InjectionModal ({modal_order, on_close}) {
           <Row style={{width : "100%"}}>
             <Col md={3}>
               <Optional exists={canEdit}>
-                <MarginButton onClick={startCanceling}>Afvis ordre</MarginButton>
+                <CancelButton/>
               </Optional>
               <Optional exists={order.status == ORDER_STATUS.RELEASED && !showCorrectAuth}>
                 <MarginButton onClick={() => {setShowCorrectAuth(true)}}>Ret ordre</MarginButton>
@@ -302,11 +287,6 @@ export function InjectionModal ({modal_order, on_close}) {
           </Row>
         </Modal.Footer>
       </Modal>
-      <CancelBox
-        show={canceling}
-        onClose={stopCanceling}
-        confirm={commitCanceling}
-      />
     </div>);
 }
 

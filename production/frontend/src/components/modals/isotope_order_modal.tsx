@@ -1,8 +1,8 @@
 import React, { useState } from "react";
-import { Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
+import { Button, Col, Form, FormControl, Modal, Row, Table } from "react-bootstrap";
 import { IsotopeOrderCollection } from "~/lib/data_structures/isotope_order_collection";
 import { CloseButton } from "../injectable/buttons";
-import { CENTER, cssTableCenter, FONT, JUSTIFY } from "~/lib/styles";
+import { ALIGN, CENTER, cssTableCenter, FONT, JUSTIFY, MARGIN } from "~/lib/styles";
 import { EndpointDisplay } from "../injectable/data_displays/endpoint";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { IsotopeVial, TracershopState } from "~/dataclasses/dataclasses";
@@ -26,6 +26,8 @@ import { FlexMinimizer } from "../injectable/flexMinimizer";
 import { MBqDisplay } from "../injectable/data_displays/mbq_display";
 import { IsotopeOrderRow } from "../production_pages/production_injectables/isotope_order_row";
 import { DateDisplay } from "../injectable/data_displays/date_display";
+import { CancelBox } from "../injectable/cancel_box";
+import { CancelButton } from "../injectable/cancel_button";
 
 
 function getModalVials(collection: IsotopeOrderCollection, state: TracershopState){
@@ -70,7 +72,7 @@ function VialRow({vial, selectedVialsState} : VialRowProps){
   const isSelected = selectedVials.has(vial.id);
 
   function toggleSelect(){
-    if(0 >= vial.id){
+    if(0 >= vial.id && editing){
       return;
     }
     setSelectedVials((old: Set<number>) => { // @ts-ignore
@@ -129,10 +131,13 @@ function VialRow({vial, selectedVialsState} : VialRowProps){
   }
 
 
-  const editButton = <ClickableIcon
-    src={"/static/images/pen.svg"}
-    onClick={() => setEditing(true)}
-  />
+  const editButton = (<Optional exists={!isSelected}>
+    <ClickableIcon
+      src={"/static/images/pen.svg"}
+      onClick={() => setEditing(true)}
+      />
+    </Optional>
+  );
 
 
   return (
@@ -185,8 +190,8 @@ function VialRow({vial, selectedVialsState} : VialRowProps){
     </td>
     <td style={cssTableCenter}>
       <Optional exists={dataClassExists(vial)}>
-
         <Form.Check
+          disabled={editing}
           onChange={toggleSelect}
           checked={isSelected}
         />
@@ -258,23 +263,23 @@ function IsotopeModalBody({
     <div>
       <Row>
         <Row>
-          <Col><h4>Destination:</h4></Col>
-          <Col><h4><EndpointDisplay endpoint={collection.endpoint}/></h4></Col>
+          <Col style={ALIGN.CENTER} ><h4 style={MARGIN.NO}>Destination:</h4></Col>
+          <Col style={ALIGN.CENTER} ><h4 style={MARGIN.NO}><EndpointDisplay endpoint={collection.endpoint}/></h4></Col>
+        </Row>
+        <hr style={{margin : 8}}/>
+        <Row>
+          <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}>Leverings tidspunkt:</h4></Col>
+          <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}><TimeDisplay time={collection.delivery.delivery_time}/></h4></Col>
         </Row>
         <hr style={{ margin : 8 }}/>
         <Row>
-          <Col><h4>Leverings tidspunkt:</h4></Col>
-          <Col><h4><TimeDisplay time={collection.delivery.delivery_time}/></h4></Col>
+          <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}>Samlet bestilt aktivitet:</h4></Col>
+          <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}><MBqDisplay activity={collection.ordered_activity}/></h4></Col>
         </Row>
         <hr style={{ margin : 8 }}/>
         <Row>
-          <Col><h4>Samlet bestilt aktivitet:</h4></Col>
-          <Col><h4><MBqDisplay activity={collection.ordered_activity}/></h4></Col>
-        </Row>
-        <hr style={{ margin : 8 }}/>
-        <Row>
-          <Col><h4>Ordre:</h4></Col>
-          <Col>{isotopeOrders}</Col>
+          <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}>Ordre:</h4></Col>
+          <Col style={ALIGN.CENTER}>{isotopeOrders}</Col>
         </Row>
         <hr style={{ margin : 8 }}/>
         <VialTable
@@ -297,15 +302,34 @@ function IsotopeModalBody({
 type IsotopeModalFooterProps = {
   onClose : () => void,
   selectedVials : Set<number>,
-  collection : IsotopeOrderCollection
+  collection : IsotopeOrderCollection,
+  isAuthenticatingState : [boolean, React.Dispatch<React.SetStateAction<boolean>>]
 }
 
 function IsotopeModalFooter({
-  onClose, selectedVials, collection
+  onClose, selectedVials, collection, isAuthenticatingState
 } : IsotopeModalFooterProps){
+
+
   return (
-  <Row>
-    <Col><CloseButton onClick={onClose}/></Col>
+  <Row style={{width : "100%"}}>
+    <Col>
+      <CancelButton/>
+    </Col>
+    <Col>
+      <Row style={JUSTIFY.right}>
+        <Optional exists={true}>
+          <Col style={{flex : "0 1"}}>
+            <Button>
+              Frigiv
+            </Button>
+          </Col>
+        </Optional>
+        <Col style={{flex : "0 1"}}>
+          <CloseButton onClick={onClose}/>
+        </Col>
+      </Row>
+    </Col>
   </Row>)
 }
 
@@ -324,6 +348,8 @@ export function IsotopeOrderModal({
 
   const [selectedVials, setSelectedVials] = selectedVialsState;
 
+
+
   return (
   <Modal
     size="lg"
@@ -332,7 +358,9 @@ export function IsotopeOrderModal({
     onHide={onClose}
   >
     <Modal.Header>
-      <h2>Isotope ordre til: <EndpointDisplay endpoint={collection.endpoint}/> -  <DateDisplay date={state.today}/></h2>
+      <Row style={ALIGN.CENTER}>
+        <h2 style={MARGIN.NO}>Isotope ordre til: <EndpointDisplay endpoint={collection.endpoint}/> -  <DateDisplay date={state.today}/></h2>
+      </Row>
     </Modal.Header>
     <Modal.Body>
       <IsotopeModalBody
@@ -342,7 +370,7 @@ export function IsotopeOrderModal({
       />
     </Modal.Body>
     <Modal.Footer>
-      <IsotopeModalFooter collection={collection} selectedVials={selectedVials} onClose={onClose}/>
+      <IsotopeModalFooter isAuthenticatingState={isAuthenticatingState} collection={collection} selectedVials={selectedVials} onClose={onClose}/>
     </Modal.Footer>
   </Modal>);
 }

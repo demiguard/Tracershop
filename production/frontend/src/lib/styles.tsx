@@ -25,6 +25,17 @@ export const rotation = {
   `}
 };
 
+export const ALIGN : {
+  CENTER : React.CSSProperties,
+  RIGHT : React.CSSProperties
+} = {
+  CENTER : {
+    alignContent : "center"
+  },
+  RIGHT : {
+    alignContent : "right"
+  }
+}
 
 export const JUSTIFY : {
   between : React.CSSProperties,
@@ -64,6 +75,7 @@ export const CENTER : React.CSSProperties = {
 };
 
 export const ExpandAndCenter : React.CSSProperties = {
+  margin : 'auto',
   alignItems : 'center',
   textAlign : 'center',
   height : "100%",
@@ -105,6 +117,9 @@ export const MARGIN = {
       marginRight: '50px',
     }
   },
+  NO : {
+    margin : 0
+  }
 }
 
 export const PADDING = {
