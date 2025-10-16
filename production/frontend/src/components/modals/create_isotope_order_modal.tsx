@@ -1,13 +1,13 @@
 import React, { useState } from "react";
-import { Container, FormControl, Modal, Row } from "react-bootstrap";
-import { useTracershopState } from "~/contexts/tracer_shop_context";
+import { Button, Container, FormControl, Modal, Row } from "react-bootstrap";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { DateDisplay } from "../injectable/data_displays/date_display";
-import { CloseButton } from "../injectable/buttons";
+import { CloseButton, IdempotentButton } from "../injectable/buttons";
 import { getDay } from "~/lib/chronomancy";
 import { endpointFilter, isotopeDeliveryFilter } from "~/lib/filters";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { FONT } from "~/lib/styles";
-import { Customer, DeliveryEndpoint, IsotopeDelivery, TracershopState } from "~/dataclasses/dataclasses";
+import { Customer, DeliveryEndpoint, IsotopeDelivery, IsotopeOrder, TracershopState } from "~/dataclasses/dataclasses";
 import { EndpointSelect } from "../injectable/derived_injectables/endpoint_select";
 import { TimeSlotSelect } from "../injectable/derived_injectables/timeslot_select";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
@@ -19,6 +19,10 @@ import { setStateToEvent } from "~/lib/state_management";
 import { Optional } from "../injectable/optional";
 import { IsotopeDisplay } from "../injectable/data_displays/isotope_display";
 import { DayDisplay } from "../injectable/data_displays/day_display";
+import { parseDanishPositiveNumberInput } from "~/lib/user_input";
+import { DATA_ISOTOPE_ORDER } from "~/lib/shared_constants";
+import { ORDER_STATUS } from "~/lib/constants";
+import { dateToDateString } from "~/lib/formatting";
 
 type CustomerState = {
   deliveries : Array<IsotopeDelivery>,
@@ -32,6 +36,7 @@ type CustomerState = {
 
 export function CreateIsotopeOrderModal({on_close, active_isotope}){
   const state = useTracershopState();
+  const websocket = useWebsocket();
   const day = getDay(state.today);
 
   // State
@@ -107,8 +112,35 @@ export function CreateIsotopeOrderModal({on_close, active_isotope}){
         ...old,
         selectedDelivery : deliveryID ? deliveryID : ""
       }
-    })
+    });
   }
+
+  function submitOrder() {
+    const [valid, num] = parseDanishPositiveNumberInput(displayActivity, "Injektion")
+
+    if(!valid){
+      setErrorActivity(num);
+      return Promise.resolve({});
+    }
+
+    const promise = websocket.sendCreateModel( DATA_ISOTOPE_ORDER, new IsotopeOrder(
+      -1,
+      ORDER_STATUS.ACCEPTED,
+      state.logged_in_user.id,
+      num,
+      customerState.selectedDelivery,
+      dateToDateString(state.today),
+      `Opret af ${state.logged_in_user.username}`,
+      null,
+      null
+    ));
+
+    on_close();
+
+    return promise;
+  }
+
+  const canOrder = displayActivity !== "";
 
   const endpointOptions = endpointFilter(
     customerState.endpoints,
@@ -174,6 +206,9 @@ export function CreateIsotopeOrderModal({on_close, active_isotope}){
         </Container>
       </Modal.Body>
       <Modal.Footer>
+        <IdempotentButton
+          disabled={!canOrder}
+          onClick={submitOrder}> Opret ordre</IdempotentButton>
         <CloseButton onClick={on_close}/>
       </Modal.Footer>
     </Modal>

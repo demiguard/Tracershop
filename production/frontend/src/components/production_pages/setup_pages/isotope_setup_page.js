@@ -8,7 +8,7 @@ import { parseDanishPositiveNumberInput } from '../../../lib/user_input';
 import { Isotope } from '../../../dataclasses/dataclasses';
 import { ErrorInput } from '../../injectable/inputs/error_input';
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
-import { CommitButton } from '~/components/injectable/commit_button';
+import { CommitIcon } from '~/components/injectable/commit_icon';
 
 
 export function IsotopeSetupPage() {
@@ -124,7 +124,7 @@ export function IsotopeSetupPage() {
           />
       </td>
       <td>
-        {changed ? <CommitButton
+        {changed ? <CommitIcon
           label={`commit-${isotope.id}`}
           temp_object={tempIsotope}
           validate={validate}

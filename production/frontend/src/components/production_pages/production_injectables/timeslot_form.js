@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { ClickableIcon } from "~/components/injectable/icons.tsx";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
@@ -261,7 +261,7 @@ export function TimeSlotForm({
         <Col><h4>Leveringstidspunkt</h4></Col>
         <Col xs="4" style={{display:"flex", justifyContent : "right"}}>
           <Optional exists={timeSlotDirty}>
-            <CommitButton
+            <CommitIcon
               temp_object={tempTimeSlot}
               object_type={DATA_TYPE}
               label="time-slot-commit"
@@ -289,7 +289,7 @@ export function TimeSlotForm({
       <Optional exists={product.is_tracer()}>
         <TracershopInputGroup label="Overhead" error={overheadError} tail={
           <Optional exists={overhead !== initialOverhead} alternative={<div>%</div>}>
-            <CommitButton
+            <CommitIcon
               label="commit-overhead"
               temp_object={tracerCatalogPage}
               object_type={DATA_TRACER_MAPPING}

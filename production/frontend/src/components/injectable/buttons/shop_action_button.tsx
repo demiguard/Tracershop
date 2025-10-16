@@ -6,7 +6,7 @@
  */
 
 import React from "react";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { DeleteButton } from "~/components/injectable/delete_button";
 import { ClickableIcon } from "~/components/injectable/icons";
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from "~/dataclasses/dataclasses";
@@ -47,7 +47,7 @@ function BaseActionButton({
       }
       // DELIBERATE FALL THROUGH!
     case ORDER_STATUS.AVAILABLE:
-      return <CommitButton
+      return <CommitIcon
         label={label}
         validate={validate}
         callback={callback}

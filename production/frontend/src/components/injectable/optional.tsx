@@ -3,7 +3,13 @@ import propTypes from 'prop-types';
 
 // WHY THE FUCK DIDN'T I MAKE THIS COMPONENT YEARS AGO?
 
-export function Optional({children, exists=true, alternative=null}){
+type OptionalProps = {
+  exists : boolean,
+  children : React.JSX.Element
+  alternative? : React.JSX.Element
+}
+
+export function Optional({children, exists=true, alternative=null} : OptionalProps){
   if(exists){
     return children;
   } else {

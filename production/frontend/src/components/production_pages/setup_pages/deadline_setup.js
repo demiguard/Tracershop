@@ -15,7 +15,7 @@ import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context
 import { nullParser } from "~/lib/formatting";
 import { Optional } from "~/components/injectable/optional";
 import { compareLoosely, nullify } from "~/lib/utils";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 
 
 /**
@@ -201,7 +201,7 @@ export function DeadlineSetup(){
       </Col>
       <Col>
         <Optional exists={changed}>
-          <CommitButton
+          <CommitIcon
             label={`commit-${deadline.id}`}
             temp_object={deadline}
             validate={validate}

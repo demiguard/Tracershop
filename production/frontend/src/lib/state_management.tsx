@@ -18,14 +18,10 @@ export function changeState(stateKeyWord, This){
  * @param {String} stateKeyWord - Keyword of state
  * @returns callable function
  */
-export function toggleState(stateKeyWord, This){
-  const returnFunction = (event) => {
-    const newState = {...This.state};
-    const oldValue = newState[stateKeyWord];
-    newState[stateKeyWord] = !oldValue;
-    This.setState(newState);
+export function toggleState(stateFunction: React.Dispatch<React.SetStateAction<boolean>>){
+  return () => {
+    stateFunction(old => !old);
   }
-  return returnFunction.bind(This);
 }
 
 /**
@@ -35,7 +31,7 @@ export function toggleState(stateKeyWord, This){
  * @returns {CallableFunction}
  */
 export function setStateToEvent(stateFunction, formatFunction=undefined){
-  return (event) => {
+  return (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
     stateFunction(value);
   }

@@ -15,7 +15,7 @@ import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { parseTimeInput } from "~/lib/user_input";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { numberfy } from "~/lib/utils";
 import { Options } from "~/components/injectable/optional";
 import { MESSAGE_ERROR } from "~/lib/incoming_messages";
@@ -266,7 +266,7 @@ export function ProductionSetup(){
       <Col>
         <Row>
           <Col>
-            <CommitButton
+            <CommitIcon
               temp_object={tempProduction}
               validate={validate}
               object_type={getProductionKW(product)}

@@ -19,7 +19,7 @@ import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
-import { getId } from "~/lib/utils";
+import { getId, getObjects } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";
 import { FONT } from "~/lib/styles";
 import { useErrorState } from "~/lib/error_handling";
@@ -47,6 +47,10 @@ export function CreateInjectionOrderModal({on_close}){
 
   // Can send
   const canOrder = !!endpointID && !!tracerID;
+
+  const available_tracers = [...tracerCatalog.getInjectionCatalog(endpointID)].map(
+    getObjects(state.tracer)
+  );
 
   function SubmitOrder(){
     //Validation
@@ -82,15 +86,13 @@ export function CreateInjectionOrderModal({on_close}){
     }
   }
 
-  const tracerOptions = toOptions(tracerCatalog.getInjectionCatalog(endpointID),
-                                  'shortname', 'id')
+  const tracerOptions = toOptions(available_tracers, 'shortname', 'id')
 
   useEffect(() => {
-    const newOptions = tracerCatalog.getInjectionCatalog(endpointID);
-    const newOptionsIDs = newOptions.map(getId);
-    if(!(newOptionsIDs.includes(tracerID))){
-      if(newOptions.length){
-        setTracer(newOptions[0].id);
+    const newAvailableTracerIds = tracerCatalog.getInjectionCatalog(endpointID);
+    if(!(newAvailableTracerIds.has(tracerID))){
+      if(newAvailableTracerIds.size){
+        setTracer([...newAvailableTracerIds][0]);
       } else {
         setTracer("");
       }

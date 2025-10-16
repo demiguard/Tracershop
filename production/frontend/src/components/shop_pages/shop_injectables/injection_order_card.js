@@ -18,7 +18,7 @@ import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { setTempObjectToEvent } from "~/lib/state_management";
 import { InjectionOrderPDFUrl, compareLoosely, nullify } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { Optional } from "~/components/injectable/optional";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 
@@ -142,7 +142,7 @@ export function InjectionOrderCard({
       />
     }
     if(changed && valid_deadline){
-      return <CommitButton
+      return <CommitIcon
         temp_object={tempInjectionOrder}
         object_type={DATA_INJECTION_ORDER}
         label={`commit-injection-${injection_order.id}`}

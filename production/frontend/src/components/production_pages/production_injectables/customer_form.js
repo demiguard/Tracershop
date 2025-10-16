@@ -1,6 +1,6 @@
 import React from 'react';
 import { Col, Row, Form } from "react-bootstrap";
-import { CommitButton } from '~/components/injectable/commit_button';
+import { CommitIcon } from '~/components/injectable/commit_icon';
 import { TracershopInputGroup } from '~/components/injectable/inputs/tracershop_input_group';
 import { Optional } from "~/components/injectable/optional";
 import { useErrorState } from '~/lib/error_handling';
@@ -43,7 +43,7 @@ export function CustomerForm({
         <Col><h4>Kunde</h4></Col>
           <Optional exists={customerDirty}>
             <Col style={{ justifyContent : "right", display: "flex"}}>
-              <CommitButton
+              <CommitIcon
                 label="customer-commit"
                 temp_object={tempCustomer}
                 object_type={DATA_CUSTOMER}

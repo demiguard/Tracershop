@@ -3,7 +3,11 @@ configure({
   computedStyleSupportsPseudoElements: true
 })
 import "@testing-library/jest-dom"
-import { jest } from "@jest/globals"
+import { jest, expect } from "@jest/globals"
+
+import { MATCH_EXTENSIONS } from '~/tests/jest_extension';
+
+expect.extend(MATCH_EXTENSIONS);
 
 const { getComputedStyle } = window;
 window.getComputedStyle = (elt) => getComputedStyle(elt);

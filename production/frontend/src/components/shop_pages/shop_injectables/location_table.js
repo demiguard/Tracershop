@@ -7,7 +7,7 @@ import { DATA_LOCATION } from "~/lib/shared_constants"
 import { nullParser } from "~/lib/formatting";
 import { EndpointSelect } from "../../injectable/derived_injectables/endpoint_select";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { compareLoosely } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";
 
@@ -99,7 +99,7 @@ export function LocationTable(){
             textAlign : "center"
           }}>
             <Optional exists={changed}>
-              <CommitButton
+              <CommitIcon
                 temp_object={location}
                 object_type={DATA_LOCATION}
                 validate={validate(location.id)}

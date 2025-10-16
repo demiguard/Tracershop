@@ -128,11 +128,20 @@ export const INJECTION_USAGE_NAMES = {
   other : "Andet",
 }
 
+/** Enum describing the different states
+ * @enum
+ */
+export const DISPLAY_STATUS = {
+  STATIC : 0,
+  DISPLAY : 1,
+  EDITING : 2
+};
+
 export const INJECTION_USAGE = {
   human : 0,
   animal : 1,
   other : 2,
-}
+};
 
 export const ERROR_BACKGROUND_COLOR = "#FF3333";
 export const ERROR_MARGIN_COLOR = "#FF0000";

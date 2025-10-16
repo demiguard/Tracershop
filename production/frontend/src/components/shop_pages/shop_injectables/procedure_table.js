@@ -14,10 +14,11 @@ import { setStateToEvent } from "~/lib/state_management";
 import { parseDanish0OrPositiveNumberInput, parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { PROCEDURE_SORTING, sort_procedures } from "~/lib/sorting";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";
 import { useUpdatingEffect } from "~/effects/updating_effect";
+import { getObjects } from "~/lib/utils";
 
 export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series description"
 
@@ -161,7 +162,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
         </td>
         <td>
           <Optional exists={dirtyObject}>
-            <CommitButton
+            <CommitIcon
               object_type={DATA_PROCEDURE}
               temp_object={procedure}
               label={`commit-${procedure.id}`}
@@ -199,7 +200,8 @@ export function ProcedureTable({relatedCustomer}){
   const activeProcedures = endpointProcedures.getProcedures(activeEndpoint);
 
   const tracerCatalog = useTracerCatalog();
-  const availableTracers = tracerCatalog.getActivityCatalog(activeEndpoint).concat(tracerCatalog.getInjectionCatalog(activeEndpoint));
+  const availableTracerIds = [...tracerCatalog.getActivityCatalog(activeEndpoint), ...tracerCatalog.getInjectionCatalog(activeEndpoint)];
+  const availableTracers = availableTracerIds.map(getObjects(state.tracer));
 
   const tracerOptions = toOptions(availableTracers, 'shortname');
   tracerOptions.push(new Option("", "---------"));

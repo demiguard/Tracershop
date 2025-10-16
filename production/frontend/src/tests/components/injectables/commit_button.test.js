@@ -5,7 +5,7 @@
 import React from "react";
 import { act, screen, render, cleanup, fireEvent, getByTestId } from "@testing-library/react";
 import { afterEach, jest } from "@jest/globals"
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
 
@@ -27,7 +27,7 @@ describe("Commit button tests", () => {
 
     render(
        <TracerShopContext websocket={websocket} tracershop_state={testState}>
-        <CommitButton
+        <CommitIcon
           label="test"
           temp_object={temp_object}
           object_type={data_type}
@@ -52,7 +52,7 @@ describe("Commit button tests", () => {
 
     render(
        <TracerShopContext websocket={websocket} tracershop_state={testState}>
-        <CommitButton
+        <CommitIcon
           label="test"
           temp_object={temp_object}
           object_type={data_type}
@@ -81,7 +81,7 @@ describe("Commit button tests", () => {
 
     render(
        <TracerShopContext websocket={websocket} tracershop_state={testState}>
-        <CommitButton
+        <CommitIcon
           label="test"
           temp_object={temp_object}
           object_type={data_type}

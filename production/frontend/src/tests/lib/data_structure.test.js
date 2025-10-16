@@ -69,10 +69,10 @@ describe("Tracer catalog Tests", () => {
     const empty_endpoint_catalog = tracerCatalog.getCatalog(1)
 
     expect(empty_endpoint_catalog).toBeInstanceOf(EndpointCatalog);
-    expect(empty_endpoint_catalog.tracerCatalogActivity).toStrictEqual([]);
-    expect(empty_endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
-    expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([]);
-    expect(tracerCatalog.getInjectionCatalog(1)).toStrictEqual([]);
+    expect(empty_endpoint_catalog.tracerCatalogActivity).toEqualSet([]);
+    expect(empty_endpoint_catalog.tracerCatalogInjections).toEqualSet([]);
+    expect(tracerCatalog.getActivityCatalog(1)).toEqualSet([]);
+    expect(tracerCatalog.getInjectionCatalog(1)).toEqualSet([]);
 
   });
 
@@ -99,11 +99,11 @@ describe("Tracer catalog Tests", () => {
 
     const endpoint_catalog = tracerCatalog.getCatalog(1);
     expect(endpoint_catalog).toBeInstanceOf(EndpointCatalog);
-    expect(endpoint_catalog.tracerCatalogActivity).toStrictEqual([tracer]);
-    expect(endpoint_catalog.tracerCatalogInjections).toStrictEqual([]);
-    expect(tracerCatalog.getActivityCatalog(1)).toStrictEqual([tracer]);
-    expect(tracerCatalog.getActivityCatalog(2)).toStrictEqual([]);
-    expect(tracerCatalog.getInjectionCatalog(1)).toStrictEqual([]);
+    expect(endpoint_catalog.tracerCatalogActivity).toEqualSet([tracer.id]);
+    expect(endpoint_catalog.tracerCatalogInjections).toEqualSet();
+    expect(tracerCatalog.getActivityCatalog(1)).toEqualSet([tracer.id]);
+    expect(tracerCatalog.getActivityCatalog(2)).toEqualSet([]);
+    expect(tracerCatalog.getInjectionCatalog(1)).toEqualSet([]);
   });
 });
 

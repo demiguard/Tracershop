@@ -23,7 +23,7 @@ import { compareDates, getId, openActivityReleasePDF } from "~/lib/utils";
 import { TimeInput } from "../injectable/inputs/time_input";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { OrderMapping } from "~/lib/data_structures/order_mapping";
-import { CommitButton } from "../injectable/commit_button";
+import { CommitIcon } from "../injectable/commit_icon";
 import { Optional, Options } from "../injectable/optional";
 import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
@@ -141,7 +141,7 @@ function OrderRow({order, setDirtyOrders}){
               }}
         />
       }>
-        <CommitButton
+        <CommitIcon
           label={`edit-accept-order-activity-${order.id}`}
           object_type={DATA_ACTIVITY_ORDER}
           temp_object={order}
@@ -295,7 +295,7 @@ function VialRow({
           <div> {/* DEFAULT_CANNOT_EDIT */}
           </div>
           <div> {/* EDITING */}
-            <CommitButton
+            <CommitIcon
               temp_object={vial}
               object_type={DATA_VIAL}
               validate={validate}

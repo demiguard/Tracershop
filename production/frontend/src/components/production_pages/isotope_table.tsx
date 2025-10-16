@@ -54,10 +54,9 @@ export function IsotopeTable({product}: IsotopeTableArgs){
   )
 
   const isotopeOrderMapping = new IsotopeOrderMapping(all_orders);
-  const renderedTimeSlots = []
+  const renderedTimeSlots = [];
 
   for(const [timeSlotID, orders] of isotopeOrderMapping){
-
     const timeSlot = state.isotope_delivery.get(timeSlotID);
 
     renderedTimeSlots.push(

@@ -38,3 +38,5 @@ export function getOrderType({order, orders}: {order? : OrderType, orders? : Ord
       return undefined;
   }
 }
+
+export type ValueOf<T> = T[keyof T];

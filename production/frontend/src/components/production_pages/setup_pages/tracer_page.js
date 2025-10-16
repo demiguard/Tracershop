@@ -13,7 +13,7 @@ import { Select,  toOptions } from "~/components/injectable/select";
 import { HoverBox } from "~/components/injectable/hover_box";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { nullParser } from "~/lib/formatting";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { compareLoosely } from "~/lib/utils";
@@ -181,7 +181,7 @@ export function TracerPage(){
             <Col>
               <HoverBox
                 Base={
-                  <CommitButton
+                  <CommitIcon
                   temp_object={tracer}
                   validate={validate(tracer)}
                   object_type={DATA_TRACER}

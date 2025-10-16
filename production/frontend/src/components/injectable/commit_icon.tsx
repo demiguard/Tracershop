@@ -2,7 +2,8 @@ import React from 'react'
 import { ClickableIcon, IdempotentIcon } from './icons';
 import { useWebsocket } from '../../contexts/tracer_shop_context';
 
-export function CommitButton({
+
+export function CommitIcon({
   temp_object,
   validate,
   object_type,

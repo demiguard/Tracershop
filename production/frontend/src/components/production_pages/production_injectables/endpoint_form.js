@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { EndpointSelect } from "~/components/injectable/derived_injectables/endpoint_select";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";
@@ -93,7 +93,7 @@ export function EndpointForm({
         <Col><h4>Leveringssted</h4></Col>
         <Col style={{display: "flex", justifyContent: "right"}}>
           <Optional exists={endpointDirty}>
-            <CommitButton
+            <CommitIcon
               temp_object={tempEndpoint}
               validate={validateEndpoint}
               callback={commit_callback}

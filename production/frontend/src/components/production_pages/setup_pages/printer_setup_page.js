@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Col, Container, FormCheck, FormControl, Row } from "react-bootstrap";
 import { IdempotentButton } from "~/components/injectable/buttons";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { DeleteButton } from "~/components/injectable/delete_button";
 import { IdempotentIcon } from "~/components/injectable/icons.tsx";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
@@ -79,7 +79,7 @@ function PrinterRow({
 
   const actionButton = creating ?
     <Optional exists={showCreateButton}>
-      <CommitButton
+      <CommitIcon
         validate={
           () => {
             return [printerState.name && printerState.ip && printerState.port, printerState];

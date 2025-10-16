@@ -14,7 +14,7 @@ import { ClickableIcon, EtherealIcon } from "../injectable/icons";
 import { Optional } from "../injectable/optional";
 import { setStateToEvent } from "~/lib/state_management";
 import { EditableInput } from "../injectable/inputs/editable_input";
-import { CommitButton } from "../injectable/commit_button";
+import { CommitIcon } from "../injectable/commit_icon";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "~/lib/user_input";
 import { DATA_ISOTOPE_VIAL } from "~/lib/shared_constants";
 import { useErrorState, setError } from "~/lib/error_handling";
@@ -25,6 +25,7 @@ import { TimeDisplay } from "../injectable/data_displays/time_display";
 import { FlexMinimizer } from "../injectable/flexMinimizer";
 import { MBqDisplay } from "../injectable/data_displays/mbq_display";
 import { IsotopeOrderRow } from "../production_pages/production_injectables/isotope_order_row";
+import { DateDisplay } from "../injectable/data_displays/date_display";
 
 
 function getModalVials(collection: IsotopeOrderCollection, state: TracershopState){
@@ -174,7 +175,7 @@ function VialRow({vial, selectedVialsState} : VialRowProps){
     </td>
     <td style={cssTableCenter}>
       <Optional exists={editing} alternative={editButton}>
-        <CommitButton
+        <CommitIcon
           temp_object={vial}
           validate={validateVial}
           object_type={DATA_ISOTOPE_VIAL}
@@ -260,22 +261,22 @@ function IsotopeModalBody({
           <Col><h4>Destination:</h4></Col>
           <Col><h4><EndpointDisplay endpoint={collection.endpoint}/></h4></Col>
         </Row>
-        <hr/>
+        <hr style={{ margin : 8 }}/>
         <Row>
-          <Col><h4>Leverings tidspunk:</h4></Col>
+          <Col><h4>Leverings tidspunkt:</h4></Col>
           <Col><h4><TimeDisplay time={collection.delivery.delivery_time}/></h4></Col>
         </Row>
-        <hr/>
+        <hr style={{ margin : 8 }}/>
         <Row>
           <Col><h4>Samlet bestilt aktivitet:</h4></Col>
           <Col><h4><MBqDisplay activity={collection.ordered_activity}/></h4></Col>
         </Row>
-        <hr/>
+        <hr style={{ margin : 8 }}/>
         <Row>
           <Col><h4>Ordre:</h4></Col>
           <Col>{isotopeOrders}</Col>
         </Row>
-        <hr/>
+        <hr style={{ margin : 8 }}/>
         <VialTable
           collection={collection}
           showingEtherealVial={showingEtherealVial}
@@ -317,6 +318,7 @@ export function IsotopeOrderModal({
   collection, onClose,
 }: IsotopeOrderModalProps){
   // Select vials have too be up here, because it's passed down to
+  const state = useTracershopState();
   const isAuthenticatingState = useState(false);
   const selectedVialsState = useState(new Set<number>());
 
@@ -330,7 +332,7 @@ export function IsotopeOrderModal({
     onHide={onClose}
   >
     <Modal.Header>
-      <h2>Isotope ordre til: <EndpointDisplay endpoint={collection.endpoint}/></h2>
+      <h2>Isotope ordre til: <EndpointDisplay endpoint={collection.endpoint}/> -  <DateDisplay date={state.today}/></h2>
     </Modal.Header>
     <Modal.Body>
       <IsotopeModalBody

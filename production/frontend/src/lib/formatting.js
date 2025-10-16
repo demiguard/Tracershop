@@ -168,7 +168,7 @@ export function StringValidator(input, min_length, max_length){
  * @returns {boolean} - true if str is a batch number false if not
  */
 export function batchNumberValidator(str){
-  return /[a-zA-Z]+-\d{6}-[1-9]\d*/g.test(str);
+  return /[a-zA-Z\d]+-\d{6}-[1-9]\d*/g.test(str);
 }
 
 /**

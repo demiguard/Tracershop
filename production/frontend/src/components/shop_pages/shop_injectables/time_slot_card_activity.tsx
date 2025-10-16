@@ -16,7 +16,7 @@ import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
 import { Optional } from "~/components/injectable/optional";
-import { CommitButton } from "~/components/injectable/commit_button";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { setStateToEvent } from "~/lib/state_management";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { makeBlankActivityOrder } from "~/lib/blanks";
@@ -140,7 +140,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>
         <Optional exists={canEdit && changedTemp}>
-          <CommitButton
+          <CommitIcon
             label={`commit-${order.id}`}
             temp_object={order}
             validate={validate}

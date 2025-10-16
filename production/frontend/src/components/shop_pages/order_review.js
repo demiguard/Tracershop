@@ -71,8 +71,6 @@ export function OrderReview({active_endpoint,
     }
   }
 
-  console.log(availableProducts);
-
   const tracerButtons = availableProducts.map((product_) => {
     const productRef = ProductReference.fromProduct(product_)
     const underline = product.equal(productRef)

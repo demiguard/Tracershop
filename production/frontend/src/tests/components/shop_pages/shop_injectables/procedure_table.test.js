@@ -10,7 +10,7 @@ import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
 import { ERROR_BACKGROUND_COLOR } from "~/lib/constants.js";
-import { TracerCatalogProvider } from "~/contexts/tracer_catalog.js";
+import { TracerCatalogProvider } from "~/contexts/tracer_catalog";
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
 
