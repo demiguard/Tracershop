@@ -178,7 +178,7 @@ export function InjectionOrderCard({
   <Card style={{padding : '0px'}}>
     <Card.Header>
       <Row>
-        <Col xs={1}>
+        <Col xs={1} style={{alignItems : "center", justifyContent : "center", display : "flex"}}>
           <Optional exists={ORDER_STATUS.AVAILABLE < injection_order.status}>
             <StatusIcon order={injection_order}/>
           </Optional>
@@ -187,7 +187,7 @@ export function InjectionOrderCard({
         <div style={{
           display : "ruby"
         }}>
-          <TracershopInputGroup label="Tracer">
+          <TracershopInputGroup readOnly={!canEdit} label="Tracer">
             <Optional exists={canEdit} alternative={TracerForm}>
               {TracerSelect}
             </Optional>
@@ -195,7 +195,7 @@ export function InjectionOrderCard({
           </div>
         </Col>
         <Col>
-          <TracershopInputGroup label="Injektioner">
+          <TracershopInputGroup readOnly={!canEdit} label="Injektioner">
             <ErrorInput error={errorInjections}>
               <EditableInput
                 aria-label={`injections-input-${injection_order.id}`}
@@ -208,7 +208,7 @@ export function InjectionOrderCard({
         </Col>
         <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
           <Col>
-            <TracershopInputGroup label="Frigivet kl:">
+            <TracershopInputGroup readOnly={!canEdit} label="Frigivet kl:">
               <Form.Control
                 aria-label={`freed-datetime-${injection_order.id}`}
                 value={getTimeString(injection_order.freed_datetime)}
@@ -244,16 +244,18 @@ export function InjectionOrderCard({
           </TracershopInputGroup>
         </Col>
         <Col>
-          <TracershopInputGroup label="Kommentar">
-            <EditableInput
-              canEdit={canEdit}
-              data-testid={`comment-${injection_order.id}`}
-              as="textarea"
-              rows={1}
-              value={nullParser(tempInjectionOrder.comment)}
-              onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
-            />
-          </TracershopInputGroup>
+          <Optional exists={canEdit || tempInjectionOrder.comment}>
+            <TracershopInputGroup label="Kommentar">
+              <EditableInput
+                canEdit={canEdit}
+                data-testid={`comment-${injection_order.id}`}
+                as="textarea"
+                rows={1}
+                value={nullParser(tempInjectionOrder.comment)}
+                onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
+                />
+            </TracershopInputGroup>
+          </Optional>
         </Col>
         <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
           <Col>
@@ -265,7 +267,10 @@ export function InjectionOrderCard({
              </TracershopInputGroup>
           </Col>
         </Optional>
-        <Col xs={1}>
+        <Col xs={1} style={{
+          alignItems : "center",
+          display : "flex"
+        }}>
           {ActionButton}
         </Col>
       </Row>

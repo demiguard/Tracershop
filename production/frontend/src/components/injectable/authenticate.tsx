@@ -1,11 +1,10 @@
 import React, { useEffect, useState } from "react";
 import propTypes from 'prop-types'
-import { Form, Button, Spinner } from "react-bootstrap";
-//import styles from "../../css/Authenticate.module.css"
+
 import { FONT, MARGIN } from '~/lib/styles'
 import { AlertBox, ERROR_LEVELS } from "./alert_box";
 import { setStateToEvent } from "~/lib/state_management";
-import { Optional } from "~/components/injectable/optional";
+
 import { RecoverableError } from "~/lib/error_handling";
 import { IdempotentButton } from "~/components/injectable/buttons";
 
@@ -73,15 +72,23 @@ export function Authenticate({ authenticate,
   const [password, setPassword] = useState("");
 
   function onSubmitFunc() {
-    if(password){
-      return authenticate(username, password);
-    } else {
+    if(!username){
       setError(new RecoverableError(
-        "Dit kodeord er ikke tastet ind.",
+        "Dit brugernavn er ikke tastet ind.",
          ERROR_LEVELS.warning
       ));
+      return Promise.resolve();
     }
-    return Promise.resolve();
+
+    if(!password){
+      setError(new RecoverableError(
+        "Dit kodeord er ikke tastet ind.",
+        ERROR_LEVELS.warning
+      ));
+      return Promise.resolve();
+    }
+
+    return authenticate(username, password);
   }
 
   function onEnterSubmit(event : KeyboardEvent){
@@ -135,7 +142,7 @@ export function Authenticate({ authenticate,
           </div>
           {/* Note that Alert box doesn't render on no error */}
           <AlertBox
-            testId={"Authenticate-alterbox"}
+            data-testid={"Authenticate-alert-box"}
             error={error}
           />
           <div className={"form-group"} style={styles.formRow}>

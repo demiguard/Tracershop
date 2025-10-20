@@ -1,5 +1,6 @@
 import React, {useState} from "react";
 import { ERROR_LEVELS } from "~/components/injectable/alert_box";
+import { ErrorFunction, ValueOf } from "./types";
 
 /**
  * Class for grouping error, that tracershop should be able to recover from.
@@ -10,14 +11,14 @@ import { ERROR_LEVELS } from "~/components/injectable/alert_box";
  */
 export class RecoverableError {
   message : string
-  level : ERROR_LEVELS
+  level : ValueOf<typeof ERROR_LEVELS>
 
   /**
    *
    * @param {string | React.ReactElement | undefined} message
    * @param {ERROR_LEVELS | undefined} level
    */
-  constructor(message? : string, level? : ERROR_LEVELS){
+  constructor(message? : string, level? : ValueOf<typeof ERROR_LEVELS>){
     this.message = message ? message : "";
     this.level = level ? level : message ? ERROR_LEVELS.error : ERROR_LEVELS.NO_ERROR;
   }
@@ -53,7 +54,7 @@ export function useErrorState(): [RecoverableError, (arg: any) => void]{
    *   Truthy - Sets the error to a recoverable error
    * @param {Any} newError
    */
-  function setError(newError : any){
+  function setError(newError : any | undefined){
     if(typeof newError === "function"){
       innerSetError(
         (oldError) => {
@@ -75,3 +76,41 @@ export function useErrorState(): [RecoverableError, (arg: any) => void]{
 export function setError(valid: boolean, errorStateFunction, messageOrValue){
   if(!valid){ errorStateFunction(messageOrValue); }
 }
+
+
+export class ErrorMonad {
+  error : Map<string, string>
+  values : Map<string, any>
+
+  constructor(){
+    this.error = new Map()
+    this.values = new Map()
+  }
+
+  /**
+   * # THIS IS THE MONADIC BIND AND HAVE NOTHING TO DO WITH JAVASCRIPT
+   */
+  bind(func: ErrorFunction){
+    const {valid, error, value, id} = func();
+    if(valid){
+      this.values.set(id, value);
+    } else {
+      this.error.set(id, error);
+    }
+    return this;
+  }
+
+  hasError(): boolean{
+    return !!this.error.size;
+  }
+
+  get_value(key: string){
+    const val = this.values.get(key);
+    return val ? val : "";
+  }
+
+  get_error(key: string){
+    const err = this.error.get(key);
+    return err ? err : ""
+  }
+};

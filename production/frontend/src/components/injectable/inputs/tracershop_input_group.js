@@ -14,9 +14,18 @@ import  propTypes  from "prop-types";
  * @param {*} param0
  * @returns
  */
-export function TracershopInputGroup({children, label, error, tail, ...extra_props}) {
+export function TracershopInputGroup({children, label, error, tail, readonly, ...extra_props}) {
   const showLabel = !!label;
   const showTail = !!tail;
+
+  if(readonly){
+
+    const tail_string = tail ? tail : "";
+    const label_string = label ? label : "";
+
+    return `${label_string} ${children.props.value} ${tail_string}`
+  }
+
 
   if(error === "" || error === undefined || error.level === ERROR_LEVELS.NO_ERROR){
     return (

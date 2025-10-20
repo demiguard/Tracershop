@@ -5,7 +5,7 @@ import propTypes from 'prop-types';
 
 type OptionalProps = {
   exists : boolean,
-  children : React.JSX.Element
+  children : React.JSX.Element | React.JSX.Element[]
   alternative? : React.JSX.Element
 }
 

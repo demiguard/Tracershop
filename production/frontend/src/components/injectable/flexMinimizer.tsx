@@ -6,6 +6,7 @@ export function FlexMinimizer(props : React.HTMLAttributes<HTMLDivElement>){
   const {children, style, ...rest} = props;
 
   const newStyle = {
+    ...style,
     display : "flex",
     flexGrow : "0",
     flexShrink : "1",

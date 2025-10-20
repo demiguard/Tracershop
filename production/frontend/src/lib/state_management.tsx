@@ -18,9 +18,15 @@ export function changeState(stateKeyWord, This){
  * @param {String} stateKeyWord - Keyword of state
  * @returns callable function
  */
-export function toggleState(stateFunction: React.Dispatch<React.SetStateAction<boolean>>){
+export function toggleState(
+    stateFunction: React.Dispatch<React.SetStateAction<boolean>>,
+    sideEffect = (newValue : boolean) => {}
+){
   return () => {
-    stateFunction(old => !old);
+    stateFunction(old => {
+      sideEffect(!old);
+      return !old
+    });
   }
 }
 

@@ -17,31 +17,31 @@ import { toggleState } from "~/lib/state_management";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 
 type OrderRowProps = {
-  order : IsotopeOrder
+  order : IsotopeOrder,
+  isFreeing? : boolean
 }
 
 export function IsotopeOrderRow ({
-  order
+  order, isFreeing = false
 }: OrderRowProps) {
   const [editing, setEditing] = useState(false);
   const [displayActivity, setDisplayActivity] = useState(String(order.ordered_activity_MBq));
   const [error, setError] = useErrorState();
 
   function validate(){
-    const [valid, number] = parseDanishPositiveNumberInput(displayActivity, 'Aktiviten')
+    const [valid, number] = parseDanishPositiveNumberInput(displayActivity, 'Aktiviten');
 
     if (!valid){
-      setError(number)
-      return [false, {}]
+      setError(number);
+      return [false, {}];
     }
-
 
     return [true, {...order, ordered_activity_MBq : number}];
   }
 
   const displayStatus = (() => {
     switch (true) {
-      case !([ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)):
+      case isFreeing || !([ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)):
         return DISPLAY_STATUS.STATIC;
       case editing === true:
         return DISPLAY_STATUS.EDITING;
@@ -62,12 +62,12 @@ export function IsotopeOrderRow ({
       displayStatus={displayStatus}
     />
     <Optional exists={!!(order.comment)}>
-      <FlexMinimizer style={{justifyContent : "center" }}>
+      <FlexMinimizer style={{alignItems : "center" }} aria-label={`comment-icon-${order.id}`}>
         <Comment comment={order.comment}/>
       </FlexMinimizer>
     </Optional>
     <Optional exists={[ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(order.status)}>
-      <FlexMinimizer style={{ justifyContent : "center" }}>
+      <FlexMinimizer style={{ alignItems : "center" }} aria-label={`command-icon-${order.id}`}>
         <CommandProductionIcon
           displayStatus={displayStatus}
           temp_object={order}

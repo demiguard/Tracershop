@@ -8,20 +8,29 @@ export const useOverflow = (ref, callback) => {
 
   useLayoutEffect(() => {
     const { current } = ref;
+    let observer = null;
 
     const trigger = () => {
       const hasOverflow = current.scrollHeight > current.clientHeight
                         || current.scrollWidth > current.clientWidth;
       setIsOverflow(hasOverflow);
 
-      if (callback) callback(hasOverflow);
+      if (callback){
+        callback(hasOverflow);
+      }
     };
 
     if (current) {
       if('ResizeObserver' in window){
-        new ResizeObserver(trigger).observe(current);
+        observer = new ResizeObserver(trigger);
+        observer.observe(current);
       }
       trigger();
+    }
+    return () => {
+      if(observer){
+        observer.disconnect();
+      }
     }
   }, [callback, ref]);
 

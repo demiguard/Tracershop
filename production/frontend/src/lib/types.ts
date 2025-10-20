@@ -40,3 +40,12 @@ export function getOrderType({order, orders}: {order? : OrderType, orders? : Ord
 }
 
 export type ValueOf<T> = T[keyof T];
+
+export type ReactState<T> = [T, React.Dispatch<React.SetStateAction<T>>];
+
+export type ErrorFunction = () => {
+  valid : boolean,
+  error? : string,
+  value? : any,
+  id : string
+}

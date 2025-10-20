@@ -48,10 +48,10 @@ export function OrderReview({active_endpoint,
   const [product, setActiveProduct] = productState;
   const availableTracers = [...endpointCatalog.tracerCatalogActivity].map(getObjects(state.tracer))
   const availableIsotopes = [...endpointCatalog.isotopeCatalog].map(getObjects(state.isotopes))
-
+  const availableInjectionTracers = [...endpointCatalog.tracerCatalogInjections].map(getObjects(state.tracer));
   const availableProducts = [...availableTracers, ...availableIsotopes];
 
-  const availableInjectionTracers = endpointCatalog.tracerCatalogInjections;
+
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
 

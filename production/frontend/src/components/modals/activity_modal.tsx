@@ -32,9 +32,10 @@ import { vialFilter } from "~/lib/filters";
 import { FONT } from "~/lib/styles";
 import { DateTime } from "~/components/injectable/datetime";
 import { toLotDateString } from "~/lib/chronomancy";
-import { RecoverableError, useErrorState } from "~/lib/error_handling";
+import { ErrorMonad, RecoverableError, useErrorState } from "~/lib/error_handling";
 import { useUserReleaseRights } from "~/contexts/user_release_right";
 import { CancelButton } from "~/components/injectable/cancel_button";
+import { ReleaseButton } from "~/components/production_pages/production_injectables/release_button";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -62,6 +63,8 @@ const orderRowStates = {
 }
 
 export const WRONG_DATE_WARNING_MESSAGE = "Ordren som er i gang med at blive frigivet er ikke til i dag!";
+const dateErrorStatic = new RecoverableError(WRONG_DATE_WARNING_MESSAGE, ERROR_LEVELS.hint);
+
 
 function OrderRow({order, setDirtyOrders}){
   const creating = order.id === NEW_LOCAL_ID;
@@ -83,8 +86,9 @@ function OrderRow({order, setDirtyOrders}){
   function validate(){
     const [valid, activityNumber] = parseDanishPositiveNumberInput(etherealOrder.ordered_activity, "Aktiviteten");
     const newError = {ordered_activity : !valid ?  activityNumber : ""};
+    //@ts-ignore
     setError(newError);
-    if(!valid){ return [false, {}]; }
+    if( !valid ){ return [false, {}]; }
 
     return [true, {...order,
       ordered_activity : activityNumber,
@@ -155,7 +159,6 @@ function OrderRow({order, setDirtyOrders}){
   );
 }
 
-
 function VialRow({
   vial, selected, orderCollection, freeing, setSelectedVials, setDirtyVials, stopAllocatingNewVial
 }){
@@ -187,17 +190,15 @@ function VialRow({
   // Vial Row functions
   function startEditing() {
     setEditing(true);
-    toggleSetState(setDirtyVials, vial.id, TOGGLE_ACTIONS.ADD)()
   }
 
   function cancelEditing() {
     setEditing(false);
-    toggleSetState(setDirtyVials, vial.id, TOGGLE_ACTIONS.REMOVE)()
     setEtherealVial({...vial});
   }
 
   function validate() {
-    const [batchValid, formattedLotNumber] = parseBatchNumberInput(etherealVial.lot_number, "lot nr.");
+    const [batchValid, formattedLotNumber] = parseBatchNumberInput(etherealVial.lot_number, "lot nr." );
     const [timeValid, formattedFillTime] = parseTimeInput(etherealVial.fill_time, "Produktions tidspunk");
     const [volumeValid, formattedVolume] = parseDanishPositiveNumberInput(etherealVial.volume, "Volume");
     const [activityValid, formattedActivity] = parseDanishPositiveNumberInput(etherealVial.activity, "Aktiviten");
@@ -209,6 +210,7 @@ function VialRow({
       activity   : !activityValid ? formattedActivity : "",
     }
 
+    //@ts-ignore
     setError(newVialError);
 
     const success = batchValid && timeValid && volumeValid && activityValid;
@@ -315,7 +317,7 @@ function VialRow({
             <div> {/* DEFAULT */}
               <Form.Check
                 aria-label={`vial-usage-${vial.id}`}
-                onChange={toggleSetState(setSelectedVials, vial.id)}
+                onChange={toggleSetState(setSelectedVials, vial.id, TOGGLE_ACTIONS.ADD)}
                 checked={selected}
               />
             </div>
@@ -335,7 +337,8 @@ function VialRow({
             <div> {/* SELECTED */}
             <Form.Check
               aria-label={`vial-usage-${vial.id}`}
-              onChange={toggleSetState(setSelectedVials, vial.id)}
+              disabled={freeing}
+              onChange={toggleSetState(setSelectedVials, vial.id, TOGGLE_ACTIONS.REMOVE)}
               checked={selected}/>
             </div>
             <div> {/* UNSELECTABLE */}
@@ -378,13 +381,12 @@ export function ActivityModal({
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
   // Order State
-  const /** @type {StateType<Set<Number>>} */ [selectedVials, setSelectedVials] = useState(new Set());
+  const [selectedVials, setSelectedVials] = useState(new Set<number>());
   const [dirtyOrders, setDirtyOrders] = useState(new Set());
   const [dirtyVials, setDirtyVials] = useState(new Set());
   const [addingVial, setAddingVial] = useState(false);
   const [freeing, setFreeing] = useState(false);
   const [loginError, setLoginError] = useErrorState();
-  const [dateError, setDateError]  = useErrorState();
   const [correctingOrder, setCorrectingOrder] = useState(false);
 
   // Derived State
@@ -407,21 +409,8 @@ export function ActivityModal({
     setAddingVial(false);
   }
 
-  function startFreeing(){
-    if(compareDates(active_date, new Date())){
-      setFreeing(true);
-    } else {
-      setFreeing(true);
-      setDateError(
-        WRONG_DATE_WARNING_MESSAGE,
-        ERROR_LEVELS.hint
-      )
-    }
-  }
-
   function stopFreeing(){
     setFreeing(false)
-    setDateError();
   }
 
   function startCorrectingOrder(){
@@ -486,7 +475,7 @@ export function ActivityModal({
       (message) => {
         if (message[AUTH_IS_AUTHENTICATED]){
           stopCorrectingOrder();
-          setLoginError();
+          setLoginError(new RecoverableError());
         } else {
           setLoginError(new RecoverableError("Forkert login"));
         }
@@ -541,10 +530,6 @@ export function ActivityModal({
       />;
 
   const canFree = selectedVials.size > 0 && !(addingVial) && RightsToFree;
-  const ConfirmButton = canFree ?
-                          <MarginButton onClick={startFreeing}>Godkend</MarginButton>
-                        : <MarginButton disabled>Godkend</MarginButton>;
-  const CancelFreeButton = <MarginButton onClick={stopFreeing}>Rediger</MarginButton>
   const PDFButton = <MarginButton onClick={onClickToPDF}>Frigivelsecertifikat</MarginButton>;
 
   /**
@@ -603,6 +588,8 @@ export function ActivityModal({
     allocationTotal += vial.activity;
   }
 
+
+
   return (
     <div>
     <Modal
@@ -641,14 +628,14 @@ export function ActivityModal({
               <Col>{Math.floor(orderCollection.deliver_activity)} MBq</Col>
             </Row>
             <hr style={marginLess}/>
-            <Optional exists={orderCollection.minimum_status == ORDER_STATUS.ACCEPTED}>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ACCEPTED}>
               <Row style={marginRows}>
                 <Col xs={3}>Allokeret aktivitet:</Col>
                 <Col data-testid="allocation-col">{Math.floor(allocationTotal)} MBq</Col>
               </Row>
               <hr style={marginLess}/>
             </Optional>
-            <Optional exists={orderCollection.minimum_status == ORDER_STATUS.RELEASED}>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
               <Row style={marginRows}>
                 <Col xs={3}>Frigivet aktivitet</Col>
                 <Col>{Math.floor(orderCollection.delivered_activity)} MBq</Col>
@@ -669,7 +656,9 @@ export function ActivityModal({
         </Col>
           {sideElement}
         </Row>
-        <AlertBox error={dateError}/>
+        <Optional exists={freeing && !compareDates(state.today, new Date())}>
+          <AlertBox data-testid={"activity-error-date-error"} error={dateErrorStatic}/>
+        </Optional>
         <Row>
           <div>
             <Table>
@@ -724,11 +713,13 @@ export function ActivityModal({
             <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ORDERED}>
               <Col md="auto">{AcceptButton}</Col>
             </Optional>
-            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ACCEPTED && !freeing}>
-              <Col md="auto">{ConfirmButton}</Col>
-            </Optional>
-            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ACCEPTED && freeing}>
-              <Col md="auto">{CancelFreeButton}</Col>
+            <Optional exists={orderCollection.minimum_status === ORDER_STATUS.ACCEPTED}>
+              <Col md="auto">
+                <ReleaseButton
+                  canFree={canFree}
+                  authenticationState={[freeing, setFreeing]}
+                />
+              </Col>
             </Optional>
             <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED}>
               <Col md="auto">{PDFButton}</Col>
