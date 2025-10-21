@@ -4,7 +4,7 @@ import { IsotopeOrderCollection } from "~/lib/data_structures/isotope_order_coll
 import { CloseButton } from "../injectable/buttons";
 import { ALIGN, CENTER, cssTableCenter, DISPLAY, FONT, JUSTIFY, MARGIN } from "~/lib/styles";
 import { EndpointDisplay } from "../injectable/data_displays/endpoint";
-import { useTracershopState } from "~/contexts/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { IsotopeVial, TracershopState } from "~/dataclasses/dataclasses";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
 import { isotopeVialFilter } from "~/lib/filters";
@@ -15,7 +15,7 @@ import { Optional } from "../injectable/optional";
 import { setStateToEvent } from "~/lib/state_management";
 import { EditableInput } from "../injectable/inputs/editable_input";
 import { CommitIcon } from "../injectable/commit_icon";
-import { DATA_ISOTOPE_VIAL } from "~/lib/shared_constants";
+import { AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_VIAL, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_FREE_ISOTOPE, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { useErrorState, setError, ErrorMonad, RecoverableError } from "~/lib/error_handling";
 import { dateToDateString } from "~/lib/formatting";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
@@ -30,6 +30,7 @@ import { ReleaseButton } from "../production_pages/production_injectables/releas
 import { parseBatchNumberBind, parseDanishPositiveNumberBind, parseTimeBind } from "~/lib/parsing";
 import { Authenticate } from "../injectable/authenticate";
 import { ERROR_LEVELS } from "../injectable/alert_box";
+import { MESSAGE_UPDATE_PRIVILEGED_STATE } from "~/lib/incoming_messages";
 
 
 function getModalVials(collection: IsotopeOrderCollection, state: TracershopState){
@@ -287,20 +288,36 @@ type IsotopeModalBodyProps = {
 function IsotopeModalBody({
   collection, isAuthenticatingState, selectedVialsState
 } : IsotopeModalBodyProps){
+  const [selectedVials, setSelectedVials] = selectedVialsState
   const [isFreeing, setFreeing] = isAuthenticatingState;
   const [showingEtherealVial, setShowingEtherealVial] = useState(false);
   const [authenticateError, setAuthenticateError] = useErrorState();
 
   const showShowEtherealVialButton =[ORDER_STATUS.ACCEPTED, ORDER_STATUS.ORDERED].includes(collection.minimum_status);
+  const websocket = useWebsocket()
 
   const isotopeOrders = collection.orders.map(
     (io) => <IsotopeOrderRow key={io.id} order={io} isFreeing={isFreeing}/>
   );
 
   function authenticate(username, password){
-    if(username==="" || password === ""){
-      setAuthenticateError(new RecoverableError("Der er oplysninger som ikke er tastet ind.", ERROR_LEVELS.warning))
-    }
+    websocket.send({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_FREE_ISOTOPE,
+      [DATA_AUTH] : {
+        AUTH_USERNAME : username,
+        AUTH_PASSWORD : password
+      },
+      WEBSOCKET_DATA : {
+        DATA_ISOTOPE_ORDER : collection.orders.map(getId),
+        DATA_ISOTOPE_VIAL : [...selectedVials]
+      }
+    }).then(response => {
+      if(response instanceof MESSAGE_UPDATE_PRIVILEGED_STATE){
+
+      }
+    })
+
+
   }
 
   const width = isFreeing ? "75%" : "100%";
