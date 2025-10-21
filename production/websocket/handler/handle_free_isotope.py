@@ -37,25 +37,7 @@ class HandleFreeIsotope(HandlerBase):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_FREE_ISOTOPE
 
   async def __call__(self, consumer: Consumer, message):
-    """This is the handler it assumes the message is a json object with the
-    following specialized structure:
-    {
-      DATA_AUTH : {
-        AUTH_USERNAME : username of the authenticating user
-        AUTH_PASSWORD : password for the authenticating user
-      }
-      WEBSOCKET_DATA : {
-        DATA_ISOTOPE_ORDER : Order_id
-        DATA_ISOTOPE_VIAL : List<Vial id>
-      }
-    }
-
-    Args:
-        consumer (Consumer): _description_
-        message (_type_): _description_
-
-    Returns:
-        _type_: _description_
+    """Frees isotope orders
     """
     result, user = await consumer.authenticate_from_auth(message)
 
@@ -70,7 +52,6 @@ class HandleFreeIsotope(HandlerBase):
       updated_state = await consumer.db.release_isotope_order(
         message[WEBSOCKET_DATA], user, consumer.datetimeNow.now()
       )
-      #log_release_isotope_orders()
 
       await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, {
           MESSENGER_CONSUMER : consumer,
@@ -82,5 +63,4 @@ class HandleFreeIsotope(HandlerBase):
         })
     except Exception:
       # Send an error back, that stuff went wrong
-
       pass

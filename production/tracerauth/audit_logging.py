@@ -204,7 +204,23 @@ def logReleaseManyInjectionOrders(
     lot: str
   ):
 
-  message = f"\nUser: {user.username} is releasing the following orders with batch: {lot}\n"
+  message = f"\nUser: {user.username} is releasing the following injection orders with batch: {lot}\n"
   for order in orders:
-    message += f"  {order.id}\n"
+    message += f"  Injection order: {order.id}\n"
+  logger.info(message)
+
+def log_release_isotope_orders(
+    user: 'models.User',
+    orders: List['models.IsotopeOrder'],
+    vials: List['models.IsotopeVial'],
+  ):
+
+  message = f"\nUser: {user.username } is releasing the following isotope orders:\n"
+  for order in orders:
+    message += f"  Isotope order: {order.id}\n"
+
+  message += "To fulfill these orders there're releasing these vials:\n"
+  for vial in vials:
+    message += f"  Isotope Vial: {vial.id}\n"
+
   logger.info(message)
