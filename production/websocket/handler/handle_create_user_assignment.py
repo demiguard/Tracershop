@@ -1,6 +1,6 @@
 # Python Standard library
 from logging import getLogger
-from typing import Tuple, Optional
+from typing import Any, Dict, Tuple, Optional
 
 # Django / Channels Imports
 from channels.auth import get_user
@@ -10,11 +10,11 @@ from database.models import User, UserAssignment
 from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.utils import classproperty
 from shared_constants import DATA_USER, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
-  WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
+  WEBSOCKET_MESSAGE_STATUS, AUTH_USERNAME, DATA_USER_ASSIGNMENT,\
   WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_ERROR,\
   WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES,\
   WEBSOCKET_SERVER_MESSAGES
-
+from tracerauth.message_validation import Message
 
 from websocket.handler_base import HandlerBase
 
@@ -22,12 +22,19 @@ error_logger = getLogger(ERROR_LOGGER)
 
 class HandleCreateUserAssignment(HandlerBase):
   @classproperty
+  def blueprint(cls):
+    return Message({
+      AUTH_USERNAME : str,
+      "customer_id" : int,
+    })
+
+  @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT
 
   async def __call__(self, consumer, message):
     user = await get_user(consumer.scope)
-    username = message['username']
+    username = message[AUTH_USERNAME]
     customerID = message['customer_id']
 
     temp_res: Tuple[SUCCESS_STATUS_CRUD,
@@ -48,7 +55,7 @@ class HandleCreateUserAssignment(HandlerBase):
     if user_assignment is None: # pragma no cover
       error_logger.critical("Somebody somewhere fucked up a contract...")
 
-    data_dict = {
+    data_dict: Dict[str, Any] = {
       DATA_USER_ASSIGNMENT : [user_assignment],
     }
 

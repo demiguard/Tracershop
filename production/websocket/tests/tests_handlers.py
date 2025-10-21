@@ -33,7 +33,7 @@ class DatetimeMock:
 async def mock_get_user(scope):
   return scope['user']
 
-with mock.patch('channels.auth.get_user', mock_get_user):
+with mock.patch('tracerauth.auth.get_logged_in_user', mock_get_user):
   from websocket.handler.handle_get_telemetry import HandleReadTelemetry
   from websocket.handler.handle_read_state import HandleReadState
   from websocket.handler.handle_model_create import HandleModelCreate

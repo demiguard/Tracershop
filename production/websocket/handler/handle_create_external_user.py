@@ -12,24 +12,33 @@ from constants import ERROR_LOGGER
 from lib.utils import classproperty
 from constants import MESSENGER_CONSUMER
 from shared_constants import DATA_USER, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
-  WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, DATA_USER_ASSIGNMENT,\
-  WEBSOCKET_DATA, WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE,\
-  WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
-
+  WEBSOCKET_MESSAGE_STATUS, AUTH_USERNAME, DATA_USER_ASSIGNMENT,\
+  WEBSOCKET_DATA, WEBSOCKET_REFRESH, AUTH_PASSWORD,\
+  DATA_CUSTOMER, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
+from tracerauth.message_validation import Message
 from websocket.handler_base import HandlerBase
 
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleCreateExternalUser(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+    WEBSOCKET_DATA : {
+      AUTH_USERNAME : str,
+      AUTH_PASSWORD : str,
+      DATA_CUSTOMER : int
+    }
+  })
 
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER
 
   async def __call__(self, consumer, message):
-    user: User = await get_user(consumer.scope)
+    user: User = await get_user(consumer.scope) # type: ignore
     if not user.is_production_admin:
-      raise IllegalActionAttempted
+      raise IllegalActionAttempted(f"User {user.username}")
     newUser, newUserAssignment = await consumer.db.createExternalUser(
       message[WEBSOCKET_DATA]
     )

@@ -310,3 +310,26 @@ def get_login(now=None) -> Optional[AbstractBaseUser] :
     return user
   else:
     return None
+
+# from third party packages
+from django.contrib.auth.models import AnonymousUser
+from channels.auth import get_user
+
+# Tracershop
+from database.models import User
+from core.exceptions import LoginRequired, ContractBroken
+
+async def get_logged_in_user(scope):
+  user = await get_user(scope)
+
+  if isinstance(user, AnonymousUser):
+    raise LoginRequired("Action requires the user to be logged in")
+
+  if not isinstance(user, User):
+    raise ContractBroken("Returned a user that wasn't a Tracershop user class")
+
+  return user
+
+__all__ = [
+  'get_logged_in_user'
+]

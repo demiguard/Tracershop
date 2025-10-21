@@ -6,16 +6,30 @@
 from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_DATA,\
   DATA_DELIVER_TIME, DATA_ACTIVITY_ORDER, DATA_VIAL, AUTH_IS_AUTHENTICATED,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_SUCCESS,\
+  WEBSOCKET_REFRESH, DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_UPDATE_STATE, WEBSOCKET_MESSAGE_TYPES,\
   WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD
-
+from tracerauth.message_validation import Message, Array
 from tracerauth.types import AuthenticationResult
 from tracerauth.audit_logging import logFreeActivityOrders
 from lib.utils import classproperty
 from websocket.handler_base import HandlerBase
 
 class HandleFreeActivity(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      DATA_AUTH : {
+        AUTH_USERNAME : str,
+        AUTH_PASSWORD : str
+      },
+      WEBSOCKET_DATA : {
+        DATA_DELIVER_TIME : int,
+        DATA_VIAL : Array(int),
+        DATA_ACTIVITY_ORDER : Array(int)
+      }
+    })
+
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_FREE_ACTIVITY

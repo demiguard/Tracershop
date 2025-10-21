@@ -197,3 +197,14 @@ def logCorrectOrder(user: 'models.User', data: Dict[str, List[int]]):
   message = f"User: {user.username} is unreleasing the following data:\n"
   message += pformat(data)
   logger.info(message)
+
+def logReleaseManyInjectionOrders(
+    user: 'models.User',
+    orders: List['models.InjectionOrder'],
+    lot: str
+  ):
+
+  message = f"\nUser: {user.username} is releasing the following orders with batch: {lot}\n"
+  for order in orders:
+    message += f"  {order.id}\n"
+  logger.info(message)

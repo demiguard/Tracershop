@@ -411,6 +411,55 @@ Blegdamsvej 9
 
     self.assertEqual(len(vials), 4)
 
+    for vial in vials:
+      vial.validate_constraints()
+
+    text.close()
+
+  def tests_pe2i_csv_file_test_failed_case(self):
+    file_content = \
+r"""BatchReference,Customer,CustomerAddress,DateTimeStamp,DispensedDose,DoseName,Name,RadVolumeDispensed,Status,Value,ValueType,ValueUnits,VariableName
+"PE2I-251020-1","bispebjerg","Klinisk Fysiologi/
+Nuklearmedicinsk Afd.
+Bispebjerg Hospital
+Bispebjerg Bakke 23, 2400 Københvan NV","20-10-2025 12:37:27","2929","Dose 1","Dose 1","8","Keyboard","2929","DoseCalibrator","MBq","Dose1"
+"PE2I-251020-1","odense","Nuklearmedicinsk Afd.
+Odense Universitetshospital
+Sdr. Boulevard 26, 5000 Odense C","20-10-2025 12:47:51","5442","Dose 2","Dose 2","12","KeyboardReentered","5442","DoseCalibrator","MBq","Dose2"
+"PE2I-251020-1","bispebjerg","Klinisk Fysiologi/
+Nuklearmedicinsk Afd.
+Bispebjerg Hospital
+Bispebjerg Bakke 23, 2400 Københvan NV","20-10-2025 12:51:46","4019","Dose 3","Dose 3","9","KeyboardReentered","4019","DoseCalibrator","MBq","Dose3"
+"""
+    text = io.StringIO()
+    text.write(file_content)
+    text.seek(0)
+
+    data_frame = read_csv(text)
+
+    vials = parse_data_frame_row_to_vial(data_frame)
+
+    self.assertEqual(len(vials), 3)
+
+    self.assertEqual(vials[0].lot_number, "PE2I-251020-1")
+    self.assertEqual(vials[1].lot_number, "PE2I-251020-1")
+    self.assertEqual(vials[2].lot_number, "PE2I-251020-1")
+
+    self.assertEqual(vials[0].fill_date, date(2025,10,20))
+    self.assertEqual(vials[1].fill_date, date(2025,10,20))
+    self.assertEqual(vials[2].fill_date, date(2025,10,20))
+
+    self.assertEqual(vials[0].fill_time, time(12,37,27))
+    self.assertEqual(vials[1].fill_time, time(12,47,51))
+    self.assertEqual(vials[2].fill_time, time(12,51,46))
+
+    self.assertEqual(vials[0].activity, 2929)
+    self.assertEqual(vials[1].activity, 5442)
+    self.assertEqual(vials[2].activity, 4019)
+
+    for vial in vials:
+      vial.full_clean()
+
     text.close()
 
 

@@ -35,3 +35,7 @@ class InvalidCSVFile(Exception):
 
 class UnknownUnit(Exception):
   pass
+
+class LoginRequired(Exception):
+  """Raised when an action requires a user to be logged in, but there isn't"""
+  pass

@@ -34,14 +34,14 @@ from core.exceptions import IllegalActionAttempted,\
 from shared_constants import DATA_VIAL, DATA_INJECTION_ORDER, DATA_CUSTOMER,\
     DATA_ACTIVITY_ORDER, DATA_CLOSED_DATE, AUTH_USERNAME, AUTH_PASSWORD,\
     EXCLUDED_STATE_MODELS, DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST,\
-    DATA_BOOKING, SUCCESS_STATUS_CRUD
+    DATA_BOOKING, SUCCESS_STATUS_CRUD, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_VIAL
 from database.models import ServerConfiguration, User,\
     UserGroups, getModelType, TracershopModel, ActivityOrder, OrderStatus,\
     InjectionOrder, Vial, MODELS, INVERTED_MODELS,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
     TracerUsage, ActivityProduction, Customer, Procedure, Days,\
-    Location, TelemetryRecord, TelemetryRequest
+    Location, TelemetryRecord, TelemetryRequest, IsotopeOrder, IsotopeVial
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -277,6 +277,30 @@ class DatabaseInterface():
       order.save(user) # This is to trigger audit log
 
     return orders
+
+  @database_sync_to_async
+  def release_isotope_order(self, data_directory: Dict[str, Any], user: User, now: datetime):
+    if DATA_ISOTOPE_VIAL not in data_directory or DATA_ISOTOPE_ORDER not in data_directory:
+      raise ValueError(f"Missing {DATA_ISOTOPE_VIAL} or {DATA_ISOTOPE_ORDER}")
+
+    isotope_order = IsotopeOrder.objects.get(pk=data_directory[DATA_ISOTOPE_ORDER])
+
+    isotope_vials = IsotopeVial.objects.filter(pk__in=data_directory[DATA_ISOTOPE_ORDER])
+
+    if(len(isotope_vials)):
+      raise ValueError(f"Unable to find the vials")
+
+    for vial in isotope_vials:
+      if vial.delivery_with is not None:
+        raise ValueError(f"Vial: {vial.id} is already assigned to an order!")
+      vial.delivery_with = isotope_order
+
+    isotope_order.freed_by = user
+    isotope_order.freed_datetime = now
+    isotope_order.status = OrderStatus.Released
+
+    IsotopeVial.objects.bulk_update(isotope_vials, ['delivery_with'])
+    isotope_order.save(user)
 
   @database_sync_to_async
   def correct_order(self, data: Dict[str, List[int]], user: User) -> Dict[str, List[TracershopModel]]:

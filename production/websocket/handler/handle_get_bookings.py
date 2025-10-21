@@ -8,12 +8,19 @@ from constants import MESSENGER_CONSUMER
 from database.models import Booking
 from lib.formatting import toDate
 from lib.utils import classproperty
+from tracerauth.message_validation import Message
 from shared_constants import WEBSOCKET_DATE, WEBSOCKET_DATA_ID,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPES,\
   WEBSOCKET_SERVER_MESSAGES
 from websocket.handler_base import HandlerBase
 
 class HandleReadBooking(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      WEBSOCKET_DATE : str,
+      WEBSOCKET_DATA_ID : int
+    })
 
   @classproperty
   def message_type(cls):

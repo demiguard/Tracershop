@@ -15,23 +15,30 @@ from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
   AUTH_PASSWORD, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_DATA_ID,\
   WEBSOCKET_OBJECT_DOES_NOT_EXISTS, WEBSOCKET_MESSAGE_TYPE
-
+from tracerauth.message_validation import Message
 from websocket.handler_base import HandlerBase
 
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleChangeExternalPassword(HandlerBase):
   @classproperty
+  def blueprint(cls):
+    return Message({
+      WEBSOCKET_DATA_ID : int,
+      AUTH_PASSWORD : str
+    })
+
+  @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD
 
   async def __call__(self, consumer, message):
-    user: User = await get_user(consumer.scope)
+    user: User = await get_user(consumer.scope) # type: ignore
     # Message Extraction
     externalUserID = message[WEBSOCKET_DATA_ID]
     externalNewPassword = message[AUTH_PASSWORD]
 
-    if user.is_production_admin:
+    if not user.is_production_admin:
       error_logger.error(f"User: {user.username} attempted to change password of {externalUserID}")
       return
 

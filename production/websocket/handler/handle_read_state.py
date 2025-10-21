@@ -15,7 +15,8 @@ from shared_constants import WEBSOCKET_DATE,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPES,\
   WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_DATA,\
   WEBSOCKET_REFRESH
-
+from tracerauth.auth import get_logged_in_user
+from tracerauth.message_validation import Message
 from websocket.consumer import Consumer
 from websocket.handler_base import HandlerBase
 
@@ -23,12 +24,18 @@ error_logger = getLogger(ERROR_LOGGER)
 
 class HandleReadState(HandlerBase):
   @classproperty
+  def blueprint(cls):
+    return Message({
+      # Everything is optional here
+    })
+
+  @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_READ_STATE
 
   async def __call__(self, consumer: Consumer, message):
     now = consumer.datetimeNow.now()
-    user = await get_user(consumer.scope)
+    user = await get_logged_in_user(consumer.scope)
 
     if WEBSOCKET_DATE in message:
       try:

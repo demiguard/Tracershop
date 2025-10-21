@@ -8,15 +8,28 @@ from database.models import InjectionOrder, OrderStatus
 from lib.utils import classproperty
 from shared_constants import WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_DATA,\
   WEBSOCKET_DATA_ID, DATA_INJECTION_ORDER, AUTH_IS_AUTHENTICATED,\
-  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS,\
+  WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_STATUS, DATA_AUTH, AUTH_USERNAME,\
+  AUTH_PASSWORD,\
   WEBSOCKET_MESSAGE_ID, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_TYPES
-
+from tracerauth.message_validation import Message
 from tracerauth.types import AuthenticationResult
 from tracerauth.audit_logging import logFreeInjectionOrder
-
 from websocket.handler_base import HandlerBase
 
 class HandleFreeInjection(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      DATA_AUTH : {
+        AUTH_USERNAME : str,
+        AUTH_PASSWORD : str
+      },
+      WEBSOCKET_DATA : {
+        WEBSOCKET_DATA_ID : int,
+        "lot_number" : str
+      }
+    })
+
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_FREE_INJECTION
@@ -44,11 +57,15 @@ class HandleFreeInjection(HandlerBase):
     if result != AuthenticationResult.SUCCESS:
       return await consumer._RejectFreeing(message)
 
+    scoped_user = consumer.scope.get('user')
+    if scoped_user is None or user != scoped_user:
+      return await consumer._RejectFreeing(message)
+
     # Step 2
     order: InjectionOrder = await consumer.db.getModel(InjectionOrder, message[WEBSOCKET_DATA][WEBSOCKET_DATA_ID])
     order.lot_number = message[WEBSOCKET_DATA]['lot_number']
     order.freed_datetime = consumer.datetimeNow.now()
-    order.freed_by = consumer.scope['user']
+    order.freed_by = user
     order.status = OrderStatus.Released
     await consumer.db.saveModel(order, user) # Note this may fail!
     # Log the change to db

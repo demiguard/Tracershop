@@ -11,10 +11,19 @@ from lib.utils import classproperty
 from shared_constants import WEBSOCKET_MESSAGE_LOG_ERROR, WEBSOCKET_MESSAGE_ERROR,\
   WEBSOCKET_MESSAGE_TYPES
 from websocket.handler_base import HandlerBase
+from tracerauth.message_validation import Message
 
 error_logger = getLogger(ERROR_LOGGER)
 
 class HandleLogFrontendError(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      WEBSOCKET_MESSAGE_ERROR : { #
+
+      }
+    })
+
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_LOG_ERROR

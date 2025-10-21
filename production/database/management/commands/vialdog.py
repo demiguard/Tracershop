@@ -19,7 +19,7 @@ from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 # Tracershop packages:
-from core.exceptions import EmptyFile
+from core.exceptions import EmptyFile, InvalidCSVFile
 from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV, MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
   WEBSOCKET_REFRESH, DATA_VIAL, WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
@@ -112,7 +112,11 @@ def handle_xlsx_file(path: Path):
   handle_data_frame(data_frame, path)
 
 def handle_data_frame(data_frame: DataFrame, path: Path):
-  vials = parse_data_frame_row_to_vial(data_frame)
+  try:
+    vials = parse_data_frame_row_to_vial(data_frame)
+  except InvalidCSVFile:
+    logger.error(f"The Data frame at {path} is not valid")
+    return
   vials_filtered_for_duplicates: List[Vial] = []
 
   for vial in vials:
@@ -140,6 +144,7 @@ def handle_path(path: Path):
   if path.name.startswith('VAL'):
     handle_vial_file(path)
   elif path.name.endswith('.csv'):
+
     handle_csv_file(path)
   elif path.name.endswith('.xlsx'):
     handle_xlsx_file(path)

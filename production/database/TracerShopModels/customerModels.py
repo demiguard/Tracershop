@@ -504,6 +504,12 @@ class IsotopeOrder(TracershopModel):
       Index(fields=['delivery_date'])
     ]
 
+  def canEdit(self, user: User | None = None) -> AuthActions:
+    can_edit_super = super().canEdit(user)
+    if self.status == OrderStatus.Released and can_edit_super.should_act:
+      return AuthActions.ACCEPT_LOG
+    return can_edit_super
+
 
 class IsotopeVial(TracershopModel):
   id = BigAutoField(primary_key=True)

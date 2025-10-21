@@ -33,26 +33,13 @@ from django.core import serializers
 from django.core.asgi import get_asgi_application
 from django.core.exceptions import ObjectDoesNotExist
 from django.urls import re_path
+from django.utils.timezone import get_current_timezone
 from django.test import TestCase, TransactionTestCase, override_settings
 
 # Tracershop Production
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
-from shared_constants import DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD,\
-  WEBSOCKET_JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_ID,\
-  JAVASCRIPT_VERSION, WEBSOCKET_MESSAGE_AUTH_LOGIN,\
-  WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_AUTH_LOGOUT,\
-  WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_SUCCESS, ERROR_NO_MESSAGE_ID,\
-  WEBSOCKET_MESSAGE_READ_STATE, ERROR_INSUFFICIENT_PERMISSIONS, ERROR_INVALID_MESSAGE_TYPE,\
-  ERROR_INVALID_JAVASCRIPT_VERSION, DATA_CLOSED_DATE, DATA_USER, DATA_USER_ASSIGNMENT,\
-  WEBSOCKET_DATA, DATA_ACTIVITY_ORDER, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS,\
-  DATA_DELIVER_TIME, WEBSOCKET_MESSAGE_MOVE_ORDERS, DATA_CUSTOMER, WEBSOCKET_MESSAGE_MODEL_DELETE,\
-  WEBSOCKET_MESSAGE_RESTORE_ORDERS, WEBSOCKET_MESSAGE_MODEL_CREATE, DATA_VIAL,\
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_FREE_INJECTION, WEBSOCKET_MESSAGE_ERROR,\
-  ERROR_TYPE, AUTH_USER, WEBSOCKET_MESSAGE_MODEL_EDIT, WEBSOCKET_MESSAGE_STATUS,\
-  SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_UPDATE_STATE,\
-  WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,\
-  WEBSOCKET_MESSAGE_RELEASE_MULTI, DATA_INJECTION_ORDER, DATA_TRACER, WEBSOCKET_SESSION_ID
+from shared_constants import *
 
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from database.models import ClosedDate, User, UserGroups, MODELS,\
@@ -160,9 +147,9 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     self.user_prod_admin.set_password(TEST_PROD_ADMIN_PASSWORD)
     self.user_prod_admin.save()
 
-    self.user_2 = User(username=TEST_SHOP_ADMIN_USERNAME, user_group=UserGroups.ShopAdmin)
-    self.user_2.set_password(TEST_SHOP_ADMIN_PASSWORD)
-    self.user_2.save()
+    self.shop_admin_user = User(username=TEST_SHOP_ADMIN_USERNAME, user_group=UserGroups.ShopAdmin)
+    self.shop_admin_user.set_password(TEST_SHOP_ADMIN_PASSWORD)
+    self.shop_admin_user.save()
 
 
 
@@ -989,6 +976,96 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     injection_order: InjectionOrder = await database_sync_to_async(InjectionOrder.objects.get)(pk=INJECTION_ORDER_ID)
     self.assertEqual(injection_order.status, OrderStatus.Accepted)
 
+  async def test_correct_multiple_activity_orders(self):
+    ao_1_id = 9874253186
+    ao_2_id = 9874253188
+
+    v_1_id = 32671398476
+    v_2_id = 32671398477
+
+    ao_1 = await database_sync_to_async(ActivityOrder.objects.create)(
+      id = ao_1_id,
+      ordered_activity = 6723.13,
+      delivery_date = datetime.date(2061, 2, 11),
+      status=OrderStatus.Released,
+      ordered_time_slot=self.timeSlot,
+      freed_datetime=datetime.datetime(2061,2,11,12,34,56, tzinfo=get_current_timezone()),
+      ordered_by=self.shop_admin_user,
+      freed_by=self.user_prod_admin
+    )
+    ao_2 = await database_sync_to_async(ActivityOrder.objects.create)(
+      id = ao_2_id,
+      ordered_activity = 8723.13,
+      delivery_date = datetime.date(2061, 2, 11),
+      status=OrderStatus.Released,
+      ordered_time_slot=self.timeSlot,
+      freed_datetime=datetime.datetime(2061,2,11,12,34,56, tzinfo=get_current_timezone()),
+      ordered_by=self.shop_admin_user,
+      freed_by=self.user_prod_admin
+    )
+
+    v_1 = await database_sync_to_async(Vial.objects.create)(
+      id = v_1_id,
+      tracer = self.act_tracer,
+      activity = 12281.5,
+      volume = 10.7,
+      lot_number = "F18-610211-3",
+      fill_time = datetime.time(12,33,44),
+      fill_date = datetime.date(2061,2,11),
+      assigned_to = ao_1,
+      owner=self.customer
+    )
+
+    v_2 = await database_sync_to_async(Vial.objects.create)(
+      id = v_2_id,
+      tracer = self.act_tracer,
+      activity = 12281.5,
+      volume = 10.7,
+      lot_number = "F18-610211-3",
+      fill_time = datetime.time(12,33,44),
+      fill_date = datetime.date(2061,2,11),
+      assigned_to = ao_2,
+      owner=self.customer
+    )
+
+    with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
+      with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+        comm_admin = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await comm_admin.connect()
+
+        await comm_admin.send_json_to(self.loginAdminMessage)
+        admin_login_message = await comm_admin.receive_json_from()
+
+        await comm_admin.send_json_to({
+          DATA_AUTH : {
+            AUTH_USERNAME : TEST_ADMIN_USERNAME,
+            AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+          },
+          WEBSOCKET_DATA : {
+            DATA_ACTIVITY_ORDER : [ao_1_id, ao_2_id],
+            DATA_VIAL : [v_1_id, v_2_id]
+          },
+          WEBSOCKET_MESSAGE_ID : 69230481,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CORRECT_ORDER,
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+        })
+
+        message = await comm_admin.receive_json_from()
+        await comm_admin.disconnect()
+
+    await database_sync_to_async(ao_1.refresh_from_db)()
+    self.assertEqual(ao_1.status, OrderStatus.Accepted)
+
+    await database_sync_to_async(ao_2.refresh_from_db)()
+    self.assertEqual(ao_2.status, OrderStatus.Accepted)
+
+    await database_sync_to_async(v_1.refresh_from_db)()
+    self.assertIsNone(v_1.assigned_to)
+
+    await database_sync_to_async(v_2.refresh_from_db)()
+    self.assertIsNone(v_2.assigned_to)
+
+
   async def test_deleteSingleModel(self):
     customer_1 = Customer(
       id = 178453,
@@ -1357,7 +1434,6 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                        SUCCESS_STATUS_CRUD.SUCCESS.value)
 
       await shop_comm_admin.disconnect()
-
 
 
   async def test_wsCreateUserAssignment_failed(self):

@@ -80,7 +80,7 @@ def toDate(date_str: str, Format: str=DATE_FORMAT) -> date:
 
 def formatFrontendErrorMessage(message: Dict) -> str:
   raw_error_message = message.get("message", "Unknown error")
-  raw_stack = message.get('stack', "")
+  raw_stack = message.get('stack', "Missing Stack trace!")
   tracershop_code_regex = re.compile(r"src/components/(.+)\?:(\d+):(\d+)")
 
   def helper(string: str):

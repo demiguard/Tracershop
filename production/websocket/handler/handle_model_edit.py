@@ -14,12 +14,20 @@ from shared_constants import WEBSOCKET_MESSAGE_MODEL_EDIT,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
-
+from tracerauth.auth import get_logged_in_user
+from tracerauth.message_validation import Message
 from websocket.handler_base import HandlerBase
 
 logger = getLogger(ERROR_LOGGER)
 
 class HandleModelEdit(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      WEBSOCKET_DATA : {},
+      WEBSOCKET_DATATYPE : str
+    })
+
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_EDIT
@@ -32,7 +40,7 @@ class HandleModelEdit(HandlerBase):
     Args:
       message (Dict[str, Any]): message sent by the user
     """
-    user = await get_user(consumer.scope)
+    user = await get_logged_in_user(consumer.scope)
 
     updatedModels = await consumer.db.handleEditModels(
       message[WEBSOCKET_DATATYPE],

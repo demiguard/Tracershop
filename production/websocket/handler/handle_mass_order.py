@@ -1,8 +1,6 @@
 # Python standard library
-from logging import getLogger
 
 # Third party modules
-from channels.auth import get_user
 
 # Tracershop modules
 from core.exceptions import RequestingNonExistingEndpoint
@@ -16,10 +14,18 @@ from shared_constants import WEBSOCKET_SERVER_MESSAGES,\
   ERROR_EARLY_TIME_SLOT, DATA_INJECTION_ORDER, DATA_ACTIVITY_ORDER,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPES
-
+from tracerauth.auth import get_logged_in_user
+from tracerauth.message_validation import Message
 from websocket.handler_base import HandlerBase
 
 class HandleMassOrders(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      WEBSOCKET_DATA : {
+        # This dict contain a variable str : bool pairs
+      }
+    })
 
   @classproperty
   def message_type(cls):
@@ -42,7 +48,7 @@ class HandleMassOrders(HandlerBase):
                                   The Boolean describes if the over is accepted
                                   or rejected.
     """
-    user = await get_user(consumer.scope)
+    user = await get_logged_in_user(consumer.scope)
 
     try:
       orders = await consumer.db.massOrder(message[WEBSOCKET_DATA], user)
@@ -64,12 +70,6 @@ class HandleMassOrders(HandlerBase):
       })
 
       return
-
-    ActivityCustomerIDs = await consumer.db.getCustomerIDs(orders[DATA_ACTIVITY_ORDER])
-    InjectionCustomerIDs = await consumer.db.getCustomerIDs(orders[DATA_INJECTION_ORDER])
-
-    customerIDset = set(ActivityCustomerIDs+InjectionCustomerIDs)
-    customerIDs = [customerID for customerID in customerIDset]
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
       MESSENGER_CONSUMER : consumer,

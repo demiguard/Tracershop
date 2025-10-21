@@ -18,6 +18,8 @@ from lib.utils import classproperty
 from websocket.consumer import Consumer
 from websocket.handler_base import HandlerBase
 from database.models import User, Booking
+from tracerauth.auth import get_logged_in_user
+from tracerauth.message_validation import Message
 
 DEBUG_MESSAGE = "debug_message"
 
@@ -26,6 +28,12 @@ class DebugMessages(Enum):
   DEBUG_DELETE_BOOKING = "debugDeleteBooking"
 
 class HandleDebugMessage(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+      DEBUG_MESSAGE : str
+    })
+
   def __init__(self, debug=settings.DEBUG) -> None:
     super().__init__()
     self.debug = debug
@@ -39,7 +47,7 @@ class HandleDebugMessage(HandlerBase):
       # NO DEBUG MESSAGES IN PROD!
       return
 
-    user: User = await get_user(consumer.scope)
+    user: User = await get_logged_in_user(consumer.scope)
     if not user.is_server_admin:
       # Only admin can trigger debug messages
       return

@@ -68,7 +68,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
    Because of the low user count this is ok.
   """
   global_group = CHANNEL_GROUP_GLOBAL
-  channel_layer: RedisChannelLayer
+  channel_layer: RedisChannelLayer #
+
 
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
     super().__init__()

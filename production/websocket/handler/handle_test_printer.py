@@ -6,8 +6,12 @@
 from shared_constants import WEBSOCKET_MESSAGE_TYPES
 from lib.utils import classproperty
 from websocket.handler_base import HandlerBase
+from tracerauth.message_validation import Message
 
 class HandleTestPrinter(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({})
 
   @classproperty
   def message_type(cls):

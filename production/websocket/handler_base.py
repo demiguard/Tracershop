@@ -6,8 +6,10 @@ It really is just an interface for the handlers in websocket
 
 # Python standard library
 from abc import ABC, abstractmethod
+from typing import Any
 
 # Tracershop modules
+from tracerauth.message_validation import Message
 from shared_constants import WEBSOCKET_MESSAGE_TYPES
 from lib.utils import classproperty
 
@@ -23,11 +25,16 @@ class HandlerBase(ABC):
 
   """
   @classproperty
+  def blueprint(cls) -> Message:
+    raise NotImplemented
+
+
+  @classproperty
   def message_type(cls) -> WEBSOCKET_MESSAGE_TYPES: #pragma: no cover
     raise NotImplemented
 
   """The message that the handler handles, cannot be ABSTRACT"""
 
   @abstractmethod
-  async def __call__(self, consumer: 'consumer.Consumer', message):
+  async def __call__(self, consumer: 'consumer.Consumer', message) -> Any:
     raise NotImplemented #pragma: no cover

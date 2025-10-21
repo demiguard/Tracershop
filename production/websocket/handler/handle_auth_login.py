@@ -9,16 +9,24 @@ from django.contrib.auth import aauthenticate
 
 # Tracershop imports
 from database.models import User, UserGroups
-
 from shared_constants import WEBSOCKET_MESSAGE_TYPES,\
   DATA_AUTH, AUTH_USERNAME, AUTH_PASSWORD, DATA_USER
-
+from tracerauth.message_validation import Message
 from lib.utils import classproperty
 from tracerauth.tracer_ldap import checkUserGroupMembership
 from websocket import consumer
 from websocket.handler_base import HandlerBase
 
 class HandleAuthLogin(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({
+    DATA_AUTH : {
+      AUTH_USERNAME : str,
+      AUTH_PASSWORD : str
+    }
+  })
+
   @classproperty
   def message_type(cls):
    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_AUTH_LOGIN
@@ -35,10 +43,15 @@ class HandleAuthLogin(HandlerBase):
           user.user_group = newUserGroup
           await database_sync_to_async(user.save)()
       await login(consumer.scope, user)
-      await sync_to_async(consumer.scope["session"].save)()
-      await consumer.enterUserGroups(user)
-      return await consumer.respond_auth_message(message,
+      scope_session = consumer.scope.get("session")
+      if scope_session is not None:
+        await sync_to_async(scope_session.save)()
+
+        await consumer.enterUserGroups(user)
+        scope_session = consumer.scope.get("session") # Refresh the scope
+        if scope_session is not None:
+          return await consumer.respond_auth_message(message,
                                              True,
                                              {DATA_USER : [user]},
-                                             consumer.scope["session"].session_key)
+                                             scope_session.session_key)
     return await consumer.respond_reject_auth_message(message)

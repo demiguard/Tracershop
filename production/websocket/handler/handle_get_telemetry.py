@@ -1,27 +1,27 @@
 # Python standard library
 
 # Third party modules
-from channels.auth import get_user
 
 # Tracershop modules
 from core.exceptions import IllegalActionAttempted
 from lib.utils import classproperty
-from database.models import User
-
-from shared_constants import WEBSOCKET_MESSAGE_READ_TELEMETRY, WEBSOCKET_MESSAGE_SUCCESS,\
-  WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES,\
+from tracerauth.auth import get_logged_in_user
+from tracerauth.message_validation import Message
+from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPES,\
   WEBSOCKET_SERVER_MESSAGES
-
-
 from websocket.handler_base import HandlerBase
 
 class HandleReadTelemetry(HandlerBase):
+  @classproperty
+  def blueprint(cls):
+    return Message({})
+
   @classproperty
   def message_type(cls):
     return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_READ_TELEMETRY
 
   async def __call__(self, consumer, message):
-    user: User = await get_user(consumer.scope)
+    user = await get_logged_in_user(consumer.scope)
 
     if not user.is_server_admin:
       raise IllegalActionAttempted()

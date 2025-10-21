@@ -179,7 +179,7 @@ def parse_data_frame_row_to_vial(data_frame: DataFrame) -> List['models.Vial']:
       tracer=tracer,
       activity=activity,
       volume=volume,
-      lot_number=data_frame['BatchReference'],
+      lot_number=data_row['BatchReference'],
       fill_time=vial_tap_timestamp.time(),
       fill_date=vial_tap_timestamp.date(),
       owner=customer
