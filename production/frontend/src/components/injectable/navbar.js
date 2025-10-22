@@ -37,6 +37,7 @@ export function TracershopNavbar({
 
     key={identifier}>
       <Button
+
         aria-label={`navbar-${identifier}`}
         style={NAVBAR_STYLES.navbarElement}
         variant={NavBarButtonType}

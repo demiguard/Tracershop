@@ -41,6 +41,6 @@ describe("Injectable AlertBox", () => {
       />
     );
 
-    expect(screen.queryByText(TestMessage)).toBeNull();
+    expect(screen.getByText(TestMessage)).not.toBeVisible();
   });
 });

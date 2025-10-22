@@ -231,8 +231,9 @@ function TracerCard({tracer,
          </Table>
          <Optional exists={deadlineValid}>
           <Row style={{justifyContent : "right",display : "flex",}}>
-
-            <div><AlertBox testId={"booking_error"} error={bookingError}></AlertBox></div>
+            <div>
+              <AlertBox data-testid={`booking_error-${tracer.id}`} error={bookingError}/>
+            </div>
 
             <div>
               <IdempotentButton

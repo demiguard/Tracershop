@@ -139,15 +139,24 @@ describe("Injection modal test suite", () =>{
       fireEvent.change(screen.getByLabelText("lot-input"), {target : {value : "test-111111-1"}});
     });
 
+    act(() => {
+      fireEvent.change(screen.getByLabelText("lot-input"), {target : {value : "test-111111-1"}});
+    });
+
+
     act(() => { // To get the authenticate to appear
       screen.getByRole('button', {name : "Frigiv ordre"}).click();
     });
+
+    act(() => {
+      fireEvent.change(screen.getByLabelText("username"), {target : {value : "username"}});
+    })
 
     await act(async () => { // To get the authenticate to confirm the missing password
       screen.getByRole('button', {name : "Frigiv ordre"}).click();
     });
 
-    expect(await screen.findByText("Dit kodeord er ikke tastet ind.")).toBeVisible();
+    expect(screen.getByText("Dit kodeord er ikke tastet ind.")).toBeVisible();
     expect(screen.getByRole('button', {name : "Luk"})).toBeVisible();
 
     expect(ResolvingWebsocket.send).not.toHaveBeenCalled();

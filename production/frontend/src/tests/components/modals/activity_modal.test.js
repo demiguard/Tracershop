@@ -535,7 +535,7 @@ describe("Activity Modal Test", () => {
       screen.getByLabelText('vial-usage-7').click();
     });
 
-    expect(screen.getByRole('button', {'name' : "Godkend"})).toBeDisabled()
+    expect(screen.getByRole('button', {'name' : "Frigiv"})).toBeDisabled()
   })
 
   it("free an order success", async () => {
@@ -579,7 +579,7 @@ describe("Activity Modal Test", () => {
     const allocColumn = screen.getByTestId('allocation-col');
     expect(allocColumn.innerHTML).toEqual(`${vial.activity} MBq`);
 
-    const freeButton = screen.getByRole('button', {name : "Godkend"});
+    const freeButton = screen.getByRole('button', {name : "Frigiv"});
 
     act(() => {
       freeButton.click()
@@ -636,7 +636,7 @@ describe("Activity Modal Test", () => {
     expect(screen.getByTestId('allocation-col').innerHTML).toEqual(`${vial.activity} MBq`);
 
     act(() => {
-      screen.getByRole('button', {name : "Godkend"}).click();
+      screen.getByRole('button', {name : "Frigiv"}).click();
     });
 
     expect(screen.queryByText(WRONG_DATE_WARNING_MESSAGE)).toBeNull();
@@ -698,7 +698,7 @@ describe("Activity Modal Test", () => {
     const allocColumn = await screen.findByTestId('allocation-col');
     expect(allocColumn.innerHTML).toEqual(`${vial.activity} MBq`);
 
-    const freeButton = await screen.findByRole('button', {name : "Godkend"});
+    const freeButton = await screen.findByRole('button', {name : "Frigiv"});
 
     act(() => {
       freeButton.click()

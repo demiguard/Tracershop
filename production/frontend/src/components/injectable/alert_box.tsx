@@ -119,8 +119,8 @@ export function AlertBox ({error, style, ...rest} : AlertBoxProps) {
     }
   }
 
+  // overflow is unused because I have an issue where it would flicker back an fourth
   const overflow = useOverflow(headerRef, overflowingCallback);
-  console.log("Overflow: ", overflow, headerRef);
 
   const headerStyle = {
     ...headerStylings[error.level],

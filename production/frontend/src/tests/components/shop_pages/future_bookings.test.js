@@ -153,7 +153,7 @@ describe("Future Bookings Test Suite", () => {
     });
 
     expect(websocket.send).toBeCalled();
-    expect(screen.getByTestId("booking_error")).toBeVisible();
+    expect(screen.getByTestId("booking_error-1")).toBeVisible();
   });
 
   it("Open tracer 1, Remove booking 2 and order, but can't no time slot", async () => {
@@ -191,7 +191,7 @@ describe("Future Bookings Test Suite", () => {
     await act(async () => { orderButton.click(); });
 
     expect(websocket.send).toBeCalled();
-    expect(screen.getByTestId("booking_error")).toBeVisible();
+    expect(screen.getByTestId("booking_error-1")).toBeVisible();
   });
 
   it("ChangeSorting", () => {

@@ -219,7 +219,7 @@ export function TimeSlotCardIsotope({
 
   const blankOrder = makeBlankIsotopeOrder(timeSlot, state);
 
-  console.log(blankOrder);
+  console.log(blankOrder, deadlineValid, state.today);
 
   if(deadlineValid){
     renderedOrders.push(

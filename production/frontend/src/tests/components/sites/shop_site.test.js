@@ -4,7 +4,7 @@
 
 import React from "react";
 
-import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { AppState, testState } from "../../app_state";
 
@@ -17,7 +17,7 @@ const module = jest.mock('../../../lib/tracer_websocket');
 const tracer_websocket = require("../../../lib/tracer_websocket");
 const logout = jest.fn();
 
-let websocket = null;
+let websocket = tracer_websocket.TracerWebSocket;
 
 
 afterEach(() => {
@@ -28,7 +28,7 @@ afterEach(() => {
 
 describe("Shop shop test suite", () => {
   it("standard test - render test Site Admin", async () => {
-    await act(async () => { // Theres a useEffect that have to catch this
+    await waitFor(async () => { // Theres a useEffect that have to catch this
       render(<TracerShopContext websocket={websocket} tracershop_state={testState}>
                <ShopSite logout={logout} />
              </TracerShopContext>
@@ -43,11 +43,13 @@ describe("Shop shop test suite", () => {
       logged_in_user : users.get(4),
     });
 
-    render(
-      <TracerShopContext tracershop_state={newState} websocket={websocket}>
+    await waitFor(() => {
+      render(
+        <TracerShopContext tracershop_state={newState} websocket={websocket}>
         <ShopSite logout={logout}/>
       </TracerShopContext>
     );
+    })
     expect(screen.queryByLabelText("no-assoc-internal-user-error")).toBeNull();
   });
 
@@ -138,5 +140,26 @@ describe("Shop shop test suite", () => {
     })
 
     expect(screen.getByLabelText("no-assoc-internal-user-error")).toBeVisible()
+  });
+
+  it("end 2 end order isotope", async () => {
+    await waitFor(() => {
+      render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+          <ShopSite logout={logout}/>
+        </TracerShopContext>
+      );
+    });
+
+    await act( async () => {
+      fireEvent.click(screen.getByLabelText('navbar-orders'))
+    })
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', {name : /Ba-139/}))
+    });
+
+
+
   });
 })
