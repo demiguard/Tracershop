@@ -18,7 +18,6 @@ from lib.utils import classproperty
 from tracerauth.types import AuthActions
 
 class Isotope(TracershopModel):
-  id = BigAutoField(primary_key=True)
   atomic_number = SmallIntegerField()
   atomic_mass = SmallIntegerField()
   halflife_seconds = FloatField()
@@ -36,7 +35,6 @@ class TracerTypes(IntegerChoices):
   InjectionBased = 2
 
 class Tracer(TracershopModel):
-  id = BigAutoField(primary_key=True)
   shortname = CharField(max_length=32)
   clinical_name = CharField(max_length=256)
   isotope = ForeignKey(Isotope, on_delete=RESTRICT)
@@ -71,7 +69,6 @@ class Tracer(TracershopModel):
       return AuthActions.REJECT_LOG
 
 class ActivityProduction(TracershopModel):
-  id = BigAutoField(primary_key=True)
   production_day = SmallIntegerField(choices=Days.choices)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   production_time = TimeField()
@@ -105,7 +102,6 @@ class ActivityProduction(TracershopModel):
     ]
 
 class ReleaseRight(TracershopModel):
-  id = BigAutoField(primary_key=True)
   expiry_date = DateField(null=True, default=None)
   releaser = ForeignKey(User, on_delete=RESTRICT)
   product = ForeignKey(Tracer, on_delete=RESTRICT)
@@ -152,7 +148,6 @@ class ReleaseRight(TracershopModel):
 
 class IsotopeProduction(TracershopModel):
   """This represent production of standalone isotopes"""
-  id = BigAutoField(primary_key=True)
   isotope = ForeignKey(Isotope, on_delete=RESTRICT)
   production_day = SmallIntegerField(choices=Days.choices)
   production_time = TimeField()

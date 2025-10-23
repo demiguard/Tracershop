@@ -301,23 +301,28 @@ function IsotopeModalBody({
   );
 
   function authenticate(username, password){
-    websocket.send({
+    return websocket.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_FREE_ISOTOPE,
       [DATA_AUTH] : {
-        AUTH_USERNAME : username,
-        AUTH_PASSWORD : password
+        [AUTH_USERNAME] : username,
+        [AUTH_PASSWORD] : password
       },
-      WEBSOCKET_DATA : {
-        DATA_ISOTOPE_ORDER : collection.orders.map(getId),
-        DATA_ISOTOPE_VIAL : [...selectedVials]
+      [WEBSOCKET_DATA] : {
+        [DATA_ISOTOPE_ORDER] : collection.orders.map(getId),
+        [DATA_ISOTOPE_VIAL] : [...selectedVials]
       }
     }).then(response => {
       if(response instanceof MESSAGE_UPDATE_PRIVILEGED_STATE){
-
+        if( response.isAuthenticated){
+          setFreeing(false);
+        } else {
+          setAuthenticateError(new RecoverableError("Dit login blev afvist", ERROR_LEVELS.error))
+        }
+      } else {
+        console.log("Received a unknown response");
+        console.log(response);
       }
     })
-
-
   }
 
   const width = isFreeing ? "75%" : "100%";
@@ -392,7 +397,7 @@ function IsotopeModalFooter({
   return (
   <Row style={{width : "100%"}}>
     <Col>
-      <CancelButton/>
+      <CancelButton orders={collection.orders}/>
     </Col>
     <Col>
       <Row style={JUSTIFY.right}>

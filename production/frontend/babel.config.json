@@ -1,18 +1,16 @@
 {
   "presets": [
+    ["@babel/preset-env", {"targets": {"node": "current"}}],
     ["@babel/preset-react", { "targets": "defaults"}],
-      ["@babel/preset-env", {"targets": {"node": "current"}}],
-      "@babel/preset-typescript"
-    ],
+    ["@babel/preset-typescript", { "allExtensions" : true, "isTSX" : true, "allowDeclareFields" : true }]
+  ],
   "plugins": [
-    "@babel/plugin-proposal-class-properties",
     ["babel-plugin-root-import", {
       "paths": {
         "rootPathSuffix": "./src/",
         "rootPathPrefix": "~/"
       }
-    }],
-    "@babel/plugin-transform-private-methods",
+      }],
     ["babel-plugin-react-compiler", {"target" : "18"}]
   ],
   "env"   : {

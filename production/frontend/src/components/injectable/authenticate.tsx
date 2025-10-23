@@ -72,7 +72,7 @@ export function Authenticate({ authenticate,
   const [password, setPassword] = useState("");
 
   function onSubmitFunc() {
-    if(!username){
+    if(username === ""){
       setError(new RecoverableError(
         "Dit brugernavn er ikke tastet ind.",
          ERROR_LEVELS.warning
@@ -80,7 +80,7 @@ export function Authenticate({ authenticate,
       return Promise.resolve();
     }
 
-    if(!password){
+    if(password === ""){
       setError(new RecoverableError(
         "Dit kodeord er ikke tastet ind.",
         ERROR_LEVELS.warning

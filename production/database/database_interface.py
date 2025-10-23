@@ -21,6 +21,7 @@ from django.conf import settings
 from django.core.serializers import serialize
 from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db import connection
+from django.db.models.manager import BaseManager
 from django.db.models import Sum
 from django.db.models.query import QuerySet
 from django.db.utils import IntegrityError
@@ -282,28 +283,29 @@ class DatabaseInterface():
   @database_sync_to_async
   def release_isotope_order(self, data_directory: Dict[str, Any], user: User, now: datetime):
     if DATA_ISOTOPE_VIAL not in data_directory or DATA_ISOTOPE_ORDER not in data_directory:
-      raise ValueError(f"Missing {DATA_ISOTOPE_VIAL} or {DATA_ISOTOPE_ORDER}")
+      raise ContractBroken(f"Missing {DATA_ISOTOPE_VIAL} or {DATA_ISOTOPE_ORDER} in data")
 
     if len(data_directory[DATA_ISOTOPE_ORDER]) == 0 or len(data_directory[DATA_ISOTOPE_VIAL]) == 0:
-      raise Exception
+      raise ContractBroken("Attempting to Release Isotope orders without either vials or orders to fulfill.")
 
     isotope_orders = IsotopeOrder.objects.filter(pk__in=data_directory[DATA_ISOTOPE_ORDER], status=OrderStatus.Accepted)
 
-    isotope_vials = IsotopeVial.objects.filter(pk__in=data_directory[DATA_ISOTOPE_ORDER], delivery_with=None)
+    if not self.validate_selection(data_directory[DATA_ISOTOPE_ORDER], isotope_orders):
+      raise ContractBroken(f"Attempting to release a not accepted order")
 
-    if(len(isotope_orders) != len(data_directory[DATA_ISOTOPE_ORDER])):
-      raise Exception("")
+    isotope_vials = IsotopeVial.objects.filter(pk__in=data_directory[DATA_ISOTOPE_VIAL], delivery_with=None)
 
-    if(len(isotope_vials) != len(data_directory[DATA_ISOTOPE_VIAL])):
-      raise ValueError(f"Unable to find the vials")
+    if not self.validate_selection(data_directory[DATA_ISOTOPE_VIAL], isotope_vials):
+      raise ContractBroken(f"Attempting to double free a vial")
 
     isotope_order = isotope_orders[0]
 
     for vial in isotope_vials:
+      # I know this CANNOT happen because of the filter, but it's also mostly free
+      # Like I have in place incase a refactor does something stupid.
       if vial.delivery_with is not None:
-        raise ValueError(f"Vial: {vial.id} is already assigned to an order!")
+        raise ContractBroken(f"Vial: {vial.id} is already assigned to an order!")
       vial.delivery_with = isotope_order
-
 
     for isotope_order in isotope_orders:
       isotope_order.freed_by = user
@@ -314,6 +316,11 @@ class DatabaseInterface():
     IsotopeVial.objects.bulk_update(isotope_vials, ['delivery_with'])
 
     log_release_isotope_orders(user, [io for io in isotope_orders], [iv for iv in isotope_vials])
+
+    return {
+      DATA_ISOTOPE_VIAL : [iv for iv in isotope_vials],
+      DATA_ISOTOPE_ORDER : [io for io in isotope_orders]
+    }
 
   @database_sync_to_async
   def correct_order(self, data: Dict[str, List[int]], user: User) -> Dict[str, List[TracershopModel]]:
@@ -329,9 +336,9 @@ class DatabaseInterface():
         status=OrderStatus.Released
       )
 
-      if(len(orders) != len(data[DATA_ACTIVITY_ORDER])):
-        error_logger.error(f"Got IDs: {orders}, while only found {len(orders)} Activity Orders")
+      if not self.validate_selection(data[DATA_ACTIVITY_ORDER], orders):
         raise Exception("Not all requested orders are updated")
+
       orders.update(status=OrderStatus.Accepted)
       # We have to make a new query here because (I think) we invalidate the
       # query by updating the Manager
@@ -341,13 +348,13 @@ class DatabaseInterface():
 
     if DATA_INJECTION_ORDER in data:
       orders = InjectionOrder.objects.filter(
-        id__in=data[DATA_ACTIVITY_ORDER],
+        id__in=data[DATA_INJECTION_ORDER],
         status=OrderStatus.Released
       )
 
-      if(len(orders) != len(data[DATA_INJECTION_ORDER])):
-        error_logger.error(f"Got IDs: {orders}, while only found {len(orders)} Injection orders")
+      if not self.validate_selection(data[DATA_INJECTION_ORDER], orders):
         raise Exception("Not all requested orders are updated")
+
       orders.update(status=OrderStatus.Accepted)
       # We have to make a new query here because (I think) we invalidate the
       # query by updating the Manager
@@ -357,8 +364,7 @@ class DatabaseInterface():
 
     if DATA_VIAL in data:
       vials = Vial.objects.filter(id__in=data[DATA_VIAL])
-      if(len(vials) != len(data[DATA_VIAL])):
-        error_logger.error(f"Got IDs: {vials}, while only found {len(vials)} Vials")
+      if not self.validate_selection(data[DATA_VIAL], vials):
         raise Exception("Not all requested orders are updated")
 
       vials.update(assigned_to=None)
@@ -767,14 +773,16 @@ class DatabaseInterface():
     self,
     date_: date, delivery_endpoint_id: int
   ) -> Dict[str, List[Booking]]:
-    """_summary_
+    """Gets the stored bookings for the endpoint id for a specific date and
+    returns them ready to be serialized by the engine, ie you can throw the
+    returned object in to a message and the infra will convert it to good json
 
     Args:
-        date_ (date): _description_
-        delivery_endpoint_id (int): _description_
+        date_ (date): Date to retrieve bookings from
+        delivery_endpoint_id (int): The Endpoint you want bookings from
 
     Returns:
-        str: A serialized_string
+      Dict[str, List[Bookings]] - with a single key - booking
     """
     locations = Location.objects.filter(
       endpoint__id=delivery_endpoint_id,
@@ -997,3 +1005,44 @@ class DatabaseInterface():
     return_dict[DATA_TELEMETRY_RECORD] = records
 
     return return_dict
+
+  def validate_selection[T : TracershopModel](self, ids: List[int], filtered_objects: BaseManager[T]):
+    """When selecting objects, various sanity checks are applied, this function
+       does a simple check, that no sanity checks were violated.
+
+    Logs error to error_logger, so one should raise / return an error value if
+    this function returns false
+
+    Args:
+        ids (List[int]): The original list of ids, that was part of filter
+        filtered_objects (BaseManager[TracershopModel]): The result of the filter
+          Note that it's an assumption that an argument to the filtering
+          have been id__in=ids or pk__in=ids
+
+    Returns:
+        boolean: if sanity constraint holds.
+    """
+    if(len(ids) == 0):
+      error_logger.error("Attempted to filter for no ids.")
+      return False
+
+    if(len(ids) == len(filtered_objects)):
+      # While the error case covers more ground, it's more to grant an easier
+      # time debugging
+      return True
+
+    # Okay something is wrong
+    missing_ids = set(ids)
+    extra_objects = set[int]()
+
+    for obj in filtered_objects:
+      if obj.id in missing_ids:
+        missing_ids.remove(obj.id)
+      else:
+        extra_objects.add(obj.id)
+
+    error_message = f"While attempting to retrieve: {ids}, the following object are missing: {[id_ for id_ in missing_ids]}"
+    error_logger.error(error_message)
+
+
+    return False

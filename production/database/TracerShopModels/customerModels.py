@@ -25,7 +25,6 @@ from tracerauth.types import AuthActions
 
 
 class ClosedDate(TracershopModel):
-  id = BigAutoField(primary_key=True)
   close_date = DateField()
 
   def __str__(self) -> str:
@@ -39,7 +38,6 @@ class ClosedDate(TracershopModel):
 
 class Customer(TracershopModel):
   """This represents the organization that is ordering tracers in tracershop"""
-  id = BigAutoField(primary_key=True)
   short_name = CharField(max_length=32)
   long_name = CharField(max_length=128, null=True, default=None)
   dispenser_id = SmallIntegerField(null=True, default=None, unique=True)
@@ -54,7 +52,6 @@ class Customer(TracershopModel):
     return self.short_name
 
 class UserAssignment(TracershopModel):
-  id = BigAutoField(primary_key=True)
   user = ForeignKey(User, on_delete=CASCADE)
   customer = ForeignKey(Customer, on_delete=RESTRICT)
 
@@ -70,13 +67,11 @@ class UserAssignment(TracershopModel):
 
 
 class Message(TracershopModel):
-  id = BigAutoField(primary_key=True)
   message = TextField(max_length=8000)
   expiration = DateField(null=True, default=None)
 
 
 class MessageAssignment(TracershopModel):
-  id = BigAutoField(primary_key=True)
   message_id = ForeignKey(Message, on_delete=CASCADE)
   customer_id = ForeignKey(Customer, on_delete=RESTRICT)
 
@@ -85,7 +80,6 @@ class MessageAssignment(TracershopModel):
 
 
 class DeliveryEndpoint(TracershopModel):
-  id = BigAutoField(primary_key=True)
   address = CharField(max_length=128, null=True, default=None, blank=True)
   city = CharField(max_length=128, null=True, default=None, blank=True)
   zip_code = CharField(max_length=8, null=True, default=None, blank=True)
@@ -97,7 +91,6 @@ class DeliveryEndpoint(TracershopModel):
     return f"{self.owner} - {self.name}"
 
 class TracerCatalogPage(TracershopModel):
-  id = BigAutoField(primary_key=True)
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT)
   max_injections = SmallIntegerField(default=0)
@@ -118,7 +111,6 @@ class Location(TracershopModel):
   """This is a room, that can be booked too. A room can be owned by an endpoint
   """
   #Note A Location should be able to be created from location_code alone
-  id = BigAutoField(primary_key=True)
   location_code = CharField(max_length=120, unique=True)
   endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None, blank=True)
   common_name = CharField(max_length=120, null=True, default=None, blank=True)
@@ -132,7 +124,6 @@ class Location(TracershopModel):
 
 
 class ProcedureIdentifier(TracershopModel):
-  id = BigAutoField(primary_key=True)
   code = CharField(max_length=128, blank=True, unique=True, null=True, default=None)
   description = CharField(max_length=255, blank=True, unique=True, null=True, default=None)
   is_pet = BooleanField(default=True)
@@ -146,7 +137,6 @@ class ProcedureIdentifier(TracershopModel):
 
 
 class Procedure(TracershopModel):
-  id = BigAutoField(primary_key=True)
   series_description = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
   tracer_units = FloatField(default=0.0)
   delay_minutes = FloatField(default=0.0)
@@ -175,7 +165,6 @@ class BookingStatus(IntegerChoices):
   Released = 3
 
 class Booking(TracershopModel):
-  id = BigAutoField(primary_key=True)
   status = SmallIntegerField(choices=BookingStatus.choices, default=BookingStatus.Initial)
   location = ForeignKey(Location, on_delete=RESTRICT)
   procedure = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
@@ -201,7 +190,6 @@ class WeeklyRepeat(IntegerChoices):
 
 
 class ActivityDeliveryTimeSlot(TracershopModel):
-  id = BigAutoField(primary_key=True)
   weekly_repeat = SmallIntegerField(choices=WeeklyRepeat.choices)
   delivery_time = TimeField()
   destination = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
@@ -229,7 +217,6 @@ class OrderStatus(IntegerChoices):
   Rejected = 4
 
 class ActivityOrder(TracershopModel):
-  id = BigAutoField(primary_key=True)
   ordered_activity = FloatField()
   delivery_date = DateField()
   status = SmallIntegerField(choices=OrderStatus.choices)
@@ -342,7 +329,6 @@ class TracerUsage(IntegerChoices):
       return "andet"
 
 class InjectionOrder(TracershopModel):
-  id = BigAutoField(primary_key=True)
   delivery_time = TimeField()
   delivery_date = DateField()
   injections = PositiveSmallIntegerField()
@@ -413,7 +399,6 @@ class InjectionOrder(TracershopModel):
     return super().save(user, *args, **kwargs)
 
 class Vial(TracershopModel):
-  id = BigAutoField(primary_key=True)
   tracer = ForeignKey(Tracer, on_delete=RESTRICT, null=True, blank=True)
   activity = FloatField()
   volume = FloatField()
@@ -478,7 +463,6 @@ class LegacyActivityOrder(TracershopModel):
 
 # Isotope - shop
 class IsotopeDelivery(TracershopModel):
-  id = BigAutoField(primary_key=True)
   production = ForeignKey(IsotopeProduction, on_delete=RESTRICT)
   weekly_repeat = SmallIntegerField(choices=WeeklyRepeat.choices, default=WeeklyRepeat.EveryWeek)
   delivery_endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
@@ -486,7 +470,6 @@ class IsotopeDelivery(TracershopModel):
 
 
 class IsotopeOrder(TracershopModel):
-  id = BigAutoField(primary_key=True)
   status = SmallIntegerField(choices=OrderStatus.choices, default=OrderStatus.Ordered)
   order_by = ForeignKey(User, on_delete=RESTRICT, related_name="ordered_by")
   ordered_activity_MBq = FloatField()
@@ -512,7 +495,6 @@ class IsotopeOrder(TracershopModel):
 
 
 class IsotopeVial(TracershopModel):
-  id = BigAutoField(primary_key=True)
   batch_nr = CharField(max_length=128)
   delivery_with = ForeignKey(IsotopeOrder, # I kinda wanna say this is a bad name
                              on_delete=RESTRICT, # Because I was confused by it myself

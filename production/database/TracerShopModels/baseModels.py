@@ -5,7 +5,7 @@ from typing import Any, Dict, List, Optional
 
 # Third Party
 from django.db.models import Model, IntegerChoices, ForeignKey, IntegerField,\
-  TimeField, DateTimeField, DateField, BooleanField
+  TimeField, DateTimeField, DateField, BooleanField, BigAutoField
 from django.core.exceptions import FieldDoesNotExist, ObjectDoesNotExist
 from django.utils import timezone
 
@@ -21,6 +21,8 @@ from lib.utils import classproperty
 error_logger = getLogger(ERROR_LOGGER)
 
 class TracershopModel(Model):
+  id = BigAutoField(primary_key=True)
+
   #The main point about this class is allowing you go: model[fieldName] for reading data
   def __getitem__(self, name: str):
       try:

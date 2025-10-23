@@ -13,7 +13,6 @@ from database.TracerShopModels.baseModels import TracershopModel
 
 
 class Address(TracershopModel):
-  id = BigAutoField(primary_key=True)
   ip   = CharField(max_length=30, null=True)
   port = CharField(max_length=6, null=True)
   description = CharField(max_length=120,null=True)
@@ -25,7 +24,6 @@ class Address(TracershopModel):
       return str(self.ip) + ':' + str(self.port)
 
 class DicomEndpoint(TracershopModel):
-  id = BigAutoField(primary_key=True)
   address = ForeignKey(Address, on_delete=RESTRICT)
   ae_title = CharField(max_length=16)
 

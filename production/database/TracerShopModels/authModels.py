@@ -30,7 +30,6 @@ class UserGroups(IntegerChoices):
   ShopExternal = 6
 
 class User(AbstractBaseUser, TracershopModel):
-  id = BigAutoField(primary_key=True)
   username = CharField(max_length=120, unique=True)
   password = CharField(max_length=120)
   user_group = SmallIntegerField(choices=UserGroups.choices, default= UserGroups.Anon)
@@ -73,12 +72,10 @@ class User(AbstractBaseUser, TracershopModel):
 
 
 class SecondaryEmail(TracershopModel):
-  id = BigAutoField(primary_key=True)
   email = EmailField()
   record_user = ForeignKey(User, on_delete=CASCADE)
 
 class SuccessfulLogin(TracershopModel):
-  id = BigAutoField(primary_key=True)
   login_time = DateTimeField(auto_now=True)
   user = ForeignKey(User, CASCADE)
 

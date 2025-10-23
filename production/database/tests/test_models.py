@@ -1,11 +1,11 @@
 """Test cases for models"""
 
 # Python Standard Library
-from datetime import time, datetime, timezone
+from datetime import date, time, datetime, timezone
 from zoneinfo import ZoneInfo
 
 # Third party packages
-from django.test import TransactionTestCase, TestCase
+from django.test import TransactionTestCase, TestCase, SimpleTestCase
 
 # Tracershop Packages
 from constants import ERROR_LOGGER
@@ -13,7 +13,7 @@ from constants import ERROR_LOGGER
 from database.models import User, UserGroups, Vial, TracerTypes, Tracer,\
   Isotope, InjectionOrder, Days, Booking
 
-class AuthModelTestCase(TransactionTestCase):
+class AuthModelTestCase(SimpleTestCase):
   def test_user_groups(self):
     admin_user = User(username="Admin", user_group=UserGroups.Admin)
     productionAdmin_user = User(username="ProductionAdmin", user_group=UserGroups.ProductionAdmin)
@@ -58,9 +58,51 @@ class AuthModelTestCase(TransactionTestCase):
     self.assertFalse(shopExternal_user.is_shop_admin)
     self.assertTrue(shopExternal_user.is_shop_member)
 
-class CustomerModels(TransactionTestCase):
+class CustomerModels(TestCase):
   def test_model_strings(self):
-    vial = Vial()
+    isotope = Isotope.objects.create(
+      id = 164879,
+      atomic_number = 14,
+      atomic_mass = 15,
+      halflife_seconds = 1853701,
+      atomic_letter = "A"
+    )
+    tracer = Tracer.objects.create(
+      id = 1,
+      shortname = "BOH",
+      isotope=isotope,
+      tracer_type = TracerTypes.ActivityBased,
+      vial_tag="BOH"
+    )
+
+    tracer_2 = Tracer.objects.create(
+      id = 2,
+      shortname = "2BOH",
+      isotope=isotope,
+      tracer_type = TracerTypes.ActivityBased,
+      vial_tag="2BOH"
+    )
+
+    vial_id = 1358776
+    vial = Vial.objects.create(
+      id = vial_id,
+      tracer=tracer,
+      activity = 6723.012,
+      volume = 124,
+      lot_number = "FDG-250105-1",
+      fill_date = date(2025,1,5),
+      fill_time = time(11,22,33)
+    )
+
+    self.assertEqual(str(vial), "Vial - BOH - A-15 - (Missing)")
+    fvials = Vial.objects.filter(id__in=[vial_id])
+
+    self.assertEqual(len(fvials), 1)
+    fvials.update(tracer=tracer_2)
+
+    self.assertEqual(str(fvials[0]),"Vial - 2BOH - A-15 - (Missing)")
+
+
 
 class TracershopModelsTests(TestCase):
   def setUp(self) -> None:

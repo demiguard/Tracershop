@@ -4,12 +4,14 @@
 
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction,
   Customer, DeliveryEndpoint, Isotope, Tracer,
-  TracershopState } from "~/dataclasses/dataclasses"
+  TracershopState,
+  User} from "~/dataclasses/dataclasses"
 import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy"
 import { ORDER_STATUS } from "~/lib/constants"
 import { decayCorrect, correctVialActivityToTime } from "~/lib/physics"
 import { getId } from "~/lib/utils"
 import { Vial } from "~/dataclasses/dataclasses"
+import { OrderCollection } from "~/lib/data_structures/order_collection"
 
 /**
  * Wraps a group of orders, for the purpose of providing a single view of the
@@ -26,97 +28,80 @@ import { Vial } from "~/dataclasses/dataclasses"
  * One could think about an instance as the piece of paper a waiter write down a
  * group of people orders, which then gets handed to the kitchen.
  */
-export class ActivityOrderCollection {
-  #minimum_status
-  #contributing_orders
-  #cancelled_orders
+export class ActivityOrderCollection extends OrderCollection {
+  #contributing_orders : Array<ActivityOrder>
+  #cancelled_orders : Array<ActivityOrder>
 
   /** Storage for the property ordered_date
    * @type{String}
   */
-  #ordered_date
+  #ordered_date : string
 
   /**
    * @desc Underlying collection that this class wraps, orders in this list
    * will be delivered to the same endpoint at same day.
    * @type {Array<ActivityOrder>}
-   */ orders
+   */ declare orders : Array<ActivityOrder>
   /**
    * @desc Time slot that {@link orders} will be delivered to.
    * @type {ActivityDeliveryTimeSlot}
-   */ delivering_time_slot
-
+   */ delivering_time_slot : ActivityDeliveryTimeSlot
 
   /**
    * @desc DeliveryEndpoint for {@link delivering_time_slot}
-   * @type {DeliveryEndpoint}
-   */ endpoint
+   */ endpoint : DeliveryEndpoint
   /**
    * @desc Owner of {@link endpoint} which take deliveries from {@link delivering_time_slot}
-   * @type {Customer}
-   */ owner
+   */ owner : Customer
   /**
    * @desc Tracer for {@link delivering_time_slot}
-   * @type {Tracer}
-   */ tracer
+   */ tracer : Tracer
   /**
    * @desc Isotope of the {@link tracer}
-   * @type {Isotope}
-   */ isotope
+   */ isotope : Isotope
   /**
    * @desc The production for {@link delivering_time_slot}
-   * @type {ActivityProduction}
-   */ production
+   */ production : ActivityProduction
   /**
    * @desc If all orders of {@link orders}, then this string holds the time
    * the collection was freed
-   * @type {String | null}
-   */ freed_time
+   */ freed_time : string | null
   /**
    * @desc If {@link orders} contains any orders, that do not delivery to the
    * time slot that they have been ordered to, then this is true otherwise false
-   * @type {Boolean}
-   */ moved
+   */ moved : boolean
   /**
    * @desc Combined ordered activity of {@link orders} with out overhead
-   * @type {Number}
-   */ ordered_activity
+   */ ordered_activity : number
   /**
    * @desc Combined activity ordered of {@link orders} with accounting for
    * overhead
-   * @type {Number}
-   */ deliver_activity
+   */ deliver_activity : number
   /**
    * @desc Activity released to fulfil {@link orders}
-   * @type {Number}
-   */ delivered_activity
+   */ delivered_activity : number
 
   /**
    * @desc ID of all orders in the collection of {@link orders}
-   * @type {Array<Number>}
-   */ orderIDs
+   */ orderIDs : Array<number>
 
   /**
    * @desc If the orderCollection was freed, then this is the user that freed
    * them
-   * @type {User | null}
-   */ freed_by
+   */ freed_by : User | null
 
   /**
    * @desc The overhead for the time slot
-   * @type {Number}
-   */ overhead
+   */ overhead : number
 
   /**
    * @desc vials that were allocated to this order collection for fulfilling the
    * orders
-   * @type {Array<Vial>}
-   */ vials
+   */ vials : Array<Vial>
 
   /**
    * @desc Vials that is or could be used to fulfill this order collection
-   * @type {Array<Vial>}
-   */ unassigned_vials
+   */ unassigned_vials : Array<Vial>
 
 /**
   * Wraps a group of orders, for the purpose of providing a single view of the
@@ -129,13 +114,14 @@ export class ActivityOrderCollection {
   *
   * One could think about an instance as the piece of paper a waiter write down a
   * group of people orders, which then gets handed to the kitchen.
-  * @param {Array<ActivityOrder>} activity_orders
-  * @param {string} ordered_date
-  * @param {ActivityDeliveryTimeSlot} timeSlot
-  * @param {TracershopState} state
-  * @param {number} [overhead=1]
   */
-  constructor(activity_orders, ordered_date, timeSlot, state, overhead = 1) {
+  constructor(
+    activity_orders : Array<ActivityOrder>,
+    ordered_date: string,
+    timeSlot: ActivityDeliveryTimeSlot,
+    state: TracershopState,
+    overhead = 1
+  ) {
     // This class really suffers from bad abstraction, as it have been the
     // source of bugs much more frequently than other parts of the code.
     //
@@ -143,9 +129,9 @@ export class ActivityOrderCollection {
     // Rather that several simpler functions, which also forces the abstraction
     // to become rather concrete. Because I think this class came about as
     // display holder class. I.E. Not it's own idea
-
+    super(activity_orders)
     this.#ordered_date = ordered_date
-    this.#minimum_status = ORDER_STATUS.EMPTY;
+
     this.delivering_time_slot = (timeSlot instanceof ActivityDeliveryTimeSlot) ? timeSlot : state.deliver_times.get(timeSlot);
     this.endpoint = state.delivery_endpoint.get(this.delivering_time_slot.destination);
     this.production = state.production.get(this.delivering_time_slot.production_run);
@@ -159,7 +145,6 @@ export class ActivityOrderCollection {
     this.ordered_activity = 0;
     this.deliver_activity = 0;
     this.delivered_activity = 0;
-    this.orders = activity_orders;
     this.orderIDs = activity_orders.map(getId);
     this.vials = [];
     this.unassigned_vials = []
@@ -178,8 +163,6 @@ export class ActivityOrderCollection {
         continue;
       }
     }
-
-    this.#set_minimum_status();
 
     for(const order of this.#cancelled_orders){
       // These Attributes will be overwritten by contributing orders if
@@ -222,8 +205,8 @@ export class ActivityOrderCollection {
 
           this.vials.push(vial);
         }
-        if(vial.delivery_date === this.#ordered_date
-            && vial.owner === this.customer.id
+        if(vial.fill_date === this.#ordered_date
+            && vial.owner === this.owner.id
             && vial.assigned_to === null){
           this.unassigned_vials.push(vial);
         };
@@ -239,15 +222,6 @@ export class ActivityOrderCollection {
    */
   get ordered_date(){
     return this.#ordered_date
-  }
-
-  /**
-   * @desc the minimum status among {@link orders} with the ordering:
-   * AVAILABLE < ORDERED < ACCEPTED < RELEASED < CANCELLED < UNAVAILABLE
-   * @type {ORDER_STATUS}
-   */
-  get minimum_status(){
-    return this.#minimum_status;
   }
 
   get relevant_orders(){
@@ -291,20 +265,4 @@ export class ActivityOrderCollection {
       ORDER_STATUS.ORDERED
     ].includes(order.status)
   }
-
-  /** Function with side effect of setting minimum_status to
-   *
-   * @param {Array<ActivityOrder>} relevant_orders List of Orders where each for
-   * each order in relevant_orders: _is_relevant_order returns true
-   */
-  #set_minimum_status(){
-    let minimum_status = ORDER_STATUS.EMPTY;
-    for(const order of this.relevant_orders){
-      minimum_status = Math.min(minimum_status, order.status);
-    }
-
-    this.#minimum_status = minimum_status;
-  }
-
-
 }
