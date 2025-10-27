@@ -12,14 +12,15 @@ from typing import Any, Dict
 
 # Tracershop Modules
 from core.exceptions import ContractBroken
-from constants import DEBUG_LOGGER
-from shared_constants import WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES
-
+from constants import DEBUG_LOGGER,ERROR_LOGGER
+from shared_constants import WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_TYPES,\
+  ERROR_TYPE, MessageValidationResult
+from tracerauth.message_validation import validate_message
 from websocket import handler_base
 from websocket import consumer
 
 debug_logger = getLogger(DEBUG_LOGGER)
-
+error_logger = getLogger(ERROR_LOGGER)
 
 PYTHON_FILE_GLOB_PATTERN = "*.py"
 
@@ -67,4 +68,8 @@ class MessageHandler():
 
     handler = self._handlers[message_type]
 
-    await handler(consumer, message)
+    if validate_message(message, handler.blueprint):
+      await handler(consumer, message)
+    else:
+      error_logger.error(f"Message Specific validation failed with message: {message} with expected message: {handler.blueprint}")
+      await consumer.RespondWithError(message, {ERROR_TYPE : MessageValidationResult.MessageSpecificValidationFailed})

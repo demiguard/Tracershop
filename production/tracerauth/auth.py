@@ -6,6 +6,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
 from datetime import datetime, timedelta
+from enum import Enum
 from logging import getLogger
 from typing import Any, Dict, Optional, Tuple,  Type
 
@@ -15,189 +16,22 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.http.request import HttpRequest
 from django.contrib.auth import authenticate, login
 from django.contrib.auth.models import AnonymousUser, AbstractBaseUser
+from channels.auth import get_user
 
 # Tracershop App
+from tracerauth.message_validation import Message, validate_message
+from database.models import User
+from core.exceptions import LoginRequired, ContractBroken
 from constants import ERROR_LOGGER, DEBUG_LOGGER
-from lib.formatting import toDate
 from lib.parsing import parse_index_header
-from lib.utils import identity
-from shared_constants import AUTH_PASSWORD, AUTH_USERNAME,\
-  ERROR_INSUFFICIENT_DATA, ERROR_INVALID_JAVASCRIPT_VERSION,\
-  ERROR_NO_MESSAGE_TYPE, ERROR_INVALID_MESSAGE_TYPE, ERROR_NO_JAVASCRIPT_VERSION,\
-  ERROR_NO_MESSAGE_ID, WEBSOCKET_JAVASCRIPT_VERSION, ERROR_INVALID_MESSAGE,\
-  ERROR_INVALID_AUTH, DATA_AUTH, WEBSOCKET_DATA, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_ID,\
-  WEBSOCKET_MESSAGE_AUTH_LOGIN, WEBSOCKET_MESSAGE_FREE_INJECTION,\
-  WEBSOCKET_MESSAGE_READ_STATE, WEBSOCKET_DATATYPE,\
-  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,\
-  WEBSOCKET_MESSAGE_TYPE, NO_ERROR, WEBSOCKET_DATE,\
-  WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_MODEL_CREATE,\
-  WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_RESTORE_ORDERS,\
-  WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER,\
-  WEBSOCKET_MESSAGE_AUTH_LOGOUT, WEBSOCKET_MESSAGE_AUTH_WHOAMI,\
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY, WEBSOCKET_MESSAGE_CORRECT_ORDER,\
-  WEBSOCKET_MESSAGE_MOVE_ORDERS, WEBSOCKET_MESSAGE_GET_ORDERS,\
-  WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION
+from shared_constants import WEBSOCKET_JAVASCRIPT_VERSION,\
+  WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPE,\
+  WEBSOCKET_MESSAGE_TYPES, JAVASCRIPT_VERSION, MessageValidationResult
 from database.models import User, UserGroups, SuccessfulLogin
-
-from tracerauth.types import MessageType, MessageField, MessageObjectField,\
-  Message, AuthenticationResult
+from tracerauth.types import AuthenticationResult
 
 error_logger = getLogger(ERROR_LOGGER)
 debug_logger = getLogger(DEBUG_LOGGER)
-
-requiredMessageFields = {
-  WEBSOCKET_MESSAGE_AUTH_LOGIN : [DATA_AUTH],
-  WEBSOCKET_MESSAGE_FREE_INJECTION : [WEBSOCKET_DATA, DATA_AUTH],
-  WEBSOCKET_MESSAGE_READ_STATE : [],
-  WEBSOCKET_MESSAGE_MODEL_DELETE : [WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE],
-  WEBSOCKET_MESSAGE_MODEL_EDIT : [WEBSOCKET_DATA, WEBSOCKET_DATATYPE],
-  WEBSOCKET_MESSAGE_MODEL_CREATE : [WEBSOCKET_DATA, WEBSOCKET_DATATYPE],
-}
-
-MESSAGE_TYPES = {
-  WEBSOCKET_MESSAGE_AUTH_LOGIN : MessageType(WEBSOCKET_MESSAGE_AUTH_LOGIN, [
-    MessageObjectField(DATA_AUTH, [
-      MessageField(AUTH_USERNAME, str),
-      MessageField(AUTH_PASSWORD, str),
-    ])
-  ]),
-  WEBSOCKET_MESSAGE_AUTH_LOGOUT : MessageType(WEBSOCKET_MESSAGE_AUTH_LOGOUT, []),
-  WEBSOCKET_MESSAGE_AUTH_WHOAMI : MessageType(WEBSOCKET_MESSAGE_AUTH_WHOAMI, []),
-
-  WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT : MessageType(WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, []), # This function is not done?
-  WEBSOCKET_MESSAGE_GET_ORDERS : MessageType(WEBSOCKET_MESSAGE_GET_ORDERS, [
-    MessageField(WEBSOCKET_DATE, toDate, required=True)
-  ]),
-  WEBSOCKET_MESSAGE_READ_STATE : MessageType(WEBSOCKET_MESSAGE_READ_STATE, [
-    MessageField(WEBSOCKET_DATE, toDate, required=False)
-  ]),
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY : MessageType(WEBSOCKET_MESSAGE_FREE_ACTIVITY, []),
-  WEBSOCKET_MESSAGE_FREE_INJECTION : MessageType(WEBSOCKET_MESSAGE_FREE_INJECTION, []),
-  WEBSOCKET_MESSAGE_MODEL_CREATE : MessageType(WEBSOCKET_MESSAGE_MODEL_CREATE, []),
-  WEBSOCKET_MESSAGE_MODEL_DELETE : MessageType(WEBSOCKET_MESSAGE_MODEL_DELETE, []),
-  WEBSOCKET_MESSAGE_MODEL_EDIT : MessageType(WEBSOCKET_MESSAGE_MODEL_EDIT, []),
-  WEBSOCKET_MESSAGE_MASS_ORDER : MessageType(WEBSOCKET_MESSAGE_MASS_ORDER, [
-    MessageField(WEBSOCKET_DATA, identity)
-  ]),
-  WEBSOCKET_MESSAGE_MOVE_ORDERS : MessageType(WEBSOCKET_MESSAGE_MOVE_ORDERS, []),
-  WEBSOCKET_MESSAGE_RESTORE_ORDERS : MessageType(WEBSOCKET_MESSAGE_RESTORE_ORDERS, []),
-  WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD : MessageType(WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, []),
-  WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER : MessageType(WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, []),
-  WEBSOCKET_MESSAGE_CORRECT_ORDER : MessageType(
-    WEBSOCKET_MESSAGE_CORRECT_ORDER, [
-      MessageObjectField(DATA_AUTH, [
-        MessageField(AUTH_USERNAME, str),
-        MessageField(AUTH_PASSWORD, str),
-      ]),
-      MessageObjectField(WEBSOCKET_DATA, [
-
-      ])
-    ]
-  )
-}
-
-requiredDataFields = {
-  WEBSOCKET_MESSAGE_FREE_INJECTION : [(WEBSOCKET_DATA_ID, int), ('lot_number', str)]
-}
-
-
-def ValidateAuthObject(AuthObj: Dict) -> bool:
-  """Validates that the auth object contains a username and password
-
-  Username name might not exists and if it does password may not be correct.
-
-  Args:
-      message (Dict): An object that should contain AUTH_USERNAME and AUTH_PASSWORD
-
-  Returns:
-      bool: Validity of Auth object
-  """
-  # Auth object should always contain a username and a password
-  username_in_obj = AUTH_USERNAME in AuthObj
-  password_in_obj = AUTH_PASSWORD in AuthObj
-
-  if not username_in_obj:
-    error_logger.error(f"AUTH_USERNAME is missing from Auth object: {AuthObj}")
-  if not password_in_obj:
-    error_logger.error(f"AUTH_PASSWORD is missing from Auth object: {AuthObj}")
-
-  return username_in_obj and password_in_obj
-
-def ValidateType(value : Any, targetType: Type) -> bool:
-  """Checks if a value is of a certain type
-
-  Args:
-      value (_type_): _description_
-      targetType (_type_): _description_
-
-  Returns:
-      bool: _description_
-  """
-
-  return True
-
-def AuthMessage(user: User, message: Dict) -> bool:
-  """Check if a user is allowed to send a message
-
-  Args:
-      user (User): _description_
-      messageType (str): _description_
-
-  Returns:
-      bool: If the user is allowed to handle such a message
-  """
-  messageType = message[WEBSOCKET_MESSAGE_TYPE]
-  return True
-
-
-def validateMessage(message: Dict) -> str:
-  """Checks is a message contains the correct fields to be a valid message.
-  Note a valid message is returned as falsy, while a truthy indicate an error.
-
-  Note that this function should not be used
-
-  Args:
-      message (Dict): The message to be validated
-
-  Returns:
-      str: empty if valid otherwise a ERROR_XXX from constants.py is returned
-  """
-  if not message.get(WEBSOCKET_MESSAGE_ID):
-    return ERROR_NO_MESSAGE_ID
-  if not message.get(WEBSOCKET_MESSAGE_TYPE):
-    return ERROR_NO_MESSAGE_TYPE
-  try:
-    # GOT FUCKING DAMMIT, fucking control flow by exceptions...
-    WEBSOCKET_MESSAGE_TYPES(message[WEBSOCKET_MESSAGE_TYPE])
-  except ValueError:
-    return ERROR_INVALID_MESSAGE_TYPE
-
-  if not message.get(WEBSOCKET_JAVASCRIPT_VERSION):
-    return ERROR_NO_JAVASCRIPT_VERSION
-  if not message[WEBSOCKET_JAVASCRIPT_VERSION] == JAVASCRIPT_VERSION:
-    return ERROR_INVALID_JAVASCRIPT_VERSION
-
-  message_type = message[WEBSOCKET_MESSAGE_TYPE]
-
-  #if message_type not in requiredMessageFields:
-  #  error_logger.warning(f"Message type: {message_type} is not in Require Message Fields")
-
-  for field in requiredMessageFields.get(message_type, []):
-    if field not in message:
-      error_logger.error(f"Missing {field} in f{message}")
-      return ERROR_INVALID_MESSAGE
-
-  if WEBSOCKET_DATA in message:
-    data = message[WEBSOCKET_DATA]
-    for field, Type in requiredDataFields.get(message_type, []):
-      if field not in data or not ValidateType(data[field], Type):
-        return ERROR_INSUFFICIENT_DATA
-
-  if DATA_AUTH in message and not ValidateAuthObject(message[DATA_AUTH]):
-    return ERROR_INVALID_AUTH
-
-  return NO_ERROR
-
 
 def authenticate_user(username: str,
                       password: str,
@@ -208,7 +42,7 @@ def authenticate_user(username: str,
     return AuthenticationResult.MISS_MATCH_USERNAME, None
 
   user = authenticate(request=request, username=username, password=password)
-  if user:
+  if isinstance(user, User):
     return AuthenticationResult.SUCCESS, user
   else:
     return AuthenticationResult.INVALID_PASSWORD, None
@@ -236,7 +70,7 @@ def login_from_header(request: HttpRequest) -> bool:
 
   if 'X-Tracer-User' in request.headers and 'X-Tracer-Role' in request.headers:
     header_user_group, header_user_name = parse_index_header(
-      request.headers
+      request.headers #type: ignore
     )
 
     if header_user_group == UserGroups.ShopExternal:
@@ -274,13 +108,15 @@ def _login_from_header_external_user(request: HttpRequest) -> None:
 
   if 'auth' in request.COOKIES:
     signer = Signer()
-    try:
-      username = signer.unsign(request.COOKIES.get('auth'))
-      user = User.objects.get(username=username)
-      login(request, user, backend="tracerauth.backend.TracershopAuthenticationBackend")
-      return
-    except BadSignature:
-      pass
+    signed_username = request.COOKIES.get('auth')
+    if signed_username is not None:
+      try:
+        username = signer.unsign(signed_username)
+        user = User.objects.get(username=username)
+        login(request, user, backend="tracerauth.backend.TracershopAuthenticationBackend")
+        return
+      except BadSignature:
+        pass
 
   user = get_login()
   if user:
@@ -311,13 +147,6 @@ def get_login(now=None) -> Optional[AbstractBaseUser] :
   else:
     return None
 
-# from third party packages
-from django.contrib.auth.models import AnonymousUser
-from channels.auth import get_user
-
-# Tracershop
-from database.models import User
-from core.exceptions import LoginRequired, ContractBroken
 
 async def get_logged_in_user(scope):
   user = await get_user(scope)
@@ -330,6 +159,29 @@ async def get_logged_in_user(scope):
 
   return user
 
+
+_BaseMessage = Message({
+  WEBSOCKET_MESSAGE_ID : int,
+  WEBSOCKET_JAVASCRIPT_VERSION : str,
+  WEBSOCKET_MESSAGE_TYPE : str
+})
+
+def validate_unknown_message(message : Dict[str, Any]):
+  if not validate_message(message, _BaseMessage):
+    return MessageValidationResult.MissingField
+
+  if message[WEBSOCKET_JAVASCRIPT_VERSION] != JAVASCRIPT_VERSION:
+    return MessageValidationResult.JavascriptVersionMismatch
+
+  if message[WEBSOCKET_MESSAGE_TYPE] not in WEBSOCKET_MESSAGE_TYPES:
+    return MessageValidationResult.InvalidMessageType
+
+  return MessageValidationResult.Successful
+
 __all__ = [
-  'get_logged_in_user'
+  'get_logged_in_user',
+  'validate_unknown_message',
+  'get_login',
+  'login_from_header',
+  'authenticate_user'
 ]

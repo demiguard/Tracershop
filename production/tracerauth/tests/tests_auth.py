@@ -25,19 +25,16 @@ from shared_constants import WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_AUTH_LOGI
 
 from database.models import User, UserGroups
 from lib.utils import LMAP
-from tracerauth.auth import AuthMessage, validateMessage, ValidateAuthObject
-
 
 TEST_ADMIN_USERNAME = "admin"
 TEST_ADMIN_PASSWORD = "password"
-
 
 def createShellMessage(messageType : str) -> Dict:
   return {
     WEBSOCKET_MESSAGE_TYPE : messageType
   }
 
-class authTestCase(SimpleTestCase):
+class AuthTestCase(SimpleTestCase):
   messages = LMAP(createShellMessage, [
     WEBSOCKET_MESSAGE_AUTH_LOGIN,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT,
@@ -49,92 +46,3 @@ class authTestCase(SimpleTestCase):
   ])
 
   message_id = 6940269
-
-  def test_validateMessage_validMessage(self):
-    self.assertEqual(validateMessage({
-      WEBSOCKET_MESSAGE_ID : 1337,
-      WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_GET_ORDERS
-    }),"")
-
-  def test_validateMessage_FreeInjectionOrder(self):
-    self.assertEqual(validateMessage(
-      {
-      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-      WEBSOCKET_DATA : {
-        'lot_number' : "messageBatchNumber",
-        WEBSOCKET_DATA_ID : 6631
-      },
-      DATA_AUTH : {
-        AUTH_USERNAME : TEST_ADMIN_USERNAME,
-        AUTH_PASSWORD : TEST_ADMIN_PASSWORD
-      }
-    }
-    ), "")
-
-  def test_validate_empty_auth_object(self):
-    with self.assertLogs(ERROR_LOGGER) as captured_logs:
-      self.assertFalse(ValidateAuthObject({}))
-
-    self.assertEqual(len(captured_logs.output), 2)
-    self.assertRegex(captured_logs.output[0], "AUTH_USERNAME is missing")
-    self.assertRegex(captured_logs.output[1], "AUTH_PASSWORD is missing")
-
-
-  def test_validate_missing_message_type(self):
-    self.assertEqual(validateMessage({
-      WEBSOCKET_MESSAGE_ID : 167901
-    }), ERROR_NO_MESSAGE_TYPE)
-
-  def test_missing_javascript_type(self):
-    self.assertEqual(validateMessage({
-      WEBSOCKET_MESSAGE_ID : 69870235,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-    }), ERROR_NO_JAVASCRIPT_VERSION)
-
-  def test_wrong_javascript_type(self):
-    self.assertEqual(validateMessage({
-      WEBSOCKET_MESSAGE_ID : 69870235,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_WHOAMI,
-      WEBSOCKET_JAVASCRIPT_VERSION : "1.0.0"
-    }), ERROR_INVALID_JAVASCRIPT_VERSION)
-
-  def test_validateMessage_FreeInjectionOrder_Missing_AUTH(self):
-    with self.assertLogs(ERROR_LOGGER):
-      self.assertEqual(validateMessage(
-        {
-        WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-        WEBSOCKET_DATA : {
-          'lot_number' : "messageBatchNumber",
-          WEBSOCKET_DATA_ID : 6631
-        },
-        DATA_AUTH : {
-          AUTH_USERNAME : TEST_ADMIN_USERNAME,
-        #  AUTH_PASSWORD : TEST_ADMIN_PASSWORD
-        }
-      }
-      ), ERROR_INVALID_AUTH)
-
-  def test_validateMessage_FreeInjectionOrder_Missing_DATA(self):
-    with self.assertLogs(ERROR_LOGGER) as captured_logs:
-      self.assertEqual(validateMessage(
-        {
-        WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_ID : self.message_id,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-        #WEBSOCKET_DATA : {
-        #  'lot_number' : "messageBatchNumber",
-        #  WEBSOCKET_DATA_ID : 6631
-        #},
-        #DATA_AUTH : {
-        #  AUTH_USERNAME : TEST_ADMIN_USERNAME,
-        #  AUTH_PASSWORD : TEST_ADMIN_PASSWORD
-        #}
-      }
-      ), ERROR_INVALID_MESSAGE)
-
-    self.assertEqual(len(captured_logs.output), 1)

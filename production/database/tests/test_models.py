@@ -9,9 +9,9 @@ from django.test import TransactionTestCase, TestCase, SimpleTestCase
 
 # Tracershop Packages
 from constants import ERROR_LOGGER
-
+from database.models import TracershopModel
 from database.models import User, UserGroups, Vial, TracerTypes, Tracer,\
-  Isotope, InjectionOrder, Days, Booking
+  Isotope, InjectionOrder, Days, Booking, SuccessfulLogin
 
 class AuthModelTestCase(SimpleTestCase):
   def test_user_groups(self):
@@ -213,3 +213,11 @@ class TracershopModelsTests(TestCase):
     booking = Booking()
 
     self.assertEqual(booking.display_name, "Booking")
+
+  def test_successful_login_string(self):
+    user = User(username = "testuser")
+    self.assertEqual(str(SuccessfulLogin(user=user, login_time=datetime(2000,1,1,0,0,0))),"testuser - 2000-01-01 00:00:00")
+
+  def test_base_models_are_not_commitable(self):
+    self.assertRaises(ValueError, TracershopModel.filter_args_for_committed_models)
+    self.assertRaises(ValueError, TracershopModel.kwargs_for_uncommitting)

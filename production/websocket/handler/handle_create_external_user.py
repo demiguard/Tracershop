@@ -27,7 +27,6 @@ class HandleCreateExternalUser(HandlerBase):
     WEBSOCKET_DATA : {
       AUTH_USERNAME : str,
       AUTH_PASSWORD : str,
-      DATA_CUSTOMER : int
     }
   })
 

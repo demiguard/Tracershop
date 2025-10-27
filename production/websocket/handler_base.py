@@ -25,7 +25,7 @@ class HandlerBase(ABC):
 
   """
   @classproperty
-  def blueprint(cls) -> Message:
+  def blueprint(cls) -> Message: #pragma: no cover
     raise NotImplemented
 
 

@@ -27,7 +27,7 @@ class HandleModelCreate(HandlerBase):
   def blueprint(cls):
     return Message({
       WEBSOCKET_DATA : {},
-      WEBSOCKET_DATATYPE : {}
+      WEBSOCKET_DATATYPE : str
     })
 
   @classproperty

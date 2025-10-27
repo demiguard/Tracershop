@@ -1,5 +1,9 @@
+
+# Third party
 from django.test.testcases import SimpleTestCase
 
+# Tracershop imports
+from constants import ERROR_LOGGER
 from tracerauth.message_validation import Message,validate_message, Array, JsonBlueprint
 
 class MessageValidationTestCases(SimpleTestCase):
@@ -37,19 +41,22 @@ class MessageValidationTestCases(SimpleTestCase):
     }, blueprint))
 
     # Missing is not OK
-    self.assertFalse(validate_message({
-      "really" : 6782139,
-      "simple" : 672903.1249710,
-      "this" : "a string",
-    }, blueprint))
+    with self.assertLogs(ERROR_LOGGER) as captured_logs:
+      self.assertFalse(validate_message({
+        "really" : 6782139,
+        "simple" : 672903.1249710,
+        "this" : "a string",
+      }, blueprint))
+
 
     # Wrong Type is not ok
-    self.assertFalse(validate_message({
-      "is" : 1,
-      "really" : 6782139,
-      "simple" : 672903.1249710,
-      "this" : "a string",
-    }, blueprint))
+    with self.assertLogs(ERROR_LOGGER) as captured_logs:
+      self.assertFalse(validate_message({
+        "is" : 1,
+        "really" : 6782139,
+        "simple" : 672903.1249710,
+        "this" : "a string",
+      }, blueprint))
 
   def test_nested_structures(self):
     blueprint = Message({
@@ -80,15 +87,17 @@ class MessageValidationTestCases(SimpleTestCase):
       }
     }, blueprint))
 
-    self.assertFalse(validate_message({
-      "this" : False
-    }, blueprint))
+    with self.assertLogs(ERROR_LOGGER):
+      self.assertFalse(validate_message({
+        "this" : False
+      }, blueprint))
 
-    self.assertFalse(validate_message({
-      "this" : {
-        "is" : False
-      }
-    }, blueprint))
+    with self.assertLogs(ERROR_LOGGER):
+      self.assertFalse(validate_message({
+        "this" : {
+          "is" : False
+        }
+      }, blueprint))
 
   def test_validate_empty_message(self):
     self.assertTrue(validate_message({}, Message({})))
@@ -99,5 +108,14 @@ class MessageValidationTestCases(SimpleTestCase):
     })
 
     self.assertTrue(validate_message({"list" : [1,2,3,4,5]}, blueprint))
-    self.assertFalse(validate_message({"list" : ["1","2","3","4","5"]}, blueprint))
-    self.assertFalse(validate_message({"list" : "[1,2,3,4,5]"}, blueprint))
+
+    with self.assertLogs(ERROR_LOGGER):
+      self.assertFalse(validate_message({"list" : ["1","2","3","4","5"]}, blueprint))
+      self.assertFalse(validate_message({"list" : "[1,2,3,4,5]"}, blueprint))
+
+  def test_message_string(self):
+    blueprint = Message({
+      "asdf" : str
+    })
+
+    self.assertEqual(str(blueprint), "{\n  asdf : <class 'str'>}\n")

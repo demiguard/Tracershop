@@ -8,7 +8,7 @@
 import React from "react";
 import { CommitIcon } from "~/components/injectable/commit_icon";
 import { DeleteButton } from "~/components/injectable/delete_button";
-import { ClickableIcon } from "~/components/injectable/icons";
+import { ClickableIcon, DeliveryIcon } from "~/components/injectable/icons";
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from "~/dataclasses/dataclasses";
 import { datify } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
@@ -28,11 +28,7 @@ function BaseActionButton({
 }){
   switch(order.status){
     case ORDER_STATUS.RELEASED:
-      return <ClickableIcon
-        label={label}
-        src="/static/images/delivery.svg"
-        onClick={releaseOnClick}
-      />
+      return <div></div>
     case ORDER_STATUS.ORDERED:
       if(!canEdit){
         return (<div aria-label={label}></div>)

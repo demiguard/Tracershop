@@ -40,7 +40,6 @@ from django.test import TestCase, TransactionTestCase, override_settings
 from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from shared_constants import *
-
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from database.models import ClosedDate, User, UserGroups, MODELS,\
     ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
@@ -529,10 +528,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         response = await self._sendReceive(comm, {})
         await comm.disconnect()
 
-      self.assertRegexIn(ERROR_NO_MESSAGE_ID, captured_error_logs.output)
-
       self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
-      self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], { ERROR_TYPE : ERROR_NO_MESSAGE_ID })
+      self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], { ERROR_TYPE : MessageValidationResult.MissingField.value })
 
   async def test_InvalidMessageType(self):
     with self.assertLogs(DEBUG_LOGGER, DEBUG):
@@ -549,8 +546,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
       self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
       self.assertEqual(response[WEBSOCKET_MESSAGE_ID], self.message_id)
-      self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : ERROR_INVALID_MESSAGE_TYPE})
-    self.assertRegexIn(ERROR_INVALID_MESSAGE_TYPE, captured_error_logs.output)
+      self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : MessageValidationResult.InvalidMessageType.value})
 
 
   async def test_InvalidJavascript(self):
@@ -567,9 +563,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         await comm.disconnect()
 
         self.assertEqual(response[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_ERROR)
-        self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : ERROR_INVALID_JAVASCRIPT_VERSION})
+        self.assertEqual(response[WEBSOCKET_MESSAGE_ERROR], {ERROR_TYPE : MessageValidationResult.JavascriptVersionMismatch.value})
 
-    self.assertRegexIn(f"{ERROR_INVALID_JAVASCRIPT_VERSION}", captured_error_logs.output)
 
   ##### Message Testing #####
   async def test_GetState(self):
@@ -591,7 +586,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     """
 
     keyword = DATA_CLOSED_DATE
-    Model = MODELS[keyword]
+    Model = ClosedDate
     with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
       comm = WebsocketCommunicator(app,"ws/")
       comm_other_user = WebsocketCommunicator(app, "ws/")
@@ -611,7 +606,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
           WEBSOCKET_MESSAGE_ID : self.message_id,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_CREATE,
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-          WEBSOCKET_DATATYPE : keyword,
+          WEBSOCKET_DATATYPE : DATA_CLOSED_DATE,
           WEBSOCKET_DATA : {
             "close_date" : "2021-11-30"
           }
@@ -625,12 +620,12 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         await comm.disconnect()
         await comm_other_user.disconnect()
 
-        modelBackend: ClosedDate = await database_sync_to_async(Model.objects.get)(close_date=datetime.date(2021,11,30))
+        modelBackend: ClosedDate = await database_sync_to_async(ClosedDate.objects.get)(close_date=datetime.date(2021,11,30))
         self.assertIn(WEBSOCKET_DATA, response)
         data = response[WEBSOCKET_DATA]
         self.assertIn(keyword, data)
 
-        modelFrontend = await database_sync_to_async(Model.objects.get)(pk=data[keyword][0]['pk'])
+        modelFrontend = await database_sync_to_async(ClosedDate.objects.get)(pk=data[keyword][0]['pk'])
         self.assertEqual(modelFrontend, modelBackend)
 
   async def test_ModelCreate_create_injectionOrder(self):
@@ -1143,6 +1138,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       })
       message = await comm_admin.receive_json_from()
       await comm_admin.disconnect()
+
+
 
     self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS], SUCCESS_STATUS_CRUD.SUCCESS.value)
 

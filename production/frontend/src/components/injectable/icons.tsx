@@ -237,7 +237,7 @@ type IdempotentIconProps = {
   altText? : string,
   src : string,
   beforeInjection? : (svg: SVGSVGElement) => undefined,
-  onClick? : (() => void) | (() => Promise<any>),
+  onClick? : (() => Promise<any>),
   onMouseDown? : () => void,
   label? : string,
   className? : string,

@@ -22,7 +22,7 @@ class HandleModelDelete(HandlerBase):
   def blueprint(cls):
     return Message({
       # WEBSOCKET_DATA_ID : int, this can int or array(int), TODO: change it to array(int)
-      WEBSOCKET_DATATYPE : {}
+      WEBSOCKET_DATATYPE : str
     })
 
   @classproperty

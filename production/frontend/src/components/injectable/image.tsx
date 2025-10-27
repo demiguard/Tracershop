@@ -5,7 +5,7 @@ import { SVG } from './svg'
 
 type ImageProps = {
   src : string,
-  beforeInjection : (svg: SVGSVGElement) => void
+  beforeInjection? : (svg: SVGSVGElement) => void
   [key: string] : any
 } & BTImageProps;
 

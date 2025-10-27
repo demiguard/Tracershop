@@ -222,3 +222,11 @@ class BookingStatus(__Enum):
   Ordered = 1
   Rejected = 2
   Released = 3
+
+
+class MessageValidationResult(__Enum):
+  Successful = 0
+  MissingField = 1
+  JavascriptVersionMismatch = 2
+  InvalidMessageType = 3
+  MessageSpecificValidationFailed = 4

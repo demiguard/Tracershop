@@ -1,7 +1,7 @@
 from django.test import TestCase
 from django.db.models import CharField
 
-from database.models import User, TracershopModel, Address, Database, DicomEndpoint
+from database.models import User, TracershopModel, Address, DicomEndpoint
 
 # Create your tests here.
 class ModelTestCases(TestCase):
@@ -17,8 +17,6 @@ class ModelTestCases(TestCase):
 
     # Database
     test_databaseName = "testDatabase"
-    database = Database(databaseName=test_databaseName, username="username", password="password", address=add_desc)
-    self.assertEqual(str(database), test_databaseName)
 
     # User
     testUserName="testUser"
@@ -56,4 +54,3 @@ class ModelTestCases(TestCase):
     )
 
     self.assertEqual(user, "google")
-

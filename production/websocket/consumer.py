@@ -23,7 +23,7 @@ from channels.db import database_sync_to_async
 from channels.auth import get_user
 from channels.generic.websocket import AsyncJsonWebsocketConsumer
 from channels_redis.core import RedisChannelLayer
-from django.contrib.auth.models import AnonymousUser
+from django.contrib.auth.models import AnonymousUser, AbstractBaseUser
 from django.conf import settings
 
 # Tracershop Production packages
@@ -37,7 +37,7 @@ from shared_constants import AUTH_PASSWORD, DATA_USER, AUTH_USERNAME, AUTH_IS_AU
     DATA_AUTH, WEBSOCKET_SESSION_ID,WEBSOCKET_MESSAGE_STATUS, \
     WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_SUCCESS,\
     WEBSOCKET_MESSAGE_TYPE, SUCCESS_STATUS_CRUD, WEBSOCKET_SERVER_MESSAGES,\
-    WEBSOCKET_DATA, WEBSOCKET_REFRESH
+    WEBSOCKET_DATA, WEBSOCKET_REFRESH, MessageValidationResult
 
 from database.database_interface import DatabaseInterface
 from database.TracerShopModels.telemetry_models import TelemetryRecordStatus
@@ -68,7 +68,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
    Because of the low user count this is ok.
   """
   global_group = CHANNEL_GROUP_GLOBAL
-  channel_layer: RedisChannelLayer #
+  channel_layer: RedisChannelLayer #type: ignore
 
 
   def __init__(self, db = DatabaseInterface(), datetimeNow = DateTimeNow()):
@@ -89,8 +89,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
   async def decode_json(cls, text_data: str) -> Dict:
     return decode(text_data)
 
-  async def enterUserGroups(self, user: User):
-    if isinstance(user, AnonymousUser):
+  async def enterUserGroups(self, user: AbstractBaseUser | AnonymousUser):
+    if not isinstance(user, User):
       return
 
     if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
@@ -101,8 +101,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(f'customer_{customerID}', self.channel_name)
 
 
-  async def leaveUserGroups(self, user: User):
-    if isinstance(user, AnonymousUser):
+  async def leaveUserGroups(self, user: AbstractBaseUser | AnonymousUser):
+    if not isinstance(user, User):
       return
 
     if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
@@ -148,27 +148,6 @@ class Consumer(AsyncJsonWebsocketConsumer):
     await self.channel_layer.group_send(self.global_group, message)
 
 
-  async def broadcastProduction(self, message: Dict):
-    """Broadcast only to the group production
-
-    Args:
-        message (Dict): Message to be send
-    """
-    message = await self._prepBroadcastMessage(message)
-    await self.channel_layer.group_send('production', message) #
-
-
-  async def broadcastCustomer(self, message: Dict, customerIDs: Optional[List[int]]):
-    message = await self._prepBroadcastMessage(message)
-    if customerIDs is None:
-      await self.broadcastGlobal(message)
-      return
-
-    await self.broadcastProduction(message)
-    for customerID in customerIDs:
-      await self.channel_layer.group_send(f'customer_{customerID}', message)
-
-
   async def broadcastMessage(self, message: Dict):
     """WARNING: IS THIS A PRIVATE HELPER FUNCTION THAT YOU SHOULDN'T CALL IN
     HANDLER FUNCTIONS. Use _broadcastGlobal instead!
@@ -203,21 +182,17 @@ class Consumer(AsyncJsonWebsocketConsumer):
                          needed to handle that message
     """
     time_start_ns = time_module.monotonic_ns()
-    user: User = await get_user(self.scope)
+    user = await get_user(self.scope)
 
     try:
-      error = auth.validateMessage(content)
-      if error != NO_ERROR:
+      error = auth.validate_unknown_message(content)
+      if error != MessageValidationResult.Successful:
         error_logger.error(f"Handling an invalid message {content}")
         error_logger.error(f"With error code: {error}")
         await self.RespondWithError(content, {ERROR_TYPE : error})
         return
 
       logger.info(f"Websocket received message: {content[WEBSOCKET_MESSAGE_ID]} - {content[WEBSOCKET_MESSAGE_TYPE]}")
-      if not auth.AuthMessage(user, content): #pragma: no cover
-        logger.info(f"Insufficient Rights for {user}!")
-        await self.RespondWithError(content, {ERROR_TYPE : ERROR_INSUFFICIENT_PERMISSIONS})
-        return
 
       await self.handler(self, content)
       time_end_ns = time_module.monotonic_ns()
@@ -333,7 +308,8 @@ class Consumer(AsyncJsonWebsocketConsumer):
 
   async def authenticate_from_auth(self, message):
     Auth = message[DATA_AUTH]
-    user: User = await get_user(self.scope)
+    user: User = await get_user(self.scope) # type: ignore
+
     authentication_result: Tuple[AuthenticationResult,
                                  Optional[User]] = await database_sync_to_async(auth.authenticate_user)(
       username=Auth[AUTH_USERNAME],

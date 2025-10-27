@@ -83,6 +83,14 @@ export const EXCLUDED_STATE_MODELS = [
 
 export const JAVASCRIPT_VERSION = "2.3.0";
 
+export const MessageValidationResult = {
+  Successful : 0,
+  MissingField : 1,
+  JavascriptVersionMismatch : 2,
+  InvalidMessageType : 3,
+  MessageSpecificValidationFailed : 4,
+};
+
 export const NO_ERROR = "";
 
 export const SUCCESS_STATUS_CRUD = {

@@ -1,9 +1,9 @@
 import React, { act, useEffect, useState } from "react";
 import { Card, Col, Collapse, Form, FormText, Row } from "react-bootstrap";
-import { StatusIcon } from "~/components/injectable/icons";
+import { ClickableIcon, DeliveryIcon, StatusIcon } from "~/components/injectable/icons";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { IsotopeDelivery, IsotopeOrder } from "~/dataclasses/dataclasses";
+import { IsotopeDelivery, IsotopeOrder, IsotopeVial } from "~/dataclasses/dataclasses";
 import { IsotopeOrderCollection } from "~/lib/data_structures/isotope_order_collection";
 import { CENTER, ExpandAndCenter, JUSTIFY, PADDING } from "~/lib/styles";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
@@ -18,66 +18,91 @@ import { useUpdatingEffect } from "~/effects/updating_effect";
 import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
 import { TimeDisplay } from "~/components/injectable/data_displays/time_display";
 import { SUCCESS_STATUS_CRUD } from "~/lib/shared_constants";
+import { FlexMinimizer } from "~/components/injectable/flexMinimizer";
+import { MBqDisplay } from "~/components/injectable/data_displays/mbq_display";
+import { Image } from "~/components/injectable/image";
+import { DatetimeDisplay } from "~/components/injectable/data_displays/datetime_display";
 
-type  CardHeaderDescriptionArgs = {
-  isotopeOrderCollection: IsotopeOrderCollection
+type CardHeaderDescriptionArgs = {
+  collection: IsotopeOrderCollection
 }
 
-function CardHeaderDescription({isotopeOrderCollection} : CardHeaderDescriptionArgs){
-  switch (isotopeOrderCollection.minimum_status){
+function CardHeaderDescription({ collection } : CardHeaderDescriptionArgs){
+  switch (collection.minimum_status){
     case ORDER_STATUS.EMPTY:
       return (
         <Col>
           <Row style={ExpandAndCenter}>
             <Col style={ExpandAndCenter} xs={2}>
-              <TimeDisplay time={isotopeOrderCollection.delivery.delivery_time}/>
+              <TimeDisplay time={collection.delivery.delivery_time}/>
             </Col>
             <Col xs={8} style={ExpandAndCenter}>Der er ikke bestilt isotope til denne levering</Col>
           </Row>
         </Col>
       );
+
     case ORDER_STATUS.ORDERED:
+    case ORDER_STATUS.ACCEPTED:
       return (
         <Col>
           <Row style={ExpandAndCenter}>
-            <Col style={ExpandAndCenter} xs={2}>
+            <Col style={ExpandAndCenter} xs={3}>
               <TimeDisplay
-                time={isotopeOrderCollection.delivery.delivery_time}
+                time={collection.delivery.delivery_time}
               />
             </Col>
             <Col
               xs={8}
               style={ExpandAndCenter}>
-                Der er bestilt: {isotopeOrderCollection.ordered_activity} MBq
+                Der er bestilt: {collection.ordered_activity} MBq
+            </Col>
+          </Row>
+        </Col>
+      );
+    case ORDER_STATUS.RELEASED:
+      return (
+        <Col>
+          <Row>
+            <FlexMinimizer style={{ display : "flex", alignItems : "center" }}>
+              <TimeDisplay time={collection.delivery.delivery_time}/>
+            </FlexMinimizer>
+            <Col xs={4} style={{ display : "flex", alignItems : "center" }}>
+              Der er bestilt: <MBqDisplay activity={collection.ordered_activity}/>
+            </Col>
+            <Col style={{ display : "flex", alignItems : "center" }}>
+              Der er leveret <MBqDisplay activity={collection.delivered_activity}/> kalibret til kl: <TimeDisplay time={collection.delivery.delivery_time}/>
+            </Col>
+            <Col xs={1}>
+              <DeliveryIcon collection={collection}/>
             </Col>
           </Row>
         </Col>
       )
     default:
-      console.log(isotopeOrderCollection.minimum_status);
-
       return (
       <Col>
-        <Col style={ExpandAndCenter} xs={2}>
-          <TimeDisplay
-            time={isotopeOrderCollection.delivery.delivery_time}
-          />
+        <Col xs={2}>
+          <FlexMinimizer>
+            <TimeDisplay
+              time={collection.delivery.delivery_time}
+            />
+          </FlexMinimizer>
         </Col>
       </Col>)
   }
 }
 
 
-function CardHeader({isotopeOrderCollection, collapsedState}){
+function CardHeader({collection, collapsedState}){
   const [collapsed, setCollapsed] = collapsedState
 
   return (
     <Card.Header>
       <Row style={JUSTIFY.between}>
         <Col xs={1} style={JUSTIFY.center}>
-          <StatusIcon collection={isotopeOrderCollection}/>
+          <StatusIcon collection={collection}/>
         </Col>
-        <CardHeaderDescription isotopeOrderCollection={isotopeOrderCollection}/>
+        <CardHeaderDescription collection={collection}/>
         <Col xs={1} style={{
           ...JUSTIFY.left
         }}>
@@ -97,7 +122,6 @@ interface OrderRowProps {
 }
 
 function OrderRow({order, deadlineValid}: OrderRowProps){
-  const state = useTracershopState();
   const canEdit = deadlineValid && [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(order.status);
   const [tempOrder, setTempOrder] =  useState(order);
   const [errorActivity, setErrorActivity] = useErrorState();
@@ -147,14 +171,14 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
     }
   }
 
-  const orderDirty = isDirty(order, tempOrder);
+  const orderDirty = isDirty(tempOrder, order);
 
   return <Row>
     <Col xs={1} style={JUSTIFY.center}>
       <StatusIcon order={order}/>
     </Col>
     <Col>
-      <TracershopInputGroup tail={"MBq"}>
+      <TracershopInputGroup readonly={!canEdit} tail={"MBq"} error={errorActivity}>
         <Form.Control
           onChange={setTempClassToEvent<IsotopeOrder>({
             stateFunction : setTempOrder,
@@ -166,7 +190,7 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
       </TracershopInputGroup>
     </Col>
     <Col>
-      <TracershopInputGroup tail={"Kommentar"}>
+      <TracershopInputGroup readonly={!canEdit} tail={"Kommentar"} error={errorComment}>
         <Form.Control
           as="textarea"
           rows={1}
@@ -193,6 +217,34 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
   </Row>
 }
 
+type DisplayRowIsotopeVialShopProps = {
+  vial : IsotopeVial
+}
+
+function DisplayRowIsotopeVialShop({vial} : DisplayRowIsotopeVialShopProps){
+  return (
+    <Row>
+      <Col style={{flexGrow : 0}}>
+        <Image
+          src="/static/images/vial.svg"
+          style={{
+            paddingLeft : "12px",
+            paddingRight : "12px",
+            border : "1px",
+            width : '24px',
+            height : '24px'
+          }}
+          width="24"
+          height="24"
+        />
+      </Col>
+      <Col>
+        Aktivitet: <MBqDisplay activity={vial.vial_activity} /> kalibret til <DatetimeDisplay datetime={vial.calibration_datetime} />
+      </Col>
+    </Row>
+  );
+}
+
 
 interface TimeSlotCardIsotopeArgs {
   timeSlot : IsotopeDelivery,
@@ -210,7 +262,7 @@ export function TimeSlotCardIsotope({
   const [collapsed, setCollapsed] = useState(false);
   const [showCalculator, setShowCalculator] = useState(deadlineValid);
 
-  const isotopeOrderCollection = new IsotopeOrderCollection(orders, timeSlot, state);
+  const collection = new IsotopeOrderCollection(orders, timeSlot, state);
 
   const renderedOrders = orders.map(
     (order) => {
@@ -218,8 +270,6 @@ export function TimeSlotCardIsotope({
     });
 
   const blankOrder = makeBlankIsotopeOrder(timeSlot, state);
-
-  console.log(blankOrder, deadlineValid, state.today);
 
   if(deadlineValid){
     renderedOrders.push(
@@ -230,15 +280,25 @@ export function TimeSlotCardIsotope({
     )
   }
 
+  const vialRows = [];
+  for(const vial of collection.getVials()){
+    vialRows.push(<DisplayRowIsotopeVialShop
+      key={vial.id}
+      vial={vial}
+    />);
+  }
+
+
   return (
     <Card style={PADDING.all.px0}>
       <CardHeader
-        isotopeOrderCollection={isotopeOrderCollection}
+        collection={collection}
         collapsedState={[collapsed, setCollapsed]}
       />
       <Collapse in={collapsed}>
         <Card.Body>
           {renderedOrders}
+          {vialRows}
         </Card.Body>
       </Collapse>
     </Card>
