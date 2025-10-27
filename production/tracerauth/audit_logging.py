@@ -5,7 +5,7 @@ direct call to the audit logger."""
 from abc import ABC, abstractmethod
 import logging
 from pprint import pformat
-from typing import Dict, List, Iterable, Optional, Tuple
+from typing import Dict, List, Iterable, Optional, Tuple, Type
 
 # Third party packages
 from django.db.models import ManyToManyRel, ManyToOneRel
@@ -222,5 +222,10 @@ def log_release_isotope_orders(
   message += "To fulfill these orders there're releasing these vials:\n"
   for vial in vials:
     message += f"  Isotope Vial: {vial.id}\n"
+
+  logger.info(message)
+
+def log_correction(user : 'models.User', ModelType : Type['models.TracershopModel'], model_ids : List[int]):
+  message = f""
 
   logger.info(message)

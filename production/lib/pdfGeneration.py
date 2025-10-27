@@ -9,6 +9,7 @@ Most of the functionality is found in:
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard library
+from dataclasses import dataclass
 from datetime import date, datetime
 from pathlib import Path
 from logging import getLogger
@@ -43,7 +44,9 @@ WIDTH, HEIGHT = (int(x) for x in A4)
 from constants import LEGACY_ENTRIES, ERROR_LOGGER, DEBUG_LOGGER
 from lib.formatting import dateConverter, timeConverter,\
   toDanishDecimalString, empty_none_formatter, format_time_number
-from database.models import Customer, ActivityOrder, ActivityProduction, DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage
+from database.models import Customer, ActivityOrder, ActivityProduction,\
+  DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage,\
+  IsotopeOrder, IsotopeDelivery, IsotopeVial
 
 debug_logger = getLogger(DEBUG_LOGGER)
 error_logger = getLogger(ERROR_LOGGER)
@@ -65,8 +68,6 @@ LINE_WIDTH = 500
 start_x_cursor = int((WIDTH - 500) / 2)
 start_y_cursor = 780
 
-
-
 def order_pair(i,j):
   return (min(i,j), max(i,j))
 
@@ -87,7 +88,34 @@ MonthNames = {
 }
 
 
-class MailTemplate(canvas.Canvas):
+@dataclass(slots=True)
+class Cursor:
+  x: int
+  y: int
+
+  def __add__(self, t: Tuple[int,int]):
+    x,y = t
+    return Cursor(self.x + x, self.y + y)
+
+  def __radd__(self, t: Tuple[int,int]):
+    x,y = t
+    return Cursor(self.x + x, self.y + y)
+
+  def __iadd__(self, t: Tuple[int,int]):
+    x,y = t
+    self.x += x
+    self.y += y
+    return self
+
+
+def get_starting_cursor():
+  return Cursor(
+    x = int((WIDTH - 500) / 2),
+    y = 780
+  )
+
+
+class ReleaseDocument(canvas.Canvas):
   line_height = 18 # How large is a text line
   _font       = defaultFont
   _font_size  = defaultFontSize
@@ -122,6 +150,11 @@ class MailTemplate(canvas.Canvas):
 
   def resetFont(self):
     self.setFont(self._font, self._font_size)
+
+  def draw_string(self, cursor: Cursor, string: str):
+    """Draws a string like the drawString
+    """
+    return self.drawString(cursor.x, cursor.y, string)
 
   def drawBoldString(self,
                      abscissa,
@@ -421,6 +454,40 @@ class MailTemplate(canvas.Canvas):
 
     return y_cursor
 
+  def apply_isotope_orders(self,
+                           cursor: Cursor,
+                           delivery: IsotopeDelivery,
+                           orders: List[IsotopeOrder],
+                           vials: List[IsotopeVial]
+    ):
+
+    isotope = delivery.production.isotope
+
+    order = orders[0]
+
+    self.draw_string(cursor, f"Hermed frigives Isotope: {isotope} til den {dateConverter(order.delivery_date, "%d/%m/%Y")} - {str(delivery.delivery_time)}")
+
+    cursor.y -= 25
+
+    for order in orders:
+      self.draw_string(cursor + (0,  0), f"Ordre ID: {order.id}")
+      self.draw_string(cursor + (150, 0), f"{order.ordered_activity_MBq} MBq")
+      cursor.y -= self.line_height
+
+    cursor.y -= 25
+    self.draw_string(cursor, f"Til disse ordre frigives disse hætteglas:")
+    cursor.y -= 25
+
+    for vial in vials:
+      self.draw_string(cursor + (0, 0), f"{vial.batch_nr}")
+      self.draw_string(cursor + (100, 0), f"{vial.vial_activity} MBq")
+      self.draw_string(cursor + (250, 0), f"{vial.calibration_datetime.time()} {dateConverter(vial.calibration_datetime.date(), "%d/%m/%Y")}")
+      cursor.y -= self.line_height
+
+    cursor.y -= 25
+
+    return cursor
+
 
   def ApplySender(self, x_cursor, y_cursor):
     self.drawString(x_cursor, y_cursor, f"Venlig hilsen")
@@ -460,9 +527,7 @@ def DrawActivityOrder(
     vials: Sequence[Vial],
   ) -> None:
 
-
-
-  template = MailTemplate(filename)
+  template = ReleaseDocument(filename)
   x_cursor = start_x_cursor
   y_cursor = start_y_cursor
 
@@ -490,7 +555,7 @@ def DrawInjectionOrder(
     filename: str,
     injectionOrder : InjectionOrder,
   ):
-  template = MailTemplate(filename)
+  template = ReleaseDocument(filename)
   x_cursor = start_x_cursor
   y_cursor = start_y_cursor
 
@@ -521,7 +586,7 @@ def DrawReleaseCertificate(filename :str,
                            productions : ActivityProduction,
                            orders : Sequence[ActivityOrder] ,
                            vials : Sequence[Vial],):
-  template = MailTemplate(filename)
+  template = ReleaseDocument(filename)
   x_cursor = start_x_cursor
   y_cursor = 400
 
@@ -771,4 +836,32 @@ def DrawReleaseCertificate(filename :str,
   sig_height = 109
 
   template.drawInlineImage(f"{settings.BASE_DIR}/pdfData/sig.png", x_cursor + 30, ordinate - sig_height, 128, sig_height, preserveAspectRatio=True)
+  template.save()
+
+def draw_isotope_release_document(
+    filename : str,
+    delivery : IsotopeDelivery,
+    orders: List[IsotopeOrder],
+    vials: List[IsotopeVial]
+  ):
+
+  template = ReleaseDocument(filename)
+
+  cursor = get_starting_cursor()
+
+  cursor.y = template.ApplyEndpoint(cursor.x, cursor.y, delivery.delivery_endpoint)
+
+  cursor += (10, -20)
+
+  cursor = template.apply_isotope_orders(
+    cursor,
+    delivery,
+    orders,
+    vials
+  )
+
+  cursor += (-10, 20)
+
+  template.ApplySender(cursor.x, cursor.y)
+
   template.save()

@@ -7,7 +7,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python Standard Library
 
 # Third Party Packages
-from typing import Optional
+from typing import Any, Dict, Optional
 from django.db.models import DateField, BigAutoField, CharField, EmailField,\
     TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField,\
     RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField,\
@@ -310,6 +310,18 @@ class ActivityOrder(TracershopModel):
       self.id = None
     return super().save(user, *args, **kwargs)
 
+  @classmethod
+  def filter_args_for_committed_models(cls):
+    return {
+      'status' : OrderStatus.Released
+    }
+
+  @classmethod
+  def kwargs_for_uncommitting(cls) -> Dict[str, Any]:
+    return {
+      'status' : OrderStatus.Accepted
+    }
+
   class Meta: # type: ignore
     indexes = [
       Index(fields=['delivery_date'])
@@ -398,6 +410,18 @@ class InjectionOrder(TracershopModel):
 
     return super().save(user, *args, **kwargs)
 
+  @classmethod
+  def filter_args_for_committed_models(cls):
+    return {
+      'status' : OrderStatus.Released
+    }
+
+  @classmethod
+  def kwargs_for_uncommitting(cls) -> Dict[str, Any]:
+    return {
+      'status' : OrderStatus.Accepted
+    }
+
 class Vial(TracershopModel):
   tracer = ForeignKey(Tracer, on_delete=RESTRICT, null=True, blank=True)
   activity = FloatField()
@@ -439,6 +463,18 @@ class Vial(TracershopModel):
       return AuthActions.ACCEPT_LOG
 
     return AuthActions.REJECT
+
+  @classmethod
+  def filter_args_for_committed_models(cls):
+    return {
+      'assigned_to__isnull' : False
+    }
+
+  @classmethod
+  def kwargs_for_uncommitting(cls) -> Dict[str, Any]:
+    return {
+      'assigned_to' : None
+    }
 
   class Meta: # type: ignore
     indexes = [
@@ -493,6 +529,18 @@ class IsotopeOrder(TracershopModel):
       return AuthActions.ACCEPT_LOG
     return can_edit_super
 
+  @classmethod
+  def filter_args_for_committed_models(cls):
+    return {
+      'status' : OrderStatus.Released
+    }
+
+  @classmethod
+  def kwargs_for_uncommitting(cls) -> Dict[str, Any]:
+    return {
+      'status' : OrderStatus.Accepted
+    }
+
 
 class IsotopeVial(TracershopModel):
   batch_nr = CharField(max_length=128)
@@ -510,3 +558,15 @@ class IsotopeVial(TracershopModel):
     indexes = [
       Index(fields=['calibration_datetime'])
     ]
+
+  @classmethod
+  def filter_args_for_committed_models(cls):
+    return {
+      'delivery_with__isnull' : False
+    }
+
+  @classmethod
+  def kwargs_for_uncommitting(cls) -> Dict[str, Any]:
+    return {
+      'delivery_with' : None
+    }

@@ -12,6 +12,7 @@ import { decayCorrect, correctVialActivityToTime } from "~/lib/physics"
 import { getId } from "~/lib/utils"
 import { Vial } from "~/dataclasses/dataclasses"
 import { OrderCollection } from "~/lib/data_structures/order_collection"
+import { DATA_VIAL } from "../shared_constants"
 
 /**
  * Wraps a group of orders, for the purpose of providing a single view of the
@@ -264,5 +265,13 @@ export class ActivityOrderCollection extends OrderCollection {
       ORDER_STATUS.RELEASED,
       ORDER_STATUS.ORDERED
     ].includes(order.status)
+  }
+
+  getVials(): any[] {
+    return this.vials;
+  }
+
+  getVialType(): string {
+    return DATA_VIAL;
   }
 }

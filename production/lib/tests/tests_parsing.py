@@ -304,9 +304,9 @@ class ParsingTestCase(TestCase):
     message_2 = hl7.parse("""MSH|^~\\&|Sectra|Sectra RIS|IBC-606|Veenstra|20240923123843||ORM^O01|AA632E60419940989BACDD0E7CADF6E6-ORM|P|2.3.1\rPID|||||||19410614|M|||Humlevej 20^^Allerød^^3450|201|||||||||||||||||""\rPV1|||""|||||||||||||\rORC|CA|||||||||||||||||||\rOBR||DKREGH0520378664|SECTRA1539720570|S_WHBSS99UF_$30^Myokardieskint., fysiol. prov., Tc-99m||||||||||||||||DKREGH0023637963||||||||||||^^^^^^220691000016004\r""")
     message_3 = hl7.parse("""MSH|^~\\&|Sectra|Sectra RIS|IBC-606|Veenstra|20240923122931||ORM^O01|FC06A833F12D4F8CBBBBDD96B2A9AFA2-ORM|P|2.3.1\rPID|||||||19470929|M|||Baeshøjgårdsvej 21^^Vig^^4560|306|||||||||||||||||""\rPV1|||""|||||||||||||\rORC|CA|||||||||||||||||||\rOBR||DKREGH0520081424|SECTRA1503940345|WDTPSCUXX_$15^PET/CT, Cu-64-DOTATATE (+)||||||||||||||||DKREGH0023322206||||||||||||^^^^^^256621000016000""")
 
-    self.assertEqual(extract_deleted_accessionNumber(message_1['OBR'][0]),"DKREGH0023459112")
-    self.assertEqual(extract_deleted_accessionNumber(message_2['OBR'][0]),"DKREGH0023637963")
-    self.assertEqual(extract_deleted_accessionNumber(message_3['OBR'][0]),"DKREGH0023322206")
+    self.assertEqual(extract_deleted_accessionNumber(message_1['OBR'][0]),"DKREGH0023459112") # type: ignore
+    self.assertEqual(extract_deleted_accessionNumber(message_2['OBR'][0]),"DKREGH0023637963") # type: ignore
+    self.assertEqual(extract_deleted_accessionNumber(message_3['OBR'][0]),"DKREGH0023322206") # type: ignore
 
   def test_cannot_parse_nonsense(self):
     not_a_val_file = [

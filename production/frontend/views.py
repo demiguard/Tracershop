@@ -18,10 +18,10 @@ from django.views.decorators.csrf import ensure_csrf_cookie
 # Tracershop Production
 from constants import DEBUG_LOGGER, ERROR_LOGGER
 from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
-  OrderStatus, Vial, InjectionOrder
+  OrderStatus, Vial, InjectionOrder, IsotopeDelivery, IsotopeOrder, IsotopeVial
 from database.database_interface import DatabaseInterface
 from lib.formatting import format_csv_data, format_time_number
-from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder
+from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder, draw_isotope_release_document
 from shared_constants import JAVASCRIPT_VERSION, URL_SHOP_MANUAL
 from tracerauth.auth import login_from_header
 
@@ -155,6 +155,56 @@ def vial_csv_view(request, year: int, month: int):
   formatted_data = format_csv_data(csv_data)
 
   return FileResponse(formatted_data, filename=f"tracershop_data-{year}-{format_time_number(month)}.xlsx")
+
+@ensure_csrf_cookie
+def release_isotope_document(request : HttpRequest,
+                             delivery_id: int,
+                             year: int,
+                             month: int,
+                             day: int
+                             ):
+  try:
+    delivery = IsotopeDelivery.objects.get(pk=delivery_id)
+  except ObjectDoesNotExist:
+    return HttpResponseNotFound(request)
+
+  try:
+    requested_date = date(year, month, day)
+  except ValueError:
+    return HttpResponseNotFound(request)
+
+  isotope_orders = [ io for io in IsotopeOrder.objects.filter(
+    destination=delivery,
+    delivery_date=requested_date,
+    status=OrderStatus.Released
+  )]
+
+  if len(isotope_orders) == 0:
+    return HttpResponseNotFound(request)
+
+  vials = [ iv for iv in IsotopeVial.objects.filter(
+    delivery_with__in=isotope_orders
+  )]
+
+  if len(vials) == 0:
+    return HttpResponseNotFound(request)
+
+
+  filename = f"frontend/static/frontend/pdfs/isotope/{delivery_id}/{year}/{month}/{day}.pdf"
+  pathFilename = Path(filename)
+  dirPath = Path(os.path.dirname(pathFilename))
+  if not dirPath.exists():
+    dirPath.mkdir(parents=True, exist_ok=True)
+
+  draw_isotope_release_document(
+    filename,
+    delivery,
+    isotope_orders,
+    vials
+  )
+
+  return FileResponse(open(filename, 'rb'),filename="isotope_frigivelse.pdf")
+
 
 @ensure_csrf_cookie
 def shop_manual_view(request):

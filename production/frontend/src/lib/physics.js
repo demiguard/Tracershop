@@ -1,4 +1,4 @@
-import { ActivityOrder, TracershopState, Vial } from "~/dataclasses/dataclasses";
+import { ActivityOrder, IsotopeVial, TracershopState, Vial } from "~/dataclasses/dataclasses";
 import { compareTimeStamp, TimeStamp } from "~/lib/chronomancy";
 
 export function CountMinutes(past,future) {
@@ -66,4 +66,23 @@ export function correctVialActivityToTime(vial, time, halflife_seconds){
   return 0 < minutes_delay ?
       decayCorrect(halflife_seconds, minutes_delay, vial.activity)
     : vial.activity;
+}
+
+/**
+ *
+ * @param {IsotopeVial} vial
+ * @param {any} time
+ */
+export function correctIsotopeVialActivityToTime(vial, time, halflife_seconds){
+  const timeStamp = new TimeStamp(time)
+  const vialDate = new Date(vial.calibration_datetime)
+
+  const vialTimeStamp = new TimeStamp(vialDate);
+  const diffTimeStamp = compareTimeStamp(timeStamp, vialTimeStamp);
+
+  const minutes_delay = diffTimeStamp.toMinutes()
+
+  return 0 < minutes_delay ?
+      decayCorrect(halflife_seconds, minutes_delay, vial.vial_activity)
+    : vial.vial_activity;
 }

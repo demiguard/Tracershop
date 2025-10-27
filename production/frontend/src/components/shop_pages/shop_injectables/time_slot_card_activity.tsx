@@ -394,7 +394,7 @@ export function TimeSlotCardActivity({
         <Optional exists={!!displayActivityOrders.length}>
           <StatusIcon
             label={`status-icon-time-slot-${timeSlot.id}`}
-            orderCollection={orderCollection}
+            collection={orderCollection}
           />
         </Optional>
       </Col>

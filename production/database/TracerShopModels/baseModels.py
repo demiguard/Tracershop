@@ -59,6 +59,25 @@ class TracershopModel(Model):
   def display_name(cls) -> str:
     return formatting.camelcase_to_readable(cls.__name__)
 
+  @classmethod
+  def filter_args_for_committed_models(cls) -> Dict[str, Any]:
+    raise ValueError("Model is not commitable")
+
+  @classmethod
+  def kwargs_for_uncommitting(cls) -> Dict[str, Any]:
+    """Returns the arguments, that you need to reset an instance with the
+    update from the BaseManager
+
+    Returns:
+        Dict[str, Any]: _description_
+
+    Example:
+    >>> ms = ModelType.Objects.filter(ModelType.get_filter_args())
+    >>> ms.update(ModelType.get_correct_args) # This resets all models.
+
+    """
+    raise ValueError("Model is not commitable")
+
   class Meta:
     abstract = True
 

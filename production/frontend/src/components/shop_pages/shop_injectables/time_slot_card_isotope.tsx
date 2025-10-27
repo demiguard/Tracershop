@@ -75,7 +75,7 @@ function CardHeader({isotopeOrderCollection, collapsedState}){
     <Card.Header>
       <Row style={JUSTIFY.between}>
         <Col xs={1} style={JUSTIFY.center}>
-          <StatusIcon orderCollection={isotopeOrderCollection}/>
+          <StatusIcon collection={isotopeOrderCollection}/>
         </Col>
         <CardHeaderDescription isotopeOrderCollection={isotopeOrderCollection}/>
         <Col xs={1} style={{

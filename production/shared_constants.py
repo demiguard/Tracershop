@@ -99,8 +99,8 @@ EXCLUDED_STATE_MODELS = [
 URL_INDEX = ""
 URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs"
 URL_INJECTION_PDF_BASE_PATH = "injection_pdfs"
+URL_ISOTOPE_PDF_BASE_PATH = "isotope_pdf"
 URL_SHOP_MANUAL = "shop_manual"
-
 
 # WEBSOCKET MESSAGES
 WEBSOCKET_DATA                             = "data"

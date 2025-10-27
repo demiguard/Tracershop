@@ -4,7 +4,7 @@ import propTypes from 'prop-types'
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from '~/dataclasses/dataclasses'
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection'
 import { ORDER_STATUS, StateType } from '~/lib/constants'
-import { openActivityReleasePDF, openInjectionReleasePDF } from '~/lib/utils'
+import { openActivityReleasePDF, openInjectionReleasePDF, openIsotopeReleasePDF } from '~/lib/utils'
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton } from './buttons'
@@ -14,6 +14,7 @@ import { Image } from './image'
 import { OrdersType, OrderType, getOrderType } from '~/lib/types'
 import { CancelBox } from './cancel_box'
 import { Optional } from './optional'
+import { OrderCollection } from '~/lib/data_structures/order_collection'
 
 interface ClickableIconProps {
   altText? : string,
@@ -77,7 +78,7 @@ ClickableIcon.propTypes = {
   onClick : propTypes.func
 }
 
-function statusImages(status) {
+function statusImages(status : number) {
   switch (status){
     case ORDER_STATUS.ORDERED:
       return "/static/images/clipboard1.svg";
@@ -103,18 +104,17 @@ interface StatusIconArgs {
   altText? : string,
   label? : string,
   onClick? : () => void;
-  order? : ActivityOrder | InjectionOrder | IsotopeOrder
-  orderCollection? : ActivityOrderCollection | IsotopeOrderCollection
+  order? : OrderType
+  collection? : OrderCollection
 }
 
-export function StatusIcon ({onClick, label, order, orderCollection, altText} : StatusIconArgs) {
+export function StatusIcon ({onClick, label, order, collection, altText} : StatusIconArgs) {
   const statusImagePath = (() => {
-
-    if (orderCollection) {
-      if(orderCollection instanceof ActivityOrderCollection && orderCollection.moved) {
+    if (collection) {
+      if(collection instanceof ActivityOrderCollection && collection.moved) {
         return "/static/images/move_top.svg";
       } else {
-        return statusImages(orderCollection.minimum_status);
+        return statusImages(collection.minimum_status);
       }
     }
     if(order instanceof ActivityOrder && !!order.moved_to_time_slot){
@@ -161,6 +161,34 @@ export function InjectionDeliveryIcon(props){
     src="/static/images/delivery.svg"
     onClick={ openInjectionReleasePDF(order)}
     {...newProps}  // This is here to make props overwrite default props
+  />;
+}
+
+type DeliveryIconProps = {
+  collection? : OrderCollection
+  order? : OrderType
+};
+
+export function DeliveryIcon({
+  collection,
+  order
+} : DeliveryIconProps){
+
+  const clickFunction = (() => {
+    switch(true) {
+      case collection instanceof ActivityOrderCollection:
+        return openActivityReleasePDF(collection.delivering_time_slot.id, new Date(collection.ordered_date))
+      case order instanceof InjectionOrder:
+        return openInjectionReleasePDF(order);
+      case collection instanceof IsotopeOrderCollection:
+        return openIsotopeReleasePDF(collection);
+      default:
+        return () => {}
+    }})();
+
+  return <ClickableIcon
+    src="/static/images/delivery.svg"
+    onClick={clickFunction}
   />;
 }
 
@@ -252,8 +280,6 @@ if (className) {
 } else {
   className = "statusIcon";
 }
-
-
 
 return (<IdempotentButton
           {...rest}
@@ -421,20 +447,19 @@ type EtherealIconProps = {
 }
 
 export function EtherealIcon(props : EtherealIconProps){
-  const { showState } = props
-
-  const [show, setShow] = showState
+  const { showState } = props;
+  const [show, setShow] = showState;
 
   const showIcon = <ClickableIcon
                       src="/static/images/plus2.svg"
                       onClick={() => {setShow(true)}}
                       beforeInjection={(svg) => { svg.setAttribute('fill', 'green') }}
-                    />
+                    />;
   const hideIcon = <ClickableIcon
                       src="/static/images/plus2.svg"
                       onClick={() => {setShow(false)}}
                       beforeInjection={(svg) => { svg.setAttribute('fill', 'red') }}
-                    />
+                    />;
 
   return <Optional exists={show} alternative={showIcon}>
     {hideIcon}

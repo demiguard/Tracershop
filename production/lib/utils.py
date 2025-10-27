@@ -18,13 +18,13 @@ def LMAP(func: Callable[[T], T2], list_:List[T]):
 def LFILTER(func: Callable[[T], bool], List: List[T]):
   return list(filter(func, List))
 
-class classproperty(property):
-  def __get__(self, owner_self, owner_cls=None):
+class classproperty[cT](property):
+  def __get__(self, owner_self, owner_cls=None) -> cT: #type: ignore
     if owner_cls is None or self is None:
       raise ValueError("You have class error without class???") # pragma: no cover
     if self.fget is None:
       raise ValueError("Somehow fget is None?") # pragma: no cover
-    return self.fget(owner_cls)
+    return self.fget(owner_cls) #type: ignore
 
 def identity(val: T) -> T:
   """The identity function

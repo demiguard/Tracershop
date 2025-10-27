@@ -8,7 +8,7 @@ import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context
 import { IsotopeVial, TracershopState } from "~/dataclasses/dataclasses";
 import { ORDER_STATUS, StateType } from "~/lib/constants";
 import { isotopeVialFilter } from "~/lib/filters";
-import { dataClassExists, getId } from "~/lib/utils";
+import { dataClassExists, getId, map } from "~/lib/utils";
 import { DateRange, datify, getTimeString } from "~/lib/chronomancy";
 import { ClickableIcon, EtherealIcon } from "../injectable/icons";
 import { Optional } from "../injectable/optional";
@@ -31,6 +31,7 @@ import { parseBatchNumberBind, parseDanishPositiveNumberBind, parseTimeBind } fr
 import { Authenticate } from "../injectable/authenticate";
 import { ERROR_LEVELS } from "../injectable/alert_box";
 import { MESSAGE_UPDATE_PRIVILEGED_STATE } from "~/lib/incoming_messages";
+import { FuckedUpButton } from "../injectable/buttons/fucked_up_button";
 
 
 function getModalVials(collection: IsotopeOrderCollection, state: TracershopState){
@@ -51,7 +52,8 @@ function getModalVials(collection: IsotopeOrderCollection, state: TracershopStat
 type VialRowProps = {
   vial : IsotopeVial,
   isFreeing : boolean,
-  selectedVialsState : StateType<Set<number>>
+  selectedVialsState : StateType<Set<number>>,
+  collection : IsotopeOrderCollection
 }
 
 const fieldHeaderBatchNr = "Batch Nr.";
@@ -59,7 +61,7 @@ const fieldHeaderFillTime = "Kalibrering Tid";
 const fieldHeaderVolume = "Volumen";
 const fieldHeaderActivity = "Aktivitet"
 
-function VialRow({vial, selectedVialsState, isFreeing} : VialRowProps){
+function VialRow({vial, selectedVialsState, isFreeing, collection} : VialRowProps){
   const state = useTracershopState();
   const [selectedVials, setSelectedVials] = selectedVialsState;
   const [editing, setEditing] = useState(vial.id === -1);
@@ -79,6 +81,7 @@ function VialRow({vial, selectedVialsState, isFreeing} : VialRowProps){
   const [activityError, setActivityError] = useErrorState();
 
   const isSelected = selectedVials.has(vial.id);
+  const canSelect = !isFreeing && !editing && ORDER_STATUS.ACCEPTED == collection.minimum_status;
 
   function toggleSelect(){
     if(0 >= vial.id && editing){
@@ -222,7 +225,7 @@ function VialRow({vial, selectedVialsState, isFreeing} : VialRowProps){
     <td style={cssTableCenter}>
       <Optional exists={dataClassExists(vial)}>
         <Form.Check
-          disabled={editing || isFreeing}
+          disabled={!canSelect}
           onChange={toggleSelect}
           checked={isSelected}
         />
@@ -247,7 +250,15 @@ function VialTable({
 ){
   const state = useTracershopState();
   const vials = getModalVials(collection, state);
-  const vialRows = vials.map((vial) => <VialRow isFreeing={isFreeing} key={vial.id} vial={vial} selectedVialsState={selectedVialsState}/>)
+  const vialRows = vials.map((vial) =>
+    <VialRow
+      collection={collection}
+      isFreeing={isFreeing}
+      key={vial.id}
+      vial={vial}
+      selectedVialsState={selectedVialsState}
+    />
+  )
 
   if(showingEtherealVial){
     const etherealVial = new IsotopeVial(-1, "", null, "", "", "", collection.isotope.id);
@@ -255,6 +266,7 @@ function VialTable({
     vialRows.push(
       <VialRow
         key={-1}
+        collection={collection}
         vial={etherealVial}
         selectedVialsState={selectedVialsState}
         isFreeing={isFreeing}
@@ -397,7 +409,7 @@ function IsotopeModalFooter({
   return (
   <Row style={{width : "100%"}}>
     <Col>
-      <CancelButton orders={collection.orders}/>
+      <FuckedUpButton collection={collection}/>
     </Col>
     <Col>
       <Row style={JUSTIFY.right}>
@@ -425,7 +437,7 @@ export function IsotopeOrderModal({
   // Select vials have too be up here, because it's passed down to
   const state = useTracershopState();
   const isAuthenticatingState = useState(false);
-  const selectedVialsState = useState(new Set<number>());
+  const selectedVialsState = useState(new Set<number>(map(getId,collection.vials)));
 
   const [selectedVials, setSelectedVials] = selectedVialsState;
 

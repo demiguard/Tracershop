@@ -378,7 +378,7 @@ return (
        <Col xs={1} style={cssCenter}>
           <StatusIcon
             label={`time-slot-icon-${timeSlot.id}`}
-            orderCollection={orderCollection}
+            collection={orderCollection}
             onClick={headerFunction}
           />
        </Col>

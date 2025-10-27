@@ -244,7 +244,7 @@ export function InjectionOrderCard({
           </TracershopInputGroup>
         </Col>
         <Col>
-          <Optional exists={canEdit || tempInjectionOrder.comment}>
+          <Optional exists={!!(canEdit || tempInjectionOrder.comment)}>
             <TracershopInputGroup label="Kommentar">
               <EditableInput
                 canEdit={canEdit}

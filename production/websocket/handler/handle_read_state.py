@@ -4,18 +4,18 @@ from logging import getLogger
 
 # Django / Channels Imports
 from channels.auth import get_user
-
 from django.utils import timezone
+from django.contrib.auth.models import AnonymousUser
 
 # Tracershop imports
 from constants import ERROR_LOGGER
+from database.models import User
 from lib.utils import classproperty
 from constants import MESSENGER_CONSUMER
 from shared_constants import WEBSOCKET_DATE,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPES,\
   WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_DATA,\
   WEBSOCKET_REFRESH
-from tracerauth.auth import get_logged_in_user
 from tracerauth.message_validation import Message
 from websocket.consumer import Consumer
 from websocket.handler_base import HandlerBase
@@ -35,7 +35,18 @@ class HandleReadState(HandlerBase):
 
   async def __call__(self, consumer: Consumer, message):
     now = consumer.datetimeNow.now()
-    user = await get_logged_in_user(consumer.scope)
+    user = await get_user(consumer.scope)
+
+    if not isinstance(user, User):
+      return await consumer.messenger(
+        WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_STATE, {
+          MESSENGER_CONSUMER : consumer,
+          WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+          WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
+          WEBSOCKET_DATA : {},
+          WEBSOCKET_REFRESH : True,
+        }
+      )
 
     if WEBSOCKET_DATE in message:
       try:

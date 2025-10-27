@@ -8,7 +8,7 @@ from typing import Dict
 from unittest import skip
 
 # Third party packages
-from django.test import TransactionTestCase
+from django.test import SimpleTestCase
 from django.contrib.auth.models import AnonymousUser
 
 # Tracershop packages
@@ -37,7 +37,7 @@ def createShellMessage(messageType : str) -> Dict:
     WEBSOCKET_MESSAGE_TYPE : messageType
   }
 
-class authTestCase(TransactionTestCase):
+class authTestCase(SimpleTestCase):
   messages = LMAP(createShellMessage, [
     WEBSOCKET_MESSAGE_AUTH_LOGIN,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT,
@@ -120,18 +120,21 @@ class authTestCase(TransactionTestCase):
       ), ERROR_INVALID_AUTH)
 
   def test_validateMessage_FreeInjectionOrder_Missing_DATA(self):
-    self.assertEqual(validateMessage(
-      {
-      WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
-      WEBSOCKET_MESSAGE_ID : self.message_id,
-      WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
-      #WEBSOCKET_DATA : {
-      #  'lot_number' : "messageBatchNumber",
-      #  WEBSOCKET_DATA_ID : 6631
-      #},
-      #DATA_AUTH : {
-      #  AUTH_USERNAME : TEST_ADMIN_USERNAME,
-      #  AUTH_PASSWORD : TEST_ADMIN_PASSWORD
-      #}
-    }
-    ), ERROR_INVALID_MESSAGE)
+    with self.assertLogs(ERROR_LOGGER) as captured_logs:
+      self.assertEqual(validateMessage(
+        {
+        WEBSOCKET_JAVASCRIPT_VERSION :  JAVASCRIPT_VERSION,
+        WEBSOCKET_MESSAGE_ID : self.message_id,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
+        #WEBSOCKET_DATA : {
+        #  'lot_number' : "messageBatchNumber",
+        #  WEBSOCKET_DATA_ID : 6631
+        #},
+        #DATA_AUTH : {
+        #  AUTH_USERNAME : TEST_ADMIN_USERNAME,
+        #  AUTH_PASSWORD : TEST_ADMIN_PASSWORD
+        #}
+      }
+      ), ERROR_INVALID_MESSAGE)
+
+    self.assertEqual(len(captured_logs.output), 1)

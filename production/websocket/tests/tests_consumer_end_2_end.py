@@ -1028,30 +1028,31 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       owner=self.customer
     )
 
-    with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
-      with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
-        comm_admin = WebsocketCommunicator(app,"ws/")
-        _conn, _subprotocal = await comm_admin.connect()
+    with self.assertNoLogs(ERROR_LOGGER):
+      with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
+        with self.assertLogs(AUDIT_LOGGER) as captured_audit_logs:
+          comm_admin = WebsocketCommunicator(app,"ws/")
+          _conn, _subprotocal = await comm_admin.connect()
 
-        await comm_admin.send_json_to(self.loginAdminMessage)
-        admin_login_message = await comm_admin.receive_json_from()
+          await comm_admin.send_json_to(self.loginAdminMessage)
+          admin_login_message = await comm_admin.receive_json_from()
 
-        await comm_admin.send_json_to({
-          DATA_AUTH : {
-            AUTH_USERNAME : TEST_ADMIN_USERNAME,
-            AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
-          },
-          WEBSOCKET_DATA : {
-            DATA_ACTIVITY_ORDER : [ao_1_id, ao_2_id],
-            DATA_VIAL : [v_1_id, v_2_id]
-          },
-          WEBSOCKET_MESSAGE_ID : 69230481,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CORRECT_ORDER,
-          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        })
+          await comm_admin.send_json_to({
+            DATA_AUTH : {
+              AUTH_USERNAME : TEST_ADMIN_USERNAME,
+              AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+            },
+            WEBSOCKET_DATA : {
+              DATA_ACTIVITY_ORDER : [ao_1_id, ao_2_id],
+              DATA_VIAL : [v_1_id, v_2_id]
+            },
+            WEBSOCKET_MESSAGE_ID : 69230481,
+            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CORRECT_ORDER,
+            WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          })
 
-        message = await comm_admin.receive_json_from()
-        await comm_admin.disconnect()
+          message = await comm_admin.receive_json_from()
+          await comm_admin.disconnect()
 
     await database_sync_to_async(ao_1.refresh_from_db)()
     self.assertEqual(ao_1.status, OrderStatus.Accepted)

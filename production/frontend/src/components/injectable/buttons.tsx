@@ -1,6 +1,6 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react'
-import { Button, Spinner } from 'react-bootstrap'
+import { Button, ButtonProps, Spinner } from 'react-bootstrap'
 import { useWebsocket } from '~/contexts/tracer_shop_context';
 import { MARGIN } from '~/lib/styles';
 
@@ -32,7 +32,9 @@ CloseButton.propTypes = {
 }
 
 
-export function IdempotentButton(props){
+type IdempotentButtonProps = { onClick : () => Promise<any> } & Omit<ButtonProps, "onClick">;
+
+export function IdempotentButton(props : IdempotentButtonProps){
   const {onClick, children, ...rest} = props;
 
   const [isHandling, setIsHandling] = useState(false);
@@ -70,7 +72,6 @@ export function WeeklyViewButton({is_active, onClick}){
     <Button
       key="week-plan"
       style={MARGIN.leftRight.px15}
-      sz="sm"
       onClick={onClick}
     >
       {buttonMessage}
@@ -85,7 +86,6 @@ export function SpecialTracerButton({is_active, onClick}){
     <Button
       style={MARGIN.leftRight.px15}
       key="Special"
-      sm="sm"
       onClick={onClick}
     >
       {buttonMessage}

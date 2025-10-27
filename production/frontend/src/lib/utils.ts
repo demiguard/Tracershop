@@ -1,9 +1,10 @@
 /** This module is for library functions which doesn't belong in other  */
 
 import { ORDER_STATUS } from "~/lib/constants";
-import { ActivityOrder, DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
-import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
+import { ActivityOrder, Dataclass, DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
+import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_ISOTOPE_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
 import { template } from "@babel/core";
+import { IsotopeOrderCollection } from "./data_structures/isotope_order_collection";
 
 /**
  *
@@ -36,10 +37,9 @@ export function removeIndex(arr, index){
 
 /**
  *
- * @param {*} obj
- * @returns {Number}
  */
-export function getId(obj){
+export function getId<T extends Dataclass>(obj: T) : number{
+  //@ts-ignore
   return obj.id
 }
 
@@ -69,6 +69,16 @@ export function openActivityReleasePDF(timeSlotID, date){
 
 export function openInjectionReleasePDF(order){
   return () => {window.open(`${URL_INJECTION_PDF_BASE_PATH}/${order.id}`)}
+}
+
+
+export function openIsotopeReleasePDF(collection: IsotopeOrderCollection){
+  return () => {
+    console.log("Hello world?")
+    window.open(`${URL_ISOTOPE_PDF_BASE_PATH}/${collection.delivery.id}/${
+      collection.order_date.getFullYear()}/${collection.order_date.getMonth() +1}/${collection.order_date.getDate()}`
+    );
+  }
 }
 
 export function openShopManual(){
@@ -214,4 +224,8 @@ export function* reverse<T>(arr: Array<T>){
 export function properModulo(a: number, n: number){
   const r = a % n;
   return r < 0 ? r + n : r;
+}
+
+export function map<T,U>(fn : (a : T) => U, arr: T[]): U[] {
+  return [...arr].map(fn)
 }

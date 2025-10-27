@@ -49,7 +49,7 @@ from lib.physics import tracerDecayFactor
 from tracerauth.types import LDAPSearchResult
 from tracerauth import tracer_ldap
 from tracerauth.audit_logging import logFreeInjectionOrder, logCorrectOrder,\
-  log_release_isotope_orders
+  log_release_isotope_orders, log_correction
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 audit_logger = logging.getLogger(AUDIT_LOGGER)
@@ -324,56 +324,41 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def correct_order(self, data: Dict[str, List[int]], user: User) -> Dict[str, List[TracershopModel]]:
-    return_dict = {
-      DATA_ACTIVITY_ORDER : [],
-      DATA_INJECTION_ORDER : [],
-      DATA_VIAL : []
-    }
+    """This function takes committed models, such as orders and vials and
 
-    if DATA_ACTIVITY_ORDER in data:
-      orders = ActivityOrder.objects.filter(
-        id__in=data[DATA_ACTIVITY_ORDER],
-        status=OrderStatus.Released
-      )
 
-      if not self.validate_selection(data[DATA_ACTIVITY_ORDER], orders):
-        raise Exception("Not all requested orders are updated")
+    Args:
+        data (Dict[str, List[int]]): _description_
+        user (User): _description_
 
-      orders.update(status=OrderStatus.Accepted)
-      # We have to make a new query here because (I think) we invalidate the
-      # query by updating the Manager
-      return_dict[DATA_ACTIVITY_ORDER] = [o for o in ActivityOrder.objects.filter(
-        id__in=data[DATA_ACTIVITY_ORDER]
-      )]
+    Raises:
+        Exception: _description_
 
-    if DATA_INJECTION_ORDER in data:
-      orders = InjectionOrder.objects.filter(
-        id__in=data[DATA_INJECTION_ORDER],
-        status=OrderStatus.Released
-      )
+    Returns:
+        Dict[str, List[TracershopModel]]: _description_
+    """
 
-      if not self.validate_selection(data[DATA_INJECTION_ORDER], orders):
-        raise Exception("Not all requested orders are updated")
 
-      orders.update(status=OrderStatus.Accepted)
-      # We have to make a new query here because (I think) we invalidate the
-      # query by updating the Manager
-      return_dict[DATA_INJECTION_ORDER] = [o for o in InjectionOrder.objects.filter(
-        id__in=data[DATA_INJECTION_ORDER]
-      )]
+    return_dict = { }
 
-    if DATA_VIAL in data:
-      vials = Vial.objects.filter(id__in=data[DATA_VIAL])
-      if not self.validate_selection(data[DATA_VIAL], vials):
-        raise Exception("Not all requested orders are updated")
+    for model_identifier, model_ids in data.items():
+      model = MODELS[model_identifier]
 
-      vials.update(assigned_to=None)
-      # We have to make a new query here because (I think) we invalidate the
-      # query by updating the Manager
+      filter_args: Dict[str, Any] = {
+        'pk__in' : model_ids,
+      }
 
-      return_dict[DATA_VIAL] = [vial for vial in Vial.objects.filter(id__in=data[DATA_VIAL])]
+      filter_args.update(model.filter_args_for_committed_models())
+      filtered_models = model.objects.filter(**filter_args)
 
-    logCorrectOrder(user, data)
+      if not self.validate_selection(model_ids, filtered_models):
+        raise Exception(f"Unable to get all {model.__name__} with id: {model_ids}")
+
+      filtered_models.update(**model.kwargs_for_uncommitting())
+
+      log_correction(user, model, model_ids)
+
+      return_dict[model_identifier] = [m for m in filtered_models]
 
     return return_dict
 

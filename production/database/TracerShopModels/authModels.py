@@ -6,7 +6,7 @@ Tracershop.
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Packages
-from typing import List
+from typing import List, Optional
 
 # Third party Packages
 from django.db.models import Model, BigAutoField, CASCADE, CharField,\
@@ -18,6 +18,8 @@ from database.TracerShopModels.baseModels import TracershopModel
 
 from lib.utils import classproperty
 from django.contrib.auth.models import AbstractBaseUser
+
+from tracerauth.types import AuthActions
 
 
 class UserGroups(IntegerChoices):

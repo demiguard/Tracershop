@@ -5,11 +5,11 @@ import {  TRACER_TYPE,
   WEEKLY_REPEAT_CHOICES, WEEKLY_TIME_TABLE_PROP_DAY_GETTER, WEEKLY_TIME_TABLE_PROP_ENTRIES,
   WEEKLY_TIME_TABLE_PROP_ENTRY_COLOR, WEEKLY_TIME_TABLE_PROP_ENTRY_ON_CLICK, WEEKLY_TIME_TABLE_PROP_HOUR_GETTER,
    WEEKLY_TIME_TABLE_PROP_INNER_TEXT, WEEKLY_TIME_TABLE_PROP_LABEL_FUNC} from "~/lib/constants";
-import { DATA_ENDPOINT } from "~/lib/shared_constants.js"
-import { CloseButton } from "../injectable/buttons.js";
-import { toOptions } from "../injectable/select.js"
+import { DATA_ENDPOINT } from "~/lib/shared_constants"
+import { CloseButton } from "../injectable/buttons";
+import { toOptions } from "../injectable/select"
 import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracerCatalogPage } from "~/dataclasses/dataclasses";
-import { useTracershopState } from "../../contexts/tracer_shop_context.js";
+import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { compareLoosely } from "~/lib/utils";
 import { clone } from "~/lib/serialization";
 import { endpointFilter, isotopeFilter, tracerTypeFilter } from "~/lib/filters";

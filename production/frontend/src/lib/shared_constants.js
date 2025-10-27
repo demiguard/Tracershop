@@ -109,6 +109,7 @@ export const TRACER_USAGE = {
 export const URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs";
 export const URL_INDEX = "";
 export const URL_INJECTION_PDF_BASE_PATH = "injection_pdfs";
+export const URL_ISOTOPE_PDF_BASE_PATH = "isotope_pdf";
 export const URL_SHOP_MANUAL = "shop_manual";
 
 export const WARNING_DUPLICATED_BOOKINGS = "duplicated_bookings";

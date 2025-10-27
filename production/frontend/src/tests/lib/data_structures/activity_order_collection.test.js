@@ -139,7 +139,7 @@ describe("ActivityOrderCollection", () => {
 
   it("Isolation test from orders that could be related", () => {
     const orders = [
-      new ActivityOrder(8, 1000, ordered_date, ORDER_STATUS.RELEASED, "", time_slot_1_id, null, null, active_user_id), freeing_user_id,
+      new ActivityOrder(8, 1000, ordered_date, ORDER_STATUS.RELEASED, "", time_slot_1_id, null, null, active_user_id, freeing_user_id),
       new ActivityOrder(9, 1000, ordered_date, ORDER_STATUS.ACCEPTED, "", time_slot_2_id, null, null, active_user_id, null)
     ];
 
@@ -149,7 +149,7 @@ describe("ActivityOrderCollection", () => {
 
     expect(test_data_structure.delivering_time_slot).toBe(state.deliver_times.get(time_slot_1_id));
     expect(test_data_structure.endpoint).toBe(state.delivery_endpoint.get(endpoint_id));
-    expect(test_data_structure.minimum_status).toBe(ORDER_STATUS.RELEASED);
+    expect(test_data_structure.minimum_status).toBe(ORDER_STATUS.ACCEPTED);
     expect(test_data_structure.isotope).toBe(state.isotopes.get(isotope_id));
     expect(test_data_structure.moved).toBe(false);
   });

@@ -15,12 +15,19 @@ export class OrderCollection {
     }
   }
 
-
   /**
    * @desc the minimum status among {@link orders} with the ordering:
    * AVAILABLE < ORDERED < ACCEPTED < RELEASED < CANCELLED < UNAVAILABLE
    */
   get minimum_status(){
     return this.#minimum_status;
+  }
+
+  getVials(){
+    return [];
+  }
+
+  getVialType(){
+    return ""
   }
 }

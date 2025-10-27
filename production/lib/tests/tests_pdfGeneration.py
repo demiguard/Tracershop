@@ -10,10 +10,13 @@ from reportlab.pdfgen import canvas
 
 # Tracershop Packages
 from constants import ENV_TEST_PDF_DIRECTORY, ENV_TEST_PDF_DIRECTORY_DEFAULT
+
 from lib import pdfGeneration
+from database.TracerShopModels.baseModels import Days
 from database.models import ActivityDeliveryTimeSlot, ActivityOrder, \
   ActivityProduction, Customer, DeliveryEndpoint,InjectionOrder, Isotope,\
-  OrderStatus, Tracer, TracerTypes, TracerUsage, Vial, WeeklyRepeat
+  OrderStatus, Tracer, TracerTypes, TracerUsage, Vial, WeeklyRepeat, IsotopeDelivery,\
+  IsotopeOrder, IsotopeVial, IsotopeProduction, User, UserGroups
 
 test_output_directory = Path(environ.get(ENV_TEST_PDF_DIRECTORY,
                                          ENV_TEST_PDF_DIRECTORY_DEFAULT))
@@ -23,6 +26,20 @@ if not test_output_directory.exists():
 
 class PDFsGenerationTest(TestCase):
   def setUp(self) -> None:
+
+    self.shop_user = User(
+      id=67298034,
+      username="ShopUser",
+      password="",
+      user_group=UserGroups.ShopUser
+    )
+
+    self.prod_user = User(
+      id=67298035,
+      username="ProdUser",
+      password="",
+      user_group=UserGroups.ProductionUser
+    )
 
     self.orderDate = date(1707, 4, 15)
     self.isotope = Isotope(
@@ -120,6 +137,56 @@ class PDFsGenerationTest(TestCase):
                                           freed_datetime=datetime(1777,4,30,13,44,51),
     )
 
+    self.isotope_production = IsotopeProduction(
+      id=8793451,
+      isotope=self.isotope,
+      production_day=Days.Monday,
+      production_time=time(4,0,0),
+      expiry_time=None
+    )
+
+    self.isotope_delivery = IsotopeDelivery(
+      id=76389123,
+      production=self.isotope_production,
+      weekly_repeat=WeeklyRepeat.EveryWeek,
+      delivery_endpoint=self.endpoint,
+      delivery_time=time(6,0,0),
+    )
+
+    self.isotope_order_1 = IsotopeOrder(
+      id=1763859,
+      status=OrderStatus.Released,
+      order_by=self.shop_user,
+      ordered_activity_MBq=100009,
+      destination=self.isotope_delivery,
+      delivery_date=date(2025,11,11),
+      comment=None,
+      freed_by=self.prod_user,
+      freed_datetime=datetime(2025,11,11,11,11,11),
+    )
+
+    self.isotope_order_2 = IsotopeOrder(
+      id=1763860,
+      status=OrderStatus.Released,
+      order_by=self.shop_user,
+      ordered_activity_MBq=100019,
+      destination=self.isotope_delivery,
+      delivery_date=date(2025,11,11),
+      comment=None,
+      freed_by=self.prod_user,
+      freed_datetime=datetime(2025,11,11,11,11,11),
+    )
+
+    self.isotope_vials = IsotopeVial(
+      id=7512351,
+      batch_nr="Æ-251111-1",
+      delivery_with=self.isotope_order_1,
+      volume=10.0,
+      calibration_datetime=datetime(2025,11,11,10,00,00),
+      vial_activity=6819024.0,
+      isotope=self.isotope
+    )
+
   def test_createActivityPDF_singleOrderVial(self):
     output_path = test_output_directory / f"{self._testMethodName}.pdf"
     pdfGeneration.DrawActivityOrder(
@@ -142,3 +209,12 @@ class PDFsGenerationTest(TestCase):
                                          self.production_1,
                                          [self.activity_order],
                                          [self.vial])
+
+  def test_create_isotope_release_document(self):
+    output_path = test_output_directory / f"{self._testMethodName}.pdf"
+    pdfGeneration.draw_isotope_release_document(
+      str(output_path),
+      self.isotope_delivery,
+      [self.isotope_order_1, self.isotope_order_2],
+      [self.isotope_vials]
+    )

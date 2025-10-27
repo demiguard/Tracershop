@@ -3,7 +3,7 @@ import { Card, Col, Collapse, Row } from 'react-bootstrap'
 
 import { EndpointDisplay } from '~/components/injectable/data_displays/endpoint';
 import { MBqDisplay } from '~/components/injectable/data_displays/mbq_display';
-import { AcceptIcon, CancelIcon, StatusIcon } from '~/components/injectable/icons';
+import { AcceptIcon, CancelIcon, DeliveryIcon, StatusIcon } from '~/components/injectable/icons';
 import { OpenCloseButton } from '~/components/injectable/open_close_button';
 import { Optional } from '~/components/injectable/optional';
 import { useTracershopState } from '~/contexts/tracer_shop_context';
@@ -15,6 +15,7 @@ import { Comment } from '~/components/injectable/data_displays/comment';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { IsotopeOrderModal } from '~/components/modals/isotope_order_modal';
 import { IsotopeOrderRow } from './isotope_order_row';
+import { FlexMinimizer } from '~/components/injectable/flexMinimizer';
 
 type CardHeaderProps = {
   openState : StateType<boolean>,
@@ -29,12 +30,12 @@ function CardHeader({openState, collection, showModal} : CardHeaderProps){
     <Card.Header>
       <Row style={JUSTIFY.left}>
         <Col style={ExpandAndCenter} xs={1}>
-          <StatusIcon orderCollection={collection} onClick={showModal}/>
+          <StatusIcon collection={collection} onClick={showModal}/>
         </Col>
         <Col style={ExpandAndCenter}>
           <EndpointDisplay endpoint={collection.endpoint}/>
         </Col>
-        <Col style={ExpandAndCenter}>
+        <Col style={ExpandAndCenter} xs={1}>
           <TimeDisplay time={collection.delivery.delivery_time} />
         </Col>
         <Col style={ExpandAndCenter}>
@@ -46,6 +47,13 @@ function CardHeader({openState, collection, showModal} : CardHeaderProps){
         <Optional exists={collection.minimum_status === ORDER_STATUS.ORDERED}>
           <Col style={ExpandAndCenter} xs={1}>
             <AcceptIcon orders={collection.orders}/>
+          </Col>
+        </Optional>
+        <Optional exists={collection.minimum_status === ORDER_STATUS.RELEASED}>
+          <Col xs={1}>
+            <FlexMinimizer>
+              <DeliveryIcon collection={collection}/>
+            </FlexMinimizer>
           </Col>
         </Optional>
         <Col xs={1} style={{
