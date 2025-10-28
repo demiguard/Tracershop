@@ -18,7 +18,7 @@ from websocket.messenger_base import MessengerBase, MessageBlueprint,\
   MessageDataField, MessageDataType
 from websocket import consumer
 
-class MessengerCreateBooking(MessengerBase):
+class MessengerUpdatePrivilegeState(MessengerBase):
   message_blueprint = MessageBlueprint({
     CHANNEL_TARGET_KEYWORD : CHANNEL_TARGET_BROADCAST_FUNCTION,
     AUTH_IS_AUTHENTICATED : MessageDataField(),

@@ -41,11 +41,7 @@ from core.side_effect_injection import DateTimeNow
 from core.exceptions import IllegalActionAttempted
 from shared_constants import *
 from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
-from database.models import ClosedDate, User, UserGroups, MODELS,\
-    ActivityDeliveryTimeSlot, Customer, DeliveryEndpoint,\
-    Tracer, ActivityProduction, Isotope, ActivityOrder, Vial, InjectionOrder,\
-    OrderStatus, Booking, Procedure, ProcedureIdentifier, Location,\
-    BookingStatus, Days, UserAssignment, SuccessfulLogin
+from database.models import *
 from testing import TransactionTracershopTestCase
 from tracerauth.tests.mocks import mocks_ldap
 
@@ -53,20 +49,22 @@ from database.database_interface import DatabaseInterface
 from websocket import consumer
 
 # Testing library
-
+from testing import clean_up_models
 
 # Asgi Loading
 django_asgi_app = get_asgi_application()
 
+used_timezone =datetime.timezone(offset=datetime.timedelta(seconds=60*60), name="Europa/Copenhagen")
+
 from websocket import routing # Import that this line is here, otherwise load order is fucked up
 class FakeDatetime(DateTimeNow):
   def now(self):
-    return datetime.datetime(2012,10,11,11,22,33, tzinfo=datetime.timezone(offset=datetime.timedelta(seconds=60*60), name="Europa/Copenhagen")) # pragma: no cover
+    return datetime.datetime(2012,10,11,11,22,33, tzinfo=used_timezone) # pragma: no cover
 
 app = ProtocolTypeRouter({
   "http" : django_asgi_app,
   "websocket" : SessionMiddlewareStack(AuthMiddlewareStack(
-    URLRouter([re_path(r'ws/$', consumer.Consumer.as_asgi(datetimeNow=FakeDatetime()))]))
+    URLRouter([re_path(r'ws/$', consumer.Consumer.as_asgi(datetimeNow=FakeDatetime()))])) # type: ignore
   )
 })
 
@@ -404,22 +402,41 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       freed_by=None,
     )
 
-  def tearDown(self):
-    Booking.objects.all().delete()
-    Procedure.objects.all().delete()
-    ProcedureIdentifier.objects.all().delete()
-    Location.objects.all().delete()
-    InjectionOrder.objects.all().delete()
-    Vial.objects.all().delete()
-    ActivityOrder.objects.all().delete()
-    ActivityDeliveryTimeSlot.objects.all().delete()
-    DeliveryEndpoint.objects.all().delete()
-    UserAssignment.objects.all().delete()
-    Customer.objects.all().delete()
-    ActivityProduction.objects.all().delete()
-    Tracer.objects.all().delete()
-    Isotope.objects.all().delete()
-    User.objects.all().delete()
+    self.isotope_production = IsotopeProduction.objects.create(
+      id = 659710432,
+      isotope = self.isotope,
+      production_day = Days.Monday,
+      production_time = datetime.time(3,15,00),
+      expiry_time = None
+    )
+
+    self.isotope_delivery_id = 176598014
+    self.isotope_delivery = IsotopeDelivery.objects.create(
+      id=self.isotope_delivery_id,
+      production=self.isotope_production,
+      delivery_endpoint=self.endpoint,
+      delivery_time=datetime.time(4,15,00)
+    )
+
+    self.isotope_order_to_be_freed_id = 713804183
+    self.isotope_order_to_be_freed = IsotopeOrder.objects.create(
+      id=self.isotope_order_to_be_freed_id,
+      status=OrderStatus.Accepted,
+      order_by=self.shop_admin_user,
+      ordered_activity_MBq=1829041,
+      destination=self.isotope_delivery,
+      delivery_date=datetime.date(2020,6,11)
+    )
+
+    self.isotope_vial_to_be_freed_id =7517552
+    self.isotope_vial_to_be_freed = IsotopeVial.objects.create(
+      id=self.isotope_vial_to_be_freed_id,
+      batch_nr="U-252512-1",
+      volume=51,
+      calibration_datetime=datetime.datetime(2020,6,11,3,4,11, tzinfo=used_timezone),
+      vial_activity=128510,
+      isotope=self.isotope
+    )
 
   # Test that the mock is correct
 
@@ -436,7 +453,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
   async def test_login_persists(self):
     with self.assertLogs(DEBUG_LOGGER) as captured_debug_logger:
-      comm = WebsocketCommunicator(app,"ws/", headers=b'')
+      comm = WebsocketCommunicator(app,"ws/", headers=None)
       _conn, _subprotocol = await comm.connect()
       response = await self._sendReceive(comm, self.loginAdminMessage)
       sessionID = response[WEBSOCKET_SESSION_ID]
@@ -465,7 +482,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
   async def test_login_logout_whoamI(self):
     with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
-      comm = WebsocketCommunicator(app,"ws/", headers=b'')
+      comm = WebsocketCommunicator(app,"ws/", headers=None)
       _conn, subprotocol = await comm.connect()
 
       loginMessage = await self._sendReceive(comm, self.loginAdminMessage)
@@ -489,7 +506,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
   async def test_login_wrong_password(self):
     with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
-      comm = WebsocketCommunicator(app,"ws/", headers=b'')
+      comm = WebsocketCommunicator(app,"ws/", headers=None)
       _conn, subprotocol = await comm.connect()
 
       response = await self._sendReceive(comm, {
@@ -522,7 +539,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
   async def test_invalidated_Message(self):
     with self.assertLogs(DEBUG_LOGGER, DEBUG):
       with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
-        comm = WebsocketCommunicator(app, "ws/", headers=b'')
+        comm = WebsocketCommunicator(app, "ws/", headers=None)
         _conn, subprotocal = await comm.connect()
 
         response = await self._sendReceive(comm, {})
@@ -534,7 +551,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
   async def test_InvalidMessageType(self):
     with self.assertLogs(DEBUG_LOGGER, DEBUG):
       with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
-        comm = WebsocketCommunicator(app, "ws/", headers=b'')
+        comm = WebsocketCommunicator(app, "ws/", headers=None)
         _conn, subprotocal = await comm.connect()
 
         response = await self._sendReceive(comm, {
@@ -552,7 +569,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
   async def test_InvalidJavascript(self):
     with self.assertLogs(DEBUG_LOGGER, DEBUG):
       with self.assertLogs(ERROR_LOGGER) as captured_error_logs:
-        comm = WebsocketCommunicator(app, "ws/", headers=b'')
+        comm = WebsocketCommunicator(app, "ws/", headers=None)
         _conn, subprotocal = await comm.connect()
 
         response = await self._sendReceive(comm, {
@@ -1634,6 +1651,41 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                         WEBSOCKET_MESSAGE_SUCCESS)
       self.assertFalse(message[AUTH_IS_AUTHENTICATED])
       await communicator.disconnect()
+
+  async def test_release_isotope_order(self):
+    with self.assertLogs(DEBUG_LOGGER):
+      with self.assertLogs(AUDIT_LOGGER):
+        communicator = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await communicator.connect()
+
+        await communicator.send_json_to(self.loginShopAdminMessage)
+        admin_login_message = await communicator.receive_json_from()
+
+        await communicator.send_json_to({
+          DATA_AUTH : {
+            AUTH_USERNAME : TEST_SHOP_ADMIN_USERNAME,
+            AUTH_PASSWORD : TEST_SHOP_ADMIN_PASSWORD,
+          },
+          WEBSOCKET_DATA : {
+            DATA_ISOTOPE_ORDER : [self.isotope_order_to_be_freed_id],
+            DATA_ISOTOPE_VIAL : [self.isotope_vial_to_be_freed_id]
+          },
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ISOTOPE,
+          WEBSOCKET_MESSAGE_ID : 657901284,
+        })
+
+        message = await communicator.receive_json_from()
+
+        self.assertEqual(message['type'], 'broadcastMessage') # This is a lazy way of testing that the message have been boardcasted
+        self.assertTrue(message[AUTH_IS_AUTHENTICATED])
+
+    refreshed_isotope_order = await database_sync_to_async(IsotopeOrder.objects.get)(pk=self.isotope_order_to_be_freed_id)
+    self.assertEqual(refreshed_isotope_order.status, OrderStatus.Released)
+
+    refreshed_isotope_vial = await database_sync_to_async(IsotopeVial.objects.get)(pk=self.isotope_vial_to_be_freed_id)
+    vial_order = await database_sync_to_async(getattr)(refreshed_isotope_vial, 'delivery_with')
+    self.assertEqual(vial_order, refreshed_isotope_order)
 
   @patch("django.utils.timezone.now")
   async def test_login_external_user_success(self, mock_now):

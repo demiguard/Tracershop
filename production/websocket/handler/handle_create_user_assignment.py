@@ -39,7 +39,7 @@ class HandleCreateUserAssignment(HandlerBase):
 
     temp_res: Tuple[SUCCESS_STATUS_CRUD,
                     Optional[UserAssignment],
-                    Optional[User]] = await consumer.db.createUserAssignment(username, customerID, user)
+                    Optional[User]] = await consumer.db.a_create_user_assignment(username, customerID, user)
     success, user_assignment, new_user = temp_res
 
     if success != SUCCESS_STATUS_CRUD.SUCCESS:

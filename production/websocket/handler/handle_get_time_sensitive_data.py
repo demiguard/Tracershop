@@ -30,7 +30,7 @@ class HandleGetTimeSensitiveData(HandlerBase):
   async def __call__(self, consumer, message):
     user: User = await get_logged_in_user(consumer.scope)
     client_date = toDateTime(message[WEBSOCKET_DATE][:19])
-    data = await consumer.db.getTimeSensitiveData(client_date, user)
+    data = await consumer.db.a_get_time_sensitive_state(client_date, user)
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
       "consumer" : consumer,

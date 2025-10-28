@@ -57,7 +57,7 @@ class HandleReadState(HandlerBase):
 
     # Assumed to have no Field in the message since it can use the user in scope
 
-    state = await consumer.db.getState(now, user)
+    state = await consumer.db.a_get_state(now, user)
 
     await consumer.messenger(
       WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_STATE, {

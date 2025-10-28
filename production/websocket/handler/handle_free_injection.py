@@ -62,12 +62,12 @@ class HandleFreeInjection(HandlerBase):
       return await consumer._RejectFreeing(message)
 
     # Step 2
-    order: InjectionOrder = await consumer.db.getModel(InjectionOrder, message[WEBSOCKET_DATA][WEBSOCKET_DATA_ID])
+    order: InjectionOrder = await consumer.db.a_get_model(InjectionOrder, message[WEBSOCKET_DATA][WEBSOCKET_DATA_ID])
     order.lot_number = message[WEBSOCKET_DATA]['lot_number']
     order.freed_datetime = consumer.datetimeNow.now()
     order.freed_by = user
     order.status = OrderStatus.Released
-    await consumer.db.saveModel(order, user) # Note this may fail!
+    await consumer.db.a_save_model(order, user) # Note this may fail!
     # Log the change to db
     logFreeInjectionOrder(user, order)
 

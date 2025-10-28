@@ -24,7 +24,7 @@ PYTHON_FILE_GLOB_PATTERN = "*.py"
 
 class Messenger:
   def __init__(self):
-    self._messengers: Dict[WEBSOCKET_SERVER_MESSAGES, MessengerBase] = {}
+    self.messengers: Dict[WEBSOCKET_SERVER_MESSAGES, MessengerBase] = {}
 
     messengerDir =  Path(__file__).parent
 
@@ -43,23 +43,23 @@ class Messenger:
         except TypeError: #pragma: no cover
           raise ContractBroken(f"{class_name} has abstract method __call__ and can't be created!")
 
-        if instance.message_type in self._messengers: # pragma: no cover
+        if instance.message_type in self.messengers: # pragma: no cover
           raise ContractBroken(f"Duplicate messenger for {instance.message_type}!")
 
-        self._messengers[instance.message_type] = instance
+        self.messengers[instance.message_type] = instance
 
     missing_message_types = [
-      mt for mt in WEBSOCKET_SERVER_MESSAGES if mt not in self._messengers
+      mt for mt in WEBSOCKET_SERVER_MESSAGES if mt not in self.messengers
     ]
 
     if missing_message_types: # pragma: no cover
       raise ContractBroken(f"Messenger messenger missing for {missing_message_types}")
 
   def getMessageArgs(self, message_type: WEBSOCKET_SERVER_MESSAGES) -> Type[MessengerBase.MessageArgs]:
-    return self._messengers[message_type].getMessageArgs()
+    return self.messengers[message_type].getMessageArgs()
 
   async def __call__ (self, message_type: WEBSOCKET_SERVER_MESSAGES, dict_args: Dict) -> None:
-    Args = self._messengers[message_type].getMessageArgs()
+    Args = self.messengers[message_type].getMessageArgs()
     args = Args(**dict_args)
 
-    await self._messengers[message_type](args)
+    await self.messengers[message_type](args)

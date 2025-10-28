@@ -36,9 +36,8 @@ class MessengerReadTelemetry(MessengerBase):
 
   @classmethod
   async def __call__(cls, args):
-    if not isinstance(args, cls.Args): # pragma: no cover
-      raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
+    if not isinstance(args, cls.Args):
+      raise TypeError("MessengerReadTelemetry call must be of type MessengerReadTelemetry.Args")
 
     consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]
-
     await consumer_.send_json(await cls.message_blueprint.serialize(args))

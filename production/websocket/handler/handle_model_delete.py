@@ -31,7 +31,7 @@ class HandleModelDelete(HandlerBase):
 
   async def __call__(self, consumer, message):
     user: User = await get_logged_in_user(consumer.scope)
-    success = await consumer.db.deleteModels(
+    success = await consumer.db.a_delete_models(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA_ID],
       user

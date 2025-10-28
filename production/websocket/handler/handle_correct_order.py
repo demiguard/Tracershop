@@ -39,7 +39,7 @@ class HandleCorrectOrder(HandlerBase):
       return await consumer._RejectFreeing(message)
 
 
-    corrected_state = await consumer.db.correct_order(
+    corrected_state = await consumer.db.a_correct_order(
       message[WEBSOCKET_DATA], user
     )
 

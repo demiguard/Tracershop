@@ -39,10 +39,6 @@ class ExternalLoginTestCase(TransactionTracershopTestCase):
     self.ProductionUser.set_password("ProductionUser_password")
     self.ProductionUser.save()
 
-  def tearDown(self) -> None:
-    User.objects.all().delete()
-
-
   def test_empty(self):
     with self.assertLogs(ERROR_LOGGER):
       request = self.factory.get('/external')

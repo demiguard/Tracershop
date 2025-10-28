@@ -56,20 +56,20 @@ import { WEBSOCKET_MESSAGE_TYPE } from \"~/lib/shared_constants.js\"
 import { deserialize } from \"~/lib/serialization.js\"
 import {
 """
-  for message_type in grand_messenger._messengers:
+  for message_type in grand_messenger.messengers:
     file_content += f"  {message_type.name},\n"
 
   file_content += "} from \"~/lib/shared_constants.js\"\n\n"
 
 
-  for message_type, messenger in grand_messenger._messengers.items():
+  for message_type, messenger in grand_messenger.messengers.items():
     blueprint = messenger.message_blueprint
 
     file_content += blueprint.to_javascript(message_type)
     file_content += "\n"
 
   file_content += "export const MESSAGES = {\n"
-  for message_type in grand_messenger._messengers:
+  for message_type in grand_messenger.messengers:
     file_content += f"  [{message_type.name}] : {format_message_name(message_name=message_type.name)},\n"
   file_content += "}\n"
 

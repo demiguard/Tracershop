@@ -51,7 +51,7 @@ class HandleMassOrders(HandlerBase):
     user = await get_logged_in_user(consumer.scope)
 
     try:
-      orders = await consumer.db.massOrder(message[WEBSOCKET_DATA], user)
+      orders = await consumer.db.a_mass_order(message[WEBSOCKET_DATA], user)
     except RequestingNonExistingEndpoint as exception: # pragma: no cover
       if exception.earliest_available_order_time is not None:
         early_booking_time = timeConverter(exception.earliest_available_order_time)

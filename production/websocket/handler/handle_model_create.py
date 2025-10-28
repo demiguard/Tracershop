@@ -37,7 +37,7 @@ class HandleModelCreate(HandlerBase):
   async def __call__(self, consumer, message):
     user = await get_logged_in_user(consumer.scope)
     try:
-      instances = await consumer.db.handleCreateModels(message[WEBSOCKET_DATATYPE],
+      instances = await consumer.db.a_create_models(message[WEBSOCKET_DATATYPE],
                                                        message[WEBSOCKET_DATA],
                                                        user)
     except IntegrityError as e:

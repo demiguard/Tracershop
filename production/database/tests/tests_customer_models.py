@@ -4,7 +4,7 @@
 from datetime import date, time, datetime, timezone
 
 # Third party packages
-from django.test import SimpleTestCase, TransactionTestCase
+from django.test import SimpleTestCase, TransactionTestCase, TestCase
 
 # Tracershop packages
 from constants import AUDIT_LOGGER, DEBUG_LOGGER
@@ -154,49 +154,32 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
 
 
 
-class TransactionalCustomerModels(TransactionTestCase):
-  def setUp(self) -> None:
-    self.shop_user = User.objects.create(username="TaylorTheSlow", user_group=UserGroups.ShopUser)
-    self.site_admin = User.objects.create(username="Mr gaga",      user_group=UserGroups.Admin)
-    self.prod_admin = User.objects.create(username="Prof Dre",    user_group=UserGroups.ProductionAdmin)
-    self.prod_user = User.objects.create(username="Scoop cat",  user_group=UserGroups.ProductionUser)
-    self.frank = Customer.objects.create(short_name="FrankTheCustomer")
-    self.franks_backyard = DeliveryEndpoint.objects.create(name="franks backyard", owner=self.frank)
-    self.the_secret = Isotope.objects.create(atomic_letter="U", atomic_mass=235, atomic_number=92, halflife_seconds=57122)
-    self.the_secret_sauce=Tracer.objects.create(shortname="secret sauce",
-                                                isotope=self.the_secret,
+class TransactionalCustomerModels(TestCase):
+  @classmethod
+  def setUpTestData(cls):
+    cls.shop_user = User.objects.create(username="TaylorTheSlow", user_group=UserGroups.ShopUser)
+    cls.site_admin = User.objects.create(username="Mr gaga",      user_group=UserGroups.Admin)
+    cls.prod_admin = User.objects.create(username="Prof Dre",    user_group=UserGroups.ProductionAdmin)
+    cls.prod_user = User.objects.create(username="Scoop cat",  user_group=UserGroups.ProductionUser)
+    cls.frank = Customer.objects.create(short_name="FrankTheCustomer")
+    cls.franks_backyard = DeliveryEndpoint.objects.create(name="franks backyard", owner=cls.frank)
+    cls.the_secret = Isotope.objects.create(atomic_letter="U", atomic_mass=235, atomic_number=92, halflife_seconds=57122)
+    cls.the_secret_sauce=Tracer.objects.create(shortname="secret sauce",
+                                                isotope=cls.the_secret,
                                                 clinical_name="Boom stick fuel",
                                                 tracer_type=TracerTypes.ActivityBased,
                                                 vial_tag="FUN")
-    self.the_sauce_production=ActivityProduction.objects.create(
+    cls.the_sauce_production=ActivityProduction.objects.create(
       production_day=Days.Monday,
-      tracer=self.the_secret_sauce,
+      tracer=cls.the_secret_sauce,
       production_time=time(0,1,0),
     )
-    self.the_sauce_delivery=ActivityDeliveryTimeSlot.objects.create(
+    cls.the_sauce_delivery=ActivityDeliveryTimeSlot.objects.create(
       weekly_repeat=WeeklyRepeat.EveryWeek,
       delivery_time=time(10,00,00),
-      destination=self.franks_backyard,
-      production_run=self.the_sauce_production,
+      destination=cls.franks_backyard,
+      production_run=cls.the_sauce_production,
     )
-
-  def tearDown(self):
-    Vial.objects.all().delete()
-    ActivityOrder.objects.all().delete()
-    InjectionOrder.objects.all().delete()
-    ActivityDeliveryTimeSlot.objects.all().delete()
-    ActivityProduction.objects.all().delete()
-    Booking.objects.all().delete()
-    Procedure.objects.all().delete()
-    Location.objects.all().delete()
-    ProcedureIdentifier.objects.all().delete()
-    DeliveryEndpoint.objects.all().delete()
-    UserAssignment.objects.all().delete()
-    Customer.objects.all().delete()
-    ReleaseRight.objects.all().delete()
-    Tracer.objects.all().delete()
-    Isotope.objects.all().delete()
-    User.objects.all().delete()
 
   def test_ActivityOrder_can_xxx(self):
     the_ordered_sauce_order=ActivityOrder.objects.create(

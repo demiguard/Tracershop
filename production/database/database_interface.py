@@ -94,7 +94,13 @@ class DatabaseInterface():
 
 
   @database_sync_to_async
-  def handleEditModels(self,
+  def a_edit_models(self,
+                       model_identifier: str,
+                       models : Union[Dict, Iterable[Dict]],
+                       user: User) -> Optional[List[TracershopModel]]:
+    return self.edit_models(model_identifier, models, user)
+
+  def edit_models(self,
                        model_identifier: str,
                        models : Union[Dict, Iterable[Dict]],
                        user: User) -> Optional[List[TracershopModel]]:
@@ -115,7 +121,6 @@ class DatabaseInterface():
       updateModels = [self.__editModel(model_identifier, model, user) for model in models]
     if None in updateModels:
       return None
-
 
     [model.save(user) for model in updateModels if model is not None] # if statement is just their to make the type checker happy
     return updateModels # type: ignore # type checker is stupid
@@ -139,14 +144,29 @@ class DatabaseInterface():
 
 
   @database_sync_to_async
-  def getModel(self, model: Type[T], identifier: Any, key: Optional[str]=None) -> T:
+  def a_get_model(self, model: Type[T], identifier: Any, key: Optional[str]=None) -> T:
+    return self.get_model(model, identifier, key)
+
+  def get_model(self, model: Type[T], identifier: Any, key: Optional[str]=None) -> T:
     if key is None:
       return model.objects.get(pk=identifier)
     else:
       return model.objects.get(**{ key : identifier})
 
   @database_sync_to_async
-  def deleteModels(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
+  def a_delete_models(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
+    """Deletes one or more model instance, if one or more models cannot be
+    deleted, then no models are deleted and this function returns false
+    returns true if successfully deleted all models
+
+    """
+    # So a performance hic up here is that canDelete must be called on all
+    # objects with this notation, secondly delete also calls canDelete again
+    # This means this operation "Might" have 3 database quires per object
+    # 2 from canDelete, and 1 form the actually deletion
+    return self.delete_models(modelIdentifier, modelID, user)
+
+  def delete_models(self, modelIdentifier: str, modelID: Any, user: User) -> bool:
     """Deletes one or more model instance, if one or more models cannot be
     deleted, then no models are deleted and this function returns false
     returns true if successfully deleted all models
@@ -183,7 +203,10 @@ class DatabaseInterface():
     return instance
 
   @database_sync_to_async
-  def handleCreateModels(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]], user: User) -> QuerySet[TracershopModel]:
+  def a_create_models(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]], user: User) -> QuerySet[TracershopModel]:
+    return self.create_models(modelIdentifier, modelDicts, user)
+
+  def create_models(self, modelIdentifier: str, modelDicts: Union[Dict, List[Dict]], user: User) -> QuerySet[TracershopModel]:
     modelType = getModelType(modelIdentifier)
     if isinstance(modelDicts, List):
       models = [self.__createModel(modelType, modelDict, user) for modelDict in modelDicts]
@@ -195,11 +218,30 @@ class DatabaseInterface():
 
 
   @database_sync_to_async
-  def saveModel(self, model: TracershopModel, user) -> None:
+  def a_save_model(self, model: TracershopModel, user) -> None:
+    self.save_model(model, user)
+
+
+  def save_model(self, model: TracershopModel, user) -> None:
     model.save(user)
 
   @database_sync_to_async
-  def releaseOrders(self,
+  def a_release_activity_orders(self,
+                    timeSlotID: int,
+                    orderIDs: List[int],
+                    vialIDs: List[int],
+                    user: User,
+                    now: datetime) -> Tuple[QuerySet[ActivityOrder],QuerySet[Vial]]:
+    return self.release_activity_orders(
+      timeSlotID,
+      orderIDs,
+      vialIDs,
+      user,
+      now
+    )
+
+
+  def release_activity_orders(self,
                     timeSlotID: int,
                     orderIDs: List[int],
                     vialIDs: List[int],
@@ -254,6 +296,15 @@ class DatabaseInterface():
     return orders, vials
 
   @database_sync_to_async
+  def a_release_many_injections_orders(
+      self,
+      order_ids: List[int],
+      lot_number: str,
+      release_time: datetime,
+      user: User
+    ) -> QuerySet[InjectionOrder]:
+    return self.release_many_injections_orders(order_ids, lot_number, release_time, user)
+
   def release_many_injections_orders(
       self,
       order_ids: List[int],
@@ -281,6 +332,9 @@ class DatabaseInterface():
     return orders
 
   @database_sync_to_async
+  def a_release_isotope_order(self, data_directory: Dict[str, Any], user: User, now: datetime):
+    return self.release_isotope_order(data_directory, user, now)
+
   def release_isotope_order(self, data_directory: Dict[str, Any], user: User, now: datetime):
     if DATA_ISOTOPE_VIAL not in data_directory or DATA_ISOTOPE_ORDER not in data_directory:
       raise ContractBroken(f"Missing {DATA_ISOTOPE_VIAL} or {DATA_ISOTOPE_ORDER} in data")
@@ -323,6 +377,9 @@ class DatabaseInterface():
     }
 
   @database_sync_to_async
+  def a_correct_order(self, data: Dict[str, List[int]], user: User) -> Dict[str, List[TracershopModel]]:
+    return self.correct_order(data, user)
+
   def correct_order(self, data: Dict[str, List[int]], user: User) -> Dict[str, List[TracershopModel]]:
     """This function takes committed models, such as orders and vials and
 
@@ -389,14 +446,18 @@ class DatabaseInterface():
     return query
 
   @database_sync_to_async
-  def getTimeSensitiveData(self, centralDate: datetime, user: User):
+  def a_get_time_sensitive_state(self, central_date: datetime, user: User):
+    return self.get_time_sensitive_state(central_date, user)
+
+
+  def get_time_sensitive_state(self, central_date: datetime, user: User):
     return {
-      keyword : self.__modelGetters[keyword](centralDate, user)
+      keyword : self.__modelGetters[keyword](central_date, user)
         for keyword in TIME_SENSITIVE_FIELDS.keys()
     }
 
   @database_sync_to_async
-  def async_serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> Dict[str,Any]:
+  def a_serialize_dict(self, instances: Dict[str, Iterable[TracershopModel]]) -> Dict[str,Any]:
     """Transforms some models to a string representation of those models.
     It removes any fields that should not be broadcast such a passwords
 
@@ -430,15 +491,18 @@ class DatabaseInterface():
 
     return serialized_dict
 
-  def getModels(self, user: User) -> List[Type[TracershopModel]]:
+  def get_models(self, user: User) -> List[Type[TracershopModel]]:
     return [model for model in apps.get_app_config('database').get_models()
                 # This line is here to ensure models are the correct type
                 # As django might add some models for itself
                 if issubclass(model, TracershopModel)]
 
   @database_sync_to_async
-  def getState(self, referenceTime: datetime, user: User) -> Dict[str, List[TracershopModel]]:
-    models = self.getModels(user)
+  def a_get_state(self, reference_time: datetime, user: User) -> Dict[str, List[TracershopModel]]:
+    return self.get_state(reference_time, user)
+
+  def get_state(self, referenceTime: datetime, user: User) -> Dict[str, List[TracershopModel]]:
+    models = self.get_models(user)
     instances = {}
     for model in models:
       modelKeyword = INVERTED_MODELS.get(model)
@@ -452,7 +516,10 @@ class DatabaseInterface():
     return instances
 
   @database_sync_to_async
-  def moveOrders(self, orderIDs: List[int], destinationID: int):
+  def a_move_orders(self, orderIDs: List[int], destinationID: int):
+    return self.move_orders(orderIDs, destinationID)
+
+  def move_orders(self, orderIDs: List[int], destinationID: int):
     orders = ActivityOrder.objects.filter(pk__in=orderIDs)
     destination = ActivityDeliveryTimeSlot.objects.get(pk=destinationID)
 
@@ -486,7 +553,11 @@ class DatabaseInterface():
     return orders
 
   @database_sync_to_async
-  def restoreDestinations(self, orderIDs: List[int]):
+  def a_restore_destinations(self, orderIDs: List[int]):
+    return self.restore_destinations(orderIDs)
+
+
+  def restore_destinations(self, orderIDs: List[int]):
     orders = ActivityOrder.objects.filter(pk__in=orderIDs)
     for order in orders:
       order.moved_to_time_slot = None
@@ -494,87 +565,25 @@ class DatabaseInterface():
     return orders
 
   @database_sync_to_async
-  def getRelatedCustomerIDs(self, user: User) -> List[int]:
+  def a_get_related_customer_ids(self, user: User) -> List[int]:
+    return self.get_related_customer_ids(user)
+
+  def get_related_customer_ids(self, user: User) -> List[int]:
     userAssignments = UserAssignment.objects.filter(user=user)
 
     return [userAssignment.customer.id
               for userAssignment in userAssignments]
 
   @database_sync_to_async
-  def getCustomerIDs(self, models: Iterable[T]) -> Optional[List[int]]:
-    customerIDs = set()
-    endpointIDs = set()
-    timeSlotsIDs = set()
+  def a_create_user_assignment(self,
+                           username : str,
+                           customer_id : int,
+                           creating_user) -> Tuple[SUCCESS_STATUS_CRUD,
+                                                   Optional[UserAssignment],
+                                                   Optional[User]]:
+    return self.create_user_assignment(username, customer_id, creating_user)
 
-    # Helper Handler Functions, each of them should handle an instance type
-    # And add to the customerIDs, which is then converted to the related
-    # Customer IDs
-
-    def __UserAssignmentHandler(instance: UserAssignment):
-      customerIDs.add(instance.customer.id)
-
-    def __EndpointHandler(instance: DeliveryEndpoint,):
-      owner = instance.owner # Database Access
-      customerIDs.add(owner.id)
-
-    def __ActivityOrder(instance: ActivityOrder):
-      timeSlot = instance.ordered_time_slot # Database Access
-      timeSlotID = timeSlot.id
-      if timeSlotID in timeSlotsIDs:
-        return
-      else:
-        timeSlotsIDs.add(timeSlotID)
-
-      endpoint = timeSlot.destination # Database Access
-      endpointID = endpoint.id
-      if endpointID in endpointIDs:
-        return
-      else:
-        endpointIDs.add(endpointID)
-
-      owner = endpoint.owner # Database Access
-      customerIDs.add(owner.id)
-
-    def __InjectionOrderHandler(instance: InjectionOrder):
-      endpoint = instance.endpoint # Database Access
-      endpointID = endpoint.id
-      if endpointID in endpointIDs:
-        return
-      else:
-        endpointIDs.add(endpointID)
-
-      owner = endpoint.owner # Database Access
-      customerIDs.add(owner.id)
-
-    def __ActivityDeliveryTimeSlotHandler(instance: ActivityDeliveryTimeSlot):
-      endpoint = instance.destination # Database Access
-      endpointID = endpoint.id
-      if endpointID in endpointIDs:
-        return
-      else:
-        endpointIDs.add(endpointID)
-      owner = endpoint.owner # Database Access
-      customerIDs.add(owner.id)
-
-    modelHandlers: Dict[Type[TracershopModel], Callable] = { # No clue how to type hint Callable :(
-      ActivityDeliveryTimeSlot : __ActivityDeliveryTimeSlotHandler,
-      ActivityOrder : __ActivityOrder,
-      UserAssignment : __UserAssignmentHandler,
-      DeliveryEndpoint : __EndpointHandler,
-      InjectionOrder : __InjectionOrderHandler,
-    }
-
-    for instance in models:
-      handler = modelHandlers.get(instance.__class__, None)
-      if handler is None:
-        return None
-      else:
-        handler(instance)
-
-    return [customerID for customerID in customerIDs]
-
-  @database_sync_to_async
-  def createUserAssignment(self,
+  def create_user_assignment(self,
                            username : str,
                            customer_id : int,
                            creating_user) -> Tuple[SUCCESS_STATUS_CRUD,
@@ -621,9 +630,11 @@ class DatabaseInterface():
     else:
       return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, None
 
-
   @database_sync_to_async
-  def massOrder(self, bookings: Dict[str, bool], user: User):
+  def a_mass_order(self, bookings: Dict[str, bool], user: User):
+    return self.mass_order(bookings, user)
+
+  def mass_order(self, bookings: Dict[str, bool], user: User):
     timeSlotsBookings: Dict[ActivityDeliveryTimeSlot, float] = {}
     injectionOrders: List[InjectionOrder] = []
     activityOrders: List[ActivityOrder] = []
@@ -752,12 +763,11 @@ class DatabaseInterface():
       DATA_INJECTION_ORDER : injectionsOrders
     }
 
-
   @database_sync_to_async
-  def get_bookings(
-    self,
-    date_: date, delivery_endpoint_id: int
-  ) -> Dict[str, List[Booking]]:
+  def a_get_bookings(self, date_: date, delivery_endpoint_id: int) -> Dict[str, List[Booking]]:
+    return self.get_bookings(date_, delivery_endpoint_id)
+
+  def get_bookings(self, date_: date, delivery_endpoint_id: int) -> Dict[str, List[Booking]]:
     """Gets the stored bookings for the endpoint id for a specific date and
     returns them ready to be serialized by the engine, ie you can throw the
     returned object in to a message and the infra will convert it to good json
@@ -782,7 +792,11 @@ class DatabaseInterface():
     }
 
   @database_sync_to_async
-  def createExternalUser(self, userSkeleton: Dict[str, Any]):
+  def a_create_external_user(self, user_skeleton: Dict[str, Any]):
+    return self.create_external_user(user_skeleton)
+
+
+  def create_external_user(self, user_skeleton: Dict[str, Any]):
     """Create an external user
 
     Args:
@@ -792,14 +806,14 @@ class DatabaseInterface():
           * DATA_CUSTOMER - Optional int - if defined, the customer the user
                                            represents.
     """
-    newExternalUser = User(username=userSkeleton[AUTH_USERNAME],
+    newExternalUser = User(username=user_skeleton[AUTH_USERNAME],
                            user_group=UserGroups.ShopExternal)
 
-    newExternalUser.set_password(userSkeleton[AUTH_PASSWORD])
+    newExternalUser.set_password(user_skeleton[AUTH_PASSWORD])
     newExternalUser.save()
 
-    if DATA_CUSTOMER in userSkeleton and userSkeleton[DATA_CUSTOMER]:
-      customer = Customer.objects.get(pk=userSkeleton[DATA_CUSTOMER])
+    if DATA_CUSTOMER in user_skeleton and user_skeleton[DATA_CUSTOMER]:
+      customer = Customer.objects.get(pk=user_skeleton[DATA_CUSTOMER])
 
       newUserAssignment = UserAssignment(user=newExternalUser, customer=customer)
       newUserAssignment.save()
@@ -809,7 +823,10 @@ class DatabaseInterface():
     return newExternalUser, newUserAssignment
 
   @database_sync_to_async # This is just to get a sync environment.
-  def changeExternalPassword(self, externalUserID : int, externalNewPassword: str):
+  def a_change_external_password(self, external_user_id : int, external_new_password: str):
+    return self.change_external_password(external_user_id, external_new_password)
+
+  def change_external_password(self, external_user_id : int, external_new_password: str):
     """changes the password of a user
 
     Args:
@@ -819,10 +836,10 @@ class DatabaseInterface():
     Raises:
         IllegalActionAttempted: _description_
     """
-    externalUser = User.objects.get(pk=externalUserID)
+    externalUser = User.objects.get(pk=external_user_id)
     if externalUser.user_group != UserGroups.ShopExternal:
       raise IllegalActionAttempted
-    externalUser.set_password(externalNewPassword)
+    externalUser.set_password(external_new_password)
     externalUser.save()
 
   def get_csv_data(self, csv_date: date) -> Dict[str, Dict[str, List[Any]]]:
@@ -861,8 +878,6 @@ class DatabaseInterface():
     ).order_by(
       'fill_date', 'fill_time'
     )
-
-
 
     return_dir: Dict[str, Dict[str, List[Any]]] = {}
 
@@ -964,6 +979,10 @@ class DatabaseInterface():
     return return_dir
 
   @database_sync_to_async
+  def a_get_telemetry_data(self):
+    return self.get_telemetry_data()
+
+
   def get_telemetry_data(self):
     """Get all the telemetry data
 
@@ -1028,6 +1047,5 @@ class DatabaseInterface():
 
     error_message = f"While attempting to retrieve: {ids}, the following object are missing: {[id_ for id_ in missing_ids]}"
     error_logger.error(error_message)
-
 
     return False

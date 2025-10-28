@@ -33,7 +33,7 @@ class HandleRestoreOrders(HandlerBase):
     if not user.is_production_member:
       raise IllegalActionAttempted
 
-    orders = await consumer.db.restoreDestinations(message[DATA_ACTIVITY_ORDER])
+    orders = await consumer.db.a_restore_destinations(message[DATA_ACTIVITY_ORDER])
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
       MESSENGER_CONSUMER : consumer,

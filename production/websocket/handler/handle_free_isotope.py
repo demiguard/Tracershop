@@ -55,7 +55,7 @@ class HandleFreeIsotope(HandlerBase):
       return await consumer._RejectFreeing(message)
 
     try:
-      updated_state = await consumer.db.release_isotope_order(
+      updated_state = await consumer.db.a_release_isotope_order(
         message[WEBSOCKET_DATA], user, consumer.datetimeNow.now()
       )
 

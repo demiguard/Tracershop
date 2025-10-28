@@ -10,11 +10,13 @@ __author__ = "Christoffer Vilstrup Jensen"
 # Python standard library
 from multiprocessing.connection import wait
 import threading
+from unittest import TestCase as UnitTestCase, skip
 
 # Django packages
-from django.test import TestCase # Note most of these test doesn't really depent on django, it's just for integration purposes.
+from django.test import TestCase, SimpleTestCase # Note most of these test doesn't really depent on django, it's just for integration purposes.
 
 class ProgrammingTestCase(TestCase):
+  @skip("Doesn't test Tracershop")
   def test_two_threads_one_dict(self): # yes, very sexy
     def write_to_dict(dict, kw, val):
       dict[kw] = val
@@ -37,6 +39,7 @@ class ProgrammingTestCase(TestCase):
         "kw_2" : "val_2"
       })
 
+  @skip("Doesn't test Tracershop")
   def test_basic_syncronization_t1_t2(self):
     """This test creates a que system between 2 threads"""
     e1 = threading.Event()
@@ -71,6 +74,7 @@ class ProgrammingTestCase(TestCase):
 
     self.assertListEqual(target_list,["t1","t2"] * iter)
 
+  @skip("Doesn't test Tracershop")
   def test_basic_syncronization_t2_t1(self):
     """This test creates a que system between 2 threads"""
 
@@ -106,6 +110,7 @@ class ProgrammingTestCase(TestCase):
 
     self.assertListEqual(thread_list,["t1","t2"] * iter)
 
+  @skip("Doesn't test Tracershop")
   def test_circular_synchronization(self):
     """This test creates a que system between 3 threads where t1 waits on t2 which waits on t3 which waits on t1 and so fourth"""
 

@@ -154,7 +154,7 @@ async def get_logged_in_user(scope):
   if isinstance(user, AnonymousUser):
     raise LoginRequired("Action requires the user to be logged in")
 
-  if not isinstance(user, User):
+  if not isinstance(user, User): # pragma: no cover
     raise ContractBroken("Returned a user that wasn't a Tracershop user class")
 
   return user

@@ -34,7 +34,7 @@ class HandleReadBooking(HandlerBase):
         message (Dict[str, Any]): _description_
     """
     booking_date = toDate(message[WEBSOCKET_DATE][:10])
-    bookings: Dict[str, List[Booking]] = await consumer.db.get_bookings(
+    bookings: Dict[str, List[Booking]] = await consumer.db.a_get_bookings(
       booking_date,
       message[WEBSOCKET_DATA_ID]
     )

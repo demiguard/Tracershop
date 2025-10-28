@@ -38,7 +38,7 @@ class HandleCreateExternalUser(HandlerBase):
     user: User = await get_user(consumer.scope) # type: ignore
     if not user.is_production_admin:
       raise IllegalActionAttempted(f"User {user.username}")
-    newUser, newUserAssignment = await consumer.db.createExternalUser(
+    newUser, newUserAssignment = await consumer.db.a_create_external_user(
       message[WEBSOCKET_DATA]
     )
 

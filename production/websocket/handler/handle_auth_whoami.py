@@ -38,20 +38,22 @@ class HandleAuthWhoAmI(HandlerBase):
       if user.user_group == UserGroups.ShopExternal:
         logins = await database_sync_to_async(SuccessfulLogin.objects.filter)(user=user)
         await database_sync_to_async(logins.delete)()
-      return await consumer.respond_auth_message(message, True, {DATA_USER : [user]}, consumer.scope["session"].session_key)
+      session = consumer.scope.get("session")
+      if session is not None:
+        return await consumer.respond_auth_message(message, True, {DATA_USER : [user]}, session.session_key)
     elif isinstance(user, AnonymousUser):
       user = await database_sync_to_async(auth.get_login)(now)
       logger.info(f"Found user:{user} from external users")
       if user is not None and not isinstance(user, AnonymousUser):
         await login(consumer.scope, user, backend='tracerauth.backend.TracershopAuthenticationBackend') #type: ignore
         session = consumer.scope.get("session")
-        if session is None:
+        if session is None: #pragma: no cover
           logger.critical("Somehow the session is none")
           return
         await database_sync_to_async(session.save)()
         await consumer.enterUserGroups(user)
         session = consumer.scope.get("session")
-        if session is None:
+        if session is None: #pragma: no cover
           logger.critical("Somehow the session is none")
           return
         session_key = session.session_key

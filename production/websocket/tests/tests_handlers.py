@@ -63,7 +63,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
       Booking(id = 3)
     ]
 
-    self.mockDatabase.get_bookings.return_value = return_value
+    self.mockDatabase.a_get_bookings.return_value = return_value
 
     await handler(self.mockConsumer, {
       WEBSOCKET_DATE : "2000-05-05",
@@ -82,7 +82,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
     """ # THIS DOESN'T WORK FOR SOME REAL FUCKING STUPID REASON
     self.mockMessenger.assert_awaited() # ARE YOU FUCKING KIDDING ME
 
-    self.mockDatabase.get_bookings.assert_called_once()
+    self.mockDatabase.a_get_bookings.assert_called_once()
 
   async def test_getting_telemetry(self):
     handler = HandleReadTelemetry()
@@ -91,7 +91,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
       'user' : User(id=13287540, username="Blah blah", user_group=UserGroups.Admin)
     }
 
-    self.mockDatabase.get_telemetry_data.return_value = {
+    self.mockDatabase.a_get_telemetry_data.return_value = {
       DATA_TELEMETRY_RECORD : [],
       DATA_TELEMETRY_REQUEST : []
     }
@@ -110,7 +110,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
       'user' : User(id=13287540, username="Blah blah", user_group=UserGroups.ShopAdmin)
     }
 
-    self.mockDatabase.get_telemetry_data.return_value = {
+    self.mockDatabase.a_get_telemetry_data.return_value = {
       DATA_TELEMETRY_RECORD : [],
       DATA_TELEMETRY_REQUEST : []
     }
@@ -173,7 +173,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
       'user' : User(id=1421861, username="BlahBlah", user_group=UserGroups.Admin)
     }
 
-    self.mockDatabase.handleCreateModels.side_effect = IntegrityError
+    self.mockDatabase.a_create_models.side_effect = IntegrityError
     handler = HandleModelCreate()
 
 
@@ -202,7 +202,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
       'user' : User(id=1421861, username="BlahBlah", user_group=UserGroups.Admin)
     }
 
-    self.mockDatabase.handleCreateModels.side_effect = ValidationError({
+    self.mockDatabase.a_create_models.side_effect = ValidationError({
 
     })
     handler = HandleModelCreate()

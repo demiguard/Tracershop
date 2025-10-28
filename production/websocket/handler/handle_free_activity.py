@@ -61,7 +61,7 @@ class HandleFreeActivity(HandlerBase):
 
     # Authentication successful update
     data = message[WEBSOCKET_DATA]
-    orders, vials = await consumer.db.releaseOrders(data[DATA_DELIVER_TIME],
+    orders, vials = await consumer.db.a_release_activity_orders(data[DATA_DELIVER_TIME],
                                                     data[DATA_ACTIVITY_ORDER],
                                                     data[DATA_VIAL],
                                                     user,

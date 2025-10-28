@@ -96,7 +96,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_add('production', self.channel_name)
     if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
-      customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
+      customerIDs: List[int] = await self.db.a_get_related_customer_ids(user)
       for customerID in customerIDs:
         await self.channel_layer.group_add(f'customer_{customerID}', self.channel_name)
 
@@ -108,7 +108,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     if user.user_group in [UserGroups.Admin, UserGroups.ProductionAdmin, UserGroups.ProductionUser]:
       await self.channel_layer.group_discard('production', channel=self.channel_name)
     if user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopExternal, UserGroups.ShopUser]:
-      customerIDs: List[int] = await self.db.getRelatedCustomerIDs(user)
+      customerIDs: List[int] = await self.db.a_get_related_customer_ids(user)
       for customerID in customerIDs:
         await self.channel_layer.group_discard(f'customer_{customerID}', channel=self.channel_name)
 

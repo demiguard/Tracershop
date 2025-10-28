@@ -34,7 +34,7 @@ class HandleMoveOrders(HandlerBase):
     if not user.is_production_member:
       raise IllegalActionAttempted(f"{user.username} attempted to move orders")
 
-    orders = await consumer.db.moveOrders(message[DATA_ACTIVITY_ORDER], message[DATA_DELIVER_TIME])
+    orders = await consumer.db.a_move_orders(message[DATA_ACTIVITY_ORDER], message[DATA_DELIVER_TIME])
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE,{
       MESSENGER_CONSUMER : consumer,

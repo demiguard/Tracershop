@@ -42,7 +42,7 @@ class HandleFreeMultiInjection(HandlerBase):
 
     release_time = consumer.datetimeNow.now()
 
-    orders = await consumer.db.release_many_injections_orders(
+    orders = await consumer.db.a_release_many_injections_orders(
       message[WEBSOCKET_DATA_ID], message[WEBSOCKET_DATA], release_time, user
     )
 

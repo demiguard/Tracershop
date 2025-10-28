@@ -42,7 +42,7 @@ class MessengerAuthResponse(MessengerBase):
   @classmethod
   async def __call__(cls, args):
     # Just a bonehead exception
-    if not isinstance(args, cls.Args): # pragma: no cover
+    if not isinstance(args, cls.Args):
       raise TypeError("MessengerAuthResponse call must be of type MessengerAuthResponse.Args")
 
     consumer_: consumer.Consumer = args[MESSENGER_CONSUMER]

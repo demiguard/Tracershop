@@ -17,7 +17,7 @@ from websocket.messenger_base import MessengerBase, MessageBlueprint,\
   MessageDataField, MessageDataType
 from websocket import consumer
 
-class MessengerCreateBooking(MessengerBase):
+class MessengerUpdateState(MessengerBase):
   message_blueprint = MessageBlueprint({
     CHANNEL_TARGET_KEYWORD : CHANNEL_TARGET_BROADCAST_FUNCTION,
     WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,
@@ -27,7 +27,6 @@ class MessengerCreateBooking(MessengerBase):
     WEBSOCKET_DATA : MessageDataField(MessageDataType.STATE),
     WEBSOCKET_REFRESH : MessageDataField(bool),
   })
-
 
   @classproperty
   def message_type(cls):
@@ -51,8 +50,8 @@ class MessengerCreateBooking(MessengerBase):
 
   @classmethod
   async def __call__(cls, args):
-    if not isinstance(args, cls.Args): # pragma: no cover
-      raise TypeError("MessengerCreateBooking call must be of type MessengerCreateBooking.Args")
+    if not isinstance(args, cls.Args):
+      raise TypeError("MessengerCr call must be of type MessengerCreateBooking.Args")
 
     # There's a whole great issue figuring out where to send what.
     LAYER: RedisChannelLayer = get_channel_layer() # type: ignore

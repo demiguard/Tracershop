@@ -26,7 +26,7 @@ class HandleReadTelemetry(HandlerBase):
     if not user.is_server_admin:
       raise IllegalActionAttempted()
 
-    telemetry_data = await consumer.db.get_telemetry_data()
+    telemetry_data = await consumer.db.a_get_telemetry_data()
 
     await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_READ_TELEMETRY, {
       "consumer" : consumer,

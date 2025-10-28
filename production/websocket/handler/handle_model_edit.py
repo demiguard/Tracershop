@@ -42,7 +42,7 @@ class HandleModelEdit(HandlerBase):
     """
     user = await get_logged_in_user(consumer.scope)
 
-    updatedModels = await consumer.db.handleEditModels(
+    updatedModels = await consumer.db.a_edit_models(
       message[WEBSOCKET_DATATYPE],
       message[WEBSOCKET_DATA],
       user

@@ -43,7 +43,7 @@ class HandleChangeExternalPassword(HandlerBase):
       return
 
     try:
-      await consumer.db.changeExternalPassword(externalUserID, externalNewPassword)
+      await consumer.db.a_change_external_password(externalUserID, externalNewPassword)
     except ObjectDoesNotExist:
       return await consumer.send_json({
         WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
