@@ -269,7 +269,7 @@ class ActivityOrder(TracershopModel):
       else:
         return AuthActions.REJECT_LOG
 
-    database_self = self.__class__.objects.get(pk=self.pk)
+    database_self = self.get_database_instance()
 
     if database_self.status == OrderStatus.Released:
       if self.status == OrderStatus.Accepted and user.is_production_member:
@@ -368,7 +368,7 @@ class InjectionOrder(TracershopModel):
         return AuthActions.ACCEPT
       else:
         return AuthActions.REJECT_LOG
-    database_self = self.__class__.objects.get(pk=self.pk)
+    database_self = self.get_database_instance()
 
     if database_self.status == OrderStatus.Released:
       if self.status == OrderStatus.Accepted:
@@ -570,3 +570,9 @@ class IsotopeVial(TracershopModel):
     return {
       'delivery_with' : None
     }
+
+  def canEdit(self, user: User | None = None) -> AuthActions:
+    if user is not None and user.is_production_member:
+      return AuthActions.ACCEPT_LOG
+
+    return AuthActions.REJECT

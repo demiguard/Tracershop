@@ -56,7 +56,7 @@ class Messenger:
       raise ContractBroken(f"Messenger messenger missing for {missing_message_types}")
 
   def getMessageArgs(self, message_type: WEBSOCKET_SERVER_MESSAGES) -> Type[MessengerBase.MessageArgs]:
-    return self.messengers[message_type].getMessageArgs()
+    return self.messengers[message_type].getMessageArgs() #type: ignore
 
   async def __call__ (self, message_type: WEBSOCKET_SERVER_MESSAGES, dict_args: Dict) -> None:
     Args = self.messengers[message_type].getMessageArgs()

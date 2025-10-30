@@ -154,6 +154,6 @@ class IsotopeProduction(TracershopModel):
   expiry_time = DateField(default=None, blank=True, null=True)
 
   def __str__(self) -> str:
-    baseString = f"Isotope production at {Days(self.production_day).name} - {self.production_time}"
+    baseString = f"{self.isotope} production at {Days(self.production_day).name} - {self.production_time}"
 
     return baseString

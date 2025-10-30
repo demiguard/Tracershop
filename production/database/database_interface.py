@@ -46,9 +46,9 @@ from database.models import ServerConfiguration, User,\
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
-from tracerauth.types import LDAPSearchResult
+from tracerauth.types import LDAPSearchResult, AuthActions
 from tracerauth import tracer_ldap
-from tracerauth.audit_logging import logFreeInjectionOrder, logCorrectOrder,\
+from tracerauth.audit_logging import logFreeInjectionOrder,\
   log_release_isotope_orders, log_correction
 
 debug_logger = logging.getLogger(DEBUG_LOGGER)
@@ -354,20 +354,29 @@ class DatabaseInterface():
 
     isotope_order = isotope_orders[0]
 
+    canCommit = AuthActions.ACCEPT
+
     for vial in isotope_vials:
-      # I know this CANNOT happen because of the filter, but it's also mostly free
-      # Like I have in place incase a refactor does something stupid.
-      if vial.delivery_with is not None:
-        raise ContractBroken(f"Vial: {vial.id} is already assigned to an order!")
       vial.delivery_with = isotope_order
+      canCommit &= vial.canEdit(user)
 
     for isotope_order in isotope_orders:
       isotope_order.freed_by = user
       isotope_order.freed_datetime = now
       isotope_order.status = OrderStatus.Released
-      isotope_order.save(user)
 
-    IsotopeVial.objects.bulk_update(isotope_vials, ['delivery_with'])
+      canCommit &= isotope_order.canEdit(user)
+
+    if not canCommit:
+      raise ContractBroken(f"User: {user.username} cannot release because they cannot edit the models!")
+
+    for isotope_order in isotope_orders:
+      if not isotope_order.save(user): # pragma: no cover
+        raise ContractBroken("So somehow we ended up asking if we could edit, but we cant???")
+
+    for isotope_vial in isotope_vials:
+      if not isotope_vial.save(user): # pragma: no cover
+        raise ContractBroken("So somehow we ended up asking if we could edit, but we cant???")
 
     log_release_isotope_orders(user, [io for io in isotope_orders], [iv for iv in isotope_vials])
 
@@ -398,6 +407,8 @@ class DatabaseInterface():
 
     return_dict = { }
 
+    models: Dict[str, Tuple[BaseManager[TracershopModel], List[int]]] = {}
+
     for model_identifier, model_ids in data.items():
       model = MODELS[model_identifier]
 
@@ -409,7 +420,12 @@ class DatabaseInterface():
       filtered_models = model.objects.filter(**filter_args)
 
       if not self.validate_selection(model_ids, filtered_models):
-        raise Exception(f"Unable to get all {model.__name__} with id: {model_ids}")
+        raise ContractBroken(f"Unable to get all {model.__name__} with id: {model_ids}")
+
+      models[model_identifier] = filtered_models, model_ids
+
+    for model_identifier, (filtered_models, model_ids) in models.items():
+      model = MODELS[model_identifier]
 
       filtered_models.update(**model.kwargs_for_uncommitting())
 
@@ -467,7 +483,7 @@ class DatabaseInterface():
     Returns:
         _type_: _description_
     """
-    return self.serialize_dict(instances)
+    return self.serialize_dict(instances) #pragma: no cover
 
   @staticmethod
   def serialize_dict(instances: Dict[str, Iterable[TracershopModel]]) -> Dict[str, Any]:
@@ -765,7 +781,7 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def a_get_bookings(self, date_: date, delivery_endpoint_id: int) -> Dict[str, List[Booking]]:
-    return self.get_bookings(date_, delivery_endpoint_id)
+    return self.get_bookings(date_, delivery_endpoint_id) #pragma: no cover
 
   def get_bookings(self, date_: date, delivery_endpoint_id: int) -> Dict[str, List[Booking]]:
     """Gets the stored bookings for the endpoint id for a specific date and
@@ -824,7 +840,7 @@ class DatabaseInterface():
 
   @database_sync_to_async # This is just to get a sync environment.
   def a_change_external_password(self, external_user_id : int, external_new_password: str):
-    return self.change_external_password(external_user_id, external_new_password)
+    return self.change_external_password(external_user_id, external_new_password) #pragma: no cover
 
   def change_external_password(self, external_user_id : int, external_new_password: str):
     """changes the password of a user
@@ -980,8 +996,7 @@ class DatabaseInterface():
 
   @database_sync_to_async
   def a_get_telemetry_data(self):
-    return self.get_telemetry_data()
-
+    return self.get_telemetry_data() # pragma: no cover
 
   def get_telemetry_data(self):
     """Get all the telemetry data

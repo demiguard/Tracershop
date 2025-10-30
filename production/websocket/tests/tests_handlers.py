@@ -1,22 +1,25 @@
 # Python standard library
 from datetime import datetime
 from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch, AsyncMock
 
 # Third party modules
 from django.core.exceptions import ValidationError
 from django.db.utils import IntegrityError
 from django.utils import timezone
+from django.contrib.auth.models import AnonymousUser
 
 # Tracershop Modules
 from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from core.exceptions import IllegalActionAttempted
+from core.side_effect_injection import DateTimeNow
 from shared_constants import WEBSOCKET_DATE, WEBSOCKET_MESSAGE_READ_BOOKINGS,\
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_DATA_ID,\
   DATA_TELEMETRY_REQUEST, DATA_TELEMETRY_RECORD, WEBSOCKET_MESSAGE_READ_TELEMETRY,\
   WEBSOCKET_SERVER_MESSAGES,WEBSOCKET_DATA,WEBSOCKET_MESSAGE_MODEL_CREATE,\
   WEBSOCKET_MESSAGE_STATUS, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_READ_STATE,\
-  WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPES
+  WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPES,\
+  WEBSOCKET_REFRESH
 from tracerauth.types import AuthenticationResult
 from testing import TransactionTracershopTestCase
 from database.database_interface import DatabaseInterface
@@ -24,14 +27,13 @@ from database.models import Booking, User, UserGroups
 from websocket.handler.handle_get_bookings import HandleReadBooking
 from websocket.consumer import Consumer
 from websocket.messenger import Messenger
-from core.side_effect_injection import DateTimeNow
 
 class DatetimeMock:
   def now(self):
     return datetime(2000, 1, 1, 1, 1, 1, tzinfo=timezone.now().tzinfo),
 
 async def mock_get_user(scope):
-  return scope['user']
+  return scope['user'] if 'user' in scope else AnonymousUser()
 
 with mock.patch('tracerauth.auth.get_logged_in_user', mock_get_user):
   with mock.patch('channels.auth.get_user', mock_get_user):
@@ -51,6 +53,7 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
 
     self.mockConsumer.db = self.mockDatabase
     self.mockConsumer.messenger = self.mockMessenger
+    self.mockConsumer.scope = {}
 
   def tearDown(self):
     pass
@@ -150,6 +153,19 @@ class ReadHandlersTestCases(TransactionTracershopTestCase):
         WEBSOCKET_MESSAGE_ID : 125451,
       }
     )
+
+  async def test_handler_without_user(self):
+    handler = HandleReadState()
+
+    await handler(
+      self.mockConsumer, {
+        WEBSOCKET_DATE : "2054/06/06", # fails because i didn't regex this shit
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_READ_STATE,
+        WEBSOCKET_MESSAGE_ID : 125451,
+      }
+    )
+
+    self.mockMessenger.assert_called()
 
   async def test_handler_get_state_with_date_and_error(self):
     handler = HandleReadState()

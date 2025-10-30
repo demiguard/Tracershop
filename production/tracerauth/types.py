@@ -6,6 +6,7 @@ __author__ = "Christoffer Vilstrup Jensen"
 
 # Python standard Library
 from enum import Enum
+from logging import getLogger
 
 class AuthActions(Enum):
   REJECT_LOG = 1

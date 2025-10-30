@@ -158,6 +158,9 @@ class TracershopModel(Model):
       return True
     return False
 
+  def get_database_instance(self):
+    return self.__class__.objects.get(pk=self.id)
+
 
 class Days(IntegerChoices):
   """Enum describing the days. Note these overlap with datetime module,

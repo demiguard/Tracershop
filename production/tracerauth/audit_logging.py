@@ -193,11 +193,6 @@ def logFreeInjectionOrder(user: 'models.User', order: 'models.InjectionOrder'):
   message += f"  Injection order lot number: {order.lot_number}\n"
   logger.info(message)
 
-def logCorrectOrder(user: 'models.User', data: Dict[str, List[int]]):
-  message = f"User: {user.username} is unreleasing the following data:\n"
-  message += pformat(data)
-  logger.info(message)
-
 def logReleaseManyInjectionOrders(
     user: 'models.User',
     orders: List['models.InjectionOrder'],
@@ -226,6 +221,5 @@ def log_release_isotope_orders(
   logger.info(message)
 
 def log_correction(user : 'models.User', ModelType : Type['models.TracershopModel'], model_ids : List[int]):
-  message = f""
-
+  message = f"User {user.username} set {ModelType.__name__} for corrections with ids: {', '.join([str(id_) for id_ in model_ids])}"
   logger.info(message)

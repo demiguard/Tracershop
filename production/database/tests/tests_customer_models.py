@@ -149,10 +149,22 @@ class SimpleCustomerModelTestCase(SimpleTestCase):
 
     self.assertEqual(the_sauce_order.tracer, the_secret_sauce)
 
-    # Access rights
+    # TracerUsage rights
+    self.assertEqual(str(TracerUsage.human), "humant")
+    self.assertEqual(str(TracerUsage.animal), "dyr")
+    self.assertEqual(str(TracerUsage.other), "andet")
 
 
+    self.assertEqual(str(IsotopeProduction(
+      id=67219034,
+      isotope=Isotope(atomic_letter='A', atomic_mass=17, halflife_seconds=1000, atomic_number=5),
+      production_day=Days.Monday,
+      production_time = time(11,33,55)
+    )), "A-17 production at Monday - 11:33:55")
 
+    self.assertEqual(str(ActivityProduction.display_name), "aktivitets produktion")
+    self.assertEqual(str(UserAssignment.display_name), "bruger rettighed")
+    self.assertEqual(str(ActivityDeliveryTimeSlot.display_name),"Aktivitets Levering")
 
 class TransactionalCustomerModels(TestCase):
   @classmethod
@@ -417,3 +429,37 @@ class TransactionalCustomerModels(TestCase):
 
     with self.assertNoLogs(AUDIT_LOGGER):
       self.assertTrue(production.delete(self.site_admin))
+
+  def test_vial_duplication_check(self):
+    Vial.objects.create(
+      id=1,
+      tracer=self.the_secret_sauce,
+      activity=1000,
+      volume=10.0,
+      lot_number="F-251111-1",
+      fill_time=time(11,33,44),
+      fill_date=date(2051,11,22),
+      owner=self.frank
+    )
+
+    self.assertTrue(
+      Vial(
+        tracer=self.the_secret_sauce,
+        activity=1000,
+        volume=10.0,
+        lot_number="F-251111-1",
+        fill_time=time(11,33,44),
+        fill_date=date(2051,11,22),
+        owner=self.frank
+      ).is_duplicate())
+
+    self.assertFalse(
+      Vial(
+        tracer=self.the_secret_sauce,
+        activity=1001,
+        volume=10.0,
+        lot_number="F-251111-1",
+        fill_time=time(11,33,44),
+        fill_date=date(2051,11,22),
+        owner=self.frank
+      ).is_duplicate())

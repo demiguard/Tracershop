@@ -15,6 +15,7 @@ from django.utils import timezone
 from pandas import DataFrame
 
 # Tracershop packages
+from core.exceptions import ContractBroken
 from constants import DATETIME_RE_UTC, DATETIME_REGULAR_EXPRESSION,\
   DATETIME_RE_WITH_MICRO, DATETIME_RE_WITH_MICRO_TZ_PLUS,\
   DATETIME_RE_WITH_MICRO_TZ_MINUS
@@ -164,7 +165,7 @@ def parse_data_frame_row_to_vial(data_frame: DataFrame) -> List['models.Vial']:
     tracer_tag_match = vial_tracer_tag_regex.search(batch_number)
 
     if tracer_tag_match is None:
-      raise Exception
+      raise ContractBroken(f"Unable to find a tracer with matching tag: {batch_number}")
 
     tracer_key, = tracer_tag_match.groups()
 

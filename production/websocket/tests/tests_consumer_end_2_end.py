@@ -1654,31 +1654,32 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
   async def test_release_isotope_order(self):
     with self.assertLogs(DEBUG_LOGGER):
-      with self.assertLogs(AUDIT_LOGGER):
-        communicator = WebsocketCommunicator(app,"ws/")
-        _conn, _subprotocal = await communicator.connect()
+      with self.assertNoLogs(ERROR_LOGGER):
+        with self.assertLogs(AUDIT_LOGGER):
+          communicator = WebsocketCommunicator(app,"ws/")
+          _conn, _subprotocal = await communicator.connect( )
 
-        await communicator.send_json_to(self.loginShopAdminMessage)
-        admin_login_message = await communicator.receive_json_from()
+          await communicator.send_json_to(self.loginAdminMessage)
+          admin_login_message = await communicator.receive_json_from()
 
-        await communicator.send_json_to({
-          DATA_AUTH : {
-            AUTH_USERNAME : TEST_SHOP_ADMIN_USERNAME,
-            AUTH_PASSWORD : TEST_SHOP_ADMIN_PASSWORD,
-          },
-          WEBSOCKET_DATA : {
-            DATA_ISOTOPE_ORDER : [self.isotope_order_to_be_freed_id],
-            DATA_ISOTOPE_VIAL : [self.isotope_vial_to_be_freed_id]
-          },
-          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ISOTOPE,
-          WEBSOCKET_MESSAGE_ID : 657901284,
-        })
+          await communicator.send_json_to({
+            DATA_AUTH : {
+              AUTH_USERNAME : TEST_ADMIN_USERNAME,
+              AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
+            },
+            WEBSOCKET_DATA : {
+              DATA_ISOTOPE_ORDER : [self.isotope_order_to_be_freed_id],
+              DATA_ISOTOPE_VIAL : [self.isotope_vial_to_be_freed_id]
+            },
+            WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_ISOTOPE,
+            WEBSOCKET_MESSAGE_ID : 657901284,
+          })
 
-        message = await communicator.receive_json_from()
+          message = await communicator.receive_json_from()
 
-        self.assertEqual(message['type'], 'broadcastMessage') # This is a lazy way of testing that the message have been boardcasted
-        self.assertTrue(message[AUTH_IS_AUTHENTICATED])
+          self.assertEqual(message['type'], 'broadcastMessage') # This is a lazy way of testing that the message have been boardcasted
+          self.assertTrue(message[AUTH_IS_AUTHENTICATED])
 
     refreshed_isotope_order = await database_sync_to_async(IsotopeOrder.objects.get)(pk=self.isotope_order_to_be_freed_id)
     self.assertEqual(refreshed_isotope_order.status, OrderStatus.Released)
