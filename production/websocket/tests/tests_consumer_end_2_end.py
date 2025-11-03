@@ -719,7 +719,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
         await comm.send_json_to({
           WEBSOCKET_MESSAGE_ID : self.message_id,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODELS_EDIT,
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           WEBSOCKET_DATATYPE : keyword,
           WEBSOCKET_DATA : {
@@ -743,7 +743,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
         modelFrontend = await database_sync_to_async(Model.objects.get)(pk=data[keyword][0]['pk'])
         self.assertEqual(modelFrontend, self.customer)
-    self.assertRegexIn(f'{self.message_id} - {WEBSOCKET_MESSAGE_MODEL_EDIT}', captured_debug_logs.output)
+    self.assertRegexIn(f'{self.message_id} - {WEBSOCKET_MESSAGE_MODELS_EDIT}', captured_debug_logs.output)
 
   async def test_ModelEdit_RejectedModel(self):
     """Test of the model backend that allows other to update
@@ -767,7 +767,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
         await comm.send_json_to({
           WEBSOCKET_MESSAGE_ID : self.message_id,
-          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_EDIT,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODELS_EDIT,
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           WEBSOCKET_DATATYPE : keyword,
           WEBSOCKET_DATA : {
@@ -1105,7 +1105,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         WEBSOCKET_DATA_ID : 278454,
         WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODELS_DELETE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
       message = await comm_admin.receive_json_from()
@@ -1150,7 +1150,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         WEBSOCKET_DATA_ID : [278453,178454],
         WEBSOCKET_DATATYPE : DATA_CUSTOMER,
         WEBSOCKET_MESSAGE_ID : 69230481,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODELS_DELETE,
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
       })
       message = await comm_admin.receive_json_from()
@@ -1195,7 +1195,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
             WEBSOCKET_DATA_ID : [self.freed_order.id],
             WEBSOCKET_DATATYPE : DATA_ACTIVITY_ORDER,
             WEBSOCKET_MESSAGE_ID : 69230481,
-            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODEL_DELETE,
+            WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_MODELS_DELETE,
             WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           })
           message = await comm_admin.receive_json_from()

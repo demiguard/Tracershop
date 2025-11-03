@@ -187,7 +187,7 @@ export class ProductReference {
   filterOrders(state: TracershopState, {
     timeSlots,
     delivery_date,
-  }) {
+  } : { timeSlots? : any, delivery_date? : string}) {
     const raw_orders = (() => {
       switch (this.type){
         case PRODUCT_TYPES.ACTIVITY:

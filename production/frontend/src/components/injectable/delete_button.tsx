@@ -14,7 +14,7 @@ export function DeleteButton({
       return Promise.resolve();
     }
 
-    websocket.sendDeleteModel(
+    websocket.sendDeleteModels(
       object_type, object
     )
   }

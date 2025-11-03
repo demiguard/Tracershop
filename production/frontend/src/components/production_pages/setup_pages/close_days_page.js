@@ -24,7 +24,7 @@ export function CloseDaysPage () {
         const dateStr = dateToDateString(dateObject)
         if (closedDateMap.has(dateStr)){
           const closedDateID = closedDateMap.get(dateStr);
-          websocket.sendDeleteModel(DATA_CLOSED_DATE, [closedDateID])
+          websocket.sendDeleteModels(DATA_CLOSED_DATE, [closedDateID])
         } else { // Delete it
           const newClosedDate = new ClosedDate(undefined, dateStr);
           websocket.sendCreateModel(DATA_CLOSED_DATE, newClosedDate)

@@ -153,7 +153,7 @@ export function PrinterOverviewPage(){
   function changeActiveLabelPrinter(event){
     const target = event.target.value === "-1" ? null : Number(event.target.value);
 
-    websocket.sendEditModel(DATA_SERVER_CONFIG, {
+    websocket.sendEditModels(DATA_SERVER_CONFIG, {
       ...server_config,
       active_label_printer : target
     });
@@ -162,7 +162,7 @@ export function PrinterOverviewPage(){
   function changeActivePrinter(event){
     const target = event.target.value === "-1" ? null : Number(event.target.value);
 
-    websocket.sendEditModel(DATA_SERVER_CONFIG, {
+    websocket.sendEditModels(DATA_SERVER_CONFIG, {
       ...server_config,
       active_printer : target
     });

@@ -55,14 +55,14 @@ export function TracerPage(){
 
   function restoreTracer(tracer){
     return () => {
-      websocket.sendEditModel(DATA_TRACER, {...tracer, archived : false,});
+      websocket.sendEditModels(DATA_TRACER, {...tracer, archived : false,});
     }
   }
 
   function ArchiveTracer(tracer){
     // This function cannot be called with an empty tracer
     return () => {
-      websocket.sendEditModel(DATA_TRACER, {...tracer, archived : true});
+      websocket.sendEditModels(DATA_TRACER, {...tracer, archived : true});
     }
   }
 

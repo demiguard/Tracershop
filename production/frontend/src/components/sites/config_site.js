@@ -1,9 +1,8 @@
 import React, {useState} from "react"
-import { ControlPanel } from "../admin_pages/control_panel.js"
-import { TracershopNavbar } from "../injectable/navbar.js"
-import { DatabasePanel } from "~/components/admin_pages/database_panel.js"
-import { TelemetryVisualizer } from "~/components/admin_pages/telemetry_visualizer.js"
-
+import { ControlPanel } from "../admin_pages/control_panel"
+import { TracershopNavbar } from "../injectable/navbar"
+import { DatabasePanel } from "~/components/admin_pages/database_panel"
+import { TelemetryVisualizer } from "~/components/admin_pages/telemetry_visualizer"
 
 const Pages = {
   controlPanel : ControlPanel, // Danish for key since keys are displayed.
@@ -21,6 +20,7 @@ export function ConfigSite (props) {
   const [activeSite, setActivePage] = useState("controlPanel")
   const Site = Pages[activeSite];
 
+
   return(
     <div>
       <TracershopNavbar
@@ -31,9 +31,13 @@ export function ConfigSite (props) {
         isAuthenticated={true}
         NavbarElements={props.NavbarElements}
       />
+      {calenderDays}
+
       <Site
         {...props}
       />
+
+
     </div>
   );
 }

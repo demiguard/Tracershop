@@ -329,7 +329,7 @@ export function AcceptIcon(props : {orders : OrdersType }){
       (order) => ({...order, status : ORDER_STATUS.ACCEPTED})
     );
 
-    return websocket.sendEditModel(
+    return websocket.sendEditModels(
       order_type, updated_orders
     );
   }
@@ -366,7 +366,7 @@ export function AcceptIconInjection(props){
       order => ({...order, status : ORDER_STATUS.ACCEPTED})
     );
 
-    return websocket.sendEditModel(
+    return websocket.sendEditModels(
       DATA_INJECTION_ORDER, updated_orders
     );
   }
@@ -389,7 +389,7 @@ export function AcceptIconActivity (props: {orders : Array<ActivityOrder>}){
       order => ({...order, status : ORDER_STATUS.ACCEPTED})
     );
 
-    return websocket.sendEditModel(
+    return websocket.sendEditModels(
       DATA_ACTIVITY_ORDER, updated_orders
     );
   }

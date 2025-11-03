@@ -5,7 +5,7 @@ import { Container, Form, FormControl, Modal, Row, Table } from "react-bootstrap
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE } from "~/lib/constants";
 import {DATA_TRACER_MAPPING, WEBSOCKET_DATA,
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
-  WEBSOCKET_MESSAGE_MODEL_DELETE
+  WEBSOCKET_MESSAGE_MODELS_DELETE
 } from "~/lib/shared_constants";
 
 import { setStateToEvent } from "~/lib/state_management";
@@ -44,7 +44,7 @@ export function TracerModal ({active_tracer, on_close}) {
       websocket.send(message);
     } else {
       const tracerCatalogID = TracerMapping.get(endpointID);
-      const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODEL_DELETE);
+      const message = websocket.getMessage(WEBSOCKET_MESSAGE_MODELS_DELETE);
       message[WEBSOCKET_DATA_ID] = tracerCatalogID
       message[WEBSOCKET_DATATYPE] = DATA_TRACER_MAPPING;
 

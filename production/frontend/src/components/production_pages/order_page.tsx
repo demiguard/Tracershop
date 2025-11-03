@@ -18,6 +18,8 @@ import { makeBlankProductReference } from "~/lib/blanks";
 import { isotopeFilter } from "~/lib/filters";
 import { presentName } from "~/lib/presentation";
 import { ProductionTable } from "~/components/production_pages/product_table";
+import { dateToDateString } from "~/lib/formatting";
+import { StatusButton } from "../injectable/buttons/status_buttons";
 
 const SUBPAGE_PRODUCT = "activity"
 const SUBPAGE_INJECTION = "injection"
@@ -39,8 +41,14 @@ function TableSwitchButton({is_active_product, product, onClick}: ProductButtonA
   const state = useTracershopState()
   const underline = is_active_product;
   const name = presentName(product.to_product(state));
+
+  const orders = product.filterOrders(state, {
+    delivery_date : dateToDateString(state.today)
+  });
+
   return (
-    <Button
+    <StatusButton
+      orders={orders}
       style={MARGIN.leftRight.px15}
       key={name}
       //@ts-ignore
@@ -50,7 +58,7 @@ function TableSwitchButton({is_active_product, product, onClick}: ProductButtonA
       <Optional exists={underline} alternative={<div>{name}</div>}>
         <u>{name}</u>
       </Optional>
-    </Button>
+    </StatusButton>
   );
 }
 

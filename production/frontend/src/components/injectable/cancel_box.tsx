@@ -57,7 +57,7 @@ export function CancelBox({
       { ...order, status : ORDER_STATUS.CANCELLED }
     ));
 
-    const promise = websocket.sendEditModel(order_type, updated_orders);
+    const promise = websocket.sendEditModels(order_type, updated_orders);
     onClose();
     return promise;
   }

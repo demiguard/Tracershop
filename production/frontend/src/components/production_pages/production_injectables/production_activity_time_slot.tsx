@@ -102,7 +102,7 @@ function ProductionInnerContentStatusORDERED({orderCollection, firstAvailableTim
       order.status = ORDER_STATUS.ACCEPTED;
     }
 
-    return websocket.sendEditModel(DATA_ACTIVITY_ORDER, acceptedOrders);
+    return websocket.sendEditModels(DATA_ACTIVITY_ORDER, acceptedOrders);
   }
 
   return <Row>

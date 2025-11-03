@@ -35,7 +35,7 @@ export function useCommitObject({
                             && 0 <= temp_object.id;
 
     const websocketFunction = tempObjectExists ?
-        websocket.sendEditModel.bind(websocket)
+        websocket.sendEditModels.bind(websocket)
       : websocket.sendCreateModel.bind(websocket);
 
     return websocketFunction(object_type, formattedObject).then(

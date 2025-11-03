@@ -63,7 +63,7 @@ export function InjectionModal ({modal_order, on_close}) {
 
   function acceptOrder(){
     order.status = ORDER_STATUS.ACCEPTED;
-    websocket.sendEditModel(DATA_INJECTION_ORDER, [order]);
+    websocket.sendEditModels(DATA_INJECTION_ORDER, [order]);
   }
 
   function startFreeing(){

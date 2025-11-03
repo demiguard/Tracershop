@@ -92,19 +92,19 @@ export function PingServiceConfig(props){
               newEndpointID = model.pk;
               break;
             }
-            websocket.sendEditModel(DATA_SERVER_CONFIG, [{
+            websocket.sendEditModels(DATA_SERVER_CONFIG, [{
               ...server_config,
               ris_dicom_endpoint : newEndpointID
             }]); // THE CHAIN IS DEAD, LONG LIVE THE SYNC CODE
         });
       })
     } else {
-      websocket.sendEditModel(DATA_ADDRESS, [{
+      websocket.sendEditModels(DATA_ADDRESS, [{
         ...ris_dicom_endpoint_address,
         ip : state_.address_ip,
         port : port
       }])
-      websocket.sendEditModel(DATA_DICOM_ENDPOINT, [{
+      websocket.sendEditModels(DATA_DICOM_ENDPOINT, [{
         ...ris_dicom_endpoint,
         ae_title : state_.ae_title,
       }])

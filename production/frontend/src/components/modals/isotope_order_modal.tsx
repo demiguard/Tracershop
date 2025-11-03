@@ -32,6 +32,7 @@ import { Authenticate } from "../injectable/authenticate";
 import { ERROR_LEVELS } from "../injectable/alert_box";
 import { MESSAGE_UPDATE_PRIVILEGED_STATE } from "~/lib/incoming_messages";
 import { FuckedUpButton } from "../injectable/buttons/fucked_up_button";
+import { IsotopeDisplay } from "../injectable/data_displays/isotope_display";
 
 
 function getModalVials(collection: IsotopeOrderCollection, state: TracershopState){
@@ -353,6 +354,11 @@ function IsotopeModalBody({
             <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}><TimeDisplay time={collection.delivery.delivery_time}/></h4></Col>
           </Row>
           <hr style={{ margin : 8 }}/>
+          <Row>
+            <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}>Isotop</h4></Col>
+            <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}><IsotopeDisplay isotope={collection.isotope}/> </h4></Col>
+          </Row>
+          <hr style={{margin : 8}}/>
           <Row>
             <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}>Samlet bestilt aktivitet:</h4></Col>
             <Col style={ALIGN.CENTER}><h4 style={MARGIN.NO}><MBqDisplay activity={collection.ordered_activity}/></h4></Col>

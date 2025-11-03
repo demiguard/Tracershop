@@ -1,8 +1,11 @@
 import PropTypes from 'prop-types';
 import React, { useEffect, useState } from 'react'
 import { Button, ButtonProps, Spinner } from 'react-bootstrap'
-import { useWebsocket } from '~/contexts/tracer_shop_context';
+import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
+import { injectionOrdersFilter } from '~/lib/filters';
+import { dateToDateString } from '~/lib/formatting';
 import { MARGIN } from '~/lib/styles';
+import { StatusButton } from './buttons/status_buttons';
 
 export {MarginButton, CloseButton}
 
@@ -80,15 +83,22 @@ export function WeeklyViewButton({is_active, onClick}){
 }
 
 export function SpecialTracerButton({is_active, onClick}){
+  const state = useTracershopState();
+
+  const injection_orders = injectionOrdersFilter(state, {
+    delivery_date : dateToDateString(state.today)
+  })
+
   const buttonMessage = is_active ? <u>Special</u> : <div>Special</div>;
 
   return (
-    <Button
+    <StatusButton
+      orders={injection_orders}
       style={MARGIN.leftRight.px15}
       key="Special"
       onClick={onClick}
     >
       {buttonMessage}
-    </Button>
+    </StatusButton>
   );
 }

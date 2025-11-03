@@ -3,8 +3,8 @@ import Cookies from "js-cookie";
 
 import { WEBSOCKET_MESSAGE_TYPE,  WEBSOCKET_DATA_ID,
   WEBSOCKET_DATA, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_ID,
-  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODEL_EDIT,
-  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
+  WEBSOCKET_JAVASCRIPT_VERSION, JAVASCRIPT_VERSION, AUTH_IS_AUTHENTICATED, WEBSOCKET_MESSAGE_MODELS_EDIT,
+  WEBSOCKET_MESSAGE_MODELS_DELETE, WEBSOCKET_MESSAGE_MODEL_CREATE, WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD,
   AUTH_PASSWORD, WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_SESSION_ID, WEBSOCKET_MESSAGE_AUTH_WHOAMI, AUTH_USER,
   WEBSOCKET_MESSAGE_READ_BOOKINGS, WEBSOCKET_DATE,   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_SUCCESS,
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_READ_TELEMETRY,
@@ -15,7 +15,11 @@ import { UpdateState, DeleteState, UpdateCurrentUser, ReducerAction, UpdateWebso
 import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
-import { createMessage, MESSAGE_AUTH_LOGOUT, MESSAGE_AUTH_RESPONSE, MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_DELETE_STATE, MESSAGE_ERROR, MESSAGE_READ_BOOKINGS, MESSAGE_READ_STATE, MESSAGE_READ_TELEMETRY, MESSAGE_UPDATE_PRIVILEGED_STATE, MESSAGE_UPDATE_STATE, MESSAGES } from "~/lib/incoming_messages";
+import { createMessage, MESSAGE_AUTH_LOGOUT, MESSAGE_AUTH_RESPONSE, MESSAGE_CREATE_BOOKING,
+  MESSAGE_DELETE_BOOKING, MESSAGE_DELETE_STATE, MESSAGE_ERROR, MESSAGE_READ_BOOKINGS,
+  MESSAGE_READ_STATE, MESSAGE_READ_TELEMETRY, MESSAGE_UPDATE_PRIVILEGED_STATE,
+  MESSAGE_UPDATE_STATE, MESSAGES
+} from "~/lib/incoming_messages";
 
 const promise_resolve_timeout_ms = 150;
 
@@ -138,9 +142,9 @@ export class TracerWebSocket {
     return promise;
   }
 
-  sendEditModel(modelType, models){
+  sendEditModels(modelType, models){
     return this.send({
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_EDIT,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODELS_EDIT,
       [WEBSOCKET_DATA] : models,
       [WEBSOCKET_DATATYPE] : modelType,
     });
@@ -156,7 +160,7 @@ export class TracerWebSocket {
     return this.send(message_to_send);
   }
 
-  sendDeleteModel(modelType, models){
+  sendDeleteModels(modelType, models){
     const ids = (() => {
       if (models instanceof Array){
         return models.map((model) => {return (typeof model === 'number') ? model : model.id});
@@ -168,7 +172,7 @@ export class TracerWebSocket {
     })();
 
     return this.send({
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODELS_DELETE,
       [WEBSOCKET_DATA_ID] : ids,
       [WEBSOCKET_DATATYPE] : modelType,
     });
@@ -245,7 +249,6 @@ export class TracerWebSocket {
     }
 
     const message = createMessage(message_raw)
-
 
     const pipe = this.#promiseMap.get(message[WEBSOCKET_MESSAGE_ID]);
     if(pipe !== undefined){

@@ -5,6 +5,7 @@ import { ActivityOrder, Dataclass, DeliveryEndpoint, InjectionOrder, Tracer } fr
 import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_ISOTOPE_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
 import { template } from "@babel/core";
 import { IsotopeOrderCollection } from "./data_structures/isotope_order_collection";
+import { OrdersType } from "./types";
 
 /**
  *
@@ -228,4 +229,14 @@ export function properModulo(a: number, n: number){
 
 export function map<T,U>(fn : (a : T) => U, arr: T[]): U[] {
   return [...arr].map(fn)
+}
+
+export function get_minimum_status(orders: OrdersType){
+  let minimum_status = ORDER_STATUS.EMPTY;
+
+  for(const order of orders){
+    minimum_status = Math.min(minimum_status, order.status);
+  }
+
+  return minimum_status;
 }

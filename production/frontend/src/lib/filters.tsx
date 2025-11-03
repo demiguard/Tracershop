@@ -451,7 +451,7 @@ export function activityOrderFilter(container: ContainerType<ActivityOrder>, {st
 export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, filterArgs: any): InjectionOrder[];
 export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, filterArgs: any, ids: true): number[];
 
-export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, { status, dateRange }, ids=false) {
+export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, { status, dateRange, delivery_date }, ids=false) {
   const injectionOrders = extractData(container, InjectionOrder, DATA_INJECTION_ORDER);
 
   const filteredInjectionOrders = injectionOrders.filter(
@@ -467,8 +467,9 @@ export function injectionOrdersFilter(container: ContainerType<InjectionOrder>, 
         return true;
       })();
       const dateRangeCondition = dateRange !== undefined ? dateRange.in_range(order.delivery_date) : true;
+      const deliveryDateCondition = delivery_date !== undefined ? order.delivery_date === delivery_date : true;
 
-      return statusCondition && dateRangeCondition;
+      return statusCondition && dateRangeCondition && deliveryDateCondition;
     }
   );
 

@@ -232,12 +232,10 @@ export function InjectionTable() {
 
   const modalExists = !!ModalState.modal;
 
-  //console.log(modalExists, ModalState.modal, selection.selected);
-
   return (
     <div>
       <Row>
-        <Col sm={6}>Produktion - {danishDate}</Col>
+        <Col sm={6}><h3>Produktion - {danishDate}</h3></Col>
         <Col style={{...DISPLAY.FLEX}} className="flex-row-reverse flex" sm={6}>
           <Row style={MARGIN.leftRight.px15}>
             <Button onClick={openCreateOrderModal}>Opret ny ordre</Button>

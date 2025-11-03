@@ -38,7 +38,7 @@ export function CommitIcon({
     }
 
     const websocket_function = tempObjectExists ?
-        websocket.sendEditModel.bind(websocket)
+        websocket.sendEditModels.bind(websocket)
       : websocket.sendCreateModel.bind(websocket);
 
     return websocket_function(object_type, formattedObject).then(

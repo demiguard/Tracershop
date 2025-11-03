@@ -65,7 +65,7 @@ export function InjectionOrderCard({
   }
 
   function deleteOrder(){
-    websocket.sendDeleteModel(DATA_INJECTION_ORDER, [injection_order]);
+    websocket.sendDeleteModels(DATA_INJECTION_ORDER, [injection_order]);
   }
 
   function validate(){

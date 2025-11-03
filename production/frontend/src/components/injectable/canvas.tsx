@@ -1,6 +1,12 @@
-import React, {useRef, useEffect} from "react";
+import React, {useRef, useEffect, PropsWithoutRef} from "react";
 
-export function Canvas(props){
+
+type CanvasProps = {
+  draw : (context: CanvasRenderingContext2D, frameCount: number) => void
+} & React.ComponentPropsWithoutRef<'canvas'>
+
+
+export function Canvas(props : CanvasProps){
   const ref = useRef(null);
   const {draw, ...rest} = props;
 
@@ -9,7 +15,7 @@ export function Canvas(props){
     const context = canvas.getContext('2d');
 
     let frameCount = 0;
-    let animationFrameId;
+    let animationFrameId: number;
 
     function render () {
       frameCount++;
@@ -28,8 +34,9 @@ export function Canvas(props){
   return <canvas ref={ref} {...rest}/>
 }
 
-export function StaticCanvas(props){
-  const ref = useRef(null);
+
+export function StaticCanvas(props : CanvasProps){
+  const ref: React.RefObject<HTMLCanvasElement> = useRef(null);
   const {draw, ...rest} = props;
 
   useEffect(() => {

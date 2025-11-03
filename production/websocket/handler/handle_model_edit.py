@@ -9,7 +9,7 @@ from channels.auth import get_user
 # Tracershop modules
 from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.utils import classproperty
-from shared_constants import WEBSOCKET_MESSAGE_MODEL_EDIT,\
+from shared_constants import WEBSOCKET_MESSAGE_MODELS_EDIT,\
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
@@ -20,17 +20,16 @@ from websocket.handler_base import HandlerBase
 
 logger = getLogger(ERROR_LOGGER)
 
-class HandleModelEdit(HandlerBase):
+class HandleModelEdits(HandlerBase):
   @classproperty
   def blueprint(cls):
     return Message({
-      WEBSOCKET_DATA : {},
       WEBSOCKET_DATATYPE : str
     })
 
   @classproperty
   def message_type(cls):
-    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_EDIT
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODELS_EDIT
 
   async def __call__(self, consumer, message):
     """Primitive endpoint for editing a model

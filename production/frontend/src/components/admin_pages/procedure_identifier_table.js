@@ -14,7 +14,7 @@ import { DATA_PROCEDURE_IDENTIFIER } from '~/lib/shared_constants';
 function ProcedureIdentifierRow({procedure_identifier}){
   const websocket = useWebsocket();
   function togglePet(){
-    websocket.sendEditModel(DATA_PROCEDURE_IDENTIFIER, {...procedure_identifier, is_pet : !procedure_identifier.is_pet});
+    websocket.sendEditModels(DATA_PROCEDURE_IDENTIFIER, {...procedure_identifier, is_pet : !procedure_identifier.is_pet});
   }
 
   return (

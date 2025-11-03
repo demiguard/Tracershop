@@ -54,7 +54,7 @@ function UserAssignmentRow(props){
   }
 
   function delete_user_assignment(){
-    websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, user_assignment.id);
+    websocket.sendDeleteModels(DATA_USER_ASSIGNMENT, user_assignment.id);
   }
 
   const ActionButton = (exists) ? <ClickableIcon

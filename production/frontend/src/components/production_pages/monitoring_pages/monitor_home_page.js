@@ -6,7 +6,7 @@ import { Button, Col, FormControl, Row } from "react-bootstrap";
 import { StaticCanvas } from "~/components/injectable/canvas";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { ActivityOrder, InjectionOrder, TracershopState } from "~/dataclasses/dataclasses";
-import { TimeStamp, compareTimeStamp, datify, getDateRangeForMonth, getSiteDate, setSiteDate } from "~/lib/chronomancy";
+import { TimeStamp, compareTimeStamp, datify, getDateRangeForMonth } from "~/lib/chronomancy";
 import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
 import { useContainerDimensions } from "~/effects/dimensions";
 import { activityOrderFilter, injectionOrdersFilter } from "~/lib/filters";

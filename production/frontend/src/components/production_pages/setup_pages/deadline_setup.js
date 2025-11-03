@@ -79,11 +79,11 @@ export function DeadlineSetup(){
         } break;
         case GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE: {
           setGlobalActivityDeadline(deadline.id)
-          websocket.sendEditModel(DATA_SERVER_CONFIG, {...serverConfig, global_activity_deadline : deadline.id})
+          websocket.sendEditModels(DATA_SERVER_CONFIG, {...serverConfig, global_activity_deadline : deadline.id})
         } break;
         case GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE: {
           setGlobalInjectionDeadline(deadline.id)
-          websocket.sendEditModel(DATA_SERVER_CONFIG, {...serverConfig, global_injection_deadline : deadline.id})
+          websocket.sendEditModels(DATA_SERVER_CONFIG, {...serverConfig, global_injection_deadline : deadline.id})
         } break;
       }
     }

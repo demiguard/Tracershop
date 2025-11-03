@@ -67,7 +67,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   }
 
   function deleteOrder(){
-    websocket.sendDeleteModel(DATA_ACTIVITY_ORDER, [order]);
+    websocket.sendDeleteModels(DATA_ACTIVITY_ORDER, [order]);
   }
 
   // Rewrite

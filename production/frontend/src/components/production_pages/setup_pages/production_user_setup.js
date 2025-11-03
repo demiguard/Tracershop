@@ -114,7 +114,7 @@ export function ProductionUserSetup(){
 
       if(userExists) {
         if(user.user_assignment && user.user_assignment.customer != targetCustomerID){
-          websocket.sendDeleteModel(DATA_USER_ASSIGNMENT, user.user_assignment);
+          websocket.sendDeleteModels(DATA_USER_ASSIGNMENT, user.user_assignment);
         }
         if(targetCustomerID){
           websocket.sendCreateModel(DATA_USER_ASSIGNMENT, {

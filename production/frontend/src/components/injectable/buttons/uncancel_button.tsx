@@ -23,7 +23,7 @@ export function UncancelButton({
       );
     }
 
-    return websocket.sendEditModel(
+    return websocket.sendEditModels(
       getOrderType({collection : collection}), updated_models
     );
   }

@@ -98,7 +98,7 @@ export function FreeingRightsPage(){
     const user = state.user.get(releaseRight.releaser);
     const tracer = state.tracer.get(releaseRight.product);
     function deleteReleaseRight(){
-      websocket.sendDeleteModel(DATA_RELEASE_RIGHT, releaseRight);
+      websocket.sendDeleteModels(DATA_RELEASE_RIGHT, releaseRight);
     }
 
     let expiryDate = "Aldrig";

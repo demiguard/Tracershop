@@ -27,7 +27,7 @@ class HandleModelDelete(HandlerBase):
 
   @classproperty
   def message_type(cls):
-    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODEL_DELETE
+    return WEBSOCKET_MESSAGE_TYPES.WEBSOCKET_MESSAGE_MODELS_DELETE
 
   async def __call__(self, consumer, message):
     user: User = await get_logged_in_user(consumer.scope)

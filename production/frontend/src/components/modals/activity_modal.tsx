@@ -428,7 +428,7 @@ export function ActivityModal({
         order.status = ORDER_STATUS.ACCEPTED;
       }
     }
-    return websocket.sendEditModel(DATA_ACTIVITY_ORDER, orders);
+    return websocket.sendEditModels(DATA_ACTIVITY_ORDER, orders);
   }
 
   function onClickToPDF() {
