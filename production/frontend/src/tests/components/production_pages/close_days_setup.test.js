@@ -6,7 +6,7 @@ import React from "react";
 
 import { act, render, screen, cleanup } from "@testing-library/react"
 
-import { testState } from "../../app_state.js";
+import { testState } from "../../app_state";
 
 import { CloseDaysPage } from "../../../components/production_pages/setup_pages/close_days_page.js";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
@@ -48,14 +48,14 @@ describe("Close Days Setup test", () => {
       </TracerShopContext>
     );
 
-    expect(screen.getByLabelText('calender-day-1')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-2')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-3')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-4')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-5')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-6')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-7')).toBeVisible()
-    expect(screen.getByLabelText('calender-day-13')).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-1')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-2')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-3')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-4')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-5')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-6')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-7')[0]).toBeVisible()
+    expect(screen.getAllByLabelText('calender-day-13')[0]).toBeVisible()
   });
 
   it("Create close date", async () => {
@@ -84,7 +84,7 @@ describe("Close Days Setup test", () => {
       screen.getByLabelText('calender-day-13').click();
     });
 
-    expect(websocket.sendDeleteModel).toHaveBeenCalled();
+    expect(websocket.sendDeleteModels).toHaveBeenCalled();
   })
 
 })

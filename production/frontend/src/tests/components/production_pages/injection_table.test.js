@@ -22,7 +22,7 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH,
 const module = jest.mock('../../../lib/tracer_websocket');
 const websocket = {
   send : jest.fn(() => Promise.resolve()),
-  sendEditModel : jest.fn(() => Promise.resolve())
+  sendEditModels : jest.fn(() => Promise.resolve())
 }
 
 const today = new Date(2020,4, 4, 10, 36, 44)
@@ -172,7 +172,7 @@ describe("Deadline Setup tests", () => {
       screen.getByTestId('accept-1').click();
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_INJECTION_ORDER, [expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_INJECTION_ORDER, [expect.objectContaining({
       id : 1, status : ORDER_STATUS.ACCEPTED
     })]);
   });
@@ -318,7 +318,7 @@ describe("Deadline Setup tests", () => {
       screen.getByTestId("accept-1").click();
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalled();
+    expect(websocket.sendEditModels).toHaveBeenCalled();
   });
 
 });

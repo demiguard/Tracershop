@@ -8,6 +8,7 @@ import { SetupShop } from "../production_pages/setup_pages/setup_shop"
 import { USER_GROUPS } from "../../lib/constants";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { MonitorPage } from "~/components/production_pages/monitoring_pages/monitor_home_page";
+import { CalenderColorMapContextProvider, PRODUCTION_ID } from "~/contexts/calender_color_map";
 
 const Pages = {
   orders : OrderPage,
@@ -52,7 +53,9 @@ export function ProductionSite({ logout, NavbarElements }) {
           NavbarElements={NavbarElements}
         />
         <Container fluid="xxl">
-          <ActivePage/>
+          <CalenderColorMapContextProvider endpoint_id={PRODUCTION_ID}>
+            <ActivePage/>
+          </CalenderColorMapContextProvider>
         </Container>
       </div>);
 }

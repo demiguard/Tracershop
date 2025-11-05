@@ -9,13 +9,13 @@ const tracer_websocket = jest.createMockFromModule('../tracer_websocket');
 const TracerWebSocket = jest.fn();
 TracerWebSocket.getMessage = jest.fn((kw) => {return {[WEBSOCKET_MESSAGE_TYPE] : kw}});
 TracerWebSocket.send = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
-TracerWebSocket.sendEditModel = jest.fn((message) => new Promise(async function(resolve) {resolve({
+TracerWebSocket.sendEditModels = jest.fn((message) => new Promise(async function(resolve) {resolve({
   [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS
 })}));
 TracerWebSocket.sendCreateModel = jest.fn((message) => new Promise(async function(resolve) {resolve({
   [WEBSOCKET_MESSAGE_STATUS] : SUCCESS_STATUS_CRUD.SUCCESS
 })}));
-TracerWebSocket.sendDeleteModel = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
+TracerWebSocket.sendDeleteModels = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendChangePassword = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendCreateExternalUser = jest.fn((message) => new Promise(async function(resolve) {resolve()}));
 TracerWebSocket.sendGetBookings = jest.fn((message) => Promise.resolve(new MESSAGE_READ_BOOKINGS({

@@ -186,7 +186,7 @@ describe("Customer modal list", () => {
     });
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
-    expect(websocket.sendEditModel).toHaveBeenCalled();
+    expect(websocket.sendEditModels).toHaveBeenCalled();
     //expect(screen.getByLabelText("time-slot-edit")).toBeVisible();
   });
 
@@ -213,7 +213,7 @@ describe("Customer modal list", () => {
       background : ERROR_BACKGROUND_COLOR
     });
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
   });
 
   it("Change endpoint while an Delivery Time was selected", () => {
@@ -309,7 +309,7 @@ describe("Customer modal list", () => {
 
     await act( async () => { screen.getByLabelText('customer-commit').click(9); });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_CUSTOMER,
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_CUSTOMER,
       expect.objectContaining({ id : 1, dispenser_id : 13 }));
   });
 
@@ -330,7 +330,7 @@ describe("Customer modal list", () => {
       screen.getByLabelText('customer-commit').click();
     });
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
     await waitFor(() => {
       expect(screen.getByLabelText('dispenser-input')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
     })
@@ -405,7 +405,7 @@ describe("Customer modal list", () => {
           ]
         }
       });})),
-      sendEditModel : jest.fn((message) => new Promise(async function(resolve) {resolve();})),
+      sendEditModels : jest.fn((message) => new Promise(async function(resolve) {resolve();})),
     };
 
     render(
@@ -458,7 +458,7 @@ describe("Customer modal list", () => {
 
     await act(async () => { screen.getByLabelText('commit-overhead').click(); });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(
       DATA_TRACER_MAPPING,
       expect.objectContaining({
         endpoint : 1,
@@ -484,7 +484,7 @@ describe("Customer modal list", () => {
       screen.getByLabelText('commit-overhead').click();
     });
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
     expect(screen.getByLabelText('overhead-input')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
   });
 

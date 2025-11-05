@@ -1,5 +1,5 @@
 import { ActivityDeliveryTimeSlot, ActivityProduction, ClosedDate, Deadline } from "../../dataclasses/dataclasses"
-import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, TimeStamp, getTimeString, datify, getToday, DateRange } from "../../lib/chronomancy"
+import { calculateDeadline, combineDateAndTimeStamp, compareTimeStamp, evalBitChain, expiredDeadline, getBitChain, TimeStamp, getTimeString, datify, getToday, DateRange, DaysInAMonth, LastMondayInLastMonth, sameDate } from "../../lib/chronomancy"
 import { DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "../../lib/constants"
 
 import { jest, expect } from '@jest/globals'
@@ -14,6 +14,25 @@ describe("Chronomancy test suit", () => {
   it("Datify, a date",() => {
     expect(datify(new Date())).toBeInstanceOf(Date);
     expect(datify("2023-11-11")).toBeInstanceOf(Date);
+  })
+
+  it("Dates in a month", () => {
+    expect(DaysInAMonth(new Date("2025-01-01"))).toBe(31);
+    expect(DaysInAMonth(new Date("2025-02-01"))).toBe(28);
+    expect(DaysInAMonth(new Date("2025-03-01"))).toBe(31);
+    expect(DaysInAMonth(new Date("2025-04-01"))).toBe(30);
+    expect(DaysInAMonth(new Date("2025-05-01"))).toBe(31);
+    expect(DaysInAMonth(new Date("2025-06-01"))).toBe(30);
+    expect(DaysInAMonth(new Date("2025-07-01"))).toBe(31);
+    expect(DaysInAMonth(new Date("2025-08-01"))).toBe(31);
+    expect(DaysInAMonth(new Date("2025-09-01"))).toBe(30);
+    expect(DaysInAMonth(new Date("2025-10-01"))).toBe(31);
+    expect(DaysInAMonth(new Date("2025-11-01"))).toBe(30);
+    expect(DaysInAMonth(new Date("2025-12-01"))).toBe(31);
+  })
+
+  it("Get mondays from last month", () => {
+    expect(sameDate(LastMondayInLastMonth(new Date("2025-01-01")), new Date("2024-12-30"))).toBeTruthy()
   })
 
   //#region Deadline Tests
@@ -208,5 +227,7 @@ describe("Chronomancy test suit", () => {
     expect(() => {
       dr.in_range();
     }).toThrow();
-  })
+  });
+
+
 })

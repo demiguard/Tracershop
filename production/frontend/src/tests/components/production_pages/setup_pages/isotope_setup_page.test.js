@@ -5,7 +5,7 @@
 import React from "react";
 import { render, screen, cleanup, fireEvent, act } from "@testing-library/react";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
-import { testState } from "~/tests/app_state.js";
+import { testState } from "~/tests/app_state";
 import { IsotopeSetupPage } from "~/components/production_pages/setup_pages/isotope_setup_page.js";
 
 const module = jest.mock('../../../../lib/tracer_websocket.js');

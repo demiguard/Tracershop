@@ -6,9 +6,8 @@
 */
 
 import { properModulo } from "~/lib/utils";
-import { ClosedDate, Deadline } from "../dataclasses/dataclasses";
-import { DAYS, DEADLINE_TYPES, WEEKLY_REPEAT_CHOICES } from "./constants";
-import { FormatDateStr, FormatTime, dateToDateString } from "./formatting";
+import { DAYS, DEADLINE_TYPES } from "./constants";
+import { FormatDateStr, dateToDateString } from "./formatting";
 
 /**
  * Function to get today, mainly here to make testing easier as this can be mocked
@@ -18,6 +17,9 @@ export function getToday(){
   return new Date()
 }
 
+export function dateIsValid(date: Date): boolean {
+  return isNaN(date.valueOf());
+}
 
 export function datify(dateLike){
   if(dateLike instanceof Date){
@@ -32,7 +34,7 @@ export class TimeStamp {
   /** @type {Number} */minute
   /** @type {Number} */second
 
-  constructor(arg_1, minute, second){
+  constructor(arg_1, minute?: string | number, second?: string | number){
     if(typeof(arg_1) == "string"){
       this.hour = Number(arg_1.substring(0, 2));
       this.minute = Number(arg_1.substring(3, 5));
@@ -246,13 +248,10 @@ export function combineDateAndTimeStamp(date, timestampBlueprint){
   return new Date(`${dateString}T${FormatDateStr(timestamp.hour)}:${FormatDateStr(timestamp.minute)}:${FormatDateStr(timestamp.second)}`)
 }
 
-export function getWeekNumber(date){
-  if(!(date instanceof Date)){
-    date = new Date(date);
-  }
-
+export function getWeekNumber(date: any){
+  date = datify(date);
   const oneJan = new Date(date.getFullYear(),0,1);
-  const numberOfDays = Math.floor((date - oneJan) / (24 * 60 * 60 * 1000));
+  const numberOfDays = Math.floor((date.valueOf() - oneJan.valueOf()) / (24 * 60 * 60 * 1000));
   return Math.ceil(( date.getDay() + 1 + numberOfDays) / 7);
 }
 
@@ -289,7 +288,7 @@ export function expiredDeadline(deadline, orderDate, closedDates,  now){
   return deadlineDate < now;
 }
 
-export function sameDate(date_1, date_2){
+export function sameDate(date_1 : Date, date_2: Date){
   return date_1.getDate() === date_2.getDate() &&
          date_1.getMonth() === date_2.getMonth() &&
          date_1.getFullYear() === date_2.getFullYear();
@@ -304,53 +303,57 @@ export function sameDate(date_1, date_2){
 * Note that there's not a +1 in front of the month, however here the next parcularity of
 * JavaScript's Date system. Months ARE zero indexed, so the +1 is kinda build in.
 * Then just select the date
-*
-*
-* @param {*} year
-* @param {*} month
-* @returns {Date}
 */
-export function DaysInAMonth(year, month){
- return new Date(year, month,0).getDate();
+export function DaysInAMonth(date: Date){
+ return new Date(date.getFullYear(), date.getMonth() + 1,0).getDate();
 };
 
-export function LastMondayInLastMonth(year,month){
+export function LastMondayInLastMonth(date: Date){
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
   let pivot = 1;
   let pivotDate = new Date(year, month, pivot);
   while((pivotDate.getDay() + 6) % 7 != DAYS.MONDAY){
     pivot--;
     pivotDate = new Date(year, month, pivot);
   }
-  return pivot;
+  return pivotDate;
 };
 
-export function FirstSundayInNextMonth(year,month){
-  let pivot = DaysInAMonth(year, month);
+export function FirstSundayInNextMonth(date: Date){
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  let pivot = DaysInAMonth(date);
   let pivotDate = new Date(year, month, pivot);
-  while(pivotDate.getDay() != DAYS.SUNDAY){
+  while((pivotDate.getDay() + 6) % 7 != DAYS.SUNDAY){
     pivot++;
     pivotDate = new Date(year, month, pivot);
   }
-  return pivot;
+  return pivotDate;
 };
 
 export class DateRange {
+  startDate : Date
+  endDate : Date
+
   constructor(startDate, endDate){
     this.startDate = datify(startDate)
     this.endDate = datify(endDate);
 
     // sorry for the verbose errors, but hopefully it's useful to some
-    if(isNaN(this.startDate) && isNaN(this.endDate)){
+    if(dateIsValid(this.startDate) && dateIsValid(this.endDate)){
       throw {
         error : `Unable to convert ${startDate} and ${endDate} to Date objects`
       }
     }
-    if(isNaN(this.startDate)){
+    if(dateIsValid(this.startDate)){
       throw {
         error : `Unable to convert ${startDate} to Date objects`
       }
     }
-    if(isNaN(this.endDate)){
+    if(dateIsValid(this.endDate)){
       throw {
         error : `Unable to convert ${endDate} to Date objects`
       }
@@ -360,6 +363,7 @@ export class DateRange {
   in_range(test_date){
     const date = datify(test_date);
 
+    //@ts-ignore
     if(isNaN(date)){
       throw {
         error : `Unable to convert ${test_date} to a Date object`
@@ -369,12 +373,7 @@ export class DateRange {
   }
 }
 
-/**
- *
- * @param {Date} date
- * @returns {DateRange}
- */
-export function getDateRangeForMonth(input_date){
+export function getDateRangeForMonth(input_date: any){
   const date = datify(input_date)
   const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
   const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
@@ -417,4 +416,12 @@ export function toLotDateString(dateInput){
 export function getHour(timeStamp){
   const t = timeStamp instanceof TimeStamp ? timeStamp : new TimeStamp(timeStamp);
   return t.hour;
+}
+
+export function addDaysToDates(date: Date, days_to_add: number){
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + days_to_add, date.getHours(), date.getMinutes(), date.getSeconds(), date.getMilliseconds());
+}
+
+export function fixDateTo12AClock(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0,0,0 );
 }

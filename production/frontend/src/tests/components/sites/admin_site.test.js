@@ -5,7 +5,7 @@
 import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { testState } from "../../app_state.js";
+import { testState } from "../../app_state";
 
 import { AdminSite } from "../../../components/sites/admin_site.js"
 import { DATABASE_ADMIN_PAGE, PROP_USER } from "../../../lib/constants.js";

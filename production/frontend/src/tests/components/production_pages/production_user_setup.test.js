@@ -5,7 +5,7 @@
 import React from "react";
 import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
-import { AppState, testState } from "~/tests/app_state.js";
+import { AppState, testState } from "~/tests/app_state";
 
 import { ProductionUserSetup } from "~/components/production_pages/setup_pages/production_user_setup.js"
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
@@ -69,7 +69,7 @@ describe("Production User Setup tests", () => {
       fireEvent.change(customerSelect6, {target : {value : ""}});
     })
 
-    expect(websocket.sendDeleteModel).toHaveBeenCalled()
+    expect(websocket.sendDeleteModels).toHaveBeenCalled()
   });
 
   it("Change user assignment", async () => {
@@ -85,7 +85,7 @@ describe("Production User Setup tests", () => {
       fireEvent.change(customerSelect6, {target : {value : "2"}});
     })
 
-    expect(websocket.sendDeleteModel).toHaveBeenCalled();
+    expect(websocket.sendDeleteModels).toHaveBeenCalled();
     expect(websocket.sendCreateModel).toHaveBeenCalled();
   });
 });

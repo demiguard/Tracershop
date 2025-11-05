@@ -10,7 +10,7 @@ import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
 
 const websocket = {
-  sendEditModel : jest.fn(() => Promise.resolve()),
+  sendEditModels : jest.fn(() => Promise.resolve()),
   sendCreateModel : jest.fn(() => Promise.resolve()),
 }
 

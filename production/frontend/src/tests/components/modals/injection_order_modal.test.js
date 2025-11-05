@@ -64,7 +64,7 @@ describe("Injection modal test suite", () =>{
       screen.getByRole('button', {name : "Accepter ordre"}).click()
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalled();
+    expect(websocket.sendEditModels).toHaveBeenCalled();
   });
 
   it("Standard Render test status 2", () => {

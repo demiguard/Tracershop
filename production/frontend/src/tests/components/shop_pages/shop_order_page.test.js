@@ -71,8 +71,7 @@ describe("Shop Order page test suite", () => {
     );
 
     await act(async () => {
-      const day = screen.getByLabelText('calender-day-7')
-      day.click();
+      screen.getByLabelText('calender-day-17').click();
     })
 
     expect(dispatchMock).toHaveBeenCalled();

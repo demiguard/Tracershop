@@ -8,7 +8,7 @@ import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 import { DEADLINE_TYPES  } from "~/lib/constants.js";
 import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants.js";
-import { testState } from "../../app_state.js";
+import { testState } from "../../app_state";
 
 import { DeadlineSetup, GlobalDeadlineValuesOptions } from "~/components/production_pages/setup_pages/deadline_setup.js";
 import userEvent from "@testing-library/user-event";
@@ -57,7 +57,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.click(await screen.findByLabelText("commit-1"));
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_DEADLINE, expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_DEADLINE, expect.objectContaining({
       id : 1,
       deadline_type : DEADLINE_TYPES.WEEKLY,
       deadline_time : "12:00:00",
@@ -79,7 +79,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : "0"}})
     })
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
   })
 
   it("Change deadline time", async () => {
@@ -110,7 +110,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.click(await screen.findByLabelText("commit-1"));
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_DEADLINE,
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_DEADLINE,
       expect.objectContaining({
         id : 1,
         deadline_type : DEADLINE_TYPES.DAILY,
@@ -135,7 +135,7 @@ describe("Deadline Setup tests", () => {
       expect(input.value).toBe("");
     })
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
   });
 
   it("Change deadline time", async () => {
@@ -150,7 +150,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : "2"}})
       fireEvent.click(await screen.findByLabelText("commit-2"));
     })
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_DEADLINE,expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_DEADLINE,expect.objectContaining({
       id : 2,
       deadline_type : DEADLINE_TYPES.WEEKLY,
       deadline_time : "12:00:00",
@@ -170,7 +170,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : "3"}})
     })
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
   });
 
   it("Change Deadline to Global", async () => {
@@ -185,7 +185,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.NO_OPTION}`}})
     })
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
   })
 
   it("Change Deadline to Global Activity deadline", async () => {
@@ -200,7 +200,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_ACTIVITY_DEADLINE}`}})
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
       global_activity_deadline : 3,
     }));
   });
@@ -217,7 +217,7 @@ describe("Deadline Setup tests", () => {
       fireEvent.change(input, {target : {value : `${GlobalDeadlineValuesOptions.GLOBAL_INJECTION_DEADLINE}`}})
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_SERVER_CONFIG, expect.objectContaining({
       global_injection_deadline : 3,
     }));
   });

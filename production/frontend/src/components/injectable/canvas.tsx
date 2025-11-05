@@ -41,8 +41,16 @@ export function StaticCanvas(props : CanvasProps){
 
   useEffect(() => {
     const canvas = ref.current;
+    if(!canvas){ return; }
     const context = canvas.getContext('2d');
-    draw(context, 0);
+    if(!context){ return; }
+
+    const animationFrameId = requestAnimationFrame(() => {
+      draw(context, 0);
+    })
+
+    return () => cancelAnimationFrame(animationFrameId);
+
   }, [draw]);
 
 

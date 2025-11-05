@@ -8,7 +8,7 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME,
   WEBSOCKET_MESSAGE_CHANGE_EXTERNAL_PASSWORD, WEBSOCKET_REFRESH,
   WEBSOCKET_MESSAGE_CREATE_EXTERNAL_USER, WEBSOCKET_MESSAGE_DELETE_STATE,
   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_MODEL_CREATE,
-  WEBSOCKET_MESSAGE_MODEL_DELETE, WEBSOCKET_MESSAGE_MODEL_EDIT,
+  WEBSOCKET_MESSAGE_MODELS_EDIT, WEBSOCKET_MESSAGE_MODELS_DELETE,
   WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE,
   WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE, WEBSOCKET_MESSAGE_UPDATE_STATE,
   WEBSOCKET_SERVER_MESSAGES, WEBSOCKET_MESSAGE_READ_STATE, DATA_CUSTOMER,
@@ -18,7 +18,6 @@ import { TracerWebSocket } from "~/lib/tracer_websocket";
 import { MessageChannel } from 'node:worker_threads'
 import { DeleteState, UpdateWebsocketConnectionState } from "~/lib/state_actions";
 import { jest } from "@jest/globals"
-import { User } from "~/dataclasses/dataclasses";
 
 let /** @type { WS } */ server = null;
 let websocket = null;
@@ -192,11 +191,11 @@ describe("tracer websocket test suite", () => {
   it("Send method - edit model",  () => {
     const dataType = "dataType";
     const data = [{id : 1, data: "foo bar"}];
-    websocket.sendEditModel(dataType, data);
+    websocket.sendEditModels(dataType, data);
 
     const expectedMessage = {
       [WEBSOCKET_DATATYPE] : dataType,
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_EDIT,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODELS_EDIT,
       [WEBSOCKET_DATA] : data,
     };
     // we send a message on creation
@@ -219,10 +218,10 @@ describe("tracer websocket test suite", () => {
 
   it("Send Delete Models - id", async () => {
     const dataType = "asdf"
-    websocket.sendDeleteModel(dataType, 1);
+    websocket.sendDeleteModels(dataType, 1);
 
     await expect(server).toReceiveMessage(expect.objectContaining({
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_DELETE,
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODELS_DELETE,
       [WEBSOCKET_DATA_ID] : [1],
       [WEBSOCKET_DATATYPE] : dataType
     }));
@@ -230,11 +229,11 @@ describe("tracer websocket test suite", () => {
 
   it("Send Delete Models - model", async () => {
     const dataType = "asdf"
-    websocket.sendDeleteModel(dataType, {id : 1});
+    websocket.sendDeleteModels(dataType, {id : 2});
 
     const received_message = await server.nextMessage
 
-    await server.send({
+    server.send({
       [WEBSOCKET_DATA_ID] : [1],
       [WEBSOCKET_DATATYPE] : dataType,
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_DELETE_STATE,
@@ -251,7 +250,7 @@ describe("tracer websocket test suite", () => {
 
   it("Send Delete Models - array of models model", async () => {
     const dataType = "asdf"
-    websocket.sendDeleteModel(dataType, [{id : 1}, {id : 2}, 3]);
+    websocket.sendDeleteModels(dataType, [{id : 1}, {id : 2}, 3]);
 
     const received_message = await server.nextMessage
 

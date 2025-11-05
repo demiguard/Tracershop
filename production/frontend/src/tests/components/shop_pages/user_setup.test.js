@@ -173,7 +173,7 @@ describe("User setup test", () => {
       send : jest.fn(() => Promise.resolve(
         {status : SUCCESS_STATUS_CRUD.SUCCESS}
       )),
-      sendDeleteModel : jest.fn(() => {})
+      sendDeleteModels : jest.fn(() => {})
     };
 
     render(
@@ -186,6 +186,6 @@ describe("User setup test", () => {
       screen.getByLabelText('user-assignment-1').click();
     });
     // No idea why this doesn't get called!
-    //expect(websocket.sendDeleteModel).toHaveBeenCalled();
+    //expect(websocket.sendDeleteModels).toHaveBeenCalled();
   });
 });

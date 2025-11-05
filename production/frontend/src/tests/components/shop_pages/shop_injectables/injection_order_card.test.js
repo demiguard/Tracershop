@@ -161,7 +161,7 @@ describe("Injection order card test suite", () => {
       screen.getByLabelText('commit-injection-1').click();
     });
 
-    expect(websocket.sendEditModel).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
+    expect(websocket.sendEditModels).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
       tracer : 5,
       injections : 2,
       delivery_time : "13:45:00",
@@ -212,7 +212,7 @@ describe("Injection order card test suite", () => {
         createIcon.click();
       })
 
-      expect(websocket.sendEditModel).not.toBeCalled();
+      expect(websocket.sendEditModels).not.toBeCalled();
       expect(websocket.sendCreateModel).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
         tracer : 5,
         injections : 2,
@@ -264,7 +264,7 @@ describe("Injection order card test suite", () => {
         createIcon.click();
       })
 
-      expect(websocket.sendEditModel).not.toBeCalled();
+      expect(websocket.sendEditModels).not.toBeCalled();
       expect(websocket.sendCreateModel).not.toBeCalled();
     });
 
@@ -308,6 +308,6 @@ describe("Injection order card test suite", () => {
       screen.getByLabelText('delete-injection-1').click();
     });
 
-    expect(websocket.sendDeleteModel).toHaveBeenCalled();
+    expect(websocket.sendDeleteModels).toHaveBeenCalled();
   });
 })

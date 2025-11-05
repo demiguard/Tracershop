@@ -171,11 +171,13 @@ export class TracerWebSocket {
       }
     })();
 
-    return this.send({
+    const server_message = {
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODELS_DELETE,
       [WEBSOCKET_DATA_ID] : ids,
       [WEBSOCKET_DATATYPE] : modelType,
-    });
+    };
+
+    return this.send(server_message);
   }
 
   sendChangePassword(userID, newPassword){

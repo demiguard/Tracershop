@@ -5,7 +5,7 @@
 import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
-import { testState } from "~/tests/app_state.js";
+import { testState } from "~/tests/app_state";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 import { ERROR_MISSING_SERIES_DESCRIPTION, ProcedureTable } from "~/components/shop_pages/shop_injectables/procedure_table.js";
 import { DATA_PROCEDURE, SUCCESS_STATUS_CRUD } from "~/lib/shared_constants.js";
@@ -174,7 +174,7 @@ describe("Procedure Table test suite", () => {
       fireEvent.click(editButton);
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_PROCEDURE, expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_PROCEDURE, expect.objectContaining({
       id : 1,
       series_description : 1,
       tracer : 1,

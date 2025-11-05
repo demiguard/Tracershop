@@ -3,9 +3,8 @@ import propTypes from 'prop-types';
 
 import { Calender } from '../calender'
 import { useTracershopState } from '~/contexts/tracer_shop_context'
-import { TimeSlotBitChain } from '~/lib/data_structures';
-
 import { getId } from '~/lib/utils';
+import { TimeSlotBitChain } from '~/lib/data_structures/bit_chains';
 
 /**
  *

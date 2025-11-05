@@ -66,7 +66,17 @@ export const testState = new TracershopState(
   vials,
 )
 
-export function getModifiedTestState(modifications) {
+/**
+ * Modifies the test state to have any desired modifications
+ *
+ * @Example
+ * // Returns the test state with today as today
+ *
+ * const modifiedTestState = getModifiedTestState({ today : new Date()})
+ */
+export function getModifiedTestState(modifications: any) {
+
+  //@ts-ignore
   const customState = new TracershopState();
   Object.assign(customState, testState);
   if(modifications){

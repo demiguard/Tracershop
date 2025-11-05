@@ -8,7 +8,7 @@ import { jest } from '@jest/globals'
 import { TracerPage } from "../../../components/production_pages/setup_pages/tracer_page"
 import { TRACER_TYPE } from "~/lib/constants.js";
 import { DATA_TRACER } from "~/lib/shared_constants";
-import { testState } from "../../app_state.js"
+import { testState } from "../../app_state"
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 
 
@@ -49,7 +49,7 @@ describe("Tracer setup Page test suite", () => {
     }
 
     expect(websocket.sendCreateModel).not.toHaveBeenCalled();
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
   });
 
   it("Restore Tracer", async () => {
@@ -67,7 +67,7 @@ describe("Tracer setup Page test suite", () => {
       screen.getByLabelText('restore-5').click();
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(
       DATA_TRACER,
       expect.objectContaining({id : 5, archived : false}
     ));
@@ -87,7 +87,7 @@ describe("Tracer setup Page test suite", () => {
 
     await act(async () => { screen.getByLabelText('commit-tracer-1').click(); });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER,
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_TRACER,
       expect.objectContaining({id : 1, clinical_name : "New Name"}))
   })
 
@@ -159,7 +159,7 @@ describe("Tracer setup Page test suite", () => {
       screen.getByLabelText('archive-8').click();
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_TRACER, expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_TRACER, expect.objectContaining({
       id : 8,
       archived : true
     }));

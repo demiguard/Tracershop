@@ -26,6 +26,7 @@ export const COLORS = {
   red2:"#FBB",
   green1: "#5F5",
   yellow1: "#FF5",
+  visual_error : "#F5F"
 }
 
 

@@ -16,7 +16,7 @@ export class Address extends Dataclass {
   port
   description
 
-  constructor(id, ip, port, description, ) {
+  constructor(id?, ip?, port?, description?, ) {
     super()
     this.id=id
     this.ip=ip
@@ -57,7 +57,7 @@ export class ActivityOrder extends Dataclass {
   ordered_by
   freed_by
 
-  constructor(id, ordered_activity, delivery_date, status, comment, ordered_time_slot, moved_to_time_slot, freed_datetime, ordered_by, freed_by, ) {
+  constructor(id?, ordered_activity?, delivery_date?, status?, comment?, ordered_time_slot?, moved_to_time_slot?, freed_datetime?, ordered_by?, freed_by?, ) {
     super()
     this.id=id
     this.ordered_activity=ordered_activity
@@ -113,7 +113,7 @@ export class Booking extends Dataclass {
   start_time
   start_date
 
-  constructor(id, status, location, procedure, accession_number, start_time, start_date, ) {
+  constructor(id?, status?, location?, procedure?, accession_number?, start_time?, start_date?, ) {
     super()
     this.id=id
     this.status=status
@@ -155,7 +155,7 @@ export class ClosedDate extends Dataclass {
   id
   close_date
 
-  constructor(id, close_date, ) {
+  constructor(id?, close_date?, ) {
     super()
     this.id=id
     this.close_date=close_date
@@ -190,7 +190,7 @@ export class Customer extends Dataclass {
   billing_zip_code
   active_directory_code
 
-  constructor(id, short_name, long_name, dispenser_id, billing_address, billing_city, billing_email, billing_phone, billing_zip_code, active_directory_code, ) {
+  constructor(id?, short_name?, long_name?, dispenser_id?, billing_address?, billing_city?, billing_email?, billing_phone?, billing_zip_code?, active_directory_code?, ) {
     super()
     this.id=id
     this.short_name=short_name
@@ -243,7 +243,7 @@ export class Deadline extends Dataclass {
   deadline_time
   deadline_day
 
-  constructor(id, deadline_type, deadline_time, deadline_day, ) {
+  constructor(id?, deadline_type?, deadline_time?, deadline_day?, ) {
     super()
     this.id=id
     this.deadline_type=deadline_type
@@ -280,7 +280,7 @@ export class ActivityDeliveryTimeSlot extends Dataclass {
   production_run
   expiration_date
 
-  constructor(id, weekly_repeat, delivery_time, destination, production_run, expiration_date, ) {
+  constructor(id?, weekly_repeat?, delivery_time?, destination?, production_run?, expiration_date?, ) {
     super()
     this.id=id
     this.weekly_repeat=weekly_repeat
@@ -320,7 +320,7 @@ export class DicomEndpoint extends Dataclass {
   address
   ae_title
 
-  constructor(id, address, ae_title, ) {
+  constructor(id?, address?, ae_title?, ) {
     super()
     this.id=id
     this.address=address
@@ -355,7 +355,7 @@ export class DeliveryEndpoint extends Dataclass {
   name
   owner
 
-  constructor(id, address, city, zip_code, phone, name, owner, ) {
+  constructor(id?, address?, city?, zip_code?, phone?, name?, owner?, ) {
     super()
     this.id=id
     this.address=address
@@ -408,7 +408,7 @@ export class InjectionOrder extends Dataclass {
   freed_datetime
   freed_by
 
-  constructor(id, delivery_time, delivery_date, injections, status, tracer_usage, comment, ordered_by, endpoint, tracer, lot_number, freed_datetime, freed_by, ) {
+  constructor(id?, delivery_time?, delivery_date?, injections?, status?, tracer_usage?, comment?, ordered_by?, endpoint?, tracer?, lot_number?, freed_datetime?, freed_by?, ) {
     super()
     this.id=id
     this.delivery_time=delivery_time
@@ -472,7 +472,7 @@ export class Isotope extends Dataclass {
   atomic_letter
   metastable
 
-  constructor(id, atomic_number, atomic_mass, halflife_seconds, atomic_letter, metastable, ) {
+  constructor(id?, atomic_number?, atomic_mass?, halflife_seconds?, atomic_letter?, metastable?, ) {
     super()
     this.id=id
     this.atomic_number=atomic_number
@@ -514,7 +514,7 @@ export class IsotopeDelivery extends Dataclass {
   delivery_endpoint
   delivery_time
 
-  constructor(id, production, weekly_repeat, delivery_endpoint, delivery_time, ) {
+  constructor(id?, production?, weekly_repeat?, delivery_endpoint?, delivery_time?, ) {
     super()
     this.id=id
     this.production=production
@@ -557,7 +557,7 @@ export class IsotopeOrder extends Dataclass {
   freed_by
   freed_datetime
 
-  constructor(id, status, order_by, ordered_activity_MBq, destination, delivery_date, comment, freed_by, freed_datetime, ) {
+  constructor(id?, status?, order_by?, ordered_activity_MBq?, destination?, delivery_date?, comment?, freed_by?, freed_datetime?, ) {
     super()
     this.id=id
     this.status=status
@@ -608,7 +608,7 @@ export class IsotopeProduction extends Dataclass {
   production_time
   expiry_time
 
-  constructor(id, isotope, production_day, production_time, expiry_time, ) {
+  constructor(id?, isotope?, production_day?, production_time?, expiry_time?, ) {
     super()
     this.id=id
     this.isotope=isotope
@@ -649,7 +649,7 @@ export class IsotopeVial extends Dataclass {
   vial_activity
   isotope
 
-  constructor(id, batch_nr, delivery_with, volume, calibration_datetime, vial_activity, isotope, ) {
+  constructor(id?, batch_nr?, delivery_with?, volume?, calibration_datetime?, vial_activity?, isotope?, ) {
     super()
     this.id=id
     this.batch_nr=batch_nr
@@ -693,7 +693,7 @@ export class ReleaseRight extends Dataclass {
   releaser
   product
 
-  constructor(id, expiry_date, releaser, product, ) {
+  constructor(id?, expiry_date?, releaser?, product?, ) {
     super()
     this.id=id
     this.expiry_date=expiry_date
@@ -726,7 +726,7 @@ export class LegacyProductionMember extends Dataclass {
   id
   legacy_production_username
 
-  constructor(id, legacy_production_username, ) {
+  constructor(id?, legacy_production_username?, ) {
     super()
     this.id=id
     this.legacy_production_username=legacy_production_username
@@ -755,7 +755,7 @@ export class Location extends Dataclass {
   endpoint
   common_name
 
-  constructor(id, location_code, endpoint, common_name, ) {
+  constructor(id?, location_code?, endpoint?, common_name?, ) {
     super()
     this.id=id
     this.location_code=location_code
@@ -789,7 +789,7 @@ export class Message extends Dataclass {
   message
   expiration
 
-  constructor(id, message, expiration, ) {
+  constructor(id?, message?, expiration?, ) {
     super()
     this.id=id
     this.message=message
@@ -820,7 +820,7 @@ export class MessageAssignment extends Dataclass {
   message_id
   customer_id
 
-  constructor(id, message_id, customer_id, ) {
+  constructor(id?, message_id?, customer_id?, ) {
     super()
     this.id=id
     this.message_id=message_id
@@ -854,7 +854,7 @@ export class TelemetryRecord extends Dataclass {
   status
   expire_datetime
 
-  constructor(id, request_type, created, latency_ms, status, expire_datetime, ) {
+  constructor(id?, request_type?, created?, latency_ms?, status?, expire_datetime?, ) {
     super()
     this.id=id
     this.request_type=request_type
@@ -893,7 +893,7 @@ export class TelemetryRequest extends Dataclass {
   message_key
   display_name
 
-  constructor(id, message_key, display_name, ) {
+  constructor(id?, message_key?, display_name?, ) {
     super()
     this.id=id
     this.message_key=message_key
@@ -930,7 +930,7 @@ export class Tracer extends Dataclass {
   marketed
   is_static_instance
 
-  constructor(id, shortname, clinical_name, isotope, tracer_type, vial_tag, archived, marketed, is_static_instance, ) {
+  constructor(id?, shortname?, clinical_name?, isotope?, tracer_type?, vial_tag?, archived?, marketed?, is_static_instance?, ) {
     super()
     this.id=id
     this.shortname=shortname
@@ -980,7 +980,7 @@ export class TracerCatalogPage extends Dataclass {
   max_injections
   overhead_multiplier
 
-  constructor(id, endpoint, tracer, max_injections, overhead_multiplier, ) {
+  constructor(id?, endpoint?, tracer?, max_injections?, overhead_multiplier?, ) {
     super()
     this.id=id
     this.endpoint=endpoint
@@ -1019,7 +1019,7 @@ export class Printer extends Dataclass {
   port
   label_printer
 
-  constructor(id, name, ip, port, label_printer, ) {
+  constructor(id?, name?, ip?, port?, label_printer?, ) {
     super()
     this.id=id
     this.name=name
@@ -1059,7 +1059,7 @@ export class Procedure extends Dataclass {
   tracer
   owner
 
-  constructor(id, series_description, tracer_units, delay_minutes, tracer, owner, ) {
+  constructor(id?, series_description?, tracer_units?, delay_minutes?, tracer?, owner?, ) {
     super()
     this.id=id
     this.series_description=series_description
@@ -1100,7 +1100,7 @@ export class ProcedureIdentifier extends Dataclass {
   description
   is_pet
 
-  constructor(id, code, description, is_pet, ) {
+  constructor(id?, code?, description?, is_pet?, ) {
     super()
     this.id=id
     this.code=code
@@ -1136,7 +1136,7 @@ export class ActivityProduction extends Dataclass {
   production_time
   is_static_instance
 
-  constructor(id, production_day, tracer, production_time, is_static_instance, ) {
+  constructor(id?, production_day?, tracer?, production_time?, is_static_instance?, ) {
     super()
     this.id=id
     this.production_day=production_day
@@ -1172,7 +1172,7 @@ export class SecondaryEmail extends Dataclass {
   email
   record_user
 
-  constructor(id, email, record_user, ) {
+  constructor(id?, email?, record_user?, ) {
     super()
     this.id=id
     this.email=email
@@ -1213,7 +1213,7 @@ export class ServerConfiguration extends Dataclass {
   active_printer
   weekly_close_days
 
-  constructor(id, SMTPServer, DateRange, AdminPhoneNumber, AdminEmail, global_activity_deadline, global_injection_deadline, ping_service_ae_tile, ris_dicom_endpoint, record_telemetry, active_label_printer, active_printer, weekly_close_days, ) {
+  constructor(id?, SMTPServer?, DateRange?, AdminPhoneNumber?, AdminEmail?, global_activity_deadline?, global_injection_deadline?, ping_service_ae_tile?, ris_dicom_endpoint?, record_telemetry?, active_label_printer?, active_printer?, weekly_close_days?, ) {
     super()
     this.id=id
     this.SMTPServer=SMTPServer
@@ -1275,7 +1275,7 @@ export class ServerLog extends Dataclass {
   message
   level
 
-  constructor(id, created, message, level, ) {
+  constructor(id?, created?, message?, level?, ) {
     super()
     this.id=id
     this.created=created
@@ -1311,7 +1311,7 @@ export class User extends Dataclass {
   user_group
   active
 
-  constructor(last_login, id, username, user_group, active, ) {
+  constructor(last_login?, id?, username?, user_group?, active?, ) {
     super()
     this.last_login=last_login
     this.id=id
@@ -1348,7 +1348,7 @@ export class UserAssignment extends Dataclass {
   user
   customer
 
-  constructor(id, user, customer, ) {
+  constructor(id?, user?, customer?, ) {
     super()
     this.id=id
     this.user=user
@@ -1385,7 +1385,7 @@ export class Vial extends Dataclass {
   assigned_to
   owner
 
-  constructor(id, tracer, activity, volume, lot_number, fill_time, fill_date, assigned_to, owner, ) {
+  constructor(id?, tracer?, activity?, volume?, lot_number?, fill_time?, fill_date?, assigned_to?, owner?, ) {
     super()
     this.id=id
     this.tracer=tracer
@@ -1503,7 +1503,7 @@ export class TracershopState {
   user_assignment : Map<number, UserAssignment>
   vial : Map<number, Vial>
 
-  constructor(logged_in_user, today, address, activity_orders, closed_date, customer, deadline, deliver_times, dicom_endpoint, delivery_endpoint, injection_orders, isotopes, isotope_delivery, isotope_order, isotope_production, isotope_vial, release_right, legacy_production_member, location, message, message_assignment, tracer, tracer_mapping, printer, procedure, procedure_identifier, production, secondary_email, server_config, server_log, user, user_assignment, vial, ){
+  constructor(logged_in_user?, today?, address?, activity_orders?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, server_log?, user?, user_assignment?, vial?, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED

@@ -143,7 +143,7 @@ describe("Freeing Rights Page test suite", () => {
       deleteButton.click()
     })
 
-    expect(websocket.sendDeleteModel).toBeCalled();
+    expect(websocket.sendDeleteModels).toBeCalled();
   });
 
   it("Change Sorting Methods", () => {

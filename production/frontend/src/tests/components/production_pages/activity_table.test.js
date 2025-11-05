@@ -6,7 +6,7 @@ import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
 import { ActivityTable } from "~/components/production_pages/activity_table.js"
 import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants.js";
-import { getModifiedTestState, testState } from "~/tests/app_state.js";
+import { getModifiedTestState, testState } from "~/tests/app_state";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 

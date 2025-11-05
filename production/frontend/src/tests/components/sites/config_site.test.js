@@ -6,7 +6,7 @@ import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState } from "../../app_state.js";
+import { AppState } from "../../app_state";
 import { db } from "../../../lib/local_storage_driver.js";
 import { ConfigSite } from "../../../components/sites/config_site.js"
 import { PROP_USER } from "../../../lib/constants.js";

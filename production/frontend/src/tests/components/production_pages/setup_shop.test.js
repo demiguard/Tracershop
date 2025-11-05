@@ -5,7 +5,7 @@
 import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
 
-import { AppState } from "../../app_state.js";
+import { AppState } from "../../app_state";
 import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js";
 import { WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 

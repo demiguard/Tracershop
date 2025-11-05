@@ -154,9 +154,9 @@ class Command(BaseCommand):
         for field in model._meta.fields:
           if field.name in model.exclude:
             continue
-          out.write(f"{field.name}, ")
+          out.write(f"{field.name}?, ")
         for derived_property in model.derived_properties: # type: ignore
-          out.write(f"{derived_property}, ")
+          out.write(f"{derived_property}?, ")
         out.write(") {\n")
         out.write("    super()\n")
         for field in model._meta.fields:
@@ -210,10 +210,10 @@ class Command(BaseCommand):
         if key not in shared_constants.EXCLUDED_STATE_MODELS:
           out.write(f"  {key} : Map<number, {model.__name__}>\n")
 
-      out.write("\n  constructor(logged_in_user, today, ")
+      out.write("\n  constructor(logged_in_user?, today?, ")
       for key, model in MODELS.items():
         if key not in shared_constants.EXCLUDED_STATE_MODELS:
-          out.write(f"{key}, ")
+          out.write(f"{key}?, ")
       out.write("){\n    this.logged_in_user=logged_in_user\n")
       out.write("    this.today=today\n")
       out.write("   this.readyState = WebSocket.CLOSED\n")

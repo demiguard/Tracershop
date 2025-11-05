@@ -9,10 +9,11 @@ import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS } from "~/lib/shared_const
 
 import PropTypes from 'prop-types'
 
-import { FirstSundayInNextMonth, LastMondayInLastMonth, datify, expiredDeadline } from "~/lib/chronomancy";
+import { FirstSundayInNextMonth, LastMondayInLastMonth, addDaysToDates, datify, expiredDeadline, fixDateTo12AClock } from "~/lib/chronomancy";
 import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { dateToDateString } from "~/lib/formatting";
-import { BitChain, OrderDateMapping } from "~/lib/data_structures";
+import { OrderDateMapping } from "~/lib/data_structures";
+import { BitChain } from "~/lib/data_structures/bit_chains";
 import { MonthSelector } from "~/components/injectable/month_selector";
 import { UpdateToday } from "~/lib/state_actions";
 import { FONT_SIZE } from "~/lib/styles";
@@ -87,8 +88,7 @@ const CALENDER_PROP_TYPES = {
  * @returns {Element}
  */
 function Day({date, calender_date, colorMap, calender_on_day_click, activeMonth}) {
-   const dateObject  = new Date(activeMonth.getFullYear(), activeMonth.getMonth(), date, 12);
-   const dateString = dateToDateString(dateObject)
+   const dateString = dateToDateString(date)
    const [backGroundColor, borderColor] = (colorMap.has(dateString)) ?  colorMap.get(dateString) : ["#FF00FF", "#FF00FF"];
 
    const styles = {
@@ -96,7 +96,7 @@ function Day({date, calender_date, colorMap, calender_on_day_click, activeMonth}
     borderColor : borderColor,
     backgroundColor : backGroundColor,
    }
-   if (compareDates(calender_date, dateObject)){
+   if (compareDates(calender_date, date)){
      styles.fontFamily = "MariPoster"
      styles.fontSize = "1.5em";
    }
@@ -104,8 +104,8 @@ function Day({date, calender_date, colorMap, calender_on_day_click, activeMonth}
    return (
      <div
        style={styles}
-       aria-label={`calender-day-${dateObject.getDate()}`}
-       onClick={() => calender_on_day_click(dateObject)}> {dateObject.getDate()}</div>
+       aria-label={`calender-day-${date.getDate()}`}
+       onClick={() => calender_on_day_click(date)}> {date.getDate()}</div>
    );
  }
 
@@ -119,13 +119,13 @@ function Week({activeMonth,
 }) {
   return(
     <div style={WEEK_STYLE} className="d-flex">
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate}/>
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 1}/>
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 2}/>
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 3}/>
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 4}/>
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 5}/>
-      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={startingDate + 6}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 0) }/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 1)}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 2)}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 3)}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 4)}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 5)}/>
+      <Day calender_date={calender_date} activeMonth={activeMonth} calender_on_day_click={calender_on_day_click} colorMap={colorMap} date={addDaysToDates(startingDate, 6)}/>
     </div>
   );
 }
@@ -137,6 +137,7 @@ export function Calender({calender_date,
                           filter_injection_orders,
                           bit_chain,
                         }) {
+
   const state = useTracershopState();
   const websocket = useWebsocket();
   const dispatch = useTracershopDispatch();
@@ -150,9 +151,6 @@ export function Calender({calender_date,
   ){
     const colorMap = new Map();
 
-    const year = activeMonth.getFullYear();
-    const month = activeMonth.getMonth();
-
     const server_config = state.server_config.get(1)
     const activity_deadline = (server_config !== undefined) ?
       state.deadline.get(server_config.global_activity_deadline) : undefined;
@@ -162,9 +160,9 @@ export function Calender({calender_date,
     const dateInjectionMapping = new OrderDateMapping([...state.injection_orders.values()].filter(filter_injection_orders));
     const dateActivityMapping = new OrderDateMapping([...state.activity_orders.values()].filter(filter_activity_orders));
 
-    const lastMondayOffset = new Date(year, month -1,  LastMondayInLastMonth(year, month - 1));
+    const lastMondayOffset = LastMondayInLastMonth(activeMonth);
     let pivot = lastMondayOffset;
-    const firstSundayOffset = new Date(year, month + 1,  FirstSundayInNextMonth(year, month + 1));
+    const firstSundayOffset = addDaysToDates(FirstSundayInNextMonth(activeMonth), 1);
 
     while(!compareDates(pivot, firstSundayOffset)){
       const dateString = dateToDateString(pivot);
@@ -206,23 +204,24 @@ export function Calender({calender_date,
    * @param {Number} changeBy - This number indicates how many months you wish to change by
    */
   function changeMonthCallback(newMonth) {
-    dispatch(new UpdateToday(datify(newMonth), websocket))
+    dispatch(new UpdateToday(datify(newMonth), websocket));
   }
 
-  let startingDate = LastMondayInLastMonth(activeMonth.getFullYear(), activeMonth.getMonth())
-  const EndingDate = FirstSundayInNextMonth(activeMonth.getFullYear(), activeMonth.getMonth())
+  let startingDate = fixDateTo12AClock(LastMondayInLastMonth(activeMonth));
+  const endingDate = fixDateTo12AClock(FirstSundayInNextMonth(activeMonth));
   const weeks = [];
 
-  while (startingDate <= EndingDate) {
+  while (startingDate <= endingDate) {
     weeks.push((<Week
                   calender_date={calender_date}
                   calender_on_day_click={calender_on_day_click}
                   activeMonth={activeMonth}
                   colorMap={colorMap}
                   startingDate={startingDate}
-                  key={weeks.length + 1}
+                  key={weeks.length}
                 />));
-    startingDate += DAYS_PER_WEEK;
+    startingDate = addDaysToDates(startingDate, DAYS_PER_WEEK)
+
   }
 
   return (

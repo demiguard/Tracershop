@@ -13,7 +13,7 @@ import { Calender } from '~/components/injectable/calender'
 import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK } from "~/lib/constants";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { ProductionBitChain } from "~/lib/data_structures";
-import { testState } from "~/tests/app_state";
+import { getModifiedTestState, testState } from "~/tests/app_state";
 import { UpdateToday } from "~/lib/state_actions";
 
 let websocket = null
@@ -45,8 +45,9 @@ const calender_props = {
 
 describe("Calender render Tests", () => {
   it("Standard RenderTest", () => {
+    const modifiedState = getModifiedTestState({ today : date });
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={modifiedState} websocket={websocket}>
         <Calender {...calender_props}/>
       </TracerShopContext>
     );
@@ -66,8 +67,10 @@ describe("Calender render Tests", () => {
   });
 
   it("Click on 15 of june", () => {
+    const modifiedState = getModifiedTestState({ today : date });
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={modifiedState} websocket={websocket}>
         <Calender {...calender_props}/>
       </TracerShopContext>
     );
@@ -78,8 +81,10 @@ describe("Calender render Tests", () => {
   });
 
   it("Increase Month", async () => {
+    const modifiedState = getModifiedTestState({ today : date });
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
+      <TracerShopContext tracershop_state={modifiedState} websocket={websocket} dispatch={dispatch}>
         <Calender {...calender_props}/>
       </TracerShopContext>
     );
@@ -91,8 +96,10 @@ describe("Calender render Tests", () => {
   });
 
   it("Decrease Month", async () => {
+    const modifiedState = getModifiedTestState({ today : date });
+
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatch}>
+      <TracerShopContext tracershop_state={modifiedState} websocket={websocket} dispatch={dispatch}>
         <Calender {...calender_props}/>
       </TracerShopContext>
     );

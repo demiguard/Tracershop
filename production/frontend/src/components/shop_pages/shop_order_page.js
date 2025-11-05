@@ -26,6 +26,7 @@ import { numberfy, toMapping } from "~/lib/utils";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 import { StateType } from "~/lib/constants";
+import { CalenderColorMapContextProvider } from "~/contexts/calender_color_map";
 
 const Content = {
   Manuel : OrderReview,
@@ -283,12 +284,14 @@ export function ShopOrderPage ({relatedCustomer}){
         </Row>
         <Row>
           <div>
-            <ShopCalender
-              active_date={state.today}
-              active_endpoint={activeEndpoint}
-              on_day_click={setActiveDate}
-              time_slots={calenderTimeSlots}
-            />
+            <CalenderColorMapContextProvider endpoint_id={activeEndpoint}>
+              <ShopCalender
+                active_date={state.today}
+                active_endpoint={activeEndpoint}
+                on_day_click={setActiveDate}
+                time_slots={calenderTimeSlots}
+              />
+            </CalenderColorMapContextProvider>
           </div>
         </Row>
       </Col>

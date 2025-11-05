@@ -166,7 +166,7 @@ describe("Activity Modal Test", () => {
       screen.getByRole('button', {name : "Accepter"}).click();
     })
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, [
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER, [
       expect.objectContaining({ status : ORDER_STATUS.ACCEPTED }),
       expect.objectContaining({ status : ORDER_STATUS.ACCEPTED }),
       expect.objectContaining({ status : ORDER_STATUS.ACCEPTED }),
@@ -440,7 +440,7 @@ describe("Activity Modal Test", () => {
       screen.getByLabelText("vial-commit-7").click();
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalled();
+    expect(websocket.sendEditModels).toHaveBeenCalled();
   });
 
   it("edit a vial failed", async () => {
@@ -490,7 +490,7 @@ describe("Activity Modal Test", () => {
       screen.getByLabelText("vial-commit-7").click()
     });
 
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
     expect(screen.getByLabelText('lot_number-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
     expect(screen.getByLabelText('fill_time-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
     expect(screen.getByLabelText('volume-7')).toHaveStyle({background : ERROR_BACKGROUND_COLOR});
@@ -762,7 +762,7 @@ describe("Activity Modal Test", () => {
       screen.getByLabelText("edit-accept-order-activity-5").click()
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,
       expect.objectContaining({
         ordered_activity : 59420
       })
@@ -805,12 +805,12 @@ describe("Activity Modal Test", () => {
       const editForm = screen.getByLabelText("edit-form-order-activity-5")
       fireEvent.change(editForm,{target :{ value : "a59420"}});
     });
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
     // Accept the Edit
     await act(async () => {
       screen.getByLabelText("edit-accept-order-activity-5").click();
     });
-    expect(websocket.sendEditModel).not.toHaveBeenCalled();
+    expect(websocket.sendEditModels).not.toHaveBeenCalled();
     expect(screen.getByLabelText('edit-form-order-activity-5')).toHaveStyle({
       background : ERROR_BACKGROUND_COLOR
     });
@@ -860,7 +860,7 @@ describe("Activity Modal Test", () => {
       screen.getByTestId("CancelBoxCancel").click();
     });
 
-    expect(websocket.sendEditModel).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,[
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_ACTIVITY_ORDER,[
       expect.objectContaining({status : ORDER_STATUS.CANCELLED})
     ])
   });

@@ -240,3 +240,10 @@ export function get_minimum_status(orders: OrdersType){
 
   return minimum_status;
 }
+
+export function mapGetDefault<K,V>(map: Map<K,V>, key: K, default_: V): V{
+  if(map.has(key)){
+    return map.get(key);
+  }
+  return default_;
+}

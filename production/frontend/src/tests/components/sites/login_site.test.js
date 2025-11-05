@@ -6,7 +6,7 @@ import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState } from "../../app_state.js";
+import { AppState } from "../../app_state";
 
 import { PROP_SET_USER, PROP_USER, USER_GROUPS  } from "~/lib/constants.js";
 import { AUTH_IS_AUTHENTICATED, DATA_USER, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"

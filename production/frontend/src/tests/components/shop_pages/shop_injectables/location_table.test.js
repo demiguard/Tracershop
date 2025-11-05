@@ -6,7 +6,7 @@
 import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
-import { testState } from "~/tests/app_state.js";
+import { testState } from "~/tests/app_state";
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 import { LocationTable } from "~/components/shop_pages/shop_injectables/location_table.js";

@@ -31,8 +31,6 @@ export function ConfigSite (props) {
         isAuthenticated={true}
         NavbarElements={props.NavbarElements}
       />
-      {calenderDays}
-
       <Site
         {...props}
       />
