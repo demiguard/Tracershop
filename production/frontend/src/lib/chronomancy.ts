@@ -21,20 +21,20 @@ export function dateIsValid(date: Date): boolean {
   return isNaN(date.valueOf());
 }
 
-export function datify(dateLike){
+export function datify(dateLike: string | number | Date){
   if(dateLike instanceof Date){
     return dateLike
   } else {
-    return new Date(dateLike)
+    return new Date(dateLike);
   }
 }
 
 export class TimeStamp {
-  /** @type {Number} */hour
-  /** @type {Number} */minute
-  /** @type {Number} */second
+  hour: number
+  minute: number
+  second: number
 
-  constructor(arg_1, minute?: string | number, second?: string | number){
+  constructor(arg_1, minute?: number, second?: number){
     if(typeof(arg_1) == "string"){
       this.hour = Number(arg_1.substring(0, 2));
       this.minute = Number(arg_1.substring(3, 5));
@@ -139,7 +139,7 @@ export class TimeStamp {
  * @param {TimeStamp | string | Date } timeStamp_2
  * @returns {TimeStamp}
  */
-export function compareTimeStamp(timeStamp_1, timeStamp_2){
+export function compareTimeStamp(timeStamp_1, timeStamp_2 ){
   timeStamp_1 = new TimeStamp(timeStamp_1);
   timeStamp_2 = new TimeStamp(timeStamp_2);
 

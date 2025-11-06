@@ -8,7 +8,7 @@ import { getModifiedTestState, testState } from '~/tests/app_state';
 
 const { ActivityProduction, ActivityDeliveryTimeSlot, Tracer, TracerCatalogPage, TracershopState, Isotope, Customer, DeliveryEndpoint, ActivityOrder, User, Vial } = require("~/dataclasses/dataclasses");
 const { WEEKLY_REPEAT_CHOICES, TRACER_TYPE, DAYS, ORDER_STATUS, USER_GROUPS } = require("~/lib/constants");
-const { TimeSlotBitChain } = require("~/lib/data_structures");
+const { TimeSlotBitChain } = require("~/lib/data_structures/bit_chains");
 const { TracerCatalog, EndpointCatalog } = require('~/contexts/tracer_catalog');
 
 describe("Bit chains test sweep", () => {

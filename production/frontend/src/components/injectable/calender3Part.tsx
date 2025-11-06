@@ -23,11 +23,10 @@ export const CALENDER_STYLE: React.CSSProperties = {
   border: "5px",
   borderColor: "blue",
   borderStyle: "solid",
-  width: "100%",
+  width: "calc(calc(52px * 7) + 10px)",
   textAlign: "center",
   borderRadius: "8px",
   lineHeight: "20px",
-  verticalAlign: "middle",
 };
 
 export const WEEK_STYLE = {
@@ -118,16 +117,11 @@ export function Calender3Part({ calender_on_day_click }) {
   const websocket = useWebsocket();
   const dispatch = useTracershopDispatch();
   const [activeMonth, setActiveMonth] = useState(state.today);
-  const [renderPhase, setRenderPhase] = useState(0);
-
-
 
   const calenderRef = useRef(null);
-  const containerSize = useContainerDimensions(calenderRef)
+  const { height, width } = useContainerDimensions(calenderRef);
 
-  const {width, height } = containerSize;
-
-  const iconSize = Math.min(width, height) / 7;
+  const iconSize = 52
 
   /** This function is called when the user changes the current month
    */
@@ -150,7 +144,7 @@ export function Calender3Part({ calender_on_day_click }) {
   }
 
   return (
-    <div style={CALENDER_STYLE} ref={calenderRef}>
+    <div style={CALENDER_STYLE}>
       <div
         style={{
           background : COLORS.tertiaryColor3

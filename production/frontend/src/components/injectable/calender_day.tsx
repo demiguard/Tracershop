@@ -31,10 +31,6 @@ export function CalenderDay({
     ...rest
   } : CalenderDayProps
 ){
-  if(day === 20){
-    console.log("Rerendering Calender Day: ", orderColor)
-  }
-
   function draw (context: CanvasRenderingContext2D, frame_number: number) {
     const center_x = context.canvas.width / 2;
     const center_y = context.canvas.height / 2;

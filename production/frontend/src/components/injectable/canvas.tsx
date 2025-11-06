@@ -41,15 +41,16 @@ export function StaticCanvas(props : CanvasProps){
 
   useEffect(() => {
     const canvas = ref.current;
-    if(!canvas){ return; }
+    if(!canvas){
+      console.warn("Canvas not ready");
+      return;
+    }
     const context = canvas.getContext('2d');
-    if(!context){ return; }
-
-    const animationFrameId = requestAnimationFrame(() => {
-      draw(context, 0);
-    })
-
-    return () => cancelAnimationFrame(animationFrameId);
+    if(!context){
+      console.warn("Context not ready");
+      return;
+    }
+    draw(context, 0);
 
   }, [draw]);
 

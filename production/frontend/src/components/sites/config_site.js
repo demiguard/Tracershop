@@ -3,6 +3,9 @@ import { ControlPanel } from "../admin_pages/control_panel"
 import { TracershopNavbar } from "../injectable/navbar"
 import { DatabasePanel } from "~/components/admin_pages/database_panel"
 import { TelemetryVisualizer } from "~/components/admin_pages/telemetry_visualizer"
+import { Col, Container, Row } from "react-bootstrap"
+import { CalenderColorMapContextProvider, PRODUCTION_ID } from "~/contexts/calender_color_map"
+import { Calender3Part } from "~/components/injectable/calender3Part"
 
 const Pages = {
   controlPanel : ControlPanel, // Danish for key since keys are displayed.
@@ -31,9 +34,19 @@ export function ConfigSite (props) {
         isAuthenticated={true}
         NavbarElements={props.NavbarElements}
       />
-      <Site
-        {...props}
-      />
+      <Container>
+        <Row>
+          <Col>
+            <Site {...props} />
+          </Col>
+          <Col xs={4}>
+            <CalenderColorMapContextProvider endpoint_id={PRODUCTION_ID}>
+              <Calender3Part calender_on_day_click={(date) => {console.log("clicked on :", date)}}/>
+            </CalenderColorMapContextProvider>
+          </Col>
+        </Row>
+      </Container>
+
 
 
     </div>

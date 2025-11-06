@@ -20,14 +20,11 @@ export class OrderColor {
   }
 
   getActivityCode(){
-    const code = this.color_code % 10;
-
-    return code;
+    return this.color_code % 10;
   }
 
   getInjectionCode(){
     const code = this.color_code % 100;
-
     return Math.floor(code / 10);
   }
 

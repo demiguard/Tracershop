@@ -12,7 +12,7 @@ const tracer_websocket = require("~/lib/tracer_websocket");
 import { Calender } from '~/components/injectable/calender'
 import { CALENDER_PROP_DATE, CALENDER_PROP_GET_COLOR, CALENDER_PROP_ON_DAY_CLICK } from "~/lib/constants";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
-import { ProductionBitChain } from "~/lib/data_structures";
+import { ProductionBitChain } from "~/lib/data_structures/bit_chains";
 import { getModifiedTestState, testState } from "~/tests/app_state";
 import { UpdateToday } from "~/lib/state_actions";
 
