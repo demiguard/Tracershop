@@ -1,5 +1,5 @@
-import { ORDER_STATUS, valueof } from "../constants";
-import { OrdersType, ValueOf } from "../types";
+import { ORDER_STATUS } from "../constants";
+import { OrdersType } from "../types";
 
 export class OrderCollection {
   orders: OrdersType
@@ -9,7 +9,7 @@ export class OrderCollection {
   constructor(orders : OrdersType){
     this.orders = orders;
 
-    this.#minimum_status = ORDER_STATUS.EMPTY
+    this.#minimum_status = ORDER_STATUS.AVAILABLE
     for(const order of orders){
       this.#minimum_status = Math.min(this.#minimum_status, order.status);
     }

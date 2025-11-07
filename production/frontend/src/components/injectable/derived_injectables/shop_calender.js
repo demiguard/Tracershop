@@ -18,6 +18,8 @@ export function ShopCalender({ on_day_click, active_endpoint, time_slots }){
   const bitChain = new TimeSlotBitChain(time_slots, state);
   const timeSlotIDs = time_slots.map(getId);
 
+  console.log(time_slots)
+
   return <Calender
     calender_date={state.today}
     calender_on_day_click={on_day_click}

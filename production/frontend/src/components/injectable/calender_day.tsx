@@ -13,13 +13,17 @@ type CalenderDayProps = {
 function status_to_color(status : number){
   switch(status) {
     case ORDER_STATUS.AVAILABLE:
-      return COLORS.grey1;
+      return COLORS.grey4;
+    case ORDER_STATUS.UNAVAILABLE:
+      return COLORS.grey3;
     case ORDER_STATUS.ORDERED:
       return COLORS.red1;
     case ORDER_STATUS.ACCEPTED:
       return COLORS.yellow1;
     case ORDER_STATUS.RELEASED:
       return COLORS.green1;
+    case ORDER_STATUS.CANCELLED:
+      return COLORS.grey1;
     default:
       return COLORS.visual_error;
   }
@@ -40,13 +44,13 @@ export function CalenderDay({
     const degrees = [-Math.PI / 2, Math.PI / 2];
 
     context.beginPath(); // Draw Injection Outer Circle
-    context.fillStyle = status_to_color(orderColor.getInjectionCode());
+    context.fillStyle = status_to_color(orderColor.getIsotopeCode());
     context.arc(center_x, center_y, outer_radius, degrees[0], degrees[1]);
     context.fill();
     context.closePath();
 
     context.beginPath(); // Draw Isotope Outer Circle
-    context.fillStyle = status_to_color(orderColor.getIsotopeCode());
+    context.fillStyle = status_to_color(orderColor.getInjectionCode());
     context.arc(center_x, center_y, outer_radius, degrees[1], degrees[0]);
     context.fill();
     context.closePath();

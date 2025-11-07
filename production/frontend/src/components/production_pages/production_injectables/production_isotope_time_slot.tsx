@@ -77,11 +77,11 @@ export function ProductionIsotopeTimeSlot({
 } : ProductionIsotopeTimeSlotProps) {
   const state = useTracershopState();
   const collection = new IsotopeOrderCollection(orders, timeSlot, state);
+
   const [showingModal, setShowingModal] = useState(false);
 
   const showModal = () => { setShowingModal(true);};
   const hideModal = () => { setShowingModal(false);};
-
 
   const orderRows = [];
   const [open, setOpen] = useState(false);

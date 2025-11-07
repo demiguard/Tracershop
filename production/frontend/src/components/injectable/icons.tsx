@@ -88,12 +88,10 @@ function statusImages(status : number) {
       return "/static/images/clipboard3.svg";
     case ORDER_STATUS.CANCELLED:
       return "/static/images/clipboard0.svg";
-    case ORDER_STATUS.EMPTY:
+    case ORDER_STATUS.UNAVAILABLE:
       return "";
     case ORDER_STATUS.AVAILABLE:
       return "";
-    case ORDER_STATUS.RISOE:
-      return "/static/images/clipboard0.svg";
     default:
       console.error("Unknown status encountered", status)
       return "/static/images/clipboard0.svg";

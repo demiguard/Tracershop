@@ -225,10 +225,9 @@ function ProductionInnerContentStatusCANCELED({orderCollection, moveOrders, firs
         <div>
           Afvist af: <UserDisplay style={DISPLAY.INLINE_BLOCK} user={orderCollection.freed_by}/>
         </div>
-
       </Col>
       <Col style={{...JUSTIFY.center, marginTop: '3.1666px', marginBottom: '3.1666px'}}>
-        Afvist kl: <DatetimeDisplay style={DISPLAY.INLINE_BLOCK} datetime={orderCollection.freed_time}/>
+        Afvist kl: <DatetimeDisplay datetime={orderCollection.freed_time}/>
       </Col>
     </Row>
   );
@@ -297,16 +296,18 @@ function ProductionInnerContent({
 * @param {ActivityOrderCollection} props.orderCollection
 * @returns
 */
-export function ProductionActivityTimeSlot({timeSlot,
+export function ProductionActivityTimeSlot({
+                    timeSlot,
                     setTimeSlotID,
                     setModalIdentifier,
                     orderMapping,
                     timeSlotMapping,
                     orderCollection,
 }){
+
 const websocket = useWebsocket();
 const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(orderCollection.delivering_time_slot);
-const /**@type {Number} */ firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
+const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
 
 const orders = [...orderCollection.relevant_orders]
 const orderData = [];
@@ -369,7 +370,6 @@ function headerFunction(){
     setModalIdentifier('activityModal');
   }
 }
-
 
 return (
  <Card key={timeSlot.id}>

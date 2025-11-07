@@ -32,5 +32,4 @@ export class AccumulatingMap {
       yield [key, value]
     }
   }
-
 }

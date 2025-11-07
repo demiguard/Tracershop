@@ -29,7 +29,8 @@ type CardHeaderDescriptionArgs = {
 
 function CardHeaderDescription({ collection } : CardHeaderDescriptionArgs){
   switch (collection.minimum_status){
-    case ORDER_STATUS.EMPTY:
+    case ORDER_STATUS.UNAVAILABLE:
+    case ORDER_STATUS.AVAILABLE:
       return (
         <Col>
           <Row style={ExpandAndCenter}>

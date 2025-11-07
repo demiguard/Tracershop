@@ -101,13 +101,12 @@ export const WEEKLY_REPEAT_CHOICES = {
  * @typedef {Number} OrderStatus
  * @enum {OrderStatus} */
 export const ORDER_STATUS = {
-  AVAILABLE : 0,
   ORDERED : 1, // The value associated with red
   ACCEPTED : 2, // The value associated with yellow
   RELEASED : 3, // The value associated with green
   CANCELLED : 4,
-  RISOE : 5,
-  EMPTY : 6,
+  AVAILABLE : 5,
+  UNAVAILABLE : 6,
 }
 
 /** Enum that holds all the different "types" of orders. Each type

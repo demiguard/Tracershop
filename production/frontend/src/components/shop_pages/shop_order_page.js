@@ -249,7 +249,7 @@ export function ShopOrderPage ({relatedCustomer}){
     productState : [activeProduct, setActiveProduct],
   };
 
-  const calenderTimeSlots = activeProduct.filterDeliveries(state, activeEndpoint);
+  const calenderTimeSlots = activeProduct.filterDeliveries(state, { endpoint_id : activeEndpoint });
 
   return (
   <Container fluid="xxl" style={{padding : "0px"}}>

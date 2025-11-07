@@ -463,7 +463,7 @@ export class BookingTimeGroupLocation extends ITimeTableDataContainer {
  * @returns
  */
 function WeeklyOrderHour({orders, state, testid}){
-  let minimum_status = ORDER_STATUS.EMPTY;
+  let minimum_status = ORDER_STATUS.AVAILABLE;
 
   const activity_tracer_mapping = new AccumulatingMap();
   const injection_tracer_mapping = new AccumulatingMap();

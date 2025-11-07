@@ -9,6 +9,7 @@ import { USER_GROUPS } from "../../lib/constants";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { MonitorPage } from "~/components/production_pages/monitoring_pages/monitor_home_page";
 import { CalenderColorMapContextProvider, PRODUCTION_ID } from "~/contexts/calender_color_map";
+import { TracerProfiler } from "~/components/injectable/dev_components/tracer_profiler";
 
 const Pages = {
   orders : OrderPage,

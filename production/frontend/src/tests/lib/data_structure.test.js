@@ -121,7 +121,7 @@ describe("ActivityOrderCollectionTests", () => {
       [], testDateString, defaultTestTimeSlot, testState, 1.0
     );
 
-    expect(emptyActivityOrderCollection.minimum_status).toBe(ORDER_STATUS.EMPTY);
+    expect(emptyActivityOrderCollection.minimum_status).toBe(ORDER_STATUS.AVAILABLE);
     expect(emptyActivityOrderCollection.tracer).toBe(testState.tracer.get(1));
     expect(emptyActivityOrderCollection.isotope).toBe(testState.isotopes.get(1));
     expect(emptyActivityOrderCollection.orders.length).toBe(0);

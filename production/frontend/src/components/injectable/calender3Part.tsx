@@ -45,26 +45,6 @@ export const BASE_DAY_STYLE = {
   ...FONT_SIZE.em1p25
 }
 
-export const STATUS_COLORS = {
-  [ORDER_STATUS.AVAILABLE] : "#d6d6d6",
-  [ORDER_STATUS.ORDERED] : "#F55" ,
-  [ORDER_STATUS.ACCEPTED] : "#FF5",
-  [ORDER_STATUS.RELEASED] : "#5F5",
-  [ORDER_STATUS.EMPTY] : "#858585",
-}
-
-
-
-/** This is a calender, where stuff can be injected on date click and on month change
- *  Alot of functions are in injected into this Component.
- *
- * Props:
- *  date - Initial date for the calender
- *  onMonthChange - function(Date object) -> No return - injected function in response to a user changing the month.
- *  onDayChange -
- *  getColor - function that adds css classes, primarily to add a different color to the date
- */
-
 //#region Day
  /**
   * A day in the calender
@@ -118,8 +98,6 @@ export function Calender3Part({ calender_on_day_click }) {
   const dispatch = useTracershopDispatch();
   const [activeMonth, setActiveMonth] = useState(state.today);
 
-  const calenderRef = useRef(null);
-  const { height, width } = useContainerDimensions(calenderRef);
 
   const iconSize = 52
 
@@ -146,9 +124,7 @@ export function Calender3Part({ calender_on_day_click }) {
   return (
     <div style={CALENDER_STYLE}>
       <div
-        style={{
-          background : COLORS.tertiaryColor3
-        }}
+        style={{ background : COLORS.tertiaryColor3 }}
         className="calender-header flex-row d-flex justify-content-around"
       >
         <MonthSelector
@@ -167,7 +143,7 @@ export function Calender3Part({ calender_on_day_click }) {
           <div className="calender-row"> Lør</div>
           <div className="calender-row"> Søn</div>
         </div>
-        <div ref={calenderRef}>
+        <div>
           {weeks}
         </div>
     </div>);

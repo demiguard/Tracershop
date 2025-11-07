@@ -374,7 +374,7 @@ export function TimeSlotCardActivity({
         return <TimeSlotCardHeaderAccepted orderCollection={orderCollection}/>;
       case ORDER_STATUS.ORDERED:
         return <TimeSlotCardHeaderOrdered orderCollection={orderCollection} openCalculator={openCalculator}/>;
-      case ORDER_STATUS.EMPTY:
+      case ORDER_STATUS.AVAILABLE:
         return <TimeSlotCardHeaderEmpty orderCollection={orderCollection} canOrder={canOrder} openCalculator={openCalculator}/>;
       default:
         console.error("Unhandled header type");

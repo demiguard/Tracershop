@@ -179,9 +179,7 @@ export function InjectionOrderCard({
     <Card.Header>
       <Row>
         <Col xs={1} style={{alignItems : "center", justifyContent : "center", display : "flex"}}>
-          <Optional exists={ORDER_STATUS.AVAILABLE < injection_order.status}>
-            <StatusIcon order={injection_order}/>
-          </Optional>
+          <StatusIcon order={injection_order}/>
         </Col>
         <Col>
         <div style={{

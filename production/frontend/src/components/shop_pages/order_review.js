@@ -33,12 +33,13 @@ import { getObjects } from "~/lib/utils";
  * }} props
  * @returns Element
  */
-export function OrderReview({active_endpoint,
-                             active_customer,
-                             active_date,
-                             injectionDeadlineValid,
-                             activityDeadlineValid,
-                             productState,
+export function OrderReview({
+  active_endpoint,
+  active_customer,
+  active_date,
+  injectionDeadlineValid,
+  activityDeadlineValid,
+  productState,
 }){
   const state = useTracershopState();
   const tracerCatalog = useTracerCatalog();
@@ -59,15 +60,12 @@ export function OrderReview({active_endpoint,
     endpoint_id : active_endpoint, day : day
   });
 
-  const availableOrders = product.filterOrders(state, {
-    timeslots : availableDeliveries,
-    delivery_date : activeDateString
-  });
 
 
-  function setProduct(tracer){
+
+  function setProduct(product_){
     return () => {
-      setActiveProduct(tracer);
+      setActiveProduct(product_);
     }
   }
 
@@ -88,6 +86,11 @@ export function OrderReview({active_endpoint,
   const overhead = tracerCatalog.getOverheadForTracer(active_customer, product.product_id);
 
   const timeSlotsCards = availableDeliveries.map((timeSlot) => {
+    const availableOrders = product.filterOrders(state, {
+      timeSlots : [timeSlot],
+      delivery_date : activeDateString
+    });
+
     return <TimeSlotCard
       key={timeSlot.id}
       type={product.type}

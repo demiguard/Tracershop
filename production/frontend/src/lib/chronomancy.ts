@@ -8,6 +8,7 @@
 import { properModulo } from "~/lib/utils";
 import { DAYS, DEADLINE_TYPES } from "./constants";
 import { FormatDateStr, dateToDateString } from "./formatting";
+import { Deadline } from "~/dataclasses/dataclasses";
 
 /**
  * Function to get today, mainly here to make testing easier as this can be mocked
@@ -219,7 +220,7 @@ function _calculateWeeklyDeadline(deadline, date){
  * @param {undefined | Date} date - reference date for the deadline, defaults to today
  * @returns {Date}
  */
-export function calculateDeadline(deadline, date){
+export function calculateDeadline(deadline, date?){
   if(date === undefined){
     date = getToday();
   }
@@ -371,6 +372,15 @@ export class DateRange {
     }
     return this.startDate < date && date < this.endDate;
   }
+
+  *[Symbol.iterator](){
+    let pivot_date = this.startDate;
+
+    while(pivot_date <= this.endDate){
+      yield pivot_date;
+      pivot_date = addDaysToDates(pivot_date, 1);
+    }
+  }
 }
 
 export function getDateRangeForMonth(input_date: any){
@@ -423,5 +433,5 @@ export function addDaysToDates(date: Date, days_to_add: number){
 }
 
 export function fixDateTo12AClock(date: Date) {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0,0,0 );
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0,0,0);
 }

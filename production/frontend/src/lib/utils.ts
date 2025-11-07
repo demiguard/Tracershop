@@ -1,7 +1,7 @@
 /** This module is for library functions which doesn't belong in other  */
 
 import { ORDER_STATUS } from "~/lib/constants";
-import { ActivityOrder, Dataclass, DeliveryEndpoint, InjectionOrder, Tracer } from "../dataclasses/dataclasses";
+import { ActivityOrder, Dataclass, Deadline, DeliveryEndpoint, InjectionOrder, ServerConfiguration, Tracer, TracershopState } from "../dataclasses/dataclasses";
 import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_ISOTOPE_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
 import { template } from "@babel/core";
 import { IsotopeOrderCollection } from "./data_structures/isotope_order_collection";
@@ -232,7 +232,7 @@ export function map<T,U>(fn : (a : T) => U, arr: T[]): U[] {
 }
 
 export function get_minimum_status(orders: OrdersType){
-  let minimum_status = ORDER_STATUS.EMPTY;
+  let minimum_status = ORDER_STATUS.UNAVAILABLE;
 
   for(const order of orders){
     minimum_status = Math.min(minimum_status, order.status);
@@ -241,9 +241,22 @@ export function get_minimum_status(orders: OrdersType){
   return minimum_status;
 }
 
-export function mapGetDefault<K,V>(map: Map<K,V>, key: K, default_: V): V{
+export function mapGetDefault<K,V>(map: Map<K,V>, key: K, default_: V | null): V  | null {
   if(map.has(key)){
     return map.get(key);
   }
   return default_;
+}
+
+export function getServerConfig(state: TracershopState) {
+  return mapGetDefault(state.server_config, 1, new ServerConfiguration());
+}
+
+export function getGlobalDeadlines(state: TracershopState){
+  const config = getServerConfig(state);
+
+  const activityDeadline = mapGetDefault(state.deadline, config.global_activity_deadline, null);
+  const injectionDeadline = mapGetDefault(state.deadline, config.global_injection_deadline, null);
+
+  return [activityDeadline, injectionDeadline, null];
 }

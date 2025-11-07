@@ -4,7 +4,7 @@
 
 import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
 import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, IsotopeProduction, IsotopeVial, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
-import { compareDates, getId } from "./utils";
+import { compareDates, getId, map } from "./utils";
 import { DateRange, datify, sameDate } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
 
@@ -398,11 +398,12 @@ export function isotopeOrderFilter(
 
 type ActivityOrderFilterArgs = {
   state? : TracershopState,
-  timeSlotFilterArgs? : any,
+  timeSlotFilterArgs? : TimeSlotFilterArgs,
   timeSlots? : Array<ActivityDeliveryTimeSlot>,
   status? : ORDER_STATUS | Array<ORDER_STATUS>,
   delivery_date? : string,
   dateRange? : DateRange,
+  tracer_id? : number
 };
 
 export function activityOrderFilter(container: ContainerType<ActivityOrder>, filterArgs: ActivityOrderFilterArgs): ActivityOrder[]
@@ -418,7 +419,7 @@ export function activityOrderFilter(container: ContainerType<ActivityOrder>, {st
   const orders = extractData(container, ActivityOrder, DATA_ACTIVITY_ORDER)
 
   const timeSlotIDs =
-    timeSlots !== undefined ? timeSlots.map(getId) : // If passed TimeSlots we use those
+    timeSlots !== undefined ? map(getId, timeSlots) : // If passed TimeSlots we use those
     timeSlotFilterArgs && state ? // Otherwise we can get the timesslots
       timeSlotFilter(state, { state : state, ...timeSlotFilterArgs }, true)
     : undefined; // Otherwise No filter over time slots

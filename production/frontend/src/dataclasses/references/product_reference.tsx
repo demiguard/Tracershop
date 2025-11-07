@@ -203,6 +203,9 @@ export class ProductReference {
               state : state,
               timeSlots : timeSlots,
               delivery_date : delivery_date,
+              timeSlotFilterArgs : {
+                isotopeID : this.product_id
+              }
             });
           }
     })();
