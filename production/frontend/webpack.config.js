@@ -9,9 +9,11 @@ import {BundleAnalyzerPlugin} from 'webpack-bundle-analyzer'
 
 export default {
   mode: 'development',
+  devtool : 'eval-source-map',
   entry: "./src/index.js",
   output: {
     path: resolve("./static/frontend"),
+    publicPath : '/static/',
     filename: `[name]_${JAVASCRIPT_VERSION}.js`,
     chunkFilename: `[name]_${JAVASCRIPT_VERSION}_[contenthash].chunk.js`,
   },

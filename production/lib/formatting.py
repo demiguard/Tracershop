@@ -146,3 +146,8 @@ def format_error_with_datatype(error: Exception, datatype: str):
 
 
   return str(error)
+
+def format_phone_number(phone_number: str):
+  if(len(phone_number) != 8):
+    return "INVALID PHONE NUMBER"
+  return f"{phone_number[0:2]} {phone_number[2:4]} {phone_number[4:6]} {phone_number[6:8]}"

@@ -134,17 +134,15 @@ export class TracerCatalog {
 //@ts-ignore
 const TracerShopCatalogContext = createContext(new TracerCatalog(new TracershopState()));
 
-/**
- *
- * @param {TracershopState} state
- */
 export function TracerCatalogProvider({ children }){
   const state = useTracershopState();
 
   // Note that this component is memorized by the react compiler.
-  const tracer_catalog = useMemo(() => {
-    return new TracerCatalog(state);
-  }, [state.tracer_mapping, state.tracer, state.isotope_delivery, state.isotope_production, state.isotopes])
+  //const tracer_catalog = useMemo(() => {
+  //  return new TracerCatalog(state);
+  //}, [state.tracer_mapping, state.tracer, state.isotope_delivery, state.isotope_production, state.isotopes])
+
+  const tracer_catalog = new TracerCatalog(state)
 
   return (
     <TracerShopCatalogContext.Provider value={tracer_catalog}>

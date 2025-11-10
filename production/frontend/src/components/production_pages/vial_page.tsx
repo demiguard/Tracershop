@@ -12,11 +12,12 @@ import { useTracershopDispatch, useTracershopState, useWebsocket } from "../../c
 import { parseDateInput } from "~/lib/user_input";
 import { MarginButton } from "~/components/injectable/buttons";
 import { UpdateToday } from "~/lib/state_actions";
-import { clamp } from "~/lib/utils";
-import { ClickableIcon } from "~/components/injectable/icons.tsx";
+import { clamp, openIsotopeReleasePDF, openVialLabel } from "~/lib/utils";
+import { ClickableIcon } from "~/components/injectable/icons";
 import { HoverBox } from "~/components/injectable/hover_box";
 
 import { Optional } from "~/components/injectable/optional";
+import { Vial } from "~/dataclasses/dataclasses";
 
 
 const vialRowHeight = 41; // in pixels
@@ -37,22 +38,19 @@ const SortingOptions = {
   ORDER : 7,
 }
 
-function VialRow({vial}){
+type VialRowProps = {
+  vial : Vial
+}
+
+function VialRow({vial} : VialRowProps){
   const state = useTracershopState();
-  const server_config = state.server_config.get(1);
   const customer = state.customer.get(vial.owner);
   const customerName = customer === undefined ?
                                  "Ukendt ejer"
                                  : customer.short_name;
 
-  const labelPrinter = state.printer.get(server_config.active_label_printer);
-  const printer = state.printer.get(server_config.active_printer);
-
-  const labelPrinterName = labelPrinter ? labelPrinter.name : "";
-  const printerName = printer ? printer.name : ""
-
-  function printVial(){
-    return
+  function open_label(){
+    openVialLabel(vial)
   }
 
   return <tr style={{ height : `${vialRowHeight}px` }} key={vial.id}>
@@ -65,36 +63,10 @@ function VialRow({vial}){
     <td data-testid="owner_field">{customerName}</td>
     <td data-testid="order_field">{vial.assigned_to}</td>
     <td data-testid="print">
-      <HoverBox
-        displayType={"block ruby"}
-        Base={
-          <ClickableIcon src={"static/images/printer.svg"}/>
-        }
-        Hover={
-          <Container>
-            <Row>
-              <Optional exists={printer !== undefined} alternative={<div>Der er ingen normal printer sat op</div>}>
-                <Col>Føgleseddel - {printerName}</Col>
-                <Col xs={2}>
-                  <ClickableIcon src={"static/images/printer.svg"}/>
-                </Col>
-              </Optional>
-
-            </Row>
-            <Row>
-              <Optional exists={labelPrinter !== undefined} alternative={<div>Der er ingen label printer sat op</div>}>
-                <Col>Label - {labelPrinterName}</Col>
-                <Col xs={2}>
-                  <ClickableIcon src={"static/images/printer.svg"}/>
-                </Col>
-              </Optional>
-            </Row>
-          </Container>
-        }
-      >
-
-      </HoverBox>
-
+      <ClickableIcon beforeInjection={(svg) => {
+        svg.setAttribute("height", "32")
+        svg.setAttribute("width", "32")
+      }} src={"static/images/label.svg"} onClick={open_label}/>
     </td>
   </tr>
 }
@@ -144,6 +116,7 @@ export function VialPage(){
     if(validDate){
       dispatch(new UpdateToday(date, websocket));
     } else {
+      //@ts-ignore
       setDateError(date);
     }
   }
@@ -190,31 +163,31 @@ export function VialPage(){
         const invertedSearchFactor = (sortingInverted) ? -1 : 1;
         switch (sortingOption) {
           case SortingOptions.ID:
-            return invertedSearchFactor*(vial1.id - vial2.id);
+            return invertedSearchFactor * (vial1.id - vial2.id);
           case SortingOptions.CHARGE:
-            return invertedSearchFactor*((vial1.lot_number > vial2.lot_number) - (vial1.lot_number < vial2.lot_number));
+            return invertedSearchFactor * (Number(vial1.lot_number > vial2.lot_number) - Number(vial1.lot_number < vial2.lot_number));
           case SortingOptions.DATE:
             const date1 = new Date(vial1.fill_date).valueOf();
             const date2 = new Date(vial2.fill_date).valueOf();
             if(date1 != date2){
               return (
                 isFinite(date1) && isFinite(date2) ?
-                invertedSearchFactor*((date1>date2) - (date1<date2)) :
+                invertedSearchFactor*(Number(date1>date2) - Number(date1<date2)) :
                 NaN
               );
             } else {
-              return invertedSearchFactor*((vial1.fill_time > vial2.fill_time) - (vial1.fill_time < vial2.fill_time));
+              return invertedSearchFactor*(  Number(vial1.fill_time > vial2.fill_time) - Number(vial1.fill_time < vial2.fill_time));
             }
           case SortingOptions.TIME:
-            return invertedSearchFactor*((vial1.fill_time > vial2.fill_time) - (vial1.fill_time < vial2.fill_time));
+            return invertedSearchFactor*(Number(vial1.fill_time > vial2.fill_time) - Number(vial1.fill_time < vial2.fill_time));
           case SortingOptions.VOLUME:
             return invertedSearchFactor*(vial1.volume - vial2.volume);
           case SortingOptions.ACTIVITY:
             return invertedSearchFactor*(vial1.activity - vial2.activity);
           case SortingOptions.OWNER:
-            return invertedSearchFactor*(vial1.customer - vial2.customer);
+            return invertedSearchFactor*(vial1.owner - vial2.owner);
           case SortingOptions.ORDER:
-            return invertedSearchFactor*(vial1.order_map - vial2.order_map)
+            return invertedSearchFactor*(vial1.assigned_to - vial2.assigned_to)
           default:
             /*istanbul ignore next */
             throw "Unknown Search Option:" + sortingOption
@@ -238,7 +211,7 @@ export function VialPage(){
     );
   }, [overflowDivRef.current, filteredSortedVials, scrollOffset]);
 
-  const overflowDivHeight = `calc(100vh - ${heightOffset + 4 * vialRowHeight}px)`;
+  const overflowDivHeight = `calc(100vh - ${heightOffset + 1 * vialRowHeight}px)`;
   return (
     <div>
       <Row className="justify-content-center">
@@ -282,7 +255,7 @@ export function VialPage(){
           <MarginButton onMouseDown={restartVialDog}>Hent manglende glas</MarginButton>
         </Col>
       </Row>
-      <div ref={overflowDivRef} style={{height : overflowDivHeight}}>
+      <div ref={overflowDivRef} style={{height : overflowDivHeight, overflow : 'hidden'}}>
         <Table>
           <thead>
             <tr>
@@ -297,7 +270,7 @@ export function VialPage(){
               <th data-testid="header-print">Print</th>
             </tr>
           </thead>
-          <tbody style={{overflow: "auto"}}>
+          <tbody>
             {VialRows}
           </tbody>
         </Table>

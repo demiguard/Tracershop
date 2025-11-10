@@ -21,7 +21,8 @@ from database.models import ActivityOrder, ActivityDeliveryTimeSlot, \
   OrderStatus, Vial, InjectionOrder, IsotopeDelivery, IsotopeOrder, IsotopeVial
 from database.database_interface import DatabaseInterface
 from lib.formatting import format_csv_data, format_time_number
-from lib.pdfGeneration import DrawReleaseCertificate, DrawInjectionOrder, draw_isotope_release_document
+from lib.pdf_generation import DrawReleaseCertificate, DrawInjectionOrder, draw_isotope_release_document
+from lib.pdf_generation import label
 from shared_constants import JAVASCRIPT_VERSION, URL_SHOP_MANUAL
 from tracerauth.auth import login_from_header
 
@@ -210,3 +211,22 @@ def release_isotope_document(request : HttpRequest,
 def shop_manual_view(request):
   filename = "frontend/static/frontend/pdfs/manuals/shop_manual.pdf"
   return FileResponse(open(filename, 'rb'), filename="Kunde Manual.pdf")
+
+@ensure_csrf_cookie
+def vial_label_pdf(request: HttpRequest, vial_id : int):
+  try:
+    vial = Vial.objects.get(pk=vial_id)
+  except ObjectDoesNotExist:
+    return HttpResponseNotFound(request)
+
+  filename = f"frontend/static/frontend/pdfs/vial_labels"
+  file_path = Path(filename)
+
+  if not file_path.parent.exists():
+    file_path.parent.mkdir(parents=True, exist_ok=True)
+
+  label.VialLabel(filename, vial)
+
+  #label.get_label_post_script(filename, vial)
+
+  return FileResponse(open(filename, 'rb'), filename=f"label-{vial.id}.pdf")

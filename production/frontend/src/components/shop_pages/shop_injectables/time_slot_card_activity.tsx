@@ -21,6 +21,7 @@ import { setStateToEvent } from "~/lib/state_management";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { makeBlankActivityOrder } from "~/lib/blanks";
 import { useErrorState } from "~/lib/error_handling";
+import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
 
 
 type ShowOrderRowProps = {
@@ -37,7 +38,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
       return String(order.ordered_activity);
     }
 
-    return String(calculatorActivity);
+    return ""
   });
   const [displayComment, setDisplayComment] = useState(() => {
     if(dataClassExists(order)){
@@ -74,19 +75,21 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   function commitCallBack(){
     setDisplayActivity("0");
     setDisplayComment("");
+
+
   }
 
   useUpdatingEffect(function RefreshOrder(){
     if(dataClassExists(order)){
-      setDisplayActivity(order.ordered_activity);
+      setDisplayActivity(String(order.ordered_activity));
       setDisplayComment(nullParser(order.comment));
     } else {
       setDisplayActivity(String(calculatorActivity));
     }
   }, [calculatorActivity, order]);
 
-  const ordered = order.status > 0;
-  const canEdit = order.status <= 1;
+  const ordered = order.status !== ORDER_STATUS.AVAILABLE;
+  const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(order.status) ;
   const changedTemp = state.activity_orders.has(order.id) ?
                         String(order.ordered_activity) === displayActivity
                       : true;
@@ -108,6 +111,10 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
       return "Ny ordre";
     }
   })();
+
+  const orderDirty =
+    displayActivity !== String(order.ordered_activity) ||
+    displayComment !== nullParser(order.comment);
 
   return (
     <Row>
@@ -139,23 +146,13 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
         />
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>
-        <Optional exists={canEdit && changedTemp}>
-          <CommitIcon
-            label={`commit-${order.id}`}
-            temp_object={order}
-            validate={validate}
-            callback={commitCallBack}
-            add_image="/static/images/cart.svg"
-            object_type={DATA_ACTIVITY_ORDER}
-          />
-        </Optional>
-        <Optional exists={canEdit && !changedTemp && ordered}>
-          <ClickableIcon
-            src={"static/images/decline.svg"}
-            onClick={deleteOrder}
-            label={`delete-order-${order.id}`}
-          />
-        </Optional>
+        <ShopActionButton
+          order={order}
+          validate={validate}
+          callback={commitCallBack}
+          isDirty={orderDirty}
+          canEdit={canEdit}
+        />
       </Col>
     </Row>);
 }

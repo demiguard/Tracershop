@@ -35,7 +35,7 @@ CloseButton.propTypes = {
 }
 
 
-type IdempotentButtonProps = { onClick : () => Promise<any> } & Omit<ButtonProps, "onClick">;
+export type IdempotentButtonProps = { onClick : () => Promise<any> } & Omit<ButtonProps, "onClick">;
 
 export function IdempotentButton(props : IdempotentButtonProps){
   const {onClick, children, ...rest} = props;

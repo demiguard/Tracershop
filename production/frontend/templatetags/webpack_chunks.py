@@ -11,7 +11,7 @@ register = template.Library()
 @register.simple_tag
 def webpack_chunks():
     """Load all webpack chunks in the correct order"""
-    manifest_path = Path('frontend') / "static" / "frontend" / 'chunk-manifest.json'
+    manifest_path = Path("frontend") / "static" / "frontend" / "chunk-manifest.json"
 
     try:
         with open(manifest_path, 'r') as f:

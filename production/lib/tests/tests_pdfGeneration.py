@@ -11,7 +11,7 @@ from reportlab.pdfgen import canvas
 # Tracershop Packages
 from constants import ENV_TEST_PDF_DIRECTORY, ENV_TEST_PDF_DIRECTORY_DEFAULT
 
-from lib import pdfGeneration
+from lib import pdf_generation
 from database.TracerShopModels.baseModels import Days
 from database.models import ActivityDeliveryTimeSlot, ActivityOrder, \
   ActivityProduction, Customer, DeliveryEndpoint,InjectionOrder, Isotope,\
@@ -189,7 +189,7 @@ class PDFsGenerationTest(TestCase):
 
   def test_createActivityPDF_singleOrderVial(self):
     output_path = test_output_directory / f"{self._testMethodName}.pdf"
-    pdfGeneration.DrawActivityOrder(
+    pdf_generation.DrawActivityOrder(
       str(output_path),
       self.orderDate,
       self.endpoint,
@@ -199,11 +199,11 @@ class PDFsGenerationTest(TestCase):
 
   def test_createInjectionPDF(self):
     output_path = test_output_directory / f"{self._testMethodName}.pdf"
-    pdfGeneration.DrawInjectionOrder(str(output_path), self.injection_order)
+    pdf_generation.DrawInjectionOrder(str(output_path), self.injection_order)
 
   def test_createReleaseDocument(self):
     output_path = test_output_directory / f"{self._testMethodName}.pdf"
-    pdfGeneration.DrawReleaseCertificate(str(output_path),
+    pdf_generation.DrawReleaseCertificate(str(output_path),
                                          self.orderDate,
                                          self.endpoint,
                                          self.production_1,
@@ -212,9 +212,37 @@ class PDFsGenerationTest(TestCase):
 
   def test_create_isotope_release_document(self):
     output_path = test_output_directory / f"{self._testMethodName}.pdf"
-    pdfGeneration.draw_isotope_release_document(
+    pdf_generation.draw_isotope_release_document(
       str(output_path),
       self.isotope_delivery,
       [self.isotope_order_1, self.isotope_order_2],
       [self.isotope_vials]
+    )
+
+  def test_create_vial_label(self):
+    output_path = test_output_directory / f"{self._testMethodName}.pdf"
+    label = pdf_generation.label.VialLabel(
+      str(output_path),
+      Vial(
+      tracer=self.tracer,
+      activity = 1000.0,
+      volume = 10.0,
+      lot_number = "F-251102-1",
+      fill_date = date(2025,11,23),
+      fill_time = time(11,22,33)
+      )
+    )
+
+  def test_create_vial_label_postscript(self):
+    output_path = test_output_directory / f"{self._testMethodName}.eps"
+    pdf_generation.label.get_label_post_script(
+      str(output_path),
+      Vial(
+        tracer=self.tracer,
+        activity = 1000.0,
+        volume = 10.0,
+        lot_number = "F-251102-1",
+        fill_date = date(2025,11,23),
+        fill_time = time(11,22,33)
+      )
     )

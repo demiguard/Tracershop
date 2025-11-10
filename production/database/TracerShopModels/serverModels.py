@@ -61,7 +61,8 @@ class Printer(TracershopModel):
     from lib.printing import is_printer_installed
     return is_printer_installed(self)
 
-  def save(self, *args, **kwargs):
+
+  def save(self, *args, **kwargs): #type: ignore
     if self.valid_printer_names.fullmatch(self.name) is None:
       raise ValidationError(
         {'name': gettext_lazy("Name can only consists of normal characters")}

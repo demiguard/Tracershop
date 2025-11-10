@@ -18,6 +18,7 @@ from typing import Iterable, Optional, Tuple, List, Sequence
 # Django packages
 from django.conf import settings
 from django.db.models import QuerySet
+from django.db.models.manager import BaseManager
 from django.utils import timezone
 
 # Third party packages
@@ -27,6 +28,9 @@ import reportlab.rl_config
 reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
+
+from reportlab.lib.fonts import addMapping
+from reportlab.graphics.charts.textlabels import Label
 try: #pragma: no cover
   pdfmetrics.registerFont(TTFont('Mari',        f'{settings.BASE_DIR}/pdfData/Mari.ttf'))
   pdfmetrics.registerFont(TTFont('Mari_Bold',   f'{settings.BASE_DIR}/pdfData/Mari_Bold.ttf'))
@@ -34,6 +38,8 @@ try: #pragma: no cover
   pdfmetrics.registerFont(TTFont('Mari_Heavy',  f'{settings.BASE_DIR}/pdfData/Mari_Heavy.ttf'))
   pdfmetrics.registerFont(TTFont('Mari_Light',  f'{settings.BASE_DIR}/pdfData/Mari_Light.ttf'))
   pdfmetrics.registerFont(TTFont('Mari_Poster', f'{settings.BASE_DIR}/pdfData/Mari_Poster.ttf'))
+
+  addMapping('Mari', 0, 0, 'Mari')
   fonts = True
 except: #pragma: no cover
   fonts = False
@@ -90,22 +96,23 @@ MonthNames = {
 
 @dataclass(slots=True)
 class Cursor:
-  x: int
-  y: int
+  x: int | float
+  y: int | float
 
-  def __add__(self, t: Tuple[int,int]):
+  def __add__(self, t: Tuple[float,float]):
     x,y = t
     return Cursor(self.x + x, self.y + y)
 
-  def __radd__(self, t: Tuple[int,int]):
+  def __radd__(self, t: Tuple[float,float]):
     x,y = t
     return Cursor(self.x + x, self.y + y)
 
-  def __iadd__(self, t: Tuple[int,int]):
+  def __iadd__(self, t: Tuple[float,float]):
     x,y = t
     self.x += x
     self.y += y
     return self
+
 
 
 def get_starting_cursor():
@@ -114,6 +121,21 @@ def get_starting_cursor():
     y = 780
   )
 
+
+class TracershopCanvas(canvas.Canvas):
+  def __init__(self, *args, **kwargs) -> None:
+    if 'initialFontName' not in kwargs:
+      kwargs['initialFontName'] = defaultFont
+    if 'initialFontSize' not in kwargs:
+      kwargs['initialFontSize'] = defaultFontSize
+
+    super().__init__(*args, **kwargs)
+    self.font_size = kwargs['initialFontSize']
+
+  def draw_string(self, cursor: Cursor, text: str, line_height=1.25):
+    self.drawString(cursor.x, cursor.y, text)
+    cursor += (0, -line_height * self.font_size)
+    return cursor
 
 class ReleaseDocument(canvas.Canvas):
   line_height = 18 # How large is a text line
@@ -175,7 +197,7 @@ class ReleaseDocument(canvas.Canvas):
     self.drawString(abscissa, ordinate, string_to_bold)
     self.resetFont()
 
-  def ApplyEndpoint(self, x_cursor:int, y_cursor:int, endpoint: DeliveryEndpoint) -> int:
+  def ApplyEndpoint(self, x_cursor:int | float, y_cursor:int | float, endpoint: DeliveryEndpoint) -> int | float:
     self.setStrokeColorRGB(0.5,0.5,1.0)
     self.setFont(self._font, self._font_size)
 
@@ -228,12 +250,12 @@ class ReleaseDocument(canvas.Canvas):
 
   def ApplyOrderActivity(
       self,
-      x_cursor: int,
-      y_cursor: int,
+      x_cursor: int | float,
+      y_cursor: int | float,
       order_date: date,
       productions: Sequence[ActivityProduction],
       orders: Iterable[ActivityOrder],
-    ) -> int:
+    ) -> int | float:
 
     self.setFont(self._font, self._font_size)
     self.setStrokeColorRGB(0,0,0)
@@ -280,7 +302,7 @@ class ReleaseDocument(canvas.Canvas):
     return y_cursor
 
 
-  def applyVials(self, x_cursor:int, y_cursor : int, vials: Sequence[Vial]):
+  def applyVials(self, x_cursor:int | float, y_cursor : int | float, vials: Sequence[Vial]):
     """[summary]
 
     Args:
@@ -333,7 +355,7 @@ class ReleaseDocument(canvas.Canvas):
     x_1,y_1,x_2,y_2 = t4  #pragma: no cover
     return self.drawBox(x_1, y_1, x_2, y_2) # pragma: no cover
 
-  def drawBox(self, x_1 :int, y_1:int, x_2:int, y_2:int):
+  def drawBox(self, x_1 :int | float, y_1:int | float, x_2:int | float, y_2:int | float):
     """Draw a box on the canvas
       A box is defined as:
         (x1, y1) --------- (x2,y1)
@@ -398,7 +420,7 @@ class ReleaseDocument(canvas.Canvas):
       if separator_lines and i != len(Texts) -1:
         self.line(x - 5, line_y + self.line_height, x - 5, line_y )
 
-  def drawTable(self, x_cursor: int, y_cursor: int, table_width: int, textLines: List[List[str]]):
+  def drawTable(self, x_cursor: int | float, y_cursor: int | float, table_width: int, textLines: List[List[str]]):
     """[summary]
 
     Args:
@@ -424,10 +446,10 @@ class ReleaseDocument(canvas.Canvas):
 
   def ApplyInjectionOrder(
       self,
-      x_cursor : int,
-      y_cursor : int,
+      x_cursor : int | float,
+      y_cursor : int | float,
       injectionOrder : InjectionOrder,
-      ) -> int:
+      ) -> int | float:
 
     if(injectionOrder.delivery_date < LEGACY_ENTRIES):
       self.drawString(x_cursor, y_cursor, "Ordren er lavet i det gamle tracershop, og kan derfor manglel data")
@@ -786,7 +808,10 @@ def DrawReleaseCertificate(filename :str,
       order_id = str(order.id)
       ordered_activity = f"{toDanishDecimalString(order.ordered_activity, 0)} MBq@{delivery_time}"
       try:
-        timezone_aware = timezone.make_naive(order.freed_datetime)
+        if order.freed_datetime is not None:
+          timezone_aware = timezone.make_naive(order.freed_datetime)
+        else:
+          timezone_aware = None
       except ValueError:
         timezone_aware = order.freed_datetime
       else:
@@ -865,3 +890,5 @@ def draw_isotope_release_document(
   template.ApplySender(cursor.x, cursor.y)
 
   template.save()
+
+from lib.pdf_generation import label

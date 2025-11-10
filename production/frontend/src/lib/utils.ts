@@ -1,8 +1,8 @@
 /** This module is for library functions which doesn't belong in other  */
 
 import { ORDER_STATUS } from "~/lib/constants";
-import { ActivityOrder, Dataclass, Deadline, DeliveryEndpoint, InjectionOrder, ServerConfiguration, Tracer, TracershopState } from "../dataclasses/dataclasses";
-import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_ISOTOPE_PDF_BASE_PATH, URL_SHOP_MANUAL } from "./shared_constants.js";
+import { ActivityOrder, Dataclass, Deadline, DeliveryEndpoint, InjectionOrder, ServerConfiguration, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_ISOTOPE_PDF_BASE_PATH, URL_SHOP_MANUAL, URL_VIAL_LABEL_PDF_BASE_PATH } from "./shared_constants.js";
 import { template } from "@babel/core";
 import { IsotopeOrderCollection } from "./data_structures/isotope_order_collection";
 import { OrdersType } from "./types";
@@ -75,11 +75,14 @@ export function openInjectionReleasePDF(order){
 
 export function openIsotopeReleasePDF(collection: IsotopeOrderCollection){
   return () => {
-    console.log("Hello world?")
     window.open(`${URL_ISOTOPE_PDF_BASE_PATH}/${collection.delivery.id}/${
       collection.order_date.getFullYear()}/${collection.order_date.getMonth() +1}/${collection.order_date.getDate()}`
     );
   }
+}
+
+export function openVialLabel(vial: Vial){
+  window.open(`${URL_VIAL_LABEL_PDF_BASE_PATH}/${vial.id}`)
 }
 
 export function openShopManual(){

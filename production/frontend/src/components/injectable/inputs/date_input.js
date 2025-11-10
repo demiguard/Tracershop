@@ -26,7 +26,7 @@ function addDateSlashes(event, currentInput){
  * @param {{
  *   stateFunction : CallableFunction - function used for setting an input
  * }} props
- * @returns {Element}
+
  */
 export function DateInput(props){
   const  {stateFunction, ...formControlProps} = props;

@@ -119,6 +119,7 @@ export const URL_INDEX = "";
 export const URL_INJECTION_PDF_BASE_PATH = "injection_pdfs";
 export const URL_ISOTOPE_PDF_BASE_PATH = "isotope_pdf";
 export const URL_SHOP_MANUAL = "shop_manual";
+export const URL_VIAL_LABEL_PDF_BASE_PATH = "vial_label";
 
 export const WARNING_DUPLICATED_BOOKINGS = "duplicated_bookings";
 

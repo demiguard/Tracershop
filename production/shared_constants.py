@@ -101,6 +101,7 @@ URL_ACTIVITY_PDF_BASE_PATH = "activtity_pdfs"
 URL_INJECTION_PDF_BASE_PATH = "injection_pdfs"
 URL_ISOTOPE_PDF_BASE_PATH = "isotope_pdf"
 URL_SHOP_MANUAL = "shop_manual"
+URL_VIAL_LABEL_PDF_BASE_PATH = "vial_label"
 
 # WEBSOCKET MESSAGES
 WEBSOCKET_DATA                             = "data"

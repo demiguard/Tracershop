@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 """
 
 import os
+import pathlib
 from production.SECRET_KEY import KEY, LDAP_CERT_PATH, LDAP_USERNAME,\
       LDAP_PASSWORD
 from production.config import debug_file_log, error_file_log,\
@@ -18,7 +19,8 @@ from production.config import debug_file_log, error_file_log,\
 from constants import DEBUG_LOGGER, ERROR_LOGGER, AUDIT_LOGGER,\
       PING_SERVICE_LOGGER, VIAL_LOGGER, CLEAN_UP_LOGGER
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = pathlib.Path(__file__).parent.parent
+
 import ldap
 from django_auth_ldap.config import LDAPSearch, LDAPSearchUnion
 
@@ -30,6 +32,8 @@ SECRET_KEY = KEY
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
+
+CORS_ALLOW_ALL_ORIGINS = DEBUG
 
 ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.167.172', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk"]
 
@@ -309,5 +313,8 @@ LOGGING = {
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = "/static/"
+STATICFILES_DIRS = [
+  BASE_DIR / "frontend/static"
+]
 
 # Logging

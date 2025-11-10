@@ -12,9 +12,9 @@ import { ClickableIcon, DeliveryIcon } from "~/components/injectable/icons";
 import { ActivityOrder, InjectionOrder, IsotopeOrder } from "~/dataclasses/dataclasses";
 import { datify } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
-import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE_ORDER } from "~/lib/shared_constants";
+import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER, DATA_ISOTOPE_ORDER } from "~/lib/shared_constants";
 import { OrderType } from "~/lib/types";
-import { openActivityReleasePDF } from "~/lib/utils";
+import { openActivityReleasePDF, openInjectionReleasePDF } from "~/lib/utils";
 
 function BaseActionButton({
   label,
@@ -92,6 +92,24 @@ function ActivityActionButton({order, label, validate, callback, isDirty, canEdi
   />;
 }
 
+function InjectionActionButton({
+  order, label, validate, callback, isDirty, canEdit
+}){
+  function onRelease(){
+    openInjectionReleasePDF(order);
+  }
+
+  return <BaseActionButton
+    order={order}
+    datatype={DATA_INJECTION_ORDER}
+    label={label}
+    releaseOnClick={onRelease}
+    validate={validate}
+    callback={callback}
+    isDirty={isDirty}
+    canEdit={canEdit}
+  />
+}
 
 type ShopActionButtonProps = {
   order : OrderType
@@ -106,7 +124,7 @@ export function ShopActionButton({order,
     label,
     validate,
     isDirty,
-    callback = () => {},
+    callback = () => Promise.resolve(),
     canEdit = false,
   } : ShopActionButtonProps) {
 
@@ -130,6 +148,17 @@ export function ShopActionButton({order,
         isDirty={isDirty}
         canEdit={canEdit}
       />
+    }
+    case order instanceof InjectionOrder: {
+      return (
+      <InjectionActionButton
+        order={order}
+        validate={validate}
+        callback={callback}
+        label={label}
+        isDirty={isDirty}
+        canEdit={canEdit}
+      />)
     }
     default:
       throw { error : "Order is not an order" };

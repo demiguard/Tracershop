@@ -50,9 +50,11 @@ const ProcedureFinderContext = createContext(new ProcedureFinder(new TracershopS
 export function ProcedureContext({children}){
   const state = useTracershopState();
 
-  const procedureIndex = useMemo(() => {
-    return  new ProcedureFinder( state );
-  }, [state.location, state.procedure]);
+  //const procedureIndex = useMemo(() => {
+  //  return  new ProcedureFinder( state );
+  //}, [state.location, state.procedure]);
+
+  const procedureIndex = new ProcedureFinder(state);
 
   return <ProcedureFinderContext.Provider value={procedureIndex}>
     {children}

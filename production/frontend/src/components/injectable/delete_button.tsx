@@ -9,14 +9,14 @@ export function DeleteButton({
 }){
   const websocket = useWebsocket();
 
-  function deleteFunc() {
+  function deleteFunc() : Promise<any> {
     if(!websocket){
       return Promise.resolve();
     }
 
-    websocket.sendDeleteModels(
+    return websocket.sendDeleteModels(
       object_type, object
-    )
+    );
   }
 
   return <IdempotentIcon

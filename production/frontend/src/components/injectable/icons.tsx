@@ -7,7 +7,7 @@ import { ORDER_STATUS, StateType } from '~/lib/constants'
 import { openActivityReleasePDF, openInjectionReleasePDF, openIsotopeReleasePDF } from '~/lib/utils'
 import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context'
 import { HoverBox } from '~/components/injectable/hover_box'
-import { IdempotentButton } from './buttons'
+import { IdempotentButton, IdempotentButtonProps } from './buttons'
 import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_ORDER } from '~/lib/shared_constants'
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
 import { Image } from './image'
@@ -241,9 +241,7 @@ type IdempotentIconProps = {
   className? : string,
   style? : CSSProperties
   variant? : string
-  [key: string] : any
-
-}
+} & IdempotentButtonProps;
 
 export function IdempotentIcon (props: IdempotentIconProps){
 

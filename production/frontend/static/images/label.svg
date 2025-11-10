@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     width="32" height="32"
+     viewBox="30 -70 200 280"
+     role="img" aria-label="Rotated label with squiggly lines">
+
+  <!-- Group rotated 45 degrees around the center of the rounded rect (120,60) -->
+  <g transform="rotate(45 120 60)">
+
+    <!-- Rounded rectangle (the label background) -->
+    <rect x="20" y="20" width="200" height="80" rx="12" ry="12"
+          fill="#FFFFFF" stroke="#000" stroke-width="10" />
+
+    <path d="M65 45 q10 16 20 0 q10 -16 20 0 q10 16 20 0 q10 -16 20 0 q10 16 20 0 q10 -16 20 0"
+          fill="none" stroke="#333333" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round" />
+
+    <g stroke="black" stroke-width="4" fill="white">
+      <circle id="pointB" cx="45" cy="60" r="7" />
+    </g>
+
+    <path d="M75 70 q10 16 20 0 q10 -16 20 0 q10 16 20 0 q10 -16 20 0 q10 16 20 0 q10 -16 20 0"
+          fill="none" stroke="#333333" stroke-width="4"
+          stroke-linecap="round" stroke-linejoin="round" />
+  </g>
+
+</svg>

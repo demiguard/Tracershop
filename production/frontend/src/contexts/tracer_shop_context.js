@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useReducer, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useMemo, useReducer, useRef } from 'react';
 import { TracerWebSocket } from '../lib/tracer_websocket';
 import { MODELS, TracershopState, User } from '../dataclasses/dataclasses';
 import { ReducerAction, UpdateCurrentUser, UpdateState, DeleteState, UpdateToday, UpdateWebsocketConnectionState, UpdateError } from '~/lib/state_actions';
@@ -151,24 +151,28 @@ export function tracershopReducer(state, action){
 }
 
 export function TracerShopContextInitializer({children, websocket_url}){
-  const today = new Date();
-  const user = (
-    () => {
-      const init_user = db.get(DATABASE_CURRENT_USER);
-      if(init_user && !(init_user instanceof User)){
-        return new User(init_user, init_user.id ,init_user.username, init_user.user_group, init_user.active);
-      } else {
-        return new User();
+  const initial_state = useMemo(() => {
+    const today = new Date();
+    const user = (
+      () => {
+        const init_user = db.get(DATABASE_CURRENT_USER);
+        if(init_user && !(init_user instanceof User)){
+          return new User(init_user, init_user.id ,init_user.username, init_user.user_group, init_user.active);
+        } else {
+          return new User();
+        }
       }
+    )();
+    const initial_state = new TracershopState(user, today);
+    for(const keyword of Object.keys(MODELS)){
+      if(EXCLUDED_STATE_MODELS.includes(keyword)){
+        continue;
+      }
+      initial_state[keyword] = getDatabaseMap(keyword);
     }
-  )();
-  const initial_state = new TracershopState(user, today);
-  for(const keyword of Object.keys(MODELS)){
-    if(EXCLUDED_STATE_MODELS.includes(keyword)){
-      continue;
-    }
-    initial_state[keyword] = getDatabaseMap(keyword);
-  }
+    return initial_state;
+  }, []);
+
   const [state, dispatch] = useReducer(tracershopReducer, initial_state);
   const websocket = useRef(null);
 
@@ -193,7 +197,7 @@ export function TracerShopContextInitializer({children, websocket_url}){
       websocket={websocket.current}
       dispatch={dispatch}
       tracershop_state={state}
-      >
+    >
       {children}
     </TracerShopContext>
   );

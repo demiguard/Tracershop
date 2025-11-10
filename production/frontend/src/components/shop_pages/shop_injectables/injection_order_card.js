@@ -21,6 +21,7 @@ import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { CommitIcon } from "~/components/injectable/commit_icon";
 import { Optional } from "~/components/injectable/optional";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
+import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
 
 /**
  * This is a card containing all the information on an injection order
@@ -127,52 +128,14 @@ export function InjectionOrderCard({
     });
   },[injection_order]);
 
-
   const changed = !compareLoosely(injection_order, tempInjectionOrder);
-  const canEdit = injection_order.status <= 1 && valid_deadline;
-  const orderExists = 0 < injection_order.status;
+  const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(injection_order.status) && valid_deadline;
+  const orderExists = !([ORDER_STATUS.AVAILABLE, ORDER_STATUS.UNAVAILABLE].includes(injection_order.status));
   const statusInfo = orderExists ? `ID: ${injection_order.id}` : "Ny ordre";
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
-  const ActionButton = (() => {
-    if(injection_order.status === ORDER_STATUS.RELEASED){
-      return <InjectionDeliveryIcon
-        label={`delivery-injection-${injection_order.id}`}
-        order={injection_order}
-      />
-    }
-    if(changed && valid_deadline){
-      return <CommitIcon
-        temp_object={tempInjectionOrder}
-        object_type={DATA_INJECTION_ORDER}
-        label={`commit-injection-${injection_order.id}`}
-        validate={validate}
-      />
-    }
-    if(!changed && valid_deadline && orderExists){
-      return <ClickableIcon
-        label={`delete-injection-${injection_order.id}`}
-        src="static/images/decline.svg"
-        onClick={deleteOrder}
-      />
-    }
-    return "";
-  })();
-
-  const TracerSelect = <Select
-    aria-label={`tracer-input-${injection_order.id}`}
-    canEdit={canEdit}
-    options={tracerOptions}
-    onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
-    value={tempInjectionOrder.tracer}
-  />;
-
   const tempTracer = state.tracer.get(injection_order.tracer);
-  const TracerForm = tempTracer ? <FormControl
-                        disabled
-                        aria-label={`tracer-input-${injection_order.id}`}
-                        value={tempTracer.shortname}
-                     /> : <div></div>;
+
 
   return (
   <Card style={{padding : '0px'}}>
@@ -182,15 +145,15 @@ export function InjectionOrderCard({
           <StatusIcon order={injection_order}/>
         </Col>
         <Col>
-        <div style={{
-          display : "ruby"
-        }}>
           <TracershopInputGroup readOnly={!canEdit} label="Tracer">
-            <Optional exists={canEdit} alternative={TracerForm}>
-              {TracerSelect}
-            </Optional>
+            <Select
+              aria-label={`tracer-input-${injection_order.id}`}
+              canEdit={canEdit}
+              options={tracerOptions}
+              onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
+              value={tempInjectionOrder.tracer}
+            />
           </TracershopInputGroup>
-          </div>
         </Col>
         <Col>
           <TracershopInputGroup readOnly={!canEdit} label="Injektioner">
@@ -269,7 +232,12 @@ export function InjectionOrderCard({
           alignItems : "center",
           display : "flex"
         }}>
-          {ActionButton}
+          <ShopActionButton
+            order={injection_order}
+            label={`inj-action-${injection_order.id}`}
+            validate={validate}
+            isDirty={changed}
+          />
         </Col>
       </Row>
     </Card.Header>
