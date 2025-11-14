@@ -28,7 +28,7 @@ import reportlab.rl_config
 reportlab.rl_config.warnOnMissingFontGlyphs = 0 # type: ignore
 from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
-
+from reportlab.lib.colors import Color
 from reportlab.lib.fonts import addMapping
 from reportlab.graphics.charts.textlabels import Label
 try: #pragma: no cover
@@ -46,6 +46,9 @@ except: #pragma: no cover
 
 WIDTH, HEIGHT = (int(x) for x in A4)
 
+BLUE_COLOR = Color(0.5, 0.5, 1.0)
+BLACK_COLOR = Color(0.0, 0.0, 0.0)
+
 # Tracershop Production packages
 from constants import LEGACY_ENTRIES, ERROR_LOGGER, DEBUG_LOGGER
 from lib.formatting import dateConverter, timeConverter,\
@@ -53,6 +56,7 @@ from lib.formatting import dateConverter, timeConverter,\
 from database.models import Customer, ActivityOrder, ActivityProduction,\
   DeliveryEndpoint, InjectionOrder, ActivityDeliveryTimeSlot, Vial, TracerUsage,\
   IsotopeOrder, IsotopeDelivery, IsotopeVial
+from lib.utils import default
 
 debug_logger = getLogger(DEBUG_LOGGER)
 error_logger = getLogger(ERROR_LOGGER)
@@ -130,11 +134,71 @@ class TracershopCanvas(canvas.Canvas):
       kwargs['initialFontSize'] = defaultFontSize
 
     super().__init__(*args, **kwargs)
-    self.font_size = kwargs['initialFontSize']
+    self.font_size: float = kwargs['initialFontSize']
 
   def draw_string(self, cursor: Cursor, text: str, line_height=1.25):
     self.drawString(cursor.x, cursor.y, text)
     cursor += (0, -line_height * self.font_size)
+    return cursor
+
+  def draw_text_lines(self, cursor: Cursor, lines: List[str]):
+    max_text_length = 0
+    for line in lines:
+      if line is None:
+        line = ''
+      self.draw_string(cursor, line)
+      max_text_length = max(max_text_length, len(line))
+    return max_text_length
+
+
+  ### Region - Drawing Models
+  def draw_endpoint(self, cursor: Cursor, endpoint: DeliveryEndpoint):
+    """Draws an identifier for the customer like:
+
+    #--------------------
+      Customer name
+      Customer address
+      Customer phone
+      Customer Mail
+    #-------------------
+
+    """
+    y_top = cursor.y
+    cursor += (10, -15)
+
+    customer = endpoint.owner
+    long_name = default(customer.long_name, "")
+    address = default(customer.billing_address, "")
+    phone = default(customer.billing_phone, "")
+    email = default(customer.billing_email, "")
+
+    max_length = self.draw_text_lines(cursor, [
+      long_name,
+      address,
+      phone,
+      email
+    ])
+
+    cursor += (-10, -15)
+
+    self.setStrokeColor(BLUE_COLOR)
+
+    encapsulating_x_line_start = cursor.x
+    encapsulating_x_line_end = cursor.x + max_length
+    y_bot = cursor.y
+
+    encapsulating_top_line = (encapsulating_x_line_start, y_top, encapsulating_x_line_stop, y_top)
+    encapsulating_bot_line = (encapsulating_x_line_start, y_bot, encapsulating_x_line_stop, y_bot)
+
+
+    self.lines([
+      encapsulating_top_line,
+      encapsulating_bot_line
+    ])
+
+    cursor.y += (0, -self.font_size)
+
+
     return cursor
 
 class ReleaseDocument(canvas.Canvas):
@@ -201,20 +265,12 @@ class ReleaseDocument(canvas.Canvas):
     self.setStrokeColorRGB(0.5,0.5,1.0)
     self.setFont(self._font, self._font_size)
 
-    customer = endpoint.owner
-
     y_top = y_cursor
-
     y_cursor -= 15 # Move the Cursor Down
 
-    phone = ""
-    email = ""
-
-    if customer.billing_phone is not None:
-      phone = customer.billing_phone
-
-    if customer.billing_email is not None:
-      email = customer.billing_email
+    customer = endpoint.owner
+    phone = customer.billing_phone if customer.billing_phone is not None else ""
+    email = customer.billing_email if customer.billing_email is not None else ""
 
     Customer_identification_lines = [customer.long_name,
                                      customer.billing_address,
@@ -230,14 +286,14 @@ class ReleaseDocument(canvas.Canvas):
       y_cursor -= self.line_height
       max_text_length = max(max_text_length, len(line))
 
-    Y_bot =  y_cursor + 10
+    Y_bot = y_cursor + 10
 
     line_width = 3
 
     encapsulating_x_line_start = x_cursor - line_width
     encapsulating_x_line_stop = max(200, x_cursor + max_text_length * self._Length_per_character + line_width)
 
-    encapsulating_top_line    = (encapsulating_x_line_start, y_top, encapsulating_x_line_stop, y_top)
+    encapsulating_top_line = (encapsulating_x_line_start, y_top, encapsulating_x_line_stop, y_top)
     encapsulating_bot_line = (encapsulating_x_line_start, Y_bot, encapsulating_x_line_stop, Y_bot)
 
 

@@ -1,30 +1,33 @@
 # Python Standard library
+from logging import getLogger
 from pathlib import Path
 from typing import IO, Optional
 
+
+
 # Third part modules:
-from reportlab.graphics.shapes import Drawing, Image
-
-
 ## Django
 from django.conf import settings
 
 ## Report Lab
-from reportlab.graphics.shapes import String
+from reportlab.graphics.shapes import String, Drawing, Image
 from reportlab.graphics import renderPS
 from reportlab.lib.units import mm, inch
 
 # Tracershop modules
+from constants import DEBUG_LOGGER
 from database.models import Vial, ServerConfiguration
-from lib.formatting import format_phone_number
+from lib.formatting import format_phone_number, format_time_number
 from lib.pdf_generation import Cursor, TracershopCanvas, defaultFont
 
 radioactive_path = Path(f"{settings.BASE_DIR}/pdfData/radioactive.jpg")
 
+debug_logger = getLogger(DEBUG_LOGGER)
+
 class VialLabel(TracershopCanvas):
   def __init__(self, filename: str | IO[bytes], vial: Optional[Vial] = None, *args) -> None:
-    page_size = (0.6 * inch, 1.2 * inch)
-    font_size = 5
+    page_size = (98 * mm, 38 * mm)
+    font_size = 10
 
     super().__init__(filename, *args, pagesize=page_size, initialFontSize=font_size)
     self.file_name = filename
@@ -40,15 +43,30 @@ class VialLabel(TracershopCanvas):
 
   def load_vial(self, vial: Vial):
     sc = ServerConfiguration.get()
-    self.rotate(90)
 
-    cursor = Cursor(10, -10)
+    hour = format_time_number(vial.fill_time.hour)
+    minute = format_time_number(vial.fill_time.minute)
+    second = format_time_number(vial.fill_time.second)
 
-    cursor = self.draw_string(cursor, vial.lot_number)
-    cursor = self.draw_string(cursor, f"{vial.activity} MBq")
-    cursor = self.draw_string(cursor, f"{vial.fill_time.hour}:{vial.fill_time.minute}:{vial.fill_time.second}")
-    cursor = self.draw_string(cursor, f"{vial.fill_date.day}/{vial.fill_date.month}/{vial.fill_date.year}")
-    cursor = self.draw_string(cursor, f"Ved Uheld ring: {format_phone_number(sc.AdminPhoneNumber)}")
+    day = format_time_number(vial.fill_date.day)
+    month = format_time_number(vial.fill_date.month)
+    year = str(vial.fill_date.year)
+
+    image_size = 20 * mm
+
+    self.drawImage(radioactive_path, 74 * mm , 38 * mm - image_size - self.margin, image_size, image_size)
+
+    cursor = Cursor(self.margin, 26 * mm - self.font_size)
+
+    self.draw_text_lines(
+      cursor, [
+        vial.lot_number,
+        f"{vial.activity} MBq",
+        f"{hour}:{minute}:{second}",
+        f"{day}/{month}/{year}",
+        f"Ved Uheld ring: {format_phone_number(sc.AdminPhoneNumber)}"
+      ]
+    )
 
     self.save()
 

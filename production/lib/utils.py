@@ -5,7 +5,7 @@ to prevent circular imports
 """
 
 
-from typing import Any,Callable, List, Generic,TypeVar
+from typing import Any,Callable, List, Generic, Optional,TypeVar
 
 T = TypeVar('T')
 T2 = TypeVar('T2')
@@ -36,3 +36,10 @@ def identity(val: T) -> T:
       T: The same input
   """
   return val
+
+
+def default[dT](value: Optional[dT], default_value: dT):
+  """A less verbose way of writing:
+  >>> value if value is not None else default_value
+  """
+  return value if value is not None else default_value
