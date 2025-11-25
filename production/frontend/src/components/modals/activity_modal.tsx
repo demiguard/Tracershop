@@ -22,12 +22,11 @@ import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput }
 import { compareDates, getId, openActivityReleasePDF } from "~/lib/utils";
 import { TimeInput } from "../injectable/inputs/time_input";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
-import { OrderMapping } from "~/lib/data_structures/order_mapping";
 import { CommitIcon } from "../injectable/commit_icon";
 import { Optional, Options } from "../injectable/optional";
 import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
-import { CancelBox } from "~/components/injectable/cancel_box";
+
 import { vialFilter } from "~/lib/filters";
 import { FONT } from "~/lib/styles";
 import { DateTime } from "~/components/injectable/datetime";
@@ -36,6 +35,8 @@ import { ErrorMonad, RecoverableError, useErrorState } from "~/lib/error_handlin
 import { useUserReleaseRights } from "~/contexts/user_release_right";
 import { CancelButton } from "~/components/injectable/cancel_button";
 import { ReleaseButton } from "~/components/production_pages/production_injectables/release_button";
+import { FuckedUpButton } from "../injectable/buttons/fucked_up_button";
+import { OrderMapping } from "~/lib/data_structures/order_mapping";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -355,16 +356,17 @@ const marginRows = {
   marginBottom : "7px",
 }
 
-/**
- *
- * @param {{
- *  order_mapping : OrderMapping,
- * }} param0
- * @returns
- */
+
+type ActivityModalProps = {
+  active_tracer : number,
+  order_mapping : OrderMapping,
+  on_close : () => void,
+  timeSlotID : number
+}
+
 export function ActivityModal({
   active_tracer, order_mapping, on_close, timeSlotID
-}){
+}: ActivityModalProps){
 
   // State extraction
   const state = useTracershopState();
@@ -387,11 +389,6 @@ export function ActivityModal({
   const [addingVial, setAddingVial] = useState(false);
   const [freeing, setFreeing] = useState(false);
   const [loginError, setLoginError] = useErrorState();
-  const [correctingOrder, setCorrectingOrder] = useState(false);
-
-  // Derived State
-  const canCancel = orderCollection.minimum_status === ORDER_STATUS.ACCEPTED
-  || orderCollection.minimum_status === ORDER_STATUS.ORDERED;
 
   const modal_vials = orderCollection.minimum_status === ORDER_STATUS.RELEASED ?
     vialFilter(state, { orderIDs : orderCollection.orderIDs }) :
@@ -413,13 +410,7 @@ export function ActivityModal({
     setFreeing(false)
   }
 
-  function startCorrectingOrder(){
-    setCorrectingOrder(true);
-  }
 
-  function stopCorrectingOrder(){
-    setCorrectingOrder(true);
-  }
 
   function onClickAccept(){
     const orders = [...order_mapping.getOrders(timeSlotID)];
@@ -458,30 +449,6 @@ export function ActivityModal({
     });
   }
 
-  function onCorrect(username, password){
-    const message = {
-      [DATA_AUTH] : {
-        [AUTH_USERNAME] : username,
-        [AUTH_PASSWORD] : password
-      },
-      [WEBSOCKET_DATA] : {
-        [DATA_VIAL] : orderCollection.vials.map(getId),
-        [DATA_ACTIVITY_ORDER] : orderCollection.orderIDs,
-      },
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CORRECT_ORDER,
-    };
-
-    return websocket.send(message).then(
-      (message) => {
-        if (message[AUTH_IS_AUTHENTICATED]){
-          stopCorrectingOrder();
-          setLoginError(new RecoverableError());
-        } else {
-          setLoginError(new RecoverableError("Forkert login"));
-        }
-      }
-    )
-  }
 
   //#region ActivityModal Subcomponents
   const orderRows = orderCollection.orders.map((order) => <OrderRow
@@ -532,44 +499,6 @@ export function ActivityModal({
   const canFree = selectedVials.size > 0 && !(addingVial) && RightsToFree;
   const PDFButton = <MarginButton onClick={onClickToPDF}>Frigivelsecertifikat</MarginButton>;
 
-  /**
-   * This is the element that might be displayed if
-   */
-  const sideElement = (() => {
-    if(freeing){
-      return (
-        <Col md={6}>
-          <Authenticate
-            authenticate={onFree}
-            error={loginError}
-            setError={setLoginError}
-            fit_in={false}
-            headerMessage={`Frigiv ordre - ${orderCollection.orderIDs.join(', ')}`}
-            buttonMessage={"Frigiv ordre"}
-          />
-        </Col>
-      );
-    }
-
-    if(correctingOrder){
-      return (
-        <Col md={6}>
-          <Authenticate
-            authenticate={onCorrect}
-            error={loginError}
-            setError={setLoginError}
-            fit_in={false}
-            headerMessage={`Ret ordre - ${orderCollection.orderIDs.join(', ')}`}
-            buttonMessage={"Ret ordre"}
-          />
-        </Col>
-      );
-    }
-    return <div></div>;
-
-  })()
-
-
   const destinationHover = <HoverBox
     Base={<div>Destination:</div>}
     Hover={<div>Kundens brugernavn, rigtige navn og <br/>
@@ -585,10 +514,12 @@ export function ActivityModal({
   let allocationTotal = 0;
   for(const vid of selectedVials.values()){
     const vial = state.vial.get(vid);
-    allocationTotal += vial.activity;
+    if(vial){
+      allocationTotal += vial.activity;
+    } else {
+      console.log("Excuse me wtf?");
+    }
   }
-
-
 
   return (
     <div>
@@ -606,7 +537,7 @@ export function ActivityModal({
     </Modal.Header>
     <Modal.Body>
         <Row>
-          <Col md={(freeing || correctingOrder) ? 6 : 12}>
+          <Col md={(freeing) ? 6 : 12}>
           <Row>
             <Row style={marginRows}>
               <Col xs={3}>{destinationHover}</Col>
@@ -654,7 +585,19 @@ export function ActivityModal({
             </Optional>
           </Row>
         </Col>
-          {sideElement}
+        <Optional exists={freeing}>
+          <Col md={6}>
+            <Authenticate
+              authenticate={onFree}
+              error={loginError}
+              setError={setLoginError}
+              fit_in={false}
+              headerMessage={`Frigiv ordre - ${orderCollection.orderIDs.join(', ')}`}
+              buttonMessage={"Frigiv ordre"}
+            />
+        </Col>
+
+        </Optional>
         </Row>
         <Optional exists={freeing && !compareDates(state.today, new Date())}>
           <AlertBox data-testid={"activity-error-date-error"} error={dateErrorStatic}/>
@@ -697,16 +640,7 @@ export function ActivityModal({
       <Container>
       <Row className="justify-content-around">
         <Col>
-          <Optional exists={canCancel}>
-            <Col md="auto">
-              <CancelButton orders={orderCollection.orders}/>
-            </Col>
-          </Optional>
-          <Optional exists={orderCollection.minimum_status === ORDER_STATUS.RELEASED && !correctingOrder}>
-            <Col md="auto">
-              <MarginButton onClick={startCorrectingOrder}>Ret ordre</MarginButton>
-            </Col>
-          </Optional>
+          <FuckedUpButton collection={orderCollection}/>
         </Col>
         <Col>
           <Row className="justify-content-end">

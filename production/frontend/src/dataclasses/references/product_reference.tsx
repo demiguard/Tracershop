@@ -195,7 +195,10 @@ export class ProductReference {
             state, {
               state : state,
               timeSlots : timeSlots,
-              delivery_date : delivery_date
+              delivery_date : delivery_date,
+              timeSlotFilterArgs : {
+                tracerID : this.product_id
+              }
             }
           );
           case PRODUCT_TYPES.ISOTOPE:

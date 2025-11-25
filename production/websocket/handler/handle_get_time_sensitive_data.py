@@ -32,14 +32,6 @@ class HandleGetTimeSensitiveData(HandlerBase):
     client_date = toDateTime(message[WEBSOCKET_DATE][:19])
     data = await consumer.db.a_get_time_sensitive_state(client_date, user)
 
-    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
-      "consumer" : consumer,
-      "message_id" : message[WEBSOCKET_MESSAGE_ID],
-      "status" : SUCCESS_STATUS_CRUD.SUCCESS,
-      "data" : data,
-      "refresh" : True
-    })
-
     await consumer.send_json({
       WEBSOCKET_DATA : data,
       WEBSOCKET_MESSAGE_SUCCESS : WEBSOCKET_MESSAGE_SUCCESS,

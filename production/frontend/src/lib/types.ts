@@ -16,7 +16,7 @@ export interface ShopActionButtonArgs {
 
 export type OrderType = IsotopeOrder | ActivityOrder | InjectionOrder
 export type OrdersType = Array<IsotopeOrder> | Array<ActivityOrder> | Array<InjectionOrder>
-
+export type OrderCollectionSpecialized = ActivityOrderCollection | InjectionOrderCollection | IsotopeOrderCollection;
 export type ProductType = Isotope | Tracer
 
 export interface TracershopDataClass {
