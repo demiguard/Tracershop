@@ -15,43 +15,25 @@ import { getRelatedTimeSlots } from '../../../lib/data_structures';
 import propType from 'prop-types'
 
 type DestinationSelectProps = {
-  activeCustomer : number,
-  activeEndpoint : number,
-  activeTimeSlot? : number,
+  activeCustomer :  number | string,
+  activeEndpoint :  number | string,
+  activeTimeSlot? : number | string,
   ariaLabelCustomer? : string ,
   ariaLabelEndpoint? : string ,
   ariaLabelTimeSlot? : string ,
   customers : Map<number, Customer>,
   endpoints : Map<number, DeliveryEndpoint>,
   timeSlots? : Map<number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot>,
-  setCustomer :  (id : number) => void,
-  setEndpoint :  (id : number) => void,
-  setTimeSlot? : (id : number) => void
+  setCustomer :  (id : number | string) => void,
+  setEndpoint :  (id : number | string) => void,
+  setTimeSlot? : (id : number | string) => void
 }
 
 
-/**
- *
- * @param {{
- * ariaLabelCustomer : String | undefined,
- * ariaLabelEndpoint : String | undefined,
- * ariaLabelTimeSlot : String | undefined,
- * activeCustomer : number,
- * activeEndpoint : number,
- * activeTimeSlot : number | undefined,
- * customer : Map<number, Customer>,
- * endpoints : Map<number, DeliveryEndpoint>,
- * timeSlots : Map<number, ActivityDeliveryTimeSlot> | Array<ActivityDeliveryTimeSlot> | undefined,
- * setCustomer : Callable,
- * setEndpoint : Callable,
- * setTimeSlot : Callable | undefined,
- * }} param0
- * @returns {Element}
- */
 export function DestinationSelect({activeCustomer, activeEndpoint, activeTimeSlot,
                                    ariaLabelCustomer, ariaLabelEndpoint, ariaLabelTimeSlot,
                                    customers, endpoints, timeSlots,
-                                   setCustomer, setEndpoint, setTimeSlot }){
+                                   setCustomer, setEndpoint, setTimeSlot } : DestinationSelectProps){
   const filteredEndpoints = [...endpoints.values()].filter(
     (endpoint) => {return activeCustomer == endpoint.owner;}
   );

@@ -107,6 +107,7 @@ export function procedureFilter(container : ContainerType<Procedure>, {
 
 export function locationFilter(container: ContainerType<Location>, filterArgs: any): Location[]
 export function locationFilter(container: ContainerType<Location>, filterArgs: any, ids: true): number[]
+export function locationFilter(container: ContainerType<Location>, filterArgs: any, ids: false): Location[]
 
 export function locationFilter(container: ContainerType<Location>, {
   active_endpoint

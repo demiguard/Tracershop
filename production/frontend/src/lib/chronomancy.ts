@@ -266,7 +266,7 @@ export function getWeekNumber(date: any){
  * @returns {Boolean} - Returns True if the deadline is expired,
  * so you can't do the the thing or false if you can do the thing
  */
-export function expiredDeadline(deadline, orderDate, closedDates,  now){
+export function expiredDeadline(deadline, orderDate, closedDates, now?){
   if (now === undefined){
     now = getToday();
   }

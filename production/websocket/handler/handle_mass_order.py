@@ -11,7 +11,7 @@ from shared_constants import WEBSOCKET_SERVER_MESSAGES,\
   WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_ID,\
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_ERROR,\
   ERROR_TYPE, ERROR_NO_VALID_TIME_SLOTS, ERROR_EARLY_BOOKING_TIME,\
-  ERROR_EARLY_TIME_SLOT, DATA_INJECTION_ORDER, DATA_ACTIVITY_ORDER,\
+  ERROR_EARLY_TIME_SLOT, DATA_BOOKING, DATA_ACTIVITY_ORDER,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_UPDATE_STATE,\
   SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPES
 from tracerauth.auth import get_logged_in_user
@@ -51,7 +51,7 @@ class HandleMassOrders(HandlerBase):
     user = await get_logged_in_user(consumer.scope)
 
     try:
-      orders = await consumer.db.a_mass_order(message[WEBSOCKET_DATA], user)
+      orders, bookings = await consumer.db.a_mass_order(message[WEBSOCKET_DATA], user)
     except RequestingNonExistingEndpoint as exception: # pragma: no cover
       if exception.earliest_available_order_time is not None:
         early_booking_time = timeConverter(exception.earliest_available_order_time)
@@ -71,9 +71,10 @@ class HandleMassOrders(HandlerBase):
 
       return
 
-    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+    await consumer.messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_MASS_ORDER, {
       MESSENGER_CONSUMER : consumer,
       WEBSOCKET_MESSAGE_ID : message[WEBSOCKET_MESSAGE_ID],
+      DATA_BOOKING : bookings,
       WEBSOCKET_DATA : orders,
       WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
     })

@@ -777,6 +777,8 @@ class DatabaseInterface():
     return {
       DATA_ACTIVITY_ORDER : activityOrders,
       DATA_INJECTION_ORDER : injectionsOrders
+    }, {
+      DATA_BOOKING : bookingUpdated
     }
 
   @database_sync_to_async

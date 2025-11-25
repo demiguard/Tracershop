@@ -6,13 +6,10 @@ import { useTracershopState } from '~/contexts/tracer_shop_context'
 import { getId } from '~/lib/utils';
 import { TimeSlotBitChain } from '~/lib/data_structures/bit_chains';
 
-/**
- *
- * @param {{
- *  time_slots : Array<Number>
- * }} param0
- * @returns
- */
+
+
+
+
 export function ShopCalender({ on_day_click, active_endpoint, time_slots }){
   const state = useTracershopState();
   const bitChain = new TimeSlotBitChain(time_slots, state);
@@ -25,9 +22,4 @@ export function ShopCalender({ on_day_click, active_endpoint, time_slots }){
     filter_injection_orders={(io) => io.endpoint === active_endpoint}
     bit_chain={bitChain}
   />
-}
-
-ShopCalender.propTypes = {
-  on_day_click : propTypes.func.isRequired,
-  time_slots : propTypes.arrayOf(Number).isRequired,
 }

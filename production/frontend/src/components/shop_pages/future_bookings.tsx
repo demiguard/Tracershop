@@ -18,60 +18,55 @@ import { RecoverableError, useErrorState } from "~/lib/error_handling";
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
 
-  /** This component is for showing booking for not setup
- *
- * @param {{
-  *  bookings : Array<Booking>
-  * }} param0
-  * @returns
-  */
-  function ProcedureCard({bookings}){
-    const state = useTracershopState();
-    const [open, setOpen] = useState(false);
-    // Using Set for eliminating duplicates
-    const /**@type {Set<Number>} */ procedureIdentifierIDs = new Set(
-      bookings.map((booking) => {
-        return booking.procedure;
-      }));
-
-    const rows = [...procedureIdentifierIDs].map(
-      (procedureIdentifierID) => {
-        const procedureIdentifier = state.procedure_identifier.get(procedureIdentifierID);
-        if(procedureIdentifier === undefined){
-          console.log(`Procedure Identifier for ${procedureIdentifierID} is undefined!`);
-          return null;
-        }
-
-        return (<Row key={procedureIdentifierID}>{procedureIdentifier.description}</Row>);
-      }
-    )
-
-    return (<Card>
-      <Card.Header>
-        <Row>
-          <Col>{missingSetupHeader}</Col>
-          <Col style={cssAlignRight}>
-            <OpenCloseButton
-              label="open-unset-procedures"
-              open={open}
-              setOpen={setOpen}
-            />
-          </Col>
-        </Row>
-      </Card.Header>
-      <Collapse in={open}>
-        <Card.Body>{rows}</Card.Body>
-      </Collapse>
-    </Card>);
+type ProcedureCardProps = {
+  bookings : Array<Booking>
 }
 
-/**
- *
- * @param {{
- *   booking : Booking
- * }} param0
- * @returns
- */
+function ProcedureCard({bookings} :  ProcedureCardProps){
+  const state = useTracershopState();
+  const [open, setOpen] = useState(false);
+  // Using Set for eliminating duplicates
+  const procedureIdentifierIDs = new Set<number>(
+    bookings.map((booking) => {
+      return booking.procedure;
+    }));
+
+  const rows = [...procedureIdentifierIDs].map(
+    (procedureIdentifierID) => {
+      const procedureIdentifier = state.procedure_identifier.get(procedureIdentifierID);
+      if(procedureIdentifier === undefined){
+        console.log(`Procedure Identifier for ${procedureIdentifierID} is undefined!`);
+        return null;
+      }
+
+      return (<Row key={procedureIdentifierID}>{procedureIdentifier.description}</Row>);
+    }
+  )
+
+  return (<Card>
+    <Card.Header>
+      <Row>
+        <Col>{missingSetupHeader}</Col>
+        <Col style={cssAlignRight}>
+          <OpenCloseButton
+            label="open-unset-procedures"
+            open={open}
+            setOpen={setOpen}
+          />
+        </Col>
+      </Row>
+    </Card.Header>
+    <Collapse in={open}>
+      <Card.Body>{rows}</Card.Body>
+    </Collapse>
+  </Card>);
+}
+
+type BookingRowProps = {
+  booking : Booking,
+  checked : boolean,
+}
+
 function BookingRow({
   setBookingProgram,
   booking,
@@ -184,7 +179,7 @@ function TracerCard({tracer,
   const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
     activityDeadlineValid : injectionDeadlineValid;
 
-
+  //@ts-ignore
   const rows = [...bookings].sort(sortBookings(sortingMethod, state, invertedSorting)).map(
     (booking, i) => {
       const checked = bookingProgram[booking.accession_number];
@@ -279,7 +274,6 @@ export function FutureBooking ({active_endpoint, booking,
       bookingCards.push(<ProcedureCard
         key={index}
         bookings={BookingArray}
-        procedures={state.procedure}
       />);
     } else {
       bookingCards.push(

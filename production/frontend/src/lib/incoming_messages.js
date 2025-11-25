@@ -13,6 +13,7 @@ import {
   WEBSOCKET_MESSAGE_AUTH_LOGOUT,
   WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE,
   WEBSOCKET_MESSAGE_CREATE_BOOKING,
+  WEBSOCKET_MESSAGE_MASS_ORDER,
   WEBSOCKET_MESSAGE_READ_TELEMETRY,
 } from "~/lib/shared_constants.js"
 
@@ -125,6 +126,18 @@ export class MESSAGE_CREATE_BOOKING {
   }
 }
 
+export class MESSAGE_MASS_ORDER {
+  constructor(message){
+    this.type = message["type"]
+    this.success = message["success"]
+    this.status = message["status"]
+    this.messageType = message["messageType"]
+    this.message_id = message["message_id"]
+    this.data = deserialize(message["data"])
+    this.booking = deserialize(message["booking"])
+  }
+}
+
 export class MESSAGE_READ_TELEMETRY {
   constructor(message){
     this.success = message["success"]
@@ -145,6 +158,7 @@ export const MESSAGES = {
   [WEBSOCKET_MESSAGE_AUTH_LOGOUT] : MESSAGE_AUTH_LOGOUT,
   [WEBSOCKET_MESSAGE_UPDATE_PRIVILEGED_STATE] : MESSAGE_UPDATE_PRIVILEGED_STATE,
   [WEBSOCKET_MESSAGE_CREATE_BOOKING] : MESSAGE_CREATE_BOOKING,
+  [WEBSOCKET_MESSAGE_MASS_ORDER] : MESSAGE_MASS_ORDER,
   [WEBSOCKET_MESSAGE_READ_TELEMETRY] : MESSAGE_READ_TELEMETRY,
 }
 

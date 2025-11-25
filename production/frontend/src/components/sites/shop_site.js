@@ -1,7 +1,7 @@
 import React, {useState } from "react";
 import { TracershopNavbar } from "../injectable/navbar";
 import { ShopSetup } from "../shop_pages/shop_setup.js";
-import { ShopOrderPage } from "../shop_pages/shop_order_page.js";
+import { ShopOrderPage } from "../shop_pages/shop_order_page";
 
 import { PROP_RELATED_CUSTOMER, PROP_USER, USER_GROUPS } from "../../lib/constants";
 

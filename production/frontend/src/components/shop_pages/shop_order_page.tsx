@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import { Select, toOptions } from '../injectable/select.js'
-import { FutureBooking } from "./future_bookings.js";
-import { OrderReview } from "./order_review.js";
-import { db } from "../../lib/local_storage_driver.js";
+import { Select, toOptions } from '../injectable/select'
+import { FutureBooking } from "./future_bookings";
+import { OrderReview } from "./order_review";
+import { db } from "~/lib/local_storage_driver";
 import { DATABASE_ACTIVE_TRACER, DATABASE_SHOP_ACTIVE_ENDPOINT, DATABASE_SHOP_CUSTOMER,
   DATABASE_SHOP_ORDER_PAGE,  PROP_ACTIVE_CUSTOMER, PROP_ACTIVE_DATE,
   PROP_ACTIVE_ENDPOINT, PROP_VALID_ACTIVITY_DEADLINE, PROP_VALID_INJECTION_DEADLINE,
   USER_GROUPS,
-} from "../../lib/constants.js";
-import { ServerConfiguration, Deadline, } from "~/dataclasses/dataclasses";
+} from "~/lib/constants";
+import { ServerConfiguration, Deadline, Booking, } from "~/dataclasses/dataclasses";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
 import { expiredDeadline } from "../../lib/chronomancy";
 import { DestinationSelect } from "../injectable/derived_injectables/destination_select";
@@ -21,8 +21,8 @@ import { Optional } from "~/components/injectable/optional";
 import { DATA_BOOKING } from "~/lib/shared_constants";
 import { bookingFilter, timeSlotFilter } from "~/lib/filters";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
-import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages";
-import { numberfy, toMapping } from "~/lib/utils";
+import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_MASS_ORDER, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages";
+import { getObjects, numberfy, toMapping } from "~/lib/utils";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 import { StateType } from "~/lib/constants";
@@ -96,7 +96,7 @@ export function ShopOrderPage ({relatedCustomer}){
 
   });
   const catalog = tracerCatalog.getCatalog(activeEndpoint);
-  const availableProducts = [...catalog.tracerCatalogActivity, ...catalog.isotopeCatalog];
+  const availableProducts = [...[...catalog.tracerCatalogActivity].map(getObjects(state.tracer)), ...[...catalog.isotopeCatalog].map(getObjects(state.isotopes))];
 
   const [activeProduct, _setActiveProduct] = useState(() => {
     const local_stored_active_tracer = db.get(DATABASE_ACTIVE_TRACER);
@@ -110,7 +110,7 @@ export function ShopOrderPage ({relatedCustomer}){
     return ProductReference.fromProduct(availableProducts[0])
   });
 
-  const [bookings, setBookings] = useState(new Map());
+  const [bookings, setBookings] = useState(new Map<number, Booking>());
   const activeDate = state.today;
 
   function addBookingFromUpdate(message){
@@ -138,6 +138,17 @@ export function ShopOrderPage ({relatedCustomer}){
         }
         return newBookings
       });
+    } else if(message instanceof MESSAGE_MASS_ORDER){
+      setBookings(oldBookings => {
+        const all_bookings: Booking[] = [...oldBookings.values(), ...message.booking[DATA_BOOKING]]
+        const filteredBookings = bookingFilter(all_bookings, {
+          state : state,
+          active_date : activeDate,
+          active_endpoint : activeEndpoint,
+        });
+
+        return toMapping(filteredBookings);
+      })
     }
   }
 
@@ -286,7 +297,6 @@ export function ShopOrderPage ({relatedCustomer}){
           <div>
             <CalenderColorMapContextProvider endpoint_id={activeEndpoint}>
               <ShopCalender
-                active_date={state.today}
                 active_endpoint={activeEndpoint}
                 on_day_click={setActiveDate}
                 time_slots={calenderTimeSlots}

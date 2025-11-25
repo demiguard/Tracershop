@@ -25,7 +25,8 @@ import { formatAccessionNumber } from '~/lib/formatting';
 
 //#region TimeSlotMapping
 export class TimeSlotMapping {
-  /**@type {Map<Number, ArrayMap<Number, ActivityDeliveryTimeSlot>} */ _timeSlotMapping
+  _timeSlotMapping: Map<Number, ArrayMap<Number, ActivityDeliveryTimeSlot>>
+  _endpoints: Map<Number, DeliveryEndpoint>
 
   /**
   * Creates a mapping over the related activity delivery time slots.
@@ -33,10 +34,7 @@ export class TimeSlotMapping {
   * 1. Filter out time slots of the wrong day and tracer
   * 2. Group TimeSlots together so a time slot can figure out if and what time
   *    slot it should move to.
-  * @param {Map<Number, DeliveryEndpoint>} endpoints - This should be all
-  * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
-  * @param {Array<Number>} relevantProductions
-   */
+  */
   constructor(endpoints, timeSlots, relevantProductions) {
     /* The underlying datastructure
       Customer_1 --> Endpoint_1 -> [time_slot_1, time_slot_2] // Sorted by time
@@ -263,7 +261,7 @@ export class TracerBookingMapping {
    * @param {ProcedureLocationIndex} procedureLocationIndex
    */
   constructor(bookings, procedureLocationIndex){
-    this._map = new ArrayMap();
+    this._map = new ArrayMap<Number,Booking> ();
 
     for(const booking of bookings){
       const procedure = procedureLocationIndex.getProcedure(booking);
@@ -276,7 +274,7 @@ export class TracerBookingMapping {
     }
   }
 
-  *[Symbol.iterator](){
+  *[Symbol.iterator]() : Generator<[number, Booking[]]>{
     for(const [tracer, bookings] of this._map){
       yield [tracer, bookings]
     }
@@ -357,7 +355,7 @@ export class ITimeTableDataContainer {
 function BookingCell({bookings}){
   const state = useTracershopState();
   const [hasOverflowed, setHasOverflowed] = useState(false);
-  const ref = useRef();
+  const ref = useRef(null);
   // Note we do not use the actually overflow to determine rendering.
   // This is to prevent flickering back and forth between an over- and
   // underflowing of the component

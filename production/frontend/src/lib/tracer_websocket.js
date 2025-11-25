@@ -16,7 +16,7 @@ import { deserialize_single } from "./serialization";
 import { DATABASE_CURRENT_USER } from "./constants";
 import { db } from "./local_storage_driver";
 import { createMessage, MESSAGE_AUTH_LOGOUT, MESSAGE_AUTH_RESPONSE, MESSAGE_CREATE_BOOKING,
-  MESSAGE_DELETE_BOOKING, MESSAGE_DELETE_STATE, MESSAGE_ERROR, MESSAGE_READ_BOOKINGS,
+  MESSAGE_DELETE_BOOKING, MESSAGE_DELETE_STATE, MESSAGE_ERROR, MESSAGE_MASS_ORDER, MESSAGE_READ_BOOKINGS,
   MESSAGE_READ_STATE, MESSAGE_READ_TELEMETRY, MESSAGE_UPDATE_PRIVILEGED_STATE,
   MESSAGE_UPDATE_STATE, MESSAGES
 } from "~/lib/incoming_messages";
@@ -295,6 +295,11 @@ export class TracerWebSocket {
           this.dispatch(new DeleteState(message.datatype, message.dataID))
         }
         break;
+      case message instanceof MESSAGE_MASS_ORDER:
+        // The Bookings update is not part Tracershop and is handled in the response
+        if(message.status === SUCCESS_STATUS_CRUD.SUCCESS){
+          this.dispatch(new UpdateState(message.data, false));
+        }
       case message instanceof MESSAGE_ERROR:
         break;
       case message instanceof MESSAGE_AUTH_LOGOUT:
