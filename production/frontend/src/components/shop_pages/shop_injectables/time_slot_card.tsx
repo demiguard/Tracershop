@@ -3,7 +3,7 @@ import { ProductReference } from "~/dataclasses/references/product_reference";
 import { ActivityDeliveryTimeSlot, ActivityOrder, IsotopeDelivery, IsotopeOrder } from "~/dataclasses/dataclasses";
 import { DATA_ISOTOPE, DATA_TRACER } from "~/lib/shared_constants";
 import { TimeSlotCardIsotope } from "~/components/shop_pages/shop_injectables/time_slot_card_isotope";
-import { TimeSlotCardActivity } from "~/components/shop_pages/shop_injectables/time_slot_card_activity";
+import { ShopTimeSlotCardActivity } from "~/components/shop_pages/shop_injectables/shop_time_slot_card_activity";
 
 type TimeSlotCardArgs = {
    type : typeof DATA_TRACER,
@@ -39,7 +39,7 @@ export function TimeSlotCard({
     }
     case DATA_TRACER: {
       return (
-        <TimeSlotCardActivity
+        <ShopTimeSlotCardActivity
           timeSlot={timeSlot}
           activityOrders={orders}
           overhead={overhead}

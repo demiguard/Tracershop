@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Col, Form, Row } from "react-bootstrap";
 import { CommitIcon } from "~/components/injectable/commit_icon";
-import { ClickableIcon } from "~/components/injectable/icons.tsx";
+import { ClickableIcon } from "~/components/injectable/icons";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";
@@ -11,13 +11,15 @@ import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { PRODUCT_TYPES, ProductReference, productToReferenceOption } from "~/dataclasses/references/product_reference";
 import { DATA_DELIVER_TIME, DATA_ISOTOPE_DELIVERY, DATA_TRACER_MAPPING } from "~/lib/shared_constants";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
-import { parseDanishPositiveNumberInput, parseTimeInput } from "~/lib/user_input";
+import { parseTimeInput } from "~/lib/user_input";
 
-import {StateType, WEEKLY_REPEAT_CHOICES} from '~/lib/constants.js';
-import { ActivityProduction, DeliveryEndpoint, IsotopeProduction, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
-import { presentName, presentOptionName } from "~/lib/presentation";
-import { TracerCatalog, useTracerCatalog } from "~/contexts/tracer_catalog";
+import { WEEKLY_REPEAT_CHOICES } from '~/lib/constants';
+import { TracerCatalogPage } from "~/dataclasses/dataclasses";
+import { presentOptionName } from "~/lib/presentation";
+import { useTracerCatalog } from "~/contexts/tracer_catalog";
 import { useUpdatingEffect } from "~/effects/updating_effect";
+import { ErrorMonad } from "~/lib/error_handling";
+import { parseDanishPositiveNumberBind } from "~/lib/parsing";
 
 const WeeklyRepeatOptions = toOptions([
   { id : 0, name : "Alle Uger"},
@@ -25,15 +27,12 @@ const WeeklyRepeatOptions = toOptions([
   { id : 2, name : "Ulige Uger"},
 ]);
 
+const OVERHEAD_HEADER_NAME = "Overhead"
 
-/**
- *
- * @param {TracerCatalogPage} page
- */
-function getOverheadString(page) {
+function getOverheadString(page: TracerCatalogPage) {
   const percentage = Math.round((page.overhead_multiplier - 1) * 100);
 
-  return String(percentage)
+  return percentage === 0 ? "" : String(percentage);
 }
 
 
@@ -72,7 +71,7 @@ export function TimeSlotForm({
   const [tempTimeSlot, setTempTimeSlot] = timeSlotState;
   const endpointCatalog = tracerCatalog.getCatalog(selectedEndpoint.id);
 
-  function setCatalogPage(product){
+  function setCatalogPage(product: ProductReference){
     if (product.is_tracer()) {
       if (endpointCatalog.pages.has(product.product_id)) {
         return endpointCatalog.pages.get(product.product_id);
@@ -80,16 +79,14 @@ export function TimeSlotForm({
         return new TracerCatalogPage(-1, selectedEndpoint.id, product.product_id, -1, 1);
       }
     }
-    return {
-      overhead_multiplier : ""
-    };
+    return new TracerCatalogPage(-1, selectedEndpoint.id, product.product_id, -1, 1)
   }
 
   const tracerCatalogPage = setCatalogPage(product);
 
   const [deliveryTimeError, setDeliveryTimeError] = useState("");
 
-  const [overhead, setOverhead] = useState(() => {
+  const [overheadDisplay, setOverheadDisplay] = useState(() => {
     if(tracerCatalogPage instanceof TracerCatalogPage){
       return getOverheadString(tracerCatalogPage);
     }
@@ -116,7 +113,7 @@ export function TimeSlotForm({
     if(productReference.is_tracer()){
       const newProductPage = setCatalogPage(productReference);
 
-      setOverhead(getOverheadString(newProductPage));
+      setOverheadDisplay(getOverheadString(newProductPage));
     }
     // Reset temp
     const new_productions = productReference.filterProduction(state);
@@ -153,7 +150,7 @@ export function TimeSlotForm({
         overheadString = (String((tcp.overhead_multiplier - 1) * 100));
       }
     }
-    setOverhead(overheadString);
+    setOverheadDisplay(overheadString);
     return () => {};
   },[selectedEndpoint]);
 
@@ -219,12 +216,17 @@ export function TimeSlotForm({
   }
 
   function validateOverhead(){
-    const [validOverhead, parsedOverhead] = parseDanishPositiveNumberInput(overhead, "Overhead");
+    const monad = new ErrorMonad();
 
-    if(!validOverhead){
-      setOverheadError(parsedOverhead);
+    monad.bind(parseDanishPositiveNumberBind(overheadDisplay, OVERHEAD_HEADER_NAME));
+
+    if (monad.hasError()){
+      setOverheadError(monad.get_error(OVERHEAD_HEADER_NAME));
+
       return [false, {}];
     }
+
+    const parsedOverhead: number = monad.get_value(OVERHEAD_HEADER_NAME);
 
     setOverheadError("");
 
@@ -264,14 +266,14 @@ export function TimeSlotForm({
             <CommitIcon
               temp_object={tempTimeSlot}
               object_type={DATA_TYPE}
-              label="time-slot-commit"
+              aria-label="time-slot-commit"
               validate={validateTimeSlot}
               callback={clearTime}
             />
           </Optional>
           <Optional exists={tempTimeSlot.id != -1}>
             <ClickableIcon
-              label="time-slot-initialize"
+              aria-label="time-slot-initialize"
               src={"static/images/plus2.svg"}
               onClick={initializeNewTimeSlot}
             />
@@ -288,9 +290,9 @@ export function TimeSlotForm({
       </TracershopInputGroup>
       <Optional exists={product.is_tracer()}>
         <TracershopInputGroup label="Overhead" error={overheadError} tail={
-          <Optional exists={overhead !== initialOverhead} alternative={<div>%</div>}>
+          <Optional exists={overheadDisplay !== String(initialOverhead)} alternative={<div>%</div>}>
             <CommitIcon
-              label="commit-overhead"
+              aria-label="commit-overhead"
               temp_object={tracerCatalogPage}
               object_type={DATA_TRACER_MAPPING}
               validate={validateOverhead}
@@ -300,8 +302,8 @@ export function TimeSlotForm({
           }>
           <Form.Control
             aria-label="overhead-input"
-            value={overhead}
-            onChange={setStateToEvent(setOverhead)}
+            value={overheadDisplay}
+            onChange={setStateToEvent(setOverheadDisplay)}
             />
         </TracershopInputGroup>
       </Optional>

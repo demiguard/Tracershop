@@ -6,12 +6,12 @@ import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { AppState } from "../../app_state";
+import { AppState, testState } from "../../app_state";
 import { db } from "../../../lib/local_storage_driver.js";
 import { ConfigSite } from "../../../components/sites/config_site.js"
 import { PROP_USER } from "../../../lib/constants.js";
 import { ANON } from "../../test_state/users.js";
-import { WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -51,8 +51,13 @@ afterEach(() => {
 
 describe("Congig Site test suite", () => {
   it("standard test", () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <ConfigSite {...props}/>
-    </WebsocketContextProvider>);
+
+    render(
+      <TracerShopContext value={websocket} tracershop_state={testState}>
+        <WebsocketContextProvider >
+          <ConfigSite {...props}/>
+        </WebsocketContextProvider>
+      </TracerShopContext>
+    );
   })
 })

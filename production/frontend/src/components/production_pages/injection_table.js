@@ -6,7 +6,7 @@ import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting";
 import { compareDates } from "~/lib/utils";
 import { CreateInjectionOrderModal } from "../modals/create_injection_modal";
 import { InjectionModal } from "../modals/injection_modal";
-import { AcceptIconInjection, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons";
+import { AcceptIcon, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons";
 import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { InjectionUsage } from "../injectable/data_displays/injection_usage";
@@ -51,7 +51,7 @@ function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModa
   const actionButton = (() => {
     switch (order.status){
       case ORDER_STATUS.ORDERED:
-        return <AcceptIconInjection data-testid={`accept-${order.id}`} orders={[order]}/>
+        return <AcceptIcon data-testid={`accept-${order.id}`} orders={[order]}/>
       case ORDER_STATUS.ACCEPTED:
         return <FormCheck data-testid={`check-${order.id}`} disabled={disabled} checked={isSelected} onChange={onSelect}/>
       case ORDER_STATUS.RELEASED:
@@ -63,10 +63,12 @@ function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModa
 
   return (
    <tr>
-     <td><StatusIcon
-           label={`status-icon-${order.id}`}
+     <td>
+        <StatusIcon
+           aria-label={`status-icon-${order.id}`}
            order={order}
-           onClick={openOrderModal}/>
+           onClick={openOrderModal}
+        />
      </td>
      <td>{order.id}</td>
      <td><EndpointDisplay endpoint={endpoint}/></td>

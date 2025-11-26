@@ -28,7 +28,7 @@ describe("Commit button tests", () => {
     render(
        <TracerShopContext websocket={websocket} tracershop_state={testState}>
         <CommitIcon
-          label="test"
+          aria-label="test"
           temp_object={temp_object}
           object_type={data_type}
           validate={
@@ -53,7 +53,7 @@ describe("Commit button tests", () => {
     render(
        <TracerShopContext websocket={websocket} tracershop_state={testState}>
         <CommitIcon
-          label="test"
+          aria-label="test"
           temp_object={temp_object}
           object_type={data_type}
           validate={
@@ -82,7 +82,7 @@ describe("Commit button tests", () => {
     render(
        <TracerShopContext websocket={websocket} tracershop_state={testState}>
         <CommitIcon
-          label="test"
+          aria-label="test"
           temp_object={temp_object}
           object_type={data_type}
           validate={

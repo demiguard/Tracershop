@@ -7,10 +7,10 @@ export function CommitIcon({
   temp_object,
   validate,
   object_type,
-  label="",
-  callback=(arg)=>{},
+  callback=(arg : any)=> {},
   edit_image="/static/images/update.svg",
   add_image="/static/images/plus2.svg",
+  ...rest
 }){
   const websocket = useWebsocket();
 
@@ -42,12 +42,12 @@ export function CommitIcon({
       : websocket.sendCreateModel.bind(websocket);
 
     return websocket_function(object_type, formattedObject).then(
-      (response) => { callback(response); }
+      (response : any) => { callback(response); }
     );
   }
 
   return <IdempotentIcon
-    label={label}
+    {...rest}
     src={image_src}
     beforeInjection={(svg) => {
       svg.setAttribute('fill', 'green');

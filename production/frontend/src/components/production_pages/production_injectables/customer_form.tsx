@@ -44,7 +44,7 @@ export function CustomerForm({
           <Optional exists={customerDirty}>
             <Col style={{ justifyContent : "right", display: "flex"}}>
               <CommitIcon
-                label="customer-commit"
+                aria-label="customer-commit"
                 temp_object={tempCustomer}
                 object_type={DATA_CUSTOMER}
                 validate={validateCustomer}

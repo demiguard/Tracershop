@@ -1,22 +1,21 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, Collapse, Col, Row } from "react-bootstrap";
-import { ActivityDeliveryTimeSlot, ActivityOrder } from "../../../dataclasses/dataclasses";
-import { dateToDateString, nullParser, renderDateTime } from "../../../lib/formatting";
-import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE } from "../../../lib/constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder } from "~/dataclasses/dataclasses";
+import { dateToDateString, nullParser, renderDateTime } from "~/lib/formatting";
+import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE } from "~/lib/constants";
 import { cssAlignRight, cssCenter } from "~/lib/styles";
-import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "../../../lib/shared_constants.js"
-import { ActivityDeliveryIcon, CalculatorIcon, ClickableIcon, StatusIcon } from "~/components/injectable/icons"
-import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
-import { CalculatorModal } from "../../modals/calculator_modal";
+import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "~/lib/shared_constants"
+import { ActivityDeliveryIcon, CalculatorIcon, StatusIcon } from "~/components/injectable/icons"
+import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
+import { CalculatorModal } from "~/components/modals/calculator_modal";
 import { combineDateAndTimeStamp } from "~/lib/chronomancy";
-import { compareLoosely, dataClassExists, nullify, toMapping } from "~/lib/utils";
+import { dataClassExists, nullify } from "~/lib/utils";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
 import { Optional } from "~/components/injectable/optional";
-import { CommitIcon } from "~/components/injectable/commit_icon";
 import { setStateToEvent } from "~/lib/state_management";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { makeBlankActivityOrder } from "~/lib/blanks";
@@ -30,7 +29,6 @@ type ShowOrderRowProps = {
 }
 
 function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
-  const websocket = useWebsocket();
   const state = useTracershopState();
 
   const [displayActivity, setDisplayActivity] = useState(() => {
@@ -67,16 +65,10 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
     }];
   }
 
-  function deleteOrder(){
-    websocket.sendDeleteModels(DATA_ACTIVITY_ORDER, [order]);
-  }
-
   // Rewrite
   function commitCallBack(){
     setDisplayActivity("0");
     setDisplayComment("");
-
-
   }
 
   useUpdatingEffect(function RefreshOrder(){
@@ -89,17 +81,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   }, [calculatorActivity, order]);
 
   const ordered = order.status !== ORDER_STATUS.AVAILABLE;
-  const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(order.status) ;
-  const changedTemp = state.activity_orders.has(order.id) ?
-                        String(order.ordered_activity) === displayActivity
-                      : true;
-
-  const statusIcon = (() => {
-    if(!dataClassExists(order)){
-      return <div></div>
-    }
-    return <StatusIcon order={order}/>
-  })()
+  const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(order.status);
 
   const statusInfo = (() => {
     if (order.moved_to_time_slot){
@@ -119,7 +101,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   return (
     <Row>
       <Col xs={1} style={cssCenter}>
-        {statusIcon}
+        <StatusIcon order={order}/>
       </Col>
       <Col style={cssCenter} xs={1}>
         {statusInfo}
@@ -136,17 +118,18 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
       </Col>
       <Col>
         <TracershopInputGroup label="Kommentar">
-        <EditableInput
-          canEdit={canEdit}
-          data-testid={`comment-${order.id}`}
-          as="textarea"
-          rows={1}
-          value={displayComment}
-          onChange={(setStateToEvent(setDisplayComment))}
-        />
+          <EditableInput
+            canEdit={canEdit}
+            data-testid={`comment-${order.id}`}
+            as="textarea"
+            rows={1}
+            value={displayComment}
+            onChange={(setStateToEvent(setDisplayComment))}
+          />
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>
         <ShopActionButton
+          aria-label={`commit-${order.id}`}
           order={order}
           validate={validate}
           callback={commitCallBack}
@@ -296,7 +279,7 @@ type TimeSlotCardActivityProps = {
 * This is a card, representing the users view of ActivityDeliveryTimeSlot
 * It contains all ordered
 */
-export function TimeSlotCardActivity({
+export function ShopTimeSlotCardActivity({
   timeSlot,
   activityOrders,
   overhead,
@@ -388,12 +371,10 @@ export function TimeSlotCardActivity({
   <Card.Header>
     <Row>
       <Col xs={1} style={cssCenter}>
-        <Optional exists={!!displayActivityOrders.length}>
-          <StatusIcon
-            label={`status-icon-time-slot-${timeSlot.id}`}
-            collection={orderCollection}
-          />
-        </Optional>
+        <StatusIcon
+          aria-label={`status-icon-time-slot-${timeSlot.id}`}
+          collection={orderCollection}
+        />
       </Col>
       <Col xs={2} style={cssCenter}>{timeSlot.delivery_time}</Col>
       <Col>
@@ -405,7 +386,7 @@ export function TimeSlotCardActivity({
        }}>
          <OpenCloseButton
             open={collapsed}
-            label={`open-time-slot-${timeSlot.id}`}
+            aria-label={`open-time-slot-${timeSlot.id}`}
             setOpen={setCollapsed}
          />
        </Col>

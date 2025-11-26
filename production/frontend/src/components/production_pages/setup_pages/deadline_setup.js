@@ -202,7 +202,7 @@ export function DeadlineSetup(){
       <Col>
         <Optional exists={changed}>
           <CommitIcon
-            label={`commit-${deadline.id}`}
+            aria-label={`commit-${deadline.id}`}
             temp_object={deadline}
             validate={validate}
             object_type={DATA_DEADLINE}

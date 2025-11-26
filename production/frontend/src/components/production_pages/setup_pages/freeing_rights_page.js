@@ -112,7 +112,7 @@ export function FreeingRightsPage(){
       <td>{expiryDate}</td>
       <td style={cssAlignRight}>
         <ClickableIcon
-          label={`delete-release-right-${releaseRight.id}`}
+          aria-label={`delete-release-right-${releaseRight.id}`}
           src="static/images/decline.svg"
           onClick={deleteReleaseRight}/>
       </td>
@@ -158,7 +158,7 @@ export function FreeingRightsPage(){
             ><OpenCloseButton
               open={open}
               setOpen={setOpen}
-              label="open-existing-rights"
+              aria-label="open-existing-rights"
             />
             </Col>
           </Row>
@@ -208,7 +208,7 @@ export function FreeingRightsPage(){
       </Col>
       <Col style={cssCenter}>
         <ClickableIcon
-          label="create-release-right"
+          aria-label="create-release-right"
           src="/static/images/plus2.svg"
           onClick={createReleaseRight}
         />

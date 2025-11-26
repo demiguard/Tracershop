@@ -65,10 +65,6 @@ export function InjectionOrderCard({
     );
   }
 
-  function deleteOrder(){
-    websocket.sendDeleteModels(DATA_INJECTION_ORDER, [injection_order]);
-  }
-
   function validate(){
     const [validInjections, injections] = parseWholePositiveNumber(tempInjectionOrder.injections, "Injektioner");
     const [validTimeInput, delivery_time] = parseTimeInput(tempInjectionOrder.delivery_time, "Leverings Tiden");
@@ -234,7 +230,7 @@ export function InjectionOrderCard({
         }}>
           <ShopActionButton
             order={injection_order}
-            label={`inj-action-${injection_order.id}`}
+            aria-label={`inj-action-${injection_order.id}`}
             validate={validate}
             isDirty={changed}
           />

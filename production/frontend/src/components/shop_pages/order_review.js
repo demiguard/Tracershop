@@ -5,7 +5,7 @@ import { DATABASE_ACTIVE_TRACER, INJECTION_USAGE, ORDER_STATUS } from "~/lib/con
 import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { dateToDateString } from "~/lib/formatting";
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
-import { TimeSlotCardActivity } from "./shop_injectables/time_slot_card_activity";
+import { ShopTimeSlotCardActivity } from "./shop_injectables/shop_time_slot_card_activity";
 import { getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { activityOrderFilter, timeSlotFilter } from "~/lib/filters";

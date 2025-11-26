@@ -27,7 +27,7 @@ function CustomerRow({customer, activateModal}){
             display : "flex"
           }}>
             <ClickableIcon
-              label={`settings-${customer.id}`}
+              aria-label={`settings-${customer.id}`}
               src={'/static/images/setting.png'}
               onClick={activateModal(customer.id, "CUSTOMER")}
             />

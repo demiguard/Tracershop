@@ -125,7 +125,7 @@ export function IsotopeSetupPage() {
       </td>
       <td>
         {changed ? <CommitIcon
-          label={`commit-${isotope.id}`}
+          aria-label={`commit-${isotope.id}`}
           temp_object={tempIsotope}
           validate={validate}
           object_type={DATA_ISOTOPE}

@@ -7,11 +7,13 @@ import { screen, render, cleanup, fireEvent, act } from "@testing-library/react"
 import { jest } from '@jest/globals';
 import { getModifiedTestState, testState } from "~/tests/app_state";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
-import { PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID, PROP_VALID_ACTIVITY_DEADLINE } from "~/lib/constants";
-import { TimeSlotCardActivity } from "~/components/shop_pages/shop_injectables/time_slot_card_activity";
+import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_EXPIRED_ACTIVITY_DEADLINE, PROP_TIME_SLOT_ID, PROP_VALID_ACTIVITY_DEADLINE } from "~/lib/constants";
+import { ShopTimeSlotCardActivity } from "~/components/shop_pages/shop_injectables/shop_time_slot_card_activity";
 import { getRelevantActivityOrders } from "~/lib/filters";
 import { CALCULATOR_NEW_ACTIVITY_LABEL, CALCULATOR_NEW_TIME_LABEL } from "~/components/injectable/calculator";
 import { DATA_ACTIVITY_ORDER } from "~/lib/shared_constants";
+import { ActivityOrder } from "~/dataclasses/dataclasses";
+import { dateToDateString } from "~/lib/formatting";
 const module = jest.mock('../../../../lib/tracer_websocket');
 const tracer_websocket = require("../../../../lib/tracer_websocket");
 
@@ -50,7 +52,7 @@ describe("Time slot card Test Suite", () => {
   it("Standard Render Test", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -69,7 +71,7 @@ describe("Time slot card Test Suite", () => {
   it("Open the card with extra order", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -93,7 +95,7 @@ describe("Time slot card Test Suite", () => {
 
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -110,11 +112,29 @@ describe("Time slot card Test Suite", () => {
     }
   });
 
+  it("Status icon isn't visible for ethereal order, and the ethereal order exists", () => {
+
+    render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopTimeSlotCardActivity
+          timeSlot={default_time_slot}
+          activityOrders={[]}
+          activityDeadlineValid={true}
+          overhead={1.25}
+        />
+      </TracerShopContext>
+    );
+
+    // One icon is visible on the front row, the other in the card
+    const orders = screen.getAllByTestId("missing-status-icon");
+    expect(orders.length).toBe(2);
+
+  })
 
   it("Create an New order", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -148,7 +168,7 @@ describe("Time slot card Test Suite", () => {
   it("Fail to create New order", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -179,7 +199,7 @@ describe("Time slot card Test Suite", () => {
   it("Open the calculator", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -196,7 +216,7 @@ describe("Time slot card Test Suite", () => {
   it("use the calculator", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 
@@ -242,7 +262,7 @@ describe("Time slot card Test Suite", () => {
 
     render(
       <TracerShopContext tracershop_state={modState} websocket={websocket}>
-        <TimeSlotCardActivity {...props} />
+        <ShopTimeSlotCardActivity {...props} />
       </TracerShopContext>
     );
 

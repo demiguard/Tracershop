@@ -98,15 +98,12 @@ export function EndpointForm({
               validate={validateEndpoint}
               callback={commit_callback}
               object_type={DATA_ENDPOINT}
-              label="commit-endpoint"
+              aria-label="commit-endpoint"
             />
           </Optional>
         </Col>
       </Row>
-      <TracershopInputGroup
-        label="Leveringssteder"
-        error={endpointReferenceError}
-      >
+      <TracershopInputGroup label="Leveringssteder" error={endpointReferenceError}>
         <EndpointSelect
           aria-label="endpoint-select"
           delivery_endpoint={endpoints}

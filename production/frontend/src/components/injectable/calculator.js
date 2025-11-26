@@ -42,7 +42,7 @@ function CalculatorEntryRow({entry, removeEntry, index}){
     <td><ClickableIcon
         src={"/static/images/decline.svg"}
         onClick={removeEntry(index)}
-        label={"delete-"+index.toString()}
+        aria-label={"delete-"+index.toString()}
       /></td>
   </tr>
 }

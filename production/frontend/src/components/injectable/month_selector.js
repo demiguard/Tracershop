@@ -18,7 +18,7 @@ function MonthRow(props){
   </Row>
 }
 
-function MonthContainer({label, children, onClick}){
+function MonthContainer({children, onClick, style = {}, ...rest}){
   const [styleState, setStyleState] = useState({background : "#FFFFFF"})
 
   function onHover(){
@@ -38,11 +38,12 @@ function MonthContainer({label, children, onClick}){
   }
 
   return <Col
-  aria-label={label}
+  {...rest}
   onMouseEnter={onHover}
   onMouseLeave={onLeave}
   onClick={onClick}
   style={{
+    ...style,
     display : "flex",
     justifyContent : "center",
     textAlign : "center",
@@ -118,7 +119,7 @@ export function MonthSelector({stateDate, setDate, callback, ...rest}) {
           alt="Sidste"
           src="/static/images/prev.svg"/>
         </MonthContainer>
-        <MonthContainer label="year">{tempDate.toLocaleString('default', {year: "numeric"})}</MonthContainer>
+        <MonthContainer aria-label="year">{tempDate.toLocaleString('default', {year: "numeric"})}</MonthContainer>
         <MonthContainer
           onClick={() => {changeTempYear(1)}}
         ><img
@@ -129,22 +130,22 @@ export function MonthSelector({stateDate, setDate, callback, ...rest}) {
           src="/static/images/next.svg"/></MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer label={"jan"} onClick={selectMonth(0)}>Jan</MonthContainer>
-        <MonthContainer label={"feb"} onClick={selectMonth(1)}>Feb</MonthContainer>
-        <MonthContainer label={"mar"} onClick={selectMonth(2)}>Mar</MonthContainer>
-        <MonthContainer label={"apr"} onClick={selectMonth(3)}>Apr</MonthContainer>
+        <MonthContainer aria-label={"jan"} onClick={selectMonth(0)}>Jan</MonthContainer>
+        <MonthContainer aria-label={"feb"} onClick={selectMonth(1)}>Feb</MonthContainer>
+        <MonthContainer aria-label={"mar"} onClick={selectMonth(2)}>Mar</MonthContainer>
+        <MonthContainer aria-label={"apr"} onClick={selectMonth(3)}>Apr</MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer label={"may"} onClick={selectMonth(4)}>Maj</MonthContainer>
-        <MonthContainer label={"jul"} onClick={selectMonth(5)}>Jun</MonthContainer>
-        <MonthContainer label={"jun"} onClick={selectMonth(6)}>Jul</MonthContainer>
-        <MonthContainer label={"aug"} onClick={selectMonth(7)}>Aug</MonthContainer>
+        <MonthContainer aria-label={"may"} onClick={selectMonth(4)}>Maj</MonthContainer>
+        <MonthContainer aria-label={"jul"} onClick={selectMonth(5)}>Jun</MonthContainer>
+        <MonthContainer aria-label={"jun"} onClick={selectMonth(6)}>Jul</MonthContainer>
+        <MonthContainer aria-label={"aug"} onClick={selectMonth(7)}>Aug</MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer label={"sep"} onClick={selectMonth(8)}>Sep</MonthContainer>
-        <MonthContainer label={"oct"} onClick={selectMonth(9)}>Okt</MonthContainer>
-        <MonthContainer label={"nov"} onClick={selectMonth(10)}>Nov</MonthContainer>
-        <MonthContainer label={"dec"} onClick={selectMonth(11)}>Dec</MonthContainer>
+        <MonthContainer aira-label={"sep"} onClick={selectMonth(8)}>Sep</MonthContainer>
+        <MonthContainer aira-label={"oct"} onClick={selectMonth(9)}>Okt</MonthContainer>
+        <MonthContainer aira-label={"nov"} onClick={selectMonth(10)}>Nov</MonthContainer>
+        <MonthContainer aira-label={"dec"} onClick={selectMonth(11)}>Dec</MonthContainer>
       </MonthRow>
     </div>
   </div>

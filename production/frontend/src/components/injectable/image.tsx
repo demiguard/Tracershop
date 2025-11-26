@@ -3,7 +3,7 @@ import { Image as BTImage, ImageProps as BTImageProps } from 'react-bootstrap'
 import { SVG } from './svg'
 
 
-type ImageProps = {
+export type ImageProps = {
   src : string,
   beforeInjection? : (svg: SVGSVGElement) => void
   [key: string] : any

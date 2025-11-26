@@ -35,11 +35,13 @@ CloseButton.propTypes = {
 }
 
 
-export type IdempotentButtonProps = { onClick : () => Promise<any> } & Omit<ButtonProps, "onClick">;
+export type IdempotentButtonProps = {
+  onClick : () => Promise<any>
+} & Omit<ButtonProps, "onClick">;
 
-export function IdempotentButton(props : IdempotentButtonProps){
-  const {onClick, children, ...rest} = props;
-
+export function IdempotentButton({
+  onClick, children, ...rest
+} : IdempotentButtonProps){
   const [isHandling, setIsHandling] = useState(false);
 
   useEffect(() => {
@@ -62,6 +64,8 @@ export function IdempotentButton(props : IdempotentButtonProps){
   if(isHandling){
     return <Spinner data-testid="idempotent-spinner"></Spinner>
   }
+
+  console.log(rest);
 
   return <Button onClick={wrappedOnClick} {...rest}>
     {children}

@@ -49,7 +49,7 @@ function ProcedureCard({bookings} :  ProcedureCardProps){
         <Col>{missingSetupHeader}</Col>
         <Col style={cssAlignRight}>
           <OpenCloseButton
-            label="open-unset-procedures"
+            aria-label="open-unset-procedures"
             open={open}
             setOpen={setOpen}
           />
@@ -200,7 +200,7 @@ function TracerCard({tracer,
         <Col>{tracer.shortname}</Col>
          <Col style={cssAlignRight}>
             <OpenCloseButton
-              label={`open-tracer-${tracer.id}`}
+              aria-label={`open-tracer-${tracer.id}`}
               open={open}
               setOpen={setOpen}
             />

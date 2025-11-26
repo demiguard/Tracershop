@@ -130,12 +130,12 @@ describe("Customer modal list", () => {
       </TracerShopContext>
     );
 
-    const timeSlot2 = await screen.findByLabelText('time-slot-2');
+    const timeSlot2 = screen.getByLabelText('time-slot-2');
     act(() => {fireEvent.click(timeSlot2);});
 
-    const timeSlotForm = await screen.findByLabelText('time-slot-delivery-time');
-    const weeklySelect = await screen.findByLabelText('weekly-select');
-    const productionSelect = await screen.findByLabelText('production-select');
+    const timeSlotForm = screen.getByLabelText('time-slot-delivery-time');
+    const weeklySelect =  screen.getByLabelText('weekly-select');
+    const productionSelect = screen.getByLabelText('production-select');
 
 
     const /**@type {ActivityDeliveryTimeSlot} */ targetTimeSlot = testState.deliver_times.get(2);
@@ -143,7 +143,8 @@ describe("Customer modal list", () => {
     expect(timeSlotForm.value).toEqual(targetTimeSlot.delivery_time);
     expect(Number(weeklySelect.value)).toEqual(targetTimeSlot.weekly_repeat);
     expect(Number(productionSelect.value)).toEqual(targetTimeSlot.production_run);
-    expect(screen.queryByLabelText("time-slot-initialize")).not.toBeNull();
+    //screen.debug(null, 10000000000);
+    expect(screen.getByLabelText("time-slot-initialize")).toBeVisible();
   })
 
   it("Customer 1, change time slot 2 - delivery time", () => {

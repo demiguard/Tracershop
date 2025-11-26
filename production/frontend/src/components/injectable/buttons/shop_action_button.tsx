@@ -17,62 +17,69 @@ import { OrderType } from "~/lib/types";
 import { openActivityReleasePDF, openInjectionReleasePDF } from "~/lib/utils";
 
 function BaseActionButton({
-  label,
   releaseOnClick,
   canEdit,
   isDirty,
   callback,
   validate,
   order,
-  datatype
+  datatype,
+  ...rest
 }){
   switch(order.status){
     case ORDER_STATUS.RELEASED:
-      return <div></div>
+      return <DeliveryIcon order={order} {...rest} />
     case ORDER_STATUS.ORDERED:
       if(!canEdit){
-        return (<div aria-label={label}></div>)
+        return (<div {...rest}></div>)
       }
 
       if(!isDirty){
         return (<DeleteButton
-          label={label}
           object={order}
           object_type={datatype}
+          {...rest}
         />);
       }
       // DELIBERATE FALL THROUGH!
     case ORDER_STATUS.AVAILABLE:
       return <CommitIcon
-        label={label}
         validate={validate}
         callback={callback}
         temp_object={order}
         object_type={datatype}
         add_image="/static/images/cart.svg"
+        {...rest}
       />
     default:
-      return (<div aria-label={label}></div>);
+      return (<div {...rest}></div>);
   }
 }
 
 
-function IsotopeActionButton({order, label, validate, callback, isDirty, canEdit}){
+function IsotopeActionButton({order, validate, callback, isDirty, canEdit, ...rest}){
   return (
     <BaseActionButton
       order={order}
       datatype={DATA_ISOTOPE_ORDER}
-      label={label}
       releaseOnClick={() => {}}
       validate={validate}
       callback={callback}
       isDirty={isDirty}
       canEdit={canEdit}
+      {...rest}
     />
   );
 }
 
-function ActivityActionButton({order, label, validate, callback, isDirty, canEdit}){
+function ActivityActionButton({
+  order,
+  validate,
+  callback,
+  isDirty,
+  canEdit,
+  ...rest
+}){
   function onRelease(){
     openActivityReleasePDF(
       order.ordered_activity,
@@ -83,17 +90,17 @@ function ActivityActionButton({order, label, validate, callback, isDirty, canEdi
   return <BaseActionButton
     order={order}
     datatype={DATA_ACTIVITY_ORDER}
-    label={label}
     releaseOnClick={onRelease}
     validate={validate}
     callback={callback}
     isDirty={isDirty}
     canEdit={canEdit}
+    {...rest}
   />;
 }
 
 function InjectionActionButton({
-  order, label, validate, callback, isDirty, canEdit
+  order, validate, callback, isDirty, canEdit, ...rest
 }){
   function onRelease(){
     openInjectionReleasePDF(order);
@@ -102,30 +109,30 @@ function InjectionActionButton({
   return <BaseActionButton
     order={order}
     datatype={DATA_INJECTION_ORDER}
-    label={label}
     releaseOnClick={onRelease}
     validate={validate}
     callback={callback}
     isDirty={isDirty}
     canEdit={canEdit}
+    {...rest}
   />
 }
 
 type ShopActionButtonProps = {
   order : OrderType
-  label? : any,
   validate : any,
   callback? : any,
   isDirty : boolean,
   canEdit? : boolean,
 }
 
-export function ShopActionButton({order,
-    label,
+export function ShopActionButton({
+    order,
     validate,
     isDirty,
     callback = () => Promise.resolve(),
     canEdit = false,
+    ...rest
   } : ShopActionButtonProps) {
 
   switch (true) {
@@ -134,9 +141,9 @@ export function ShopActionButton({order,
         order={order}
         validate={validate}
         callback={callback}
-        label={label}
         isDirty={isDirty}
         canEdit={canEdit}
+        {...rest}
       />
     }
     case order instanceof ActivityOrder: {
@@ -144,9 +151,10 @@ export function ShopActionButton({order,
         order={order}
         validate={validate}
         callback={callback}
-        label={label}
+
         isDirty={isDirty}
         canEdit={canEdit}
+        {...rest}
       />
     }
     case order instanceof InjectionOrder: {
@@ -155,9 +163,9 @@ export function ShopActionButton({order,
         order={order}
         validate={validate}
         callback={callback}
-        label={label}
         isDirty={isDirty}
         canEdit={canEdit}
+        {...rest}
       />)
     }
     default:

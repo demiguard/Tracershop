@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { ClickableIcon } from './icons';
 import styled from 'styled-components';
 import { rotation } from '~/lib/styles';
@@ -27,7 +27,7 @@ interface OpenCloseButtonArgs {
   label? : string,
 }
 
-export function OpenCloseButton({open, setOpen, label}: OpenCloseButtonArgs) {
+export function OpenCloseButton({open, setOpen, ...rest}: OpenCloseButtonArgs) {
   const [rotated, setRotated] = useState(open);
   const [rotating, setRotating] = useState(false);
 
@@ -47,18 +47,20 @@ export function OpenCloseButton({open, setOpen, label}: OpenCloseButtonArgs) {
     }, animationSpeedMS);
   }
 
-  const button = <ClickableIcon
-    src="/static/images/next.svg"
-    label={label}
-    onClick={() => {
-      if(rotated){
+  function rotate(){
+    if(rotated){
         rotateCounterClockwise();
       } else {
         rotateClockwise();
       }
 
       setOpen((open) => !open);
-    }}
+  }
+
+  const button = <ClickableIcon
+    {...rest}
+    src="/static/images/next.svg"
+    onClick={rotate}
   />
 
   // This is a fucking mess!

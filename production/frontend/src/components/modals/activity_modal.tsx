@@ -137,7 +137,7 @@ function OrderRow({order, setDirtyOrders}){
         justifyContent : "right", display : "flex"
       }}><Optional exists={editing} alternative={
         <StatusIcon
-              label={`edit-order-activity-${order.id}`}
+              aria-label={`edit-order-activity-${order.id}`}
               order={order}
               onClick={() => {
                 if(canEdit){
@@ -148,7 +148,7 @@ function OrderRow({order, setDirtyOrders}){
         />
       }>
         <CommitIcon
-          label={`edit-accept-order-activity-${order.id}`}
+          aria-label={`edit-accept-order-activity-${order.id}`}
           object_type={DATA_ACTIVITY_ORDER}
           temp_object={order}
           validate={validate}
@@ -292,7 +292,7 @@ function VialRow({
           <div> {/* DEFAULT */}
             <ClickableIcon
               src="/static/images/pen.svg"
-              label={`edit-vial-${vial.id}`}
+              aria-label={`edit-vial-${vial.id}`}
               onClick={startEditing}
             />
           </div>
@@ -304,7 +304,7 @@ function VialRow({
               object_type={DATA_VIAL}
               validate={validate}
               callback={commitCallback}
-              label={`vial-commit-${vial.id}`}
+              aria-label={`vial-commit-${vial.id}`}
             />
           </div>
           <div> {/* SELECTED */}
@@ -330,7 +330,7 @@ function VialRow({
             </div>
             <div> {/* EDITING */}
             <ClickableIcon
-              label={`vial-edit-decline-${vial.id}`}
+              aria-label={`vial-edit-decline-${vial.id}`}
               src="/static/images/decline.svg"
               onClick={cancelEditing}
             />
@@ -627,7 +627,7 @@ export function ActivityModal({
               <Optional exists={!(addingVial || freeing)}>
                 <div>
                   <ClickableIcon
-                    label="add-new-vial"
+                    aria-label="add-new-vial"
                     src="/static/images/plus2.svg"
                     onClick={allocateNewVial}/>
                 </div>

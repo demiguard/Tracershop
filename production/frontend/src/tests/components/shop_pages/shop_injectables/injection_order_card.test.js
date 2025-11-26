@@ -158,15 +158,15 @@ describe("Injection order card test suite", () => {
     });
 
     act(() => {
-      screen.getByLabelText('commit-injection-1').click();
+      screen.getByLabelText('inj-action-1').click();
     });
 
     expect(websocket.sendEditModels).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
-      tracer : 5,
-      injections : 2,
-      delivery_time : "13:45:00",
-      tracer_usage : INJECTION_USAGE.other,
-    }));
+        tracer : 5,
+        injections : 2,
+        delivery_time : "13:45:00",
+        tracer_usage : INJECTION_USAGE.other,
+      }));
     });
 
     it("Create an order", async () => {
@@ -206,7 +206,7 @@ describe("Injection order card test suite", () => {
         fireEvent.change(usageInput, {target : { value : INJECTION_USAGE.other}})
       })
 
-      const createIcon = screen.getByLabelText('commit-injection--1');
+      const createIcon = screen.getByLabelText(`inj-action-${newInjectionOrder.id}`);
 
       await act(async () => {
         createIcon.click();
@@ -258,7 +258,7 @@ describe("Injection order card test suite", () => {
         fireEvent.change(usageInput, {target : { value : INJECTION_USAGE.other}})
       })
 
-      const createIcon = screen.getByLabelText('commit-injection--1');
+      const createIcon = screen.getByLabelText('inj-action--1');
 
       await act(async () => {
         createIcon.click();
@@ -282,7 +282,7 @@ describe("Injection order card test suite", () => {
       </TracerShopContext>
     );
 
-    const deliveryNote = screen.getByLabelText('delivery-injection-3')
+    const deliveryNote = screen.getByLabelText('inj-action-3')
 
     act(() => {
       deliveryNote.click();
@@ -305,7 +305,7 @@ describe("Injection order card test suite", () => {
     );
 
     act(() => {
-      screen.getByLabelText('delete-injection-1').click();
+      screen.getByLabelText('inj-action-1').click();
     });
 
     expect(websocket.sendDeleteModels).toHaveBeenCalled();

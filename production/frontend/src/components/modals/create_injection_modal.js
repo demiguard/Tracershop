@@ -136,9 +136,7 @@ export function CreateInjectionOrderModal({on_close}){
               value={usage}
             />
           </TracershopInputGroup>
-          <TracershopInputGroup
-              label={"Injektioner"}
-              error={errorInjection}
+          <TracershopInputGroup label={"Injektioner"} error={errorInjection}
               data-testid={"injection-input-group"}
           >
             <Form.Control

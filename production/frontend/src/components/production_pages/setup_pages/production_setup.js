@@ -270,7 +270,7 @@ export function ProductionSetup(){
               temp_object={tempProduction}
               validate={validate}
               object_type={getProductionKW(product)}
-              label="commit-active-production"
+              aria-label="commit-active-production"
               callback={validateCallback}
             />
           </Col>

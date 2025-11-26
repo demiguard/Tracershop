@@ -87,7 +87,7 @@ export function TracerPage(){
             <td>{tracer.shortname}</td>
             <td style={cssAlignRight}>
               <ClickableIcon
-                label={`restore-${tracer.id}`}
+                aria-label={`restore-${tracer.id}`}
                 src="static/images/archive_up.svg"
                 onClick={restoreTracer(tracer)}
               />
@@ -157,7 +157,7 @@ export function TracerPage(){
             <Col>
               <HoverBox
                 Base={<ClickableIcon
-                  label={`open-modal-${tracer.id}`}
+                  aria-label={`open-modal-${tracer.id}`}
                   src="/static/images/setting.png"
                   onClick={openModal(tracer)}
                 />}
@@ -169,7 +169,7 @@ export function TracerPage(){
           <Col>
             <HoverBox
               Base={<ClickableIcon
-                label={`archive-${tracer.id}`}
+                aria-label={`archive-${tracer.id}`}
                 src="/static/images/archive_down.svg"
                 onClick={ArchiveTracer(tracer)}
               />}
@@ -185,7 +185,7 @@ export function TracerPage(){
                   temp_object={tracer}
                   validate={validate(tracer)}
                   object_type={DATA_TRACER}
-                  label={`commit-tracer-${tracer.id}`}
+                  aria-label={`commit-tracer-${tracer.id}`}
                   />
                 }
                 Hover={<div>
@@ -275,7 +275,7 @@ export function TracerPage(){
             <Col>Tracer arkiv</Col>
             <Col style={cssAlignRight}>
               <OpenCloseButton
-                label="open-tracer-archive"
+                aria-label="open-tracer-archive"
                 open={openArchive}
                 setOpen={setOpenArchive}
               />

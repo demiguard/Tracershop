@@ -23,13 +23,13 @@ const testOrder = new ActivityOrder(123, 1000, "irrelvant", ORDER_STATUS.ACCEPTE
 
 describe("Clickable icon tests", () => {
   it("Black Block render test", () => {
-    const url = "dummy/url"
+    const url = "dummy/url";
     const altText = "altDummy";
     render(<ClickableIcon
       src={url}
-      altText={altText}
+      alt={altText}
       onClick={dummyClickable}
-      label={"label"}
+      aria-label={"label"}
     />)
     const image = screen.getByAltText(altText);
 
@@ -37,13 +37,13 @@ describe("Clickable icon tests", () => {
   })
 
   it("Black Block render click", () => {
-    const url = "dummy/url"
+    const url = "dummy/url";
     const altText = "altDummy";
     render(<ClickableIcon
       src={url}
-      altText={altText}
+      alt={altText}
       onClick={dummyClickable}
-      label={"label"}
+      aria-label={"label"}
     />)
     const image = screen.getByAltText(altText);
 
@@ -71,7 +71,7 @@ describe("Status icon tests", () => {
     render(<StatusIcon
       order={testOrder}
       onClick={dummyClickable}
-      label={"label"}
+      aria-label={"label"}
     />);
     screen.getByLabelText("SVG-/static/images/clipboard2.svg");
   });
@@ -81,7 +81,7 @@ describe("Status icon tests", () => {
     render(<StatusIcon
       order={testOrder}
       onClick={dummyClickable}
-      label={"label"}
+      aria-label={"label"}
     />)
     const image = screen.getByLabelText("label");
 

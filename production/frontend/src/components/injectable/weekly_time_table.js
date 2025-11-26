@@ -61,7 +61,7 @@ function AbsoluteCell({
     day,
     timeSlots = 0,
     color = 'lightblue',
-    label = "",
+    ...rest
    }){
   return (<Row
       style={{
@@ -72,7 +72,7 @@ function AbsoluteCell({
         left : `calc(25px + ${day + 1} * (12.5% - 3px))`,
         width: "calc(12.5% - 5px)",
       }}
-      aria-label={label}
+      {...rest}
       onClick={onClick}
     >{children}</Row>)
 }
@@ -106,7 +106,7 @@ export function WeeklyTimeTable({day_function,
 
 
     entries.push(<AbsoluteCell
-                    label={label}
+                    aria-label={label}
                     color={entry_color}
                     timeSlots={entry_hour - startingHour}
                     key={key}

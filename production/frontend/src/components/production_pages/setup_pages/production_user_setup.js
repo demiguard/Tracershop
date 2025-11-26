@@ -173,7 +173,7 @@ export function ProductionUserSetup(){
               </Col>
               <Col xs="1" style={cssCenter}>
                 <ClickableIcon
-                  label={`commit-user-${user.id}`}
+                  aria-label={`commit-user-${user.id}`}
                   src={image_src}
                   onClick={handleUserClick}
                 />

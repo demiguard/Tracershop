@@ -10,51 +10,45 @@ import { HoverBox } from '~/components/injectable/hover_box'
 import { IdempotentButton, IdempotentButtonProps } from './buttons'
 import { DATA_ACTIVITY_ORDER, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_ORDER } from '~/lib/shared_constants'
 import { IsotopeOrderCollection } from '~/lib/data_structures/isotope_order_collection'
-import { Image } from './image'
+import { Image, ImageProps } from './image'
 import { OrdersType, OrderType, getOrderType } from '~/lib/types'
 import { CancelBox } from './cancel_box'
 import { Optional } from './optional'
 import { OrderCollection } from '~/lib/data_structures/order_collection'
 
-interface ClickableIconProps {
-  altText? : string,
+type ClickableIconProps = {
   src : string,
-  onClick? : any,
-  onMouseDown? : any,
-  label? : string,
-  className? : string,
-  style? : Object,
-  variant? : string,
+  onClick? : () => void,
+  onMouseDown? : () => void
   beforeInjection? : (svg: SVGSVGElement) => void
-}
+  style? : React.CSSProperties,
+  variant? : string
+} & ImageProps
 
-export function ClickableIcon (props : ClickableIconProps){
-  const {
-    altText,
-    src,
-    onClick,
-    onMouseDown,
-    label,
-    className ,
-    style={
-      padding : "0px",
-      justifyContent : 'center',
-      alignItems: 'center',
-      display: 'block',
-    },
-    variant="variant-light",
-    beforeInjection,
-    ...rest
-  } = props
+export function ClickableIcon ({
+  "aria-label" : ariaLabel,
+  src,
+  onClick,
+  onMouseDown,
+  style={
+    padding : "0px",
+    justifyContent : 'center',
+    alignItems: 'center',
+    display: 'block',
+  },
+  variant="variant-light",
+  beforeInjection,
+  ...rest
 
-  const PassedClassName = className ? `statusIcon ${className}` : "statusIcon";
+} : ClickableIconProps){
+
 
   return (<Button
             style={style}
             variant={variant}
-            aria-label={label}
             onClick={onClick}
             onMouseDown={onMouseDown}
+            aria-label={ariaLabel}
     >
       <Image
         beforeInjection={beforeInjection}
@@ -64,9 +58,7 @@ export function ClickableIcon (props : ClickableIconProps){
         }}
         width="24"
         height="24"
-        className={PassedClassName}
         src={src}
-        alt={altText}
         {...rest}
       />
     </Button>)
@@ -98,15 +90,13 @@ function statusImages(status : number) {
   }
 }
 
-interface StatusIconArgs {
-  altText? : string,
-  label? : string,
+type StatusIconArgs = {
   onClick? : () => void;
   order? : OrderType
   collection? : OrderCollection
-}
+} & Omit<ClickableIconProps, 'src'>
 
-export function StatusIcon ({onClick, label, order, collection, altText} : StatusIconArgs) {
+export function StatusIcon ({onClick, order, collection, ...rest} : StatusIconArgs) {
   const statusImagePath = (() => {
     if (collection) {
       if(collection instanceof ActivityOrderCollection && collection.moved) {
@@ -122,29 +112,30 @@ export function StatusIcon ({onClick, label, order, collection, altText} : Statu
     return statusImages(order.status);
   })();
 
-  if(statusImagePath === ""){
-    return <div></div>;
+  const etherealOrder = order !== undefined && order.id <= 0;
+  const empty_collection = collection !== undefined && collection.orders.length == 0
+
+  if(statusImagePath === "" || etherealOrder || empty_collection){
+    return <div data-testid="missing-status-icon" {...rest}></div>;
   }
 
   return <ClickableIcon
-    altText={altText}
     onClick={onClick}
-    label={label}
     src={statusImagePath}
+    {...rest}
   />;
 }
 
-export function ActivityDeliveryIcon(props){
-  const newProps = {...props};
-  delete newProps['orderCollection'];
-  if(props.orderCollection.minimum_status === ORDER_STATUS.RELEASED){
-    return <ClickableIcon
-    src="/static/images/delivery.svg"
-    onClick={openActivityReleasePDF(props.orderCollection.delivering_time_slot.id,
-                                    new Date(props.orderCollection.ordered_date))
-            }
-    {...newProps} // This is here to make props overwrite default props
-  />
+export function ActivityDeliveryIcon({orderCollection, ...rest}){
+  if(orderCollection.minimum_status === ORDER_STATUS.RELEASED){
+    return (
+      <ClickableIcon
+        src="/static/images/delivery.svg"
+        onClick={openActivityReleasePDF(orderCollection.delivering_time_slot.id,
+                                        new Date(orderCollection.ordered_date))
+                }
+        {...rest} // This is here to make props overwrite default props
+      />);
   }
   return <div aria-label='empty-delivery-icon'></div>;
 }
@@ -237,51 +228,32 @@ type IdempotentIconProps = {
   beforeInjection? : (svg: SVGSVGElement) => undefined,
   onClick? : (() => Promise<any>),
   onMouseDown? : () => void,
-  label? : string,
   className? : string,
   style? : CSSProperties
   variant? : string
 } & IdempotentButtonProps;
 
-export function IdempotentIcon (props: IdempotentIconProps){
-
-  let {
+export function IdempotentIcon ({
     altText,
     src,
     onClick,
     onMouseDown,
-    label,
-    className ,
-    style,
-    variant,
+    style = {
+      padding : "0px",
+      justifyContent : 'center',
+      alignItems: 'center',
+      display: 'block',
+    },
+    variant = "variant-light",
     beforeInjection,
     ...rest
-  } = props
+  }: IdempotentIconProps){
 
-if(style === undefined){
-  style = {
-    padding : "0px",
-    justifyContent : 'center',
-    alignItems: 'center',
-    display: 'block',
-  }
-}
-
-if(variant === undefined){
-  variant = "variant-light"
-}
-
-if (className) {
-  className = `statusIcon ${className}`;
-} else {
-  className = "statusIcon";
-}
 
 return (<IdempotentButton
           {...rest}
           style={style}
           variant={variant}
-          aria-label={label}
           onClick={onClick}
           onMouseDown={onMouseDown}
   >
@@ -293,7 +265,6 @@ return (<IdempotentButton
       width = '24'
       height = '24'
       beforeInjection={beforeInjection}
-      className={className}
       src={src}
       alt={altText}
     />
@@ -337,68 +308,7 @@ export function AcceptIcon(props : {orders : OrdersType }){
   />
 }
 
-
-
-/**
- *
- * @param {{
- *  orders : Array<InjectionOrder>
- * }} props
- */
-export function AcceptIconInjection(props){
-  const websocket = useWebsocket();
-
-  const {orders, ...rest} = props;
-
-  function acceptOrders(){
-    if (!websocket){
-      return Promise.resolve();
-    }
-
-    const filtered_orders = orders.filter(
-      order => order.status === ORDER_STATUS.ORDERED
-    );
-    const updated_orders = filtered_orders.map(
-      order => ({...order, status : ORDER_STATUS.ACCEPTED})
-    );
-
-    return websocket.sendEditModels(
-      DATA_INJECTION_ORDER, updated_orders
-    );
-  }
-
-  return <IdempotentIcon {...rest} src="/static/images/thumb-up-add.svg" onClick={acceptOrders}/>;
-}
-
-export function AcceptIconActivity (props: {orders : Array<ActivityOrder>}){
-  const {orders} = props;
-  const websocket = useWebsocket();
-
-  function acceptOrders(){
-    if(!websocket){
-      return Promise.resolve();
-    }
-    const filtered_orders = orders.filter(
-      order => order.status === ORDER_STATUS.ORDERED
-    );
-    const updated_orders = filtered_orders.map(
-      order => ({...order, status : ORDER_STATUS.ACCEPTED})
-    );
-
-    return websocket.sendEditModels(
-      DATA_ACTIVITY_ORDER, updated_orders
-    );
-  }
-
- return <IdempotentIcon
-            src="/static/images/thumb-up-add.svg"
-            onClick={acceptOrders}
-        />;
-}
-
-export function CalculatorIcon(props){
-  const { openCalculator, ...rest } = props;
-
+export function CalculatorIcon({ openCalculator, ...rest }){
   return <ClickableIcon
     onClick={openCalculator}
     src="/static/images/calculator.svg"

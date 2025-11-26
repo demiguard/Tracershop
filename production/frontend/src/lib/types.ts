@@ -6,10 +6,9 @@ import { IsotopeOrderCollection } from "./data_structures/isotope_order_collecti
 import { InjectionOrderCollection } from "./data_structures/injection_order_collection"
 
 
-export interface ShopActionButtonArgs {
-  label?: string,
+export type ShopActionButtonArgs = {
   validate: () => boolean | [ boolean, any ],
-  callback?: (any) => void,
+  callback?: (any: any) => void,
   canEdit: boolean,
   is_dirty: boolean
 }

@@ -165,7 +165,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
             <CommitIcon
               object_type={DATA_PROCEDURE}
               temp_object={procedure}
-              label={`commit-${procedure.id}`}
+              aria-label={`commit-${procedure.id}`}
               validate={validate}
               callback={commit_callback}
             />

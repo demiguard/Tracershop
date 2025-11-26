@@ -377,7 +377,7 @@ return (
      <Row>
        <Col xs={1} style={cssCenter}>
           <StatusIcon
-            label={`time-slot-icon-${timeSlot.id}`}
+            aria-label={`time-slot-icon-${timeSlot.id}`}
             collection={orderCollection}
             onClick={headerFunction}
           />
@@ -396,7 +396,7 @@ return (
          display : 'flex'
        }}>
          <OpenCloseButton
-           label={`open-time-slot-${timeSlot.id}`}
+           aria-label={`open-time-slot-${timeSlot.id}`}
            open={open}
            setOpen={setOpen}
          />

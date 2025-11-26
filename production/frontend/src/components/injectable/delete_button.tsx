@@ -3,9 +3,10 @@ import { IdempotentIcon } from '~/components/injectable/icons'
 import { useWebsocket } from '~/contexts/tracer_shop_context'
 
 export function DeleteButton({
-  label,
   object,
-  object_type
+  object_type,
+  ...rest
+
 }){
   const websocket = useWebsocket();
 
@@ -22,6 +23,6 @@ export function DeleteButton({
   return <IdempotentIcon
     src="/static/images/decline.svg"
     onClick={deleteFunc}
-    label={label}
+    {...rest}
   />
 }
