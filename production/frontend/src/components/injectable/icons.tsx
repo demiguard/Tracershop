@@ -156,11 +156,12 @@ export function InjectionDeliveryIcon(props){
 type DeliveryIconProps = {
   collection? : OrderCollection
   order? : OrderType
-};
+} & Omit<ClickableIconProps, 'src' & 'onClick'>;
 
 export function DeliveryIcon({
   collection,
-  order
+  order,
+  ...rest
 } : DeliveryIconProps){
 
   const clickFunction = (() => {
@@ -176,6 +177,7 @@ export function DeliveryIcon({
     }})();
 
   return <ClickableIcon
+    {...rest}
     src="/static/images/delivery.svg"
     onClick={clickFunction}
   />;
