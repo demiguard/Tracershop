@@ -142,10 +142,10 @@ export function MonthSelector({stateDate, setDate, callback, ...rest}) {
         <MonthContainer aria-label={"aug"} onClick={selectMonth(7)}>Aug</MonthContainer>
       </MonthRow>
       <MonthRow>
-        <MonthContainer aira-label={"sep"} onClick={selectMonth(8)}>Sep</MonthContainer>
-        <MonthContainer aira-label={"oct"} onClick={selectMonth(9)}>Okt</MonthContainer>
-        <MonthContainer aira-label={"nov"} onClick={selectMonth(10)}>Nov</MonthContainer>
-        <MonthContainer aira-label={"dec"} onClick={selectMonth(11)}>Dec</MonthContainer>
+        <MonthContainer aria-label={"sep"} onClick={selectMonth(8)}>Sep</MonthContainer>
+        <MonthContainer aria-label={"oct"} onClick={selectMonth(9)}>Okt</MonthContainer>
+        <MonthContainer aria-label={"nov"} onClick={selectMonth(10)}>Nov</MonthContainer>
+        <MonthContainer aria-label={"dec"} onClick={selectMonth(11)}>Dec</MonthContainer>
       </MonthRow>
     </div>
   </div>

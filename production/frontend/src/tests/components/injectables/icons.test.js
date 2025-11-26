@@ -60,14 +60,11 @@ describe("Clickable icon tests", () => {
   it("We can find Calculator Icon with test_id", () => {
     render(<CalculatorIcon data-testid="HelloWorld"/>)
     expect(screen.queryByTestId("HelloWorld")).not.toBeNull();
-  })
-
+  });
 })
 
 describe("Status icon tests", () => {
   it("Black Block render test", () => {
-    const url = "/static/images/clipboard2.svg"
-
     render(<StatusIcon
       order={testOrder}
       onClick={dummyClickable}
@@ -77,12 +74,11 @@ describe("Status icon tests", () => {
   });
 
   it("Black Block render click", () => {
-
     render(<StatusIcon
       order={testOrder}
       onClick={dummyClickable}
       aria-label={"label"}
-    />)
+    />);
     const image = screen.getByLabelText("label");
 
     fireEvent(image, new MouseEvent('click', {bubbles: true, cancelable: true}));

@@ -2,6 +2,7 @@
  * @jest-environment jsdom
  */
 import React, {useState} from 'react'
+import { expect } from '@jest/globals'
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 
 import { MonthSelector } from '~/components/injectable/month_selector';
