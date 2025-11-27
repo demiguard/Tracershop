@@ -24,14 +24,14 @@ const testOrder = new ActivityOrder(123, 1000, "irrelvant", ORDER_STATUS.ACCEPTE
 describe("Clickable icon tests", () => {
   it("Black Block render test", () => {
     const url = "dummy/url";
-    const altText = "altDummy";
+    const alt = "altDummy";
     render(<ClickableIcon
       src={url}
-      alt={altText}
+      alt={alt}
       onClick={dummyClickable}
       aria-label={"label"}
     />)
-    const image = screen.getByAltText(altText);
+    const image = screen.getByAltText(alt);
 
     expect(image).toHaveAttribute("src", url)
   })

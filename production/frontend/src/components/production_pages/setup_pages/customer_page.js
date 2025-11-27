@@ -113,7 +113,7 @@ export function CustomerPage () {
           <Optional exists={displayCreateButton}>
             <InputGroup.Text>
               <IdempotentIcon
-                altText="Opret Kunde"
+                alt="Opret Kunde"
                 src="/static/images/plus2.svg"
                 onClick={createCustomer}
               />

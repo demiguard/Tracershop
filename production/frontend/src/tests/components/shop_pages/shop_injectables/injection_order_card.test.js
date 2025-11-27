@@ -291,7 +291,7 @@ describe("Injection order card test suite", () => {
     expect(window.open).toHaveBeenCalled()
   });
 
-  it("Delete an order", () => {
+  it("Delete an order", async () => {
     const injectionOrder = testState.injection_orders.get(1);
 
     render(
@@ -304,7 +304,7 @@ describe("Injection order card test suite", () => {
       </TracerShopContext>
     );
 
-    act(() => {
+    await act(async () => {
       screen.getByLabelText('inj-action-1').click();
     });
 

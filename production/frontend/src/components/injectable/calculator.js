@@ -233,7 +233,7 @@ export function Calculator ({
           <ClickableIcon
             src={"/static/images/plus2.svg"}
             onClick={addEntry}
-            altText={"Tilføj"}
+            alt={"Tilføj"}
           />
         </td>
       </tr>

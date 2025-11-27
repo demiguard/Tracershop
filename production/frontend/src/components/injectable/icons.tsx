@@ -65,7 +65,7 @@ export function ClickableIcon ({
 }
 
 ClickableIcon.propTypes = {
-  altText : propTypes.string,
+  alt : propTypes.string,
   src : propTypes.string.isRequired,
   onClick : propTypes.func
 }
@@ -225,7 +225,7 @@ export function WebsocketIcon(){
 }
 
 type IdempotentIconProps = {
-  altText? : string,
+  alt? : string,
   src : string,
   beforeInjection? : (svg: SVGSVGElement) => undefined,
   onClick? : (() => Promise<any>),
@@ -236,7 +236,7 @@ type IdempotentIconProps = {
 } & IdempotentButtonProps;
 
 export function IdempotentIcon ({
-    altText,
+    alt,
     src,
     onClick,
     onMouseDown,
@@ -268,7 +268,7 @@ return (<IdempotentButton
       height = '24'
       beforeInjection={beforeInjection}
       src={src}
-      alt={altText}
+      alt={alt}
     />
   </IdempotentButton>)
 }

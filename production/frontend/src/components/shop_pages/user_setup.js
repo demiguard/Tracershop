@@ -59,11 +59,11 @@ function UserAssignmentRow(props){
 
   const ActionButton = (exists) ? <ClickableIcon
     src="/static/images/decline.svg"
-    altText={"Slet tildeling"}
+    alt={"Slet tildeling"}
     aria-label={`delete-assignment-${user_assignment.id}`}
     onClick={delete_user_assignment}
   /> : <ClickableIcon
-    altText={"Tilføj tildeling"}
+    alt={"Tilføj tildeling"}
     onMouseDown={create_user_assignment}
     src="/static/images/plus2.svg"
   />;
