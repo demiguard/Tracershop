@@ -29,6 +29,9 @@ export function ControlPanel(){
         <Col>
           <Button onClick={() => {console.log(state)}}>print state</Button>
         </Col>
+        <Col>
+          <Button onClick={() => {console.log(websocket.get_listeners())}}>Listeners</Button>
+        </Col>
       </Row>
       <Card>
         <Card.Header>

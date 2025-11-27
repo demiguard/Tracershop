@@ -253,15 +253,10 @@ export class ProcedureIndex {
 }
 
 export class TracerBookingMapping {
-  /** @type {ArrayMap<Number | undefined, Booking>} */ _map
+  /** @type {ArrayMap<Number | undefined, Booking>} */ _map : ArrayMap<number, Booking>
 
-  /**
-   *
-   * @param {Iterable<Booking>} bookings
-   * @param {ProcedureLocationIndex} procedureLocationIndex
-   */
-  constructor(bookings, procedureLocationIndex){
-    this._map = new ArrayMap<Number,Booking> ();
+  constructor(bookings : Array<Booking>, procedureLocationIndex: ProcedureLocationIndex){
+    this._map = new ArrayMap<number,Booking> ();
 
     for(const booking of bookings){
       const procedure = procedureLocationIndex.getProcedure(booking);

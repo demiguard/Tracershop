@@ -65,8 +65,6 @@ export function IdempotentButton({
     return <Spinner data-testid="idempotent-spinner"></Spinner>
   }
 
-  console.log(rest);
-
   return <Button onClick={wrappedOnClick} {...rest}>
     {children}
   </Button>

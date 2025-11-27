@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Col, Container, Row } from "react-bootstrap";
 import { Select, toOptions } from '../injectable/select'
 import { FutureBooking } from "./future_bookings";
@@ -27,6 +27,7 @@ import { useUpdatingEffect } from "~/effects/updating_effect";
 import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 import { StateType } from "~/lib/constants";
 import { CalenderColorMapContextProvider } from "~/contexts/calender_color_map";
+import { dateToDateString } from "~/lib/formatting";
 
 const Content = {
   Manuel : OrderReview,
@@ -111,7 +112,6 @@ export function ShopOrderPage ({relatedCustomer}){
   });
 
   const [bookings, setBookings] = useState(new Map<number, Booking>());
-  const activeDate = state.today;
 
   function addBookingFromUpdate(message){
     if(message instanceof MESSAGE_CREATE_BOOKING){
@@ -120,13 +120,14 @@ export function ShopOrderPage ({relatedCustomer}){
         const incomingBookings = message.data[DATA_BOOKING]
         const filteredBookings = bookingFilter(incomingBookings, {
           state : state,
-          active_date : activeDate,
+          active_date : state.today,
           active_endpoint : activeEndpoint,
         });
 
         for(const booking of filteredBookings){
           newBookings.set(booking.id, booking);
         }
+
         return newBookings;
       })
     } else if(message instanceof MESSAGE_DELETE_BOOKING){
@@ -140,26 +141,34 @@ export function ShopOrderPage ({relatedCustomer}){
       });
     } else if(message instanceof MESSAGE_MASS_ORDER){
       setBookings(oldBookings => {
-        const all_bookings: Booking[] = [...oldBookings.values(), ...message.booking[DATA_BOOKING]]
-        const filteredBookings = bookingFilter(all_bookings, {
+        const bookings = new Map(oldBookings);
+        const new_bookings = [...message.booking[DATA_BOOKING]];
+
+        const filteredBookings = bookingFilter(new_bookings, {
           state : state,
-          active_date : activeDate,
+          active_date : state.today,
           active_endpoint : activeEndpoint,
         });
 
-        return toMapping(filteredBookings);
+        for(const booking of filteredBookings){
+          bookings.set(booking.id, booking);
+        }
+
+        return bookings;
       })
     }
   }
 
   useEffect(() => {
-    const listenNumber = websocket ? websocket.addListener(addBookingFromUpdate) : null;
+    if(!websocket){ return; }
+    const listenNumber = websocket.addListener(addBookingFromUpdate);
+
     return () => {
       if(listenNumber !== null){
         websocket.removeListener(listenNumber);
       }
     }
-  }, [websocket]);
+  }, [websocket, addBookingFromUpdate]);
 
   useUpdatingEffect(function changeRelatedCustomer() {
     if(!relatedCustomer.has(activeCustomer)){
@@ -185,7 +194,7 @@ export function ShopOrderPage ({relatedCustomer}){
 
   useEffect(function getBookings () {
     if(websocket !== null){
-      websocket.sendGetBookings(activeDate, activeEndpoint).then((message) => {
+      websocket.sendGetBookings(state.today, activeEndpoint).then((message) => {
         if(message instanceof MESSAGE_READ_BOOKINGS){
           setBookings(toMapping(message.data[DATA_BOOKING]));
         } else {
@@ -196,7 +205,7 @@ export function ShopOrderPage ({relatedCustomer}){
     return () => {
       setBookings(new Map());
     }
-  }, [activeEndpoint, activeDate, websocket])
+  }, [activeEndpoint, state.today, websocket])
 
   function setActiveDate(newDate) {
     dispatch(new UpdateToday(newDate, websocket));
@@ -259,6 +268,8 @@ export function ShopOrderPage ({relatedCustomer}){
     [DATA_BOOKING] : [...bookings.values()],
     productState : [activeProduct, setActiveProduct],
   };
+
+
 
   const calenderTimeSlots = activeProduct.filterDeliveries(state, { endpoint_id : activeEndpoint });
 

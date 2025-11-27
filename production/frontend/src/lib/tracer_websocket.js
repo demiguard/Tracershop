@@ -38,7 +38,7 @@ export class TracerWebSocket {
   constructor(websocket, dispatch){
     this.#promiseMap = new Map();
     this.#listeners = new Map();
-    this.#listerNumber = 1; // Gotta start at 1 otherwise if conditions fails
+    this.#listerNumber = 0; // Note that this number is incremeted before use, so you'll never see a 'listener 0'
     this.#dispatch = dispatch
     this.initializeWebsocket(websocket) // sets .#ws
   }
@@ -218,14 +218,19 @@ export class TracerWebSocket {
   }
 
   addListener(func){
-    this.#listeners.set(this.#listerNumber, func);
     this.#listerNumber++;
+    this.#listeners.set(this.#listerNumber, func);
+
 
     return this.#listerNumber;
   }
 
   removeListener(listenNumber){
-    this.#listeners.delete(listenNumber);
+    const was_deleted = this.#listeners.delete(listenNumber);
+  }
+
+  get_listeners(){
+    return this.#listeners;
   }
 
   triggerListeners(data){

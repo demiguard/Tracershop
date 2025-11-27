@@ -14,6 +14,8 @@ import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";
 import { AlertBox, ERROR_LEVELS } from "~/components/injectable/alert_box";
 import { RecoverableError, useErrorState } from "~/lib/error_handling";
+import { MESSAGE_MASS_ORDER } from "~/lib/incoming_messages";
+import { useProcedureFinder } from "~/contexts/procedure_context";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -119,38 +121,36 @@ function BookingRow({
   </tr>);
 }
 
+type TracerCardProps = {
+  tracer : Tracer,
+  bookings : Array<Booking>,
+  activityDeadlineValid : boolean,
+  injectionDeadlineValid : boolean,
+  procedureLocationIndex : ProcedureLocationIndex
+}
 
-/**
- *
- * @param {{
-*   tracer : Tracer
-*   bookings : Array<Booking>
-* }} param0
-* @returns
-*/
+
 function TracerCard({tracer,
                     bookings,
                     activityDeadlineValid,
                     injectionDeadlineValid,
                     procedureLocationIndex
 
-  }) {
+  }: TracerCardProps) {
   const state = useTracershopState();
   const websocket = useWebsocket();
-  // This is overkill, but...
-  const bookingListInit = useRef(null);
-  if(bookingListInit.current === null){
-    bookingListInit.current = {};
-    bookings.map((booking) => {
-      bookingListInit.current[booking.accession_number] = true;
-    });
-  }
-
   const [bookingError, setBookingError] = useErrorState()
   const [sortingMethod, setSortingState] = useState(BOOKING_SORTING_METHODS.START_TIME);
   const [invertedSorting, setInvertedSorting] = useState(1)
   const [open, setOpen] = useState(false);
-  const [bookingProgram, setBookingProgram] = useState(bookingListInit.current);
+  const [bookingProgram, setBookingProgram] = useState(() => {
+    const program = {};
+    bookings.map((booking) => {
+      program[booking.accession_number] = true;
+    });
+
+    return program
+  });
 
   function setSortingMethod(newMethod){
     return () => {setSortingState(newMethod)}
@@ -164,13 +164,13 @@ function TracerCard({tracer,
         const error_info = message[WEBSOCKET_ERROR];
         if(error_info[ERROR_EARLY_TIME_SLOT]){
           setBookingError(`Kunne ikke oprette bookinger, da et eller flere af injektions tidspunktet: ${error_info[ERROR_EARLY_BOOKING_TIME]} er før tidligste frigivelse tidspunkt kl: ${error_info[ERROR_EARLY_TIME_SLOT]}`);
+        } else if(message[WEBSOCKET_ERROR] === WARNING_DUPLICATED_BOOKINGS){
+          setBookingError(new RecoverableError("Der var allerede nogle ordre, du bedes doubelt checke at ordre er korrekte.", ERROR_LEVELS.warning))
         } else {
           setBookingError(`Kunne ikke oprette bookinger, da der ikke findes nogle levering af ${tracer.shortname} til denne dato`);
         }
-      } else {
-        if(message[WEBSOCKET_ERROR] === WARNING_DUPLICATED_BOOKINGS){
-          setBookingError(new RecoverableError("Der var allerede nogle ordre, du bedes doubelt checke at ordre er korrekte.", ERROR_LEVELS.warning))
-        }
+      } else if(message instanceof MESSAGE_MASS_ORDER){
+        console.log("MASS ORDER SUCCESS") // Note that we can handle booking refresh at booking stateholder ~ shop_order_page.tsx
         setBookingError("");
       }
     });
@@ -183,7 +183,6 @@ function TracerCard({tracer,
   const rows = [...bookings].sort(sortBookings(sortingMethod, state, invertedSorting)).map(
     (booking, i) => {
       const checked = bookingProgram[booking.accession_number];
-
       return (<BookingRow
                 key={i}
                 booking={booking}
@@ -243,21 +242,23 @@ function TracerCard({tracer,
    </Card>);
 }
 
+type FutureBookingProps = {
+  active_endpoint : number,
+  booking : Array<Booking>,
+  activityDeadlineValid : boolean,
+  injectionDeadlineValid : boolean
+}
+
+
 /** Displays bookings for the active date prop and the endpoint prop. Allows the
  * user to order bookings by tracer
- *
- * @param {{
- *  active_date : Date,
- *  active_endpoint : Number,
- *  activityDeadlineValid : Boolean,
- *  injectionDeadlineValid : Boolean,
- *  booking : Array<Booking>
- * }} props
- *
- * @returns {Component}
  */
-export function FutureBooking ({active_endpoint, booking,
-  activityDeadlineValid, injectionDeadlineValid}) {
+export function FutureBooking ({
+  active_endpoint,
+  booking,
+  activityDeadlineValid,
+  injectionDeadlineValid
+} : FutureBookingProps) {
   const state = useTracershopState();
   const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
                                                             state.location,

@@ -7,6 +7,7 @@ import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, D
 import { compareDates, getId, map } from "./utils";
 import { DateRange, datify, sameDate } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
+import { dateToDateString } from "./formatting";
 
 
 
@@ -125,15 +126,24 @@ export function locationFilter(container: ContainerType<Location>, {
   return ids ? filteredLocations.map(getId) : filteredLocations;
 }
 
-export function bookingFilter(container: ContainerType<Booking>, filterArgs: any): Booking[]
-export function bookingFilter(container: ContainerType<Booking>, filterArgs: any, ids: true): number[]
+type BookingFilterArgs = {
+  state? : TracershopState,
+  active_endpoint? : number,
+  active_date? : Date,
+  tracer_id? : number
+}
+
+export function bookingFilter(container: ContainerType<Booking>, filterArgs: BookingFilterArgs): Booking[]
+export function bookingFilter(container: ContainerType<Booking>, filterArgs: BookingFilterArgs, ids: true): number[]
 
 export function bookingFilter(container: ContainerType<Booking>, {
   state,
   active_endpoint,
   active_date,
   tracer_id
-}, ids=false){
+} : BookingFilterArgs, ids=false){
+
+
   const bookings = extractData(container, Booking, DATA_BOOKING);
 
   const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
@@ -143,8 +153,11 @@ export function bookingFilter(container: ContainerType<Booking>, {
 
   const filteredBookings = bookings.filter((booking) => {
     const endpoint_condition = locations ? locations.includes(booking.location) : true;
-    const date_condition = active_date ? compareDates(datify(active_date), datify(booking.start_date)) : true;
-    const procedure_condition = procedures ? procedures.includes(booking.procedure) : true;;
+    const date_condition = active_date ? dateToDateString(active_date) === booking.start_date : true;
+    const procedure_condition = procedures ? procedures.includes(booking.procedure) : true;
+
+    //console.log(booking, active_date, dateToDateString(active_date), booking.start_date,  date_condition);
+
     return endpoint_condition && date_condition && procedure_condition;
   });
 
