@@ -47,7 +47,6 @@ export function InjectionOrderCard({
   const [errorInjections, setErrorInjections] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("")
   const state = useTracershopState();
-  const websocket = useWebsocket();
 
   function resetErrors(){
     setErrorInjections("");
@@ -130,8 +129,6 @@ export function InjectionOrderCard({
   const statusInfo = orderExists ? `ID: ${injection_order.id}` : "Ny ordre";
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
-  const tempTracer = state.tracer.get(injection_order.tracer);
-
 
   return (
   <Card style={{padding : '0px'}}>
@@ -178,7 +175,7 @@ export function InjectionOrderCard({
       </Row>
       <Row>
         <Col xs={1} style={cssCenter} >{statusInfo}</Col>
-        <Col xs={3}>
+        <Col>
           <TracershopInputGroup label={"Tid"}>
             <ErrorInput error={errorDeliveryTime}>
               <TimeInput
@@ -190,7 +187,7 @@ export function InjectionOrderCard({
             </ErrorInput>
           </TracershopInputGroup>
         </Col>
-        <Col xs={3}>
+        <Col>
           <TracershopInputGroup label={"Brug"}>
             <UsageSelect
               aria-label={`usage-input-${injection_order.id}`}
@@ -200,8 +197,8 @@ export function InjectionOrderCard({
             />
           </TracershopInputGroup>
         </Col>
-        <Col>
-          <Optional exists={!!(canEdit || tempInjectionOrder.comment)}>
+        <Optional exists={!!(canEdit || tempInjectionOrder.comment)}>
+          <Col>
             <TracershopInputGroup label="Kommentar">
               <EditableInput
                 canEdit={canEdit}
@@ -212,8 +209,8 @@ export function InjectionOrderCard({
                 onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
                 />
             </TracershopInputGroup>
-          </Optional>
-        </Col>
+          </Col>
+        </Optional>
         <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
           <Col>
             <TracershopInputGroup label="lot:">
@@ -233,6 +230,7 @@ export function InjectionOrderCard({
             aria-label={`inj-action-${injection_order.id}`}
             validate={validate}
             isDirty={changed}
+            canEdit={canEdit}
           />
         </Col>
       </Row>

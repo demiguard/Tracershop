@@ -20,7 +20,7 @@ describe("Filter test suites", () => {
       undefined, // Address
       undefined, // Activity Orders
       toMapping(closedDates), // closedDates
-    )
+    );
 
     const returnArray = extractData(testState, ClosedDate, DATA_CLOSED_DATE);
 
@@ -43,10 +43,11 @@ describe("Filter test suites", () => {
       new Booking( 3,  1,  2,  1, "asdf", "10:30:00", "2020-05-04"),
     ];
 
-    const res = bookingFilter(bookings, { active_date : "2020-05-04"});
+    const res = bookingFilter(bookings, { active_date : new Date("2020-05-04")});
 
-    expect(res[0]).toBe(bookings[0]);
     expect(res.length).toBe(2);
+    expect(res[0]).toBe(bookings[0]);
+    expect(res[1]).toBe(bookings[2]);
   });
 
   it("Time Slot filter",() => {

@@ -170,7 +170,7 @@ function TracerCard({tracer,
           setBookingError(`Kunne ikke oprette bookinger, da der ikke findes nogle levering af ${tracer.shortname} til denne dato`);
         }
       } else if(message instanceof MESSAGE_MASS_ORDER){
-        console.log("MASS ORDER SUCCESS") // Note that we can handle booking refresh at booking stateholder ~ shop_order_page.tsx
+        // Note: The site handles bookings refresh at booking stateholder ~ shop_order_page.tsx
         setBookingError("");
       }
     });
@@ -265,7 +265,7 @@ export function FutureBooking ({
                                                             active_endpoint);
   const bookingMapping = new TracerBookingMapping(booking, procedureLocationIndex);
 
-  const bookingCards = []
+  const bookingCards = [];
   let index = 0;
 
   for (const [tracerID, BookingArray] of bookingMapping) {
