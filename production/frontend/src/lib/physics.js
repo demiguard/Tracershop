@@ -64,7 +64,7 @@ export function correctVialActivityToTime(vial, time, halflife_seconds){
   const minutes_delay = diffTimeStamp.toMinutes()
 
   return 0 < minutes_delay ?
-      decayCorrect(halflife_seconds, minutes_delay, vial.activity)
+      decayCorrect(halflife_seconds, -minutes_delay, vial.activity)
     : vial.activity;
 }
 

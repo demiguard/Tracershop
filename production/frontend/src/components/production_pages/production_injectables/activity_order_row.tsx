@@ -7,6 +7,7 @@ import { CancelIcon, StatusIcon } from "~/components/injectable/icons";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ActivityDeliveryTimeSlot, ActivityOrder } from "~/dataclasses/dataclasses";
 import { fulfillmentActivity } from "~/lib/physics";
+import { MARGIN } from "~/lib/styles";
 import { canBeCancelled } from "~/lib/utils";
 
 
@@ -116,7 +117,7 @@ export function ActivityOrderRow({
   }).filter(x => Boolean(x));
 
   return (
-    <Row>
+    <Row style={MARGIN.all.px10}>
       {renderedColumns}
     </Row>
   );

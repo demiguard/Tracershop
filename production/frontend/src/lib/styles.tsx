@@ -87,6 +87,9 @@ export const MARGIN = {
     px0 : {
       margin : '0px'
     },
+    px10 : {
+      margin : '10px'
+    },
   },
   bottom : {
     px30 : {

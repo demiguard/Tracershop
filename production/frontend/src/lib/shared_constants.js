@@ -81,7 +81,7 @@ export const EXCLUDED_STATE_MODELS = [
   "telemetry_request",
 ]
 
-export const JAVASCRIPT_VERSION = "2.4.2";
+export const JAVASCRIPT_VERSION = "2.4.3";
 
 export const MessageValidationResult = {
   Successful : 0,

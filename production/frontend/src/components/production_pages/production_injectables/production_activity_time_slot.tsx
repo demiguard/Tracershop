@@ -9,7 +9,7 @@ import { Optional } from '~/components/injectable/optional';
 import { OpenCloseButton } from '~/components/injectable/open_close_button';
 import { ActivityDeliveryIcon, ClickableIcon, IdempotentIcon, StatusIcon } from '~/components/injectable/icons';
 import { Comment } from '~/components/injectable/data_displays/comment';
-import { ActivityDeliveryTimeSlot } from '~/dataclasses/dataclasses';
+import { ActivityDeliveryTimeSlot, Vial } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { decayCorrect, correctVialActivityToTime, fulfillmentActivity } from '~/lib/physics';
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
@@ -20,28 +20,26 @@ import { MBqDisplay } from '~/components/injectable/data_displays/mbq_display';
 import { UserDisplay } from '~/components/injectable/data_displays/user_display';
 import { DatetimeDisplay } from '~/components/injectable/data_displays/datetime_display';
 import { HoverBox } from '~/components/injectable/hover_box';
-import { compareTimeStamp, TimeStamp } from '~/lib/chronomancy';
+
 import { ActivityOrderRow } from './activity_order_row';
 
-/**
- *
- * @param {Object} param0
- * @param {Vial} param0.vial
- * @param {ActivityOrderCollection}  param0.orderCollection
- */
-function VialRow({vial, orderCollection}){
+type VialRowProps = {
+  vial : Vial,
+  orderCollection : ActivityOrderCollection
+}
+
+
+function VialRow({vial, orderCollection} : VialRowProps){
+  const state = useTracershopState();
   const timeSlot = orderCollection.delivering_time_slot
-  const timeStampTimeSlot = new TimeStamp(timeSlot.delivery_time);
-  const timeStampVial = new TimeStamp(vial.fill_time);
-  const comparedTimeSlot = compareTimeStamp(timeStampVial, timeStampTimeSlot)
+  const tracer = state.tracer.get(vial.tracer)
+  const isotope = state.isotopes.get(tracer.isotope);
 
-  const minutesBetweenVialAndTimeSlot = comparedTimeSlot.toMinutes();
-
-  const correctedActivity = decayCorrect(
-    orderCollection.isotope.halflife_seconds,
-    minutesBetweenVialAndTimeSlot,
-    vial.activity
-  );
+  const correctedActivity = correctVialActivityToTime(
+    vial,
+    timeSlot.delivery_time,
+    isotope.halflife_seconds,
+  )
 
   const base_time = <div>Kl: {vial.fill_time}</div>;
   const hover_time = <div>Dispenseringstidspunkt</div>;
