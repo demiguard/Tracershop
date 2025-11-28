@@ -277,11 +277,12 @@ export function renderDateTime(dateString){
  * @returns
  */
 export function formatUsername(user){
-  if(user === null){
-    return "";
+  if(user){
+    return user.username.toUpperCase();
+  } else {
+    return "Ukendt Bruger"
   }
 
-  return user.username.toUpperCase();
 }
 
 /**
