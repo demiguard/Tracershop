@@ -20,13 +20,10 @@ import { AccumulatingMap } from '~/lib/accumulating_map';
 import { Col } from 'react-bootstrap';
 import { formatAccessionNumber } from '~/lib/formatting';
 
-
-
-
 //#region TimeSlotMapping
 export class TimeSlotMapping {
-  _timeSlotMapping: Map<Number, ArrayMap<Number, ActivityDeliveryTimeSlot>>
-  _endpoints: Map<Number, DeliveryEndpoint>
+  _timeSlotMapping: Map<number, ArrayMap<number, ActivityDeliveryTimeSlot>>
+  _endpoints: Map<number, DeliveryEndpoint>
 
   /**
   * Creates a mapping over the related activity delivery time slots.
@@ -86,19 +83,15 @@ export class TimeSlotMapping {
    * @param {ActivityDeliveryTimeSlot} timeSlot
    * @returns {ActivityDeliveryTimeSlot}
    */
-  getFirstTimeSlot(timeSlot){
+  getFirstTimeSlot(timeSlot : ActivityDeliveryTimeSlot) : ActivityDeliveryTimeSlot {
     const endpoint = this._endpoints.get(timeSlot.destination);
     const destinationMap = this._timeSlotMapping.get(endpoint.owner)
     return destinationMap.get(endpoint.id)[0];
   }
 
-  /**
-   *
-   * @param {DeliveryEndpoint} endpoint
-   * @returns {ActivityDeliveryTimeSlot[]}
-   */
-  getTimeSlots(endpoint){
-    return this._timeSlotMapping.get(endpoint.owner).get(endpoint.id)
+  getTimeSlots(endpoint : DeliveryEndpoint) : ActivityDeliveryTimeSlot[]{
+    const owner_map = this._timeSlotMapping.get(endpoint.owner);
+    return owner_map ? owner_map.get(endpoint.id, []) : [];
   }
 }
 
