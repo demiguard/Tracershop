@@ -1,6 +1,6 @@
 import React, { useContext, createContext, useMemo } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { Isotope, IsotopeDelivery, Tracer, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
+import { Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
 import { numberfy } from "~/lib/utils";
 
@@ -36,14 +36,25 @@ export class TracerCatalog {
    * Data structure containing information about which tracers a customer have access to
    * Each instance is unique to a customer.
    */
-  constructor(state: TracershopState) {
+  constructor(
+    tracer_mapping : Map<number,TracerCatalogPage>,
+    tracers : Map<number, Tracer>,
+    isotope_deliveries : Map<number, IsotopeDelivery>,
+    isotope_productions : Map<number, IsotopeProduction>,
+    isotopes : Map<number, Isotope>,
+  ) {
     this._endpointCatalogs = new Map();
 
-    for (const tracerCatalogPage of state.tracer_mapping.values()) {
+    console.log(
+      tracer_mapping, tracers, isotope_deliveries, isotope_productions,isotopes
+    )
+
+
+    for (const tracerCatalogPage of tracer_mapping.values()) {
       const endpoint_catalog = this.getCatalog(tracerCatalogPage.endpoint);
       endpoint_catalog.pages.set(tracerCatalogPage.tracer, tracerCatalogPage);
 
-      const tracer = state.tracer.get(tracerCatalogPage.tracer);
+      const tracer = tracers.get(tracerCatalogPage.tracer);
       if (tracer === undefined) {
         throw "Database integrity violated!";
       }
@@ -56,10 +67,10 @@ export class TracerCatalog {
       }
     }
 
-    for(const isotopeDelivery of state.isotope_delivery.values()){
+    for(const isotopeDelivery of isotope_deliveries.values()){
       const endpointCatalog = this.getCatalog(isotopeDelivery.delivery_endpoint);
-      const production = state.isotope_production.get(isotopeDelivery.production);
-      const isotope = state.isotopes.get(production.isotope);
+      const production = isotope_productions.get(isotopeDelivery.production);
+      const isotope = isotopes.get(production.isotope);
       endpointCatalog.isotopeCatalog.add(isotope.id);
     }
   }
@@ -132,7 +143,7 @@ export class TracerCatalog {
 }
 
 //@ts-ignore
-const TracerShopCatalogContext = createContext(new TracerCatalog(new TracershopState()));
+const TracerShopCatalogContext = createContext(new TracerCatalog(new Map(), new Map(), new Map(), new Map(), new Map()));
 
 export function TracerCatalogProvider({ children }){
   const state = useTracershopState();
@@ -142,7 +153,20 @@ export function TracerCatalogProvider({ children }){
   //  return new TracerCatalog(state);
   //}, [state.tracer_mapping, state.tracer, state.isotope_delivery, state.isotope_production, state.isotopes])
 
-  const tracer_catalog = new TracerCatalog(state)
+  const tracer_catalog = useMemo(() => {
+    return new TracerCatalog(
+    state.tracer_mapping,
+    state.tracer,
+    state.isotope_delivery,
+    state.isotope_production,
+    state.isotopes
+  )}, [
+    state.tracer_mapping,
+    state.tracer,
+    state.isotope_delivery,
+    state.isotope_production,
+    state.isotopes
+]);
 
   return (
     <TracerShopCatalogContext.Provider value={tracer_catalog}>

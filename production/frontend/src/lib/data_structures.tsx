@@ -19,6 +19,7 @@ import { HIGH_CONTRAST_ORDER_COLORS, JUSTIFY } from '~/lib/styles';
 import { AccumulatingMap } from '~/lib/accumulating_map';
 import { Col } from 'react-bootstrap';
 import { formatAccessionNumber } from '~/lib/formatting';
+import { ActivityOrderCollection } from './data_structures/activity_order_collection';
 
 //#region TimeSlotMapping
 export class TimeSlotMapping {
@@ -83,10 +84,12 @@ export class TimeSlotMapping {
    * @param {ActivityDeliveryTimeSlot} timeSlot
    * @returns {ActivityDeliveryTimeSlot}
    */
-  getFirstTimeSlot(timeSlot : ActivityDeliveryTimeSlot) : ActivityDeliveryTimeSlot {
+  getFirstTimeSlot(timeSlot : ActivityDeliveryTimeSlot) : ActivityDeliveryTimeSlot | null {
     const endpoint = this._endpoints.get(timeSlot.destination);
     const destinationMap = this._timeSlotMapping.get(endpoint.owner)
-    return destinationMap.get(endpoint.id)[0];
+    const timeSlots = destinationMap.get(endpoint.id, []);
+
+    return timeSlots.length ? timeSlots[0] : null
   }
 
   getTimeSlots(endpoint : DeliveryEndpoint) : ActivityDeliveryTimeSlot[]{
@@ -98,15 +101,10 @@ export class TimeSlotMapping {
 
 
 export class ProductionTimeSlotOwnerShip {
-  /**@type {ArrayMap<Number, ActivityDeliveryTimeSlot>} underlying data structure */ _productionMapping
+  _productionMapping: ArrayMap<number, ActivityDeliveryTimeSlot>
 
-  /**
-   *
-   * @param {Array<Number>} relevantProductions
-   * @param {Map<Number, ActivityDeliveryTimeSlot>} timeSlots
-   */
-  constructor(relevantProductions, timeSlots){
-    this._productionMapping = new ArrayMap()
+  constructor(relevantProductions: Array<number>, timeSlots: Map<number, ActivityDeliveryTimeSlot>){
+    this._productionMapping = new ArrayMap<number, ActivityDeliveryTimeSlot>()
     for(const activityDeliveryTimeSlot of timeSlots.values()){
       // You can't turn this into a map because of the sorting ruins parallelism
       if(!relevantProductions.includes(activityDeliveryTimeSlot.production_run)){
@@ -116,8 +114,8 @@ export class ProductionTimeSlotOwnerShip {
     }
   }
 
-  getTimeSlots(productionID){
-    return this._productionMapping.get(productionID);
+  getTimeSlots(productionID: number){
+    return this._productionMapping.get(productionID, []);
   }
 }
 

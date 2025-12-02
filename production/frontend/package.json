@@ -14,10 +14,6 @@
   "keywords": [],
   "author": "Christoffer Vilstrup Jensen",
   "dependencies": {
-    "@babel/core": "^7.14.6",
-    "@babel/plugin-proposal-class-properties": "^7.14.5",
-    "@babel/preset-env": "^7.14.7",
-    "@babel/preset-react": "^7.14.5",
     "@popperjs/core": "^2.11.6",
     "@testing-library/user-event": "^14.4.3",
     "babel-jest": "^29.2.2",
@@ -25,11 +21,10 @@
     "babel-plugin-root-import": "^6.6.0",
     "bootstrap": "^5.0.2",
     "canvas": "^2.11.2",
-    "file-loader": "^6.2.0",
+
     "history": "^5.3.0",
     "jquery": "^3.6.0",
     "js-cookie": "^3.0.1",
-    "motion": "^12.23.24",
     "prop-types": "^15.8.1",
     "react": "^18.2.0",
     "react-bootstrap": "^2.4.0",
@@ -41,10 +36,16 @@
     "react-svg": "^16.3.0",
     "style-loader": "^4.0.0",
     "styled-components": "^6.1.13",
-    "svg-url-loader": "^8.0.0",
-    "webpack-cli": "^5.1.4"
+    "svg-url-loader": "^8.0.0"
+
   },
   "devDependencies": {
+    "@babel/core": "^7.14.6",
+    "@babel/plugin-proposal-class-properties": "^7.14.5",
+    "@babel/preset-env": "^7.14.7",
+    "@babel/preset-react": "^7.14.5",
+    "file-loader": "^6.2.0",
+    "webpack-cli": "^5.1.4",
     "@babel/plugin-transform-modules-commonjs": "^7.14.5",
     "@babel/plugin-transform-private-methods": "^7.25.9",
     "@babel/preset-typescript": "^7.27.1",

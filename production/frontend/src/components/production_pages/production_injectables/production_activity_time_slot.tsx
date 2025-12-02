@@ -9,7 +9,7 @@ import { Optional } from '~/components/injectable/optional';
 import { OpenCloseButton } from '~/components/injectable/open_close_button';
 import { ActivityDeliveryIcon, ClickableIcon, IdempotentIcon, StatusIcon } from '~/components/injectable/icons';
 import { Comment } from '~/components/injectable/data_displays/comment';
-import { ActivityDeliveryTimeSlot, Vial } from '~/dataclasses/dataclasses';
+import { ActivityDeliveryTimeSlot, ActivityOrder, Vial } from '~/dataclasses/dataclasses';
 import { TimeDisplay } from '~/components/injectable/data_displays/time_display';
 import { decayCorrect, correctVialActivityToTime, fulfillmentActivity } from '~/lib/physics';
 import { ActivityOrderCollection } from '~/lib/data_structures/activity_order_collection';
@@ -22,6 +22,8 @@ import { DatetimeDisplay } from '~/components/injectable/data_displays/datetime_
 import { HoverBox } from '~/components/injectable/hover_box';
 
 import { ActivityOrderRow } from './activity_order_row';
+import { dateToDateString } from '~/lib/formatting';
+import { TimeSlotMapping } from '~/lib/data_structures';
 
 type VialRowProps = {
   vial : Vial,
@@ -278,6 +280,18 @@ function ProductionInnerContent({
 
 
 //#region ProductionTimeSlot
+
+type ProductionActivityTimeSlotProps = {
+  timeSlot : ActivityDeliveryTimeSlot,
+  orders : Array<ActivityOrder>,
+  orderMapping : OrderMapping,
+  setTimeSlotID : React.Dispatch<React.SetStateAction<any>>,
+  setModalIdentifier : React.Dispatch<React.SetStateAction<any>>
+  timeSlotMapping : TimeSlotMapping
+
+}
+
+
 /**
 * This is similar to the shop side TimeSlotCard,
 * however the functionality is quite different
@@ -294,25 +308,42 @@ function ProductionInnerContent({
 * @param {ActivityOrderCollection} props.orderCollection
 * @returns
 */
+
+
+
+
 export function ProductionActivityTimeSlot({
-                    timeSlot,
-                    setTimeSlotID,
-                    setModalIdentifier,
-                    orderMapping,
-                    timeSlotMapping,
-                    orderCollection,
-}){
+  timeSlot,
+  setTimeSlotID,
+  setModalIdentifier,
+  timeSlotMapping,
+  orders,
+}: ProductionActivityTimeSlotProps){
+  console.time("ProductionTimeSlot")
 
-const websocket = useWebsocket();
-const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(orderCollection.delivering_time_slot);
-const firstAvailableTimeSlotID = firstAvailableTimeSlot.id;
+  // State
+  const [open, setOpen] = useState(false);
 
-const orders = [...orderCollection.relevant_orders]
-const orderData = [];
-const vialData = [];
+  const state = useTracershopState();
+  const websocket = useWebsocket();
+  const dateString = dateToDateString(state.today);
 
-for(const order of orders){
-  const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id
+  const orderCollection = new ActivityOrderCollection(orders, dateString, timeSlot, state, 1.25);
+
+
+  const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(orderCollection.delivering_time_slot);
+  if(firstAvailableTimeSlot == null){
+    console.log("Something is every wrong...")
+    console.log(orderCollection)
+    return <div>ERROR</div>
+  }
+
+
+  const orderData = [];
+  const vialData = [];
+
+  for(const order of orders){
+    const is_originalTimeSlot = order.ordered_time_slot === timeSlot.id
                            && order.moved_to_time_slot === null
                            || order.moved_to_time_slot === timeSlot.id
 
@@ -333,23 +364,12 @@ for(const vial of orderCollection.vials){
 const canMove = firstAvailableTimeSlot.id !== timeSlot.id
              && orderCollection.minimum_status < ORDER_STATUS.RELEASED;
 
-// State
-const [open, setOpen] = useState(false);
 
 // Functions
 function moveOrders(){
   const message = websocket.getMessage(WEBSOCKET_MESSAGE_MOVE_ORDERS);
-  const firstTimeSlotOrderCollection = orderMapping.getOrders(firstAvailableTimeSlotID);
 
-  if(firstTimeSlotOrderCollection.minimum_status === ORDER_STATUS.RELEASED &&
-    ( orderCollection.minimum_status === ORDER_STATUS.ACCEPTED ||
-      orderCollection.minimum_status === ORDER_STATUS.ORDERED
-    )
-  ){
-
-  }
-
-  message[DATA_DELIVER_TIME] = firstAvailableTimeSlotID;
+  message[DATA_DELIVER_TIME] = firstAvailableTimeSlot.id;
   message[DATA_ACTIVITY_ORDER] = orders.map(getId);
   return websocket.send(message);
 }
@@ -369,8 +389,10 @@ function headerFunction(){
   }
 }
 
+console.timeEnd("ProductionTimeSlot")
+
 return (
- <Card key={timeSlot.id}>
+  <Card key={timeSlot.id}>
     <Card.Header>
      <Row>
        <Col xs={1} style={cssCenter}>
@@ -400,9 +422,10 @@ return (
          />
        </Col>
      </Row>
-   </Card.Header>
-   <Collapse in={open}>
-     <Card.Body>
+    </Card.Header>
+
+    <Collapse in={open}>
+      <Card.Body>
         <Row>
           <Col xs={1}></Col>
           <Col>Ordre ID</Col>
@@ -436,7 +459,7 @@ return (
             </Col>
           </Row>
         </Optional>
-     </Card.Body>
-   </Collapse>
- </Card>);
+      </Card.Body>
+    </Collapse>
+  </Card>);
 }
