@@ -867,10 +867,12 @@ def DrawReleaseCertificate(filename :str,
         if order.freed_datetime is not None:
           timezone_aware = timezone.make_naive(order.freed_datetime)
         else:
+          error_logger.error(f"Activity Order {order.id} has been freed, but has no freed datetime")
           timezone_aware = None
       except ValueError:
         timezone_aware = order.freed_datetime
-      else:
+      except Exception as e:
+        error_logger.error(f"While converting the the freed time of Activity Order {order.id} the program encountered: {e}")
         timezone_aware = None
 
       if timezone_aware is not None:

@@ -103,7 +103,9 @@ export function ActivityTable ({active_tracer} : ActivityTableProps) {
     return func(a.timeSlot, b.timeSlot);
   });
 
+  console.time("timeslots")
   const renderedTimeSlots = timeSlotArgs.map((args) => <ProductionActivityTimeSlot {...args}/>);
+  console.timeEnd("timeslots")
 
   const modalProps = {
     [PROP_ACTIVE_TRACER] : active_tracer,
