@@ -79,9 +79,9 @@ export function FreeingRightsPage(){
     }
 
     setExpiryDateError("");
-    websocket.sendCreateModel(DATA_RELEASE_RIGHT, [new ReleaseRight(
+    websocket.sendCreateModel(DATA_RELEASE_RIGHT, new ReleaseRight(
       undefined, formattedExpiryDate, activeUserID, activeTracerID
-    )]).then(() => {setOpen(true);});
+    )).then(() => {setOpen(true);});
   }
 
 
