@@ -45,11 +45,6 @@ export class TracerCatalog {
   ) {
     this._endpointCatalogs = new Map();
 
-    console.log(
-      tracer_mapping, tracers, isotope_deliveries, isotope_productions,isotopes
-    )
-
-
     for (const tracerCatalogPage of tracer_mapping.values()) {
       const endpoint_catalog = this.getCatalog(tracerCatalogPage.endpoint);
       endpoint_catalog.pages.set(tracerCatalogPage.tracer, tracerCatalogPage);

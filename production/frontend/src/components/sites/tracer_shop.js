@@ -81,7 +81,7 @@ export function TracerShop() {
     }
   }, [websocket])
 
-  const hasNoError = !tracershopState.error
+  const hasNoError = !tracershopState.error;
 
   return (
     <ErrorBoundary FallbackComponent={ErrorPage}>

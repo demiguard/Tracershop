@@ -5,7 +5,7 @@ import { db } from "~/lib/local_storage_driver";
 import { ConfigSite } from "./config_site";
 import { ProductionSite } from "./production_site";
 import { ShopSite } from "./shop_site";
-import { MARGIN, NAVBAR_STYLES } from "~/lib/styles";
+import { ALIGN, ALIGN_ITEMS, MARGIN, NAVBAR_STYLES, PADDING } from "~/lib/styles";
 
 /**
  * @enum
@@ -27,19 +27,6 @@ const SITE_NAMES = {
 
 
 export function AdminSite({logout}) {
-  const init = useRef({
-    activeSite : null
-  });
-
-  if(init.current.activeSite === null){
-    let /**@type {string} */ activeSite = db.get(DATABASE_ADMIN_PAGE);
-    if (activeSite === undefined || activeSite === null){
-      activeSite = "production";
-      db.set(DATABASE_ADMIN_PAGE, activeSite);
-    }
-    init.current.activeSite = activeSite
-  }
-
   const [activeSite, setActiveSite] = useState(() => {
     let /**@type {string} */ activeSite = db.get(DATABASE_ADMIN_PAGE);
     if (activeSite === undefined || activeSite === null){
@@ -69,12 +56,13 @@ export function AdminSite({logout}) {
     }
 
   const NavbarAdmin = [(
-    <Col key="SiteSelector">
+    <Col style={{...PADDING.all.px0, ...ALIGN_ITEMS.CENTER}} key="SiteSelector">
       <NavDropdown
         className={"btn-primary"}
         style={{
           ...MARGIN.topBottom.px0,
-          ...NAVBAR_STYLES.navbarElement
+          ...PADDING.all.px0,
+          ...NAVBAR_STYLES.navbarElement,
         }}
         aria-label="site-selector"
         title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}

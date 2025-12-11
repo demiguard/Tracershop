@@ -37,6 +37,20 @@ export const ALIGN : {
   }
 }
 
+export const ALIGN_ITEMS : {
+  CENTER : React.CSSProperties,
+  RIGHT : React.CSSProperties
+} = {
+  CENTER : {
+    alignItems : "center",
+    display : "flex"
+  },
+  RIGHT : {
+    alignItems : "right",
+    display : "flex",
+  }
+}
+
 export const JUSTIFY : {
   between : React.CSSProperties,
   center : React.CSSProperties,
@@ -129,7 +143,13 @@ export const PADDING = {
   all : {
     px0 : { padding : "0px" },
     px25 : { padding : "25px"},
-  }
+  },
+  lr :  {
+    px25 : {
+      paddingLeft : "25px",
+      paddingRight : "25px",
+    },
+  },
 }
 
 export const FONT = {
@@ -164,25 +184,25 @@ export const PADDING_TOP_BOTTOM_0PX = {
   paddingBottom: '0px'
 };
 
-export const NAVBAR_STYLES = {
+export const NAVBAR_STYLES : {
+  navbarElement : React.CSSProperties,
+  navbarMargin : React.CSSProperties,
+} = {
   navbarElement : {
     color : 'white' ,
     width : '150px',
-    padding : '10px',
     marginRight: '15px',
     marginLeft: '15px',
     border : '1px',
     borderStyle: 'solid',
     borderRadius: '10px',
+    textAlign : "center",
     fontFamily: "mariheavy, Helvetica Neue, Helvetica, Arial, sans-serif",
   },
   navbarMargin : {
     marginBottom: '20px',
   },
-  mainIcon : {
-    maxHeight : 'min(100%, 62.5px)',
-    maxWidth : '100%'
-  }
+
 };
 
 export const HIGH_CONTRAST_ORDER_COLORS = {
@@ -206,6 +226,7 @@ export const ERROR_CONTAINER_CSS: React.CSSProperties = {
   borderTop: '0px',
   borderBottom: '0px',
   minHeight: '100vh',
+  paddingTop : "15px",
   boxShadow: '3px 3px 6px 6px #888888',
 };
 

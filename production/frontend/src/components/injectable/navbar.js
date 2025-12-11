@@ -30,14 +30,13 @@ export function TracershopNavbar({
     const innerHTML = getName(ActiveKey, Names, identifier);
     elements.push(
     <Col
-    style={{
-      display : "flex",
-      alignItems : "center"
-    }}
-
-    key={identifier}>
+      style={{
+        display : "flex",
+        alignItems : "center"
+      }}
+      key={identifier}
+    >
       <Button
-
         aria-label={`navbar-${identifier}`}
         style={NAVBAR_STYLES.navbarElement}
         variant={NavBarButtonType}
@@ -51,12 +50,13 @@ export function TracershopNavbar({
   return (
   <Navbar style={{
     ...NAVBAR_STYLES.navbarMargin,
-    backgroundColor : 'var(--secondary-color-3)'
+    backgroundColor : 'var(--secondary-color-3)',
+    marginBottom : "12px"
   }}>
     <Container style={{margin : '0px', maxWidth : '100%'}}>
         <Row style={{...JUSTIFY.between}}>
             <Col>
-              <img style={NAVBAR_STYLES.mainIcon} src="/static/images/logo.png"/>
+              <img height={"63px"} src="/static/images/logo.png"/>
             </Col>
             {elements}
             <Optional exists={isAuthenticated}>
