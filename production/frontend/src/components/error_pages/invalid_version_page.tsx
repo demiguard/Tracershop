@@ -2,7 +2,7 @@ import React from "react";
 import { Container, NavbarBrand, Row, Col, Button } from "react-bootstrap";
 import { ERROR_CONTAINER_CSS } from "~/lib/styles";
 import { TracershopNavbar } from "../injectable/navbar";
-import { NavbarWithHookers } from "../injectable/navbar_with_blackjack_and_hookers";
+import { NavbarRedesigned } from "../injectable/navbar_redesigned";
 
 export function InvalidVersionPage() {
   function refresh(){
@@ -11,13 +11,13 @@ export function InvalidVersionPage() {
 
   return(
     <div>
-      <NavbarWithHookers>
+      <NavbarRedesigned>
         <NavbarBrand onClick={refresh}>
           <Button>
             Genindlæs
           </Button>
         </NavbarBrand>
-      </NavbarWithHookers>
+      </NavbarRedesigned>
 
 
     <Container style={ERROR_CONTAINER_CSS}>

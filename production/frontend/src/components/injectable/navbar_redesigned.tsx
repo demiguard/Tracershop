@@ -3,13 +3,11 @@ import { Container, Navbar, NavbarProps } from "react-bootstrap";
 import { COLORS } from "~/lib/constants";
 import { PADDING } from "~/lib/styles";
 
-type NavbarWithHookersProps = {
+type NavbarRedesignedProps = {
   children? : React.ReactNode
 }
 
-export function NavbarWithHookers({children} : NavbarProps){
-
-
+export function NavbarRedesigned({children} : NavbarProps){
   return (
   <Navbar style={{
     backgroundColor : COLORS.secondaryColor3,
