@@ -354,7 +354,7 @@ describe("formatUsername Tests", () => {
   });
 
   it("returns empty on null", () => {
-    expect(formatUsername(null)).toEqual("");
+    expect(formatUsername(null)).toEqual("Ukendt Bruger");
   });
 })
 

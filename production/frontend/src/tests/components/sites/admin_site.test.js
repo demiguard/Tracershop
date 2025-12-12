@@ -5,14 +5,16 @@
 import React from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
-import { testState } from "../../app_state";
 
-import { AdminSite } from "../../../components/sites/admin_site.js"
-import { DATABASE_ADMIN_PAGE, PROP_USER } from "../../../lib/constants.js";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
-const module = jest.mock('../../../lib/tracer_websocket.js');
-const tracer_websocket = require("../../../lib/tracer_websocket.js");
+import { AdminSite } from "~/components/sites/admin_site"
+import { DATABASE_ADMIN_PAGE, PROP_USER } from "~/lib/constants";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { testState } from "~/tests/app_state";
+
+
+const module = jest.mock('../../../lib/tracer_websocket');
+const tracer_websocket = require("../../../lib/tracer_websocket");
 
 let websocket = tracer_websocket.TracerWebSocket;
 let container = null;

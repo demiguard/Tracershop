@@ -197,7 +197,6 @@ function ProductionInnerContentStatusRELEASED({orderCollection, moveOrders, firs
     Korrigeret til kl: {orderCollection.delivering_time_slot.delivery_time}
   </div>
 
-
   return (
     <Row>
       <Col style={cssCenter}>
@@ -288,7 +287,6 @@ type ProductionActivityTimeSlotProps = {
   setTimeSlotID : React.Dispatch<React.SetStateAction<any>>,
   setModalIdentifier : React.Dispatch<React.SetStateAction<any>>
   timeSlotMapping : TimeSlotMapping
-
 }
 
 
@@ -319,7 +317,6 @@ export function ProductionActivityTimeSlot({
   timeSlotMapping,
   orders,
 }: ProductionActivityTimeSlotProps){
-  console.time("ProductionTimeSlot")
 
   // State
   const [open, setOpen] = useState(false);
@@ -388,8 +385,6 @@ function headerFunction(){
     setModalIdentifier('activityModal');
   }
 }
-
-console.timeEnd("ProductionTimeSlot")
 
 return (
   <Card key={timeSlot.id}>

@@ -65,7 +65,13 @@ describe("Bit chains test sweep", () => {
 
 describe("Tracer catalog Tests", () => {
   it("Empty Tracer catalog", () => {
-    const tracerCatalog = new TracerCatalog(new TracershopState());
+    const tracerCatalog = new TracerCatalog(
+      new Map(),
+      new Map(),
+      new Map(),
+      new Map(),
+      new Map()
+    );
     const empty_endpoint_catalog = tracerCatalog.getCatalog(1)
 
     expect(empty_endpoint_catalog).toBeInstanceOf(EndpointCatalog);
@@ -95,7 +101,13 @@ describe("Tracer catalog Tests", () => {
       [DATA_TRACER_MAPPING] : newTracerCatalogPages
     })
 
-    const tracerCatalog = new TracerCatalog(modState)
+    const tracerCatalog = new TracerCatalog(
+      modState.tracer_mapping,
+      modState.tracer,
+      modState.isotope_delivery,
+      modState.isotope_production,
+      modState.isotopes
+    );
 
     const endpoint_catalog = tracerCatalog.getCatalog(1);
     expect(endpoint_catalog).toBeInstanceOf(EndpointCatalog);

@@ -37,6 +37,8 @@ import { CancelButton } from "~/components/injectable/cancel_button";
 import { ReleaseButton } from "~/components/production_pages/production_injectables/release_button";
 import { FuckedUpButton } from "../injectable/buttons/fucked_up_button";
 import { OrderMapping } from "~/lib/data_structures/order_mapping";
+import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
+import { useTracerCatalog } from "~/contexts/tracer_catalog";
 
 const vialErrorDefault = {
   lot_number : "",
@@ -371,14 +373,20 @@ export function ActivityModal({
   // State extraction
   const state = useTracershopState();
   const websocket = useWebsocket();
+  const tracer_catalog = useTracerCatalog();
   const active_date = state.today;
   const dateString = dateToDateString(active_date);
   const timeSlot = state.deliver_times.get(timeSlotID);
-  const orderCollection = order_mapping.getOrders(timeSlot.id);
-
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
-  const customer = state.customer.get(endpoint.owner);
   const tracer = state.tracer.get(active_tracer);
+  const orders = order_mapping.getOrders(dateString, timeSlot.id);
+  const overhead = tracer_catalog.getOverheadForTracer(endpoint.id, tracer.id)
+
+  const orderCollection = new ActivityOrderCollection(
+    orders, dateString, timeSlot, state, overhead
+  );
+
+  const customer = state.customer.get(endpoint.owner);
   const releaseRightHolder = useUserReleaseRights()
   const RightsToFree = releaseRightHolder.permissionForTracer(tracer);
 
@@ -410,10 +418,8 @@ export function ActivityModal({
     setFreeing(false)
   }
 
-
-
   function onClickAccept(){
-    const orders = [...order_mapping.getOrders(timeSlotID)];
+    const orders = [...order_mapping.getOrders(dateString, timeSlotID)];
     for(const order of orders){
       if (order.status === ORDER_STATUS.ORDERED){
         order.status = ORDER_STATUS.ACCEPTED;

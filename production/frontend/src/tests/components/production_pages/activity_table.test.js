@@ -4,14 +4,14 @@
 
 import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
-import { ActivityTable } from "~/components/production_pages/activity_table.js"
-import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants.js";
+import { ActivityTable } from "~/components/production_pages/activity_table"
+import { PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER } from "~/lib/constants";
 import { getModifiedTestState, testState } from "~/tests/app_state";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 
 
-const module = jest.mock('~/lib/tracer_websocket.js');
-const tracer_websocket = require("~/lib/tracer_websocket.js");
+const module = jest.mock('~/lib/tracer_websocket');
+const tracer_websocket = require("~/lib/tracer_websocket");
 
 jest.mock('../../../components/modals/create_activity_modal', () =>
   ({CreateOrderModal : () => <div>CreateModalMocked</div>}))

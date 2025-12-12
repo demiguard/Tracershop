@@ -28,10 +28,11 @@ const SITE_NAMES = {
 
 export function AdminSite({logout}) {
   const [activeSite, setActiveSite] = useState(() => {
-    let /**@type {string} */ activeSite = db.get(DATABASE_ADMIN_PAGE);
-    if (activeSite === undefined || activeSite === null){
-      db.set(DATABASE_ADMIN_PAGE, SITE_NAMES.production);
-      return SITE_NAMES.production
+    let activeSite: string | undefined | null = db.get(DATABASE_ADMIN_PAGE);
+
+    if (!(activeSite in SITES)){
+      db.set(DATABASE_ADMIN_PAGE, "production");
+      return "production";
     }
     return activeSite;
   });

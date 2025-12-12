@@ -19,7 +19,8 @@
       "~/*": ["./src/*"]
     },
     "incremental": true,
-    "noUncheckedIndexedAccess": false
+    "noUncheckedIndexedAccess": false,
+    "types": ["@testing-library/jest-dom"]
   },
   "include": [
     "src/**/*",
