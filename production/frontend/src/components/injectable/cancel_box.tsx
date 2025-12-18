@@ -42,8 +42,8 @@ export function CancelBox({
       return [];
     })()
 
-    if(orders.length === 0){
-      console.error("You are attempting to cancel NO orders!");
+    if(order_array.length === 0){
+      console.error("You are attempting to cancel NO orders!", orders, order, collection);
       return Promise.resolve();
     }
 

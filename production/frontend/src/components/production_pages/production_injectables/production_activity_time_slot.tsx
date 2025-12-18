@@ -24,6 +24,8 @@ import { HoverBox } from '~/components/injectable/hover_box';
 import { ActivityOrderRow } from './activity_order_row';
 import { dateToDateString } from '~/lib/formatting';
 import { TimeSlotMapping } from '~/lib/data_structures';
+import { ERROR_MESSAGE_INCORRECT_GROUPS } from '~/components/shop_pages/user_setup';
+import { useTracerCatalog } from '~/contexts/tracer_catalog';
 
 type VialRowProps = {
   vial : Vial,
@@ -308,8 +310,6 @@ type ProductionActivityTimeSlotProps = {
 */
 
 
-
-
 export function ProductionActivityTimeSlot({
   timeSlot,
   setTimeSlotID,
@@ -324,8 +324,11 @@ export function ProductionActivityTimeSlot({
   const state = useTracershopState();
   const websocket = useWebsocket();
   const dateString = dateToDateString(state.today);
+  const tracer_catalog = useTracerCatalog();
 
-  const orderCollection = new ActivityOrderCollection(orders, dateString, timeSlot, state, 1.25);
+  const overhead = tracer_catalog.getOverheadForTimeSlot(state, timeSlot)
+
+  const orderCollection = new ActivityOrderCollection(orders, dateString, timeSlot, state, overhead);
 
 
   const firstAvailableTimeSlot = timeSlotMapping.getFirstTimeSlot(orderCollection.delivering_time_slot);

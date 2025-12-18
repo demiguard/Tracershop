@@ -258,7 +258,7 @@ export function InjectionModal ({modal_order, on_close}) {
           <Row style={{width : "100%"}}>
             <Col md={3}>
               <Optional exists={canEdit}>
-                <CancelButton/>
+                <CancelButton order={order}/>
               </Optional>
               <Optional exists={order.status == ORDER_STATUS.RELEASED && !showCorrectAuth}>
                 <MarginButton onClick={() => {setShowCorrectAuth(true)}}>Ret ordre</MarginButton>

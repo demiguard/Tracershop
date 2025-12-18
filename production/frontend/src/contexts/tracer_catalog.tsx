@@ -1,6 +1,6 @@
 import React, { useContext, createContext, useMemo } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
-import { Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
 import { TRACER_TYPE } from "~/lib/constants";
 import { numberfy } from "~/lib/utils";
 
@@ -134,6 +134,16 @@ export class TracerCatalog {
     // There should be a handle here!
     console.log(`Undefined customer - ${endpointID}, tracer ${tracerID} referenced`);
     return 1;
+  }
+
+  getOverheadForTimeSlot(state : TracershopState, timeSlot : ActivityDeliveryTimeSlot){
+    const prod = state.production.get(timeSlot.production_run);
+
+    if(prod === undefined){
+      return 1;
+    }
+
+    return this.getOverheadForTracer(timeSlot.destination, prod.tracer);
   }
 }
 
