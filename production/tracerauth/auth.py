@@ -38,14 +38,20 @@ def authenticate_user(username: str,
                       logged_in_user: Optional[User]=None,
                       request: Optional[HttpRequest]=None
                      ) -> Tuple[AuthenticationResult, Optional[User]]:
-  if logged_in_user and logged_in_user.username.upper() != username.upper():
+  user = authenticate(request=request, username=username, password=password)
+
+  if user is None:
+    return AuthenticationResult.INVALID_PASSWORD, None
+
+
+  if logged_in_user is not None and user != logged_in_user:
     return AuthenticationResult.MISS_MATCH_USERNAME, None
 
-  user = authenticate(request=request, username=username, password=password)
   if isinstance(user, User):
     return AuthenticationResult.SUCCESS, user
   else:
-    return AuthenticationResult.INVALID_PASSWORD, None
+    raise ContractBroken("For some reason, the user was not of the User class")
+
 
 def login_from_header(request: HttpRequest) -> bool:
   """Login the user from the http header
