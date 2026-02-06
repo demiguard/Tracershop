@@ -18,8 +18,7 @@ export const ERROR_MESSAGE_MISSING_RIGHTS = "Brugeren findes, men den har ingen 
 export const ERROR_MESSAGE_DUPLICATE_INSTANCE = "Brugeren er allerede tildelt adgang til Tracershop"
 export const ERROR_MESSAGE_UNABLE_TO_CREATE = "Kunne ikke oprette bruger, af udvikleren af tracershop"
 
-function UserAssignmentRow(props){
-  const {user_assignment, activeCustomer} = props;
+function UserAssignmentRow({user_assignment, activeCustomer}){
   const state = useTracershopState();
   const websocket = useWebsocket();
   const exists = user_assignment.id !== null
@@ -31,10 +30,18 @@ function UserAssignmentRow(props){
   // Note that creating user assignments are a tad more difficult due to
   //the nature, that user might not exists yet.
   function create_user_assignment(){
+    const customer_id = Number(activeCustomer);
+
+    if(isNaN(customer_id)){
+      setError("Der er ikke valgt en kunde");
+
+      return;
+    }
+
     websocket.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
       username : username,
-      customer_id : activeCustomer
+      customer_id : customer_id
     }).then((data) => {
       if(data.status === SUCCESS_STATUS_CRUD.UNABLE_TO_CREATE_USER_ASSIGNMENT){
         setError(ERROR_MESSAGE_UNABLE_TO_CREATE);
@@ -92,18 +99,12 @@ function UserAssignmentRow(props){
 
 export function UserSetup({relatedCustomer}){
   const state = useTracershopState();
-  const init = useRef({
-    customer : null
-  });
 
-  if(init.current.customer === null){
+  const [activeCustomer, setActiveCustomer] = useState(() => {
     for(const customer of relatedCustomer.values()){
-      init.current.customer = customer.id;
-      break;
+      return customer.id;
     }
-  }
-
-  const [activeCustomer, setActiveCustomer] = useState(init.current.customer);
+  });
 
   const userAssignmentRows = [(
     <UserAssignmentRow

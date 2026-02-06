@@ -25,7 +25,7 @@ class HandleCreateUserAssignment(HandlerBase):
   def blueprint(cls):
     return Message({
       AUTH_USERNAME : str,
-      "customer_id" : str,
+      "customer_id" : int,
     })
 
   @classproperty
@@ -35,7 +35,7 @@ class HandleCreateUserAssignment(HandlerBase):
   async def __call__(self, consumer, message):
     user = await get_user(consumer.scope)
     username = message[AUTH_USERNAME]
-    customerID = int(message['customer_id'])
+    customerID = message['customer_id']
 
     temp_res: Tuple[SUCCESS_STATUS_CRUD,
                     Optional[UserAssignment],
