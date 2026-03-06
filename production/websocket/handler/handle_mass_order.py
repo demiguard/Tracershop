@@ -39,6 +39,10 @@ class HandleMassOrders(HandlerBase):
     Bookings have related procedures which knows what tracer and amount is
     needed.
 
+    It's also note worthy that this message cannot be handled by a UPDATE_STATE
+    message because it needs to return the updated bookings, which are not part
+    of the state
+
     Args:
         message (Dict[str, Any]): message send by the user. Has the
                                   WEBSOCKET_DATA with a dict value on the format

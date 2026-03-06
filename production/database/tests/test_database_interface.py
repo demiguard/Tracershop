@@ -31,9 +31,6 @@ from database.models import Booking, Procedure, User, Tracer, Isotope,\
   IsotopeProduction, IsotopeDelivery
 
 
-
-
-
 DEFAULT_TEST_ORDER_DATE = date(2020,4,15)
 
 # Create your tests here.
@@ -512,7 +509,11 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
   def test_createUserAssignment_missingUser(self):
     username = "-AAAA0003"
-    status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
+    returned_user = User(username=username, user_group=mocks_ldap.mockedUserGroups[username])
+    with patch("tracerauth.tracer_ldap.get_ldap_user", return_value=returned_user):
+      status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
+
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.SUCCESS)
 
     if user is None: #pragma: no cover
       raise AssertionError("User is None!")
@@ -533,7 +534,10 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
   def test_createUserAssignment_AssignmentToSiteAdmin(self):
     username = "-AAAA0000"
-    status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
+    returned_user = User(username=username, user_group=mocks_ldap.mockedUserGroups[username])
+    with patch("tracerauth.tracer_ldap.get_ldap_user", return_value=returned_user):
+      with patch("tracerauth.tracer_ldap.checkUserGroupMembership", return_value=mocks_ldap.mockedUserGroups[username]):
+        status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
 
     self.assertEqual(status, SUCCESS_STATUS_CRUD.INCORRECT_GROUPS)
     self.assertIsNone(userAssignment)
@@ -541,7 +545,9 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
   def test_createUserAssignment_MissingCustomer(self):
     username = "-AAAA0003"
-    status, userAssignment, user = self.db.create_user_assignment(username, 189508160918, self.admin)
+    returned_user = User(username=username, user_group=mocks_ldap.mockedUserGroups[username])
+    with patch("tracerauth.tracer_ldap.get_ldap_user", return_value=returned_user):
+      status, userAssignment, user = self.db.create_user_assignment(username, 189508160918, self.admin)
 
     self.assertEqual(status, SUCCESS_STATUS_CRUD.MISSING_CUSTOMER)
     self.assertIsNone(userAssignment)
@@ -767,10 +773,10 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
   def test_changeExternalPassword_success(self):
     new_password = "BLABLABLA"
     self.db.change_external_password(
-        self.shop_external.id, new_password
+      self.shop_external.id, new_password
     )
 
-    self.assertIsNotNone(authenticate(username=self.shop_external, password=new_password))
+    self.assertIsNotNone(authenticate(username=self.shop_external.username, password=new_password))
 
   def test_changeExternalPassword_non_external(self):
     new_password = "BLABLABLA"

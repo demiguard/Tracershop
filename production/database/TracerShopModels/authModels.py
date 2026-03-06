@@ -6,7 +6,7 @@ Tracershop.
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Packages
-from typing import List, Optional
+from typing import Any, List, Optional
 
 # Third party Packages
 from django.db.models import Model, BigAutoField, CASCADE, CharField,\
@@ -31,12 +31,42 @@ class UserGroups(IntegerChoices):
   ShopUser = 5
   ShopExternal = 6
 
-class User(AbstractBaseUser, TracershopModel):
-  username = CharField(max_length=120, unique=True)
-  password = CharField(max_length=120)
-  user_group = SmallIntegerField(choices=UserGroups.choices, default= UserGroups.Anon)
-  active = BooleanField(default=True)
+  def __str__(self):
+    match self:
+      case UserGroups.Anon:
+        return "Anonymous"
+      case UserGroups.Admin:
+        return "Admin"
+      case UserGroups.ProductionAdmin:
+        return "Production admin"
+      case UserGroups.ProductionUser:
+        return "Production User"
+      case UserGroups.ShopAdmin:
+        return "Shop Admin"
+      case UserGroups.ShopUser:
+        return "Internal shop user"
+      case UserGroups.ShopExternal:
+        return "External Shop User"
+    raise ValueError("Undefined User Group")
 
+
+class UserGroupField(SmallIntegerField):
+  def from_db_value(self, value, expression, connection):
+    if value is None:
+      return UserGroups.Anon
+    return UserGroups(value)
+
+class User(AbstractBaseUser, TracershopModel):
+  username = CharField(max_length=120, unique=True, help_text="This field contains the regional ID", verbose_name="Regional ID")
+  password = CharField(max_length=120)
+  user_group = UserGroupField(choices=UserGroups.choices, default= UserGroups.Anon)
+  active = BooleanField(default=True)
+  bam_id = CharField(
+    max_length=120,
+    help_text="This field contains the bam ID, if empty the bam_id and username are equal",
+    verbose_name="Local ID",
+    default=""
+  )
 
   USERNAME_FIELD = 'username'
 
@@ -65,12 +95,19 @@ class User(AbstractBaseUser, TracershopModel):
                                UserGroups.ShopUser,
                                UserGroups.ShopExternal]
 
+  def upgrade_user_group(self, new_user_group):
+    if new_user_group == UserGroups.Anon:
+      return
+
+    self.user_group = new_user_group
+    self.save()
+
   @classproperty
   def exclude(cls):
     return ['password']
 
   def __str__(self):
-    return self.username
+    return f"{self.username} : {self.user_group}" if not self.bam_id else f"{self.bam_id} - {self.username} : {self.user_group}"
 
 
 class SecondaryEmail(TracershopModel):
@@ -82,7 +119,7 @@ class SuccessfulLogin(TracershopModel):
   user = ForeignKey(User, CASCADE)
 
   def __str__(self) -> str:
-    return f"{self.user} - {self.login_time}"
+    return f"{self.user.username} - {self.login_time}"
 
   class Meta: #type: ignore
     indexes = [

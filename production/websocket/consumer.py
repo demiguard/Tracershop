@@ -318,5 +318,7 @@ class Consumer(AsyncJsonWebsocketConsumer):
     )
 
     result, _ = authentication_result
+    if result != AuthenticationResult.SUCCESS:
+      logger.info(f"User: {user.username} failed to authenticate with username: {Auth[AUTH_USERNAME]} and is: {result.name}")
 
     return result, user

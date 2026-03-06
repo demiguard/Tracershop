@@ -611,41 +611,30 @@ class DatabaseInterface():
       error_logger.info(f"User {creating_user} tried to create an association between {username} and a non-existent customer")
       return SUCCESS_STATUS_CRUD.MISSING_CUSTOMER, None, None
 
-    user = None
     try:
-      user = User.objects.get(username=username)
-      user_created = False
+      user = tracer_ldap.get_ldap_user(username)
     except ObjectDoesNotExist:
-      success, ldap_user_group = tracer_ldap.checkUserGroupMembership(username)
-      if success == LDAPSearchResult.USER_DOES_NOT_EXISTS:
-        return SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME, None, None
+      return SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME, None, None
 
-      if success == LDAPSearchResult.MISSING_USER_GROUP:
-        return SUCCESS_STATUS_CRUD.NO_GROUPS, None, None
+    success, ldap_user_group = tracer_ldap.checkUserGroupMembership(username)
+    if ldap_user_group is not None and ldap_user_group != user.user_group:
+      user.user_group = ldap_user_group
+      user.save()
 
-      if ldap_user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
-        user_created = True
-        user = User.objects.create(username=username.upper(), user_group=ldap_user_group)
-      else:
-        return SUCCESS_STATUS_CRUD.INCORRECT_GROUPS, None, None
+    if success == LDAPSearchResult.MISSING_USER_GROUP:
+      return SUCCESS_STATUS_CRUD.NO_GROUPS, None, None
 
     if not user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
       return SUCCESS_STATUS_CRUD.INCORRECT_GROUPS, None, None
 
-    try:
-      user_assignment = UserAssignment(user=user, customer=customer)
-      created = user_assignment.save(creating_user)
-    except IntegrityError:
-      return SUCCESS_STATUS_CRUD.DUPLICATE_ASSIGNMENT, None, None
-
+    user_assignment, created = UserAssignment.objects.get_or_create(user=user, customer=customer)
+    
     if not created:
       return SUCCESS_STATUS_CRUD.UNABLE_TO_CREATE_USER_ASSIGNMENT, None, None
 
-    if user_created:
-      return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, user
-    else:
-      return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, None
+    return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, user
 
+    
   @database_sync_to_async
   def a_mass_order(self, bookings: Dict[str, bool], user: User):
     return self.mass_order(bookings, user)

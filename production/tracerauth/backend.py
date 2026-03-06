@@ -3,11 +3,15 @@ import re
 from typing import Optional
 
 # Third party packages
+from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from django.contrib.auth.backends import BaseBackend
 from django.contrib.auth.hashers import check_password
 
 # Tracershop Production Packages
-from database.models import User
+
+from database.models import User, UserGroups
+from tracerauth.tracer_ldap import authenticate_user, checkUserGroupMembership, get_regional_id
 
 
 def validString(string: str) -> bool:
@@ -26,8 +30,38 @@ def validString(string: str) -> bool:
   return False
 
 class TracershopAuthenticationBackend(BaseBackend):
-  def authenticate(self, request, username=None, password=None) -> Optional[User]:
+  def authenticate(self, request, username=None, password=None, **kwargs) -> Optional[User]:
     if username and password:
+      if settings.USE_LDAP and authenticate_user(username, password):
+        try: # First check if we have the user already
+          return User.objects.get(username=username)
+        except ObjectDoesNotExist:
+          pass
+
+        # Note that we would have created the user on /index.html with username
+        # equal to the regional id. Note that if they are different then we can
+        # go from bam id to regional id but not the other way around.
+
+        try: # Second check if we have the user stored as bam id
+          return User.objects.get(bam_id=username)
+        except ObjectDoesNotExist:
+          pass
+
+        regional_id = get_regional_id(username)
+        success, user_group = checkUserGroupMembership(username)
+
+        if user_group is None:
+          user_group = UserGroups.Anon
+
+        # Okay We don't have the user, lets log them in.
+        user = User.objects.create(
+          username=regional_id,
+          bam_id=username,
+          user_group=user_group
+        )
+
+        return user
+
       try:
         user = User.objects.get(username=username)
       except User.DoesNotExist:
@@ -41,4 +75,3 @@ class TracershopAuthenticationBackend(BaseBackend):
       return User.objects.get(id=user_id)
     except User.DoesNotExist:
       return None
-

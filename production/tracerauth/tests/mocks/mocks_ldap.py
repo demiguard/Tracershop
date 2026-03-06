@@ -8,7 +8,7 @@ from typing import Tuple
 # Third party packages
 
 # Tracershop packages
-from database.models import UserGroups
+from database.models import UserGroups, User
 from tracerauth.types import LDAPSearchResult
 
 mockedUserGroups = {
@@ -71,12 +71,15 @@ class AlteredLDAPConnection:
 
 def checkUserGroupMembership(username: str) -> Tuple[LDAPSearchResult, UserGroups]:
   if username not in mockedUserGroups:
-    return LDAPSearchResult.USER_DOES_NOT_EXISTS, None
+    return LDAPSearchResult.USER_DOES_NOT_EXISTS, UserGroups.Anon
 
   if username in MISSING_USER_GROUPS:
-    return LDAPSearchResult.MISSING_USER_GROUP, None
+    return LDAPSearchResult.MISSING_USER_GROUP, UserGroups.Anon
 
-  return LDAPSearchResult.SUCCESS, mockedUserGroups.get(username, None)
+  return LDAPSearchResult.SUCCESS, mockedUserGroups.get(username, UserGroups.Anon)
 
 def _query_username(username, conn=None):
   return
+
+def get_ldap_user(username):
+  return User.objects.get(username=username)

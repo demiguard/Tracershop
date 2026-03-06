@@ -56,7 +56,7 @@ class UserAssignment(TracershopModel):
   customer = ForeignKey(Customer, on_delete=RESTRICT)
 
   def __str__(self) -> str:
-    return f"User: {self.user} is assigned to {self.customer}"
+    return f"User: {self.user.username} is assigned to {self.customer}"
 
   @classproperty
   def display_name(cls):

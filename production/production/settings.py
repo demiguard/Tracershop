@@ -35,7 +35,7 @@ DEBUG = True
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG
 
-ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.167.172', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk"]
+ALLOWED_HOSTS = ['127.0.0.1','172.16.167.60', 'localhost','0.0.0.0', '172.16.167.172', "172.16.78.161", "tracershop-prod", "tracershop-prod.petnet.rh.dk", "172.16.166.58"]
 
 SETTING_NAME = "PROD"
 
@@ -118,6 +118,8 @@ DATABASES = {
 # Password validation
 # https://docs.djangoproject.com/en/3.0/ref/settings/#auth-password-validators
 
+USE_LDAP = True
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
@@ -149,7 +151,6 @@ AUTH_LDAP_BIND_DN = LDAP_USERNAME
 AUTH_LDAP_BIND_PASSWORD = LDAP_PASSWORD
 
 AUTHENTICATION_BACKENDS = [
-    'django_auth_ldap.backend.LDAPBackend',
     'tracerauth.backend.TracershopAuthenticationBackend'
 ]
 

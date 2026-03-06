@@ -143,17 +143,17 @@ export function OrderReview({
 
   return (
   <Row>
-    <Row>Ordre for den. {active_date.toLocaleDateString("da")}</Row>
+    <Row>Ordre for den {active_date.toLocaleDateString("da")}</Row>
     <Row>
       <Col>
         <DeadlineDisplay
-          deadline_name="aktivites ordre"
+          deadline_name="aktivitesordre"
           deadline={activityDeadline}
         />
       </Col>
       <Col>
         <DeadlineDisplay
-          deadline_name="injektions ordre"
+          deadline_name="injektionsordre"
           deadline={injectionDeadline}
         />
       </Col>
@@ -167,7 +167,7 @@ export function OrderReview({
       </h3>}
     </Row>
     <Optional exists={!!(InjectionOrderCards.length)}>
-      <Row style={{margin : '15px'}}><h3>Injection Ordre</h3></Row>
+      <Row style={{margin : '15px'}}><h3>Injektionordre</h3></Row>
       <Row>{InjectionOrderCards}</Row>
     </Optional>
   </Row>);

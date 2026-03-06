@@ -131,6 +131,8 @@ PASSWORD_HASHERS = [
 
 AUTH_USER_MODEL = "database.User"
 
+USE_LDAP = False
+
 AUTHENTICATION_BACKENDS = ['tracerauth.backend.TracershopAuthenticationBackend']
 CSRF_COOKIE_SAMESITE = 'Strict'
 SESSION_COOKIE_SAMESITE = 'Strict'

@@ -28,7 +28,7 @@ export function DeadlineDisplay(props){
   const deadlineDateTime = calculateDeadline(deadline, state.today);
 
   if (deadlineDateTime < clockDateTime){
-    return <div {...rest}>Deadlinen for {deadlineName} er udløbet</div>;
+    return <div {...rest}>Deadline for {deadlineName} er udløbet</div>;
   }
 
   const deadline_string = (() => {
@@ -44,5 +44,5 @@ export function DeadlineDisplay(props){
     }
   })()
 
-  return <div {...rest}>Deadlinen for {deadlineName} udløber {deadline_string}</div>
+  return <div {...rest}>Deadline for {deadlineName} udløber {deadline_string}</div>
 }

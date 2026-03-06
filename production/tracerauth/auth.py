@@ -94,15 +94,11 @@ def login_from_header(request: HttpRequest) -> bool:
 def _login_from_header_internal_user(request: HttpRequest,
                                      user_group : UserGroups,
                                      username : str) -> None:
-  try:
-    user = User.objects.get(username=username)
-    if user.user_group != user_group:
-      user.user_group = user_group
-      user.save()
-  except ObjectDoesNotExist:
-    user = User.objects.create(username=username,
-                          user_group=user_group)
-  login(request, user, backend="django_auth_ldap.backend.LDAPBackend")
+  user, created = User.objects.get_or_create(username=username)
+  if user.user_group != user_group:
+    user.user_group = user_group
+    user.save()
+  login(request, user, backend="tracerauth.backend.TracershopAuthenticationBackend")
 
 def _login_from_header_external_user(request: HttpRequest) -> None:
   """This function doesn't nothing because the login happens from "who am i"

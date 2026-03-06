@@ -141,7 +141,7 @@ class ReleaseRight(TracershopModel):
     return AuthActions.ACCEPT_LOG
 
   def __str__(self) -> str:
-    baseString = f"ReleaseRight for {self.releaser} - {self.product}"
+    baseString = f"ReleaseRight for {self.releaser.username} - {self.product}"
     if self.expiry_date is not None:
       baseString += f" expiring: {self.expiry_date}"
     return baseString

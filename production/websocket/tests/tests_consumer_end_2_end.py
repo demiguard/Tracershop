@@ -476,7 +476,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       captured_debug_logger.output
     )
 
-    self.assertRegexIn(f"{TEST_ADMIN_USERNAME} from session cookie", captured_debug_logger.output)
+    self.assertRegexIn(f"{TEST_ADMIN_USERNAME} : Admin from session cookie", captured_debug_logger.output)
 
     self.assertTrue(whoAmI_response[AUTH_IS_AUTHENTICATED])
 
@@ -1240,7 +1240,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
     self.assertRegexIn(self.accession_number_4, captured_debug_logs.output)
     self.assertRegexIn(self.accession_number_5, captured_debug_logs.output)
 
-    self.assertEqual(message[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_UPDATE_STATE)
+    self.assertEqual(message[WEBSOCKET_MESSAGE_TYPE], WEBSOCKET_MESSAGE_MASS_ORDER)
     self.assertEqual(message[WEBSOCKET_MESSAGE_SUCCESS], WEBSOCKET_MESSAGE_SUCCESS)
     self.assertIn(DATA_ACTIVITY_ORDER, message[WEBSOCKET_DATA])
     self.assertEqual(len(message[WEBSOCKET_DATA][DATA_ACTIVITY_ORDER]), 1)
