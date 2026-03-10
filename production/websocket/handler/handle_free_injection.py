@@ -26,7 +26,8 @@ class HandleFreeInjection(HandlerBase):
       },
       WEBSOCKET_DATA : {
         WEBSOCKET_DATA_ID : int,
-        "lot_number" : str
+        "lot_number" : str,
+        "max_injection_volume" : float
       }
     })
 
@@ -64,6 +65,7 @@ class HandleFreeInjection(HandlerBase):
     # Step 2
     order: InjectionOrder = await consumer.db.a_get_model(InjectionOrder, message[WEBSOCKET_DATA][WEBSOCKET_DATA_ID])
     order.lot_number = message[WEBSOCKET_DATA]['lot_number']
+    order.max_injection_volume = message[WEBSOCKET_DATA]['max_injection_volume']
     order.freed_datetime = consumer.datetimeNow.now()
     order.freed_by = user
     order.status = OrderStatus.Released

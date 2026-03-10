@@ -1428,28 +1428,37 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       await comm_new_user.disconnect()
 
   async def test_wsCreateUserAssignment(self):
-    with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
-      shop_comm_admin = WebsocketCommunicator(app,"ws/")
-      _conn, _subprotocal = await shop_comm_admin.connect()
+    user = await User.objects.acreate(username="-AAAA0003", user_group=UserGroups.ShopAdmin)
 
-      await shop_comm_admin.send_json_to(self.loginShopAdminMessage)
-      admin_login_message = await shop_comm_admin.receive_json_from()
+    with patch(
+        "tracerauth.tests.mocks.mocks_ldap.get_ldap_user",
+        return_value=user
+      ) as get_user_mock:
+      with self.assertLogs(DEBUG_LOGGER) as captured_debug_logs:
+        shop_comm_admin = WebsocketCommunicator(app,"ws/")
+        _conn, _subprotocal = await shop_comm_admin.connect()
 
-      await shop_comm_admin.send_json_to({
-        WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
-        WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
-        WEBSOCKET_MESSAGE_ID : 657901284,
-        'username' : '-AAAA0003',
-        'customer_id' : self.customer.id,
-      })
+        await shop_comm_admin.send_json_to(self.loginShopAdminMessage)
+        admin_login_message = await shop_comm_admin.receive_json_from()
 
-      message = await shop_comm_admin.receive_json_from()
+        await shop_comm_admin.send_json_to({
+          WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
+          WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT,
+          WEBSOCKET_MESSAGE_ID : 657901284,
+          'username' : '-AAAA0003',
+          'customer_id' : self.customer.id,
+        })
 
-      self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                       SUCCESS_STATUS_CRUD.SUCCESS.value)
+        message = await shop_comm_admin.receive_json_from()
 
-      await shop_comm_admin.disconnect()
+        self.assertEqual(SUCCESS_STATUS_CRUD(message[WEBSOCKET_MESSAGE_STATUS]),
+                         SUCCESS_STATUS_CRUD.SUCCESS)
 
+        await shop_comm_admin.disconnect()
+
+        self.assertTrue(get_user_mock.called)
+
+    await database_sync_to_async(user.delete)()
 
   async def test_wsCreateUserAssignment_failed(self):
     with self.assertLogs(DEBUG_LOGGER):
@@ -1475,7 +1484,10 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       await shop_comm_admin.disconnect()
 
 
-  async def test_wsCreateUserAssignment_missing_customer_group(self):
+  async def test_wsCreateUserAssignment_non_existing_user(self):
+    """This test check that the server responses to attempting a non existing
+    user"""
+
     with self.assertLogs(DEBUG_LOGGER):
       with self.assertNoLogs(ERROR_LOGGER):
         shop_comm_admin = WebsocketCommunicator(app,"ws/")
@@ -1493,11 +1505,9 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         })
 
         message = await shop_comm_admin.receive_json_from()
-        if message[WEBSOCKET_MESSAGE_STATUS] != SUCCESS_STATUS_CRUD.NO_GROUPS.value:
-          print()
 
-        self.assertEqual(message[WEBSOCKET_MESSAGE_STATUS],
-                         SUCCESS_STATUS_CRUD.NO_GROUPS.value)
+        self.assertEqual(SUCCESS_STATUS_CRUD(message[WEBSOCKET_MESSAGE_STATUS]),
+                          SUCCESS_STATUS_CRUD.NO_LDAP_USERNAME)
 
         await shop_comm_admin.disconnect()
 

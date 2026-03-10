@@ -353,6 +353,7 @@ class InjectionOrder(TracershopModel):
   lot_number = CharField(max_length=32, null=True, default=None, blank=True)
   freed_datetime = DateTimeField(null=True, default=None, blank=True)
   freed_by = ForeignKey(User, on_delete=RESTRICT, null=True, default=None, related_name="injection_freed_by", blank=True)
+  max_injection_volume = FloatField(default=None, blank=True, null=True)
 
   class Meta: # type: ignore
     indexes = [

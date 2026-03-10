@@ -19,6 +19,7 @@ import { presentName } from "~/lib/presentation";
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card";
 import { makeBlankInjectionOrder, makeBlankTracer } from "~/lib/blanks";
 import { getObjects } from "~/lib/utils";
+import { deliveriesSortingFunction } from "~/lib/sorting";
 
 
 /**
@@ -33,6 +34,16 @@ import { getObjects } from "~/lib/utils";
  * }} props
  * @returns Element
  */
+
+type OrderReviewProps = {
+  active_endpoint : number,
+  active_customer : number,
+  active_date : Date
+  injectionDeadlineValid : boolean
+  activityDeadlineValid : boolean
+  productState : [ProductReference, React.Dispatch<React.SetStateAction<ProductReference>>]
+}
+
 export function OrderReview({
   active_endpoint,
   active_customer,
@@ -40,7 +51,7 @@ export function OrderReview({
   injectionDeadlineValid,
   activityDeadlineValid,
   productState,
-}){
+}: OrderReviewProps){
   const state = useTracershopState();
   const tracerCatalog = useTracerCatalog();
   const endpoint = state.delivery_endpoint.get(active_endpoint);
@@ -77,7 +88,6 @@ export function OrderReview({
       style={MARGIN.leftRight.px15}
       key={productRef.to_value()}
       onClick={setProduct(product_)}
-      sz="sm"
     >
       {underline ? <u>{presentName(product_)}</u> : presentName(product_)}
     </Button>)
@@ -85,7 +95,7 @@ export function OrderReview({
 
   const overhead = tracerCatalog.getOverheadForTracer(active_customer, product.product_id);
 
-  const timeSlotsCards = availableDeliveries.map((timeSlot) => {
+  const timeSlotsCards = availableDeliveries.sort(deliveriesSortingFunction).map((timeSlot) => {
     const availableOrders = product.filterOrders(state, {
       timeSlots : [timeSlot],
       delivery_date : activeDateString
@@ -101,7 +111,7 @@ export function OrderReview({
     />;
   });
 
-  const /**@type {Array<InjectionOrder>} */ relevantInjectionOrders = [...state.injection_orders.values()].filter(
+  const relevantInjectionOrders = [...state.injection_orders.values()].filter(
     (injectionOrder) => {
       const matchingDay = injectionOrder.delivery_date === activeDateString;
       const matchingEndpoint = injectionOrder.endpoint === active_endpoint;

@@ -88,13 +88,12 @@ export function Calculator ({
 
   function InputEnterPress(event){
     if (event.key == "Enter"){
-      console.log(newEntryTime)
+      event.preventDefault();
       if (newEntryTime === ""){
         commit_activity();
-      } else {
+      } else if(entries) { // If there are no entries
         addEntry();
       }
-      event.preventDefault();
     }
   }
 

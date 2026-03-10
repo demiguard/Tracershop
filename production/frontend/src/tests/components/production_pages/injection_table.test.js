@@ -269,7 +269,10 @@ describe("Deadline Setup tests", () => {
 
     expect(websocket.send).toHaveBeenCalledWith(expect.objectContaining({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_RELEASE_MULTI,
-      [WEBSOCKET_DATA] : test_batch_number,
+      [WEBSOCKET_DATA] : {
+        lot_number: test_batch_number,
+        max_injection_volume : 10
+      },
       [WEBSOCKET_DATA_ID] : [1,2,3,4,5],
       [DATA_AUTH] : {
         [AUTH_USERNAME] : username,

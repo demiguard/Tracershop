@@ -16,7 +16,7 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USERNAME, DATA_AUTH,
 } from "~/lib/shared_constants";
 import { setStateToEvent } from "~/lib/state_management";
 import { FONT, MARGIN, PADDING } from "~/lib/styles";
-import { parseBatchNumberInput } from "~/lib/user_input";
+import { parseBatchNumberInput, parseDanishPositiveNumberInput } from "~/lib/user_input";
 import { compareDates, getId } from "~/lib/utils";
 
 /**
@@ -96,20 +96,33 @@ export function ReleaseManyInjectionOrdersModal({orders, on_close, selected}){
       ERROR_LEVELS.hint)
   : new RecoverableError();
 
+
   const [loginError, setLoginError] = useErrorState();
   const [batchNumber, setBatchNumber] = useState(vial_tag);
+  const [maxInjectionVolume, setMaxInjectionVolume] = useState(10.0);
   const [batchNumberError, setBatchNumberError] = useErrorState();
+  const [maxInjectionVolumeError, setMaxInjectionVolumeError] = useErrorState();
 
   function authenticate(username, password){
     const to_be_freed_id = to_be_freed.map(getId);
     const [validBatchNumber, formattedBatchNumber] = parseBatchNumberInput(batchNumber, 'Lot nummeret')
+    const [validMaxInjectionVolume, maxInjectionVolumeFormatted] = parseDanishPositiveNumberInput(maxInjectionVolume, 'Max Injektion Volumen')
+
+    if(!validMaxInjectionVolume){
+      setMaxInjectionVolumeError(maxInjectionVolumeFormatted)
+      return Promise.resolve()
+    }
+
     if(!validBatchNumber){
       setBatchNumberError("batchNumberet er ikke formatteret korrekt.")
       return Promise.resolve();
     }
 
     return websocket.send({
-      [WEBSOCKET_DATA] : formattedBatchNumber,
+      [WEBSOCKET_DATA] : {
+        lot_number : formattedBatchNumber,
+        max_injection_volume : maxInjectionVolumeFormatted
+      },
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_RELEASE_MULTI,
       [WEBSOCKET_DATA_ID] : to_be_freed_id,
       [DATA_AUTH] : {
@@ -140,6 +153,11 @@ export function ReleaseManyInjectionOrdersModal({orders, on_close, selected}){
             <Row>
               <TracershopInputGroup error={batchNumberError} label="Fælles batch nummer">
                 <FormControl data-testid="batch" value={batchNumber} onChange={setStateToEvent(setBatchNumber)}/>
+              </TracershopInputGroup>
+            </Row>
+            <Row>
+              <TracershopInputGroup error={maxInjectionVolumeError} label="Max Injektion Volumen" tail="ml">
+                <FormControl data-testid="maxInjVol" value={maxInjectionVolume} onChange={setStateToEvent(setMaxInjectionVolume)}/>
               </TracershopInputGroup>
             </Row>
             <Row>

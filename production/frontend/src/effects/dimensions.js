@@ -62,14 +62,22 @@ export function useContainerDimensions(ref) {
   }
 
   useEffect(() => {
-    if(ref.current){
-      setTimeout(() => {
-        setDimensions(getDims());
-      }, 42);
-
-      window.addEventListener('resize', handleResize);
-      return () => {window.removeEventListener('resize', handleResize);}
+    if(!ref.current){
+      return;
     }
+
+    setDimensions(getDims());
+
+    const observer = new ResizeObserver(() => {
+      setDimensions(getDims());
+    })
+
+    observer.observe(ref.current);
+
+    return () => {
+      observer.disconnect();
+    }
+
   },  [ref.current]);
 
   return dimensions

@@ -22,6 +22,8 @@ import { CommitIcon } from "~/components/injectable/commit_icon";
 import { Optional } from "~/components/injectable/optional";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
+import { ManyRows } from "~/components/injectable/ManyRows";
+
 
 /**
  * This is a card containing all the information on an injection order
@@ -130,97 +132,123 @@ export function InjectionOrderCard({
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
 
+  const cardItems = [
+    <Col key={2}>
+      <TracershopInputGroup readOnly={!canEdit} label="Tracer">
+        <Select
+          aria-label={`tracer-input-${injection_order.id}`}
+          canEdit={canEdit}
+          options={tracerOptions}
+          onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
+          value={tempInjectionOrder.tracer}
+        />
+      </TracershopInputGroup>
+    </Col>,
+    <Col key={3}>
+      <TracershopInputGroup readOnly={!canEdit} label="Injektioner">
+        <ErrorInput error={errorInjections}>
+          <EditableInput
+            aria-label={`injections-input-${injection_order.id}`}
+            canEdit={canEdit}
+            value={tempInjectionOrder.injections}
+            onChange={setTempObjectToEvent(setTempInjectionOrder, 'injections')}
+          />
+        </ErrorInput>
+      </TracershopInputGroup>
+    </Col>
+  ]
+
+  if(injection_order.status === ORDER_STATUS.RELEASED){
+    cardItems.push(
+      <Col key={4}>
+        <TracershopInputGroup readOnly={!canEdit} label="Frigivet kl:">
+          <Form.Control
+            aria-label={`freed-datetime-${injection_order.id}`}
+            value={getTimeString(injection_order.freed_datetime)}
+            readOnly
+          />
+        </TracershopInputGroup>
+      </Col>
+    )
+  }
+  cardItems.push(
+    <Col key={5}>
+      <TracershopInputGroup label={"Tid"}>
+        <ErrorInput error={errorDeliveryTime}>
+          <TimeInput
+            aria-label={`delivery-time-input-${injection_order.id}`}
+            value={tempInjectionOrder.delivery_time}
+            canEdit={canEdit}
+            stateFunction={setDeliveryTime}
+          />
+        </ErrorInput>
+      </TracershopInputGroup>
+    </Col>
+  )
+  cardItems.push(
+    <Col key={6}>
+      <TracershopInputGroup label={"Brug"}>
+        <UsageSelect
+          aria-label={`usage-input-${injection_order.id}`}
+          onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer_usage')}
+          value={tempInjectionOrder.tracer_usage}
+          canEdit={canEdit}
+        />
+      </TracershopInputGroup>
+    </Col>
+  )
+
+  if(!!(canEdit || tempInjectionOrder.comment)){
+    cardItems.push(
+      <Col keys={7}>
+        <TracershopInputGroup label="Kommentar">
+          <EditableInput
+            canEdit={canEdit}
+            data-testid={`comment-${injection_order.id}`}
+            as="textarea"
+            rows={1}
+            value={nullParser(tempInjectionOrder.comment)}
+            onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
+            />
+        </TracershopInputGroup>
+      </Col>
+    )
+  }
+  if(injection_order.status === ORDER_STATUS.RELEASED){
+    cardItems.push(
+      <Col key={8}>
+        <TracershopInputGroup label="lot:">
+          <Form.Control
+            aria-label={`lot-number-input-${injection_order.id}`}
+            value={nullParser(injection_order.lot_number)}
+            readOnly/>
+          </TracershopInputGroup>
+      </Col>
+    );
+    cardItems.push(
+      <Col key={9}>
+        <TracershopInputGroup label="Max injektion volume:" tail="ml">
+          <Form.Control
+            aria-label={`max-injection-volume-input-${injection_order.id}`}
+            value={nullParser(injection_order.max_injection_volume)}
+            readOnly/>
+          </TracershopInputGroup>
+      </Col>
+    );
+  }
+
   return (
   <Card style={{padding : '0px'}}>
     <Card.Header>
       <Row>
-        <Col xs={1} style={{alignItems : "center", justifyContent : "center", display : "flex"}}>
+        <Col key={1} xs={1} style={{alignItems : "center", justifyContent : "center", display : "flex"}}>
           <StatusIcon order={injection_order}/>
         </Col>
         <Col>
-          <TracershopInputGroup readOnly={!canEdit} label="Tracer">
-            <Select
-              aria-label={`tracer-input-${injection_order.id}`}
-              canEdit={canEdit}
-              options={tracerOptions}
-              onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer')}
-              value={tempInjectionOrder.tracer}
-            />
-          </TracershopInputGroup>
+          <ManyRows>
+            {cardItems}
+          </ManyRows>
         </Col>
-        <Col>
-          <TracershopInputGroup readOnly={!canEdit} label="Injektioner">
-            <ErrorInput error={errorInjections}>
-              <EditableInput
-                aria-label={`injections-input-${injection_order.id}`}
-                canEdit={canEdit}
-                value={tempInjectionOrder.injections}
-                onChange={setTempObjectToEvent(setTempInjectionOrder, 'injections')}
-              />
-            </ErrorInput>
-          </TracershopInputGroup>
-        </Col>
-        <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
-          <Col>
-            <TracershopInputGroup readOnly={!canEdit} label="Frigivet kl:">
-              <Form.Control
-                aria-label={`freed-datetime-${injection_order.id}`}
-                value={getTimeString(injection_order.freed_datetime)}
-                readOnly
-              />
-           </TracershopInputGroup>
-          </Col>
-        </Optional>
-        <Col xs={1}></Col>
-      </Row>
-      <Row>
-        <Col xs={1} style={cssCenter} >{statusInfo}</Col>
-        <Col>
-          <TracershopInputGroup label={"Tid"}>
-            <ErrorInput error={errorDeliveryTime}>
-              <TimeInput
-                aria-label={`delivery-time-input-${injection_order.id}`}
-                value={tempInjectionOrder.delivery_time}
-                canEdit={canEdit}
-                stateFunction={setDeliveryTime}
-              />
-            </ErrorInput>
-          </TracershopInputGroup>
-        </Col>
-        <Col>
-          <TracershopInputGroup label={"Brug"}>
-            <UsageSelect
-              aria-label={`usage-input-${injection_order.id}`}
-              onChange={setTempObjectToEvent(setTempInjectionOrder, 'tracer_usage')}
-              value={tempInjectionOrder.tracer_usage}
-              canEdit={canEdit}
-            />
-          </TracershopInputGroup>
-        </Col>
-        <Optional exists={!!(canEdit || tempInjectionOrder.comment)}>
-          <Col>
-            <TracershopInputGroup label="Kommentar">
-              <EditableInput
-                canEdit={canEdit}
-                data-testid={`comment-${injection_order.id}`}
-                as="textarea"
-                rows={1}
-                value={nullParser(tempInjectionOrder.comment)}
-                onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
-                />
-            </TracershopInputGroup>
-          </Col>
-        </Optional>
-        <Optional exists={injection_order.status === ORDER_STATUS.RELEASED}>
-          <Col>
-            <TracershopInputGroup label="lot:">
-              <Form.Control
-                aria-label={`lot-number-input-${injection_order.id}`}
-                value={nullParser(injection_order.lot_number)}
-                readOnly/>
-             </TracershopInputGroup>
-          </Col>
-        </Optional>
         <Col xs={1} style={{
           alignItems : "center",
           display : "flex"

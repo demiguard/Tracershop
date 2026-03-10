@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { ClickableIcon } from './icons';
 import styled from 'styled-components';
 import { rotation } from '~/lib/styles';
@@ -28,12 +28,20 @@ interface OpenCloseButtonArgs {
 }
 
 export function OpenCloseButton({open, setOpen, ...rest}: OpenCloseButtonArgs) {
+  const timeoutRef = useRef(null)
+
   const [rotated, setRotated] = useState(open);
   const [rotating, setRotating] = useState(false);
 
+  function clearRotatingTimeout(){
+    if(timeoutRef.current){  clearTimeout(timeoutRef.current)  }
+
+  }
+
   function rotateClockwise(){
     setRotating(true);
-    setTimeout(() => {
+    clearRotatingTimeout()
+    timeoutRef.current = setTimeout(() => {
       setRotating(false);
       setRotated(true);
     }, animationSpeedMS)
@@ -41,21 +49,37 @@ export function OpenCloseButton({open, setOpen, ...rest}: OpenCloseButtonArgs) {
 
   function rotateCounterClockwise(){
     setRotating(true);
-    setTimeout(() => {
+    clearRotatingTimeout()
+    timeoutRef.current = setTimeout(() => {
       setRotating(false);
       setRotated(false);
     }, animationSpeedMS);
   }
 
-  function rotate(){
+  function rotate_display(){
     if(rotated){
-        rotateCounterClockwise();
-      } else {
-        rotateClockwise();
-      }
-
-      setOpen((open) => !open);
+      rotateCounterClockwise();
+    } else {
+      rotateClockwise();
+    }
   }
+
+  function rotate(){
+    rotate_display()
+    setOpen((open) => !open);
+  }
+
+  useEffect(() => {
+    if(open !== rotated){
+      rotate_display();
+    }
+  }, [open])
+
+  useEffect(() => {
+    return () => {
+      clearRotatingTimeout()
+    }
+  }, [])
 
   const button = <ClickableIcon
     {...rest}

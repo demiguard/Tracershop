@@ -134,7 +134,7 @@ export function InputSelect(props){
     </div>
   );
 
-  const left_padding = width - padding.left - iconSize;
+  const left_padding = width - padding.left / 2;
   const top_padding = height - padding.bottom;
 
   const optionButtonLabel = 'aria-label' in rest ? rest['aria-label'] + "-options" : 'options';
@@ -164,7 +164,7 @@ export function InputSelect(props){
             style={{
               height : `${iconSize}px`,
               width :  `${iconSize}px`,
-              position : "relative",
+              position : "absolute",
               left : `${left_padding}px`,
               top : `-${top_padding}px`,
             }}

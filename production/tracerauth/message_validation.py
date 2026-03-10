@@ -49,6 +49,11 @@ class Message:
 
     return message
 
+COMPATIBLE_TYPES = {
+    float: (float, int),
+    int: (int,),
+    str: (str,),
+}
 
 def validate_message(message: Dict[str, Any], blueprint: Message) -> bool:
   for key, value in blueprint:
@@ -67,7 +72,8 @@ def validate_message(message: Dict[str, Any], blueprint: Message) -> bool:
       if not validate_message(message[key], Message(value)):
         return False
     elif isinstance(value, Type):
-      if not isinstance(message[key], value):
+      compatible = COMPATIBLE_TYPES.get(value, (value,))
+      if not isinstance(message[key], compatible):
         error_logger.error(f"key: {key} in message is not type {value}")
         return False
     else: # pragma: no cover

@@ -3,7 +3,7 @@
 */
 
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
-import { ActivityDeliveryTimeSlot, DeliveryEndpoint, TracershopState } from "../dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, ActivityOrder, DeliveryEndpoint, Isotope, IsotopeDelivery, TracershopState } from "../dataclasses/dataclasses";
 import { ORDER_STATUS } from "~/lib/constants";
 
 /**
@@ -16,7 +16,9 @@ export const PROCEDURE_SORTING = {
   DELAY : 3,
 }
 
+/** Indicates that a should be placed after b */
 const GREATER = 1;
+/** Indicates that b should be placed after a */
 const LESSER = -1;
 
 /**
@@ -225,15 +227,15 @@ export function sortInjectionOrders(sortingMethod, invertedSorting, state){
 }
 
 /**
+ * Sorts in the following order
+ * Collection of cancelled orders are last
+ * Then Sorted by owner -> endpoint -> delivery time
  *
- * @param {Array<ActivityOrderCollection>} activityOrderCollections
- * @param {TracershopState} state
- * @returns {Array<ActivityOrderCollection>}
  */
-export function sortActivityOrderCollections(activityOrderCollections, state){
+export function sortActivityOrderCollections(activityOrderCollections: Array<ActivityOrderCollection>, state : TracershopState){
   return activityOrderCollections.sort(
     (a,b) => {
-      if(a.minimum_status === ORDER_STATUS.CANCELLED ^ b.minimum_status === ORDER_STATUS.CANCELLED){
+      if((a.minimum_status === ORDER_STATUS.CANCELLED) || (b.minimum_status === ORDER_STATUS.CANCELLED)){
         return a.minimum_status === ORDER_STATUS.CANCELLED ? GREATER : LESSER;
       };
 
@@ -248,4 +250,15 @@ export function sortActivityOrderCollections(activityOrderCollections, state){
       return  b.delivering_time_slot.delivery_time < a.delivering_time_slot.delivery_time ? GREATER : LESSER;
     }
   );
+}
+
+export function deliveriesSortingFunction(
+  delivery_a: IsotopeDelivery | ActivityDeliveryTimeSlot,
+  delivery_b: IsotopeDelivery | ActivityDeliveryTimeSlot
+) {
+  return delivery_b.delivery_time < delivery_a.delivery_time ? GREATER : LESSER;
+}
+
+export function sortDeliveries(deliveries: Array<IsotopeDelivery> | Array<ActivityDeliveryTimeSlot>) {
+  return deliveries.sort(deliveriesSortingFunction)
 }

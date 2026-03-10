@@ -22,6 +22,7 @@ from constants import ERROR_LOGGER, DEBUG_LOGGER, AUDIT_LOGGER
 from core.exceptions import IllegalActionAttempted, UndefinedReference,\
   RequestingNonExistingEndpoint, ContractBroken
 from database.database_interface import DatabaseInterface
+from tracerauth.types import LDAPSearchResult
 from shared_constants import *
 from database.models import Booking, Procedure, User, Tracer, Isotope,\
   Location, BookingStatus, UserGroups, ProcedureIdentifier, Customer,\
@@ -137,7 +138,6 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
       delay_minutes=0,
       owner=cls.endpoint
     )
-
 
     # Extra data accessed by the function
     cls.production = ActivityProduction.objects.create(
@@ -499,31 +499,43 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
 
   def test_createUserAssignment_existingUser(self):
-    username = self.shop_admin.username
-    status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
+    """This test overlaps with the situation where there's no local user, this
+    is because responsibility of the user creation is delicated to
+    get_ldap_user, which is mocked out in this test case.
 
-    self.assertEqual(status, SUCCESS_STATUS_CRUD.SUCCESS)
-    self.assertIsNotNone(userAssignment)
-    self.assertIsNone(user)
+    In other words it's invisible to this test suite case if the user exists.
+    """
 
-
-  def test_createUserAssignment_missingUser(self):
-    username = "-AAAA0003"
-    returned_user = User(username=username, user_group=mocks_ldap.mockedUserGroups[username])
-    with patch("tracerauth.tracer_ldap.get_ldap_user", return_value=returned_user):
-      status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
-
-    self.assertEqual(status, SUCCESS_STATUS_CRUD.SUCCESS)
-
-    if user is None: #pragma: no cover
-      raise AssertionError("User is None!")
+    with patch("tracerauth.tests.mocks.mocks_ldap.get_ldap_user", return_value=self.shop_admin) as get_user_mock:
+      with patch("tracerauth.tests.mocks.mocks_ldap.checkUserGroupMembership", return_value=(LDAPSearchResult.SUCCESS, UserGroups.ShopAdmin)) as check_mock:
+        status, userAssignment, user = self.db.create_user_assignment(self.shop_admin.username, self.customer.id, self.admin)
+        self.assertTrue(check_mock.called)
+        self.assertTrue(get_user_mock.called)
 
     self.assertEqual(status, SUCCESS_STATUS_CRUD.SUCCESS)
     self.assertIsNotNone(userAssignment)
     self.assertIsNotNone(user)
-    self.assertEqual(user.user_group, mocks_ldap.mockedUserGroups[user.username])
+
+  def test_createUserAssignment_LocalOutOfDate(self):
+    """This test checks that it's the underlying LDAP database that wins holds
+    the source of truth
+    """
+
+    with patch("tracerauth.tests.mocks.mocks_ldap.get_ldap_user", return_value=self.shop_admin) as get_user_mock:
+      with patch("tracerauth.tests.mocks.mocks_ldap.checkUserGroupMembership", return_value=(LDAPSearchResult.SUCCESS, UserGroups.Anon)) as check_mock:
+        status, userAssignment, user = self.db.create_user_assignment(self.shop_admin.username, self.customer.id, self.admin)
+        self.assertTrue(check_mock.called)
+        self.assertTrue(get_user_mock.called)
+
+    self.assertEqual(status, SUCCESS_STATUS_CRUD.INCORRECT_GROUPS)
+    self.assertIsNone(userAssignment)
+    self.assertIsNone(user)
+
 
   def test_createUserAssignment_NotAUser(self):
+    """This tests when how create_user_assignment is given a user that doesn't
+    exists in local or LDAP database."""
+
     username = "not a username"
     # Act
     status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
@@ -534,20 +546,22 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
   def test_createUserAssignment_AssignmentToSiteAdmin(self):
     username = "-AAAA0000"
-    returned_user = User(username=username, user_group=mocks_ldap.mockedUserGroups[username])
-    with patch("tracerauth.tracer_ldap.get_ldap_user", return_value=returned_user):
-      with patch("tracerauth.tracer_ldap.checkUserGroupMembership", return_value=mocks_ldap.mockedUserGroups[username]):
+    returned_user = User.objects.create(username=username, user_group=UserGroups.Admin)
+    with patch("tracerauth.tests.mocks.mocks_ldap.get_ldap_user", return_value=returned_user) as get_user_mock:
+      with patch("tracerauth.tests.mocks.mocks_ldap.checkUserGroupMembership", return_value=(LDAPSearchResult.SUCCESS, UserGroups.Admin)) as check_mock:
         status, userAssignment, user = self.db.create_user_assignment(username, self.customer.id, self.admin)
+        self.assertTrue(check_mock.called)
+        self.assertTrue(get_user_mock.called)
 
     self.assertEqual(status, SUCCESS_STATUS_CRUD.INCORRECT_GROUPS)
     self.assertIsNone(userAssignment)
     self.assertIsNone(user)
 
+    returned_user.delete()
+
   def test_createUserAssignment_MissingCustomer(self):
     username = "-AAAA0003"
-    returned_user = User(username=username, user_group=mocks_ldap.mockedUserGroups[username])
-    with patch("tracerauth.tracer_ldap.get_ldap_user", return_value=returned_user):
-      status, userAssignment, user = self.db.create_user_assignment(username, 189508160918, self.admin)
+    status, userAssignment, user = self.db.create_user_assignment(username, 189508160918, self.admin)
 
     self.assertEqual(status, SUCCESS_STATUS_CRUD.MISSING_CUSTOMER)
     self.assertIsNone(userAssignment)

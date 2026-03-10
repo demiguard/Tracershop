@@ -112,3 +112,11 @@ jest.mock('react-svg', () => ({
     );
   },
 }));
+
+
+// This is not implemented in jest
+global.ResizeObserver = class ResizeObserver {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+};

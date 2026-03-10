@@ -299,16 +299,16 @@ class DatabaseInterface():
   def a_release_many_injections_orders(
       self,
       order_ids: List[int],
-      lot_number: str,
+      release_data: Dict[str, Any],
       release_time: datetime,
       user: User
     ) -> QuerySet[InjectionOrder]:
-    return self.release_many_injections_orders(order_ids, lot_number, release_time, user)
+    return self.release_many_injections_orders(order_ids, release_data, release_time, user)
 
   def release_many_injections_orders(
       self,
       order_ids: List[int],
-      lot_number: str,
+      release_data: Dict[str, Any],
       release_time: datetime,
       user: User
     ) -> QuerySet[InjectionOrder]:
@@ -324,8 +324,9 @@ class DatabaseInterface():
     for order in orders:
       order.status = OrderStatus.Released
       order.freed_datetime = release_time
+      order.max_injection_volume = release_data['max_injection_volume']
       order.freed_by = user
-      order.lot_number = lot_number
+      order.lot_number = release_data['lot_number']
       logFreeInjectionOrder(user, order)
       order.save(user) # This is to trigger audit log
 
@@ -624,17 +625,17 @@ class DatabaseInterface():
     if success == LDAPSearchResult.MISSING_USER_GROUP:
       return SUCCESS_STATUS_CRUD.NO_GROUPS, None, None
 
-    if not user.user_group in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
+    if user.user_group not in [UserGroups.ShopAdmin, UserGroups.ShopUser]:
       return SUCCESS_STATUS_CRUD.INCORRECT_GROUPS, None, None
 
     user_assignment, created = UserAssignment.objects.get_or_create(user=user, customer=customer)
-    
+
     if not created:
       return SUCCESS_STATUS_CRUD.UNABLE_TO_CREATE_USER_ASSIGNMENT, None, None
 
     return SUCCESS_STATUS_CRUD.SUCCESS, user_assignment, user
 
-    
+
   @database_sync_to_async
   def a_mass_order(self, bookings: Dict[str, bool], user: User):
     return self.mass_order(bookings, user)

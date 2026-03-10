@@ -28,7 +28,11 @@ import { DateTime } from "~/components/injectable/datetime";
 import { RecoverableError, useErrorState } from "~/lib/error_handling";
 import { useUserReleaseRights } from "~/contexts/user_release_right";
 import { CancelButton } from "~/components/injectable/cancel_button";
+import { parseDanishPositiveNumberInput } from "~/lib/user_input";
 
+/**
+ * This modal is used for releasing a single order
+ */
 export function InjectionModal ({modal_order, on_close}) {
   const state = useTracershopState();
   const websocket = useWebsocket();
@@ -43,6 +47,8 @@ export function InjectionModal ({modal_order, on_close}) {
   const [showCorrectAuth, setShowCorrectAuth] = useState(false);
   const [lot_number, setLotNumber] = useState(defaultLotNumber);
   const [loginError, setLoginError] = useErrorState();
+  const [maxInjectionVolume, setMaxInjectionVolume] = useState(10.0);
+  const [maxInjectionVolumeError, setMaxInjectionVolumeError] = useErrorState();
   const [formattingError, setFormattingError] = useErrorState();
   const [dateError, setDateError] = useErrorState();
 
@@ -78,6 +84,13 @@ export function InjectionModal ({modal_order, on_close}) {
       return;
     }
 
+    const [validMaxInjectionVolume, maxInjectionVolumeFormatted] = parseDanishPositiveNumberInput(maxInjectionVolume, 'Max Injektion Volumen');
+
+    if(!validMaxInjectionVolume){
+      setMaxInjectionVolumeError(maxInjectionVolumeFormatted);
+      return
+    }
+
     const today = getToday();
     const orderDate = new Date(order.delivery_date);
     if(!compareDates(today, orderDate)){
@@ -95,6 +108,8 @@ export function InjectionModal ({modal_order, on_close}) {
   }
 
   function freeOrder(username, password){
+    const [always_true, maxInjectionVolumeFloat] = parseDanishPositiveNumberInput(maxInjectionVolume, 'Max Injektion Volumen')
+
     const message = websocket.getMessage(WEBSOCKET_MESSAGE_FREE_INJECTION);
     message[DATA_AUTH] = {
       [AUTH_USERNAME] : username,
@@ -103,6 +118,7 @@ export function InjectionModal ({modal_order, on_close}) {
     message[WEBSOCKET_DATA] = {
       [WEBSOCKET_DATA_ID] : modal_order,
       "lot_number" : lot_number,
+      "max_injection_volume" : maxInjectionVolumeFloat
     };
     return websocket.send(message).then((data) => {
       if(data[AUTH_IS_AUTHENTICATED]){
@@ -207,6 +223,19 @@ export function InjectionModal ({modal_order, on_close}) {
                     <td><div>Anvendelse:</div></td>
                     <td><InjectionUsage usage={order.tracer_usage}/></td>
                   </tr>
+                  <Optional exists={[ORDER_STATUS.ACCEPTED,ORDER_STATUS.RELEASED].includes(order.status)}>
+                    <tr>
+                      <td><div>Max injektion volume</div></td>
+                      <td>
+                        <EditableInput
+                          aria-label="max-injection-volume"
+                          value={maxInjectionVolume}
+                          canEdit={canEdit}
+                          onChange={setStateToEvent(setMaxInjectionVolume)}
+                          />
+                      </td>
+                    </tr>
+                  </Optional>
                   <Optional exists={!!order.comment}>
                     <tr>
                       <td>Kommentar</td>

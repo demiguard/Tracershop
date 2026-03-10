@@ -204,6 +204,7 @@ describe("Injection modal test suite", () =>{
       },
       [WEBSOCKET_DATA] : {
         lot_number : "test-111111-1",
+        max_injection_volume : 10,
         [WEBSOCKET_DATA_ID] : 2
       }
     }));

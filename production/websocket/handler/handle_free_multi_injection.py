@@ -24,7 +24,10 @@ class HandleFreeMultiInjection(HandlerBase):
         AUTH_PASSWORD : str
       },
       WEBSOCKET_DATA_ID : Array(int),
-      WEBSOCKET_DATA : str
+      WEBSOCKET_DATA : {
+        "lot_number" : str,
+        "max_injection_volume" : float
+      }
     })
 
   @classproperty

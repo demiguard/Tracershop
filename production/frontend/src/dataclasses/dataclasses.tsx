@@ -407,8 +407,9 @@ export class InjectionOrder extends Dataclass {
   lot_number
   freed_datetime
   freed_by
+  max_injection_volume
 
-  constructor(id?, delivery_time?, delivery_date?, injections?, status?, tracer_usage?, comment?, ordered_by?, endpoint?, tracer?, lot_number?, freed_datetime?, freed_by?, ) {
+  constructor(id?, delivery_time?, delivery_date?, injections?, status?, tracer_usage?, comment?, ordered_by?, endpoint?, tracer?, lot_number?, freed_datetime?, freed_by?, max_injection_volume?, ) {
     super()
     this.id=id
     this.delivery_time=delivery_time
@@ -423,6 +424,7 @@ export class InjectionOrder extends Dataclass {
     this.lot_number=lot_number
     this.freed_datetime=freed_datetime
     this.freed_by=freed_by
+    this.max_injection_volume=max_injection_volume
   }
 
   /**Copies the injectionorder
@@ -442,7 +444,8 @@ export class InjectionOrder extends Dataclass {
       this.tracer,
       this.lot_number,
       this.freed_datetime,
-      this.freed_by
+      this.freed_by,
+      this.max_injection_volume
     )
   }
   fields(){
@@ -460,6 +463,7 @@ export class InjectionOrder extends Dataclass {
       new CharField("lot_number"),
       new DateTimeField("freed_datetime"),
       new ForeignField("freed_by","user"),
+      new FloatField("max_injection_volume"),
     ];
   }
 }
@@ -1310,14 +1314,16 @@ export class User extends Dataclass {
   username
   user_group
   active
+  bam_id
 
-  constructor(last_login?, id?, username?, user_group?, active?, ) {
+  constructor(last_login?, id?, username?, user_group?, active?, bam_id?, ) {
     super()
     this.last_login=last_login
     this.id=id
     this.username=username
     this.user_group=user_group
     this.active=active
+    this.bam_id=bam_id
   }
 
   /**Copies the user
@@ -1329,7 +1335,8 @@ export class User extends Dataclass {
       this.id,
       this.username,
       this.user_group,
-      this.active
+      this.active,
+      this.bam_id
     )
   }
   fields(){
@@ -1339,6 +1346,7 @@ export class User extends Dataclass {
       new CharField("username"),
       new IntField("user_group"),
       new BooleanField("active"),
+      new CharField("bam_id"),
     ];
   }
 }
