@@ -56,11 +56,14 @@ class TracershopAuthenticationBackend(BaseBackend):
           user_group = UserGroups.Anon
 
         # Okay We don't have the user, lets log them in.
-        user = User.objects.create(
+        user, created = User.objects.get_or_create(
           username=regional_id,
-          bam_id=username,
-          user_group=user_group
         )
+
+        user.bam_id = username
+        user.user_group = user_group
+        user.save()
+
 
         return user
 
