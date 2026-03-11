@@ -32,6 +32,8 @@ def validString(string: str) -> bool:
 class TracershopAuthenticationBackend(BaseBackend):
   def authenticate(self, request, username=None, password=None, **kwargs) -> Optional[User]:
     if username and password:
+      if isinstance(username, str):
+        username = username.upper()
       if settings.USE_LDAP and authenticate_user(username, password):
         try: # First check if we have the user already
           return User.objects.get(username=username)

@@ -253,7 +253,7 @@ export function ShopOrderPage ({relatedCustomer}){
                                     : false;
 
   const SiteOptions = toOptions([
-    {id : "Manuel", name : "Ordre oversigt"},
+    {id : "Manuel", name : "Ordreoversigt"},
     {id : "Automatisk", name : "Bookinger"},
     {id : "Overview", name : "Booking Oversigt"},
   ]);

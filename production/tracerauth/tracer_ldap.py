@@ -223,30 +223,36 @@ def get_ldap_user(username: str):
     django.core.exceptions.ObjectDoesNotExists - if It can find a user
   """
 
+  formatted_username = username.upper()
+
   try:
-    return User.objects.get(username=username)
+    return User.objects.get(username=formatted_username)
   except ObjectDoesNotExist:
     pass
 
   try:
-    return User.objects.get(bam_id=username)
+    return User.objects.get(bam_id=formatted_username)
   except ObjectDoesNotExist:
     pass
 
   # User doesn't exists locally lets check LDAP database and create a record.
 
-  regional_id = get_regional_id(username)
+  regional_id = get_regional_id(formatted_username)
 
   if regional_id == "": # It's not found in
     raise ObjectDoesNotExist
 
-  success, user_group = checkUserGroupMembership(username)
+  success, user_group = checkUserGroupMembership(formatted_username)
 
   if user_group is None:
     user_group = UserGroups.Anon
 
-  return User.objects.create(
+  user, created = User.objects.get_or_create(
     username=regional_id,
-    bam_id=username,
     user_group=user_group
   )
+
+  user.bam_id = formatted_username
+  user.save()
+
+  return user

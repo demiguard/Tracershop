@@ -183,7 +183,7 @@ function TimeSlotCardHeaderEmpty({canOrder, openCalculator, orderCollection}){
 
   return (
     <Row>
-      <Col>Der er ikke bestilt sporestof og deadlinen er overskredet</Col>
+      <Col>Der er ikke bestilt sporstof og deadline er overskredet</Col>
     </Row>
   );
 }
