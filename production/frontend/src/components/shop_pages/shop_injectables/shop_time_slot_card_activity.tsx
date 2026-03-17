@@ -59,6 +59,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
 
     return [true, {
       ...order,
+      delivery_date : dateToDateString(state.today),
       ordered_activity : numberActivity,
       comment : nullify(displayComment),
       status : ORDER_STATUS.ORDERED,

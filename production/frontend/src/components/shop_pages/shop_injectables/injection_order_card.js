@@ -200,7 +200,7 @@ export function InjectionOrderCard({
 
   if(!!(canEdit || tempInjectionOrder.comment)){
     cardItems.push(
-      <Col keys={7}>
+      <Col key={7}>
         <TracershopInputGroup label="Kommentar">
           <EditableInput
             canEdit={canEdit}

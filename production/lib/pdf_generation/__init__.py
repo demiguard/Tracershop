@@ -528,6 +528,11 @@ class ReleaseDocument(canvas.Canvas):
 
     self.drawString(x_cursor, y_cursor, f"{freed_timestamp_display_string} er der frigivet {injectionOrder.injections} injektioner med batch nummer: {injectionOrder.lot_number}")
 
+    if injectionOrder.max_injection_volume:
+      y_cursor -= self.line_height
+
+      self.drawString(x_cursor, y_cursor, f"Injektion ordren er godkendt til et maximal injektions volume på: {injectionOrder.max_injection_volume} ml")
+
     y_cursor -= self.line_height * 2
 
     return y_cursor

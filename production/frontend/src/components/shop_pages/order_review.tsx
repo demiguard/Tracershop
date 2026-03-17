@@ -71,9 +71,6 @@ export function OrderReview({
     endpoint_id : active_endpoint, day : day
   });
 
-
-
-
   function setProduct(product_){
     return () => {
       setActiveProduct(product_);

@@ -3,8 +3,8 @@
  */
 
 import React from "react";
-import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { jest } from '@jest/globals'
+import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
+import { jest, expect } from '@jest/globals'
 
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
 import { BookingStatus, DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,
@@ -13,11 +13,12 @@ import { BookingStatus, DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,
   WEBSOCKET_MESSAGE_READ_BOOKINGS, WEBSOCKET_MESSAGE_STATUS,
   WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_REFRESH
 } from "~/lib/shared_constants"
-import {  testState } from "~/tests/app_state";
+import {  testState, getModifiedTestState} from "~/tests/app_state";
 import {  TracerShopContext } from "~/contexts/tracer_shop_context";
 import { UpdateToday } from "~/lib/state_actions";
 
 import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages";
+import { CALCULATOR_NEW_TIME_LABEL } from "~/components/injectable/calculator.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -361,6 +362,111 @@ describe("Shop Order page test suite", () => {
 
     expect(screen.getAllByText(procedureIdentifier2.description)[0]).toBeVisible();
     expect(screen.getAllByText(procedureIdentifier2.description)[1]).not.toBeVisible();
+
+  });
+
+  it("ISSUE: 20260316 - Ordering from calculator gives the wrong date in the order", async () => {
+    const {rerender} = render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
+
+    await waitFor(async () => {})
+    const currentDate = testState.today;
+
+    //screen.debug(undefined, 10000000000)
+
+    const newTestState = getModifiedTestState({ 'today' : new Date(2020,4,12,12,0,0) })
+
+    rerender(
+      <TracerShopContext tracershop_state={newTestState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={newTestState.customer}/>
+      </TracerShopContext>
+    );
+
+    await waitFor(async () => {})
+
+
+    await act(async () => {
+      screen.getByTestId('open-calculator-7').click();
+    })
+
+    await act(async () => {
+      fireEvent.change(
+        screen.getByLabelText(CALCULATOR_NEW_TIME_LABEL),
+        { target : {value : "13:55" }}
+      );
+    });
+
+    await act(async () => {
+      screen.getByTestId("calculator-add-row").click();
+    });
+
+    expect(screen.getByLabelText(CALCULATOR_NEW_TIME_LABEL).style.backgroundColor).not.toBe("rgd(255,51,51)")
+
+    await act(async () => {
+      screen.getByTestId("calculator-commit").click();
+    });
+
+    expect(screen.queryByTestId("calculator-commit")).toBeNull();
+
+    await act(async () => {
+      screen.getByLabelText("commit--1").click();
+    });
+
+
+
+    //expect(websocket.sendCreateModel).toHaveBeenCalledWith({})
+
+  });
+
+  it("ISSUE: 20260316 - Ordering from calculator gives the wrong date in the order - Test 2", async () => {
+    const {rerender} = render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={testState.customer}/>
+      </TracerShopContext>
+    );
+
+    await waitFor(async () => {})
+    const currentDate = testState.today;
+
+    //screen.debug(undefined, 10000000000)
+
+    const newTestState = getModifiedTestState({ 'today' : new Date(2020,4,12,12,0,0) })
+
+    rerender(
+      <TracerShopContext tracershop_state={newTestState} websocket={websocket}>
+        <ShopOrderPage relatedCustomer={newTestState.customer}/>
+      </TracerShopContext>
+    );
+
+    await waitFor(async () => {})
+
+    await act(async () => {
+      fireEvent.change(
+        screen.getByTestId("activity--1"),
+        {target : { value : "2000"}}
+      )
+    });
+
+    await act(async () => {
+      screen.getByLabelText("commit--1").click();
+    });
+
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(
+      "activity_orders",
+      { "comment": null,
+        "delivery_date": "2020-05-12",
+        "freed_by": null,
+        "freed_datetime": null,
+        "id": -1,
+        "moved_to_time_slot": null,
+        "ordered_activity": 2000,
+        "ordered_by": 1,
+        "ordered_time_slot": 7,
+        "status": 1
+      })
 
   });
 });

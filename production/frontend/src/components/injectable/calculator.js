@@ -230,6 +230,7 @@ export function Calculator ({
         </td>
         <td style={cssTableCenter}>
           <ClickableIcon
+            data-testid="calculator-add-row"
             src={"/static/images/plus2.svg"}
             onClick={addEntry}
             alt={"Tilføj"}
@@ -277,7 +278,7 @@ export function Calculator ({
       </Row>
       <Row>
         <Col>
-          <Button className={CalculatorStyle.Button} onClick={commit_activity}>Udregn</Button>
+          <Button data-testid="calculator-commit" className={CalculatorStyle.Button} onClick={commit_activity}>Udregn</Button>
         </Col>
         <Col>
           <Button className={CalculatorStyle.Button} onClick={cancel}>Tilbage</Button>

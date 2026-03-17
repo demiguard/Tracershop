@@ -17,7 +17,7 @@ export function ManyRows({children, max_length = 3}){
   }
 
   const rows = [];
-  let key = 1;
+  let key = 100;
 
   for(const sublist of list_of_lists){
     rows.push(<Row key={key}>{sublist}</Row>);
