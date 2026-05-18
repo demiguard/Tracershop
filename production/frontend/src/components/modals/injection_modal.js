@@ -47,7 +47,7 @@ export function InjectionModal ({modal_order, on_close}) {
   const [showCorrectAuth, setShowCorrectAuth] = useState(false);
   const [lot_number, setLotNumber] = useState(defaultLotNumber);
   const [loginError, setLoginError] = useErrorState();
-  const [maxInjectionVolume, setMaxInjectionVolume] = useState(modal_order.max_injection_volume);
+  const [maxInjectionVolume, setMaxInjectionVolume] = useState(order.max_injection_volume);
   const [maxInjectionVolumeError, setMaxInjectionVolumeError] = useErrorState();
   const [formattingError, setFormattingError] = useErrorState();
   const [dateError, setDateError] = useErrorState();
