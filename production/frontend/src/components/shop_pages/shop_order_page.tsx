@@ -19,7 +19,7 @@ import { BookingOverview } from "./booking_overview";
 import { UpdateToday } from "~/lib/state_actions";
 import { Optional } from "~/components/injectable/optional";
 import { DATA_BOOKING } from "~/lib/shared_constants";
-import { bookingFilter, timeSlotFilter } from "~/lib/filters";
+import { bookingFilter, endpointFilter, timeSlotFilter } from "~/lib/filters";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
 import { MESSAGE_CREATE_BOOKING, MESSAGE_DELETE_BOOKING, MESSAGE_MASS_ORDER, MESSAGE_READ_BOOKINGS } from "~/lib/incoming_messages";
 import { getObjects, numberfy, toMapping } from "~/lib/utils";
@@ -46,9 +46,9 @@ export function ShopOrderPage ({relatedCustomer}){
   const websocket = useWebsocket();
   const tracerCatalog = useTracerCatalog();
 
-  const /** @type {StateType<Number>} */ [activeCustomer, _setActiveCustomer] = useState(() => {
+  const [activeCustomer, _setActiveCustomer] = useState<number>(() => {
     let activeCustomer = db.get(DATABASE_SHOP_CUSTOMER);
-    if(activeCustomer !== null){
+    if(activeCustomer){
       if(!relatedCustomer.has(activeCustomer)){
         activeCustomer = null;
       }
@@ -65,19 +65,19 @@ export function ShopOrderPage ({relatedCustomer}){
     return activeCustomer;
   });
 
-  const /** @type {StateType<Number>} */ [activeEndpoint, _setActiveEndpoint] = useState(() => {
+  const [activeEndpoint, _setActiveEndpoint] = useState<number>(() => {
     let activeEndpoint = db.get(DATABASE_SHOP_ACTIVE_ENDPOINT);
     // This check is here to see t
-    if(activeEndpoint !== null){
+    if(activeEndpoint){
       const endpoint = state.delivery_endpoint.get(activeEndpoint);
-      if (endpoint.owner !== activeCustomer){
+      if (endpoint && endpoint.owner !== activeCustomer){
         activeEndpoint = null;
       }
     }
 
     if(activeEndpoint === null){
     for(const endpoint of state.delivery_endpoint.values()){
-      if(endpoint.owner === activeCustomer){
+      if(endpoint && endpoint.owner === activeCustomer){
           activeEndpoint = endpoint.id;
           db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, activeEndpoint);
           break;
@@ -94,8 +94,8 @@ export function ShopOrderPage ({relatedCustomer}){
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
     return viewIdentifier;
-
   });
+
   const catalog = tracerCatalog.getCatalog(activeEndpoint);
   const availableProducts = [...[...catalog.tracerCatalogActivity].map(getObjects(state.tracer)), ...[...catalog.isotopeCatalog].map(getObjects(state.isotopes))];
 
@@ -186,10 +186,10 @@ export function ShopOrderPage ({relatedCustomer}){
           break;
         }
       }
+
       setActiveCustomer(newActiveCustomer);
       setActiveEndpoint(newActiveEndpoint);
     }
-
   }, [relatedCustomer])
 
   useEffect(function getBookings () {
@@ -218,11 +218,11 @@ export function ShopOrderPage ({relatedCustomer}){
   }
 
   function setActiveCustomer(newCustomer){
-    db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, newCustomer);
+    db.set(DATABASE_SHOP_CUSTOMER, newCustomer);
     _setActiveCustomer(newCustomer);
   }
   function setActiveEndpoint(newEndpoint){
-    db.set(DATABASE_SHOP_CUSTOMER, newEndpoint);
+    db.set(DATABASE_SHOP_ACTIVE_ENDPOINT, newEndpoint);
     _setActiveEndpoint(newEndpoint);
   }
 

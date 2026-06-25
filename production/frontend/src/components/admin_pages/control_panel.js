@@ -1,15 +1,16 @@
 import React, { useContext, useState } from "react";
 import { Container, Button, Card, Collapse, Col, Row } from "react-bootstrap";
 
-
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { ProcedureIdentifierTable } from "~/components/admin_pages/procedure_identifier_table";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { JUSTIFY, CENTER, MARGIN, DISPLAY } from "~/lib/styles";
+import { useTracerCatalog } from "~/contexts/tracer_catalog";
 
 export function ControlPanel(){
   const state = useTracershopState();
   const websocket = useWebsocket();
+  const tracerCatalog = useTracerCatalog();
 
   const [showProcedures, setShowProcedures] = useState(false);
 
@@ -27,7 +28,7 @@ export function ControlPanel(){
           <Button onClick={() => {throw "exception!"}}>Raise Exception!</Button>
         </Col>
         <Col>
-          <Button onClick={() => {console.log(state)}}>print state</Button>
+          <Button onClick={() => {console.log(state, tracerCatalog)}}>print state</Button>
         </Col>
         <Col>
           <Button onClick={() => {console.log(websocket.get_listeners())}}>Listeners</Button>

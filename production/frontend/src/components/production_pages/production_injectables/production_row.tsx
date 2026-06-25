@@ -43,7 +43,15 @@ export function ProductionRow({
 
   for(const timeSlot of associatedTimeSlots){
     const customer = getTimeSlotOwner(timeSlot, state.delivery_endpoint, state.customer)
-    const overhead = tracerCatalog.getOverheadForTracer(customer.id, tracer.id)
+    let endpoint_id = null
+    for (const endpoint of state.delivery_endpoint.values()){
+      if(endpoint.owner === customer.id){
+        endpoint_id = endpoint.id;
+        break;
+      }
+    }
+
+    const overhead = endpoint_id ? tracerCatalog.getOverheadForTracer(endpoint_id, tracer.id) : 1;
     const orders = orderMapping.getOrders(dateString,timeSlot.id);
 
     for (const order of orders){

@@ -63,7 +63,6 @@ export function OrderReview({
   const availableInjectionTracers = [...endpointCatalog.tracerCatalogInjections].map(getObjects(state.tracer));
   const availableProducts = [...availableTracers, ...availableIsotopes];
 
-
   const day = getDay(active_date);
   const activeDateString = dateToDateString(active_date);
 
@@ -90,7 +89,7 @@ export function OrderReview({
     </Button>)
   })
 
-  const overhead = tracerCatalog.getOverheadForTracer(active_customer, product.product_id);
+  const overhead = tracerCatalog.getOverheadForTracer(active_endpoint, product.product_id);
 
   const timeSlotsCards = availableDeliveries.sort(deliveriesSortingFunction).map((timeSlot) => {
     const availableOrders = product.filterOrders(state, {

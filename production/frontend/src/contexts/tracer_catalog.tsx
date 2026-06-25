@@ -123,7 +123,7 @@ export class TracerCatalog {
     const endpoint_index = numberfy(endpointID);
     const tracer_index = numberfy(tracerID);
     if(endpoint_index === "" || tracer_index === ""){
-      console.log(`Undefined customer - ${endpointID}, tracer ${tracerID} referenced`);
+      console.log(`Undefined endpoint - ${endpointID}, tracer ${tracerID} referenced`);
       return 1;
     }
 
@@ -132,7 +132,7 @@ export class TracerCatalog {
       return endpoint_catalog.overheadMap.get(tracer_index);
     }
     // There should be a handle here!
-    console.log(`Undefined customer - ${endpointID}, tracer ${tracerID} referenced`);
+    console.log(`Undefined endpoint - ${endpointID}, tracer ${tracerID} referenced`);
     return 1;
   }
 
