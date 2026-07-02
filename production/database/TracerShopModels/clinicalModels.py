@@ -12,6 +12,7 @@ from django.db.models import Model, DateField, BigAutoField, CharField, EmailFie
 
 # Tracershop Packages
 from database.TracerShopModels.authModels import User, UserGroups
+from database.TracerShopModels.serverModels import Deadline
 from database.TracerShopModels.baseModels import TracershopModel, Days
 
 from lib.utils import classproperty
@@ -42,6 +43,8 @@ class Tracer(TracershopModel):
   vial_tag = CharField(max_length=32)
   archived = BooleanField(default=False)
   marketed = BooleanField(default=False)
+  deadline = ForeignKey(Deadline, default=None, null=True, on_delete=RESTRICT)
+
 
   def __str__(self):
     return f"{self.shortname} - {self.isotope}"

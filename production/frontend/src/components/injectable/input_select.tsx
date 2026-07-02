@@ -42,6 +42,14 @@ function InputOption({style, option, onOptionClick}){
     </div>;
 }
 
+type InputSelectProps = {
+  options : Option[],
+  value : any,
+  onChange,
+  canEdit? : boolean
+}
+
+
 /**
  *
  * @param {{
@@ -50,7 +58,7 @@ function InputOption({style, option, onOptionClick}){
  * }} props
  * @returns
  */
-export function InputSelect(props){
+export function InputSelect(props : InputSelectProps){
   const {options, value, onChange, canEdit=true,...rest} = props;
   const optionMap = new Map();
   for(const option of options){
@@ -95,6 +103,7 @@ export function InputSelect(props){
                 key={option.value}
                 onOptionClick={onOptionClick}
                 option={option}
+                style={{}}
              />
     }
   );

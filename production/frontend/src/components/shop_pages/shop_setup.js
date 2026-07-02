@@ -4,22 +4,30 @@ import { Container, Row } from "react-bootstrap";
 import { ProcedureTable } from "./shop_injectables/procedure_table";
 import { MarginButton } from "../injectable/buttons";
 import { UserSetup } from "./user_setup";
+import { StandardOrderSetup } from "~/components/shop_pages/standard_order_setup";
 
 const SetupTables = {
   Lokationer : LocationTable,
   Procedure : ProcedureTable,
-  Bruger : UserSetup
+  Bruger : UserSetup,
+  Bestilling : StandardOrderSetup
 }
 
 export function ShopSetup ({relatedCustomer: relatedCustomerID}){
   const [SetupTableIdentifier, setSetupTableIdentifier] = useState('Lokationer')
   const buttons = [...Object.keys(SetupTables)].map(
-    (key, i) => <MarginButton
-                            aria-label={`setup-${key}`}
-                            key={i}
-                            value={key}
-                            onClick={() => {setSetupTableIdentifier(key)}}
-                          >{key}</MarginButton>
+    (key, i) => {
+      const display = SetupTableIdentifier === key ? <u>{key}</u> : <div>{key}</div>
+      return (
+        <MarginButton
+          aria-label={`setup-${key}`}
+          key={i}
+          value={key}
+          onClick={() => {setSetupTableIdentifier(key)}}
+        >
+          {display}
+        </MarginButton>);
+    }
   )
 
   const SetupTable = SetupTables[SetupTableIdentifier]

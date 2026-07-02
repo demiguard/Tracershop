@@ -19,6 +19,7 @@ import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_
 import { compareLoosely } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
+import { clone } from "~/lib/serialization";
 
 
 function getNewTracer(){
@@ -32,7 +33,7 @@ export function TracerPage(){
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
   const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, "", "",false, false, false));
-  const [tracers, setTracers] = useState(appendNewObject(state.tracer, getNewTracer));
+  const [tracers, setTracers] = useState<Map<number, Tracer>>(appendNewObject(state.tracer, getNewTracer));
   const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
 
@@ -104,28 +105,28 @@ export function TracerPage(){
                 canEdit={tracer.id == -1}
                 aria-label={`set-shortname-${tracer.id}`}
                 value={tracer.shortname}
-                onChange={setTempMapToEvent(setTracers, tracer.id, 'shortname')}
+                onChange={setTempMapToEvent(setTracers, tracer.id, 'shortname', (id) => id)}
               />
             </td>
             <td>
               <FormControl
                 aria-label={`set-clinical-name-${tracer.id}`}
                 value={nullParser(tracer.clinical_name)}
-                onChange={setTempMapToEvent(setTracers, tracer.id, 'clinical_name')}
+                onChange={setTempMapToEvent(setTracers, tracer.id, 'clinical_name', (id) => id)}
               />
             </td>
             <td>
               <FormControl
                 aria-label={`set-vial-tag-${tracer.id}`}
                 value={nullParser(tracer.vial_tag)}
-                onChange={setTempMapToEvent(setTracers, tracer.id, 'vial_tag')}
+                onChange={setTempMapToEvent(setTracers, tracer.id, 'vial_tag', (id) => id)}
             />
       </td>
       <td>
         <Select
           aria-label={`set-isotope-${tracer.id}`}
           options={isotopeOptions}
-          onChange={setTempMapToEvent(setTracers, tracer.id, 'isotope')}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'isotope', (id) => id)}
           value={tracer.isotope}
         />
       </td>
@@ -134,7 +135,7 @@ export function TracerPage(){
           aria-label={`set-type-${tracer.id}`}
           options={toOptions(TracerTypeOptions)}
           value={tracer.tracer_type}
-          onChange={setTempMapToEvent(setTracers, tracer.id, 'tracer_type')}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'tracer_type', (id) => id)}
         />
       </td>
       <td style={cssTableCenter}>
@@ -142,9 +143,9 @@ export function TracerPage(){
           data-testid={`marketed-${tracer.id}`}
           checked={tracer.marketed}
           onChange={() => {
-            setTracers(oldTracer => {
-              const newTracers = new Map(oldTracer);
-              const newTracer = {...tracer, marketed : !tracer.marketed};
+            setTracers(oldTracers => {
+              const newTracers = new Map(oldTracers);
+              const newTracer = clone(oldTracers.get(tracer.id), DATA_TRACER);
               newTracers.set(newTracer.id, newTracer);
               return newTracers
             });

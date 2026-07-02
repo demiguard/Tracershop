@@ -50,6 +50,7 @@ export const DATA_RUN = "run";
 export const DATA_SECONDARY_EMAIL = "secondary_email";
 export const DATA_SERVER_CONFIG = "server_config";
 export const DATA_SERVER_LOG = "server_log";
+export const DATA_STANDARD_ORDER = "standard_order";
 export const DATA_TELEMETRY_RECORD = "telemetry_record";
 export const DATA_TELEMETRY_REQUEST = "telemetry_request";
 export const DATA_TRACER = "tracer";

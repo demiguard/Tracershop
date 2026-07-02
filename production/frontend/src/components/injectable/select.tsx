@@ -11,6 +11,9 @@ import { InputSelect } from "~/components/injectable/input_select";
  * @param {*} name
  */
 export class Option {
+  value : string | number
+  name : string
+
   /**
    *
    */
@@ -20,7 +23,7 @@ export class Option {
   }
 }
 
-export function toOptions(iterable, nameKey='name', valueKey = 'id'){
+export function toOptions(iterable, nameKey: string | ((n: any) => string) ='name', valueKey = 'id'){
   function toOption(entry){
     const name = (typeof nameKey === 'function') ?
                         nameKey(entry)
@@ -57,13 +60,16 @@ export function toOptionsFromEnum(obj, namingFunction){
   return options;
 }
 
+type SelectProps = {
+  canEdit? : boolean, options : Option[]
+}
+
 /**
  *
  * @param {Array<Option>} props.options
  * @returns
  */
-export function Select(props) {
-  const {canEdit=true, options, ...newProps} = props;
+export function Select({canEdit= true, options, value, onChange, ...newProps}) {
 
   if(!canEdit){
       newProps['disabled'] = true;
@@ -71,7 +77,7 @@ export function Select(props) {
     }
 
   if(options.length > 10){
-    return <InputSelect {...props}/>
+    return <InputSelect canEdit={canEdit} options={options} value={value} onChange={onChange} {...newProps}/>
   }
 
   const Options = options.map(
@@ -79,15 +85,10 @@ export function Select(props) {
                   {option.name}
                 </option>);
 
-  if(props.options.length <= 1) {
+  if(options.length <= 1) {
     newProps['disabled'] = true;
   }
   delete newProps['options'];
 
   return (<Form.Select{...newProps}> {Options}</Form.Select>);
-}
-
-Select.propType = {
-  options : propTypes.arrayOf(Option).isRequired,
-  canEdit : propTypes.bool,
 }

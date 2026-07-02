@@ -932,9 +932,10 @@ export class Tracer extends Dataclass {
   vial_tag
   archived
   marketed
+  deadline
   is_static_instance
 
-  constructor(id?, shortname?, clinical_name?, isotope?, tracer_type?, vial_tag?, archived?, marketed?, is_static_instance?, ) {
+  constructor(id?, shortname?, clinical_name?, isotope?, tracer_type?, vial_tag?, archived?, marketed?, deadline?, is_static_instance?, ) {
     super()
     this.id=id
     this.shortname=shortname
@@ -944,6 +945,7 @@ export class Tracer extends Dataclass {
     this.vial_tag=vial_tag
     this.archived=archived
     this.marketed=marketed
+    this.deadline=deadline
     this.is_static_instance=is_static_instance
   }
 
@@ -960,6 +962,7 @@ export class Tracer extends Dataclass {
       this.vial_tag,
       this.archived,
       this.marketed,
+      this.deadline,
       this.is_static_instance
     )
   }
@@ -973,6 +976,7 @@ export class Tracer extends Dataclass {
       new CharField("vial_tag"),
       new BooleanField("archived"),
       new BooleanField("marketed"),
+      new ForeignField("deadline","deadline"),
     ];
   }
 }
@@ -1273,6 +1277,37 @@ export class ServerConfiguration extends Dataclass {
   }
 }
 
+export class StandardOrder extends Dataclass {
+  id
+  amount
+  destination
+
+  constructor(id?, amount?, destination?, ) {
+    super()
+    this.id=id
+    this.amount=amount
+    this.destination=destination
+  }
+
+  /**Copies the standardorder
+  * @returns { StandardOrder }
+   */
+  copy() : StandardOrder {
+    return new StandardOrder(
+      this.id,
+      this.amount,
+      this.destination
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new FloatField("amount"),
+      new ForeignField("destination","deliver_times"),
+    ];
+  }
+}
+
 export class ServerLog extends Dataclass {
   id
   created
@@ -1468,6 +1503,7 @@ export const MODELS = {
   production : ActivityProduction,
   secondary_email : SecondaryEmail,
   server_config : ServerConfiguration,
+  standard_order : StandardOrder,
   server_log : ServerLog,
   user : User,
   user_assignment : UserAssignment,
@@ -1506,12 +1542,13 @@ export class TracershopState {
   production : Map<number, ActivityProduction>
   secondary_email : Map<number, SecondaryEmail>
   server_config : Map<number, ServerConfiguration>
+  standard_order : Map<number, StandardOrder>
   server_log : Map<number, ServerLog>
   user : Map<number, User>
   user_assignment : Map<number, UserAssignment>
   vial : Map<number, Vial>
 
-  constructor(logged_in_user?, today?, address?, activity_orders?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, server_log?, user?, user_assignment?, vial?, ){
+  constructor(logged_in_user?, today?, address?, activity_orders?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1649,6 +1686,11 @@ export class TracershopState {
       this.server_config = server_config
     } else {
       this.server_config = new Map()
+    }
+    if(standard_order !== undefined){
+      this.standard_order = standard_order
+    } else {
+      this.standard_order = new Map()
     }
     if(server_log !== undefined){
       this.server_log = server_log

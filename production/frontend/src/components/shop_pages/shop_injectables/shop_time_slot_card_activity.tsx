@@ -32,11 +32,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   const state = useTracershopState();
 
   const [displayActivity, setDisplayActivity] = useState(() => {
-    if (dataClassExists(order)){
-      return String(order.ordered_activity);
-    }
-
-    return ""
+    return String(order.ordered_activity);
   });
   const [displayComment, setDisplayComment] = useState(() => {
     if(dataClassExists(order)){

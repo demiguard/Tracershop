@@ -77,6 +77,9 @@ export function setError(valid: boolean, errorStateFunction, messageOrValue){
   if(!valid){ errorStateFunction(messageOrValue); }
 }
 
+type ErrorCallBacks = {
+  [key: string]: (error: string) => void
+}
 
 export class ErrorMonad {
   error : Map<string, string>
@@ -113,4 +116,13 @@ export class ErrorMonad {
     const err = this.error.get(key);
     return err ? err : ""
   }
+
+  registerErrors(errorCallBacks: ErrorCallBacks){
+    for(const [id, error] of this.error){
+      errorCallBacks[id](error)
+    }
+
+    return !!this.error.size;
+  }
+
 };

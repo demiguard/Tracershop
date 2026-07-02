@@ -89,7 +89,7 @@ export class TracerCatalog {
     return endpointCatalog;
   }
 
-  getActivityCatalog(customerID: number | string) {
+  getActivityCatalog(customerID: number | string) : Set<number> {
     const index = numberfy(customerID);
     if(index === ""){
       return new Set();
@@ -106,7 +106,7 @@ export class TracerCatalog {
    * Gets the injections tracers a customer can order
    * @param {Number} endpointID
    */
-  getInjectionCatalog(endpointID : number | string) {
+  getInjectionCatalog(endpointID : number | string) : Set<number> {
     const index = numberfy(endpointID);
     if(index === ""){
       return new Set();

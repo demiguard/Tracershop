@@ -58,8 +58,19 @@ export function makeBlankTracer(){
 export function makeBlankActivityOrder(timeSlot: ActivityDeliveryTimeSlot){
   const state = useTracershopState();
 
+  let activity = (() => {
+    for(const standardOrder of state.standard_order.values()){
+      if(standardOrder.destination === timeSlot.id){
+        return String(standardOrder.amount)
+      }
+    }
+    return "";
+  })()
+
+  console.log(activity, timeSlot.id)
+
   return new ActivityOrder(-1,
-                           "",
+                           activity,
                            dateToDateString(state.today),
                            ORDER_STATUS.AVAILABLE,
                            "", timeSlot.id,

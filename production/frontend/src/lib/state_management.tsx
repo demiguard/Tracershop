@@ -136,8 +136,8 @@ export function setTempObjectMapToEvent(stateFunction, id, keyword){
  * @param {TConstructor<T>} nConstructor
  * @returns {Map<Number, T>}
  */
-export function appendNewObject(map, nConstructor){
-  const stateMap = new Map(map);
+export function appendNewObject<T>(map: Map<number, T>, nConstructor: () => T): Map<number, T>{
+  const stateMap = new Map<number, T>(map);
   const obj = nConstructor();
   if (obj != null){
     stateMap.set(-1, obj);

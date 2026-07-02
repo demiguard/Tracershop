@@ -11,7 +11,7 @@ from typing import Any, Dict, Optional
 from django.db.models import DateField, BigAutoField, CharField, EmailField,\
     TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField,\
     RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField,\
-    SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index
+    SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index, OneToOneField
 
 # Tracershop Packages
 from lib.utils import classproperty
@@ -577,3 +577,7 @@ class IsotopeVial(TracershopModel):
       return AuthActions.ACCEPT_LOG
 
     return AuthActions.REJECT
+
+class StandardOrder(TracershopModel):
+  amount = FloatField()
+  destination = OneToOneField(ActivityDeliveryTimeSlot, on_delete=CASCADE, unique=True)
