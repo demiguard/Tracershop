@@ -6,7 +6,7 @@ import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { dateToDateString } from "~/lib/formatting";
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
 import { ShopTimeSlotCardActivity } from "./shop_injectables/shop_time_slot_card_activity";
-import { getDay } from "~/lib/chronomancy";
+import { expiredDeadline, getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
 import { activityOrderFilter, timeSlotFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
@@ -20,6 +20,7 @@ import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot
 import { makeBlankInjectionOrder, makeBlankTracer } from "~/lib/blanks";
 import { getObjects } from "~/lib/utils";
 import { deliveriesSortingFunction } from "~/lib/sorting";
+import { InjectionOrderingCard } from "./injection_ordering_card";
 
 
 /**
@@ -53,8 +54,8 @@ export function OrderReview({
   productState,
 }: OrderReviewProps){
   const state = useTracershopState();
+  const serverConfig = state.server_config.get(1);
   const tracerCatalog = useTracerCatalog();
-  const endpoint = state.delivery_endpoint.get(active_endpoint);
   const endpointCatalog = tracerCatalog.getCatalog(active_endpoint);
 
   const [product, setActiveProduct] = productState;
@@ -123,7 +124,6 @@ export function OrderReview({
     />);
   });
 
-  const serverConfig = state.server_config.get(1);
   const activityDeadline = (serverConfig !== undefined) ?
       state.deadline.get(serverConfig.global_activity_deadline)
     : undefined;
@@ -131,21 +131,14 @@ export function OrderReview({
       state.deadline.get(serverConfig.global_injection_deadline)
     : undefined;
 
-  const defaultInjectionTracer = availableInjectionTracers.length ?
-      availableInjectionTracers[0]
-    : makeBlankTracer();
-
-
-  const blankInjectionOrder = makeBlankInjectionOrder(endpoint, defaultInjectionTracer)
-
-  if(injectionDeadlineValid && (availableInjectionTracers.length > 0)) {
-    InjectionOrderCards.push(<InjectionOrderCard
-                                key={-1}
-                                injection_order={blankInjectionOrder}
-                                injection_tracers = {availableInjectionTracers}
-                                valid_deadline={injectionDeadlineValid}
-                              />);
-  }
+  InjectionOrderCards.push(
+    <InjectionOrderingCard
+       key={-1}
+       availableTracers={availableInjectionTracers}
+       valid_deadline={injectionDeadlineValid}
+       endpointID={active_endpoint}
+    />
+  )
 
   return (
   <Row>

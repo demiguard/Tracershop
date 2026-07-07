@@ -112,6 +112,16 @@ export class ErrorMonad {
     return val ? val : "";
   }
 
+  get_values(): {[object_key: string] : any} {
+    const ret = {};
+
+    for(const [key, value] of this.values){
+      ret[key] = value
+    }
+
+    return ret;
+  }
+
   get_error(key: string){
     const err = this.error.get(key);
     return err ? err : ""

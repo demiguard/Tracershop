@@ -90,5 +90,5 @@ export function Select({canEdit= true, options, value, onChange, ...newProps}) {
   }
   delete newProps['options'];
 
-  return (<Form.Select{...newProps}> {Options}</Form.Select>);
+  return (<Form.Select value={value} onChange={onChange} {...newProps}> {Options}</Form.Select>);
 }

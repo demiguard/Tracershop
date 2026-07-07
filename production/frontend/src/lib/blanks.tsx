@@ -67,8 +67,6 @@ export function makeBlankActivityOrder(timeSlot: ActivityDeliveryTimeSlot){
     return "";
   })()
 
-  console.log(activity, timeSlot.id)
-
   return new ActivityOrder(-1,
                            activity,
                            dateToDateString(state.today),

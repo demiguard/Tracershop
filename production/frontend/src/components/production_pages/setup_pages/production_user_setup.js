@@ -23,7 +23,7 @@ import { nullify } from "~/lib/utils";
 
 export function ProductionUserSetup(){
   const state = useTracershopState()
-  const /** @type {{current : Map<Number, User>?}} */ initial_external_users = useRef(null);
+
   const userMapping = new ArrayMap()
   for(const userAssignment of state.user_assignment.values()){
     userMapping.set(userAssignment.user, userAssignment);
@@ -52,22 +52,19 @@ export function ProductionUserSetup(){
         user_assignment : null
       })
     }
-  }
 
-  if(initial_external_users.current === null){
-    initial_external_users.current = new Map();
-    initialize_users(initial_external_users.current);
+    return map
   }
 
   const [userFilter, setUserFilter] = useState('');
-  const [userState, setUserState] = useState(initial_external_users.current);
+  const [userState, setUserState] = useState(() => {
+    return initialize_users(state.user)
+  });
 
   useEffect(function updateUsers(){
     setUserState(old => {
       const newState = new Map(old);
-      initialize_users(newState);
-
-      return newState
+      return initialize_users(newState);
     })
   }, [state.user])
 
@@ -143,6 +140,7 @@ export function ProductionUserSetup(){
               <Col style={cssCenter} xs="3">
                 <TracershopInputGroup label="Kunde">
                   <EditableInput
+                    aria-label={`username-${user.id}`}
                     canEdit={user.id == -1}
                     value={user.username}
                     onChange={

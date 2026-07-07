@@ -4,35 +4,39 @@ import { Container, Table, FormControl, Row, Card, Collapse , Col, FormCheck} fr
 import { TracerModal } from "../../modals/tracer_modal";
 import { appendNewObject, setStateToEvent, setTempMapToEvent } from "~/lib/state_management";
 import { PROP_ACTIVE_TRACER, PROP_ON_CLOSE,
-  TracerTypeOptions, TRACER_TYPE} from "~/lib/constants";
+  TracerTypeOptions, TRACER_TYPE,
+  DEADLINE_TYPES,
+  DAYS_OBJECTS} from "~/lib/constants";
 import { cssAlignRight, cssTableCenter } from "~/lib/styles";
-import { Tracer } from "~/dataclasses/dataclasses";
+import { Deadline, Tracer } from "~/dataclasses/dataclasses";
 import { DATA_TRACER } from "~/lib/shared_constants"
 import { ClickableIcon } from "~/components/injectable/icons";
-import { Select,  toOptions } from "~/components/injectable/select";
+import { Select,  toOptions, Option } from "~/components/injectable/select";
 import { HoverBox } from "~/components/injectable/hover_box";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { CommitIcon } from "~/components/injectable/commit_icon";
 import { nullParser } from "~/lib/formatting";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
-import { compareLoosely } from "~/lib/utils";
+import { compareLoosely, nullify, numberfy } from "~/lib/utils";
 import { Optional } from "~/components/injectable/optional";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { clone } from "~/lib/serialization";
 
 
 function getNewTracer(){
-  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, "", false, false, false);
+  return new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, "", false, false, null, false);
 }
 
 export function TracerPage(){
   const state = useTracershopState();
   const websocket = useWebsocket();
+
+  const serverConfig = state.server_config.get(1);
+
   const [modalTracerID, setModalTracerID] = useState(-1)
   const [openArchive, setOpenArchive] = useState(false);
   const [tracerFilter, setTracerFilter] = useState("");
-  const [newTracer, setNewTracer] = useState(new Tracer(-1, "", "", 1, TRACER_TYPE.DOSE, "", "",false, false, false));
   const [tracers, setTracers] = useState<Map<number, Tracer>>(appendNewObject(state.tracer, getNewTracer));
   const isotopeOptions = toOptions(state.isotopes,
                                    (isotope) => `${isotope.atomic_letter}-${isotope.atomic_mass}${isotope.metastable ? "m" : ""}`)
@@ -54,6 +58,32 @@ export function TracerPage(){
     return () => {setModalTracerID(tracer.id)}
   }
 
+  function deadlineDisplayString(deadline: Deadline){
+    if(deadline.deadline_type === DEADLINE_TYPES.DAILY){
+      return deadline.deadline_time;
+    }
+
+    const dayObject = DAYS_OBJECTS[deadline.deadline_day]
+    return `${dayObject.name} - ${deadline.deadline_time}`
+  }
+
+  function deadlineOptions(tracer_type){
+    const options = []
+    for (const deadline of state.deadline.values()){
+      if(deadline.id != serverConfig.global_activity_deadline && deadline.id != serverConfig.global_injection_deadline){
+        options.push(new Option(deadline.id, deadlineDisplayString(deadline)))
+      }
+    }
+
+    if (tracer_type === TRACER_TYPE.ACTIVITY){
+      options.push(new Option("",deadlineDisplayString(state.deadline.get(serverConfig.global_activity_deadline))))
+    } else {
+      options.push(new Option("",deadlineDisplayString(state.deadline.get(serverConfig.global_injection_deadline))))
+    }
+
+    return options;
+  }
+
   function restoreTracer(tracer){
     return () => {
       websocket.sendEditModels(DATA_TRACER, {...tracer, archived : false,});
@@ -67,10 +97,11 @@ export function TracerPage(){
     }
   }
 
-  function validate(tracer){
+  function validate(tracer: Tracer){
     return () => {
       return [true, {
         ...tracer,
+        deadline : nullify(Number(tracer.deadline)),
         isotope : Number(tracer.isotope),
         tracer_type : Number(tracer.tracer_type),
       }];
@@ -96,6 +127,7 @@ export function TracerPage(){
           </tr>);
       } else {
         const archiveAble = !activeTracers.has(tracer.id) && 0 < tracer.id ;
+
         const changed = state.tracer.has(tracer.id) ? !compareLoosely(tracer, state.tracer.get(tracer.id)) : true;
 
         activeTracerRows.push(
@@ -126,7 +158,7 @@ export function TracerPage(){
         <Select
           aria-label={`set-isotope-${tracer.id}`}
           options={isotopeOptions}
-          onChange={setTempMapToEvent(setTracers, tracer.id, 'isotope', (id) => id)}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'isotope', (id) => Number(id))}
           value={tracer.isotope}
         />
       </td>
@@ -135,7 +167,15 @@ export function TracerPage(){
           aria-label={`set-type-${tracer.id}`}
           options={toOptions(TracerTypeOptions)}
           value={tracer.tracer_type}
-          onChange={setTempMapToEvent(setTracers, tracer.id, 'tracer_type', (id) => id)}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'tracer_type', (id) => nullify(Number(id)))}
+        />
+      </td>
+      <td>
+        <Select
+          aria-label={`set-deadline-${tracer.id}`}
+          options={deadlineOptions(tracer.tracer_type)}
+          value={numberfy(tracer.deadline)}
+          onChange={setTempMapToEvent(setTracers, tracer.id, 'deadline', (id) => nullify(Number(id)))}
         />
       </td>
       <td style={cssTableCenter}>
@@ -253,13 +293,16 @@ export function TracerPage(){
             />
           </th>
           <th>
+            <HoverBox
+              Base={<div>Deadline</div>}
+              Hover={<div>Hvis en tracer har en deadline, så bruger den deadline i stedet for den globale deadline.</div>}
+            />
+          </th>
+          <th>
             Markedsført
           </th>
           <th>
-            <HoverBox
-              Base={<div>Handlinger</div>}
-              Hover={<div>Her findes knapper til forskellige handlinger</div>}
-            />
+
           </th>
         </tr>
         </thead>

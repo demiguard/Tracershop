@@ -11,6 +11,7 @@ export const tracers = new Map([
       null, // vial_tag
       false, // archived
       false, // marketed
+      null, // deadline
       true, // is_static_instance
 )], [2, new Tracer(
       2, // id
@@ -20,6 +21,7 @@ export const tracers = new Map([
       TRACER_TYPE.DOSE, // tracer_type
       null, // vial_tag
       false, // archived
+      null,
       true, // is_static_instance
 )], [3, new Tracer(
       3, // id
@@ -30,6 +32,7 @@ export const tracers = new Map([
       null, // vial_tag
       false, // archived
       false, // marketed
+      null,
       true,  // is_static_instance
   )], [4, new Tracer(
       4, // id
@@ -40,6 +43,7 @@ export const tracers = new Map([
       null, // vial_tag
       false, // archived
       false, // marketed
+      null, // deadline
       true, // is_static_instance
   )], [5, new Tracer(
       5, // id
@@ -50,6 +54,7 @@ export const tracers = new Map([
       null, // vial_tag
       true, // archived
       false, // marketed
+      null, // deadline
       true, // is_static_instance
   )], [6, new Tracer(
     6, // id
@@ -60,6 +65,7 @@ export const tracers = new Map([
     null, // vial_tag
     true, // archived
     false, // marketed
+    null, // deadline
     true, // is_static_instance
   )],
   [7, new Tracer(
@@ -71,6 +77,7 @@ export const tracers = new Map([
     null, // vial_tag
     false, // archived
     false, // marketed
+    null, // deadline
     true, // is_static_instance
   )],
   [8, new Tracer(
@@ -82,7 +89,8 @@ export const tracers = new Map([
     null, // vial_tag
     false, // archived
     false, // marketed
-      true, // is_static_instance
+    null, // deadline
+    true, // is_static_instance
   )],
   [9, new Tracer(
     9, // id
@@ -93,6 +101,7 @@ export const tracers = new Map([
     null, // vial_tag
     true, // archived
     false, // marketed
+    null, //
     true, // is_static_instance
   )]
 ]);

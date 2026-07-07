@@ -3,7 +3,6 @@
 import { ORDER_STATUS } from "~/lib/constants";
 import { ActivityOrder, Dataclass, Deadline, DeliveryEndpoint, InjectionOrder, ServerConfiguration, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { URL_ACTIVITY_PDF_BASE_PATH, URL_INJECTION_PDF_BASE_PATH, URL_ISOTOPE_PDF_BASE_PATH, URL_SHOP_MANUAL, URL_VIAL_LABEL_PDF_BASE_PATH } from "./shared_constants.js";
-import { template } from "@babel/core";
 import { IsotopeOrderCollection } from "./data_structures/isotope_order_collection";
 import { OrdersType } from "./types";
 
@@ -13,7 +12,7 @@ import { OrdersType } from "./types";
  * @param {Date} d2 - Date 2
  * @returns Checks if date 1 and date 2 are the same day
  */
-export function compareDates(d1, d2) {
+export function compareDates(d1: Date, d2: Date) {
   //Compares if two date objects refer to the same date
   return d1.getFullYear() == d2.getFullYear() && d1.getMonth() == d2.getMonth() && d1.getDate() == d2.getDate();
 }

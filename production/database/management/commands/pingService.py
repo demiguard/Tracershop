@@ -54,8 +54,16 @@ def get_or_create_location(location_str: str) -> Location:
 
 
 @database_sync_to_async
-def get_or_create_procedureIdentifier(code, description):
-  # This block renames prodcedure identifiers
+def get_or_create_procedureIdentifier(code: str, description: str) -> ProcedureIdentifier:
+  """Retrieves procedureIdentifier from the HL7 message
+
+  Args:
+      code (str): The code for procedure
+      description (str): Description
+
+  Returns:
+      _type_: _description_
+  """
   try:
     procedure_identifier = ProcedureIdentifier.objects.get(code=code)
     if procedure_identifier.description != description:
@@ -79,6 +87,9 @@ def get_or_create_procedureIdentifier(code, description):
 @database_sync_to_async
 def create_booking(
   location, procedure_identifier, start_time, start_date, accession_number) -> Booking:
+  # You can't use a get_or_create here because you only have the accession
+  # number to fetch from, but you cannot create a booking without a procedure
+  # and location.
   try:
     booking = Booking.objects.get(accession_number=accession_number)
   except ObjectDoesNotExist:
