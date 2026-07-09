@@ -108,7 +108,9 @@ class TracerCatalogPage(TracershopModel):
 
 
 class Location(TracershopModel):
-  """This is a room, that can be booked too. A room can be owned by an endpoint
+  """This is a destination where examinations (Bookings) can be booked too.
+  A room can be owned by an endpoint, in which case an examination booked in
+  a location should be owned by that endpoint.
   """
   #Note A Location should be able to be created from location_code alone
   location_code = CharField(max_length=120, unique=True)
@@ -124,9 +126,16 @@ class Location(TracershopModel):
 
 
 class ProcedureIdentifier(TracershopModel):
+  """This represent an examination or procedure, that is common to Sectra. Note
+  that different department may have different implementations of the same
+  procedure."""
   code = CharField(max_length=128, blank=True, unique=True, null=True, default=None)
   description = CharField(max_length=255, blank=True, unique=True, null=True, default=None)
   is_pet = BooleanField(default=True)
+  """Field indicating if the procedure is a PET exam, and therefore in
+  contention for having Ordered Tracers for it. This field is unused and
+  unreliable, due to the fact that there's no workflow specifying if a procedure
+  is a """
 
   def __str__(self) -> str:
     baseString = "Procedure Identifier: "
