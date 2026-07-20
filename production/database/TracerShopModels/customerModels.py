@@ -177,7 +177,7 @@ class Booking(TracershopModel):
   status = SmallIntegerField(choices=BookingStatus.choices, default=BookingStatus.Initial)
   location = ForeignKey(Location, on_delete=RESTRICT)
   procedure = ForeignKey(ProcedureIdentifier, on_delete=RESTRICT)
-  owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT, null=True, default=None)
+
   accession_number = CharField(max_length=32, unique=True, blank=True, null=True, default=None)
   start_time = TimeField()
   start_date = DateField()
@@ -188,7 +188,6 @@ class Booking(TracershopModel):
 
   class Meta: #type: ignore
     indexes = [
-      Index(fields=['owner', 'start_date', 'start_time']),
       Index(fields=['location', 'start_date']),
       Index(fields=['accession_number']),
       Index(fields=['start_date', 'start_time'])
