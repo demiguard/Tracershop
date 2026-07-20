@@ -31,6 +31,7 @@ from shared_constants import DATA_BOOKING, WEBSOCKET_SERVER_MESSAGES,\
   WEBSOCKET_DATA_ID, WEBSOCKET_DATA
 from database.database_interface import DatabaseInterface
 from database.models import Booking, Location, ProcedureIdentifier, BookingStatus
+from lib import hl7
 from websocket.messenger import Messenger
 logger = logging.getLogger(PING_SERVICE_LOGGER)
 
@@ -51,37 +52,6 @@ def get_or_create_location(location_str: str) -> Location:
     logger.info(f"Created Location with code {location_str}")
 
   return location
-
-
-@database_sync_to_async
-def get_or_create_procedureIdentifier(code: str, description: str) -> ProcedureIdentifier:
-  """Retrieves procedureIdentifier from the HL7 message
-
-  Args:
-      code (str): The code for procedure
-      description (str): Description
-
-  Returns:
-      _type_: _description_
-  """
-  try:
-    procedure_identifier = ProcedureIdentifier.objects.get(code=code)
-    if procedure_identifier.description != description:
-      logger.info(f"Changing description from {procedure_identifier.description} to {description} for code {code}")
-      procedure_identifier.description = description
-      procedure_identifier.save()
-  except ObjectDoesNotExist:
-    try:
-      procedure_identifier = ProcedureIdentifier.objects.get(description=description)
-      procedure_identifier.code = code
-      logger.info(f"Changing code from {procedure_identifier.code} to {code} for description {description}")
-      procedure_identifier.save()
-    except ObjectDoesNotExist:
-      procedure_identifier, created = ProcedureIdentifier.objects.get_or_create(code=code, description=description)
-      if created:
-        logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
-
-  return procedure_identifier
 
 
 @database_sync_to_async
@@ -145,7 +115,7 @@ async def handle_create_booking_message(ORC_message_segment: Segment, OBR_messag
   location = await get_or_create_location(location_str)
 
   study_code, study_description = extract_procedure_identifier(OBR_message_segment)
-  procedure_identifier = await get_or_create_procedureIdentifier(study_code, study_description)
+  procedure_identifier = await hl7.get_or_create_procedureIdentifier(study_code, study_description)
   accession_number = extract_accession_number(ORC_message_segment)
   try:
     start_date, start_time = extract_booking_time(ORC_message_segment)
