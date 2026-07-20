@@ -29,7 +29,7 @@ from database.models import Booking, Procedure, User, Tracer, Isotope,\
   DeliveryEndpoint, TracerTypes, ActivityOrder, InjectionOrder,\
   ActivityDeliveryTimeSlot, ActivityProduction, Days, WeeklyRepeat,\
   UserAssignment, OrderStatus, Vial, TracerUsage, IsotopeOrder, IsotopeVial,\
-  IsotopeProduction, IsotopeDelivery
+  IsotopeProduction, IsotopeDelivery, BookingRule
 
 
 DEFAULT_TEST_ORDER_DATE = date(2020,4,15)
@@ -188,6 +188,8 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
     # 2018-03-12 is a monday
     cls.booking_date = date(2018, 3, 12)
+    cls.booking_date_2 = date(2018, 3, 13)
+    """2018-03-13"""
 
     cls.isotope_production = IsotopeProduction.objects.create(
       id=67219034,
@@ -206,128 +208,127 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
     cls.now = datetime(2025,11,22,12,34,56)
 
+    cls.bookings_activity = [
+      Booking.objects.create(
+        status=BookingStatus.Initial,
+        location=cls.location,
+        procedure=cls.procedure_identifier,
+        accession_number=accession,
+        start_time=start_time,
+      start_date=cls.booking_date,
+      ) for (accession, start_time) in [
+        (cls.accession_number_1, time(9,15,0)),
+        (cls.accession_number_2, time(10,15,0)),
+        (cls.accession_number_3, time(11,15,0)),
+        (cls.accession_number_4, time(12,15,0)),
+        (cls.accession_number_5, time(13,15,0)),
+      ]
+    ]
 
-  def setUp(self) -> None:
-    self.db = DatabaseInterface()
+    cls.bookings_injection = [
+      Booking.objects.create(
+        status=BookingStatus.Initial,
+      location=cls.location,
+      procedure=cls.procedure_identifier_inj,
+      accession_number=accession,
+      start_time=start_time,
+      start_date=cls.booking_date,
+      ) for (accession, start_time) in [
+        (cls.inj_accession_number_1, time(9,15, 0)),
+        (cls.inj_accession_number_2, time(10,15, 0)),
+        (cls.inj_accession_number_3, time(11,15, 0)),
+        (cls.inj_accession_number_4, time(12,15, 0)),
+        (cls.inj_accession_number_5, time(13,15,0))
+      ]
+    ]
 
 
-
-    Booking.objects.create(
+    cls.booking_missing_procedure = Booking.objects.create(
       status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier,
-      accession_number=self.accession_number_1,
-      start_time=time(9,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier,
-      accession_number=self.accession_number_2,
-      start_time=time(10,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier,
-      accession_number=self.accession_number_3,
-      start_time=time(11,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier,
-      accession_number=self.accession_number_4,
-      start_time=time(12,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier,
-      accession_number=self.accession_number_5,
-      start_time=time(13,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier_inj,
-      accession_number=self.inj_accession_number_1,
-      start_time=time(9,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier_inj,
-      accession_number=self.inj_accession_number_2,
-      start_time=time(10,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier_inj,
-      accession_number=self.inj_accession_number_3,
-      start_time=time(11,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier_inj,
-      accession_number=self.inj_accession_number_4,
-      start_time=time(12,15,0),
-      start_date=self.booking_date,
-    )
-
-    Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier_inj,
-      accession_number=self.inj_accession_number_5,
-      start_time=time(13,15,0),
-      start_date=self.booking_date,
-    )
-
-    self.booking_missing_procedure = Booking.objects.create(
-      status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier_missing,
+      location=cls.location,
+      procedure=cls.procedure_identifier_missing,
       accession_number="Missing",
       start_time=time(13,15,00),
       start_date=date(2011,12,11)
     )
 
-    self.booking_missing_endpoint = Booking.objects.create(
+    cls.booking_missing_endpoint = Booking.objects.create(
       status=BookingStatus.Initial,
-      location=self.location_unknown_endpoint,
-      procedure=self.procedure_identifier,
+      location=cls.location_unknown_endpoint,
+      procedure=cls.procedure_identifier,
       accession_number="missing_location",
       start_time=time(12,11,44),
       start_date=date(2033,11,12)
     )
 
-    self.booking_missing_time_slot = Booking.objects.create(
+    cls.booking_missing_time_slot = Booking.objects.create(
       status=BookingStatus.Initial,
-      location=self.location,
-      procedure=self.procedure_identifier,
+      location=cls.location,
+      procedure=cls.procedure_identifier,
       accession_number="missing_time_slot",
-      start_time=time(0,0,0),
-      start_date=self.booking_date,
+      start_time=time(10,0,0),
+      start_date=cls.booking_date,
     )
+
+    cls.excluded_accession = "EXCLUDED"
+    cls.excluded_grown = "EXCLUDED_GROWN"
+    cls.included_accession_grown = "INCLUDED_GROWN"
+    cls.included_accession_child = "INCLUDED_CHILD"
+
+    cls.booking_excluded_child = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location = cls.location,
+      procedure = cls.procedure_identifier,
+      accession_number = cls.excluded_accession,
+      start_time=time(10,0,0),
+      start_date=cls.booking_date_2,
+      patient_birth_date=date(2013,3,13)
+    )
+
+    cls.booking_excluded_grown = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location = cls.location_unknown_endpoint,
+      procedure = cls.procedure_identifier,
+      accession_number = cls.excluded_grown,
+      start_time=time(10,0,0),
+      start_date=cls.booking_date_2,
+      patient_birth_date=date(1993,3,13)
+    )
+
+    cls.booking_included_child = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location = cls.location_unknown_endpoint,
+      procedure = cls.procedure_identifier,
+      accession_number = cls.included_accession_child,
+      start_time=time(10,0,0),
+      start_date=cls.booking_date_2,
+      patient_birth_date=date(2013,3,13)
+    )
+
+    cls.booking_included_grown = Booking.objects.create(
+      status=BookingStatus.Initial,
+      location = cls.location,
+      procedure = cls.procedure_identifier,
+      accession_number = cls.included_accession_grown,
+      start_time=time(11,0,0),
+      start_date=cls.booking_date_2,
+      patient_birth_date=date(1993,3,13)
+    )
+
+
+    cls.booking_rule_exclude = BookingRule.objects.create(
+      location = cls.location,
+      true_owner = cls.other_endpoint
+    )
+
+    cls.booking_rule_include = BookingRule.objects.create(
+      location = cls.location_unknown_endpoint,
+      true_owner = cls.endpoint
+    )
+
+
+  def setUp(self) -> None:
+    self.db = DatabaseInterface()
 
     self.order_id=1513113
     self.order = ActivityOrder.objects.create(
@@ -809,7 +810,33 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
     bookings = [ booking for booking in data[DATA_BOOKING] ]
 
+    for test_booking in self.bookings_activity:
+      self.assertIn(test_booking, bookings)
+
+    for test_booking in self.bookings_injection:
+      self.assertIn(test_booking, bookings)
+
+    self.assertIn(self.booking_missing_time_slot, bookings)
+
     self.assertEqual(len(bookings), 11)
+
+  def test_get_bookings_booking_rules(self):
+    class FakeDateTime(datetime):
+      @classmethod
+      def now(cls, tz=None):
+        return cls(2018,3,13,12,0,0)
+
+    with patch("database.database_interface.datetime", FakeDateTime):
+      retrieve_bookings = self.db.get_bookings(
+        self.booking_date_2,
+        self.endpoint.id
+      )
+
+    self.assertIn(self.booking_included_grown, retrieve_bookings[DATA_BOOKING])
+    self.assertIn(self.booking_included_child, retrieve_bookings[DATA_BOOKING])
+
+    self.assertNotIn(self.booking_excluded_child, retrieve_bookings[DATA_BOOKING])
+    self.assertNotIn(self.booking_excluded_grown, retrieve_bookings[DATA_BOOKING])
 
   def test_get_csv_data(self):
     out_data = self.db.get_csv_data(DEFAULT_TEST_ORDER_DATE)

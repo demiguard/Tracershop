@@ -180,6 +180,7 @@ class Booking(TracershopModel):
   accession_number = CharField(max_length=32, unique=True, blank=True, null=True, default=None)
   start_time = TimeField()
   start_date = DateField()
+  patient_birth_date = DateField(default=None, null=True)
 
   def __str__(self) -> str:
     return f"Booking: {self.accession_number}"
@@ -191,11 +192,17 @@ class Booking(TracershopModel):
       Index(fields=['start_date', 'start_time'])
     ]
 
+class BookingRule(TracershopModel):
+  location = ForeignKey(Location, on_delete=RESTRICT)
+  true_owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+
 
 class WeeklyRepeat(IntegerChoices):
   EveryWeek = 0
   EvenWeek = 1
   OddWeek = 2
+
+
 
 
 class ActivityDeliveryTimeSlot(TracershopModel):

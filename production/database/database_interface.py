@@ -42,7 +42,8 @@ from database.models import ServerConfiguration, User,\
     TIME_SENSITIVE_FIELDS, ActivityDeliveryTimeSlot, T,\
     DeliveryEndpoint, UserAssignment, Booking, TracerTypes, BookingStatus,\
     TracerUsage, ActivityProduction, Customer, Procedure, Days,\
-    Location, TelemetryRecord, TelemetryRequest, IsotopeOrder, IsotopeVial
+    Location, TelemetryRecord, TelemetryRequest, IsotopeOrder, IsotopeVial,\
+    BookingRule
 from lib.ProductionJSON import ProductionJSONEncoder
 from lib.calenderHelper import combine_date_time, subtract_times
 from lib.physics import tracerDecayFactor
@@ -54,6 +55,7 @@ from tracerauth.audit_logging import logFreeInjectionOrder,\
 debug_logger = logging.getLogger(DEBUG_LOGGER)
 audit_logger = logging.getLogger(AUDIT_LOGGER)
 error_logger = logging.getLogger(ERROR_LOGGER)
+
 
 class DatabaseInterface():
   """This class is the interface for the production database. This includes
@@ -787,12 +789,38 @@ class DatabaseInterface():
     Returns:
       Dict[str, List[Bookings]] - with a single key - booking
     """
+
+    grownup_date = datetime.now().date() - timedelta(days = 365 * 18)
+
     locations = Location.objects.filter(
       endpoint__id=delivery_endpoint_id,
     )
+
+    exclude_rules = BookingRule.objects.filter(
+      location__id__in = locations
+    )
+
+    exclude_locations = [er.location for er in exclude_rules]
+
+    include_rules = BookingRule.objects.filter(
+      true_owner__id = delivery_endpoint_id
+    )
+
+    include_locations = [
+      ir.location for ir in include_rules
+    ]
+
     bookings = Booking.objects.filter(
       location__in=locations,
       start_date=date_
+    ).exclude(
+      start_date=date_,
+      patient_birth_date__gt = grownup_date,
+      location__in = exclude_locations
+    ) | Booking.objects.filter(
+      start_date=date_,
+      patient_birth_date__gt = grownup_date,
+      location__in = include_locations
     )
 
     return {

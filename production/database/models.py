@@ -14,7 +14,7 @@ from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DAT
     DATA_LEGACY_PRODUCTION_MEMBER, DATA_PROCEDURE_IDENTIFIER, DATA_RELEASE_RIGHT,\
     DATA_SERVER_LOG, DATA_PRINTER, DATA_TELEMETRY_RECORD, DATA_TELEMETRY_REQUEST,\
     DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL,\
-    DATA_STANDARD_ORDER
+    DATA_STANDARD_ORDER, DATA_BOOKING_RULE
 from database.TracerShopModels.authModels import *
 from database.TracerShopModels.baseModels import TracershopModel
 from database.TracerShopModels.clinicalModels import *
@@ -27,6 +27,7 @@ MODELS: Dict[str, Type[TracershopModel]] = {
   DATA_ADDRESS : Address,
   DATA_ACTIVITY_ORDER : ActivityOrder,
   DATA_BOOKING : Booking, # Note that this is not visible in state
+  DATA_BOOKING_RULE : BookingRule,
   DATA_CLOSED_DATE : ClosedDate,
   DATA_CUSTOMER : Customer,
   DATA_DEADLINE : Deadline,
