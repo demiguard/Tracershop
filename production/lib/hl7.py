@@ -1,10 +1,14 @@
 # Python standard library
+from datetime import date, datetime
 from enum import Enum
 from logging import getLogger
+from typing import Optional
 
 # Third party modules
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
+from hl7 import Message
+
 
 # Tracershop modules
 from constants import PING_SERVICE_LOGGER
@@ -17,6 +21,26 @@ class SupportedHL7Messages(Enum):
 
 
 ### EXTRACTION
+def extract_patient_birth_date(message: Message) -> Optional[date]:
+  """Extracts the birth date of the patient that HL7 message is about.
+
+  Note:
+    Relevant documentation - Sectra HL7: InterfaceSpecification.HL7.pdf
+
+  Args:
+      message (Message): A HL7 with a PID segment
+
+  Returns:
+    Optional[Date]: Patient birth date if it can be parsed otherwise None
+  """
+  PID_segment = message['PID'][0]
+
+  patient_birth_date_string = str(PID_segment[7])
+  try:
+    return datetime.strptime(patient_birth_date_string, "%Y%m%d").date()
+  except ValueError:
+    return None
+
 
 def extract_location(OBR_message_segment):
   location_code_ = OBR_message_segment[21][0]
