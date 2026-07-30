@@ -21,6 +21,7 @@ export const DATA_ACTIVITY_ORDER = "activity_orders";
 export const DATA_ADDRESS = "address";
 export const DATA_AUTH = "auth";
 export const DATA_BOOKING = "booking";
+export const DATA_BOOKING_RULE = "booking_rule";
 export const DATA_CLOSED_DATE = "closed_date";
 export const DATA_CUSTOMER = "customer";
 export const DATA_DATABASE = "database";

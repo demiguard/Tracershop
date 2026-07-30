@@ -4,6 +4,7 @@ import { Row } from "react-bootstrap";
 import { useTracerCatalog } from '~/contexts/tracer_catalog';
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { compareTimeStamp } from "~/lib/chronomancy";
+import { ORDER_STATUS } from '~/lib/constants';
 import { getTimeSlotOwner, ProductionTimeSlotOwnerShip } from "~/lib/data_structures";
 import { OrderMapping } from '~/lib/data_structures/order_mapping';
 import { dateToDateString } from '~/lib/formatting';
@@ -60,7 +61,7 @@ export function ProductionRow({
         return state.deliver_times.get(id);
       })();
 
-      if(!(associatedTimeSlots.includes(contributingTimeSlot))){
+      if(!(associatedTimeSlots.includes(contributingTimeSlot)) || order.status == ORDER_STATUS.CANCELLED){
         // This is indicate that the order have been moved to an other production
         // So it should not be included in the production!
         //console.log(`Order `, order, ` belongs to a time slot`, contributingTimeSlot, `that is not the production: ${associatedTimeSlots.map(getId)}`);
