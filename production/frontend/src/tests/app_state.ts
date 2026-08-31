@@ -35,6 +35,7 @@ export const testState = new TracershopState(
   testStateToday,
   address,
   activity_orders,
+  new Map(), //booking_rules
   closed_dates,
   customers,
   deadlines,

@@ -19,6 +19,7 @@ describe("Filter test suites", () => {
       undefined, // today
       undefined, // Address
       undefined, // Activity Orders
+      undefined,
       toMapping(closedDates), // closedDates
     );
 
