@@ -12,7 +12,9 @@ from hl7 import Message
 
 # Tracershop modules
 from constants import PING_SERVICE_LOGGER
-from database.models import Location, ProcedureIdentifier
+from database.models import Location, ProcedureIdentifier, Booking, BookingRule, BookingStatus
+
+from calenderHelper import is_child
 
 class SupportedHL7Messages(Enum):
   CREATE_BOOKING = 1
@@ -84,3 +86,26 @@ def get_or_create_procedureIdentifier(code: str, description: str) -> ProcedureI
         logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
 
   return procedure_identifier
+
+
+@database_sync_to_async
+def create_booking(
+  location, procedure_identifier, start_time, start_date, accession_number, patient_birth_date) -> Booking:
+  # You can't use a get_or_create here because you only have the accession
+  # number to fetch from, but you cannot create a booking without a procedure
+  # and location.
+  try:
+    booking = Booking.objects.get(accession_number=accession_number)
+  except ObjectDoesNotExist:
+    booking = Booking(accession_number=accession_number)
+
+  booking.location = location
+  booking.procedure = procedure_identifier
+  booking.start_date = start_date
+  booking.start_time = start_time
+  booking.status = BookingStatus.Initial
+  booking.patient_birth_date = patient_birth_date
+
+  booking.save()
+
+  return booking

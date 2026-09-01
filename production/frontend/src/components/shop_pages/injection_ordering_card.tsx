@@ -133,7 +133,7 @@ export function InjectionOrderingCard({
                 <TimeInput
                   aria-label="delivery-time-input--1"
                   value={deliveryTime}
-                  onChange={setStateToEvent(setDeliveryTime)}
+                  stateFunction={setDeliveryTime}
                   />
               </TracershopInputGroup>
             </Col>

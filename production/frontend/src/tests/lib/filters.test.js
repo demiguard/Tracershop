@@ -1,7 +1,7 @@
 const { Booking, Location, TracershopState, ClosedDate, DeliveryEndpoint, Customer, Tracer, ActivityProduction, ActivityDeliveryTimeSlot } = require("~/dataclasses/dataclasses");
 const { DAYS } = require("~/lib/constants");
 const { bookingFilter, extractData, timeSlotFilter } = require("~/lib/filters");
-const { DATA_CLOSED_DATE } = require("~/lib/shared_constants");
+const { DATA_CLOSED_DATE, BookingStatus } = require("~/lib/shared_constants");
 const { toMapping } = require("~/lib/utils");
 
 
@@ -87,4 +87,52 @@ describe("Filter test suites", () => {
     expect(filtered_timeSlots).toEqual([2,5]);
   })
 
+  it("Booking filter", () => {
+    /* In this test the following fields are considered irrelevant, because we don't test it here:
+      * Booking.bookingStatus
+      * Booking.procedure
+      * Booking.accession_number
+      * Booking.start_time
+      * Booking.start_date
+      * Location.location_code
+    */
+    const is = null; // this means irrelevant_status
+    const ip = null; // This means irrelevant_procedure
+    const ia = null; // this means irrelevant_accession_number
+    const it = null; // this means irrelevant_time
+    const id = null; // this means irrelevant_date
+    const ilc = null // this means irrelevant_location_code
+
+    const queryingEndpointID = 1;
+    const notQueryingEndpointID = 2;
+
+    const state = new TracershopState();
+    state.delivery_endpoint = new Map([
+      [queryingEndpointID, new DeliveryEndpoint(queryingEndpointID)],
+      [notQueryingEndpointID, new DeliveryEndpoint(notQueryingEndpointID)]
+    ]);
+
+    const owningLocationID = 1;
+    const notOwningLocationID = 2;
+    const bookingRuleInclusiveLocationID = 3; // Inclusive in that children from this location will contribute to the
+    const bookingRuleExclusiveLocationID = 4;
+
+    state.location = new Map([
+      [owningLocationID, new Location(owningLocationID, ilc, queryingEndpointID)],
+      [notOwningLocationID, new Location(notOwningLocationID, ilc, notQueryingEndpointID)],
+      [bookingRuleInclusiveLocationID, new Location(bookingRuleInclusiveLocationID, ilc, notQueryingEndpointID)],
+      [bookingRuleExclusiveLocationID, new Location(bookingRuleExclusiveLocationID, ilc, queryingEndpointID)]
+    ]);
+
+    // Small note - Booking CANNOT have procedure = null, but in this this shouldn't matter therefore it's have been nulled out
+
+    const booking_null_age_l1 = new Booking(1, is, owningLocationID, ip, ia, it, id, null);
+    const booking_null_age_l2 = new Booking(2, is, notOwningLocationID, null, "ID: 1", "11:00:00", "2025-01-01", null);
+    const booking_null_age_l3 = new Booking(3, is, bookingRuleExclusiveLocationID, ip, ia, it, id, null);
+    //const booking_null_age_l4 = new Booking(4, is, booking, null, "ID: 1", "11:00:00", "2025-01-01", null);
+
+
+
+
+  });
 })

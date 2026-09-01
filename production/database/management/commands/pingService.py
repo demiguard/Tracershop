@@ -89,8 +89,8 @@ def delete_booking(accession_number) -> int:
     return 0
 
 
-def extract_location(ORB_message_segment: Segment):
-  return ORB_message_segment[21][0]
+def extract_location(ORB_message_segment: Segment) -> str:
+  return str(ORB_message_segment[21][0])
 
 def extract_procedure_identifier(OBR_message_segment: Segment):
   study_code, description = OBR_message_segment[4][0]
@@ -104,7 +104,7 @@ def extract_message_type(hl7_message: Message) -> str:
 def extract_booking_time(ORC_message_segment: Segment) -> Tuple[date, time]:
   # Yeah this is pure magic number I'll try and some non-magic...
   # Also they don't have timezones?
-  booking_datetime = datetime.strptime(ORC_message_segment[7][0][3][0], "%Y%m%d%H%M%S")
+  booking_datetime = datetime.strptime(str(ORC_message_segment[7][0][3][0]), "%Y%m%d%H%M%S")
 
   return booking_datetime.date(), booking_datetime.time()
 
@@ -148,10 +148,7 @@ async def handle_delete_booking(ORC_message_segment: Segment,
 
 
 async def handleMessage(hl7_message: Message):
-  channel_layer = get_channel_layer()
   message_type = extract_message_type(hl7_message)
-
-
 
   if message_type != 'ORMO01':
     logger.error("Received a message that do not belong to this service!")
@@ -179,31 +176,28 @@ async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7Strea
     peername = hl7_writer.get_extra_info("peername")
     logger.info(f"Connection established {peername}")
     try:
-        # We're going to keep listening until the writer
-        # is closed. Only writers have closed status.
-        while not hl7_writer.is_closing():
-            try:
-                hl7_message = await hl7_reader.readmessage()
-            except ConnectionResetError:
-                logger.error("Connection Reset!")
-                continue
-            logger.info(f'Received message\n {hl7_message}'.replace('\r', '\n'))
-            try:
-                await handleMessage(hl7_message)
-                hl7_writer.writemessage(hl7_message.create_ack())
-                await hl7_writer.drain()
-            except Exception:
-                logger.error(f"Failed To handle Message with traceback:")
-                logger.error(traceback.format_exc())
-
-            # Now let's send the ACK and wait for the
-            # writer to drain
+      # We're going to keep listening until the writer
+      # is closed. Only writers have closed status.
+      while not hl7_writer.is_closing():
+        try:
+          hl7_message = await hl7_reader.readmessage()
+        except ConnectionResetError:
+          logger.error("Connection Reset!")
+          continue
+        logger.info(f'Received message\n {hl7_message}'.replace('\r', '\n'))
+        try:
+          await handleMessage(hl7_message)
+          hl7_writer.writemessage(hl7_message.create_ack())
+          await hl7_writer.drain()
+        except Exception:
+          logger.error(f"Failed To handle Message with traceback:")
+          logger.error(traceback.format_exc())
     except asyncio.IncompleteReadError:
-        # This expection is triggered at the end of a message
-        # closed or closing, close it.
-        if not hl7_writer.is_closing():
-            hl7_writer.close()
-            await hl7_writer.wait_closed()
+      # This expection is triggered at the end of a message
+      # closed or closing, close it.
+      if not hl7_writer.is_closing():
+        hl7_writer.close()
+        await hl7_writer.wait_closed()
     logger.info(f"Connection closed {peername}")
 
 
