@@ -193,7 +193,13 @@ class Booking(TracershopModel):
       Index(fields=['start_date', 'start_time'])
     ]
 
+# Booking rules are applied in the database layer, and in the frontend filters
 class BookingRule(TracershopModel):
+  """A rule indicate that a child at the location belongs to the 'true_owner'
+  rather than the owner of the location.
+
+  This is a janky workout - Assume a very low
+  """
   location = ForeignKey(Location, on_delete=RESTRICT)
   true_owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
 

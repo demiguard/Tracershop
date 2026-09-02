@@ -15,3 +15,15 @@ def subtract_times(time_1: time, time_2: time) -> timedelta:
 
 def combine_date_time(d: date, t: time) -> datetime:
   return datetime(d.year, d.month, d.day, t.hour, t.minute, t.second)
+
+def is_child(patient_birth_date: date, today: date) -> bool:
+  """Determines if a patient is a child
+
+  Args:
+      patient_birth_date (date): _description_
+      today (date): _description_
+
+  Returns:
+      bool: _description_
+  """
+  return False

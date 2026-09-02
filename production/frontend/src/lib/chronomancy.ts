@@ -8,7 +8,7 @@
 import { properModulo } from "~/lib/utils";
 import { DAYS, DEADLINE_TYPES } from "./constants";
 import { FormatDateStr, dateToDateString } from "./formatting";
-import { Deadline } from "~/dataclasses/dataclasses";
+import { Booking } from "~/dataclasses/dataclasses";
 
 /**
  * Function to get today, mainly here to make testing easier as this can be mocked
@@ -434,4 +434,47 @@ export function addDaysToDates(date: Date, days_to_add: number){
 
 export function fixDateTo12AClock(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate(), 12, 0,0,0);
+}
+
+class TimeDelta {
+  startTime : Date
+  endTime : Date
+
+  /**
+   * years do not take leap days into account!
+   */
+  years : number
+  days : number
+  hours : number
+  minutes : number
+  seconds : number
+  milliseconds : number
+
+  constructor(endTime: Date, startTime: Date){
+    this.startTime = startTime;
+    this.endTime = endTime;
+
+    this.milliseconds = endTime.getTime() - startTime.getTime();
+    this.seconds = Math.floor( this.milliseconds / 1000);
+    this.minutes = Math.floor( this.seconds / 60 );
+    this.hours = Math.floor( this.minutes / 60);
+    this.days = Math.floor( this.hours / 24);
+    this.years = Math.floor( this.days / 365);
+  }
+}
+
+export function is_child_booking(booking: Booking, today?: Date) : boolean {
+  if(today === undefined){
+    today = new Date()
+  }
+
+  if(!booking.patient_birth_date){
+    return false;
+  }
+
+  const patient_birth_date = new Date(booking.patient_birth_date) // date to string conversion
+
+  const timeDelta = new TimeDelta(today, patient_birth_date);
+
+  return timeDelta.years < 18;
 }

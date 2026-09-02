@@ -56,7 +56,7 @@ def get_or_create_location(location_str: str) -> Location:
 
 @database_sync_to_async
 def create_booking(
-  location, procedure_identifier, start_time, start_date, accession_number) -> Booking:
+  location, procedure_identifier, start_time, start_date, accession_number, patient_birth_date) -> Booking:
   # You can't use a get_or_create here because you only have the accession
   # number to fetch from, but you cannot create a booking without a procedure
   # and location.
@@ -70,6 +70,7 @@ def create_booking(
   booking.start_date = start_date
   booking.start_time = start_time
   booking.status = BookingStatus.Initial
+  booking.patient_birth_date = patient_birth_date
 
   booking.save()
 
@@ -88,8 +89,8 @@ def delete_booking(accession_number) -> int:
     return 0
 
 
-def extract_location(ORB_message_segment: Segment):
-  return ORB_message_segment[21][0]
+def extract_location(ORB_message_segment: Segment) -> str:
+  return str(ORB_message_segment[21][0])
 
 def extract_procedure_identifier(OBR_message_segment: Segment):
   study_code, description = OBR_message_segment[4][0]
@@ -98,19 +99,21 @@ def extract_procedure_identifier(OBR_message_segment: Segment):
 
 def extract_message_type(hl7_message: Message) -> str:
     MESSAGE_TYPE_HEADER_OFFSET = 9
-    return hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][0][0] + hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][1][0] #type ignore
+    return hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][0][0] + hl7_message['MSH'][0][MESSAGE_TYPE_HEADER_OFFSET][0][1][0] #type: ignore
 
 def extract_booking_time(ORC_message_segment: Segment) -> Tuple[date, time]:
   # Yeah this is pure magic number I'll try and some non-magic...
   # Also they don't have timezones?
-  booking_datetime = datetime.strptime(ORC_message_segment[7][0][3][0], "%Y%m%d%H%M%S")
+  booking_datetime = datetime.strptime(str(ORC_message_segment[7][0][3][0]), "%Y%m%d%H%M%S")
 
   return booking_datetime.date(), booking_datetime.time()
 
 def extract_accession_number(ORC_message_segment: Segment):
   return ORC_message_segment[20][0]
 
-async def handle_create_booking_message(ORC_message_segment: Segment, OBR_message_segment: Segment):
+async def handle_create_booking_message(HL7_message: Message, ORC_message_segment: Segment, OBR_message_segment: Segment):
+  patient_birth_date = hl7.extract_patient_birth_date(HL7_message)
+
   location_str = extract_location(OBR_message_segment)
   location = await get_or_create_location(location_str)
 
@@ -122,7 +125,9 @@ async def handle_create_booking_message(ORC_message_segment: Segment, OBR_messag
   except ValueError:
     logger.error(f"Booking {accession_number} has no booking time, aborting!")
     return
-  booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number)
+
+
+  booking = await create_booking(location, procedure_identifier, start_time, start_date, accession_number, patient_birth_date)
   logger.info(f"Added booking with uid: {accession_number}")
 
   await messenger(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_CREATE_BOOKING, {
@@ -143,7 +148,6 @@ async def handle_delete_booking(ORC_message_segment: Segment,
 
 
 async def handleMessage(hl7_message: Message):
-  channel_layer = get_channel_layer()
   message_type = extract_message_type(hl7_message)
 
   if message_type != 'ORMO01':
@@ -160,10 +164,9 @@ async def handleMessage(hl7_message: Message):
     # message type. But for some god forsaken reason, did we decide to have
     # 10 different Message types to the same code
     if ORC_message_segment[1][0] == 'XO' and ORC_message_segment[5][0] != 'ExamStarted':
-      await handle_create_booking_message(ORC_message_segment, OBR_message_segment)
+      await handle_create_booking_message(hl7_message, ORC_message_segment, OBR_message_segment)
 
     if ORC_message_segment[1][0] == 'DC'  or ORC_message_segment[1][0] == 'CA':
-
       await handle_delete_booking(ORC_message_segment, OBR_message_segment)
 
 async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7StreamWriter):
@@ -173,31 +176,28 @@ async def process_hl7_messages(hl7_reader: HL7StreamReader, hl7_writer: HL7Strea
     peername = hl7_writer.get_extra_info("peername")
     logger.info(f"Connection established {peername}")
     try:
-        # We're going to keep listening until the writer
-        # is closed. Only writers have closed status.
-        while not hl7_writer.is_closing():
-            try:
-                hl7_message = await hl7_reader.readmessage()
-            except ConnectionResetError:
-                logger.error("Connection Reset!")
-                continue
-            logger.info(f'Received message\n {hl7_message}'.replace('\r', '\n'))
-            try:
-                await handleMessage(hl7_message)
-                hl7_writer.writemessage(hl7_message.create_ack())
-                await hl7_writer.drain()
-            except Exception:
-                logger.error(f"Failed To handle Message with traceback:")
-                logger.error(traceback.format_exc())
-
-            # Now let's send the ACK and wait for the
-            # writer to drain
+      # We're going to keep listening until the writer
+      # is closed. Only writers have closed status.
+      while not hl7_writer.is_closing():
+        try:
+          hl7_message = await hl7_reader.readmessage()
+        except ConnectionResetError:
+          logger.error("Connection Reset!")
+          continue
+        logger.info(f'Received message\n {hl7_message}'.replace('\r', '\n'))
+        try:
+          await handleMessage(hl7_message)
+          hl7_writer.writemessage(hl7_message.create_ack())
+          await hl7_writer.drain()
+        except Exception:
+          logger.error(f"Failed To handle Message with traceback:")
+          logger.error(traceback.format_exc())
     except asyncio.IncompleteReadError:
-        # This expection is triggered at the end of a message
-        # closed or closing, close it.
-        if not hl7_writer.is_closing():
-            hl7_writer.close()
-            await hl7_writer.wait_closed()
+      # This expection is triggered at the end of a message
+      # closed or closing, close it.
+      if not hl7_writer.is_closing():
+        hl7_writer.close()
+        await hl7_writer.wait_closed()
     logger.info(f"Connection closed {peername}")
 
 

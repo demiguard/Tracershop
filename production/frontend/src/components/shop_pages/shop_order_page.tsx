@@ -35,11 +35,6 @@ const Content = {
   Overview : BookingOverview,
 };
 
-/**
- *
- * @param {Map<Number, Customer>} param0
- * @returns
- */
 export function ShopOrderPage ({relatedCustomer}){
   const state = useTracershopState();
   const dispatch = useTracershopDispatch();
@@ -131,7 +126,7 @@ export function ShopOrderPage ({relatedCustomer}){
         return newBookings;
       })
     } else if(message instanceof MESSAGE_DELETE_BOOKING){
-      const /**@type {Array<Number>} */ deleted_bookings = message.dataID
+      const deleted_bookings: Array<number> = message.dataID
       setBookings(oldBookings => {
         const newBookings = new Map(oldBookings);
         for(const bookingID of deleted_bookings){

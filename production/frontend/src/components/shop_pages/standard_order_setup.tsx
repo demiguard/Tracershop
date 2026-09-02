@@ -31,8 +31,6 @@ function TimeSlotDisplay({timeslot, currentStandardOrder} : tsdProps){
 
   const dirty = amount != defaultAmount;
 
-  console.log(`Standard Order ID ${standardOrder.id}`);
-
   function validate(){
     const m = new ErrorMonad()
 
@@ -110,16 +108,19 @@ export function StandardOrderSetup({relatedCustomer}) {
   const displayDeliveries = timeSlotFilter(allDeliveriesForDate, {state : state, tracerID : tracerID})
 
   // Rendering
-  const DaysButtons = DAYS_OBJECTS.map((({name, day : day_}) => {
-    const dname = day === day_ ? <u>{name}</u> : <div>{name}</div>
+  const DaysButtons = DAYS_OBJECTS.filter(({day: day_}) => {
+    return deliveriesForEndpoint[day_].length !== 0
+  }).map(
+    (({name, day : day_}) => {
+      const dname = day === day_ ? <u>{name}</u> : <div>{name}</div>
 
-    return (
-      <Col style={{flex : "0 0 0"}} key={day_}>
-        <Button onClick={() => {/*console.log(`Setting Day to ${day_}`);*/ setDay(day_)}}>
-          {dname}
-        </Button>
-      </Col>
-    );
+      return (
+        <Col style={{flex : "0 0 0"}} key={day_}>
+          <Button onClick={() => {/*console.log(`Setting Day to ${day_}`);*/ setDay(day_)}}>
+            {dname}
+          </Button>
+        </Col>
+      );
   }));
 
   const TracerButtons = [...activityCatalog].map(

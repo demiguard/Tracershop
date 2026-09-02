@@ -2,10 +2,10 @@
  * In general they should be used in Array.filter calls.
  */
 
-import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
-import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, IsotopeProduction, IsotopeVial, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
+import { DATA_ACTIVITY_ORDER, DATA_BOOKING, DATA_BOOKING_RULE, DATA_DELIVER_TIME, DATA_ENDPOINT, DATA_INJECTION_ORDER, DATA_ISOTOPE, DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL, DATA_LOCATION, DATA_PRODUCTION, DATA_VIAL } from "~/lib/shared_constants";
+import { ActivityDeliveryTimeSlot, ActivityOrder, ActivityProduction, Booking, BookingRule, DeliveryEndpoint, InjectionOrder, Isotope, IsotopeDelivery, IsotopeOrder, IsotopeProduction, IsotopeVial, Location, Procedure, Tracer, TracershopState, Vial } from "../dataclasses/dataclasses";
 import { compareDates, getId, map } from "./utils";
-import { DateRange, datify, sameDate } from "~/lib/chronomancy";
+import { DateRange, datify, is_child_booking, sameDate } from "~/lib/chronomancy";
 import { ORDER_STATUS } from "~/lib/constants";
 import { dateToDateString } from "./formatting";
 
@@ -126,6 +126,29 @@ export function locationFilter(container: ContainerType<Location>, {
   return ids ? filteredLocations.map(getId) : filteredLocations;
 }
 
+type BookingRuleFilterArgs = {
+
+  active_endpoint? : number,
+  location_ids? : Array<number>
+}
+
+export function bookingRuleFilter(container: ContainerType<BookingRule>, filterArgs: BookingRuleFilterArgs) : BookingRule[]
+export function bookingRuleFilter(container: ContainerType<BookingRule>, filterArgs: BookingRuleFilterArgs, ids: true) : number[]
+
+export function bookingRuleFilter(container: ContainerType<BookingRule>, { location_ids, active_endpoint } : BookingRuleFilterArgs, ids = false) {
+  const bookingRules = extractData(container, BookingRule, DATA_BOOKING_RULE);
+
+  const filteredBookingRules = bookingRules.filter((br) => {
+    const ownerCondition = active_endpoint ? br.true_owner == active_endpoint : true;
+    const locationCondition = location_ids ? location_ids.includes(br.location) : true;
+
+    return ownerCondition && locationCondition;
+  });
+
+  return ids ? filteredBookingRules.map(getId) : filteredBookingRules
+}
+
+
 type BookingFilterArgs = {
   state? : TracershopState,
   active_endpoint? : number,
@@ -142,23 +165,40 @@ export function bookingFilter(container: ContainerType<Booking>, {
   active_date,
   tracer_id
 } : BookingFilterArgs, ids=false){
-
-
   const bookings = extractData(container, Booking, DATA_BOOKING);
+
 
   const locations = state && active_endpoint ? locationFilter(state, {active_endpoint : active_endpoint}, true) : undefined;
   const procedures = state && tracer_id ? procedureFilter(state, {
     tracerID : tracer_id, active_endpoint : active_endpoint
   }, true) : undefined;
 
+  // Booking Rules for filtering out children - see
+  const excludingBookingRules = state && active_endpoint ? bookingRuleFilter(state, { location_ids : locations }) : undefined;
+  const excludingLocationIDs = excludingBookingRules ? excludingBookingRules.map((br) => br.location) : []
+  const includingBookingRules = state && active_endpoint ? bookingRuleFilter(state, { active_endpoint : active_endpoint } ) : undefined;
+  const includingLocationIDs = includingBookingRules ? includingBookingRules.map((br) => br.location) : []
+
   const filteredBookings = bookings.filter((booking) => {
-    const endpoint_condition = locations ? locations.includes(booking.location) : true;
     const date_condition = active_date ? dateToDateString(active_date) === booking.start_date : true;
     const procedure_condition = procedures ? procedures.includes(booking.procedure) : true;
 
-    //console.log(booking, active_date, dateToDateString(active_date), booking.start_date,  date_condition);
+    // Lets move this to endpoint conditions
+    const endpointCondition = (() => {
+      if(is_child_booking(booking)){
+        if (excludingLocationIDs.includes(booking.location)){
+          return false;
+        }
 
-    return endpoint_condition && date_condition && procedure_condition;
+        if(includingLocationIDs.includes(booking.location)){
+          return true;
+        }
+      }
+
+      return locations ? locations.includes(booking.location) : true;
+    })();
+
+    return endpointCondition && date_condition && procedure_condition;
   });
 
   return ids ? filteredBookings.map(getId) : filteredBookings;

@@ -61,6 +61,8 @@ export function InjectionOrderCard({
   }
 
   function setDeliveryTime(value){
+    console.log("HELLO WORLD")
+
     setTempInjectionOrder(
       (prevState) => {return {...prevState, delivery_time : value}}
     );
@@ -129,6 +131,8 @@ export function InjectionOrderCard({
   const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(injection_order.status) && valid_deadline;
   const orderExists = !([ORDER_STATUS.AVAILABLE, ORDER_STATUS.UNAVAILABLE].includes(injection_order.status));
   const statusInfo = orderExists ? `ID: ${injection_order.id}` : "Ny ordre";
+
+
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
 

@@ -1,6 +1,7 @@
 /**This module is for various time inputs */
 import React from "react"
 import { FormControl } from "react-bootstrap"
+import { ReactState } from "~/lib/types";
 
 /**
  * Attempt 3 making this
@@ -20,18 +21,15 @@ function addTimeColons(event, currentInput){
   return input;
 }
 
-/**
- *
- * @param {{
- * stateFunction : CallableFunction - function used for setting an input
- * }} props
- * @returns
- */
-export function TimeInput(props){
-  const {stateFunction, canEdit=true,  ...rest} = props;
+type TimeInputProps = {
+  stateFunction : React.Dispatch<React.SetStateAction<string>>
+  canEdit?: boolean
+  value : string
+}
 
+export function TimeInput({stateFunction, canEdit=true, value, ...rest}: TimeInputProps){
   function inputFunction(event){
-    stateFunction(addTimeColons(event, props.value));
+    stateFunction(addTimeColons(event, value));
   }
 
   rest['onChange'] = inputFunction;
@@ -42,6 +40,7 @@ export function TimeInput(props){
   }
 
   return <FormControl
+    value={value}
     {...rest}
   />
 }

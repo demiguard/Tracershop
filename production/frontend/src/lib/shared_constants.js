@@ -21,6 +21,7 @@ export const DATA_ACTIVITY_ORDER = "activity_orders";
 export const DATA_ADDRESS = "address";
 export const DATA_AUTH = "auth";
 export const DATA_BOOKING = "booking";
+export const DATA_BOOKING_RULE = "booking_rule";
 export const DATA_CLOSED_DATE = "closed_date";
 export const DATA_CUSTOMER = "customer";
 export const DATA_DATABASE = "database";
@@ -82,7 +83,7 @@ export const EXCLUDED_STATE_MODELS = [
   "telemetry_request",
 ]
 
-export const JAVASCRIPT_VERSION = "2.5.0";
+export const JAVASCRIPT_VERSION = "2.6.1";
 
 export const MessageValidationResult = {
   Successful : 0,

@@ -112,8 +112,9 @@ export class Booking extends Dataclass {
   accession_number
   start_time
   start_date
+  patient_birth_date
 
-  constructor(id?, status?, location?, procedure?, accession_number?, start_time?, start_date?, ) {
+  constructor(id?, status?, location?, procedure?, accession_number?, start_time?, start_date?, patient_birth_date?, ) {
     super()
     this.id=id
     this.status=status
@@ -122,6 +123,7 @@ export class Booking extends Dataclass {
     this.accession_number=accession_number
     this.start_time=start_time
     this.start_date=start_date
+    this.patient_birth_date=patient_birth_date
   }
 
   /**Copies the booking
@@ -135,7 +137,8 @@ export class Booking extends Dataclass {
       this.procedure,
       this.accession_number,
       this.start_time,
-      this.start_date
+      this.start_date,
+      this.patient_birth_date
     )
   }
   fields(){
@@ -147,6 +150,38 @@ export class Booking extends Dataclass {
       new CharField("accession_number"),
       new DateField("start_time"),
       new DateField("start_date"),
+      new DateField("patient_birth_date"),
+    ];
+  }
+}
+
+export class BookingRule extends Dataclass {
+  id
+  location
+  true_owner
+
+  constructor(id?, location?, true_owner?, ) {
+    super()
+    this.id=id
+    this.location=location
+    this.true_owner=true_owner
+  }
+
+  /**Copies the bookingrule
+  * @returns { BookingRule }
+   */
+  copy() : BookingRule {
+    return new BookingRule(
+      this.id,
+      this.location,
+      this.true_owner
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("location","location"),
+      new ForeignField("true_owner","delivery_endpoint"),
     ];
   }
 }
@@ -1476,6 +1511,7 @@ export const MODELS = {
   address : Address,
   activity_orders : ActivityOrder,
   booking : Booking,
+  booking_rule : BookingRule,
   closed_date : ClosedDate,
   customer : Customer,
   deadline : Deadline,
@@ -1517,6 +1553,7 @@ export class TracershopState {
   error: string 
   address : Map<number, Address>
   activity_orders : Map<number, ActivityOrder>
+  booking_rule : Map<number, BookingRule>
   closed_date : Map<number, ClosedDate>
   customer : Map<number, Customer>
   deadline : Map<number, Deadline>
@@ -1548,7 +1585,7 @@ export class TracershopState {
   user_assignment : Map<number, UserAssignment>
   vial : Map<number, Vial>
 
-  constructor(logged_in_user?, today?, address?, activity_orders?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, ){
+  constructor(logged_in_user?, today?, address?, activity_orders?, booking_rule?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1561,6 +1598,11 @@ export class TracershopState {
       this.activity_orders = activity_orders
     } else {
       this.activity_orders = new Map()
+    }
+    if(booking_rule !== undefined){
+      this.booking_rule = booking_rule
+    } else {
+      this.booking_rule = new Map()
     }
     if(closed_date !== undefined){
       this.closed_date = closed_date

@@ -1,14 +1,20 @@
 # Python standard library
+from datetime import date, datetime
 from enum import Enum
 from logging import getLogger
+from typing import Optional
 
 # Third party modules
 from channels.db import database_sync_to_async
 from django.core.exceptions import ObjectDoesNotExist
+from hl7 import Message
+
 
 # Tracershop modules
 from constants import PING_SERVICE_LOGGER
-from database.models import Location, ProcedureIdentifier
+from database.models import Location, ProcedureIdentifier, Booking, BookingRule, BookingStatus
+
+from calenderHelper import is_child
 
 class SupportedHL7Messages(Enum):
   CREATE_BOOKING = 1
@@ -17,6 +23,26 @@ class SupportedHL7Messages(Enum):
 
 
 ### EXTRACTION
+def extract_patient_birth_date(message: Message) -> Optional[date]:
+  """Extracts the birth date of the patient that HL7 message is about.
+
+  Note:
+    Relevant documentation - Sectra HL7: InterfaceSpecification.HL7.pdf
+
+  Args:
+      message (Message): A HL7 with a PID segment
+
+  Returns:
+    Optional[Date]: Patient birth date if it can be parsed otherwise None
+  """
+  PID_segment = message['PID'][0]
+
+  patient_birth_date_string = str(PID_segment[7])
+  try:
+    return datetime.strptime(patient_birth_date_string, "%Y%m%d").date()
+  except ValueError:
+    return None
+
 
 def extract_location(OBR_message_segment):
   location_code_ = OBR_message_segment[21][0]
@@ -60,3 +86,26 @@ def get_or_create_procedureIdentifier(code: str, description: str) -> ProcedureI
         logger.info(f"Created Procedure Identifier with code: {code} and description: {description}")
 
   return procedure_identifier
+
+
+@database_sync_to_async
+def create_booking(
+  location, procedure_identifier, start_time, start_date, accession_number, patient_birth_date) -> Booking:
+  # You can't use a get_or_create here because you only have the accession
+  # number to fetch from, but you cannot create a booking without a procedure
+  # and location.
+  try:
+    booking = Booking.objects.get(accession_number=accession_number)
+  except ObjectDoesNotExist:
+    booking = Booking(accession_number=accession_number)
+
+  booking.location = location
+  booking.procedure = procedure_identifier
+  booking.start_date = start_date
+  booking.start_time = start_time
+  booking.status = BookingStatus.Initial
+  booking.patient_birth_date = patient_birth_date
+
+  booking.save()
+
+  return booking
