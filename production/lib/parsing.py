@@ -290,4 +290,4 @@ def toDatetime(datetime_string:str) -> datetime:
     if res is not None:
       return res
 
-  raise ValueError(f"Could not parse {datetime_string}")
+  raise ValueError(f"Could not parse \"{datetime_string}\" as a datetime string")

@@ -108,11 +108,29 @@ class TracershopModel(Model):
         elif isinstance(field, IntegerField):
           value = int(value)
         elif isinstance(field, TimeField):
-          value = formatting.toTime(value)
+          try:
+            value = formatting.toTime(value)
+          except ValueError as E:
+            if field.null:
+              value = None
+            else:
+              raise E
         elif isinstance(field, DateTimeField):
-          value = parsing.toDatetime(value).astimezone(pTimeZone.utc)
+          try:
+            value = parsing.toDatetime(value).astimezone(pTimeZone.utc)
+          except ValueError as E:
+            if field.null:
+              value = None
+            else:
+              raise E
         elif isinstance(field, DateField):
-          value = formatting.toDate(value)
+          try:
+            value = formatting.toDate(value)
+          except ValueError as E:
+            if field.null:
+              value = None
+            else:
+              raise E
         elif isinstance(field, BooleanField):
           value = bool(value)
         # End of assignment
