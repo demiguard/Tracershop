@@ -1,26 +1,20 @@
 import React, { useRef } from "react";
 import { Row, Col, Button } from "react-bootstrap";
 
-import { DATABASE_ACTIVE_TRACER, INJECTION_USAGE, ORDER_STATUS } from "~/lib/constants";
-import { InjectionOrder } from "~/dataclasses/dataclasses";
 import { dateToDateString } from "~/lib/formatting";
 import { InjectionOrderCard } from "./shop_injectables/injection_order_card";
-import { ShopTimeSlotCardActivity } from "./shop_injectables/shop_time_slot_card_activity";
-import { expiredDeadline, getDay } from "~/lib/chronomancy";
 import { useTracershopState } from "../../contexts/tracer_shop_context";
-import { activityOrderFilter, timeSlotFilter } from "~/lib/filters";
 import { Optional } from "~/components/injectable/optional";
 import { DeadlineDisplay } from "~/components/injectable/deadline_display";
-import { db } from "~/lib/local_storage_driver";
 import { MARGIN } from "~/lib/styles";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
 import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 import { presentName } from "~/lib/presentation";
 import { TimeSlotCard } from "~/components/shop_pages/shop_injectables/time_slot_card";
-import { makeBlankInjectionOrder, makeBlankTracer } from "~/lib/blanks";
 import { getObjects } from "~/lib/utils";
 import { deliveriesSortingFunction } from "~/lib/sorting";
 import { InjectionOrderingCard } from "./injection_ordering_card";
+import { getDay } from "~/lib/chronomancy";
 
 
 /**
@@ -115,15 +109,6 @@ export function OrderReview({
       return matchingDay && matchingEndpoint;
   });
 
-  const InjectionOrderCards = relevantInjectionOrders.map((injectionOrder) => {
-    return (<InjectionOrderCard
-      key={injectionOrder.id}
-      injection_order={injectionOrder}
-      injection_tracers={availableInjectionTracers}
-      valid_deadline={injectionDeadlineValid}
-    />);
-  });
-
   const activityDeadline = (serverConfig !== undefined) ?
       state.deadline.get(serverConfig.global_activity_deadline)
     : undefined;
@@ -131,14 +116,20 @@ export function OrderReview({
       state.deadline.get(serverConfig.global_injection_deadline)
     : undefined;
 
-  InjectionOrderCards.push(
-    <InjectionOrderingCard
+
+  const InjectionOrderCards = [...relevantInjectionOrders.map((injectionOrder) => {
+    return (<InjectionOrderCard
+      key={injectionOrder.id}
+      injection_order={injectionOrder}
+      injection_tracers={availableInjectionTracers}
+      valid_deadline={injectionDeadlineValid}
+    />);
+  }), <InjectionOrderingCard
        key={-1}
        availableTracers={availableInjectionTracers}
        valid_deadline={injectionDeadlineValid}
        endpointID={active_endpoint}
-    />
-  )
+    />];
 
   return (
   <Row>

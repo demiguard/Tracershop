@@ -523,7 +523,7 @@ export function ActivityModal({
     if(vial){
       allocationTotal += vial.activity;
     } else {
-      console.log("Excuse me wtf?");
+      console.log(`Excuse me wtf? - Unable to find ${vid} in the global state`);
     }
   }
 

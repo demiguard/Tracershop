@@ -33,10 +33,10 @@ function ProcedureIdentifierRow({procedure_identifier}){
 export function ProcedureIdentifierTable() {
   const state = useTracershopState();
 
-  const piRows = [];
-  for(const pi of state.procedure_identifier.values()){
-    piRows.push(<ProcedureIdentifierRow procedure_identifier={pi} key={pi.id}/>);
-  }
+  const piRows = [...state.procedure_identifier.values()].map(
+    (pi) => {
+      return <ProcedureIdentifierRow procedure_identifier={pi} key={pi.id}/>
+  });
 
   return <Table>
     <thead>

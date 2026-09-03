@@ -3,7 +3,7 @@
  * existing orders, for that use injection_order_card
  */
 
-import React, { useMemo, useState } from 'react'
+import React, { useEffect, useMemo, useState } from 'react'
 import { Card, Col, FormControl, Row } from 'react-bootstrap';
 import { useTracershopState } from '~/contexts/tracer_shop_context';
 import { InjectionOrder, Tracer } from '~/dataclasses/dataclasses';
@@ -48,7 +48,7 @@ export function InjectionOrderingCard({
       }
     });
   }, [
-    state.today, state.deadline, state.tracer, state.closed_date
+    state.today, state.deadline, state.tracer, state.closed_date, availableTracers
   ]);
 
   const [selectedTracerID, setSelectedTracerID] = useState(() => {
@@ -91,17 +91,20 @@ export function InjectionOrderingCard({
       usage,
       comment,
       state.logged_in_user.id,
-      endpointID, selectedTracerID, "", "", "", null
+      endpointID, selectedTracerID, null, null, null, null
     )];
   }
 
+  useEffect(() => {
+    for(const tracer of tracerOptions){
+      return setSelectedTracerID(tracer.id);
+    }
+  }, [tracerOptions]);
 
   // RENDERING - NO MORE HOOKS CALLS!
   if (tracerOptions.length === 0){
     return <div></div>;
   }
-
-
 
   return (
     <Card style={{padding : 0}}>
@@ -110,7 +113,7 @@ export function InjectionOrderingCard({
           <Col xs={11}>
           <ManyRows>
             <Col>
-              <TracershopInputGroup label={"Tracer"}>
+              <TracershopInputGroup label={"Tracer"} error={injectionsError}>
                 <Select
                   aria-label={`tracer-input--1`}
                   onChange={setStateToEvent(setSelectedTracerID)}
@@ -129,7 +132,7 @@ export function InjectionOrderingCard({
               </TracershopInputGroup>
             </Col>
             <Col>
-              <TracershopInputGroup label={"Tid"}>
+              <TracershopInputGroup label={"Tid"} error={deliveryTimeError}>
                 <TimeInput
                   aria-label="delivery-time-input--1"
                   value={deliveryTime}

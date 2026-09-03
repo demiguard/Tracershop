@@ -1,10 +1,10 @@
 
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, JSX } from "react";
 import { Row, Col, Table, Button, Container, FormCheck } from 'react-bootstrap';
 import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, ORDER_STATUS, PROP_SELECTED } from "~/lib/constants";
 import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting";
 import { compareDates } from "~/lib/utils";
-import { CreateInjectionOrderModal } from "../modals/create_injection_modal";
+import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal";
 import { InjectionModal } from "../modals/injection_modal";
 import { AcceptIcon, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons";
 import { InjectionOrder } from "~/dataclasses/dataclasses";
@@ -41,7 +41,7 @@ const Modals  = {
 * }} props
 * @returns
 */
-function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModal}) {
+function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModal, canFree}) {
   const state = useTracershopState();
 
   const tracer = state.tracer.get(order.tracer);
@@ -53,7 +53,11 @@ function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModa
       case ORDER_STATUS.ORDERED:
         return <AcceptIcon data-testid={`accept-${order.id}`} orders={[order]}/>
       case ORDER_STATUS.ACCEPTED:
-        return <FormCheck data-testid={`check-${order.id}`} disabled={disabled} checked={isSelected} onChange={onSelect}/>
+        return (
+          <Optional exists={canFree}>
+            <FormCheck data-testid={`check-${order.id}`} disabled={disabled} checked={isSelected} onChange={onSelect}/>
+          </Optional>
+        )
       case ORDER_STATUS.RELEASED:
         return <InjectionDeliveryIcon data-testid={`delivery-${order.id}`} order={order}/>
       default:
@@ -83,6 +87,11 @@ function InjectionOrderRow({order, isSelected, onSelect, disabled, openOrderModa
  );
 }
 
+type InjectionTableState = {
+  modal : string | JSX.Element
+  modalOrder : string
+}
+
 /** Page that contains all injections orders for the active date
  *
  * @param {{
@@ -96,23 +105,16 @@ export function InjectionTable() {
 
   const danishDate = parseDateToDanishDate(dateToDateString(active_date))
 
-  const /**@type {Array<InjectionOrder>} */ orders = useMemo(
+  const orders = useMemo(
     () => {
-      const orders = [];
-
-      for(const injectionOrder of state.injection_orders.values()){
-        const orderDate = new Date(injectionOrder.delivery_date)
-        if (compareDates(active_date, orderDate)){
-          orders.push(injectionOrder);
-        }
-      }
-
-      return orders;
-
+      return [...state.injection_orders.values()].filter((io) => {
+        const orderDate = new Date(io.delivery_date)
+        return compareDates(active_date, orderDate)
+      });
     }, [active_date, state.injection_orders]
   );
 
-  const [ModalState, setModalState] = useState({
+  const [ModalState, setModalState] = useState<InjectionTableState>({
     modal : Modals.NoModal,
     modalOrder : "",
   });
@@ -209,6 +211,7 @@ export function InjectionTable() {
     }
 
     return <InjectionOrderRow
+              canFree={userReleaseRight.permissionForTracer(order.tracer)}
               key={order.id}
               order={order}
               selected={isSelected}

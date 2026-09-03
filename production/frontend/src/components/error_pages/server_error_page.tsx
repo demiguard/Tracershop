@@ -4,11 +4,18 @@ import { InvalidVersionPage } from "~/components/error_pages/invalid_version_pag
 import { ERROR_CONTAINER_CSS } from "~/lib/styles";
 import { ERROR_INVALID_JAVASCRIPT_VERSION, MessageValidationResult } from "~/lib/shared_constants";
 import { TracershopNavbar } from "../injectable/navbar";
+import { useTracershopState } from "~/contexts/tracer_shop_context";
 
 export function ServerErrorPage({error}){
   if(error.error_type === MessageValidationResult.JavascriptVersionMismatch){
     return <InvalidVersionPage/>
   }
+
+  const state = useTracershopState()
+
+  console.log(error);
+
+  console.log(state.error)
 
   return (
     <div>

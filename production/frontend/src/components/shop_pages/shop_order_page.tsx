@@ -28,11 +28,13 @@ import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/produc
 import { StateType } from "~/lib/constants";
 import { CalenderColorMapContextProvider } from "~/contexts/calender_color_map";
 import { dateToDateString } from "~/lib/formatting";
+import { NoDeliveryEndpoint } from "./no_delivery_endpoint";
 
 const Content = {
   Manuel : OrderReview,
   Automatisk : FutureBooking,
   Overview : BookingOverview,
+
 };
 
 export function ShopOrderPage ({relatedCustomer}){
@@ -188,7 +190,7 @@ export function ShopOrderPage ({relatedCustomer}){
   }, [relatedCustomer])
 
   useEffect(function getBookings () {
-    if(websocket !== null){
+    if(websocket !== null && typeof(activeEndpoint) == "number"){
       websocket.sendGetBookings(state.today, activeEndpoint).then((message) => {
         if(message instanceof MESSAGE_READ_BOOKINGS){
           setBookings(toMapping(message.data[DATA_BOOKING]));
@@ -253,7 +255,7 @@ export function ShopOrderPage ({relatedCustomer}){
     {id : "Overview", name : "Booking Oversigt"},
   ]);
 
-  const Site = Content[viewIdentifier];
+  const Site = 0 < activeEndpoint ? Content[viewIdentifier] : NoDeliveryEndpoint;
   const siteProps = {
     [PROP_ACTIVE_DATE] : state.today,
     [PROP_ACTIVE_CUSTOMER] : activeCustomer,
@@ -263,8 +265,6 @@ export function ShopOrderPage ({relatedCustomer}){
     [DATA_BOOKING] : [...bookings.values()],
     productState : [activeProduct, setActiveProduct],
   };
-
-
 
   const calenderTimeSlots = activeProduct.filterDeliveries(state, { endpoint_id : activeEndpoint });
 

@@ -76,7 +76,9 @@ export function ErrorPage (props) {
     console.log("OOH NOES, THE ERROR HANDLER HAD AN ERROR");
   }
 
-  return(<Container
+  console.log("PROBLEM")
+
+  return (<Container
     style={styles.ErrorContainer}
   >
     <h1>Ukendt fejl</h1>
