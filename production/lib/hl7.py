@@ -14,7 +14,7 @@ from hl7 import Message
 from constants import PING_SERVICE_LOGGER
 from database.models import Location, ProcedureIdentifier, Booking, BookingRule, BookingStatus
 
-from calenderHelper import is_child
+from lib.calenderHelper import is_child
 
 class SupportedHL7Messages(Enum):
   CREATE_BOOKING = 1
