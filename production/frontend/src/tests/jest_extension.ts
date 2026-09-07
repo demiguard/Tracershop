@@ -62,4 +62,16 @@ export const MATCH_EXTENSIONS = {
       };
     }
   },
+
+  toInclude(received: Array<any>, expected : any){
+    const pass = received.includes(expected)
+
+    return {
+      pass: pass,
+      message : pass ?
+        () => `Against Expectation: ${received} contains ${expected}`
+      : () => `Against Expectation: ${received} doesn't contain ${expected}`
+    };
+
+  }
 };

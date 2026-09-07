@@ -37,7 +37,7 @@ def indexView(request, *args, **kwargs):
   if settings.DEBUG:
     debug_logger.info(request.headers)
 
-  return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/main_{JAVASCRIPT_VERSION}.js" })
+  return render(request, "frontend/index.html", { 'javascript_file' : f"frontend/js/main_{JAVASCRIPT_VERSION}.js", "javascript_version" : JAVASCRIPT_VERSION })
 
 @ensure_csrf_cookie
 def pdfView(request: HttpRequest,

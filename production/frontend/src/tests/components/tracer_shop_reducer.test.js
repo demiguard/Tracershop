@@ -12,7 +12,7 @@ import { compareDates } from '~/lib/utils';
 const defaultUser = new User(undefined, 1);
 
 const defaultState = new TracershopState(
-  defaultUser, new Date(2024,10,6), undefined, undefined, new Map([
+  defaultUser, new Date(2024,10,6), undefined, undefined, undefined, new Map([
     [1, new ClosedDate(1, "2011-11-22")]
   ])
 );

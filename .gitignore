@@ -57,3 +57,5 @@ data/
 tsconfig.tsbuildinfo
 chunk-manifest.json
 dist/
+assets/
+static/

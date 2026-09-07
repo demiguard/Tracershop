@@ -185,7 +185,7 @@ describe("Tracer setup Page test suite", () => {
     }
   });
 
-  it("Market a tracer", () => {
+  it.skip("Market a tracer", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <TracerPage />

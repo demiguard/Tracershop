@@ -1,11 +1,12 @@
-import React, { useRef, useState } from "react";
+import React, { lazy, startTransition, Suspense, useRef, useState } from "react";
 import { Col, NavDropdown } from "react-bootstrap";
 import { DATABASE_ADMIN_PAGE } from "~/lib/constants";
 import { db } from "~/lib/local_storage_driver";
-import { ConfigSite } from "./config_site";
-import { ProductionSite } from "./production_site";
-import { ShopSite } from "./shop_site";
 import { ALIGN, ALIGN_ITEMS, MARGIN, NAVBAR_STYLES, PADDING } from "~/lib/styles";
+
+const ConfigSite = lazy(() => import('~/components/sites/config_site'))
+const ProductionSite = lazy(() => import("~/components/sites/production_site"))
+const ShopSite = lazy(() => import("~/components/sites/shop_site"))
 
 /**
  * @enum
@@ -25,8 +26,7 @@ const SITE_NAMES = {
   shop : "Kunde"
 }
 
-
-export function AdminSite({logout}) {
+export default function AdminSite({logout}) {
   const [activeSite, setActiveSite] = useState(() => {
     let activeSite: string | undefined | null = db.get(DATABASE_ADMIN_PAGE);
 
@@ -40,7 +40,9 @@ export function AdminSite({logout}) {
   function changeSite(identifier){
     return () => {
       db.set(DATABASE_ADMIN_PAGE, identifier);
-       setActiveSite(identifier)
+       startTransition(() => {
+        setActiveSite(identifier)
+       })
     }
   }
 
@@ -56,14 +58,27 @@ export function AdminSite({logout}) {
       </NavDropdown.Item>)
     }
 
+  const ColStyle : React.CSSProperties = {
+    ...ALIGN_ITEMS.CENTER,
+    height : "63px",
+    paddingTop : "6px",
+    paddingLeft : "12px",
+    paddingRight : "12px",
+    paddingBottom : "6px"
+  }
+
   const NavbarAdmin = [(
-    <Col style={{...PADDING.all.px0, ...ALIGN_ITEMS.CENTER}} key="SiteSelector">
+    <Col style={ColStyle} key="SiteSelector">
       <NavDropdown
-        className={"btn-primary"}
         style={{
+          display : "flex",
+          height : "36px",
+          backgroundColor : "#0d6efd",
           ...MARGIN.topBottom.px0,
-          ...PADDING.all.px0,
           ...NAVBAR_STYLES.navbarElement,
+          alignItems : "center",
+          justifyContent : "center"
+
         }}
         aria-label="site-selector"
         title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}
@@ -79,8 +94,12 @@ export function AdminSite({logout}) {
     throw `Undefined site ${activeSite} attempt to rendered`;
   }
 
-  return(<ActiveSite
-    logout={logout}
-    NavbarElements={NavbarAdmin}
-  />);
+  return(
+  <Suspense fallback={<div>LOADING</div>}>
+    <ActiveSite
+      logout={logout}
+      NavbarElements={NavbarAdmin}
+    />
+  </Suspense>
+  );
 }

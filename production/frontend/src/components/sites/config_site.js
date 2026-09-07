@@ -19,7 +19,7 @@ const PageNames = {
   telemetry : "Telemetri"
 }
 
-export function ConfigSite (props) {
+export default function ConfigSite (props) {
   const [activeSite, setActivePage] = useState("controlPanel")
   const Site = Pages[activeSite];
 

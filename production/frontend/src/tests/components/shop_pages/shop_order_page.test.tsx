@@ -3,9 +3,10 @@
  */
 
 import React from "react";
-import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
-import { jest, expect } from '@jest/globals'
-
+import '@testing-library/jest-dom'
+import '@testing-library/jest-dom/jest-globals'
+import { act, screen, render, cleanup, fireEvent, waitFor,  } from "@testing-library/react";
+import { jest, expect, beforeAll, beforeEach, afterEach, describe, it } from '@jest/globals'
 import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
 import { BookingStatus, DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,
   WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_BOOKING,
@@ -25,8 +26,10 @@ const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 const websocket = tracer_websocket.TracerWebSocket;
 
-jest.useFakeTimers('modern')
 const now = new Date(2020,4, 4, 10, 36, 44)
+jest.useFakeTimers({
+  now : new Date(2020,4, 4, 10, 36, 44)
+})
 jest.setSystemTime(now)
 
 const dispatchMock = jest.fn()
@@ -34,11 +37,6 @@ const dispatchMock = jest.fn()
 beforeAll(() => {
   global.IS_REACT_ACT_ENVIRONMENT = true;
 })
-
-beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-});
 
 afterEach(() => {
   cleanup();
@@ -50,7 +48,7 @@ afterEach(() => {
 describe("Shop Order page test suite", () => {
   it("Standard Render Test", async () => {
     const {unmount} = render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -98,7 +96,7 @@ describe("Shop Order page test suite", () => {
 
   it("Change Site", async () => {
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -113,7 +111,7 @@ describe("Shop Order page test suite", () => {
 
   it("Change customer", async () => {
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -129,7 +127,7 @@ describe("Shop Order page test suite", () => {
 
   it("Change endpoint", async () => {
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -181,7 +179,7 @@ describe("Shop Order page test suite", () => {
     };
 
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -208,7 +206,7 @@ describe("Shop Order page test suite", () => {
 
   it("Booking update Malform message", async () => {
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -269,7 +267,7 @@ describe("Shop Order page test suite", () => {
     }
 
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -308,7 +306,7 @@ describe("Shop Order page test suite", () => {
 
   it("Create booking from triggered update", async () => {
     render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -367,7 +365,7 @@ describe("Shop Order page test suite", () => {
 
   it("ISSUE: 20260316 - Ordering from calculator gives the wrong date in the order", async () => {
     const {rerender} = render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -380,7 +378,7 @@ describe("Shop Order page test suite", () => {
     const newTestState = getModifiedTestState({ 'today' : new Date(2020,4,12,12,0,0) })
 
     rerender(
-      <TracerShopContext tracershop_state={newTestState} websocket={websocket}>
+      <TracerShopContext tracershop_state={newTestState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={newTestState.customer}/>
       </TracerShopContext>
     );
@@ -423,7 +421,7 @@ describe("Shop Order page test suite", () => {
 
   it("ISSUE: 20260316 - Ordering from calculator gives the wrong date in the order - Test 2", async () => {
     const {rerender} = render(
-      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+      <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={testState.customer}/>
       </TracerShopContext>
     );
@@ -436,7 +434,7 @@ describe("Shop Order page test suite", () => {
     const newTestState = getModifiedTestState({ 'today' : new Date(2020,4,12,12,0,0) })
 
     rerender(
-      <TracerShopContext tracershop_state={newTestState} websocket={websocket}>
+      <TracerShopContext tracershop_state={newTestState} websocket={websocket} dispatch={() => {}}>
         <ShopOrderPage relatedCustomer={newTestState.customer}/>
       </TracerShopContext>
     );

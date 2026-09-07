@@ -11,7 +11,7 @@ register = template.Library()
 @register.simple_tag
 def webpack_chunks():
     """Load all webpack chunks in the correct order"""
-    manifest_path = Path("frontend") / "static" / "frontend" / "chunk-manifest.json"
+    manifest_path = Path("frontend") / "static" / "frontend" / "js" / "chunk-manifest.json"
 
     try:
         with open(manifest_path, 'r') as f:
@@ -20,7 +20,7 @@ def webpack_chunks():
         # Fallback if manifest doesn't exist
         print(f"Didn't find: {manifest_path}")
         from shared_constants import JAVASCRIPT_VERSION
-        return mark_safe(f'<script src="/static/frontend/main_{JAVASCRIPT_VERSION}.js"></script>')
+        return mark_safe(f'<script src="/static/frontend/js/main_{JAVASCRIPT_VERSION}.js"></script>')
 
     # Load chunks in correct order: vendors first, then main
     chunks = []

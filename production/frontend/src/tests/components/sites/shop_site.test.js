@@ -8,7 +8,7 @@ import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-libra
 import { jest } from '@jest/globals'
 import { AppState, testState } from "../../app_state";
 
-import { ShopSite } from "../../../components/sites/shop_site";
+import ShopSite from "../../../components/sites/shop_site";
 import { users } from "../../test_state/users";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { TracershopState } from "~/dataclasses/dataclasses";

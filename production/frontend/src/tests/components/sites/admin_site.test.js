@@ -3,15 +3,13 @@
  */
 
 import React from "react";
-import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
+import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
 import { jest } from '@jest/globals'
 
-
-import { AdminSite } from "~/components/sites/admin_site"
+import AdminSite from "~/components/sites/admin_site"
 import { DATABASE_ADMIN_PAGE, PROP_USER } from "~/lib/constants";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
-
 
 const module = jest.mock('../../../lib/tracer_websocket');
 const tracer_websocket = require("../../../lib/tracer_websocket");
@@ -37,19 +35,22 @@ afterEach(() => {
 });
 
 describe("Admin site test suite", () => {
-  it("standard test", () => {
-    render(
-    <TracerShopContext tracershop_state={testState} websocket={websocket}>
-      <AdminSite/>
-    </TracerShopContext>)});
+  it("standard test", async () => {
+    await waitFor(() => render(
+      <TracerShopContext tracershop_state={testState} websocket={websocket}>
+        <AdminSite/>
+      </TracerShopContext>
+      ));
+  });
 
-  it("standard test click on production", () => {
+
+  it("standard test click on production", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
         <AdminSite/>
       </TracerShopContext>
     );
-    act(() => {
+    await act( async () => {
       const dropDown = screen.getByText("Produktion");
       fireEvent.click(dropDown);
     })
@@ -66,7 +67,7 @@ describe("Admin site test suite", () => {
       </TracerShopContext>
     );
 
-    act(() => {
+    await act(async () => {
       const dropDown = screen.getByText("Produktion")
       fireEvent.click(dropDown)
     })
@@ -75,6 +76,7 @@ describe("Admin site test suite", () => {
       const shopSite = screen.getByLabelText("navbar-admin-shop")
       fireEvent.click(shopSite)
     })
+
     const item = window.localStorage.getItem(DATABASE_ADMIN_PAGE);
     expect(item).toEqual("shop");
   });

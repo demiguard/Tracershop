@@ -9,7 +9,7 @@ import { jest } from '@jest/globals'
 import { AppState, testState } from "~/tests/app_state";
 
 import { PROP_USER } from "~/lib/constants";
-import { ProductionSite } from "~/components/sites/production_site";
+import ProductionSite from "~/components/sites/production_site";
 import { users } from "~/tests/test_state/users";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { TracershopState } from "~/dataclasses/dataclasses";

@@ -4,11 +4,9 @@ import propTypes from 'prop-types';
 
 import { nullParser } from "~/lib/formatting";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-import { ClickableIcon, InjectionDeliveryIcon, StatusIcon } from "~/components/injectable/icons.tsx";
+import { StatusIcon } from "~/components/injectable/icons.tsx";
 import { Select, toOptions } from "../../injectable/select";
 import { ORDER_STATUS } from "~/lib/constants";
-import { cssCenter } from "~/lib/styles";
-import { DATA_INJECTION_ORDER } from "~/lib/shared_constants";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
 import { getTimeString } from "../../../lib/chronomancy";
 import { UsageSelect } from "../../injectable/derived_injectables/usage_select";
@@ -16,11 +14,9 @@ import { parseTimeInput, parseWholePositiveNumber } from "~/lib/user_input";
 import { ErrorInput } from "~/components/injectable/inputs/error_input";
 import { TimeInput } from "~/components/injectable/inputs/time_input";
 import { setTempObjectToEvent } from "~/lib/state_management";
-import { InjectionOrderPDFUrl, compareLoosely, nullify } from "~/lib/utils";
+import { compareLoosely, nullify } from "~/lib/utils";
 import { EditableInput } from "~/components/injectable/inputs/editable_input";
-import { CommitIcon } from "~/components/injectable/commit_icon";
-import { Optional } from "~/components/injectable/optional";
-import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
+import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
 import { ManyRows } from "~/components/injectable/ManyRows";
 
@@ -61,8 +57,6 @@ export function InjectionOrderCard({
   }
 
   function setDeliveryTime(value){
-    console.log("HELLO WORLD")
-
     setTempInjectionOrder(
       (prevState) => {return {...prevState, delivery_time : value}}
     );

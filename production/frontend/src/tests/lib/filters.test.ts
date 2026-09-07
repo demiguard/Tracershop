@@ -1,9 +1,16 @@
-const { Booking, Location, TracershopState, ClosedDate, DeliveryEndpoint, Customer, Tracer, ActivityProduction, ActivityDeliveryTimeSlot } = require("~/dataclasses/dataclasses");
-const { DAYS } = require("~/lib/constants");
-const { bookingFilter, extractData, timeSlotFilter } = require("~/lib/filters");
-const { DATA_CLOSED_DATE, BookingStatus } = require("~/lib/shared_constants");
-const { toMapping } = require("~/lib/utils");
+import { describe, expect, it, jest } from '@jest/globals'
+import '~/tests/jest_extension'
 
+import { BookingFilterArgs } from '~/lib/filters';
+import { Booking, Location, TracershopState, ClosedDate, DeliveryEndpoint, Customer, Tracer, ActivityProduction, ActivityDeliveryTimeSlot, BookingRule } from "~/dataclasses/dataclasses";
+import { DAYS } from "~/lib/constants";
+import { bookingFilter, extractData, timeSlotFilter } from "~/lib/filters";
+import { DATA_CLOSED_DATE, BookingStatus } from "~/lib/shared_constants";
+import { toMapping } from "~/lib/utils";
+
+jest.useFakeTimers({
+  now : new Date("2026-05-01T11:33:44Z")
+})
 
 const locations = new Map([
   [1, new Location(1, "code_1", 1, "blah 1")],
@@ -88,7 +95,12 @@ describe("Filter test suites", () => {
   })
 
   it("Booking filter", () => {
-    /* In this test the following fields are considered irrelevant, because we don't test it here:
+    /* Tests that the filter for bookings takes "booking rules" into account
+    when filtering for delivery endpoint. A booking rule is a mapping for child
+    bookings
+
+
+    In this test the following fields are considered irrelevant, because we don't test it here:
       * Booking.bookingStatus
       * Booking.procedure
       * Booking.accession_number
@@ -114,7 +126,9 @@ describe("Filter test suites", () => {
 
     const owningLocationID = 1;
     const notOwningLocationID = 2;
-    const bookingRuleInclusiveLocationID = 3; // Inclusive in that children from this location will contribute to the
+
+    // Inclusive in that children from this location will contribute to the
+    const bookingRuleInclusiveLocationID = 3;
     const bookingRuleExclusiveLocationID = 4;
 
     state.location = new Map([
@@ -124,13 +138,64 @@ describe("Filter test suites", () => {
       [bookingRuleExclusiveLocationID, new Location(bookingRuleExclusiveLocationID, ilc, queryingEndpointID)]
     ]);
 
+    state.booking_rule = new Map([
+      [1, new BookingRule(1, bookingRuleInclusiveLocationID, queryingEndpointID)],
+      [2, new BookingRule(2, bookingRuleExclusiveLocationID, notQueryingEndpointID)]
+    ])
+
     // Small note - Booking CANNOT have procedure = null, but in this this shouldn't matter therefore it's have been nulled out
 
     const booking_null_age_l1 = new Booking(1, is, owningLocationID, ip, ia, it, id, null);
     const booking_null_age_l2 = new Booking(2, is, notOwningLocationID, null, "ID: 1", "11:00:00", "2025-01-01", null);
-    const booking_null_age_l3 = new Booking(3, is, bookingRuleExclusiveLocationID, ip, ia, it, id, null);
-    //const booking_null_age_l4 = new Booking(4, is, booking, null, "ID: 1", "11:00:00", "2025-01-01", null);
+    const booking_null_age_l3 = new Booking(3, is, bookingRuleInclusiveLocationID, ip, ia, it, id, null);
+    const booking_null_age_l4 = new Booking(4, is, bookingRuleExclusiveLocationID, null, "ID: 1", "11:00:00", "2025-01-01", null);
+    const booking_grown_up_l1 = new Booking(5, is, owningLocationID, ip, ia, it, id, "1990-01-01");
+    const booking_grown_up_l2 = new Booking(6, is, notOwningLocationID, null, "ID: 1", "11:00:00", "2025-01-01", "1990-01-01");
+    const booking_grown_up_l3 = new Booking(7, is, bookingRuleInclusiveLocationID, ip, ia, it, id, "1990-01-01");
+    const booking_grown_up_l4 = new Booking(8, is, bookingRuleExclusiveLocationID, null, "ID: 1", "11:00:00", "2025-01-01", "1990-01-01");
+    const booking_child_l1 = new Booking(9, is,  owningLocationID, ip, ia, it, id, "2015-01-01");
+    const booking_child_l2 = new Booking(10, is, notOwningLocationID, null, "ID: 1", "11:00:00", "2025-01-01", "2015-01-01");
+    const booking_child_l3 = new Booking(11, is, bookingRuleInclusiveLocationID, ip, ia, it, id, "2015-01-01");
+    const booking_child_l4 = new Booking(12, is, bookingRuleExclusiveLocationID, null, "ID: 1", "11:00:00", "2025-01-01", "2015-01-01");
 
+    const bookings = [
+      booking_null_age_l1,
+      booking_null_age_l2,
+      booking_null_age_l3,
+      booking_null_age_l4,
+      booking_grown_up_l1,
+      booking_grown_up_l2,
+      booking_grown_up_l3,
+      booking_grown_up_l4,
+      booking_child_l1,
+      booking_child_l2,
+      booking_child_l3,
+      booking_child_l4,
+    ]
+
+    const filterArgs = {
+      state : state,
+      active_endpoint : queryingEndpointID
+    }
+
+    // TEST
+    const result = bookingFilter(bookings, filterArgs);
+
+    // ASSERT
+    expect(result).toInclude(booking_null_age_l1);
+    expect(result).not.toInclude(booking_null_age_l2);
+    expect(result).not.toInclude(booking_null_age_l3);
+    expect(result).toInclude(booking_null_age_l4);
+    // Grown up mirrors - null
+    expect(result).toInclude(booking_grown_up_l1);
+    expect(result).not.toInclude(booking_grown_up_l2);
+    expect(result).not.toInclude(booking_grown_up_l3);
+    expect(result).toInclude(booking_grown_up_l4);
+    // Children er different
+    expect(result).toInclude(booking_child_l1);
+    expect(result).not.toInclude(booking_child_l2);
+    expect(result).toInclude(booking_child_l3);
+    expect(result).not.toInclude(booking_child_l4);
 
 
 

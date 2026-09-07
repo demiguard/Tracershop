@@ -8,7 +8,7 @@ import { act, screen, render, cleanup, fireEvent } from "@testing-library/react"
 import { jest } from '@jest/globals'
 import { AppState, testState } from "../../app_state";
 import { db } from "../../../lib/local_storage_driver.js";
-import { ConfigSite } from "../../../components/sites/config_site.js"
+import ConfigSite from "../../../components/sites/config_site.js"
 import { PROP_USER } from "../../../lib/constants.js";
 import { ANON } from "../../test_state/users.js";
 import { TracerShopContext, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";

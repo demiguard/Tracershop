@@ -30,7 +30,7 @@ const UserPages = {
   vial : "Hætteglas"
 }
 
-export function ProductionSite({ logout, NavbarElements }) {
+export default function ProductionSite({ logout, NavbarElements }) {
   const state = useTracershopState()
   const [activePage, setActivePage] = useState("orders");
   const ActivePage = Pages[activePage];

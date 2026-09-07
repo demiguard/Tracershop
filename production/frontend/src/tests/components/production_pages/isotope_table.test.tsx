@@ -21,7 +21,5 @@ describe("Production isotope table test suite", () => {
       </TracerShopContext>
     )
     */
-
-
   })
 });

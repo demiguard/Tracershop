@@ -198,7 +198,7 @@ class BookingRule(TracershopModel):
   """A rule indicate that a child at the location belongs to the 'true_owner'
   rather than the owner of the location.
 
-  This is a janky workout - Assume a very low
+  This is a janky workout - Assume a very low number of rules.
   """
   location = ForeignKey(Location, on_delete=RESTRICT)
   true_owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
@@ -208,8 +208,6 @@ class WeeklyRepeat(IntegerChoices):
   EveryWeek = 0
   EvenWeek = 1
   OddWeek = 2
-
-
 
 
 class ActivityDeliveryTimeSlot(TracershopModel):

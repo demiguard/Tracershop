@@ -1,11 +1,8 @@
 /** Master Site */
-import React, { useEffect } from "react";
+import React, { lazy, useEffect } from "react";
 
 
 import { LoginSite } from "./login_site";
-import { AdminSite } from "./admin_site";
-import { ShopSite } from "./shop_site";
-import { ProductionSite } from "./production_site";
 import { DATABASE_CURRENT_USER, USER_GROUPS} from "~/lib/constants";
 import { ErrorPage } from "../error_pages/error_page";
 import { User } from "~/dataclasses/dataclasses";
@@ -17,6 +14,11 @@ import Cookies from "js-cookie";
 import { db } from "~/lib/local_storage_driver";
 import { Optional } from "~/components/injectable/optional";
 import { ServerErrorPage } from "~/components/error_pages/server_error_page";
+
+
+const AdminSite = lazy(() => import("~/components/sites/admin_site"))
+const ProductionSite = lazy(() => import("~/components/sites/production_site"))
+const ShopSite = lazy(() => import("~/components/sites/shop_site"))
 
 const SITES = {
   log_in_site : LoginSite,

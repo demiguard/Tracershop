@@ -1,6 +1,6 @@
 import React from 'react';
 import { App } from "./components/app.js";
-import './bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
 
 import { createRoot } from "react-dom/client";
 

@@ -149,7 +149,7 @@ export function bookingRuleFilter(container: ContainerType<BookingRule>, { locat
 }
 
 
-type BookingFilterArgs = {
+export type BookingFilterArgs = {
   state? : TracershopState,
   active_endpoint? : number,
   active_date? : Date,

@@ -62,6 +62,7 @@
     "jest-environment-jsdom": "^29.2.2",
     "jest-websocket-mock": "^2.5.0",
     "less-loader": "^12.2.0",
+    "mini-css-extract-plugin": "^2.10.2",
     "sass-loader": "^16.0.1",
     "typescript": "^5.8.3",
     "webpack-bundle-analyzer": "^4.10.2",
