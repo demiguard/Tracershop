@@ -68,13 +68,13 @@ app = ProtocolTypeRouter({
   )
 })
 
-TEST_ADMIN_USERNAME = "admin_username"
+TEST_ADMIN_USERNAME = "admin_username".upper()
 TEST_ADMIN_PASSWORD = "admin_password"
 
-TEST_PROD_ADMIN_USERNAME = "admin_prod_username"
+TEST_PROD_ADMIN_USERNAME = "admin_prod_username".upper()
 TEST_PROD_ADMIN_PASSWORD = "admin_prod_password"
 
-TEST_SHOP_ADMIN_USERNAME = "shopAdmin"
+TEST_SHOP_ADMIN_USERNAME = "shopAdmin".upper()
 TEST_SHOP_ADMIN_PASSWORD = "shopAdminPassword"
 
 #NOTE: that sadly the connection cannot be in a setup case,
@@ -136,15 +136,15 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
   def setUp(self):
     pass
-    self.user = User(username=TEST_ADMIN_USERNAME, user_group=UserGroups.Admin)
+    self.user = User(username=TEST_ADMIN_USERNAME.upper(), user_group=UserGroups.Admin)
     self.user.set_password(TEST_ADMIN_PASSWORD)
     self.user.save()
 
-    self.user_prod_admin = User(username=TEST_PROD_ADMIN_USERNAME, user_group=UserGroups.ProductionAdmin)
+    self.user_prod_admin = User(username=TEST_PROD_ADMIN_USERNAME.upper(), user_group=UserGroups.ProductionAdmin)
     self.user_prod_admin.set_password(TEST_PROD_ADMIN_PASSWORD)
     self.user_prod_admin.save()
 
-    self.shop_admin_user = User(username=TEST_SHOP_ADMIN_USERNAME, user_group=UserGroups.ShopAdmin)
+    self.shop_admin_user = User(username=TEST_SHOP_ADMIN_USERNAME.upper(), user_group=UserGroups.ShopAdmin)
     self.shop_admin_user.set_password(TEST_SHOP_ADMIN_PASSWORD)
     self.shop_admin_user.save()
 
@@ -943,6 +943,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
           WEBSOCKET_DATA : {
             WEBSOCKET_DATA_ID : self.injection_order.id,
             "lot_number" : "gfh-200611-1",
+            "max_injection_volume" : 10.0
           },
           WEBSOCKET_MESSAGE_ID : 69230481,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -977,6 +978,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
           WEBSOCKET_DATA : {
             WEBSOCKET_DATA_ID : INJECTION_ORDER_ID,
             "lot_number" : "gfh-200611-1",
+            "max_injection_volume" : 10.0
           },
           WEBSOCKET_MESSAGE_ID : 69230481,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_FREE_INJECTION,
@@ -1203,7 +1205,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
                            SUCCESS_STATUS_CRUD.UNSPECIFIED_REJECT.value)
           await comm_admin.disconnect()
 
-    self.assertRegexIn(f"admin_prod_username attempted to delete activity_orders", captured_debug_logs.output)
+    self.assertRegexIn(f"{TEST_PROD_ADMIN_USERNAME.upper()} attempted to delete activity_orders", captured_debug_logs.output)
 
     freed_order: ActivityOrder = await database_sync_to_async(ActivityOrder.objects.get)(pk=self.freed_order.id)
     self.assertEqual(freed_order.status, OrderStatus.Released)
@@ -1337,7 +1339,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       self.assertTrue(new_user_login_message[AUTH_IS_AUTHENTICATED])
 
       await comm_new_user.disconnect()
-      new_user = await database_sync_to_async(User.objects.get)(username="new_external")
+      new_user = await database_sync_to_async(User.objects.get)(username="new_external".upper())
       UA: UserAssignment = await database_sync_to_async(UserAssignment.objects.get)(user=new_user)
       customer: Customer = await database_sync_to_async(getattr)(UA, 'customer')
       self.assertEqual(customer.id, self.customer.id)
@@ -1348,7 +1350,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
       _conn, _subprotocal = await comm_admin.connect()
 
       await comm_admin.send_json_to(self.loginProdAdminMessage)
-      admin_login_message = await comm_admin.receive_json_from()
+      new_user_login_message = await comm_admin.receive_json_from()
 
       await comm_admin.send_json_to({
         WEBSOCKET_MESSAGE_ID : 69230481,
@@ -1380,8 +1382,8 @@ class ConsumerTestCase(TransactionTracershopTestCase):
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_AUTH_LOGIN,
         WEBSOCKET_MESSAGE_ID : 657901284,
       })
-      admin_login_message = await comm_new_user.receive_json_from()
-      self.assertTrue(admin_login_message[AUTH_IS_AUTHENTICATED])
+      new_user_login_message = await comm_new_user.receive_json_from()
+      self.assertTrue(new_user_login_message[AUTH_IS_AUTHENTICATED])
 
       await comm_new_user.disconnect()
 
@@ -1406,7 +1408,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
           await comm_shop_admin.receive_json_from(timeout=1)
 
       self.assertEqual(len(cm.output),1)
-      self.assertIn(TEST_SHOP_ADMIN_USERNAME, cm.output[0])
+      self.assertIn(TEST_SHOP_ADMIN_USERNAME.upper(), cm.output[0])
 
       await comm_shop_admin.disconnect()
 
@@ -1553,7 +1555,7 @@ class ConsumerTestCase(TransactionTracershopTestCase):
 
     await check_tracer()
 
-  async def test_release_multiple_injections(self):
+  async def test_release_multiple_injections_success(self):
     with self.assertLogs(DEBUG_LOGGER):
       with self.assertLogs(AUDIT_LOGGER) as captured_audit:
         communicator = WebsocketCommunicator(app,"ws/")
@@ -1567,7 +1569,10 @@ class ConsumerTestCase(TransactionTracershopTestCase):
             AUTH_USERNAME : TEST_ADMIN_USERNAME,
             AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
           },
-          WEBSOCKET_DATA : "asdf-211122-1",
+          WEBSOCKET_DATA : {
+            "lot_number" : "asdf-211122-1",
+            "max_injection_volume" : 10.0
+          },
           WEBSOCKET_DATA_ID : [4811, 4812],
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
@@ -1595,7 +1600,10 @@ class ConsumerTestCase(TransactionTracershopTestCase):
             AUTH_USERNAME : TEST_ADMIN_USERNAME,
             AUTH_PASSWORD : "NOT ADMIN PASSWORD!",
           },
-          WEBSOCKET_DATA : "asdf-211122-1",
+          WEBSOCKET_DATA : {
+            "lot_number" : "asdf-211122-1",
+            "max_injection_volume" : 10.0
+          },
           WEBSOCKET_DATA_ID : [4811, 4812],
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
@@ -1623,7 +1631,10 @@ class ConsumerTestCase(TransactionTracershopTestCase):
             AUTH_USERNAME : TEST_ADMIN_USERNAME,
             AUTH_PASSWORD : TEST_ADMIN_PASSWORD,
           },
-          WEBSOCKET_DATA : "asdf-211122-1",
+          WEBSOCKET_DATA : {
+            "lot_number" : "asdf-211122-1",
+            "max_injection_volume" : 10.0
+          },
           WEBSOCKET_DATA_ID : [14811, 14812],
           WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
           WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,
@@ -1648,7 +1659,10 @@ class ConsumerTestCase(TransactionTracershopTestCase):
           AUTH_USERNAME : TEST_SHOP_ADMIN_USERNAME,
           AUTH_PASSWORD : TEST_SHOP_ADMIN_PASSWORD,
         },
-        WEBSOCKET_DATA : "asdf-211122-1",
+        WEBSOCKET_DATA : {
+          "lot_number" : "asdf-211122-1",
+          "max_injection_volume" : 10.0
+        },
         WEBSOCKET_DATA_ID : [4811, 4812],
         WEBSOCKET_JAVASCRIPT_VERSION : JAVASCRIPT_VERSION,
         WEBSOCKET_MESSAGE_TYPE : WEBSOCKET_MESSAGE_RELEASE_MULTI,

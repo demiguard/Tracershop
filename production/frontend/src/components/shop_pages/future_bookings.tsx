@@ -5,7 +5,7 @@ import { TRACER_TYPE } from "../../lib/constants";
 import { cssAlignRight, cssCenter } from "~/lib/styles";
 import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WARNING_DUPLICATED_BOOKINGS, WEBSOCKET_DATA, WEBSOCKET_ERROR, WEBSOCKET_MESSAGE_MASS_ORDER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
-import { ProcedureLocationIndex, TracerBookingMapping } from "~/lib/data_structures";
+import { TracerBookingMapping } from "~/lib/data_structures";
 import { IdempotentButton } from "~/components/injectable/buttons";
 import { TimeStamp } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
@@ -15,7 +15,7 @@ import { BOOKING_SORTING_METHODS, sortBookings } from "~/lib/sorting";
 import { AlertBox, ERROR_LEVELS } from "~/components/injectable/alert_box";
 import { RecoverableError, useErrorState } from "~/lib/error_handling";
 import { MESSAGE_MASS_ORDER } from "~/lib/incoming_messages";
-import { useProcedureFinder } from "~/contexts/procedure_context";
+import { ProcedureFinder, useProcedureFinder } from "~/contexts/procedure_context";
 
 // This is a test target, that's why it's here
 export const missingSetupHeader = "Ikke opsatte undersøgelser";
@@ -72,12 +72,13 @@ type BookingRowProps = {
 function BookingRow({
   setBookingProgram,
   booking,
-  procedureLocationIndex,
+  procedureFinder,
+  activeEndpoint,
   checked
 }){
   const state = useTracershopState();
 
-  const procedure = procedureLocationIndex.getProcedure(booking);
+  const procedure = procedureFinder.find(booking,activeEndpoint);
   const series_description = state.procedure_identifier.get(procedure.series_description);
   const location = state.location.get(booking.location);
   const locationName = (location.common_name) ? location.common_name : location.location_code;
@@ -126,7 +127,8 @@ type TracerCardProps = {
   bookings : Array<Booking>,
   activityDeadlineValid : boolean,
   injectionDeadlineValid : boolean,
-  procedureLocationIndex : ProcedureLocationIndex
+  activeEndpoint : number
+  procedureFinder : ProcedureFinder
 }
 
 
@@ -134,7 +136,8 @@ function TracerCard({tracer,
                     bookings,
                     activityDeadlineValid,
                     injectionDeadlineValid,
-                    procedureLocationIndex
+                    activeEndpoint,
+                    procedureFinder
 
   }: TracerCardProps) {
   const state = useTracershopState();
@@ -186,7 +189,8 @@ function TracerCard({tracer,
       return (<BookingRow
                 key={i}
                 booking={booking}
-                procedureLocationIndex={procedureLocationIndex}
+                procedureFinder={procedureFinder}
+                activeEndpoint={activeEndpoint}
                 setBookingProgram={setBookingProgram}
                 checked={checked}
       />);
@@ -255,39 +259,34 @@ type FutureBookingProps = {
  */
 export function FutureBooking ({
   active_endpoint,
-  booking,
+  booking: bookings,
   activityDeadlineValid,
   injectionDeadlineValid
 } : FutureBookingProps) {
   const state = useTracershopState();
-  const procedureLocationIndex = new ProcedureLocationIndex(state.procedure,
-                                                            state.location,
-                                                            active_endpoint);
-  const bookingMapping = new TracerBookingMapping(booking, procedureLocationIndex);
+  const procedureFinder = useProcedureFinder();
+  const bookingMapping = new TracerBookingMapping(bookings, procedureFinder);
 
-  const bookingCards = [];
-  let index = 0;
-
-  for (const [tracerID, BookingArray] of bookingMapping) {
-    index++; // I know, you could start with 0, but this just taste
+  const bookingCards = [...bookingMapping].map(([tracerID, BookingArray], index) => {
     const tracer = state.tracer.get(tracerID);
     if(tracer === undefined || tracerID === null){
-      bookingCards.push(<ProcedureCard
+      return (<ProcedureCard
         key={index}
         bookings={BookingArray}
       />);
-    } else {
-      bookingCards.push(
-        <TracerCard
-          key={index}
-          tracer={tracer}
-          bookings={BookingArray}
-          activityDeadlineValid={activityDeadlineValid}
-          injectionDeadlineValid={injectionDeadlineValid}
-          procedureLocationIndex={procedureLocationIndex}
-        />);
     }
-  }
+
+    return (
+      <TracerCard
+        activeEndpoint={active_endpoint}
+        key={index}
+        tracer={tracer}
+        bookings={BookingArray}
+        procedureFinder={procedureFinder}
+        activityDeadlineValid={activityDeadlineValid}
+        injectionDeadlineValid={injectionDeadlineValid}
+      />);
+  });
 
   return(
     <div>

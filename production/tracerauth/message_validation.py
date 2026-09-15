@@ -67,7 +67,7 @@ def validate_message(message: Dict[str, Any], blueprint: Message) -> bool:
         return False
     elif isinstance(value, Dict):
       if not isinstance(message[key], Dict):
-        error_logger.error(f"Key: {key} should be a Dict, but it's not")
+        error_logger.error(f"Key: {key} should be a Dict, but it's not: {type(message[key])} - {message[key]}")
         return False
       if not validate_message(message[key], Message(value)):
         return False

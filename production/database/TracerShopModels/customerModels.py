@@ -5,15 +5,17 @@ It belongs here if it's related to a Customer.
 __author__ = "Christoffer Vilstrup Jensen"
 
 # Python Standard Library
+from datetime import date
 
 # Third Party Packages
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Iterable, Optional
 from django.db.models import DateField, BigAutoField, CharField, EmailField,\
     TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField,\
     RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField,\
     SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index, OneToOneField
 
 # Tracershop Packages
+from lib.calenderHelper import is_child
 from lib.utils import classproperty
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.authModels import User
@@ -167,6 +169,17 @@ class Procedure(TracershopModel):
     unique_together = ('series_description', 'owner')
 
 
+# Booking rules are applied in the database layer, and in the frontend filters
+class BookingRule(TracershopModel):
+  """A rule indicate that a child at the location belongs to the 'true_owner'
+  rather than the owner of the location.
+
+  This is a janky workout - Assume a very low number of rules.
+  """
+  location = ForeignKey(Location, on_delete=RESTRICT)
+  true_owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+
+
 class BookingStatus(IntegerChoices):
   Initial = 0
   Ordered = 1
@@ -183,6 +196,17 @@ class Booking(TracershopModel):
   start_date = DateField()
   patient_birth_date = DateField(default=None, null=True)
 
+  def get_endpoint(self, bookings_rules: Iterable[BookingRule], today: date) -> Optional[DeliveryEndpoint]:
+    if self.patient_birth_date is None or not is_child(self.patient_birth_date, today):
+      return self.location.endpoint
+
+    for rule in bookings_rules:
+      if rule.location == self.location:
+        return rule.true_owner
+
+    return self.location.endpoint
+
+
   def __str__(self) -> str:
     return f"Booking: {self.accession_number}"
 
@@ -193,15 +217,6 @@ class Booking(TracershopModel):
       Index(fields=['start_date', 'start_time'])
     ]
 
-# Booking rules are applied in the database layer, and in the frontend filters
-class BookingRule(TracershopModel):
-  """A rule indicate that a child at the location belongs to the 'true_owner'
-  rather than the owner of the location.
-
-  This is a janky workout - Assume a very low number of rules.
-  """
-  location = ForeignKey(Location, on_delete=RESTRICT)
-  true_owner = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
 
 
 class WeeklyRepeat(IntegerChoices):

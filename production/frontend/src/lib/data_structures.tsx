@@ -20,6 +20,7 @@ import { AccumulatingMap } from '~/lib/accumulating_map';
 import { Col } from 'react-bootstrap';
 import { formatAccessionNumber } from '~/lib/formatting';
 import { ActivityOrderCollection } from './data_structures/activity_order_collection';
+import { ProcedureFinder } from '~/contexts/procedure_context';
 
 //#region TimeSlotMapping
 export class TimeSlotMapping {
@@ -184,54 +185,6 @@ export function getRelatedTimeSlots(timeSlots, endpointID) {
 }
 
 
-export class ProcedureLocationIndex {
-  /** @type {Map<Number, Map<Number, Procedure>}*/ _dataStructure
-
-/**
- * @param {Map<Number,Procedure>} procedures
- * @param {Map<Number, Location>} Locations
- */
-  constructor(procedures, Locations, active_endpoint){
-    this._dataStructure = new Map();
-    const locationHelper = new ArrayMap();
-
-    for(const location of Locations.values()){
-      locationHelper.set(location.endpoint, location.id);
-    }
-
-    for(const procedure of procedures.values()){
-      if(procedure.owner !== active_endpoint){
-        // This is needed otherwise others procedure will overwrite.
-        continue;
-      }
-      const map = new Map()
-      this._dataStructure.set(procedure.series_description, map);
-      const locationIDs = locationHelper.get(procedure.owner);
-      if (locationIDs !== undefined){
-        for(const locationID of locationIDs){
-          map.set(locationID, procedure);
-        }
-      } else {
-        console.log("Location IDs undefined!")
-      }
-
-    }
-  }
-
-  /**
-   * Retrieves the associated procedure to a booking.
-   * @param {Booking} booking - Booking
-   * @return {Procedure | undefined}
-   */
-  getProcedure(booking){
-    if(!this._dataStructure.has(booking.procedure)){
-      return undefined
-    }
-    const subMap = this._dataStructure.get(booking.procedure);
-    return subMap.get(booking.location);
-  }
-}
-
 /**
  * @template T
  */
@@ -244,14 +197,14 @@ export class ProcedureIndex {
 }
 
 export class TracerBookingMapping {
-  /** @type {ArrayMap<Number | undefined, Booking>} */ _map : ArrayMap<number, Booking>
+  _map : ArrayMap<number, Booking>
 
-  constructor(bookings : Array<Booking>, procedureLocationIndex: ProcedureLocationIndex){
+  constructor(bookings : Array<Booking>, procedureFinder: ProcedureFinder){
     this._map = new ArrayMap<number,Booking> ();
 
     for(const booking of bookings){
-      const procedure = procedureLocationIndex.getProcedure(booking);
-      if (procedure === undefined){
+      const procedure = procedureFinder.find(booking);
+      if (procedure === null){
         this._map.set(null, booking)
         continue;
       }

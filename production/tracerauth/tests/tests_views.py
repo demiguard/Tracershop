@@ -13,28 +13,29 @@ class ExternalLoginTestCase(TransactionTracershopTestCase):
   def setUp(self) -> None:
     self.factory = RequestFactory()
     self.view = ExternalLoginView()
-    self.AdminUser = User(username="Admin",
+    # No create, because
+    self.AdminUser = User(username="Admin".upper(),
                           user_group=UserGroups.Admin)
     self.AdminUser.set_password("Admin_password")
     self.AdminUser.save()
-    self.ShopExternalUser = User(username="ShopExternal",
+    self.ShopExternalUser = User(username="ShopExternal".upper(),
                                  user_group=UserGroups.ShopExternal)
     self.ShopExternalUser.set_password("ShopExternal_password")
     self.ShopExternalUser.save()
-    self.ShopInternalUser = User(username="ShopInternal",
+    self.ShopInternalUser = User(username="ShopInternal".upper(),
                                  user_group=UserGroups.ShopUser)
     self.ShopInternalUser.set_password("ShopInternal_password")
     self.ShopInternalUser.save()
 
-    self.ShopAdminUser = User(username="ShopAdmin",
+    self.ShopAdminUser = User(username="ShopAdmin".upper(),
                               user_group=UserGroups.ShopAdmin)
     self.ShopAdminUser.set_password("ShopAdmin_password")
     self.ShopAdminUser.save()
-    self.ProductionAdmin = User(username="ProductionAdmin",
+    self.ProductionAdmin = User(username="ProductionAdmin".upper(),
                                 user_group=UserGroups.ProductionAdmin)
     self.ProductionAdmin.set_password("ProductionAdmin_password")
     self.ProductionAdmin.save()
-    self.ProductionUser = User(username="ProductionUser",
+    self.ProductionUser = User(username="ProductionUser".upper(),
                                user_group=UserGroups.ProductionUser)
     self.ProductionUser.set_password("ProductionUser_password")
     self.ProductionUser.save()

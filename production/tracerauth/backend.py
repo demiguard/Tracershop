@@ -11,7 +11,7 @@ from django.contrib.auth.hashers import check_password
 # Tracershop Production Packages
 
 from database.models import User, UserGroups
-from tracerauth.tracer_ldap import authenticate_user, checkUserGroupMembership, get_regional_id
+from tracerauth.tracer_ldap import authenticate_user as authenticate_user_using_LDAP, checkUserGroupMembership, get_regional_id
 
 
 def validString(string: str) -> bool:
@@ -34,7 +34,7 @@ class TracershopAuthenticationBackend(BaseBackend):
     if username and password:
       if isinstance(username, str):
         username = username.upper()
-      if settings.USE_LDAP and authenticate_user(username, password):
+      if settings.USE_LDAP and authenticate_user_using_LDAP(username, password):
         try: # First check if we have the user already
           return User.objects.get(username=username)
         except ObjectDoesNotExist:
@@ -73,6 +73,7 @@ class TracershopAuthenticationBackend(BaseBackend):
         return None
       if check_password(password, user.password):
         return user
+
     return None
 
   def get_user(self, user_id):

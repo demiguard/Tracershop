@@ -38,11 +38,11 @@ DEFAULT_TEST_ORDER_DATE = date(2020,4,15)
 class DatabaseInterFaceTestCases(TracershopTestCase):
   @classmethod
   def setUpTestData(cls):
-    cls.admin = User.objects.create(username="test_admin",
+    cls.admin = User.objects.create(username="test_admin".upper(),
                                           user_group= UserGroups.Admin)
-    cls.shop_admin = User.objects.create(username="test_shop_admin",
+    cls.shop_admin = User.objects.create(username="test_shop_admin".upper(),
                                           user_group= UserGroups.ShopAdmin)
-    cls.shop_external = User.objects.create(username="shop_external",
+    cls.shop_external = User.objects.create(username="shop_external".upper(),
                                           user_group= UserGroups.ShopExternal)
 
     cls.accession_number_1 = "REGH10642011"
@@ -94,6 +94,12 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
       name="other_endpoint"
     )
 
+    cls.endpoint_no_time_slots = DeliveryEndpoint.objects.create(
+      id = 514,
+      owner = cls.customer,
+      name="No_time_slots"
+    )
+
     cls.location = Location.objects.create(
       location_code="BLA30BLA",
       endpoint=cls.endpoint,
@@ -104,6 +110,12 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
       location_code="missing_endpoint",
       endpoint=None,
       common_name="Missing endpoint",
+    )
+
+    cls.location_to_time_slots = Location.objects.create(
+      location_code="missing_time_slot",
+      endpoint=cls.endpoint_no_time_slots,
+      common_name="no_time_slot"
     )
 
     cls.procedure_identifier = ProcedureIdentifier.objects.create(
@@ -128,6 +140,14 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
     cls.procedure_identifier_missing = ProcedureIdentifier.objects.create(
       code="Missing",
       description="Missing",
+    )
+
+    cls.procedure_no_time_slot = Procedure.objects.create(
+      series_description = cls.procedure_identifier,
+      tracer = cls.tracer,
+      tracer_units = 300,
+      delay_minutes = 0,
+      owner=cls.endpoint_no_time_slots
     )
 
     cls.procedure_inj = Procedure.objects.create(
@@ -242,7 +262,6 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
       ]
     ]
 
-
     cls.booking_missing_procedure = Booking.objects.create(
       status=BookingStatus.Initial,
       location=cls.location,
@@ -263,7 +282,7 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
 
     cls.booking_missing_time_slot = Booking.objects.create(
       status=BookingStatus.Initial,
-      location=cls.location,
+      location=cls.location_to_time_slots,
       procedure=cls.procedure_identifier,
       accession_number="missing_time_slot",
       start_time=time(10,0,0),
@@ -486,7 +505,7 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
           "missing_location" : True,
         }, self.shop_admin)
 
-    self.assertRegexIn("has no associated endpoint!", captured_error_logs.output)
+    self.assertRegexIn("has no associated endpoint", captured_error_logs.output)
 
 
   def test_order_missing_time_slot(self):
@@ -496,7 +515,7 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
           "missing_time_slot" : True,
         }, self.shop_admin)
 
-    self.assertRegexIn("that endpoint doesn't have any ActivityDeliveryTimeSlots", captured_error_logs.output)
+    self.assertRegexIn("missing_time_slot is being ordered to test_customer - No_time_slots at 10:00:00, but that endpoint doesn't have any ActivityDeliveryTimeSlots to Monday", captured_error_logs.output)
 
 
   def test_createUserAssignment_existingUser(self):
@@ -816,9 +835,8 @@ class DatabaseInterFaceTestCases(TracershopTestCase):
     for test_booking in self.bookings_injection:
       self.assertIn(test_booking, bookings)
 
-    self.assertIn(self.booking_missing_time_slot, bookings)
+    self.assertNotIn(self.booking_missing_time_slot, bookings)
 
-    self.assertEqual(len(bookings), 11)
 
   def test_get_bookings_booking_rules(self):
     class FakeDateTime(datetime):

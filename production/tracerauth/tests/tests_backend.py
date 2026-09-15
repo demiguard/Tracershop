@@ -10,8 +10,8 @@ class TracerAuthBackendTestCase(TransactionTestCase):
   OldPassword = "OldPassword"
 
   def setUp(self) -> None:
-    self.basicUserName = "basicUser"
-    self.basicPassword = "basicPassword"
+    self.basicUserName = "basicUser".upper()
+    self.basicPassword = "basicPassword".upper()
 
     self.basicUser = User(username=self.basicUserName, user_group=UserGroups.ShopUser)
     self.basicUser.set_password(self.basicPassword)

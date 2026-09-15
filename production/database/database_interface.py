@@ -642,26 +642,26 @@ class DatabaseInterface():
   def a_mass_order(self, bookings: Dict[str, bool], user: User):
     return self.mass_order(bookings, user)
 
-  def mass_order(self, bookings: Dict[str, bool], user: User):
+  def mass_order(self, requested_bookings: Dict[str, bool], user: User):
     timeSlotsBookings: Dict[ActivityDeliveryTimeSlot, float] = {}
     injectionOrders: List[InjectionOrder] = []
     activityOrders: List[ActivityOrder] = []
     bookingUpdated: List[Booking] = []
 
+    today = date.today()
+
     bookingDate = date(1970, 1 ,1)
+    bookings = Booking.objects.filter(accession_number__in = [ acc for acc in requested_bookings.keys()])
+    booking_rules = BookingRule.objects.filter(location__in=[booking.location for booking in bookings])
 
-    for accessionNumber, ordering in bookings.items():
-      try:
-        booking = Booking.objects.get(accession_number=accessionNumber)
-      except ObjectDoesNotExist:
-        # This is a silent error!
-        #
-        # So how can this happen?
-        error_logger.error(f"Booking for accession number: {accessionNumber} have no matching backend copy")
-        continue
+    if len(bookings) != len(requested_bookings):
+      existent_accession_numbers = [booking.accession_number for booking in bookings]
+      nonexistent_bookings = [ k for k in requested_bookings.keys() if k not in existent_accession_numbers ]
+      error_logger.error(f"Unable to find bookings with the following accession numbers: {nonexistent_bookings}")
 
+    for booking in bookings:
       bookingDate = booking.start_date
-      endpoint = booking.location.endpoint
+      endpoint = booking.get_endpoint(booking_rules, today)
       procedureIdentifier = booking.procedure
 
       if endpoint is None:
@@ -686,7 +686,8 @@ class DatabaseInterface():
 
       tracer = procedure.tracer
 
-      if not ordering:
+      if booking.accession_number is None or not requested_bookings.get(booking.accession_number, False):
+        debug_logger.info(f"Rejecting: {booking}")
         booking.status = BookingStatus.Rejected
         bookingUpdated.append(booking)
         continue
@@ -727,7 +728,6 @@ class DatabaseInterface():
               production_run__in=productions,
             ):
             min_time = min(time_slot.delivery_time, min_time)
-
 
           error_logger.error(f"Booking: {booking} is being ordered to {endpoint} at {booking.start_time}, but that endpoint doesn't have any ActivityDeliveryTimeSlots to {Days(day).name}")
           error_logger.error(f"Productions: {productions}")
@@ -842,7 +842,7 @@ class DatabaseInterface():
           * DATA_CUSTOMER - Optional int - if defined, the customer the user
                                            represents.
     """
-    newExternalUser = User(username=user_skeleton[AUTH_USERNAME],
+    newExternalUser = User(username=user_skeleton[AUTH_USERNAME].upper(),
                            user_group=UserGroups.ShopExternal)
 
     newExternalUser.set_password(user_skeleton[AUTH_PASSWORD])
