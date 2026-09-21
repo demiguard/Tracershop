@@ -86,6 +86,8 @@ DATA_SERVER_LOG = "server_log"
 DATA_SECONDARY_EMAIL = "secondary_email"
 DATA_STANDARD_ORDER = "standard_order"
 DATA_VIAL = "vial"
+DATA_VIAL_TEMPLATE = "vial_template"
+DATA_VIAL_TEMPLATE_TEXT = "vial_template_text"
 DATA_USER = "user"
 DATA_USER_ASSIGNMENT = "user_assignment"
 DATA_LEGACY_PRODUCTION_MEMBER = "legacy_production_member"
@@ -95,7 +97,8 @@ DATA_LEGACY_ACTIVITY_ORDER = "legacy_activity_order"
 EXCLUDED_STATE_MODELS = [
   DATA_BOOKING,
   DATA_TELEMETRY_RECORD,
-  DATA_TELEMETRY_REQUEST
+  DATA_TELEMETRY_REQUEST,
+  DATA_VIAL_TEMPLATE_TEXT
 ]
 
 URL_INDEX = ""

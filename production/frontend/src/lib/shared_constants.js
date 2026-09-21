@@ -59,6 +59,8 @@ export const DATA_TRACER_MAPPING = "tracer_mapping";
 export const DATA_USER = "user";
 export const DATA_USER_ASSIGNMENT = "user_assignment";
 export const DATA_VIAL = "vial";
+export const DATA_VIAL_TEMPLATE = "vial_template";
+export const DATA_VIAL_TEMPLATE_TEXT = "vial_template_text";
 
 export const ERROR_EARLY_BOOKING_TIME = "BOOKING_TIME";
 export const ERROR_EARLY_TIME_SLOT = "EARLIEST_ORDER_TIME";
@@ -81,6 +83,7 @@ export const EXCLUDED_STATE_MODELS = [
   "booking",
   "telemetry_record",
   "telemetry_request",
+  "vial_template_text",
 ]
 
 export const JAVASCRIPT_VERSION = "2.6.4";

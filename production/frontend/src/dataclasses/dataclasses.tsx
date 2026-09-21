@@ -1507,6 +1507,68 @@ export class Vial extends Dataclass {
   }
 }
 
+export class VialTemplate extends Dataclass {
+  id
+  title
+  print_count
+  text
+
+  constructor(id?, title?, print_count?, text?, ) {
+    super()
+    this.id=id
+    this.title=title
+    this.print_count=print_count
+    this.text=text
+  }
+
+  /**Copies the vialtemplate
+  * @returns { VialTemplate }
+   */
+  copy() : VialTemplate {
+    return new VialTemplate(
+      this.id,
+      this.title,
+      this.print_count,
+      this.text
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new CharField("title"),
+      new IntField("print_count"),
+      new ForeignField("text","vial_template_text"),
+    ];
+  }
+}
+
+export class VialTemplateText extends Dataclass {
+  id
+  text
+
+  constructor(id?, text?, ) {
+    super()
+    this.id=id
+    this.text=text
+  }
+
+  /**Copies the vialtemplatetext
+  * @returns { VialTemplateText }
+   */
+  copy() : VialTemplateText {
+    return new VialTemplateText(
+      this.id,
+      this.text
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new CharField("text"),
+    ];
+  }
+}
+
 export const MODELS = {
   address : Address,
   activity_orders : ActivityOrder,
@@ -1544,6 +1606,8 @@ export const MODELS = {
   user : User,
   user_assignment : UserAssignment,
   vial : Vial,
+  vial_template : VialTemplate,
+  vial_template_text : VialTemplateText,
 }
 
 export class TracershopState {
@@ -1584,8 +1648,9 @@ export class TracershopState {
   user : Map<number, User>
   user_assignment : Map<number, UserAssignment>
   vial : Map<number, Vial>
+  vial_template : Map<number, VialTemplate>
 
-  constructor(logged_in_user?, today?, address?, activity_orders?, booking_rule?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, ){
+  constructor(logged_in_user?, today?, address?, activity_orders?, booking_rule?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, vial_template?, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1753,6 +1818,11 @@ export class TracershopState {
       this.vial = vial
     } else {
       this.vial = new Map()
+    }
+    if(vial_template !== undefined){
+      this.vial_template = vial_template
+    } else {
+      this.vial_template = new Map()
     }
   this.error = "";
   }

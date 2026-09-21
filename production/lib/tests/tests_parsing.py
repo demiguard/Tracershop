@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from logging import getLogger, Logger, DEBUG
 
 # Third party packages
-from django.test import TestCase, TransactionTestCase
+from django.test import TestCase
 import hl7
 from pandas import read_csv
 
@@ -18,57 +18,50 @@ from pandas import read_csv
 from constants import DEBUG_LOGGER
 from database.models import Customer, Isotope, Tracer, TracerTypes, Vial,\
   UserGroups
-from lib.parsing import update_customer_mapping, update_tracer_mapping,\
-  parse_val_file, _parse_customer, extract_deleted_accessionNumber,\
-  parse_index_header, parse_data_frame_row_to_vial, toDatetime
+from lib.parsing import parse_val_file, _parse_customer,\
+  extract_deleted_accessionNumber, parse_index_header,\
+  parse_data_frame_row_to_vial, toDatetime
 
 class ParsingTestCase(TestCase):
-  def setUp(self) -> None:
-    self.isotope = Isotope.objects.create(id=1,
+  @classmethod
+  def setUpTestData(cls) -> None:
+    cls.isotope = Isotope.objects.create(id=1,
                                      atomic_number=9,
                                      atomic_mass=18,
                                      halflife_seconds=107.2,
                                      atomic_letter='F')
 
-    self.fdg = Tracer.objects.create(id=1, isotope=self.isotope, shortname="FDG", clinical_name="FDG_C", tracer_type=TracerTypes.ActivityBased, vial_tag="FDGF")
-    self.fet = Tracer.objects.create(id=2, isotope=self.isotope, shortname="FET", clinical_name="FET_C", tracer_type=TracerTypes.ActivityBased, vial_tag="FET")
-    self.pe2i = Tracer.objects.create(id=3, isotope=self.isotope, shortname="PE2I", clinical_name="PE2I_C", tracer_type=TracerTypes.ActivityBased, vial_tag="PE2I")
+    cls.fdg = Tracer.objects.create(id=1, isotope=cls.isotope, shortname="FDG", clinical_name="FDG_C", tracer_type=TracerTypes.ActivityBased, vial_tag="FDGF")
+    cls.fet = Tracer.objects.create(id=2, isotope=cls.isotope, shortname="FET", clinical_name="FET_C", tracer_type=TracerTypes.ActivityBased, vial_tag="FET")
+    cls.pe2i = Tracer.objects.create(id=3, isotope=cls.isotope, shortname="PE2I", clinical_name="PE2I_C", tracer_type=TracerTypes.ActivityBased, vial_tag="PE2I")
 
-    self.fling = Customer.objects.create(id=1, short_name="fling", long_name="Flemming Andersen", dispenser_id=None)
-    self.test_kunde = Customer.objects.create(id=2, short_name="test_kunde", long_name="Flemming Andersen", dispenser_id=1015)
-    self.herlev = Customer.objects.create(id=3, short_name="herlev", long_name="Amtsygehuset i Herlev", dispenser_id=2)
-    self.petrh = Customer.objects.create(id=4, short_name="petrh", long_name="Rigshospitalet", dispenser_id=1)
-    self.gentofte = Customer.objects.create(id=5, short_name="gentofte", long_name="Gentofte Hospital", dispenser_id=3)
-    self.glostrup = Customer.objects.create(id=6, short_name="glostrup", long_name="Rigshospitalet, Glostrup", dispenser_id=4)
-    self.hilleroed = Customer.objects.create(id=7, short_name="hilleroed", long_name="KFNA Hilleroed", dispenser_id=5)
-    self.bispebjerg = Customer.objects.create(id=8, short_name="bispebjerg", long_name="Bispebjerg Hospital", dispenser_id=6)
-    self.lund = Customer.objects.create(id=9, short_name="lund", long_name="Lund University Hospital", dispenser_id=7)
-    self.nru = Customer.objects.create(id=10, short_name="nru", long_name="Neurobiologisk Forskningsenhed ", dispenser_id=9)
-    self.aarhus = Customer.objects.create(id=11, short_name="aarhus", long_name="Pet Centret", dispenser_id=8)
-    self.goteborg = Customer.objects.create(id=12, short_name="goteborg", long_name="Göteborg", dispenser_id=10)
-    self.odense = Customer.objects.create(id=13, short_name="odense", long_name="Odense Universitetshospital", dispenser_id=11)
-    self.hvidovre = Customer.objects.create(id=14, short_name="hvidovre", long_name="Hvidovre hospital", dispenser_id=12)
-    self.vejle = Customer.objects.create(id=15, short_name="vejle", long_name="Vejle Sygehus", dispenser_id=13)
-    self.nved = Customer.objects.create(id=16, short_name="nved", long_name="Næstved Sygehus", dispenser_id=14)
-    self.petf2 = Customer.objects.create(id=17, short_name="petf2", long_name="PET Finsens II", dispenser_id=16)
-    self.koge = Customer.objects.create(id=18, short_name="koge", long_name="Koge Sygehus", dispenser_id=17)
-    self.hamlet = Customer.objects.create(id=19, short_name="hamlet", long_name="Privathospitalet Hamlet", dispenser_id=18)
-    self.malmo = Customer.objects.create(id=20, short_name="malmo", long_name="Skaanes Universitetssjukhus", dispenser_id=19)
-    self.fu = Customer.objects.create(id=21, short_name="fu", long_name="Forskning og Udvikling", dispenser_id=20)
-    self.kf = Customer.objects.create(id=22, short_name="kf", long_name="Klin fys 4011", dispenser_id=15)
-    self.life = Customer.objects.create(id=23, short_name="life", long_name="LIFE, Det Biovidenskabelige Fakultet, KU", dispenser_id=21)
-    self.pet7 = Customer.objects.create(id=24, short_name="pet7", long_name="PET7", dispenser_id=  25)
-    self.ctn = Customer.objects.create(id=25, short_name="ctn", long_name="Center for Translationel Neuroscience", dispenser_id=22)
-    self.minerva = Customer.objects.create(id=26, short_name="minerva", long_name="Minerva Imaging", dispenser_id=23)
-    self.petq = Customer.objects.create(id=27, short_name="petq", long_name="PET 7 9 10", dispenser_id=24)
-
-    update_customer_mapping()
-    update_tracer_mapping()
-
-  def tearDown(self) -> None:
-    Customer.objects.all().delete()
-    Tracer.objects.all().delete()
-    Isotope.objects.all().delete()
+    cls.fling = Customer.objects.create(id=1, short_name="fling", long_name="Flemming Andersen", dispenser_id=None)
+    cls.test_kunde = Customer.objects.create(id=2, short_name="test_kunde", long_name="Flemming Andersen", dispenser_id=1015)
+    cls.herlev = Customer.objects.create(id=3, short_name="herlev", long_name="Amtsygehuset i Herlev", dispenser_id=2)
+    cls.petrh = Customer.objects.create(id=4, short_name="petrh", long_name="Rigshospitalet", dispenser_id=1)
+    cls.gentofte = Customer.objects.create(id=5, short_name="gentofte", long_name="Gentofte Hospital", dispenser_id=3)
+    cls.glostrup = Customer.objects.create(id=6, short_name="glostrup", long_name="Rigshospitalet, Glostrup", dispenser_id=4)
+    cls.hilleroed = Customer.objects.create(id=7, short_name="hilleroed", long_name="KFNA Hilleroed", dispenser_id=5)
+    cls.bispebjerg = Customer.objects.create(id=8, short_name="bispebjerg", long_name="Bispebjerg Hospital", dispenser_id=6)
+    cls.lund = Customer.objects.create(id=9, short_name="lund", long_name="Lund University Hospital", dispenser_id=7)
+    cls.nru = Customer.objects.create(id=10, short_name="nru", long_name="Neurobiologisk Forskningsenhed ", dispenser_id=9)
+    cls.aarhus = Customer.objects.create(id=11, short_name="aarhus", long_name="Pet Centret", dispenser_id=8)
+    cls.goteborg = Customer.objects.create(id=12, short_name="goteborg", long_name="Göteborg", dispenser_id=10)
+    cls.odense = Customer.objects.create(id=13, short_name="odense", long_name="Odense Universitetshospital", dispenser_id=11)
+    cls.hvidovre = Customer.objects.create(id=14, short_name="hvidovre", long_name="Hvidovre hospital", dispenser_id=12)
+    cls.vejle = Customer.objects.create(id=15, short_name="vejle", long_name="Vejle Sygehus", dispenser_id=13)
+    cls.nved = Customer.objects.create(id=16, short_name="nved", long_name="Næstved Sygehus", dispenser_id=14)
+    cls.petf2 = Customer.objects.create(id=17, short_name="petf2", long_name="PET Finsens II", dispenser_id=16)
+    cls.koge = Customer.objects.create(id=18, short_name="koge", long_name="Koge Sygehus", dispenser_id=17)
+    cls.hamlet = Customer.objects.create(id=19, short_name="hamlet", long_name="Privathospitalet Hamlet", dispenser_id=18)
+    cls.malmo = Customer.objects.create(id=20, short_name="malmo", long_name="Skaanes Universitetssjukhus", dispenser_id=19)
+    cls.fu = Customer.objects.create(id=21, short_name="fu", long_name="Forskning og Udvikling", dispenser_id=20)
+    cls.kf = Customer.objects.create(id=22, short_name="kf", long_name="Klin fys 4011", dispenser_id=15)
+    cls.life = Customer.objects.create(id=23, short_name="life", long_name="LIFE, Det Biovidenskabelige Fakultet, KU", dispenser_id=21)
+    cls.pet7 = Customer.objects.create(id=24, short_name="pet7", long_name="PET7", dispenser_id=  25)
+    cls.ctn = Customer.objects.create(id=25, short_name="ctn", long_name="Center for Translationel Neuroscience", dispenser_id=22)
+    cls.minerva = Customer.objects.create(id=26, short_name="minerva", long_name="Minerva Imaging", dispenser_id=23)
+    cls.petq = Customer.objects.create(id=27, short_name="petq", long_name="PET 7 9 10", dispenser_id=24)
 
   def test_customer_parse(self):
     newVial = Vial()
