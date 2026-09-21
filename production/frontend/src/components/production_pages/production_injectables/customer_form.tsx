@@ -66,7 +66,7 @@ export function CustomerForm({
               onChange={setTempObjectToEvent(setTempCustomer, 'long_name')}
             />
           </TracershopInputGroup>
-          <TracershopInputGroup label="Kunde addresse">
+          <TracershopInputGroup label="Kunde adresse">
             <Form.Control
               aria-label="address-input"
               value={nullParser(tempCustomer.billing_address)}

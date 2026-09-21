@@ -109,3 +109,22 @@ class ServerConfiguration(TracershopModel):
   @classmethod
   def get(cls):
     return cls.objects.get_or_create(pk=1)[0]
+
+
+class VialTemplateText(TracershopModel):
+  """This is the text for a template, that is separated such that you don't need
+  to load the text to load the template.
+
+  Like bookings the text is not part of the global state on the frontend and
+  must be queried over the websocket.
+  """
+  text = models.TextField()
+
+class VialTemplate(TracershopModel):
+  """A vial template is a recipe for a document that is printed whenever a vial
+  is added to tracershop by the vialdog."""
+  title = models.CharField(max_length=128)
+  print_count = models.SmallIntegerField(default=0)
+  text = models.ForeignKey(VialTemplateText, on_delete=models.CASCADE, null=True, default=None)
+  # This is a one to one, but it's not enforced, it really just doesn't make any
+  # sense otherwise.
