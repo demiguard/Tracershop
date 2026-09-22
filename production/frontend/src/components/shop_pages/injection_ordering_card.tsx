@@ -7,7 +7,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import { Card, Col, FormControl, Row } from 'react-bootstrap';
 import { useTracershopState } from '~/contexts/tracer_shop_context';
 import { InjectionOrder, Tracer } from '~/dataclasses/dataclasses';
-import { expiredDeadline } from '~/lib/chronomancy';
+import { checkDeadlineForTracer, expiredDeadline } from '~/lib/chronomancy';
 import { DATA_INJECTION_ORDER, TRACER_USAGE } from '~/lib/shared_constants';
 import { ManyRows } from '../injectable/ManyRows';
 import { Select, toOptions } from '../injectable/select';
@@ -37,17 +37,9 @@ export function InjectionOrderingCard({
 } : InjectionOrderingCardProps){
   const state = useTracershopState();
   const tracerOptions = useMemo(() => {
-    return availableTracers.filter((tracer) => {
-      if(tracer.deadline){
-        const deadline = state.deadline.get(tracer.deadline);
-        return !expiredDeadline(
-          deadline, state.today, state.closed_date
-        );
-      } else {
-        return valid_deadline;
-      }
-    });
-  }, [
+      return availableTracers.filter((tracer) => checkDeadlineForTracer(tracer, state, valid_deadline));
+    }
+  , [
     state.today, state.deadline, state.tracer, state.closed_date, availableTracers
   ]);
 

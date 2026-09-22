@@ -248,10 +248,10 @@ def get_ldap_user(username: str):
     user_group = UserGroups.Anon
 
   user, created = User.objects.get_or_create(
-    username=regional_id,
-    user_group=user_group
+    username=regional_id
   )
 
+  user.user_group = user_group
   user.bam_id = formatted_username
   user.save()
 
