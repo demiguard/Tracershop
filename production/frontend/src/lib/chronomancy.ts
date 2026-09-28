@@ -8,7 +8,7 @@
 import { properModulo } from "~/lib/utils";
 import { DAYS, DEADLINE_TYPES } from "./constants";
 import { FormatDateStr, dateToDateString } from "./formatting";
-import { Booking } from "~/dataclasses/dataclasses";
+import { Booking, Tracer, TracershopState } from "~/dataclasses/dataclasses";
 
 /**
  * Function to get today, mainly here to make testing easier as this can be mocked
@@ -287,6 +287,29 @@ export function expiredDeadline(deadline, orderDate, closedDates, now?){
   const deadlineDate = calculateDeadline(deadline, orderDate);
 
   return deadlineDate < now;
+}
+
+/** Checks if a tracer specific deadline should be used instead of
+ *
+ * @param tracer
+ * @param state
+ * @param default_
+ * @param now
+ * @returns True if you can order, false if you cannot
+ */
+export function checkDeadlineForTracer(tracer: Tracer, state: TracershopState, default_: boolean, now? : Date){
+  if(now === undefined){
+    now = getToday();
+  }
+
+  if(tracer.deadline){
+    const deadline = state.deadline.get(tracer.deadline);
+      return !expiredDeadline(
+        deadline, state.today, state.closed_date, now
+      );
+    } else {
+      return default_;
+  }
 }
 
 export function sameDate(date_1 : Date, date_2: Date){

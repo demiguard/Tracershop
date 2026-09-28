@@ -29,13 +29,13 @@ from lib.utils import LMAP
 TEST_ADMIN_USERNAME = "admin"
 TEST_ADMIN_PASSWORD = "password"
 
-def createShellMessage(messageType : str) -> Dict:
+def createSkeletonMessage(messageType : str) -> Dict:
   return {
     WEBSOCKET_MESSAGE_TYPE : messageType
   }
 
 class AuthTestCase(SimpleTestCase):
-  messages = LMAP(createShellMessage, [
+  messages = LMAP(createSkeletonMessage, [
     WEBSOCKET_MESSAGE_AUTH_LOGIN,
     WEBSOCKET_MESSAGE_AUTH_LOGOUT,
     WEBSOCKET_MESSAGE_AUTH_WHOAMI,

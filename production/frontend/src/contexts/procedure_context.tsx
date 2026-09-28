@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useMemo } from "react";
 import { Booking, BookingRule, Procedure, TracershopState } from "~/dataclasses/dataclasses";
 import { useTracershopState } from "./tracer_shop_context"
+import { getToday, is_child_booking } from "~/lib/chronomancy";
 
 /**
  * Bookings have a procedure identifier and a location. This Data structure is
@@ -41,7 +42,7 @@ export class ProcedureFinder {
    * @returns The Procedure
    */
   find(booking: Booking) : Procedure | null{
-    const endpoint = this.#bookingRuleMapping.has(booking.location) ?
+    const endpoint = this.#bookingRuleMapping.has(booking.location) && is_child_booking(booking, getToday()) ?
       this.#bookingRuleMapping.get(booking.location) :
       this.#locationMap.get(booking.location);
 

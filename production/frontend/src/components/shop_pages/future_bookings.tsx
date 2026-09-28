@@ -7,7 +7,7 @@ import { ERROR_EARLY_BOOKING_TIME, ERROR_EARLY_TIME_SLOT, WARNING_DUPLICATED_BOO
 import { Booking, Tracer } from "~/dataclasses/dataclasses";
 import { TracerBookingMapping } from "~/lib/data_structures";
 import { IdempotentButton } from "~/components/injectable/buttons";
-import { TimeStamp } from "~/lib/chronomancy";
+import { checkDeadlineForTracer, expiredDeadline, TimeStamp } from "~/lib/chronomancy";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { Optional, Options } from "~/components/injectable/optional";
 import { OpenCloseButton } from "~/components/injectable/open_close_button";
@@ -179,8 +179,10 @@ function TracerCard({tracer,
     });
   }
 
-  const deadlineValid = tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
-    activityDeadlineValid : injectionDeadlineValid;
+  const deadlineValid = checkDeadlineForTracer(tracer, state, tracer.tracer_type === TRACER_TYPE.ACTIVITY ?
+        activityDeadlineValid : injectionDeadlineValid)
+
+
 
   //@ts-ignore
   const rows = [...bookings].sort(sortBookings(sortingMethod, state, invertedSorting)).map(
