@@ -293,5 +293,6 @@ export function FutureBooking ({
   return(
     <div>
       {bookingCards}
-    </div>);
+    </div>
+  );
 }
