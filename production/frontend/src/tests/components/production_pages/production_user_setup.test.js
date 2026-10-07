@@ -7,7 +7,7 @@ import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState, testState } from "~/tests/app_state";
 
-import { ProductionUserSetup } from "~/components/production_pages/setup_pages/production_user_setup.js"
+import { ExternalUserSetup } from "~/components/production_pages/setup_pages/production_user_setup.js"
 import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -35,7 +35,7 @@ describe("Production User Setup tests", () => {
   it("Standard Render tests", () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <ProductionUserSetup {...props}/>
+        <ExternalUserSetup {...props}/>
       </TracerShopContext>
     );
   });
@@ -43,7 +43,7 @@ describe("Production User Setup tests", () => {
   it("Add user assignment", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <ProductionUserSetup {...props}/>
+        <ExternalUserSetup {...props}/>
       </TracerShopContext>
     );
 
@@ -59,7 +59,7 @@ describe("Production User Setup tests", () => {
   it("Delete user assignment", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <ProductionUserSetup {...props}/>
+        <ExternalUserSetup {...props}/>
       </TracerShopContext>
     );
 
@@ -75,7 +75,7 @@ describe("Production User Setup tests", () => {
   it("Change user assignment", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket}>
-        <ProductionUserSetup {...props}/>
+        <ExternalUserSetup {...props}/>
       </TracerShopContext>
     );
 

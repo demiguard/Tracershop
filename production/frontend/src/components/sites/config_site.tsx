@@ -3,37 +3,40 @@ import { ControlPanel } from "../admin_pages/control_panel"
 import { TracershopNavbar } from "../injectable/navbar"
 import { DatabasePanel } from "~/components/admin_pages/database_panel"
 import { TelemetryVisualizer } from "~/components/admin_pages/telemetry_visualizer"
-import { Col, Container, Row } from "react-bootstrap"
+import { Button, Col, Container, Row } from "react-bootstrap"
 import { CalenderColorMapContextProvider, PRODUCTION_ID } from "~/contexts/calender_color_map"
 import { Calender3Part } from "~/components/injectable/calender3Part"
+import { NavbarElement } from "~/components/injectable/navbar_element"
+import { NavigationContainer } from "~/lib/types"
 
-const Pages = {
-  controlPanel : ControlPanel, // Danish for key since keys are displayed.
-  database : DatabasePanel,
-  telemetry : TelemetryVisualizer
-}
-
-const PageNames = {
-  controlPanel : "Kontrol Panel",
-  database : "Database",
-  telemetry : "Telemetri"
-}
+const PAGES: NavigationContainer = {
+  controlPanel : { component : ControlPanel, name : "Kontrol Panel"}, // Danish for key since keys are displayed.
+  database : { component : DatabasePanel, name : "Database" },
+  telemetry : { component : TelemetryVisualizer, name : "Telemetri"}
+};
 
 export default function ConfigSite (props) {
   const [activeSite, setActivePage] = useState("controlPanel")
-  const Site = Pages[activeSite];
+  const Site = PAGES[activeSite].component;
 
+  const configNavbarElement = [...Object.keys(PAGES)].map((key) => (
+    <NavbarElement key={key}>
+      <Button onClick={() => setActivePage(key)}>
+        <strong>{PAGES[key].name}</strong>
+      </Button>
+    </NavbarElement>
+  ));
 
   return(
     <div>
       <TracershopNavbar
-        ActiveKey={activeSite}
-        Names={PageNames}
-        setActivePage={setActivePage}
-        logout={props.logout}
         isAuthenticated={true}
-        NavbarElements={props.NavbarElements}
-      />
+        logout={props.logout}
+      >
+        {props.NavbarElements}
+        {configNavbarElement}
+      </TracershopNavbar>
+
       <Container>
         <Row>
           <Col>
@@ -46,9 +49,6 @@ export default function ConfigSite (props) {
           </Col>
         </Row>
       </Container>
-
-
-
     </div>
   );
 }

@@ -1,8 +1,8 @@
-import React, { lazy, startTransition, Suspense, useRef, useState } from "react";
-import { Col, NavDropdown } from "react-bootstrap";
+import React, { act, lazy, startTransition, Suspense, useRef, useState } from "react";
 import { DATABASE_ADMIN_PAGE } from "~/lib/constants";
 import { db } from "~/lib/local_storage_driver";
 import { ALIGN, ALIGN_ITEMS, MARGIN, NAVBAR_STYLES, PADDING } from "~/lib/styles";
+import { NavbarElement } from "../injectable/navbar_element";
 
 const ConfigSite = lazy(() => import('~/components/sites/config_site'))
 const ProductionSite = lazy(() => import("~/components/sites/production_site"))
@@ -46,17 +46,25 @@ export default function AdminSite({logout}) {
     }
   }
 
-  const RenderedSites = [];
-  for (const siteKey of Object.keys(SITES)){
-    RenderedSites.push(
-      <NavDropdown.Item
-        aria-label={`navbar-admin-${siteKey}`}
-        key={siteKey}
-        onClick={changeSite(siteKey)}
-      >
-        {SITE_NAMES[siteKey]}
-      </NavDropdown.Item>)
+  const RenderedSites = [...Object.keys(SITES)].sort(
+    (a, b) => {
+      if (a === activeSite) {
+        return -1;
+      } else if (b === activeSite) {
+        return 1;
+      } else {
+        return 0;
+      }
     }
+  ).map((identifier) => (
+    <div
+      key={identifier}
+      aria-label={`navbar-admin-${identifier}`}
+      onClick={changeSite(identifier)}
+    >
+      <strong>{SITE_NAMES[identifier]}</strong>
+    </div>))
+
 
   const ColStyle : React.CSSProperties = {
     ...ALIGN_ITEMS.CENTER,
@@ -67,25 +75,11 @@ export default function AdminSite({logout}) {
     paddingBottom : "6px"
   }
 
-  const NavbarAdmin = [(
-    <Col style={ColStyle} key="SiteSelector">
-      <NavDropdown
-        style={{
-          display : "flex",
-          height : "36px",
-          backgroundColor : "#0d6efd",
-          ...MARGIN.topBottom.px0,
-          ...NAVBAR_STYLES.navbarElement,
-          alignItems : "center",
-          justifyContent : "center"
-
-        }}
-        aria-label="site-selector"
-        title={<span style={{color : "white"}}>{SITE_NAMES[activeSite]}</span>}
-      >
-        {RenderedSites}
-      </NavDropdown>
-    </Col>)];
+  const NavbarAdmin = [
+    <NavbarElement key="test">
+      {RenderedSites}
+    </NavbarElement>
+  ];
 
   const ActiveSite = SITES[activeSite];
 
@@ -95,11 +89,11 @@ export default function AdminSite({logout}) {
   }
 
   return(
-  <Suspense fallback={<div>LOADING</div>}>
-    <ActiveSite
-      logout={logout}
-      NavbarElements={NavbarAdmin}
-    />
-  </Suspense>
+    <Suspense fallback={<div>LOADING</div>}>
+      <ActiveSite
+        logout={logout}
+        NavbarElements={NavbarAdmin}
+      />
+    </Suspense>
   );
 }

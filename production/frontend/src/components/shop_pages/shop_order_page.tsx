@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { Col, Container, Row } from "react-bootstrap";
-import { Select, toOptions } from '../injectable/select'
+import { Option, Select, toOptions } from '../injectable/select'
 import { FutureBooking } from "./future_bookings";
 import { OrderReview } from "./order_review";
 import { db } from "~/lib/local_storage_driver";
@@ -29,15 +29,15 @@ import { StateType } from "~/lib/constants";
 import { CalenderColorMapContextProvider } from "~/contexts/calender_color_map";
 import { dateToDateString } from "~/lib/formatting";
 import { NoDeliveryEndpoint } from "./no_delivery_endpoint";
+import { NavigationContainer } from "~/lib/types";
 
-const Content = {
-  Manuel : OrderReview,
-  Automatisk : FutureBooking,
-  Overview : BookingOverview,
-
+export const SHOP_ORDER_COMPONENTS: NavigationContainer = {
+  review : {component : OrderReview, name : "Bestillings Oversigt" },
+  autoBooking : { component : FutureBooking, name : "Booking Bestilling" },
+  calender : { component : BookingOverview, name : "Booking Kalender" },
 };
 
-export function ShopOrderPage ({relatedCustomer}){
+export function ShopOrderPage ({relatedCustomer, hint}){
   const state = useTracershopState();
   const dispatch = useTracershopDispatch();
   const websocket = useWebsocket();
@@ -85,13 +85,25 @@ export function ShopOrderPage ({relatedCustomer}){
   });
 
   const [viewIdentifier, setViewIdentifier] = useState(() => {
+    if (hint in SHOP_ORDER_COMPONENTS){
+      db.set(DATABASE_SHOP_ORDER_PAGE, hint);
+      return hint;
+    }
+
+
     let viewIdentifier = db.get(DATABASE_SHOP_ORDER_PAGE);
     if (viewIdentifier === null || state.logged_in_user.user_group === USER_GROUPS.SHOP_EXTERNAL){
-      viewIdentifier = "Manuel";
+      viewIdentifier = "review";
       db.set(DATABASE_SHOP_ORDER_PAGE, viewIdentifier);
     }
     return viewIdentifier;
   });
+
+  useEffect(() => {
+    if(hint in SHOP_ORDER_COMPONENTS){
+      setViewIdentifier(hint);
+    }
+  }, [hint])
 
   const catalog = tracerCatalog.getCatalog(activeEndpoint);
   const availableProducts = [...[...catalog.tracerCatalogActivity].map(getObjects(state.tracer)), ...[...catalog.isotopeCatalog].map(getObjects(state.isotopes))];
@@ -249,13 +261,11 @@ export function ShopOrderPage ({relatedCustomer}){
                                                     state.closed_date)
                                     : false;
 
-  const SiteOptions = toOptions([
-    {id : "Manuel", name : "Ordreoversigt"},
-    {id : "Automatisk", name : "Bookinger"},
-    {id : "Overview", name : "Booking Oversigt"},
-  ]);
+  const SiteOptions = [...Object.keys(SHOP_ORDER_COMPONENTS)].map(
+    (key) => new Option(key, SHOP_ORDER_COMPONENTS[key].name)
+  )
 
-  const Site = 0 < activeEndpoint ? Content[viewIdentifier] : NoDeliveryEndpoint;
+  const Site = 0 < activeEndpoint ? SHOP_ORDER_COMPONENTS[viewIdentifier].component : NoDeliveryEndpoint;
   const siteProps = {
     [PROP_ACTIVE_DATE] : state.today,
     [PROP_ACTIVE_CUSTOMER] : activeCustomer,

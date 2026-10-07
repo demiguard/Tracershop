@@ -6,7 +6,7 @@ import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
 
 import { AppState } from "../../app_state";
-import { SetupShop, siteNames } from "../../../components/production_pages/setup_pages/setup_shop.js";
+import { SetupShop, PRODUCTION_CONFIG_SITE_NAMES } from "../../../components/production_pages/setup_pages/setup_shop.js";
 import { WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
@@ -57,7 +57,7 @@ describe("Setup Shop page test", () => {
     </WebsocketContextProvider>)
 
 
-    for(const siteName of Object.values(siteNames)){
+    for(const siteName of Object.values(PRODUCTION_CONFIG_SITE_NAMES)){
       expect(await screen.findByRole('button', {name : siteName})).toBeVisible();
     }
   })

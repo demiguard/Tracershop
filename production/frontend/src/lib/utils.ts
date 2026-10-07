@@ -262,3 +262,18 @@ export function getGlobalDeadlines(state: TracershopState){
 
   return [activityDeadline, injectionDeadline, null];
 }
+
+/**
+ * Short hand function useful for states with react Components - since react
+ * components are just functions
+ * @example setState(a_function)
+ * //executes a function and stores return value - BUG with a component
+ * @example setState(navigateTo(a_function))
+ * // Stores a_function in state
+ *
+ * @param dest
+ * @returns () => dest
+ */
+export function navigateTo<T>(dest: T) : () => T {
+  return () => dest
+}

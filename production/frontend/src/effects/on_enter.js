@@ -1,7 +1,11 @@
 import { useEffect } from "react";
 
-export function useOnEnter(calledOnEnter){
+const DOM_KEYPRESS_KEY = "keypress"
+
+export function useOnEnter(calledOnEnter, deps=[]){
   /** The actual function that is called by the
+   *
+   * Remember to
    *
    * @param {KeyboardEvent} event
    */
@@ -12,10 +16,10 @@ export function useOnEnter(calledOnEnter){
   }
 
   useEffect(() => {
-    document.addEventListener('keydown', handler);
+    document.addEventListener(DOM_KEYPRESS_KEY, handler);
     return () => {
-      document.removeEventListener('keydown', handler)
+      document.removeEventListener(DOM_KEYPRESS_KEY, handler)
     }
-  } , [])
+  } , deps)
 
 }

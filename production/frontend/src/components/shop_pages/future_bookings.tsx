@@ -290,6 +290,14 @@ export function FutureBooking ({
       />);
   });
 
+  if (bookingCards.length === 0){
+    return (
+      <center>
+        <h2>Der er ingen bookinger til denne kunde i dag</h2>
+      </center>
+    );
+  }
+
   return(
     <div>
       {bookingCards}

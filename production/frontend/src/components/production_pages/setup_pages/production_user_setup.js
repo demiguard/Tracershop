@@ -21,7 +21,7 @@ import { EditableInput } from "~/components/injectable/inputs/editable_input";
 
 import { nullify } from "~/lib/utils";
 
-export function ProductionUserSetup(){
+export function ExternalUserSetup(){
   const state = useTracershopState()
 
   const userMapping = new ArrayMap()
@@ -30,13 +30,15 @@ export function ProductionUserSetup(){
   }
 
   function initialize_users(map){
+    const ret = new Map()
+
     for (const user of state.user.values()){
       if(user.user_group === USER_GROUPS.SHOP_EXTERNAL){
         const user_assignment = userMapping.has(user.id)
           ? userMapping.get(user.id)[0]
           : null;
 
-        map.set(user.id, {
+        ret.set(user.id, {
           id : user.id,
           username : user.username,
           password : "",
@@ -44,8 +46,8 @@ export function ProductionUserSetup(){
         });
       }
     }
-    if(!map.has(-1)){
-      map.set(-1,{
+    if(!ret.has(-1)){
+      ret.set(-1,{
         id : -1,
         username : "",
         password : "",
@@ -53,7 +55,7 @@ export function ProductionUserSetup(){
       })
     }
 
-    return map
+    return ret;
   }
 
   const [userFilter, setUserFilter] = useState('');

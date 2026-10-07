@@ -55,3 +55,12 @@ export type ErrorFunction = () => {
   value? : any,
   id : string
 }
+
+export type NamedComponent = {
+  component : React.ComponentType<any>,
+  name : string
+}
+
+export type NavigationContainer = {
+  [key: string] : NamedComponent
+}

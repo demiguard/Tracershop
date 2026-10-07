@@ -47,12 +47,14 @@ const styles = {
 type AuthenticateProps = {
   fit_in? : boolean,
   login_message? : string,
-  authenticate : (username: string, password: string) => void,
+  authenticate : (username: string, password: string) => Promise<undefined>,
   error? : RecoverableError
   setError? : (err: RecoverableError | string) => void
   buttonMessage? : string,
   headerMessage? : string
 }
+
+const DOM_KEY_ACTIVATION = "keypress"
 
 /**
  * This class is for the authentication box
@@ -77,6 +79,7 @@ export function Authenticate({ authenticate,
         "Dit brugernavn er ikke tastet ind.",
          ERROR_LEVELS.warning
       ));
+
       return Promise.resolve();
     }
 
@@ -85,6 +88,7 @@ export function Authenticate({ authenticate,
         "Dit kodeord er ikke tastet ind.",
         ERROR_LEVELS.warning
       ));
+
       return Promise.resolve();
     }
 
@@ -98,14 +102,14 @@ export function Authenticate({ authenticate,
   }
 
   useEffect(() => {
-    document.addEventListener('keydown', onEnterSubmit);
+    document.addEventListener(DOM_KEY_ACTIVATION, onEnterSubmit);
 
     return () => {
       document.removeEventListener(
-        'keydown', onEnterSubmit
+        DOM_KEY_ACTIVATION, onEnterSubmit
       );
     }
-  }, [])
+  }, [username, password, authenticate, error, setError]);
 
 
   return (
@@ -130,7 +134,7 @@ export function Authenticate({ authenticate,
             />
           </div>
           <div className={"form-group"} style={styles.formRow}>
-            <label htmlFor="username">Kodeord</label>
+            <label htmlFor="password">Kodeord</label>
             <input type="password"
                     className="form-control"
                     id="password"

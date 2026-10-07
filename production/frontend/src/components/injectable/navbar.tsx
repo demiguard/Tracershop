@@ -9,44 +9,11 @@ import { JUSTIFY, NAVBAR_STYLES } from "~/lib/styles";
 
 const NavBarButtonType = "primary";
 
-function getName(key, names, identifier){
-  if(key === identifier){
-    return <u>{names[identifier]}</u>
-  } else {
-    return <div>{names[identifier]}</div>
-  }
-}
-
 export function TracershopNavbar({
-  ActiveKey,
   logout,
   isAuthenticated,
-  Names,
-  NavbarElements,
-  setActivePage,
+  children
 }){
-  const elements = NavbarElements ? [...NavbarElements] : [];
-  for(const identifier of Object.keys(Names)) {
-    const innerHTML = getName(ActiveKey, Names, identifier);
-    elements.push(
-    <Col
-      style={{
-        display : "flex",
-        alignItems : "center"
-      }}
-      key={identifier}
-    >
-      <Button
-        aria-label={`navbar-${identifier}`}
-        style={NAVBAR_STYLES.navbarElement}
-        variant={NavBarButtonType}
-        onClick={() => setActivePage(identifier)}
-        >{innerHTML}
-      </Button>
-    </Col>
-    );
-  }
-
   return (
   <Navbar style={{
     ...NAVBAR_STYLES.navbarMargin,
@@ -58,7 +25,7 @@ export function TracershopNavbar({
             <Col>
               <img height={"63px"} src="/static/images/logo.png"/>
             </Col>
-            {elements}
+            {children}
             <Optional exists={isAuthenticated}>
               <Col style={{
                 display : "flex",
