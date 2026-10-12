@@ -12,6 +12,8 @@ from django.utils.translation import gettext_lazy
 from database.TracerShopModels.baseModels import TracershopModel, Days
 from database.TracerShopModels.networkModels import DicomEndpoint
 
+from lib.utils import classproperty
+
 class DeadlineTypes(models.IntegerChoices):
   daily = 0
   weekly = 1
@@ -123,8 +125,16 @@ class VialTemplateText(TracershopModel):
 class VialTemplate(TracershopModel):
   """A vial template is a recipe for a document that is printed whenever a vial
   is added to tracershop by the vialdog."""
-  title = models.CharField(max_length=128)
+  title = models.CharField(max_length=128, unique=True)
   print_count = models.SmallIntegerField(default=0)
   text = models.ForeignKey(VialTemplateText, on_delete=models.CASCADE, null=True, default=None)
   # This is a one to one, but it's not enforced, it really just doesn't make any
   # sense otherwise.
+
+  @classproperty
+  def display_name(cls) -> str:
+    return "Dokument"
+
+  @classproperty
+  def display_identifier(cls):
+    return "title"

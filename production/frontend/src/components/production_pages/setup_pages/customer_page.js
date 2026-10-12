@@ -106,7 +106,7 @@ export function CustomerPage () {
         <TracershopInputGroup>
           <FormControl
             aria-label="customer-filter"
-            onChange={setStateToEvent(setFilter)}
+            onChange={setStateToEvent({stateFunction :  setFilter})}
             value={filter}
             placeholder="Kunde Filter"
           />

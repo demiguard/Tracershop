@@ -127,12 +127,12 @@ export function LocationTable(){
             aria-label="filter-type"
             options={filterOptions}
             value={filterType}
-            onChange={setStateToEvent(setFilterType)}
+            onChange={setStateToEvent({stateFunction : setFilterType})}
             />
           <FormControl
             aria-label="filter"
             value={filter}
-            onChange={setStateToEvent(setFilter)}
+            onChange={setStateToEvent({stateFunction : setFilter})}
           />
         </TracershopInputGroup>
       </div>

@@ -56,6 +56,10 @@ class TracershopModel(Model):
     return []
 
   @classproperty
+  def display_identifier(cls):
+    return "ID"
+
+  @classproperty
   def display_name(cls) -> str:
     return formatting.camelcase_to_readable(cls.__name__)
 

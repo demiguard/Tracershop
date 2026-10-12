@@ -34,7 +34,7 @@ function StateHolder(){
   return <CustomerSelect
     customers={testState.customer}
     value={customer}
-    onChange={setStateToEvent(setCustomer)}
+    onChange={setStateToEvent({stateFunction : setCustomer})}
   />
 }
 

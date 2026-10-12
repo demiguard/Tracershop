@@ -252,7 +252,7 @@ export function TracerPage(){
         <FormControl
           aria-label="tracer-filter"
           value={tracerFilter}
-          onChange={setStateToEvent(setTracerFilter)}
+          onChange={setStateToEvent({stateFunction : setTracerFilter})}
         />
       </TracershopInputGroup>
     </Row>

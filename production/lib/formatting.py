@@ -138,7 +138,7 @@ def format_error_with_datatype(error: Exception, datatype: str):
       code, _message = error.args
 
       if code == 1062:
-        return f"Der findes allerede en tilsvarende {model.display_name}, benyt den i stedet."
+        return f"{model.display_name} med den {model.display_identifier} findes allerede."
   else:
     return "Invalid Message, datatype is not a known model?!"
 

@@ -199,7 +199,7 @@ export function CreateIsotopeOrderModal({on_close, active_isotope}){
           </Row>
           <Row>
             <TracershopInputGroup error={errorActivity} label="Aktivitet" tail="MBq">
-              <FormControl value={displayActivity} onChange={setStateToEvent(setDisplayActivity)}/>
+              <FormControl value={displayActivity} onChange={setStateToEvent({stateFunction : setDisplayActivity})}/>
             </TracershopInputGroup>
           </Row>
           </Optional>

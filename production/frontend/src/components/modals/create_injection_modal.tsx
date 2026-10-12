@@ -124,7 +124,7 @@ export function CreateInjectionOrderModal({on_close}){
             <Select
                 aria-label="tracer-select"
                 options={tracerOptions}
-                onChange={setStateToEvent(setTracer)}
+                onChange={setStateToEvent({stateFunction : setTracer})}
                 value={tracerID}
 
               />
@@ -132,7 +132,7 @@ export function CreateInjectionOrderModal({on_close}){
           <TracershopInputGroup label={"Brug"}>
             <UsageSelect
               aria-label="usage-select"
-              onChange={setStateToEvent(setUsage)}
+              onChange={setStateToEvent({stateFunction : setUsage})}
               value={usage}
             />
           </TracershopInputGroup>
@@ -142,7 +142,7 @@ export function CreateInjectionOrderModal({on_close}){
             <Form.Control
               aria-label="injection-input"
               value={injections}
-              onChange={setStateToEvent(setInjections)}
+              onChange={setStateToEvent({stateFunction : setInjections})}
             />
           </TracershopInputGroup>
           <TracershopInputGroup label={"Leverings tid"} error={errorDeliveryTime}>
@@ -156,7 +156,7 @@ export function CreateInjectionOrderModal({on_close}){
             <Form.Control
               aria-label="comment-input"
               value={comment}
-              onChange={setStateToEvent(setComment)}
+              onChange={setStateToEvent({stateFunction : setComment})}
             />
           </TracershopInputGroup>
         </Row>

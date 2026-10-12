@@ -1,4 +1,5 @@
-import { RecoverableError } from "~/lib/error_handling";
+import { useState } from "react";
+import { RecoverableError, useErrorState } from "~/lib/error_handling";
 import { TracershopDataClass } from "~/lib/types";
 
 
@@ -36,10 +37,11 @@ export function toggleState(
  * @param {CallableFunction} stateFunction - the setState function related to variable
  * @returns {CallableFunction}
  */
-export function setStateToEvent(stateFunction, formatFunction=undefined){
+export function setStateToEvent({ stateFunction, formatFunction=(id) => id, errorFunction = (string) => {}}){
   return (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = formatFunction ? formatFunction(event.target.value) : event.target.value;
+    const value = formatFunction(event.target.value);
     stateFunction(value);
+    errorFunction("");
   }
 }
 
@@ -215,4 +217,16 @@ export function toggleSetState(stateFunction, id, action){
       })
     }
   }
+}
+
+export function useFormState(){
+  const [input, setInput] = useState("");
+  const [error, setError] = useErrorState()
+
+  return {
+    input : input,
+    setInput : setInput,
+    error : error,
+    setError : setError
+  };
 }

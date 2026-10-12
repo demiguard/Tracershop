@@ -130,7 +130,7 @@ export function Authenticate({ authenticate,
               aria-label="username"
               autoComplete="new-password"
               value={username}
-              onChange={setStateToEvent(setUsername)}
+              onChange={setStateToEvent({stateFunction : setUsername})}
             />
           </div>
           <div className={"form-group"} style={styles.formRow}>
@@ -142,7 +142,7 @@ export function Authenticate({ authenticate,
                     name="password"
                     aria-label="password"
                     value={password}
-                    onChange={setStateToEvent(setPassword)}/>
+                    onChange={setStateToEvent({stateFunction : setPassword})}/>
           </div>
           {/* Note that Alert box doesn't render on no error */}
           <AlertBox

@@ -109,7 +109,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
             canEdit={canEdit}
             data-testid={`activity-${order.id}`}
             value={displayActivity}
-            onChange={setStateToEvent(setDisplayActivity)}
+            onChange={setStateToEvent({stateFunction : setDisplayActivity})}
           />
         </TracershopInputGroup>
       </Col>
@@ -121,7 +121,7 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
             as="textarea"
             rows={1}
             value={displayComment}
-            onChange={(setStateToEvent(setDisplayComment))}
+            onChange={setStateToEvent({ stateFunction :  setDisplayComment})}
           />
         </TracershopInputGroup></Col>
       <Col xs={1} style={cssAlignRight}>

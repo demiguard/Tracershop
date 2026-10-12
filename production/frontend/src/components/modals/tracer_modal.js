@@ -101,7 +101,7 @@ export function TracerModal ({active_tracer, on_close}) {
           Filter: <FormControl
             aria-label="input-filter"
             value={filter}
-            onChange={setStateToEvent(setFilter)}/>
+            onChange={setStateToEvent({stateFunction : setFilter})}/>
           </Row>
           <Row>
           <Table>

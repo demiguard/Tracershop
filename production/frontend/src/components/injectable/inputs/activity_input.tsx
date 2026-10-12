@@ -23,7 +23,7 @@ export function ActivityInput({displayStatus, displayState, error="", ...rest}: 
           <TracershopInputGroup error={error} tail="MBq">
             <FormControl
               {...rest}
-              onChange={setStateToEvent(setDisplayActivity)}
+              onChange={setStateToEvent({stateFunction : setDisplayActivity})}
               value={displayActivity}
             />
           </TracershopInputGroup>

@@ -192,7 +192,7 @@ export function FreeingRightsPage(){
           aria-label="new-user-select"
           options={userOptions}
           value={activeUserID}
-          onChange={setStateToEvent(setActiveUserID)}
+          onChange={setStateToEvent({ stateFunction : setActiveUserID})}
         />
       </Col>
       <Col>
@@ -200,7 +200,7 @@ export function FreeingRightsPage(){
           aria-label="new-tracer-select"
           options={tracerOptions}
           value={activeTracerID}
-          onChange={setStateToEvent(setActiveTracerID)}
+          onChange={setStateToEvent({ stateFunction : setActiveTracerID})}
         />
       </Col>
       <Col>

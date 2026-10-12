@@ -303,7 +303,7 @@ export function TimeSlotForm({
           <Form.Control
             aria-label="overhead-input"
             value={overheadDisplay}
-            onChange={setStateToEvent(setOverheadDisplay)}
+            onChange={setStateToEvent({stateFunction : setOverheadDisplay})}
             />
         </TracershopInputGroup>
       </Optional>

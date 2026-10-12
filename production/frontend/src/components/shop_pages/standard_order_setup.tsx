@@ -68,7 +68,7 @@ function TimeSlotDisplay({timeslot, currentStandardOrder} : tsdProps){
   return (
     <Row>
       <TracershopInputGroup label={timeslot.delivery_time} tail={actionButton} error={amountError}>
-        <FormControl value={amount} onChange={setStateToEvent(setAmount)}/>
+        <FormControl value={amount} onChange={setStateToEvent({stateFunction : setAmount})}/>
       </TracershopInputGroup>
     </Row>
   )

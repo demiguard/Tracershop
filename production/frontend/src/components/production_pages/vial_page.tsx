@@ -220,7 +220,7 @@ export function VialPage(){
             <FormControl
               data-testid="lot_filter"
               value={lotNumber}
-              onChange={setStateToEvent(setLotNumber)}
+              onChange={setStateToEvent({stateFunction : setLotNumber})}
               placeholder="lot nummer"
             />
           </TracershopInputGroup>
@@ -235,7 +235,7 @@ export function VialPage(){
                   value={customerID}
                   customers={state.customer}
                   emptyCustomer
-                  onChange={setStateToEvent(setCustomer)}
+                  onChange={setStateToEvent({stateFunction : setCustomer})}
                   />
               </TracershopInputGroup>
           </div>

@@ -86,7 +86,7 @@ function UserAssignmentRow({user_assignment, activeCustomer}){
           aria-label={label}
           canEdit={!exists}
           value={username}
-          onChange={setStateToEvent(setUserName)}
+          onChange={setStateToEvent({stateFunction : setUserName})}
         />
       </TracershopInputGroup>
     </Col>
@@ -129,7 +129,7 @@ export function UserSetup({relatedCustomer}){
       <CustomerSelect
         customers={relatedCustomer}
         value={activeCustomer}
-        onChange={setStateToEvent(setActiveCustomer)}
+        onChange={setStateToEvent({ stateFunction : setActiveCustomer})}
       />
     </TracershopInputGroup>
     {userAssignmentRows}

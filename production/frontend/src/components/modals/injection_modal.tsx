@@ -233,7 +233,7 @@ export function InjectionModal ({modal_order, on_close}) {
                           aria-label="max-injection-volume"
                           value={maxInjectionVolume}
                           canEdit={canEdit}
-                          onChange={setStateToEvent(setMaxInjectionVolume)}
+                          onChange={setStateToEvent({stateFunction : setMaxInjectionVolume})}
                           />
                       </td>
                     </tr>
@@ -252,7 +252,7 @@ export function InjectionModal ({modal_order, on_close}) {
                           aria-label="lot-input"
                           value={lot_number}
                           canEdit={canEdit}
-                          onChange={setStateToEvent(setLotNumber)}
+                          onChange={setStateToEvent({stateFunction : setLotNumber})}
                           />
                       </td>
                     </tr>

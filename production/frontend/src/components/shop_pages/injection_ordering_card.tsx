@@ -108,7 +108,7 @@ export function InjectionOrderingCard({
               <TracershopInputGroup label={"Tracer"} error={injectionsError}>
                 <Select
                   aria-label={`tracer-input--1`}
-                  onChange={setStateToEvent(setSelectedTracerID)}
+                  onChange={setStateToEvent({ stateFunction :  setSelectedTracerID})}
                   options={toOptions(tracerOptions, 'shortname')}
                   value={selectedTracerID}
                   />
@@ -119,7 +119,7 @@ export function InjectionOrderingCard({
                 <EditableInput
                   aria-label={`injections-input--1`}
                   value={injections}
-                  onChange={setStateToEvent(setInjections)}
+                  onChange={setStateToEvent({stateFunction : setInjections})}
                   />
               </TracershopInputGroup>
             </Col>
@@ -137,7 +137,7 @@ export function InjectionOrderingCard({
                 <UsageSelect
                   aria-label="usage-input--1"
                   value={usage}
-                  onChange={setStateToEvent(setUsage)}
+                  onChange={setStateToEvent({stateFunction : setUsage})}
                   />
               </TracershopInputGroup>
             </Col>
@@ -148,7 +148,7 @@ export function InjectionOrderingCard({
                   as="textarea"
                   rows={1}
                   value={comment}
-                  onChange={setStateToEvent(setComment)}
+                  onChange={setStateToEvent({stateFunction : setComment})}
                   />
               </TracershopInputGroup>
             </Col>

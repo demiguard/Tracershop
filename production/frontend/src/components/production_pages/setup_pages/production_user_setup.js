@@ -190,7 +190,7 @@ export function ExternalUserSetup(){
         <TracershopInputGroup label="Bruger Filter">
           <FormControl
             value={userFilter}
-            onChange={setStateToEvent(setUserFilter)}
+            onChange={setStateToEvent({stateFunction : setUserFilter})}
           />
         </TracershopInputGroup>
       </div>

@@ -72,7 +72,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
             data-testid={`procedure-identifier-${procedure.id}`}
             options={procedureIdentifierOptions}
             value={seriesDescription}
-            onChange={setStateToEvent(setSeriesDescription)}
+            onChange={setStateToEvent({stateFunction : setSeriesDescription})}
           />
         </ErrorInput>
       );
@@ -138,7 +138,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
               data-testid={`tracer-${procedure.id}`}
               options={tracerOptions}
               value={tracer}
-              onChange={setStateToEvent(setTracer)}
+              onChange={setStateToEvent({stateFunction : setTracer})}
             />
           </TracershopInputGroup>
         </td>
@@ -147,7 +147,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
             <FormControl
               data-testid={`delay-${procedure.id}`}
               value={delay}
-              onChange={setStateToEvent(setDelay)}
+              onChange={setStateToEvent({stateFunction : setDelay})}
             />
           </ErrorInput>
         </td>
@@ -155,7 +155,7 @@ export const ERROR_MISSING_SERIES_DESCRIPTION = "Du skal vælge en Series descri
           <ErrorInput error={errorUnits}>
             <FormControl
               value={units}
-              onChange={setStateToEvent(setUnits)}
+              onChange={setStateToEvent({stateFunction : setUnits})}
               data-testid={`units-${procedure.id}`}
             />
           </ErrorInput>

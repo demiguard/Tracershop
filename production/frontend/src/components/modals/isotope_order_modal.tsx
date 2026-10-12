@@ -182,7 +182,7 @@ function VialRow({vial, selectedVialsState, isFreeing, collection} : VialRowProp
         <EditableInput
           canEdit={editing}
           value={etherealBatchNumber}
-          onChange={setStateToEvent(setEtherealBatchNumber)}
+          onChange={setStateToEvent({stateFunction : setEtherealBatchNumber})}
         />
       </TracershopInputGroup>
     </td>
@@ -200,7 +200,7 @@ function VialRow({vial, selectedVialsState, isFreeing, collection} : VialRowProp
         <EditableInput
           canEdit={editing}
           value={etherealVolume}
-          onChange={setStateToEvent(setEtherealVolume)}
+          onChange={setStateToEvent({stateFunction : setEtherealVolume})}
         />
       </TracershopInputGroup>
     </td>
@@ -209,7 +209,7 @@ function VialRow({vial, selectedVialsState, isFreeing, collection} : VialRowProp
         <EditableInput
           canEdit={editing}
           value={etherealActivity}
-          onChange={setStateToEvent(setEtherealActivity)}
+          onChange={setStateToEvent({stateFunction : setEtherealActivity})}
         />
       </TracershopInputGroup>
     </td>
@@ -335,7 +335,10 @@ function IsotopeModalBody({
         console.log("Received a unknown response");
         console.log(response);
       }
+
+      return;
     })
+
   }
 
   const width = isFreeing ? "75%" : "100%";

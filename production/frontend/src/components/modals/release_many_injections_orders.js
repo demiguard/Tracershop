@@ -152,12 +152,12 @@ export function ReleaseManyInjectionOrdersModal({orders, on_close, selected}){
           <Col xs={6}>
             <Row>
               <TracershopInputGroup error={batchNumberError} label="Fælles batch nummer">
-                <FormControl data-testid="batch" value={batchNumber} onChange={setStateToEvent(setBatchNumber)}/>
+                <FormControl data-testid="batch" value={batchNumber} onChange={setStateToEvent({stateFunction : setBatchNumber})}/>
               </TracershopInputGroup>
             </Row>
             <Row>
               <TracershopInputGroup error={maxInjectionVolumeError} label="Max Injektion Volumen" tail="ml">
-                <FormControl data-testid="maxInjVol" value={maxInjectionVolume} onChange={setStateToEvent(setMaxInjectionVolume)}/>
+                <FormControl data-testid="maxInjVol" value={maxInjectionVolume} onChange={setStateToEvent({stateFunction : setMaxInjectionVolume})}/>
               </TracershopInputGroup>
             </Row>
             <Row>

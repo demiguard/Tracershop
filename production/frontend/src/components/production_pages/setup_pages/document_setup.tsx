@@ -1,12 +1,13 @@
 import { object } from "prop-types";
 import React, { useState } from "react";
 import { Card, Col, Container, FormControl, Row } from "react-bootstrap";
+import { CommitIcon } from "~/components/injectable/commit_icon";
 import { IdempotentIcon } from "~/components/injectable/icons";
 import { Image } from "~/components/injectable/image";
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { Optional } from "~/components/injectable/optional";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
-import { TracershopState, VialTemplate } from "~/dataclasses/dataclasses";
+import { TracershopState, Vial, VialTemplate } from "~/dataclasses/dataclasses";
 import { ErrorMonad, RecoverableError, useErrorState } from "~/lib/error_handling";
 import { parseTextBind } from "~/lib/parsing";
 import { DATA_VIAL_TEMPLATE } from "~/lib/shared_constants";
@@ -33,22 +34,28 @@ function NewDocumentCard(){
   const [documentTitle, setDocumentTitle] = useState("Nyt dokument");
   const [documentError, setDocumentError] = useErrorState()
 
-  const websocket = useWebsocket();
+  const template = new VialTemplate(-1, documentTitle, 0, null);
 
-  function createDocument() {
+
+  function validateDocument() {
+    const headerTitle= "title"
     const m = new ErrorMonad();
 
-    m.bind(parseTextBind(documentTitle, "Dokument", 3, 128));
+    m.bind(parseTextBind(documentTitle, headerTitle, 3, 128));
 
     if(m.registerErrors({
-      Dokument : (error) => setDocumentError(error)
+      [headerTitle] : (error) => setDocumentError(error)
     })){
-      return;
+      return false;
     }
 
-    const template = new VialTemplate(-1, m.get_value("Dokument"), 0, null);
+    return [true, new VialTemplate(-1, m.get_value(headerTitle), 0, null)]
+  }
 
-    return websocket.sendCreateModel(DATA_VIAL_TEMPLATE, template)
+  function creationCallback(returnMessage){
+    if(returnMessage.messageType === "error"){
+      setDocumentError(returnMessage.error);
+    }
   }
 
   return (
@@ -56,20 +63,19 @@ function NewDocumentCard(){
       <Card.Header>
         <Row>
           <Col xs={11}>
-            <TracershopInputGroup error={documentError}>
-              <FormControl value={documentTitle} onChange={setStateToEvent(setDocumentTitle)}/>
+            <TracershopInputGroup error={documentError} label="Dokument title">
+              <FormControl value={documentTitle} onChange={setStateToEvent({stateFunction : setDocumentTitle})}/>
             </TracershopInputGroup>
             </Col>
           <Col xs={1} style={{justifyContent : "flex-end", display : "flex"}}>
-          <IdempotentIcon
-            beforeInjection={(svg) => {
-              svg.style.fill = "green"
-            }}
-            height={32}
-            width={32}
-            onClick={createDocument}
-            src="/static/images/plus2.svg">
-          </IdempotentIcon>
+          <CommitIcon
+            width = {32}
+            height = {32}
+            temp_object={template}
+            object_type={DATA_VIAL_TEMPLATE}
+            validate={validateDocument}
+            callback={creationCallback}
+          />
           </Col>
         </Row>
       </Card.Header>
@@ -81,12 +87,18 @@ function DocumentCard({ document, selectedDocumentState }){
   const [selectedDocumentID, setSelectedDocument] = selectedDocumentState;
 
   const isSelected = document.id === selectedDocumentID;
+  const displayTitle = isSelected ? <u>{document.title}</u> : <div>{document.title}</div>
 
   function selectThisDocument(){
     setSelectedDocument(document.id)
   }
 
-  return <Card onClick={selectThisDocument}> I'm a document </Card>
+  return (
+    <Card onClick={selectThisDocument}>
+      <Card.Header>
+        {displayTitle}
+      </Card.Header>
+    </Card>)
 }
 
 function DocumentList({ selectedDocument : selectedDocumentState }){

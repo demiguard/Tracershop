@@ -224,7 +224,7 @@ export function Calculator ({
             <FormControl
               aria-label={CALCULATOR_NEW_ACTIVITY_LABEL}
               value={newEntryActivity}
-              onChange={setStateToEvent(setNewEntryActivity)}
+              onChange={setStateToEvent({ stateFunction : setNewEntryActivity})}
             />
           </TracershopInputGroup>
         </td>

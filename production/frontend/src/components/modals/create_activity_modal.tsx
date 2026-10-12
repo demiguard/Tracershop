@@ -291,7 +291,7 @@ export function CreateOrderModal({active_tracer, on_close, timeSlotMapping}: Cre
               <TracershopInputGroup label="Aktivitet" error={error} tail={"Mbq"}>
                 <FormControl
                   aria-label={"activity-input"}
-                  onChange={setStateToEvent(setAmount)}
+                  onChange={setStateToEvent({stateFunction : setAmount})}
                   value={amount}
                 />
               </TracershopInputGroup>
