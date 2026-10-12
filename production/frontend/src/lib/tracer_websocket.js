@@ -150,6 +150,15 @@ export class TracerWebSocket {
     });
   }
 
+  /** Sends a request to back with a request to create a single or multiple
+   * objects
+   *
+   * @param {String} modelType - Semi Enum type - must be a DATA_XXX String
+   * @param {List<Object> | Object} models - A list of objects or an object
+   * That holds all the keys to object creation. You can also use a DataClass
+   * instance. You can leave id as -1 or undefined.
+   * @returns Promise - resolves to the answer from the server.
+   */
   sendCreateModel(modelType, models){
     const message_to_send = {
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_MODEL_CREATE,

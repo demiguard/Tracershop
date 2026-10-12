@@ -10,8 +10,10 @@ import { IsotopeSetupPage } from "./isotope_setup_page";
 import { FreeingRightsPage } from "./freeing_rights_page";
 import { ProductionSetup } from "./production_setup";
 import { PrinterOverviewPage } from "~/components/production_pages/setup_pages/printer_setup_page";
+import { DocumentSetup } from "~/components/production_pages/setup_pages/document_setup";
+import { NavigationContainer } from "~/lib/types"
 
-export const PRODUCTION_CONFIG_SITES = {
+export const PRODUCTION_CONFIG_SITES: NavigationContainer = {
   customer       : { component : CustomerPage, name : "Levering og Kunder" },
   tracer         : { component : TracerPage, name : "Tracer" },
   isotope        : { component : IsotopeSetupPage, name : "Isotoper" },
@@ -20,6 +22,7 @@ export const PRODUCTION_CONFIG_SITES = {
   deadline       : { component : DeadlineSetup, name : "Deadlines" },
   external_users : { component : ExternalUserSetup, name : "Externe Kunder" },
   release_rights : { component : FreeingRightsPage, name : "Frigivelse rettigheder" },
+  documents      : { component : DocumentSetup, name : "Dokumenter"},
   printer        : { component : PrinterOverviewPage, name : "Printer" },
 }
 

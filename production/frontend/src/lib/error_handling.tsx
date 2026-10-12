@@ -85,13 +85,27 @@ export class ErrorMonad {
   error : Map<string, string>
   values : Map<string, any>
 
+  /**
+   * This is a datastructure, that you bind ErrorFunctions to and then this
+   * accumulates the parsed values and errors from parsing
+   * @example
+   * const m = new ErrorMonad();
+   *
+   * m.bind(ParsingFunction)
+   *
+   * if(m.registerError({...})){
+   *   return // Error Path handled by callbacks in arg to registerError
+   * }
+   *
+   * // Do Happy Path
+   */
   constructor(){
     this.error = new Map()
     this.values = new Map()
   }
 
   /**
-   * # THIS IS THE MONADIC BIND AND HAVE NOTHING TO DO WITH JAVASCRIPT
+   * # THIS IS THE MONADIC BIND AND HAVE NOTHING TO DO WITH JAVASCRIPT'S BIND
    */
   bind(func: ErrorFunction){
     const {valid, error, value, id} = func();
@@ -127,6 +141,11 @@ export class ErrorMonad {
     return err ? err : ""
   }
 
+  /** Unwrap any error data and sends it to the callback functions.
+   *
+   * @param errorCallBacks Object with pairs of  (headers, (error) => void)
+   * @returns True if the monad contains errors. False if there's no error registred
+   */
   registerErrors(errorCallBacks: ErrorCallBacks){
     for(const [id, error] of this.error){
       errorCallBacks[id](error)

@@ -152,3 +152,29 @@ export function parseBatchNumberBind(input: string, header: string) : ErrorFunct
     }
   }
 }
+
+export function parseTextBind(input: string, header: string, minCharacters: number, maxCharacters: number) : ErrorFunction {
+  return () => {
+    if (input.length <= minCharacters){
+      return {
+        valid : false,
+        id : header,
+        error : `${header} er mindre end ${minCharacters} lang, som den ellers skal være.`
+      }
+    }
+
+    if (maxCharacters < input.length){
+      return {
+        valid : false,
+        id : header,
+        error : `${header} er længere end ${maxCharacters} lang, som den må skal være.`
+      }
+    }
+
+    return {
+      id : header,
+      value : input,
+      valid : true
+    }
+  }
+}

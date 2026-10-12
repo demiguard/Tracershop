@@ -8,11 +8,11 @@ import { StandardOrderSetup } from "~/components/shop_pages/standard_order_setup
 import { NavigationContainer } from "~/lib/types";
 
 export const SHOP_CONFIG_SITES: NavigationContainer = {
-  Lokationer : {component : LocationTable, name : "Lokationer" },
-  Procedure :  {component : ProcedureTable, name : "Procedure" },
-  Bruger :     {component : UserSetup, name : "Bruger" },
-  Bestilling : {component : StandardOrderSetup, name : "Standard Bestillinger"}
-}
+  Lokationer : { component : LocationTable, name : "Lokationer" },
+  Procedure :  { component : ProcedureTable, name : "Procedure" },
+  Bruger :     { component : UserSetup, name : "Bruger" },
+  Bestilling : { component : StandardOrderSetup, name : "Standard Bestillinger" }
+};
 
 export function ShopSetup ({relatedCustomer: relatedCustomerID, hint}){
   const [SetupTableIdentifier, setSetupTableIdentifier] = useState(() => {
@@ -21,8 +21,7 @@ export function ShopSetup ({relatedCustomer: relatedCustomerID, hint}){
     } else {
       return "Lokationer";
     }
-
-  })
+  });
 
   useEffect(() => {
     if(hint in SHOP_CONFIG_SITES){

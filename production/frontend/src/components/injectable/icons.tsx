@@ -226,6 +226,8 @@ export function WebsocketIcon(){
 
 type IdempotentIconProps = {
   alt? : string,
+  height? : number,
+  width? : number
   src : string,
   beforeInjection? : (svg: SVGSVGElement) => undefined,
   onClick? : (() => Promise<any>),
@@ -246,6 +248,8 @@ export function IdempotentIcon ({
       alignItems: 'center',
       display: 'block',
     },
+    height = 24,
+    width = 24,
     variant = "variant-light",
     beforeInjection,
     ...rest
@@ -261,11 +265,11 @@ return (<IdempotentButton
   >
     <Image
       style={{
-          width : '24px',
-          height : '24px'
+          width : `${width}px`,
+          height : `${height}px`
         }}
-      width = '24'
-      height = '24'
+      width = {width}
+      height = {height}
       beforeInjection={beforeInjection}
       src={src}
       alt={alt}
