@@ -31,13 +31,21 @@ export function toggleState(
   }
 }
 
-/**
- * shorthand for (event) => {stateFunction(event.target.value)}
- * Note this will always be a string, so you have do some magic on the other end
- * @param {CallableFunction} stateFunction - the setState function related to variable
- * @returns {CallableFunction}
+type setStateToEventArgs = {
+  /** useState dispatcher - that holds the value to be updated by the event */
+  stateFunction : React.Dispatch<string>,
+  /** Optional function for transforming the input */
+  formatFunction? : (s: string) => string,
+  /** Optional function for clearing any errors related to the input */
+  errorFunction? : React.Dispatch<string>
+}
+
+/** Small helper for the (evt) => setState(evt.target.value)
+ *
+ * @returns Function to places in a onChange handler
+ * @example <FormControl onChange={setStateToEvent({stateFunction : setState})} value={state}/>
  */
-export function setStateToEvent({ stateFunction, formatFunction=(id) => id, errorFunction = (string) => {}}){
+export function setStateToEvent({ stateFunction, formatFunction= (id) => id, errorFunction = (err) => {}}: setStateToEventArgs){
   return (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = formatFunction(event.target.value);
     stateFunction(value);
@@ -219,13 +227,13 @@ export function toggleSetState(stateFunction, id, action){
   }
 }
 
-export function useFormState(){
-  const [input, setInput] = useState("");
+export function useTSFormState<T>(initial_value : T | (() => T)){
+  const [input, setInput] = useState(initial_value);
   const [error, setError] = useErrorState()
 
   return {
-    input : input,
-    setInput : setInput,
+    value : input,
+    setValue : setInput,
     error : error,
     setError : setError
   };

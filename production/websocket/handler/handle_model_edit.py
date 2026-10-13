@@ -9,10 +9,9 @@ from channels.auth import get_user
 # Tracershop modules
 from constants import ERROR_LOGGER, MESSENGER_CONSUMER
 from lib.utils import classproperty
-from shared_constants import WEBSOCKET_MESSAGE_MODELS_EDIT,\
+from shared_constants import \
   WEBSOCKET_DATATYPE, WEBSOCKET_DATA, SUCCESS_STATUS_CRUD,\
-  WEBSOCKET_MESSAGE_SUCCESS, WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
-  WEBSOCKET_MESSAGE_ERROR, WEBSOCKET_MESSAGE_TYPE, WEBSOCKET_MESSAGE_UPDATE_STATE,\
+   WEBSOCKET_MESSAGE_ID, WEBSOCKET_MESSAGE_STATUS,\
   WEBSOCKET_REFRESH, WEBSOCKET_MESSAGE_TYPES, WEBSOCKET_SERVER_MESSAGES
 from tracerauth.auth import get_logged_in_user
 from tracerauth.message_validation import Message
