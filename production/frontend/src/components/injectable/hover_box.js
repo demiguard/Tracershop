@@ -51,6 +51,7 @@ function Trigger({ setVisibility, triggerTestID, children }){
 
 export function HoverBox (props){
   const styleProps = props.styles !== undefined ? {...props.styles} : {}
+
   const [hoverState, updateHoverComponentStyle] = useState({
     zIndex : 999,
     ...cssCenter,
@@ -71,7 +72,7 @@ export function HoverBox (props){
   }
 
   return (
-    <div style={{position : 'relative'}} data-testid={test_id}>
+    <div style={{position : 'relative', ...props.BaseStyle}} data-testid={test_id}>
       <Trigger
         triggerTestID={props.triggerTestID}
         setVisibility={setVisibility}

@@ -4,7 +4,7 @@ import { ActivityDeliveryTimeSlot, ActivityOrder } from "~/dataclasses/dataclass
 import { dateToDateString, nullParser, renderDateTime } from "~/lib/formatting";
 import { ORDER_STATUS, PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER, PROP_COMMIT, PROP_ON_CLOSE } from "~/lib/constants";
 import { cssAlignRight, cssCenter } from "~/lib/styles";
-import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE } from "~/lib/shared_constants"
+import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE, DATA_PROJECT_ACTIVITY } from "~/lib/shared_constants"
 import { ActivityDeliveryIcon, CalculatorIcon, StatusIcon } from "~/components/injectable/icons"
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { CalculatorModal } from "~/components/modals/calculator_modal";
@@ -21,6 +21,9 @@ import { useUpdatingEffect } from "~/effects/updating_effect";
 import { makeBlankActivityOrder } from "~/lib/blanks";
 import { useErrorState } from "~/lib/error_handling";
 import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
+import { useProjectMapping } from "~/lib/data_structures/project_mapping";
+import { Option, Select, toOptions } from "~/components/injectable/select";
+import { MESSAGE_UPDATE_STATE } from "~/lib/incoming_messages";
 
 
 type ShowOrderRowProps = {
@@ -30,6 +33,19 @@ type ShowOrderRowProps = {
 
 function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   const state = useTracershopState();
+  const websocket = useWebsocket();
+  const timeSlot = state.deliver_times.get(order.ordered_time_slot);
+  const endpoint = state.delivery_endpoint.get(timeSlot.destination);
+  const production = state.production.get(timeSlot.production_run);
+  const tracer = state.tracer.get(production.tracer);
+
+  const projectMapping = useProjectMapping();
+
+  const validProjects = projectMapping.endpointsToProjects.get(endpoint.id).filter(
+    (pid) => { const p = state.project.get(pid); return p.tracer === tracer.id; }
+  ).map((pid) => state.project.get(pid));
+
+  console.log(validProjects);
 
   const [displayActivity, setDisplayActivity] = useState(() => {
     return String(order.ordered_activity);
@@ -41,6 +57,9 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
 
     return "";
   });
+  const [displayProject, setDisplayProject] = useState("")
+
+  const projectOptions = [...toOptions(validProjects), new Option("", "-----------")]
 
   const [activityError, setActivityError] = useErrorState();
     // Functions
@@ -63,9 +82,17 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   }
 
   // Rewrite
-  function commitCallBack(){
+  function commitCallBack(message){
     setDisplayActivity("0");
     setDisplayComment("");
+
+    if(message instanceof MESSAGE_UPDATE_STATE && displayProject !== ""){
+      const createdOrder: ActivityOrder = message.data[DATA_ACTIVITY_ORDER][0];
+      websocket.sendCreateModel(DATA_PROJECT_ACTIVITY, {
+        project : Number(displayProject),
+        order : createdOrder.id
+      });
+    }
   }
 
   useUpdatingEffect(function RefreshOrder(){
@@ -109,7 +136,10 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
             canEdit={canEdit}
             data-testid={`activity-${order.id}`}
             value={displayActivity}
-            onChange={setStateToEvent({stateFunction : setDisplayActivity})}
+            onChange={setStateToEvent(
+              { stateFunction : setDisplayActivity,
+                errorFunction : setActivityError
+              })}
           />
         </TracershopInputGroup>
       </Col>
@@ -123,7 +153,20 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
             value={displayComment}
             onChange={setStateToEvent({ stateFunction :  setDisplayComment})}
           />
-        </TracershopInputGroup></Col>
+        </TracershopInputGroup>
+      </Col>
+      <Optional exists={validProjects.length > 0}>
+        <Col xs={2}>
+          <Select
+            canEdit={canEdit}
+            options={projectOptions}
+            onChange={(event) => {
+              setDisplayProject(event.target.value)
+            }}
+            value={displayProject}
+          />
+          </Col>
+      </Optional>
       <Col xs={1} style={cssAlignRight}>
         <ShopActionButton
           aria-label={`commit-${order.id}`}

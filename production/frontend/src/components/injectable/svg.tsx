@@ -29,7 +29,6 @@ export function SVG({src, beforeInjection, height, width, ...rest}: SVGProps){
   }
 
 
-
   return <ReactSVG
     src={src}
     beforeInjection={injectedBeforeInjection}

@@ -88,41 +88,39 @@ export function OpenCloseButton({open, setOpen, ...rest}: OpenCloseButtonArgs) {
   />
 
   // This is a fucking mess!
-  if(rotating){
-    if(rotated){
-      return (
-      <div>
+  const Inner = (() => {
+    if(rotating){
+      if(rotated){
+        return (
         <CCWRotatingDiv>
           {button}
         </CCWRotatingDiv>
-      </div>
       );
     } else {
       return (
-        <div>
-          <CWRotatingDiv>
-              {button}
-           </CWRotatingDiv>
-        </div>
+        <CWRotatingDiv>
+          {button}
+        </CWRotatingDiv>
       );
     }
   }
 
   if(rotated){
     return (
-      <div aria-label='outer' style={{height : '24px'}}>
-        <RotatedDiv>
-          {button}
-        </RotatedDiv>
-      </div>
+      <RotatedDiv>
+        {button}
+      </RotatedDiv>
     );
   } else {
-
     return (
-      <div aria-label='outer' style={{height : '24px'}}>
+      <div>
         {button}
       </div>
-    )
-
+    );
   }
+  })();
+
+  return <div aria-label='outer' style={{height : '24px', width : "24px"}}>
+    {Inner}
+  </div>
 }

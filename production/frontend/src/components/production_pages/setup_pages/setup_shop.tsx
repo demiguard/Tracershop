@@ -12,9 +12,11 @@ import { ProductionSetup } from "./production_setup";
 import { PrinterOverviewPage } from "~/components/production_pages/setup_pages/printer_setup_page";
 import { DocumentSetup } from "~/components/production_pages/setup_pages/document_setup";
 import { NavigationContainer } from "~/lib/types"
+import { ProjectPage } from "./project_page";
 
 export const PRODUCTION_CONFIG_SITES: NavigationContainer = {
   customer       : { component : CustomerPage, name : "Levering og Kunder" },
+  project        : { component : ProjectPage, name : "Projekter" },
   tracer         : { component : TracerPage, name : "Tracer" },
   isotope        : { component : IsotopeSetupPage, name : "Isotoper" },
   production     : { component : ProductionSetup, name : "Produktioner" },
@@ -42,21 +44,10 @@ export function SetupShop({hint}){
     }
   }, [hint])
 
-  const Buttons = [...Object.keys(PRODUCTION_CONFIG_SITES)].map(
-    (_siteIdentifier, i) => {
-      return <MarginButton
-              onClick={() => {setSiteIdentifier(_siteIdentifier)}}
-              key={i}>{PRODUCTION_CONFIG_SITES[_siteIdentifier].name}</MarginButton>;
-    }
-  )
   const Site = PRODUCTION_CONFIG_SITES[siteIdentifier].component;
 
   return (
   <Container>
-    <Row style={{
-      marginBottom : '15px',
-      marginTop : '15px',
-    }}><div>{Buttons}</div></Row>
     <Site/>
   </Container>);
 }

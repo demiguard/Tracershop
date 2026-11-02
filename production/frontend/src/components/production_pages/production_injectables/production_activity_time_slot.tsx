@@ -191,19 +191,37 @@ function ProductionInnerContentStatusACCEPTED({
  * @returns
  */
 function ProductionInnerContentStatusRELEASED({orderCollection, moveOrders, firstAvailableTimeSlot}){
-  const releasedBase = <div>
-        <div>Udleveret:</div>
-        <MBqDisplay activity={orderCollection.delivered_activity}/>
-  </div>;
-  const releasedHover = <div>
-    Korrigeret til kl: {orderCollection.delivering_time_slot.delivery_time}
-  </div>
+  const DeliveryBase = (
+    <div>
+      <div>Til udlevering:</div>
+      <MBqDisplay activity={orderCollection.deliver_activity}/>
+    </div>
+  );
+
+  const DeliveryHover = (
+    <div>
+      <div>Bestilt:</div>
+      <MBqDisplay activity={orderCollection.ordered_activity}/>
+    </div>
+  );
+
+
+  const releasedBase = (
+    <div>
+      <div>Udleveret:</div>
+      <MBqDisplay activity={orderCollection.delivered_activity}/>
+    </div>
+  );
+  const releasedHover = (
+    <div>
+      Korrigeret til kl: {orderCollection.delivering_time_slot.delivery_time}
+    </div>
+  );
 
   return (
     <Row>
       <Col style={cssCenter}>
-        <div>Til udlevering:</div>
-        <MBqDisplay activity={orderCollection.deliver_activity}/>
+        <HoverBox Base={DeliveryBase} Hover={DeliveryHover}/>
       </Col>
       <Col style={cssCenter}>
         <HoverBox Base={releasedBase} Hover={releasedHover}/>

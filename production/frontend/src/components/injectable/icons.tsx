@@ -30,6 +30,8 @@ export function ClickableIcon ({
   src,
   onClick,
   onMouseDown,
+  height=24,
+  width=24,
   style={
     padding : "0px",
     justifyContent : 'center',
@@ -53,11 +55,11 @@ export function ClickableIcon ({
       <Image
         beforeInjection={beforeInjection}
         style={{
-          width : '24px',
-          height : '24px'
+          width : `${width}px`,
+          height : `${height}px`
         }}
-        width="24"
-        height="24"
+        width={`${width}`}
+        height={`${height}`}
         src={src}
         {...rest}
       />

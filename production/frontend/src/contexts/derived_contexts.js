@@ -4,6 +4,7 @@ import { ProcedureContext } from "~/contexts/procedure_context";
 import { ProductionCodexProvider } from "~/contexts/production_codex";
 import { TracerCatalogProvider } from "~/contexts/tracer_catalog";
 import { UserReleaseRightProvider } from "~/contexts/user_release_right";
+import { ProjectMappingProvider } from "~/lib/data_structures/project_mapping";
 
 export function DerivedContextPyramid({children}){
   return (
@@ -15,7 +16,9 @@ export function DerivedContextPyramid({children}){
         <TracerCatalogProvider>
           <ProcedureContext>
             <ProductionCodexProvider>
-              {children}
+              <ProjectMappingProvider>
+                {children}
+              </ProjectMappingProvider>
             </ProductionCodexProvider>
           </ProcedureContext>
         </TracerCatalogProvider>

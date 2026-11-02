@@ -1,6 +1,7 @@
 import React, { useContext, createContext, useMemo } from "react";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ActivityDeliveryTimeSlot, Isotope, IsotopeDelivery, IsotopeProduction, Tracer, TracerCatalogPage, TracershopState } from "~/dataclasses/dataclasses";
+import { ArrayMap } from "~/lib/array_map";
 import { TRACER_TYPE } from "~/lib/constants";
 import { numberfy } from "~/lib/utils";
 
@@ -31,6 +32,7 @@ export class EndpointCatalog {
  */
 export class TracerCatalog {
   _endpointCatalogs: Map<Number, EndpointCatalog>;
+  /** @desc A mapping of tracer to the endpoints, that can order it */   tracerCustomers: ArrayMap<number,number>
 
   /**
    * Data structure containing information about which tracers a customer have access to
@@ -44,6 +46,7 @@ export class TracerCatalog {
     isotopes : Map<number, Isotope>,
   ) {
     this._endpointCatalogs = new Map();
+    this.tracerCustomers = new ArrayMap<number, number>();
 
     for (const tracerCatalogPage of tracer_mapping.values()) {
       const endpoint_catalog = this.getCatalog(tracerCatalogPage.endpoint);
@@ -60,6 +63,8 @@ export class TracerCatalog {
       } else if (tracer.tracer_type === TRACER_TYPE.DOSE) {
         endpoint_catalog.tracerCatalogInjections.add(tracer.id);
       }
+
+      this.tracerCustomers.set(tracer.id, tracerCatalogPage.endpoint);
     }
 
     for(const isotopeDelivery of isotope_deliveries.values()){
@@ -144,6 +149,10 @@ export class TracerCatalog {
     }
 
     return this.getOverheadForTracer(timeSlot.destination, prod.tracer);
+  }
+
+  getCustomersForTracer(tracerID: number){
+    return this.tracerCustomers.get(tracerID, [])
   }
 }
 

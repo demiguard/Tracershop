@@ -29,7 +29,7 @@ function addDateSlashes(event, currentInput){
 
  */
 export function DateInput(props){
-  const  {stateFunction, ...formControlProps} = props;
+  const  { stateFunction, ...formControlProps} = props;
 
   function inputFunction(event){
     stateFunction(addDateSlashes(event, props.value));

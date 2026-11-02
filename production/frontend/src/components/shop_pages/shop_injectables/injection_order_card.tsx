@@ -4,7 +4,7 @@ import propTypes from 'prop-types';
 
 import { nullParser } from "~/lib/formatting";
 import { InjectionOrder, Tracer } from "~/dataclasses/dataclasses";
-import { StatusIcon } from "~/components/injectable/icons.tsx";
+import { StatusIcon } from "~/components/injectable/icons";
 import { Select, toOptions } from "../../injectable/select";
 import { ORDER_STATUS } from "~/lib/constants";
 import { TracershopInputGroup } from "../../injectable/inputs/tracershop_input_group";
@@ -19,6 +19,7 @@ import { EditableInput } from "~/components/injectable/inputs/editable_input";
 import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ShopActionButton } from "~/components/injectable/buttons/shop_action_button";
 import { ManyRows } from "~/components/injectable/ManyRows";
+import { useProjectMapping } from "~/lib/data_structures/project_mapping";
 
 
 /**
@@ -41,10 +42,16 @@ export function InjectionOrderCard({
   valid_deadline,
 }) {
   // State
+  const state = useTracershopState();
+  const projectMapping = useProjectMapping()
+
   const [tempInjectionOrder, setTempInjectionOrder] = useState(injection_order);
   const [errorInjections, setErrorInjections] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("")
-  const state = useTracershopState();
+  const [displayProject, setDisplayProject] = useState("");
+
+  projectMapping.endpointsToProjects.get(injection_order.endpoint);
+
 
   function resetErrors(){
     setErrorInjections("");
@@ -123,9 +130,7 @@ export function InjectionOrderCard({
 
   const changed = !compareLoosely(injection_order, tempInjectionOrder);
   const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(injection_order.status) && valid_deadline;
-  const orderExists = !([ORDER_STATUS.AVAILABLE, ORDER_STATUS.UNAVAILABLE].includes(injection_order.status));
-  const statusInfo = orderExists ? `ID: ${injection_order.id}` : "Ny ordre";
-
+  //const orderExists = !([ORDER_STATUS.AVAILABLE, ORDER_STATUS.UNAVAILABLE].includes(injection_order.status));
 
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');

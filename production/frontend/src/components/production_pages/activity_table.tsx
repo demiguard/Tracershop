@@ -1,7 +1,7 @@
 
 import React, { useMemo, useState } from "react";
 import { Row, Col, Button, Container } from 'react-bootstrap'
-import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting";
+import { dateToDateString, FormatDateStringToDanishDateString } from "~/lib/formatting";
 import { ActivityModal } from "../modals/activity_modal";
 import { CreateOrderModal } from "../modals/create_activity_modal";
 import {PROP_ACTIVE_DATE, PROP_ACTIVE_TRACER,
@@ -38,7 +38,7 @@ export function ActivityTable ({active_tracer} : ActivityTableProps) {
   const tracer = state.tracer.get(active_tracer);
   const activeDay = getDay(state.today)
   const delivery_date = dateToDateString(state.today)
-  const danishDateString = parseDateToDanishDate(delivery_date);
+  const danishDateString = FormatDateStringToDanishDateString(delivery_date);
   const relevantProductions = useMemo(
     () => productionsFilter(state.production, { day : activeDay, tracerID : active_tracer}, true),
     [state.production, state.today, active_tracer]

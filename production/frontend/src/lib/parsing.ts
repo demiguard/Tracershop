@@ -25,6 +25,14 @@ function emptyError(header){
   }
 }
 
+function successfulParse(value, header){
+  return {
+    valid : true,
+    value : value,
+    id: header
+  }
+}
+
 export function parseDanishNumberBind(input: string, header: string) : ErrorFunction {
   return () => {
     const inputNumber = ParseDanishNumber(input);
@@ -150,6 +158,50 @@ export function parseBatchNumberBind(input: string, header: string) : ErrorFunct
       value : input,
       valid : true
     }
+  }
+}
+
+export function parseDateBind(input: string, header: string, today: Date){
+  return () => {
+    if (input === "") {
+      return emptyError(header);
+    }
+
+    const DanishYearRegex = /(\d{2})(?:[\-\.\/\\])(\d{2})(?:[\-\.\/\\])(\d{4})/;
+    const DanishYearMatch = DanishYearRegex.exec(input);
+    if (DanishYearMatch != null) {
+      const inputDate = new Date(Number(DanishYearMatch[3]), Number(DanishYearMatch[2]), Number(DanishYearMatch[1]));
+      if(!isNaN(inputDate.getTime())){
+        return successfulParse(`${DanishYearMatch[3]}-${DanishYearMatch[2]}-${DanishYearMatch[1]}`, header);
+      }
+    }
+
+    const DanishRegex = /(\d{2})(?:[\-\.\/\\])(\d{2})/;
+    const DanishMatch = DanishRegex.exec(input);
+    if (DanishMatch != null) {
+      const year = today.getFullYear();
+      const inputDate = new Date(year, Number(DanishMatch[2]), Number(DanishMatch[1]));
+      if(!isNaN(inputDate.getTime())){
+        return successfulParse(`${year}-${DanishMatch[2]}-${DanishMatch[1]}`, header);
+      }
+    }
+
+    const ISODateRegex = /(\d{4})(?:[\-\.\/\\])(\d{2})(?:[\-\.\/\\])(\d{2})/;
+
+    const ISOMatch = ISODateRegex.exec(input);
+    if (ISOMatch != null) {
+      const inputDate = new Date(Number(ISOMatch[1]), Number(ISOMatch[2]), Number(ISOMatch[3]));
+      if(!isNaN(inputDate.getTime())){
+        return successfulParse(`${ISOMatch[1]}-${ISOMatch[2]}-${ISOMatch[3]}`, header);
+      }
+    }
+
+
+    return {
+      valid : false,
+      id : header,
+      error : `${header} er ikke i et dato format (DD-MM-YYYY) - Brug Dato vælgeren`
+    };
   }
 }
 

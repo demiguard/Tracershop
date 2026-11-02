@@ -2,7 +2,7 @@
 import React, { useMemo, useState, JSX } from "react";
 import { Row, Col, Table, Button, Container, FormCheck } from 'react-bootstrap';
 import { PROP_ACTIVE_DATE, PROP_ON_CLOSE, PROP_MODAL_ORDER, ORDER_STATUS, PROP_SELECTED } from "~/lib/constants";
-import { dateToDateString, parseDateToDanishDate } from "~/lib/formatting";
+import { dateToDateString, FormatDateStringToDanishDateString } from "~/lib/formatting";
 import { compareDates } from "~/lib/utils";
 import { CreateInjectionOrderModal } from "~/components/modals/create_injection_modal";
 import { InjectionModal } from "../modals/injection_modal";
@@ -103,7 +103,7 @@ export function InjectionTable() {
   const active_date = state.today
   const userReleaseRight = useUserReleaseRights();
 
-  const danishDate = parseDateToDanishDate(dateToDateString(active_date))
+  const danishDate = FormatDateStringToDanishDateString(dateToDateString(active_date))
 
   const orders = useMemo(
     () => {

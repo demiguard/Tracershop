@@ -25,11 +25,12 @@ from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
   WEBSOCKET_REFRESH, DATA_VIAL, WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
   WEBSOCKET_MESSAGE_STATUS
 from database.database_interface import DatabaseInterface
-from database.models import Vial
+from database.models import Vial, ServerConfiguration, Printer
 from database.utils import can_be_saved
 from lib.parsing import parse_val_file, update_customer_mapping,\
   update_tracer_mapping, parse_data_frame_row_to_vial
 from lib.formatting import toDateTime
+from lib.printing import print_documents_for_vial, print_label_for_vial
 from websocket.messenger import Messenger
 from websocket.messenger_base import getNewMessageID
 
@@ -84,6 +85,14 @@ def handle_vial_file(path: Path):
     return
   logger.info("Vial doesn't exists saving!")
 
+  server_config = ServerConfiguration.get()
+
+  if server_config.active_printer is not None:
+    print_documents_for_vial(vial, server_config.active_printer)
+
+  if server_config.active_label_printer is not None:
+    print_label_for_vial(vial, server_config.active_label_printer)
+
   send_vials_to_frontend([vial])
   logger.info(f"Send vial to service, Deleting file: {path}")
   path.unlink()
@@ -131,7 +140,7 @@ def handle_data_frame(data_frame: DataFrame, path: Path):
 
 
 def send_vials_to_frontend(vials: List[Vial]):
-  async_to_sync(messenger)(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, {
+  async_to_sync(messenger)(WEBSOCKET_SERVER_MESSAGES.WEBSOCKET_MESSAGE_UPDATE_STATE, { # type: ignore
     WEBSOCKET_MESSAGE_ID : getNewMessageID(),
     MESSENGER_CONSUMER : None,
     WEBSOCKET_MESSAGE_STATUS : SUCCESS_STATUS_CRUD.SUCCESS,
@@ -150,20 +159,24 @@ def handle_path(path: Path):
     handle_xlsx_file(path)
 
 def process_path(path: Path):
-      logger.info(f"Started to process {path}")
-      processed_path = False
-      while not processed_path:
-        process = Process(target=handle_path, args=[path])
-        process.start()
-        pid = process.pid
-        process.join(2.0)
-        if process.is_alive():
-          process.terminate()
-          logger.info(f"process {pid} timeouted!")
-        else:
-          processed_path = True
-        process.close() #
-      logger.info(f"Finished processing {path}")
+  logger.info(f"Started to process {path}")
+  processed_path = False
+  while not processed_path:
+    # Not 100 % sure why we need a other process - I think was because
+    # when you have network reads, the process can enter uninterruptable sleep
+    # Which means bad stuff happens.
+
+    process = Process(target=handle_path, args=[path])
+    process.start()
+    pid = process.pid
+    process.join(2.0)
+    if process.is_alive():
+      process.terminate()
+      logger.info(f"process {pid} timeouted!")
+    else:
+      processed_path = True
+    process.close() #
+    logger.info(f"Finished processing {path}")
 
 def run_cleanup():
   vial_file_path = Path(VIAL_WATCHER_FILE_PATH)

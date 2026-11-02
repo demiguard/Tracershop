@@ -17,7 +17,7 @@ import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, DATA_AC
   WEBSOCKET_MESSAGE_CORRECT_ORDER,
   WEBSOCKET_MESSAGE_FREE_ACTIVITY
 } from "~/lib/shared_constants"
-import { dateToDateString, formatUsername, parseDateToDanishDate } from "~/lib/formatting";
+import { dateToDateString, formatUsername, FormatDateStringToDanishDateString } from "~/lib/formatting";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input";
 import { compareDates, getId, openActivityReleasePDF } from "~/lib/utils";
 import { TimeInput } from "../injectable/inputs/time_input";
@@ -538,7 +538,7 @@ export function ActivityModal({
       >
     <Modal.Header>
       <h3>
-        Ordre - {parseDateToDanishDate(dateString)} - {timeSlot.delivery_time}
+        Ordre - {FormatDateStringToDanishDateString(dateString)} - {timeSlot.delivery_time}
       </h3>
     </Modal.Header>
     <Modal.Body>

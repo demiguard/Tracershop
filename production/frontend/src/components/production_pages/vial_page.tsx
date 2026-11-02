@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
 
 import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
-import { dateToDateString, parseDateToDanishDate } from "../../lib/formatting";
+import { dateToDateString, FormatDateStringToDanishDateString } from "../../lib/formatting";
 import { setStateToEvent } from "../../lib/state_management";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
@@ -56,17 +56,53 @@ function VialRow({vial} : VialRowProps){
   return <tr style={{ height : `${vialRowHeight}px` }} key={vial.id}>
     <td data-testid="id_field">{vial.id}</td>
     <td data-testid="lot_field">{vial.lot_number}</td>
-    <td data-testid="date_field">{parseDateToDanishDate(vial.fill_date)}</td>
+    <td data-testid="date_field">{FormatDateStringToDanishDateString(vial.fill_date)}</td>
     <td data-testid="time_field">{vial.fill_time}</td>
     <td data-testid="volume_field">{vial.volume}</td>
     <td data-testid="activity_field">{vial.activity}</td>
     <td data-testid="owner_field">{customerName}</td>
     <td data-testid="order_field">{vial.assigned_to}</td>
     <td data-testid="print">
-      <ClickableIcon beforeInjection={(svg) => {
-        svg.setAttribute("height", "32")
-        svg.setAttribute("width", "32")
-      }} src={"static/images/label.svg"} onClick={open_label}/>
+      <Row>
+          <ClickableIcon
+            style={{
+              display : "flex",
+              flex : "0 0 0"
+            }}
+            width={32}
+            height={32}
+            beforeInjection={(svg) => {
+              svg.setAttribute("height", "32")
+              svg.setAttribute("width", "32")
+            }}
+            src={"static/images/label.svg"}
+            onClick={open_label}
+          />
+        <HoverBox
+          styles={{
+            top : "20px",
+            left : "30px",
+            overflow : "visible",
+          }}
+          BaseStyle={{
+            display : "flex",
+            flex : "0 0 0",
+
+          }}
+          Base={
+            <ClickableIcon
+              width={32}
+              height={32}
+              src={"static/images/printer.svg"}
+              beforeInjection={(svg) => {
+                svg.setAttribute("height", "32")
+                svg.setAttribute("width", "32")
+              }}
+            />
+          }
+          Hover={<div>documentList</div>}
+        />
+      </Row>
     </td>
   </tr>
 }

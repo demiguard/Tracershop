@@ -61,7 +61,7 @@ export function ParseDanishNumber(numberString){
 }
 
 
-export function parseDateToDanishDate(dateString){
+export function FormatDateStringToDanishDateString(dateString){
   /* This function takes a date string on the format YYYY-MM-DD and formats it to DD-MM-YYYY
    * The Primary function should be to convert input dates to display dates.
    * This Date format is the one used by the site and throws an Error if it's not sites format

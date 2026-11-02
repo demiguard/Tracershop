@@ -77,12 +77,11 @@ export default function ShopSite ({logout, NavbarElements=[]}) {
       const componentName = SHOP_ORDER_COMPONENTS[key].name;
 
       return (
-      <NavbarElement>
+      <NavbarElement key={key}>
         <div onClick={activateOrderSite(key)}>{componentName}</div>
       </NavbarElement>);
     }
-
-  )]
+  )];
 
   const setupNavbarElements = [...Object.keys(SHOP_CONFIG_SITES)].map(
     (key) => {

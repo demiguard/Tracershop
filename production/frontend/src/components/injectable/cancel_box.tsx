@@ -1,7 +1,7 @@
 import React from "react";
 import { Container, Modal, Row, Col } from "react-bootstrap";
 import { MarginButton } from "~/components/injectable/buttons";
-import { useWebsocket } from "~/contexts/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { ORDER_STATUS } from "~/lib/constants";
 import { OrderCollection } from "~/lib/data_structures/order_collection";
 import { getOrderType, OrdersType, OrderType } from "~/lib/types";
@@ -25,6 +25,7 @@ export function CancelBox({
   cancelMessage="Vil du afvise?"
 }: CancelBoxProps
 ){
+  const state = useTracershopState()
   const websocket = useWebsocket();
 
   function cancelOrder(){
@@ -54,7 +55,7 @@ export function CancelBox({
     );
 
     const updated_orders = filtered_orders.map((order) => (
-      { ...order, status : ORDER_STATUS.CANCELLED }
+      { ...order, status : ORDER_STATUS.CANCELLED, freed_by : state.logged_in_user.id, freed_datetime : new Date() }
     ));
 
     const promise = websocket.sendEditModels(order_type, updated_orders);

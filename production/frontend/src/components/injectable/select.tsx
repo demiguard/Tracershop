@@ -23,7 +23,7 @@ export class Option {
   }
 }
 
-export function toOptions(iterable, nameKey: string | ((n: any) => string) ='name', valueKey = 'id'){
+export function toOptions(iterable, nameKey: string | ((n: any) => string) ='name', valueKey = 'id') : Option[]{
   function toOption(entry){
     const name = (typeof nameKey === 'function') ?
                         nameKey(entry)

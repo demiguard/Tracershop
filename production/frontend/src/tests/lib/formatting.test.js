@@ -1,5 +1,5 @@
 import { parseJSON } from "jquery";
-import { parseDate, ParseDanishNumber, parseDateToDanishDate,
+import { parseDate, ParseDanishNumber, FormatDateStringToDanishDateString,
   FormatTime, FormatDateStr, ParseJSONstr, ParseDjangoModelJson,
   ParseEmail, isNotNaN, PortValidator, formatTimeStamp,
   IPValidator, escapeInputString, batchNumberValidator,
@@ -75,14 +75,14 @@ describe("ParseDanishNumber tests", () => {
 
 describe("parseDateToDanishDate Tests", () => {
   it("Valid dates tests", () => {
-    expect(parseDateToDanishDate("2011-11-30")).toEqual("30/11/2011");
-    expect(parseDateToDanishDate("2011-01-31")).toEqual("31/01/2011");
+    expect(FormatDateStringToDanishDateString("2011-11-30")).toEqual("30/11/2011");
+    expect(FormatDateStringToDanishDateString("2011-01-31")).toEqual("31/01/2011");
   });
 
   it("Missing extra format", () => {
     const input = "2011/11/30";
     try {
-      parseDateToDanishDate(input);
+      FormatDateStringToDanishDateString(input);
       expect(false).toEqual(true);
     } catch (e) {
       expect(e).toEqual("Date not on format, Input: " + input);
@@ -92,7 +92,7 @@ describe("parseDateToDanishDate Tests", () => {
   it("Missing Trailing zeroes", () => {
     const input = "2011-1-30"
     try {
-      parseDateToDanishDate("2011-1-30");
+      FormatDateStringToDanishDateString("2011-1-30");
       expect(false).toEqual(true);
     } catch (e) {
       expect(e).toEqual("Date not on format, Input: " + input);
@@ -101,7 +101,7 @@ describe("parseDateToDanishDate Tests", () => {
 
   it("Not impotent", () => {
     try {
-      parseDateToDanishDate(parseDateToDanishDate("2011-11-30"));
+      FormatDateStringToDanishDateString(FormatDateStringToDanishDateString("2011-11-30"));
       expect(false).toEqual(true);
     } catch (e) {
       expect(e).toEqual("Date not on format, Input: " + "30/11/2011");

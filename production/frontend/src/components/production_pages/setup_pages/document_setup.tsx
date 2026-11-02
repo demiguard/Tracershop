@@ -121,11 +121,11 @@ function DocumentCard({ document, selectedDocumentState }){
   }
 
   return (
-    <Card onClick={selectThisDocument}>
+    <Card>
       <Card.Header>
         <Row style={{ width : "auto", justifyContent : "space-between", display : "flex" }}>
           <Col md="auto" style={{  alignItems : "center", display : "flex"}}>
-            <Button>
+            <Button onClick={selectThisDocument}>
               {displayTitle}
             </Button>
           </Col>

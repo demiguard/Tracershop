@@ -35,7 +35,7 @@ type setStateToEventArgs = {
   /** useState dispatcher - that holds the value to be updated by the event */
   stateFunction : React.Dispatch<string>,
   /** Optional function for transforming the input */
-  formatFunction? : (s: string) => string,
+  formatFunction? : (s: React.ChangeEvent<HTMLInputElement>) => string,
   /** Optional function for clearing any errors related to the input */
   errorFunction? : React.Dispatch<string>
 }
@@ -45,9 +45,9 @@ type setStateToEventArgs = {
  * @returns Function to places in a onChange handler
  * @example <FormControl onChange={setStateToEvent({stateFunction : setState})} value={state}/>
  */
-export function setStateToEvent({ stateFunction, formatFunction= (id) => id, errorFunction = (err) => {}}: setStateToEventArgs){
+export function setStateToEvent({ stateFunction, formatFunction= (id) => id.target.value, errorFunction = (err) => {}}: setStateToEventArgs){
   return (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = formatFunction(event.target.value);
+    const value = formatFunction(event);
     stateFunction(value);
     errorFunction("");
   }
@@ -56,6 +56,7 @@ export function setStateToEvent({ stateFunction, formatFunction= (id) => id, err
 /**
  * Shorthand for (event) => {stateFunction({...obj, [keyword] : event.target.value})}
  * Useful for setting objects
+ * @deprecated
  */
 export function setTempObjectToEvent(stateFunction: React.Dispatch<React.SetStateAction<object>>, keyword : string, formatFunction?: (a: any) => any){
   return (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -227,7 +228,19 @@ export function toggleSetState(stateFunction, id, action){
   }
 }
 
-export function useTSFormState<T>(initial_value : T | (() => T)){
+interface TSFormState<T> {
+  value : T,
+  setValue : (t: T) => void,
+  error : RecoverableError,
+  setError : (s: string) => void
+}
+
+/**
+ *
+ * @param initial_value
+ * @returns {{  value : The Value to place in }}
+ */
+export function useTSFormState<T>(initial_value : T | (() => T)) : TSFormState<T> {
   const [input, setInput] = useState(initial_value);
   const [error, setError] = useErrorState()
 

@@ -1210,6 +1210,138 @@ export class ActivityProduction extends Dataclass {
   }
 }
 
+export class Project extends Dataclass {
+  id
+  name
+  tracer
+  start_date
+  end_date
+
+  constructor(id?, name?, tracer?, start_date?, end_date?, ) {
+    super()
+    this.id=id
+    this.name=name
+    this.tracer=tracer
+    this.start_date=start_date
+    this.end_date=end_date
+  }
+
+  /**Copies the project
+  * @returns { Project }
+   */
+  copy() : Project {
+    return new Project(
+      this.id,
+      this.name,
+      this.tracer,
+      this.start_date,
+      this.end_date
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new CharField("name"),
+      new ForeignField("tracer","tracer"),
+      new DateField("start_date"),
+      new DateField("end_date"),
+    ];
+  }
+}
+
+export class ProjectActivityOrder extends Dataclass {
+  id
+  project
+  order
+
+  constructor(id?, project?, order?, ) {
+    super()
+    this.id=id
+    this.project=project
+    this.order=order
+  }
+
+  /**Copies the projectactivityorder
+  * @returns { ProjectActivityOrder }
+   */
+  copy() : ProjectActivityOrder {
+    return new ProjectActivityOrder(
+      this.id,
+      this.project,
+      this.order
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("project","project"),
+      new ForeignField("order","activity_orders"),
+    ];
+  }
+}
+
+export class ProjectEndpoint extends Dataclass {
+  id
+  project
+  endpoint
+
+  constructor(id?, project?, endpoint?, ) {
+    super()
+    this.id=id
+    this.project=project
+    this.endpoint=endpoint
+  }
+
+  /**Copies the projectendpoint
+  * @returns { ProjectEndpoint }
+   */
+  copy() : ProjectEndpoint {
+    return new ProjectEndpoint(
+      this.id,
+      this.project,
+      this.endpoint
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("project","project"),
+      new ForeignField("endpoint","delivery_endpoint"),
+    ];
+  }
+}
+
+export class ProjectInjectionOrder extends Dataclass {
+  id
+  project
+  order
+
+  constructor(id?, project?, order?, ) {
+    super()
+    this.id=id
+    this.project=project
+    this.order=order
+  }
+
+  /**Copies the projectinjectionorder
+  * @returns { ProjectInjectionOrder }
+   */
+  copy() : ProjectInjectionOrder {
+    return new ProjectInjectionOrder(
+      this.id,
+      this.project,
+      this.order
+    )
+  }
+  fields(){
+    return [
+      new IntField("id"),
+      new ForeignField("project","project"),
+      new ForeignField("order","injection_orders"),
+    ];
+  }
+}
+
 export class SecondaryEmail extends Dataclass {
   id
   email
@@ -1599,6 +1731,10 @@ export const MODELS = {
   procedure : Procedure,
   procedure_identifier : ProcedureIdentifier,
   production : ActivityProduction,
+  project : Project,
+  project_activity : ProjectActivityOrder,
+  project_endpoint : ProjectEndpoint,
+  project_injection : ProjectInjectionOrder,
   secondary_email : SecondaryEmail,
   server_config : ServerConfiguration,
   standard_order : StandardOrder,
@@ -1641,6 +1777,10 @@ export class TracershopState {
   procedure : Map<number, Procedure>
   procedure_identifier : Map<number, ProcedureIdentifier>
   production : Map<number, ActivityProduction>
+  project : Map<number, Project>
+  project_activity : Map<number, ProjectActivityOrder>
+  project_endpoint : Map<number, ProjectEndpoint>
+  project_injection : Map<number, ProjectInjectionOrder>
   secondary_email : Map<number, SecondaryEmail>
   server_config : Map<number, ServerConfiguration>
   standard_order : Map<number, StandardOrder>
@@ -1650,7 +1790,7 @@ export class TracershopState {
   vial : Map<number, Vial>
   vial_template : Map<number, VialTemplate>
 
-  constructor(logged_in_user?, today?, address?, activity_orders?, booking_rule?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, vial_template?, ){
+  constructor(logged_in_user?, today?, address?, activity_orders?, booking_rule?, closed_date?, customer?, deadline?, deliver_times?, dicom_endpoint?, delivery_endpoint?, injection_orders?, isotopes?, isotope_delivery?, isotope_order?, isotope_production?, isotope_vial?, release_right?, legacy_production_member?, location?, message?, message_assignment?, tracer?, tracer_mapping?, printer?, procedure?, procedure_identifier?, production?, project?, project_activity?, project_endpoint?, project_injection?, secondary_email?, server_config?, standard_order?, server_log?, user?, user_assignment?, vial?, vial_template?, ){
     this.logged_in_user=logged_in_user
     this.today=today
    this.readyState = WebSocket.CLOSED
@@ -1783,6 +1923,26 @@ export class TracershopState {
       this.production = production
     } else {
       this.production = new Map()
+    }
+    if(project !== undefined){
+      this.project = project
+    } else {
+      this.project = new Map()
+    }
+    if(project_activity !== undefined){
+      this.project_activity = project_activity
+    } else {
+      this.project_activity = new Map()
+    }
+    if(project_endpoint !== undefined){
+      this.project_endpoint = project_endpoint
+    } else {
+      this.project_endpoint = new Map()
+    }
+    if(project_injection !== undefined){
+      this.project_injection = project_injection
+    } else {
+      this.project_injection = new Map()
     }
     if(secondary_email !== undefined){
       this.secondary_email = secondary_email

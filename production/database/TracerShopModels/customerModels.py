@@ -518,6 +518,25 @@ class Vial(TracershopModel):
       Index(fields=['fill_date', 'fill_time'])
     ]
 
+
+class Project(TracershopModel):
+  name = CharField(max_length=32, unique=True)
+  tracer = ForeignKey(Tracer, on_delete=RESTRICT)
+  start_date = DateField()
+  end_date = DateField()
+
+class ProjectEndpoint(TracershopModel):
+  project = ForeignKey(Project, on_delete=RESTRICT)
+  endpoint = ForeignKey(DeliveryEndpoint, on_delete=RESTRICT)
+
+class ProjectActivityOrder(TracershopModel):
+  project = ForeignKey(Project, on_delete=RESTRICT)
+  order = ForeignKey(ActivityOrder, on_delete=RESTRICT)
+
+class ProjectInjectionOrder(TracershopModel):
+  project = ForeignKey(Project, on_delete=RESTRICT)
+  order = ForeignKey(InjectionOrder, on_delete=RESTRICT)
+
 class LegacyProductionMember(TracershopModel):
   id = IntegerField(primary_key=True)
   legacy_production_username = CharField(max_length=50)
