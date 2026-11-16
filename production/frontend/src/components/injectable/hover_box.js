@@ -10,7 +10,7 @@ const HOVER_BOX_CSS = {
   maxWidth: '350px',
   backgroundColor: '#FFFFFF',
   padding: '5px',
-  zIndex: '999',
+  zIndex: '1',
   border: '1px',
   borderStyle: 'solid',
   borderColor: 'var(--grey-1)',

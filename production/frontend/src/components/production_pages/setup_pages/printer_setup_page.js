@@ -11,7 +11,7 @@ import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context
 import { Printer } from "~/dataclasses/dataclasses";
 import { cssCenter } from "~/lib/styles";
 import { nullParser } from "~/lib/formatting";
-import { DATA_PRINTER, DATA_SERVER_CONFIG, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TEST_PRINTER, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+import { DATA_PRINTER, DATA_SERVER_CONFIG, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_STATUS, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 import { setTempObjectToEvent } from "~/lib/state_management";
 
 
@@ -25,8 +25,6 @@ function PrinterRow({
   printer
 }){
   const state = useTracershopState();
-  const websocket = useWebsocket();
-
 
   const [printerState, setPrinterState] = useState(printer);
   const [printerError, setPrinterError] = useState("");
@@ -70,12 +68,6 @@ function PrinterRow({
     <FormCheck checked={printerState.label_printer} disabled={true} readOnly={true}/>
   </div>;
 
-  function printTestPage(){
-    return websocket.send({
-      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_TEST_PRINTER,
-      [WEBSOCKET_DATA] : {...printer}
-    })
-  }
 
   const actionButton = creating ?
     <Optional exists={showCreateButton}>
@@ -123,7 +115,7 @@ function PrinterRow({
           <Col>
             <IdempotentIcon
               src="static/images/printer.svg"
-              onClick={printTestPage}
+              onClick={() => {}}
             />
           </Col>
         </Optional>

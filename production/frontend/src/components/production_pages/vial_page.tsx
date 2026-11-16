@@ -1,8 +1,8 @@
 
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { Component, CSSProperties, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
 
-import { WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
+import { DATA_VIAL, DATA_VIAL_TEMPLATE, WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_PRINT_DOCUMENT, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
 import { dateToDateString, FormatDateStringToDanishDateString } from "../../lib/formatting";
 import { setStateToEvent } from "../../lib/state_management";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
@@ -42,6 +42,56 @@ type VialRowProps = {
   vial : Vial
 }
 
+function TemplateRow({template, vial}){
+  const websocket = useWebsocket();
+
+  const [isHovered, setIsHovered] = useState(false);
+  const style: CSSProperties = {
+    backgroundColor : isHovered ? "#d2dafa" : "#ffffff",
+    margin : "0px",
+    padding : "5px",
+    textAlign : "center",
+    transition : 'background-color 0.2s ease',
+    cursor : "pointer"
+  }
+
+  return (
+    <Row
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={() => {
+          websocket.send({
+            [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_PRINT_DOCUMENT,
+            [WEBSOCKET_DATA] : {
+              [DATA_VIAL] : vial.id,
+              [DATA_VIAL_TEMPLATE] : template.id
+            }
+          })
+        }}
+        style={style}>{template.title}
+    </Row>
+  )
+
+
+}
+
+function TemplateList({vial}){
+  const state = useTracershopState();
+
+  const documentRows = [...state.vial_template.values()].map(
+    (template, i) => <Fragment key={template.id}>
+      {i > 0 && <hr style={{margin : "0px"}}/>}
+      <TemplateRow template={template} vial={vial}/>
+    </Fragment>
+  )
+
+  return (
+    <Col>
+      {documentRows}
+    </Col>
+  );
+}
+
 function VialRow({vial} : VialRowProps){
   const state = useTracershopState();
   const customer = state.customer.get(vial.owner);
@@ -53,6 +103,10 @@ function VialRow({vial} : VialRowProps){
     openVialLabel(vial)
   }
 
+  const templates = useMemo(() => {
+    return <TemplateList vial={vial}/>
+  }, [vial])
+
   return <tr style={{ height : `${vialRowHeight}px` }} key={vial.id}>
     <td data-testid="id_field">{vial.id}</td>
     <td data-testid="lot_field">{vial.lot_number}</td>
@@ -60,8 +114,6 @@ function VialRow({vial} : VialRowProps){
     <td data-testid="time_field">{vial.fill_time}</td>
     <td data-testid="volume_field">{vial.volume}</td>
     <td data-testid="activity_field">{vial.activity}</td>
-    <td data-testid="owner_field">{customerName}</td>
-    <td data-testid="order_field">{vial.assigned_to}</td>
     <td data-testid="print">
       <Row>
           <ClickableIcon
@@ -82,7 +134,7 @@ function VialRow({vial} : VialRowProps){
           styles={{
             top : "20px",
             left : "30px",
-            overflow : "visible",
+            padding : "0px",
           }}
           BaseStyle={{
             display : "flex",
@@ -100,10 +152,12 @@ function VialRow({vial} : VialRowProps){
               }}
             />
           }
-          Hover={<div>documentList</div>}
+          Hover={templates}
         />
       </Row>
     </td>
+    <td data-testid="owner_field">{customerName}</td>
+    <td data-testid="order_field">{vial.assigned_to}</td>
   </tr>
 }
 
@@ -291,7 +345,7 @@ export function VialPage(){
           <MarginButton onMouseDown={restartVialDog}>Hent manglende glas</MarginButton>
         </Col>
       </Row>
-      <div ref={overflowDivRef} style={{height : overflowDivHeight, overflow : 'hidden'}}>
+      <div ref={overflowDivRef} style={{height : overflowDivHeight, overflowX: "auto", overflowY : 'hidden'}}>
         <Table>
           <thead>
             <tr>
@@ -301,9 +355,9 @@ export function VialPage(){
               <th data-testid="header-TIME" onClick={changeSearch(SortingOptions.TIME)}>Tappe tidspunkt</th>
               <th data-testid="header-VOLUME" onClick={changeSearch(SortingOptions.VOLUME)}>Volumen</th>
               <th data-testid="header-ACTIVITY" onClick={changeSearch(SortingOptions.ACTIVITY)}>Aktivitet</th>
+              <th data-testid="header-print">Print</th>
               <th data-testid="header-OWNER" onClick={changeSearch(SortingOptions.OWNER)}>Ejer</th>
               <th data-testid="header-ORDER" onClick={changeSearch(SortingOptions.ORDER)}>Ordre</th>
-              <th data-testid="header-print">Print</th>
             </tr>
           </thead>
           <tbody>

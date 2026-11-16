@@ -205,6 +205,25 @@ function ActivityRow({activityOrderID}){
 }
 
 
+function InjectionRow({injectionOrderID}){
+  const state = useTracershopState();
+
+  const order = state.injection_orders.get(injectionOrderID);
+  const endpoint = state.delivery_endpoint.get(order.endpoint);
+
+  return (
+  <Card>
+    <Card.Header>
+      <Row>
+        <Col xs={1}> <StatusIcon order={order}/></Col>
+        <Col>{endpoint.name}</Col>
+        <Col><DateDisplay date={new Date(order.delivery_date)}/></Col>
+      </Row>
+    </Card.Header>
+  </Card>);
+}
+
+
 type ProjectCardProps = {
   project : Project,
 }
@@ -234,7 +253,9 @@ function ProjectCard({project}: ProjectCardProps){
   const activityOrdersForProject = projectMapping.activityOrdersForProject.get(project.id, []).map(
     (aio) => <ActivityRow activityOrderID={aio} key={aio}/>
   );
-  const injectionOrdersForProject = projectMapping.injectionOrdersForProject.get(project.id, []);
+  const injectionOrdersForProject = projectMapping.injectionOrdersForProject.get(project.id, []).map(
+    (oid) => <InjectionRow injectionOrderID={oid} key={oid}/>
+  );
 
   function onSelect(event: React.ChangeEvent<HTMLSelectElement>){
     websocket.sendCreateModel(
@@ -250,10 +271,13 @@ function ProjectCard({project}: ProjectCardProps){
       <Card.Header>
         <Row>
           <Col>
-            <h2 style={{margin : 0}}>{project.name}</h2>
+            <h2 style={{margin : 0, display : "flex", placeItems : "center"}}>{project.name}</h2>
+          </Col>
+          <Col style={{margin : 0, display : "flex", placeItems : "center"}}>
+            {project.start_date} - {project.end_date}
           </Col>
           <Col>
-            <h2 style={{margin : 0}}>{state.tracer.get(project.tracer).shortname}</h2>
+            <h2 style={{margin : 0, display : "flex", placeItems : "center"}}>{state.tracer.get(project.tracer).shortname}</h2>
           </Col>
           <Col style={{ alignContent : "end", display : "flex", flex : "0 0 0", margin : "auto" }}>
             <OpenCloseButton open={open} setOpen={setOpen}/>
@@ -265,12 +289,13 @@ function ProjectCard({project}: ProjectCardProps){
         <Row>
           <Col>
             {activityOrdersForProject}
+            {injectionOrdersForProject}
           </Col>
           <Col>
             {endpointRows}
             <Row>
               <TracershopInputGroup>
-                <InputGroupText> Hello world</InputGroupText>
+                <InputGroupText>Tilføj Kunde</InputGroupText>
                 <EndpointSelect
                   style={{minWidth : "15vw", display : "flex", flex : "0 0 0"}}
                   emptyEndpoint

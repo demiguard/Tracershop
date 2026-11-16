@@ -109,7 +109,7 @@ class ServerConfiguration(TracershopModel):
   weekly_close_days = models.SmallIntegerField(default=0, db_comment="Bit fields for weekly days where tracershop is close first bit is monday and so forth.")
 
   @classmethod
-  def get(cls):
+  def get(cls) -> 'ServerConfiguration':
     return cls.objects.get_or_create(pk=1)[0]
 
 

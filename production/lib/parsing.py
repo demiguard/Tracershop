@@ -103,6 +103,15 @@ def _parse_volume(string: str, vial: 'models.Vial', logger: Logger):
     vial.volume = float(volume_str[0])
 
 
+def _parse_expiry(string: str, vial: 'models.Vial', logger: Logger):
+  regex = re.compile(r"use_before:\s*(\d{2})\/(\d{2})\/(\d{2})\s*(\d{2}):(\d{2})\s*")
+  regex_match = regex.match(string)
+
+  if regex_match is not None:
+    year, month, day, hour, minute = (int(value) for value in regex_match.groups())
+    vial.expiry = datetime(2000 + year, month, day, hour, minute)
+
+
 parserFunctions = {
   'customer' : _parse_customer,
   'charge' : _parse_charge,
@@ -110,6 +119,7 @@ parserFunctions = {
   'filltime': _parse_fill_time,
   'activity': _parse_activity,
   'volume': _parse_volume,
+  'use_before' : _parse_expiry,
 }
 
 def parse_val_file(file_content: List[str], logger: Logger) -> 'models.Vial':

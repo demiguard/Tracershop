@@ -1,10 +1,17 @@
 # Python Standard Library
-from typing import Dict, Tuple, Type, TypeVar
+from typing import TypeVar
 
 # Third Party Packages
 from django.core.exceptions import ObjectDoesNotExist
 
 # Packages Tracershop
+from database.TracerShopModels.authModels import *
+from database.TracerShopModels.baseModels import TracershopModel
+from database.TracerShopModels.clinicalModels import *
+from database.TracerShopModels.customerModels import *
+from database.TracerShopModels.networkModels import *
+from database.TracerShopModels.serverModels import *
+from database.TracerShopModels.telemetry_models import *
 from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DATA_VIAL,\
     DATA_PRODUCTION, DATA_ISOTOPE, DATA_INJECTION_ORDER,  DATA_DELIVER_TIME, \
     DATA_ADDRESS, DATA_CUSTOMER, DATA_DATABASE, DATA_SERVER_CONFIG,\
@@ -16,15 +23,9 @@ from shared_constants import DATA_TRACER,DATA_BOOKING,  DATA_TRACER_MAPPING, DAT
     DATA_ISOTOPE_DELIVERY, DATA_ISOTOPE_ORDER, DATA_ISOTOPE_PRODUCTION, DATA_ISOTOPE_VIAL,\
     DATA_STANDARD_ORDER, DATA_BOOKING_RULE, DATA_VIAL_TEMPLATE, DATA_VIAL_TEMPLATE_TEXT,\
     DATA_PROJECT, DATA_PROJECT_ACTIVITY, DATA_PROJECT_ENDPOINT, DATA_PROJECT_INJECTION
-from database.TracerShopModels.authModels import *
-from database.TracerShopModels.baseModels import TracershopModel
-from database.TracerShopModels.clinicalModels import *
-from database.TracerShopModels.customerModels import *
-from database.TracerShopModels.networkModels import *
-from database.TracerShopModels.serverModels import *
-from database.TracerShopModels.telemetry_models import *
 
-MODELS: Dict[str, Type[TracershopModel]] = {
+
+MODELS: dict[str, type[TracershopModel]] = {
   DATA_ADDRESS : Address,
   DATA_ACTIVITY_ORDER : ActivityOrder,
   DATA_BOOKING : Booking, # Note that this is not visible in state
@@ -75,7 +76,7 @@ INVERTED_MODELS = {
   model : key for key, model in MODELS.items()
 }
 
-TIME_SENSITIVE_FIELDS : Dict[str, str] = {
+TIME_SENSITIVE_FIELDS : dict[str, str] = {
   DATA_ACTIVITY_ORDER :  'delivery_date',
   DATA_CLOSED_DATE : 'close_date',
   DATA_INJECTION_ORDER : 'delivery_date',
@@ -85,7 +86,7 @@ TIME_SENSITIVE_FIELDS : Dict[str, str] = {
 
 T = TypeVar('T', bound=TracershopModel)
 
-def getOrCreateModel(key, Model: Type[T], keyWord: str) -> T:
+def getOrCreateModel(key, Model: type[T], keyWord: str) -> T:
   """Gets a model with a field, if it doesn't exists, creates a new instance.
 
   Caller is responsible for saving, and filling fields, that may be required.
@@ -114,5 +115,5 @@ def getOrCreateModel(key, Model: Type[T], keyWord: str) -> T:
   return model
 
 
-def getModelType(identifier: str) -> Type[TracershopModel]:
+def getModelType(identifier: str) -> type[TracershopModel]:
   return MODELS[identifier] # type ignore

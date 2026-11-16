@@ -41,11 +41,9 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
 
   const projectMapping = useProjectMapping();
 
-  const validProjects = projectMapping.endpointsToProjects.get(endpoint.id).filter(
+  const validProjects = projectMapping.endpointsToProjects.get(endpoint.id, []).filter(
     (pid) => { const p = state.project.get(pid); return p.tracer === tracer.id; }
   ).map((pid) => state.project.get(pid));
-
-  console.log(validProjects);
 
   const [displayActivity, setDisplayActivity] = useState(() => {
     return String(order.ordered_activity);

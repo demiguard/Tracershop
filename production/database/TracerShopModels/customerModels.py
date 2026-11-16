@@ -9,9 +9,9 @@ from datetime import date
 
 # Third Party Packages
 from typing import Any, Dict, Iterable, Optional
-from django.db.models import DateField, BigAutoField, CharField, EmailField,\
+from django.db.models import BigAutoField, CharField, DateField, DateTimeField, EmailField,\
     TextField, Index, IntegerField, FloatField, ForeignKey, SmallIntegerField,\
-    RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField, DateTimeField,\
+    RESTRICT, CASCADE, IntegerChoices, BooleanField, TimeField,\
     SET_NULL, PositiveSmallIntegerField, BigIntegerField, Index, OneToOneField
 
 # Tracershop Packages
@@ -468,6 +468,7 @@ class Vial(TracershopModel):
   fill_date = DateField()
   assigned_to = ForeignKey(ActivityOrder, on_delete=RESTRICT, null=True, default=None, blank=True)
   owner = ForeignKey(Customer, on_delete=RESTRICT, null=True, default=None, blank=True)
+  expiry = DateTimeField(default=None, null=True)
 
   def is_duplicate (self) -> bool:
     return Vial.objects.filter(

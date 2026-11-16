@@ -1,17 +1,18 @@
 # Python standard library
+import asyncio
 import io
 import os
 import logging
+import traceback
 from multiprocessing import Process
 from threading import Thread
 from pathlib import Path
 from time import sleep
-import traceback
 from typing import Any, List
 
 # Third party packages
 from asgiref.sync import async_to_sync
-
+from channels.layers import get_channel_layer
 from django.core.management.base import BaseCommand
 from django.db.utils import IntegrityError
 from pandas import read_csv, read_excel, DataFrame
@@ -19,11 +20,9 @@ from watchdog.observers.polling import PollingObserver as Observer
 from watchdog.events import FileSystemEventHandler, FileSystemEvent
 
 # Tracershop packages:
-from core.exceptions import EmptyFile, InvalidCSVFile
 from constants import VIAL_LOGGER, VIAL_WATCHER_FILE_PATH_ENV, MESSENGER_CONSUMER
-from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
-  WEBSOCKET_REFRESH, DATA_VIAL, WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
-  WEBSOCKET_MESSAGE_STATUS
+from core.exceptions import EmptyFile, InvalidCSVFile
+from database.management.commands.vial_printing import CHANNEL_PRINT_VIAL
 from database.database_interface import DatabaseInterface
 from database.models import Vial, ServerConfiguration, Printer
 from database.utils import can_be_saved
@@ -31,6 +30,9 @@ from lib.parsing import parse_val_file, update_customer_mapping,\
   update_tracer_mapping, parse_data_frame_row_to_vial
 from lib.formatting import toDateTime
 from lib.printing import print_documents_for_vial, print_label_for_vial
+from shared_constants import WEBSOCKET_MESSAGE_ID, WEBSOCKET_DATA,\
+  WEBSOCKET_REFRESH, DATA_VIAL, WEBSOCKET_SERVER_MESSAGES, SUCCESS_STATUS_CRUD,\
+  WEBSOCKET_MESSAGE_STATUS
 from websocket.messenger import Messenger
 from websocket.messenger_base import getNewMessageID
 
@@ -147,6 +149,16 @@ def send_vials_to_frontend(vials: List[Vial]):
     WEBSOCKET_REFRESH : False,
     WEBSOCKET_DATA : { DATA_VIAL : vials}
   })
+
+def print_vial(vial):
+  layer = get_channel_layer()
+  if layer is None:
+    return
+
+  asyncio.run(layer.send(CHANNEL_PRINT_VIAL, {
+    "action" : "print",
+    DATA_VIAL : vial.id
+  }))
 
 
 def handle_path(path: Path):

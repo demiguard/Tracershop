@@ -2,22 +2,23 @@
 
 Since printing have side effect this is mostly here to
 """
-
 # Python standard library
-from pathlib import Path
 from io import StringIO
 from logging import getLogger
+from pathlib import Path
 import subprocess
 from typing import Optional
 
 # Third party library
 from channels.db import database_sync_to_async
+from django.conf import settings
 
 # Tracershop packages
 from constants import DEBUG_LOGGER
 from lib.rendering import render_vial_template
 from database.TracerShopModels.customerModels import Vial
 from database.TracerShopModels.serverModels import Printer, VialTemplate
+
 
 def is_printer_installed(printer: Printer):
   return subprocess.run(['lpstat', '-v', printer.name]).returncode == 0
@@ -44,8 +45,11 @@ def print_document(vial: Vial, printer: Printer, vial_template: VialTemplate, nu
 
   raw_document_text = render_vial_template(vial, vial_template.text)
 
-  logger.info("Printed ")
-  subprocess.run(["lp", "-d", printer.name, "-n", str(number_of_copies) ], input=raw_document_text, text=True)
+  if not settings.DEBUG: # pragma: no cover
+    logger.info(f"Printed {number_of_copies} copies of {vial_template.title} on {printer.name}")
+    subprocess.run(["lp", "-d", printer.name, "-n", str(number_of_copies) ], input=raw_document_text, text=True)
+  else:
+    logger.info("Avoided printing a document, because I'm in debug mode!")
 
 
 def print_documents_for_vial(vial: Vial, printer: Printer):

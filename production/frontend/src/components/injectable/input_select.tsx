@@ -11,6 +11,7 @@ function InputOption({style, option, onOptionClick}){
   const [styleState, setStyleState] = useState({
     paddingLeft  : "12px",
     paddingRight : "12px",
+    transition : "background-color 0.3s ease" ,
     ...style
   });
 

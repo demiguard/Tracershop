@@ -5,10 +5,10 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import { Card, Col, FormControl, Row } from 'react-bootstrap';
-import { useTracershopState } from '~/contexts/tracer_shop_context';
+import { useTracershopState, useWebsocket } from '~/contexts/tracer_shop_context';
 import { InjectionOrder, Tracer } from '~/dataclasses/dataclasses';
 import { checkDeadlineForTracer, expiredDeadline } from '~/lib/chronomancy';
-import { DATA_INJECTION_ORDER, TRACER_USAGE } from '~/lib/shared_constants';
+import { DATA_INJECTION_ORDER, DATA_PROJECT_INJECTION, TRACER_USAGE } from '~/lib/shared_constants';
 import { ManyRows } from '../injectable/ManyRows';
 import { Select, toOptions } from '../injectable/select';
 import { TracershopInputGroup } from '../injectable/inputs/tracershop_input_group';
@@ -20,8 +20,12 @@ import { ShopActionButton } from '../injectable/buttons/shop_action_button';
 import { CommitIcon } from '../injectable/commit_icon';
 import { ErrorMonad, useErrorState } from '~/lib/error_handling';
 import { parseTimeBind, parseWholePositiveNumberBind } from '~/lib/parsing';
-import { dateToDateString } from '~/lib/formatting';
+import { dateToDateString, nullParser } from '~/lib/formatting';
 import { ORDER_STATUS } from '~/lib/constants';
+import { useProjectMapping } from '~/lib/data_structures/project_mapping';
+import { Optional } from '../injectable/optional';
+import { numberfy } from '~/lib/utils';
+import { MESSAGE_UPDATE_STATE } from '~/lib/incoming_messages';
 
 type InjectionOrderingCardProps = {
   availableTracers : Array<Tracer>
@@ -36,6 +40,8 @@ export function InjectionOrderingCard({
   availableTracers, valid_deadline, endpointID
 } : InjectionOrderingCardProps){
   const state = useTracershopState();
+  const websocket = useWebsocket();
+  const projectMapping = useProjectMapping();
   const tracerOptions = useMemo(() => {
       return availableTracers.filter((tracer) => checkDeadlineForTracer(tracer, state, valid_deadline));
     }
@@ -43,7 +49,7 @@ export function InjectionOrderingCard({
     state.today, state.deadline, state.tracer, state.closed_date, availableTracers
   ]);
 
-  const [selectedTracerID, setSelectedTracerID] = useState(() => {
+  const [selectedTracerID, _setSelectedTracerID] = useState(() => {
     for(const tracer of tracerOptions){
       return tracer.id;
     }
@@ -51,9 +57,18 @@ export function InjectionOrderingCard({
   const [injections, setInjections] = useState("1");
   const [usage, setUsage] = useState(TRACER_USAGE.human);
   const [comment, setComment] = useState("");
+
+  const [displayProject, setDisplayProject] = useState<string | number>("");
   const [deliveryTime, setDeliveryTime] = useState("");
   const [deliveryTimeError, setDeliveryTimeError] = useErrorState();
   const [injectionsError, setInjectionsError] = useErrorState();
+
+
+  const projects = projectMapping.endpointsToProjects.get(endpointID, []).map(
+    (pid) => state.project.get(pid)
+  ).filter((p) => p.tracer === selectedTracerID);
+
+  const projectOptions = [...toOptions(projects), new Option("-----------","")]
 
   function validate(){
     const m = new ErrorMonad();
@@ -93,10 +108,30 @@ export function InjectionOrderingCard({
     }
   }, [tracerOptions]);
 
+  function setSelectedTracerID(tracerID){
+    _setSelectedTracerID(tracerID);
+    setDisplayProject("");
+  }
+
+  function callback(message){
+    if(displayProject !== "" && message instanceof MESSAGE_UPDATE_STATE){
+      const created_injection_order = message.data[DATA_INJECTION_ORDER][0];
+      const newObject = {
+        project : Number(displayProject),
+        order : created_injection_order.id
+      };
+
+      console.log(newObject);
+
+      websocket.sendCreateModel(DATA_PROJECT_INJECTION, newObject ).then((msg) => {console.log(msg)})
+    }
+  }
+
   // RENDERING - NO MORE HOOKS CALLS!
   if (tracerOptions.length === 0){
     return <div></div>;
   }
+
 
   return (
     <Card style={{padding : 0}}>
@@ -152,15 +187,28 @@ export function InjectionOrderingCard({
                   />
               </TracershopInputGroup>
             </Col>
+            <Optional exists={projects.length > 0}>
+              <Col>
+                <TracershopInputGroup label={"Projekt"}>
+                  <Select
+                    canEdit={true}
+                    onChange={setStateToEvent({stateFunction : setDisplayProject})}
+                    options={projectOptions}
+                    value={displayProject}
+                  />
+                </TracershopInputGroup>
+              </Col>
+            </Optional>
           </ManyRows>
           </Col>
           <Col style={{ alignItems : "center", display : "flex"}}>
             <CommitIcon
-                    validate={validate}
-                    temp_object={{}}
-                    object_type={DATA_INJECTION_ORDER}
-                    add_image="/static/images/cart.svg"
-                  />
+              validate={validate}
+              temp_object={{}}
+              object_type={DATA_INJECTION_ORDER}
+              add_image="/static/images/cart.svg"
+              callback={callback}
+            />
           </Col>
         </Row>
       </Card.Header>

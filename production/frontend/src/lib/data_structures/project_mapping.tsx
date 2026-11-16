@@ -9,17 +9,21 @@ class ProjectMapping {
   endpointsToProjects : ArrayMap<number, number>
   activityOrdersForProject : ArrayMap<number, number>
   injectionOrdersForProject : ArrayMap<number, number>
-
+  assignedActivityProject
+  assignedInjectionProject
 
   constructor(
       projectEndpoints: Map<number, ProjectEndpoint>,
       activityMapping: Map<number, ProjectActivityOrder>,
       injectionMapping: Map<number, ProjectInjectionOrder>
+
   ){
     this.projectToEndpoints = new ArrayMap();
     this.endpointsToProjects = new ArrayMap();
     this.activityOrdersForProject = new ArrayMap();
     this.injectionOrdersForProject = new ArrayMap();
+    this.assignedActivityProject = new Map()
+    this.assignedInjectionProject = new Map()
 
     for(const pe of projectEndpoints.values()){
       this.endpointsToProjects.set(pe.endpoint, pe.project);
@@ -28,10 +32,12 @@ class ProjectMapping {
 
     for(const pao of activityMapping.values()){
       this.activityOrdersForProject.set(pao.project, pao.order);
+      this.assignedActivityProject.set(pao.order, pao.project);
     }
 
     for(const pio of injectionMapping.values()){
-      this.activityOrdersForProject.set(pio.project, pio.order);
+      this.injectionOrdersForProject.set(pio.project, pio.order);
+      this.assignedInjectionProject.set(pio.order, pio.project);
     }
   }
 };

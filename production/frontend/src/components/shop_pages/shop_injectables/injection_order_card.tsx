@@ -23,12 +23,11 @@ import { useProjectMapping } from "~/lib/data_structures/project_mapping";
 
 
 /**
- * This is a card containing all the information on an injection order
- * It handles new orders as well as old, by the status indicator
- * It assumes that the parent have inputted the following fields in the order
- * * delivery_date
- * * endpoint
- * The backend is responsible for filling out the user who ordered it
+ * This component is used for displaying an existing order - For placing an
+ * order the user should use the InjectionOrderingCard
+ *
+ *
+ *
  * @param {{
 *  injection_order : InjectionOrder
 *  injection_tracers : Array<Tracer>
@@ -41,17 +40,9 @@ export function InjectionOrderCard({
   injection_tracers,
   valid_deadline,
 }) {
-  // State
-  const state = useTracershopState();
-  const projectMapping = useProjectMapping()
-
   const [tempInjectionOrder, setTempInjectionOrder] = useState(injection_order);
   const [errorInjections, setErrorInjections] = useState("")
   const [errorDeliveryTime, setErrorDeliveryTime] = useState("")
-  const [displayProject, setDisplayProject] = useState("");
-
-  projectMapping.endpointsToProjects.get(injection_order.endpoint);
-
 
   function resetErrors(){
     setErrorInjections("");
@@ -132,6 +123,8 @@ export function InjectionOrderCard({
   const canEdit = [ORDER_STATUS.AVAILABLE, ORDER_STATUS.ORDERED].includes(injection_order.status) && valid_deadline;
   //const orderExists = !([ORDER_STATUS.AVAILABLE, ORDER_STATUS.UNAVAILABLE].includes(injection_order.status));
 
+  const isReleased = injection_order.status === ORDER_STATUS.RELEASED;
+  const displayComment = !!(canEdit || tempInjectionOrder.comment);
 
   const tracerOptions = toOptions(injection_tracers, 'shortname');
 
@@ -158,12 +151,8 @@ export function InjectionOrderCard({
           />
         </ErrorInput>
       </TracershopInputGroup>
-    </Col>
-  ]
-
-  if(injection_order.status === ORDER_STATUS.RELEASED){
-    cardItems.push(
-      <Col key={4}>
+    </Col>,
+    isReleased && <Col key={4}>
         <TracershopInputGroup readOnly={!canEdit} label="Frigivet kl:">
           <Form.Control
             aria-label={`freed-datetime-${injection_order.id}`}
@@ -171,10 +160,7 @@ export function InjectionOrderCard({
             readOnly
           />
         </TracershopInputGroup>
-      </Col>
-    )
-  }
-  cardItems.push(
+      </Col>,
     <Col key={5}>
       <TracershopInputGroup label={"Tid"}>
         <ErrorInput error={errorDeliveryTime}>
@@ -186,9 +172,7 @@ export function InjectionOrderCard({
           />
         </ErrorInput>
       </TracershopInputGroup>
-    </Col>
-  )
-  cardItems.push(
+    </Col>,
     <Col key={6}>
       <TracershopInputGroup label={"Brug"}>
         <UsageSelect
@@ -198,12 +182,8 @@ export function InjectionOrderCard({
           canEdit={canEdit}
         />
       </TracershopInputGroup>
-    </Col>
-  )
-
-  if(!!(canEdit || tempInjectionOrder.comment)){
-    cardItems.push(
-      <Col key={7}>
+    </Col>,
+    displayComment && <Col key={7}>
         <TracershopInputGroup label="Kommentar">
           <EditableInput
             canEdit={canEdit}
@@ -214,22 +194,16 @@ export function InjectionOrderCard({
             onChange={setTempObjectToEvent(setTempInjectionOrder, 'comment')}
             />
         </TracershopInputGroup>
-      </Col>
-    )
-  }
-  if(injection_order.status === ORDER_STATUS.RELEASED){
-    cardItems.push(
-      <Col key={8}>
+      </Col>,
+      isReleased && <Col key={8}>
         <TracershopInputGroup label="lot:">
           <Form.Control
             aria-label={`lot-number-input-${injection_order.id}`}
             value={nullParser(injection_order.lot_number)}
             readOnly/>
           </TracershopInputGroup>
-      </Col>
-    );
-    cardItems.push(
-      <Col key={9}>
+      </Col>,
+      isReleased && <Col key={9}>
         <TracershopInputGroup label="Max injektion volume:" tail="ml">
           <Form.Control
             aria-label={`max-injection-volume-input-${injection_order.id}`}
@@ -237,8 +211,8 @@ export function InjectionOrderCard({
             readOnly/>
           </TracershopInputGroup>
       </Col>
-    );
-  }
+  ].filter(i => i);
+
 
   return (
   <Card style={{padding : '0px'}}>
