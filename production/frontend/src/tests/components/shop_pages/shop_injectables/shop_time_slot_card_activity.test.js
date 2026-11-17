@@ -29,8 +29,6 @@ const [,,relevantActivityOrders] = getRelevantActivityOrders(testState, 0, 1, 1,
 beforeEach(async () => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
   websocket = tracer_websocket.TracerWebSocket;
   props = {
     timeSlot : default_time_slot,

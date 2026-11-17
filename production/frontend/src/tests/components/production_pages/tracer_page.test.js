@@ -11,16 +11,10 @@ import { DATA_TRACER } from "~/lib/shared_constants";
 import { testState } from "../../app_state"
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 
-
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 let websocket = tracer_websocket.TracerWebSocket;
-
-beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-});
 
 afterEach(() => {
   cleanup();

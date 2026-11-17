@@ -98,25 +98,12 @@ class Command(BaseCommand):
     if layer is None:
       raise CommandError("Unable to aquire channel layer")
 
-
     synchronizer = asyncio.create_task(self.synchronize(layer, stop_event, vial_queue))
     consumer = Thread(target=self.consume, args=(thread_event, vial_queue))
     consumer.start()
 
-    while consumer.is_alive() or not thread_event.is_set():
-      if consumer.is_alive():
-        try:
-          consumer.join(timeout=5.0)
-        except TimeoutError:
-          continue
-      else:
-        logger = getLogger(ERROR_LOGGER)
-        logger.error("Somehow the consumer thread Died???, maybe check journalctl??")
-
-
-
-    await stop_event.wait()
     await synchronizer
+    await stop_event.wait()
 
 
   def handle_print_event(self, msg):
@@ -170,7 +157,7 @@ class Command(BaseCommand):
       logger = getLogger(ERROR_LOGGER)
       return
 
-    printing_command = ["lp", "-n", "2", "-d", printer.name, str(ARG_NAME_LABEL_OUTPUT)]
+    printing_command = ["lp", "-n", "2", "-d", printer.name, str(self.ARG_NAME_LABEL_OUTPUT)]
 
     if not settings.DEBUG:
       try:
@@ -184,13 +171,18 @@ class Command(BaseCommand):
       logger.info(f"We would have run a command: {printing_command}, but because the system is in DEBUG mode it didn't")
 
   async def synchronize(self, layer: BaseChannelLayer, stop_event: asyncio.Event, queue: Queue):
-    while not stop_event.is_set():
-      try:
-        msg = await asyncio.wait_for(layer.receive(CHANNEL_PRINT_VIAL), timeout=1.0)
-      except TimeoutError:
-        continue
+    try:
+      while not stop_event.is_set():
+        try:
+          msg = await asyncio.wait_for(layer.receive(CHANNEL_PRINT_VIAL), timeout=1.0)
+        except TimeoutError:
+          continue
 
-      queue.put(msg)
+        queue.put(msg)
+    except BaseException:
+      import traceback;
+      traceback.print_exc()
+      raise
 
   def consume(self, thread_event: ThreadEvent, queue: Queue):
     while not thread_event.is_set():

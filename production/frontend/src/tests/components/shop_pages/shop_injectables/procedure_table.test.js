@@ -21,8 +21,6 @@ const dispatch = jest.fn();
 beforeEach(async () => {
   jest.useFakeTimers('modern');
   jest.setSystemTime(now);
-  delete window.location;
-  window.location = { href : "tracershop"};
 });
 
 afterEach(() => {

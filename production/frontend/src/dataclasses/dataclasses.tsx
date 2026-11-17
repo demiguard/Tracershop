@@ -1594,8 +1594,9 @@ export class Vial extends Dataclass {
   fill_date
   assigned_to
   owner
+  expiry
 
-  constructor(id?, tracer?, activity?, volume?, lot_number?, fill_time?, fill_date?, assigned_to?, owner?, ) {
+  constructor(id?, tracer?, activity?, volume?, lot_number?, fill_time?, fill_date?, assigned_to?, owner?, expiry?, ) {
     super()
     this.id=id
     this.tracer=tracer
@@ -1606,6 +1607,7 @@ export class Vial extends Dataclass {
     this.fill_date=fill_date
     this.assigned_to=assigned_to
     this.owner=owner
+    this.expiry=expiry
   }
 
   /**Copies the vial
@@ -1621,7 +1623,8 @@ export class Vial extends Dataclass {
       this.fill_time,
       this.fill_date,
       this.assigned_to,
-      this.owner
+      this.owner,
+      this.expiry
     )
   }
   fields(){
@@ -1635,6 +1638,7 @@ export class Vial extends Dataclass {
       new DateField("fill_date"),
       new ForeignField("assigned_to","activity_orders"),
       new ForeignField("owner","customer"),
+      new DateTimeField("expiry"),
     ];
   }
 }

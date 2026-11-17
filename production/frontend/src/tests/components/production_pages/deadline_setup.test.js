@@ -6,13 +6,13 @@ import React from "react";
 import { act, fireEvent, render, screen, cleanup } from "@testing-library/react"
 
 
-import { DEADLINE_TYPES  } from "~/lib/constants.js";
-import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants.js";
+import { DEADLINE_TYPES  } from "~/lib/constants";
+import { DATA_DEADLINE, DATA_SERVER_CONFIG } from "~/lib/shared_constants";
 import { testState } from "../../app_state";
 
-import { DeadlineSetup, GlobalDeadlineValuesOptions } from "~/components/production_pages/setup_pages/deadline_setup.js";
+import { DeadlineSetup, GlobalDeadlineValuesOptions } from "~/components/production_pages/setup_pages/deadline_setup";
 import userEvent from "@testing-library/user-event";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 

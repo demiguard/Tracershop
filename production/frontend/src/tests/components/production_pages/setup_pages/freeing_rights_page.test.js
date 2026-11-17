@@ -77,7 +77,7 @@ describe("Freeing Rights Page test suite", () => {
     await act(async () => {
       fireEvent.click(createButton);
     });
-    expect(websocket.sendCreateModel).toBeCalled();
+    expect(websocket.sendCreateModel).toHaveBeenCalled();
   });
 
   it("Create an a freeing Right without expiry date", async () => {
@@ -98,7 +98,7 @@ describe("Freeing Rights Page test suite", () => {
     await act(async () => {
       fireEvent.click(createButton);
     });
-    expect(websocket.sendCreateModel).toBeCalled();
+    expect(websocket.sendCreateModel).toHaveBeenCalled();
   });
 
   it("Failed to create an a freeing Right", async () => {
@@ -121,7 +121,7 @@ describe("Freeing Rights Page test suite", () => {
     await act(async () => {
       fireEvent.click(createButton);
     });
-    expect(websocket.sendCreateModel).not.toBeCalled();
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
   });
 
   it("Delete Release Right", async () => {
@@ -143,7 +143,7 @@ describe("Freeing Rights Page test suite", () => {
       deleteButton.click()
     })
 
-    expect(websocket.sendDeleteModels).toBeCalled();
+    expect(websocket.sendDeleteModels).toHaveBeenCalled();
   });
 
   it("Change Sorting Methods", () => {

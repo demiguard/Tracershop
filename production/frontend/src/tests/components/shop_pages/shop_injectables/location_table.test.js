@@ -7,9 +7,10 @@ import React from "react";
 import { screen, render, cleanup, fireEvent, act } from "@testing-library/react";
 import { jest } from '@jest/globals';
 import { testState } from "~/tests/app_state";
-import { TracerShopContext } from "~/contexts/tracer_shop_context.js";
+import { TracerShopContext } from "~/contexts/tracer_shop_context";
+import { LocationTable } from "~/components/shop_pages/shop_injectables/location_table";
 
-import { LocationTable } from "~/components/shop_pages/shop_injectables/location_table.js";
+
 const module = jest.mock('../../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../../lib/tracer_websocket.js");
 
@@ -20,8 +21,6 @@ const now = new Date(2020,4, 4, 10, 36, 44);
 beforeEach(async () => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
   websocket = tracer_websocket.TracerWebSocket;
 });
 

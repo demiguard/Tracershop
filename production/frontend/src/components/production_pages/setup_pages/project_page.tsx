@@ -1,6 +1,5 @@
 import React, { useMemo, useState } from "react";
 import { Button, Card, Col, Collapse, FormControl, InputGroup, Row } from "react-bootstrap";
-import InputGroupText from "react-bootstrap/esm/InputGroupText";
 import { CommitIcon } from "~/components/injectable/commit_icon";
 import { DateDisplay } from "~/components/injectable/data_displays/date_display";
 import { EndpointSelect } from "~/components/injectable/derived_injectables/endpoint_select";
@@ -295,7 +294,7 @@ function ProjectCard({project}: ProjectCardProps){
             {endpointRows}
             <Row>
               <TracershopInputGroup>
-                <InputGroupText>Tilføj Kunde</InputGroupText>
+                <InputGroup.Text>Tilføj Kunde</InputGroup.Text>
                 <EndpointSelect
                   style={{minWidth : "15vw", display : "flex", flex : "0 0 0"}}
                   emptyEndpoint

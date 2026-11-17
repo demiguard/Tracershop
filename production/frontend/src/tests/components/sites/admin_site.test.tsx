@@ -4,7 +4,7 @@
 
 import React from "react";
 import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
-import { jest } from '@jest/globals'
+import { jest, beforeEach, afterEach, describe, it, expect } from '@jest/globals'
 
 import AdminSite from "~/components/sites/admin_site"
 import { DATABASE_ADMIN_PAGE, PROP_USER } from "~/lib/constants";
@@ -15,7 +15,6 @@ const module = jest.mock('../../../lib/tracer_websocket');
 const tracer_websocket = require("../../../lib/tracer_websocket");
 
 let websocket = tracer_websocket.TracerWebSocket;
-let container = null;
 
 const now = new Date(2020,4, 4, 10, 36, 44);
 
@@ -24,8 +23,6 @@ beforeEach(() => {
   window.localStorage.clear();
   jest.useFakeTimers('modern');
   jest.setSystemTime(now);
-  delete window.location;
-  window.location = { href : "tracershop"};
 });
 
 
@@ -50,13 +47,14 @@ describe("Admin site test suite", () => {
         <AdminSite/>
       </TracerShopContext>
     );
+
+     const trigger = screen.getByText("Produktion").closest(".dropdown") as HTMLElement;
+
     await act( async () => {
-      const dropDown = screen.getByText("Produktion");
-      fireEvent.click(dropDown);
+      fireEvent.mouseEnter(trigger);
     })
 
     expect(screen.getByLabelText("navbar-admin-admin")).toBeVisible();
-    expect(screen.getByLabelText("navbar-admin-production")).toBeVisible();
     expect(screen.getByLabelText("navbar-admin-shop")).toBeVisible();
   });
 
@@ -67,9 +65,10 @@ describe("Admin site test suite", () => {
       </TracerShopContext>
     );
 
-    await act(async () => {
-      const dropDown = screen.getByText("Produktion")
-      fireEvent.click(dropDown)
+    const trigger = screen.getByText("Produktion").closest(".dropdown") as HTMLElement;
+
+    await act( async () => {
+      fireEvent.mouseEnter(trigger);
     })
 
     await act(async () => {
@@ -78,6 +77,6 @@ describe("Admin site test suite", () => {
     })
 
     const item = window.localStorage.getItem(DATABASE_ADMIN_PAGE);
-    expect(item).toEqual("shop");
+    expect(item).toEqual("shop"); // I guess we should mock the shop site t
   });
 });

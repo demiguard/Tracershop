@@ -2,7 +2,7 @@
 import React, { Component, CSSProperties, Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Container, Table, Row, Col, Button, FormControl, Form } from "react-bootstrap";
 
-import { DATA_VIAL, DATA_VIAL_TEMPLATE, WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_PRINT_DOCUMENT, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
+import { DATA_VIAL, DATA_VIAL_TEMPLATE, WEBSOCKET_DATA, WEBSOCKET_DATE, WEBSOCKET_MESSAGE_GET_ORDERS, WEBSOCKET_MESSAGE_PRINT_DOCUMENT, WEBSOCKET_MESSAGE_PRINT_VIAL, WEBSOCKET_MESSAGE_RESTART_VIAL_DOG, WEBSOCKET_MESSAGE_TYPE} from "~/lib/shared_constants"
 import { dateToDateString, FormatDateStringToDanishDateString } from "../../lib/formatting";
 import { setStateToEvent } from "../../lib/state_management";
 import { CustomerSelect } from "../injectable/derived_injectables/customer_select";
@@ -94,13 +94,19 @@ function TemplateList({vial}){
 
 function VialRow({vial} : VialRowProps){
   const state = useTracershopState();
+  const websocket = useWebsocket()
   const customer = state.customer.get(vial.owner);
   const customerName = customer === undefined ?
                                  "Ukendt ejer"
                                  : customer.short_name;
 
   function open_label(){
-    openVialLabel(vial)
+    websocket.send({
+      [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_PRINT_VIAL,
+      [WEBSOCKET_DATA] : {
+        DATA_VIAL : vial.id
+      }
+    });
   }
 
   const templates = useMemo(() => {
@@ -114,7 +120,7 @@ function VialRow({vial} : VialRowProps){
     <td data-testid="time_field">{vial.fill_time}</td>
     <td data-testid="volume_field">{vial.volume}</td>
     <td data-testid="activity_field">{vial.activity}</td>
-    <td data-testid="print">
+    <td data-testid="print_field">
       <Row>
           <ClickableIcon
             style={{
@@ -355,7 +361,7 @@ export function VialPage(){
               <th data-testid="header-TIME" onClick={changeSearch(SortingOptions.TIME)}>Tappe tidspunkt</th>
               <th data-testid="header-VOLUME" onClick={changeSearch(SortingOptions.VOLUME)}>Volumen</th>
               <th data-testid="header-ACTIVITY" onClick={changeSearch(SortingOptions.ACTIVITY)}>Aktivitet</th>
-              <th data-testid="header-print">Print</th>
+              <th data-testid="header-PRINT">Print</th>
               <th data-testid="header-OWNER" onClick={changeSearch(SortingOptions.OWNER)}>Ejer</th>
               <th data-testid="header-ORDER" onClick={changeSearch(SortingOptions.ORDER)}>Ordre</th>
             </tr>

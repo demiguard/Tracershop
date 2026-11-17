@@ -24,16 +24,11 @@ const tracer_websocket = require("../../../lib/tracer_websocket");
 const onClose = jest.fn()
 
 
-let websocket = null;
-let container = null;
+let websocket = tracer_websocket.TracerWebSocket;
 let props = null;
 
 
 beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
-  websocket = tracer_websocket.TracerWebSocket;
   props = {
     [PROP_ACTIVE_TRACER] : 1,
     [PROP_ACTIVE_DATE] : new Date(2020,3,5),
@@ -49,9 +44,6 @@ afterEach(() => {
   cleanup();
   module.clearAllMocks()
 
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
   props = null;
 });
 

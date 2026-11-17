@@ -1,5 +1,5 @@
 # Python standard library
-
+from logging import getLogger
 # Third party modules
 
 from asgiref.sync import sync_to_async
@@ -8,6 +8,7 @@ from django.conf import settings
 from channels.db import database_sync_to_async
 
 # Tracershop modules
+from constants import DEBUG_LOGGER, ERROR_LOGGER
 from database.TracerShopModels.customerModels import Vial
 from database.TracerShopModels.serverModels import ServerConfiguration, VialTemplate
 from lib.printing import print_document
@@ -22,8 +23,6 @@ def get_vial_and_template(vial_id: int, vial_template_id: int):
   vial = Vial.objects.get(id=vial_id)
   template = VialTemplate.objects.get(id=vial_template_id)
   server_config = ServerConfiguration.get()
-
-
 
   return vial, template, server_config.active_printer
 
@@ -47,13 +46,14 @@ class HandleTestPrinter(HandlerBase):
         message[WEBSOCKET_DATA][DATA_VIAL],
         message[WEBSOCKET_DATA][DATA_VIAL_TEMPLATE]
       )
-
     except ObjectDoesNotExist:
-      print("Handle this later")
+      logger = getLogger(ERROR_LOGGER)
+      logger.error(f"Could not find Vial: {message[WEBSOCKET_DATA][DATA_VIAL]} or template: {message[WEBSOCKET_DATA][DATA_VIAL_TEMPLATE]} for printing!")
       return
 
     if active_printer is None:
-      print("No active printer!")
-
+      logger = getLogger(DEBUG_LOGGER)
+      logger.info("Document printer not set - Maybe add some handling for this")
+      return
 
     await sync_to_async(print_document)(vial, active_printer, template, 1)

@@ -23,8 +23,6 @@ const now = new Date(2020,4, 4, 10, 36, 44);
 beforeEach(async () => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
   websocket = tracer_websocket.TracerWebSocket;
 });
 
@@ -161,7 +159,7 @@ describe("Injection order card test suite", () => {
       screen.getByLabelText('inj-action-1').click();
     });
 
-    expect(websocket.sendEditModels).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
+    expect(websocket.sendEditModels).toHaveBeenCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
         tracer : 5,
         injections : 2,
         delivery_time : "13:45:00",
@@ -212,8 +210,8 @@ describe("Injection order card test suite", () => {
         createIcon.click();
       })
 
-      expect(websocket.sendEditModels).not.toBeCalled();
-      expect(websocket.sendCreateModel).toBeCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
+      expect(websocket.sendEditModels).not.toHaveBeenCalled();
+      expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_INJECTION_ORDER, expect.objectContaining({
         tracer : 5,
         injections : 2,
         delivery_time : "13:45:00",
@@ -264,8 +262,8 @@ describe("Injection order card test suite", () => {
         createIcon.click();
       })
 
-      expect(websocket.sendEditModels).not.toBeCalled();
-      expect(websocket.sendCreateModel).not.toBeCalled();
+      expect(websocket.sendEditModels).not.toHaveBeenCalled();
+      expect(websocket.sendCreateModel).not.toHaveBeenCalled();
     });
 
   it("Swtich to Delivery note", () => {

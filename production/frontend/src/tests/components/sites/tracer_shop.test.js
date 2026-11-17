@@ -23,8 +23,6 @@ const now = new Date(2020,4, 4, 10, 36, 44)
 beforeEach(() => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
 });
 
 afterEach(() => {

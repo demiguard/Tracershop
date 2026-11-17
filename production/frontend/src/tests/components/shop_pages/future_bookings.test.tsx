@@ -4,7 +4,7 @@
 
 import React, { } from "react";
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { jest } from '@jest/globals';
+import { jest, beforeEach, afterEach, describe, it, expect } from '@jest/globals';
 import { bookings } from "~/tests/test_state/bookings";
 import { testState } from "~/tests/app_state";
 import { FutureBooking, missingSetupHeader
@@ -31,8 +31,6 @@ const now = new Date(2020,4, 4, 10, 36, 44);
 beforeEach(async () => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
   websocket = websocket_module.TracerWebSocket;
   props = {
     [PROP_ACTIVE_DATE] : now,
@@ -113,7 +111,7 @@ describe("Future Bookings Test Suite", () => {
       orderButton.click();
     });
 
-    expect(websocket.send).toBeCalled()
+    expect(websocket.send).toHaveBeenCalled()
   });
 
   it("Open tracer 1, Remove booking 2 and order, but can't because early bookings", async () => {
@@ -152,7 +150,7 @@ describe("Future Bookings Test Suite", () => {
       orderButton.click();
     });
 
-    expect(websocket.send).toBeCalled();
+    expect(websocket.send).toHaveBeenCalled();
     expect(screen.getByTestId("booking_error-1")).toBeVisible();
   });
 
@@ -190,7 +188,7 @@ describe("Future Bookings Test Suite", () => {
 
     await act(async () => { orderButton.click(); });
 
-    expect(websocket.send).toBeCalled();
+    expect(websocket.send).toHaveBeenCalled();
     expect(screen.getByTestId("booking_error-1")).toBeVisible();
   });
 

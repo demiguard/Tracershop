@@ -15,7 +15,7 @@ import { UpdateCurrentUser } from "~/lib/state_actions";
 import { db } from "~/lib/local_storage_driver";
 import { useErrorState } from "~/lib/error_handling";
 
-export function LoginSite(props) {
+export function LoginSite() {
   const websocket = useWebsocket()
   const dispatch = useTracershopDispatch()
   const [loginError, setLoginError] = useErrorState();

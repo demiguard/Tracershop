@@ -1,38 +1,26 @@
 /**
  * @jest-environment jsdom
  */
-import React, {StrictMode} from "react";
+import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
 import { jest } from '@jest/globals'
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { testState } from "~/tests/app_state";
-import { ERROR_MESSAGE_INCORRECT_GROUPS, ERROR_MESSAGE_NO_LDAP_USERNAME, UserSetup } from "~/components/shop_pages/user_setup";
-import { SUCCESS_STATUS_CREATING_USER_ASSIGNMENT, SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
+import { UserSetup } from "~/components/shop_pages/user_setup";
+import { SUCCESS_STATUS_CRUD, WEBSOCKET_MESSAGE_CREATE_USER_ASSIGNMENT, WEBSOCKET_MESSAGE_TYPE } from "~/lib/shared_constants";
 
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
-let websocket = null;
-let container = null;
+let websocket = tracer_websocket.TracerWebSocket;
 const dispatch = jest.fn()
-
-beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
-  websocket = tracer_websocket.TracerWebSocket;
-});
-
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
   window.localStorage.clear()
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
 });
 
 describe("User setup test", () => {

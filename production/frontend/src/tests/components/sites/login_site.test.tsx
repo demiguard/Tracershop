@@ -5,21 +5,20 @@
 import React from "react";
 
 import { act, screen, render, cleanup, fireEvent } from "@testing-library/react";
-import { jest } from '@jest/globals'
-import { AppState } from "../../app_state";
+import { jest, expect, beforeEach, afterEach, describe, it } from '@jest/globals'
 
-import { PROP_SET_USER, PROP_USER, USER_GROUPS  } from "~/lib/constants.js";
-import { AUTH_IS_AUTHENTICATED, DATA_USER, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants.js"
-import { LoginSite } from "~/components/sites/login_site.js";
+import { PROP_SET_USER, PROP_USER, USER_GROUPS  } from "~/lib/constants";
+import { AUTH_IS_AUTHENTICATED, DATA_USER, WEBSOCKET_MESSAGE_AUTH_LOGIN } from "~/lib/shared_constants"
+import { LoginSite } from "~/components/sites/login_site";
 
-import { ANON } from "../../test_state/users.js";
-import { DispatchContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { ANON } from "../../test_state/users";
+import { DispatchContextProvider, WebsocketContextProvider } from "~/contexts/tracer_shop_context";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
 
 
-let websocket = null;
+let websocket = new tracer_websocket.TracerWebSocket();
 let container = null;
 let props = null;
 const dispatch = jest.fn()
@@ -30,30 +29,19 @@ const now = new Date(2020,4, 4, 10, 36, 44)
 beforeEach(() => {
   jest.useFakeTimers('modern')
   jest.setSystemTime(now)
-  delete window.location
-  window.location = { href : "tracershop"}
-  container = document.createElement("div");
-  websocket = new tracer_websocket.TracerWebSocket();
-  props = {...AppState}
-  props[PROP_USER] = ANON;
 });
-
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
   window.localStorage.clear()
-  if(container != null) container.remove();
-  container = null;
-  websocket = null;
-  props = null;
 });
 
 describe("Login shop test suite", () => {
   it("standard test", () => {
     render(
     <WebsocketContextProvider value={websocket}>
-      <LoginSite {...props}/>
+      <LoginSite/>
     </WebsocketContextProvider>);
     expect(screen.getByLabelText('username')).toBeVisible();
     expect(screen.getByLabelText('password')).toBeVisible();
@@ -81,7 +69,7 @@ describe("Login shop test suite", () => {
     render(
     <DispatchContextProvider value={dispatch}>
       <WebsocketContextProvider value={websocket}>
-        <LoginSite {...props}/>
+        <LoginSite/>
       </WebsocketContextProvider>
     </DispatchContextProvider>);
 
@@ -100,9 +88,9 @@ describe("Login shop test suite", () => {
     })
 
 
-    expect(getMessageMock).toBeCalledWith(WEBSOCKET_MESSAGE_AUTH_LOGIN);
-    expect(sendMock).toBeCalled();
-    expect(dispatch).toBeCalledWith(expect.objectContaining({ newUser : {
+    expect(getMessageMock).toHaveBeenCalledWith(WEBSOCKET_MESSAGE_AUTH_LOGIN);
+    expect(sendMock).toHaveBeenCalled();
+    expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ newUser : {
       id : 1,
       username : "username",
       user_group : USER_GROUPS.ADMIN,
@@ -122,10 +110,9 @@ describe("Login shop test suite", () => {
       getMessage : getMessageMock,
       send : sendMock
     }
-    props[PROP_SET_USER] = mockSetUser
 
     render(<WebsocketContextProvider value={websocket}>
-      <LoginSite {...props}/>
+      <LoginSite/>
     </WebsocketContextProvider>);
 
     act(() => {
@@ -141,8 +128,8 @@ describe("Login shop test suite", () => {
       await sendMock()
     })
 
-    expect(getMessageMock).toBeCalledWith(WEBSOCKET_MESSAGE_AUTH_LOGIN);
-    expect(sendMock).toBeCalled();
-    expect(mockSetUser).not.toBeCalled();
+    expect(getMessageMock).toHaveBeenCalledWith(WEBSOCKET_MESSAGE_AUTH_LOGIN);
+    expect(sendMock).toHaveBeenCalled();
+    expect(mockSetUser).not.toHaveBeenCalled();
   });
-})
+});

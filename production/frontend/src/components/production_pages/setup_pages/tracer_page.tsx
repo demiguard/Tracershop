@@ -59,6 +59,11 @@ export function TracerPage(){
   }
 
   function deadlineDisplayString(deadline: Deadline){
+    if (deadline === undefined){
+      return "-----------------";
+    }
+
+
     if(deadline.deadline_type === DEADLINE_TYPES.DAILY){
       return deadline.deadline_time;
     }

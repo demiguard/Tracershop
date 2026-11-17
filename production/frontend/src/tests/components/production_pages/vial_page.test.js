@@ -25,11 +25,8 @@ const now = new Date(2019,5,11,20,11,2);
 
 describe("Vial page tests suite", () => {
   beforeEach(() => {
-
-    delete window.location
     jest.useFakeTimers('modern');
     jest.setSystemTime(now);
-    window.location = { href : "tracershop"}
     websocket = tracer_websocket.TracerWebSocket;
   });
 
@@ -249,7 +246,7 @@ describe("Vial page tests suite", () => {
 
     act(() => {
       const lot_filter = screen.getByTestId("customer-select")
-      fireEvent.change(lot_filter, {target : {value : "1"}})
+      fireEvent.change(lot_filter, {target : {value : 1 }});
     })
 
     const customers = screen.getAllByTestId('owner_field').map(ele => ele.textContent)

@@ -29,11 +29,9 @@ const now = new Date(2020,4, 4, 10, 36, 44);
 beforeEach(() => {
   jest.useFakeTimers('modern');
   jest.setSystemTime(now);
-  delete window.location;
-  window.location = { href : "tracershop"};
   container = document.createElement("div");
   websocket = new tracer_websocket.TracerWebSocket();
-  props = {...AppState};
+  props = { ...AppState };
   props[PROP_USER] = users.get(1);
 });
 

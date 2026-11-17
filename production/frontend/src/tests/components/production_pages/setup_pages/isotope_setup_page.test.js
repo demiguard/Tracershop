@@ -76,7 +76,7 @@ describe("Isotope setup page", () => {
       commitButton.click();
     });
 
-    expect(websocket.sendCreateModel).toBeCalled();
+    expect(websocket.sendCreateModel).toHaveBeenCalled();
   });
 
   it("failed to new isotope", async () => {
@@ -104,6 +104,6 @@ describe("Isotope setup page", () => {
       commitButton.click();
     });
 
-    expect(websocket.sendCreateModel).not.toBeCalled();
+    expect(websocket.sendCreateModel).not.toHaveBeenCalled();
   });
 });

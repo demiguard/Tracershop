@@ -10,14 +10,16 @@ import subprocess
 from typing import Optional
 
 # Third party library
-from channels.db import database_sync_to_async
+from channels.layers import get_channel_layer
 from django.conf import settings
 
 # Tracershop packages
-from constants import DEBUG_LOGGER
-from lib.rendering import render_vial_template
+from constants import DEBUG_LOGGER, ERROR_LOGGER
+from database.management.commands.vial_printing import CHANNEL_PRINT_VIAL
 from database.TracerShopModels.customerModels import Vial
 from database.TracerShopModels.serverModels import Printer, VialTemplate
+from lib.rendering import render_vial_template
+from shared_constants import DATA_VIAL
 
 
 def is_printer_installed(printer: Printer):
@@ -60,5 +62,12 @@ def print_documents_for_vial(vial: Vial, printer: Printer):
     print_document(vial, printer, template)
 
 
-def print_label_for_vial(vial: Vial, printer: Printer):
-  pass
+async def schedule_vial_print(vial_id: int):
+  layer = get_channel_layer()
+
+  if layer is None:
+    error_logger = getLogger(ERROR_LOGGER)
+    error_logger.error("Unable to acquire channel layer!")
+    return
+
+  await layer.send(CHANNEL_PRINT_VIAL, {DATA_VIAL : vial_id})

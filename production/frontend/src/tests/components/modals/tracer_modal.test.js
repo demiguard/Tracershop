@@ -21,8 +21,6 @@ let container = null;
 
 
 beforeEach(() => {
-  delete window.location
-  window.location = { href : "tracershop" }
   container = document.createElement("div");
   websocket = tracer_websocket.TracerWebSocket;
 });
