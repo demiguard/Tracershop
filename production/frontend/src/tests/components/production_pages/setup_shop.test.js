@@ -4,10 +4,10 @@
 
 import React from "react";
 import { act, render, screen, cleanup } from "@testing-library/react"
+import { beforeAll, beforeEach, afterEach, describe, it, expect } from "@jest/globals"
 
-import { AppState } from "../../app_state";
-import { SetupShop, PRODUCTION_CONFIG_SITE_NAMES } from "../../../components/production_pages/setup_pages/setup_shop.js";
-import { WebsocketContextProvider } from "~/contexts/tracer_shop_context.js";
+import { SetupShop, DEADLINE_KEY } from "../../../components/production_pages/setup_pages/setup_shop";
+import { WebsocketContextProvider } from "~/contexts/tracer_shop_context";
 
 const module = jest.mock('../../../lib/tracer_websocket.js');
 const tracer_websocket = require("../../../lib/tracer_websocket.js");
@@ -24,54 +24,41 @@ jest.mock('../../../components/production_pages/setup_pages/production_user_setu
   ({ProductionUserSetup : () => <div>ProductionUserSetupMocked</div>}))
 
 
-let websocket = null;
-let container = null;
-let props = null;
+const websocket = new tracer_websocket.TracerWebSocket();;
+
 
 beforeAll(() => {
-  jest.useFakeTimers('modern')
-  jest.setSystemTime(new Date(2020,4, 4, 10, 36, 44))
+  jest.useFakeTimers('modern');
+  jest.setSystemTime(new Date(2020,4, 4, 10, 36, 44));
 })
-
-beforeEach(() => {
-    container = document.createElement("div");
-    websocket = new tracer_websocket.TracerWebSocket()
-    props = {...AppState};
-});
 
 afterEach(() => {
   cleanup()
   window.localStorage.clear()
   module.clearAllMocks()
-
-  if(container != null) container.remove();
-  container = null;
-  props=null
 });
 
 
 describe("Setup Shop page test", () => {
   it("Standard Render test", async () => {
     render(<WebsocketContextProvider value={websocket}>
-      <SetupShop {...props} />
-    </WebsocketContextProvider>)
-
-
-    for(const siteName of Object.values(PRODUCTION_CONFIG_SITE_NAMES)){
-      expect(await screen.findByRole('button', {name : siteName})).toBeVisible();
-    }
+      <SetupShop />
+    </WebsocketContextProvider>);
   })
 
-  it("Switch to deadlines", async () => {
-    render(<WebsocketContextProvider value={websocket}>
-      <SetupShop {...props} />
+  it("Switch to deadlines", () => {
+    const {rerender} = render(<WebsocketContextProvider value={websocket}>
+      <SetupShop />
     </WebsocketContextProvider>);
 
-    await act(async () => {
-      const button = await screen.findByRole('button', {name : 'Deadlines'});
-      button.click();
-    })
+    expect(screen.queryByText('DeadlineSetupMocked')).toBeNull();
 
-    expect(await screen.findByText('DeadlineSetupMocked')).toBeVisible();
+    rerender(
+      <WebsocketContextProvider value={websocket}>
+        <SetupShop hint={DEADLINE_KEY} />
+      </WebsocketContextProvider>
+    );
+
+    expect(screen.getByText('DeadlineSetupMocked')).toBeVisible();
   });
 });

@@ -45,7 +45,7 @@ export function extractData<T> (container: ContainerType<T>, type: {new(...args)
   } else if(container instanceof type){
     return [container];
   }
-  throw `Unable to extract ${typeKeyword}`
+  throw `filters.extractData - Unable to extract ${typeKeyword}`
 }
 
 type IsotopeFilterArgs = {

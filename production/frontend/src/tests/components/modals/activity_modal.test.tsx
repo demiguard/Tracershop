@@ -32,7 +32,6 @@ const module = jest.mock('../../../lib/tracer_websocket');
 const websocket_module = require("../../../lib/tracer_websocket");
 
 const today_string = "2020-05-04";
-const active_tracer = 1;
 
 const nowMock = new Date(2020,4,4,10,33,26);
 
@@ -538,7 +537,8 @@ describe("Activity Modal Test", () => {
     );
 
     const vial = testState.vial.get(7)
-    const vialUsage = screen.queryByLabelText('vial-usage-7');
+    expect(vial).not.toBe(undefined);
+    const vialUsage = screen.getByLabelText('vial-usage-7');
 
     act(() => {
       vialUsage.click();

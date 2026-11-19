@@ -14,6 +14,9 @@ import { DocumentSetup } from "~/components/production_pages/setup_pages/documen
 import { NavigationContainer } from "~/lib/types"
 import { ProjectPage } from "./project_page";
 
+
+export const DEADLINE_KEY = "deadline"
+
 export const PRODUCTION_CONFIG_SITES: NavigationContainer = {
   customer       : { component : CustomerPage, name : "Levering og Kunder" },
   project        : { component : ProjectPage, name : "Projekter" },
@@ -21,7 +24,7 @@ export const PRODUCTION_CONFIG_SITES: NavigationContainer = {
   isotope        : { component : IsotopeSetupPage, name : "Isotoper" },
   production     : { component : ProductionSetup, name : "Produktioner" },
   closeDates     : { component : CloseDaysPage, name : "Lukke dage" },
-  deadline       : { component : DeadlineSetup, name : "Deadlines" },
+  [DEADLINE_KEY] : { component : DeadlineSetup, name : "Deadlines" },
   external_users : { component : ExternalUserSetup, name : "Externe Kunder" },
   release_rights : { component : FreeingRightsPage, name : "Frigivelse rettigheder" },
   documents      : { component : DocumentSetup, name : "Dokumenter"},

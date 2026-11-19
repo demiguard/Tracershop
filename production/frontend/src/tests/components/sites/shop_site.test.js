@@ -28,12 +28,11 @@ afterEach(() => {
 
 describe("Shop shop test suite", () => {
   it("standard test - render test Site Admin", async () => {
-    await waitFor(async () => { // Theres a useEffect that have to catch this
-      render(<TracerShopContext websocket={websocket} tracershop_state={testState}>
-               <ShopSite logout={logout} />
-             </TracerShopContext>
-            );
-    });
+    await waitFor (async () => {render(
+      <TracerShopContext websocket={websocket} tracershop_state={testState}>
+        <ShopSite logout={logout} />
+      </TracerShopContext>
+    ); })
   });
 
 

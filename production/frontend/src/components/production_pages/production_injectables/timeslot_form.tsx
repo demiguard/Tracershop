@@ -7,19 +7,20 @@ import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_
 import { Optional } from "~/components/injectable/optional";
 import { Option, Select, toOptions } from "~/components/injectable/select";
 import { DELIVERY_TIME_BEFORE_PRODUCTION_ERROR_MESSAGE } from "~/components/modals/customer_modal";
-import { useTracershopState } from "~/contexts/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { PRODUCT_TYPES, ProductReference, productToReferenceOption } from "~/dataclasses/references/product_reference";
 import { DATA_DELIVER_TIME, DATA_ISOTOPE_DELIVERY, DATA_TRACER_MAPPING } from "~/lib/shared_constants";
 import { setStateToEvent, setTempObjectToEvent } from "~/lib/state_management";
 import { parseTimeInput } from "~/lib/user_input";
 
 import { WEEKLY_REPEAT_CHOICES } from '~/lib/constants';
-import { TracerCatalogPage } from "~/dataclasses/dataclasses";
+import { ActivityDeliveryTimeSlot, DeliveryEndpoint, Isotope, Tracer, TracerCatalogPage } from "~/dataclasses/dataclasses";
 import { presentOptionName } from "~/lib/presentation";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
 import { useUpdatingEffect } from "~/effects/updating_effect";
 import { ErrorMonad } from "~/lib/error_handling";
 import { parseDanishPositiveNumberBind } from "~/lib/parsing";
+import { ReactState } from "~/lib/types";
 
 const WeeklyRepeatOptions = toOptions([
   { id : 0, name : "Alle Uger"},
@@ -35,6 +36,25 @@ function getOverheadString(page: TracerCatalogPage) {
   return percentage === 0 ? "" : String(percentage);
 }
 
+
+type TimeSlotFormProps = {
+  initializeNewTimeSlot : () => void,
+  initialOverhead? : number,
+  productState : ReactState<ProductReference>,
+  products  : (Isotope | Tracer)[]
+  selectedEndpoint : DeliveryEndpoint,
+  setEndpointReferenceError : (str: string) => void
+  timeSlotDirty : boolean,
+  timeSlotState : ReactState<{
+    delivery_endpoint? : number,
+    delivery_time: string
+    destination? : number
+    id : number,
+    production? : number,
+    production_run? : number,
+    weekly_repeat : number,
+  }>,
+};
 
 /**
  * In the customer modal:
@@ -61,10 +81,10 @@ export function TimeSlotForm({
   initializeNewTimeSlot,
   initialOverhead=1,
   setEndpointReferenceError,
-  activityTracersOptions,
   productState,
   products
-}){
+}: TimeSlotFormProps){
+  const websocket = useWebsocket();
   const state = useTracershopState();
   const tracerCatalog = useTracerCatalog();
   const [product, setProduct_] = productState;
@@ -220,9 +240,7 @@ export function TimeSlotForm({
 
     monad.bind(parseDanishPositiveNumberBind(overheadDisplay, OVERHEAD_HEADER_NAME));
 
-    if (monad.hasError()){
-      setOverheadError(monad.get_error(OVERHEAD_HEADER_NAME));
-
+    if (monad.registerErrors({ [OVERHEAD_HEADER_NAME] : setOverheadError })){
       return [false, {}];
     }
 
@@ -244,7 +262,17 @@ export function TimeSlotForm({
       }
     }
 
-    function clearTime(){
+    function createTimeslotCallback(){
+      if(product.type == PRODUCT_TYPES.ACTIVITY){
+        if(!(endpointCatalog.overheadMap.has(product.product_id))){
+          websocket.sendCreateModel(
+            DATA_TRACER_MAPPING, new TracerCatalogPage(
+              -1, selectedEndpoint.id, product.product_id, 0, 1
+            )
+          );
+        }
+      }
+
       setTempTimeSlot(old => ({...old, delivery_time : ""}));
     }
 
@@ -268,7 +296,7 @@ export function TimeSlotForm({
               object_type={DATA_TYPE}
               aria-label="time-slot-commit"
               validate={validateTimeSlot}
-              callback={clearTime}
+              callback={createTimeslotCallback}
             />
           </Optional>
           <Optional exists={tempTimeSlot.id != -1}>

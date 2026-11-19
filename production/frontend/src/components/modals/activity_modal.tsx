@@ -14,8 +14,7 @@ import { cssCenter, cssTableCenter, marginLess } from "~/lib/styles";
 
 import { AUTH_IS_AUTHENTICATED, AUTH_PASSWORD, AUTH_USER, AUTH_USERNAME, DATA_ACTIVITY_ORDER,
   DATA_AUTH, DATA_DELIVER_TIME, DATA_VIAL, WEBSOCKET_DATA, WEBSOCKET_MESSAGE_TYPE,
-  WEBSOCKET_MESSAGE_CORRECT_ORDER,
-  WEBSOCKET_MESSAGE_FREE_ACTIVITY
+  WEBSOCKET_MESSAGE_CORRECT_ORDER, WEBSOCKET_MESSAGE_FREE_ACTIVITY
 } from "~/lib/shared_constants"
 import { dateToDateString, formatUsername, FormatDateStringToDanishDateString } from "~/lib/formatting";
 import { parseBatchNumberInput, parseDanishPositiveNumberInput, parseTimeInput } from "../../lib/user_input";
@@ -24,7 +23,7 @@ import { TimeInput } from "../injectable/inputs/time_input";
 import { useTracershopState, useWebsocket } from "../../contexts/tracer_shop_context";
 import { CommitIcon } from "../injectable/commit_icon";
 import { Optional, Options } from "../injectable/optional";
-import { setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState } from "~/lib/state_management";
+import { setStateToEvent, setTempObjectToEvent, TOGGLE_ACTIONS, toggleSetState, useTSFormState } from "~/lib/state_management";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
 
 import { vialFilter } from "~/lib/filters";
@@ -33,22 +32,18 @@ import { DateTime } from "~/components/injectable/datetime";
 import { toLotDateString } from "~/lib/chronomancy";
 import { ErrorMonad, RecoverableError, useErrorState } from "~/lib/error_handling";
 import { useUserReleaseRights } from "~/contexts/user_release_right";
-import { CancelButton } from "~/components/injectable/cancel_button";
 import { ReleaseButton } from "~/components/production_pages/production_injectables/release_button";
 import { FuckedUpButton } from "../injectable/buttons/fucked_up_button";
 import { OrderMapping } from "~/lib/data_structures/order_mapping";
 import { ActivityOrderCollection } from "~/lib/data_structures/activity_order_collection";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
+import { parseDanishNumberBind } from "~/lib/parsing";
 
 const vialErrorDefault = {
   lot_number : "",
   fill_time : "",
   volume : "",
   activity : "",
-}
-
-const orderErrorDefault = {
-  ordered_activity : ""
 }
 
 const vialRowStates = {
@@ -68,14 +63,20 @@ const orderRowStates = {
 export const WRONG_DATE_WARNING_MESSAGE = "Ordren som er i gang med at blive frigivet er ikke til i dag!";
 const dateErrorStatic = new RecoverableError(WRONG_DATE_WARNING_MESSAGE, ERROR_LEVELS.hint);
 
+const ACTIVITY_HEADER = "Aktiviteten"
+
 
 function OrderRow({order, setDirtyOrders}){
   const creating = order.id === NEW_LOCAL_ID;
 
   // State
-  const [etherealOrder, setEtherealOrder] = useState(order);
+  const {
+    value : displayOrderedActivity,
+    setValue : setDisplayOrderedActivity,
+    error : errorDisplayOrderedActivity,
+    setError : setErrorDisplayOrderedActivity
+  } = useTSFormState(String(order.ordered_activity));
   const [editing, setEditing] = useState(creating);
-  const [error, setError] = useState(orderErrorDefault);
 
   // Derived State
   const canEdit = order.status == ORDER_STATUS.ACCEPTED
@@ -87,14 +88,18 @@ function OrderRow({order, setDirtyOrders}){
   })();
 
   function validate(){
-    const [valid, activityNumber] = parseDanishPositiveNumberInput(etherealOrder.ordered_activity, "Aktiviteten");
-    const newError = {ordered_activity : !valid ?  activityNumber : ""};
-    //@ts-ignore
-    setError(newError);
-    if( !valid ){ return [false, {}]; }
+    const m = new ErrorMonad();
+
+    m.bind(parseDanishNumberBind(displayOrderedActivity, ACTIVITY_HEADER));
+
+    if (m.registerErrors({
+      [ACTIVITY_HEADER] : setErrorDisplayOrderedActivity
+    })){
+      return [false, {}];
+    }
 
     return [true, {...order,
-      ordered_activity : activityNumber,
+      ordered_activity : m.get_value(ACTIVITY_HEADER),
     }]
   }
 
@@ -119,13 +124,16 @@ function OrderRow({order, setDirtyOrders}){
           </div>
           <div> {/** EDITING  */}
             <TracershopInputGroup
-              error={error.ordered_activity}
+              error={errorDisplayOrderedActivity}
               tail={"MBq"}
             >
               <FormControl
                 aria-label={`edit-form-order-activity-${order.id}`}
-                value={etherealOrder.ordered_activity}
-                onChange={setTempObjectToEvent(setEtherealOrder, 'ordered_activity')}
+                value={displayOrderedActivity}
+                onChange={setStateToEvent({
+                  stateFunction : setDisplayOrderedActivity,
+                  errorFunction : setErrorDisplayOrderedActivity
+                })}
               />
             </TracershopInputGroup>
           </div>

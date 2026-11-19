@@ -2,7 +2,7 @@ import { IsotopeProduction } from "~/dataclasses/dataclasses";
 import { DAYS } from "~/lib/constants";
 import { toMapping } from "~/lib/utils";
 
-export const IsotopeProductions: Map<number, IsotopeProduction> = toMapping([
+export const isotopeProductions: Map<number, IsotopeProduction> = toMapping([
   new IsotopeProduction(
     1, // ID,
     1, // Isotope,

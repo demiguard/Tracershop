@@ -635,5 +635,14 @@ class IsotopeVial(TracershopModel):
     return AuthActions.REJECT
 
 class StandardOrder(TracershopModel):
+  """A standard order is the default amount of tracer, that a user might want to
+  order. The primary use case is that some customer do not have an up to date
+  calender when they order tracer, and therefore know the amount the will need.
+
+  """
   amount = FloatField()
   destination = OneToOneField(ActivityDeliveryTimeSlot, on_delete=CASCADE, unique=True)
+  weekly_repeat = SmallIntegerField(
+    choices=WeeklyRepeat.choices,
+    default=WeeklyRepeat.EveryWeek
+  )

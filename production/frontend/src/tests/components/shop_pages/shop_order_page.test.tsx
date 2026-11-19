@@ -7,7 +7,7 @@ import '@testing-library/jest-dom'
 import '@testing-library/jest-dom/jest-globals'
 import { act, screen, render, cleanup, fireEvent, waitFor,  } from "@testing-library/react";
 import { jest, expect, beforeAll, beforeEach, afterEach, describe, it } from '@jest/globals'
-import { ShopOrderPage } from '~/components/shop_pages/shop_order_page'
+import { BOOKING_ORDER_KEY, SHOP_CALENDER_KEY, ShopOrderPage } from '~/components/shop_pages/shop_order_page'
 import { BookingStatus, DATA_BOOKING, SUCCESS_STATUS_CRUD, WEBSOCKET_DATA,
   WEBSOCKET_DATA_ID, WEBSOCKET_DATATYPE, WEBSOCKET_MESSAGE_CREATE_BOOKING,
   WEBSOCKET_MESSAGE_DELETE_BOOKING, WEBSOCKET_MESSAGE_ID,
@@ -49,7 +49,7 @@ describe("Shop Order page test suite", () => {
   it("Standard Render Test", async () => {
     const {unmount} = render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -65,7 +65,7 @@ describe("Shop Order page test suite", () => {
   it("Change Day", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -81,7 +81,7 @@ describe("Shop Order page test suite", () => {
   it("Change month", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -97,13 +97,13 @@ describe("Shop Order page test suite", () => {
   it("Change Site", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
     await act(async () => {
       const siteSelect = screen.getByLabelText('site-select')
-      fireEvent.change(siteSelect, {target : {value : "Automatisk"}})
+      fireEvent.change(siteSelect, {target : {value : BOOKING_ORDER_KEY}})
     });
 
     expect(websocket.sendGetBookings).toHaveBeenCalledTimes(1);
@@ -112,7 +112,7 @@ describe("Shop Order page test suite", () => {
   it("Change customer", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -128,7 +128,7 @@ describe("Shop Order page test suite", () => {
   it("Change endpoint", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -180,13 +180,13 @@ describe("Shop Order page test suite", () => {
 
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
     await act(async () => {
       const siteSelect = screen.getByLabelText('site-select')
-      fireEvent.change(siteSelect, {target : {value : "Overview"}})
+      fireEvent.change(siteSelect, {target : {value : SHOP_CALENDER_KEY}})
     });
 
     const procedure = testState.procedure.get(1);
@@ -207,7 +207,7 @@ describe("Shop Order page test suite", () => {
   it("Booking update Malform message", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -268,13 +268,13 @@ describe("Shop Order page test suite", () => {
 
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
     await act(async () => {
       const siteSelect = screen.getByLabelText('site-select')
-      fireEvent.change(siteSelect, {target : {value : "Overview"}})
+      fireEvent.change(siteSelect, {target : {value : SHOP_CALENDER_KEY}})
     });
 
     const procedure = testState.procedure.get(1);
@@ -307,13 +307,13 @@ describe("Shop Order page test suite", () => {
   it("Create booking from triggered update", async () => {
     render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
     await act(async () => {
       const siteSelect = screen.getByLabelText('site-select')
-      fireEvent.change(siteSelect, {target : {value : "Overview"}})
+      fireEvent.change(siteSelect, {target : {value : SHOP_CALENDER_KEY}})
     });
 
     await act(async () => {
@@ -366,7 +366,7 @@ describe("Shop Order page test suite", () => {
   it("ISSUE: 20260316 - Ordering from calculator gives the wrong date in the order", async () => {
     const {rerender} = render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -379,7 +379,7 @@ describe("Shop Order page test suite", () => {
 
     rerender(
       <TracerShopContext tracershop_state={newTestState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={newTestState.customer}/>
+        <ShopOrderPage relatedCustomer={newTestState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -422,7 +422,7 @@ describe("Shop Order page test suite", () => {
   it("ISSUE: 20260316 - Ordering from calculator gives the wrong date in the order - Test 2", async () => {
     const {rerender} = render(
       <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={testState.customer}/>
+        <ShopOrderPage relatedCustomer={testState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 
@@ -435,7 +435,7 @@ describe("Shop Order page test suite", () => {
 
     rerender(
       <TracerShopContext tracershop_state={newTestState} websocket={websocket} dispatch={() => {}}>
-        <ShopOrderPage relatedCustomer={newTestState.customer}/>
+        <ShopOrderPage relatedCustomer={newTestState.customer} hint={"review"}/>
       </TracerShopContext>
     );
 

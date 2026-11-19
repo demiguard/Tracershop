@@ -50,7 +50,6 @@ export function CustomerModal({active_customer, on_close}) {
     : cleanEndpoint
 
   const activity_tracers = [...state.tracer.values()].filter(tracerTypeFilter(TRACER_TYPE.ACTIVITY));
-  const activityTracersOptions = toOptions(activity_tracers, 'shortname');
 
   // New product
   const producibleIsotopes = isotopeFilter(state.isotopes, {producible : true , state});
@@ -133,7 +132,6 @@ export function CustomerModal({active_customer, on_close}) {
               timeSlotState={[tempTimeSlot, setTempTimeSlot]}
               selectedEndpoint={endpoint}
               setEndpointReferenceError={setEndpointReferenceError}
-              activityTracersOptions={activityTracersOptions}
               initializeNewTimeSlot={initializeNewTimeSlot}
               products={products}
               productState={productState}

@@ -31,10 +31,14 @@ import { dateToDateString } from "~/lib/formatting";
 import { NoDeliveryEndpoint } from "./no_delivery_endpoint";
 import { NavigationContainer } from "~/lib/types";
 
+export const OVERVIEW_KEY = "review"
+export const BOOKING_ORDER_KEY = "autoBooking"
+export const SHOP_CALENDER_KEY = "calender"
+
 export const SHOP_ORDER_COMPONENTS: NavigationContainer = {
-  review : {component : OrderReview, name : "Bestillings Oversigt" },
-  autoBooking : { component : FutureBooking, name : "Booking Bestilling" },
-  calender : { component : BookingOverview, name : "Booking Kalender" },
+  [OVERVIEW_KEY] : {component : OrderReview, name : "Bestillings Oversigt" },
+  [BOOKING_ORDER_KEY] : { component : FutureBooking, name : "Booking Bestilling" },
+  [SHOP_CALENDER_KEY] : { component : BookingOverview, name : "Booking Kalender" },
 };
 
 export function ShopOrderPage ({relatedCustomer, hint}){
@@ -223,6 +227,10 @@ export function ShopOrderPage ({relatedCustomer, hint}){
   function setView(event){
     const newView = event.target.value;
     db.set(DATABASE_SHOP_ORDER_PAGE, newView);
+    if(!(newView in SHOP_ORDER_COMPONENTS)){
+      console.error("Changing to a non-existent view")
+    }
+
     setViewIdentifier(newView);
   }
 
