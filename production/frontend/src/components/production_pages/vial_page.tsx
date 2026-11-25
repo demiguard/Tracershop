@@ -104,7 +104,7 @@ function VialRow({vial} : VialRowProps){
     websocket.send({
       [WEBSOCKET_MESSAGE_TYPE] : WEBSOCKET_MESSAGE_PRINT_VIAL,
       [WEBSOCKET_DATA] : {
-        DATA_VIAL : vial.id
+        [DATA_VIAL] : vial.id
       }
     });
   }
