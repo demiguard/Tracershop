@@ -82,6 +82,9 @@ class Command(BaseCommand):
 
 
   async def main(self):
+    logger = getLogger(DEBUG_LOGGER)
+    logger.info("Hello world from vial printing - async loop")
+
     stop_event = asyncio.Event()
     thread_event = ThreadEvent()
     vial_queue = Queue()
@@ -107,6 +110,8 @@ class Command(BaseCommand):
 
 
   def handle_print_event(self, msg):
+    debug_logger = getLogger(DEBUG_LOGGER)
+    debug_logger.info(f"Printing message: {msg}")
     if DATA_VIAL not in msg:
       logger = getLogger(ERROR_LOGGER)
       logger.error(f"Incorrect message format for print-vial message: {msg} - Missing {DATA_VIAL} message key")
@@ -185,6 +190,8 @@ class Command(BaseCommand):
       raise
 
   def consume(self, thread_event: ThreadEvent, queue: Queue):
+    logger = getLogger(DEBUG_LOGGER)
+    logger.info("Hello from vial printing consumer thread!")
     while not thread_event.is_set():
       try:
         msg = queue.get(timeout=5.0)
