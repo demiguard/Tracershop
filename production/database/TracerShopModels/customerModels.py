@@ -641,7 +641,7 @@ class StandardOrder(TracershopModel):
 
   """
   amount = FloatField()
-  destination = OneToOneField(ActivityDeliveryTimeSlot, on_delete=CASCADE, unique=True)
+  destination = ForeignKey(ActivityDeliveryTimeSlot, on_delete=CASCADE)
   weekly_repeat = SmallIntegerField(
     choices=WeeklyRepeat.choices,
     default=WeeklyRepeat.EveryWeek

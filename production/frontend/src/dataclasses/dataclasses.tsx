@@ -1448,12 +1448,14 @@ export class StandardOrder extends Dataclass {
   id
   amount
   destination
+  weekly_repeat
 
-  constructor(id?, amount?, destination?, ) {
+  constructor(id?, amount?, destination?, weekly_repeat?, ) {
     super()
     this.id=id
     this.amount=amount
     this.destination=destination
+    this.weekly_repeat=weekly_repeat
   }
 
   /**Copies the standardorder
@@ -1463,7 +1465,8 @@ export class StandardOrder extends Dataclass {
     return new StandardOrder(
       this.id,
       this.amount,
-      this.destination
+      this.destination,
+      this.weekly_repeat
     )
   }
   fields(){
@@ -1471,6 +1474,7 @@ export class StandardOrder extends Dataclass {
       new IntField("id"),
       new FloatField("amount"),
       new ForeignField("destination","deliver_times"),
+      new IntField("weekly_repeat"),
     ];
   }
 }

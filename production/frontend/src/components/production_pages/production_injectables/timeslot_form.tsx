@@ -33,7 +33,7 @@ const OVERHEAD_HEADER_NAME = "Overhead"
 function getOverheadString(page: TracerCatalogPage) {
   const percentage = Math.round((page.overhead_multiplier - 1) * 100);
 
-  return percentage === 0 ? "" : String(percentage);
+  return percentage === 0 ? "0" : String(percentage);
 }
 
 
@@ -103,6 +103,8 @@ export function TimeSlotForm({
   }
 
   const tracerCatalogPage = setCatalogPage(product);
+
+  console.log(tracerCatalogPage);
 
   const [deliveryTimeError, setDeliveryTimeError] = useState("");
 

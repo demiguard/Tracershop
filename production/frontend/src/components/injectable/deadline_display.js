@@ -24,7 +24,6 @@ export function DeadlineDisplay(props){
   }, []);
 
 
-
   const deadlineDateTime = calculateDeadline(deadline, state.today);
 
   if (deadlineDateTime < clockDateTime){

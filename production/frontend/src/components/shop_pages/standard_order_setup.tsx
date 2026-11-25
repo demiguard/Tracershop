@@ -1,10 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Button, ButtonGroup, Col, Container, FormControl, InputGroup, Row } from "react-bootstrap";
 import { useDeliveryCodex } from "~/contexts/delivery_codex";
 import { useTracerCatalog } from "~/contexts/tracer_catalog";
-import { useTracershopState } from "~/contexts/tracer_shop_context";
+import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { ActivityDeliveryTimeSlot, StandardOrder } from "~/dataclasses/dataclasses";
-import { DAYS, DAYS_OBJECTS } from "~/lib/constants";
+import { DAYS, DAYS_OBJECTS, WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
 import { timeSlotFilter } from "~/lib/filters";
 import { setStateToEvent } from "~/lib/state_management";
 import { TracershopInputGroup } from "../injectable/inputs/tracershop_input_group";
@@ -14,15 +14,18 @@ import { Optional } from "../injectable/optional";
 import { DATA_STANDARD_ORDER } from "~/lib/shared_constants";
 import { ErrorMonad, useErrorState } from "~/lib/error_handling";
 import { parseDanish0OrPositiveNumberBind } from "~/lib/parsing";
+import { IdempotentIcon } from "../injectable/icons";
 
 
-type tsdProps = {
+type TimeSlotDisplayProps = {
   timeslot : ActivityDeliveryTimeSlot,
   currentStandardOrder : (ts: ActivityDeliveryTimeSlot) => StandardOrder,
+  weeklyRepeat : number
 }
 
-function TimeSlotDisplay({timeslot, currentStandardOrder} : tsdProps){
-  const standardOrder = currentStandardOrder(timeslot)
+function TimeSlotDisplay({timeslot, currentStandardOrder, weeklyRepeat} : TimeSlotDisplayProps){
+  const websocket = useWebsocket();
+  const standardOrder = useMemo(() => currentStandardOrder(timeslot), [timeslot, weeklyRepeat]);
   const defaultAmount = standardOrder.amount ? String(standardOrder.amount) : ""
   const AMOUNT_HEADER = "Standard Ordre"
 
@@ -51,18 +54,40 @@ function TimeSlotDisplay({timeslot, currentStandardOrder} : tsdProps){
 
     newStandardOrder.amount = pAmount;
     newStandardOrder.destination = timeslot.id;
+    newStandardOrder.weekly_repeat = weeklyRepeat;
 
     return [true, newStandardOrder];
   }
 
+  useEffect(() => {
+    setAmount(defaultAmount);
+  }, [standardOrder]);
+
+  function deleteStandardOrder(){
+    if(!!(standardOrder.id)){
+      return websocket.sendDeleteModels(DATA_STANDARD_ORDER, [standardOrder.id])
+    } else {
+      console.log("You should now have been able to call this!");
+      return new Promise(undefined);
+    }
+  }
+
   const actionButton = (
+    <div>
+    <Optional exists={!!(standardOrder.id) && !dirty}>
+      <IdempotentIcon
+        onClick={deleteStandardOrder}
+        src="/static/images/decline.svg"
+      />
+    </Optional>
     <Optional exists={dirty}>
       <CommitIcon
         temp_object={standardOrder}
         object_type={DATA_STANDARD_ORDER}
         validate={validate}
-      />
+        />
     </Optional>
+    </div>
   );
 
   return (
@@ -79,7 +104,6 @@ export function StandardOrderSetup({relatedCustomer}) {
   const state = useTracershopState();
   const deliveryCodex = useDeliveryCodex();
   const tracerCatalog = useTracerCatalog();
-
 
   // State
   const [activeCustomer, setActiveCustomer] = useState(() => {
@@ -101,6 +125,7 @@ export function StandardOrderSetup({relatedCustomer}) {
   const [tracerID, setTracerID] = useState(() => {
     for( const aTracerID of activityCatalog){ return aTracerID; }
   });
+  const [weeklyRepeat, setWeeklyRepeat] = useState(WEEKLY_REPEAT_CHOICES.ALL);
 
   // State extraction
   const deliveriesForEndpoint = customerCodex.get(endpoint);
@@ -141,13 +166,13 @@ export function StandardOrderSetup({relatedCustomer}) {
   const currentStandardOrder = useMemo(() => {
     return function(timeslot){
       for(const standardOrder of state.standard_order.values()){
-        if(standardOrder.destination === timeslot.id){
+        if(standardOrder.destination === timeslot.id && standardOrder.weekly_repeat === weeklyRepeat){
           return standardOrder
         }
       }
       return new StandardOrder();
     }
-  }, [state.standard_order]);
+  }, [state.standard_order, weeklyRepeat]);
 
   const changeCustomer = useMemo(() => {
     return (newCustomer: React.ChangeEvent<HTMLInputElement>) => {
@@ -174,6 +199,7 @@ export function StandardOrderSetup({relatedCustomer}) {
         key={timeslot.id}
         timeslot={timeslot}
         currentStandardOrder={currentStandardOrder}
+        weeklyRepeat={weeklyRepeat}
       />
     }
   );
@@ -194,6 +220,17 @@ export function StandardOrderSetup({relatedCustomer}) {
         marginBottom : "1vh"
       }}>
         {DaysButtons}
+      </Row>
+      <Row>
+        <Col xs="2">
+          <Button onClick={() => setWeeklyRepeat(WEEKLY_REPEAT_CHOICES.ALL)}>{weeklyRepeat == WEEKLY_REPEAT_CHOICES.ALL ? <u>Alle uger</u> : <div>Alle uger</div> } </Button>
+        </Col>
+        <Col xs="2">
+          <Button onClick={() => setWeeklyRepeat(WEEKLY_REPEAT_CHOICES.EVEN)}>{weeklyRepeat == WEEKLY_REPEAT_CHOICES.EVEN ? <u>Lige uger</u> : <div>Lige uger</div> } </Button>
+        </Col>
+        <Col xs="2">
+          <Button onClick={() => setWeeklyRepeat(WEEKLY_REPEAT_CHOICES.ODD)}>{weeklyRepeat == WEEKLY_REPEAT_CHOICES.ODD ? <u>Ulige uger</u> : <div>Ulige uger</div> } </Button>
+        </Col>
       </Row>
       <Row className="justify-content-md-left" style={{
         marginTop : "1vh",

@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Card, Collapse, Col, Row } from "react-bootstrap";
 import { ActivityDeliveryTimeSlot, ActivityOrder } from "~/dataclasses/dataclasses";
 import { dateToDateString, nullParser, renderDateTime } from "~/lib/formatting";
@@ -8,7 +8,7 @@ import { DATA_ACTIVITY_ORDER, DATA_ISOTOPE, DATA_PROJECT_ACTIVITY } from "~/lib/
 import { ActivityDeliveryIcon, CalculatorIcon, StatusIcon } from "~/components/injectable/icons"
 import { TracershopInputGroup } from "~/components/injectable/inputs/tracershop_input_group";
 import { CalculatorModal } from "~/components/modals/calculator_modal";
-import { combineDateAndTimeStamp } from "~/lib/chronomancy";
+import { combineDateAndTimeStamp, getWeekNumber } from "~/lib/chronomancy";
 import { dataClassExists, nullify } from "~/lib/utils";
 import { useTracershopState, useWebsocket } from "~/contexts/tracer_shop_context";
 import { parseDanishPositiveNumberInput } from "~/lib/user_input";
@@ -24,6 +24,7 @@ import { ShopActionButton } from "~/components/injectable/buttons/shop_action_bu
 import { useProjectMapping } from "~/lib/data_structures/project_mapping";
 import { Option, Select, toOptions } from "~/components/injectable/select";
 import { MESSAGE_UPDATE_STATE } from "~/lib/incoming_messages";
+import { useStandardOrderIndex } from "~/contexts/standard_order_index";
 
 
 type ShowOrderRowProps = {
@@ -33,7 +34,9 @@ type ShowOrderRowProps = {
 
 function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   const state = useTracershopState();
+  const standardOrderIndex = useStandardOrderIndex();
   const websocket = useWebsocket();
+  const weekNumberRef = useRef(getWeekNumber(state.today));
   const timeSlot = state.deliver_times.get(order.ordered_time_slot);
   const endpoint = state.delivery_endpoint.get(timeSlot.destination);
   const production = state.production.get(timeSlot.production_run);
@@ -60,6 +63,24 @@ function ShopOrderRow({order, calculatorActivity}: ShowOrderRowProps){
   const projectOptions = [...toOptions(validProjects), new Option("", "-----------")]
 
   const [activityError, setActivityError] = useErrorState();
+
+  //Effects
+  useEffect(() => {
+    console.log("Effect Trigger!")
+    const weekNumberPrevious = weekNumberRef.current;
+    const previousStandardOrder = standardOrderIndex.getStandardOrder(timeSlot, weekNumberPrevious);
+    const weekNumber = getWeekNumber(state.today);
+    weekNumberRef.current = weekNumber;
+
+    if(displayActivity === "" || displayActivity === String(previousStandardOrder.amount)){
+      const standardOrder = standardOrderIndex.getStandardOrder(timeSlot, weekNumber);
+      const displayStandardActivity = String(standardOrder.amount);
+      if(displayStandardActivity !== ""){
+        setDisplayActivity(displayStandardActivity);
+      }
+    }
+  }, [state.today, state.deliver_times, order.ordered_time_slot]);
+
     // Functions
   function validate(){
     const [validActivity, numberActivity] = parseDanishPositiveNumberInput(displayActivity, "Aktiviten");
@@ -338,8 +359,7 @@ export function ShopTimeSlotCardActivity({
   const tracer = state.tracer.get(production.tracer);
   const canOrder = activityDeadlineValid;
 
-  const blankOrder = makeBlankActivityOrder(timeSlot)
-
+  const blankOrder = makeBlankActivityOrder(timeSlot);
   // IMPLICIT ASSUMPTION! -- You can only move orders between time slots of the
   //same endpoint and tracer (and day, but that assumption is not used here!)
   const displayActivityOrders = activityOrders.filter((order) =>

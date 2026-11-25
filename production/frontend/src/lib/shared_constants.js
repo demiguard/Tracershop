@@ -90,7 +90,7 @@ export const EXCLUDED_STATE_MODELS = [
   "vial_template_text",
 ]
 
-export const JAVASCRIPT_VERSION = "2.6.5";
+export const JAVASCRIPT_VERSION = "2.7.0";
 
 export const MessageValidationResult = {
   Successful : 0,

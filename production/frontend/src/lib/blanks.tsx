@@ -10,9 +10,11 @@ import { useTracershopState } from "~/contexts/tracer_shop_context";
 import { ActivityDeliveryTimeSlot, ActivityOrder, DeliveryEndpoint, InjectionOrder, IsotopeDelivery, IsotopeOrder, Tracer, TracershopState } from "~/dataclasses/dataclasses";
 import { PRODUCT_TYPES, ProductReference } from "~/dataclasses/references/product_reference";
 
-import { ORDER_STATUS, TRACER_TYPE } from "~/lib/constants";
+import { ORDER_STATUS, TRACER_TYPE, WEEKLY_REPEAT_CHOICES } from "~/lib/constants";
 import { dateToDateString } from "~/lib/formatting";
 import { TRACER_USAGE } from "~/lib/shared_constants";
+import { getWeekNumber } from "./chronomancy";
+import { useStandardOrderIndex } from "~/contexts/standard_order_index";
 
 export function makeBlankIsotopeOrder(timeSlot : IsotopeDelivery, state: TracershopState){
   const blank_order = new IsotopeOrder(
@@ -57,15 +59,11 @@ export function makeBlankTracer(){
 
 export function makeBlankActivityOrder(timeSlot: ActivityDeliveryTimeSlot){
   const state = useTracershopState();
+  const standardOrderIndex = useStandardOrderIndex();
+  const weekNumber = getWeekNumber(state.today);
+  const page = standardOrderIndex.getStandardOrder(timeSlot, weekNumber);
+  const activity = String(page.amount);
 
-  let activity = (() => {
-    for(const standardOrder of state.standard_order.values()){
-      if(standardOrder.destination === timeSlot.id){
-        return String(standardOrder.amount)
-      }
-    }
-    return "";
-  })()
 
   return new ActivityOrder(-1,
                            activity,

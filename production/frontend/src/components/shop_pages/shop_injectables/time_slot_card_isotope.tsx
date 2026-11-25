@@ -94,7 +94,7 @@ function CardHeaderDescription({ collection } : CardHeaderDescriptionArgs){
 }
 
 
-function CardHeader({collection, collapsedState}){
+function IsotopeTimeSlotCardHeader({collection, collapsedState, isotopeTimeSlotID}){
   const [collapsed, setCollapsed] = collapsedState
 
   return (
@@ -108,6 +108,7 @@ function CardHeader({collection, collapsedState}){
           ...JUSTIFY.left
         }}>
           <OpenCloseButton
+            data-testid={`open-isotope-timeslot-${isotopeTimeSlotID}`}
             open={collapsed}
             setOpen={setCollapsed}
           />
@@ -181,6 +182,7 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
     <Col>
       <TracershopInputGroup readonly={!canEdit} tail={"MBq"} error={errorActivity}>
         <Form.Control
+          data-testid={`form-activity-${tempOrder.destination}`}
           onChange={setTempClassToEvent<IsotopeOrder>({
             stateFunction : setTempOrder,
             keyword : "ordered_activity_MBq",
@@ -208,6 +210,7 @@ function OrderRow({order, deadlineValid}: OrderRowProps){
       JUSTIFY.center
     } xs={1}>
       <ShopActionButton
+        data-testid={`action-isotope-${tempOrder.destination}`}
         order={order}
         validate={validate}
         callback={callback}
@@ -292,7 +295,8 @@ export function TimeSlotCardIsotope({
 
   return (
     <Card style={PADDING.all.px0}>
-      <CardHeader
+      <IsotopeTimeSlotCardHeader
+        isotopeTimeSlotID={timeSlot.id}
         collection={collection}
         collapsedState={[collapsed, setCollapsed]}
       />

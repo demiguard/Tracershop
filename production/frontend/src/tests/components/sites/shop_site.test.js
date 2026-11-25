@@ -5,13 +5,15 @@
 import React from "react";
 
 import { act, screen, render, cleanup, fireEvent, waitFor } from "@testing-library/react";
-import { jest } from '@jest/globals'
-import { AppState, testState } from "../../app_state";
+import { jest, afterEach, beforeEach, describe, it, expect } from '@jest/globals'
+import { AppState, getModifiedTestState, testState } from "../../app_state";
 
 import ShopSite from "../../../components/sites/shop_site";
 import { users } from "../../test_state/users";
 import { TracerShopContext } from "~/contexts/tracer_shop_context";
 import { TracershopState } from "~/dataclasses/dataclasses";
+import { UpdateToday } from "~/lib/state_actions";
+import { DATA_ISOTOPE_ORDER } from "~/lib/shared_constants";
 
 const module = jest.mock('../../../lib/tracer_websocket');
 const tracer_websocket = require("../../../lib/tracer_websocket");
@@ -19,11 +21,17 @@ const logout = jest.fn();
 
 let websocket = tracer_websocket.TracerWebSocket;
 
+beforeEach(() => {
+  jest.useFakeTimers();
+  jest.setSystemTime(new Date(2020,4,5,9,31,12));
+})
+
 
 afterEach(() => {
   cleanup();
   module.clearAllMocks()
   window.localStorage.clear()
+  jest.useRealTimers()
 });
 
 describe("Shop shop test suite", () => {
@@ -142,23 +150,59 @@ describe("Shop shop test suite", () => {
   });
 
   it("end 2 end order isotope", async () => {
-    await waitFor(() => {
-      render(
-        <TracerShopContext tracershop_state={testState} websocket={websocket}>
+    const dispatchMock = jest.fn((arg) => {
+      return new UpdateToday(
+        new Date("2020-05-16"), websocket
+      );
+    });
+
+
+    const {rerender} = await waitFor(() => {
+      return render(
+        <TracerShopContext tracershop_state={testState} websocket={websocket} dispatch={dispatchMock}>
           <ShopSite logout={logout}/>
         </TracerShopContext>
       );
     });
 
-    await act( async () => {
+    /*await act( async () => {
       fireEvent.click(screen.getByLabelText('navbar-orders'))
+    })
+      */
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', {name : /Ba-139/}));
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByLabelText('calender-day-19'));
+    });
+
+    const modTestState = getModifiedTestState({today : new Date(2020, 5, 23, 12, 0, 0)});
+
+    rerender(
+      <TracerShopContext tracershop_state={modTestState} websocket={websocket} dispatch={dispatchMock}>
+        <ShopSite logout={logout}/>
+      </TracerShopContext>
+    );
+
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId("open-isotope-timeslot-2"));
+    });
+
+    await act(async () => {
+      fireEvent.change(screen.getByTestId("form-activity-2"), { target : { value : "10000"}})
     })
 
     await act(async () => {
-      fireEvent.click(screen.getByRole('button', {name : /Ba-139/}))
-    });
+      fireEvent.click(screen.getByTestId("action-isotope-2"))
+    })
 
-
+    expect(websocket.sendCreateModel).toHaveBeenCalledWith(DATA_ISOTOPE_ORDER, expect.objectContaining({
+      ordered_activity_MBq : 10000,
+      destination : 2
+    }))
 
   });
 })
