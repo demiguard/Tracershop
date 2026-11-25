@@ -164,7 +164,7 @@ class Command(BaseCommand):
         subprocess.run(printing_command, check=True)
       except subprocess.CalledProcessError:
         logger = getLogger(ERROR_LOGGER)
-        logger.error(f"{printing_command} did not complete successfully!")
+        logger.error(f"{printing_command} FAILED!")
 
     else:
       logger = getLogger(DEBUG_LOGGER)
